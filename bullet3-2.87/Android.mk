@@ -43,7 +43,7 @@ FILE_LIST := $(wildcard \
 		$(LOCAL_PATH)/src/BulletSoftBody/*.cpp \
 		$(LOCAL_PATH)/src/BulletInverseDynamics/*.cpp \
 		$(LOCAL_PATH)/src/BulletInverseDynamics/details/*.cpp \
-		$(LOCAL_PATH)/native-lib.cpp \
+		$(LOCAL_PATH)/*.cpp \
 		)
 LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)
 

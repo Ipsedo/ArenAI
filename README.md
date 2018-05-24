@@ -12,4 +12,4 @@ _Comming soon !_
 ## Description
 Allow the players an experience more than immersive.
 This result will be possible thanks to a view on _VR cardboard_ and a bluetooth controller.
-The whole using library Bullet3 for more realism !
+The whole using the library Bullet3 for more realism !

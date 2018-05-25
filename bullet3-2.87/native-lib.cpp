@@ -5,7 +5,7 @@
 extern "C" JNIEXPORT jstring
 
 JNICALL
-Java_com_samuelberrien_zalsior_MainActivity_stringFromJNI(
+Java_com_samuelberrien_phyvr_MainActivity_stringFromJNI(
         JNIEnv *env,
         jobject /* this */) {
 

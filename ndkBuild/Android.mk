@@ -1,4 +1,5 @@
-LOCAL_PATH := $(call my-dir)
+LOCAL_PATH := $(call my-dir)/../bullet3-2.87
+PHYVR_SRC := $(call my-dir)/../app/src/main
 
 include $(CLEAR_VARS)
 
@@ -49,9 +50,9 @@ FILE_LIST := $(wildcard \
 		$(LOCAL_PATH)/src/BulletSoftBody/*.cpp \
 		$(LOCAL_PATH)/src/BulletInverseDynamics/*.cpp \
 		$(LOCAL_PATH)/src/BulletInverseDynamics/details/*.cpp \
-		$(LOCAL_PATH)/cpp/*.cpp \
-		$(LOCAL_PATH)/cpp/utils/*.cpp \
-		$(LOCAL_PATH)/cpp/drawable/*.cpp \
+		$(PHYVR_SRC)/cpp/*.cpp \
+		$(PHYVR_SRC)/cpp/utils/*.cpp \
+		$(PHYVR_SRC)/cpp/drawable/*.cpp \
 		)
 LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)
 

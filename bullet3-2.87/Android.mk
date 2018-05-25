@@ -10,6 +10,12 @@ LOCAL_CFLAGS := $(LOCAL_C_INCLUDES:%=-I%) -DUSE_PTHREADS -mfpu=neon -mfloat-abi=
 # apply this to disable optimization
 TARGET_CFLAGS := $(TARGET_CFLAGS) -O3
 
+# use c++11 and fix stof etc.
+TARGET_CFLAGS := $(TARGET_CFLAGS) -std=c++11
+
+# link openGLES 2.0
+LOCAL_LDLIBS    := -lGLESv2 -ldl -llog
+
 # apply these 2 to turn on assembly output (*.c/*.cpp to *.s file)
 #compile-cpp-source = $(eval $(call ev-compile-cpp-source,$1,$(1:%$(LOCAL_CPP_EXTENSION)=%.s)))
 #TARGET_CFLAGS := $(TARGET_CFLAGS) -S
@@ -43,7 +49,9 @@ FILE_LIST := $(wildcard \
 		$(LOCAL_PATH)/src/BulletSoftBody/*.cpp \
 		$(LOCAL_PATH)/src/BulletInverseDynamics/*.cpp \
 		$(LOCAL_PATH)/src/BulletInverseDynamics/details/*.cpp \
-		$(LOCAL_PATH)/*.cpp \
+		$(LOCAL_PATH)/cpp/*.cpp \
+		$(LOCAL_PATH)/cpp/utils/*.cpp \
+		$(LOCAL_PATH)/cpp/drawable/*.cpp \
 		)
 LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)
 

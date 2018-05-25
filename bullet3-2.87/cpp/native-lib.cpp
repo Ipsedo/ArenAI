@@ -1,11 +1,12 @@
 #include <jni.h>
 #include <string>
 #include <btBulletDynamicsCommon.h>
+#include <GLES2/gl2.h>
 
 extern "C" JNIEXPORT jstring
 
 JNICALL
-Java_com_samuelberrien_zalsior_MainActivity_stringFromJNI(
+Java_com_samuelberrien_phyvr_MainActivity_stringFromJNI(
         JNIEnv *env,
         jobject /* this */) {
 

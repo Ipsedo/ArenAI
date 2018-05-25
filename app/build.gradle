@@ -3,7 +3,7 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 27
     defaultConfig {
-        applicationId "com.samuelberrien.zalsior"
+        applicationId "com.samuelberrien.phyvr"
         minSdkVersion 21
         targetSdkVersion 27
         versionCode 1
@@ -17,8 +17,10 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles.add(file('../../proguard-gvr.txt'))
+
         }
     }
     externalNativeBuild {
@@ -35,4 +37,5 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    implementation 'com.google.vr:sdk-base:1.80.0'
 }

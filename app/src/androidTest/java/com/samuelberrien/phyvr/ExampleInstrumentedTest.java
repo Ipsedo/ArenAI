@@ -1,4 +1,4 @@
-package com.samuelberrien.zalsior;
+package com.samuelberrien.phyvr;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

@@ -1,4 +1,4 @@
-package com.samuelberrien.zalsior;
+package com.samuelberrien.phyvr;
 
 import org.junit.Test;
 

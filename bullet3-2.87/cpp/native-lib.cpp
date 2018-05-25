@@ -1,6 +1,7 @@
 #include <jni.h>
 #include <string>
 #include <btBulletDynamicsCommon.h>
+#include <GLES2/gl2.h>
 
 extern "C" JNIEXPORT jstring
 

@@ -5,13 +5,14 @@
 #ifndef PHYVR_LEVEL_H
 #define PHYVR_LEVEL_H
 
+#include <glm/glm.hpp>
 
 class level {
 public:
-    void update(float mHeadView[16]);
-    void draw(float mEyeProjectionMatrix[16], float mEyeViewMatrix[16], float myLighPosInEyeSpace[4], float mCameraPos[3]);
+    void update(glm::mat4 mHeadView);
+    void draw(glm::mat4 mEyeProjectionMatrix, glm::mat4 mEyeViewMatrix, glm::vec4 myLighPosInEyeSpace, glm::vec3 mCameraPos);
 private:
-    void updateLight(float xyz[3]);
+    void updateLight(glm::vec3 xyz);
 };
 
 

@@ -3,6 +3,8 @@
 #include <vector>
 #include <sstream>
 #include <string>
+#include <glm/gtc/type_ptr.hpp>
+
 #include "modelvbo.h"
 #include "../utils/shader.h"
 #include "../utils/string_utils.h"
@@ -128,7 +130,7 @@ std::vector<float> ModelVBO::parseObj(string obj_file_text) {
     return packedData;
 }
 
-void ModelVBO::draw(float mvp_matrix[16], float mv_matrix[16], float light_pos[3]) {
+void ModelVBO::draw(glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos) {
     glUseProgram(mProgram);
 
     glBindBuffer(GL_ARRAY_BUFFER, packedDataBufferId);
@@ -142,11 +144,11 @@ void ModelVBO::draw(float mvp_matrix[16], float mv_matrix[16], float light_pos[3
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    glUniformMatrix4fv(mMVPMatrixHandle, 1, GL_FALSE, mvp_matrix);
+    glUniformMatrix4fv(mMVPMatrixHandle, 1, GL_FALSE, glm::value_ptr(mvp_matrix));
 
-    glUniformMatrix4fv(mMVMatrixHandle, 1, GL_FALSE, mv_matrix);
+    glUniformMatrix4fv(mMVMatrixHandle, 1, GL_FALSE, glm::value_ptr(mv_matrix));
 
-    glUniform3fv(mLightPosHandle, 1, light_pos);
+    glUniform3fv(mLightPosHandle, 1, glm::value_ptr(light_pos));
 
     glUniform4fv(mColorHandle, 1, color);
 

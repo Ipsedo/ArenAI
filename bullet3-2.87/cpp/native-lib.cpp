@@ -1,7 +1,10 @@
 #include <jni.h>
 #include <string>
 #include <btBulletDynamicsCommon.h>
-#include <GLES2/gl2.h>
+#include <android/asset_manager.h>
+#include <android/asset_manager_jni.h>
+
+#include "utils/assets.h"
 
 extern "C" JNIEXPORT jstring
 
@@ -36,4 +39,14 @@ Java_com_samuelberrien_phyvr_MainActivity_stringFromJNI(
     char hello[100];
     sprintf(hello, "Hello\nGravity x = %f, y = %f, z = %f", tmpX, tmpY, tmpZ);
     return env->NewStringUTF(hello);
+}
+
+extern "C"
+JNIEXPORT jstring JNICALL
+Java_com_samuelberrien_phyvr_MainActivity_test(JNIEnv *env, jobject instance, jobject mgr) {
+
+    AAssetManager* cppMgr = AAssetManager_fromJava(env, mgr);
+
+    std::string objTxt = getFileText(cppMgr, "obj/icosahedron.obj");
+    return env->NewStringUTF(objTxt.c_str());
 }

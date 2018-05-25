@@ -14,7 +14,7 @@ TARGET_CFLAGS := $(TARGET_CFLAGS) -O3
 TARGET_CFLAGS := $(TARGET_CFLAGS) -std=c++11
 
 # link openGLES 2.0
-LOCAL_LDLIBS    := -lGLESv2 -ldl -llog
+LOCAL_LDLIBS    := -lGLESv2 -ldl -llog -landroid
 
 # apply these 2 to turn on assembly output (*.c/*.cpp to *.s file)
 #compile-cpp-source = $(eval $(call ev-compile-cpp-source,$1,$(1:%$(LOCAL_CPP_EXTENSION)=%.s)))

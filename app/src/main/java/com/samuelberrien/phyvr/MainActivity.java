@@ -1,4 +1,4 @@
-package com.samuelberrien.zalsior;
+package com.samuelberrien.phyvr;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;

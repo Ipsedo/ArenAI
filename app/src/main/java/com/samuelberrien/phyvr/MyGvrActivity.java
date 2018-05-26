@@ -13,6 +13,7 @@ public class MyGvrActivity extends GvrActivity {
         super.onCreate(savedInstanceState);
 
         myGvrView = new MyGvrView(this);
+        setContentView(myGvrView);
     }
 
     @Override

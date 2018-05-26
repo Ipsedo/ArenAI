@@ -1,8 +1,10 @@
 package com.samuelberrien.phyvr;
 
+import android.content.Intent;
 import android.content.res.AssetManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
@@ -22,6 +24,11 @@ public class MainActivity extends AppCompatActivity {
 		//tv.setText(stringFromJNI());
 		//tv.setText("YO");
 		tv.setText(test(this.getAssets()));
+	}
+
+	public void vr(View v) {
+		Intent myIntent = new Intent(this, MyGvrActivity.class);
+		startActivity(myIntent);
 	}
 
 	/**

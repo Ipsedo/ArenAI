@@ -31,11 +31,11 @@ void Level::addNewBox(Box *b) {
 }
 
 Level::~Level() {
-    delete collisionConfiguration;
+    /*delete collisionConfiguration;
     delete dispatcher;
 
     delete constraintSolver;
-    delete broadPhase;
+    delete broadPhase;*/
 
     delete world;
 }

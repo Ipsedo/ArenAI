@@ -62,7 +62,6 @@ float* jfloatPtrToCppFloatPtr(jfloat* array, int length) {
     for (int i = 0; i < length; i++) {
         res[i] = array[i];
     }
-    // TODO free this array
     return res;
 }
 

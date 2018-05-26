@@ -2,7 +2,6 @@ package com.samuelberrien.phyvr;
 
 import android.content.Context;
 import android.content.res.AssetManager;
-import android.opengl.Matrix;
 import android.util.AttributeSet;
 
 import com.google.vr.sdk.base.Eye;

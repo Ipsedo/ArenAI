@@ -1,5 +1,4 @@
 #include <GLES2/gl2.h>
-#include <android/log.h>
 #include "shader.h"
 
 GLuint loadShader(GLenum type, const char* shaderSource) {

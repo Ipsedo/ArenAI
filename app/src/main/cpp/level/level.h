@@ -1,27 +1,29 @@
 //
-// Created by samuel on 25/05/18.
+// Created by samuel on 26/05/18.
 //
 
 #ifndef PHYVR_LEVEL_H
 #define PHYVR_LEVEL_H
 
-#include <glm/glm.hpp>
-#include <android/asset_manager.h>
 
-#include "../drawable/modelvbo.h"
+#include "../graphics/renderer.h"
+#include "../entity/box.h"
 
 class Level {
 public:
-    Level(AAssetManager* mgr);
-    void init();
-    void update(glm::mat4 mHeadView);
-    void draw(glm::mat4 mEyeProjectionMatrix, glm::mat4 mEyeViewMatrix, glm::vec4 myLighPosInEyeSpace, glm::vec3 mCameraPos);
+    Level(vector<Box*>* boxes);
+    void update(float delta);
+    // ajoute un nouveau Box SEULEMENT au World (sera suppr dans le futur)
+    void addNewBox(Box* box);
     ~Level();
+
 private:
-    AAssetManager* mgr;
-    ModelVBO* modelVBO;
-    glm::mat4 mCamera;
-    glm::vec4 updateLight(glm::mat4 viewMatrix, glm::vec3 xyz);
+    vector<Box*>* boxes;
+    btDiscreteDynamicsWorld* world;
+    btBroadphaseInterface* broadPhase;
+    btCollisionDispatcher* dispatcher;
+    btDefaultCollisionConfiguration* collisionConfiguration;
+    btSequentialImpulseConstraintSolver* constraintSolver;
 };
 
 

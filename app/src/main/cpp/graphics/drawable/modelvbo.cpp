@@ -6,8 +6,8 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "modelvbo.h"
-#include "../utils/shader.h"
-#include "../utils/string_utils.h"
+#include "../../utils/shader.h"
+#include "../../utils/string_utils.h"
 
 std::string vs = "uniform mat4 u_MVPMatrix;\n"
         "uniform mat4 u_MVMatrix;\n"

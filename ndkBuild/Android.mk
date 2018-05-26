@@ -12,6 +12,9 @@ LOCAL_CFLAGS := $(LOCAL_C_INCLUDES:%=-I%) -DUSE_PTHREADS -mfpu=neon -mfloat-abi=
 # apply this to disable optimization
 TARGET_CFLAGS += -O3
 
+# exception
+LOCAL_CPPFLAGS += -fexceptions
+
 # use c++11 and fix stof etc.
 TARGET_CFLAGS += -std=c++11
 
@@ -57,7 +60,9 @@ FILE_LIST := $(wildcard \
 		$(PHYVR_SRC)/cpp/*.cpp \
 		$(PHYVR_SRC)/cpp/utils/*.cpp \
 		$(PHYVR_SRC)/cpp/level/*.cpp \
-		$(PHYVR_SRC)/cpp/drawable/*.cpp \
+		$(PHYVR_SRC)/cpp/graphics/drawable/*.cpp \
+		$(PHYVR_SRC)/cpp/graphics/*.cpp \
+		$(PHYVR_SRC)/cpp/entity/*.cpp \
 		)
 LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)
 

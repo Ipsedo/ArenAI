@@ -1,9 +1,12 @@
-LOCAL_PATH := $(call my-dir)/../bullet3-2.87
-PHYVR_SRC := $(call my-dir)/../app/src/main
-GLM_PATH := $(call my-dir)/../glm
+TOP_PATH := $(call my-dir)/..
+BULLET_PATH := $(TOP_PATH)/bullet3-2.87
+PHYVR_PATH := $(TOP_PATH)/app/src/main
+GLM_PATH := $(TOP_PATH)/glm
 
+# BULLET3 Module
 include $(CLEAR_VARS)
 
+LOCAL_PATH := $(BULLET_PATH)
 LOCAL_CFLAGS := $(LOCAL_C_INCLUDES:%=-I%) -DUSE_PTHREADS -mfpu=neon -mfloat-abi=softfp -pthread -DSCE_PFX_USE_SIMD_VECTORMATH
 
 # apply these flags if needed
@@ -14,12 +17,6 @@ TARGET_CFLAGS += -O3
 
 # exception
 LOCAL_CPPFLAGS += -fexceptions
-
-# use c++11 and fix stof etc.
-TARGET_CFLAGS += -std=c++11
-
-# link openGLES 2.0
-LOCAL_LDLIBS    := -lGLESv2 -ldl -llog -landroid
 
 # apply these 2 to turn on assembly output (*.c/*.cpp to *.s file)
 #compile-cpp-source = $(eval $(call ev-compile-cpp-source,$1,$(1:%$(LOCAL_CPP_EXTENSION)=%.s)))
@@ -37,11 +34,9 @@ LOCAL_MODULE := bullet
 
 LOCAL_C_INCLUDES :=  $(LOCAL_PATH)/src
 
-# add glm
-LOCAL_C_INCLUDES += $(GLM_PATH)
-
 #find all the file recursively under jni/
 FILE_LIST := $(wildcard \
+        $(LOCAL_PATH)/src/*.cpp \
 		$(LOCAL_PATH)/src/LinearMath/*.cpp \
 		$(LOCAL_PATH)/src/Bullet3Common/*.cpp \
 		$(LOCAL_PATH)/src/BulletCollision/BroadphaseCollision/*.cpp \
@@ -57,12 +52,45 @@ FILE_LIST := $(wildcard \
 		$(LOCAL_PATH)/src/BulletSoftBody/*.cpp \
 		$(LOCAL_PATH)/src/BulletInverseDynamics/*.cpp \
 		$(LOCAL_PATH)/src/BulletInverseDynamics/details/*.cpp \
-		$(PHYVR_SRC)/cpp/*.cpp \
-		$(PHYVR_SRC)/cpp/utils/*.cpp \
-		$(PHYVR_SRC)/cpp/level/*.cpp \
-		$(PHYVR_SRC)/cpp/graphics/drawable/*.cpp \
-		$(PHYVR_SRC)/cpp/graphics/*.cpp \
-		$(PHYVR_SRC)/cpp/entity/*.cpp \
+		)
+LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)
+
+include $(BUILD_STATIC_LIBRARY)
+
+
+# PHYVR Module
+include $(CLEAR_VARS)
+
+LOCAL_PATH := $(PHYVR_PATH)
+LOCAL_MODULE := phyvr
+
+# optim
+TARGET_CFLAGS += -O3
+
+# exception
+LOCAL_CPPFLAGS += -fexceptions
+
+# use c++11
+TARGET_CFLAGS += -std=c++11
+
+# link openGLES 2.0, log, android
+LOCAL_LDLIBS    := -lGLESv2 -ldl -llog -landroid
+
+# add glm
+LOCAL_C_INCLUDES += $(GLM_PATH)
+
+# add bullet
+LOCAL_STATIC_LIBRARIES += bullet
+LOCAL_C_INCLUDES += $(BULLET_PATH)/src
+
+#find all the file recursively under jni/
+FILE_LIST := $(wildcard \
+		$(LOCAL_PATH)/cpp/*.cpp \
+		$(LOCAL_PATH)/cpp/utils/*.cpp \
+		$(LOCAL_PATH)/cpp/level/*.cpp \
+		$(LOCAL_PATH)/cpp/graphics/drawable/*.cpp \
+		$(LOCAL_PATH)/cpp/graphics/*.cpp \
+		$(LOCAL_PATH)/cpp/entity/*.cpp \
 		)
 LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)
 

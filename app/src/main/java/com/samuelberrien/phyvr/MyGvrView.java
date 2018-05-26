@@ -41,7 +41,7 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
     private final float Z_FAR = 50f;
 
     static {
-        System.loadLibrary("bullet");
+        System.loadLibrary("phyvr");
     }
 
     private long boxesPtr;

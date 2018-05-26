@@ -11,7 +11,7 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             ndkBuild {
-                arguments "NDK_APPLICATION_MK:=../bullet3-2.87/Application.mk"
+                arguments "NDK_APPLICATION_MK:=../ndkBuild/Application.mk"
             }
         }
     }
@@ -25,7 +25,7 @@ android {
     }
     externalNativeBuild {
         ndkBuild {
-            path "../bullet3-2.87/Android.mk"
+            path "../ndkBuild/Android.mk"
         }
     }
 }

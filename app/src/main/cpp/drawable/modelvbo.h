@@ -5,6 +5,7 @@
 #define PHYVR_OBJVBO_H
 
 #include <GLES2/gl2.h>
+#include <glm/glm.hpp>
 
 using namespace std;
 
@@ -50,7 +51,7 @@ private:
 public:
     ModelVBO(std::string obj_file_text);
     ModelVBO(std::string obj_file_text, float color[4]);
-    void draw(float mvp_matrix[16], float mv_matrix[16], float light_pos[3]);
+    void draw(glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos);
 };
 
 #endif

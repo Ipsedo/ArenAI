@@ -179,12 +179,15 @@ Java_com_samuelberrien_phyvr_MyGvrView_addBox(JNIEnv *env, jobject instance, job
         float z = 5.f * (float) rand() / RAND_MAX;
         float scale = 2.f * (float) rand() / RAND_MAX;
         Base *base;
-        if ((float) rand() / RAND_MAX > 0.5) {
+        if ((float) rand() / RAND_MAX > 0.8) {
             base = new Box(cppMgr,
                           glm::vec3(x, 5.f, z), glm::vec3(scale),
                           id, 1.f);
         } else {
-            base = new Convex(cppMgr, "obj/icosahedron.obj",
+            /*std::string m =
+                    (float) rand() / RAND_MAX > 0.5 ? "obj/icosahedron.obj" : "obj/ast1.obj";*/
+            std::string m = "obj/icosahedron.obj";
+            base = new Convex(cppMgr, m,
                              glm::vec3(x, 5.f, z), glm::vec3(scale),
                              id, 1.f);
         }

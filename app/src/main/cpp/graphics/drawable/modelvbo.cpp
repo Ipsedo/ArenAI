@@ -6,8 +6,36 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "modelvbo.h"
-#include "../utils/shader.h"
-#include "../utils/string_utils.h"
+#include "../../utils/shader.h"
+#include "../../utils/string_utils.h"
+
+std::string vs = "uniform mat4 u_MVPMatrix;\n"
+        "uniform mat4 u_MVMatrix;\n"
+        "uniform vec4 v_Color;\n"
+        "attribute vec4 a_Position;\n"
+        "attribute vec3 a_Normal;\n"
+        "varying vec3 v_Position;\n"
+        "varying vec3 v_Normal;\n"
+        "void main(){\n"
+        "    v_Position = vec3(u_MVMatrix * a_Position);\n"
+        "    v_Normal = normalize(vec3(u_MVMatrix * vec4(a_Normal, 0.0)));\n"
+        "    gl_Position = u_MVPMatrix * a_Position;\n"
+        "}";
+
+std::string fs = "precision mediump float;\n"
+        "uniform vec3 u_LightPos;\n"
+        "uniform float u_distance_coef;\n"
+        "uniform float u_light_coef;\n"
+        "uniform vec4 u_Color;\n"
+        "varying vec3 v_Position;\n"
+        "varying vec3 v_Normal;\n"
+        "void main(){\n"
+        "    float distance = length(u_LightPos - v_Position);\n"
+        "    vec3 lightVector = normalize(u_LightPos - v_Position);\n"
+        "    float diffuse = max(dot(v_Normal, lightVector), 0.1) * u_light_coef;\n"
+        "    diffuse = diffuse * (1.0 / (1.0 + (u_distance_coef * distance * distance)));\n"
+        "    gl_FragColor = u_Color * diffuse;\n"
+        "}";
 
 ModelVBO::ModelVBO(string obj_file_text) {
     init();
@@ -36,9 +64,8 @@ ModelVBO::ModelVBO(string obj_file_text, float color[4]) {
 
 void ModelVBO::init() {
     mProgram = glCreateProgram();
-    // TODO add shader code
-    GLuint vertexShader = loadShader(GL_VERTEX_SHADER, "/shaders/diffuse_vs.glsl");
-    GLuint fragmentShader = loadShader(GL_FRAGMENT_SHADER, "/shaders/diffuse_fs.glsl");
+    GLuint vertexShader = loadShader(GL_VERTEX_SHADER, vs.c_str());
+    GLuint fragmentShader = loadShader(GL_FRAGMENT_SHADER, fs.c_str());
     glAttachShader(mProgram, vertexShader);
     glAttachShader(mProgram, fragmentShader);
     glLinkProgram(mProgram);
@@ -77,7 +104,6 @@ std::vector<float> ModelVBO::parseObj(string obj_file_text) {
     vector<int> normal_draw_order;
 
     for (auto str : lines) {
-        //std::cout << str << std::endl;
         vector<std::string> splitted_line = split(str, ' ');
         if(!splitted_line.empty()) {
             if (splitted_line[0] == "vn") {

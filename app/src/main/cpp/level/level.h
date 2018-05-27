@@ -1,18 +1,29 @@
 //
-// Created by samuel on 25/05/18.
+// Created by samuel on 26/05/18.
 //
 
 #ifndef PHYVR_LEVEL_H
 #define PHYVR_LEVEL_H
 
-#include <glm/glm.hpp>
 
-class level {
+#include "../graphics/renderer.h"
+#include "../entity/box.h"
+
+class Level {
 public:
-    void update(glm::mat4 mHeadView);
-    void draw(glm::mat4 mEyeProjectionMatrix, glm::mat4 mEyeViewMatrix, glm::vec4 myLighPosInEyeSpace, glm::vec3 mCameraPos);
+    Level(vector<Base*>* b);
+    void update(float delta);
+    // ajoute un nouveau Box SEULEMENT au World (sera suppr dans le futur)
+    void addNewBox(Base* base);
+    ~Level();
+
 private:
-    void updateLight(glm::vec3 xyz);
+    vector<Base*>* bases;
+    btDiscreteDynamicsWorld* world;
+    btBroadphaseInterface* broadPhase;
+    btCollisionDispatcher* dispatcher;
+    btDefaultCollisionConfiguration* collisionConfiguration;
+    btSequentialImpulseConstraintSolver* constraintSolver;
 };
 
 

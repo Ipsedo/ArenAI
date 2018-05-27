@@ -2,17 +2,24 @@
 // Created by samuel on 27/05/18.
 //
 
-#include "heightmap.h"
+#include "map.h"
 
-HeightMap::HeightMap(glm::vec3 pos, int heightStickWidth, int heightStickLength, float *normalizedHeightValues) {
+Map::Map(glm::vec3 pos, int width, int height, float *normalizedHeightValues, glm::vec3 scale) {
     float maxHeight = 10.f;
-    collisionShape = new btHeightfieldTerrainShape(heightStickWidth,
-                                                   heightStickLength,
+
+    heightMap = new HeightMap(normalizedHeightValues, width, height);
+
+
+    collisionShape = new btHeightfieldTerrainShape(width,
+                                                   height,
                                                    normalizedHeightValues,
                                                    maxHeight,
                                                    1,
                                                    true,
                                                    false);
+    collisionShape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
+
+    this->scale = scale;
 
     myTransform.setIdentity();
     myTransform.setOrigin(btVector3(pos.x, pos.y, pos.z));
@@ -27,4 +34,9 @@ HeightMap::HeightMap(glm::vec3 pos, int heightStickWidth, int heightStickLength,
                                                         intertie);
 
     rigidBody = new btRigidBody(constrInfo);
+}
+
+void Map::draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) {
+    std::tuple<glm::mat4, glm::mat4> matrixes = getMatrixes(pMatrix, vMatrix);
+    heightMap->draw(std::get<0>(matrixes), std::get<1>(matrixes), lighPos);
 }

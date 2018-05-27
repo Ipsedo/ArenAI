@@ -8,6 +8,7 @@
 #include "graphics/renderer.h"
 #include "level/level.h"
 #include "entity/convex.h"
+#include "entity/ground/map.h"
 #include <glm/gtc/type_ptr.hpp>
 
 extern "C"
@@ -77,6 +78,30 @@ Java_com_samuelberrien_phyvr_MyGvrView_initBoxes(JNIEnv *env, jobject instance,
 
     Base* box = new Box(cppMgr, glm::vec3(0.f, 5.f, 5.f), glm::vec3(1.f,1.f,1.f), id, 1.f);
     Base* sol = new Box(cppMgr, glm::vec3(0.f, -5.f, 0.f), glm::vec3(4.5f,0.1f,4.5f), id, 0.f);
+
+    vector<Base*>* boxes = new vector<Base*>();
+    boxes->push_back(box);
+    boxes->push_back(sol);
+
+    return (long) boxes;
+}
+
+extern "C"
+JNIEXPORT jlong JNICALL
+Java_com_samuelberrien_phyvr_MyGvrView_initEntity(JNIEnv *env, jobject instance,
+                                                  jobject assetManager, jfloatArray heightmap_,
+                                                  jint width, jint height) {
+    jfloat *heightmap = env->GetFloatArrayElements(heightmap_, NULL);
+    float *map = jfloatPtrToCppFloatPtr(heightmap, width * height);
+    // TODO
+
+    AAssetManager* cppMgr = AAssetManager_fromJava(env, assetManager);
+
+    glm::mat4 id(1.f);
+
+    Base* box = new Box(cppMgr, glm::vec3(0.f, 5.f, 5.f), glm::vec3(1.f,1.f,1.f), id, 1.f);
+    Base* sol = new Map(glm::vec3(0.f, -5.f, 0.f), width, height, map, glm::vec3(10.f,2.f,10.f));
+            //new Box(cppMgr, glm::vec3(0.f, -5.f, 0.f), glm::vec3(4.5f,0.1f,4.5f), id, 0.f);
 
     vector<Base*>* boxes = new vector<Base*>();
     boxes->push_back(box);

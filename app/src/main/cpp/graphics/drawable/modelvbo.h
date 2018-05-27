@@ -9,14 +9,16 @@
 #include <vector>
 #include <string>
 
+#include "diffusemodel.h"
+
 using namespace std;
 
 /**
  * One color object with VBO
  * Use OBJ or STL file
  */
-class ModelVBO {
-
+class ModelVBO : public DiffuseModel {
+/*
 private:
     // Data sizes
     const int POSITION_SIZE = 3;
@@ -47,13 +49,13 @@ private:
 
     void init();
     void bind();
-    void bindBuffer(std::vector<float> packedData);
+    void bindBuffer(std::vector<float> packedData);*/
     std::vector<float> parseObj(std::string obj_file_text);
 
 public:
     ModelVBO(std::string obj_file_text);
     ModelVBO(std::string obj_file_text, float color[4]);
-    void draw(glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos);
+    //void draw(glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos);
 };
 
 #endif

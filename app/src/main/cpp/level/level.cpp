@@ -4,9 +4,9 @@
 
 #include "level.h"
 
-Level::Level(vector<Box*>* boxes) {
+Level::Level(vector<Base*>* bases) {
 
-    this->boxes = boxes;
+    this->bases = bases;
 
     collisionConfiguration = new btDefaultCollisionConfiguration();
     dispatcher = new btCollisionDispatcher(collisionConfiguration);
@@ -18,7 +18,7 @@ Level::Level(vector<Box*>* boxes) {
                                         constraintSolver,
                                         collisionConfiguration);
     world->setGravity(btVector3(0,-10,0));
-    for (Box* b : *this->boxes)
+    for (Base* b : *this->bases)
         world->addRigidBody(b->rigidBody);
 }
 
@@ -26,7 +26,7 @@ void Level::update(float delta) {
     world->stepSimulation(delta);
 }
 
-void Level::addNewBox(Box *b) {
+void Level::addNewBox(Base *b) {
     world->addRigidBody(b->rigidBody);
 }
 

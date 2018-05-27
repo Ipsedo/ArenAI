@@ -8,8 +8,8 @@
 #include <GLES2/gl2.h>
 #include <glm/gtc/type_ptr.hpp>
 
-Renderer::Renderer(vector<Box*>* boxes) {
-    this->boxes = boxes;
+Renderer::Renderer(vector<Base*>* bases) {
+    this->bases = bases;
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -50,7 +50,7 @@ void Renderer::draw(glm::mat4 mEyeProjectionMatrix,
 
     glm::vec4 lighPos = this->updateLight(mViewMatrix, glm::vec3(0.f));
 
-    for (Box* b : *boxes)
+    for (Base* b : *bases)
         b->draw(mEyeProjectionMatrix, mViewMatrix, glm::vec3(lighPos.x, lighPos.y, lighPos.z));
 }
 

@@ -14,11 +14,11 @@
 
 class Renderer {
 public:
-    Renderer(vector<Box*>* boxes);
+    Renderer(vector<Base*>* bases);
     void update(glm::mat4 mHeadView);
     void draw(glm::mat4 mEyeProjectionMatrix, glm::mat4 mEyeViewMatrix, glm::vec4 myLighPosInEyeSpace, glm::vec3 mCameraPos);
 private:
-    vector<Box*>* boxes;
+    vector<Base*>* bases;
     glm::mat4 mCamera;
     glm::vec4 updateLight(glm::mat4 viewMatrix, glm::vec3 xyz);
 };

@@ -11,14 +11,14 @@
 
 class Level {
 public:
-    Level(vector<Box*>* boxes);
+    Level(vector<Base*>* b);
     void update(float delta);
     // ajoute un nouveau Box SEULEMENT au World (sera suppr dans le futur)
-    void addNewBox(Box* box);
+    void addNewBox(Base* base);
     ~Level();
 
 private:
-    vector<Box*>* boxes;
+    vector<Base*>* bases;
     btDiscreteDynamicsWorld* world;
     btBroadphaseInterface* broadPhase;
     btCollisionDispatcher* dispatcher;

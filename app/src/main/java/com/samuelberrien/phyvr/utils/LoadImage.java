@@ -3,6 +3,7 @@ package com.samuelberrien.phyvr.utils;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,7 +35,10 @@ public class LoadImage {
 		float[] res = new float[width * height * 3];
 		for (int i = 0; i < height; i++) {
 			for (int j = 0; j < width; j++) {
-				res[i * width + j] = bitmap.getPixel(j, i);
+				int color = bitmap.getPixel(j, i);
+				res[(i * width + j) * 3] = Color.red(color);
+				res[(i * width + j) * 3 + 1] = Color.green(color);
+				res[(i * width + j) * 3 + 2] = Color.blue(color);
 			}
 		}
 		return res;
@@ -54,6 +58,7 @@ public class LoadImage {
 		for (int i = 0; i < res.length; i++) {
 			int j = i * 3;
 			res[i] = (rgbArray[j] + rgbArray[j + 1] + rgbArray[j + 2]) / 3.f;
+			res[i] /= 255.f;
 		}
 		return res;
 	}

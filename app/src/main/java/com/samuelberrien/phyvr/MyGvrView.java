@@ -8,6 +8,7 @@ import com.google.vr.sdk.base.Eye;
 import com.google.vr.sdk.base.GvrView;
 import com.google.vr.sdk.base.HeadTransform;
 import com.google.vr.sdk.base.Viewport;
+import com.samuelberrien.phyvr.utils.LoadImage;
 
 import javax.microedition.khronos.egl.EGLConfig;
 
@@ -73,7 +74,10 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 
     @Override
     public void onSurfaceCreated(EGLConfig config) {
-        boxesPtr = initBoxes(getContext().getAssets());
+        //boxesPtr = initBoxes(getContext().getAssets());
+        LoadImage loadImage = new LoadImage(getContext(), "heightmap/Heightmap.png");
+        boxesPtr = initEntity(getContext().getAssets(),
+                loadImage.tofloatGreyArray(), loadImage.getWidth(), loadImage.getHeight());
         levelPtr = initLevel(boxesPtr);
         rendererPtr = initRenderer(boxesPtr);
     }
@@ -90,6 +94,7 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 	 * CPP wrappers
 	 */
 
+	public native long initEntity(AssetManager assetManager, float[] heightmap, int width, int height);
     public native long initBoxes(AssetManager assetManager);
     public native long initLevel(long boxesPtr);
     public native long initRenderer(long boxesPtr);

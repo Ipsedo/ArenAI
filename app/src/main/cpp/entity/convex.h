@@ -14,11 +14,11 @@ class Convex : public Base {
 public:
     Convex(AAssetManager* mgr, std::string objFileName,
            glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass);
-    void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) override;
+    void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lightPos) override;
 
 private:
     ModelVBO* modelVBO;
-    void parseObj(std::string objFileText, btConvexHullShape* shape);
+    btBvhTriangleMeshShape* parseObj(std::string objFileText);
 };
 
 

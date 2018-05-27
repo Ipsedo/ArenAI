@@ -5,7 +5,7 @@
 #include "map.h"
 
 Map::Map(glm::vec3 pos, int width, int height, float *normalizedHeightValues, glm::vec3 scale) {
-    float maxHeight = 10.f;
+    float maxHeight = scale.y;
 
     heightMap = new HeightMap(normalizedHeightValues, width, height);
 
@@ -17,7 +17,7 @@ Map::Map(glm::vec3 pos, int width, int height, float *normalizedHeightValues, gl
                                                    1,
                                                    true,
                                                    false);
-    collisionShape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
+    collisionShape->setLocalScaling(btVector3(scale.x, 1.f, scale.z));
 
     this->scale = scale;
 

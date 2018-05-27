@@ -91,6 +91,7 @@ FILE_LIST := $(wildcard \
 		$(LOCAL_PATH)/cpp/graphics/drawable/*.cpp \
 		$(LOCAL_PATH)/cpp/graphics/*.cpp \
 		$(LOCAL_PATH)/cpp/entity/*.cpp \
+		$(LOCAL_PATH)/cpp/entity/ground/*.cpp \
 		)
 LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)
 

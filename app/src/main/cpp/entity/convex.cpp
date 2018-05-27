@@ -5,8 +5,6 @@
 #include "convex.h"
 
 #include <glm/gtc/quaternion.hpp>
-#include <android/log.h>
-#include <glm/gtc/matrix_transform.hpp>
 
 #include "../utils/string_utils.h"
 #include "../utils/assets.h"
@@ -24,7 +22,9 @@ Convex::Convex(AAssetManager *mgr, std::string objFileName, glm::vec3 pos, glm::
                           1.f});
 
     collisionShape = parseObj(objTxt);
-    //collisionShape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
+
+    this->scale = scale;
+    collisionShape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
 
     myTransform.setIdentity();
     myTransform.setOrigin(btVector3(pos.x, pos.y, pos.z));
@@ -37,7 +37,7 @@ Convex::Convex(AAssetManager *mgr, std::string objFileName, glm::vec3 pos, glm::
 
     defaultMotionState = new btDefaultMotionState(myTransform);
 
-    btRigidBody::btRigidBodyConstructionInfo constrInfo(0.f,
+    btRigidBody::btRigidBodyConstructionInfo constrInfo(mass,
                                                         defaultMotionState,
                                                         collisionShape,
                                                         intertie);
@@ -45,10 +45,9 @@ Convex::Convex(AAssetManager *mgr, std::string objFileName, glm::vec3 pos, glm::
     rigidBody = new btRigidBody(constrInfo);
 }
 
-btBvhTriangleMeshShape* Convex::parseObj(std::string objFileText) {
+btConvexHullShape* Convex::parseObj(std::string objFileText) {
     vector<std::string> lines = split(objFileText, '\n');
-    __android_log_print(ANDROID_LOG_VERBOSE, "POIR", "a %ld", lines.size());
-
+    btConvexHullShape* shape = new btConvexHullShape();
     vector<float> vertex_list;
     vector<int> vertex_draw_order;
 
@@ -76,44 +75,18 @@ btBvhTriangleMeshShape* Convex::parseObj(std::string objFileText) {
         splitted_line.clear();
     }
 
-
-
-
     unsigned long nbVertex = vertex_draw_order.size();
-    /*btScalar *mesh = new btScalar[nbVertex * 3];
     for (int i = 0; i < nbVertex; i++) {
         btVector3 point(vertex_list[(vertex_draw_order[i] - 1) * 3],
                         vertex_list[(vertex_draw_order[i] - 1) * 3 + 1],
                         vertex_list[(vertex_draw_order[i] - 1) * 3 + 2]
         );
-        mesh[i * 3] = vertex_list[(vertex_draw_order[i] - 1) * 3];
-        mesh[i * 3 + 1] = vertex_list[(vertex_draw_order[i] - 1) * 3 + 1];
-        mesh[i * 3 + 2] = vertex_list[(vertex_draw_order[i] - 1) * 3 + 2];
-    }*/
-
-
-    btScalar *pts = new btScalar[vertex_list.size()];
-    for (int i = 0; i < vertex_list.size(); i++) {
-        pts[i] = vertex_list[i];
-        __android_log_print(ANDROID_LOG_VERBOSE, "POIR", "a %f", pts[i]);
+        shape->addPoint(point, true);
     }
-
-    btTriangleIndexVertexArray*  indexVertexArrays =
-            new btTriangleIndexVertexArray (int(nbVertex) / 3, &vertex_draw_order[0], 3 * sizeof(int), int(nbVertex), &pts[0], 3 * sizeof(btScalar));
-    btBvhTriangleMeshShape *shape = new btBvhTriangleMeshShape(indexVertexArrays, true);
-
-    //btConvexHullShape* shape = new btConvexHullShape(mesh, int(nbVertex), sizeof(btScalar) * 3);
-    //__android_log_print(ANDROID_LOG_VERBOSE, "POIR", "b %d %ld %d %d", shape->getNumPlanes(), nbVertex, shape->getNumPoints(), shape->getNumVertices());
     return shape;
 }
 
 void Convex::draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lightPos) {
-    /*btScalar tmp[16];
-    defaultMotionState->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
-    for (int i = 0; i < 16; i++) {
-        __android_log_print(ANDROID_LOG_VERBOSE, "POIR", "f %f", tmp[i]);
-    }*/
-
     std::tuple<glm::mat4, glm::mat4> matrixes = getMatrixes(pMatrix, vMatrix);
     modelVBO->draw(std::get<0>(matrixes), std::get<1>(matrixes), lightPos);
 }

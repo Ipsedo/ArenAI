@@ -18,7 +18,7 @@ public:
 
 private:
     ModelVBO* modelVBO;
-    btBvhTriangleMeshShape* parseObj(std::string objFileText);
+    btConvexHullShape* parseObj(std::string objFileText);
 };
 
 

@@ -179,7 +179,7 @@ Java_com_samuelberrien_phyvr_MyGvrView_addBox(JNIEnv *env, jobject instance, job
         float z = 5.f * (float) rand() / RAND_MAX;
         float scale = 2.f * (float) rand() / RAND_MAX;
         Base *base;
-        if (true){//((float) rand() / RAND_MAX > 0.5) {
+        if ((float) rand() / RAND_MAX > 0.5) {
             base = new Box(cppMgr,
                           glm::vec3(x, 5.f, z), glm::vec3(scale),
                           id, 1.f);

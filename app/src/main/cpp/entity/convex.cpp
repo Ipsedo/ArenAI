@@ -90,3 +90,7 @@ void Convex::draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lightPos) {
     std::tuple<glm::mat4, glm::mat4> matrixes = getMatrixes(pMatrix, vMatrix);
     modelVBO->draw(std::get<0>(matrixes), std::get<1>(matrixes), lightPos);
 }
+
+Convex::~Convex() {
+    delete modelVBO;
+}

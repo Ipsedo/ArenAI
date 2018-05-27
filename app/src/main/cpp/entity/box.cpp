@@ -49,3 +49,7 @@ void Box::draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) {
     std::tuple<glm::mat4, glm::mat4> matrixes = getMatrixes(pMatrix, vMatrix);
     modelVBO->draw(std::get<0>(matrixes), std::get<1>(matrixes), lighPos);
 }
+
+Box::~Box() {
+    delete modelVBO;
+}

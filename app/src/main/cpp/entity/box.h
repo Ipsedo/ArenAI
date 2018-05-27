@@ -9,21 +9,15 @@
 #include <android/asset_manager.h>
 #include <glm/glm.hpp>
 #include "../graphics/drawable/modelvbo.h"
+#include "base.h"
 
-class Box {
+class Box : public Base {
 public:
     Box(AAssetManager* mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass);
-    btRigidBody* rigidBody;
-    void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos);
-    ~Box();
-private:
-    btCollisionShape* collisionShape;
-    btDefaultMotionState* defaultMotionState;
-    btTransform myTransform;
+    void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) override;
 
+private:
     ModelVBO* modelVBO;
-    glm::vec3 scale;
-    glm::mat4 modelMatrix;
 };
 
 

@@ -5,9 +5,7 @@
 #include "box.h"
 #include "../utils/assets.h"
 #include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/quaternion.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 
 Box::Box(AAssetManager* mgr,
          glm::vec3 pos,
@@ -47,19 +45,7 @@ Box::Box(AAssetManager* mgr,
     rigidBody = new btRigidBody(constrInfo);
 }
 
-Box::~Box() {
-    delete defaultMotionState;
-    delete collisionShape;
-    delete rigidBody;
-}
-
 void Box::draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) {
-    btScalar tmp[16];
-    defaultMotionState->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
-    modelMatrix = glm::make_mat4(tmp) * glm::scale(glm::mat4(1.f), scale);
-
-    glm::mat4 mvMatrix = vMatrix * modelMatrix;
-    glm::mat4 mvpMatrix = pMatrix * mvMatrix;
-
-    modelVBO->draw(mvpMatrix, mvMatrix, lighPos);
+    std::tuple<glm::mat4, glm::mat4> matrixes = getMatrixes(pMatrix, vMatrix);
+    modelVBO->draw(std::get<0>(matrixes), std::get<1>(matrixes), lighPos);
 }

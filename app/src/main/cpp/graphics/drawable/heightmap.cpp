@@ -45,8 +45,8 @@ std::vector<float> HeightMap::initPlan(float* heightValues, int width, int heigh
     // STRIDE = glm::vec3 + glm::vec3
     //          point        normal
     std::vector<glm::vec3> packedDataNormal;
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
+    for (int i = 0; i < height-1; i++) {
+        for (int j = 0; j < width-1; j++) {
             /**
              * 1------3-...
              * |      |

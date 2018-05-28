@@ -4,8 +4,7 @@
 
 #include "map.h"
 
-Map::Map(glm::vec3 pos, int width, int height, float *normalizedHeightValues, glm::vec3 scale) {
-    float maxHeight = scale.y;
+Map::Map(glm::vec3 pos, int width, int height, float maxHeight, float *normalizedHeightValues, glm::vec3 scale) {
 
     heightMap = new HeightMap(normalizedHeightValues, width, height);
 
@@ -18,7 +17,7 @@ Map::Map(glm::vec3 pos, int width, int height, float *normalizedHeightValues, gl
                                                    true,
                                                    false);*/
             new btHeightfieldTerrainShape (width, height,
-                normalizedHeightValues, 1.f, -1.f, 1.f,
+                normalizedHeightValues, maxHeight, 0.f, maxHeight,
                 1, PHY_FLOAT, false);
     collisionShape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
 

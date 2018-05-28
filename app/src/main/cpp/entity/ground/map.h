@@ -16,7 +16,7 @@
 class Map : public Base {
 public:
     Map(glm::vec3 pos,
-        int width, int height, float *normalizedHeightValues,
+        int width, int height, float maxHeight, float *normalizedHeightValues,
         glm::vec3 scale);
 
     void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) override;

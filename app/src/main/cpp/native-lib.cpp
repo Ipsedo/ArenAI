@@ -109,7 +109,7 @@ Java_com_samuelberrien_phyvr_MyGvrView_initEntity(JNIEnv *env, jobject instance,
     glm::mat4 id(1.f);
 
     Base* box = new Box(cppMgr, glm::vec3(0.f, HEIGHT_SPAWN, 5.f), glm::vec3(1.f,1.f,1.f), id, 1.f);
-    Base* sol = new Map(glm::vec3(0.f, -5.f, 0.f), width, height, map, glm::vec3(100.f,HEIGHT_SPAWN,100.f));
+    Base* sol = new Map(glm::vec3(0.f, -5.f, 0.f), width, height, max, map, glm::vec3(100.f,HEIGHT_SPAWN,100.f));
             //new Box(cppMgr, glm::vec3(0.f, -5.f, 0.f), glm::vec3(4.5f,0.1f,4.5f), id, 0.f);
 
     vector<Base*>* boxes = new vector<Base*>();

@@ -3,7 +3,6 @@
 #include <btBulletDynamicsCommon.h>
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
-#include <android/log.h>
 
 #include "utils/assets.h"
 #include "graphics/renderer.h"
@@ -96,20 +95,13 @@ Java_com_samuelberrien_phyvr_MyGvrView_initEntity(JNIEnv *env, jobject instance,
                                                   jint width, jint height) {
     jfloat *heightmap = env->GetFloatArrayElements(heightmap_, NULL);
     float *map = jfloatPtrToCppFloatPtr(heightmap, width * height);
-    float max = -std::numeric_limits<float>::max(),
-        min = std::numeric_limits<float>::max();
-    for (int i = 0; i < width * height; i++) {
-        min = min > map[i] ? map[i] : min;
-        max = max < map[i] ? map[i] : max;
-    }
-    __android_log_print(ANDROID_LOG_DEBUG, "SAM", "max : %f, min : %f", max, min);
 
     AAssetManager* cppMgr = AAssetManager_fromJava(env, assetManager);
 
     glm::mat4 id(1.f);
 
     Base* box = new Box(cppMgr, glm::vec3(0.f, HEIGHT_SPAWN, 5.f), glm::vec3(1.f,1.f,1.f), id, 1.f);
-    Base* sol = new Map(glm::vec3(0.f, -5.f, 0.f), width, height, max, map, glm::vec3(100.f,HEIGHT_SPAWN,100.f));
+    Base* sol = new Map(glm::vec3(0.f, 0.f, 0.f), width, height, map, glm::vec3(10.f, 50.f, 10.f));
             //new Box(cppMgr, glm::vec3(0.f, -5.f, 0.f), glm::vec3(4.5f,0.1f,4.5f), id, 0.f);
 
     vector<Base*>* boxes = new vector<Base*>();
@@ -208,22 +200,23 @@ Java_com_samuelberrien_phyvr_MyGvrView_addBox(JNIEnv *env, jobject instance, job
     glm::mat4 id(1.f);
     double r = (double) rand() / RAND_MAX;
 
-    if (r < 1. / 120.) {
-        float x = 5.f * (float) rand() / RAND_MAX;
-        float z = 5.f * (float) rand() / RAND_MAX;
+    if (r < 1. / 30.) {
+        float x = 100.f * (float) rand() / RAND_MAX - 50.f;
+        float z = 100.f * (float) rand() / RAND_MAX - 50.f;
         float scale = 2.f * (float) rand() / RAND_MAX;
+        float mass = scale;
         Base *base;
         if ((float) rand() / RAND_MAX > 0.8) {
             base = new Box(cppMgr,
                           glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale),
-                          id, 1.f);
+                          id, mass);
         } else {
             /*std::string m =
                     (float) rand() / RAND_MAX > 0.5 ? "obj/icosahedron.obj" : "obj/ast1.obj";*/
             std::string m = "obj/icosahedron.obj";
             base = new Convex(cppMgr, m,
                              glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale),
-                             id, 1.f);
+                             id, mass);
         }
         boxes->push_back(base);
         level->addNewBox(base);

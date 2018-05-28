@@ -75,7 +75,7 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
     @Override
     public void onSurfaceCreated(EGLConfig config) {
         //boxesPtr = initBoxes(getContext().getAssets());
-        LoadImage loadImage = new LoadImage(getContext(), "heightmap/Heightmap.png");
+        LoadImage loadImage = new LoadImage(getContext(), "heightmap/heightmap4.jpg");
         boxesPtr = initEntity(getContext().getAssets(),
                 loadImage.tofloatGreyArray(), loadImage.getWidth(), loadImage.getHeight());
         levelPtr = initLevel(boxesPtr);

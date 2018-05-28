@@ -55,10 +55,15 @@ public class LoadImage {
 	public float[] tofloatGreyArray() {
 		float[] rgbArray = tofloatRGBArray();
 		float[] res = new float[rgbArray.length / 3];
+		float max = -Float.MAX_VALUE;
 		for (int i = 0; i < res.length; i++) {
 			int j = i * 3;
 			res[i] = (rgbArray[j] + rgbArray[j + 1] + rgbArray[j + 2]) / 3.f;
 			res[i] /= 255.f;
+			max = max < res[i] ? res[i] : max;
+		}
+		for (int i = 0; i < res.length; i++) {
+			res[i] /= max;
 		}
 		return res;
 	}

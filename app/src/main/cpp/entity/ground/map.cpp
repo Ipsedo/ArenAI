@@ -4,22 +4,17 @@
 
 #include "map.h"
 
-Map::Map(glm::vec3 pos, int width, int height, float maxHeight, float *normalizedHeightValues, glm::vec3 scale) {
+#include <glm/gtc/type_ptr.hpp>
 
-    heightMap = new HeightMap(normalizedHeightValues, width, height);
-
-
-    collisionShape = /*new btHeightfieldTerrainShape(width,
-                                                   height,
-                                                   normalizedHeightValues,
-                                                   maxHeight,
-                                                   1,
-                                                   true,
-                                                   false);*/
-            new btHeightfieldTerrainShape (width, height,
-                normalizedHeightValues, maxHeight, 0.f, maxHeight,
+Map::Map(glm::vec3 pos, int width, int length, float *normalizedHeightValues, glm::vec3 scale) {
+    btHeightfieldTerrainShape* tmp =
+            new btHeightfieldTerrainShape (width, length,
+                normalizedHeightValues, 1.f, 0.f, 1.f,
                 1, PHY_FLOAT, false);
-    collisionShape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
+
+    tmp->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
+    heightMap = new HeightMap(tmp, 1.f);
+    collisionShape = tmp;
 
     this->scale = scale;
 
@@ -36,6 +31,23 @@ Map::Map(glm::vec3 pos, int width, int height, float maxHeight, float *normalize
                                                         intertie);
 
     rigidBody = new btRigidBody(constrInfo);
+}
+
+/**
+ * Mesh is already scaled !
+ * @param pMatrix
+ * @param vMatrix
+ * @return
+ */
+std::tuple<glm::mat4, glm::mat4> Map::getMatrixes(glm::mat4 pMatrix, glm::mat4 vMatrix) {
+    btScalar tmp[16];
+    defaultMotionState->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
+    modelMatrix = glm::make_mat4(tmp);
+
+    glm::mat4 mvMatrix = vMatrix * modelMatrix;
+    glm::mat4 mvpMatrix = pMatrix * mvMatrix;
+
+    return tuple<glm::mat4, glm::mat4>(mvpMatrix, mvMatrix);
 }
 
 void Map::draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) {

@@ -12,7 +12,7 @@
 class Base {
 public:
     btRigidBody* rigidBody;
-    std::tuple<glm::mat4, glm::mat4> getMatrixes(glm::mat4 pMatrix, glm::mat4 vMatrix);
+    virtual std::tuple<glm::mat4, glm::mat4> getMatrixes(glm::mat4 pMatrix, glm::mat4 vMatrix);
     virtual void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) = 0;
     virtual ~Base();
 protected:

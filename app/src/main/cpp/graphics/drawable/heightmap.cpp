@@ -4,25 +4,24 @@
 
 #include "heightmap.h"
 #include <vector>
-#include <android/log.h>
 
-HeightMap::HeightMap(float *heightValues, int width, int height) {
+HeightMap::HeightMap(btHeightfieldTerrainShape* terrain, float maxheight) {
     init();
     bind();
-    bindBuffer(initPlan(heightValues, width, height));
+    bindBuffer(initPlan(terrain, maxheight));
 
-    lightCoef = 1;
-    distanceCoef = 0;
+    lightCoef = 0.5f;
+    distanceCoef = 0.f;
 
     for (int i = 0; i < 3; i++)
         this->color[i] = (float) rand() / RAND_MAX;
     this->color[3] = 1.f;
 }
 
-HeightMap::HeightMap(float *heightValues, int width, int height, float *color) {
+HeightMap::HeightMap(btHeightfieldTerrainShape* terrain, float maxheight, float color[4]) {
     init();
     bind();
-    bindBuffer(initPlan(heightValues, width, height));
+    bindBuffer(initPlan(terrain, maxheight));
 
     lightCoef = 1;
     distanceCoef = 0;
@@ -32,80 +31,56 @@ HeightMap::HeightMap(float *heightValues, int width, int height, float *color) {
     }
 }
 
-std::vector<float> HeightMap::initPlan(float* heightValues, int width, int height) {
-    nbVertex = 0;
-    float maxSide = width > height ? width : height;
-    float sideX = 2.f * float(width) / maxSide, sideY = 2.f * float(height) / maxSide;
-
-    float startX = - 0.5f * sideX, deltaX = sideX / float(width);
-    float startY = - 0.5f * sideY, deltaY = sideY / float(height);
-
-    float currX = startX, currY = startY;
-
-    // STRIDE = glm::vec3 + glm::vec3
-    //          point        normal
-    std::vector<glm::vec3> packedDataNormal;
-    for (int i = 0; i < height-1; i++) {
-        for (int j = 0; j < width-1; j++) {
-            /**
-             * 1------3-...
-             * |      |
-             * |      |
-             * 2------4-....
-             *
-             * premier triangle 1-3-2
-             * deuxieme triangle 2-3-4
-             */
-            glm::vec3 p1(currX,
-                         heightValues[i * width + j],
-                         currY);
-            glm::vec3 p2(currX,
-                         heightValues[(i + 1) * width + j],
-                         currY + deltaY);
-            glm::vec3 p3(currX + deltaX,
-                         heightValues[i * width + j + 1],
-                         currY);
-            glm::vec3 p4(currX + deltaX,
-                         heightValues[(i + 1) * width + j + 1],
-                         currY + deltaY);
-
-            glm::vec3 n1 = -glm::cross(p3-p1, p2-p1);
-            glm::vec3 n2 = glm::cross(p2-p3, p4-p3); //Pas bon
-
-            // Triangle 1
-            packedDataNormal.push_back(p1);
-            packedDataNormal.push_back(n1);
-
-            packedDataNormal.push_back(p2);
-            packedDataNormal.push_back(n1);
-
-            packedDataNormal.push_back(p3);
-            packedDataNormal.push_back(n1);
-
-            // Triangle 2
-            // Pas bon
-            packedDataNormal.push_back(p2);
-            packedDataNormal.push_back(n2);
-
-            packedDataNormal.push_back(p3);
-            packedDataNormal.push_back(n2);
-
-            packedDataNormal.push_back(p4);
-            packedDataNormal.push_back(n2);
-
-            currX += deltaX;
-            nbVertex += 6;
-        }
-        currX = startX;
-        currY += deltaY;
+class triangleCallBack : public btTriangleCallback {
+public:
+    triangleCallBack() {
+        nbVertex = 0;
     }
+    int nbVertex;
+    std::vector<float> packedData;
+    void processTriangle(btVector3* triangle, int partid, int triangleindex) override {
+        glm::vec3 p1 = glm::vec3(triangle[0].getX(),triangle[0].getY(),triangle[0].getZ());
+        glm::vec3 p2 = glm::vec3(triangle[1].getX(),triangle[1].getY(),triangle[1].getZ());
+        glm::vec3 p3 = glm::vec3(triangle[2].getX(),triangle[2].getY(),triangle[2].getZ());
+
+        glm::vec3 n1 = glm::cross(p1-p2, p3-p2);
+        glm::vec3 n2 = glm::cross(p3-p2,p1-p2);
+
+        // y : up axis
+        glm::vec3 n = n1.y > 0 ? n1 : n2;
+
+        packedData.push_back(p1.x);
+        packedData.push_back(p1.y);
+        packedData.push_back(p1.z);
+        packedData.push_back(n.x);
+        packedData.push_back(n.y);
+        packedData.push_back(n.z);
+
+        packedData.push_back(p2.x);
+        packedData.push_back(p2.y);
+        packedData.push_back(p2.z);
+        packedData.push_back(n.x);
+        packedData.push_back(n.y);
+        packedData.push_back(n.z);
+
+        packedData.push_back(p3.x);
+        packedData.push_back(p3.y);
+        packedData.push_back(p3.z);
+        packedData.push_back(n.x);
+        packedData.push_back(n.y);
+        packedData.push_back(n.z);
+
+        nbVertex += 3;
+    }
+};
+
+std::vector<float> HeightMap::initPlan(btHeightfieldTerrainShape* terrain, float maxheight) {
+    nbVertex = 0;
 
     std::vector<float> res;
-    for (int i = 0; i < packedDataNormal.size(); i++) {
-        glm::vec3 curr = packedDataNormal[i];
-        res.push_back(curr.x);
-        res.push_back(curr.y);
-        res.push_back(curr.z);
-    }
-    return res;
+    triangleCallBack callback;
+    // TODO limits aabb
+    terrain->processAllTriangles(&callback, btVector3(-1000, -1000, -1000), btVector3(1000, 1000, 1000));
+    nbVertex = callback.nbVertex;
+    return callback.packedData;
 }

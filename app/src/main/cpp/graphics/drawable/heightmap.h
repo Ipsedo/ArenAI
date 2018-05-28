@@ -8,6 +8,7 @@
 #include "diffusemodel.h"
 #include <vector>
 #include <glm/glm.hpp>
+#include <BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
 
 class HeightMap : public DiffuseModel {
 public:
@@ -17,11 +18,11 @@ public:
      * @param width
      * @param height
      */
-    HeightMap(float* heightValues, int width, int height);
-    HeightMap(float* heightValues, int width, int height, float color[4]);
+    HeightMap(btHeightfieldTerrainShape* terrain, float maxheight);
+    HeightMap(btHeightfieldTerrainShape* terrain, float maxheight, float color[4]);
 private:
 
-    std::vector<float> initPlan(float* heightValues, int width, int height);
+    std::vector<float> initPlan(btHeightfieldTerrainShape* terrain, float maxheight);
 };
 
 

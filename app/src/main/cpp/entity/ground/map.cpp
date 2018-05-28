@@ -14,7 +14,7 @@ Map::Map(glm::vec3 pos, int width, int length, float *normalizedHeightValues, gl
 
     tmp->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
     heightMap = new HeightMap(tmp, 1.f);
-    collisionShape = tmp;
+    collisionShape.push_back(tmp);
 
     this->scale = scale;
 
@@ -27,10 +27,10 @@ Map::Map(glm::vec3 pos, int width, int length, float *normalizedHeightValues, gl
 
     btRigidBody::btRigidBodyConstructionInfo constrInfo(0.f,
                                                         defaultMotionState,
-                                                        collisionShape,
+                                                        collisionShape[0],
                                                         intertie);
 
-    rigidBody = new btRigidBody(constrInfo);
+    rigidBody.push_back(new btRigidBody(constrInfo));
 }
 
 /**

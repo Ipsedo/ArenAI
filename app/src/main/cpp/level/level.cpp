@@ -19,7 +19,8 @@ Level::Level(vector<Base*>* bases) {
                                         collisionConfiguration);
     world->setGravity(btVector3(0,-10,0));
     for (Base* b : *this->bases)
-        world->addRigidBody(b->rigidBody);
+        for (btRigidBody* bd : b->rigidBody)
+            world->addRigidBody(bd);
 }
 
 void Level::update(float delta) {
@@ -27,7 +28,8 @@ void Level::update(float delta) {
 }
 
 void Level::addNewBox(Base *b) {
-    world->addRigidBody(b->rigidBody);
+    for (btRigidBody* bd : b->rigidBody)
+        world->addRigidBody(bd);
 }
 
 Level::~Level() {

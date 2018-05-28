@@ -21,10 +21,10 @@ Convex::Convex(AAssetManager *mgr, std::string objFileName, glm::vec3 pos, glm::
                           (float) rand() / RAND_MAX,
                           1.f});
 
-    collisionShape = parseObj(objTxt);
+    collisionShape.push_back(parseObj(objTxt));
 
     this->scale = scale;
-    collisionShape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
+    collisionShape[0]->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
 
     myTransform.setIdentity();
     myTransform.setOrigin(btVector3(pos.x, pos.y, pos.z));
@@ -33,16 +33,16 @@ Convex::Convex(AAssetManager *mgr, std::string objFileName, glm::vec3 pos, glm::
 
     btVector3 intertie(0.f, 0.f, 0.f);
     if (mass)
-        collisionShape->calculateLocalInertia(mass, intertie);
+        collisionShape[0]->calculateLocalInertia(mass, intertie);
 
     defaultMotionState = new btDefaultMotionState(myTransform);
 
     btRigidBody::btRigidBodyConstructionInfo constrInfo(mass,
                                                         defaultMotionState,
-                                                        collisionShape,
+                                                        collisionShape[0],
                                                         intertie);
 
-    rigidBody = new btRigidBody(constrInfo);
+    rigidBody.push_back(new btRigidBody(constrInfo));
 }
 
 btConvexHullShape* Convex::parseObj(std::string objFileText) {

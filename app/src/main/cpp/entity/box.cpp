@@ -24,7 +24,7 @@ Box::Box(AAssetManager* mgr,
 
     scale = sideScale;
 
-    collisionShape = new btBoxShape(btVector3(scale.x, scale.y, scale.z));
+    collisionShape.push_back(new btBoxShape(btVector3(scale.x, scale.y, scale.z)));
 
     myTransform.setIdentity();
     myTransform.setOrigin(btVector3(pos.x, pos.y, pos.z));
@@ -33,16 +33,16 @@ Box::Box(AAssetManager* mgr,
 
     btVector3 intertie(0.f, 0.f, 0.f);
     if (mass)
-        collisionShape->calculateLocalInertia(mass, intertie);
+        collisionShape[0]->calculateLocalInertia(mass, intertie);
 
     defaultMotionState = new btDefaultMotionState(myTransform);
 
     btRigidBody::btRigidBodyConstructionInfo constrInfo(mass,
                                                         defaultMotionState,
-                                                        collisionShape,
+                                                        collisionShape[0],
                                                         intertie);
 
-    rigidBody = new btRigidBody(constrInfo);
+    rigidBody.push_back(new btRigidBody(constrInfo));
 }
 
 void Box::draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) {

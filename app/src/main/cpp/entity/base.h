@@ -11,12 +11,12 @@
 
 class Base {
 public:
-    btRigidBody* rigidBody;
+    std::vector<btRigidBody*> rigidBody;
     virtual std::tuple<glm::mat4, glm::mat4> getMatrixes(glm::mat4 pMatrix, glm::mat4 vMatrix);
     virtual void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) = 0;
     virtual ~Base();
 protected:
-    btCollisionShape* collisionShape;
+    std::vector<btCollisionShape*> collisionShape;
     btDefaultMotionState* defaultMotionState;
     btTransform myTransform;
 

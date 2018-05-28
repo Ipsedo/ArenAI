@@ -8,8 +8,10 @@
 
 Base::~Base() {
     delete defaultMotionState;
-    delete collisionShape;
-    delete rigidBody;
+    for (btCollisionShape* shape : collisionShape)
+        delete shape;
+    for (btRigidBody* body : rigidBody)
+        delete body;
 }
 
 std::tuple<glm::mat4, glm::mat4> Base::getMatrixes(glm::mat4 pMatrix, glm::mat4 vMatrix) {

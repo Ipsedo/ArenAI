@@ -10,14 +10,17 @@ Map::Map(glm::vec3 pos, int width, int height, float *normalizedHeightValues, gl
     heightMap = new HeightMap(normalizedHeightValues, width, height);
 
 
-    collisionShape = new btHeightfieldTerrainShape(width,
+    collisionShape = /*new btHeightfieldTerrainShape(width,
                                                    height,
                                                    normalizedHeightValues,
                                                    maxHeight,
                                                    1,
                                                    true,
-                                                   false);
-    collisionShape->setLocalScaling(btVector3(scale.x, 1.f, scale.z));
+                                                   false);*/
+            new btHeightfieldTerrainShape (width, height,
+                normalizedHeightValues, 1.f, -1.f, 1.f,
+                1, PHY_FLOAT, false);
+    collisionShape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
 
     this->scale = scale;
 

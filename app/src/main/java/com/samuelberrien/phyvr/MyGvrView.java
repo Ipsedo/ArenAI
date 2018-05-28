@@ -39,7 +39,7 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
      */
 
     private final float Z_NEAR = 0.1f;
-    private final float Z_FAR = 50f;
+    private final float Z_FAR = 500f;
 
     static {
         System.loadLibrary("phyvr");

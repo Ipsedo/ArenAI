@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 public class Controls {
 
-	private final long controlPtr;
+	private final long carPtr;
 
 	private int controllerId;
 
@@ -17,12 +17,19 @@ public class Controls {
 
 	public native long initControls();
 
-	public Controls(long controlPtr) {
+	public Controls(long carPtr) {
 		controllerId = -1;
-		this.controlPtr = controlPtr;
+		this.carPtr = carPtr;
 	}
 
-	public void onMotionEvent(MotionEvent motionEvent) {
+	public void onMotionEvent(MotionEvent event) {
+		if ((event.getSource() & InputDevice.SOURCE_JOYSTICK)
+				== InputDevice.SOURCE_JOYSTICK) {
+			float x = event.getAxisValue(MotionEvent.AXIS_X);
+			float y = event.getAxisValue(MotionEvent.AXIS_Y);
+			System.out.println("POIR " + x);
+			control(carPtr, x, y);
+		}
 
 	}
 
@@ -52,4 +59,6 @@ public class Controls {
 	private class NoControllerException extends Exception {
 
 	}
+
+	public native void control(long controlPtr, float direction, float speed);
 }

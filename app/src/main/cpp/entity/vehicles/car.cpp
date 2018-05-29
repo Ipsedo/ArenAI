@@ -13,12 +13,15 @@
 
 static float wheelRadius = 0.7f;
 static float wheelWidth = 0.2f;
-static float chassisMass = 150.f;
+static float chassisMass = 850.f;
 static float wheelMass = 10.f;
 
 Car::Car(btDynamicsWorld* world, AAssetManager* mgr) {
+    direction = 0.f;
     init(world, mgr);
 }
+
+int cpt = 0;
 
 void Car::draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) {
     btScalar tmp[16];
@@ -139,57 +142,105 @@ void Car::init(btDynamicsWorld* world, AAssetManager* mgr) {
         world->addConstraint(pHinge2[i], true);
             // draw constraint frames and limits for debugging
         /**
-         * Y-axis
+         * motorAxis 5 -> X axis
          */
 
         {
             int motorAxis = 3;
             pHinge2[i]->enableMotor(motorAxis, true);
-            pHinge2[i]->setMaxMotorForce(motorAxis, 1000);
+            pHinge2[i]->setMaxMotorForce(motorAxis, 1e10f);
             pHinge2[i]->setTargetVelocity(motorAxis, -3);
         }
 
         /*
          * motorAxis 5 -> Y axis
          */
+#if 0
+        if (i > 1){
+            // Roues arrière
+            int motorAxis = 5;
+            pHinge2[i]->setLimit(motorAxis,0,0);
+        } else {
+            // Roues avant
+            int motorAxis = 5;
+            pHinge2[i]->setLimit(motorAxis,float(-M_PI) * 1.f / 6.f,float(M_PI) * 1.f / 6.f);
+            pHinge2[i]->enableMotor(motorAxis, true);
+            pHinge2[i]->setMaxMotorForce(motorAxis, 1e30f);
+            pHinge2[i]->setTargetVelocity(motorAxis, 0);
+            /*pHinge2[i]->setServo(motorAxis, true);
+            pHinge2[i]->setServoTarget(motorAxis, 0);*/
+        }
+#endif
+#if 1
         {
             int motorAxis = 5;
-            pHinge2[i]->enableMotor(motorAxis, true);
-            pHinge2[i]->setMaxMotorForce(motorAxis, 1e10f);
-            pHinge2[i]->setTargetVelocity(motorAxis, 0);
+            pHinge2[i]->setLimit(motorAxis,0,0);
         }
+#endif
 
 
         pHinge2[i]->setDbgDrawSize(btScalar(5.f));
     }
 }
 
-void Car::control() {
-    /*int wheelIndex = 2;
-    m_vehicle->applyEngineForce(gEngineForce,wheelIndex);
-    m_vehicle->setBrake(gBreakingForce,wheelIndex);
-    wheelIndex = 3;
-    m_vehicle->applyEngineForce(gEngineForce,wheelIndex);
-    m_vehicle->setBrake(gBreakingForce,wheelIndex);
+/**
+ *
+ * @param leftRight [-1, 1]
+ */
+void Car::control(float leftRight, float s) {
+    int motorAxis = 5;
+    float attenuation = 10.f;
 
+    direction += leftRight / attenuation;
+    if (direction > 1.f) direction = 1.f;
+    if (direction < -1.f) direction = -1.f;
 
-    wheelIndex = 0;
-    m_vehicle->setSteeringValue(gVehicleSteering,wheelIndex);
-    wheelIndex = 1;
-    m_vehicle->setSteeringValue(gVehicleSteering,wheelIndex);*/
+    pHinge2[0]->setLimit(
+            motorAxis,
+            float(M_PI) * direction / 6.f,
+            float(M_PI) * direction / 6.f);
+    pHinge2[1]->setLimit(
+            motorAxis,
+            float(M_PI) * direction / 6.f,
+            float(M_PI) * direction / 6.f);
+
+    motorAxis = 3;
+    speed += s;
+    if (speed > 1.f) speed = 1.f;
+    if (speed < - 1.f) speed = -1.f;
+
     for (int i = 0; i < 4; i++) {
+        pHinge2[i]->setTargetVelocity(motorAxis, speed * 10.f);
     }
+
 }
 
-glm::vec3 Car::getCamPos() {
+glm::vec3 Car::camPos() {
     btScalar tmp[16];
 
     // Chassis
     defaultMotionState[0]->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
-    glm::mat4 modelMatrix = glm::make_mat4(tmp) * glm::scale(glm::mat4(1.f), scale[0]);
+    glm::mat4 modelMatrix = glm::make_mat4(tmp);
 
     glm::vec4 pos(0.f,0.f,0.f,1.f);
     pos = modelMatrix * pos;
 
     return glm::vec3(pos.x, pos.y, pos.z);
+}
+
+glm::vec3 Car::camLookAtVec() {
+    btScalar tmp[16];
+
+    // Chassis
+    defaultMotionState[0]->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
+    glm::mat4 modelMatrix = glm::make_mat4(tmp);
+
+    glm::vec4 pos(0.f,0.f,1.f,0.f);
+    pos = modelMatrix * pos;
+
+    return glm::vec3(pos.x, pos.y, pos.z);
+}
+
+glm::vec3 Car::camUpVec() {
+    return glm::vec3(0.f, 1.f, 0.f);
 }

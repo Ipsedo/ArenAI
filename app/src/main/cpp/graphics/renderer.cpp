@@ -22,11 +22,14 @@ Renderer::Renderer(vector<Base*>* bases) {
     glClearColor(0.5f, 0.5f, 0.5f, 1.f);
 
     camPos = glm::vec3(0.f, 5.f, -5.f);
+    camLookAtVec = glm::vec3(0.f, 0.f, 1.f);
 }
 
 void Renderer::update(glm::mat4 mHeadView) {
-    camPos = car->getCamPos();
+    camPos = camera->camPos();
     camPos.y += 3.f;
+    camLookAtVec = camera->camLookAtVec();
+    camUpVec = camera->camUpVec();
 }
 
 void Renderer::draw(glm::mat4 mEyeProjectionMatrix,
@@ -44,8 +47,8 @@ void Renderer::draw(glm::mat4 mEyeProjectionMatrix,
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     mCamera = glm::lookAt(camPos,
-                          camPos + glm::vec3(0.f, 0.f, 1.f),
-                          glm::vec3(0.f, 1.f, 0.f));
+                          camPos + camLookAtVec,
+                          camUpVec);
 
     glm::mat4 mViewMatrix = mEyeViewMatrix * mCamera;
 
@@ -66,6 +69,6 @@ glm::vec4 Renderer::updateLight(glm::mat4 viewMatrix, glm::vec3 xyz) {
 
 }
 
-void Renderer::setCar(Car* car) {
-    this->car = car;
+void Renderer::setCamera(Camera* c) {
+    this->camera = c;
 }

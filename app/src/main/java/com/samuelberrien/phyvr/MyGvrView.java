@@ -3,11 +3,13 @@ package com.samuelberrien.phyvr;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 
 import com.google.vr.sdk.base.Eye;
 import com.google.vr.sdk.base.GvrView;
 import com.google.vr.sdk.base.HeadTransform;
 import com.google.vr.sdk.base.Viewport;
+import com.samuelberrien.phyvr.controls.Controls;
 import com.samuelberrien.phyvr.utils.LoadImage;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -34,6 +36,12 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
         super.onResume();
     }
 
+    @Override
+	public boolean onGenericMotionEvent(MotionEvent motionEvent) {
+    	controls.onMotionEvent(motionEvent);
+    	return super.onGenericMotionEvent(motionEvent);
+	}
+
     /**
      * Stereo Renderer stuff
      */
@@ -49,6 +57,8 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
     private long rendererPtr;
     private long levelPtr;
     private long carPtr;
+
+    private Controls controls;
 
     @Override
     public void onNewFrame(HeadTransform headTransform) {
@@ -82,6 +92,8 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
         levelPtr = initLevel(boxesPtr);
         rendererPtr = initRenderer(boxesPtr);
         carPtr = initCar(getContext().getAssets(), levelPtr, rendererPtr, boxesPtr);
+
+        controls = new Controls(carPtr);
     }
 
     @Override

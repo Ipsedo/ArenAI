@@ -16,13 +16,15 @@ class Renderer {
 public:
     Renderer(vector<Base*>* bases);
     void update(glm::mat4 mHeadView);
-    void setCar(Car* car);
+    void setCamera(Camera* c);
     void draw(glm::mat4 mEyeProjectionMatrix, glm::mat4 mEyeViewMatrix, glm::vec4 myLighPosInEyeSpace, glm::vec3 mCameraPos);
 private:
-    Car* car;
     vector<Base*>* bases;
+    Camera* camera;
     glm::mat4 mCamera;
     glm::vec3 camPos;
+    glm::vec3 camLookAtVec; // normalized Vec
+    glm::vec3 camUpVec;
     glm::vec4 updateLight(glm::mat4 viewMatrix, glm::vec3 xyz);
 };
 

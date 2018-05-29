@@ -268,9 +268,19 @@ Java_com_samuelberrien_phyvr_MyGvrView_initCar(JNIEnv *env, jobject instance, jo
     Car* c = new Car(level->world, cppMgr);
     entity->push_back(c);
     level->addNewBox(c);
-    renderer->setCar(c);
+    renderer->setCamera(c);
 
 
     __android_log_print(ANDROID_LOG_DEBUG, "POIR", "aab");
     return (long) c;
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_samuelberrien_phyvr_controls_Controls_control(JNIEnv *env, jobject instance,
+                                                       jlong controlPtr, jfloat direction,
+                                                       jfloat speed) {
+
+    Car* c = (Car*) controlPtr;
+    c->control(direction, speed);
+
 }

@@ -16,17 +16,18 @@ Map::Map(glm::vec3 pos, int width, int length, float *normalizedHeightValues, gl
     heightMap = new HeightMap(tmp, 1.f);
     collisionShape.push_back(tmp);
 
-    this->scale = scale;
+    this->scale.push_back(scale);
 
+    btTransform myTransform;
     myTransform.setIdentity();
     myTransform.setOrigin(btVector3(pos.x, pos.y, pos.z));
 
     btVector3 intertie(0.f, 0.f, 0.f);
 
-    defaultMotionState = new btDefaultMotionState(myTransform);
+    defaultMotionState.push_back(new btDefaultMotionState(myTransform));
 
     btRigidBody::btRigidBodyConstructionInfo constrInfo(0.f,
-                                                        defaultMotionState,
+                                                        defaultMotionState[0],
                                                         collisionShape[0],
                                                         intertie);
 
@@ -41,8 +42,8 @@ Map::Map(glm::vec3 pos, int width, int length, float *normalizedHeightValues, gl
  */
 std::tuple<glm::mat4, glm::mat4> Map::getMatrixes(glm::mat4 pMatrix, glm::mat4 vMatrix) {
     btScalar tmp[16];
-    defaultMotionState->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
-    modelMatrix = glm::make_mat4(tmp);
+    defaultMotionState[0]->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
+    glm::mat4 modelMatrix = glm::make_mat4(tmp);
 
     glm::mat4 mvMatrix = vMatrix * modelMatrix;
     glm::mat4 mvpMatrix = pMatrix * mvMatrix;

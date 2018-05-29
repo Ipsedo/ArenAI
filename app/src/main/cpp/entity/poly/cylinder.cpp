@@ -17,11 +17,12 @@ Cylinder::Cylinder(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4
                           (float) rand() / RAND_MAX,
                           1.f});
 
-    this->scale = scale;
+    this->scale.push_back(scale);
 
     collisionShape.push_back(new btCylinderShape(btVector3(1.f, 1.f, 1.f)));
     collisionShape[0]->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
 
+    btTransform myTransform;
     myTransform.setIdentity();
     myTransform.setOrigin(btVector3(pos.x, pos.y, pos.z));
     glm::quat tmp = glm::quat_cast(rotationMatrix);
@@ -31,10 +32,10 @@ Cylinder::Cylinder(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4
     if (mass)
         collisionShape[0]->calculateLocalInertia(mass, intertie);
 
-    defaultMotionState = new btDefaultMotionState(myTransform);
+    defaultMotionState.push_back(new btDefaultMotionState(myTransform));
 
     btRigidBody::btRigidBodyConstructionInfo constrInfo(mass,
-                                                        defaultMotionState,
+                                                        defaultMotionState[0],
                                                         collisionShape[0],
                                                         intertie);
 

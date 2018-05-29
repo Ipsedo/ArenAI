@@ -23,9 +23,10 @@ Convex::Convex(AAssetManager *mgr, std::string objFileName, glm::vec3 pos, glm::
 
     collisionShape.push_back(parseObj(objTxt));
 
-    this->scale = scale;
+    this->scale.push_back(scale);
     collisionShape[0]->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
 
+    btTransform myTransform;
     myTransform.setIdentity();
     myTransform.setOrigin(btVector3(pos.x, pos.y, pos.z));
     glm::quat tmp = glm::quat_cast(rotationMatrix);
@@ -35,10 +36,10 @@ Convex::Convex(AAssetManager *mgr, std::string objFileName, glm::vec3 pos, glm::
     if (mass)
         collisionShape[0]->calculateLocalInertia(mass, intertie);
 
-    defaultMotionState = new btDefaultMotionState(myTransform);
+    defaultMotionState.push_back(new btDefaultMotionState(myTransform));
 
     btRigidBody::btRigidBodyConstructionInfo constrInfo(mass,
-                                                        defaultMotionState,
+                                                        defaultMotionState[0],
                                                         collisionShape[0],
                                                         intertie);
 

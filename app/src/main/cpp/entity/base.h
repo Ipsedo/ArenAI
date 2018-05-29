@@ -17,11 +17,9 @@ public:
     virtual ~Base();
 protected:
     std::vector<btCollisionShape*> collisionShape;
-    btDefaultMotionState* defaultMotionState;
-    btTransform myTransform;
+    std::vector<btDefaultMotionState*> defaultMotionState;
 
-    glm::vec3 scale;
-    glm::mat4 modelMatrix;
+    std::vector<glm::vec3> scale;
 };
 
 

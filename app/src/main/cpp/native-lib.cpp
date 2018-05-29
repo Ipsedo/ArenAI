@@ -14,7 +14,7 @@
 #include <cpp/entity/poly/sphere.h>
 #include <cpp/entity/poly/cylinder.h>
 
-#define HEIGHT_SPAWN 10.f
+#define HEIGHT_SPAWN 30.f
 
 extern "C"
 JNIEXPORT jstring JNICALL
@@ -104,8 +104,8 @@ Java_com_samuelberrien_phyvr_MyGvrView_initEntity(JNIEnv *env, jobject instance,
     glm::mat4 id(1.f);
 
     Base* box = new Box(cppMgr, glm::vec3(0.f, HEIGHT_SPAWN, 5.f), glm::vec3(1.f,1.f,1.f), id, 1.f);
-    Base* sol = //new Map(glm::vec3(0.f, 0.f, 0.f), width, height, map, glm::vec3(10.f, 50.f, 10.f));
-            new Box(cppMgr, glm::vec3(0.f, -5.f, 0.f), glm::vec3(4.5f,0.1f,4.5f), id, 0.f);
+    Base* sol = new Map(glm::vec3(0.f, 0.f, 0.f), width, height, map, glm::vec3(10.f, 50.f, 10.f));
+            //new Box(cppMgr, glm::vec3(0.f, -5.f, 0.f), glm::vec3(4.5f,0.1f,4.5f), id, 0.f);
 
     vector<Base*>* boxes = new vector<Base*>();
     boxes->push_back(box);
@@ -204,13 +204,13 @@ Java_com_samuelberrien_phyvr_MyGvrView_addBox(JNIEnv *env, jobject instance, job
     double r = (double) rand() / RAND_MAX;
 
     if (r < 1. / 30.) {
-        float x = 5.f * (float) rand() / RAND_MAX - 2.5f;
-        float z = 5.f * (float) rand() / RAND_MAX - 2.5f;
+        float x = 40.f * (float) rand() / RAND_MAX - 20.f;
+        float z = 40.f * (float) rand() / RAND_MAX - 20.f;
         float scale = 2.f * (float) rand() / RAND_MAX;
         float mass = scale;
         Base *base;
-        if (true){//((float) rand() / RAND_MAX > 0.8) {
-            base = new Cylinder(cppMgr,
+        if ((float) rand() / RAND_MAX > 0.8) {
+            base = new Cone(cppMgr,
                           glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale),
                           id, mass);
         } else {

@@ -93,6 +93,7 @@ FILE_LIST := $(wildcard \
 		$(LOCAL_PATH)/cpp/entity/*.cpp \
 		$(LOCAL_PATH)/cpp/entity/ground/*.cpp \
 		$(LOCAL_PATH)/cpp/entity/vehicles/*.cpp \
+		$(LOCAL_PATH)/cpp/entity/poly/*.cpp \
 		$(LOCAL_PATH)/cpp/controls/*.cpp \
 		)
 LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)

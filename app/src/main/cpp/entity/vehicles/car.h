@@ -18,12 +18,12 @@ public:
     ~Car();
 private:
     void init(btDynamicsWorld* world, AAssetManager* mgr);
-    /*btVector3 m_loadStartPos;
+    btVector3 m_loadStartPos;
     btVector3	m_forkStartPos;
-    btHingeConstraint* m_liftHinge;
-    btSliderConstraint* m_forkSlider;*/
-    btVehicleRaycaster m_vehicleRayCaster;
-    btRaycastVehicle m_vehicle;
+    std::vector<btHinge2Constraint*> pHinge2;
+    std::vector<btRigidBody*> rigidBody;
+    std::vector<btDefaultMotionState*> defaultMotionState;
+    std::vector<glm::vec3> scale;
     std::vector<ModelVBO*> modelVBOs;
 };
 

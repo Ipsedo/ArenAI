@@ -94,7 +94,7 @@ std::tuple<btRigidBody*, btDefaultMotionState*> localCreateRigidBody(btScalar ma
  * @param world
  */
 void Car::init(btDynamicsWorld* world, AAssetManager* mgr) {
-#if 0
+#if 1
 
     std::string cubeObjTxt = getFileText(mgr, "obj/cube.obj");
 
@@ -157,29 +157,29 @@ void Car::init(btDynamicsWorld* world, AAssetManager* mgr) {
         btVector3 parentAxis(0.f, 1.f, 0.f);
         btVector3 childAxis(1.f, 0.f, 0.f);
         btVector3 anchor = tr.getOrigin();//(0.f, 0.f, 0.f);
-        btHinge2Constraint *pHinge2 = new btHinge2Constraint(*pBodyA, *pBodyB, anchor, parentAxis,
-                                                             childAxis);
+        pHinge2.push_back(new btHinge2Constraint(*pBodyA, *pBodyB, anchor, parentAxis,
+                                                             childAxis));
 
-        pHinge2->setLowerLimit(-SIMD_HALF_PI * 0.5f);
-        pHinge2->setUpperLimit(SIMD_HALF_PI * 0.5f);
+        pHinge2[i]->setLowerLimit(-MATH_PI * 0.5f);
+        pHinge2[i]->setUpperLimit(MATH_PI * 0.5f);
         // add constraint to world
-        world->addConstraint(pHinge2, true);
+        world->addConstraint(pHinge2[i], true);
             // draw constraint frames and limits for debugging
-        {
+        /*{
             int motorAxis = 3;
-            pHinge2->enableMotor(motorAxis, true);
-            pHinge2->setMaxMotorForce(motorAxis, 1000);
-            pHinge2->setTargetVelocity(motorAxis, -1);
+            pHinge2[i]->enableMotor(motorAxis, true);
+            pHinge2[i]->setMaxMotorForce(motorAxis, 1000);
+            pHinge2[i]->setTargetVelocity(motorAxis, -1);
         }
 
         {
             int motorAxis = 5;
-            pHinge2->enableMotor(motorAxis, true);
-            pHinge2->setMaxMotorForce(motorAxis, 1000);
-            pHinge2->setTargetVelocity(motorAxis, 0);
-        }
+            pHinge2[i]->enableMotor(motorAxis, true);
+            pHinge2[i]->setMaxMotorForce(motorAxis, 1000);
+            pHinge2[i]->setTargetVelocity(motorAxis, 0);
+        }*/
 
-        pHinge2->setDbgDrawSize(btScalar(5.f));
+        pHinge2[i]->setDbgDrawSize(btScalar(5.f));
     }
 #endif
 #if 0

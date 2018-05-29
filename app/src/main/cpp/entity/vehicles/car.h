@@ -8,14 +8,23 @@
 
 #include "../base.h"
 #include <glm/glm.hpp>
+#include <android/asset_manager.h>
 
 class Car : public Base {
 public:
-    Car();
+    Car(btDynamicsWorld* world, AAssetManager* mgr);
     void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) override;
+    void control();
     ~Car();
 private:
-    void init();
+    void init(btDynamicsWorld* world, AAssetManager* mgr);
+    /*btVector3 m_loadStartPos;
+    btVector3	m_forkStartPos;
+    btHingeConstraint* m_liftHinge;
+    btSliderConstraint* m_forkSlider;*/
+    btVehicleRaycaster m_vehicleRayCaster;
+    btRaycastVehicle m_vehicle;
+    std::vector<ModelVBO*> modelVBOs;
 };
 
 

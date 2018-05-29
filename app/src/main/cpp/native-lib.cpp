@@ -3,6 +3,7 @@
 #include <btBulletDynamicsCommon.h>
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
+#include <android/log.h>
 
 #include "utils/assets.h"
 #include "graphics/renderer.h"
@@ -10,9 +11,10 @@
 #include "entity/convex.h"
 #include "entity/ground/map.h"
 #include <glm/gtc/type_ptr.hpp>
-#include <cpp/entity/poly/cone.h>
-#include <cpp/entity/poly/sphere.h>
-#include <cpp/entity/poly/cylinder.h>
+#include "entity/poly/cone.h"
+#include "entity/poly/sphere.h"
+#include "entity/poly/cylinder.h"
+#include "entity/vehicles/car.h"
 
 #define HEIGHT_SPAWN 30.f
 
@@ -104,7 +106,7 @@ Java_com_samuelberrien_phyvr_MyGvrView_initEntity(JNIEnv *env, jobject instance,
     glm::mat4 id(1.f);
 
     Base* box = new Box(cppMgr, glm::vec3(0.f, HEIGHT_SPAWN, 5.f), glm::vec3(1.f,1.f,1.f), id, 1.f);
-    Base* sol = new Map(glm::vec3(0.f, 0.f, 0.f), width, height, map, glm::vec3(10.f, 50.f, 10.f));
+    Base* sol = new Map(glm::vec3(0.f, -5.f, 0.f), width, height, map, glm::vec3(10.f, 50.f, 10.f));
             //new Box(cppMgr, glm::vec3(0.f, -5.f, 0.f), glm::vec3(4.5f,0.1f,4.5f), id, 0.f);
 
     vector<Base*>* boxes = new vector<Base*>();
@@ -210,7 +212,7 @@ Java_com_samuelberrien_phyvr_MyGvrView_addBox(JNIEnv *env, jobject instance, job
         float mass = scale;
         Base *base;
         if ((float) rand() / RAND_MAX > 0.8) {
-            base = new Cone(cppMgr,
+            base = new Cylinder(cppMgr,
                           glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale),
                           id, mass);
         } else {
@@ -249,4 +251,21 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_samuelberrien_phyvr_MyGvrView_freeRenderer(JNIEnv *env, jobject instance, jlong rendererPtr) {
     delete (Renderer*) rendererPtr;
+}
+
+extern "C"
+JNIEXPORT jlong JNICALL
+Java_com_samuelberrien_phyvr_MyGvrView_initCar(JNIEnv *env, jobject instance, jobject assetManager,
+                                               jlong levelPtr, jlong entityPtr) {
+
+    Level* level = (Level*) levelPtr;
+    vector<Base*>* entity = (vector<Base*>*) entityPtr;
+    AAssetManager* cppMgr = AAssetManager_fromJava(env, assetManager);
+
+    Car* c = new Car(level->world, cppMgr);
+    entity->push_back(c);
+    level->addNewBox(c);
+
+    __android_log_print(ANDROID_LOG_DEBUG, "POIR", "aaa");
+    return (long) c;
 }

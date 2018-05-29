@@ -15,10 +15,10 @@ public:
     // ajoute un nouveau Box SEULEMENT au World (sera suppr dans le futur)
     void addNewBox(Base* base);
     ~Level();
+    btDiscreteDynamicsWorld* world;
 
 private:
     vector<Base*>* bases;
-    btDiscreteDynamicsWorld* world;
     btBroadphaseInterface* broadPhase;
     btCollisionDispatcher* dispatcher;
     btDefaultCollisionConfiguration* collisionConfiguration;

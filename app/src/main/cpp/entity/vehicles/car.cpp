@@ -4,74 +4,120 @@
 
 #include "car.h"
 #include <btBulletDynamicsCommon.h>
+#include <android/asset_manager.h>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <android/log.h>
+#include "../../utils/assets.h"
 
-Car::Car() {
 
+static float wheelRadius = 0.5f;
+static float wheelWidth = 0.4f;
+static btScalar loadMass = 350.f;
+
+Car::Car(btDynamicsWorld* world, AAssetManager* mgr) {
+    init(world, mgr);
 }
 
 void Car::draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) {
+    btScalar tmp[16];
 
+    // Chassis
+    defaultMotionState[0]->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
+    glm::mat4 modelMatrix = glm::make_mat4(tmp) * glm::scale(glm::mat4(1.f), scale[0]);
+
+    glm::mat4 mvMatrix = vMatrix * modelMatrix;
+    glm::mat4 mvpMatrix = pMatrix * mvMatrix;
+
+    modelVBOs[0]->draw(mvpMatrix, mvMatrix, lighPos);
+
+    //Wheels
+    int idxDebutWheels = 1;
+    for (int i = 0; i < 4; i++) {
+        int idx = idxDebutWheels + i;
+        defaultMotionState[idx]->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
+        modelMatrix = glm::make_mat4(tmp) * glm::scale(glm::mat4(1.f), scale[1]);
+
+        mvMatrix = vMatrix * modelMatrix;
+        mvpMatrix = pMatrix * mvMatrix;
+
+        modelVBOs[1]->draw(mvpMatrix, mvMatrix, lighPos);
+    }
+    defaultMotionState[5]->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
+    modelMatrix = glm::make_mat4(tmp) * glm::scale(glm::mat4(1.f), scale[2]);
+
+    mvMatrix = vMatrix * modelMatrix;
+    mvpMatrix = pMatrix * mvMatrix;
+
+    modelVBOs[2]->draw(mvpMatrix, mvMatrix, lighPos);
 }
 
 Car::~Car() {
-
+    for (ModelVBO* m : modelVBOs)
+        delete m;
 }
 
-void Car::init() {
+std::tuple<btRigidBody*, btDefaultMotionState*> localCreateRigidBody(btScalar mass, const btTransform& startTransform, btCollisionShape* shape)
+{
+    btAssert((!shape || shape->getShapeType() != INVALID_SHAPE_PROXYTYPE));
 
+    //rigidbody is dynamic if and only if mass is non zero, otherwise static
+    bool isDynamic = (mass != 0.f);
 
-    btCollisionShape *groundShape = new btBoxShape(btVector3(50, 3, 50));
-    collisionShape.push_back(groundShape);
-    //m_collisionConfiguration = new btDefaultCollisionConfiguration();
-    //m_dispatcher = new btCollisionDispatcher(m_collisionConfiguration);
-    btVector3 worldMin(-1000, -1000, -1000);
-    btVector3 worldMax(1000, 1000, 1000);
+    btVector3 localInertia(0,0,0);
+    if (isDynamic)
+        shape->calculateLocalInertia(mass,localInertia);
+
+    btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
+
+    btRigidBody::btRigidBodyConstructionInfo cInfo(mass,myMotionState,shape,localInertia);
+
+    return std::tuple<btRigidBody*, btDefaultMotionState*>(new btRigidBody(cInfo), myMotionState);
+}
+
+/**
+ * CollisionShape[0] -> chassisShape
+ * CollisionShape[1] -> wheel shape
+ *
+ * rigidBody[0] -> m_carChassis
+ * rigidBody[1 - 4] -> pBodyB
+ *
+ * defaultMotionState[0] -> m_carChassisMotionState
+ * defaultMotionState[1 - 4] -> pBodyBMotionState
+ *
+ * modelVBOs[0] -> chassisShape
+ * modelVBOs[1] -> wheels
+ *
+ * scale[0] -> chassis
+ * scale[1] -> wheels
+ *
+ * @param world
+ */
+void Car::init(btDynamicsWorld* world, AAssetManager* mgr) {
+#if 0
+
+    std::string cubeObjTxt = getFileText(mgr, "obj/cube.obj");
+
     btTransform tr;
     tr.setIdentity();
-
-    tr.setOrigin(btVector3(0, -3, 0));
-
-
-
-    //create ground object
 
     btCollisionShape *chassisShape = new btBoxShape(btVector3(1.f, 0.5f, 2.f));
     collisionShape.push_back(chassisShape);
 
-    btCompoundShape *compound = new btCompoundShape();
-    collisionShape.push_back(compound);
-    btTransform localTrans;
-    localTrans.setIdentity();
-
-    //localTrans effectively shifts the center of mass with respect to the chassis
-    localTrans.setOrigin(btVector3(0, 1, 0));
-
-    compound->addChildShape(localTrans, chassisShape);
-
-    {
-        btCollisionShape *suppShape = new btBoxShape(btVector3(0.5f, 0.1f, 0.5f));
-        btTransform suppLocalTrans;
-        suppLocalTrans.setIdentity();
-
-        //localTrans effectively shifts the center of mass with respect to the chassis
-        suppLocalTrans.setOrigin(btVector3(0, 1.0, 2.5));
-        compound->addChildShape(suppLocalTrans, suppShape);
-    }
-
     tr.setOrigin(btVector3(0, 0.f, 0));
-/*
+
     btScalar chassisMass = 800;
-    m_carChassis = localCreateRigidBody(chassisMass, tr, compound);//chassisShape);
-    //m_carChassis->setDamping(0.2,0.2);
+    std::tuple<btRigidBody*, btDefaultMotionState*> tmp = localCreateRigidBody(chassisMass, tr, chassisShape);//chassisShape);
+    btRigidBody* m_carChassis = std::get<0>(tmp);
+    btDefaultMotionState* m_carChassiMotionState = std::get<1>(tmp);
 
-    //m_wheelShape = new btCylinderShapeX(btVector3(wheelWidth,wheelRadius,wheelRadius));
-    m_wheelShape = new btCylinderShapeX(btVector3(wheelWidth, wheelRadius, wheelRadius));
+    modelVBOs.push_back(new ModelVBO(cubeObjTxt, new float[4]{1.f,0.f,0.f,1.f}));
+    scale.push_back(glm::vec3(1.f, 0.5f, 2.f));
+    rigidBody.push_back(m_carChassis);
+    defaultMotionState.push_back(m_carChassiMotionState);
 
-
-//const float position[4]={0,10,10,0};
-//const float quaternion[4]={0,0,0,1};
-//const float color[4]={0,1,0,1};
-//const float scaling[4] = {1,1,1,1};
+    btCollisionShape* m_wheelShape = new btCylinderShapeX(btVector3(wheelWidth, wheelRadius, wheelRadius));
+    collisionShape.push_back(m_wheelShape);
 
     btVector3 wheelPos[4] = {
             btVector3(btScalar(-1.), btScalar(-0.25), btScalar(1.25)),
@@ -81,252 +127,187 @@ void Car::init() {
     };
 
 
-    for (
-            int i = 0;
-            i < 4; i++) {
-// create a Hinge2 joint
-// create two rigid bodies
-// static bodyA (parent) on top:
+    std::string cylObjText = getFileText(mgr, "obj/cylinderX.obj");
+    scale.push_back(glm::vec3(wheelWidth, wheelRadius, wheelRadius));
+    modelVBOs.push_back(new ModelVBO(cylObjText, new float[4]{0.f,1.f,0.f,1.f}));
 
+    for (int i = 0; i < 4; i++) {
+        // create a Hinge2 joint
+        // create two rigid bodies
+        // static bodyA (parent) on top:
 
-        btRigidBody *pBodyA = this->m_carChassis;//m_chassis;//createRigidBody( 0.0, tr, m_wheelShape);
+        btRigidBody *pBodyA = rigidBody[0];//m_chassis;//createRigidBody( 0.0, tr, m_wheelShape);
         pBodyA->setActivationState(DISABLE_DEACTIVATION);
-// dynamic bodyB (child) below it :
-        btTransform tr;
-        tr.
+        // dynamic bodyB (child) below it :
+        tr.setIdentity();
+        tr.setOrigin(wheelPos[i]);
 
-                setIdentity();
+        //btRigidBody *pBodyB = createRigidBody(10.0, tr, m_wheelShape);
+        tmp = localCreateRigidBody(10.0, tr, m_wheelShape);
 
-        tr.
-                setOrigin(wheelPos[i]);
+        btRigidBody *pBodyB = std::get<0>(tmp);
+        btDefaultMotionState* pBodyBMotionState = std::get<1>(tmp);
 
-        btRigidBody *pBodyB = createRigidBody(10.0, tr, m_wheelShape);
+        rigidBody.push_back(pBodyB);
+        defaultMotionState.push_back(pBodyBMotionState);
+
         pBodyB->setFriction(1110);
         pBodyB->setActivationState(DISABLE_DEACTIVATION);
-// add some data to build constraint frames
+        // add some data to build constraint frames
         btVector3 parentAxis(0.f, 1.f, 0.f);
         btVector3 childAxis(1.f, 0.f, 0.f);
         btVector3 anchor = tr.getOrigin();//(0.f, 0.f, 0.f);
         btHinge2Constraint *pHinge2 = new btHinge2Constraint(*pBodyA, *pBodyB, anchor, parentAxis,
                                                              childAxis);
 
-//m_guiHelper->get2dCanvasInterface();
-
-
         pHinge2->setLowerLimit(-SIMD_HALF_PI * 0.5f);
-        pHinge2->
-                setUpperLimit(SIMD_HALF_PI * 0.5f);
-// add constraint to world
-        m_dynamicsWorld->
-                addConstraint(pHinge2,
-                              true);
-// draw constraint frames and limits for debugging
+        pHinge2->setUpperLimit(SIMD_HALF_PI * 0.5f);
+        // add constraint to world
+        world->addConstraint(pHinge2, true);
+            // draw constraint frames and limits for debugging
         {
             int motorAxis = 3;
-            pHinge2->
-                    enableMotor(motorAxis,
-                                true);
-            pHinge2->
-                    setMaxMotorForce(motorAxis,
-                                     1000);
-            pHinge2->
-                    setTargetVelocity(motorAxis,
-                                      -1);
+            pHinge2->enableMotor(motorAxis, true);
+            pHinge2->setMaxMotorForce(motorAxis, 1000);
+            pHinge2->setTargetVelocity(motorAxis, -1);
         }
 
         {
             int motorAxis = 5;
-            pHinge2->
-                    enableMotor(motorAxis,
-                                true);
-            pHinge2->
-                    setMaxMotorForce(motorAxis,
-                                     1000);
-            pHinge2->
-                    setTargetVelocity(motorAxis,
-                                      0);
+            pHinge2->enableMotor(motorAxis, true);
+            pHinge2->setMaxMotorForce(motorAxis, 1000);
+            pHinge2->setTargetVelocity(motorAxis, 0);
         }
 
-        pHinge2->
-                setDbgDrawSize(btScalar(5.f));
+        pHinge2->setDbgDrawSize(btScalar(5.f));
     }
+#endif
+#if 0
+    // This function is called only from the main program when initially creating the vehicle, not on scene load
+    /*ResourceCache* cache = GetSubsystem<ResourceCache>();
 
+    StaticModel* hullObject = node_->CreateComponent<StaticModel>();
+    hullBody_ = node_->CreateComponent<RigidBody>();
+    CollisionShape* hullColShape = node_->CreateComponent<CollisionShape>();
 
+    hullBody_->SetMass(800.0f);
+    hullBody_->SetLinearDamping(0.2f); // Some air resistance
+    hullBody_->SetAngularDamping(0.5f);
+    hullBody_->SetCollisionLayer(1);*/
+
+    std::string cubeObjTxt = getFileText(mgr, "obj/cube.obj");
+
+    btTransform tr;
+    tr.setIdentity();
+
+    btCollisionShape *chassisShape = new btBoxShape(btVector3(1.f, 0.5f, 2.f));
+    collisionShape.push_back(chassisShape);
+
+    tr.setOrigin(btVector3(0, 0.f, 0));
+
+    btScalar chassisMass = 800;
+    std::tuple<btRigidBody*, btDefaultMotionState*> tmp = localCreateRigidBody(chassisMass, tr, chassisShape);//chassisShape);
+    btRigidBody* m_carChassis = std::get<0>(tmp);
+    btDefaultMotionState* m_carChassiMotionState = std::get<1>(tmp);
+
+    modelVBOs.push_back(new ModelVBO(cubeObjTxt, new float[4]{1.f,0.f,0.f,1.f}));
+    scale.push_back(glm::vec3(1.f, 0.5f, 2.f));
+    rigidBody.push_back(m_carChassis);
+    defaultMotionState.push_back(m_carChassiMotionState);
+
+    int rightIndex = 0;
+    int upIndex = 1;
+    int forwardIndex = 2;
+    /*Scene* scene = GetScene();
+    PhysicsWorld *pPhysWorld = scene->GetComponent<PhysicsWorld>();
+    btDynamicsWorld *pbtDynWorld = (btDynamicsWorld*)pPhysWorld->GetWorld();*/
+
+    m_vehicleRayCaster = new btDefaultVehicleRaycaster( pbtDynWorld );
+    m_vehicle = new btRaycastVehicle( m_tuning, hullBody_->GetBody(), m_vehicleRayCaster );
+    world->addVehicle( m_vehicle );
+
+    m_vehicle->setCoordinateSystem( rightIndex, upIndex, forwardIndex );
+
+    node_->SetScale( Vector3(1.5f, 1.0f, 3.5f) );
+    Vector3 v3BoxExtents = Vector3::ONE;//Vector3(1.5f, 1.0f, 3.0f);
+    hullColShape->SetBox( v3BoxExtents );
+
+    hullObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+    hullObject->SetMaterial(cache->GetResource<Material>("Materials/Stone.xml"));
+    hullObject->SetCastShadows(true);
+
+    float connectionHeight = -0.4f;//1.2f;
+    bool isFrontWheel=true;
+    btVector3 wheelDirectionCS0(0,-1,0);
+    btVector3 wheelAxleCS(-1,0,0);
+
+    btVector3 connectionPointCS0(CUBE_HALF_EXTENTS-(0.3f*m_fwheelWidth),connectionHeight,2*CUBE_HALF_EXTENTS-m_fwheelRadius);
+    m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,m_fsuspensionRestLength,m_fwheelRadius,m_tuning,isFrontWheel);
+
+    connectionPointCS0 = btVector3(-CUBE_HALF_EXTENTS+(0.3f*m_fwheelWidth),connectionHeight,2*CUBE_HALF_EXTENTS-m_fwheelRadius);
+    m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,m_fsuspensionRestLength,m_fwheelRadius,m_tuning,isFrontWheel);
+
+    isFrontWheel = false;
+    connectionPointCS0 = btVector3(-CUBE_HALF_EXTENTS+(0.3f*m_fwheelWidth),connectionHeight,-2*CUBE_HALF_EXTENTS+m_fwheelRadius);
+    m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,m_fsuspensionRestLength,m_fwheelRadius,m_tuning,isFrontWheel);
+
+    connectionPointCS0 = btVector3(CUBE_HALF_EXTENTS-(0.3f*m_fwheelWidth),connectionHeight,-2*CUBE_HALF_EXTENTS+m_fwheelRadius);
+    m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,m_fsuspensionRestLength,m_fwheelRadius,m_tuning,isFrontWheel);
+
+    for ( int i = 0; i < m_vehicle->getNumWheels(); i++ )
     {
-        btCollisionShape *liftShape = new btBoxShape(btVector3(0.5f, 2.0f, 0.05f));
-        m_collisionShapes.
-                push_back(liftShape);
-        btTransform liftTrans;
-        m_liftStartPos = btVector3(0.0f, 2.5f, 3.05f);
-        liftTrans.
-
-                setIdentity();
-
-        liftTrans.
-                setOrigin(m_liftStartPos);
-        m_liftBody = localCreateRigidBody(10, liftTrans, liftShape);
-
-        btTransform localA, localB;
-        localA.
-
-                setIdentity();
-
-        localB.
-
-                setIdentity();
-
-        localA.
-
-                        getBasis()
-
-                .setEulerZYX(0, M_PI_2, 0);
-        localA.
-                setOrigin(btVector3(0.0, 1.0, 3.05));
-        localB.
-
-                        getBasis()
-
-                .setEulerZYX(0, M_PI_2, 0);
-        localB.
-                setOrigin(btVector3(0.0, -1.5, -0.05));
-        m_liftHinge = new btHingeConstraint(*m_carChassis, *m_liftBody, localA, localB);
-//		m_liftHinge->setLimit(-LIFT_EPS, LIFT_EPS);
-        m_liftHinge->setLimit(0.0f, 0.0f);
-        m_dynamicsWorld->
-                addConstraint(m_liftHinge,
-                              true);
-
-        btCollisionShape *forkShapeA = new btBoxShape(btVector3(1.0f, 0.1f, 0.1f));
-        m_collisionShapes.
-                push_back(forkShapeA);
-        btCompoundShape *forkCompound = new btCompoundShape();
-        m_collisionShapes.
-                push_back(forkCompound);
-        btTransform forkLocalTrans;
-        forkLocalTrans.
-
-                setIdentity();
-
-        forkCompound->
-                addChildShape(forkLocalTrans, forkShapeA
-        );
-
-        btCollisionShape *forkShapeB = new btBoxShape(btVector3(0.1f, 0.02f, 0.6f));
-        m_collisionShapes.
-                push_back(forkShapeB);
-        forkLocalTrans.
-
-                setIdentity();
-
-        forkLocalTrans.
-                setOrigin(btVector3(-0.9f, -0.08f, 0.7f));
-        forkCompound->
-                addChildShape(forkLocalTrans, forkShapeB
-        );
-
-        btCollisionShape *forkShapeC = new btBoxShape(btVector3(0.1f, 0.02f, 0.6f));
-        m_collisionShapes.
-                push_back(forkShapeC);
-        forkLocalTrans.
-
-                setIdentity();
-
-        forkLocalTrans.
-                setOrigin(btVector3(0.9f, -0.08f, 0.7f));
-        forkCompound->
-                addChildShape(forkLocalTrans, forkShapeC
-        );
-
-        btTransform forkTrans;
-        m_forkStartPos = btVector3(0.0f, 0.6f, 3.2f);
-        forkTrans.
-
-                setIdentity();
-
-        forkTrans.
-                setOrigin(m_forkStartPos);
-        m_forkBody = localCreateRigidBody(5, forkTrans, forkCompound);
-
-        localA.
-
-                setIdentity();
-
-        localB.
-
-                setIdentity();
-
-        localA.
-
-                        getBasis()
-
-                .setEulerZYX(0, 0, M_PI_2);
-        localA.
-                setOrigin(btVector3(0.0f, -1.9f, 0.05f));
-        localB.
-
-                        getBasis()
-
-                .setEulerZYX(0, 0, M_PI_2);
-        localB.
-                setOrigin(btVector3(0.0, 0.0, -0.1));
-        m_forkSlider = new btSliderConstraint(*m_liftBody, *m_forkBody, localA, localB, true);
-        m_forkSlider->setLowerLinLimit(0.1f);
-        m_forkSlider->setUpperLinLimit(0.1f);
-//		m_forkSlider->setLowerAngLimit(-LIFT_EPS);
-//		m_forkSlider->setUpperAngLimit(LIFT_EPS);
-        m_forkSlider->setLowerAngLimit(0.0f);
-        m_forkSlider->setUpperAngLimit(0.0f);
-        m_dynamicsWorld->
-                addConstraint(m_forkSlider,
-                              true);
-
-
-        btCompoundShape *loadCompound = new btCompoundShape();
-        m_collisionShapes.
-                push_back(loadCompound);
-        btCollisionShape *loadShapeA = new btBoxShape(btVector3(2.0f, 0.5f, 0.5f));
-        m_collisionShapes.
-                push_back(loadShapeA);
-        btTransform loadTrans;
-        loadTrans.
-
-                setIdentity();
-
-        loadCompound->
-                addChildShape(loadTrans, loadShapeA
-        );
-        btCollisionShape *loadShapeB = new btBoxShape(btVector3(0.1f, 1.0f, 1.0f));
-        m_collisionShapes.
-                push_back(loadShapeB);
-        loadTrans.
-
-                setIdentity();
-
-        loadTrans.
-                setOrigin(btVector3(2.1f, 0.0f, 0.0f));
-        loadCompound->
-                addChildShape(loadTrans, loadShapeB
-        );
-        btCollisionShape *loadShapeC = new btBoxShape(btVector3(0.1f, 1.0f, 1.0f));
-        m_collisionShapes.
-                push_back(loadShapeC);
-        loadTrans.
-
-                setIdentity();
-
-        loadTrans.
-                setOrigin(btVector3(-2.1f, 0.0f, 0.0f));
-        loadCompound->
-                addChildShape(loadTrans, loadShapeC
-        );
-        loadTrans.
-
-                setIdentity();
-
-        m_loadStartPos = btVector3(0.0f, 3.5f, 7.0f);
-        loadTrans.
-                setOrigin(m_loadStartPos);
-        m_loadBody = localCreateRigidBody(loadMass, loadTrans, loadCompound);
+        btWheelInfo& wheel = m_vehicle->getWheelInfo( i );
+        wheel.m_suspensionStiffness = m_fsuspensionStiffness;
+        wheel.m_wheelsDampingRelaxation = m_fsuspensionDamping;
+        wheel.m_wheelsDampingCompression = m_fsuspensionCompression;
+        wheel.m_frictionSlip = m_fwheelFriction;
+        wheel.m_rollInfluence = m_frollInfluence;
     }
-*/
+
+    if ( m_vehicle )
+    {
+        m_vehicle->resetSuspension();
+
+        for ( int i = 0; i < m_vehicle->getNumWheels(); i++ )
+        {
+            //synchronize the wheels with the (interpolated) chassis worldtransform
+            m_vehicle->updateWheelTransform(i,true);
+
+            btTransform transform = m_vehicle->getWheelTransformWS( i );
+            Vector3 v3Origin = ToVector3( transform.getOrigin() );
+            Quaternion qRot = ToQuaternion( transform.getRotation() );
+
+            // create wheel node
+            Node *wheelNode = GetScene()->CreateChild();
+            m_vpNodeWheel.Push( wheelNode );
+
+            wheelNode->SetPosition( v3Origin );
+            btWheelInfo whInfo = m_vehicle->getWheelInfo( i );
+            Vector3 v3PosLS = ToVector3( whInfo.m_chassisConnectionPointCS );
+
+            wheelNode->SetRotation( v3PosLS.x_ >= 0.0 ? Quaternion(0.0f, 0.0f, -90.0f) : Quaternion(0.0f, 0.0f, 90.0f) );
+            wheelNode->SetScale(Vector3(1.0f, 0.65f, 1.0f));
+
+            StaticModel *pWheel = wheelNode->CreateComponent<StaticModel>();
+            pWheel->SetModel(cache->GetResource<Model>("Models/Cylinder.mdl"));
+            pWheel->SetMaterial(cache->GetResource<Material>("Materials/Stone.xml"));
+            pWheel->SetCastShadows(true);
+        }
+    }
+#endif
+}
+
+void Car::control() {
+    /*int wheelIndex = 2;
+    m_vehicle->applyEngineForce(gEngineForce,wheelIndex);
+    m_vehicle->setBrake(gBreakingForce,wheelIndex);
+    wheelIndex = 3;
+    m_vehicle->applyEngineForce(gEngineForce,wheelIndex);
+    m_vehicle->setBrake(gBreakingForce,wheelIndex);
+
+
+    wheelIndex = 0;
+    m_vehicle->setSteeringValue(gVehicleSteering,wheelIndex);
+    wheelIndex = 1;
+    m_vehicle->setSteeringValue(gVehicleSteering,wheelIndex);*/
 }

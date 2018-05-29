@@ -48,6 +48,7 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
     private long boxesPtr;
     private long rendererPtr;
     private long levelPtr;
+    private long carPtr;
 
     @Override
     public void onNewFrame(HeadTransform headTransform) {
@@ -80,6 +81,7 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
                 loadImage.tofloatGreyArray(), loadImage.getWidth(), loadImage.getHeight());
         levelPtr = initLevel(boxesPtr);
         rendererPtr = initRenderer(boxesPtr);
+        carPtr = initCar(getContext().getAssets(), levelPtr, boxesPtr);
     }
 
     @Override
@@ -96,6 +98,7 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 
 	public native long initEntity(AssetManager assetManager, float[] heightmap, int width, int height);
     public native long initBoxes(AssetManager assetManager);
+    public native long initCar(AssetManager assetManager, long levelPtr, long entityPtr);
     public native long initLevel(long boxesPtr);
     public native long initRenderer(long boxesPtr);
 

@@ -18,6 +18,7 @@ Level::Level(vector<Base*>* bases) {
                                         constraintSolver,
                                         collisionConfiguration);
     world->setGravity(btVector3(0,-10,0));
+
     for (Base* b : *this->bases)
         for (btRigidBody* bd : b->rigidBody)
             world->addRigidBody(bd);
@@ -33,11 +34,24 @@ void Level::addNewBox(Base *b) {
 }
 
 Level::~Level() {
-    /*delete collisionConfiguration;
-    delete dispatcher;
+    // From car bullet example
+    for (int i = world->getNumCollisionObjects() - 1; i >= 0 ; i--) {
+        btCollisionObject* obj = world->getCollisionObjectArray()[i];
+        btRigidBody* body = btRigidBody::upcast(obj);
+        if (body && body->getMotionState()) {
 
-    delete constraintSolver;
-    delete broadPhase;*/
+            while (body->getNumConstraintRefs()) {
+                btTypedConstraint* constraint = body->getConstraintRef(0);
+                world->removeConstraint(constraint);
+                delete constraint;
+            }
+            //delete body->getMotionState(); base delete motionstate
+            world->removeRigidBody(body);
+        } else {
+            world->removeCollisionObject( obj );
+        }
+        // delete obj; base delete body object (but btCollisionObject or btRigidBody ?)
+    }
 
     delete world;
 }

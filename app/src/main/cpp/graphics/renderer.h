@@ -10,7 +10,7 @@
 #include <android/asset_manager.h>
 
 #include "drawable/modelvbo.h"
-#include "../entity/box.h"
+#include "cpp/entity/poly/box.h"
 
 class Renderer {
 public:

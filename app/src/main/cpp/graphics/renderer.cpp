@@ -40,7 +40,7 @@ void Renderer::draw(glm::mat4 mEyeProjectionMatrix,
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    float camHeight = 20.f;
+    float camHeight = 3.f;
     mCamera = glm::lookAt(glm::vec3(0.f, camHeight, -5.f),
                           glm::vec3(0.f, camHeight, 1.f),
                           glm::vec3(0.f, 1.f, 0.f));

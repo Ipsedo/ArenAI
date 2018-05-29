@@ -5,9 +5,8 @@
 #ifndef PHYVR_LEVEL_H
 #define PHYVR_LEVEL_H
 
-
 #include "../graphics/renderer.h"
-#include "../entity/box.h"
+#include "../entity/base.h"
 
 class Level {
 public:

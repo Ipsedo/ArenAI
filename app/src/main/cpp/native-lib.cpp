@@ -11,7 +11,9 @@
 #include "entity/convex.h"
 #include "entity/ground/map.h"
 #include <glm/gtc/type_ptr.hpp>
+#include "entity/vehicles/car2.h"
 #include "entity/poly/cone.h"
+#include "entity/poly/box.h"
 #include "entity/poly/sphere.h"
 #include "entity/poly/cylinder.h"
 #include "entity/vehicles/car.h"
@@ -107,7 +109,7 @@ Java_com_samuelberrien_phyvr_MyGvrView_initEntity(JNIEnv *env, jobject instance,
 
     Base* box = new Box(cppMgr, glm::vec3(0.f, HEIGHT_SPAWN, 5.f), glm::vec3(1.f,1.f,1.f), id, 1.f);
     Base* sol = new Map(glm::vec3(0.f, -5.f, 0.f), width, height, map, glm::vec3(10.f, 50.f, 10.f));
-            //new Box(cppMgr, glm::vec3(0.f, -5.f, 0.f), glm::vec3(4.5f,0.1f,4.5f), id, 0.f);
+            //new Box(cppMgr, glm::vec3(0.f, -5.f, 0.f), glm::vec3(40.f,0.1f,40.f), id, 0.f);
 
     vector<Base*>* boxes = new vector<Base*>();
     boxes->push_back(box);
@@ -256,16 +258,19 @@ Java_com_samuelberrien_phyvr_MyGvrView_freeRenderer(JNIEnv *env, jobject instanc
 extern "C"
 JNIEXPORT jlong JNICALL
 Java_com_samuelberrien_phyvr_MyGvrView_initCar(JNIEnv *env, jobject instance, jobject assetManager,
-                                               jlong levelPtr, jlong entityPtr) {
+                                               jlong levelPtr, jlong rendererPtr, jlong entityPtr) {
 
     Level* level = (Level*) levelPtr;
+    Renderer* renderer = (Renderer*) rendererPtr;
     vector<Base*>* entity = (vector<Base*>*) entityPtr;
     AAssetManager* cppMgr = AAssetManager_fromJava(env, assetManager);
 
     Car* c = new Car(level->world, cppMgr);
     entity->push_back(c);
     level->addNewBox(c);
+    renderer->setCar(c);
 
-    __android_log_print(ANDROID_LOG_DEBUG, "POIR", "aaa");
+
+    __android_log_print(ANDROID_LOG_DEBUG, "POIR", "aab");
     return (long) c;
 }

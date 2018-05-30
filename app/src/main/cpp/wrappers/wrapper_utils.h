@@ -7,6 +7,6 @@
 
 #include <jni.h>
 
-float* jfloatPtrToCppFloatPtr(jfloat* array, int length);
+float *jfloatPtrToCppFloatPtr(jfloat *array, int length);
 
 #endif //PHYVR_UTILS_H

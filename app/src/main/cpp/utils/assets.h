@@ -8,6 +8,6 @@
 #include <string>
 #include <android/asset_manager.h>
 
-std::string getFileText(AAssetManager * mgr, std::string fileName);
+std::string getFileText(AAssetManager *mgr, std::string fileName);
 
 #endif //PHYVR_ASSETS_H

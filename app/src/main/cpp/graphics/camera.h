@@ -9,9 +9,11 @@
 
 class Camera {
 public:
-    virtual glm::vec3 camPos() = 0;
-    virtual glm::vec3 camLookAtVec() = 0;
-    virtual glm::vec3 camUpVec() = 0;
+	virtual glm::vec3 camPos() = 0;
+
+	virtual glm::vec3 camLookAtVec() = 0;
+
+	virtual glm::vec3 camUpVec() = 0;
 };
 
 #endif //PHYVR_CAMERA_H

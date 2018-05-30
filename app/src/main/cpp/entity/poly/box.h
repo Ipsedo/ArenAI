@@ -13,11 +13,14 @@
 
 class Box : public Base {
 public:
-    Box(AAssetManager* mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass);
-    void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) override;
-    ~Box();
+	Box(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass);
+
+	void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) override;
+
+	~Box();
+
 private:
-    ModelVBO* modelVBO;
+	ModelVBO *modelVBO;
 };
 
 

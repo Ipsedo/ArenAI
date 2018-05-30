@@ -12,12 +12,14 @@
 
 class Sphere : public Base {
 public:
-    Sphere(AAssetManager* mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass);
-    void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) override;
-    ~Sphere();
+	Sphere(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass);
+
+	void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) override;
+
+	~Sphere();
 
 private:
-    ModelVBO* modelVBO;
+	ModelVBO *modelVBO;
 };
 
 

@@ -27,79 +27,79 @@
 extern "C"
 JNIEXPORT jlong JNICALL
 Java_com_samuelberrien_phyvr_MyGvrView_initBoxes(JNIEnv *env, jobject instance,
-                                                 jobject assetManager) {
+												 jobject assetManager) {
 
-    AAssetManager* cppMgr = AAssetManager_fromJava(env, assetManager);
+	AAssetManager *cppMgr = AAssetManager_fromJava(env, assetManager);
 
-    glm::mat4 id(1.f);
+	glm::mat4 id(1.f);
 
-    Base* box = new Box(cppMgr, glm::vec3(0.f, HEIGHT_SPAWN, 5.f), glm::vec3(1.f,1.f,1.f), id, 1.f);
-    Base* sol = new Box(cppMgr, glm::vec3(0.f, -5.f, 0.f), glm::vec3(4.5f,0.1f,4.5f), id, 0.f);
+	Base *box = new Box(cppMgr, glm::vec3(0.f, HEIGHT_SPAWN, 5.f), glm::vec3(1.f, 1.f, 1.f), id, 1.f);
+	Base *sol = new Box(cppMgr, glm::vec3(0.f, -5.f, 0.f), glm::vec3(4.5f, 0.1f, 4.5f), id, 0.f);
 
-    vector<Base*>* boxes = new vector<Base*>();
-    boxes->push_back(box);
-    boxes->push_back(sol);
+	vector<Base *> *boxes = new vector<Base *>();
+	boxes->push_back(box);
+	boxes->push_back(sol);
 
-    return (long) boxes;
+	return (long) boxes;
 }
 
 extern "C"
 JNIEXPORT jlong JNICALL
 Java_com_samuelberrien_phyvr_MyGvrView_initEntity(JNIEnv *env, jobject instance,
-                                                  jobject assetManager, jfloatArray heightmap_,
-                                                  jint width, jint height) {
-    jfloat *heightmap = env->GetFloatArrayElements(heightmap_, NULL);
-    float *map = jfloatPtrToCppFloatPtr(heightmap, width * height);
+												  jobject assetManager, jfloatArray heightmap_,
+												  jint width, jint height) {
+	jfloat *heightmap = env->GetFloatArrayElements(heightmap_, NULL);
+	float *map = jfloatPtrToCppFloatPtr(heightmap, width * height);
 
-    AAssetManager* cppMgr = AAssetManager_fromJava(env, assetManager);
+	AAssetManager *cppMgr = AAssetManager_fromJava(env, assetManager);
 
-    glm::mat4 id(1.f);
+	glm::mat4 id(1.f);
 
-    Base* box = new Box(cppMgr, glm::vec3(0.f, HEIGHT_SPAWN, 5.f), glm::vec3(1.f,1.f,1.f), id, 1.f);
-    Base* sol = new Map(glm::vec3(0.f, -5.f, 0.f), width, height, map, glm::vec3(10.f, 50.f, 10.f));
-            //new Box(cppMgr, glm::vec3(0.f, -5.f, 0.f), glm::vec3(40.f,0.1f,40.f), id, 0.f);
+	Base *box = new Box(cppMgr, glm::vec3(0.f, HEIGHT_SPAWN, 5.f), glm::vec3(1.f, 1.f, 1.f), id, 1.f);
+	Base *sol = new Map(glm::vec3(0.f, -5.f, 0.f), width, height, map, glm::vec3(10.f, 50.f, 10.f));
+	//new Box(cppMgr, glm::vec3(0.f, -5.f, 0.f), glm::vec3(40.f,0.1f,40.f), id, 0.f);
 
-    vector<Base*>* boxes = new vector<Base*>();
-    boxes->push_back(box);
-    boxes->push_back(sol);
+	vector<Base *> *boxes = new vector<Base *>();
+	boxes->push_back(box);
+	boxes->push_back(sol);
 
-    return (long) boxes;
+	return (long) boxes;
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_samuelberrien_phyvr_MyGvrView_addBox(JNIEnv *env, jobject instance, jobject assetManager,
-                                              jlong boxesPtr, jlong levelPtr) {
+											  jlong boxesPtr, jlong levelPtr) {
 
-    vector<Base*>* boxes = (vector<Base*>*) boxesPtr;
-    Level* level = (Level*) levelPtr;
+	vector<Base *> *boxes = (vector<Base *> *) boxesPtr;
+	Level *level = (Level *) levelPtr;
 
-    AAssetManager* cppMgr = AAssetManager_fromJava(env, assetManager);
+	AAssetManager *cppMgr = AAssetManager_fromJava(env, assetManager);
 
-    glm::mat4 id(1.f);
-    double r = (double) rand() / RAND_MAX;
+	glm::mat4 id(1.f);
+	double r = (double) rand() / RAND_MAX;
 
-    if (r < 1. / 30.) {
-        float x = 40.f * (float) rand() / RAND_MAX - 20.f;
-        float z = 40.f * (float) rand() / RAND_MAX - 20.f;
-        float scale = 2.f * (float) rand() / RAND_MAX;
-        float mass = scale;
-        Base *base;
-        if ((float) rand() / RAND_MAX > 0.8) {
-            base = new Cylinder(cppMgr,
-                          glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale),
-                          id, mass);
-        } else {
-            /*std::string m =
-                    (float) rand() / RAND_MAX > 0.5 ? "obj/icosahedron.obj" : "obj/ast1.obj";*/
-            std::string m = "obj/icosahedron.obj";
-            base = new Convex(cppMgr, m,
-                             glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale),
-                             id, mass);
-        }
-        boxes->push_back(base);
-        level->addNewBox(base);
-    }
+	if (r < 1. / 30.) {
+		float x = 40.f * (float) rand() / RAND_MAX - 20.f;
+		float z = 40.f * (float) rand() / RAND_MAX - 20.f;
+		float scale = 2.f * (float) rand() / RAND_MAX;
+		float mass = scale;
+		Base *base;
+		if ((float) rand() / RAND_MAX > 0.8) {
+			base = new Cylinder(cppMgr,
+								glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale),
+								id, mass);
+		} else {
+			/*std::string m =
+					(float) rand() / RAND_MAX > 0.5 ? "obj/icosahedron.obj" : "obj/ast1.obj";*/
+			std::string m = "obj/icosahedron.obj";
+			base = new Convex(cppMgr, m,
+							  glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale),
+							  id, mass);
+		}
+		boxes->push_back(base);
+		level->addNewBox(base);
+	}
 
 }
 
@@ -107,11 +107,11 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_samuelberrien_phyvr_MyGvrView_freeBoxes(JNIEnv *env, jobject instance, jlong boxesPtr) {
 
-    vector<Base*>* boxes = (vector<Base*>*) boxesPtr;
-    for (Base* b : *boxes)
-        delete b;
-    boxes->clear();
-    delete boxes;
+	vector<Base *> *boxes = (vector<Base *> *) boxesPtr;
+	for (Base *b : *boxes)
+		delete b;
+	boxes->clear();
+	delete boxes;
 
 }
 

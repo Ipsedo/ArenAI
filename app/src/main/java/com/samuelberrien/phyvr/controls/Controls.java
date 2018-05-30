@@ -33,7 +33,7 @@ public class Controls {
 	}
 
 	public void onKeyDown(int keyCode, KeyEvent event) {
-		
+
 	}
 
 	public void onKeyUp(int keyCode, KeyEvent event) {

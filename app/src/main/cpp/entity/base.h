@@ -11,15 +11,19 @@
 
 class Base {
 public:
-    std::vector<btRigidBody*> rigidBody;
-    virtual std::tuple<glm::mat4, glm::mat4> getMatrixes(glm::mat4 pMatrix, glm::mat4 vMatrix);
-    virtual void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) = 0;
-    virtual ~Base();
-protected:
-    std::vector<btCollisionShape*> collisionShape;
-    std::vector<btDefaultMotionState*> defaultMotionState;
+	std::vector<btRigidBody *> rigidBody;
 
-    std::vector<glm::vec3> scale;
+	virtual std::tuple<glm::mat4, glm::mat4> getMatrixes(glm::mat4 pMatrix, glm::mat4 vMatrix);
+
+	virtual void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) = 0;
+
+	virtual ~Base();
+
+protected:
+	std::vector<btCollisionShape *> collisionShape;
+	std::vector<btDefaultMotionState *> defaultMotionState;
+
+	std::vector<glm::vec3> scale;
 };
 
 

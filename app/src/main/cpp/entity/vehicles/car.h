@@ -13,19 +13,28 @@
 
 class Car : public Base, public Camera {
 public:
-    Car(btDynamicsWorld* world, AAssetManager* mgr);
-    void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) override;
-    glm::vec3 camPos() override;
-    glm::vec3 camLookAtVec() override;
-    glm::vec3 camUpVec() override;
-    void control(float leftRight, float speed);
-    ~Car();
+	Car(btDynamicsWorld *world, AAssetManager *mgr);
+
+	void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) override;
+
+	glm::vec3 camPos() override;
+
+	glm::vec3 camLookAtVec() override;
+
+	glm::vec3 camUpVec() override;
+
+	void control(float leftRight, float speed);
+
+	~Car();
+
 private:
-    float direction;
-    float speed;
-    void init(btDynamicsWorld* world, AAssetManager* mgr);
-    std::vector<btHinge2Constraint*> pHinge2;
-    std::vector<ModelVBO*> modelVBOs;
+	float direction;
+	float speed;
+
+	void init(btDynamicsWorld *world, AAssetManager *mgr);
+
+	std::vector<btHinge2Constraint *> pHinge2;
+	std::vector<ModelVBO *> modelVBOs;
 };
 
 

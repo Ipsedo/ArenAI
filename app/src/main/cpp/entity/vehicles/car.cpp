@@ -211,7 +211,7 @@ void Car::control(float leftRight, float s) {
 	if (speed < -1.f) speed = -1.f;
 
 	for (int i = 0; i < 4; i++) {
-		pHinge2[i]->setTargetVelocity(motorAxis, speed * 10.f);
+		pHinge2[i]->setTargetVelocity(motorAxis, -speed * 10.f);
 	}
 
 }

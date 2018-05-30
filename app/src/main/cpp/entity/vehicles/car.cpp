@@ -21,8 +21,6 @@ Car::Car(btDynamicsWorld *world, AAssetManager *mgr) {
 	init(world, mgr);
 }
 
-int cpt = 0;
-
 void Car::draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) {
 	btScalar tmp[16];
 

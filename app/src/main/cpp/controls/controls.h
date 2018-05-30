@@ -8,9 +8,17 @@
 
 #include <tuple>
 
+struct input {
+	float xAxis;
+	float speed;
+	bool brake;
+	float turretDir;
+	float turretUp;
+};
+
 class Controls {
 public:
-	virtual void onInput(float xAxis, float speed, bool brake) = 0;
+	virtual void onInput(input in) = 0;
 };
 
 

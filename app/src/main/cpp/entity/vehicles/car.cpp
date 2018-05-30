@@ -18,6 +18,7 @@ static float wheelMass = 10.f;
 
 Car::Car(btDynamicsWorld *world, AAssetManager *mgr) {
 	direction = 0.f;
+	speed = 0.f;
 	init(world, mgr);
 }
 
@@ -167,11 +168,11 @@ void Car::init(btDynamicsWorld *world, AAssetManager *mgr) {
 	}
 }
 
-void Car::onInput(float xAxis, float s, bool brake) {
+void Car::onInput(input in) {
 	int motorAxis = 5;
 	float attenuation = 10.f;
 
-	direction += xAxis / attenuation;
+	direction += in.xAxis / attenuation;
 	if (direction > 1.f) direction = 1.f;
 	if (direction < -1.f) direction = -1.f;
 
@@ -185,10 +186,10 @@ void Car::onInput(float xAxis, float s, bool brake) {
 			float(M_PI) * direction / 6.f);
 
 	motorAxis = 3;
-	speed += s / attenuation;
+	speed += in.speed / attenuation;
 	if (speed > 1.f) speed = 1.f;
 	if (speed < -1.f) speed = -1.f;
-	if (brake) speed = 0.f;
+	if (in.brake) speed = 0.f;
 
 	for (int i = 0; i < 4; i++) {
 		pHinge2[i]->setTargetVelocity(motorAxis, -speed * 10.f);

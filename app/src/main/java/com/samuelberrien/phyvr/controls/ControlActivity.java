@@ -22,11 +22,15 @@ public class ControlActivity extends AppCompatActivity {
 
 		setUpControls = new ArrayList<>();
 
-		setUpControls.add(new SetUpControl(this, R.string.left_control, this));
-		setUpControls.add(new SetUpControl(this, R.string.right_control, this));
-		setUpControls.add(new SetUpControl(this, R.string.speed_up_control, this));
-		setUpControls.add(new SetUpControl(this, R.string.speed_down_control, this));
-		setUpControls.add(new SetUpControl(this, R.string.brake_control, this));
+		setUpControls.add(new SetUpControl(this, R.string.left_control));
+		setUpControls.add(new SetUpControl(this, R.string.right_control));
+		setUpControls.add(new SetUpControl(this, R.string.speed_up_control));
+		setUpControls.add(new SetUpControl(this, R.string.speed_down_control));
+		setUpControls.add(new SetUpControl(this, R.string.brake_control));
+		setUpControls.add(new SetUpControl(this, R.string.turret_left_control));
+		setUpControls.add(new SetUpControl(this, R.string.turret_right_control));
+		setUpControls.add(new SetUpControl(this, R.string.turret_up_control));
+		setUpControls.add(new SetUpControl(this, R.string.turret_down_control));
 
 		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 

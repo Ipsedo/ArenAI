@@ -5,6 +5,7 @@
 
 #include <jni.h>
 #include <android/asset_manager_jni.h>
+#include "../entity/vehicles/tank.h"
 #include "../level/level.h"
 #include "../controls/controls.h"
 
@@ -18,7 +19,7 @@ Java_com_samuelberrien_phyvr_MyGvrView_initCar(JNIEnv *env, jobject instance, jo
 	vector<Base *> *entity = (vector<Base *> *) entityPtr;
 	AAssetManager *cppMgr = AAssetManager_fromJava(env, assetManager);
 
-	Car *c = new Car(level->world, cppMgr);
+	Tank *c = new Tank(level->world, cppMgr);
 	entity->push_back(c);
 	level->addNewBox(c);
 	renderer->setCamera(c);

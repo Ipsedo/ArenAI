@@ -8,5 +8,9 @@
 	<string name="speed_up_control">Speed up</string>
 	<string name="speed_down_control">Speed down</string>
 	<string name="brake_control">Brake</string>
+	<string name="turret_left_control">Turret left</string>
+	<string name="turret_right_control">Turret right</string>
+	<string name="turret_up_control">Turret up</string>
+	<string name="turret_down_control">Turret down</string>
 	<string name="undefined_control">Unedefined</string>
 </resources>

@@ -26,6 +26,8 @@ public class Controls {
 
 	public static String sharedPref = "ControlsPreference";
 
+	private final static float AXIS_LIMIT = 0.1f;
+
 	private final long controlPtr;
 
 	private SharedPreferences controlsPref;
@@ -37,6 +39,10 @@ public class Controls {
 	private Infos speedUpInfo;
 	private Infos speedDownInfo;
 	private Infos brakeInfo;
+	private Infos turretLeftInfo;
+	private Infos turretRightInfo;
+	private Infos turretUpInfo;
+	private Infos turretDownInfo;
 
 	static {
 		System.loadLibrary("phyvr");
@@ -64,14 +70,35 @@ public class Controls {
 
 		json = controlsPref.getString(context.getString(R.string.brake_control), Controls.Infos.getDefault());
 		brakeInfo = gson.fromJson(json, Controls.Infos.class);
+
+		json = controlsPref.getString(context.getString(R.string.turret_left_control), Controls.Infos.getDefault());
+		turretLeftInfo = gson.fromJson(json, Controls.Infos.class);
+
+		json = controlsPref.getString(context.getString(R.string.turret_right_control), Controls.Infos.getDefault());
+		turretRightInfo = gson.fromJson(json, Controls.Infos.class);
+
+		json = controlsPref.getString(context.getString(R.string.turret_up_control), Controls.Infos.getDefault());
+		turretUpInfo = gson.fromJson(json, Controls.Infos.class);
+
+		json = controlsPref.getString(context.getString(R.string.turret_down_control), Controls.Infos.getDefault());
+		turretDownInfo = gson.fromJson(json, Controls.Infos.class);
 	}
 
 	public void onMotionEvent(MotionEvent event) {
 		float leftValue = 0.f;
 		float rightValue = 0.f;
+
 		float speedUpValue = 0.f;
 		float speedDownValue = 0.f;
+
 		boolean brake = false;
+
+		float leftTurret = 0.f;
+		float rightTurret = 0.f;
+
+		float upTurret = 0.f;
+		float downTurret = 0.f;
+
 		if (leftInfo.isMotionEvent) {
 			leftValue = event.getAxisValue(leftInfo.ID);
 			leftValue = leftInfo.isPlusAxis ? -leftValue : leftValue;
@@ -80,6 +107,7 @@ public class Controls {
 			rightValue = event.getAxisValue(rightInfo.ID);
 			rightValue = rightInfo.isPlusAxis ? rightValue : -rightValue;
 		}
+
 		if (speedUpInfo.isMotionEvent) {
 			speedUpValue = event.getAxisValue(speedUpInfo.ID);
 			speedUpValue = speedUpInfo.isPlusAxis ? speedUpValue : -speedUpValue;
@@ -88,38 +116,85 @@ public class Controls {
 			speedDownValue = event.getAxisValue(speedDownInfo.ID);
 			speedDownValue = speedDownInfo.isPlusAxis ? -speedDownValue : speedDownValue;
 		}
+
 		if (brakeInfo.isMotionEvent) {
 			if (event.getAxisValue(brakeInfo.ID) > 0.5f) brake = true;
 		}
 
+		if (turretLeftInfo.isMotionEvent) {
+			leftTurret = event.getAxisValue(turretLeftInfo.ID);
+			leftTurret = turretLeftInfo.isPlusAxis ? -leftTurret : leftTurret;
+		}
+		if (turretRightInfo.isMotionEvent) {
+			rightTurret = event.getAxisValue(turretRightInfo.ID);
+			rightTurret = turretRightInfo.isPlusAxis ? rightTurret : -rightTurret;
+		}
+
+		if (turretUpInfo.isMotionEvent) {
+			upTurret = event.getAxisValue(turretUpInfo.ID);
+			upTurret = turretUpInfo.isPlusAxis ? upTurret : -upTurret;
+		}
+		if (turretDownInfo.isMotionEvent) {
+			downTurret = event.getAxisValue(turretDownInfo.ID);
+			downTurret = turretDownInfo.isPlusAxis ? -downTurret : downTurret;
+		}
+
 		float steer;
 		float speed;
+		float turretDir;
+		float turretHeight;
+
 		if (Math.abs(leftValue) > Math.abs(rightValue)) steer = leftValue;
 		else steer = rightValue;
+
 		if (Math.abs(speedUpValue) > Math.abs(speedDownValue)) speed = speedUpValue;
 		else speed = speedDownValue;
 
-		control(controlPtr, steer, speed, brake);
+		if (Math.abs(leftTurret) > Math.abs(rightTurret)) turretDir = leftTurret;
+		else turretDir = rightTurret;
+
+		if (Math.abs(upTurret) > Math.abs(downTurret)) turretHeight = upTurret;
+		else turretHeight = downTurret;
+
+		steer = Math.abs(steer) > AXIS_LIMIT ? steer : 0.f;
+		speed = Math.abs(speed) > AXIS_LIMIT ? speed : 0.f;
+		turretDir = Math.abs(turretDir) > AXIS_LIMIT ? turretDir : 0.f;
+		turretHeight = Math.abs(turretHeight) > AXIS_LIMIT ? turretHeight : 0.f;
+
+		control(controlPtr, steer, speed, brake, turretDir, turretHeight);
 	}
 
 	public void onKeyDown(int keyCode, KeyEvent event) {
 		float leftValue = 0.f;
 		float rightValue = 0.f;
+
 		float speedUpValue = 0.f;
 		float speedDownValue = 0.f;
+
 		boolean brake = false;
+
+		float leftTurret = 0.f;
+		float rightTurret = 0.f;
+
+		float upTurret = 0.f;
+		float downTurret = 0.f;
+
 		if (!leftInfo.isMotionEvent && leftInfo.ID == keyCode) leftValue = -1.f;
 		if (!rightInfo.isMotionEvent && rightInfo.ID == keyCode) rightValue = 1.f;
 		if (!speedUpInfo.isMotionEvent && speedUpInfo.ID == keyCode) speedUpValue = 1.f;
 		if (!speedDownInfo.isMotionEvent && speedDownInfo.ID == keyCode) speedDownValue = -1.f;
 		if (!brakeInfo.isMotionEvent && brakeInfo.ID == keyCode) brake = true;
+		if (!turretLeftInfo.isMotionEvent && turretLeftInfo.ID == keyCode) leftTurret = -1.f;
+		if (!turretRightInfo.isMotionEvent && turretRightInfo.ID == keyCode) rightTurret = 1.f;
+		if (!turretUpInfo.isMotionEvent && turretUpInfo.ID == keyCode) upTurret = 1.f;
+		if (!turretDownInfo.isMotionEvent && turretDownInfo.ID == keyCode) downTurret = -1.f;
 
-		float steer;
-		float speed;
-		steer = leftValue + rightValue;
-		speed = speedUpValue + speedDownValue;
+		float steer = leftValue + rightValue;
+		float speed = speedUpValue + speedDownValue;
+		float turretDir = leftTurret + rightTurret;
+		float turretHeight = upTurret + downTurret;
 
-		control(controlPtr, steer, speed, brake);
+		control(controlPtr, steer, speed, brake, turretDir, turretHeight);
 	}
 
 	public void onKeyUp(int keyCode, KeyEvent event) {
@@ -153,5 +228,5 @@ public class Controls {
 
 	}
 
-	public native void control(long controlPtr, float direction, float speed, boolean brake);
+	public native void control(long controlPtr, float direction, float speed, boolean brake, float turretDir, float turretUp);
 }

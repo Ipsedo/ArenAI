@@ -1,20 +1,19 @@
 //
-// Created by samuel on 28/05/18.
+// Created by samuel on 30/05/18.
 //
 
-#ifndef PHYVR_CAR_H
-#define PHYVR_CAR_H
+#ifndef PHYVR_TANK_H
+#define PHYVR_TANK_H
 
-
-#include "../base.h"
 #include <glm/glm.hpp>
 #include <android/asset_manager.h>
-#include "../../controls/controls.h"
 #include "../../graphics/camera.h"
+#include "../base.h"
+#include "../../controls/controls.h"
 
-class Car : public Base, public Camera, public Controls {
+class Tank : public Base, public Camera, public Controls {
 public:
-	Car(btDynamicsWorld *world, AAssetManager *mgr);
+	Tank(btDynamicsWorld *world, AAssetManager *mgr);
 
 	void onInput(input in) override;
 
@@ -24,11 +23,13 @@ public:
 	glm::vec3 camLookAtVec() override;
 	glm::vec3 camUpVec() override;
 
-	~Car();
+	~Tank();
 
 private:
 	float direction;
 	float speed;
+
+	float turretDir;
 
 	void init(btDynamicsWorld *world, AAssetManager *mgr);
 
@@ -37,4 +38,4 @@ private:
 };
 
 
-#endif //PHYVR_CAR_H
+#endif //PHYVR_TANK_H

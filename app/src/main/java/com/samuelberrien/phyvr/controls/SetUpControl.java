@@ -26,13 +26,13 @@ public class SetUpControl extends LinearLayout {
 
 	private boolean isSetUp;
 
-	public SetUpControl(final Context context, int controlStrId, final Activity activity) {
-		super(context);
+	public SetUpControl(final Activity activity, int controlStrId) {
+		super(activity);
 		setOrientation(HORIZONTAL);
 
-		controlName = context.getString(controlStrId);
+		controlName = activity.getString(controlStrId);
 
-		controlsPref = context.getSharedPreferences(Controls.sharedPref, MODE_PRIVATE);
+		controlsPref = activity.getSharedPreferences(Controls.sharedPref, MODE_PRIVATE);
 
 		Gson gson = new Gson();
 		String json = controlsPref.getString(controlName, Controls.Infos.getDefault());
@@ -41,7 +41,7 @@ public class SetUpControl extends LinearLayout {
 		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT);
 		params.weight = 0.5f;
 
-		setUpButton = new Button(context);
+		setUpButton = new Button(activity);
 		setUpButton.setLayoutParams(params);
 		setUpButton.setGravity(Gravity.CENTER);
 		setUpButton.setText(controlName);
@@ -70,7 +70,7 @@ public class SetUpControl extends LinearLayout {
 
 		addView(setUpButton);
 
-		controlView = new TextView(context);
+		controlView = new TextView(activity);
 		controlView.setLayoutParams(params);
 		controlView.setGravity(Gravity.CENTER);
 		setTextViewInfos();

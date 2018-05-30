@@ -6,6 +6,9 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.TextView;
+import com.google.gson.Gson;
+import com.samuelberrien.phyvr.controls.ControlActivity;
+import com.samuelberrien.phyvr.controls.Controls;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -14,15 +17,23 @@ public class MainActivity extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		// Example of a call to a native method
-		TextView tv = (TextView) findViewById(R.id.sample_text);
-		//tv.setText(stringFromJNI());
-		//tv.setText("YO");
-		tv.setText(getString(R.string.app_name));
+		Controls.Infos infos = new Controls.Infos();
+		infos.ID = 1;
+		infos.isMotionEvent = true;
+		infos.name = "a";
+
+		Gson gson = new Gson();
+		String json = gson.toJson(infos);
+		System.out.println(json);
 	}
 
 	public void vr(View v) {
 		Intent myIntent = new Intent(this, MyGvrActivity.class);
+		startActivity(myIntent);
+	}
+
+	public void configureControls(View v) {
+		Intent myIntent = new Intent(this, ControlActivity.class);
 		startActivity(myIntent);
 	}
 }

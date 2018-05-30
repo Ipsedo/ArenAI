@@ -1,20 +1,41 @@
 package com.samuelberrien.phyvr.controls;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import com.google.gson.Gson;
+import com.samuelberrien.phyvr.R;
 
 import java.util.ArrayList;
 
+import static android.content.Context.MODE_PRIVATE;
+
 public class Controls {
+
+	public static class Infos {
+		public int ID;
+		public boolean isMotionEvent;
+		public String name;
+		public boolean isPlusAxis; // -1, +1 axis for motioneEvent
+		public static String getDefault() {
+			return "{\"ID\":-1,\"isMotionEvent\":false,\"isPlusAxis\":false,\"name\":\"undefined\"}";
+		}
+	}
+
+	public static String sharedPref = "ControlsPreference";
 
 	private final long carPtr;
 
+	private SharedPreferences controlsPref;
+
 	private int controllerId;
 
-	private int directionAxis;
-	private int reverseAxis;
-	private int speedAxis;
+	private Infos leftInfo;
+	private Infos rightInfo;
+	private Infos speedUpInfo;
+	private Infos speedDownInfo;
 
 	static {
 		System.loadLibrary("phyvr");
@@ -22,37 +43,61 @@ public class Controls {
 
 	public native long initControls();
 
-	public Controls(long carPtr) {
+	public Controls(Context context, long carPtr) {
 		controllerId = -1;
 
 		this.carPtr = carPtr;
 
-		/**
-		 * Xbox one controller
-		 */
-		directionAxis = MotionEvent.AXIS_X;
-		reverseAxis = MotionEvent.AXIS_BRAKE;
-		speedAxis = MotionEvent.AXIS_THROTTLE;
+		controlsPref = context.getSharedPreferences(Controls.sharedPref, MODE_PRIVATE);
+		Gson gson = new Gson();
+
+		String json = controlsPref.getString(context.getString(R.string.left_control), Controls.Infos.getDefault());
+		leftInfo = gson.fromJson(json, Controls.Infos.class);
+
+		json = controlsPref.getString(context.getString(R.string.right_control), Controls.Infos.getDefault());
+		rightInfo = gson.fromJson(json, Controls.Infos.class);
+
+		json = controlsPref.getString(context.getString(R.string.speed_up_control), Controls.Infos.getDefault());
+		speedUpInfo = gson.fromJson(json, Controls.Infos.class);
+
+		json = controlsPref.getString(context.getString(R.string.speed_down_control), Controls.Infos.getDefault());
+		speedDownInfo = gson.fromJson(json, Controls.Infos.class);
 	}
 
 	public void onMotionEvent(MotionEvent event) {
-		if ((event.getSource() & InputDevice.SOURCE_JOYSTICK)
-				== InputDevice.SOURCE_JOYSTICK) {
-			float dir = event.getAxisValue(directionAxis);
-			float speed = event.getAxisValue(speedAxis);
-			float reverse = event.getAxisValue(reverseAxis);
+		float leftValue = 0.f;
+		float rightValue = 0.f;
+		float speedUpValue = 0.f;
+		float speedDownValue = 0.f;
+		if (leftInfo.isMotionEvent) {
+			leftValue = event.getAxisValue(leftInfo.ID);
+			leftValue = leftInfo.isPlusAxis ? -leftValue : leftValue;
+		}
+		if (rightInfo.isMotionEvent) {
+			rightValue = event.getAxisValue(rightInfo.ID);
+			rightValue = rightInfo.isPlusAxis ? rightValue : -rightValue;
+		}
+		if (speedUpInfo.isMotionEvent) {
+			speedUpValue = event.getAxisValue(speedUpInfo.ID);
+			speedUpValue = speedUpInfo.isPlusAxis ? speedUpValue : -speedUpValue;
+		}
+		if (speedDownInfo.isMotionEvent) {
+			speedDownValue = event.getAxisValue(speedDownInfo.ID);
+			speedDownValue = speedDownInfo.isPlusAxis ? -speedDownValue : speedDownValue;
+		}
 
-			float speedChange = reverse > 0.f ? reverse : speed;
-			System.out.println("POIR : " + speedChange);
-			control(carPtr, dir, speedChange);
-		}
-		if ((event.getSource() & InputDevice.SOURCE_DPAD)
-				== InputDevice.SOURCE_DPAD) {
-		}
+		float steer;
+		float speed;
+		if (Math.abs(leftValue) > Math.abs(rightValue)) steer = leftValue;
+		else steer = rightValue;
+		if (Math.abs(speedUpValue) > Math.abs(speedDownValue)) speed = speedUpValue;
+		else speed = speedDownValue;
+
+		control(carPtr, steer, speed);
 	}
 
 	public void onKeyDown(int keyCode, KeyEvent event) {
-		switch(keyCode) {
+		/*switch(keyCode) {
 			case KeyEvent.KEYCODE_BUTTON_L1:
 			case KeyEvent.KEYCODE_BUTTON_R1:
 			case KeyEvent.KEYCODE_BUTTON_THUMBR:
@@ -68,7 +113,7 @@ public class Controls {
 			case KeyEvent.KEYCODE_BUTTON_X:
 			case KeyEvent.KEYCODE_BUTTON_Y:
 			default:
-		}
+		}*/
 	}
 
 	public void onKeyUp(int keyCode, KeyEvent event) {

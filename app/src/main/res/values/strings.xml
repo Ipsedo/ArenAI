@@ -1,3 +1,9 @@
 <resources>
 	<string name="app_name">PhyVR</string>
+	<string name="activity_control_text">Click to define control :</string>
+	<string name="left_control">Left</string>
+	<string name="right_control">Right</string>
+	<string name="speed_up_control">Speed up</string>
+	<string name="speed_down_control">Speed down</string>
+	<string name="undefined_control">Unedefined</string>
 </resources>

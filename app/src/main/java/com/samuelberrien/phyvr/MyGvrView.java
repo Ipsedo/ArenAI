@@ -46,13 +46,13 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		controls.onKeyDown(keyCode, event);
-		return super.onKeyDown(keyCode, event);
+		return true;
 	}
 
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
 		controls.onKeyUp(keyCode, event);
-		return super.onKeyUp(keyCode, event);
+		return true;
 	}
 
 	/**
@@ -108,7 +108,7 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 		rendererPtr = initRenderer(boxesPtr);
 		carPtr = initCar(getContext().getAssets(), levelPtr, rendererPtr, boxesPtr);
 
-		controls = new Controls(carPtr);
+		controls = new Controls(getContext(), carPtr);
 	}
 
 	@Override

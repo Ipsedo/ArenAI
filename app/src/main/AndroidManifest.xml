@@ -34,6 +34,9 @@
             </intent-filter>
 
         </activity>
+        <activity android:name=".controls.ControlActivity">
+
+        </activity>
     </application>
 
 </manifest>

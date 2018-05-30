@@ -6,6 +6,7 @@
 #include <jni.h>
 #include <android/asset_manager_jni.h>
 #include "../level/level.h"
+#include "../controls/controls.h"
 
 extern "C"
 JNIEXPORT jlong JNICALL
@@ -23,15 +24,4 @@ Java_com_samuelberrien_phyvr_MyGvrView_initCar(JNIEnv *env, jobject instance, jo
 	renderer->setCamera(c);
 
 	return (long) c;
-}
-
-extern "C"
-JNIEXPORT void JNICALL
-Java_com_samuelberrien_phyvr_controls_Controls_control(JNIEnv *env, jobject instance,
-													   jlong controlPtr, jfloat direction,
-													   jfloat speed) {
-
-	Car *c = (Car *) controlPtr;
-	c->control(direction, speed);
-
 }

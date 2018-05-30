@@ -26,6 +26,7 @@ public class ControlActivity extends AppCompatActivity {
 		setUpControls.add(new SetUpControl(this, R.string.right_control, this));
 		setUpControls.add(new SetUpControl(this, R.string.speed_up_control, this));
 		setUpControls.add(new SetUpControl(this, R.string.speed_down_control, this));
+		setUpControls.add(new SetUpControl(this, R.string.brake_control, this));
 
 		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 

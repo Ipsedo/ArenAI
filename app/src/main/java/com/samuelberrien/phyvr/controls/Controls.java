@@ -26,7 +26,7 @@ public class Controls {
 
 	public static String sharedPref = "ControlsPreference";
 
-	private final long carPtr;
+	private final long controlPtr;
 
 	private SharedPreferences controlsPref;
 
@@ -36,17 +36,16 @@ public class Controls {
 	private Infos rightInfo;
 	private Infos speedUpInfo;
 	private Infos speedDownInfo;
+	private Infos brakeInfo;
 
 	static {
 		System.loadLibrary("phyvr");
 	}
 
-	public native long initControls();
-
-	public Controls(Context context, long carPtr) {
+	public Controls(Context context, long controlPtr) {
 		controllerId = -1;
 
-		this.carPtr = carPtr;
+		this.controlPtr = controlPtr;
 
 		controlsPref = context.getSharedPreferences(Controls.sharedPref, MODE_PRIVATE);
 		Gson gson = new Gson();
@@ -62,6 +61,9 @@ public class Controls {
 
 		json = controlsPref.getString(context.getString(R.string.speed_down_control), Controls.Infos.getDefault());
 		speedDownInfo = gson.fromJson(json, Controls.Infos.class);
+
+		json = controlsPref.getString(context.getString(R.string.brake_control), Controls.Infos.getDefault());
+		brakeInfo = gson.fromJson(json, Controls.Infos.class);
 	}
 
 	public void onMotionEvent(MotionEvent event) {
@@ -69,6 +71,7 @@ public class Controls {
 		float rightValue = 0.f;
 		float speedUpValue = 0.f;
 		float speedDownValue = 0.f;
+		boolean brake = false;
 		if (leftInfo.isMotionEvent) {
 			leftValue = event.getAxisValue(leftInfo.ID);
 			leftValue = leftInfo.isPlusAxis ? -leftValue : leftValue;
@@ -85,6 +88,9 @@ public class Controls {
 			speedDownValue = event.getAxisValue(speedDownInfo.ID);
 			speedDownValue = speedDownInfo.isPlusAxis ? -speedDownValue : speedDownValue;
 		}
+		if (brakeInfo.isMotionEvent) {
+			if (event.getAxisValue(brakeInfo.ID) > 0.5f) brake = true;
+		}
 
 		float steer;
 		float speed;
@@ -93,27 +99,27 @@ public class Controls {
 		if (Math.abs(speedUpValue) > Math.abs(speedDownValue)) speed = speedUpValue;
 		else speed = speedDownValue;
 
-		control(carPtr, steer, speed);
+		control(controlPtr, steer, speed, brake);
 	}
 
 	public void onKeyDown(int keyCode, KeyEvent event) {
-		/*switch(keyCode) {
-			case KeyEvent.KEYCODE_BUTTON_L1:
-			case KeyEvent.KEYCODE_BUTTON_R1:
-			case KeyEvent.KEYCODE_BUTTON_THUMBR:
-			case KeyEvent.KEYCODE_BUTTON_THUMBL:
-			case KeyEvent.KEYCODE_DPAD_LEFT:
-			case KeyEvent.KEYCODE_DPAD_RIGHT:
-			case KeyEvent.KEYCODE_DPAD_UP:
-			case KeyEvent.KEYCODE_DPAD_DOWN:
-			case KeyEvent.KEYCODE_BUTTON_START:
-			case KeyEvent.KEYCODE_BUTTON_MODE://Big button in the middle
-			case KeyEvent.KEYCODE_BUTTON_B:
-			case KeyEvent.KEYCODE_BUTTON_A:
-			case KeyEvent.KEYCODE_BUTTON_X:
-			case KeyEvent.KEYCODE_BUTTON_Y:
-			default:
-		}*/
+		float leftValue = 0.f;
+		float rightValue = 0.f;
+		float speedUpValue = 0.f;
+		float speedDownValue = 0.f;
+		boolean brake = false;
+		if (!leftInfo.isMotionEvent && leftInfo.ID == keyCode) leftValue = -1.f;
+		if (!rightInfo.isMotionEvent && rightInfo.ID == keyCode) rightValue = 1.f;
+		if (!speedUpInfo.isMotionEvent && speedUpInfo.ID == keyCode) speedUpValue = 1.f;
+		if (!speedDownInfo.isMotionEvent && speedDownInfo.ID == keyCode) speedDownValue = -1.f;
+		if (!brakeInfo.isMotionEvent && brakeInfo.ID == keyCode) brake = true;
+
+		float steer;
+		float speed;
+		steer = leftValue + rightValue;
+		speed = speedUpValue + speedDownValue;
+
+		control(controlPtr, steer, speed, brake);
 	}
 
 	public void onKeyUp(int keyCode, KeyEvent event) {
@@ -147,5 +153,5 @@ public class Controls {
 
 	}
 
-	public native void control(long controlPtr, float direction, float speed);
+	public native void control(long controlPtr, float direction, float speed, boolean brake);
 }

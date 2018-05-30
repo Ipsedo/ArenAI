@@ -5,16 +5,16 @@
 #include "misc.h"
 
 float *packedVertNorm(float *heightmap, int width, int height) {
-    for (int i = 0; i < width; i++) {
-        for (int j = 0; j < height; j++) {
+	for (int i = 0; i < width; i++) {
+		for (int j = 0; j < height; j++) {
 
-        }
-    }
+		}
+	}
 
 
-    return nullptr;
+	return nullptr;
 }
 
 float *packedNoiseMap(int width, int height) {
-    return nullptr;
+	return nullptr;
 }

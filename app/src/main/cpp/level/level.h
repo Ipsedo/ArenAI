@@ -10,19 +10,23 @@
 
 class Level {
 public:
-    Level(vector<Base*>* b);
-    void update(float delta);
-    // ajoute un nouveau Box SEULEMENT au World (sera suppr dans le futur)
-    void addNewBox(Base* base);
-    ~Level();
-    btDiscreteDynamicsWorld* world;
+	Level(vector<Base *> *b);
+
+	void update(float delta);
+
+	// ajoute un nouveau Box SEULEMENT au World (sera suppr dans le futur)
+	void addNewBox(Base *base);
+
+	~Level();
+
+	btDiscreteDynamicsWorld *world;
 
 private:
-    vector<Base*>* bases;
-    btBroadphaseInterface* broadPhase;
-    btCollisionDispatcher* dispatcher;
-    btDefaultCollisionConfiguration* collisionConfiguration;
-    btSequentialImpulseConstraintSolver* constraintSolver;
+	vector<Base *> *bases;
+	btBroadphaseInterface *broadPhase;
+	btCollisionDispatcher *dispatcher;
+	btDefaultCollisionConfiguration *collisionConfiguration;
+	btSequentialImpulseConstraintSolver *constraintSolver;
 };
 
 

@@ -3,6 +3,6 @@
 
 #include <GLES2/gl2.h>
 
-GLuint loadShader(GLenum type, const char* shaderSource);
+GLuint loadShader(GLenum type, const char *shaderSource);
 
 #endif

@@ -50,12 +50,13 @@ private:
     void init();
     void bind();
     void bindBuffer(std::vector<float> packedData);*/
-    std::vector<float> parseObj(std::string obj_file_text);
+	std::vector<float> parseObj(std::string obj_file_text);
 
 public:
-    ModelVBO(std::string obj_file_text);
-    ModelVBO(std::string obj_file_text, float color[4]);
-    //void draw(glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos);
+	ModelVBO(std::string obj_file_text);
+
+	ModelVBO(std::string obj_file_text, float color[4]);
+	//void draw(glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos);
 };
 
 #endif

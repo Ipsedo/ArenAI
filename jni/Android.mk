@@ -95,6 +95,7 @@ FILE_LIST := $(wildcard \
 		$(LOCAL_PATH)/cpp/entity/vehicles/*.cpp \
 		$(LOCAL_PATH)/cpp/entity/poly/*.cpp \
 		$(LOCAL_PATH)/cpp/controls/*.cpp \
+		$(LOCAL_PATH)/cpp/wrappers/*.cpp \
 		)
 LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)
 

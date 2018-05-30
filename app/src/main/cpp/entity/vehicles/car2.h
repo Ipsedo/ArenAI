@@ -12,17 +12,23 @@
 
 class Car2 : public Base {
 public:
-    Car2(btDynamicsWorld* world, AAssetManager* mgr);
-    void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) override;
-    void control();
-    ~Car2();
+	Car2(btDynamicsWorld *world, AAssetManager *mgr);
+
+	void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) override;
+
+	void control();
+
+	~Car2();
+
 private:
-    btDefaultVehicleRaycaster* raycaster;
-    btRaycastVehicle::btVehicleTuning tuning;
-    btRaycastVehicle* vehicle;
-    void init(btDynamicsWorld* world, AAssetManager* mgr);
-    ModelVBO* chassis;
-    ModelVBO* wheel;
+	btDefaultVehicleRaycaster *raycaster;
+	btRaycastVehicle::btVehicleTuning tuning;
+	btRaycastVehicle *vehicle;
+
+	void init(btDynamicsWorld *world, AAssetManager *mgr);
+
+	ModelVBO *chassis;
+	ModelVBO *wheel;
 };
 
 

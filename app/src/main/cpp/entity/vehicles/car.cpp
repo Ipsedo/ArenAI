@@ -149,7 +149,7 @@ void Car::init(btDynamicsWorld* world, AAssetManager* mgr) {
             int motorAxis = 3;
             pHinge2[i]->enableMotor(motorAxis, true);
             pHinge2[i]->setMaxMotorForce(motorAxis, 1e10f);
-            pHinge2[i]->setTargetVelocity(motorAxis, -3);
+            pHinge2[i]->setTargetVelocity(motorAxis, 0);
         }
 
         /*

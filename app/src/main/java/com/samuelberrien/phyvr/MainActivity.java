@@ -9,11 +9,6 @@ import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
 
-	// Used to load the 'native-lib' library on application startup.
-	static {
-		System.loadLibrary("phyvr");
-	}
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -23,19 +18,11 @@ public class MainActivity extends AppCompatActivity {
 		TextView tv = (TextView) findViewById(R.id.sample_text);
 		//tv.setText(stringFromJNI());
 		//tv.setText("YO");
-		tv.setText(test(this.getAssets()));
+		tv.setText(getString(R.string.app_name));
 	}
 
 	public void vr(View v) {
 		Intent myIntent = new Intent(this, MyGvrActivity.class);
 		startActivity(myIntent);
 	}
-
-	/**
-	 * A native method that is implemented by the 'native-lib' native library,
-	 * which is packaged with this application.
-	 */
-	public native String stringFromJNI();
-
-	public native String test(AssetManager mgr);
 }

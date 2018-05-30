@@ -1,6 +1,7 @@
 package com.samuelberrien.phyvr.controls;
 
 import android.view.InputDevice;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 
 import java.util.ArrayList;
@@ -27,9 +28,15 @@ public class Controls {
 				== InputDevice.SOURCE_JOYSTICK) {
 			float x = event.getAxisValue(MotionEvent.AXIS_X);
 			float y = event.getAxisValue(MotionEvent.AXIS_Y);
-			System.out.println("POIR " + x);
 			control(carPtr, x, y);
 		}
+	}
+
+	public void onKeyDown(int keyCode, KeyEvent event) {
+		
+	}
+
+	public void onKeyUp(int keyCode, KeyEvent event) {
 
 	}
 

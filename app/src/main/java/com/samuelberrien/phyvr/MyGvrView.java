@@ -3,6 +3,7 @@ package com.samuelberrien.phyvr;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.util.AttributeSet;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 
 import com.google.vr.sdk.base.Eye;
@@ -41,6 +42,18 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
     	controls.onMotionEvent(motionEvent);
     	return super.onGenericMotionEvent(motionEvent);
 	}
+
+	@Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        controls.onKeyDown(keyCode, event);
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        controls.onKeyUp(keyCode, event);
+        return super.onKeyUp(keyCode, event);
+    }
 
     /**
      * Stereo Renderer stuff

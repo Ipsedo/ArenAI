@@ -9,21 +9,20 @@
 #include "../base.h"
 #include <glm/glm.hpp>
 #include <android/asset_manager.h>
+#include "../../controls/controls.h"
 #include "../../graphics/camera.h"
 
-class Car : public Base, public Camera {
+class Car : public Base, public Camera, public Controls {
 public:
 	Car(btDynamicsWorld *world, AAssetManager *mgr);
+
+	void onInput(float xAxis, float speed, bool brake) override;
 
 	void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) override;
 
 	glm::vec3 camPos() override;
-
 	glm::vec3 camLookAtVec() override;
-
 	glm::vec3 camUpVec() override;
-
-	void control(float leftRight, float speed);
 
 	~Car();
 

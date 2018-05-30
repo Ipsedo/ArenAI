@@ -9,18 +9,8 @@
 #include <tuple>
 
 class Controls {
-private:
-	float joystick1Ver;
-	float joystick1Hor;
-
 public:
-	std::tuple<int, int> getJoystick1();
-
-	std::tuple<int, int> getJoystick2();
-
-	bool isPressingFire();
-
-	bool isPressingBrake();
+	virtual void onInput(float xAxis, float speed, bool brake) = 0;
 };
 
 

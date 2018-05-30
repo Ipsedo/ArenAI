@@ -27,7 +27,6 @@ Renderer::Renderer(vector<Base *> *bases) {
 
 void Renderer::update(glm::mat4 mHeadView) {
 	camPos = camera->camPos();
-	camPos.y += 3.f;
 	camLookAtVec = camera->camLookAtVec();
 	camUpVec = camera->camUpVec();
 }

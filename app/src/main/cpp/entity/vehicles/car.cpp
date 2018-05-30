@@ -12,7 +12,7 @@
 
 
 static float wheelRadius = 0.7f;
-static float wheelWidth = 0.2f;
+static float wheelWidth = 0.35f;
 static float chassisMass = 850.f;
 static float wheelMass = 10.f;
 
@@ -110,13 +110,10 @@ void Car::init(btDynamicsWorld *world, AAssetManager *mgr) {
 	modelVBOs.push_back(new ModelVBO(cylObjText, new float[4]{0.f, 1.f, 0.f, 1.f}));
 
 	for (int i = 0; i < 4; i++) {
-		// create a Hinge2 joint
-		// create two rigid bodies
-		// static bodyA (parent) on top:
 
-		btRigidBody *pBodyA = rigidBody[0];//m_chassis;//createRigidBody( 0.0, tr, m_wheelShape);
+		btRigidBody *pBodyA = rigidBody[0];
 		pBodyA->setActivationState(DISABLE_DEACTIVATION);
-		// dynamic bodyB (child) below it :
+
 		tr.setIdentity();
 		tr.setOrigin(wheelPos[i]);
 
@@ -130,20 +127,22 @@ void Car::init(btDynamicsWorld *world, AAssetManager *mgr) {
 
 		pBodyB->setFriction(1110);
 		pBodyB->setActivationState(DISABLE_DEACTIVATION);
-		// add some data to build constraint frames
+
 		btVector3 parentAxis(0.f, 1.f, 0.f);
 		btVector3 childAxis(1.f, 0.f, 0.f);
-		btVector3 anchor = tr.getOrigin();//(0.f, 0.f, 0.f);
+		btVector3 anchor = tr.getOrigin();
 		pHinge2.push_back(new btHinge2Constraint(*pBodyA, *pBodyB, anchor, parentAxis,
 												 childAxis));
 
 		pHinge2[i]->setLowerLimit(float(-M_PI) * 0.5f);
 		pHinge2[i]->setUpperLimit(float(M_PI) * 0.5f);
-		// add constraint to world
+
 		world->addConstraint(pHinge2[i], true);
-		// draw constraint frames and limits for debugging
+
 		/**
-		 * motorAxis 5 -> X axis
+		 * Axis :
+		 * 	- Linear, y = 2
+		 * 	- Rotation, x = 3, z = 4, y = 5
 		 */
 
 		{
@@ -153,46 +152,28 @@ void Car::init(btDynamicsWorld *world, AAssetManager *mgr) {
 			pHinge2[i]->setTargetVelocity(motorAxis, 0);
 		}
 
-		/*
-		 * motorAxis 5 -> Y axis
-		 */
-#if 0
-		if (i > 1){
-			// Roues arrière
-			int motorAxis = 5;
-			pHinge2[i]->setLimit(motorAxis,0,0);
-		} else {
-			// Roues avant
-			int motorAxis = 5;
-			pHinge2[i]->setLimit(motorAxis,float(-M_PI) * 1.f / 6.f,float(M_PI) * 1.f / 6.f);
-			pHinge2[i]->enableMotor(motorAxis, true);
-			pHinge2[i]->setMaxMotorForce(motorAxis, 1e30f);
-			pHinge2[i]->setTargetVelocity(motorAxis, 0);
-			/*pHinge2[i]->setServo(motorAxis, true);
-			pHinge2[i]->setServoTarget(motorAxis, 0);*/
-		}
-#endif
-#if 1
 		{
 			int motorAxis = 5;
 			pHinge2[i]->setLimit(motorAxis, 0, 0);
 		}
-#endif
 
+		{
+			int index = 2;
+			pHinge2[i]->setLimit(index, -0.4f, 0.2f);
+			pHinge2[i]->setDamping(index, 2.3f, true);
+			pHinge2[i]->setStiffness(index, 20.f, true);
+			pHinge2[i]->setBounce(index, 0.1f);
+		}
 
 		pHinge2[i]->setDbgDrawSize(btScalar(5.f));
 	}
 }
 
-/**
- *
- * @param leftRight [-1, 1]
- */
-void Car::control(float leftRight, float s) {
+void Car::onInput(float xAxis, float s, bool brake) {
 	int motorAxis = 5;
 	float attenuation = 10.f;
 
-	direction += leftRight / attenuation;
+	direction += xAxis / attenuation;
 	if (direction > 1.f) direction = 1.f;
 	if (direction < -1.f) direction = -1.f;
 
@@ -206,14 +187,14 @@ void Car::control(float leftRight, float s) {
 			float(M_PI) * direction / 6.f);
 
 	motorAxis = 3;
-	speed += s;
+	speed += s / attenuation;
 	if (speed > 1.f) speed = 1.f;
 	if (speed < -1.f) speed = -1.f;
+	if (brake) speed = 0.f;
 
 	for (int i = 0; i < 4; i++) {
 		pHinge2[i]->setTargetVelocity(motorAxis, -speed * 10.f);
 	}
-
 }
 
 glm::vec3 Car::camPos() {
@@ -223,7 +204,7 @@ glm::vec3 Car::camPos() {
 	defaultMotionState[0]->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
 	glm::mat4 modelMatrix = glm::make_mat4(tmp);
 
-	glm::vec4 pos(0.f, 0.f, 0.f, 1.f);
+	glm::vec4 pos(0.f, 3.f, 0.f, 1.f);
 	pos = modelMatrix * pos;
 
 	return glm::vec3(pos.x, pos.y, pos.z);
@@ -243,5 +224,14 @@ glm::vec3 Car::camLookAtVec() {
 }
 
 glm::vec3 Car::camUpVec() {
-	return glm::vec3(0.f, 1.f, 0.f);
+	btScalar tmp[16];
+
+	// Chassis
+	defaultMotionState[0]->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
+	glm::mat4 modelMatrix = glm::make_mat4(tmp);
+
+	glm::vec4 pos(0.f, 1.f, 0.f, 0.f);
+	pos = modelMatrix * pos;
+
+	return glm::vec3(pos.x, pos.y, pos.z);
 }

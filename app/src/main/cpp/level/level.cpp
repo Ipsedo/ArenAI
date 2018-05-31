@@ -4,6 +4,9 @@
 #include "level.h"
 #include "../entity/shooter.h"
 
+static float gravity = -10.f;
+static float deltaTime = 1.f / 60.f;
+
 Level::Level(vector<Base *> *bases) {
 
 	this->bases = bases;
@@ -17,7 +20,7 @@ Level::Level(vector<Base *> *bases) {
 										broadPhase,
 										constraintSolver,
 										collisionConfiguration);
-	world->setGravity(btVector3(0, -10, 0));
+	world->setGravity(btVector3(0, gravity, 0));
 
 	for (Base *b : *this->bases)
 		for (btRigidBody *bd : b->rigidBody)
@@ -34,7 +37,7 @@ void Level::update(float delta) {
 	for (Shooter* s : shooters)
 		s->fire(bases);
 
-	world->stepSimulation(1.f / 60.f);
+	world->stepSimulation(deltaTime);
 }
 
 void Level::addShooter(Shooter *s) {

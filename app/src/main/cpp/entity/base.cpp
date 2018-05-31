@@ -25,3 +25,7 @@ std::tuple<glm::mat4, glm::mat4> Base::getMatrixes(glm::mat4 pMatrix, glm::mat4 
 
 	return tuple<glm::mat4, glm::mat4>(mvpMatrix, mvMatrix);
 }
+
+void Base::init() {
+}
+

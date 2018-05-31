@@ -13,6 +13,8 @@ class Base {
 public:
 	std::vector<btRigidBody *> rigidBody;
 
+	virtual void init();
+
 	virtual std::tuple<glm::mat4, glm::mat4> getMatrixes(glm::mat4 pMatrix, glm::mat4 vMatrix);
 
 	virtual void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) = 0;

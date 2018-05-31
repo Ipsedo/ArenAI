@@ -14,7 +14,7 @@
 
 class Car : public Base, public Camera, public Controls {
 public:
-	Car(btDynamicsWorld *world, AAssetManager *mgr);
+	Car(glm::vec3 pos, btDynamicsWorld *world, AAssetManager *mgr);
 
 	void onInput(input in) override;
 
@@ -29,6 +29,8 @@ public:
 private:
 	float direction;
 	float speed;
+
+	glm::vec3 spawnPos;
 
 	void init(btDynamicsWorld *world, AAssetManager *mgr);
 

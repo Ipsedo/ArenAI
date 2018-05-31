@@ -16,9 +16,10 @@ static float wheelWidth = 0.35f;
 static float chassisMass = 850.f;
 static float wheelMass = 10.f;
 
-Car::Car(btDynamicsWorld *world, AAssetManager *mgr) {
+Car::Car(glm::vec3 pos, btDynamicsWorld *world, AAssetManager *mgr) {
 	direction = 0.f;
 	speed = 0.f;
+	spawnPos = pos,
 	init(world, mgr);
 }
 
@@ -74,15 +75,13 @@ Car::~Car() {
 void Car::init(btDynamicsWorld *world, AAssetManager *mgr) {
 	std::string cubeObjTxt = getFileText(mgr, "obj/cube.obj");
 
-	float posY = 5.f;
-
 	btTransform tr;
 	tr.setIdentity();
 
 	btCollisionShape *chassisShape = new btBoxShape(btVector3(1.f, 0.5f, 2.f));
 	collisionShape.push_back(chassisShape);
 
-	tr.setOrigin(btVector3(0, posY + 0.f, 0));
+	tr.setOrigin(btVector3(spawnPos.x + 0.f, spawnPos.y + 0.f, spawnPos.z + 0.f));
 
 	std::tuple<btRigidBody *, btDefaultMotionState *> tmp = localCreateRigidBody(chassisMass, tr,
 																				 chassisShape);//chassisShape);
@@ -98,10 +97,10 @@ void Car::init(btDynamicsWorld *world, AAssetManager *mgr) {
 	collisionShape.push_back(m_wheelShape);
 
 	btVector3 wheelPos[4] = {
-			btVector3(btScalar(-1.), btScalar(posY - 0.3), btScalar(1.25)),
-			btVector3(btScalar(1.), btScalar(posY - 0.3), btScalar(1.25)),
-			btVector3(btScalar(1.), btScalar(posY - 0.3), btScalar(-1.25)),
-			btVector3(btScalar(-1.), btScalar(posY - 0.3), btScalar(-1.25))
+			btVector3(btScalar(spawnPos.x - 1.), btScalar(spawnPos.y - 0.3), btScalar(spawnPos.z + 1.25)),
+			btVector3(btScalar(spawnPos.x + 1.), btScalar(spawnPos.y - 0.3), btScalar(spawnPos.z + 1.25)),
+			btVector3(btScalar(spawnPos.x + 1.), btScalar(spawnPos.y - 0.3), btScalar(spawnPos.z - 1.25)),
+			btVector3(btScalar(spawnPos.x - 1.), btScalar(spawnPos.y - 0.3), btScalar(spawnPos.z - 1.25))
 	};
 
 	std::string cylObjText = getFileText(mgr, "obj/cylinderX.obj");

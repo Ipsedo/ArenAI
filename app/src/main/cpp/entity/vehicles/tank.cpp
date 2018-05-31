@@ -16,12 +16,20 @@
 
 static float wheelRadius = 0.8f;
 static float wheelWidth = 0.4f;
-static float chassisMass = 1000.f;
-static float wheelMass = 10.f;
-static float turretMass = 50.f;
-static float canonMass = 10.f;
 static float wheelOffset = 0.6f;
+static float wheelbaseOffset = 0.1f;
+
+static float chassisMass = 40000.f;
+static float wheelMass = 300.f;
+static float turretMass = 100.f;
+static float canonMass = 10.f;
+
 static float canonOffset = 0.1f;
+
+//#95a5a6
+static float wheelColor[4]{52.f / 255.f, 73.f / 255.f, 94.f / 255.f, 1.f};//(0.58431372549f, 0.64705882352f, 0.65098039215f);
+static float chassisColor[4]{150.f / 255.f, 40.f / 255.f, 27.f / 255.f, 1.f};
+static float turretColor[4]{4.f / 255.f, 147.f / 255.f, 114.f / 255.f, 1.f};
 
 Tank::Tank(glm::vec3 pos, btDynamicsWorld *world, AAssetManager *mgr, vector<Base*>* bases) {
 	std::string objTxt = getFileText(mgr, "obj/cone.obj");
@@ -44,7 +52,7 @@ Tank::Tank(glm::vec3 pos, btDynamicsWorld *world, AAssetManager *mgr, vector<Bas
 	direction = 0.f;
 	speed = 0.f;
 
-	chassisScale = glm::vec3(1.f, 0.5f, 2.f);
+	chassisScale = glm::vec3(1.2f, 0.5f, 2.f);
 	turretScale = glm::vec3(0.9f, 0.25f, 1.2f);
 	wheelScale = glm::vec3(wheelWidth, wheelRadius, wheelRadius);
 	canonScale = glm::vec3(0.1f, 0.1f, 0.8f);
@@ -57,12 +65,12 @@ Tank::Tank(glm::vec3 pos, btDynamicsWorld *world, AAssetManager *mgr, vector<Bas
 	nbWheel = 6;
 
 	wheelPos = new btVector3[nbWheel]{
-			btVector3(spawnPos.x - 1.f, spawnPos.y - wheelOffset, spawnPos.z + 1.75f),
-			btVector3(spawnPos.x + 1.f, spawnPos.y - wheelOffset, spawnPos.z + 1.75f),
-			btVector3(spawnPos.x - 1.f, spawnPos.y - wheelOffset, spawnPos.z + 0),
-			btVector3(spawnPos.x + 1.f, spawnPos.y - wheelOffset, spawnPos.z + 0),
-			btVector3(spawnPos.x + 1.f, spawnPos.y - wheelOffset, spawnPos.z - 1.75f),
-			btVector3(spawnPos.x - 1.f, spawnPos.y - wheelOffset, spawnPos.z - 1.75f)
+			btVector3(spawnPos.x - (chassisScale.x + wheelbaseOffset), spawnPos.y - wheelOffset, spawnPos.z + 1.75f),
+			btVector3(spawnPos.x + (chassisScale.x + wheelbaseOffset), spawnPos.y - wheelOffset, spawnPos.z + 1.75f),
+			btVector3(spawnPos.x - (chassisScale.x + wheelbaseOffset), spawnPos.y - wheelOffset, spawnPos.z + 0),
+			btVector3(spawnPos.x + (chassisScale.x + wheelbaseOffset), spawnPos.y - wheelOffset, spawnPos.z + 0),
+			btVector3(spawnPos.x + (chassisScale.x + wheelbaseOffset), spawnPos.y - wheelOffset, spawnPos.z - 1.75f),
+			btVector3(spawnPos.x - (chassisScale.x + wheelbaseOffset), spawnPos.y - wheelOffset, spawnPos.z - 1.75f)
 	};
 
 	init(world, mgr);
@@ -288,11 +296,7 @@ void Tank::makeChassis(AAssetManager *mgr) {
 	btRigidBody *m_carChassis = std::get<0>(tmp);
 	btDefaultMotionState *m_carChassiMotionState = std::get<1>(tmp);
 
-	tr.setIdentity();
-	tr.setOrigin(btVector3(spawnPos.x + 0, spawnPos.y - chassisScale.y / 2.f, spawnPos.z + 0));
-	m_carChassis->setCenterOfMassTransform(tr);
-
-	modelVBOs.push_back(new ModelVBO(chassisObjTxt, new float[4]{1.f, 0.f, 0.f, 1.f}));
+	modelVBOs.push_back(new ModelVBO(chassisObjTxt, chassisColor));
 	scale.push_back(chassisScale);
 	rigidBody.push_back(m_carChassis);
 	defaultMotionState.push_back(m_carChassiMotionState);
@@ -306,7 +310,7 @@ void Tank::makeWheels(AAssetManager *mgr, btDynamicsWorld *world) {
 
 	std::string cylObjText = getFileText(mgr, "obj/cylinderX.obj");
 	scale.push_back(wheelScale);
-	modelVBOs.push_back(new ModelVBO(cylObjText, new float[4]{0.f, 1.f, 0.f, 1.f}));
+	modelVBOs.push_back(new ModelVBO(cylObjText, wheelColor));
 
 	for (int i = 0; i < nbWheel; i++) {
 
@@ -385,7 +389,7 @@ void Tank::makeTurret(AAssetManager *mgr, btDynamicsWorld *world) {
 
 	std::string turretObjTxt = getFileText(mgr, "obj/tank_turret.obj");
 
-	modelVBOs.push_back(new ModelVBO(turretObjTxt, new float[4]{0.f, 0.8f, 0.8f, 1.f}));
+	modelVBOs.push_back(new ModelVBO(turretObjTxt, turretColor));
 
 	btCollisionShape* turretShape = parseObj(turretObjTxt);
 	turretShape->setLocalScaling(btVector3(scale[2].x, scale[2].y, scale[2].z));
@@ -416,7 +420,7 @@ void Tank::makeTurret(AAssetManager *mgr, btDynamicsWorld *world) {
 void Tank::makeCanon(AAssetManager *mgr, btDynamicsWorld *world) {
 	std::string canonObjTxt = getFileText(mgr, "obj/cylinderZ.obj");
 
-	modelVBOs.push_back(new ModelVBO(canonObjTxt, new float[4]{0.f, 0.8f, 0.8f, 1.f}));
+	modelVBOs.push_back(new ModelVBO(canonObjTxt, turretColor));
 
 	scale.push_back(canonScale);
 

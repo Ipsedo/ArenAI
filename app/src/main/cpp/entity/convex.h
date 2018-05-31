@@ -21,8 +21,6 @@ public:
 
 private:
 	ModelVBO *modelVBO;
-
-	btConvexHullShape *parseObj(std::string objFileText);
 };
 
 

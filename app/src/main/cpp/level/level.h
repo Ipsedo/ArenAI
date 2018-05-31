@@ -7,6 +7,7 @@
 
 #include "../graphics/renderer.h"
 #include "../entity/base.h"
+#include "../entity/shooter.h"
 
 class Level {
 public:
@@ -14,14 +15,14 @@ public:
 
 	void update(float delta);
 
-	// ajoute un nouveau Box SEULEMENT au World (sera suppr dans le futur)
-	void addNewBox(Base *base);
+	void addShooter(Shooter* s);
 
 	~Level();
 
 	btDiscreteDynamicsWorld *world;
 
 private:
+	vector<Shooter*> shooters;
 	vector<Base *> *bases;
 	btBroadphaseInterface *broadPhase;
 	btCollisionDispatcher *dispatcher;

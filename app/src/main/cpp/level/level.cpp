@@ -3,6 +3,7 @@
 //
 
 #include "level.h"
+#include "../entity/shooter.h"
 
 Level::Level(vector<Base *> *bases) {
 
@@ -25,12 +26,20 @@ Level::Level(vector<Base *> *bases) {
 }
 
 void Level::update(float delta) {
+	// add rigid body
+	for (Base* b : *bases)
+		for (btRigidBody* rb : b->rigidBody)
+			if (!rb->isInWorld())
+				world->addRigidBody(rb);
+
+	for (Shooter* s : shooters)
+		s->fire(bases);
+
 	world->stepSimulation(delta);
 }
 
-void Level::addNewBox(Base *b) {
-	for (btRigidBody *bd : b->rigidBody)
-		world->addRigidBody(bd);
+void Level::addShooter(Shooter *s) {
+	shooters.push_back(s);
 }
 
 Level::~Level() {

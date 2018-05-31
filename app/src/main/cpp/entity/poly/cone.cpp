@@ -10,7 +10,7 @@
 Cone::Cone(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix,
 		   float mass) {
 	std::string objTxt = getFileText(mgr, "obj/cone.obj");
-
+	hasOwnModelVBO = true;
 	modelVBO = new ModelVBO(
 			objTxt,
 			new float[4]{(float) rand() / RAND_MAX,
@@ -22,6 +22,7 @@ Cone::Cone(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotatio
 }
 
 Cone::Cone(ModelVBO *modelVBO, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass) {
+	hasOwnModelVBO = false;
 	this->modelVBO = modelVBO;
 	init(pos, scale, rotationMatrix, mass);
 }
@@ -58,5 +59,6 @@ void Cone::draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) {
 }
 
 Cone::~Cone() {
-	delete modelVBO;
+	if (hasOwnModelVBO)
+		delete modelVBO;
 }

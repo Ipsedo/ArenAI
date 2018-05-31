@@ -20,6 +20,7 @@ public:
 	~Cone();
 
 private:
+	bool hasOwnModelVBO;
 	void init(glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass);
 	ModelVBO *modelVBO;
 };

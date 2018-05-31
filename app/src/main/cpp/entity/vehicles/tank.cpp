@@ -242,6 +242,7 @@ glm::vec3 Tank::camUpVec() {
 Tank::~Tank() {
 	for (ModelVBO *m : modelVBOs)
 		delete m;
+	delete missile;
 }
 
 /**

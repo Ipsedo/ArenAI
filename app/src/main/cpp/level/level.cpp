@@ -1,7 +1,6 @@
 //
 // Created by samuel on 26/05/18.
 //
-
 #include "level.h"
 #include "../entity/shooter.h"
 
@@ -35,7 +34,7 @@ void Level::update(float delta) {
 	for (Shooter* s : shooters)
 		s->fire(bases);
 
-	world->stepSimulation(delta);
+	world->stepSimulation(1.f / 60.f);
 }
 
 void Level::addShooter(Shooter *s) {

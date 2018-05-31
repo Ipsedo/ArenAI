@@ -19,7 +19,7 @@ Java_com_samuelberrien_phyvr_MyGvrView_initCar(JNIEnv *env, jobject instance, jo
 	vector<Base*>* entity = (vector<Base*>*) entityPtr;
 	AAssetManager *cppMgr = AAssetManager_fromJava(env, assetManager);
 
-	Tank *c = new Tank(glm::vec3(0, 5, 0), level->world, cppMgr, entity);
+	Tank *c = new Tank(glm::vec3(0, -15, -20), level->world, cppMgr, entity);
 	level->addShooter(c);
 	entity->push_back(c);
 	renderer->setCamera(c);

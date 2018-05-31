@@ -14,11 +14,11 @@
 #include "../poly/box.h"
 #include "tank.h"
 
-static float wheelRadius = 0.7f;
+static float wheelRadius = 0.8f;
 static float wheelWidth = 0.4f;
-static float chassisMass = 850.f;
+static float chassisMass = 1000.f;
 static float wheelMass = 10.f;
-static float turretMass = 150.f;
+static float turretMass = 50.f;
 static float canonMass = 10.f;
 static float wheelOffset = 0.6f;
 static float canonOffset = 0.1f;
@@ -288,6 +288,10 @@ void Tank::makeChassis(AAssetManager *mgr) {
 	btRigidBody *m_carChassis = std::get<0>(tmp);
 	btDefaultMotionState *m_carChassiMotionState = std::get<1>(tmp);
 
+	tr.setIdentity();
+	tr.setOrigin(btVector3(spawnPos.x + 0, spawnPos.y - chassisScale.y / 2.f, spawnPos.z + 0));
+	m_carChassis->setCenterOfMassTransform(tr);
+
 	modelVBOs.push_back(new ModelVBO(chassisObjTxt, new float[4]{1.f, 0.f, 0.f, 1.f}));
 	scale.push_back(chassisScale);
 	rigidBody.push_back(m_carChassis);
@@ -466,7 +470,7 @@ void Tank::fire(vector<Base *> *bases) {
 	Base* c = new Cone(missile, glm::vec3(vec.x, vec.y, vec.z), missileScale, rotMatrix, 10.f);
 	world->addRigidBody(c->rigidBody[0]);
 
-	glm::vec4 forceVec = modelMatrix * glm::vec4(0.f, 0.f, 1000.f, 0.f);
+	glm::vec4 forceVec = modelMatrix * glm::vec4(0.f, 0.f, 500.f, 0.f);
 
 	c->rigidBody[0]->applyCentralImpulse(btVector3(forceVec.x, forceVec.y, forceVec.z));
 

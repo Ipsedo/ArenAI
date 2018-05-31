@@ -7,8 +7,12 @@
 
 #include <tuple>
 #include <btBulletDynamicsCommon.h>
+#include <string>
 
-std::tuple<btRigidBody *, btDefaultMotionState *>
+using namespace std;
+
+tuple<btRigidBody *, btDefaultMotionState *>
 localCreateRigidBody(btScalar mass, const btTransform &startTransform, btCollisionShape *shape);
+btConvexHullShape *parseObj(string objFileText);
 
 #endif //PHYVR_RIGODBODY_H

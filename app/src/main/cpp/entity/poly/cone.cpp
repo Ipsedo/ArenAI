@@ -18,6 +18,15 @@ Cone::Cone(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotatio
 						 (float) rand() / RAND_MAX,
 						 1.f});
 
+	init(pos, scale, rotationMatrix, mass);
+}
+
+Cone::Cone(ModelVBO *modelVBO, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass) {
+	this->modelVBO = modelVBO;
+	init(pos, scale, rotationMatrix, mass);
+}
+
+void Cone::init(glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass) {
 	this->scale.push_back(scale);
 
 	collisionShape.push_back(new btConeShape(1.f, 2.f));

@@ -12,6 +12,7 @@
 
 class Cone : public Base {
 public:
+	Cone(ModelVBO* modelVBO, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass);
 	Cone(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass);
 
 	void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) override;
@@ -19,6 +20,7 @@ public:
 	~Cone();
 
 private:
+	void init(glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass);
 	ModelVBO *modelVBO;
 };
 

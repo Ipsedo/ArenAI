@@ -14,14 +14,14 @@ JNIEXPORT jlong JNICALL
 Java_com_samuelberrien_phyvr_MyGvrView_initCar(JNIEnv *env, jobject instance, jobject assetManager,
 											   jlong levelPtr, jlong rendererPtr, jlong entityPtr) {
 
-	Level *level = (Level *) levelPtr;
-	Renderer *renderer = (Renderer *) rendererPtr;
-	vector<Base *> *entity = (vector<Base *> *) entityPtr;
+	Level *level = (Level*) levelPtr;
+	Renderer *renderer = (Renderer*) rendererPtr;
+	vector<Base*>* entity = (vector<Base*>*) entityPtr;
 	AAssetManager *cppMgr = AAssetManager_fromJava(env, assetManager);
 
-	Tank *c = new Tank(level->world, cppMgr);
+	Tank *c = new Tank(glm::vec3(0, 5, 0), level->world, cppMgr, entity);
+	level->addShooter(c);
 	entity->push_back(c);
-	level->addNewBox(c);
 	renderer->setCamera(c);
 
 	return (long) c;

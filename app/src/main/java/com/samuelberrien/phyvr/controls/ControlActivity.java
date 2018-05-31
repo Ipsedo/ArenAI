@@ -31,6 +31,8 @@ public class ControlActivity extends AppCompatActivity {
 		setUpControls.add(new SetUpControl(this, R.string.turret_right_control));
 		setUpControls.add(new SetUpControl(this, R.string.turret_up_control));
 		setUpControls.add(new SetUpControl(this, R.string.turret_down_control));
+		setUpControls.add(new SetUpControl(this, R.string.respawn_control));
+		setUpControls.add(new SetUpControl(this, R.string.fire_control));
 
 		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 

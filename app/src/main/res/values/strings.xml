@@ -12,5 +12,7 @@
 	<string name="turret_right_control">Turret right</string>
 	<string name="turret_up_control">Turret up</string>
 	<string name="turret_down_control">Turret down</string>
+	<string name="respawn_control">Respawn</string>
+	<string name="fire_control">Fire</string>
 	<string name="undefined_control">Unedefined</string>
 </resources>

@@ -20,6 +20,8 @@ static float chassisMass = 850.f;
 static float wheelMass = 10.f;
 static float turretMass = 150.f;
 static float canonMass = 10.f;
+static float wheelOffset = 0.6f;
+static float canonOffset = 0.1f;
 
 Tank::Tank(glm::vec3 pos, btDynamicsWorld *world, AAssetManager *mgr, vector<Base*>* bases) {
 	std::string objTxt = getFileText(mgr, "obj/cone.obj");
@@ -50,17 +52,17 @@ Tank::Tank(glm::vec3 pos, btDynamicsWorld *world, AAssetManager *mgr, vector<Bas
 	turretUp = 0.f;
 	turretDir = 0.f;
 	turretPos = glm::vec3(spawnPos.x + 0.f, spawnPos.y + chassisScale.y + turretScale.y, spawnPos.z + 0.f);
-	canonPos = turretPos + glm::vec3(0.f, 0.f, turretScale.z + canonScale.z - canonScale.z / 10.f);
+	canonPos = turretPos + glm::vec3(0.f, 0.f, turretScale.z + canonScale.z - canonOffset);
 
 	nbWheel = 6;
 
 	wheelPos = new btVector3[nbWheel]{
-			btVector3(btScalar(spawnPos.x - 1.), btScalar(spawnPos.y - 0.4), btScalar(spawnPos.z + 1.75)),
-			btVector3(btScalar(spawnPos.x + 1.), btScalar(spawnPos.y - 0.4), btScalar(spawnPos.z + 1.75)),
-			btVector3(btScalar(spawnPos.x - 1.), btScalar(spawnPos.y - 0.4), btScalar(spawnPos.z + 0)),
-			btVector3(btScalar(spawnPos.x + 1.), btScalar(spawnPos.y - 0.4), btScalar(spawnPos.z + 0)),
-			btVector3(btScalar(spawnPos.x + 1.), btScalar(spawnPos.y - 0.4), btScalar(spawnPos.z - 1.75)),
-			btVector3(btScalar(spawnPos.x - 1.), btScalar(spawnPos.y - 0.4), btScalar(spawnPos.z - 1.75))
+			btVector3(spawnPos.x - 1.f, spawnPos.y - wheelOffset, spawnPos.z + 1.75f),
+			btVector3(spawnPos.x + 1.f, spawnPos.y - wheelOffset, spawnPos.z + 1.75f),
+			btVector3(spawnPos.x - 1.f, spawnPos.y - wheelOffset, spawnPos.z + 0),
+			btVector3(spawnPos.x + 1.f, spawnPos.y - wheelOffset, spawnPos.z + 0),
+			btVector3(spawnPos.x + 1.f, spawnPos.y - wheelOffset, spawnPos.z - 1.75f),
+			btVector3(spawnPos.x - 1.f, spawnPos.y - wheelOffset, spawnPos.z - 1.75f)
 	};
 
 	init(world, mgr);
@@ -114,7 +116,7 @@ void Tank::onInput(input in) {
 	turretUp += in.turretUp / attenuation;
 	if (turretUp > 1.f) turretUp = 1.f;
 	if (turretUp < -1.f) turretUp = -1.f;
-	canonHinge->setLimit(turretUp * float(M_PI) * 0.3f, turretUp * float(M_PI) * 0.3f);
+	canonHinge->setLimit(turretUp * float(M_PI) * 0.2f, turretUp * float(M_PI) * 0.2f);
 
 	if (in.respawn) {
 		respawn();
@@ -257,8 +259,6 @@ Tank::~Tank() {
  * rigidBody[8] -> canon
  *
  * wheelHinge2[0-5] -> wheels
- * wheelHinge2[6] -> turret
- * wheelHinge2[7] -> canon
  *
  * modelVBOs[0] -> chassis
  * modelVBOs[1] -> wheels
@@ -436,7 +436,7 @@ void Tank::makeCanon(AAssetManager *mgr, btDynamicsWorld *world) {
 	tr.setIdentity();
 	tr.setOrigin(btVector3(canonPos.x, canonPos.y, canonPos.z - canonScale.z));
 
-	btVector3 pivotA = btVector3(0.f, 0.f, turretScale.z);
+	btVector3 pivotA = btVector3(0.f, 0.f, turretScale.z - canonOffset);
 	btVector3 pivotB = btVector3(0.f, 0.f, -canonScale.z);
 	btVector3 axis = btVector3(1,0,0);
 	canonHinge = new btHingeConstraint(*pBodyA, *pBodyB, pivotA, pivotB, axis, axis, true);
@@ -466,7 +466,7 @@ void Tank::fire(vector<Base *> *bases) {
 	Base* c = new Cone(missile, glm::vec3(vec.x, vec.y, vec.z), missileScale, rotMatrix, 10.f);
 	world->addRigidBody(c->rigidBody[0]);
 
-	glm::vec4 forceVec = modelMatrix * glm::vec4(0.f, 0.f, 500.f, 0.f);
+	glm::vec4 forceVec = modelMatrix * glm::vec4(0.f, 0.f, 1000.f, 0.f);
 
 	c->rigidBody[0]->applyCentralImpulse(btVector3(forceVec.x, forceVec.y, forceVec.z));
 

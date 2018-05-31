@@ -39,11 +39,12 @@ Java_com_samuelberrien_phyvr_MyGvrView_initEntity(JNIEnv *env, jobject instance,
 	boxes->push_back(sol);
 
 	int nbEntity = 10;
+	float maxMass = 100.f;
 	for (int i = 0; i < nbEntity; i++) {
 		float x = 40.f * (float) rand() / RAND_MAX - 20.f;
 		float z = 40.f * (float) rand() / RAND_MAX - 20.f;
 		float scale = 2.f * (float) rand() / RAND_MAX;
-		float mass = scale;
+		float mass = maxMass * float(rand()) / RAND_MAX;
 		boxes->push_back(
 				new Box(cppMgr,
 							 glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale),
@@ -53,7 +54,7 @@ Java_com_samuelberrien_phyvr_MyGvrView_initEntity(JNIEnv *env, jobject instance,
 		float x = 40.f * (float) rand() / RAND_MAX - 20.f;
 		float z = 40.f * (float) rand() / RAND_MAX - 20.f;
 		float scale = 2.f * (float) rand() / RAND_MAX;
-		float mass = scale;
+		float mass = maxMass * float(rand()) / RAND_MAX;
 		boxes->push_back(
 				new Cylinder(cppMgr,
 							 glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale),
@@ -63,7 +64,7 @@ Java_com_samuelberrien_phyvr_MyGvrView_initEntity(JNIEnv *env, jobject instance,
 		float x = 40.f * (float) rand() / RAND_MAX - 20.f;
 		float z = 40.f * (float) rand() / RAND_MAX - 20.f;
 		float scale = 2.f * (float) rand() / RAND_MAX;
-		float mass = scale;
+		float mass = maxMass * float(rand()) / RAND_MAX;
 		boxes->push_back(
 				new Cone(cppMgr,
 							 glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale),
@@ -73,7 +74,7 @@ Java_com_samuelberrien_phyvr_MyGvrView_initEntity(JNIEnv *env, jobject instance,
 		float x = 40.f * (float) rand() / RAND_MAX - 20.f;
 		float z = 40.f * (float) rand() / RAND_MAX - 20.f;
 		float scale = 2.f * (float) rand() / RAND_MAX;
-		float mass = scale;
+		float mass = maxMass * float(rand()) / RAND_MAX;
 		boxes->push_back(
 				new Sphere(cppMgr,
 							 glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale),

@@ -14,6 +14,8 @@ struct input {
 	bool brake;
 	float turretDir;
 	float turretUp;
+	bool respawn;
+	bool fire;
 };
 
 class Controls {

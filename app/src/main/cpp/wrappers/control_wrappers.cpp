@@ -9,7 +9,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_samuelberrien_phyvr_controls_Controls_control(JNIEnv *env, jobject instance,
 		jlong controlPtr, jfloat direction,
-		jfloat speed, jboolean brake, jfloat turretDir, jfloat turretUp) {
+		jfloat speed, jboolean brake, jfloat turretDir, jfloat turretUp, jboolean respawn, jboolean fire) {
 
 	Controls *c = (Controls*) controlPtr;
 	input in;
@@ -18,6 +18,8 @@ Java_com_samuelberrien_phyvr_controls_Controls_control(JNIEnv *env, jobject inst
 	in.brake = brake;
 	in.turretDir = turretDir;
 	in.turretUp = turretUp;
+	in.respawn = respawn;
+	in.fire = fire;
 	c->onInput(in);
 }
 

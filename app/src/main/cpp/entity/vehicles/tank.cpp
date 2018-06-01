@@ -27,7 +27,7 @@ static float canonMass = 10.f;
 static float canonOffset = 0.1f;
 
 //#95a5a6
-static float wheelColor[4]{52.f / 255.f, 73.f / 255.f, 94.f / 255.f, 1.f};//(0.58431372549f, 0.64705882352f, 0.65098039215f);
+static float wheelColor[4]{52.f / 255.f, 73.f / 255.f, 94.f / 255.f, 1.f};
 static float chassisColor[4]{150.f / 255.f, 40.f / 255.f, 27.f / 255.f, 1.f};
 static float turretColor[4]{4.f / 255.f, 147.f / 255.f, 114.f / 255.f, 1.f};
 

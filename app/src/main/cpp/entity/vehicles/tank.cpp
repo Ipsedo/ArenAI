@@ -371,7 +371,7 @@ void Tank::makeWheels(AAssetManager *mgr, btDynamicsWorld *world) {
 
 		{
 			int index = 2;
-			wheelHinge2[i]->setLimit(index, -0.4f, 0.2f);
+			wheelHinge2[i]->setLimit(index, -0.4f, 0.f);
 			wheelHinge2[i]->setDamping(index, 2.3f, true);
 			wheelHinge2[i]->setStiffness(index, 20.f, true);
 			wheelHinge2[i]->setBounce(index, 0.1f);
@@ -386,8 +386,8 @@ void Tank::makeWheels(AAssetManager *mgr, btDynamicsWorld *world) {
 		wheelHinge2[3]->setLimit(0, 0.f, 0.f);
 		wheelHinge2[2]->setLimit(1, 0.f, 0.f);
 		wheelHinge2[3]->setLimit(1, 0.f, 0.f);
-		wheelHinge2[2]->setLimit(2, 0.f, 0.f);
-		wheelHinge2[3]->setLimit(2, 0.f, 0.f);
+		/*wheelHinge2[2]->setLimit(2, 0.f, 0.f);
+		wheelHinge2[3]->setLimit(2, 0.f, 0.f);*/
 	}
 }
 
@@ -475,8 +475,7 @@ void Tank::fire(vector<Base *> *bases) {
 	btQuaternion quat = defaultMotionState[8]->m_graphicsWorldTrans.getRotation();
 	glm::mat4 modelMatrix = glm::make_mat4(tmp);
 
-	glm::vec4 vec = modelMatrix
-					* glm::vec4(0.f, 0.f, canonScale.z + 1.f, 1.f);
+	glm::vec4 vec = modelMatrix * glm::vec4(0.f, 0.f, canonScale.z + 1.f, 1.f);
 
 	glm::mat4 rotMatrix = glm::toMat4(glm::quat(quat.getX(), quat.getY(), quat.getZ(), quat.getW()))
 						  * glm::rotate(glm::mat4(1.f), 90.f, glm::vec3(1,0,0));

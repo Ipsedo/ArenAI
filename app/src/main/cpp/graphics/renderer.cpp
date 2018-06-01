@@ -56,14 +56,11 @@ void Renderer::draw(glm::mat4 mEyeProjectionMatrix,
 
 	for (Base *b : *bases)
 		b->draw(mEyeProjectionMatrix, mViewMatrix, glm::vec3(lighPos.x, lighPos.y, lighPos.z));
-	//camPos.z += 0.01f;
 }
 
 glm::vec4 Renderer::updateLight(glm::mat4 viewMatrix, glm::vec3 xyz) {
-	glm::mat4 lightModel(1.f);
-	lightModel = glm::translate(lightModel, xyz);
-	glm::vec4 lightPosInModelSpace(0.f, 0.f, 0.f, 1.f);
-	return viewMatrix * lightModel * lightPosInModelSpace;
+	glm::mat4 lightModel = glm::translate(glm::mat4(1.0f), xyz);
+	return viewMatrix * lightModel * glm::vec4(0.f, 0.f, 0.f, 1.0f);
 
 }
 

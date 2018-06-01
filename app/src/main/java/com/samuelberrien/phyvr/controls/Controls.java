@@ -19,8 +19,9 @@ public class Controls {
 		public boolean isMotionEvent;
 		public String name;
 		public boolean isPlusAxis; // -1, +1 axis for motioneEvent
+		public boolean isButton;
 		public static String getDefault() {
-			return "{\"ID\":-1,\"isMotionEvent\":false,\"isPlusAxis\":false,\"name\":\"undefined\"}";
+			return "{\"ID\":-1,\"isMotionEvent\":false,\"isPlusAxis\":false,\"isButton\":false,\"name\":\"undefined\"}";
 		}
 	}
 
@@ -31,6 +32,11 @@ public class Controls {
 	private final long controlPtr;
 
 	private SharedPreferences controlsPref;
+
+	private float dir;
+	private float turretDir;
+	private float turretHeight;
+	private float speed;
 
 	private int controllerId;
 
@@ -52,6 +58,8 @@ public class Controls {
 
 	public Controls(Context context, long controlPtr) {
 		controllerId = -1;
+
+		dir = speed = turretDir = turretHeight = 0.f;
 
 		this.controlPtr = controlPtr;
 
@@ -99,17 +107,11 @@ public class Controls {
 		float speedUpValue = 0.f;
 		float speedDownValue = 0.f;
 
-		boolean brake = false;
-
 		float leftTurret = 0.f;
 		float rightTurret = 0.f;
 
 		float upTurret = 0.f;
 		float downTurret = 0.f;
-
-		boolean respawn = false;
-
-		boolean fire = false;
 
 		if (leftInfo.isMotionEvent) {
 			leftValue = event.getAxisValue(leftInfo.ID);
@@ -129,9 +131,6 @@ public class Controls {
 			speedDownValue = speedDownInfo.isPlusAxis ? -speedDownValue : speedDownValue;
 		}
 
-		if (brakeInfo.isMotionEvent)
-			if (event.getAxisValue(brakeInfo.ID) > 0.5f) brake = true;
-
 		if (turretLeftInfo.isMotionEvent) {
 			leftTurret = event.getAxisValue(turretLeftInfo.ID);
 			leftTurret = turretLeftInfo.isPlusAxis ? leftTurret : -leftTurret;
@@ -150,19 +149,8 @@ public class Controls {
 			downTurret = turretDownInfo.isPlusAxis ? downTurret : -downTurret;
 		}
 
-		if (respawnInfo.isMotionEvent)
-			if (event.getAxisValue(respawnInfo.ID) > 0.5f) respawn = true;
-
-		if (fireInfo.isMotionEvent)
-			if (event.getAxisValue(fireInfo.ID) > 0.5f) fire = true;
-
-		float steer;
-		float speed;
-		float turretDir;
-		float turretHeight;
-
-		if (Math.abs(leftValue) > Math.abs(rightValue)) steer = leftValue;
-		else steer = rightValue;
+		if (Math.abs(leftValue) > Math.abs(rightValue)) dir = leftValue;
+		else dir = rightValue;
 
 		if (Math.abs(speedUpValue) > Math.abs(speedDownValue)) speed = speedUpValue;
 		else speed = speedDownValue;
@@ -173,51 +161,27 @@ public class Controls {
 		if (Math.abs(upTurret) > Math.abs(downTurret)) turretHeight = upTurret;
 		else turretHeight = downTurret;
 
-		steer = Math.abs(steer) > AXIS_LIMIT ? steer : 0.f;
+		dir = Math.abs(dir) > AXIS_LIMIT ? dir : 0.f;
 		speed = Math.abs(speed) > AXIS_LIMIT ? speed : 0.f;
 		turretDir = Math.abs(turretDir) > AXIS_LIMIT ? turretDir : 0.f;
 		turretHeight = Math.abs(turretHeight) > AXIS_LIMIT ? turretHeight : 0.f;
 
-		control(controlPtr, steer, speed, brake, turretDir, turretHeight, respawn, fire);
+		control(controlPtr, dir, speed, false, turretDir, turretHeight, false, false);
 	}
 
 	public void onKeyDown(int keyCode, KeyEvent event) {
-		float leftValue = 0.f;
-		float rightValue = 0.f;
-
-		float speedUpValue = 0.f;
-		float speedDownValue = 0.f;
 
 		boolean brake = false;
-
-		float leftTurret = 0.f;
-		float rightTurret = 0.f;
-
-		float upTurret = 0.f;
-		float downTurret = 0.f;
 
 		boolean respawn = false;
 
 		boolean fire = false;
-
-		if (!leftInfo.isMotionEvent && leftInfo.ID == keyCode) leftValue = -1.f;
-		if (!rightInfo.isMotionEvent && rightInfo.ID == keyCode) rightValue = 1.f;
-		if (!speedUpInfo.isMotionEvent && speedUpInfo.ID == keyCode) speedUpValue = 1.f;
-		if (!speedDownInfo.isMotionEvent && speedDownInfo.ID == keyCode) speedDownValue = -1.f;
+		
 		if (!brakeInfo.isMotionEvent && brakeInfo.ID == keyCode) brake = true;
-		if (!turretLeftInfo.isMotionEvent && turretLeftInfo.ID == keyCode) leftTurret = -1.f;
-		if (!turretRightInfo.isMotionEvent && turretRightInfo.ID == keyCode) rightTurret = 1.f;
-		if (!turretUpInfo.isMotionEvent && turretUpInfo.ID == keyCode) upTurret = 1.f;
-		if (!turretDownInfo.isMotionEvent && turretDownInfo.ID == keyCode) downTurret = -1.f;
 		if (!respawnInfo.isMotionEvent && respawnInfo.ID == keyCode) respawn = true;
 		if (!fireInfo.isMotionEvent && fireInfo.ID == keyCode) fire = true;
 
-		float steer = leftValue + rightValue;
-		float speed = speedUpValue + speedDownValue;
-		float turretDir = leftTurret + rightTurret;
-		float turretHeight = upTurret + downTurret;
-
-		control(controlPtr, steer, speed, brake, turretDir, turretHeight, respawn, fire);
+		control(controlPtr, dir, speed, brake, turretDir, turretHeight, respawn, fire);
 	}
 
 	public void onKeyUp(int keyCode, KeyEvent event) {
@@ -259,4 +223,6 @@ public class Controls {
 							   float turretUp,
 							   boolean respawn,
 							   boolean fire);
+
+	public native void control2(long controlPtr, float[] arrayControl);
 }

@@ -24,7 +24,7 @@ public class SetUpControl extends LinearLayout {
 
 	private SharedPreferences controlsPref;
 
-	private Controls.Infos infos;
+	protected Controls.Infos infos;
 
 	private boolean isSetUp;
 
@@ -99,12 +99,11 @@ public class SetUpControl extends LinearLayout {
 
 	public boolean motionEvent(MotionEvent event) {
 		boolean handled = false;
-		if (isSetUp) {
+		if (isSetUp && infos.isMotionEvent) {
 			for (int i = MotionEvent.AXIS_X; i < MotionEvent.AXIS_GENERIC_16; i++) {
 				float value = event.getAxisValue(i);
 				if (value > 0.5f || value < -0.5f) {
 					infos.name = controlName;
-					infos.isMotionEvent = true;
 					infos.ID = i;
 					infos.isPlusAxis = value > 0.f;
 
@@ -135,9 +134,8 @@ public class SetUpControl extends LinearLayout {
 
 	public boolean keyDown(int keyCode, KeyEvent event) {
 		boolean handled = false;
-		if (isSetUp && keyCode >= KeyEvent.KEYCODE_BUTTON_A && keyCode <= KeyEvent.KEYCODE_BUTTON_MODE) {
+		if (isSetUp && !infos.isMotionEvent && keyCode >= KeyEvent.KEYCODE_BUTTON_A && keyCode <= KeyEvent.KEYCODE_BUTTON_MODE) {
 			infos.name = controlName;
-			infos.isMotionEvent = false;
 			infos.ID = keyCode;
 			infos.isPlusAxis = false;
 

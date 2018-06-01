@@ -3,11 +3,13 @@ package com.samuelberrien.phyvr.controls;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.support.v4.content.ContextCompat;
 import android.view.*;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.google.gson.Gson;
+import com.samuelberrien.phyvr.R;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -26,9 +28,18 @@ public class SetUpControl extends LinearLayout {
 
 	private boolean isSetUp;
 
+	private boolean isActive;
+
+	private long lastActivation;
+
+	private StopColorationThread thread;
+
 	public SetUpControl(final Activity activity, int controlStrId) {
 		super(activity);
 		setOrientation(HORIZONTAL);
+
+		isActive = false;
+		lastActivation = System.currentTimeMillis();
 
 		controlName = activity.getString(controlStrId);
 
@@ -76,6 +87,9 @@ public class SetUpControl extends LinearLayout {
 		setTextViewInfos();
 
 		addView(controlView);
+
+		thread = new StopColorationThread();
+		thread.start();
 	}
 
 	private void setTextViewInfos() {
@@ -83,7 +97,8 @@ public class SetUpControl extends LinearLayout {
 				+ (infos.isMotionEvent ? (infos.isPlusAxis ? "+" : "-") : ""));
 	}
 
-	public void motionEvent(MotionEvent event) {
+	public boolean motionEvent(MotionEvent event) {
+		boolean handled = false;
 		if (isSetUp) {
 			for (int i = MotionEvent.AXIS_X; i < MotionEvent.AXIS_GENERIC_16; i++) {
 				float value = event.getAxisValue(i);
@@ -100,14 +115,27 @@ public class SetUpControl extends LinearLayout {
 					prefsEditor.apply();
 					isSetUp = false;
 					setTextViewInfos();
+					handled = true;
 					break;
 				}
 			}
 		}
+		float value = 0.f;
+		if (infos.ID != -1)
+			value = event.getAxisValue(infos.ID);
+		if (infos.isMotionEvent && infos.isPlusAxis ? value > 0.1f : value < -0.1f) {
+			isActive = true;
+			setBackgroundColor(ContextCompat.getColor(getContext(), R.color.greyTransparent));
+			handled = true;
+		}
+		if (handled)
+			lastActivation = System.currentTimeMillis();
+		return handled;
 	}
 
-	public void keyDown(int keyCode, KeyEvent event) {
-		if (isSetUp) {
+	public boolean keyDown(int keyCode, KeyEvent event) {
+		boolean handled = false;
+		if (isSetUp && keyCode >= KeyEvent.KEYCODE_BUTTON_A && keyCode <= KeyEvent.KEYCODE_BUTTON_MODE) {
 			infos.name = controlName;
 			infos.isMotionEvent = false;
 			infos.ID = keyCode;
@@ -120,6 +148,60 @@ public class SetUpControl extends LinearLayout {
 			prefsEditor.apply();
 			isSetUp = false;
 			setTextViewInfos();
+			handled = true;
+		}
+		if (infos.ID == keyCode) {
+			isActive = true;
+			setBackgroundColor(ContextCompat.getColor(getContext(), R.color.greyTransparent));
+			handled = true;
+		}
+		if (handled)
+			lastActivation = System.currentTimeMillis();
+		return handled;
+	}
+
+	public void onResume() {
+		thread = new StopColorationThread();
+	}
+
+	public void onPause() {
+		thread.halt();
+		try {
+			thread.join();
+		} catch (InterruptedException ie) {
+			ie.printStackTrace();
+		}
+	}
+
+	private class StopColorationThread extends Thread {
+		private final long millisLimit;
+
+		private boolean running;
+
+		StopColorationThread() {
+			super("StopColorationThread");
+			running = true;
+			millisLimit = 500;
+		}
+
+		void halt() {
+			running = false;
+		}
+
+		@Override
+		public void run() {
+			while (running) {
+				long curr = System.currentTimeMillis();
+				if (isActive && curr - lastActivation > millisLimit) {
+					isActive = false;
+					setBackgroundColor(ContextCompat.getColor(getContext(), android.R.color.transparent));
+				}
+				try {
+					Thread.sleep(500L);
+				} catch (InterruptedException ie) {
+					ie.printStackTrace();
+				}
+			}
 		}
 	}
 }

@@ -42,15 +42,31 @@ public class ControlActivity extends AppCompatActivity {
 
 	@Override
 	public boolean dispatchGenericMotionEvent(MotionEvent e) {
+		boolean handled = false;
 		for (SetUpControl s : setUpControls)
-			s.motionEvent(e);
-		return true;
+			handled = s.motionEvent(e) || handled;
+		return handled || super.dispatchGenericMotionEvent(e);
 	}
 
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent event) {
+		boolean handled = false;
 		for (SetUpControl s : setUpControls)
-			s.keyDown(event.getKeyCode(), event);
-		return event.getKeyCode() != KeyEvent.KEYCODE_BACK || super.dispatchKeyEvent(event);
+			handled = s.keyDown(event.getKeyCode(), event) || handled;
+		return handled || super.dispatchKeyEvent(event);
+	}
+
+	@Override
+	protected void onPause() {
+		for (SetUpControl s : setUpControls)
+			s.onPause();
+		super.onPause();
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		for (SetUpControl s : setUpControls)
+			s.onResume();
 	}
 }

@@ -16,6 +16,8 @@ class Tank : public Base, public Camera, public Controls, public Shooter {
 public:
 	Tank(glm::vec3 pos, btDynamicsWorld *world, AAssetManager *mgr, vector<Base*>* bases);
 
+	void update() override;
+
 	void onInput(input in) override;
 
 	void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) override;
@@ -40,13 +42,17 @@ private:
 	glm::vec3 turretScale;
 	glm::vec3 canonScale;
 
+	float directionAdd;
 	float direction;
+	float speedAdd;
 	float speed;
 	bool hasClickedShoot;
 
 	glm::vec3 turretPos;
 	glm::vec3 canonPos;
+	float turretDirAdd;
 	float turretDir;
+	float turretUpAdd;
 	float turretUp;
 
 	int nbWheel;

@@ -29,10 +29,12 @@ Level::Level(vector<Base *> *bases) {
 
 void Level::update(float delta) {
 	// add rigid body
-	for (Base* b : *bases)
-		for (btRigidBody* rb : b->rigidBody)
+	for (Base* b : *bases) {
+		for (btRigidBody *rb : b->rigidBody)
 			if (!rb->isInWorld())
 				world->addRigidBody(rb);
+		b->update();
+	}
 
 	for (Shooter* s : shooters)
 		s->fire(bases);

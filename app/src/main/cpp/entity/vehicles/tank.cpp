@@ -2,8 +2,8 @@
 // Created by samuel on 30/05/18.
 //
 
-#include <android/asset_manager.h>
 #define GLM_ENABLE_EXPERIMENTAL
+#include <android/asset_manager.h>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -38,8 +38,7 @@ Tank::Tank(glm::vec3 pos, btDynamicsWorld *world, AAssetManager *mgr, vector<Bas
 
 	this->world = world;
 
-	missile = new ModelVBO(
-			objTxt,
+	missile = new ModelVBO(objTxt,
 			new float[4]{(float) rand() / RAND_MAX,
 						 (float) rand() / RAND_MAX,
 						 (float) rand() / RAND_MAX,
@@ -77,13 +76,45 @@ Tank::Tank(glm::vec3 pos, btDynamicsWorld *world, AAssetManager *mgr, vector<Bas
 }
 
 void Tank::onInput(input in) {
-	int motorAxis = 5;
+	directionAdd = in.xAxis;
+	speedAdd = in.speed;
+	turretDirAdd = in.turretDir;
+	turretUpAdd = in.turretUp;
+
+	if (in.brake) {
+		speedAdd = 0;
+		speed = 0.f;
+	}
+
+	if (in.respawn) respawn();
+	if (in.fire) hasClickedShoot = true;
+}
+
+void Tank::update() {
 	float attenuation = 10.f;
 
-	direction += in.xAxis / attenuation;
+	direction += directionAdd / attenuation;
 	if (direction > 1.f) direction = 1.f;
 	if (direction < -1.f) direction = -1.f;
 
+	speed += speedAdd / attenuation;
+	if (speed > 1.f) speed = 1.f;
+	if (speed < -1.f) speed = -1.f;
+
+	// Turret rotation
+	attenuation = 50.f;
+	turretDir += turretDirAdd / attenuation;
+	if (turretDir > 1.f) turretDir = 1.f;
+	if (turretDir < -1.f) turretDir = -1.f;
+
+	// Canon elevation
+	attenuation = 30.f;
+	turretUp += turretUpAdd / attenuation;
+	if (turretUp > 1.f) turretUp = 1.f;
+	if (turretUp < -1.f) turretUp = -1.f;
+
+	// Wheel direction
+	int motorAxis = 5;
 	wheelHinge2[0]->setLimit(
 			motorAxis,
 			float(M_PI) * direction / 6.f,
@@ -103,35 +134,12 @@ void Tank::onInput(input in) {
 			-float(M_PI) * direction / 6.f);
 
 	motorAxis = 3;
-	speed += in.speed / attenuation;
-	if (speed > 1.f) speed = 1.f;
-	if (speed < -1.f) speed = -1.f;
-	if (in.brake) speed = 0.f;
-
-	for (int i = 0; i < nbWheel; i++) {
+	for (int i = 0; i < nbWheel; i++)
 		wheelHinge2[i]->setTargetVelocity(motorAxis, -speed * 10.f);
-	}
 
-	// Turret rotation
-	attenuation = 50.f;
-	turretDir += in.turretDir / attenuation;
-	if (turretDir > 1.f) turretDir = 1.f;
-	if (turretDir < -1.f) turretDir = -1.f;
 	turretHinge->setLimit(turretDir * float(M_PI) * 0.5f, turretDir * float(M_PI) * 0.5f);
 
-	// Canon elevation
-	attenuation = 30.f;
-	turretUp += in.turretUp / attenuation;
-	if (turretUp > 1.f) turretUp = 1.f;
-	if (turretUp < -1.f) turretUp = -1.f;
 	canonHinge->setLimit(turretUp * float(M_PI) * 0.2f, turretUp * float(M_PI) * 0.2f);
-
-	if (in.respawn) {
-		respawn();
-	}
-
-	if (in.fire)
-		hasClickedShoot = true;
 }
 
 void Tank::respawn() {
@@ -152,6 +160,7 @@ void Tank::respawn() {
 		rigidBody[id]->setWorldTransform(tr);
 		rigidBody[id]->clearForces();
 	}
+
 	tr.setIdentity();
 	tr.setOrigin(btVector3(turretPos.x, turretPos.y, turretPos.z));
 	defaultMotionState[7]->setWorldTransform(tr);
@@ -467,9 +476,10 @@ void Tank::fire(vector<Base *> *bases) {
 	glm::mat4 modelMatrix = glm::make_mat4(tmp);
 
 	glm::vec4 vec = modelMatrix
-					* glm::vec4(0.f, 0.f, canonScale.z+1.f, 1.f);
+					* glm::vec4(0.f, 0.f, canonScale.z + 1.f, 1.f);
 
-	glm::mat4 rotMatrix = glm::toMat4(glm::quat(quat.getX(), quat.getY(), quat.getZ(), quat.getW())) * glm::rotate(glm::mat4(1.f), 90.f, glm::vec3(1,0,0));
+	glm::mat4 rotMatrix = glm::toMat4(glm::quat(quat.getX(), quat.getY(), quat.getZ(), quat.getW()))
+						  * glm::rotate(glm::mat4(1.f), 90.f, glm::vec3(1,0,0));
 
 	Base* c = new Cone(missile, glm::vec3(vec.x, vec.y, vec.z), missileScale, rotMatrix, 10.f);
 	world->addRigidBody(c->rigidBody[0]);

@@ -38,7 +38,7 @@ Java_com_samuelberrien_phyvr_MyGvrView_initEntity(JNIEnv *env, jobject instance,
 	vector<Base *> *boxes = new vector<Base *>();
 	boxes->push_back(sol);
 
-	int nbEntity = 10;
+	int nbEntity = 30;
 	float maxMass = 100.f;
 	for (int i = 0; i < nbEntity; i++) {
 		float x = 40.f * (float) rand() / RAND_MAX - 20.f;

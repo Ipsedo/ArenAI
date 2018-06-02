@@ -36,6 +36,16 @@ void Engine::update(float delta) {
 		b->update();
 	}
 
+	// remove base and rigidBody
+	for (Base* b : *bases)
+		if (b->isDead())
+			for (btRigidBody* rb : b->rigidBody)
+				world->removeRigidBody(rb);
+
+	bases->erase(std::remove_if(bases->begin(), bases->end(),
+								[](Base* o) { return o->isDead(); }),
+				 bases->end());
+
 	for (Shooter* s : shooters)
 		s->fire(bases);
 

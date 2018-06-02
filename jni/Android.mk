@@ -1,5 +1,5 @@
 TOP_PATH := $(call my-dir)/..
-BULLET_PATH := $(TOP_PATH)/bullet3-2.87
+BULLET_PATH := $(TOP_PATH)/bullet3
 PHYVR_PATH := $(TOP_PATH)/app/src/main
 GLM_PATH := $(TOP_PATH)/glm
 

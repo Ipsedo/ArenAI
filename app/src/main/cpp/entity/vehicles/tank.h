@@ -7,12 +7,9 @@
 
 #include <glm/glm.hpp>
 #include <android/asset_manager.h>
-#include "../../graphics/camera.h"
-#include "../base.h"
-#include "../../controls/controls.h"
-#include "../shooter.h"
+#include "../player.h"
 
-class Tank : public Base, public Camera, public Controls, public Shooter {
+class Tank : public Player {
 public:
 	Tank(glm::vec3 pos, btDynamicsWorld *world, AAssetManager *mgr, vector<Base*>* bases);
 

@@ -5,14 +5,12 @@
 #ifndef PHYVR_CAR_H
 #define PHYVR_CAR_H
 
-
-#include "../base.h"
 #include <glm/glm.hpp>
 #include <android/asset_manager.h>
-#include "../../controls/controls.h"
-#include "../../graphics/camera.h"
+#include <btBulletDynamicsCommon.h>
+#include "../player.h"
 
-class Car : public Base, public Camera, public Controls {
+class Car : public Player {
 public:
 	Car(glm::vec3 pos, btDynamicsWorld *world, AAssetManager *mgr);
 

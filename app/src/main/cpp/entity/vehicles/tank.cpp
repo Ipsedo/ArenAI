@@ -26,7 +26,6 @@ static float canonMass = 10.f;
 
 static float canonOffset = 0.1f;
 
-//#95a5a6
 static float wheelColor[4]{52.f / 255.f, 73.f / 255.f, 94.f / 255.f, 1.f};
 static float chassisColor[4]{150.f / 255.f, 40.f / 255.f, 27.f / 255.f, 1.f};
 static float turretColor[4]{4.f / 255.f, 147.f / 255.f, 114.f / 255.f, 1.f};
@@ -58,7 +57,7 @@ Tank::Tank(glm::vec3 pos, btDynamicsWorld *world, AAssetManager *mgr, vector<Bas
 
 	turretUp = 0.f;
 	turretDir = 0.f;
-	turretPos = glm::vec3(spawnPos.x + 0.f, spawnPos.y + chassisScale.y + turretScale.y, spawnPos.z + 0.f);
+	turretPos = spawnPos + glm::vec3(0.f, chassisScale.y + turretScale.y, 0.f);
 	canonPos = turretPos + glm::vec3(0.f, 0.f, turretScale.z + canonScale.z - canonOffset);
 
 	nbWheel = 6;
@@ -149,6 +148,8 @@ void Tank::respawn() {
 	defaultMotionState[0]->setWorldTransform(tr);
 	rigidBody[0]->setWorldTransform(tr);
 	rigidBody[0]->clearForces();
+	rigidBody[0]->setLinearVelocity(btVector3(0,0,0));
+	rigidBody[0]->setAngularVelocity(btVector3(0,0,0));
 
 	for (int i = 0; i < nbWheel; i++) {
 		int id = i + 1;
@@ -159,6 +160,8 @@ void Tank::respawn() {
 		defaultMotionState[id]->setWorldTransform(tr);
 		rigidBody[id]->setWorldTransform(tr);
 		rigidBody[id]->clearForces();
+		rigidBody[id]->setLinearVelocity(btVector3(0,0,0));
+		rigidBody[id]->setAngularVelocity(btVector3(0,0,0));
 	}
 
 	tr.setIdentity();
@@ -166,12 +169,16 @@ void Tank::respawn() {
 	defaultMotionState[7]->setWorldTransform(tr);
 	rigidBody[7]->setWorldTransform(tr);
 	rigidBody[7]->clearForces();
+	rigidBody[7]->setLinearVelocity(btVector3(0,0,0));
+	rigidBody[7]->setAngularVelocity(btVector3(0,0,0));
 
 	tr.setIdentity();
 	tr.setOrigin(btVector3(canonPos.x, canonPos.y, canonPos.z));
 	defaultMotionState[8]->setWorldTransform(tr);
 	rigidBody[8]->setWorldTransform(tr);
 	rigidBody[8]->clearForces();
+	rigidBody[8]->setLinearVelocity(btVector3(0,0,0));
+	rigidBody[8]->setAngularVelocity(btVector3(0,0,0));
 }
 
 void Tank::draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) {

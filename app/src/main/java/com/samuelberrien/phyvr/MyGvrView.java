@@ -66,10 +66,10 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 		System.loadLibrary("phyvr");
 	}
 
-	private long boxesPtr;
+	private long entitiesPtr;
 	private long rendererPtr;
-	private long levelPtr;
-	private long carPtr;
+	private long enginePtr;
+	private long playerPtr;
 	private long controlPtr;
 
 	private Controls controls;
@@ -79,7 +79,7 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 		float[] mHeadView = new float[16];
 		headTransform.getHeadView(mHeadView, 0);
 		willDrawRenderer(rendererPtr, mHeadView);
-		updateLevel(levelPtr);
+		updateLevel(enginePtr);
 		//addBox(getContext().getAssets(), boxesPtr);
 	}
 
@@ -103,19 +103,19 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 	public void onSurfaceCreated(EGLConfig config) {
 		//boxesPtr = initBoxes(getContext().getAssets());
 		LoadImage loadImage = new LoadImage(getContext(), "heightmap/heightmap6.png");
-		boxesPtr = initEntity(getContext().getAssets(),
+		entitiesPtr = initEntity(getContext().getAssets(),
 				loadImage.tofloatGreyArray(), loadImage.getWidth(), loadImage.getHeight());
-		levelPtr = initLevel(boxesPtr);
-		rendererPtr = initRenderer(boxesPtr);
-		carPtr = initCar(getContext().getAssets(), levelPtr, rendererPtr, boxesPtr);
-		controlPtr = getControlPtrFromCar(carPtr);
+		enginePtr = initEngine(entitiesPtr);
+		rendererPtr = initRenderer(entitiesPtr);
+		playerPtr = initPlayer(getContext().getAssets(), enginePtr, rendererPtr, entitiesPtr);
+		controlPtr = getControlPtrFromPlayer(playerPtr);
 		controls = new Controls(getContext(), controlPtr);
 	}
 
 	@Override
 	public void onRendererShutdown() {
-		freeBoxes(boxesPtr);
-		freeLevel(levelPtr);
+		freeBoxes(entitiesPtr);
+		freeLevel(enginePtr);
 		freeRenderer(rendererPtr);
 	}
 
@@ -126,11 +126,11 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 
 	public native long initEntity(AssetManager assetManager, float[] heightmap, int width, int height);
 
-	public native long initCar(AssetManager assetManager, long levelPtr, long rendererPtr, long entityPtr);
+	public native long initPlayer(AssetManager assetManager, long levelPtr, long rendererPtr, long entityPtr);
 
-	public native long getControlPtrFromCar(long carPtr);
+	public native long getControlPtrFromPlayer(long carPtr);
 
-	public native long initLevel(long boxesPtr);
+	public native long initEngine(long boxesPtr);
 
 	public native long initRenderer(long boxesPtr);
 

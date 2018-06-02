@@ -21,7 +21,7 @@ public:
 
 private:
 	bool isInit;
-	vector<Base*> entities;
+	vector<Base*>* entities;
 	Player* player;
 };
 

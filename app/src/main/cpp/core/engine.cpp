@@ -1,13 +1,13 @@
 //
 // Created by samuel on 26/05/18.
 //
-#include "level.h"
+#include "engine.h"
 #include "../entity/shooter.h"
 
 static float gravity = -10.f;
 static float deltaTime = 1.f / 60.f;
 
-Level::Level(vector<Base *> *bases) {
+Engine::Engine(vector<Base *> *bases) {
 
 	this->bases = bases;
 
@@ -27,7 +27,7 @@ Level::Level(vector<Base *> *bases) {
 			world->addRigidBody(bd);
 }
 
-void Level::update(float delta) {
+void Engine::update(float delta) {
 	// add rigid body
 	for (Base* b : *bases) {
 		for (btRigidBody *rb : b->rigidBody)
@@ -42,11 +42,11 @@ void Level::update(float delta) {
 	world->stepSimulation(deltaTime);
 }
 
-void Level::addShooter(Shooter *s) {
+void Engine::addShooter(Shooter *s) {
 	shooters.push_back(s);
 }
 
-Level::~Level() {
+Engine::~Engine() {
 	// From car bullet example
 	for (int i = world->getNumCollisionObjects() - 1; i >= 0; i--) {
 		btCollisionObject *obj = world->getCollisionObjectArray()[i];

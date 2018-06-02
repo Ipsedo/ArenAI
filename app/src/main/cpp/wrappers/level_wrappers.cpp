@@ -3,15 +3,15 @@
 //
 
 #include <jni.h>
-#include "../level/level.h"
+#include "../core/engine.h"
 
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_com_samuelberrien_phyvr_MyGvrView_initLevel(JNIEnv *env, jobject instance, jlong boxesPtr) {
+Java_com_samuelberrien_phyvr_MyGvrView_initEngine(JNIEnv *env, jobject instance, jlong boxesPtr) {
 
 	vector<Base *> *boxes = (vector<Base *> *) boxesPtr;
 
-	Level *level = new Level(boxes);
+	Engine *level = new Engine(boxes);
 
 	return (long) level;
 }
@@ -19,12 +19,12 @@ Java_com_samuelberrien_phyvr_MyGvrView_initLevel(JNIEnv *env, jobject instance, 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_samuelberrien_phyvr_MyGvrView_updateLevel(JNIEnv *env, jobject instance, jlong levelptr) {
-	Level *level = (Level *) levelptr;
+	Engine *level = (Engine *) levelptr;
 	level->update(1.f / 60.f);
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_samuelberrien_phyvr_MyGvrView_freeLevel(JNIEnv *env, jobject instance, jlong levelPtr) {
-	delete (Level *) levelPtr;
+	delete (Engine *) levelPtr;
 }

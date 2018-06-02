@@ -9,15 +9,15 @@
 #include "../entity/base.h"
 #include "../entity/shooter.h"
 
-class Level {
+class Engine {
 public:
-	Level(vector<Base *> *b);
+	Engine(vector<Base *> *b);
 
 	void update(float delta);
 
 	void addShooter(Shooter* s);
 
-	~Level();
+	~Engine();
 
 	btDiscreteDynamicsWorld *world;
 

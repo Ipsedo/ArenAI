@@ -10,7 +10,7 @@
 
 #include "../../utils/rigidbody.h"
 #include "../../utils/assets.h"
-#include "../poly/cone.h"
+#include "../missile.h"
 #include "../poly/box.h"
 #include "tank.h"
 
@@ -465,7 +465,10 @@ void Tank::makeCanon(AAssetManager *mgr, btDynamicsWorld *world) {
 	btVector3 axis = btVector3(1,0,0);
 	canonHinge = new btHingeConstraint(*pBodyA, *pBodyB, pivotA, pivotB, axis, axis, true);
 	world->addConstraint(canonHinge, true);
-	world->addRigidBody(pBodyB, 1, 0); // Canon subit pas de collision
+	//world->addRigidBody(pBodyB, 1, 0); // Canon subit pas de collision
+	for (int i = 0; i < rigidBody.size() - 1; i++) {
+		pBodyB->setIgnoreCollisionCheck(rigidBody[i], true);
+	}
 	canonHinge->setLimit(0,0);
 }
 
@@ -487,7 +490,7 @@ void Tank::fire(vector<Base *> *bases) {
 	glm::mat4 rotMatrix = glm::toMat4(glm::quat(quat.getX(), quat.getY(), quat.getZ(), quat.getW()))
 						  * glm::rotate(glm::mat4(1.f), 90.f, glm::vec3(1,0,0));
 
-	Base* c = new Cone(missile, glm::vec3(vec.x, vec.y, vec.z), missileScale, rotMatrix, 10.f);
+	Base* c = new Missile(missile, glm::vec3(vec.x, vec.y, vec.z), missileScale, rotMatrix, 10.f);
 	world->addRigidBody(c->rigidBody[0]);
 
 	glm::vec4 forceVec = modelMatrix * glm::vec4(0.f, 0.f, 500.f, 0.f);

@@ -11,7 +11,7 @@
 
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_com_samuelberrien_phyvr_MyGvrView_initPlayer(JNIEnv *env, jobject instance, jobject assetManager,
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initPlayer(JNIEnv *env, jobject instance, jobject assetManager,
 											   jlong enginePtr, jlong rendererPtr, jlong entityPtr) {
 
 	Engine *level = (Engine*) enginePtr;

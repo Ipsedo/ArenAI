@@ -9,7 +9,7 @@
 
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_com_samuelberrien_phyvr_MyGvrView_initRenderer(JNIEnv *env, jobject instance, jlong boxesPtr) {
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initRenderer(JNIEnv *env, jobject instance, jlong boxesPtr) {
 
 	vector<Base *> *boxes = (vector<Base *> *) boxesPtr;
 	Renderer *renderer = new Renderer(boxes);
@@ -19,13 +19,13 @@ Java_com_samuelberrien_phyvr_MyGvrView_initRenderer(JNIEnv *env, jobject instanc
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_samuelberrien_phyvr_MyGvrView_willDrawRenderer(JNIEnv *env, jobject instance,
-														jlong rendererPtr, jfloatArray mHeadView_) {
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_willDrawRenderer(JNIEnv *env, jobject instance,
+														jlong rendererPtr, jfloatArray mHeadView_, jboolean VR) {
 	jfloat *mHeadView = env->GetFloatArrayElements(mHeadView_, NULL);
 	float *headView = jfloatPtrToCppFloatPtr(mHeadView, 16);
 
 	Renderer *renderer = (Renderer *) rendererPtr;
-	renderer->update(glm::make_mat4(headView));
+	renderer->update(glm::make_mat4(headView), VR);
 
 	env->ReleaseFloatArrayElements(mHeadView_, mHeadView, 0);
 	delete headView;
@@ -33,7 +33,7 @@ Java_com_samuelberrien_phyvr_MyGvrView_willDrawRenderer(JNIEnv *env, jobject ins
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_samuelberrien_phyvr_MyGvrView_drawRenderer(JNIEnv *env, jobject instance,
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_drawRenderer(JNIEnv *env, jobject instance,
 													jlong rendererPtr,
 													jfloatArray mEyeProjectionMatrix_,
 													jfloatArray mEyeViewMatrix_,
@@ -67,6 +67,6 @@ Java_com_samuelberrien_phyvr_MyGvrView_drawRenderer(JNIEnv *env, jobject instanc
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_samuelberrien_phyvr_MyGvrView_freeRenderer(JNIEnv *env, jobject instance, jlong rendererPtr) {
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_freeRenderer(JNIEnv *env, jobject instance, jlong rendererPtr) {
 	delete (Renderer *) rendererPtr;
 }

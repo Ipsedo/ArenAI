@@ -7,7 +7,7 @@
 
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_com_samuelberrien_phyvr_MyGvrView_initEngine(JNIEnv *env, jobject instance, jlong boxesPtr) {
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initEngine(JNIEnv *env, jobject instance, jlong boxesPtr) {
 
 	vector<Base *> *boxes = (vector<Base *> *) boxesPtr;
 
@@ -18,13 +18,13 @@ Java_com_samuelberrien_phyvr_MyGvrView_initEngine(JNIEnv *env, jobject instance,
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_samuelberrien_phyvr_MyGvrView_updateLevel(JNIEnv *env, jobject instance, jlong levelptr) {
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_updateEngine(JNIEnv *env, jobject instance, jlong levelptr) {
 	Engine *level = (Engine *) levelptr;
 	level->update(1.f / 60.f);
 }
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_samuelberrien_phyvr_MyGvrView_freeLevel(JNIEnv *env, jobject instance, jlong levelPtr) {
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_freeLevel(JNIEnv *env, jobject instance, jlong levelPtr) {
 	delete (Engine *) levelPtr;
 }

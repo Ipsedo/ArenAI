@@ -22,7 +22,7 @@
 
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_com_samuelberrien_phyvr_MyGvrView_initEntity(JNIEnv *env, jobject instance,
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initEntity(JNIEnv *env, jobject instance,
 												  jobject assetManager, jfloatArray heightmap_,
 												  jint width, jint height) {
 	jfloat *heightmap = env->GetFloatArrayElements(heightmap_, NULL);
@@ -85,7 +85,7 @@ Java_com_samuelberrien_phyvr_MyGvrView_initEntity(JNIEnv *env, jobject instance,
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_samuelberrien_phyvr_MyGvrView_addBox(JNIEnv *env, jobject instance, jobject assetManager,
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_addBox(JNIEnv *env, jobject instance, jobject assetManager,
 											  jlong boxesPtr) {
 
 	vector<Base *> *boxes = (vector<Base *> *) boxesPtr;
@@ -120,7 +120,7 @@ Java_com_samuelberrien_phyvr_MyGvrView_addBox(JNIEnv *env, jobject instance, job
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_samuelberrien_phyvr_MyGvrView_freeBoxes(JNIEnv *env, jobject instance, jlong boxesPtr) {
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_freeBoxes(JNIEnv *env, jobject instance, jlong boxesPtr) {
 
 	vector<Base *> *boxes = (vector<Base *> *) boxesPtr;
 	for (Base *b : *boxes)

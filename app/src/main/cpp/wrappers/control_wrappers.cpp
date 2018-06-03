@@ -26,7 +26,7 @@ Java_com_samuelberrien_phyvr_controls_Controls_control(JNIEnv *env, jobject inst
 
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_com_samuelberrien_phyvr_MyGvrView_getControlPtrFromPlayer(JNIEnv *env, jobject instance, jlong carPtr) {
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_getControlPtrFromPlayer(JNIEnv *env, jobject instance, jlong carPtr) {
 
 	return (long) dynamic_cast <Controls*> ((Player*)carPtr);
 }

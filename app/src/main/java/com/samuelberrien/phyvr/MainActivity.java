@@ -1,14 +1,12 @@
 package com.samuelberrien.phyvr;
 
 import android.content.Intent;
-import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.widget.TextView;
-import com.google.gson.Gson;
 import com.samuelberrien.phyvr.controls.ControlActivity;
-import com.samuelberrien.phyvr.controls.Controls;
+import com.samuelberrien.phyvr.normal.PlayActivity;
+import com.samuelberrien.phyvr.vr.MyGvrActivity;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -16,15 +14,11 @@ public class MainActivity extends AppCompatActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+	}
 
-		Controls.Infos infos = new Controls.Infos();
-		infos.ID = 1;
-		infos.isMotionEvent = true;
-		infos.name = "a";
-
-		Gson gson = new Gson();
-		String json = gson.toJson(infos);
-		System.out.println(json);
+	public void normal(View v) {
+		Intent myIntent = new Intent(this, PlayActivity.class);
+		startActivity(myIntent);
 	}
 
 	public void vr(View v) {

@@ -19,9 +19,9 @@ public:
 
 	void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) override;
 
-	glm::vec3 camPos() override;
-	glm::vec3 camLookAtVec() override;
-	glm::vec3 camUpVec() override;
+	glm::vec3 camPos(bool VR) override;
+	glm::vec3 camLookAtVec(bool VR) override;
+	glm::vec3 camUpVec(bool VR) override;
 
 	void fire(vector<Base*>* bases) override;
 

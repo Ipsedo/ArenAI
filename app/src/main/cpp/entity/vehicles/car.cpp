@@ -195,7 +195,7 @@ void Car::onInput(input in) {
 	}
 }
 
-glm::vec3 Car::camPos() {
+glm::vec3 Car::camPos(bool VR) {
 	btScalar tmp[16];
 
 	// Chassis
@@ -208,7 +208,7 @@ glm::vec3 Car::camPos() {
 	return glm::vec3(pos.x, pos.y, pos.z);
 }
 
-glm::vec3 Car::camLookAtVec() {
+glm::vec3 Car::camLookAtVec(bool VR) {
 	btScalar tmp[16];
 
 	// Chassis
@@ -221,7 +221,7 @@ glm::vec3 Car::camLookAtVec() {
 	return glm::vec3(pos.x, pos.y, pos.z);
 }
 
-glm::vec3 Car::camUpVec() {
+glm::vec3 Car::camUpVec(bool VR) {
 	btScalar tmp[16];
 
 	// Chassis

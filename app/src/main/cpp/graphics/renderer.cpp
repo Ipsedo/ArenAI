@@ -25,10 +25,10 @@ Renderer::Renderer(vector<Base *> *bases) {
 	camLookAtVec = glm::vec3(0.f, 0.f, 1.f);
 }
 
-void Renderer::update(glm::mat4 mHeadView) {
-	camPos = camera->camPos();
-	camLookAtVec = camera->camLookAtVec();
-	camUpVec = camera->camUpVec();
+void Renderer::update(glm::mat4 mHeadView, bool VR) {
+	camPos = camera->camPos(VR);
+	camLookAtVec = camera->camLookAtVec(VR);
+	camUpVec = camera->camUpVec(VR);
 }
 
 void Renderer::draw(glm::mat4 mEyeProjectionMatrix,

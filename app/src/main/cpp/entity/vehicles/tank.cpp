@@ -226,37 +226,40 @@ void Tank::draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) {
 }
 
 // TODO cam selon tourelle ?
-glm::vec3 Tank::camPos() {
+glm::vec3 Tank::camPos(bool VR) {
 	btScalar tmp[16];
 
-	// Chassis
-	defaultMotionState[0]->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
+	int id = VR ? 0 : 8;
+	// Chassis : Canon
+	defaultMotionState[id]->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
 	glm::mat4 modelMatrix = glm::make_mat4(tmp);
 
-	glm::vec4 pos(0.f, 3.f, -1.f, 1.f);
+	glm::vec4 pos(0.f, 3.f, VR ? -1.f : -12.f, 1.f);
 	pos = modelMatrix * pos;
 
 	return glm::vec3(pos.x, pos.y, pos.z);
 }
 
-glm::vec3 Tank::camLookAtVec() {
+glm::vec3 Tank::camLookAtVec(bool VR) {
 	btScalar tmp[16];
 
-	// Chassis
-	defaultMotionState[0]->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
+	int id = VR ? 0 : 8;
+	// Chassis : Canon
+	defaultMotionState[id]->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
 	glm::mat4 modelMatrix = glm::make_mat4(tmp);
 
-	glm::vec4 pos(0.f, 0.f, 1.f, 0.f);
+	glm::vec4 pos(0.f, VR ? 0.f : -0.2f, 1.f, 0.f);
 	pos = modelMatrix * pos;
 
 	return glm::vec3(pos.x, pos.y, pos.z);
 }
 
-glm::vec3 Tank::camUpVec() {
+glm::vec3 Tank::camUpVec(bool VR) {
 	btScalar tmp[16];
 
-	// Chassis
-	defaultMotionState[0]->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
+	int id = VR ? 0 : 8;
+	// Chassis : Canon
+	defaultMotionState[id]->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
 	glm::mat4 modelMatrix = glm::make_mat4(tmp);
 
 	glm::vec4 pos(0.f, 1.f, 0.f, 0.f);

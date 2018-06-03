@@ -16,7 +16,7 @@ class Renderer {
 public:
 	Renderer(vector<Base *> *bases);
 
-	void update(glm::mat4 mHeadView);
+	void update(glm::mat4 mHeadView, bool VR);
 
 	void setCamera(Camera *c);
 

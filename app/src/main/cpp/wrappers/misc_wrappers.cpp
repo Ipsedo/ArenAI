@@ -38,11 +38,12 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initEntity(JNIEnv *env, jobje
 	vector<Base *> *boxes = new vector<Base *>();
 	boxes->push_back(sol);
 
-	int nbEntity = 30;
+	int nbEntity = 100;
+	float spawnRange = 10.f * min(width, height) * 0.5f;
 	float maxMass = 100.f;
 	for (int i = 0; i < nbEntity; i++) {
-		float x = 40.f * (float) rand() / RAND_MAX - 20.f;
-		float z = 40.f * (float) rand() / RAND_MAX - 20.f;
+		float x = spawnRange * (float) rand() / RAND_MAX - spawnRange * 0.5f;
+		float z = spawnRange * (float) rand() / RAND_MAX - spawnRange * 0.5f;
 		float scale = 2.f * (float) rand() / RAND_MAX;
 		float mass = maxMass * float(rand()) / RAND_MAX;
 		boxes->push_back(
@@ -51,8 +52,8 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initEntity(JNIEnv *env, jobje
 							 id, mass));
 	}
 	for (int i = 0; i < nbEntity; i++) {
-		float x = 40.f * (float) rand() / RAND_MAX - 20.f;
-		float z = 40.f * (float) rand() / RAND_MAX - 20.f;
+		float x = spawnRange * (float) rand() / RAND_MAX - spawnRange * 0.5f;
+		float z = spawnRange * (float) rand() / RAND_MAX - spawnRange * 0.5f;
 		float scale = 2.f * (float) rand() / RAND_MAX;
 		float mass = maxMass * float(rand()) / RAND_MAX;
 		boxes->push_back(
@@ -61,8 +62,8 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initEntity(JNIEnv *env, jobje
 							 id, mass));
 	}
 	for (int i = 0; i < nbEntity; i++) {
-		float x = 40.f * (float) rand() / RAND_MAX - 20.f;
-		float z = 40.f * (float) rand() / RAND_MAX - 20.f;
+		float x = spawnRange * (float) rand() / RAND_MAX - spawnRange * 0.5f;
+		float z = spawnRange * (float) rand() / RAND_MAX - spawnRange * 0.5f;
 		float scale = 2.f * (float) rand() / RAND_MAX;
 		float mass = maxMass * float(rand()) / RAND_MAX;
 		boxes->push_back(
@@ -71,8 +72,8 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initEntity(JNIEnv *env, jobje
 							 id, mass));
 	}
 	for (int i = 0; i < nbEntity; i++) {
-		float x = 40.f * (float) rand() / RAND_MAX - 20.f;
-		float z = 40.f * (float) rand() / RAND_MAX - 20.f;
+		float x = spawnRange * (float) rand() / RAND_MAX - spawnRange * 0.5f;
+		float z = spawnRange * (float) rand() / RAND_MAX - spawnRange * 0.5f;
 		float scale = 2.f * (float) rand() / RAND_MAX;
 		float mass = maxMass * float(rand()) / RAND_MAX;
 		boxes->push_back(

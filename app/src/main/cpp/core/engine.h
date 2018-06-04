@@ -9,6 +9,16 @@
 #include "../entity/base.h"
 #include "../entity/shooter.h"
 
+bool contact_callback( btManifoldPoint &btmanifoldpoint,
+					   const btCollisionObjectWrapper *btcollisionobject0,
+					   int part_0, int index_0,
+					   const btCollisionObjectWrapper *btcollisionobject1,
+					   int part_1, int index_1 );
+
+bool callback_finish(void* userPersistentData);
+
+bool callback_processed(btManifoldPoint& cp, void* body0,void* body1);
+
 class Engine {
 public:
 	Engine(vector<Base *> *b);

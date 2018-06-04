@@ -176,7 +176,7 @@ public class Controls {
 		boolean respawn = false;
 
 		boolean fire = false;
-		
+
 		if (!brakeInfo.isMotionEvent && brakeInfo.ID == keyCode) brake = true;
 		if (!respawnInfo.isMotionEvent && respawnInfo.ID == keyCode) respawn = true;
 		if (!fireInfo.isMotionEvent && fireInfo.ID == keyCode) fire = true;

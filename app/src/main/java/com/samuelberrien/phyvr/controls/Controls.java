@@ -100,7 +100,7 @@ public class Controls {
 		fireInfo = gson.fromJson(json, Controls.Infos.class);
 	}
 
-	public void onMotionEvent(MotionEvent event) {
+	public boolean onMotionEvent(MotionEvent event) {
 		float leftValue = 0.f;
 		float rightValue = 0.f;
 
@@ -112,6 +112,8 @@ public class Controls {
 
 		float upTurret = 0.f;
 		float downTurret = 0.f;
+
+		boolean handled = false;
 
 		if (leftInfo.isMotionEvent) {
 			leftValue = event.getAxisValue(leftInfo.ID);
@@ -161,15 +163,24 @@ public class Controls {
 		if (Math.abs(upTurret) > Math.abs(downTurret)) turretHeight = upTurret;
 		else turretHeight = downTurret;
 
+		if (Math.abs(dir) > AXIS_LIMIT
+				|| Math.abs(speed) > AXIS_LIMIT
+				|| Math.abs(turretDir) > AXIS_LIMIT
+				|| Math.abs(turretHeight) > AXIS_LIMIT)
+			handled = true;
+
+
 		dir = Math.abs(dir) > AXIS_LIMIT ? dir : 0.f;
 		speed = Math.abs(speed) > AXIS_LIMIT ? speed : 0.f;
 		turretDir = Math.abs(turretDir) > AXIS_LIMIT ? turretDir : 0.f;
 		turretHeight = Math.abs(turretHeight) > AXIS_LIMIT ? turretHeight : 0.f;
 
 		control(controlPtr, dir, speed, false, turretDir, turretHeight, false, false);
+
+		return handled;
 	}
 
-	public void onKeyDown(int keyCode, KeyEvent event) {
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
 
 		boolean brake = false;
 
@@ -177,11 +188,15 @@ public class Controls {
 
 		boolean fire = false;
 
-		if (!brakeInfo.isMotionEvent && brakeInfo.ID == keyCode) brake = true;
-		if (!respawnInfo.isMotionEvent && respawnInfo.ID == keyCode) respawn = true;
-		if (!fireInfo.isMotionEvent && fireInfo.ID == keyCode) fire = true;
+		boolean handled = false;
+		
+		if (!brakeInfo.isMotionEvent && brakeInfo.ID == keyCode) handled = brake = true;
+		if (!respawnInfo.isMotionEvent && respawnInfo.ID == keyCode) handled = respawn = true;
+		if (!fireInfo.isMotionEvent && fireInfo.ID == keyCode) handled = fire = true;
 
 		control(controlPtr, dir, speed, brake, turretDir, turretHeight, respawn, fire);
+
+		return handled;
 	}
 
 	public void onKeyUp(int keyCode, KeyEvent event) {

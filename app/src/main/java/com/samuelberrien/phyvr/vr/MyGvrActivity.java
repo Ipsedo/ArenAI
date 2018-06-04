@@ -37,7 +37,12 @@ public class MyGvrActivity extends GvrActivity {
 
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent event) {
-		myGvrView.onKeyDown(event.getKeyCode(), event);
-		return event.getKeyCode() != KeyEvent.KEYCODE_BACK || super.dispatchKeyEvent(event);
+		boolean handled = false;
+		if (event.getAction() == KeyEvent.ACTION_DOWN)
+			handled =  myGvrView.onKeyDown(event.getKeyCode(), event);
+
+		return  handled
+				|| event.getKeyCode() != KeyEvent.KEYCODE_BACK
+				|| super.dispatchKeyEvent(event);
 	}
 }

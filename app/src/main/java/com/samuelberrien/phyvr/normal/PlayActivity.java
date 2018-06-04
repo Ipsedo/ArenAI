@@ -36,7 +36,12 @@ public class PlayActivity extends Activity {
 
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent event) {
-		surfaceView.onKeyDown(event.getKeyCode(), event);
-		return event.getKeyCode() != KeyEvent.KEYCODE_BACK || super.dispatchKeyEvent(event);
+		boolean handled = false;
+		if (event.getAction() == KeyEvent.ACTION_DOWN)
+			handled =  surfaceView.onKeyDown(event.getKeyCode(), event);
+
+		return  handled
+				|| event.getKeyCode() != KeyEvent.KEYCODE_BACK
+				|| super.dispatchKeyEvent(event);
 	}
 }

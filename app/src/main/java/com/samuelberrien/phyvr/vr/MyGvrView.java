@@ -42,20 +42,12 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 
 	@Override
 	public boolean onGenericMotionEvent(MotionEvent motionEvent) {
-		controls.onMotionEvent(motionEvent);
-		return super.onGenericMotionEvent(motionEvent);
+		return controls.onMotionEvent(motionEvent) || super.onGenericMotionEvent(motionEvent);
 	}
 
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		controls.onKeyDown(keyCode, event);
-		return true;
-	}
-
-	@Override
-	public boolean onKeyUp(int keyCode, KeyEvent event) {
-		//controls.onKeyUp(keyCode, event);
-		return true;
+		return controls.onKeyDown(keyCode, event) || super.onKeyDown(keyCode, event);
 	}
 
 	/**

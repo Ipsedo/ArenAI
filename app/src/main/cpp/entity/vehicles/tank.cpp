@@ -19,7 +19,7 @@ static float wheelWidth = 0.4f;
 static float wheelOffset = 0.6f;
 static float wheelbaseOffset = 0.1f;
 
-static float chassisMass = 40000.f;
+static float chassisMass = 50000.f;
 static float wheelMass = 300.f;
 static float turretMass = 100.f;
 static float canonMass = 10.f;
@@ -29,6 +29,8 @@ static float canonOffset = 0.1f;
 static float wheelColor[4]{52.f / 255.f, 73.f / 255.f, 94.f / 255.f, 1.f};
 static float chassisColor[4]{150.f / 255.f, 40.f / 255.f, 27.f / 255.f, 1.f};
 static float turretColor[4]{4.f / 255.f, 147.f / 255.f, 114.f / 255.f, 1.f};
+
+static int wheelDirectionAxis = 4;
 
 Tank::Tank(glm::vec3 pos, btDynamicsWorld *world, AAssetManager *mgr, vector<Base*>* bases) {
 	std::string objTxt = getFileText(mgr, "obj/cone.obj");
@@ -63,12 +65,18 @@ Tank::Tank(glm::vec3 pos, btDynamicsWorld *world, AAssetManager *mgr, vector<Bas
 	nbWheel = 6;
 
 	wheelPos = new btVector3[nbWheel]{
-			btVector3(spawnPos.x - (chassisScale.x + wheelbaseOffset), spawnPos.y - wheelOffset, spawnPos.z + 1.75f),
+			/*btVector3(spawnPos.x - (chassisScale.x + wheelbaseOffset), spawnPos.y - wheelOffset, spawnPos.z + 1.75f),
 			btVector3(spawnPos.x + (chassisScale.x + wheelbaseOffset), spawnPos.y - wheelOffset, spawnPos.z + 1.75f),
 			btVector3(spawnPos.x - (chassisScale.x + wheelbaseOffset), spawnPos.y - wheelOffset, spawnPos.z + 0),
 			btVector3(spawnPos.x + (chassisScale.x + wheelbaseOffset), spawnPos.y - wheelOffset, spawnPos.z + 0),
 			btVector3(spawnPos.x + (chassisScale.x + wheelbaseOffset), spawnPos.y - wheelOffset, spawnPos.z - 1.75f),
-			btVector3(spawnPos.x - (chassisScale.x + wheelbaseOffset), spawnPos.y - wheelOffset, spawnPos.z - 1.75f)
+			btVector3(spawnPos.x - (chassisScale.x + wheelbaseOffset), spawnPos.y - wheelOffset, spawnPos.z - 1.75f)*/
+			btVector3(- (chassisScale.x + wheelbaseOffset), - wheelOffset, + 1.75f),
+			btVector3(+ (chassisScale.x + wheelbaseOffset), - wheelOffset, + 1.75f),
+			btVector3(- (chassisScale.x + wheelbaseOffset), - wheelOffset, + 0),
+			btVector3(+ (chassisScale.x + wheelbaseOffset), - wheelOffset, + 0),
+			btVector3(+ (chassisScale.x + wheelbaseOffset), - wheelOffset, - 1.75f),
+			btVector3(- (chassisScale.x + wheelbaseOffset), - wheelOffset, - 1.75f)
 	};
 
 	init(world, mgr);
@@ -113,7 +121,7 @@ void Tank::update() {
 	if (turretUp < -1.f) turretUp = -1.f;
 
 	// Wheel direction
-	int motorAxis = 5;
+	int motorAxis = wheelDirectionAxis;
 	wheelHinge2[0]->setLimit(
 			motorAxis,
 			float(M_PI) * direction / 6.f,
@@ -122,15 +130,6 @@ void Tank::update() {
 			motorAxis,
 			float(M_PI) * direction / 6.f,
 			float(M_PI) * direction / 6.f);
-
-	wheelHinge2[4]->setLimit(
-			motorAxis,
-			-float(M_PI) * direction / 6.f,
-			-float(M_PI) * direction / 6.f);
-	wheelHinge2[5]->setLimit(
-			motorAxis,
-			-float(M_PI) * direction / 6.f,
-			-float(M_PI) * direction / 6.f);
 
 	motorAxis = 3;
 	for (int i = 0; i < nbWheel; i++)
@@ -225,7 +224,6 @@ void Tank::draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) {
 	modelVBOs[3]->draw(mvpMatrix, mvMatrix, lighPos);
 }
 
-// TODO cam selon tourelle ?
 glm::vec3 Tank::camPos(bool VR) {
 	btScalar tmp[16];
 
@@ -234,7 +232,7 @@ glm::vec3 Tank::camPos(bool VR) {
 	defaultMotionState[id]->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
 	glm::mat4 modelMatrix = glm::make_mat4(tmp);
 
-	glm::vec4 pos(0.f, 3.f, VR ? -1.f : -12.f, 1.f);
+	glm::vec4 pos(0.f, VR ? 2.f : 3.f, VR ? 0.f : -12.f, 1.f);
 	pos = modelMatrix * pos;
 
 	return glm::vec3(pos.x, pos.y, pos.z);
@@ -347,25 +345,35 @@ void Tank::makeWheels(AAssetManager *mgr, btDynamicsWorld *world) {
 		rigidBody.push_back(pBodyB);
 		defaultMotionState.push_back(pBodyBMotionState);
 
-		pBodyB->setFriction(1110);
+		pBodyB->setFriction(500);
 		pBodyB->setActivationState(DISABLE_DEACTIVATION);
 
-		btVector3 parentAxis(0.f, 1.f, 0.f);
+		/*btVector3 parentAxis(0.f, 1.f, 0.f);
 		btVector3 childAxis(1.f, 0.f, 0.f);
 		btVector3 anchor = tr.getOrigin();
 		wheelHinge2.push_back(new btHinge2Constraint(*pBodyA, *pBodyB, anchor, parentAxis,
 												 childAxis));
 
-		wheelHinge2[i]->setLowerLimit(float(-M_PI) * 0.5f);
-		wheelHinge2[i]->setUpperLimit(float(M_PI) * 0.5f);
+		wheelHinge2[i]->setLowerLimit(0);
+		wheelHinge2[i]->setUpperLimit(0);*/
+
+		btTransform trA, trB;
+		trA.setIdentity();
+		trA.setOrigin(wheelPos[i]);
+		trB.setIdentity();
+		trB.setOrigin(btVector3(0,0,0));
+		btGeneric6DofSpring2Constraint* hinge = new btGeneric6DofSpring2Constraint(*pBodyA, *pBodyB, trA, trB, RO_XYZ);
+		wheelHinge2.push_back(hinge);
+
+		// Angular limits
+		hinge->setAngularLowerLimit(btVector3(1,0,0));
+		hinge->setAngularUpperLimit(btVector3(-1,0,0));
+
+		// Linear limits
+		hinge->setLinearLowerLimit(btVector3(0,-0.4f,0));
+		hinge->setLinearUpperLimit(btVector3(0,0,0));
 
 		world->addConstraint(wheelHinge2[i], true);
-
-		/**
-		 * Axis :
-		 * 	- Linear, y = 2
-		 * 	- Rotation, x = 3, z = 4, y = 5
-		 */
 
 		{
 			int motorAxis = 3;
@@ -375,29 +383,13 @@ void Tank::makeWheels(AAssetManager *mgr, btDynamicsWorld *world) {
 		}
 
 		{
-			int motorAxis = 5;
-			wheelHinge2[i]->setLimit(motorAxis, 0, 0);
-		}
-
-		{
-			int index = 2;
-			wheelHinge2[i]->setLimit(index, -0.4f, 0.f);
+			int index = 1;
 			wheelHinge2[i]->setDamping(index, 2.3f, true);
 			wheelHinge2[i]->setStiffness(index, 20.f, true);
 			wheelHinge2[i]->setBounce(index, 0.1f);
 		}
 
 		wheelHinge2[i]->setDbgDrawSize(btScalar(5.f));
-	}
-
-	{
-		// Bug
-		wheelHinge2[2]->setLimit(0, 0.f, 0.f);
-		wheelHinge2[3]->setLimit(0, 0.f, 0.f);
-		wheelHinge2[2]->setLimit(1, 0.f, 0.f);
-		wheelHinge2[3]->setLimit(1, 0.f, 0.f);
-		/*wheelHinge2[2]->setLimit(2, 0.f, 0.f);
-		wheelHinge2[3]->setLimit(2, 0.f, 0.f);*/
 	}
 }
 
@@ -484,19 +476,26 @@ void Tank::fire(vector<Base *> *bases) {
 	btScalar tmp[16];
 	glm::vec3 missileScale = glm::vec3(0.1f, 0.3f, 0.1f);
 
+	// Model matrix
 	defaultMotionState[8]->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
-	btQuaternion quat = defaultMotionState[8]->m_graphicsWorldTrans.getRotation();
 	glm::mat4 modelMatrix = glm::make_mat4(tmp);
+
+	// Rotation matrix
+	btQuaternion quat = defaultMotionState[8]->m_graphicsWorldTrans.getRotation();
+	btTransform tr;
+	tr.setIdentity();
+	tr.setRotation(quat);
+	tr.getOpenGLMatrix(tmp);
+	glm::mat4 rotMatrix = glm::make_mat4(tmp);
 
 	glm::vec4 vec = modelMatrix * glm::vec4(0.f, 0.f, canonScale.z + 1.f, 1.f);
 
-	glm::mat4 rotMatrix = glm::toMat4(glm::quat(quat.getX(), quat.getY(), quat.getZ(), quat.getW()))
-						  * glm::rotate(glm::mat4(1.f), 90.f, glm::vec3(1,0,0));
+	rotMatrix = rotMatrix * glm::rotate(glm::mat4(1.f), 90.f, glm::vec3(1,0,0));
 
 	Base* c = new Missile(missile, glm::vec3(vec.x, vec.y, vec.z), missileScale, rotMatrix, 10.f);
 	world->addRigidBody(c->rigidBody[0]);
 
-	glm::vec4 forceVec = modelMatrix * glm::vec4(0.f, 0.f, 500.f, 0.f);
+	glm::vec4 forceVec = modelMatrix * glm::vec4(0, 0, 500.f, 0);
 
 	c->rigidBody[0]->applyCentralImpulse(btVector3(forceVec.x, forceVec.y, forceVec.z));
 

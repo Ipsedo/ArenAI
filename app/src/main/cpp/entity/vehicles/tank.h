@@ -61,7 +61,7 @@ private:
 
 	btHingeConstraint* turretHinge;
 	btHingeConstraint* canonHinge;
-	vector<btHinge2Constraint *> wheelHinge2;
+	vector<btGeneric6DofSpring2Constraint *> wheelHinge2;
 	vector<ModelVBO *> modelVBOs;
 
 	void makeChassis(AAssetManager* mgr);

@@ -13,5 +13,5 @@ void Missile::update() {
 }
 
 bool Missile::isDead() {
-	return rigidBody[0]->getLinearVelocity().norm() < 1e-2f;
+	return rigidBody[0]->getLinearVelocity().norm() < 1.f;
 }

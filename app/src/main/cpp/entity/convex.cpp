@@ -33,18 +33,9 @@ Convex::Convex(AAssetManager *mgr, std::string objFileName, glm::vec3 pos, glm::
 	glm::quat tmp = glm::quat_cast(rotationMatrix);
 	myTransform.setRotation(btQuaternion(tmp.x, tmp.y, tmp.z, tmp.w));
 
-	btVector3 intertie(0.f, 0.f, 0.f);
-	if (mass)
-		collisionShape[0]->calculateLocalInertia(mass, intertie);
-
-	defaultMotionState.push_back(new btDefaultMotionState(myTransform));
-
-	btRigidBody::btRigidBodyConstructionInfo constrInfo(mass,
-														defaultMotionState[0],
-														collisionShape[0],
-														intertie);
-
-	rigidBody.push_back(new btRigidBody(constrInfo));
+	std::tuple<btRigidBody*, btDefaultMotionState*> t = localCreateRigidBody(mass, myTransform, collisionShape[0], this);
+	rigidBody.push_back(std::get<0>(t));
+	defaultMotionState.push_back(std::get<1>(t));
 }
 
 void Convex::draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lightPos) {

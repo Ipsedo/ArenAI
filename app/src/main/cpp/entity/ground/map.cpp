@@ -3,7 +3,7 @@
 //
 
 #include "map.h"
-
+#include "../../utils/rigidbody.h"
 #include <glm/gtc/type_ptr.hpp>
 
 Map::Map(glm::vec3 pos, int width, int length, float *normalizedHeightValues, glm::vec3 scale) {
@@ -31,7 +31,7 @@ Map::Map(glm::vec3 pos, int width, int length, float *normalizedHeightValues, gl
 														collisionShape[0],
 														intertie);
 
-	rigidBody.push_back(new btRigidBody(constrInfo));
+	rigidBody.push_back(new btRigidBodyWithBase(constrInfo, this));
 }
 
 /**

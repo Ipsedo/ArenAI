@@ -4,6 +4,7 @@
 #include <android/log.h>
 #include "engine.h"
 #include "../entity/shooter.h"
+#include "../utils/rigidbody.h"
 
 static float gravity = -10.f;
 static float deltaTime = 1.f / 60.f;
@@ -14,24 +15,35 @@ bool contact_callback(btManifoldPoint &btmanifoldpoint, const btCollisionObjectW
 	/*btRigidBody* body0 = (btRigidBody*) btRigidBody::upcast(btcollisionobject0->getCollisionObject());
 	btRigidBody* body1 = (btRigidBody*) btRigidBody::upcast(btcollisionobject1->getCollisionObject());
 
-	btVector3 pos0 = body0->getWorldTransform().getOrigin();
-	btVector3 pos1 = body1->getWorldTransform().getOrigin();
+	btRigidBodyWithBase* downcast0 = static_cast<btRigidBodyWithBase*>(body0);
+	btRigidBodyWithBase* downcast1 = static_cast<btRigidBodyWithBase*>(body1);
 
-	body0->applyCentralForce((pos0 - pos1) * 2000);
-	body1->applyCentralForce((pos0 - pos1) * 2000);*/
-
-	__android_log_print(ANDROID_LOG_DEBUG, "AAA", "p");
+	downcast0->base->decreaseLife(1);
+	downcast1->base->decreaseLife(1);*/
 
 	return false;
 }
 
 bool callback_finish(void *userPersistentData) {
-	__android_log_print(ANDROID_LOG_DEBUG, "AAA", "yo");
+	std::tuple<Base*, Base*>* t = (std::tuple<Base*, Base*>*) userPersistentData;
+
+	Base* b0 = std::get<0>(*t);
+	Base* b1 = std::get<1>(*t);
+
+	b0->decreaseLife(1);
+	b1->decreaseLife(1);
+
+	delete t;
+
 	return false;
 }
 
 bool callback_processed(btManifoldPoint &cp, void *body0, void *body1) {
-	__android_log_print(ANDROID_LOG_DEBUG, "AAA", "yo");
+	btRigidBodyWithBase* b0 = (btRigidBodyWithBase*) body0;
+	btRigidBodyWithBase* b1 = (btRigidBodyWithBase*) body1;
+
+	cp.m_userPersistentData = new std::tuple<Base*, Base*>(b0->base, b1->base);
+
 	return false;
 }
 
@@ -55,8 +67,8 @@ Engine::Engine(vector<Base *> *bases) {
 			world->addRigidBody(bd);
 
 	//gContactAddedCallback = contact_callback;
-	//gContactDestroyedCallback = callback_finish;
-	//gContactProcessedCallback = callback_processed;
+	gContactDestroyedCallback = callback_finish;
+	gContactProcessedCallback = callback_processed;
 }
 
 void Engine::update(float delta) {

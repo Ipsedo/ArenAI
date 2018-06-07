@@ -84,7 +84,7 @@ void Car::init(btDynamicsWorld *world, AAssetManager *mgr) {
 	tr.setOrigin(btVector3(spawnPos.x + 0.f, spawnPos.y + 0.f, spawnPos.z + 0.f));
 
 	std::tuple<btRigidBody *, btDefaultMotionState *> tmp = localCreateRigidBody(chassisMass, tr,
-																				 chassisShape);//chassisShape);
+																				 chassisShape, this);//chassisShape);
 	btRigidBody *m_carChassis = std::get<0>(tmp);
 	btDefaultMotionState *m_carChassiMotionState = std::get<1>(tmp);
 
@@ -115,7 +115,7 @@ void Car::init(btDynamicsWorld *world, AAssetManager *mgr) {
 		tr.setIdentity();
 		tr.setOrigin(wheelPos[i]);
 
-		tmp = localCreateRigidBody(wheelMass, tr, m_wheelShape);
+		tmp = localCreateRigidBody(wheelMass, tr, m_wheelShape, this);
 
 		btRigidBody *pBodyB = std::get<0>(tmp);
 		btDefaultMotionState *pBodyBMotionState = std::get<1>(tmp);

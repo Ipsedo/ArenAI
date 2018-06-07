@@ -309,7 +309,7 @@ void Tank::makeChassis(AAssetManager *mgr) {
 	tr.setOrigin(btVector3(spawnPos.x + 0, spawnPos.y + 0, spawnPos.z + 0));
 
 	std::tuple<btRigidBody *, btDefaultMotionState *> tmp = localCreateRigidBody(chassisMass, tr,
-																				 chassisShape);
+																				 chassisShape, this);
 	btRigidBody *m_carChassis = std::get<0>(tmp);
 	btDefaultMotionState *m_carChassiMotionState = std::get<1>(tmp);
 
@@ -337,7 +337,7 @@ void Tank::makeWheels(AAssetManager *mgr, btDynamicsWorld *world) {
 		tr.setIdentity();
 		tr.setOrigin(wheelPos[i]);
 
-		std::tuple<btRigidBody *, btDefaultMotionState *> tmp = localCreateRigidBody(wheelMass, tr, m_wheelShape);
+		std::tuple<btRigidBody *, btDefaultMotionState *> tmp = localCreateRigidBody(wheelMass, tr, m_wheelShape, this);
 
 		btRigidBody *pBodyB = std::get<0>(tmp);
 		btDefaultMotionState *pBodyBMotionState = std::get<1>(tmp);
@@ -410,7 +410,7 @@ void Tank::makeTurret(AAssetManager *mgr, btDynamicsWorld *world) {
 	tr.setIdentity();
 	tr.setOrigin(btVector3(turretPos.x, turretPos.y, turretPos.z));
 
-	std::tuple<btRigidBody *, btDefaultMotionState *> tmp = localCreateRigidBody(turretMass, tr, turretShape);
+	std::tuple<btRigidBody *, btDefaultMotionState *> tmp = localCreateRigidBody(turretMass, tr, turretShape, this);
 
 	btRigidBody *pBodyA = rigidBody[0];
 	btRigidBody *pBodyB = std::get<0>(tmp);
@@ -443,7 +443,7 @@ void Tank::makeCanon(AAssetManager *mgr, btDynamicsWorld *world) {
 	tr.setIdentity();
 	tr.setOrigin(btVector3(canonPos.x, canonPos.y, canonPos.z));
 
-	std::tuple<btRigidBody *, btDefaultMotionState *> tmp = localCreateRigidBody(canonMass, tr, canonShape);
+	std::tuple<btRigidBody *, btDefaultMotionState *> tmp = localCreateRigidBody(canonMass, tr, canonShape, this);
 
 	btRigidBody *pBodyA = rigidBody[7];
 	btRigidBody *pBodyB = std::get<0>(tmp);

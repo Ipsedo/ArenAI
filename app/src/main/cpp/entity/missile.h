@@ -12,7 +12,11 @@ class Missile : public Cone {
 public:
 	Missile(ModelVBO* modelVBO, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass);
 	void update() override;
+	void decreaseLife(int toSub) override;
 	bool isDead() override;
+
+private:
+	int life;
 };
 
 

@@ -4,10 +4,10 @@ __Samuel Berrien__
 _Comming soon !_
 
 ## Infos
-* with [Bullet3](https://github.com/bulletphysics/bullet3), many thanks to the authors
-    * linked with mk files (ndkBuild in gradle)   
-* VR cardboard and bluetooth controller
-    * not yet implemented
+* with [Bullet3](https://github.com/bulletphysics/bullet3)
+* and [GLM](https://github.com/g-truc/glm)
+* VR cardboard or normal vision
+* A bluetooth controller is required
     
 ## Description
 Allow the players an experience more than immersive.

@@ -33,3 +33,7 @@ bool Base::isDead() {
 void Base::init() { }
 
 void Base::update() { }
+
+void Base::decreaseLife(int toSub) {
+
+}

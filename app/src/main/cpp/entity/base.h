@@ -17,6 +17,8 @@ public:
 
 	virtual void update();
 
+	virtual void decreaseLife(int toSub);
+
 	virtual bool isDead();
 
 	virtual std::tuple<glm::mat4, glm::mat4> getMatrixes(glm::mat4 pMatrix, glm::mat4 vMatrix);

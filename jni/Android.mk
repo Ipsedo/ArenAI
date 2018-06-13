@@ -87,6 +87,8 @@ LOCAL_C_INCLUDES += $(BULLET_PATH)/src
 FILE_LIST := $(wildcard \
 		$(LOCAL_PATH)/cpp/*.cpp \
 		$(LOCAL_PATH)/cpp/utils/*.cpp \
+		$(LOCAL_PATH)/cpp/levels/*.cpp \
+		$(LOCAL_PATH)/cpp/levels/level0/*.cpp \
 		$(LOCAL_PATH)/cpp/core/*.cpp \
 		$(LOCAL_PATH)/cpp/graphics/drawable/*.cpp \
 		$(LOCAL_PATH)/cpp/graphics/*.cpp \

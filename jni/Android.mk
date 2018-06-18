@@ -1,7 +1,8 @@
 TOP_PATH := $(call my-dir)/..
-BULLET_PATH := $(TOP_PATH)/bullet3
+LIBS_PATH := $(TOP_PATH)/libs
+BULLET_PATH := $(LIBS_PATH)/bullet3
 PHYVR_PATH := $(TOP_PATH)/app/src/main
-GLM_PATH := $(TOP_PATH)/glm
+GLM_PATH := $(LIBS_PATH)/glm
 
 # BULLET3 Module
 include $(CLEAR_VARS)

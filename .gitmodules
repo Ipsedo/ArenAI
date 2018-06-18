@@ -1,6 +1,6 @@
 [submodule "glm"]
-	path = glm
+	path = libs/glm
 	url = https://github.com/g-truc/glm
 [submodule "bullet3"]
-	path = bullet3
+	path = libs/bullet3
 	url = https://github.com/bulletphysics/bullet3

@@ -8,8 +8,8 @@
 #include <btBulletDynamicsCommon.h>
 #include <android/asset_manager.h>
 #include <glm/glm.hpp>
-#include "cpp/graphics/drawable/modelvbo.h"
-#include "cpp/entity/base.h"
+#include "../../graphics/drawable/modelvbo.h"
+#include "../../entity/base.h"
 
 class Box : public Base {
 public:

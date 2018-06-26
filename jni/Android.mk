@@ -1,8 +1,14 @@
 TOP_PATH := $(call my-dir)/..
 LIBS_PATH := $(TOP_PATH)/libs
 BULLET_PATH := $(LIBS_PATH)/bullet3
-PHYVR_PATH := $(TOP_PATH)/app/src/main
+PHYVR_PATH := $(TOP_PATH)/app/src/main/cpp
 GLM_PATH := $(LIBS_PATH)/glm
+
+# Stuff
+# https://gist.github.com/darkdukey/9402013c953ff57c73ba
+define walk
+ 	$(wildcard $(1)) $(foreach e, $(wildcard $(1)/*), $(call walk, $(e)))
+endef
 
 # BULLET3 Module
 include $(CLEAR_VARS)
@@ -85,21 +91,8 @@ LOCAL_STATIC_LIBRARIES += bullet
 LOCAL_C_INCLUDES += $(BULLET_PATH)/src
 
 #find all the file recursively under jni/
-FILE_LIST := $(wildcard \
-		$(LOCAL_PATH)/cpp/*.cpp \
-		$(LOCAL_PATH)/cpp/utils/*.cpp \
-		$(LOCAL_PATH)/cpp/levels/*.cpp \
-		$(LOCAL_PATH)/cpp/levels/level0/*.cpp \
-		$(LOCAL_PATH)/cpp/core/*.cpp \
-		$(LOCAL_PATH)/cpp/graphics/drawable/*.cpp \
-		$(LOCAL_PATH)/cpp/graphics/*.cpp \
-		$(LOCAL_PATH)/cpp/entity/*.cpp \
-		$(LOCAL_PATH)/cpp/entity/ground/*.cpp \
-		$(LOCAL_PATH)/cpp/entity/vehicles/*.cpp \
-		$(LOCAL_PATH)/cpp/entity/poly/*.cpp \
-		$(LOCAL_PATH)/cpp/controls/*.cpp \
-		$(LOCAL_PATH)/cpp/wrappers/*.cpp \
-		)
+ALLFILES := $(call walk, $(LOCAL_PATH))
+FILE_LIST := $(filter %.cpp, $(ALLFILES))
 LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)
 
 include $(BUILD_SHARED_LIBRARY)

@@ -19,7 +19,7 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initPlayer(JNIEnv *env, jobje
 	vector<Base *> *entity = (vector<Base *> *) entityPtr;
 	AAssetManager *cppMgr = AAssetManager_fromJava(env, assetManager);
 
-	Tank *tank = new Tank(vr, cppMgr, level->world, btVector3(0.f, -10.f, 20.f));
+	Tank *tank = new Tank(vr, cppMgr, level->world, btVector3(5.f, -10.f, 20.f));
 	for (Base *b : tank->getBaseTest())
 		entity->push_back(b);
 	renderer->setCamera(tank->getCamera());

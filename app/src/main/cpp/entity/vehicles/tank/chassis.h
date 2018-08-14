@@ -22,7 +22,7 @@ private:
 	btVector3 pos;
 
 public:
-	Chassis(const btRigidBodyConstructionInfo &constructionInfo, btDefaultMotionState *motionState,
+	Chassis(const btRigidBodyConstructionInfo &constructionInfo,
 			ModelVBO *modelVBO, const glm::vec3 &scale, const btVector3 pos);
 
 	void onInput(input in) override;

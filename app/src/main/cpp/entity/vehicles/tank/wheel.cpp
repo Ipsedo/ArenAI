@@ -7,10 +7,10 @@
 #include <glm/vec3.hpp>
 #include "../../../utils/rigidbody.h"
 
-Wheel::Wheel(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo, btDefaultMotionState *motionState,
+Wheel::Wheel(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo,
 			 ModelVBO *modelVBO, const glm::vec3 &scale,
 			 btDynamicsWorld *world, Base *chassis, btVector3 chassisPos, btVector3 wheelPos) :
-		Base(constructionInfo, motionState, modelVBO, scale),
+		Base(constructionInfo, modelVBO, scale),
 		pos(wheelPos), chassisPos(chassisPos),
 		isMotorEnabled(false), isBraking(true), targetSpeed(0.f), hasReAccelerate(false) {
 
@@ -80,7 +80,7 @@ void Wheel::update() {
 		tr.setIdentity();
 		tr.setOrigin(pos + chassisPos);
 
-		motionState->setWorldTransform(tr);
+		getMotionState()->setWorldTransform(tr);
 		setWorldTransform(tr);
 		clearForces();
 		setLinearVelocity(btVector3(0, 0, 0));
@@ -97,10 +97,9 @@ void Wheel::update() {
  *
  */
 FrontWheel::FrontWheel(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo,
-					   btDefaultMotionState *motionState, ModelVBO *modelVBO,
-					   const glm::vec3 &scale, btDynamicsWorld *world,
+					   ModelVBO *modelVBO, const glm::vec3 &scale, btDynamicsWorld *world,
 					   Base *chassis, const btVector3 &chassisPos, const btVector3 &pos)
-		: Wheel(constructionInfo, motionState, modelVBO, scale, world, chassis, chassisPos, pos), direction(0.f) {}
+		: Wheel(constructionInfo, modelVBO, scale, world, chassis, chassisPos, pos), direction(0.f) {}
 
 void FrontWheel::onInput(input in) {
 	Wheel::onInput(in);
@@ -127,9 +126,9 @@ Wheel *makeWheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVe
 	btTransform tr;
 	tr.setIdentity();
 	tr.setOrigin(pos + chassisPos);
-	tuple<btRigidBody::btRigidBodyConstructionInfo, btDefaultMotionState *> cinfo
+	btRigidBody::btRigidBodyConstructionInfo cinfo
 			= localCreateInfo(wheelMass, tr, m_wheelShape);
-	return new Wheel(get<0>(cinfo), get<1>(cinfo), makeWheelMesh(mgr),
+	return new Wheel(cinfo, makeWheelMesh(mgr),
 					 glm::vec3(wheelWidth, wheelRadius, wheelRadius), world,
 					 chassis, chassisPos, pos);
 }
@@ -139,9 +138,8 @@ FrontWheel *makeFrontWheel(AAssetManager *mgr, btDynamicsWorld *world, Base *cha
 	btTransform tr;
 	tr.setIdentity();
 	tr.setOrigin(pos + chassisPos);
-	tuple<btRigidBody::btRigidBodyConstructionInfo, btDefaultMotionState *> cinfo
-			= localCreateInfo(wheelMass, tr, m_wheelShape);
-	return new FrontWheel(get<0>(cinfo), get<1>(cinfo), makeWheelMesh(mgr),
+	btRigidBody::btRigidBodyConstructionInfo cinfo = localCreateInfo(wheelMass, tr, m_wheelShape);
+	return new FrontWheel(cinfo, makeWheelMesh(mgr),
 						  glm::vec3(wheelWidth, wheelRadius, wheelRadius), world, chassis,
 						  chassisPos, pos);
 }

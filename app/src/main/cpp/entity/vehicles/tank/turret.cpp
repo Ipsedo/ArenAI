@@ -13,9 +13,8 @@
 #include "../../../utils/assets.h"
 
 Turret::Turret(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo,
-			   btDefaultMotionState *motionState, DiffuseModel *modelVBO,
-			   const glm::vec3 &scale, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos)
-		: Base(constructionInfo, motionState, modelVBO, scale),
+			   DiffuseModel *modelVBO, const glm::vec3 &scale, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos)
+		: Base(constructionInfo, modelVBO, scale),
 		  angle(0.f), respawn(false), pos(chassisPos + turretRelPos) {
 
 	btTransform tr;
@@ -47,7 +46,7 @@ void Turret::update() {
 		btTransform tr;
 		tr.setIdentity();
 		tr.setOrigin(pos);
-		motionState->setWorldTransform(tr);
+		getMotionState()->setWorldTransform(tr);
 		setWorldTransform(tr);
 		clearForces();
 		setLinearVelocity(btVector3(0, 0, 0));
@@ -62,9 +61,8 @@ void Turret::update() {
 /////////////////////
 
 Canon::Canon(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo,
-			 btDefaultMotionState *motionState, DiffuseModel *modelVBO,
-			 const glm::vec3 &scale, btDynamicsWorld *world, Base *turret, btVector3 turretPos, DiffuseModel *missile)
-		: Base(constructionInfo, motionState, modelVBO, scale),
+			 DiffuseModel *modelVBO, const glm::vec3 &scale, btDynamicsWorld *world, Base *turret, btVector3 turretPos, DiffuseModel *missile)
+		: Base(constructionInfo, modelVBO, scale),
 		  angle(0.f), respawn(false), pos(turretPos + canonRelPos), hasClickedShoot(false), missile(missile) {
 
 	btRigidBody *pBodyA = turret;
@@ -96,7 +94,7 @@ void Canon::update() {
 		btTransform tr;
 		tr.setIdentity();
 		tr.setOrigin(pos);
-		motionState->setWorldTransform(tr);
+		getMotionState()->setWorldTransform(tr);
 		setWorldTransform(tr);
 		clearForces();
 		setLinearVelocity(btVector3(0, 0, 0));
@@ -116,12 +114,15 @@ void Canon::fire(std::vector<Base *> *entities) {
 	glm::vec3 missileScale = glm::vec3(0.1f, 0.3f, 0.1f);
 
 	// Model matrix
-	motionState->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
+	btTransform tr;
+	getMotionState()->getWorldTransform(tr);
+	tr.getOpenGLMatrix(tmp);
 	glm::mat4 modelMatrix = glm::make_mat4(tmp);
 
 	// Rotation matrix
-	btQuaternion quat = motionState->m_graphicsWorldTrans.getRotation();
-	btTransform tr;
+	tr.setIdentity();
+	getMotionState()->getWorldTransform(tr);
+	btQuaternion quat = tr.getRotation();
 	tr.setIdentity();
 	tr.setRotation(quat);
 	tr.getOpenGLMatrix(tmp);
@@ -191,8 +192,8 @@ Turret *makeTurret(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, bt
 	tr.setIdentity();
 	tr.setOrigin(chassisPos + turretRelPos);
 
-	tuple<btRigidBody::btRigidBodyConstructionInfo, btDefaultMotionState *> cinfo = localCreateInfo(turretMass, tr, turretShape);
-	return new Turret(get<0>(cinfo), get<1>(cinfo), modelVBO, turretScale, world, chassis, chassisPos);
+	btRigidBody::btRigidBodyConstructionInfo cinfo = localCreateInfo(turretMass, tr, turretShape);
+	return new Turret(cinfo, modelVBO, turretScale, world, chassis, chassisPos);
 }
 
 Canon *makeCanon(AAssetManager *mgr, btDynamicsWorld *world, Base *turret, btVector3 turretPos) {
@@ -206,13 +207,10 @@ Canon *makeCanon(AAssetManager *mgr, btDynamicsWorld *world, Base *turret, btVec
 	tr.setIdentity();
 	tr.setOrigin(canonRelPos + turretPos);
 
-	tuple<btRigidBody::btRigidBodyConstructionInfo, btDefaultMotionState *> cinfo
+	btRigidBody::btRigidBodyConstructionInfo cinfo
 			= localCreateInfo(canonMass, tr, canonShape);
 
-	return new Canon(get<0>(cinfo), get<1>(cinfo), modelVBO, canonScale, world, turret, turretPos,
+	return new Canon(cinfo, modelVBO, canonScale, world, turret, turretPos,
 		new ModelVBO(getFileText(mgr, "obj/cone.obj"),
-					 new float[4]{(float) rand() / RAND_MAX,
-								  (float) rand() / RAND_MAX,
-								  (float) rand() / RAND_MAX,
-								  1.f}));
+					 new float[4]{0.2f, 0.7f, 0.05f, 1.f}));
 }

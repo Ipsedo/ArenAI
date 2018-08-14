@@ -13,7 +13,7 @@
 class Cylinder : public Base {
 public:
 protected:
-	Cylinder(const btRigidBodyConstructionInfo &constructionInfo, btDefaultMotionState *motionState,
+	Cylinder(const btRigidBodyConstructionInfo &constructionInfo,
 			 DiffuseModel *modelVBO, const glm::vec3 &scale);
 
 public:

@@ -11,7 +11,7 @@
 
 using namespace std;
 
-tuple<btRigidBody::btRigidBodyConstructionInfo, btDefaultMotionState *>
+btRigidBody::btRigidBodyConstructionInfo
 localCreateInfo(btScalar mass, const btTransform &startTransform, btCollisionShape *shape);
 
 btConvexHullShape *parseObj(string objFileText);

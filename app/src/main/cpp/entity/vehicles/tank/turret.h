@@ -24,7 +24,7 @@ private:
 	bool respawn;
 	btVector3 pos;
 public:
-	Turret(const btRigidBodyConstructionInfo &constructionInfo, btDefaultMotionState *motionState,
+	Turret(const btRigidBodyConstructionInfo &constructionInfo,
 		   DiffuseModel *modelVBO, const glm::vec3 &scale,
 		   btDynamicsWorld *world, Base *chassis, btVector3 chassisPos);
 
@@ -48,7 +48,7 @@ private:
 	btHingeConstraint *hinge;
 	DiffuseModel *missile;
 public:
-	Canon(const btRigidBodyConstructionInfo &constructionInfo, btDefaultMotionState * motionState,
+	Canon(const btRigidBodyConstructionInfo &constructionInfo,
 		  DiffuseModel *modelVBO, const glm::vec3 &scale,
 		  btDynamicsWorld *world, Base *turret, btVector3 turretPos, DiffuseModel *missile);
 

@@ -45,8 +45,8 @@ Sphere::~Sphere() {
 	delete modelVBO;
 }*/
 
-Sphere::Sphere(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo, btDefaultMotionState *motionState,
-			   DiffuseModel *modelVBO, const glm::vec3 &scale) : Base(constructionInfo, motionState, modelVBO,
+Sphere::Sphere(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo,
+			   DiffuseModel *modelVBO, const glm::vec3 &scale) : Base(constructionInfo, modelVBO,
 																		  scale) {
 
 }
@@ -70,7 +70,7 @@ Sphere *Sphere::MakeSphere(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, g
 	glm::quat tmp = glm::quat_cast(rotMat);
 	myTransform.setRotation(btQuaternion(tmp.x, tmp.y, tmp.z, tmp.w));
 
-	tuple<btRigidBody::btRigidBodyConstructionInfo, btDefaultMotionState *> cinfo
+	btRigidBody::btRigidBodyConstructionInfo cinfo
 		= localCreateInfo(mass, myTransform, shape);
-	return new Sphere(get<0>(cinfo), get<1>(cinfo), modelVBO, scale);
+	return new Sphere(cinfo, modelVBO, scale);
 }

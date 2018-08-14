@@ -53,7 +53,7 @@ public:
 	 * @param chassis
 	 * @param pos Position relative de la roue par rapport au centre du chassis
 	 */
-	Wheel(const btRigidBodyConstructionInfo &constructionInfo, btDefaultMotionState *motionState,
+	Wheel(const btRigidBodyConstructionInfo &constructionInfo,
 		  ModelVBO *modelVBO, const glm::vec3 &scale,
 		  btDynamicsWorld *world, Base *chassis, btVector3 chassisPos, btVector3 pos);
 
@@ -67,7 +67,7 @@ private:
 	float direction;
 
 public:
-	FrontWheel(const btRigidBodyConstructionInfo &constructionInfo, btDefaultMotionState *motionState,
+	FrontWheel(const btRigidBodyConstructionInfo &constructionInfo,
 			   ModelVBO *modelVBO, const glm::vec3 &scale,
 			   btDynamicsWorld *world, Base *chassis, const btVector3 &chassisPos, const btVector3 &pos);
 

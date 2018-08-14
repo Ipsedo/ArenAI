@@ -7,8 +7,8 @@
 #include "base.h"
 
 Base::Base(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo,
-				   btDefaultMotionState *motionState, DiffuseModel *model,
-				   const glm::vec3 &s) : scale(s), modelVBO(model), btRigidBody(constructionInfo), motionState(motionState) {
+				   DiffuseModel *model, const glm::vec3 &s)
+		: scale(s), modelVBO(model), btRigidBody(constructionInfo) {
 
 }
 
@@ -27,7 +27,9 @@ bool Base::isDead() {
 
 void Base::draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) {
 	btScalar tmp[16];
-	motionState->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
+	btTransform tr;
+	getMotionState()->getWorldTransform(tr);
+	tr.getOpenGLMatrix(tmp);
 	glm::mat4 modelMatrix = glm::make_mat4(tmp) * glm::scale(glm::mat4(1.f), scale);
 
 	glm::mat4 mvMatrix = vMatrix * modelMatrix;

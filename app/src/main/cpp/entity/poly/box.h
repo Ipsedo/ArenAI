@@ -16,8 +16,7 @@ public:
 	static Box *MakeBox(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass);
 
 protected:
-	Box(const btRigidBodyConstructionInfo &constructionInfo, btDefaultMotionState *motionState, DiffuseModel *modelVBO,
-		const glm::vec3 &scale);
+	Box(const btRigidBodyConstructionInfo &constructionInfo,  DiffuseModel *modelVBO, const glm::vec3 &scale);
 };
 
 

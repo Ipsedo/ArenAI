@@ -9,9 +9,8 @@
 #include "../../../utils/rigidbody.h"
 
 Chassis::Chassis(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo,
-				 btDefaultMotionState *motionState, ModelVBO *modelVBO,
-				 const glm::vec3 &scale, const btVector3 centerPos)
-		: Base(constructionInfo, motionState, modelVBO, scale),
+				 ModelVBO *modelVBO, const glm::vec3 &scale, const btVector3 centerPos)
+		: Base(constructionInfo, modelVBO, scale),
 		  respawn(false), pos(centerPos) {
 }
 
@@ -27,11 +26,13 @@ void Chassis::update() {
 		tr.setIdentity();
 		tr.setOrigin(pos);
 
-		motionState->setWorldTransform(tr);
+		getMotionState()->setWorldTransform(tr);
 		setWorldTransform(tr);
+
 		clearForces();
 		setLinearVelocity(btVector3(0, 0, 0));
 		setAngularVelocity(btVector3(0, 0, 0));
+
 		respawn = false;
 	}
 }
@@ -45,9 +46,9 @@ Chassis *makeChassis(AAssetManager *mgr, btVector3 pos) {
 	tr.setOrigin(pos);
 
 	btCollisionShape *chassisShape = parseObj(chassisObjTxt);
-	tuple<btRigidBody::btRigidBodyConstructionInfo, btDefaultMotionState *> cinfo = localCreateInfo(chassisMass, tr, chassisShape);
+	btRigidBody::btRigidBodyConstructionInfo cinfo = localCreateInfo(chassisMass, tr, chassisShape);
 
-	return new Chassis(get<0>(cinfo), get<1>(cinfo), modelVBO, chassisScale, pos);
+	return new Chassis(cinfo, modelVBO, chassisScale, pos);
 }
 
 glm::vec3 Chassis::camLookAtVec(bool VR) {

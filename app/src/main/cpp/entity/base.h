@@ -16,8 +16,7 @@ private:
 	DiffuseModel *modelVBO;
 
 protected:
-	btDefaultMotionState *motionState;
-	Base(const btRigidBodyConstructionInfo &constructionInfo, btDefaultMotionState *motionState,
+	Base(const btRigidBodyConstructionInfo &constructionInfo,
 			 DiffuseModel *modelVBO, const glm::vec3 &scale);
 
 public:

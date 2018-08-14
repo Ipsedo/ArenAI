@@ -14,7 +14,7 @@
 
 class Map : public Base {
 public:
-	Map(const btRigidBodyConstructionInfo &constructionInfo, btDefaultMotionState *motionState,
+	Map(const btRigidBodyConstructionInfo &constructionInfo,
 		DiffuseModel *modelVBO, const glm::vec3 &scale);
 	//HeightMap *heightMap;
 };

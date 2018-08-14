@@ -19,7 +19,7 @@ public:
 	~Sphere();*/
 	static Sphere *MakeSphere(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass);
 protected:
-	Sphere(const btRigidBodyConstructionInfo &constructionInfo, btDefaultMotionState *motionState,
+	Sphere(const btRigidBodyConstructionInfo &constructionInfo,
 		   DiffuseModel *modelVBO, const glm::vec3 &scale);
 
 private:

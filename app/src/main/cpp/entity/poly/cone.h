@@ -19,7 +19,7 @@ public:
 	void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) override;*/
 
 protected:
-	Cone(const btRigidBodyConstructionInfo &constructionInfo, btDefaultMotionState *motionState,
+	Cone(const btRigidBodyConstructionInfo &constructionInfo,
 		 DiffuseModel *modelVBO, const glm::vec3 &scale);
 
 public:
@@ -27,7 +27,7 @@ public:
 	static Cone *MakeCone(DiffuseModel *modelVBO, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass);
 
 private:
-	static tuple<btRigidBody::btRigidBodyConstructionInfo, btDefaultMotionState *>
+	static btRigidBody::btRigidBodyConstructionInfo
 		init(glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass);
 	/*bool hasOwnModelVBO;
 

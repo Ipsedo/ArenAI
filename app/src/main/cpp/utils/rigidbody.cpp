@@ -7,7 +7,7 @@
 
 #include <btBulletDynamicsCommon.h>
 
-tuple<btRigidBody::btRigidBodyConstructionInfo, btDefaultMotionState *>
+btRigidBody::btRigidBodyConstructionInfo
 localCreateInfo(btScalar mass, const btTransform &startTransform, btCollisionShape *shape) {
 	btAssert((!shape || shape->getShapeType() != INVALID_SHAPE_PROXYTYPE));
 
@@ -20,8 +20,7 @@ localCreateInfo(btScalar mass, const btTransform &startTransform, btCollisionSha
 
 	btDefaultMotionState *myMotionState = new btDefaultMotionState(startTransform);
 
-	return std::tuple<btRigidBody::btRigidBodyConstructionInfo, btDefaultMotionState *>
-			(btRigidBody::btRigidBodyConstructionInfo(mass, myMotionState, shape, localInertia), myMotionState);
+	return btRigidBody::btRigidBodyConstructionInfo(mass, myMotionState, shape, localInertia);
 }
 
 btConvexHullShape *parseObj(std::string objFileText) {

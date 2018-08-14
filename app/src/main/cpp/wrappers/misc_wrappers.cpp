@@ -10,12 +10,10 @@
 #include "../core/engine.h"
 #include "../entity/convex.h"
 #include "../entity/ground/map.h"
-#include "../entity/vehicles/car2.h"
 #include "../entity/poly/cone.h"
 #include "../entity/poly/box.h"
 #include "../entity/poly/sphere.h"
 #include "../entity/poly/cylinder.h"
-#include "../entity/vehicles/car.h"
 #include "wrapper_utils.h"
 
 #define HEIGHT_SPAWN 30.f
@@ -23,8 +21,8 @@
 extern "C"
 JNIEXPORT jlong JNICALL
 Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initEntity(JNIEnv *env, jobject instance,
-												  jobject assetManager, jfloatArray heightmap_,
-												  jint width, jint height) {
+															  jobject assetManager, jfloatArray heightmap_,
+															  jint width, jint height) {
 	jfloat *heightmap = env->GetFloatArrayElements(heightmap_, NULL);
 	float *map = jfloatPtrToCppFloatPtr(heightmap, width * height);
 
@@ -32,10 +30,9 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initEntity(JNIEnv *env, jobje
 
 	glm::mat4 id(1.f);
 
-	Base *sol = new Map(glm::vec3(0.f, 0.f, 0.f), width, height, map, glm::vec3(10.f, 50.f, 10.f));
-	//new Box(cppMgr, glm::vec3(0.f, -5.f, 0.f), glm::vec3(40.f,0.1f,40.f), id, 0.f);
-
 	vector<Base *> *boxes = new vector<Base *>();
+
+	Base *sol = makeMap(map, width, height, btVector3(0.f, 0.f, 0.f), btVector3(10.f, 50.f, 10.f));
 	boxes->push_back(sol);
 
 	int nbEntity = 100;
@@ -47,7 +44,7 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initEntity(JNIEnv *env, jobje
 		float scale = 2.f * (float) rand() / RAND_MAX;
 		float mass = maxMass * float(rand()) / RAND_MAX;
 		boxes->push_back(
-				new Box(cppMgr,
+				Box::MakeBox(cppMgr,
 							 glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale),
 							 id, mass));
 	}
@@ -57,7 +54,7 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initEntity(JNIEnv *env, jobje
 		float scale = 2.f * (float) rand() / RAND_MAX;
 		float mass = maxMass * float(rand()) / RAND_MAX;
 		boxes->push_back(
-				new Cylinder(cppMgr,
+				Cylinder::MakeCylinder(cppMgr,
 							 glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale),
 							 id, mass));
 	}
@@ -67,7 +64,7 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initEntity(JNIEnv *env, jobje
 		float scale = 2.f * (float) rand() / RAND_MAX;
 		float mass = maxMass * float(rand()) / RAND_MAX;
 		boxes->push_back(
-				new Cone(cppMgr,
+				Cone::MakeCone(cppMgr,
 							 glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale),
 							 id, mass));
 	}
@@ -77,7 +74,7 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initEntity(JNIEnv *env, jobje
 		float scale = 2.f * (float) rand() / RAND_MAX;
 		float mass = maxMass * float(rand()) / RAND_MAX;
 		boxes->push_back(
-				new Sphere(cppMgr,
+				Sphere::MakeSphere(cppMgr,
 							 glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale),
 							 id, mass));
 	}
@@ -87,9 +84,9 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initEntity(JNIEnv *env, jobje
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_samuelberrien_phyvr_wrappers_MainWrappers_addBox(JNIEnv *env, jobject instance, jobject assetManager,
-											  jlong boxesPtr) {
+														  jlong boxesPtr) {
 
-	vector<Base *> *boxes = (vector<Base *> *) boxesPtr;
+	/*vector<Base *> *boxes = (vector<Base *> *) boxesPtr;
 
 	AAssetManager *cppMgr = AAssetManager_fromJava(env, assetManager);
 
@@ -107,15 +104,14 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_addBox(JNIEnv *env, jobject i
 								glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale),
 								id, mass);
 		} else {
-			/*std::string m =
-					(float) rand() / RAND_MAX > 0.5 ? "obj/icosahedron.obj" : "obj/ast1.obj";*/
+
 			std::string m = "obj/icosahedron.obj";
 			base = new Convex(cppMgr, m,
 							  glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale),
 							  id, mass);
 		}
 		boxes->push_back(base);
-	}
+	}*/
 
 }
 

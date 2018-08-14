@@ -15,7 +15,6 @@ void Level0::init() {
 }
 
 
-
 vector<Base *> Level0::getEntities() {
 	return entities;
 }
@@ -29,15 +28,15 @@ bool Level0::lose() {
 }
 
 vector<Shooter *> Level0::getShooters() {
-	vector<Shooter*> res = vector<Shooter*>();
-	res.push_back(tank);
+	vector<Shooter *> res = vector<Shooter *>();
+//	res.push_back(tank);
 	return res;
 }
 
 Camera *Level0::getCamera() {
-	return (Camera*) tank;
+	return nullptr;
 }
 
 Controls *Level0::getControls() {
-	return (Controls*) tank;
+	return nullptr;
 }

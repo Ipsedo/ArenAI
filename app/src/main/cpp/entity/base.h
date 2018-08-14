@@ -1,38 +1,36 @@
 //
-// Created by samuel on 27/05/18.
+// Created by samuel on 26/06/18.
 //
 
-#ifndef PHYVR_BASE_H
-#define PHYVR_BASE_H
+#ifndef PHYVR_BASETEST_H
+#define PHYVR_BASETEST_H
+
 
 #include <btBulletDynamicsCommon.h>
 #include <glm/glm.hpp>
 #include "../graphics/drawable/modelvbo.h"
 
-class Base {
+class Base : public btRigidBody {
+private:
+	glm::vec3 scale;
+	DiffuseModel *modelVBO;
+
+protected:
+	btDefaultMotionState *motionState;
+	Base(const btRigidBodyConstructionInfo &constructionInfo, btDefaultMotionState *motionState,
+			 DiffuseModel *modelVBO, const glm::vec3 &scale);
+
 public:
-	std::vector<btRigidBody *> rigidBody;
-
-	virtual void init();
-
 	virtual void update();
 
 	virtual void decreaseLife(int toSub);
 
 	virtual bool isDead();
 
-	virtual std::tuple<glm::mat4, glm::mat4> getMatrixes(glm::mat4 pMatrix, glm::mat4 vMatrix);
-
-	virtual void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) = 0;
+	virtual void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos);
 
 	virtual ~Base();
-
-protected:
-	std::vector<btCollisionShape *> collisionShape;
-	std::vector<btDefaultMotionState *> defaultMotionState;
-
-	std::vector<glm::vec3> scale;
 };
 
 
-#endif //PHYVR_BASE_H
+#endif //PHYVR_BASETEST_H

@@ -9,7 +9,7 @@
 #include "../utils/rigidbody.h"
 #include "../utils/string_utils.h"
 #include "../utils/assets.h"
-
+/*
 Convex::Convex(AAssetManager *mgr, std::string objFileName, glm::vec3 pos, glm::vec3 scale,
 			   glm::mat4 rotationMatrix, float mass) {
 
@@ -33,7 +33,8 @@ Convex::Convex(AAssetManager *mgr, std::string objFileName, glm::vec3 pos, glm::
 	glm::quat tmp = glm::quat_cast(rotationMatrix);
 	myTransform.setRotation(btQuaternion(tmp.x, tmp.y, tmp.z, tmp.w));
 
-	std::tuple<btRigidBody*, btDefaultMotionState*> t = localCreateRigidBody(mass, myTransform, collisionShape[0], this);
+	std::tuple<btRigidBody *, btDefaultMotionState *> t = localCreateRigidBody(mass, myTransform, collisionShape[0],
+																			   this);
 	rigidBody.push_back(std::get<0>(t));
 	defaultMotionState.push_back(std::get<1>(t));
 }
@@ -46,3 +47,4 @@ void Convex::draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lightPos) {
 Convex::~Convex() {
 	delete modelVBO;
 }
+*/

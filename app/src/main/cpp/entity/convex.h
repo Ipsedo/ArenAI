@@ -9,7 +9,7 @@
 #include "base.h"
 #include <glm/glm.hpp>
 #include <android/asset_manager.h>
-
+/*
 class Convex : public Base {
 public:
 	Convex(AAssetManager *mgr, std::string objFileName,
@@ -23,5 +23,5 @@ private:
 	ModelVBO *modelVBO;
 };
 
-
+*/
 #endif //PHYVR_CONVEX_H

@@ -6,7 +6,6 @@
 #define PHYVR_LEVEL0_H
 
 #include "../level.h"
-#include "../../entity/vehicles/tank.h"
 
 class Level0 : public Level {
 public:
@@ -14,18 +13,21 @@ public:
 
 	void init() override;
 
-	Controls* getControls() override;
+	Controls *getControls() override;
+
 	vector<Shooter *> getShooters() override;
+
 	Camera *getCamera() override;
 
-	vector<Base*> getEntities() override;
+	vector<Base *> getEntities() override;
 
 	bool won() override;
+
 	bool lose() override;
 
 private:
-	Tank* tank;
-	vector<Base*> entities;
+//	Tank *tank;
+	vector<Base *> entities;
 	bool isInit;
 };
 

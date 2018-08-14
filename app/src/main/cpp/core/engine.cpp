@@ -1,7 +1,6 @@
 //
 // Created by samuel on 26/05/18.
 //
-#include <android/log.h>
 #include "engine.h"
 #include "../entity/shooter.h"
 #include "../utils/rigidbody.h"
@@ -25,7 +24,7 @@ bool contact_callback(btManifoldPoint &btmanifoldpoint, const btCollisionObjectW
 }
 
 bool callback_finish(void *userPersistentData) {
-	std::tuple<Base*, Base*>* t = (std::tuple<Base*, Base*>*) userPersistentData;
+	/*std::tuple<Base*, Base*>* t = (std::tuple<Base*, Base*>*) userPersistentData;
 
 	Base* b0 = std::get<0>(*t);
 	Base* b1 = std::get<1>(*t);
@@ -33,16 +32,16 @@ bool callback_finish(void *userPersistentData) {
 	b0->decreaseLife(1);
 	b1->decreaseLife(1);
 
-	delete t;
+	delete t;*/
 
 	return false;
 }
 
 bool callback_processed(btManifoldPoint &cp, void *body0, void *body1) {
-	btRigidBodyWithBase* b0 = (btRigidBodyWithBase*) body0;
+	/*btRigidBodyWithBase* b0 = (btRigidBodyWithBase*) body0;
 	btRigidBodyWithBase* b1 = (btRigidBodyWithBase*) body1;
 
-	cp.m_userPersistentData = new std::tuple<Base*, Base*>(b0->base, b1->base);
+	cp.m_userPersistentData = new std::tuple<Base*, Base*>(b0->base, b1->base);*/
 
 	return false;
 }
@@ -63,8 +62,7 @@ Engine::Engine(vector<Base *> *bases) {
 	world->setGravity(btVector3(0, gravity, 0));
 
 	for (Base *b : *this->bases)
-		for (btRigidBody *bd : b->rigidBody)
-			world->addRigidBody(bd);
+		world->addRigidBody(b);
 
 	//gContactAddedCallback = contact_callback;
 	gContactDestroyedCallback = callback_finish;
@@ -73,24 +71,22 @@ Engine::Engine(vector<Base *> *bases) {
 
 void Engine::update(float delta) {
 	// add rigid body
-	for (Base* b : *bases) {
-		for (btRigidBody *rb : b->rigidBody)
-			if (!rb->isInWorld())
-				world->addRigidBody(rb);
+	for (Base *b : *bases) {
+		if (!b->isInWorld())
+			world->addRigidBody(b);
 		b->update();
 	}
 
 	// remove base and rigidBody
-	for (Base* b : *bases)
+	for (Base *b : *bases)
 		if (b->isDead())
-			for (btRigidBody* rb : b->rigidBody)
-				world->removeRigidBody(rb);
+			world->removeRigidBody(b);
 
 	bases->erase(std::remove_if(bases->begin(), bases->end(),
-								[](Base* o) { return o->isDead(); }),
+								[](Base *o) { return o->isDead(); }),
 				 bases->end());
 
-	for (Shooter* s : shooters)
+	for (Shooter *s : shooters)
 		s->fire(bases);
 
 	world->stepSimulation(deltaTime);

@@ -5,24 +5,25 @@
 
 #include <jni.h>
 #include <android/asset_manager_jni.h>
-#include "../entity/vehicles/tank.h"
+#include "entity/vehicles/tank/tank.h"
 #include "../core/engine.h"
 #include "../controls/controls.h"
 
 extern "C"
 JNIEXPORT jlong JNICALL
 Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initPlayer(JNIEnv *env, jobject instance, jobject assetManager,
-											   jlong enginePtr, jlong rendererPtr, jlong entityPtr) {
+															  jlong enginePtr, jlong rendererPtr, jlong entityPtr, jboolean vr) {
 
-	Engine *level = (Engine*) enginePtr;
-	Renderer *renderer = (Renderer*) rendererPtr;
-	vector<Base*>* entity = (vector<Base*>*) entityPtr;
+	Engine *level = (Engine *) enginePtr;
+	Renderer *renderer = (Renderer *) rendererPtr;
+	vector<Base *> *entity = (vector<Base *> *) entityPtr;
 	AAssetManager *cppMgr = AAssetManager_fromJava(env, assetManager);
 
-	Player *c = new Tank(glm::vec3(0, -15, -20), level->world, cppMgr, entity);
-	level->addShooter(c);
-	entity->push_back(c);
-	renderer->setCamera(c);
-
-	return (long) c;
+	Tank *tank = new Tank(vr, cppMgr, level->world, btVector3(0.f, -10.f, 20.f));
+	for (Base *b : tank->getBaseTest())
+		entity->push_back(b);
+	renderer->setCamera(tank->getCamera());
+	for (Shooter *s : tank->getShooters())
+		level->addShooter(s);
+	return (long) tank;
 }

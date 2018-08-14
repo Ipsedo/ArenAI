@@ -20,13 +20,7 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 
 	public MyGvrView(Context context) {
 		super(context);
-		mainWrappers = new MainWrappers(getContext());
-		setRenderer(this);
-	}
-
-	public MyGvrView(Context context, AttributeSet attrs) {
-		super(context, attrs);
-		mainWrappers = new MainWrappers(getContext());
+		mainWrappers = new MainWrappers(getContext(), true);
 		setRenderer(this);
 	}
 

@@ -8,7 +8,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-Box::Box(AAssetManager *mgr,
+/*Box::Box(AAssetManager *mgr,
 		 glm::vec3 pos,
 		 glm::vec3 sideScale,
 		 glm::mat4 rotationMatrix,
@@ -33,16 +33,35 @@ Box::Box(AAssetManager *mgr,
 	glm::quat tmp = glm::quat_cast(rotationMatrix);
 	myTransform.setRotation(btQuaternion(tmp.x, tmp.y, tmp.z, tmp.w));
 
-	std::tuple<btRigidBody*, btDefaultMotionState*> t = localCreateRigidBody(mass, myTransform, collisionShape[0], this);
+	std::tuple<btRigidBody *, btDefaultMotionState *> t = localCreateRigidBody(mass, myTransform, collisionShape[0],
+																			   this);
 	rigidBody.push_back(std::get<0>(t));
 	defaultMotionState.push_back(std::get<1>(t));
+}*/
+
+Box *Box::MakeBox(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass) {
+	std::string objTxt = getFileText(mgr, "obj/cube.obj");
+
+	ModelVBO *modelVBO
+			= new ModelVBO(objTxt,
+			new float[4]{(float) rand() / RAND_MAX,
+						 (float) rand() / RAND_MAX,
+						 (float) rand() / RAND_MAX,
+						 1.f});
+	btCollisionShape *collisionShape = new btBoxShape(btVector3(scale.x, scale.y, scale.z));
+
+	btTransform myTransform;
+	myTransform.setIdentity();
+	myTransform.setOrigin(btVector3(pos.x, pos.y, pos.z));
+	glm::quat tmp = glm::quat_cast(rotMat);
+	myTransform.setRotation(btQuaternion(tmp.x, tmp.y, tmp.z, tmp.w));
+
+	tuple<btRigidBody::btRigidBodyConstructionInfo, btDefaultMotionState *> cinfo
+			= localCreateInfo(mass, myTransform, collisionShape);
+	return new Box(get<0>(cinfo), get<1>(cinfo), modelVBO, scale);
 }
 
-void Box::draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) {
-	std::tuple<glm::mat4, glm::mat4> matrixes = getMatrixes(pMatrix, vMatrix);
-	modelVBO->draw(std::get<0>(matrixes), std::get<1>(matrixes), lighPos);
-}
+Box::Box(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo, btDefaultMotionState *motionState,
+		 DiffuseModel *modelVBO, const glm::vec3 &scale) : Base(constructionInfo, motionState, modelVBO, scale) {
 
-Box::~Box() {
-	delete modelVBO;
 }

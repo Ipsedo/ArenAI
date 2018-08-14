@@ -18,9 +18,11 @@ public class MainWrappers {
 	private long playerPtr;
 	private long controlPtr;
 
-	public MainWrappers(Context context) {
-		this.context = context;
+	private boolean vr;
 
+	public MainWrappers(Context context, boolean vr) {
+		this.context = context;
+		this.vr = vr;
 	}
 
 	public void init() {
@@ -29,7 +31,7 @@ public class MainWrappers {
 				loadImage.tofloatGreyArray(), loadImage.getWidth(), loadImage.getHeight());
 		enginePtr = initEngine(entitiesPtr);
 		rendererPtr = initRenderer(entitiesPtr);
-		playerPtr = initPlayer(context.getAssets(), enginePtr, rendererPtr, entitiesPtr);
+		playerPtr = initPlayer(context.getAssets(), enginePtr, rendererPtr, entitiesPtr, vr);
 		controlPtr = getControlPtrFromPlayer(playerPtr);
 	}
 
@@ -61,7 +63,7 @@ public class MainWrappers {
 
 	private native long initEntity(AssetManager assetManager, float[] heightmap, int width, int height);
 
-	private native long initPlayer(AssetManager assetManager, long levelPtr, long rendererPtr, long entityPtr);
+	private native long initPlayer(AssetManager assetManager, long levelPtr, long rendererPtr, long entityPtr, boolean vr);
 
 	private native long getControlPtrFromPlayer(long carPtr);
 

@@ -20,7 +20,8 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initRenderer(JNIEnv *env, job
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_samuelberrien_phyvr_wrappers_MainWrappers_willDrawRenderer(JNIEnv *env, jobject instance,
-														jlong rendererPtr, jfloatArray mHeadView_, jboolean VR) {
+																	jlong rendererPtr, jfloatArray mHeadView_,
+																	jboolean VR) {
 	jfloat *mHeadView = env->GetFloatArrayElements(mHeadView_, NULL);
 	float *headView = jfloatPtrToCppFloatPtr(mHeadView, 16);
 
@@ -34,11 +35,11 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_willDrawRenderer(JNIEnv *env,
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_samuelberrien_phyvr_wrappers_MainWrappers_drawRenderer(JNIEnv *env, jobject instance,
-													jlong rendererPtr,
-													jfloatArray mEyeProjectionMatrix_,
-													jfloatArray mEyeViewMatrix_,
-													jfloatArray myLighPosInEyeSpace_,
-													jfloatArray mCameraPos_) {
+																jlong rendererPtr,
+																jfloatArray mEyeProjectionMatrix_,
+																jfloatArray mEyeViewMatrix_,
+																jfloatArray myLighPosInEyeSpace_,
+																jfloatArray mCameraPos_) {
 	jfloat *mEyeProjectionMatrix = env->GetFloatArrayElements(mEyeProjectionMatrix_, NULL);
 	jfloat *mEyeViewMatrix = env->GetFloatArrayElements(mEyeViewMatrix_, NULL);
 	jfloat *myLighPosInEyeSpace = env->GetFloatArrayElements(myLighPosInEyeSpace_, NULL);

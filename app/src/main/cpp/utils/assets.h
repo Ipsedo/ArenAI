@@ -11,7 +11,7 @@
 struct normalized_image {
 	int width;
 	int height;
-	float* greyValues; //
+	float *greyValues; //
 };
 
 std::string getFileText(AAssetManager *mgr, std::string fileName);

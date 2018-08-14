@@ -3,16 +3,17 @@
 //
 
 #include <jni.h>
-#include "../entity/vehicles/tank.h"
+#include "entity/vehicles/tank/tank.h"
 #include "wrapper_utils.h"
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_samuelberrien_phyvr_controls_Controls_control(JNIEnv *env, jobject instance,
-		jlong controlPtr, jfloat direction,
-		jfloat speed, jboolean brake, jfloat turretDir, jfloat turretUp, jboolean respawn, jboolean fire) {
+													   jlong controlPtr, jfloat direction,
+													   jfloat speed, jboolean brake, jfloat turretDir, jfloat turretUp,
+													   jboolean respawn, jboolean fire) {
 
-	Controls *c = (Controls*) controlPtr;
+	vector<Controls *> *ctrl = (vector<Controls *> *) controlPtr;
 	input in;
 	in.xAxis = direction;
 	in.speed = speed;
@@ -21,24 +22,29 @@ Java_com_samuelberrien_phyvr_controls_Controls_control(JNIEnv *env, jobject inst
 	in.turretUp = turretUp;
 	in.respawn = respawn;
 	in.fire = fire;
-	c->onInput(in);
+	for (Controls *c : *ctrl)
+		c->onInput(in);
 }
 
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_com_samuelberrien_phyvr_wrappers_MainWrappers_getControlPtrFromPlayer(JNIEnv *env, jobject instance, jlong carPtr) {
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_getControlPtrFromPlayer(JNIEnv *env, jobject instance,
+																		   jlong carPtr) {
 
-	return (long) dynamic_cast <Controls*> ((Player*)carPtr);
+	vector<Controls *> *res = new vector<Controls *>();
+	for (Controls *c : ((Tank *) carPtr)->getControls())
+		res->push_back(c);
+	return (long) res;
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_samuelberrien_phyvr_controls_Controls_control2(JNIEnv *env, jobject instance,
-														jlong controlPtr,jfloatArray arrayControl_) {
+														jlong controlPtr, jfloatArray arrayControl_) {
 	jfloat *arrayControl = env->GetFloatArrayElements(arrayControl_, NULL);
 
-	float* controls = jfloatPtrToCppFloatPtr(arrayControl, 8);
-	Controls *c = (Controls*) controlPtr;
+	float *controls = jfloatPtrToCppFloatPtr(arrayControl, 8);
+	vector<Controls *> *ctrl = (vector<Controls *> *) controlPtr;
 	input in;
 	in.xAxis = controls[0];
 	in.speed = controls[1];
@@ -47,7 +53,8 @@ Java_com_samuelberrien_phyvr_controls_Controls_control2(JNIEnv *env, jobject ins
 	in.turretUp = controls[4];
 	in.respawn = controls[5] != 0.f;
 	in.fire = controls[6] != 0.f;
-	c->onInput(in);
+	for (Controls *c : *ctrl)
+		c->onInput(in);
 
 	delete controls;
 	env->ReleaseFloatArrayElements(arrayControl_, arrayControl, 0);

@@ -2,18 +2,7 @@
 // Created by samuel on 30/05/18.
 //
 
-#define GLM_ENABLE_EXPERIMENTAL
-#include <android/asset_manager.h>
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-#include "../../utils/rigidbody.h"
-#include "../../utils/assets.h"
-#include "../missile.h"
-#include "../poly/box.h"
-#include "tank.h"
-
+/*
 static float wheelRadius = 0.8f;
 static float wheelWidth = 0.4f;
 static float wheelOffset = 0.6f;
@@ -32,7 +21,7 @@ static float turretColor[4]{4.f / 255.f, 147.f / 255.f, 114.f / 255.f, 1.f};
 
 static int wheelDirectionAxis = 4;
 
-Tank::Tank(glm::vec3 pos, btDynamicsWorld *world, AAssetManager *mgr, vector<Base*>* bases) {
+Tank::Tank(glm::vec3 pos, btDynamicsWorld *world, AAssetManager *mgr, vector<Base *> *bases) {
 	std::string objTxt = getFileText(mgr, "obj/cone.obj");
 
 	hasClickedShoot = false;
@@ -40,10 +29,10 @@ Tank::Tank(glm::vec3 pos, btDynamicsWorld *world, AAssetManager *mgr, vector<Bas
 	this->world = world;
 
 	missile = new ModelVBO(objTxt,
-			new float[4]{(float) rand() / RAND_MAX,
-						 (float) rand() / RAND_MAX,
-						 (float) rand() / RAND_MAX,
-						 1.f});
+						   new float[4]{(float) rand() / RAND_MAX,
+										(float) rand() / RAND_MAX,
+										(float) rand() / RAND_MAX,
+										1.f});
 
 	this->bases = bases;
 
@@ -65,18 +54,12 @@ Tank::Tank(glm::vec3 pos, btDynamicsWorld *world, AAssetManager *mgr, vector<Bas
 	nbWheel = 6;
 
 	wheelPos = new btVector3[nbWheel]{
-			/*btVector3(spawnPos.x - (chassisScale.x + wheelbaseOffset), spawnPos.y - wheelOffset, spawnPos.z + 1.75f),
-			btVector3(spawnPos.x + (chassisScale.x + wheelbaseOffset), spawnPos.y - wheelOffset, spawnPos.z + 1.75f),
-			btVector3(spawnPos.x - (chassisScale.x + wheelbaseOffset), spawnPos.y - wheelOffset, spawnPos.z + 0),
-			btVector3(spawnPos.x + (chassisScale.x + wheelbaseOffset), spawnPos.y - wheelOffset, spawnPos.z + 0),
-			btVector3(spawnPos.x + (chassisScale.x + wheelbaseOffset), spawnPos.y - wheelOffset, spawnPos.z - 1.75f),
-			btVector3(spawnPos.x - (chassisScale.x + wheelbaseOffset), spawnPos.y - wheelOffset, spawnPos.z - 1.75f)*/
-			btVector3(- (chassisScale.x + wheelbaseOffset), - wheelOffset, + 1.75f),
-			btVector3(+ (chassisScale.x + wheelbaseOffset), - wheelOffset, + 1.75f),
-			btVector3(- (chassisScale.x + wheelbaseOffset), - wheelOffset, + 0),
-			btVector3(+ (chassisScale.x + wheelbaseOffset), - wheelOffset, + 0),
-			btVector3(+ (chassisScale.x + wheelbaseOffset), - wheelOffset, - 1.75f),
-			btVector3(- (chassisScale.x + wheelbaseOffset), - wheelOffset, - 1.75f)
+			btVector3(-(chassisScale.x + wheelbaseOffset), -wheelOffset, +1.75f),
+			btVector3(+(chassisScale.x + wheelbaseOffset), -wheelOffset, +1.75f),
+			btVector3(-(chassisScale.x + wheelbaseOffset), -wheelOffset, +0),
+			btVector3(+(chassisScale.x + wheelbaseOffset), -wheelOffset, +0),
+			btVector3(+(chassisScale.x + wheelbaseOffset), -wheelOffset, -1.75f),
+			btVector3(-(chassisScale.x + wheelbaseOffset), -wheelOffset, -1.75f)
 	};
 
 	init(world, mgr);
@@ -147,8 +130,8 @@ void Tank::respawn() {
 	defaultMotionState[0]->setWorldTransform(tr);
 	rigidBody[0]->setWorldTransform(tr);
 	rigidBody[0]->clearForces();
-	rigidBody[0]->setLinearVelocity(btVector3(0,0,0));
-	rigidBody[0]->setAngularVelocity(btVector3(0,0,0));
+	rigidBody[0]->setLinearVelocity(btVector3(0, 0, 0));
+	rigidBody[0]->setAngularVelocity(btVector3(0, 0, 0));
 
 	for (int i = 0; i < nbWheel; i++) {
 		int id = i + 1;
@@ -159,8 +142,8 @@ void Tank::respawn() {
 		defaultMotionState[id]->setWorldTransform(tr);
 		rigidBody[id]->setWorldTransform(tr);
 		rigidBody[id]->clearForces();
-		rigidBody[id]->setLinearVelocity(btVector3(0,0,0));
-		rigidBody[id]->setAngularVelocity(btVector3(0,0,0));
+		rigidBody[id]->setLinearVelocity(btVector3(0, 0, 0));
+		rigidBody[id]->setAngularVelocity(btVector3(0, 0, 0));
 	}
 
 	tr.setIdentity();
@@ -168,16 +151,16 @@ void Tank::respawn() {
 	defaultMotionState[7]->setWorldTransform(tr);
 	rigidBody[7]->setWorldTransform(tr);
 	rigidBody[7]->clearForces();
-	rigidBody[7]->setLinearVelocity(btVector3(0,0,0));
-	rigidBody[7]->setAngularVelocity(btVector3(0,0,0));
+	rigidBody[7]->setLinearVelocity(btVector3(0, 0, 0));
+	rigidBody[7]->setAngularVelocity(btVector3(0, 0, 0));
 
 	tr.setIdentity();
 	tr.setOrigin(btVector3(canonPos.x, canonPos.y, canonPos.z));
 	defaultMotionState[8]->setWorldTransform(tr);
 	rigidBody[8]->setWorldTransform(tr);
 	rigidBody[8]->clearForces();
-	rigidBody[8]->setLinearVelocity(btVector3(0,0,0));
-	rigidBody[8]->setAngularVelocity(btVector3(0,0,0));
+	rigidBody[8]->setLinearVelocity(btVector3(0, 0, 0));
+	rigidBody[8]->setAngularVelocity(btVector3(0, 0, 0));
 }
 
 void Tank::draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) {
@@ -272,24 +255,6 @@ Tank::~Tank() {
 	delete missile;
 }
 
-/**
- * collisionShape[0] -> chassis
- * collisionShape[1-6] -> wheels
- * collisionShape[7] -> turret
- * collisionShape[8] -> canon
- *
- * rigidBody[0] -> chassis
- * rigidBody[1-6] -> wheels
- * rigidBody[7] -> turret
- * rigidBody[8] -> canon
- *
- * wheelHinge2[0-5] -> wheels
- *
- * modelVBOs[0] -> chassis
- * modelVBOs[1] -> wheels
- * modelVBOx[2] -> canon
- *
- */
 void Tank::init(btDynamicsWorld *world, AAssetManager *mgr) {
 	makeChassis(mgr);
 	makeWheels(mgr, world);
@@ -348,30 +313,21 @@ void Tank::makeWheels(AAssetManager *mgr, btDynamicsWorld *world) {
 		pBodyB->setFriction(500);
 		pBodyB->setActivationState(DISABLE_DEACTIVATION);
 
-		/*btVector3 parentAxis(0.f, 1.f, 0.f);
-		btVector3 childAxis(1.f, 0.f, 0.f);
-		btVector3 anchor = tr.getOrigin();
-		wheelHinge2.push_back(new btHinge2Constraint(*pBodyA, *pBodyB, anchor, parentAxis,
-												 childAxis));
-
-		wheelHinge2[i]->setLowerLimit(0);
-		wheelHinge2[i]->setUpperLimit(0);*/
-
 		btTransform trA, trB;
 		trA.setIdentity();
 		trA.setOrigin(wheelPos[i]);
 		trB.setIdentity();
-		trB.setOrigin(btVector3(0,0,0));
-		btGeneric6DofSpring2Constraint* hinge = new btGeneric6DofSpring2Constraint(*pBodyA, *pBodyB, trA, trB, RO_XYZ);
+		trB.setOrigin(btVector3(0, 0, 0));
+		btGeneric6DofSpring2Constraint *hinge = new btGeneric6DofSpring2Constraint(*pBodyA, *pBodyB, trA, trB, RO_XYZ);
 		wheelHinge2.push_back(hinge);
 
 		// Angular limits
-		hinge->setAngularLowerLimit(btVector3(1,0,0));
-		hinge->setAngularUpperLimit(btVector3(-1,0,0));
+		hinge->setAngularLowerLimit(btVector3(1, 0, 0));
+		hinge->setAngularUpperLimit(btVector3(-1, 0, 0));
 
 		// Linear limits
-		hinge->setLinearLowerLimit(btVector3(0,-0.4f,0));
-		hinge->setLinearUpperLimit(btVector3(0,0,0));
+		hinge->setLinearLowerLimit(btVector3(0, -0.4f, 0));
+		hinge->setLinearUpperLimit(btVector3(0, 0, 0));
 
 		world->addConstraint(wheelHinge2[i], true);
 
@@ -402,7 +358,7 @@ void Tank::makeTurret(AAssetManager *mgr, btDynamicsWorld *world) {
 
 	modelVBOs.push_back(new ModelVBO(turretObjTxt, turretColor));
 
-	btCollisionShape* turretShape = parseObj(turretObjTxt);
+	btCollisionShape *turretShape = parseObj(turretObjTxt);
 	turretShape->setLocalScaling(btVector3(scale[2].x, scale[2].y, scale[2].z));
 
 	collisionShape.push_back(turretShape);
@@ -425,7 +381,7 @@ void Tank::makeTurret(AAssetManager *mgr, btDynamicsWorld *world) {
 
 	turretHinge = new btHingeConstraint(*pBodyA, *pBodyB, pivotA, pivotB, axis, axis, true);
 	world->addConstraint(turretHinge, true);
-	turretHinge->setLimit(0,0);
+	turretHinge->setLimit(0, 0);
 }
 
 void Tank::makeCanon(AAssetManager *mgr, btDynamicsWorld *world) {
@@ -435,7 +391,7 @@ void Tank::makeCanon(AAssetManager *mgr, btDynamicsWorld *world) {
 
 	scale.push_back(canonScale);
 
-	btCollisionShape* canonShape = new btCylinderShapeZ(btVector3(canonScale.x, canonScale.y, canonScale.z));
+	btCollisionShape *canonShape = new btCylinderShapeZ(btVector3(canonScale.x, canonScale.y, canonScale.z));
 
 	collisionShape.push_back(canonShape);
 
@@ -457,14 +413,14 @@ void Tank::makeCanon(AAssetManager *mgr, btDynamicsWorld *world) {
 
 	btVector3 pivotA = btVector3(0.f, 0.f, turretScale.z - canonOffset);
 	btVector3 pivotB = btVector3(0.f, 0.f, -canonScale.z);
-	btVector3 axis = btVector3(1,0,0);
+	btVector3 axis = btVector3(1, 0, 0);
 	canonHinge = new btHingeConstraint(*pBodyA, *pBodyB, pivotA, pivotB, axis, axis, true);
 	world->addConstraint(canonHinge, true);
 	//world->addRigidBody(pBodyB, 1, 0); // Canon subit pas de collision
 	for (int i = 0; i < rigidBody.size() - 1; i++) {
 		pBodyB->setIgnoreCollisionCheck(rigidBody[i], true);
 	}
-	canonHinge->setLimit(0,0);
+	canonHinge->setLimit(0, 0);
 }
 
 void Tank::fire(vector<Base *> *bases) {
@@ -500,4 +456,4 @@ void Tank::fire(vector<Base *> *bases) {
 	c->rigidBody[0]->applyCentralImpulse(btVector3(forceVec.x, forceVec.y, forceVec.z));
 
 	bases->push_back(c);
-}
+}*/

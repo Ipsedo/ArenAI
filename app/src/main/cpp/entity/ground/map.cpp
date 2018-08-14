@@ -6,6 +6,7 @@
 #include "../../utils/rigidbody.h"
 #include <glm/gtc/type_ptr.hpp>
 
+/*
 Map::Map(glm::vec3 pos, int width, int length, float *normalizedHeightValues, glm::vec3 scale) {
 	btHeightfieldTerrainShape *tmp =
 			new btHeightfieldTerrainShape(width, length,
@@ -32,26 +33,29 @@ Map::Map(glm::vec3 pos, int width, int length, float *normalizedHeightValues, gl
 														intertie);
 
 	rigidBody.push_back(new btRigidBodyWithBase(constrInfo, this));
+}*/
+
+Map::Map(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo,
+		 btDefaultMotionState *motionState, DiffuseModel *modelVBO,
+		 const glm::vec3 &scale) : Base(constructionInfo, motionState, modelVBO, scale) {
+
 }
 
-/**
- * Mesh is already scaled !
- * @param pMatrix
- * @param vMatrix
- * @return
- */
-std::tuple<glm::mat4, glm::mat4> Map::getMatrixes(glm::mat4 pMatrix, glm::mat4 vMatrix) {
-	btScalar tmp[16];
-	defaultMotionState[0]->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
-	glm::mat4 modelMatrix = glm::make_mat4(tmp);
+Map *makeMap(float *normalizedHeightValues, int width, int length, btVector3 pos, btVector3 scale) {
+	btHeightfieldTerrainShape *tmp =
+			new btHeightfieldTerrainShape(width, length,
+										  normalizedHeightValues, 1.f, 0.f, 1.f,
+										  1, PHY_FLOAT, false);
 
-	glm::mat4 mvMatrix = vMatrix * modelMatrix;
-	glm::mat4 mvpMatrix = pMatrix * mvMatrix;
+	tmp->setLocalScaling(btVector3(scale));
+	HeightMap *heightMap = new HeightMap(tmp, 1.f);
 
-	return tuple<glm::mat4, glm::mat4>(mvpMatrix, mvMatrix);
-}
+	btTransform myTransform;
+	myTransform.setIdentity();
+	myTransform.setOrigin(pos);
 
-void Map::draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) {
-	std::tuple<glm::mat4, glm::mat4> matrixes = getMatrixes(pMatrix, vMatrix);
-	heightMap->draw(std::get<0>(matrixes), std::get<1>(matrixes), lighPos);
+	btVector3 intertie(0.f, 0.f, 0.f);
+	btDefaultMotionState *motionState = new btDefaultMotionState(myTransform);
+	btRigidBody::btRigidBodyConstructionInfo constrInfo(0.f, motionState, tmp, intertie);
+	return new Map(constrInfo, motionState, heightMap, glm::vec3(1.f));
 }

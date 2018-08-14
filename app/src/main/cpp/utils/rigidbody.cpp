@@ -7,9 +7,8 @@
 
 #include <btBulletDynamicsCommon.h>
 
-
-std::tuple<btRigidBody *, btDefaultMotionState *>
-localCreateRigidBody(btScalar mass, const btTransform &startTransform, btCollisionShape *shape, Base* b) {
+tuple<btRigidBody::btRigidBodyConstructionInfo, btDefaultMotionState *>
+localCreateInfo(btScalar mass, const btTransform &startTransform, btCollisionShape *shape) {
 	btAssert((!shape || shape->getShapeType() != INVALID_SHAPE_PROXYTYPE));
 
 	//rigidbody is dynamic if and only if mass is non zero, otherwise static
@@ -21,12 +20,11 @@ localCreateRigidBody(btScalar mass, const btTransform &startTransform, btCollisi
 
 	btDefaultMotionState *myMotionState = new btDefaultMotionState(startTransform);
 
-	btRigidBody::btRigidBodyConstructionInfo cInfo(mass, myMotionState, shape, localInertia);
-
-	return std::tuple<btRigidBody *, btDefaultMotionState *>(new btRigidBodyWithBase(cInfo, b), myMotionState);
+	return std::tuple<btRigidBody::btRigidBodyConstructionInfo, btDefaultMotionState *>
+			(btRigidBody::btRigidBodyConstructionInfo(mass, myMotionState, shape, localInertia), myMotionState);
 }
 
-btConvexHullShape* parseObj(std::string objFileText) {
+btConvexHullShape *parseObj(std::string objFileText) {
 	vector<std::string> lines = split(objFileText, '\n');
 	btConvexHullShape *shape = new btConvexHullShape();
 	vector<float> vertex_list;
@@ -65,15 +63,4 @@ btConvexHullShape* parseObj(std::string objFileText) {
 		shape->addPoint(point, true);
 	}
 	return shape;
-}
-
-btRigidBodyWithBase::btRigidBodyWithBase(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo, Base* b)
-		: btRigidBody(constructionInfo) {
-	base = b;
-}
-
-btRigidBodyWithBase::btRigidBodyWithBase(btScalar mass, btMotionState *motionState, btCollisionShape *collisionShape,
-										 const btVector3 &localInertia, Base* b) : btRigidBody(mass, motionState, collisionShape,
-																					  localInertia) {
-	base = b;
 }

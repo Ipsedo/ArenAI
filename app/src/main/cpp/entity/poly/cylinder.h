@@ -6,20 +6,25 @@
 #define PHYVR_CYLINDER_H
 
 
-#include "../base.h"
+#include "entity/base.h"
 #include <glm/glm.hpp>
 #include <android/asset_manager.h>
 
 class Cylinder : public Base {
 public:
-	Cylinder(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass);
+protected:
+	Cylinder(const btRigidBodyConstructionInfo &constructionInfo, btDefaultMotionState *motionState,
+			 DiffuseModel *modelVBO, const glm::vec3 &scale);
 
-	void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) override;
+public:
+	static Cylinder *MakeCylinder(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale,
+								 glm::mat4 rotationMatrix, float mass);
+	/*void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) override;
 
-	~Cylinder();
+	~Cylinder();*/
 
 private:
-	ModelVBO *modelVBO;
+	//ModelVBO *modelVBO;
 };
 
 

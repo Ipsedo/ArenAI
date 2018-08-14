@@ -1,39 +1,41 @@
 //
-// Created by samuel on 27/05/18.
+// Created by samuel on 26/06/18.
 //
 
-#include "base.h"
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include "base.h"
 
-Base::~Base() {
-	for (btDefaultMotionState *state : defaultMotionState)
-		delete state;
-	for (btCollisionShape *shape : collisionShape)
-		delete shape;
-	for (btRigidBody *body : rigidBody)
-		delete body;
+Base::Base(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo,
+				   btDefaultMotionState *motionState, DiffuseModel *model,
+				   const glm::vec3 &s) : scale(s), modelVBO(model), btRigidBody(constructionInfo), motionState(motionState) {
+
 }
 
-std::tuple<glm::mat4, glm::mat4> Base::getMatrixes(glm::mat4 pMatrix, glm::mat4 vMatrix) {
-	btScalar tmp[16];
-	defaultMotionState[0]->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
-	glm::mat4 modelMatrix = glm::make_mat4(tmp) * glm::scale(glm::mat4(1.f), scale[0]);
 
-	glm::mat4 mvMatrix = vMatrix * modelMatrix;
-	glm::mat4 mvpMatrix = pMatrix * mvMatrix;
+void Base::update() {
 
-	return tuple<glm::mat4, glm::mat4>(mvpMatrix, mvMatrix);
+}
+
+void Base::decreaseLife(int toSub) {
+
 }
 
 bool Base::isDead() {
 	return false;
 }
 
-void Base::init() { }
+void Base::draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) {
+	btScalar tmp[16];
+	motionState->m_graphicsWorldTrans.getOpenGLMatrix(tmp);
+	glm::mat4 modelMatrix = glm::make_mat4(tmp) * glm::scale(glm::mat4(1.f), scale);
 
-void Base::update() { }
+	glm::mat4 mvMatrix = vMatrix * modelMatrix;
+	glm::mat4 mvpMatrix = pMatrix * mvMatrix;
 
-void Base::decreaseLife(int toSub) {
+	modelVBO->draw(mvpMatrix, mvMatrix, lighPos);
+}
+
+Base::~Base() {
 
 }

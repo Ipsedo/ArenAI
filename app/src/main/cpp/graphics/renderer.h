@@ -8,7 +8,8 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <android/asset_manager.h>
-#include "../entity/vehicles/car.h"
+#include "entity/base.h"
+#include "camera.h"
 
 #include "drawable/modelvbo.h"
 

@@ -39,7 +39,7 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 		projectionMatrix = new float[16];
 		viewMatrix = new float[16];
 		Matrix.setIdentityM(viewMatrix, 0);
-		mainWrappers = new MainWrappers(getContext());
+		mainWrappers = new MainWrappers(getContext(), false);
 	}
 
 	@Override

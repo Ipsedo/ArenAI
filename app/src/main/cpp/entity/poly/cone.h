@@ -8,21 +8,32 @@
 
 #include <android/asset_manager.h>
 #include <glm/glm.hpp>
-#include "../base.h"
+#include "entity/base.h"
 
 class Cone : public Base {
 public:
-	Cone(ModelVBO* modelVBO, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass);
+	/*Cone(ModelVBO *modelVBO, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass);
+
 	Cone(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass);
 
-	void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) override;
+	void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) override;*/
 
-	~Cone();
+protected:
+	Cone(const btRigidBodyConstructionInfo &constructionInfo, btDefaultMotionState *motionState,
+		 DiffuseModel *modelVBO, const glm::vec3 &scale);
+
+public:
+	static Cone *MakeCone(AAssetManager* mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass);
+	static Cone *MakeCone(DiffuseModel *modelVBO, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass);
 
 private:
-	bool hasOwnModelVBO;
+	static tuple<btRigidBody::btRigidBodyConstructionInfo, btDefaultMotionState *>
+		init(glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass);
+	/*bool hasOwnModelVBO;
+
 	void init(glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass);
-	ModelVBO *modelVBO;
+
+	ModelVBO *modelVBO;*/
 };
 
 

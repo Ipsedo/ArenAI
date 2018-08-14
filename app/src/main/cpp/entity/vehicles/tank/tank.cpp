@@ -42,6 +42,7 @@ vector<Base *> Tank::getBaseTest() {
 
 vector<Controls *> Tank::getControls() {
 	vector<Controls *> res;
+	res.push_back(chassis);
 	res.push_back(turret);
 	res.push_back(canon);
 	for (Controls *c : wheels)

@@ -33,7 +33,7 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initEntity(JNIEnv *env, jobje
 
 	vector<Base *> *boxes = new vector<Base *>();
 
-	Map *sol = makeMap(map, width, height, btVector3(0.f, 0.f, 0.f), btVector3(10.f, 50.f, 10.f));
+	Map *sol = new Map(map, width, height, btVector3(0.f, 0.f, 0.f), btVector3(10.f, 50.f, 10.f));
 	boxes->push_back(sol);
 
 	int nbEntity = 100;

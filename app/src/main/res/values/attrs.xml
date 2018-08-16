@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<declare-styleable name="SetUpAxis">
+		<attr name="command" format="enum">
+			<enum name="direction" value="0"/>
+			<enum name="speed" value="1"/>
+			<enum name="canon" value="2"/>
+			<enum name="turret" value="3"/>
+		</attr>
+	</declare-styleable>
+</resources>

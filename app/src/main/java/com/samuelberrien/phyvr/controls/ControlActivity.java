@@ -8,6 +8,7 @@ import android.view.MotionEvent;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import com.samuelberrien.phyvr.R;
+import com.samuelberrien.phyvr.controls.axis.Axis;
 
 import java.util.ArrayList;
 
@@ -19,28 +20,9 @@ public class ControlActivity extends AppCompatActivity {
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_control);
-
-		setUpControls = new ArrayList<>();
-
-		setUpControls.add(new SetUpControlAxis(this, R.string.left_control));
-		setUpControls.add(new SetUpControlAxis(this, R.string.right_control));
-		setUpControls.add(new SetUpControlAxis(this, R.string.speed_up_control));
-		setUpControls.add(new SetUpControlAxis(this, R.string.speed_down_control));
-		setUpControls.add(new SetUpControlButton(this, R.string.brake_control));
-		setUpControls.add(new SetUpControlAxis(this, R.string.turret_left_control));
-		setUpControls.add(new SetUpControlAxis(this, R.string.turret_right_control));
-		setUpControls.add(new SetUpControlAxis(this, R.string.turret_up_control));
-		setUpControls.add(new SetUpControlAxis(this, R.string.turret_down_control));
-		setUpControls.add(new SetUpControlButton(this, R.string.respawn_control));
-		setUpControls.add(new SetUpControlButton(this, R.string.fire_control));
-
-		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-
-		for (SetUpControl s : setUpControls)
-			((LinearLayout) findViewById(R.id.linearlayout_control)).addView(s, params);
 	}
 
-	@Override
+	/*@Override
 	public boolean dispatchGenericMotionEvent(MotionEvent e) {
 		boolean handled = false;
 		for (SetUpControl s : setUpControls)
@@ -54,19 +36,19 @@ public class ControlActivity extends AppCompatActivity {
 		for (SetUpControl s : setUpControls)
 			handled = s.keyDown(event.getKeyCode(), event) || handled;
 		return handled || super.dispatchKeyEvent(event);
-	}
+	}*/
 
 	@Override
 	protected void onPause() {
-		for (SetUpControl s : setUpControls)
-			s.onPause();
+		/*for (SetUpControl s : setUpControls)
+			s.onPause();*/
 		super.onPause();
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-		for (SetUpControl s : setUpControls)
-			s.onResume();
+		/*for (SetUpControl s : setUpControls)
+			s.onResume();*/
 	}
 }

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<tool:LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tool="http://schemas.android.com/tools"
+<tool:LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+				   xmlns:tool="http://schemas.android.com/tools"
+				   xmlns:app="http://schemas.android.com/apk/res-auto"
 				   android:layout_width="match_parent"
 				   android:layout_height="match_parent"
 				   tool:context=".controls.ControlActivity">
@@ -7,19 +9,42 @@
 	<ScrollView
 		android:layout_width="match_parent"
 		android:layout_height="match_parent">
+
 		<LinearLayout
 				android:orientation="vertical"
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
 				android:id="@+id/linearlayout_control">
+
 			<TextView android:layout_width="match_parent"
 					  android:layout_height="wrap_content"
 					  android:text="@string/activity_control_text"
 					  android:gravity="center"
 					  android:layout_margin="15dp"/>
+
+			<com.samuelberrien.phyvr.controls.axis.SetUpAxis
+					android:layout_width="match_parent"
+					android:layout_height="100dp"
+					app:command="direction"
+					android:layout_margin="15dp"/>
+
+			<com.samuelberrien.phyvr.controls.axis.SetUpAxis
+					android:layout_width="match_parent"
+					android:layout_height="100dp"
+					app:command="speed"
+					android:layout_margin="15dp"/>
+
+			<com.samuelberrien.phyvr.controls.axis.SetUpAxis
+					android:layout_width="match_parent"
+					android:layout_height="100dp"
+					app:command="turret"
+					android:layout_margin="15dp"/>
+
+			<com.samuelberrien.phyvr.controls.axis.SetUpAxis
+					android:layout_width="match_parent"
+					android:layout_height="100dp"
+					app:command="canon"
+					android:layout_margin="15dp"/>
 		</LinearLayout>
 	</ScrollView>
-
-
-
 </tool:LinearLayout>

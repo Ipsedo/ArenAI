@@ -44,4 +44,10 @@ public class PlayActivity extends Activity {
 				|| event.getKeyCode() != KeyEvent.KEYCODE_BACK
 				|| super.dispatchKeyEvent(event);
 	}
+
+	@Override
+	protected void onStop() {
+		surfaceView.free();
+		super.onStop();
+	}
 }

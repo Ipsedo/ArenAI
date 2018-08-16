@@ -20,9 +20,14 @@ public class MainWrappers {
 
 	private boolean vr;
 
+	private boolean isFree;
+	private boolean isFreeable;
+
 	public MainWrappers(Context context, boolean vr) {
 		this.context = context;
 		this.vr = vr;
+		isFree = false;
+		isFreeable = false;
 	}
 
 	public void init() {
@@ -33,6 +38,7 @@ public class MainWrappers {
 		rendererPtr = initRenderer(entitiesPtr);
 		playerPtr = initPlayer(context.getAssets(), enginePtr, rendererPtr, entitiesPtr, vr);
 		controlPtr = getControlPtrFromPlayer(playerPtr);
+		isFreeable = true;
 	}
 
 	public long getControlPtr() {
@@ -55,10 +61,19 @@ public class MainWrappers {
 				mEyeProjectionMatrix, mEyeViewMatrix, myLighPosInEyeSpace, mCameraPos);
 	}
 
+	public boolean isFree() {
+		return isFree;
+	}
+
 	public void free() {
-		freeBoxes(entitiesPtr);
-		freeLevel(enginePtr);
-		freeRenderer(rendererPtr);
+		if (isFreeable) {
+			freeLevel(enginePtr);
+			freeRenderer(rendererPtr);
+			isFree = true;
+			isFreeable = false;
+		} else {
+			throw new RuntimeException("Wrappers are already free");
+		}
 	}
 
 	private native long initEntity(AssetManager assetManager, float[] heightmap, int width, int height);

@@ -88,6 +88,10 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 
 	@Override
 	public void onRendererShutdown() {
+		//TODO free c++ memory here ?
+	}
+
+	public void free() {
 		mainWrappers.free();
 	}
 }

@@ -45,4 +45,10 @@ public class MyGvrActivity extends GvrActivity {
 				|| event.getKeyCode() != KeyEvent.KEYCODE_BACK
 				|| super.dispatchKeyEvent(event);
 	}
+
+	@Override
+	public void onStop() {
+		myGvrView.free();
+		super.onStop();
+	}
 }

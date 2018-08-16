@@ -11,37 +11,37 @@ static float deltaTime = 1.f / 60.f;
 bool contact_callback(btManifoldPoint &btmanifoldpoint, const btCollisionObjectWrapper *btcollisionobject0, int part_0,
 					  int index_0, const btCollisionObjectWrapper *btcollisionobject1, int part_1, int index_1) {
 
-	/*btRigidBody* body0 = (btRigidBody*) btRigidBody::upcast(btcollisionobject0->getCollisionObject());
+	btRigidBody* body0 = (btRigidBody*) btRigidBody::upcast(btcollisionobject0->getCollisionObject());
 	btRigidBody* body1 = (btRigidBody*) btRigidBody::upcast(btcollisionobject1->getCollisionObject());
 
-	btRigidBodyWithBase* downcast0 = static_cast<btRigidBodyWithBase*>(body0);
-	btRigidBodyWithBase* downcast1 = static_cast<btRigidBodyWithBase*>(body1);
+	Base* downcast0 = static_cast<Base*>(body0);
+	Base* downcast1 = static_cast<Base*>(body1);
 
-	downcast0->base->decreaseLife(1);
-	downcast1->base->decreaseLife(1);*/
+	downcast0->decreaseLife(1);
+	downcast1->decreaseLife(1);
 
 	return false;
 }
 
 bool callback_finish(void *userPersistentData) {
-	/*std::tuple<Base*, Base*>* t = (std::tuple<Base*, Base*>*) userPersistentData;
+	tuple<Base*, Base*>* t = (tuple<Base*, Base*>*) userPersistentData;
 
-	Base* b0 = std::get<0>(*t);
-	Base* b1 = std::get<1>(*t);
+	Base* b0 = get<0>(*t);
+	Base* b1 = get<1>(*t);
 
 	b0->decreaseLife(1);
 	b1->decreaseLife(1);
 
-	delete t;*/
+	delete t;
 
 	return false;
 }
 
 bool callback_processed(btManifoldPoint &cp, void *body0, void *body1) {
-	/*btRigidBodyWithBase* b0 = (btRigidBodyWithBase*) body0;
-	btRigidBodyWithBase* b1 = (btRigidBodyWithBase*) body1;
+	Base* b0 = (Base*) body0;
+	Base* b1 = (Base*) body1;
 
-	cp.m_userPersistentData = new std::tuple<Base*, Base*>(b0->base, b1->base);*/
+	cp.m_userPersistentData = new tuple<Base*, Base*>(b0, b1);
 
 	return false;
 }

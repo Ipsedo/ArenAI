@@ -6,20 +6,20 @@
 #include "chassis.h"
 
 Tank::Tank(bool vr, AAssetManager *mgr, btDynamicsWorld *world, btVector3 centerPos) {
-	chassis = makeChassis(mgr, centerPos);
+	chassis = new Chassis(mgr, centerPos);
 	chassis->setActivationState(DISABLE_DEACTIVATION);
 
-	wheels.push_back(makeFrontWheel(mgr, world, chassis, centerPos, wheelPos[0]));
-	wheels.push_back(makeFrontWheel(mgr, world, chassis, centerPos, wheelPos[1]));
+	wheels.push_back(new FrontWheel(mgr, world, chassis, centerPos, wheelPos[0]));
+	wheels.push_back(new FrontWheel(mgr, world, chassis, centerPos, wheelPos[1]));
 
-	wheels.push_back(makeWheel(mgr, world, chassis, centerPos, wheelPos[2]));
-	wheels.push_back(makeWheel(mgr, world, chassis, centerPos, wheelPos[3]));
-	wheels.push_back(makeWheel(mgr, world, chassis, centerPos, wheelPos[4]));
-	wheels.push_back(makeWheel(mgr, world, chassis, centerPos, wheelPos[5]));
+	wheels.push_back(new Wheel(mgr, world, chassis, centerPos, wheelPos[2]));
+	wheels.push_back(new Wheel(mgr, world, chassis, centerPos, wheelPos[3]));
+	wheels.push_back(new Wheel(mgr, world, chassis, centerPos, wheelPos[4]));
+	wheels.push_back(new Wheel(mgr, world, chassis, centerPos, wheelPos[5]));
 
-	turret = makeTurret(mgr, world, chassis, centerPos);
+	turret = new Turret(mgr, world, chassis, centerPos);
 
-	canon = makeCanon(mgr, world, turret, centerPos + turretRelPos);
+	canon = new Canon(mgr, world, turret, centerPos + turretRelPos);
 
 	for (btRigidBody* rb : wheels) canon->setIgnoreCollisionCheck(rb, true);
 	canon->setIgnoreCollisionCheck(chassis, true);

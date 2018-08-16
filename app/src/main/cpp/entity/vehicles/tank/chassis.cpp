@@ -5,14 +5,21 @@
 #include "chassis.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "../../../utils/vec.h"
 #include "../../../utils/assets.h"
 #include "../../../utils/rigidbody.h"
 
-Chassis::Chassis(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo,
-				 ModelVBO *modelVBO, const glm::vec3 &scale, const btVector3 centerPos)
-		: Base(constructionInfo, modelVBO, scale),
-		  respawn(false), pos(centerPos) {
+ModelVBO *makeChassisModel(AAssetManager *mgr) {
+	std::string chassisObjTxt = getFileText(mgr, "obj/tank_chassis.obj");
+	return new ModelVBO(chassisObjTxt, chassisColor);
 }
+
+Chassis::Chassis(AAssetManager *mgr, btVector3 pos)
+	: Poly(Poly::makeCInfo([mgr](glm::vec3 scale){
+		std::string chassisObjTxt = getFileText(mgr, "obj/tank_chassis.obj");
+		return parseObj(chassisObjTxt);
+	}, btVector3ToVec3(pos), glm::mat4(1.0f), chassisScale, chassisMass),
+	makeChassisModel(mgr), chassisScale), respawn(false), pos(pos){}
 
 void Chassis::onInput(input in) {
 	respawn = in.respawn;
@@ -35,20 +42,6 @@ void Chassis::update() {
 
 		respawn = false;
 	}
-}
-
-Chassis *makeChassis(AAssetManager *mgr, btVector3 pos) {
-	std::string chassisObjTxt = getFileText(mgr, "obj/tank_chassis.obj");
-
-	ModelVBO *modelVBO = new ModelVBO(chassisObjTxt, chassisColor);
-	btTransform tr;
-	tr.setIdentity();
-	tr.setOrigin(pos);
-
-	btCollisionShape *chassisShape = parseObj(chassisObjTxt);
-	btRigidBody::btRigidBodyConstructionInfo cinfo = localCreateInfo(chassisMass, tr, chassisShape);
-
-	return new Chassis(cinfo, modelVBO, chassisScale, pos);
 }
 
 glm::vec3 Chassis::camLookAtVec(bool VR) {

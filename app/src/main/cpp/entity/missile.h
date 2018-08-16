@@ -7,20 +7,19 @@
 
 
 #include "poly/cone.h"
-/*
+
 class Missile : public Cone {
+
 public:
-	Missile(ModelVBO *modelVBO, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass);
-
-	void update() override;
-
 	void decreaseLife(int toSub) override;
 
 	bool isDead() override;
 
 private:
 	int life;
+
+public:
+	Missile(DiffuseModel *modelVBO, const glm::vec3 &pos, const glm::vec3 &scale, const glm::mat4 &rotMat, float mass, int life);
 };
-*/
 
 #endif //PHYVR_MISSILE_H

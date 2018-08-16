@@ -5,18 +5,30 @@
 #define GLM_ENABLE_EXPERIMENTAL
 
 #include "turret.h"
-#include "../../poly/cone.h"
+
+#include "../../missile.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "../../../utils/rigidbody.h"
 #include "../../../utils/assets.h"
+#include "../../../utils/vec.h"
 
-Turret::Turret(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo,
-			   DiffuseModel *modelVBO, const glm::vec3 &scale, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos)
-		: Base(constructionInfo, modelVBO, scale),
+ModelVBO *makeTurretModel(AAssetManager *mgr) {
+	string turretObjTxt = getFileText(mgr, "obj/tank_turret.obj");
+	return new ModelVBO(turretObjTxt, turretColor);
+}
+
+Turret::Turret(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos)
+		: Poly(Poly::makeCInfo([mgr](glm::vec3 scale) {
+								   string turretObjTxt = getFileText(mgr, "obj/tank_turret.obj");
+								   btCollisionShape *turretShape = parseObj(turretObjTxt);
+								   turretShape->setLocalScaling(btVector3(turretScale.x, turretScale.y, turretScale.z));
+								   return turretShape;
+							   },
+							   btVector3ToVec3(chassisPos + turretRelPos), glm::mat4(1.0f), turretScale, turretMass),
+			   makeTurretModel(mgr), turretScale),
 		  angle(0.f), respawn(false), pos(chassisPos + turretRelPos) {
-
 	btTransform tr;
 	tr.setIdentity();
 	tr.setOrigin(pos);
@@ -60,11 +72,22 @@ void Turret::update() {
 // Canon
 /////////////////////
 
-Canon::Canon(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo,
-			 DiffuseModel *modelVBO, const glm::vec3 &scale, btDynamicsWorld *world, Base *turret, btVector3 turretPos, DiffuseModel *missile)
-		: Base(constructionInfo, modelVBO, scale),
-		  angle(0.f), respawn(false), pos(turretPos + canonRelPos), hasClickedShoot(false), missile(missile) {
+ModelVBO *makeCanonModel(AAssetManager *mgr) {
+	string canonObjTxt = getFileText(mgr, "obj/cylinderZ.obj");
+	return new ModelVBO(canonObjTxt, turretColor);
+}
 
+ModelVBO *makeMissileModel(AAssetManager *mgr) {
+	return new ModelVBO(getFileText(mgr, "obj/cone.obj"), new float[4]{0.2f, 0.7f, 0.05f, 1.f});
+}
+
+Canon::Canon(AAssetManager *mgr, btDynamicsWorld *world, Base *turret, btVector3 turretPos)
+		: Poly(Poly::makeCInfo([mgr](glm::vec3 scale) {
+								   string canonObjTxt = getFileText(mgr, "obj/cylinderZ.obj");
+								   return new btCylinderShapeZ(btVector3(canonScale.x, canonScale.y, canonScale.z));
+							   }, btVector3ToVec3(turretPos + canonRelPos), glm::mat4(1.0f), canonScale, canonMass),
+			   makeCanonModel(mgr), canonScale),
+		  angle(0.f), respawn(false), pos(turretPos + canonRelPos), hasClickedShoot(false), missile(makeMissileModel(mgr)) {
 	btRigidBody *pBodyA = turret;
 	btRigidBody *pBodyB = this;
 
@@ -130,15 +153,15 @@ void Canon::fire(std::vector<Base *> *entities) {
 
 	glm::vec4 vec = modelMatrix * glm::vec4(0.f, 0.f, canonScale.z + 1.f, 1.f);
 
-	rotMatrix = rotMatrix * glm::rotate(glm::mat4(1.f), 90.f, glm::vec3(1,0,0));
+	rotMatrix = rotMatrix * glm::rotate(glm::mat4(1.f), 90.f, glm::vec3(1, 0, 0));
 
-	Cone *cone = Cone::MakeCone(missile, vec, missileScale, rotMatrix, 10.f);
+	Missile *m = new Missile(missile, vec, missileScale, rotMatrix, 10.f, 10);
 
 	glm::vec4 forceVec = modelMatrix * glm::vec4(0, 0, 500.f, 0);
 
-	cone->applyCentralImpulse(btVector3(forceVec.x, forceVec.y, forceVec.z));
+	m->applyCentralImpulse(btVector3(forceVec.x, forceVec.y, forceVec.z));
 
-	entities->push_back(cone);
+	entities->push_back(m);
 }
 
 glm::vec3 Canon::camPos(bool VR) {
@@ -178,39 +201,4 @@ glm::vec3 Canon::camUpVec(bool VR) {
 	p = modelMatrix * p;
 
 	return glm::vec3(p.x, p.y, p.z);
-}
-
-Turret *makeTurret(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos) {
-	std::string turretObjTxt = getFileText(mgr, "obj/tank_turret.obj");
-
-	ModelVBO *modelVBO = new ModelVBO(turretObjTxt, turretColor);
-
-	btCollisionShape *turretShape = parseObj(turretObjTxt);
-	turretShape->setLocalScaling(btVector3(turretScale.x, turretScale.y, turretScale.z));
-
-	btTransform tr;
-	tr.setIdentity();
-	tr.setOrigin(chassisPos + turretRelPos);
-
-	btRigidBody::btRigidBodyConstructionInfo cinfo = localCreateInfo(turretMass, tr, turretShape);
-	return new Turret(cinfo, modelVBO, turretScale, world, chassis, chassisPos);
-}
-
-Canon *makeCanon(AAssetManager *mgr, btDynamicsWorld *world, Base *turret, btVector3 turretPos) {
-	std::string canonObjTxt = getFileText(mgr, "obj/cylinderZ.obj");
-
-	ModelVBO *modelVBO = new ModelVBO(canonObjTxt, turretColor);
-
-	btCollisionShape *canonShape = new btCylinderShapeZ(btVector3(canonScale.x, canonScale.y, canonScale.z));
-
-	btTransform tr;
-	tr.setIdentity();
-	tr.setOrigin(canonRelPos + turretPos);
-
-	btRigidBody::btRigidBodyConstructionInfo cinfo
-			= localCreateInfo(canonMass, tr, canonShape);
-
-	return new Canon(cinfo, modelVBO, canonScale, world, turret, turretPos,
-		new ModelVBO(getFileText(mgr, "obj/cone.obj"),
-					 new float[4]{0.2f, 0.7f, 0.05f, 1.f}));
 }

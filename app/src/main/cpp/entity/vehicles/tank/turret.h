@@ -6,7 +6,7 @@
 #define PHYVR_TURRET_H
 
 
-#include "entity/base.h"
+#include "../../poly/poly.h"
 #include <glm/glm.hpp>
 #include "../../../controls/controls.h"
 #include "../../shooter.h"
@@ -17,16 +17,14 @@ static const btVector3 turretRelPos(0.f, chassisScale.x + turretScale.y, 0.f);
 static float turretColor[4]{4.f / 255.f, 147.f / 255.f, 114.f / 255.f, 1.f};
 static const float turretMass = 100.f;
 
-class Turret : public Base, public Controls {
+class Turret : public Poly, public Controls {
 private:
 	btHingeConstraint *hinge;
 	float angle;
 	bool respawn;
 	btVector3 pos;
 public:
-	Turret(const btRigidBodyConstructionInfo &constructionInfo,
-		   DiffuseModel *modelVBO, const glm::vec3 &scale,
-		   btDynamicsWorld *world, Base *chassis, btVector3 chassisPos);
+	Turret(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos);
 
 	void onInput(input in) override;
 
@@ -39,7 +37,7 @@ static float canonOffset = 0.1f;
 static const glm::vec3 canonScale(0.1f, 0.1f, 0.8f);
 static const btVector3 canonRelPos(0.f, 0.f, turretScale.z + canonScale.z - canonOffset);
 
-class Canon : public Base, public Controls, public Shooter, public Camera {
+class Canon : public Poly, public Controls, public Shooter, public Camera {
 private:
 	float angle;
 	bool respawn;
@@ -48,9 +46,7 @@ private:
 	btHingeConstraint *hinge;
 	DiffuseModel *missile;
 public:
-	Canon(const btRigidBodyConstructionInfo &constructionInfo,
-		  DiffuseModel *modelVBO, const glm::vec3 &scale,
-		  btDynamicsWorld *world, Base *turret, btVector3 turretPos, DiffuseModel *missile);
+	Canon(AAssetManager *mgr, btDynamicsWorld *world, Base *turret, btVector3 turretPos);
 
 	void onInput(input in) override;
 
@@ -64,9 +60,5 @@ public:
 
 	glm::vec3 camUpVec(bool VR) override;
 };
-
-Turret *makeTurret(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos);
-
-Canon *makeCanon(AAssetManager *mgr, btDynamicsWorld *world, Base *turret, btVector3 turretPos);
 
 #endif //PHYVR_TURRET_H

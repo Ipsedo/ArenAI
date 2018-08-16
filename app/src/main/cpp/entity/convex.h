@@ -6,22 +6,14 @@
 #define PHYVR_CONVEX_H
 
 
-#include "base.h"
+#include "poly/poly.h"
 #include <glm/glm.hpp>
 #include <android/asset_manager.h>
-/*
-class Convex : public Base {
+
+class Convex : public Poly {
 public:
-	Convex(AAssetManager *mgr, std::string objFileName,
-		   glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass);
-
-	void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lightPos) override;
-
-	~Convex();
-
-private:
-	ModelVBO *modelVBO;
+	Convex(AAssetManager *mgr, std::string objFileName, glm::vec3 pos, glm::vec3 scale,
+							  glm::mat4 rotationMatrix, float mass);
 };
 
-*/
 #endif //PHYVR_CONVEX_H

@@ -15,6 +15,7 @@
 #include "../entity/poly/sphere.h"
 #include "../entity/poly/cylinder.h"
 #include "wrapper_utils.h"
+#include "../utils/rigidbody.h"
 
 #define HEIGHT_SPAWN 30.f
 
@@ -43,41 +44,32 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initEntity(JNIEnv *env, jobje
 		float z = spawnRange * (float) rand() / RAND_MAX - spawnRange * 0.5f;
 		float scale = 2.f * (float) rand() / RAND_MAX;
 		float mass = maxMass * float(rand()) / RAND_MAX;
-		boxes->push_back(
-				Box::MakeBox(cppMgr,
-							 glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale),
-							 id, mass));
+		boxes->push_back(new Box(cppMgr, glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale), id, mass));
 	}
 	for (int i = 0; i < nbEntity; i++) {
 		float x = spawnRange * (float) rand() / RAND_MAX - spawnRange * 0.5f;
 		float z = spawnRange * (float) rand() / RAND_MAX - spawnRange * 0.5f;
 		float scale = 2.f * (float) rand() / RAND_MAX;
 		float mass = maxMass * float(rand()) / RAND_MAX;
-		boxes->push_back(
-				Cylinder::MakeCylinder(cppMgr,
-							 glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale),
-							 id, mass));
+
+		boxes->push_back(new Cylinder(cppMgr, glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale), id, mass));
 	}
 	for (int i = 0; i < nbEntity; i++) {
 		float x = spawnRange * (float) rand() / RAND_MAX - spawnRange * 0.5f;
 		float z = spawnRange * (float) rand() / RAND_MAX - spawnRange * 0.5f;
 		float scale = 2.f * (float) rand() / RAND_MAX;
 		float mass = maxMass * float(rand()) / RAND_MAX;
-		boxes->push_back(
-				Cone::MakeCone(cppMgr,
-							 glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale),
-							 id, mass));
+
+		boxes->push_back(new Cone(cppMgr, glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale), id, mass));
 	}
 	for (int i = 0; i < nbEntity; i++) {
 		float x = spawnRange * (float) rand() / RAND_MAX - spawnRange * 0.5f;
 		float z = spawnRange * (float) rand() / RAND_MAX - spawnRange * 0.5f;
 		float scale = 2.f * (float) rand() / RAND_MAX;
 		float mass = maxMass * float(rand()) / RAND_MAX;
-		boxes->push_back(
-				Sphere::MakeSphere(cppMgr,
-							 glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale),
-							 id, mass));
+		boxes->push_back(new Sphere(cppMgr, glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale), id, mass));
 	}
+
 	return (long) boxes;
 }
 

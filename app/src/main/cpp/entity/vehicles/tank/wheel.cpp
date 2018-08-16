@@ -2,18 +2,22 @@
 // Created by samuel on 26/06/18.
 //
 
-#include "../../../utils/assets.h"
 #include "wheel.h"
-#include <glm/vec3.hpp>
+#include "../../../utils/assets.h"
 #include "../../../utils/rigidbody.h"
+#include "../../../utils/vec.h"
+#include <glm/glm.hpp>
 
-Wheel::Wheel(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo,
-			 ModelVBO *modelVBO, const glm::vec3 &scale,
-			 btDynamicsWorld *world, Base *chassis, btVector3 chassisPos, btVector3 wheelPos) :
-		Base(constructionInfo, modelVBO, scale),
-		pos(wheelPos), chassisPos(chassisPos),
-		isMotorEnabled(false), isBraking(true), targetSpeed(0.f), hasReAccelerate(false) {
+auto l = [](glm::vec3 unused) {
+	return new btCylinderShapeX(btVector3(wheelWidth, wheelRadius, wheelRadius));
+};
 
+Wheel::Wheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos, btVector3 pos)
+		: Poly(Poly::makeCInfo(l, btVector3ToVec3(pos + chassisPos),
+							   glm::mat4(1.0f), glm::vec3(wheelWidth, wheelRadius, wheelRadius), wheelMass),
+			   makeWheelMesh(mgr), glm::vec3(wheelWidth, wheelRadius, wheelRadius)),
+	  pos(pos), chassisPos(chassisPos),
+	  isMotorEnabled(false), isBraking(true), targetSpeed(0.f), hasReAccelerate(false){
 	setFriction(500);
 	setActivationState(DISABLE_DEACTIVATION);
 
@@ -49,8 +53,6 @@ Wheel::Wheel(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo,
 	}
 
 	hinge->setDbgDrawSize(btScalar(5.f));
-
-	//world->addRigidBody(this);
 }
 
 
@@ -96,10 +98,10 @@ void Wheel::update() {
  *
  *
  */
-FrontWheel::FrontWheel(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo,
-					   ModelVBO *modelVBO, const glm::vec3 &scale, btDynamicsWorld *world,
-					   Base *chassis, const btVector3 &chassisPos, const btVector3 &pos)
-		: Wheel(constructionInfo, modelVBO, scale, world, chassis, chassisPos, pos), direction(0.f) {}
+
+
+FrontWheel::FrontWheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos, btVector3 pos)
+		: Wheel(mgr, world, chassis, chassisPos, pos), direction(0.f) {}
 
 void FrontWheel::onInput(input in) {
 	Wheel::onInput(in);
@@ -116,30 +118,7 @@ void FrontWheel::update() {
 			float(M_PI) * direction / 10.f);
 }
 
-ModelVBO *makeWheelMesh(AAssetManager *mgr) {
+ModelVBO *Wheel::makeWheelMesh(AAssetManager *mgr) {
 	std::string cylObjText = getFileText(mgr, "obj/cylinderX.obj");
 	return new ModelVBO(cylObjText, wheelColor);
-}
-
-Wheel *makeWheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos, btVector3 pos) {
-	btCollisionShape *m_wheelShape = new btCylinderShapeX(btVector3(wheelWidth, wheelRadius, wheelRadius));
-	btTransform tr;
-	tr.setIdentity();
-	tr.setOrigin(pos + chassisPos);
-	btRigidBody::btRigidBodyConstructionInfo cinfo
-			= localCreateInfo(wheelMass, tr, m_wheelShape);
-	return new Wheel(cinfo, makeWheelMesh(mgr),
-					 glm::vec3(wheelWidth, wheelRadius, wheelRadius), world,
-					 chassis, chassisPos, pos);
-}
-
-FrontWheel *makeFrontWheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos, btVector3 pos) {
-	btCollisionShape *m_wheelShape = new btCylinderShapeX(btVector3(wheelWidth, wheelRadius, wheelRadius));
-	btTransform tr;
-	tr.setIdentity();
-	tr.setOrigin(pos + chassisPos);
-	btRigidBody::btRigidBodyConstructionInfo cinfo = localCreateInfo(wheelMass, tr, m_wheelShape);
-	return new FrontWheel(cinfo, makeWheelMesh(mgr),
-						  glm::vec3(wheelWidth, wheelRadius, wheelRadius), world, chassis,
-						  chassisPos, pos);
 }

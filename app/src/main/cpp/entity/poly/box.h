@@ -9,14 +9,12 @@
 #include <android/asset_manager.h>
 #include <glm/glm.hpp>
 #include "../../graphics/drawable/modelvbo.h"
-#include "entity/base.h"
+#include "../../utils/assets.h"
+#include "poly.h"
 
-class Box : public Base {
+class Box : public Poly {
 public:
-	static Box *MakeBox(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass);
-
-protected:
-	Box(const btRigidBodyConstructionInfo &constructionInfo,  DiffuseModel *modelVBO, const glm::vec3 &scale);
+	Box(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass);
 };
 
 

@@ -8,38 +8,14 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
- Cone::Cone(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo,
-			DiffuseModel *modelVBO, const glm::vec3 &scale) : Base(constructionInfo, modelVBO, scale) {
-
- }
-
-Cone *Cone::MakeCone(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass) {
-	std::string objTxt = getFileText(mgr, "obj/cone.obj");
-	ModelVBO *modelVBO = new ModelVBO(
-			objTxt,
-			new float[4]{(float) rand() / RAND_MAX,
-						 (float) rand() / RAND_MAX,
-						 (float) rand() / RAND_MAX,
-						 1.f});
-	btRigidBody::btRigidBodyConstructionInfo cinfo = init(pos, scale, rotMat, mass);
-	return new Cone(cinfo, modelVBO, scale);
-}
-
-Cone *Cone::MakeCone(DiffuseModel *modelVBO, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass) {
-	btRigidBody::btRigidBodyConstructionInfo cinfo = init(pos, scale, rotMat, mass);
-	return new Cone(cinfo, modelVBO, scale);
-}
-
-btRigidBody::btRigidBodyConstructionInfo
-Cone::init(glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass) {
+auto l = [](glm::vec3 scale) {
 	btCollisionShape *shape = new btConeShape(1.f, 2.f);
 	shape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
+	return shape;
+};
 
-	btTransform myTransform;
-	myTransform.setIdentity();
-	myTransform.setOrigin(btVector3(pos.x, pos.y, pos.z));
-	glm::quat tmp = glm::quat_cast(rotationMatrix);
-	myTransform.setRotation(btQuaternion(tmp.x, tmp.y, tmp.z, tmp.w));
+Cone::Cone(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass)
+		: Poly(Poly::makeCInfo(l, pos, rotMat, scale, mass), Poly::makeModel(mgr, "obj/cone.obj"), scale) {}
 
-	return localCreateInfo(mass, myTransform, shape);
-}
+Cone::Cone(DiffuseModel *modelVBO, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass)
+		: Poly(Poly::makeCInfo(l, pos, rotMat, scale, mass), modelVBO, scale) {}

@@ -13,7 +13,8 @@
 
 class Poly : public Base {
 public:
-	Poly(const btRigidBodyConstructionInfo &constructionInfo, DiffuseModel *modelVBO, const glm::vec3 &scale, bool hasOwnModel) : Base(
+	Poly(const btRigidBodyConstructionInfo &constructionInfo, DiffuseModel *modelVBO, const glm::vec3 &scale,
+		 bool hasOwnModel) : Base(
 			constructionInfo, modelVBO, scale, hasOwnModel) {}
 
 	template<typename FunShape>
@@ -32,11 +33,12 @@ public:
 
 	static DiffuseModel *makeModel(AAssetManager *mgr, string objFileName) {
 		string objTxt = getFileText(mgr, objFileName);
-		float* color = new float[4];
-		for (int i = 0; i < 3; i++) {
-			color[i] = (float) rand() / RAND_MAX;
-		}
-		color[3] = 1.f;
+		float color[4]{
+				(float) rand() / RAND_MAX,
+				(float) rand() / RAND_MAX,
+				(float) rand() / RAND_MAX,
+				1.f
+		};
 		return new ModelVBO(objTxt, color);
 	};
 };

@@ -41,7 +41,7 @@ private:
 	btSequentialImpulseConstraintSolver *constraintSolver;
 	Limits *limits;
 
-	void deleteBase(Base *b);
+	void deleteBase(Base *base);
 };
 
 

@@ -5,7 +5,7 @@
 #ifndef PHYVR_WHEEL_H
 #define PHYVR_WHEEL_H
 
-#include "entity/poly/poly.h"
+#include "../../poly.h"
 #include "../../../controls/controls.h"
 #include "chassis.h"
 #include "../../../utils/rigidbody.h"

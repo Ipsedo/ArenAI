@@ -6,7 +6,7 @@
 #define PHYVR_CONVEX_H
 
 
-#include "poly/poly.h"
+#include "poly.h"
 #include <glm/glm.hpp>
 #include <android/asset_manager.h>
 

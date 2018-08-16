@@ -8,7 +8,7 @@
 
 #include <android/asset_manager.h>
 #include <glm/glm.hpp>
-#include "poly.h"
+#include "../poly.h"
 #include "../../utils/assets.h"
 
 class Sphere : public Poly {

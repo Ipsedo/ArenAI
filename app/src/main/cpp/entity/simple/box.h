@@ -10,7 +10,7 @@
 #include <glm/glm.hpp>
 #include "../../graphics/drawable/modelvbo.h"
 #include "../../utils/assets.h"
-#include "poly.h"
+#include "../poly.h"
 
 class Box : public Poly {
 public:

@@ -6,7 +6,7 @@
 #define PHYVR_CYLINDER_H
 
 #include "../../utils/assets.h"
-#include "poly.h"
+#include "../poly.h"
 #include <glm/glm.hpp>
 #include <android/asset_manager.h>
 

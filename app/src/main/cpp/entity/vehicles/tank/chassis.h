@@ -6,7 +6,7 @@
 #define PHYVR_CHASSIS_H
 
 
-#include "../../poly/poly.h"
+#include "../../poly.h"
 #include "../../../controls/controls.h"
 #include "../../../graphics/camera.h"
 #include <glm/glm.hpp>

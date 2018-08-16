@@ -6,7 +6,7 @@
 #define PHYVR_TURRET_H
 
 
-#include "../../poly/poly.h"
+#include "../../poly.h"
 #include <glm/glm.hpp>
 #include "../../../controls/controls.h"
 #include "../../shooter.h"

@@ -14,7 +14,7 @@ HeightMap::HeightMap(btHeightfieldTerrainShape *terrain, float maxheight) {
 	distanceCoef = 0.f;
 
 	for (int i = 0; i < 3; i++)
-		this->color[i] = (float) rand() / RAND_MAX;
+		this->color[i] = 0.3f + 0.7f * (float) rand() / RAND_MAX;
 	this->color[3] = 1.f;
 }
 

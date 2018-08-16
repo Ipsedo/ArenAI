@@ -27,7 +27,7 @@ Turret::Turret(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVect
 								   return turretShape;
 							   },
 							   btVector3ToVec3(chassisPos + turretRelPos), glm::mat4(1.0f), turretScale, turretMass),
-			   makeTurretModel(mgr), turretScale),
+			   makeTurretModel(mgr), turretScale, true),
 		  angle(0.f), respawn(false), pos(chassisPos + turretRelPos) {
 	btTransform tr;
 	tr.setIdentity();
@@ -86,7 +86,7 @@ Canon::Canon(AAssetManager *mgr, btDynamicsWorld *world, Base *turret, btVector3
 								   string canonObjTxt = getFileText(mgr, "obj/cylinderZ.obj");
 								   return new btCylinderShapeZ(btVector3(canonScale.x, canonScale.y, canonScale.z));
 							   }, btVector3ToVec3(turretPos + canonRelPos), glm::mat4(1.0f), canonScale, canonMass),
-			   makeCanonModel(mgr), canonScale),
+			   makeCanonModel(mgr), canonScale, true),
 		  angle(0.f), respawn(false), pos(turretPos + canonRelPos), hasClickedShoot(false), missile(makeMissileModel(mgr)) {
 	btRigidBody *pBodyA = turret;
 	btRigidBody *pBodyB = this;
@@ -201,4 +201,8 @@ glm::vec3 Canon::camUpVec(bool VR) {
 	p = modelMatrix * p;
 
 	return glm::vec3(p.x, p.y, p.z);
+}
+
+Canon::~Canon() {
+	delete missile;
 }

@@ -20,6 +20,9 @@ private:
 
 	// GPU program handle
 	GLuint mProgram;
+	GLuint vertexShader;
+	GLuint fragmentShader;
+
 	GLuint mPositionHandle;
 	GLuint mNormalHandle;
 	GLuint mColorHandle;
@@ -48,6 +51,7 @@ protected:
 
 public:
 	void draw(glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos);
+	virtual ~DiffuseModel();
 };
 
 

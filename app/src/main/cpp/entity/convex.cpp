@@ -17,4 +17,4 @@ Convex::Convex(AAssetManager *mgr, string objFileName, glm::vec3 pos, glm::vec3 
 		btCollisionShape *shape = parseObj(objTxt);
 		shape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
 		return shape;
-	}, pos, rotationMatrix, scale, mass), Poly::makeModel(mgr, objFileName), scale)  {}
+	}, pos, rotationMatrix, scale, mass), Poly::makeModel(mgr, objFileName), scale, true)  {}

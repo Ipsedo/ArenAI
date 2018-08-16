@@ -15,7 +15,7 @@ auto l = [](glm::vec3 unused) {
 Wheel::Wheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos, btVector3 pos)
 		: Poly(Poly::makeCInfo(l, btVector3ToVec3(pos + chassisPos),
 							   glm::mat4(1.0f), glm::vec3(wheelWidth, wheelRadius, wheelRadius), wheelMass),
-			   makeWheelMesh(mgr), glm::vec3(wheelWidth, wheelRadius, wheelRadius)),
+			   makeWheelMesh(mgr), glm::vec3(wheelWidth, wheelRadius, wheelRadius), true),
 	  pos(pos), chassisPos(chassisPos),
 	  isMotorEnabled(false), isBraking(true), targetSpeed(0.f), hasReAccelerate(false){
 	setFriction(500);

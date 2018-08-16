@@ -7,8 +7,8 @@
 #include "base.h"
 
 Base::Base(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo,
-				   DiffuseModel *model, const glm::vec3 &s)
-		: scale(s), modelVBO(model), btRigidBody(constructionInfo) {
+				   DiffuseModel *model, const glm::vec3 &s, bool hasOwnModel)
+		: scale(s), hasOwnModel(hasOwnModel), modelVBO(model), btRigidBody(constructionInfo) {
 
 }
 
@@ -39,5 +39,7 @@ void Base::draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos) {
 }
 
 Base::~Base() {
-
+	btRigidBody::~btRigidBody();
+	if (hasOwnModel)
+		delete modelVBO;
 }

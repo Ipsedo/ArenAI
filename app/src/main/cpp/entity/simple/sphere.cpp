@@ -15,4 +15,4 @@ auto l = [](glm::vec3 scale) {
 };
 
 Sphere::Sphere(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass)
-	: Poly(Poly::makeCInfo(l, pos, rotMat, scale, mass), Poly::makeModel(mgr, "obj/sphere.obj"), scale) {}
+	: Poly(Poly::makeCInfo(l, pos, rotMat, scale, mass), Poly::makeModel(mgr, "obj/sphere.obj"), scale, true) {}

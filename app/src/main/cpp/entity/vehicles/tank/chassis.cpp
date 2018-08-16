@@ -19,7 +19,7 @@ Chassis::Chassis(AAssetManager *mgr, btVector3 pos)
 		std::string chassisObjTxt = getFileText(mgr, "obj/tank_chassis.obj");
 		return parseObj(chassisObjTxt);
 	}, btVector3ToVec3(pos), glm::mat4(1.0f), chassisScale, chassisMass),
-	makeChassisModel(mgr), chassisScale), respawn(false), pos(pos){}
+	makeChassisModel(mgr), chassisScale, true), respawn(false), pos(pos){}
 
 void Chassis::onInput(input in) {
 	respawn = in.respawn;

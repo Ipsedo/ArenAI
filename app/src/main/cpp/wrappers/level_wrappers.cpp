@@ -3,6 +3,7 @@
 //
 
 #include <jni.h>
+#include "../entity/ground/map.h"
 #include "../core/engine.h"
 
 extern "C"
@@ -11,7 +12,17 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initEngine(JNIEnv *env, jobje
 
 	vector<Base *> *boxes = (vector<Base *> *) boxesPtr;
 
-	Engine *level = new Engine(boxes);
+	glm::vec3 start(-1000.f, -200.f, -1000.f);
+	glm::vec3 end(1000.f, 200.f, 1000.f);
+
+	// TODO modifier wrapper pr limit level ? (dyn_cast deg...)
+	/*for (Base *b : *boxes)
+		if(Map* m = dynamic_cast<Map*>(b)) {
+			start = m->getMinPos();
+			end = m->getMaxPos();
+		}
+	end.y = 200.f;*/
+	Engine *level = new Engine(boxes, new BoxLimits(start, end - start));
 
 	return (long) level;
 }

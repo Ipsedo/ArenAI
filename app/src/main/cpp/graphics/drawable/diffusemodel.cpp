@@ -38,8 +38,8 @@ std::string fs = "precision mediump float;\n"
 
 void DiffuseModel::init() {
 	mProgram = glCreateProgram();
-	GLuint vertexShader = loadShader(GL_VERTEX_SHADER, vs.c_str());
-	GLuint fragmentShader = loadShader(GL_FRAGMENT_SHADER, fs.c_str());
+	vertexShader = loadShader(GL_VERTEX_SHADER, vs.c_str());
+	fragmentShader = loadShader(GL_FRAGMENT_SHADER, fs.c_str());
 	glAttachShader(mProgram, vertexShader);
 	glAttachShader(mProgram, fragmentShader);
 	glLinkProgram(mProgram);
@@ -97,4 +97,11 @@ void DiffuseModel::draw(glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 lig
 
 	glDisableVertexAttribArray(mPositionHandle);
 	glDisableVertexAttribArray(mNormalHandle);
+}
+
+DiffuseModel::~DiffuseModel() {
+	glDeleteBuffers(1, &packedDataBufferId);
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
+	glDeleteProgram(mProgram);
 }

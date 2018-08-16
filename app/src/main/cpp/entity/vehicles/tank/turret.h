@@ -59,6 +59,8 @@ public:
 	glm::vec3 camLookAtVec(bool VR) override;
 
 	glm::vec3 camUpVec(bool VR) override;
+
+	virtual ~Canon();
 };
 
 #endif //PHYVR_TURRET_H

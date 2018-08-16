@@ -4,6 +4,7 @@
 #include "engine.h"
 #include "../entity/shooter.h"
 #include "../utils/rigidbody.h"
+#include <algorithm>
 
 static float gravity = -10.f;
 static float deltaTime = 1.f / 60.f;
@@ -46,9 +47,7 @@ bool callback_processed(btManifoldPoint &cp, void *body0, void *body1) {
 	return false;
 }
 
-Engine::Engine(vector<Base *> *bases) {
-
-	this->bases = bases;
+Engine::Engine(vector<Base *> *bases, Limits *limits) : limits(limits), bases(bases) {
 
 	collisionConfiguration = new btDefaultCollisionConfiguration();
 	dispatcher = new btCollisionDispatcher(collisionConfiguration);
@@ -78,12 +77,12 @@ void Engine::update(float delta) {
 	}
 
 	// remove base and rigidBody
-	for (Base *b : *bases)
-		if (b->isDead())
-			world->removeRigidBody(b);
-
-	bases->erase(std::remove_if(bases->begin(), bases->end(),
-								[](Base *o) { return o->isDead(); }),
+	bases->erase(remove_if(bases->begin(), bases->end(), [this](Base *b) {
+					   bool isDead = b->isDead() || !limits->isInside(b);
+					   if (isDead) {
+						   deleteBase(b);
+					   }
+					   return isDead; }),
 				 bases->end());
 
 	for (Shooter *s : shooters)
@@ -102,19 +101,34 @@ Engine::~Engine() {
 		btCollisionObject *obj = world->getCollisionObjectArray()[i];
 		btRigidBody *body = btRigidBody::upcast(obj);
 		if (body && body->getMotionState()) {
-
 			while (body->getNumConstraintRefs()) {
 				btTypedConstraint *constraint = body->getConstraintRef(0);
 				world->removeConstraint(constraint);
 				delete constraint;
 			}
-			//delete body->getMotionState(); base delete motionstate
+			delete body->getMotionState();
+			delete body->getCollisionShape();
 			world->removeRigidBody(body);
 		} else {
 			world->removeCollisionObject(obj);
+			delete obj;
 		}
-		// delete obj; base delete body object (but btCollisionObject or btRigidBody ?)
 	}
 
 	delete world;
+	delete limits;
+}
+
+void Engine::deleteBase(Base *body) {
+	if (body && body->getMotionState()) {
+		while (body->getNumConstraintRefs()) {
+			btTypedConstraint *constraint = body->getConstraintRef(0);
+			world->removeConstraint(constraint);
+			delete constraint;
+		}
+		delete body->getMotionState();
+		delete body->getCollisionShape();
+		world->removeRigidBody(body);
+	}
+	delete body;
 }

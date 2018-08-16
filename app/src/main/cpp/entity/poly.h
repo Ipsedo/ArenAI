@@ -13,8 +13,8 @@
 
 class Poly : public Base {
 public:
-	Poly(const btRigidBodyConstructionInfo &constructionInfo, DiffuseModel *modelVBO, const glm::vec3 &scale) : Base(
-			constructionInfo, modelVBO, scale) {}
+	Poly(const btRigidBodyConstructionInfo &constructionInfo, DiffuseModel *modelVBO, const glm::vec3 &scale, bool hasOwnModel) : Base(
+			constructionInfo, modelVBO, scale, hasOwnModel) {}
 
 	template<typename FunShape>
 	static btRigidBodyConstructionInfo makeCInfo(FunShape makeShapFun, glm::vec3 pos,

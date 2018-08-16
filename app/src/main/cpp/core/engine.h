@@ -8,6 +8,7 @@
 #include "../graphics/renderer.h"
 #include "entity/base.h"
 #include "../entity/shooter.h"
+#include "limits.h"
 
 bool contact_callback(btManifoldPoint &btmanifoldpoint,
 					  const btCollisionObjectWrapper *btcollisionobject0,
@@ -21,7 +22,7 @@ bool callback_processed(btManifoldPoint &cp, void *body0, void *body1);
 
 class Engine {
 public:
-	Engine(vector<Base *> *b);
+	Engine(vector<Base *> *b, Limits *limits);
 
 	void update(float delta);
 
@@ -38,6 +39,9 @@ private:
 	btCollisionDispatcher *dispatcher;
 	btDefaultCollisionConfiguration *collisionConfiguration;
 	btSequentialImpulseConstraintSolver *constraintSolver;
+	Limits *limits;
+
+	void deleteBase(Base *b);
 };
 
 

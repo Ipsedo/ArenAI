@@ -13,10 +13,18 @@
 #include <glm/glm.hpp>
 
 class Map : public Base {
+private:
+	glm::vec3 minPos;
+	glm::vec3 maxPos;
+	float *normalizedHeightValues;
 public:
 	Map(const btRigidBodyConstructionInfo &constructionInfo,
-		DiffuseModel *modelVBO, const glm::vec3 &scale);
+		DiffuseModel *modelVBO, const glm::vec3 &scale, float* normalizedHeightValue);
 	//HeightMap *heightMap;
+	glm::vec3 getMinPos();
+	glm::vec3 getMaxPos();
+
+	virtual ~Map();
 };
 
 Map *makeMap(float *normalizedHeightValues, int width, int length, btVector3 pos, btVector3 scale);

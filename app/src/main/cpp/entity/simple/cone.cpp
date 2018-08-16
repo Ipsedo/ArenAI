@@ -15,7 +15,7 @@ auto l = [](glm::vec3 scale) {
 };
 
 Cone::Cone(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass)
-		: Poly(Poly::makeCInfo(l, pos, rotMat, scale, mass), Poly::makeModel(mgr, "obj/cone.obj"), scale) {}
+		: Poly(Poly::makeCInfo(l, pos, rotMat, scale, mass), Poly::makeModel(mgr, "obj/cone.obj"), scale, true) {}
 
 Cone::Cone(DiffuseModel *modelVBO, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass)
-		: Poly(Poly::makeCInfo(l, pos, rotMat, scale, mass), modelVBO, scale) {}
+		: Poly(Poly::makeCInfo(l, pos, rotMat, scale, mass), modelVBO, scale, false) {}

@@ -71,11 +71,17 @@ include $(CLEAR_VARS)
 LOCAL_PATH := $(PHYVR_PATH)
 LOCAL_MODULE := phyvr
 
+# use clang
+LOCAL_CLANG := true
+
+# AddressSanitizer
+# LOCAL_SANITIZE := address
+
 # optim
 TARGET_CFLAGS += -O3
 
 # exception
-LOCAL_CPPFLAGS += -fexceptions
+# LOCAL_CPPFLAGS += -fexceptions
 
 # use c++11
 TARGET_CFLAGS += -std=c++11

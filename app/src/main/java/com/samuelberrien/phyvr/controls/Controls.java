@@ -1,200 +1,85 @@
 package com.samuelberrien.phyvr.controls;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
-import com.google.gson.Gson;
-import com.samuelberrien.phyvr.R;
+import com.samuelberrien.phyvr.controls.axis.Axis;
 
 import java.util.ArrayList;
 
-import static android.content.Context.MODE_PRIVATE;
-
 public class Controls {
 
-	public static class Infos {
-		public int ID;
-		public boolean isMotionEvent;
-		public String name;
-		public boolean isPlusAxis; // -1, +1 axis for motioneEvent
-		public boolean isButton;
-		public static String getDefault() {
-			return "{\"ID\":-1,\"isMotionEvent\":false,\"isPlusAxis\":false,\"isButton\":false,\"name\":\"undefined\"}";
-		}
-	}
-
-	public static String sharedPref = "ControlsPreference";
-
-	private final static float AXIS_LIMIT = 0.1f;
 
 	private final long controlPtr;
 
-	private SharedPreferences controlsPref;
 
 	private float dir;
-	private float turretDir;
-	private float turretHeight;
+	private float turret;
+	private float canon;
 	private float speed;
 
-	private int controllerId;
+	boolean brake;
+	boolean respawn;
+	boolean fire;
 
-	private Infos leftInfo;
-	private Infos rightInfo;
-	private Infos speedUpInfo;
-	private Infos speedDownInfo;
-	private Infos brakeInfo;
-	private Infos turretLeftInfo;
-	private Infos turretRightInfo;
-	private Infos turretUpInfo;
-	private Infos turretDownInfo;
-	private Infos respawnInfo;
-	private Infos fireInfo;
+	private Axis dirAxis;
+	private Axis speedAxis;
+	private Axis turretAxis;
+	private Axis canonAxis;
 
 	static {
 		System.loadLibrary("phyvr");
 	}
 
 	public Controls(Context context, long controlPtr) {
-		controllerId = -1;
-
-		dir = speed = turretDir = turretHeight = 0.f;
-
 		this.controlPtr = controlPtr;
+		dir = 0.f;
+		turret = 0.f;
+		canon = 0.f;
+		speed = 0.f;
 
-		controlsPref = context.getSharedPreferences(Controls.sharedPref, MODE_PRIVATE);
-		Gson gson = new Gson();
+		brake = false;
+		respawn = false;
+		fire = false;
 
-		String json = controlsPref.getString(context.getString(R.string.left_control), Controls.Infos.getDefault());
-		leftInfo = gson.fromJson(json, Controls.Infos.class);
+		dirAxis = new Axis(context, Axis.AxisMap.DIR);
+		dirAxis.addListener((float value) -> {
+				dir = value;
+			}
+		);
 
-		json = controlsPref.getString(context.getString(R.string.right_control), Controls.Infos.getDefault());
-		rightInfo = gson.fromJson(json, Controls.Infos.class);
+		speedAxis = new Axis(context, Axis.AxisMap.SPEED);
+		speedAxis.addListener((float value) -> {
+			speed = value;
+		});
 
-		json = controlsPref.getString(context.getString(R.string.speed_up_control), Controls.Infos.getDefault());
-		speedUpInfo = gson.fromJson(json, Controls.Infos.class);
+		turretAxis = new Axis(context, Axis.AxisMap.TURRET);
+		turretAxis.addListener((float value) -> {
+			turret = value;
+		});
 
-		json = controlsPref.getString(context.getString(R.string.speed_down_control), Controls.Infos.getDefault());
-		speedDownInfo = gson.fromJson(json, Controls.Infos.class);
-
-		json = controlsPref.getString(context.getString(R.string.brake_control), Controls.Infos.getDefault());
-		brakeInfo = gson.fromJson(json, Controls.Infos.class);
-
-		json = controlsPref.getString(context.getString(R.string.turret_left_control), Controls.Infos.getDefault());
-		turretLeftInfo = gson.fromJson(json, Controls.Infos.class);
-
-		json = controlsPref.getString(context.getString(R.string.turret_right_control), Controls.Infos.getDefault());
-		turretRightInfo = gson.fromJson(json, Controls.Infos.class);
-
-		json = controlsPref.getString(context.getString(R.string.turret_up_control), Controls.Infos.getDefault());
-		turretUpInfo = gson.fromJson(json, Controls.Infos.class);
-
-		json = controlsPref.getString(context.getString(R.string.turret_down_control), Controls.Infos.getDefault());
-		turretDownInfo = gson.fromJson(json, Controls.Infos.class);
-
-		json = controlsPref.getString(context.getString(R.string.respawn_control), Controls.Infos.getDefault());
-		respawnInfo = gson.fromJson(json, Controls.Infos.class);
-
-		json = controlsPref.getString(context.getString(R.string.fire_control), Controls.Infos.getDefault());
-		fireInfo = gson.fromJson(json, Controls.Infos.class);
+		canonAxis = new Axis(context, Axis.AxisMap.CANON);
+		canonAxis.addListener((float value) -> {
+			canon = value;
+		});
 	}
 
 	public boolean onMotionEvent(MotionEvent event) {
-		float leftValue = 0.f;
-		float rightValue = 0.f;
+		dirAxis.onGenericMotion(event);
+		speedAxis.onGenericMotion(event);
+		turretAxis.onGenericMotion(event);
+		canonAxis.onGenericMotion(event);
 
-		float speedUpValue = 0.f;
-		float speedDownValue = 0.f;
+		control(controlPtr, dir, speed, brake, turret, canon, respawn, fire);
 
-		float leftTurret = 0.f;
-		float rightTurret = 0.f;
-
-		float upTurret = 0.f;
-		float downTurret = 0.f;
-
-		boolean handled = false;
-
-		if (leftInfo.isMotionEvent) {
-			leftValue = event.getAxisValue(leftInfo.ID);
-			leftValue = leftInfo.isPlusAxis ? -leftValue : leftValue;
-		}
-		if (rightInfo.isMotionEvent) {
-			rightValue = event.getAxisValue(rightInfo.ID);
-			rightValue = rightInfo.isPlusAxis ? rightValue : -rightValue;
-		}
-
-		if (speedUpInfo.isMotionEvent) {
-			speedUpValue = event.getAxisValue(speedUpInfo.ID);
-			speedUpValue = speedUpInfo.isPlusAxis ? speedUpValue : -speedUpValue;
-		}
-		if (speedDownInfo.isMotionEvent) {
-			speedDownValue = event.getAxisValue(speedDownInfo.ID);
-			speedDownValue = speedDownInfo.isPlusAxis ? -speedDownValue : speedDownValue;
-		}
-
-		if (turretLeftInfo.isMotionEvent) {
-			leftTurret = event.getAxisValue(turretLeftInfo.ID);
-			leftTurret = turretLeftInfo.isPlusAxis ? leftTurret : -leftTurret;
-		}
-		if (turretRightInfo.isMotionEvent) {
-			rightTurret = event.getAxisValue(turretRightInfo.ID);
-			rightTurret = turretRightInfo.isPlusAxis ? -rightTurret : rightTurret;
-		}
-
-		if (turretUpInfo.isMotionEvent) {
-			upTurret = event.getAxisValue(turretUpInfo.ID);
-			upTurret = turretUpInfo.isPlusAxis ? -upTurret : upTurret;
-		}
-		if (turretDownInfo.isMotionEvent) {
-			downTurret = event.getAxisValue(turretDownInfo.ID);
-			downTurret = turretDownInfo.isPlusAxis ? downTurret : -downTurret;
-		}
-
-		if (Math.abs(leftValue) > Math.abs(rightValue)) dir = leftValue;
-		else dir = rightValue;
-
-		if (Math.abs(speedUpValue) > Math.abs(speedDownValue)) speed = speedUpValue;
-		else speed = speedDownValue;
-
-		if (Math.abs(leftTurret) > Math.abs(rightTurret)) turretDir = leftTurret;
-		else turretDir = rightTurret;
-
-		if (Math.abs(upTurret) > Math.abs(downTurret)) turretHeight = upTurret;
-		else turretHeight = downTurret;
-
-		if (Math.abs(dir) > AXIS_LIMIT
-				|| Math.abs(speed) > AXIS_LIMIT
-				|| Math.abs(turretDir) > AXIS_LIMIT
-				|| Math.abs(turretHeight) > AXIS_LIMIT)
-			handled = true;
-
-
-		dir = Math.abs(dir) > AXIS_LIMIT ? dir : 0.f;
-		speed = Math.abs(speed) > AXIS_LIMIT ? speed : 0.f;
-		turretDir = Math.abs(turretDir) > AXIS_LIMIT ? turretDir : 0.f;
-		turretHeight = Math.abs(turretHeight) > AXIS_LIMIT ? turretHeight : 0.f;
-
-		control(controlPtr, dir, speed, false, turretDir, turretHeight, false, false);
-
-		return handled;
+		return false;
 	}
 
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-
-		boolean brake = false;
-
-		boolean respawn = false;
-
-		boolean fire = false;
-
 		boolean handled = false;
-		
-		if (!brakeInfo.isMotionEvent && brakeInfo.ID == keyCode) handled = brake = true;
-		if (!respawnInfo.isMotionEvent && respawnInfo.ID == keyCode) handled = respawn = true;
-		if (!fireInfo.isMotionEvent && fireInfo.ID == keyCode) handled = fire = true;
 
-		control(controlPtr, dir, speed, brake, turretDir, turretHeight, respawn, fire);
+		//control(controlPtr, dir, speed, brake, turret, canon, respawn, fire);
 
 		return handled;
 	}
@@ -223,7 +108,7 @@ public class Controls {
 		if (gameControllerDeviceIds.isEmpty()) {
 			throw new NoControllerException();
 		}
-		controllerId = gameControllerDeviceIds.get(0);
+		int controllerId = gameControllerDeviceIds.get(0);
 	}
 
 	private class NoControllerException extends Exception {

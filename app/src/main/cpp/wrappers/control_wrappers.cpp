@@ -18,7 +18,7 @@ Java_com_samuelberrien_phyvr_controls_Controls_control(JNIEnv *env, jobject inst
 	in.xAxis = direction;
 	in.speed = speed;
 	in.brake = brake;
-	in.turretDir = turretDir;
+	in.turretDir = -turretDir;
 	in.turretUp = turretUp;
 	in.respawn = respawn;
 	in.fire = fire;

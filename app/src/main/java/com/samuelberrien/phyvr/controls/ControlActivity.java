@@ -14,41 +14,27 @@ import java.util.ArrayList;
 
 public class ControlActivity extends AppCompatActivity {
 
-	private ArrayList<SetUpControl> setUpControls;
-
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_control);
 	}
 
-	/*@Override
+	@Override
 	public boolean dispatchGenericMotionEvent(MotionEvent e) {
 		boolean handled = false;
-		for (SetUpControl s : setUpControls)
-			handled = s.motionEvent(e) || handled;
+		LinearLayout axises = findViewById(R.id.axis_set_up_layout);
+		for (int i = 0; i < axises.getChildCount(); i++) {
+			handled = axises.getChildAt(i).onGenericMotionEvent(e) || handled;
+		}
 		return handled || super.dispatchGenericMotionEvent(e);
 	}
 
-	@Override
+	/*@Override
 	public boolean dispatchKeyEvent(KeyEvent event) {
 		boolean handled = false;
 		for (SetUpControl s : setUpControls)
 			handled = s.keyDown(event.getKeyCode(), event) || handled;
 		return handled || super.dispatchKeyEvent(event);
 	}*/
-
-	@Override
-	protected void onPause() {
-		/*for (SetUpControl s : setUpControls)
-			s.onPause();*/
-		super.onPause();
-	}
-
-	@Override
-	protected void onResume() {
-		super.onResume();
-		/*for (SetUpControl s : setUpControls)
-			s.onResume();*/
-	}
 }

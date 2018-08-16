@@ -5,6 +5,7 @@ import android.content.res.TypedArray;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.*;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -16,6 +17,8 @@ public class SetUpAxis extends LinearLayout {
 
 	private Axis.AxisMap axisMap;
 	private Axis axis;
+	private AxisContener contenerMinus;
+	private AxisContener contenerPlus;
 
 	public SetUpAxis(Context context) {
 		super(context);
@@ -23,24 +26,29 @@ public class SetUpAxis extends LinearLayout {
 
 	public SetUpAxis(Context context, @Nullable AttributeSet attrs) {
 		super(context, attrs);
-		init(context, attrs);
+		init(context.getTheme().obtainStyledAttributes(
+				attrs,
+				R.styleable.SetUpAxis,
+				0, 0), context);
 	}
 
 	public SetUpAxis(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
 		super(context, attrs, defStyleAttr);
-		init(context, attrs);
+		init(context.getTheme().obtainStyledAttributes(
+				attrs,
+				R.styleable.SetUpAxis,
+				defStyleAttr, 0), context);
 	}
 
 	public SetUpAxis(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
 		super(context, attrs, defStyleAttr, defStyleRes);
-		init(context, attrs);
-	}
-
-	private void init(Context context, AttributeSet attrs) {
-		TypedArray a = context.getTheme().obtainStyledAttributes(
+		init(context.getTheme().obtainStyledAttributes(
 				attrs,
 				R.styleable.SetUpAxis,
-				0, 0);
+				defStyleAttr, defStyleRes), context);
+	}
+
+	private void init(TypedArray a, Context context) {
 
 		try {
 			switch (a.getInteger(R.styleable.SetUpAxis_command, -1)) {
@@ -55,8 +63,6 @@ public class SetUpAxis extends LinearLayout {
 			a.recycle();
 		}
 
-		System.out.println("TTTTTTTTTTTTTTTTTT " + axisMap.getFullName());
-
 		axis = new Axis(getContext(), axisMap);
 
 		setOrientation(VERTICAL);
@@ -65,16 +71,19 @@ public class SetUpAxis extends LinearLayout {
 		l.setOrientation(HORIZONTAL);
 		LinearLayout.LayoutParams params = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
 		params.weight = 0.5f;
-		l.addView(new AxisContener(context, axis, false), params);
-		l.addView(new AxisContener(context, axis, true), params);
+		l.addView(contenerMinus = new AxisContener(context, axis, false), params);
+		l.addView(contenerPlus = new AxisContener(context, axis, true), params);
 
 		TextView name = new TextView(context);
-		name.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.button_axis));
+		name.setBackground(ContextCompat.getDrawable(getContext(), R.color.greyTransparent));
 		name.setGravity(Gravity.CENTER);
 		name.setText(axisMap.getFullName());
 
 		params = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
 		params.weight = 0.6f;
+		int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4,
+				getContext().getResources().getDisplayMetrics());
+		params.setMargins(px, px, px, 0);
 		addView(name, params);
 
 		params = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
@@ -85,6 +94,9 @@ public class SetUpAxis extends LinearLayout {
 	@Override
 	public boolean onGenericMotionEvent(MotionEvent event) {
 		axis.onGenericMotion(event);
-		return super.onGenericMotionEvent(event);
+		boolean handled = false;
+		handled = contenerMinus.onGenericMotionEvent(event) || handled;
+		handled = contenerPlus.onGenericMotionEvent(event) || handled;
+		return handled || super.onGenericMotionEvent(event);
 	}
 }

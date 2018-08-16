@@ -32,7 +32,6 @@ public class AxisContener extends RelativeLayout implements SharedPreferences.On
 
 		this.axis = axis;
 		this.isPlus = isPlus;
-		hasClick = false;
 		listening = false;
 
 		setBackground(ContextCompat.getDrawable(context, R.drawable.button_axis));
@@ -45,7 +44,7 @@ public class AxisContener extends RelativeLayout implements SharedPreferences.On
 		text = new TextView(context);
 		text.setGravity(Gravity.CENTER);
 		text.setBackground(ContextCompat.getDrawable(context, android.R.color.transparent));
-		text.setText(pref.getInt(axis.getAxisMap().getName() + (isPlus ? "+" : "-"), -1) + (isPlus ? "+" : "-"));
+		setText(pref);
 
 		addView(axisGage, axisGage.makeLayoutParams());
 		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
@@ -58,34 +57,46 @@ public class AxisContener extends RelativeLayout implements SharedPreferences.On
 		text.setOnClickListener(this);
 	}
 
+	private void setText(SharedPreferences pref) {
+		String key = axis.getAxisMap().getName()+ (isPlus ? "+" : "-");
+		text.setText(pref.getInt(key, -1) + (pref.getBoolean(key + "?", false) ? "+" : "-"));
+	}
+
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences pref, String key) {
 		if (key.contains(axis.getAxisMap().getName()) && key.contains(isPlus ? "+" : "-")) {
-			text.setText(pref.getInt(key, -1) + (isPlus ? "+" : "-"));
+			setText(pref);
 		}
 	}
 
 	@Override
 	public boolean onGenericMotionEvent(MotionEvent event) {
+		System.out.println("TTTTTT " + axis.getAxisMap().getFullName());
 		if (!listening)
 			return super.onGenericMotionEvent(event);
 
-		System.out.println("TTTTTTTT");
+		boolean handled = false;
 		for (int i = MotionEvent.AXIS_X; i < MotionEvent.AXIS_GENERIC_16; i++) {
 			float v = event.getAxisValue(i);
 			if (v > Axis.LIMIT || v < -Axis.LIMIT) {
-				pref.edit().putInt(axis.getAxisMap().getName() + (isPlus ? "+" : "-"), i).apply();
+				String key = axis.getAxisMap().getName() + (isPlus ? "+" : "-");
+				pref.edit()
+						.putInt(key, i)
+						.putBoolean(key + "?", v > 0.f)
+						.apply();
 				text.setBackground(ContextCompat.getDrawable(getContext(), android.R.color.transparent));
 				text.requestLayout();
 				listening = false;
+				handled = true;
+				break;
 			}
 		}
-		return super.onGenericMotionEvent(event);
+		return handled || super.onGenericMotionEvent(event);
 	}
 
 	@Override
 	public void onClick(View v) {
-		if (hasClick && !listening) {
+		if (!listening) {
 			text.setBackground(ContextCompat.getDrawable(getContext(), R.color.redTransparent));
 			text.requestLayout();
 			new Timer().schedule(new TimerTask() {
@@ -99,10 +110,10 @@ public class AxisContener extends RelativeLayout implements SharedPreferences.On
 				}
 			}, 4000);
 			listening = true;
-			hasClick = false;
 			return;
-		} else if (hasClick)
-			hasClick = false;
-		hasClick = true;
+		} else if (listening) {
+			return;
+		}
+		listening = true;
 	}
 }

@@ -105,7 +105,7 @@ Canon::Canon(AAssetManager *mgr, btDynamicsWorld *world, Base *turret, btVector3
 }
 
 void Canon::onInput(input in) {
-	angle = -in.turretUp;
+	angle = in.turretUp;
 	respawn = in.respawn;
 	hasClickedShoot = in.fire;
 }

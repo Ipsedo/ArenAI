@@ -17,11 +17,12 @@ private:
 	glm::vec3 minPos;
 	glm::vec3 maxPos;
 	float *normalizedHeightValues;
+
 public:
-	Map(const btRigidBodyConstructionInfo &constructionInfo,
-		DiffuseModel *modelVBO, const glm::vec3 &scale, float* normalizedHeightValue);
-	//HeightMap *heightMap;
+	Map(float *normalizedHeightValues, int width, int length, btVector3 pos, btVector3 scale);
+
 	glm::vec3 getMinPos();
+
 	glm::vec3 getMaxPos();
 
 	virtual ~Map();

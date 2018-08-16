@@ -45,35 +45,35 @@ public:
 	}
 };
 
-Map::Map(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo, DiffuseModel *modelVBO,
-		 const glm::vec3 &scale, float* normalizedHeightValues) : Base(constructionInfo, modelVBO, scale, true),
-																  normalizedHeightValues(normalizedHeightValues) {
-
-}
-
-Map *makeMap(float *normalizedHeightValues, int width, int length, btVector3 pos, btVector3 scale) {
-	btHeightfieldTerrainShape *tmp =
-			new btHeightfieldTerrainShape(width, length,
-										  normalizedHeightValues, 1.f, 0.f, 1.f,
-										  1, PHY_FLOAT, false);
-	tmp->setLocalScaling(btVector3(scale));
-	HeightMap *heightMap = new HeightMap(tmp, 1.f);
-
-	/*TriangleCallBack *callBack = new TriangleCallBack();
-	tmp->processAllTriangles(callBack, btVector3(-1000, -1000, -1000), btVector3(1000, 1000, 1000));
-	glm::vec3 minPos = callBack->start;
-	glm::vec3 maxPos = callBack->end;
-	delete callBack;*/
-
+btRigidBody::btRigidBodyConstructionInfo makeMapCInfo(btHeightfieldTerrainShape *map, btVector3 pos, btVector3 scale) {
+	map->setLocalScaling(btVector3(scale));
 	btTransform myTransform;
 	myTransform.setIdentity();
 	myTransform.setOrigin(pos);
 
 	btVector3 intertie(0.f, 0.f, 0.f);
 	btDefaultMotionState *motionState = new btDefaultMotionState(myTransform);
-	btRigidBody::btRigidBodyConstructionInfo constrInfo(0.f, motionState, tmp, intertie);
-	return new Map(constrInfo, heightMap, glm::vec3(1.f), normalizedHeightValues);
+	return btRigidBody::btRigidBodyConstructionInfo(0.f, motionState, map, intertie);
 }
+
+/**
+ * must delete map -> init
+ * @param map
+ * @return
+ */
+DiffuseModel *makeMapModel(btHeightfieldTerrainShape *map, btVector3 scale) {
+	map->setLocalScaling(btVector3(scale));
+	HeightMap *model = new HeightMap(map, 1.f);
+	delete map;
+	return model;
+}
+
+Map::Map(float *normalizedHeightValues, int width, int length, btVector3 pos, btVector3 scale)
+		: normalizedHeightValues(normalizedHeightValues),
+		  Base(makeMapCInfo(new btHeightfieldTerrainShape(width, length, normalizedHeightValues, 1.f, 0.f, 1.f,
+														  1, PHY_FLOAT, false), pos, scale),
+			   makeMapModel(new btHeightfieldTerrainShape(width, length, normalizedHeightValues, 1.f, 0.f, 1.f,
+														  1, PHY_FLOAT, false), scale), glm::vec3(1.0f), true) {}
 
 glm::vec3 Map::getMinPos() {
 	return minPos;

@@ -12,6 +12,7 @@
 class Limits {
 public:
 	virtual bool isInside(Base *b) = 0;
+
 	virtual ~Limits();
 };
 
@@ -22,7 +23,8 @@ private:
 
 public:
 	BoxLimits(glm::vec3 startVert, glm::vec3 edgeSize);
-	bool isInside(Base *b) override ;
+
+	bool isInside(Base *b) override;
 };
 
 

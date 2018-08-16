@@ -7,7 +7,7 @@
 #include "base.h"
 
 Base::Base(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo,
-				   DiffuseModel *model, const glm::vec3 &s, bool hasOwnModel)
+		   DiffuseModel *model, const glm::vec3 &s, bool hasOwnModel)
 		: scale(s), hasOwnModel(hasOwnModel), modelVBO(model), btRigidBody(constructionInfo) {
 
 }

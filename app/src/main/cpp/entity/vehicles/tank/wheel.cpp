@@ -16,8 +16,8 @@ Wheel::Wheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector
 		: Poly(Poly::makeCInfo(l, btVector3ToVec3(pos + chassisPos),
 							   glm::mat4(1.0f), glm::vec3(wheelWidth, wheelRadius, wheelRadius), wheelMass),
 			   makeWheelMesh(mgr), glm::vec3(wheelWidth, wheelRadius, wheelRadius), true),
-	  pos(pos), chassisPos(chassisPos),
-	  isMotorEnabled(false), isBraking(true), targetSpeed(0.f), hasReAccelerate(false){
+		  pos(pos), chassisPos(chassisPos),
+		  isMotorEnabled(false), isBraking(true), targetSpeed(0.f), hasReAccelerate(false) {
 	setFriction(500);
 	setActivationState(DISABLE_DEACTIVATION);
 

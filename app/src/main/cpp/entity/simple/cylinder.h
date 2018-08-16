@@ -13,7 +13,7 @@
 class Cylinder : public Poly {
 public:
 	Cylinder(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale,
-								 glm::mat4 rotationMatrix, float mass);
+			 glm::mat4 rotationMatrix, float mass);
 };
 
 

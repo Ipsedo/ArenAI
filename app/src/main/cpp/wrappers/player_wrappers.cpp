@@ -12,7 +12,8 @@
 extern "C"
 JNIEXPORT jlong JNICALL
 Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initPlayer(JNIEnv *env, jobject instance, jobject assetManager,
-															  jlong enginePtr, jlong rendererPtr, jlong entityPtr, jboolean vr) {
+															  jlong enginePtr, jlong rendererPtr, jlong entityPtr,
+															  jboolean vr) {
 
 	Engine *level = (Engine *) enginePtr;
 	Renderer *renderer = (Renderer *) rendererPtr;

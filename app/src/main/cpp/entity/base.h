@@ -18,7 +18,7 @@ private:
 
 protected:
 	Base(const btRigidBodyConstructionInfo &constructionInfo,
-			 DiffuseModel *modelVBO, const glm::vec3 &scale, bool hasOwnModel);
+		 DiffuseModel *modelVBO, const glm::vec3 &scale, bool hasOwnModel);
 
 public:
 	virtual void update();

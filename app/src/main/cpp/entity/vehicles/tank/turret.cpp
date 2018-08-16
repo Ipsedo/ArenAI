@@ -83,11 +83,12 @@ ModelVBO *makeMissileModel(AAssetManager *mgr) {
 
 Canon::Canon(AAssetManager *mgr, btDynamicsWorld *world, Base *turret, btVector3 turretPos)
 		: Poly(Poly::makeCInfo([mgr](glm::vec3 scale) {
-								   string canonObjTxt = getFileText(mgr, "obj/cylinderZ.obj");
-								   return new btCylinderShapeZ(btVector3(canonScale.x, canonScale.y, canonScale.z));
-							   }, btVector3ToVec3(turretPos + canonRelPos), glm::mat4(1.0f), canonScale, canonMass),
+				   string canonObjTxt = getFileText(mgr, "obj/cylinderZ.obj");
+				   return new btCylinderShapeZ(btVector3(canonScale.x, canonScale.y, canonScale.z));
+			   }, btVector3ToVec3(turretPos + canonRelPos), glm::mat4(1.0f), canonScale, canonMass),
 			   makeCanonModel(mgr), canonScale, true),
-		  angle(0.f), respawn(false), pos(turretPos + canonRelPos), hasClickedShoot(false), missile(makeMissileModel(mgr)) {
+		  angle(0.f), respawn(false), pos(turretPos + canonRelPos), hasClickedShoot(false),
+		  missile(makeMissileModel(mgr)) {
 	btRigidBody *pBodyA = turret;
 	btRigidBody *pBodyB = this;
 

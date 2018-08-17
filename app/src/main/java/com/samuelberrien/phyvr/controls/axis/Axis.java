@@ -3,8 +3,6 @@ package com.samuelberrien.phyvr.controls.axis;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.view.MotionEvent;
-import android.view.View;
-import com.samuelberrien.phyvr.R;
 
 import java.util.ArrayList;
 
@@ -22,17 +20,23 @@ public class Axis implements SharedPreferences.OnSharedPreferenceChangeListener 
 		private String name;
 		private String fullName;
 
-		AxisMap(int id, String name, String fullName){
+		AxisMap(int id, String name, String fullName) {
 			this.id = id;
 			this.name = name;
 			this.fullName = fullName;
 		}
 
-		public int getValue() { return id; }
+		public int getValue() {
+			return id;
+		}
 
-		public String getName() { return name; }
+		public String getName() {
+			return name;
+		}
 
-		public String getFullName() { return fullName; }
+		public String getFullName() {
+			return fullName;
+		}
 	}
 
 	public static float LIMIT = 1e-1f;

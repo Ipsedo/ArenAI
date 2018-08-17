@@ -91,10 +91,10 @@ public class MainWrappers {
 	private native void willDrawRenderer(long rendererPtr, float[] mHeadView, boolean VR);
 
 	private native void drawRenderer(long rendererPtr,
-									float[] mEyeProjectionMatrix,
-									float[] mEyeViewMatrix,
-									float[] myLighPosInEyeSpace,
-									float[] mCameraPos);
+									 float[] mEyeProjectionMatrix,
+									 float[] mEyeViewMatrix,
+									 float[] myLighPosInEyeSpace,
+									 float[] mCameraPos);
 
 	private native void updateEngine(long engineptr);
 

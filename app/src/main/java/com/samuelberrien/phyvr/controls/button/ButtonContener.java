@@ -1,12 +1,12 @@
 package com.samuelberrien.phyvr.controls.button;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.support.v4.content.ContextCompat;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.RelativeLayout;
-import android.content.SharedPreferences;
 import android.widget.TextView;
 import com.samuelberrien.phyvr.R;
 import com.samuelberrien.phyvr.utils.Dimens;

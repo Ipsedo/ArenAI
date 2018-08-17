@@ -25,8 +25,13 @@ public class Button implements SharedPreferences.OnSharedPreferenceChangeListene
 			this.fullName = fullName;
 		}
 
-		public String getName() { return name; }
-		public String getFullName() { return fullName; }
+		public String getName() {
+			return name;
+		}
+
+		public String getFullName() {
+			return fullName;
+		}
 	}
 
 	private int buttonID;

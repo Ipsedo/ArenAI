@@ -52,9 +52,15 @@ public class SetUpButton extends LinearLayout {
 
 		try {
 			switch (a.getInteger(R.styleable.SetUpButton_button, -1)) {
-				case 10: map = Button.ButtonMap.BRAKE; break;
-				case 11: map = Button.ButtonMap.RESPAWN; break;
-				case 12: map = Button.ButtonMap.FIRE; break;
+				case 10:
+					map = Button.ButtonMap.BRAKE;
+					break;
+				case 11:
+					map = Button.ButtonMap.RESPAWN;
+					break;
+				case 12:
+					map = Button.ButtonMap.FIRE;
+					break;
 			}
 		} catch (RuntimeException uoe) {
 			uoe.printStackTrace();

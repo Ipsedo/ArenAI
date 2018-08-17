@@ -3,7 +3,6 @@ package com.samuelberrien.phyvr.normal;
 import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
-import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.util.AttributeSet;
 import android.view.KeyEvent;

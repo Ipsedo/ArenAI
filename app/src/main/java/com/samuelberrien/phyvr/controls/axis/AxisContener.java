@@ -1,12 +1,12 @@
 package com.samuelberrien.phyvr.controls.axis;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.support.v4.content.ContextCompat;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.content.SharedPreferences;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import com.samuelberrien.phyvr.R;
@@ -55,7 +55,7 @@ public class AxisContener extends RelativeLayout implements SharedPreferences.On
 	}
 
 	private void setText(SharedPreferences pref) {
-		String key = axis.getAxisMap().getName()+ (isPlus ? "+" : "-");
+		String key = axis.getAxisMap().getName() + (isPlus ? "+" : "-");
 		text.setText(pref.getInt(key, -1) + (pref.getBoolean(key + "?", false) ? "+" : "-"));
 	}
 

@@ -6,12 +6,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import com.samuelberrien.phyvr.R;
-import com.samuelberrien.phyvr.controls.axis.Axis;
-
-import java.util.ArrayList;
 
 public class ControlActivity extends AppCompatActivity {
 

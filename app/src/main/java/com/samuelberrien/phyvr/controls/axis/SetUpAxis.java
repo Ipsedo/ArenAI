@@ -5,7 +5,9 @@ import android.content.res.TypedArray;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
-import android.view.*;
+import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.samuelberrien.phyvr.R;
@@ -53,10 +55,18 @@ public class SetUpAxis extends LinearLayout {
 
 		try {
 			switch (a.getInteger(R.styleable.SetUpAxis_axis, -1)) {
-				case 0: axisMap = DIR; break;
-				case 1: axisMap = SPEED; break;
-				case 2: axisMap = CANON; break;
-				case 3: axisMap = TURRET; break;
+				case 0:
+					axisMap = DIR;
+					break;
+				case 1:
+					axisMap = SPEED;
+					break;
+				case 2:
+					axisMap = CANON;
+					break;
+				case 3:
+					axisMap = TURRET;
+					break;
 			}
 		} catch (RuntimeException uoe) {
 			uoe.printStackTrace();

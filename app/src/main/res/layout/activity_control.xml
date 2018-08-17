@@ -15,11 +15,13 @@
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content">
 
-			<TextView android:layout_width="match_parent"
-					  android:layout_height="wrap_content"
-					  android:text="@string/activity_control_text"
-					  android:gravity="center"
-					  android:layout_margin="15dp"/>
+			<TextView
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:text="@string/activity_control_text"
+					android:gravity="center"
+					android:layout_margin="15dp"/>
+
 			<LinearLayout
 					android:orientation="vertical"
 					android:layout_width="match_parent"
@@ -50,30 +52,31 @@
 						app:axis="canon"
 						android:layout_margin="15dp"/>
 			</LinearLayout>
-		<LinearLayout
-				android:orientation="vertical"
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:id="@+id/button_set_up_layout">
 
-			<com.samuelberrien.phyvr.controls.button.SetUpButton
+			<LinearLayout
+					android:orientation="vertical"
 					android:layout_width="match_parent"
-					android:layout_height="100dp"
-					android:layout_margin="15dp"
-					app:button="brake"/>
+					android:layout_height="wrap_content"
+					android:id="@+id/button_set_up_layout">
 
-			<com.samuelberrien.phyvr.controls.button.SetUpButton
-					android:layout_width="match_parent"
-					android:layout_height="100dp"
-					android:layout_margin="15dp"
-					app:button="respawn"/>
+				<com.samuelberrien.phyvr.controls.button.SetUpButton
+						android:layout_width="match_parent"
+						android:layout_height="100dp"
+						android:layout_margin="15dp"
+						app:button="brake"/>
 
-			<com.samuelberrien.phyvr.controls.button.SetUpButton
-					android:layout_width="match_parent"
-					android:layout_height="100dp"
-					android:layout_margin="15dp"
-					app:button="fire"/>
-		</LinearLayout>
+				<com.samuelberrien.phyvr.controls.button.SetUpButton
+						android:layout_width="match_parent"
+						android:layout_height="100dp"
+						android:layout_margin="15dp"
+						app:button="respawn"/>
+
+				<com.samuelberrien.phyvr.controls.button.SetUpButton
+						android:layout_width="match_parent"
+						android:layout_height="100dp"
+						android:layout_margin="15dp"
+						app:button="fire"/>
+			</LinearLayout>
 		</LinearLayout>
 	</ScrollView>
 </tool:LinearLayout>

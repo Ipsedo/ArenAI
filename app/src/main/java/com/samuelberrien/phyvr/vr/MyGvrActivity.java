@@ -1,7 +1,6 @@
 package com.samuelberrien.phyvr.vr;
 
 import android.os.Bundle;
-
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import com.google.vr.sdk.base.GvrActivity;
@@ -39,10 +38,10 @@ public class MyGvrActivity extends GvrActivity {
 	public boolean dispatchKeyEvent(KeyEvent event) {
 		boolean handled = false;
 		if (event.getAction() == KeyEvent.ACTION_DOWN)
-			handled =  myGvrView.onKeyDown(event.getKeyCode(), event);
+			handled = myGvrView.onKeyDown(event.getKeyCode(), event);
 		else if (event.getAction() == KeyEvent.ACTION_UP)
-			handled =  myGvrView.onKeyUp(event.getKeyCode(), event);
-		return  handled
+			handled = myGvrView.onKeyUp(event.getKeyCode(), event);
+		return handled
 				|| event.getKeyCode() != KeyEvent.KEYCODE_BACK
 				|| super.dispatchKeyEvent(event);
 	}

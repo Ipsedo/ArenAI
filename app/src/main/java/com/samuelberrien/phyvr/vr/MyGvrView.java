@@ -1,17 +1,13 @@
 package com.samuelberrien.phyvr.vr;
 
 import android.content.Context;
-import android.content.res.AssetManager;
-import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
-
 import com.google.vr.sdk.base.Eye;
 import com.google.vr.sdk.base.GvrView;
 import com.google.vr.sdk.base.HeadTransform;
 import com.google.vr.sdk.base.Viewport;
 import com.samuelberrien.phyvr.controls.Controls;
-import com.samuelberrien.phyvr.utils.LoadImage;
 import com.samuelberrien.phyvr.wrappers.MainWrappers;
 
 import javax.microedition.khronos.egl.EGLConfig;

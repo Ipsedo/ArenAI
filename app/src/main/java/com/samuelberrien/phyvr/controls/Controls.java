@@ -51,8 +51,8 @@ public class Controls {
 		// Axis
 		dirAxis = new Axis(context, Axis.AxisMap.DIR);
 		dirAxis.addListener((float value) -> {
-				dir = value;
-			}
+					dir = value;
+				}
 		);
 
 		speedAxis = new Axis(context, Axis.AxisMap.SPEED);

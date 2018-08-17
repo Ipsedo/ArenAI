@@ -2,17 +2,15 @@ package com.samuelberrien.phyvr.controls.axis;
 
 import android.content.Context;
 import android.support.v4.content.ContextCompat;
-import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.content.SharedPreferences;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import com.samuelberrien.phyvr.R;
-import com.samuelberrien.phyvr.controls.Controls;
+import com.samuelberrien.phyvr.utils.Dimens;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -49,8 +47,7 @@ public class AxisContener extends RelativeLayout implements SharedPreferences.On
 		addView(axisGage, axisGage.makeLayoutParams());
 		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
 		params.addRule(RelativeLayout.CENTER_IN_PARENT);
-		int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4,
-				getContext().getResources().getDisplayMetrics());
+		int px = Dimens.dpResToPx(context, R.dimen.stroke_width);
 		params.setMargins(px, px, px, px);
 		addView(text, params);
 

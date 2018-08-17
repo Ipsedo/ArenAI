@@ -2,7 +2,6 @@ package com.samuelberrien.phyvr.controls.button;
 
 import android.content.Context;
 import android.support.v4.content.ContextCompat;
-import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
@@ -10,8 +9,8 @@ import android.widget.RelativeLayout;
 import android.content.SharedPreferences;
 import android.widget.TextView;
 import com.samuelberrien.phyvr.R;
+import com.samuelberrien.phyvr.utils.Dimens;
 
-import java.security.Key;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -33,8 +32,7 @@ public class ButtonContener extends RelativeLayout implements SharedPreferences.
 
 		RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
 				RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT);
-		int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4,
-				getContext().getResources().getDisplayMetrics());
+		int px = Dimens.dpResToPx(context, R.dimen.stroke_width);
 		layoutParams.setMargins(px, px, px, px);
 		layoutParams.addRule(RelativeLayout.CENTER_VERTICAL);
 

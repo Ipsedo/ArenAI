@@ -2,14 +2,11 @@ package com.samuelberrien.phyvr.controls.axis;
 
 import android.content.Context;
 import android.support.v4.content.ContextCompat;
-import android.util.TypedValue;
 import android.view.View;
-import android.content.SharedPreferences;
-import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import com.samuelberrien.phyvr.R;
+import com.samuelberrien.phyvr.utils.Dimens;
 
 public class AxisGage extends View implements Axis.OnAxisMoveListener {
 
@@ -43,8 +40,7 @@ public class AxisGage extends View implements Axis.OnAxisMoveListener {
 	public RelativeLayout.LayoutParams makeLayoutParams() {
 		RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
 				RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT);
-		int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4,
-				getContext().getResources().getDisplayMetrics());
+		int px = Dimens.dpResToPx(getContext(), R.dimen.stroke_width);
 		layoutParams.setMargins(px, px, px, px);
 		layoutParams.addRule(isPlus ? RelativeLayout.ALIGN_PARENT_START : RelativeLayout.ALIGN_PARENT_END);
 		layoutParams.addRule(RelativeLayout.CENTER_VERTICAL);

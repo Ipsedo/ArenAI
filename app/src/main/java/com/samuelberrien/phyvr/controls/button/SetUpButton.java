@@ -5,14 +5,13 @@ import android.content.res.TypedArray;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
-import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.samuelberrien.phyvr.R;
-
-import static com.samuelberrien.phyvr.controls.axis.Axis.AxisMap.*;
+import com.samuelberrien.phyvr.utils.Dimens;
 
 public class SetUpButton extends LinearLayout {
 
@@ -22,6 +21,7 @@ public class SetUpButton extends LinearLayout {
 
 	public SetUpButton(Context context) {
 		super(context);
+		throw new UnsupportedOperationException("Must be initialized with button field ");
 	}
 
 	public SetUpButton(Context context, @Nullable AttributeSet attrs) {
@@ -66,13 +66,13 @@ public class SetUpButton extends LinearLayout {
 		setOrientation(VERTICAL);
 
 		TextView name = new TextView(context);
+		name.setGravity(Gravity.CENTER);
 		name.setBackground(ContextCompat.getDrawable(context, R.color.greyTransparent));
 		name.setText(map.getFullName());
 
 		LinearLayout.LayoutParams params = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
 		params.weight = 0.6f;
-		int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4,
-				getContext().getResources().getDisplayMetrics());
+		int px = Dimens.dpResToPx(context, R.dimen.stroke_width);
 		params.setMargins(px, px, px, 0);
 
 		addView(name, params);

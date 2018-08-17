@@ -5,11 +5,11 @@ import android.content.res.TypedArray;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
-import android.util.TypedValue;
 import android.view.*;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.samuelberrien.phyvr.R;
+import com.samuelberrien.phyvr.utils.Dimens;
 
 import static com.samuelberrien.phyvr.controls.axis.Axis.AxisMap.*;
 
@@ -22,6 +22,7 @@ public class SetUpAxis extends LinearLayout {
 
 	public SetUpAxis(Context context) {
 		super(context);
+		throw new UnsupportedOperationException("Must be initialized with axis field ");
 	}
 
 	public SetUpAxis(Context context, @Nullable AttributeSet attrs) {
@@ -81,8 +82,7 @@ public class SetUpAxis extends LinearLayout {
 
 		params = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
 		params.weight = 0.6f;
-		int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4,
-				getContext().getResources().getDisplayMetrics());
+		int px = Dimens.dpResToPx(context, R.dimen.stroke_width);
 		params.setMargins(px, px, px, 0);
 		addView(name, params);
 
@@ -94,8 +94,7 @@ public class SetUpAxis extends LinearLayout {
 	@Override
 	public boolean onGenericMotionEvent(MotionEvent event) {
 		axis.onGenericMotion(event);
-		boolean handled = false;
-		handled = contenerMinus.onGenericMotionEvent(event) || handled;
+		boolean handled = contenerMinus.onGenericMotionEvent(event);
 		handled = contenerPlus.onGenericMotionEvent(event) || handled;
 		return handled || super.onGenericMotionEvent(event);
 	}

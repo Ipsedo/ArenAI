@@ -32,7 +32,7 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_getControlPtrFromPlayer(JNIEn
 																		   jlong carPtr) {
 
 	vector<Controls *> *res = new vector<Controls *>();
-	for (Controls *c : ((Tank *) carPtr)->getControls())
+	for (Controls *c : ((Player *) carPtr)->getControls())
 		res->push_back(c);
 	return (long) res;
 }

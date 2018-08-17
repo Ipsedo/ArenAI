@@ -30,7 +30,7 @@ Tank::Tank(bool vr, AAssetManager *mgr, btDynamicsWorld *world, btVector3 center
 	//camera = chassis;
 }
 
-vector<Base *> Tank::getBaseTest() {
+vector<Base *> Tank::getBase() {
 	vector<Base *> res;
 	res.push_back(chassis);
 	res.push_back(turret);

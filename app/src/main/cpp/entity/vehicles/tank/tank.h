@@ -6,14 +6,13 @@
 #define PHYVR_TANK2_H
 
 
-#include "entity/base.h"
+#include "../../player.h"
 #include <android/asset_manager.h>
-#include <controls/controls.h>
 #include "../../../graphics/camera.h"
 #include "wheel.h"
 #include "turret.h"
 
-class Tank {
+class Tank : public Player {
 private:
 	Chassis *chassis;
 	Turret *turret;
@@ -23,13 +22,13 @@ private:
 public:
 	Tank(bool vr, AAssetManager *mgr, btDynamicsWorld *world, btVector3 centerPos);
 
-	vector<Base *> getBaseTest();
+	vector<Base *> getBase() override ;
 
-	vector<Controls *> getControls();
+	vector<Controls *> getControls() override ;
 
-	Camera *getCamera();
+	Camera *getCamera() override ;
 
-	vector<Shooter *> getShooters();
+	vector<Shooter *> getShooters() override ;
 
 };
 

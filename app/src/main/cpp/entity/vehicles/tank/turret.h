@@ -45,6 +45,8 @@ private:
 	btVector3 pos;
 	btHingeConstraint *hinge;
 	DiffuseModel *missile;
+	const int maxFramesFire;
+	int fireCounter;
 public:
 	Canon(AAssetManager *mgr, btDynamicsWorld *world, Base *turret, btVector3 turretPos);
 

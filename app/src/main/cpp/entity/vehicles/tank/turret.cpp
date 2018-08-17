@@ -9,10 +9,15 @@
 #include "../../missile.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
+#include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "../../../utils/rigidbody.h"
 #include "../../../utils/assets.h"
 #include "../../../utils/vec.h"
+
+/////////////////////
+// Turret
+/////////////////////
 
 ModelVBO *makeTurretModel(AAssetManager *mgr) {
 	string turretObjTxt = getFileText(mgr, "obj/tank_turret.obj");
@@ -88,7 +93,7 @@ Canon::Canon(AAssetManager *mgr, btDynamicsWorld *world, Base *turret, btVector3
 			   }, btVector3ToVec3(turretPos + canonRelPos), glm::mat4(1.0f), canonScale, canonMass),
 			   makeCanonModel(mgr), canonScale, true),
 		  angle(0.f), respawn(false), pos(turretPos + canonRelPos), hasClickedShoot(false),
-		  missile(makeMissileModel(mgr)) {
+		  missile(makeMissileModel(mgr)), maxFramesFire(25), fireCounter(0) {
 	btRigidBody *pBodyA = turret;
 	btRigidBody *pBodyB = this;
 
@@ -112,7 +117,10 @@ void Canon::onInput(input in) {
 
 void Canon::update() {
 	Base::update();
+
 	hinge->setLimit(angle * float(M_PI) * 0.2f, angle * float(M_PI) * 0.2f);
+
+	fireCounter = fireCounter + 1 <= maxFramesFire ? fireCounter + 1 : maxFramesFire;
 
 	if (respawn) {
 		btTransform tr;
@@ -129,9 +137,10 @@ void Canon::update() {
 }
 
 void Canon::fire(std::vector<Base *> *entities) {
-	if (!hasClickedShoot) {
+	if (!hasClickedShoot || fireCounter < maxFramesFire) {
 		return;
 	}
+	fireCounter = 0;
 	hasClickedShoot = false;
 
 	btScalar tmp[16];
@@ -147,19 +156,16 @@ void Canon::fire(std::vector<Base *> *entities) {
 	tr.setIdentity();
 	getMotionState()->getWorldTransform(tr);
 	btQuaternion quat = tr.getRotation();
-	tr.setIdentity();
-	tr.setRotation(quat);
-	tr.getOpenGLMatrix(tmp);
-	glm::mat4 rotMatrix = glm::make_mat4(tmp);
+	glm::quat q(quat.w(), quat.x(), quat.y(), quat.z());
+
+	glm::mat4 rotMat = glm::toMat4(q);
+	rotMat = rotMat * glm::rotate(glm::mat4(1.f), float(M_PI / 2.f), glm::vec3(1, 0, 0));
 
 	glm::vec4 vec = modelMatrix * glm::vec4(0.f, 0.f, canonScale.z + 1.f, 1.f);
 
-	rotMatrix = rotMatrix * glm::rotate(glm::mat4(1.f), 90.f, glm::vec3(1, 0, 0));
-
-	Missile *m = new Missile(missile, vec, missileScale, rotMatrix, 10.f, 10);
+	Missile *m = new Missile(missile, vec, missileScale, rotMat, 10.f, 10);
 
 	glm::vec4 forceVec = modelMatrix * glm::vec4(0, 0, 500.f, 0);
-
 	m->applyCentralImpulse(btVector3(forceVec.x, forceVec.y, forceVec.z));
 
 	entities->push_back(m);

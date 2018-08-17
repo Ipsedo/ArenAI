@@ -1,9 +1,11 @@
 [submodule "glm"]
 	path = libs/glm
 	url = https://github.com/g-truc/glm
+	branch = stable
 [submodule "bullet3"]
 	path = libs/bullet3
 	url = https://github.com/bulletphysics/bullet3
+	branch = erwincoumans-patch-4
 [submodule "libpng-android"]
 	path = libs/libpng-android
 	url = https://github.com/julienr/libpng-android

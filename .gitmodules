@@ -4,6 +4,3 @@
 [submodule "bullet3"]
 	path = libs/bullet3
 	url = https://github.com/bulletphysics/bullet3
-[submodule "libpng"]
-	path = libs/libpng
-	url = https://github.com/glennrp/libpng

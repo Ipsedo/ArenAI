@@ -73,8 +73,8 @@ include $(CLEAR_VARS)
 LOCAL_MODULE:= libpng
 LOCAL_PATH := $(LIBPNG_PATH)
 
-LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)
-LOCAL_EXPORT_C_INCLUDES += $(LOCAL_PATH)/scripts
+LOCAL_C_INCLUDES := $(LOCAL_PATH)
+#LOCAL_C_INCLUDES := $(LOCAL_PATH)/scripts/pnglibconf.h.prebuilt
 
 FILE_LIST := $(wildcard \
 	$(LOCAL_PATH)/png.c \
@@ -137,7 +137,6 @@ LOCAL_C_INCLUDES += $(BULLET_PATH)/src
 # add libpng
 LOCAL_STATIC_LIBRARIES += libpng
 LOCAL_C_INCLUDES += $(LIBPNG_PATH)
-LOCAL_C_INCLUDES += $(LIBPNG_PATH)/scripts
 
 #find all the file recursively
 ALLFILES := $(call walk, $(LOCAL_PATH))

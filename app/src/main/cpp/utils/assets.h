@@ -7,6 +7,7 @@
 
 #include <string>
 #include <android/asset_manager.h>
+#include <png.h>
 
 struct normalized_image {
 	int width;
@@ -15,5 +16,7 @@ struct normalized_image {
 };
 
 std::string getFileText(AAssetManager *mgr, std::string fileName);
+
+//png_structp readPNG(AAssetManager *mgr, std::string pngName);
 
 #endif //PHYVR_ASSETS_H

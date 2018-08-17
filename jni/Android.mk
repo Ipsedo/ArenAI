@@ -1,14 +1,16 @@
 TOP_PATH := $(call my-dir)/..
 LIBS_PATH := $(TOP_PATH)/libs
 BULLET_PATH := $(LIBS_PATH)/bullet3
-PHYVR_PATH := $(TOP_PATH)/app/src/main/cpp
 GLM_PATH := $(LIBS_PATH)/glm
+LIBPNG_PATH := $(LIBS_PATH)/libpng
+PHYVR_PATH := $(TOP_PATH)/app/src/main/cpp
 
 # Stuff
 # https://gist.github.com/darkdukey/9402013c953ff57c73ba
 define walk
  	$(wildcard $(1)) $(foreach e, $(wildcard $(1)/*), $(call walk, $(e)))
 endef
+
 
 # BULLET3 Module
 include $(CLEAR_VARS)
@@ -65,6 +67,42 @@ LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)
 include $(BUILD_STATIC_LIBRARY)
 
 
+# LIBPNG Module
+include $(CLEAR_VARS)
+
+LOCAL_MODULE:= libpng
+LOCAL_PATH := $(LIBPNG_PATH)
+
+LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)
+LOCAL_EXPORT_C_INCLUDES += $(LOCAL_PATH)/scripts
+
+FILE_LIST := $(wildcard \
+	$(LOCAL_PATH)/png.c \
+    $(LOCAL_PATH)/pngerror.c \
+    $(LOCAL_PATH)/pngget.c \
+    $(LOCAL_PATH)/pngmem.c \
+    $(LOCAL_PATH)/pngpread.c \
+    $(LOCAL_PATH)/pngread.c \
+    $(LOCAL_PATH)/pngrio.c \
+    $(LOCAL_PATH)/pngrtran.c \
+    $(LOCAL_PATH)/pngrutil.c \
+    $(LOCAL_PATH)/pngset.c \
+    $(LOCAL_PATH)/pngtest.c \
+    $(LOCAL_PATH)/pngtrans.c \
+    $(LOCAL_PATH)/pngwio.c \
+    $(LOCAL_PATH)/pngwrite.c \
+    $(LOCAL_PATH)/pngwtran.c \
+    $(LOCAL_PATH)/pngwutil.c \
+    $(LOCAL_PATH)/arm/arm_init.c \
+    $(LOCAL_PATH)/arm/filter_neon.S \
+    $(LOCAL_PATH)/arm/filter_neon_intrinsics.c \
+	)
+LOCAL_SRC_FILES :=$(FILE_LIST:$(LOCAL_PATH)/%=%)
+
+LOCAL_EXPORT_LDLIBS := -lz
+include $(BUILD_STATIC_LIBRARY)
+
+
 # PHYVR Module
 include $(CLEAR_VARS)
 
@@ -87,7 +125,7 @@ TARGET_CFLAGS += -O3
 TARGET_CFLAGS += -std=c++11
 
 # link openGLES 2.0, log, android
-LOCAL_LDLIBS    := -lGLESv2 -ldl -llog -landroid
+LOCAL_LDLIBS := -lGLESv2 -ldl -llog -landroid
 
 # add glm
 LOCAL_C_INCLUDES += $(GLM_PATH)
@@ -96,7 +134,12 @@ LOCAL_C_INCLUDES += $(GLM_PATH)
 LOCAL_STATIC_LIBRARIES += bullet
 LOCAL_C_INCLUDES += $(BULLET_PATH)/src
 
-#find all the file recursively under jni/
+# add libpng
+LOCAL_STATIC_LIBRARIES += libpng
+LOCAL_C_INCLUDES += $(LIBPNG_PATH)
+LOCAL_C_INCLUDES += $(LIBPNG_PATH)/scripts
+
+#find all the file recursively
 ALLFILES := $(call walk, $(LOCAL_PATH))
 FILE_LIST := $(filter %.cpp, $(ALLFILES))
 LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)

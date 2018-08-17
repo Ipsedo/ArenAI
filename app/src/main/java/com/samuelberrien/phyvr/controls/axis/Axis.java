@@ -43,19 +43,13 @@ public class Axis implements SharedPreferences.OnSharedPreferenceChangeListener 
 	private int idMinus;
 	private boolean hasMinusAxisPositive;
 
-	private float value;
-
 	private AxisMap axisMap;
 
 	private ArrayList<OnAxisMoveListener> listeners;
 
-	private Context context;
-
 	public Axis(Context context, AxisMap axisMap) {
 		idMinus = -1;
 		idPlus = -1;
-		value = 0.f;
-		this.context = context;
 		this.axisMap = axisMap;
 		this.listeners = new ArrayList<>();
 		SharedPreferences pref = context.getSharedPreferences(axisPref, Context.MODE_PRIVATE);
@@ -84,7 +78,7 @@ public class Axis implements SharedPreferences.OnSharedPreferenceChangeListener 
 	}
 
 	public void onGenericMotion(MotionEvent event) {
-		value = 0.f;
+		float value = 0.f;
 
 		if (hasPlusAxisPositive ? event.getAxisValue(idPlus) > LIMIT : event.getAxisValue(idPlus) < -LIMIT) {
 			value = Math.abs(event.getAxisValue(idPlus));

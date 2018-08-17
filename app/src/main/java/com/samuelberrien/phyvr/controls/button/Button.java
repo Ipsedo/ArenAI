@@ -32,14 +32,11 @@ public class Button implements SharedPreferences.OnSharedPreferenceChangeListene
 	private int buttonID;
 	private ButtonMap map;
 
-	private boolean pressed;
-
 	private ArrayList<OnStateChangedListener> list;
 
 	public Button(Context context, ButtonMap map) {
 		this.map = map;
 		buttonID = -1;
-		pressed = false;
 		SharedPreferences pref = context.getSharedPreferences(buttonPref, Context.MODE_PRIVATE);
 		pref.registerOnSharedPreferenceChangeListener(this);
 		init(pref);

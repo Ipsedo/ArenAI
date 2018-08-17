@@ -22,3 +22,6 @@ std::string getFileText(AAssetManager *mgr, std::string fileName) {
 	return std::string(fileContent);
 }
 
+png_structp readPNG(AAssetManager *mgr, std::string pngName) {
+	return nullptr;
+}

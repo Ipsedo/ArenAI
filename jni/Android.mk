@@ -2,7 +2,7 @@ TOP_PATH := $(call my-dir)/..
 LIBS_PATH := $(TOP_PATH)/libs
 BULLET_PATH := $(LIBS_PATH)/bullet3
 GLM_PATH := $(LIBS_PATH)/glm
-LIBPNG_PATH := $(LIBS_PATH)/libpng
+LIBPNG_PATH := $(LIBS_PATH)/libpng-android/jni
 PHYVR_PATH := $(TOP_PATH)/app/src/main/cpp
 
 # Stuff
@@ -73,8 +73,9 @@ include $(CLEAR_VARS)
 LOCAL_MODULE:= libpng
 LOCAL_PATH := $(LIBPNG_PATH)
 
+LOCAL_CFLAGS := -std=gnu89 -O3
+
 LOCAL_C_INCLUDES := $(LOCAL_PATH)
-#LOCAL_C_INCLUDES := $(LOCAL_PATH)/scripts/pnglibconf.h.prebuilt
 
 FILE_LIST := $(wildcard \
 	$(LOCAL_PATH)/png.c \
@@ -93,9 +94,6 @@ FILE_LIST := $(wildcard \
     $(LOCAL_PATH)/pngwrite.c \
     $(LOCAL_PATH)/pngwtran.c \
     $(LOCAL_PATH)/pngwutil.c \
-    $(LOCAL_PATH)/arm/arm_init.c \
-    $(LOCAL_PATH)/arm/filter_neon.S \
-    $(LOCAL_PATH)/arm/filter_neon_intrinsics.c \
 	)
 LOCAL_SRC_FILES :=$(FILE_LIST:$(LOCAL_PATH)/%=%)
 

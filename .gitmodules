@@ -4,3 +4,7 @@
 [submodule "bullet3"]
 	path = libs/bullet3
 	url = https://github.com/bulletphysics/bullet3
+[submodule "libpng-android"]
+	path = libs/libpng-android
+	url = https://github.com/julienr/libpng-android
+	branch = stable

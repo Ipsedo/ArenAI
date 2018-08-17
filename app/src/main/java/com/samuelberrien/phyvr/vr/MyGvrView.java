@@ -44,6 +44,11 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 		return controls.onKeyDown(keyCode, event) || super.onKeyDown(keyCode, event);
 	}
 
+	@Override
+	public boolean onKeyUp(int keyCode, KeyEvent event) {
+		return controls.onKeyUp(keyCode, event) || super.onKeyUp(keyCode, event);
+	}
+
 	/**
 	 * Stereo Renderer stuff
 	 */
@@ -60,6 +65,7 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 		float[] mHeadView = new float[16];
 		headTransform.getHeadView(mHeadView, 0);
 		mainWrappers.willDraw(mHeadView, true);
+		controls.sendInputs();
 		mainWrappers.update();
 		//addBox(getContext().getAssets(), boxesPtr);
 	}

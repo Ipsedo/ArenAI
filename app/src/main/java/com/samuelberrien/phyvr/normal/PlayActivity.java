@@ -39,7 +39,8 @@ public class PlayActivity extends Activity {
 		boolean handled = false;
 		if (event.getAction() == KeyEvent.ACTION_DOWN)
 			handled =  surfaceView.onKeyDown(event.getKeyCode(), event);
-
+		else if (event.getAction() == KeyEvent.ACTION_UP)
+			handled =  surfaceView.onKeyUp(event.getKeyCode(), event);
 		return  handled
 				|| event.getKeyCode() != KeyEvent.KEYCODE_BACK
 				|| super.dispatchKeyEvent(event);

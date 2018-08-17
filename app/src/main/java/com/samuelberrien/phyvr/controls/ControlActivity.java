@@ -5,6 +5,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import com.samuelberrien.phyvr.R;
@@ -30,11 +31,18 @@ public class ControlActivity extends AppCompatActivity {
 		return handled || super.dispatchGenericMotionEvent(e);
 	}
 
-	/*@Override
+	@Override
 	public boolean dispatchKeyEvent(KeyEvent event) {
 		boolean handled = false;
-		for (SetUpControl s : setUpControls)
-			handled = s.keyDown(event.getKeyCode(), event) || handled;
+		LinearLayout buttons = findViewById(R.id.button_set_up_layout);
+		for (int i = 0; i < buttons.getChildCount(); i++) {
+			View v = buttons.getChildAt(i);
+			if (event.getAction() == KeyEvent.ACTION_DOWN) {
+				handled = v.onKeyDown(event.getKeyCode(), event) || handled;
+			} else if (event.getAction() == KeyEvent.ACTION_UP) {
+				handled = v.onKeyUp(event.getKeyCode(), event) || handled;
+			}
+		}
 		return handled || super.dispatchKeyEvent(event);
-	}*/
+	}
 }

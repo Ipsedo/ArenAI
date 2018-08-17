@@ -57,6 +57,11 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 	}
 
 	@Override
+	public boolean onKeyUp(int keyCode, KeyEvent event) {
+		return controls.onKeyUp(keyCode, event) || super.onKeyUp(keyCode, event);
+	}
+
+	@Override
 	public void onSurfaceCreated(GL10 unused, EGLConfig eglConfig) {
 		mainWrappers.init();
 		controls = new Controls(getContext(), mainWrappers.getControlPtr());
@@ -73,6 +78,7 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
 	@Override
 	public void onDrawFrame(GL10 unused) {
+		controls.sendInputs();
 		mainWrappers.update();
 		mainWrappers.willDraw(viewMatrix, false);
 		mainWrappers.draw(projectionMatrix, viewMatrix, new float[4], new float[3]);

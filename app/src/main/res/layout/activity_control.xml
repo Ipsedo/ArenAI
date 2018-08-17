@@ -29,27 +29,51 @@
 				<com.samuelberrien.phyvr.controls.axis.SetUpAxis
 						android:layout_width="match_parent"
 						android:layout_height="100dp"
-						app:command="direction"
+						app:axis="direction"
 						android:layout_margin="15dp"/>
 
 				<com.samuelberrien.phyvr.controls.axis.SetUpAxis
 						android:layout_width="match_parent"
 						android:layout_height="100dp"
-						app:command="speed"
+						app:axis="speed"
 						android:layout_margin="15dp"/>
 
 				<com.samuelberrien.phyvr.controls.axis.SetUpAxis
 						android:layout_width="match_parent"
 						android:layout_height="100dp"
-						app:command="turret"
+						app:axis="turret"
 						android:layout_margin="15dp"/>
 
 				<com.samuelberrien.phyvr.controls.axis.SetUpAxis
 						android:layout_width="match_parent"
 						android:layout_height="100dp"
-						app:command="canon"
+						app:axis="canon"
 						android:layout_margin="15dp"/>
 			</LinearLayout>
+		<LinearLayout
+				android:orientation="vertical"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:id="@+id/button_set_up_layout">
+
+			<com.samuelberrien.phyvr.controls.button.SetUpButton
+					android:layout_width="match_parent"
+					android:layout_height="100dp"
+					android:layout_margin="15dp"
+					app:button="brake"/>
+
+			<com.samuelberrien.phyvr.controls.button.SetUpButton
+					android:layout_width="match_parent"
+					android:layout_height="100dp"
+					android:layout_margin="15dp"
+					app:button="respawn"/>
+
+			<com.samuelberrien.phyvr.controls.button.SetUpButton
+					android:layout_width="match_parent"
+					android:layout_height="100dp"
+					android:layout_margin="15dp"
+					app:button="fire"/>
+		</LinearLayout>
 		</LinearLayout>
 	</ScrollView>
 </tool:LinearLayout>

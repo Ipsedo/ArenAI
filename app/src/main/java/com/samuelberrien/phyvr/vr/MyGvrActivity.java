@@ -40,7 +40,8 @@ public class MyGvrActivity extends GvrActivity {
 		boolean handled = false;
 		if (event.getAction() == KeyEvent.ACTION_DOWN)
 			handled =  myGvrView.onKeyDown(event.getKeyCode(), event);
-
+		else if (event.getAction() == KeyEvent.ACTION_UP)
+			handled =  myGvrView.onKeyUp(event.getKeyCode(), event);
 		return  handled
 				|| event.getKeyCode() != KeyEvent.KEYCODE_BACK
 				|| super.dispatchKeyEvent(event);

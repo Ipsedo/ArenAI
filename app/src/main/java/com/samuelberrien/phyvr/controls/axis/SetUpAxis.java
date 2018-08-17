@@ -51,7 +51,7 @@ public class SetUpAxis extends LinearLayout {
 	private void init(TypedArray a, Context context) {
 
 		try {
-			switch (a.getInteger(R.styleable.SetUpAxis_command, -1)) {
+			switch (a.getInteger(R.styleable.SetUpAxis_axis, -1)) {
 				case 0: axisMap = DIR; break;
 				case 1: axisMap = SPEED; break;
 				case 2: axisMap = CANON; break;

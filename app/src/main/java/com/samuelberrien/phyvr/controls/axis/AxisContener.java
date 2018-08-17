@@ -71,7 +71,6 @@ public class AxisContener extends RelativeLayout implements SharedPreferences.On
 
 	@Override
 	public boolean onGenericMotionEvent(MotionEvent event) {
-		System.out.println("TTTTTT " + axis.getAxisMap().getFullName());
 		if (!listening)
 			return super.onGenericMotionEvent(event);
 

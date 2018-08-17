@@ -5,6 +5,7 @@ import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import com.samuelberrien.phyvr.controls.axis.Axis;
+import com.samuelberrien.phyvr.controls.button.Button;
 
 import java.util.ArrayList;
 
@@ -28,6 +29,10 @@ public class Controls {
 	private Axis turretAxis;
 	private Axis canonAxis;
 
+	private Button brakeButton;
+	private Button respButton;
+	private Button fireButton;
+
 	static {
 		System.loadLibrary("phyvr");
 	}
@@ -43,6 +48,7 @@ public class Controls {
 		respawn = false;
 		fire = false;
 
+		// Axis
 		dirAxis = new Axis(context, Axis.AxisMap.DIR);
 		dirAxis.addListener((float value) -> {
 				dir = value;
@@ -63,6 +69,26 @@ public class Controls {
 		canonAxis.addListener((float value) -> {
 			canon = value;
 		});
+
+		// Buttons
+		brakeButton = new Button(context, Button.ButtonMap.BRAKE);
+		brakeButton.addListener((boolean newState) -> {
+			brake = newState;
+		});
+
+		respButton = new Button(context, Button.ButtonMap.RESPAWN);
+		respButton.addListener((boolean newState) -> {
+			respawn = newState;
+		});
+
+		fireButton = new Button(context, Button.ButtonMap.FIRE);
+		fireButton.addListener((boolean newState) -> {
+			fire = newState;
+		});
+	}
+
+	public void sendInputs() {
+		control(controlPtr, dir, speed, brake, turret, canon, respawn, fire);
 	}
 
 	public boolean onMotionEvent(MotionEvent event) {
@@ -71,21 +97,22 @@ public class Controls {
 		turretAxis.onGenericMotion(event);
 		canonAxis.onGenericMotion(event);
 
-		control(controlPtr, dir, speed, brake, turret, canon, respawn, fire);
-
-		return false;
+		return true;
 	}
 
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		boolean handled = false;
 
-		//control(controlPtr, dir, speed, brake, turret, canon, respawn, fire);
 
-		return handled;
+		return brakeButton.onKeyDown(event) ||
+				respButton.onKeyDown(event) ||
+				fireButton.onKeyDown(event);
 	}
 
-	public void onKeyUp(int keyCode, KeyEvent event) {
+	public boolean onKeyUp(int keyCode, KeyEvent event) {
 
+		return brakeButton.onKeyUp(event) ||
+				respButton.onKeyUp(event) ||
+				fireButton.onKeyUp(event);
 	}
 
 	public void initControllerIds() throws NoControllerException {

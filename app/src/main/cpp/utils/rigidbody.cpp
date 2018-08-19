@@ -64,18 +64,3 @@ btConvexHullShape *parseObj(std::string objFileText) {
 	}
 	return shape;
 }
-
-/*template<typename F>
-btRigidBody::btRigidBodyConstructionInfo
-makeCInfo(F&& fun, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass) {
-
-	btCollisionShape *shape = fun();
-
-	btTransform myTransform;
-	myTransform.setIdentity();
-	myTransform.setOrigin(btVector3(pos.x, pos.y, pos.z));
-	glm::quat tmp = glm::quat_cast(rotMat);
-	myTransform.setRotation(btQuaternion(tmp.x, tmp.y, tmp.z, tmp.w));
-
-	return localCreateInfo(mass, myTransform, shape);
-}*/

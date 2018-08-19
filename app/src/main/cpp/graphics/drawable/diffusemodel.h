@@ -55,5 +55,4 @@ public:
 	virtual ~DiffuseModel();
 };
 
-
 #endif //PHYVR_DIFFUSEMODEL_H

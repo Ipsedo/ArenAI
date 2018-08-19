@@ -72,10 +72,10 @@ void Engine::update(float delta) {
 			world->addRigidBody(b);
 		b->update();
 	}
-
+	limits = level->getLimits();
 	// remove base and rigidBody
 	level->deleteBase([this](Base *b) {
-		bool isDead = b->isDead() || !level->getLimits()->isInside(b);
+		bool isDead = b->isDead() || !limits->isInside(b);
 		if (isDead) {
 			deleteBase(b);
 		}

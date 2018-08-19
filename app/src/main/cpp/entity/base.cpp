@@ -6,24 +6,19 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "base.h"
 
+int nbNew;
+int nbDel;
+
 Base::Base(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo,
 		   DiffuseModel *model, const glm::vec3 &s, bool hasOwnModel)
-		: scale(s), hasOwnModel(hasOwnModel), modelVBO(model), btRigidBody(constructionInfo) {
-
-}
+		: scale(s), hasOwnModel(hasOwnModel), modelVBO(model), btRigidBody(constructionInfo) {nbNew++;}
 
 
-void Base::update() {
+void Base::update() {}
 
-}
+void Base::decreaseLife(int toSub) {}
 
-void Base::decreaseLife(int toSub) {
-
-}
-
-bool Base::isDead() {
-	return false;
-}
+bool Base::isDead() { return false; }
 
 void Base::draw(draw_infos infos) {
 	btScalar tmp[16];
@@ -39,6 +34,7 @@ void Base::draw(draw_infos infos) {
 }
 
 Base::~Base() {
+	nbDel++;
 	btRigidBody::~btRigidBody();
 	if (hasOwnModel)
 		delete modelVBO;

@@ -7,7 +7,6 @@
 #include "diffusemodel.h"
 #include "../../utils/shader.h"
 
-
 std::string vs = "uniform mat4 u_MVPMatrix;\n"
 		"uniform mat4 u_MVMatrix;\n"
 		"uniform vec4 v_Color;\n"

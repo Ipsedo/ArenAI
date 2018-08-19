@@ -8,8 +8,7 @@
 #include <GLES2/gl2.h>
 #include <glm/gtc/type_ptr.hpp>
 
-Renderer::Renderer(vector<Base *> *bases) {
-	this->bases = bases;
+Renderer::Renderer(Level *level) : level(level) {
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
@@ -26,9 +25,9 @@ Renderer::Renderer(vector<Base *> *bases) {
 }
 
 void Renderer::update(glm::mat4 mHeadView, bool VR) {
-	camPos = camera->camPos(VR);
-	camLookAtVec = camera->camLookAtVec(VR);
-	camUpVec = camera->camUpVec(VR);
+	camPos = level->getCamera()->camPos(VR);
+	camLookAtVec = level->getCamera()->camLookAtVec(VR);
+	camUpVec = level->getCamera()->camUpVec(VR);
 }
 
 void Renderer::draw(glm::mat4 mEyeProjectionMatrix,
@@ -52,18 +51,19 @@ void Renderer::draw(glm::mat4 mEyeProjectionMatrix,
 	glm::mat4 mViewMatrix = mEyeViewMatrix * mCamera;
 
 
-	glm::vec4 lighPos = this->updateLight(mViewMatrix, glm::vec3(0.f, 500.f, 0.f));
+	glm::vec4 lightPos = updateLight(mViewMatrix, glm::vec3(0.f, 500.f, 0.f));
 
-	for (Base *b : *bases)
-		b->draw(mEyeProjectionMatrix, mViewMatrix, glm::vec3(lighPos.x, lighPos.y, lighPos.z));
+	draw_infos infos;
+	infos.proj_matrix = mEyeProjectionMatrix;
+	infos.view_matrix = mViewMatrix;
+	infos.light_pos = glm::vec3(lightPos.x, lightPos.y, lightPos.z);
+	infos.camera_pos = camPos;
+
+	for (Drawable *b : level->getDrawables())
+		b->draw(infos);
 }
 
 glm::vec4 Renderer::updateLight(glm::mat4 viewMatrix, glm::vec3 xyz) {
 	glm::mat4 lightModel = glm::translate(glm::mat4(1.0f), xyz);
 	return viewMatrix * lightModel * glm::vec4(0.f, 0.f, 0.f, 1.0f);
-
-}
-
-void Renderer::setCamera(Camera *c) {
-	this->camera = c;
 }

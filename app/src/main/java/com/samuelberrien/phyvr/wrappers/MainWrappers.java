@@ -18,6 +18,8 @@ public class MainWrappers {
 	private long playerPtr;
 	private long controlPtr;
 
+	private long levelPtr;
+
 	private boolean vr;
 
 	private boolean isFree;
@@ -31,18 +33,22 @@ public class MainWrappers {
 	}
 
 	public void init() {
-		LoadImage loadImage = new LoadImage(context, "heightmap/heightmap6.png");
+		/*LoadImage loadImage = new LoadImage(context, "heightmap/heightmap6.png");
 		entitiesPtr = initEntity(context.getAssets(),
 				loadImage.tofloatGreyArray(), loadImage.getWidth(), loadImage.getHeight());
 		enginePtr = initEngine(entitiesPtr);
 		rendererPtr = initRenderer(entitiesPtr);
 		playerPtr = initPlayer(context.getAssets(), enginePtr, rendererPtr, entitiesPtr, vr);
-		controlPtr = getControlPtrFromPlayer(playerPtr);
+		controlPtr = getControlPtrFromPlayer(playerPtr);*/
+		levelPtr = makeLevel();
+		enginePtr = makeEngine(levelPtr);
+		initLevel(context.getAssets(), vr, levelPtr, enginePtr);
+		rendererPtr = makeRenderer(levelPtr);
 		isFreeable = true;
 	}
 
-	public long getControlPtr() {
-		return controlPtr;
+	public long getLevelPtr() {
+		return levelPtr;
 	}
 
 	public void update() {
@@ -67,8 +73,9 @@ public class MainWrappers {
 
 	public void free() {
 		if (isFreeable) {
-			freeLevel(enginePtr);
+			freeEngine(enginePtr);
 			freeRenderer(rendererPtr);
+			freeLevel(levelPtr);
 			isFree = true;
 			isFreeable = false;
 		} else {
@@ -76,31 +83,20 @@ public class MainWrappers {
 		}
 	}
 
-	private native long initEntity(AssetManager assetManager, float[] heightmap, int width, int height);
+	private native long makeLevel();
+	private native void initLevel(AssetManager manager, boolean isVR, long levelPtr, long enginePtr);
+	private native void freeLevel(long levelPtr);
 
-	private native long initPlayer(AssetManager assetManager, long levelPtr, long rendererPtr, long entityPtr, boolean vr);
+	private native long makeEngine(long levelPtr);
+	private native void updateEngine(long engineptr);
+	private native void freeEngine(long levelPtr);
 
-	private native long getControlPtrFromPlayer(long carPtr);
-
-	private native long initEngine(long boxesPtr);
-
-	private native long initRenderer(long boxesPtr);
-
-	public native void addBox(AssetManager assetManager, long boxesPtr);
-
+	private native long makeRenderer(long levelPtr);
 	private native void willDrawRenderer(long rendererPtr, float[] mHeadView, boolean VR);
-
 	private native void drawRenderer(long rendererPtr,
 									 float[] mEyeProjectionMatrix,
 									 float[] mEyeViewMatrix,
 									 float[] myLighPosInEyeSpace,
 									 float[] mCameraPos);
-
-	private native void updateEngine(long engineptr);
-
-	private native void freeBoxes(long boxesPtr);
-
-	private native void freeLevel(long levelPtr);
-
 	private native void freeRenderer(long rendererPtr);
 }

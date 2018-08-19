@@ -136,9 +136,9 @@ void Canon::update() {
 	}
 }
 
-void Canon::fire(std::vector<Base *> *entities) {
+vector<Base *> Canon::fire() {
 	if (!hasClickedShoot || fireCounter < maxFramesFire) {
-		return;
+		return vector<Base *>();
 	}
 	fireCounter = 0;
 	hasClickedShoot = false;
@@ -168,7 +168,9 @@ void Canon::fire(std::vector<Base *> *entities) {
 	glm::vec4 forceVec = modelMatrix * glm::vec4(0, 0, 500.f, 0);
 	m->applyCentralImpulse(btVector3(forceVec.x, forceVec.y, forceVec.z));
 
-	entities->push_back(m);
+	vector<Base *> res;
+	res.push_back(m);
+	return res;
 }
 
 glm::vec3 Canon::camPos(bool VR) {

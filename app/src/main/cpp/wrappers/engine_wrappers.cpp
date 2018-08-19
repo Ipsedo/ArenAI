@@ -1,0 +1,35 @@
+//
+// Created by samuel on 30/05/18.
+//
+
+#include <jni.h>
+#include "../entity/ground/map.h"
+#include "../core/engine.h"
+#include "../levels/level.h"
+
+extern "C"
+JNIEXPORT jlong JNICALL
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_makeEngine(JNIEnv *env, jobject instance, jlong levelPtr) {
+
+	Level *level = (Level *) levelPtr;
+
+	glm::vec3 start(-1000.f, -200.f, -1000.f);
+	glm::vec3 end(1000.f, 200.f, 1000.f);
+
+	Engine *engine = new Engine(level);
+
+	return (long) engine;
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_updateEngine(JNIEnv *env, jobject instance, jlong enginePtr) {
+	Engine *engine = (Engine *) enginePtr;
+	engine->update(1.f / 60.f);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_freeEngine(JNIEnv *env, jobject instance, jlong enginePtr) {
+	delete (Engine *) enginePtr;
+}

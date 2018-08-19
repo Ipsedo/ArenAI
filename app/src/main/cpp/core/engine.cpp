@@ -47,7 +47,7 @@ bool callback_processed(btManifoldPoint &cp, void *body0, void *body1) {
 	return false;
 }
 
-Engine::Engine(vector<Base *> *bases, Limits *limits) : limits(limits), bases(bases) {
+Engine::Engine(Level *level) : level(level) {
 
 	collisionConfiguration = new btDefaultCollisionConfiguration();
 	dispatcher = new btCollisionDispatcher(collisionConfiguration);
@@ -60,9 +60,6 @@ Engine::Engine(vector<Base *> *bases, Limits *limits) : limits(limits), bases(ba
 										collisionConfiguration);
 	world->setGravity(btVector3(0, gravity, 0));
 
-	for (Base *b : *this->bases)
-		world->addRigidBody(b);
-
 	//gContactAddedCallback = contact_callback;
 	gContactDestroyedCallback = callback_finish;
 	gContactProcessedCallback = callback_processed;
@@ -70,30 +67,25 @@ Engine::Engine(vector<Base *> *bases, Limits *limits) : limits(limits), bases(ba
 
 void Engine::update(float delta) {
 	// add rigid body
-	for (Base *b : *bases) {
+	for (Base *b : level->getEntities()) {
 		if (!b->isInWorld())
 			world->addRigidBody(b);
 		b->update();
 	}
 
 	// remove base and rigidBody
-	bases->erase(remove_if(bases->begin(), bases->end(), [this](Base *b) {
-					 bool isDead = b->isDead() || !limits->isInside(b);
-					 if (isDead) {
-						 deleteBase(b);
-					 }
-					 return isDead;
-				 }),
-				 bases->end());
+	level->deleteBase([this](Base *b) {
+		bool isDead = b->isDead() || !level->getLimits()->isInside(b);
+		if (isDead) {
+			deleteBase(b);
+		}
+		return isDead;
+	});
 
-	for (Shooter *s : shooters)
-		s->fire(bases);
+	for (Shooter *s : level->getShooters())
+		level->addBases(s->fire());
 
 	world->stepSimulation(deltaTime);
-}
-
-void Engine::addShooter(Shooter *s) {
-	shooters.push_back(s);
 }
 
 Engine::~Engine() {

@@ -2,11 +2,12 @@
 // Created by samuel on 26/05/18.
 //
 
-#ifndef PHYVR_LEVEL_H
-#define PHYVR_LEVEL_H
+#ifndef PHYVR_ENGINE_H
+#define PHYVR_ENGINE_H
 
+#include "../levels/level.h"
 #include "../graphics/renderer.h"
-#include "entity/base.h"
+#include "../entity/base.h"
 #include "../entity/shooter.h"
 #include "limits.h"
 
@@ -22,19 +23,16 @@ bool callback_processed(btManifoldPoint &cp, void *body0, void *body1);
 
 class Engine {
 public:
-	Engine(vector<Base *> *b, Limits *limits);
+	Engine(Level *level);
 
 	void update(float delta);
-
-	void addShooter(Shooter *s);
 
 	~Engine();
 
 	btDiscreteDynamicsWorld *world;
 
 private:
-	vector<Shooter *> shooters;
-	vector<Base *> *bases;
+	Level *level;
 	btBroadphaseInterface *broadPhase;
 	btCollisionDispatcher *dispatcher;
 	btDefaultCollisionConfiguration *collisionConfiguration;

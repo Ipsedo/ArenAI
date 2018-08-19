@@ -8,25 +8,19 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <android/asset_manager.h>
-#include "entity/base.h"
-#include "camera.h"
-
-#include "drawable/modelvbo.h"
+#include "../levels/level.h"
 
 class Renderer {
 public:
-	Renderer(vector<Base *> *bases);
+	Renderer(Level *level);
 
 	void update(glm::mat4 mHeadView, bool VR);
-
-	void setCamera(Camera *c);
 
 	void
 	draw(glm::mat4 mEyeProjectionMatrix, glm::mat4 mEyeViewMatrix, glm::vec4 myLighPosInEyeSpace, glm::vec3 mCameraPos);
 
 private:
-	vector<Base *> *bases;
-	Camera *camera;
+	Level *level;
 	glm::mat4 mCamera;
 	glm::vec3 camPos;
 	glm::vec3 camLookAtVec; // normalized Vec

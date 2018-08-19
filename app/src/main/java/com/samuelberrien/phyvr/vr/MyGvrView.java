@@ -85,7 +85,7 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 	@Override
 	public void onSurfaceCreated(EGLConfig config) {
 		mainWrappers.init();
-		controls = new Controls(getContext(), mainWrappers.getControlPtr());
+		controls = new Controls(getContext(), mainWrappers.getLevelPtr());
 	}
 
 	@Override

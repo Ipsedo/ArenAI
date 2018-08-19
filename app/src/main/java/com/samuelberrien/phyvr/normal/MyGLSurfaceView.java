@@ -63,7 +63,7 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 	@Override
 	public void onSurfaceCreated(GL10 unused, EGLConfig eglConfig) {
 		mainWrappers.init();
-		controls = new Controls(getContext(), mainWrappers.getControlPtr());
+		controls = new Controls(getContext(), mainWrappers.getLevelPtr());
 	}
 
 	@Override

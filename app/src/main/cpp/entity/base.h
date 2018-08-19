@@ -9,8 +9,9 @@
 #include <btBulletDynamicsCommon.h>
 #include <glm/glm.hpp>
 #include "../graphics/drawable/modelvbo.h"
+#include "../graphics/misc.h"
 
-class Base : public btRigidBody {
+class Base : public btRigidBody, public Drawable {
 private:
 	glm::vec3 scale;
 	DiffuseModel *modelVBO;
@@ -27,7 +28,7 @@ public:
 
 	virtual bool isDead();
 
-	virtual void draw(glm::mat4 pMatrix, glm::mat4 vMatrix, glm::vec3 lighPos);
+	void draw(draw_infos infos) override ;
 
 	virtual ~Base();
 };

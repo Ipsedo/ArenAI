@@ -10,7 +10,7 @@
 
 class Shooter {
 public:
-	virtual void fire(std::vector<Base *> *entities) = 0;
+	virtual vector<Base *> fire() = 0;
 };
 
 #endif //PHYVR_SHOOTER_H

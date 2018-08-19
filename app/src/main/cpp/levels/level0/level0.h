@@ -5,15 +5,16 @@
 #ifndef PHYVR_LEVEL0_H
 #define PHYVR_LEVEL0_H
 
-#include "../level.h"
+#include "levels/level.h"
+#include "../../entity/vehicles/tank/tank.h"
 
 class Level0 : public Level {
 public:
 	Level0();
 
-	void init() override;
+	void init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) override;
 
-	Controls *getControls() override;
+	vector<Controls *> getControls() override;
 
 	vector<Shooter *> getShooters() override;
 
@@ -21,13 +22,16 @@ public:
 
 	vector<Base *> getEntities() override;
 
+	vector<Drawable *> getDrawables() override;
+
+	Limits *getLimits() override;
+
 	bool won() override;
 
 	bool lose() override;
 
 private:
-//	Tank *tank;
-	vector<Base *> entities;
+	Tank *tank;
 	bool isInit;
 };
 

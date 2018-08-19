@@ -54,7 +54,7 @@ public:
 
 	void update() override;
 
-	void fire(std::vector<Base *> *entities) override;
+	vector<Base *> fire() override;
 
 	glm::vec3 camPos(bool VR) override;
 

@@ -9,10 +9,10 @@
 
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initRenderer(JNIEnv *env, jobject instance, jlong boxesPtr) {
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_makeRenderer(JNIEnv *env, jobject instance, jlong levelPtr) {
 
-	vector<Base *> *boxes = (vector<Base *> *) boxesPtr;
-	Renderer *renderer = new Renderer(boxes);
+	Level *level = (Level *) levelPtr;
+	Renderer *renderer = new Renderer(level);
 
 	return (long) renderer;
 }

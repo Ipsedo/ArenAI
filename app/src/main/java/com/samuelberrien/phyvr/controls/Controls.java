@@ -37,8 +37,8 @@ public class Controls {
 		System.loadLibrary("phyvr");
 	}
 
-	public Controls(Context context, long controlPtr) {
-		this.controlPtr = controlPtr;
+	public Controls(Context context, long levelPtr) {
+		this.controlPtr = levelPtr;
 		dir = 0.f;
 		turret = 0.f;
 		canon = 0.f;
@@ -142,7 +142,7 @@ public class Controls {
 
 	}
 
-	public native void control(long controlPtr,
+	public native void control(long levelPtr,
 							   float direction,
 							   float speed,
 							   boolean brake,

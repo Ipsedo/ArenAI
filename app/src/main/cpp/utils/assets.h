@@ -7,16 +7,10 @@
 
 #include <string>
 #include <android/asset_manager.h>
-#include <png.h>
-
-struct normalized_image {
-	int width;
-	int height;
-	float *greyValues; //
-};
+#include "image.h"
 
 std::string getFileText(AAssetManager *mgr, std::string fileName);
 
-png_structp readPNG(AAssetManager *mgr, std::string pngName);
+libpng_image readPNG(AAssetManager *mgr, std::string pngName);
 
 #endif //PHYVR_ASSETS_H

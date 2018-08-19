@@ -33,7 +33,13 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initEntity(JNIEnv *env, jobje
 
 	vector<Base *> *boxes = new vector<Base *>();
 
-	Map *sol = new Map(map, width, height, btVector3(0.f, 0.f, 0.f), btVector3(10.f, 50.f, 10.f));
+	libpng_image tmp = readPNG(cppMgr, "heightmap/heightmap6.png");
+	normalized_image img = toGrayImg(tmp);
+	float *array = new float[img.allpixels.size()]; //TODO free this array
+	for (int i = 0; i < img.allpixels.size(); i++) {
+		array[i] = img.allpixels[i];
+	}
+	Map *sol = new Map(array, img.width, img.height, btVector3(0.f, 40.f, 0.f), btVector3(10.f, 200.f, 10.f));
 	boxes->push_back(sol);
 
 	int nbEntity = 100;
@@ -76,36 +82,7 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initEntity(JNIEnv *env, jobje
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_samuelberrien_phyvr_wrappers_MainWrappers_addBox(JNIEnv *env, jobject instance, jobject assetManager,
-														  jlong boxesPtr) {
-
-	/*vector<Base *> *boxes = (vector<Base *> *) boxesPtr;
-
-	AAssetManager *cppMgr = AAssetManager_fromJava(env, assetManager);
-
-	glm::mat4 id(1.f);
-	double r = (double) rand() / RAND_MAX;
-
-	if (r < 1. / 60.) {
-		float x = 40.f * (float) rand() / RAND_MAX - 20.f;
-		float z = 40.f * (float) rand() / RAND_MAX - 20.f;
-		float scale = 2.f * (float) rand() / RAND_MAX;
-		float mass = scale;
-		Base *base;
-		if ((float) rand() / RAND_MAX > 0.8) {
-			base = new Cylinder(cppMgr,
-								glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale),
-								id, mass);
-		} else {
-
-			std::string m = "obj/icosahedron.obj";
-			base = new Convex(cppMgr, m,
-							  glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale),
-							  id, mass);
-		}
-		boxes->push_back(base);
-	}*/
-
-}
+														  jlong boxesPtr) {}
 
 extern "C"
 JNIEXPORT void JNICALL

@@ -12,7 +12,16 @@
 #include <android/asset_manager.h>
 #include <glm/glm.hpp>
 
-class Map : public Base {
+btRigidBody::btRigidBodyConstructionInfo makeMapCInfo(btHeightfieldTerrainShape *map, btVector3 pos, btVector3 scale);
+DiffuseModel *makeMapModel(btHeightfieldTerrainShape *map);
+
+class Ground : public Base {
+public:
+	Ground(btHeightfieldTerrainShape *shape, btVector3 pos, btVector3 scale)
+			: Base(makeMapCInfo(shape, pos, scale), makeMapModel(shape), glm::vec3(1.0f), true) {};
+};
+
+class Map : public Ground {
 private:
 	glm::vec3 minPos;
 	glm::vec3 maxPos;

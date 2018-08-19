@@ -56,7 +56,7 @@ Java_com_samuelberrien_phyvr_controls_Controls_control2(JNIEnv *env, jobject ins
 	for (Controls *c : *ctrl)
 		c->onInput(in);
 
-	delete controls;
+	delete[] controls;
 	env->ReleaseFloatArrayElements(arrayControl_, arrayControl, 0);
 }
 

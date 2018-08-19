@@ -29,7 +29,7 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_willDrawRenderer(JNIEnv *env,
 	renderer->update(glm::make_mat4(headView), VR);
 
 	env->ReleaseFloatArrayElements(mHeadView_, mHeadView, 0);
-	delete headView;
+	delete[] headView;
 }
 
 extern "C"
@@ -60,10 +60,10 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_drawRenderer(JNIEnv *env, job
 	env->ReleaseFloatArrayElements(mEyeViewMatrix_, mEyeViewMatrix, 0);
 	env->ReleaseFloatArrayElements(myLighPosInEyeSpace_, myLighPosInEyeSpace, 0);
 	env->ReleaseFloatArrayElements(mCameraPos_, mCameraPos, 0);
-	delete eyeProjectionMatrix;
-	delete eyeViewMatrix;
-	delete lighPosInEyeSpace;
-	delete cameraPos;
+	delete[] eyeProjectionMatrix;
+	delete[] eyeViewMatrix;
+	delete[] lighPosInEyeSpace;
+	delete[] cameraPos;
 }
 
 extern "C"

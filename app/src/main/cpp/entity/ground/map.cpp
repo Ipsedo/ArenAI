@@ -46,7 +46,6 @@ public:
 };
 
 btRigidBody::btRigidBodyConstructionInfo makeMapCInfo(btHeightfieldTerrainShape *map, btVector3 pos, btVector3 scale) {
-	map->setLocalScaling(btVector3(scale));
 	btTransform myTransform;
 	myTransform.setIdentity();
 	myTransform.setOrigin(pos);
@@ -61,19 +60,21 @@ btRigidBody::btRigidBodyConstructionInfo makeMapCInfo(btHeightfieldTerrainShape 
  * @param map
  * @return
  */
-DiffuseModel *makeMapModel(btHeightfieldTerrainShape *map, btVector3 scale) {
-	map->setLocalScaling(btVector3(scale));
+DiffuseModel *makeMapModel(btHeightfieldTerrainShape *map) {
 	HeightMap *model = new HeightMap(map, 1.f);
-	delete map;
 	return model;
+}
+
+btHeightfieldTerrainShape *makeTerrainShape(float *normalizedHeightValues, int width, int length, btVector3 scale) {
+	auto map = new btHeightfieldTerrainShape(width, length, normalizedHeightValues, 1.f, 0.f, 1.f,
+								  1, PHY_FLOAT, false);
+	map->setLocalScaling(btVector3(scale));
+	return map;
 }
 
 Map::Map(float *normalizedHeightValues, int width, int length, btVector3 pos, btVector3 scale)
 		: normalizedHeightValues(normalizedHeightValues),
-		  Base(makeMapCInfo(new btHeightfieldTerrainShape(width, length, normalizedHeightValues, 1.f, 0.f, 1.f,
-														  1, PHY_FLOAT, false), pos, scale),
-			   makeMapModel(new btHeightfieldTerrainShape(width, length, normalizedHeightValues, 1.f, 0.f, 1.f,
-														  1, PHY_FLOAT, false), scale), glm::vec3(1.0f), true) {}
+		  Ground(makeTerrainShape(normalizedHeightValues, width, length, scale), pos, scale) {}
 
 glm::vec3 Map::getMinPos() {
 	return minPos;
@@ -84,5 +85,5 @@ glm::vec3 Map::getMaxPos() {
 }
 
 Map::~Map() {
-	delete normalizedHeightValues;
+	delete[] normalizedHeightValues;
 }

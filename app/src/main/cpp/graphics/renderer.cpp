@@ -8,7 +8,7 @@
 #include <GLES2/gl2.h>
 #include <glm/gtc/type_ptr.hpp>
 
-Renderer::Renderer(Level *level) : level(level) {
+Renderer::Renderer(Level *level) : level(level), VR(false) {
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
@@ -28,6 +28,7 @@ void Renderer::update(glm::mat4 mHeadView, bool VR) {
 	camPos = level->getCamera()->camPos(VR);
 	camLookAtVec = level->getCamera()->camLookAtVec(VR);
 	camUpVec = level->getCamera()->camUpVec(VR);
+	this->VR = VR;
 }
 
 void Renderer::draw(glm::mat4 mEyeProjectionMatrix,

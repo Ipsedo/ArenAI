@@ -33,6 +33,12 @@ void Base::draw(draw_infos infos) {
 	modelVBO->draw(mvpMatrix, mvMatrix, infos.light_pos);
 }
 
+bool Base::needExplosion() {
+	return true;
+}
+
+void Base::onContactFinish(Base *other) {}
+
 Base::~Base() {
 	nbDel++;
 	btRigidBody::~btRigidBody();

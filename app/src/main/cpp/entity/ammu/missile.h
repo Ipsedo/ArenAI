@@ -6,7 +6,7 @@
 #define PHYVR_MISSILE_H
 
 
-#include "simple/cone.h"
+#include "entity/simple/cone.h"
 
 class Missile : public Cone {
 public:

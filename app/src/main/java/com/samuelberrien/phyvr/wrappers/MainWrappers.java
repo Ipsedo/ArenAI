@@ -33,15 +33,8 @@ public class MainWrappers {
 	}
 
 	public void init() {
-		/*LoadImage loadImage = new LoadImage(context, "heightmap/heightmap6.png");
-		entitiesPtr = initEntity(context.getAssets(),
-				loadImage.tofloatGreyArray(), loadImage.getWidth(), loadImage.getHeight());
-		enginePtr = initEngine(entitiesPtr);
-		rendererPtr = initRenderer(entitiesPtr);
-		playerPtr = initPlayer(context.getAssets(), enginePtr, rendererPtr, entitiesPtr, vr);
-		controlPtr = getControlPtrFromPlayer(playerPtr);*/
 		levelPtr = makeLevel();
-		enginePtr = makeEngine(levelPtr);
+		enginePtr = makeEngine(levelPtr, context.getAssets());
 		initLevel(context.getAssets(), vr, levelPtr, enginePtr);
 		rendererPtr = makeRenderer(levelPtr);
 		isFreeable = true;
@@ -87,7 +80,7 @@ public class MainWrappers {
 	private native void initLevel(AssetManager manager, boolean isVR, long levelPtr, long enginePtr);
 	private native void freeLevel(long levelPtr);
 
-	private native long makeEngine(long levelPtr);
+	private native long makeEngine(long levelPtr, AssetManager manager);
 	private native void updateEngine(long engineptr);
 	private native void freeEngine(long levelPtr);
 

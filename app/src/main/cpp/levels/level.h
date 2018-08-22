@@ -10,14 +10,15 @@
 #include "../core/limits.h"
 #include "../controls/controls.h"
 #include "../graphics/camera.h"
-#include "../entity/shooter.h"
+#include "entity/ammu/shooter.h"
 
 class Level {
 protected:
 	vector<Base *> entities;
+	AAssetManager *mgr;
 
 public:
-	virtual void init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) = 0;
+	virtual void init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world);
 
 	virtual vector<Controls *> getControls() = 0;
 
@@ -32,6 +33,8 @@ public:
 	virtual Limits *getLimits() = 0;
 
 	void addBases(vector<Base *> bs);
+
+	AAssetManager *getMgr();
 
 	virtual bool won() = 0;
 

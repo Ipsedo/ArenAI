@@ -14,5 +14,5 @@ void Missile::decreaseLife(int toSub) {
 }
 
 bool Missile::isDead() {
-	return Cone::isDead() || life <= 0 || getLinearVelocity().norm() < 1.f;
+	return Cone::isDead() || life <= 0;
 }

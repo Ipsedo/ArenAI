@@ -26,4 +26,13 @@ public:
 	ModelVBO(std::string obj_file_text, float color[4]);
 };
 
+class TransparentModelVBO : public ModelVBO {
+public:
+	TransparentModelVBO(const string &obj_file_text, float *color);
+
+	TransparentModelVBO(const string &obj_file_text);
+
+	void draw(glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos) override ;
+};
+
 #endif

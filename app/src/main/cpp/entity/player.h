@@ -7,7 +7,7 @@
 
 #include "base.h"
 #include "../controls/controls.h"
-#include "shooter.h"
+#include "entity/ammu/shooter.h"
 #include "../graphics/camera.h"
 
 class Player {

@@ -50,7 +50,7 @@ protected:
 	void bindBuffer(std::vector<float> packedData);
 
 public:
-	void draw(glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos);
+	virtual void draw(glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos);
 
 	virtual ~DiffuseModel();
 };

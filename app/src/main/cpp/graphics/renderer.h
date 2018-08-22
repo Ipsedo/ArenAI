@@ -25,6 +25,7 @@ private:
 	glm::vec3 camPos;
 	glm::vec3 camLookAtVec; // normalized Vec
 	glm::vec3 camUpVec;
+	bool VR;
 
 	glm::vec4 updateLight(glm::mat4 viewMatrix, glm::vec3 xyz);
 };

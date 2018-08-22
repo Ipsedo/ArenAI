@@ -5,9 +5,9 @@
 #ifndef PHYVR_POLY_H
 #define PHYVR_POLY_H
 
-#include "base.h"
 #include "utils/assets.h"
 #include "utils/rigidbody.h"
+#include "base.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 

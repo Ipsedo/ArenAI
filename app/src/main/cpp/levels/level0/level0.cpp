@@ -64,7 +64,7 @@ void Level0::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
 		float mass = maxMass * float(rand()) / RAND_MAX;
 		entities.push_back(new Sphere(mgr, glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale), id, mass));
 	}
-	
+
 	isInit = true;
 }
 

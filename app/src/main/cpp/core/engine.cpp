@@ -2,7 +2,9 @@
 // Created by samuel on 26/05/18.
 //
 #include "engine.h"
-#include "../entity/shooter.h"
+#include "entity/ammu/explosion.h"
+#include "entity/ammu/shooter.h"
+#include "../utils/assets.h"
 #include "../utils/rigidbody.h"
 #include <algorithm>
 
@@ -29,6 +31,8 @@ bool callback_finish(void *userPersistentData) {
 
 	Base *b0 = get<0>(*t);
 	Base *b1 = get<1>(*t);
+	b0->onContactFinish(b1);
+	b1->onContactFinish(b0);
 
 	b0->decreaseLife(1);
 	b1->decreaseLife(1);
@@ -47,7 +51,9 @@ bool callback_processed(btManifoldPoint &cp, void *body0, void *body1) {
 	return false;
 }
 
-Engine::Engine(Level *level) : level(level) {
+Engine::Engine(Level *level, AAssetManager *mgr)
+		: level(level),
+		  explosion(new TransparentModelVBO(getFileText(mgr, "obj/sphere.obj"), new float[4]{1.f, 0.6f, 0.f, 0.7f})) {
 
 	collisionConfiguration = new btDefaultCollisionConfiguration();
 	dispatcher = new btCollisionDispatcher(collisionConfiguration);
@@ -72,20 +78,28 @@ void Engine::update(float delta) {
 			world->addRigidBody(b);
 		b->update();
 	}
-	limits = level->getLimits();
-	// remove base and rigidBody
-	level->deleteBase([this](Base *b) {
-		bool isDead = b->isDead() || !limits->isInside(b);
-		if (isDead) {
-			deleteBase(b);
-		}
-		return isDead;
-	});
 
 	for (Shooter *s : level->getShooters())
 		level->addBases(s->fire());
 
 	world->stepSimulation(deltaTime);
+
+	limits = level->getLimits();
+
+	// remove base and rigidBody
+	vector<Base *> toAdd;
+	level->deleteBase([this, &toAdd](Base *b) {
+		bool isDead = b->isDead() || !limits->isInside(b);
+		if (isDead) {
+			if (b->needExplosion()) {
+				Explosion *e = new Explosion(b->getWorldTransform().getOrigin(), explosion);
+				toAdd.push_back(e);
+			}
+			deleteBase(b);
+		}
+		return isDead;
+	});
+	level->addBases(toAdd);
 }
 
 Engine::~Engine() {

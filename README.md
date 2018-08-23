@@ -1,13 +1,18 @@
 # PhyVR
 __Samuel Berrien__
 
-_Comming soon !_
+https://play.google.com/store/apps/details?id=com.samuelberrien.phyvr
 
 ## Infos
-* with [Bullet3](https://github.com/bulletphysics/bullet3)
-* and [GLM](https://github.com/g-truc/glm)
-* VR cardboard or normal vision
-* A bluetooth controller is required
+used libraries :
+* [Bullet3](https://github.com/bulletphysics/bullet3)
+* [GLM](https://github.com/g-truc/glm)
+* [libpng](https://github.com/julienr/libpng-android)
+
+
+VR cardboard or normal vision
+
+A bluetooth controller is required
     
 ## Description
 Allow the players an experience more than immersive.

@@ -9,7 +9,7 @@
 
 #define MAX_FRAMES 5
 #define INIT_SIZE 1e-1f
-#define MAX_SIZE 20.f
+#define MAX_SIZE 30.f
 #define BASE_SIZE exp(log(MAX_SIZE) / MAX_FRAMES)
 #define MASS 0.f
 
@@ -46,8 +46,8 @@ void Explosion::onContactFinish(Base *other) {
 	btVector3 vec = other->getCenterOfMassPosition() - getCenterOfMassPosition();
 	vec = vec.normalized();
 
-	float force = 2.184e4f;
+	float force = 1.184e1f;
 
 	other->activate(true);
-	other->applyCentralForce(force * vec);
+	other->applyCentralImpulse(force * vec);
 }

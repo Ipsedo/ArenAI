@@ -83,7 +83,7 @@ void CubeMap::loadCubeMaptexture(AAssetManager *mgr, string cubaMapAssetPath) {
 	};
 	for (int i = 0; i < 6; i++) {
 		libpng_image tmp = readPNG(mgr, cubaMapAssetPath + fileName[i]);
-		imgRGB img = toRGBImgBis(tmp);
+		imgRGB img = toImgRGB(tmp);
 		glTexImage2D(idTxt[i], 0, GL_RGB, img.width, img.height, 0, GL_RGB, GL_UNSIGNED_BYTE, img.pixels);
 		delete[] tmp.data;
 		delete[] tmp.rowPtrs;

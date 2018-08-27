@@ -13,7 +13,7 @@
 Level0::Level0() : isInit(false) {}
 
 void Level0::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
-	tank = new Tank(isVR, mgr, world, btVector3(5.f, -10.f, 20.f));
+	tank = new Tank(isVR, mgr, world, btVector3(5.f, -35.f, 20.f));
 	vector<Base *> tankBases = tank->getBase();
 	entities.insert( entities.end(), tankBases.begin(), tankBases.end() );
 
@@ -65,7 +65,7 @@ void Level0::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
 		entities.push_back(new Sphere(mgr, glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale), id, mass));
 	}
 
-	map = new CubeMap(mgr, "cubemap/1/", 1000.f);
+	map = new CubeMap(mgr, "cubemap/2/", 1000.f);
 
 	isInit = true;
 }

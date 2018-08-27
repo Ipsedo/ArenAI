@@ -7,7 +7,7 @@
 #include "diffusemodel.h"
 #include "../../utils/shader.h"
 
-std::string vs = "uniform mat4 u_MVPMatrix;\n"
+std::string diffuse_vs = "uniform mat4 u_MVPMatrix;\n"
 		"uniform mat4 u_MVMatrix;\n"
 		"uniform vec4 v_Color;\n"
 		"attribute vec4 a_Position;\n"
@@ -20,7 +20,7 @@ std::string vs = "uniform mat4 u_MVPMatrix;\n"
 		"    gl_Position = u_MVPMatrix * a_Position;\n"
 		"}";
 
-std::string fs = "precision mediump float;\n"
+std::string diffuse_fs = "precision mediump float;\n"
 		"uniform vec3 u_LightPos;\n"
 		"uniform float u_distance_coef;\n"
 		"uniform float u_light_coef;\n"
@@ -37,8 +37,8 @@ std::string fs = "precision mediump float;\n"
 
 void DiffuseModel::init() {
 	mProgram = glCreateProgram();
-	vertexShader = loadShader(GL_VERTEX_SHADER, vs.c_str());
-	fragmentShader = loadShader(GL_FRAGMENT_SHADER, fs.c_str());
+	vertexShader = loadShader(GL_VERTEX_SHADER, diffuse_vs.c_str());
+	fragmentShader = loadShader(GL_FRAGMENT_SHADER, diffuse_fs.c_str());
 	glAttachShader(mProgram, vertexShader);
 	glAttachShader(mProgram, fragmentShader);
 	glLinkProgram(mProgram);

@@ -76,6 +76,8 @@ public class MainWrappers {
 		}
 	}
 
+	public boolean isInit() { return isFreeable; }
+
 	private native long makeLevel();
 	private native void initLevel(AssetManager manager, boolean isVR, long levelPtr, long enginePtr);
 	private native void freeLevel(long levelPtr);

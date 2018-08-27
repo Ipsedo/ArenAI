@@ -34,6 +34,7 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
 	private void init() {
 		setEGLContextClientVersion(2);
+		setPreserveEGLContextOnPause(true);
 		setRenderer(this);
 		projectionMatrix = new float[16];
 		viewMatrix = new float[16];
@@ -47,23 +48,31 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
 	@Override
 	public boolean onGenericMotionEvent(MotionEvent motionEvent) {
+		if (mainWrappers == null || !mainWrappers.isInit())
+			return super.onGenericMotionEvent(motionEvent);
 		return controls.onMotionEvent(motionEvent) || super.onGenericMotionEvent(motionEvent);
 	}
 
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if (mainWrappers == null || !mainWrappers.isInit())
+			return super.onKeyDown(keyCode, event);
 		return controls.onKeyDown(keyCode, event) || super.onKeyDown(keyCode, event);
 	}
 
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
+		if (mainWrappers == null || !mainWrappers.isInit())
+			return super.onKeyUp(keyCode, event);
 		return controls.onKeyUp(keyCode, event) || super.onKeyUp(keyCode, event);
 	}
 
 	@Override
 	public void onSurfaceCreated(GL10 unused, EGLConfig eglConfig) {
-		mainWrappers.init();
-		controls = new Controls(getContext(), mainWrappers.getLevelPtr());
+		if (!mainWrappers.isInit()) {
+			mainWrappers.init();
+			controls = new Controls(getContext(), mainWrappers.getLevelPtr());
+		}
 	}
 
 	@Override

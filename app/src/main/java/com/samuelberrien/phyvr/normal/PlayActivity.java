@@ -52,8 +52,8 @@ public class PlayActivity extends Activity {
 	}
 
 	@Override
-	protected void onStop() {
+	protected void onDestroy() {
 		surfaceView.free();
-		super.onStop();
+		super.onDestroy();
 	}
 }

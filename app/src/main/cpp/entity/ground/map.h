@@ -37,6 +37,4 @@ public:
 	virtual ~Map();
 };
 
-Map *makeMap(float *normalizedHeightValues, int width, int length, btVector3 pos, btVector3 scale);
-
 #endif //PHYVR_MAP_H

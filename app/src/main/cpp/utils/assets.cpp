@@ -96,8 +96,13 @@ libpng_image readPNG(AAssetManager *mgr, std::string pngName) {
 	}
 
 	// Pass to 8 bits (1 byte) depth
-	if (bitdepth == 16)
+	if (bitdepth < 8) {
+		png_set_packing(png_ptr);
+		bitdepth = 8;
+	} else if (bitdepth == 16) {
 		png_set_strip_16(png_ptr);
+		bitdepth = 8;
+	}
 
 	png_read_update_info(png_ptr, info_ptr);
 

@@ -13,7 +13,7 @@ using namespace std;
 struct normalized_image {
 	int width;
 	int height;
-	vector<float> allpixels;//
+	vector<float> allpixels;
 };
 
 template<typename T> class color {
@@ -27,7 +27,6 @@ public:
 struct colored_image {
 	int width;
 	int height;
-	int maxValue;
 	vector<color<int>> allpixels;
 };
 
@@ -46,10 +45,10 @@ struct libpng_image {
 	png_bytep* rowPtrs;
 };
 
-colored_image toRGBImg(libpng_image image);
+colored_image toColoredImg(libpng_image image);
 
 normalized_image toGrayImg(libpng_image image);
 
-imgRGB toRGBImgBis(libpng_image image);
+imgRGB toImgRGB(libpng_image image);
 
 #endif //PHYVR_IMAGE_H

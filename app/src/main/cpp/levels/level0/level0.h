@@ -5,6 +5,7 @@
 #ifndef PHYVR_LEVEL0_H
 #define PHYVR_LEVEL0_H
 
+#include "../../graphics/cubemap.h"
 #include "levels/level.h"
 #include "../../entity/vehicles/tank/tank.h"
 
@@ -31,6 +32,7 @@ public:
 	bool lose() override;
 
 private:
+	CubeMap *map;
 	Tank *tank;
 	bool isInit;
 };

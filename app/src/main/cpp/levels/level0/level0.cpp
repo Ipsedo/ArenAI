@@ -65,6 +65,8 @@ void Level0::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
 		entities.push_back(new Sphere(mgr, glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale), id, mass));
 	}
 
+	map = new CubeMap(mgr, "cubemap/1/", 1000.f);
+
 	isInit = true;
 }
 
@@ -112,6 +114,7 @@ vector<Drawable *> Level0::getDrawables() {
 	vector<Drawable *> d;
 	for (Base *b : entities)
 		d.push_back(b);
+	d.push_back(map);
 	return d;
 }
 

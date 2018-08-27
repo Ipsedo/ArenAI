@@ -50,7 +50,7 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 	 */
 
 	private final float Z_NEAR = 0.1f;
-	private final float Z_FAR = 500f;
+	private final float Z_FAR = 1100f * (float) Math.sqrt(3);
 
 	private MainWrappers mainWrappers;
 

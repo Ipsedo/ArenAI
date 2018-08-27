@@ -72,7 +72,7 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
 		float ratio = (float) width / height;
 
-		Matrix.perspectiveM(projectionMatrix, 0, 40f, ratio, 0.1f, 500f);
+		Matrix.perspectiveM(projectionMatrix, 0, 40f, ratio, 0.1f, 1100f * (float) Math.sqrt(3));
 	}
 
 	@Override

@@ -33,6 +33,7 @@ bool validatePNG(AAssetManager *mgr, std::string pngName) {
 
 	png_byte header[8];
 	AAsset_read(file, header, size_t(8));
+	AAsset_close(file);
 	return !png_sig_cmp(header, 0, 8);
 }
 
@@ -49,12 +50,14 @@ libpng_image readPNG(AAssetManager *mgr, std::string pngName) {
 	// http://www.piko3d.net/tutorials/libpng-tutorial-loading-png-files-from-streams/
 	png_structp png_ptr = NULL;
 	png_infop info_ptr = NULL;
+	png_infop end_info = NULL;
 	png_bytep row = NULL;
 
 	png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	info_ptr = png_create_info_struct(png_ptr);
-
+	end_info = png_create_info_struct(png_ptr);
 	png_set_read_fn(png_ptr,(png_voidp)file, userReadData);
+
 	png_set_sig_bytes(png_ptr, 8);
 
 	png_read_info(png_ptr, info_ptr);
@@ -78,6 +81,8 @@ libpng_image readPNG(AAssetManager *mgr, std::string pngName) {
 				png_set_expand_gray_1_2_4_to_8(png_ptr);
 			bitdepth = 8;
 			break;
+		default:
+			break;
 	}
 
 	// full alpha conversion
@@ -90,6 +95,7 @@ libpng_image readPNG(AAssetManager *mgr, std::string pngName) {
 		channels -= 1;
 	}
 
+	// Pass to 8 bits (1 byte) depth
 	if (bitdepth == 16)
 		png_set_strip_16(png_ptr);
 
@@ -97,14 +103,19 @@ libpng_image readPNG(AAssetManager *mgr, std::string pngName) {
 
 	png_bytep* rowPtrs = new png_bytep[imgHeight];
 	char* data = new char[imgWidth * imgHeight * bitdepth * channels / 8];
-	const unsigned int stride = imgWidth * bitdepth * channels / 8;
+	const unsigned int stride = imgWidth * bitdepth * channels / 8u;
 
-	for (size_t i = 0; i < imgHeight; i++) {
-		png_uint_32 q = (imgHeight- i - 1) * stride;
+	for (unsigned int i = 0u; i < imgHeight; i++) {
+		png_uint_32 q = (imgHeight- i - 1u) * stride;
 		rowPtrs[i] = (png_bytep)data + q;
 	}
+
 	png_read_image(png_ptr, rowPtrs);
 
+	png_read_end(png_ptr, end_info);
+
+	png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
+	AAsset_close(file);
 
 	return { imgWidth,
 			 imgHeight,

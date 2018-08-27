@@ -31,6 +31,12 @@ struct colored_image {
 	vector<color<int>> allpixels;
 };
 
+struct imgRGB {
+	int width;
+	int height;
+	char *pixels;
+};
+
 struct libpng_image {
 	png_uint_32 width;
 	png_uint_32 height;
@@ -43,5 +49,7 @@ struct libpng_image {
 colored_image toRGBImg(libpng_image image);
 
 normalized_image toGrayImg(libpng_image image);
+
+imgRGB toRGBImgBis(libpng_image image);
 
 #endif //PHYVR_IMAGE_H

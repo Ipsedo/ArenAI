@@ -1,29 +1,25 @@
 //
-// Created by samuel on 29/08/18.
+// Created by samuel on 11/06/18.
 //
 
 #ifndef PHYVR_LEVEL0_H
 #define PHYVR_LEVEL0_H
 
+#include "../../graphics/drawable/cubemap.h"
 #include "../level.h"
+#include "../../entity/vehicles/tank/tank.h"
 
-/**
- * Niveau 0 (training)
- * idée niveau :
- * 1) se rendre à un point précis
- * 2) tirer sur des cibles
- * 	  les cibles sont montées sur charnière et basculent
- */
-class Level0 : public Level {
-
+class LevelDemo : public Level {
 public:
+	LevelDemo();
+
 	void init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) override;
 
 	vector<Controls *> getControls() override;
 
-	Camera *getCamera() override;
-
 	vector<Shooter *> getShooters() override;
+
+	Camera *getCamera() override;
 
 	vector<Base *> getEntities() override;
 
@@ -35,8 +31,10 @@ public:
 
 	bool lose() override;
 
-	~Level0() override;
-
+private:
+	CubeMap *map;
+	Tank *tank;
+	bool isInit;
 };
 
 

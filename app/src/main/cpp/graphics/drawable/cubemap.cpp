@@ -3,9 +3,9 @@
 //
 
 #include "cubemap.h"
-#include "../utils/shader.h"
-#include "../utils/assets.h"
-#include "../utils/gl_utils.h"
+#include "../../utils/shader.h"
+#include "../../utils/assets.h"
+#include "../../utils/gl_utils.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>

@@ -6,6 +6,8 @@
 #define PHYVR_LEVEL0_H
 
 #include "../level.h"
+#include "../../entity/vehicles/tank/tank.h"
+#include "../../entity/ground/map.h"
 
 /**
  * Niveau 0 (training)
@@ -17,6 +19,8 @@
 class Level0 : public Level {
 
 public:
+	Level0();
+
 	void init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) override;
 
 	vector<Controls *> getControls() override;
@@ -37,6 +41,10 @@ public:
 
 	~Level0() override;
 
+private:
+	bool isInit;
+
+	Tank *tank;
 };
 
 

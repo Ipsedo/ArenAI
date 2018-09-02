@@ -14,10 +14,6 @@ struct draw_infos {
 	glm::vec3 camera_pos;
 };
 
-float *packedVertNorm(float *heightmap, int width, int height);
-
-float *packedNoiseMap(int width, int height);
-
 class Drawable {
 public:
 	virtual void draw(draw_infos infos) = 0;

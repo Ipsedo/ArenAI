@@ -18,6 +18,11 @@ public:
 class Cible : public Convex {
 public:
 	Cible(AAssetManager *mgr, SupportCible *supportCible, btDynamicsWorld *world);
+
+	bool isWon();
+
+private:
+	btHingeConstraint *hinge;
 };
 
 

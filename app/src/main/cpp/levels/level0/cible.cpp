@@ -21,11 +21,14 @@ Cible::Cible(AAssetManager *mgr, SupportCible *supportCible, btDynamicsWorld *wo
 	btVector3 pivotB = btVector3(0.f, -scale.y, 0.f);
 	btVector3 axis = btVector3(1.f, 0.f, 0.f);
 
-	btHingeConstraint *hinge = new btHingeConstraint(*pBodyA, *pBodyB, pivotA, pivotB, axis, axis, true);
+	hinge = new btHingeConstraint(*pBodyA, *pBodyB, pivotA, pivotB, axis, axis, true);
 	world->addConstraint(hinge, true);
-	hinge->setLimit((float) -M_PI * 1e-1f, (float) M_PI * 0.5f);
+	hinge->setLimit((float) (-M_PI * 1e-1), (float) (M_PI * 0.5));
 }
 
+bool Cible::isWon() {
+	return hinge->getHingeAngle() > (float) (M_PI * 0.4);
+}
 
 SupportCible::SupportCible(AAssetManager *mgr, const glm::vec3 &pos)
 		: Convex(mgr, "obj/support_cible.obj", pos, glm::vec3(SUPPORT_SCALE), glm::mat4(1.f), 0.f) {}

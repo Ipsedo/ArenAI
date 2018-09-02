@@ -28,6 +28,18 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initLevel(JNIEnv *env, jobjec
 }
 
 extern "C"
+JNIEXPORT jboolean JNICALL
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_hasWon(JNIEnv *env, jobject instance, jlong levelPtr) {
+	return (jboolean) ((Level *) levelPtr)->won();
+}
+
+extern "C"
+JNIEXPORT jboolean JNICALL
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_hasLose(JNIEnv *env, jobject instance, jlong levelPtr) {
+	return (jboolean) ((Level *) levelPtr)->lose();
+}
+
+extern "C"
 JNIEXPORT void JNICALL
 Java_com_samuelberrien_phyvr_wrappers_MainWrappers_freeLevel(JNIEnv *env, jobject instance, jlong levelPtr) {
 	delete (Level *)levelPtr;

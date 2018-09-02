@@ -48,6 +48,10 @@ public class MainWrappers {
 		updateEngine(enginePtr);
 	}
 
+	public boolean win() { return hasWon(levelPtr); }
+
+	public boolean lose() { return hasLose(levelPtr); }
+
 	public void willDraw(float[] mHeadView, boolean VR) {
 		willDrawRenderer(rendererPtr, mHeadView, VR);
 	}
@@ -80,6 +84,8 @@ public class MainWrappers {
 
 	private native long makeLevel();
 	private native void initLevel(AssetManager manager, boolean isVR, long levelPtr, long enginePtr);
+	private native boolean hasWon(long levelPtr);
+	private native boolean hasLose(long levelPtr);
 	private native void freeLevel(long levelPtr);
 
 	private native long makeEngine(long levelPtr, AssetManager manager);

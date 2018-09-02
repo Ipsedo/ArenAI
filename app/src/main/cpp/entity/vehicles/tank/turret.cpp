@@ -2,14 +2,12 @@
 // Created by samuel on 13/08/18.
 //
 
-#define GLM_ENABLE_EXPERIMENTAL
-
 #include "turret.h"
 
-#include "entity/ammu/missile.h"
+#include "../../ammu/missile.h"
 #include <glm/glm.hpp>
-#include <glm/gtx/transform.hpp>
-#include <glm/gtx/quaternion.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "../../../utils/rigidbody.h"
 #include "../../../utils/assets.h"
@@ -158,7 +156,7 @@ vector<Base *> Canon::fire() {
 	btQuaternion quat = tr.getRotation();
 	glm::quat q(quat.w(), quat.x(), quat.y(), quat.z());
 
-	glm::mat4 rotMat = glm::toMat4(q);
+	glm::mat4 rotMat = glm::mat4_cast(q);
 	rotMat = rotMat * glm::rotate(glm::mat4(1.f), float(M_PI / 2.f), glm::vec3(1, 0, 0));
 
 	glm::vec4 vec = modelMatrix * glm::vec4(0.f, 0.f, canonScale.z + 1.f, 1.f);

@@ -118,8 +118,12 @@ vector<Drawable *> LevelDemo::getDrawables() {
 	return d;
 }
 
-Limits *LevelDemo::getLimits() {
+Limits LevelDemo::getLimits() {
 	glm::vec3 start(-1000.f, -200.f, -1000.f);
 	glm::vec3 end(1000.f, 200.f, 1000.f);
-	return new BoxLimits(start, end - start);
+	return BoxLimits(start, end - start);
+}
+
+void LevelDemo::step() {
+
 }

@@ -25,11 +25,13 @@ public:
 
 	vector<Drawable *> getDrawables() override;
 
-	Limits *getLimits() override;
+	Limits getLimits() override;
 
 	bool won() override;
 
 	bool lose() override;
+
+	void step() override ;
 
 private:
 	CubeMap *map;

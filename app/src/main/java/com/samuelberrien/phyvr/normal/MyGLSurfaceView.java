@@ -1,6 +1,9 @@
 package com.samuelberrien.phyvr.normal;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
@@ -22,6 +25,8 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
 	private MainWrappers mainWrappers;
 
+	private boolean willQuit;
+
 	public MyGLSurfaceView(Context context) {
 		super(context);
 		init();
@@ -33,6 +38,7 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 	}
 
 	private void init() {
+		willQuit = false;
 		setEGLContextClientVersion(2);
 		setPreserveEGLContextOnPause(true);
 		setRenderer(this);
@@ -90,6 +96,29 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 		mainWrappers.update();
 		mainWrappers.willDraw(viewMatrix, false);
 		mainWrappers.draw(projectionMatrix, viewMatrix, new float[4], new float[3]);
+		detectWinLose();
+	}
+
+	private void detectWinLose() {
+		if(willQuit)
+			return;
+
+		boolean lose = mainWrappers.lose();
+
+		if (lose || mainWrappers.win()) {
+			willQuit = true;
+			post(() -> {
+				new AlertDialog.Builder(getContext())
+						.setMessage(lose ? "Game Over !" : "Game Done !")
+						.setNeutralButton("Main menu",
+								(DialogInterface dialogInterface, int i) -> {
+									((Activity) getContext()).finish();
+								})
+						.create()
+						.show();
+				setRenderMode(RENDERMODE_WHEN_DIRTY);
+			});
+		}
 	}
 
 	public void free() {

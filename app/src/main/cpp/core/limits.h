@@ -11,7 +11,7 @@
 
 class Limits {
 public:
-	virtual bool isInside(Base *b) = 0;
+	virtual bool isInside(Base *b) { return true; }
 
 	virtual ~Limits();
 };

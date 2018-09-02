@@ -6,6 +6,7 @@
 #define PHYVR_LEVEL0_H
 
 #include "../level.h"
+#include "cible.h"
 #include "../../entity/vehicles/tank/tank.h"
 #include "../../entity/ground/map.h"
 
@@ -33,11 +34,13 @@ public:
 
 	vector<Drawable *> getDrawables() override;
 
-	Limits *getLimits() override;
+	Limits getLimits() override;
 
 	bool won() override;
 
 	bool lose() override;
+
+	void step() override ;
 
 	~Level0() override;
 
@@ -45,6 +48,8 @@ private:
 	bool isInit;
 
 	Tank *tank;
+
+	vector<Cible *> cibles;
 };
 
 

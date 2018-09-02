@@ -3,11 +3,10 @@
 //
 
 #include "level0.h"
-#include "cible.h"
 #include "../../entity/vehicles/tank/tank.h"
 #include "../../entity/ground/map.h"
 
-Level0::Level0() : isInit(false) {}
+Level0::Level0() : isInit(false), cibles(vector<Cible *>()) {}
 
 void Level0::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
 	Level::init(isVR, mgr, world);
@@ -29,8 +28,9 @@ void Level0::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
 	entities.push_back(supportCible);
 	entities.push_back(cible);
 
-	isInit = true;
+	cibles.push_back(cible);
 
+	isInit = true;
 }
 
 vector<Controls *> Level0::getControls() {
@@ -67,18 +67,25 @@ vector<Drawable *> Level0::getDrawables() {
 	return d;
 }
 
-Limits *Level0::getLimits() {
+Limits Level0::getLimits() {
 	glm::vec3 start(-1000.f, -200.f, -1000.f);
 	glm::vec3 end(1000.f, 200.f, 1000.f);
-	return new BoxLimits(start, end - start);
+	return BoxLimits(start, end - start);
 }
 
 bool Level0::won() {
-	return false;
+	bool won = true;
+	for (Cible *c : cibles)
+		won &= c->isWon();
+	return won;
 }
 
 bool Level0::lose() {
 	return false;
+}
+
+void Level0::step() {
+
 }
 
 Level0::~Level0() {

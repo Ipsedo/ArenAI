@@ -47,8 +47,8 @@ public class MyGvrActivity extends GvrActivity {
 	}
 
 	@Override
-	public void onStop() {
+	public void onDestroy() {
 		myGvrView.free();
-		super.onStop();
+		super.onDestroy();
 	}
 }

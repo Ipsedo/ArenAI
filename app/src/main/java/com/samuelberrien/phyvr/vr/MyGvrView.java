@@ -16,6 +16,7 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 
 	public MyGvrView(Context context) {
 		super(context);
+		setEGLContextClientVersion(2);
 		mainWrappers = new MainWrappers(getContext(), true);
 		setRenderer(this);
 	}
@@ -63,7 +64,6 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 		mainWrappers.willDraw(mHeadView, true);
 		controls.sendInputs();
 		mainWrappers.update();
-		//addBox(getContext().getAssets(), boxesPtr);
 	}
 
 	@Override

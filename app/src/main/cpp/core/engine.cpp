@@ -84,12 +84,12 @@ void Engine::update(float delta) {
 
 	world->stepSimulation(deltaTime);
 
-	limits = level->getLimits();
+	level->step();
 
 	// remove base and rigidBody
 	vector<Base *> toAdd;
 	level->deleteBase([this, &toAdd](Base *b) {
-		bool isDead = b->isDead() || !limits->isInside(b);
+		bool isDead = b->isDead() || !level->getLimits().isInside(b);
 		if (isDead) {
 			if (b->needExplosion()) {
 				Explosion *e = new Explosion(b->getWorldTransform().getOrigin(), explosion);
@@ -128,7 +128,6 @@ Engine::~Engine() {
 	delete dispatcher;
 	delete collisionConfiguration;
 	delete constraintSolver;
-	delete limits;
 }
 
 void Engine::deleteBase(Base *base) {

@@ -30,9 +30,11 @@ public:
 
 	virtual vector<Drawable *> getDrawables() = 0;
 
-	virtual Limits *getLimits() = 0;
+	virtual Limits getLimits() = 0;
 
 	void addBases(vector<Base *> bs);
+
+	virtual void step() = 0;
 
 	AAssetManager *getMgr();
 

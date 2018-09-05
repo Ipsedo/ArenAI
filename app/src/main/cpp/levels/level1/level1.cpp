@@ -10,32 +10,32 @@ Level1::Level1() : isInit(false), cibles(vector<Cible *>()) {}
 
 void Level1::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
 	Level::init(isVR, mgr, world);
-	tank = new Tank(isVR, mgr, world, btVector3(5.f, -35.f, 20.f));
+	tank = new Tank(isVR, mgr, world, btVector3(-97.f, 1.f, -175.f));
 	vector<Base *> tankBases = tank->getBase();
 	entities.insert(entities.end(), tankBases.begin(), tankBases.end());
 
-	libpng_image tmp = readPNG(mgr, "heightmap/heightmap6.png");
+	libpng_image tmp = readPNG(mgr, "heightmap/heightmap_road2.png");
 	normalized_image img = toGrayImg(tmp);
 	float *array = new float[img.allpixels.size()];
 	for (int i = 0; i < img.allpixels.size(); i++) {
 		array[i] = img.allpixels[i];
 	}
-	Map *sol = new Map(array, img.width, img.height, btVector3(0.f, 40.f, 0.f), btVector3(10.f, 200.f, 10.f));
+	Map *sol = new Map(array, img.width, img.height, btVector3(0.f, 0.f, 0.f), btVector3(0.8f, 20.f, 0.8f));
 	entities.push_back(sol);
 
-	SupportCible *supportCible1 = new SupportCible(mgr, glm::vec3(5.f, -40.f, 100.f));
+	SupportCible *supportCible1 = new SupportCible(mgr, glm::vec3(-28.f, 15.f, 40.f));
 	Cible *cible1 = new Cible(mgr, supportCible1, world);
 	entities.push_back(supportCible1);
 	entities.push_back(cible1);
 	cibles.push_back(cible1);
 
-	SupportCible *supportCible2 = new SupportCible(mgr, glm::vec3(50.f, -38.f, 100.f));
+	SupportCible *supportCible2 = new SupportCible(mgr, glm::vec3(-77.f, 15.f, 150.f));
 	Cible *cible2 = new Cible(mgr, supportCible2, world);
 	entities.push_back(supportCible2);
 	entities.push_back(cible2);
 	cibles.push_back(cible2);
 
-	SupportCible *supportCible3 = new SupportCible(mgr, glm::vec3(-45.f, -40.f, 100.f));
+	SupportCible *supportCible3 = new SupportCible(mgr, glm::vec3(73.f, 15.f, 40.f));
 	Cible *cible3 = new Cible(mgr, supportCible3, world);
 	entities.push_back(supportCible3);
 	entities.push_back(cible3);

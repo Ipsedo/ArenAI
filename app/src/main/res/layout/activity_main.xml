@@ -19,11 +19,15 @@
 			<Button
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
+				android:background="@drawable/button"
+				android:layout_margin="@dimen/stroke_width"
 				android:text="Normal"
 				android:onClick="normal"/>
 			<Button
 					android:layout_width="match_parent"
 					android:layout_height="wrap_content"
+					android:background="@drawable/button"
+					android:layout_margin="@dimen/stroke_width"
 					android:text="VR"
 					android:onClick="vr"/>
 		</LinearLayout>
@@ -33,6 +37,8 @@
 				android:id="@+id/level_picker"
 				android:descendantFocusability="blocksDescendants"
 				android:layout_weight="0.75"
+				android:background="@drawable/picker"
+				android:layout_margin="@dimen/stroke_width"
 				android:layout_width="match_parent"
 				android:layout_height="match_parent"/>
 	</LinearLayout>
@@ -41,6 +47,8 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:text="Configure controls"
+			android:background="@drawable/button"
+			android:layout_margin="@dimen/stroke_width"
 			android:onClick="configureControls"/>
 
 </LinearLayout>

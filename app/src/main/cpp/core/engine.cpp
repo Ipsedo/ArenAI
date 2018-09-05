@@ -11,21 +11,6 @@
 static float gravity = -10.f;
 static float deltaTime = 1.f / 60.f;
 
-bool contact_callback(btManifoldPoint &btmanifoldpoint, const btCollisionObjectWrapper *btcollisionobject0, int part_0,
-					  int index_0, const btCollisionObjectWrapper *btcollisionobject1, int part_1, int index_1) {
-
-	btRigidBody *body0 = (btRigidBody *) btRigidBody::upcast(btcollisionobject0->getCollisionObject());
-	btRigidBody *body1 = (btRigidBody *) btRigidBody::upcast(btcollisionobject1->getCollisionObject());
-
-	Base *downcast0 = static_cast<Base *>(body0);
-	Base *downcast1 = static_cast<Base *>(body1);
-
-	downcast0->decreaseLife(1);
-	downcast1->decreaseLife(1);
-
-	return false;
-}
-
 bool callback_finish(void *userPersistentData) {
 	tuple<Base *, Base *> *t = (tuple<Base *, Base *> *) userPersistentData;
 
@@ -66,7 +51,6 @@ Engine::Engine(Level *level, AAssetManager *mgr)
 										collisionConfiguration);
 	world->setGravity(btVector3(0, gravity, 0));
 
-	//gContactAddedCallback = contact_callback;
 	gContactDestroyedCallback = callback_finish;
 	gContactProcessedCallback = callback_processed;
 }

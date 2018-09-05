@@ -23,12 +23,23 @@ void Level1::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
 	Map *sol = new Map(array, img.width, img.height, btVector3(0.f, 40.f, 0.f), btVector3(10.f, 200.f, 10.f));
 	entities.push_back(sol);
 
-	SupportCible *supportCible = new SupportCible(mgr, glm::vec3(5.f, -40.f, 100.f));
-	Cible *cible = new Cible(mgr, supportCible, world);
-	entities.push_back(supportCible);
-	entities.push_back(cible);
+	SupportCible *supportCible1 = new SupportCible(mgr, glm::vec3(5.f, -40.f, 100.f));
+	Cible *cible1 = new Cible(mgr, supportCible1, world);
+	entities.push_back(supportCible1);
+	entities.push_back(cible1);
+	cibles.push_back(cible1);
 
-	cibles.push_back(cible);
+	SupportCible *supportCible2 = new SupportCible(mgr, glm::vec3(50.f, -38.f, 100.f));
+	Cible *cible2 = new Cible(mgr, supportCible2, world);
+	entities.push_back(supportCible2);
+	entities.push_back(cible2);
+	cibles.push_back(cible2);
+
+	SupportCible *supportCible3 = new SupportCible(mgr, glm::vec3(-45.f, -40.f, 100.f));
+	Cible *cible3 = new Cible(mgr, supportCible3, world);
+	entities.push_back(supportCible3);
+	entities.push_back(cible3);
+	cibles.push_back(cible3);
 
 	map = new CubeMap(mgr, "cubemap/1/", 1000.f);
 

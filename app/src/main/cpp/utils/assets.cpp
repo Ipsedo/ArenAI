@@ -20,7 +20,12 @@ std::string getFileText(AAssetManager *mgr, std::string fileName) {
 
 	// Do whatever you want with the content of the file
 	AAsset_close(file);
-	return std::string(fileContent);
+
+	std::string res = std::string(fileContent);
+
+	delete[] fileContent;
+
+	return res;
 }
 
 void userReadData(png_structp pngPtr, png_bytep data, png_size_t length) {
@@ -43,8 +48,8 @@ libpng_image readPNG(AAssetManager *mgr, std::string pngName) {
 	char header[8];
 	AAsset_read(file, header, 8);
 	if (png_sig_cmp((png_byte*)header, 0, 8)) {
-		//exit(0);
 		__android_log_print(ANDROID_LOG_DEBUG, "PhyVR", "unrecognize png sig %s", pngName.c_str());
+		exit(667);
 	}
 
 	// http://www.piko3d.net/tutorials/libpng-tutorial-loading-png-files-from-streams/

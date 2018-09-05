@@ -62,5 +62,10 @@ btConvexHullShape *parseObj(std::string objFileText) {
 		);
 		shape->addPoint(point, true);
 	}
+
+	vertex_draw_order.clear();
+	vertex_list.clear();
+	lines.clear();
+
 	return shape;
 }

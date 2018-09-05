@@ -25,6 +25,7 @@ Java_com_samuelberrien_phyvr_controls_Controls_control(JNIEnv *env, jobject inst
 	in.fire = fire;
 	for (Controls *c : ctrl)
 		c->onInput(in);
+	ctrl.clear();
 }
 
 extern "C"
@@ -48,5 +49,6 @@ Java_com_samuelberrien_phyvr_controls_Controls_control2(JNIEnv *env, jobject ins
 
 	delete[] controls;
 	env->ReleaseFloatArrayElements(arrayControl_, arrayControl, 0);
+	ctrl.clear();
 }
 

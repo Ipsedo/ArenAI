@@ -9,6 +9,7 @@
 #include "cible.h"
 #include "../../entity/vehicles/tank/tank.h"
 #include "../../entity/ground/map.h"
+#include "../../graphics/drawable/cubemap.h"
 
 /**
  * Niveau 0 (training)
@@ -50,6 +51,8 @@ private:
 	Tank *tank;
 
 	vector<Cible *> cibles;
+
+	CubeMap *map;
 };
 
 

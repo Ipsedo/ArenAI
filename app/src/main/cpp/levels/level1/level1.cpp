@@ -30,6 +30,8 @@ void Level1::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
 
 	cibles.push_back(cible);
 
+	map = new CubeMap(mgr, "cubemap/1/", 1000.f);
+
 	isInit = true;
 }
 
@@ -64,6 +66,7 @@ vector<Drawable *> Level1::getDrawables() {
 	vector<Drawable *> d;
 	for (Base *b : entities)
 		d.push_back(b);
+	d.push_back(map);
 	return d;
 }
 

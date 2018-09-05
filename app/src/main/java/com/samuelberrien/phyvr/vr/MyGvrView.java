@@ -1,5 +1,6 @@
 package com.samuelberrien.phyvr.vr;
 
+import android.app.Activity;
 import android.content.Context;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -7,6 +8,7 @@ import com.google.vr.sdk.base.Eye;
 import com.google.vr.sdk.base.GvrView;
 import com.google.vr.sdk.base.HeadTransform;
 import com.google.vr.sdk.base.Viewport;
+import com.samuelberrien.phyvr.MainActivity;
 import com.samuelberrien.phyvr.controls.Controls;
 import com.samuelberrien.phyvr.wrappers.MainWrappers;
 
@@ -17,7 +19,9 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 	public MyGvrView(Context context) {
 		super(context);
 		setEGLContextClientVersion(2);
-		mainWrappers = new MainWrappers(getContext(), true);
+		mainWrappers = new MainWrappers(getContext(),
+				true,
+				((Activity) getContext()).getIntent().getIntExtra(MainActivity.levelIdxExtraStr, 0));
 		setRenderer(this);
 	}
 

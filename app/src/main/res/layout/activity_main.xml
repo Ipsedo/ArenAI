@@ -7,17 +7,35 @@
 		android:orientation="vertical"
 		tools:context=".MainActivity">
 
-	<Button
+	<LinearLayout
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:text="Normal"
-			android:onClick="normal"/>
+			android:orientation="horizontal">
+		<LinearLayout
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:orientation="vertical"
+				android:layout_weight="0.25">
+			<Button
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="Normal"
+				android:onClick="normal"/>
+			<Button
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:text="VR"
+					android:onClick="vr"/>
+		</LinearLayout>
 
-	<Button
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:text="VR"
-			android:onClick="vr"/>
+
+		<NumberPicker
+				android:id="@+id/level_picker"
+				android:descendantFocusability="blocksDescendants"
+				android:layout_weight="0.75"
+				android:layout_width="match_parent"
+				android:layout_height="match_parent"/>
+	</LinearLayout>
 
 	<Button
 			android:layout_width="match_parent"

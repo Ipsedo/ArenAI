@@ -5,15 +5,20 @@
 #include <jni.h>
 #include <android/asset_manager_jni.h>
 #include "../core/engine.h"
-#include "../levels/level0/level0.h"
+#include "../levels/level1/level1.h"
+#include "../levels/level_demo/level_demo.h"
 #include "../levels/level.h"
 
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_com_samuelberrien_phyvr_wrappers_MainWrappers_makeLevel(JNIEnv *env, jobject instance) {
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_makeLevel(JNIEnv *env, jobject instance, jint levelId) {
 	nbNew = 0;
 	nbDel = 0;
-	return (long) new Level0();//LevelDemo();
+	switch (int(levelId)) {
+		case 0: return (long) new LevelDemo();
+		case 1: return (long) new Level1();
+		default: return (long) new LevelDemo();
+	}
 }
 
 extern "C"

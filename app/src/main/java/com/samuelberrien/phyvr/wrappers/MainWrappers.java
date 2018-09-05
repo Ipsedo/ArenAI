@@ -25,15 +25,18 @@ public class MainWrappers {
 	private boolean isFree;
 	private boolean isFreeable;
 
-	public MainWrappers(Context context, boolean vr) {
+	private int levelIdx;
+
+	public MainWrappers(Context context, boolean vr, int levelIdx) {
 		this.context = context;
 		this.vr = vr;
 		isFree = false;
 		isFreeable = false;
+		this.levelIdx = levelIdx;
 	}
 
 	public void init() {
-		levelPtr = makeLevel();
+		levelPtr = makeLevel(levelIdx);
 		enginePtr = makeEngine(levelPtr, context.getAssets());
 		initLevel(context.getAssets(), vr, levelPtr, enginePtr);
 		rendererPtr = makeRenderer(levelPtr);
@@ -82,7 +85,7 @@ public class MainWrappers {
 
 	public boolean isInit() { return isFreeable; }
 
-	private native long makeLevel();
+	private native long makeLevel(int id);
 	private native void initLevel(AssetManager manager, boolean isVR, long levelPtr, long enginePtr);
 	private native boolean hasWon(long levelPtr);
 	private native boolean hasLose(long levelPtr);

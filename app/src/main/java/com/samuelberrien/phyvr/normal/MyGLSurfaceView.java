@@ -10,6 +10,7 @@ import android.opengl.Matrix;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import com.samuelberrien.phyvr.MainActivity;
 import com.samuelberrien.phyvr.controls.Controls;
 import com.samuelberrien.phyvr.wrappers.MainWrappers;
 
@@ -49,7 +50,9 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 	}
 
 	private void initWrappers() {
-		mainWrappers = new MainWrappers(getContext(), false);
+		mainWrappers = new MainWrappers(getContext(),
+				false,
+				((Activity) getContext()).getIntent().getIntExtra(MainActivity.levelIdxExtraStr, 0));
 	}
 
 	@Override

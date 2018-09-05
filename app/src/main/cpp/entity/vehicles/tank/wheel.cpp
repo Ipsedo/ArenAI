@@ -75,7 +75,7 @@ void Wheel::update() {
 
 	int motorAxis = 3;
 	hinge->enableMotor(motorAxis, isMotorEnabled);
-	hinge->setTargetVelocity(motorAxis, -targetSpeed * 10.f);
+	hinge->setTargetVelocity(motorAxis, -targetSpeed * 15.f);
 
 	if (respawn) {
 		btTransform tr;

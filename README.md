@@ -1,7 +1,7 @@
 # PhyVR
 __Samuel Berrien__
 
-https://play.google.com/store/apps/details?id=com.samuelberrien.phyvr
+[Google Play Link](https://play.google.com/store/apps/details?id=com.samuelberrien.phyvr)
 
 ## Infos
 used libraries :
@@ -13,6 +13,15 @@ used libraries :
 VR cardboard or normal vision
 
 A bluetooth controller is required
+
+Git 1.6.5 to 2.12 :
+```renderscript
+git clone  --recursive https://github.com/Ipsedo/PhyVR.git
+```
+Git 2.13 or later :
+```renderscript
+git clone --recurse-submodules https://github.com/Ipsedo/PhyVR.git
+```
     
 ## Description
 Allow the players an experience more than immersive.

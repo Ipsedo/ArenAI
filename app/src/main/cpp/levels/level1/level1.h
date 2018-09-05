@@ -2,8 +2,8 @@
 // Created by samuel on 29/08/18.
 //
 
-#ifndef PHYVR_LEVEL0_H
-#define PHYVR_LEVEL0_H
+#ifndef PHYVR_LEVEL1_H
+#define PHYVR_LEVEL1_H
 
 #include "../level.h"
 #include "cible.h"
@@ -17,10 +17,10 @@
  * 2) tirer sur des cibles
  * 	  les cibles sont montées sur charnière et basculent
  */
-class Level0 : public Level {
+class Level1 : public Level {
 
 public:
-	Level0();
+	Level1();
 
 	void init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) override;
 
@@ -42,7 +42,7 @@ public:
 
 	void step() override ;
 
-	~Level0() override;
+	~Level1() override;
 
 private:
 	bool isInit;

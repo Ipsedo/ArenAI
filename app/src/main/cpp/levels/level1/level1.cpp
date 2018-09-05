@@ -2,13 +2,13 @@
 // Created by samuel on 29/08/18.
 //
 
-#include "level0.h"
+#include "level1.h"
 #include "../../entity/vehicles/tank/tank.h"
 #include "../../entity/ground/map.h"
 
-Level0::Level0() : isInit(false), cibles(vector<Cible *>()) {}
+Level1::Level1() : isInit(false), cibles(vector<Cible *>()) {}
 
-void Level0::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
+void Level1::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
 	Level::init(isVR, mgr, world);
 	tank = new Tank(isVR, mgr, world, btVector3(5.f, -35.f, 20.f));
 	vector<Base *> tankBases = tank->getBase();
@@ -33,31 +33,31 @@ void Level0::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
 	isInit = true;
 }
 
-vector<Controls *> Level0::getControls() {
+vector<Controls *> Level1::getControls() {
 	if (!isInit)
 		return vector<Controls *>();
 	return tank->getControls();
 }
 
-Camera *Level0::getCamera() {
+Camera *Level1::getCamera() {
 	if (!isInit)
 		return nullptr;
 	return tank->getCamera();
 }
 
-vector<Shooter *> Level0::getShooters() {
+vector<Shooter *> Level1::getShooters() {
 	if (!isInit)
 		return vector<Shooter *>();
 	return tank->getShooters();
 }
 
-vector<Base *> Level0::getEntities() {
+vector<Base *> Level1::getEntities() {
 	if (!isInit)
 		return vector<Base *>();
 	return entities;
 }
 
-vector<Drawable *> Level0::getDrawables() {
+vector<Drawable *> Level1::getDrawables() {
 	if (!isInit)
 		return vector<Drawable *>();
 
@@ -67,27 +67,27 @@ vector<Drawable *> Level0::getDrawables() {
 	return d;
 }
 
-Limits Level0::getLimits() {
+Limits Level1::getLimits() {
 	glm::vec3 start(-1000.f, -200.f, -1000.f);
 	glm::vec3 end(1000.f, 200.f, 1000.f);
 	return BoxLimits(start, end - start);
 }
 
-bool Level0::won() {
+bool Level1::won() {
 	bool won = true;
 	for (Cible *c : cibles)
 		won &= c->isWon();
 	return won;
 }
 
-bool Level0::lose() {
+bool Level1::lose() {
 	return false;
 }
 
-void Level0::step() {
+void Level1::step() {
 
 }
 
-Level0::~Level0() {
+Level1::~Level1() {
 
 }

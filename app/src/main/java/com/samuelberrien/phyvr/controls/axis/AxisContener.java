@@ -41,7 +41,7 @@ public class AxisContener extends RelativeLayout implements SharedPreferences.On
 
 		text = new TextView(context);
 		text.setGravity(Gravity.CENTER);
-		text.setBackground(ContextCompat.getDrawable(context, R.drawable.axis_contener_text));
+		text.setBackground(ContextCompat.getDrawable(context, R.drawable.control_text));
 		setText(pref);
 
 		addView(axisGage, axisGage.makeLayoutParams());
@@ -80,7 +80,7 @@ public class AxisContener extends RelativeLayout implements SharedPreferences.On
 						.putInt(key, i)
 						.putBoolean(key + "?", v > 0.f)
 						.apply();
-				text.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.axis_contener_text));
+				text.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.control_text));
 				text.requestLayout();
 				listening = false;
 				handled = true;
@@ -99,7 +99,7 @@ public class AxisContener extends RelativeLayout implements SharedPreferences.On
 				@Override
 				public void run() {
 					post(() -> {
-						text.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.axis_contener_text));
+						text.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.control_text));
 						text.requestLayout();
 						listening = false;
 					});

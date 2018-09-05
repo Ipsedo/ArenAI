@@ -38,7 +38,7 @@ public class ButtonContener extends RelativeLayout implements SharedPreferences.
 
 		text = new TextView(context);
 		text.setGravity(Gravity.CENTER);
-		text.setBackground(ContextCompat.getDrawable(context, android.R.color.transparent));
+		text.setBackground(ContextCompat.getDrawable(context, R.drawable.control_text));
 
 		pref = context.getSharedPreferences(Button.buttonPref, Context.MODE_PRIVATE);
 		setText(pref);
@@ -68,7 +68,7 @@ public class ButtonContener extends RelativeLayout implements SharedPreferences.
 		for (int i = KeyEvent.KEYCODE_BUTTON_A; i < KeyEvent.KEYCODE_BUTTON_MODE; i++) {
 			if (keyCode == i) {
 				pref.edit().putInt(button.getMap().getName(), keyCode).apply();
-				text.setBackground(ContextCompat.getDrawable(getContext(), android.R.color.transparent));
+				text.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.control_text));
 				text.requestLayout();
 				listening = false;
 				handled = true;
@@ -94,7 +94,7 @@ public class ButtonContener extends RelativeLayout implements SharedPreferences.
 				@Override
 				public void run() {
 					post(() -> {
-						text.setBackground(ContextCompat.getDrawable(getContext(), android.R.color.transparent));
+						text.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.control_text));
 						text.requestLayout();
 						listening = false;
 					});

@@ -35,13 +35,11 @@ public:
 
 	static DiffuseModel *makeModel(AAssetManager *mgr, string objFileName) {
 		string objTxt = getFileText(mgr, objFileName);
-		float color[4]{
-				(float) rand() / RAND_MAX,
-				(float) rand() / RAND_MAX,
-				(float) rand() / RAND_MAX,
-				1.f
-		};
-		return new ModelVBO(objTxt, color);
+		return new ModelVBO(objTxt,
+							(float) rand() / RAND_MAX,
+							(float) rand() / RAND_MAX,
+							(float) rand() / RAND_MAX,
+							1.f);
 	};
 };
 

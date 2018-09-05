@@ -120,5 +120,5 @@ void FrontWheel::update() {
 
 ModelVBO *Wheel::makeWheelMesh(AAssetManager *mgr) {
 	std::string cylObjText = getFileText(mgr, "obj/cylinderX.obj");
-	return new ModelVBO(cylObjText, wheelColor);
+	return new ModelVBO(cylObjText, wheelColor[0], wheelColor[1], wheelColor[2], wheelColor[3]);
 }

@@ -53,7 +53,7 @@ bool callback_processed(btManifoldPoint &cp, void *body0, void *body1) {
 
 Engine::Engine(Level *level, AAssetManager *mgr)
 		: level(level),
-		  explosion(new TransparentModelVBO(getFileText(mgr, "obj/sphere.obj"), new float[4]{1.f, 0.6f, 0.f, 0.7f})) {
+		  explosion(new TransparentModelVBO(getFileText(mgr, "obj/sphere.obj"), 1.f, 0.6f, 0.f, 0.7f)) {
 
 	collisionConfiguration = new btDefaultCollisionConfiguration();
 	dispatcher = new btCollisionDispatcher(collisionConfiguration);

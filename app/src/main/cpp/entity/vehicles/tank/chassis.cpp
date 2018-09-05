@@ -11,7 +11,7 @@
 
 ModelVBO *makeChassisModel(AAssetManager *mgr) {
 	std::string chassisObjTxt = getFileText(mgr, "obj/tank_chassis.obj");
-	return new ModelVBO(chassisObjTxt, chassisColor);
+	return new ModelVBO(chassisObjTxt, chassisColor[0], chassisColor[1], chassisColor[2], chassisColor[3]);
 }
 
 Chassis::Chassis(AAssetManager *mgr, btVector3 pos)

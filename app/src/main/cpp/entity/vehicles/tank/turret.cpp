@@ -19,7 +19,7 @@
 
 ModelVBO *makeTurretModel(AAssetManager *mgr) {
 	string turretObjTxt = getFileText(mgr, "obj/tank_turret.obj");
-	return new ModelVBO(turretObjTxt, turretColor);
+	return new ModelVBO(turretObjTxt, turretColor[0], turretColor[1], turretColor[2], turretColor[3]);
 }
 
 Turret::Turret(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos)
@@ -77,11 +77,11 @@ void Turret::update() {
 
 ModelVBO *makeCanonModel(AAssetManager *mgr) {
 	string canonObjTxt = getFileText(mgr, "obj/cylinderZ.obj");
-	return new ModelVBO(canonObjTxt, turretColor);
+	return new ModelVBO(canonObjTxt, turretColor[0], turretColor[1], turretColor[2], turretColor[3]);
 }
 
 ModelVBO *makeMissileModel(AAssetManager *mgr) {
-	return new ModelVBO(getFileText(mgr, "obj/cone.obj"), new float[4]{0.2f, 0.7f, 0.05f, 1.f});
+	return new ModelVBO(getFileText(mgr, "obj/cone.obj"), 0.2f, 0.7f, 0.05f, 1.f);
 }
 
 Canon::Canon(AAssetManager *mgr, btDynamicsWorld *world, Base *turret, btVector3 turretPos)

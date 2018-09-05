@@ -23,12 +23,12 @@ class ModelVBO : public DiffuseModel {
 public:
 	ModelVBO(std::string obj_file_text);
 
-	ModelVBO(std::string obj_file_text, float color[4]);
+	ModelVBO(std::string obj_file_text, float r, float g, float b, float a);
 };
 
 class TransparentModelVBO : public ModelVBO {
 public:
-	TransparentModelVBO(const string &obj_file_text, float *color);
+	TransparentModelVBO(const string &obj_file_text, float r, float g, float b, float a);
 
 	TransparentModelVBO(const string &obj_file_text);
 

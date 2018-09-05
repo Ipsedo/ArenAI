@@ -22,7 +22,7 @@ ModelVBO::ModelVBO(string obj_file_text) {
 	this->color[3] = 1.f;
 }
 
-ModelVBO::ModelVBO(string obj_file_text, float color[4]) {
+ModelVBO::ModelVBO(string obj_file_text, float r, float g, float b, float a) {
 	init();
 	bind();
 	bindBuffer(parseObj(obj_file_text));
@@ -30,9 +30,10 @@ ModelVBO::ModelVBO(string obj_file_text, float color[4]) {
 	lightCoef = 1;
 	distanceCoef = 0;
 
-	for (int i = 0; i < 4; i++) {
-		this->color[i] = color[i];
-	}
+	color[0] = r;
+	color[1] = g;
+	color[2] = b;
+	color[3] = a;
 }
 
 std::vector<float> ModelVBO::parseObj(string obj_file_text) {
@@ -98,7 +99,8 @@ std::vector<float> ModelVBO::parseObj(string obj_file_text) {
 	return packedData;
 }
 
-TransparentModelVBO::TransparentModelVBO(const string &obj_file_text, float *color) : ModelVBO(obj_file_text, color) {}
+TransparentModelVBO::TransparentModelVBO(const string &obj_file_text, float r, float g, float b, float a)
+		: ModelVBO(obj_file_text, r, g, b, a) {}
 
 TransparentModelVBO::TransparentModelVBO(const string &obj_file_text) : ModelVBO(obj_file_text) {}
 

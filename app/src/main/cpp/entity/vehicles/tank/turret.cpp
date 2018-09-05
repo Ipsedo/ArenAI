@@ -23,14 +23,14 @@ ModelVBO *makeTurretModel(AAssetManager *mgr) {
 }
 
 Turret::Turret(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos)
-		: Poly(Poly::makeCInfo([mgr](glm::vec3 scale) {
+		: Poly([mgr](glm::vec3 scale) {
 								   string turretObjTxt = getFileText(mgr, "obj/tank_turret.obj");
 								   btCollisionShape *turretShape = parseObj(turretObjTxt);
 								   turretShape->setLocalScaling(btVector3(turretScale.x, turretScale.y, turretScale.z));
 								   return turretShape;
 							   },
-							   btVector3ToVec3(chassisPos + turretRelPos), glm::mat4(1.0f), turretScale, turretMass),
-			   makeTurretModel(mgr), turretScale, true),
+			   makeTurretModel(mgr),
+			   btVector3ToVec3(chassisPos + turretRelPos), turretScale, glm::mat4(1.0f),  turretMass, true),
 		  angle(0.f), respawn(false), pos(chassisPos + turretRelPos) {
 	btTransform tr;
 	tr.setIdentity();
@@ -85,11 +85,12 @@ ModelVBO *makeMissileModel(AAssetManager *mgr) {
 }
 
 Canon::Canon(AAssetManager *mgr, btDynamicsWorld *world, Base *turret, btVector3 turretPos)
-		: Poly(Poly::makeCInfo([mgr](glm::vec3 scale) {
+		: Poly([mgr](glm::vec3 scale) {
 				   string canonObjTxt = getFileText(mgr, "obj/cylinderZ.obj");
 				   return new btCylinderShapeZ(btVector3(canonScale.x, canonScale.y, canonScale.z));
-			   }, btVector3ToVec3(turretPos + canonRelPos), glm::mat4(1.0f), canonScale, canonMass),
-			   makeCanonModel(mgr), canonScale, true),
+			   },
+			   makeCanonModel(mgr), btVector3ToVec3(turretPos + canonRelPos),
+			   canonScale, glm::mat4(1.0f),  canonMass, true),
 		  angle(0.f), respawn(false), pos(turretPos + canonRelPos), hasClickedShoot(false),
 		  missile(makeMissileModel(mgr)), maxFramesFire(25), fireCounter(0) {
 	btRigidBody *pBodyA = turret;

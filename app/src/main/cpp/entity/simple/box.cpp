@@ -13,4 +13,4 @@ auto l = [](glm::vec3 scale) {
 };
 
 Box::Box(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass)
-		: Poly(Poly::makeCInfo(l, pos, rotMat, scale, mass), Poly::makeModel(mgr, "obj/cube.obj"), scale, true) {}
+		: Poly(l, Poly::makeModel(mgr, "obj/cube.obj"), pos, scale, rotMat, mass, true) {}

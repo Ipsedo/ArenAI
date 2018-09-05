@@ -12,11 +12,7 @@
 #include <glm/gtc/quaternion.hpp>
 
 class Poly : public Base {
-public:
-	Poly(const btRigidBodyConstructionInfo &constructionInfo, DiffuseModel *modelVBO, const glm::vec3 &scale,
-		 bool hasOwnModel) : Base(
-			constructionInfo, modelVBO, scale, hasOwnModel) {}
-
+private:
 	template<typename FunShape>
 	static btRigidBodyConstructionInfo makeCInfo(FunShape makeShapFun, glm::vec3 pos,
 												 glm::mat4 rotMat, glm::vec3 scale, float mass) {
@@ -30,6 +26,12 @@ public:
 
 		return localCreateInfo(mass, myTransform, shape);
 	};
+
+public:
+	template<typename FunShape>
+	Poly(FunShape makeShapFun, DiffuseModel *modelVBO, const glm::vec3 pos,
+		 const glm::vec3 &scale, glm::mat4 rotMat, float mass, bool hasOwnModel) : Base(
+			makeCInfo(makeShapFun, pos, rotMat, scale, mass), modelVBO, scale, hasOwnModel) {}
 
 	static DiffuseModel *makeModel(AAssetManager *mgr, string objFileName) {
 		string objTxt = getFileText(mgr, objFileName);

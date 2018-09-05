@@ -24,8 +24,8 @@ auto l = [](glm::vec3 scale) {
 };
 
 Explosion::Explosion(btVector3 pos, DiffuseModel *modelVBO)
-	: Poly(Poly::makeCInfo(l, glm::vec3(pos.x(), pos.y(), pos.z()), glm::mat4(1.f), glm::vec3(getSize(0)), MASS),
-		   modelVBO, glm::vec3(getSize(0)), false), nbFrames(MAX_FRAMES) {}
+	: Poly(l, modelVBO, glm::vec3(pos.x(), pos.y(), pos.z()), glm::vec3(getSize(0)),
+		   glm::mat4(1.f), MASS, false), nbFrames(MAX_FRAMES) {}
 
 bool Explosion::isDead() {
 	return nbFrames <= 0;

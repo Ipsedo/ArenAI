@@ -14,5 +14,4 @@ auto l = [](glm::vec3 scale) {
 };
 
 Cylinder::Cylinder(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotationMatrix, float mass)
-		: Poly(Poly::makeCInfo(l, pos, rotationMatrix, scale, mass), Poly::makeModel(mgr, "obj/cylinder.obj"), scale,
-			   true) {}
+		: Poly(l, Poly::makeModel(mgr, "obj/cylinder.obj"), pos,  scale, rotationMatrix, mass, true) {}

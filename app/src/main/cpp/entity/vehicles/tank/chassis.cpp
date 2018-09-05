@@ -15,11 +15,12 @@ ModelVBO *makeChassisModel(AAssetManager *mgr) {
 }
 
 Chassis::Chassis(AAssetManager *mgr, btVector3 pos)
-		: Poly(Poly::makeCInfo([mgr](glm::vec3 scale) {
+		: Poly([mgr](glm::vec3 scale) {
 				   std::string chassisObjTxt = getFileText(mgr, "obj/tank_chassis.obj");
 				   return parseObj(chassisObjTxt);
-			   }, btVector3ToVec3(pos), glm::mat4(1.0f), chassisScale, chassisMass),
-			   makeChassisModel(mgr), chassisScale, true), respawn(false), pos(pos) {}
+			   },
+			   makeChassisModel(mgr), glm::vec3(pos.x(), pos.y(), pos.z()),
+			   chassisScale, glm::mat4(1.0f), chassisMass, true), respawn(false), pos(pos) {}
 
 void Chassis::onInput(input in) {
 	respawn = in.respawn;

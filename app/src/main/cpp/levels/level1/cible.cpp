@@ -17,13 +17,15 @@ Cible::Cible(AAssetManager *mgr, SupportCible *supportCible, btDynamicsWorld *wo
 	btRigidBody *pBodyA = supportCible;
 	btRigidBody *pBodyB = this;
 
-	btVector3 pivotA = HEIGHT_SUPPORT * btVector3(0, supportCible->getCollisionShape()->getLocalScaling().y(), 0);
+	btVector3 pivotA = btVector3(0, HEIGHT_SUPPORT, 0);
 	btVector3 pivotB = btVector3(0.f, -scale.y, 0.f);
 	btVector3 axis = btVector3(1.f, 0.f, 0.f);
 
 	hinge = new btHingeConstraint(*pBodyA, *pBodyB, pivotA, pivotB, axis, axis, true);
 	world->addConstraint(hinge, true);
 	hinge->setLimit((float) (-M_PI * 1e-1), (float) (M_PI * 0.5));
+
+	setIgnoreCollisionCheck(supportCible, true);
 }
 
 bool Cible::isWon() {

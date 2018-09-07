@@ -10,6 +10,7 @@
 #include "../../entity/vehicles/tank/tank.h"
 #include "../../entity/ground/map.h"
 #include "../../graphics/drawable/cubemap.h"
+#include "../../ui/compass.h"
 
 /**
  * Niveau 0 (training)
@@ -51,6 +52,8 @@ private:
 	Tank *tank;
 
 	vector<Cible *> cibles;
+
+	vector<Compass *> compass;
 
 	CubeMap *map;
 };

@@ -6,7 +6,7 @@
 #include "../../entity/vehicles/tank/tank.h"
 #include "../../entity/ground/map.h"
 
-Level1::Level1() : isInit(false), cibles(vector<Cible *>()) {}
+Level1::Level1() : isInit(false), cibles(vector<Cible *>()), compass(vector<Compass *>()) {}
 
 void Level1::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
 	Level::init(isVR, mgr, world);
@@ -28,18 +28,21 @@ void Level1::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
 	entities.push_back(supportCible1);
 	entities.push_back(cible1);
 	cibles.push_back(cible1);
+	compass.push_back(new Compass(cible1));
 
 	SupportCible *supportCible2 = new SupportCible(mgr, glm::vec3(-77.f, 15.f, 150.f));
 	Cible *cible2 = new Cible(mgr, supportCible2, world);
 	entities.push_back(supportCible2);
 	entities.push_back(cible2);
 	cibles.push_back(cible2);
+	compass.push_back(new Compass(cible2));
 
 	SupportCible *supportCible3 = new SupportCible(mgr, glm::vec3(73.f, 15.f, 40.f));
 	Cible *cible3 = new Cible(mgr, supportCible3, world);
 	entities.push_back(supportCible3);
 	entities.push_back(cible3);
 	cibles.push_back(cible3);
+	compass.push_back(new Compass(cible3));
 
 	map = new CubeMap(mgr, "cubemap/1/", 1000.f);
 
@@ -77,6 +80,9 @@ vector<Drawable *> Level1::getDrawables() {
 	vector<Drawable *> d;
 	for (Base *b : entities)
 		d.push_back(b);
+	for (int i = 0; i < compass.size(); i++)
+		if (!cibles[i]->isWon())
+			d.push_back(compass[i]);
 	d.push_back(map);
 	return d;
 }

@@ -117,6 +117,7 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 								(DialogInterface dialogInterface, int i) -> {
 									((Activity) getContext()).finish();
 								})
+						.setCancelable(false)
 						.create()
 						.show();
 				setRenderMode(RENDERMODE_WHEN_DIRTY);

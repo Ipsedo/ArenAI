@@ -12,6 +12,7 @@ struct draw_infos {
 	glm::mat4 view_matrix;
 	glm::vec3 light_pos;
 	glm::vec3 camera_pos;
+	bool VR;
 };
 
 class Drawable {

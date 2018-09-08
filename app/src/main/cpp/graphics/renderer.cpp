@@ -25,9 +25,10 @@ Renderer::Renderer(Level *level) : level(level), VR(false) {
 }
 
 void Renderer::update(glm::mat4 mHeadView, bool VR) {
-	camPos = level->getCamera()->camPos(VR);
-	camLookAtVec = level->getCamera()->camLookAtVec(VR);
-	camUpVec = level->getCamera()->camUpVec(VR);
+	Camera *c = level->getCamera();
+	camPos = c->camPos(VR);
+	camLookAtVec = c->camLookAtVec(VR);
+	camUpVec = c->camUpVec(VR);
 	this->VR = VR;
 }
 
@@ -59,6 +60,7 @@ void Renderer::draw(glm::mat4 mEyeProjectionMatrix,
 	infos.view_matrix = mViewMatrix;
 	infos.light_pos = glm::vec3(lightPos.x, lightPos.y, lightPos.z);
 	infos.camera_pos = camPos;
+	infos.VR = VR;
 
 	for (Drawable *b : level->getDrawables())
 		b->draw(infos);

@@ -11,6 +11,7 @@
 #include "../../../graphics/camera.h"
 #include "wheel.h"
 #include "turret.h"
+#include "canon.h"
 
 class Tank : public Player {
 private:

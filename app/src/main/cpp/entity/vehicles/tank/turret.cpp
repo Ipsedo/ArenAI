@@ -19,13 +19,13 @@ ModelVBO *makeTurretModel(AAssetManager *mgr) {
 
 Turret::Turret(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos)
 		: Poly([mgr](glm::vec3 scale) {
-								   string turretObjTxt = getFileText(mgr, "obj/tank_turret.obj");
-								   btCollisionShape *turretShape = parseObj(turretObjTxt);
-								   turretShape->setLocalScaling(btVector3(turretScale.x, turretScale.y, turretScale.z));
-								   return turretShape;
-							   },
+				   string turretObjTxt = getFileText(mgr, "obj/tank_turret.obj");
+				   btCollisionShape *turretShape = parseObj(turretObjTxt);
+				   turretShape->setLocalScaling(btVector3(turretScale.x, turretScale.y, turretScale.z));
+				   return turretShape;
+			   },
 			   makeTurretModel(mgr),
-			   btVector3ToVec3(chassisPos + turretRelPos), turretScale, glm::mat4(1.0f),  turretMass, true),
+			   btVector3ToVec3(chassisPos + turretRelPos), turretScale, glm::mat4(1.0f), turretMass, true),
 		  angle(0.f), respawn(false), added(0.f), pos(chassisPos + turretRelPos) {
 	btTransform tr;
 	tr.setIdentity();

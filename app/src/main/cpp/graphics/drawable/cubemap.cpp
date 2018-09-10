@@ -26,7 +26,7 @@ string cube_fs = "precision mediump float;\n"
 		"}";
 
 CubeMap::CubeMap(AAssetManager *mgr, string cubeMapAssetPath, float sideLength)
-	: modelMatrix(glm::scale(glm::mat4(1.f), glm::vec3(sideLength))){
+		: modelMatrix(glm::scale(glm::mat4(1.f), glm::vec3(sideLength))) {
 	makeProgram();
 	bind();
 	loadCubeMaptexture(mgr, cubeMapAssetPath);

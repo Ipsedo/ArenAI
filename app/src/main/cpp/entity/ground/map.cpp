@@ -67,7 +67,7 @@ DiffuseModel *makeMapModel(btHeightfieldTerrainShape *map) {
 
 btHeightfieldTerrainShape *makeTerrainShape(float *normalizedHeightValues, int width, int length, btVector3 scale) {
 	auto map = new btHeightfieldTerrainShape(width, length, normalizedHeightValues, 1.f, 0.f, 1.f,
-								  1, PHY_FLOAT, false);
+											 1, PHY_FLOAT, false);
 	map->setLocalScaling(btVector3(scale));
 	return map;
 }

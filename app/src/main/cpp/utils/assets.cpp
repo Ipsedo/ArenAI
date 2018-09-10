@@ -30,7 +30,7 @@ std::string getFileText(AAssetManager *mgr, std::string fileName) {
 
 void userReadData(png_structp pngPtr, png_bytep data, png_size_t length) {
 	png_voidp a = png_get_io_ptr(pngPtr);
-	AAsset_read((AAsset*) a, (char*)data, length);
+	AAsset_read((AAsset *) a, (char *) data, length);
 }
 
 bool validatePNG(AAssetManager *mgr, std::string pngName) {
@@ -47,7 +47,7 @@ libpng_image readPNG(AAssetManager *mgr, std::string pngName) {
 
 	char header[8];
 	AAsset_read(file, header, 8);
-	if (png_sig_cmp((png_byte*)header, 0, 8)) {
+	if (png_sig_cmp((png_byte *) header, 0, 8)) {
 		__android_log_print(ANDROID_LOG_DEBUG, "PhyVR", "unrecognize png sig %s", pngName.c_str());
 		exit(667);
 	}
@@ -61,16 +61,16 @@ libpng_image readPNG(AAssetManager *mgr, std::string pngName) {
 	png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	info_ptr = png_create_info_struct(png_ptr);
 	end_info = png_create_info_struct(png_ptr);
-	png_set_read_fn(png_ptr,(png_voidp)file, userReadData);
+	png_set_read_fn(png_ptr, (png_voidp) file, userReadData);
 
 	png_set_sig_bytes(png_ptr, 8);
 
 	png_read_info(png_ptr, info_ptr);
 
-	png_uint_32 imgWidth =  png_get_image_width(png_ptr, info_ptr);
+	png_uint_32 imgWidth = png_get_image_width(png_ptr, info_ptr);
 	png_uint_32 imgHeight = png_get_image_height(png_ptr, info_ptr);
-	png_uint_32 bitdepth   = png_get_bit_depth(png_ptr, info_ptr);
-	png_uint_32 channels   = png_get_channels(png_ptr, info_ptr);
+	png_uint_32 bitdepth = png_get_bit_depth(png_ptr, info_ptr);
+	png_uint_32 channels = png_get_channels(png_ptr, info_ptr);
 	png_uint_32 color_type = png_get_color_type(png_ptr, info_ptr);
 
 	// color palete -> RGB
@@ -93,7 +93,7 @@ libpng_image readPNG(AAssetManager *mgr, std::string pngName) {
 	// full alpha conversion
 	if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
 		png_set_tRNS_to_alpha(png_ptr);
-		channels+=1;
+		channels += 1;
 	}
 	if (color_type & PNG_COLOR_MASK_ALPHA) {
 		png_set_strip_alpha(png_ptr);
@@ -111,13 +111,13 @@ libpng_image readPNG(AAssetManager *mgr, std::string pngName) {
 
 	png_read_update_info(png_ptr, info_ptr);
 
-	png_bytep* rowPtrs = new png_bytep[imgHeight];
-	char* data = new char[imgWidth * imgHeight * bitdepth * channels / 8];
+	png_bytep *rowPtrs = new png_bytep[imgHeight];
+	char *data = new char[imgWidth * imgHeight * bitdepth * channels / 8];
 	const unsigned int stride = imgWidth * bitdepth * channels / 8u;
 
 	for (unsigned int i = 0u; i < imgHeight; i++) {
-		png_uint_32 q = (imgHeight- i - 1u) * stride;
-		rowPtrs[i] = (png_bytep)data + q;
+		png_uint_32 q = (imgHeight - i - 1u) * stride;
+		rowPtrs[i] = (png_bytep) data + q;
 	}
 
 	png_read_image(png_ptr, rowPtrs);
@@ -127,10 +127,10 @@ libpng_image readPNG(AAssetManager *mgr, std::string pngName) {
 	png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
 	AAsset_close(file);
 
-	return { imgWidth,
-			 imgHeight,
-			 bitdepth,
-			 channels,
-			 data,
-			 rowPtrs };
+	return {imgWidth,
+			imgHeight,
+			bitdepth,
+			channels,
+			data,
+			rowPtrs};
 }

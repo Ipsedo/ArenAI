@@ -16,11 +16,13 @@ struct normalized_image {
 	vector<float> allpixels;
 };
 
-template<typename T> class color {
+template<typename T>
+class color {
 public:
 	T r;
 	T g;
 	T b;
+
 	color(T r, T g, T b) : r(r), g(g), b(b) {};
 };
 
@@ -41,8 +43,8 @@ struct libpng_image {
 	png_uint_32 height;
 	png_uint_32 bitdepth;
 	png_uint_32 channels;
-	char* data;
-	png_bytep* rowPtrs;
+	char *data;
+	png_bytep *rowPtrs;
 };
 
 colored_image toColoredImg(libpng_image image);

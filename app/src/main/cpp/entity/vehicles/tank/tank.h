@@ -23,13 +23,13 @@ private:
 public:
 	Tank(bool vr, AAssetManager *mgr, btDynamicsWorld *world, btVector3 centerPos);
 
-	vector<Base *> getBase() override ;
+	vector<Base *> getBase() override;
 
-	vector<Controls *> getControls() override ;
+	vector<Controls *> getControls() override;
 
-	Camera *getCamera() override ;
+	Camera *getCamera() override;
 
-	vector<Shooter *> getShooters() override ;
+	vector<Shooter *> getShooters() override;
 
 };
 

@@ -15,9 +15,12 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_makeLevel(JNIEnv *env, jobjec
 	nbNew = 0;
 	nbDel = 0;
 	switch (int(levelId)) {
-		case 0: return (long) new LevelDemo();
-		case 1: return (long) new Level1();
-		default: return (long) new LevelDemo();
+		case 0:
+			return (long) new LevelDemo();
+		case 1:
+			return (long) new Level1();
+		default:
+			return (long) new LevelDemo();
 	}
 }
 
@@ -47,5 +50,5 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_hasLose(JNIEnv *env, jobject 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_samuelberrien_phyvr_wrappers_MainWrappers_freeLevel(JNIEnv *env, jobject instance, jlong levelPtr) {
-	delete (Level *)levelPtr;
+	delete (Level *) levelPtr;
 }

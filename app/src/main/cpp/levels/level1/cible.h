@@ -12,6 +12,7 @@
 class SupportCible : public Convex {
 public:
 	SupportCible(AAssetManager *mgr, const glm::vec3 &pos);
+
 	glm::vec3 getPosHinge();
 };
 

@@ -35,7 +35,7 @@ public:
 
 	glm::vec3 getMaxPos();
 
-	virtual ~Map();
+	~Map();
 };
 
 #endif //PHYVR_MAP_H

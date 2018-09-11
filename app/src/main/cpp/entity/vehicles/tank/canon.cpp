@@ -13,7 +13,7 @@
 // Canon
 /////////////////////
 
-#define LIMIT_ANGLE_CAMERA -float(M_PI) / 10.f
+#define LIMIT_ANGLE_CAMERA -float(M_PI) / 12.f
 
 ModelVBO *makeCanonModel(AAssetManager *mgr) {
 	string canonObjTxt = getFileText(mgr, "obj/cylinderZ.obj");

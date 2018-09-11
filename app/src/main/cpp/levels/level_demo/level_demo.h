@@ -31,7 +31,7 @@ public:
 
 	bool lose() override;
 
-	void step() override ;
+	void step() override;
 
 private:
 	CubeMap *map;

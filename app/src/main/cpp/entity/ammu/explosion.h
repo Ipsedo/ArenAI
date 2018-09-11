@@ -14,13 +14,13 @@ private:
 public:
 	Explosion(btVector3 pos, DiffuseModel *modelVBO);
 
-	bool isDead() override ;
+	bool isDead() override;
 
-	void update() override ;
+	void update() override;
 
-	bool needExplosion() override ;
+	bool needExplosion() override;
 
-	void onContactFinish(Base *other) override ;
+	void onContactFinish(Base *other) override;
 };
 
 

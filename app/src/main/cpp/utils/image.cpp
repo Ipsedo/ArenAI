@@ -4,7 +4,6 @@
 
 #include <cmath>
 #include "image.h"
-#include <android/log.h>
 
 colored_image toColoredImg(libpng_image image) {
 	colored_image res;

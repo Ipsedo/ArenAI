@@ -11,7 +11,7 @@
 extern "C"
 JNIEXPORT jlong JNICALL
 Java_com_samuelberrien_phyvr_wrappers_MainWrappers_makeEngine(JNIEnv *env, jobject instance, jlong levelPtr,
-	jobject manager) {
+															  jobject manager) {
 
 	Level *level = (Level *) levelPtr;
 

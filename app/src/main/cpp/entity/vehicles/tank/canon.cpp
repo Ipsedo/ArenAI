@@ -30,7 +30,7 @@ Canon::Canon(AAssetManager *mgr, btDynamicsWorld *world, Base *turret, btVector3
 				   return new btCylinderShapeZ(btVector3(canonScale.x, canonScale.y, canonScale.z));
 			   },
 			   makeCanonModel(mgr), btVector3ToVec3(turretPos + canonRelPos),
-			   canonScale, glm::mat4(1.0f),  canonMass, true),
+			   canonScale, glm::mat4(1.0f), canonMass, true),
 		  angle(0.f), added(0), respawn(false), pos(turretPos + canonRelPos),
 		  hasClickedShoot(false), missile(makeMissileModel(mgr)), maxFramesFire(25), fireCounter(0), turret(turret) {
 	btRigidBody *pBodyA = turret;
@@ -129,7 +129,8 @@ glm::mat4 Canon::getCamRot() {
 	glm::mat4 turretModelMatrix = glm::make_mat4(tmp2);
 
 	glm::mat3 rot = hinge->getHingeAngle() < LIMIT_ANGLE_CAMERA ?
-					glm::mat3(turretModelMatrix * glm::rotate(glm::mat4(1.0f), LIMIT_ANGLE_CAMERA, glm::vec3(1.f, 0.f, 0.f))) :
+					glm::mat3(turretModelMatrix *
+							  glm::rotate(glm::mat4(1.0f), LIMIT_ANGLE_CAMERA, glm::vec3(1.f, 0.f, 0.f))) :
 					glm::mat3(canonModelMatrix);
 
 	canonModelMatrix[0] = glm::vec4(rot[0], canonModelMatrix[0][3]);

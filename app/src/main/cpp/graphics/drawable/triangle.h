@@ -27,11 +27,14 @@ private:
 	float color[4];
 
 	void makeProgram();
+
 	void bind();
 
 public:
 	Triangle(float r, float g, float b);
+
 	void draw(glm::mat4 MVPMatrix);
+
 	~Triangle();
 
 };

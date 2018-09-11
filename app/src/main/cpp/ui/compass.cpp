@@ -38,12 +38,13 @@ void Compass::draw(draw_infos infos) {
 		angle = -angle;
 
 	glm::mat4 modelMat = glm::rotate(glm::mat4(1.f), angle, glm::vec3(0.f, 0.f, 1.f)) *
-			glm::translate(glm::mat4(1.f), glm::vec3(0.f, 7e-2f, 0.2f)) * //TODO position en fonction de frustum
-			glm::scale(glm::mat4(1.f), glm::vec3(5e-3f));
+						 glm::translate(glm::mat4(1.f), glm::vec3(0.f, 7e-2f, 0.2f)) *
+						 //TODO position en fonction de frustum
+						 glm::scale(glm::mat4(1.f), glm::vec3(5e-3f));
 
 	glm::mat4 mvpMatrix = projMat *
-			glm::lookAt(glm::vec3(0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(0.f, 1.f, 0.f)) *
-			modelMat;
+						  glm::lookAt(glm::vec3(0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(0.f, 1.f, 0.f)) *
+						  modelMat;
 
 	triangle.draw(mvpMatrix);
 }

@@ -15,7 +15,7 @@ LevelDemo::LevelDemo() : isInit(false) {}
 void LevelDemo::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
 	tank = new Tank(isVR, mgr, world, btVector3(5.f, -35.f, 20.f));
 	vector<Base *> tankBases = tank->getBase();
-	entities.insert( entities.end(), tankBases.begin(), tankBases.end() );
+	entities.insert(entities.end(), tankBases.begin(), tankBases.end());
 
 	// items
 	libpng_image tmp = readPNG(mgr, "heightmap/heightmap6.png");

@@ -42,7 +42,7 @@ public:
 
 	bool lose() override;
 
-	void step() override ;
+	void step() override;
 
 	~Level1() override;
 

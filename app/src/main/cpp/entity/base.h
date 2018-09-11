@@ -31,7 +31,7 @@ public:
 
 	virtual bool isDead();
 
-	void draw(draw_infos infos) override ;
+	void draw(draw_infos infos) override;
 
 	virtual bool needExplosion();
 

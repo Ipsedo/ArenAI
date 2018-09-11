@@ -40,8 +40,7 @@ void Triangle::bind() {
 Triangle::Triangle(float r, float g, float b)
 		: vertexShader(loadShader(GL_VERTEX_SHADER, simple_vs.c_str())),
 		  fragmentShader(loadShader(GL_FRAGMENT_SHADER, simple_fs.c_str())),
-		  color{r, g, b, 1.f}
-{
+		  color{r, g, b, 1.f} {
 	makeProgram();
 	bind();
 }

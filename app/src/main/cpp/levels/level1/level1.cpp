@@ -20,6 +20,9 @@ void Level1::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
 	for (int i = 0; i < img.allpixels.size(); i++) {
 		array[i] = img.allpixels[i];
 	}
+	delete[] tmp.rowPtrs;
+	delete[] tmp.data;
+	img.allpixels.clear();
 	Map *sol = new Map(array, img.width, img.height, btVector3(0.f, 0.f, 0.f), btVector3(0.8f, 20.f, 0.8f));
 	entities.push_back(sol);
 
@@ -109,5 +112,6 @@ void Level1::step() {
 }
 
 Level1::~Level1() {
-
+	delete map;
+	delete tank;
 }

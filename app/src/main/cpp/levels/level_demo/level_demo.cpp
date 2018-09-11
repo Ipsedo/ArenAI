@@ -24,6 +24,9 @@ void LevelDemo::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
 	for (int i = 0; i < img.allpixels.size(); i++) {
 		array[i] = img.allpixels[i];
 	}
+	delete[] tmp.rowPtrs;
+	delete[] tmp.data;
+	img.allpixels.clear();
 	Map *sol = new Map(array, img.width, img.height, btVector3(0.f, 40.f, 0.f), btVector3(10.f, 200.f, 10.f));
 	entities.push_back(sol);
 
@@ -126,4 +129,9 @@ Limits LevelDemo::getLimits() {
 
 void LevelDemo::step() {
 
+}
+
+LevelDemo::~LevelDemo() {
+	delete map;
+	delete tank;
 }

@@ -16,4 +16,6 @@ void Level::addBases(vector<Base *> bs) {
 	entities.insert(entities.end(), bs.begin(), bs.end());
 }
 
-Level::~Level() {}
+Level::~Level() {
+	entities.clear();
+}

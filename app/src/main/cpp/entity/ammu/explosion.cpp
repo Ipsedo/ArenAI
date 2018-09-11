@@ -14,7 +14,7 @@
 #define MASS 0.f
 
 float getSize(int frame) {
-	return INIT_SIZE + float(pow(BASE_SIZE, frame - 1));
+	return 6.f;//INIT_SIZE + float(pow(BASE_SIZE, frame - 1));
 }
 
 auto l = [](glm::vec3 scale) {

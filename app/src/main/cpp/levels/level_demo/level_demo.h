@@ -33,6 +33,8 @@ public:
 
 	void step() override;
 
+	~LevelDemo();
+
 private:
 	CubeMap *map;
 	Tank *tank;

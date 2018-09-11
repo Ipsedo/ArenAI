@@ -44,7 +44,7 @@ public:
 
 	void step() override;
 
-	~Level1() override;
+	~Level1();
 
 private:
 	bool isInit;

@@ -2,7 +2,6 @@ package com.samuelberrien.phyvr.wrappers;
 
 import android.content.Context;
 import android.content.res.AssetManager;
-import com.samuelberrien.phyvr.utils.LoadImage;
 
 public class MainWrappers {
 
@@ -12,18 +11,14 @@ public class MainWrappers {
 
 	private Context context;
 
-	private long entitiesPtr;
 	private long rendererPtr;
 	private long enginePtr;
-	private long playerPtr;
-	private long controlPtr;
-
 	private long levelPtr;
 
 	private boolean vr;
 
 	private boolean isFree;
-	private boolean isFreeable;
+	private boolean isInit;
 
 	private int levelIdx;
 
@@ -31,7 +26,7 @@ public class MainWrappers {
 		this.context = context;
 		this.vr = vr;
 		isFree = false;
-		isFreeable = false;
+		isInit = false;
 		this.levelIdx = levelIdx;
 	}
 
@@ -40,22 +35,36 @@ public class MainWrappers {
 		enginePtr = makeEngine(levelPtr, context.getAssets());
 		initLevel(context.getAssets(), vr, levelPtr, enginePtr);
 		rendererPtr = makeRenderer(levelPtr);
-		isFreeable = true;
+		isInit = true;
+	}
+
+	private void checkInit() {
+		if (!isInit())
+			throw new RuntimeException("C++ stuff is not initialized !");
 	}
 
 	public long getLevelPtr() {
+		checkInit();
 		return levelPtr;
 	}
 
 	public void update() {
+		checkInit();
 		updateEngine(enginePtr);
 	}
 
-	public boolean win() { return hasWon(levelPtr); }
+	public boolean win() {
+		checkInit();
+		return hasWon(levelPtr);
+	}
 
-	public boolean lose() { return hasLose(levelPtr); }
+	public boolean lose() {
+		checkInit();
+		return hasLose(levelPtr);
+	}
 
 	public void willDraw(float[] mHeadView, boolean VR) {
+		checkInit();
 		willDrawRenderer(rendererPtr, mHeadView, VR);
 	}
 
@@ -63,6 +72,7 @@ public class MainWrappers {
 					 float[] mEyeViewMatrix,
 					 float[] myLighPosInEyeSpace,
 					 float[] mCameraPos) {
+		checkInit();
 		drawRenderer(rendererPtr,
 				mEyeProjectionMatrix, mEyeViewMatrix, myLighPosInEyeSpace, mCameraPos);
 	}
@@ -72,18 +82,18 @@ public class MainWrappers {
 	}
 
 	public void free() {
-		if (isFreeable) {
+		if (isInit) {
 			freeEngine(enginePtr);
 			freeRenderer(rendererPtr);
 			freeLevel(levelPtr);
 			isFree = true;
-			isFreeable = false;
+			isInit = false;
 		} else {
 			throw new RuntimeException("Wrappers are already free");
 		}
 	}
 
-	public boolean isInit() { return isFreeable; }
+	public boolean isInit() { return isInit; }
 
 	private native long makeLevel(int id);
 	private native void initLevel(AssetManager manager, boolean isVR, long levelPtr, long enginePtr);

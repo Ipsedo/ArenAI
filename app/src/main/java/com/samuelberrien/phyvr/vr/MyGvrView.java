@@ -14,10 +14,14 @@ import com.samuelberrien.phyvr.wrappers.MainWrappers;
 
 import javax.microedition.khronos.egl.EGLConfig;
 
+import static com.samuelberrien.phyvr.utils.Dimens.Z_FAR;
+import static com.samuelberrien.phyvr.utils.Dimens.Z_NEAR;
+
 public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 
 	public MyGvrView(Context context) {
 		super(context);
+		setMultisampling(4);
 		setEGLContextClientVersion(2);
 		mainWrappers = new MainWrappers(getContext(),
 				true,
@@ -53,9 +57,6 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 	/**
 	 * Stereo Renderer stuff
 	 */
-
-	private final float Z_NEAR = 0.1f;
-	private final float Z_FAR = 1100f * (float) Math.sqrt(3);
 
 	private MainWrappers mainWrappers;
 

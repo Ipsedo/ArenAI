@@ -9,4 +9,7 @@ public class Dimens {
 		return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp,
 				context.getResources().getDisplayMetrics());
 	}
+
+	public static final float Z_FAR = 2000f * (float) Math.sqrt(3);
+	public static final float Z_NEAR = 0.1f;
 }

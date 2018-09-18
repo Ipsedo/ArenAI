@@ -14,10 +14,15 @@ import com.samuelberrien.phyvr.MainActivity;
 import com.samuelberrien.phyvr.controls.Controls;
 import com.samuelberrien.phyvr.wrappers.MainWrappers;
 
+import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.opengles.GL10;
 
-public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer {
+import static com.samuelberrien.phyvr.utils.Dimens.Z_FAR;
+import static com.samuelberrien.phyvr.utils.Dimens.Z_NEAR;
+
+public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer, GLSurfaceView.EGLConfigChooser {
 
 	private float[] projectionMatrix;
 	private float[] viewMatrix;
@@ -40,6 +45,7 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
 	private void init() {
 		willQuit = false;
+		setEGLConfigChooser(this);
 		setEGLContextClientVersion(2);
 		setPreserveEGLContextOnPause(true);
 		setRenderer(this);
@@ -90,7 +96,7 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
 		float ratio = (float) width / height;
 
-		Matrix.perspectiveM(projectionMatrix, 0, 40f, ratio, 0.1f, 1100f * (float) Math.sqrt(3));
+		Matrix.perspectiveM(projectionMatrix, 0, 40f, ratio, Z_NEAR, Z_FAR);
 	}
 
 	@Override
@@ -127,5 +133,30 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
 	public void free() {
 		mainWrappers.free();
+	}
+
+	@Override
+	public EGLConfig chooseConfig(EGL10 egl10, EGLDisplay eglDisplay) {
+		int attribs[] = {
+				EGL10.EGL_LEVEL, 0,
+				EGL10.EGL_RENDERABLE_TYPE, 4,
+				EGL10.EGL_COLOR_BUFFER_TYPE, EGL10.EGL_RGB_BUFFER,
+				EGL10.EGL_RED_SIZE, 8,
+				EGL10.EGL_GREEN_SIZE, 8,
+				EGL10.EGL_BLUE_SIZE, 8,
+				EGL10.EGL_DEPTH_SIZE, 16,
+				EGL10.EGL_SAMPLE_BUFFERS, 1,
+				EGL10.EGL_SAMPLES, 4,
+				EGL10.EGL_NONE
+		};
+		EGLConfig[] configs = new EGLConfig[1];
+		int[] configCounts = new int[1];
+		egl10.eglChooseConfig(eglDisplay, attribs, configs, 1, configCounts);
+
+		if (configCounts[0] == 0) {
+			return null;
+		} else {
+			return configs[0];
+		}
 	}
 }

@@ -16,10 +16,9 @@ Wheel::Wheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector
 		: Poly(l, makeWheelMesh(mgr), btVector3ToVec3(pos + chassisPos),
 			   glm::vec3(wheelWidth, wheelRadius, wheelRadius),
 			   glm::mat4(1.0f), wheelMass, true),
-		  pos(pos), chassisPos(chassisPos),
-		  isMotorEnabled(false), isBraking(true), targetSpeed(0.f), hasReAccelerate(false) {
+		  pos(pos), chassisPos(chassisPos), isMotorEnabled(false),
+		  isBraking(true), targetSpeed(0.f), added(0.f), nbFrameMotorEnabled(0), hasReAccelerate(false) {
 	setFriction(500);
-	setActivationState(DISABLE_DEACTIVATION);
 
 	btTransform trA, trB;
 	trA.setIdentity();
@@ -58,7 +57,7 @@ Wheel::Wheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector
 
 void Wheel::onInput(input in) {
 	isMotorEnabled = abs(in.speed) > 1e-2f;
-	targetSpeed = isMotorEnabled ? in.speed : 0.f;
+	targetSpeed = tanh(float(nbFrameMotorEnabled) * in.speed / MAX_FRAME_TOP_VEL);
 	respawn = in.respawn;
 	if (isMotorEnabled) hasReAccelerate = true;
 	if (hasReAccelerate) isBraking = in.brake;
@@ -68,14 +67,20 @@ void Wheel::onInput(input in) {
 void Wheel::update() {
 	Base::update();
 
+	if (hasReAccelerate)
+		nbFrameMotorEnabled++;
+	else
+		nbFrameMotorEnabled = 0;
+
 	if (isBraking) {
 		isMotorEnabled = true;
+		nbFrameMotorEnabled = 0;
 		targetSpeed = 0.f;
 	}
 
 	int motorAxis = 3;
 	hinge->enableMotor(motorAxis, isMotorEnabled);
-	hinge->setTargetVelocity(motorAxis, -targetSpeed * 15.f);
+	hinge->setTargetVelocity(motorAxis, -targetSpeed * 16.f);
 
 	if (respawn) {
 		btTransform tr;
@@ -98,7 +103,6 @@ void Wheel::update() {
  *
  *
  */
-
 
 FrontWheel::FrontWheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos, btVector3 pos)
 		: Wheel(mgr, world, chassis, chassisPos, pos), direction(0.f) {}

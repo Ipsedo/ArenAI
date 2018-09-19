@@ -13,6 +13,8 @@
 #include <glm/glm.hpp>
 #include <android/asset_manager.h>
 
+#define MAX_FRAME_TOP_VEL 30.f
+
 static float wheelRadius = 0.8f;
 static float wheelWidth = 0.4f;
 
@@ -38,6 +40,8 @@ private:
 	bool isBraking;
 	bool isMotorEnabled;
 	bool hasReAccelerate;
+	int nbFrameMotorEnabled;
+	float added;
 	float targetSpeed;
 	bool respawn;
 	btVector3 pos;

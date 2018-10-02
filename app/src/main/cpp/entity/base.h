@@ -10,9 +10,6 @@
 #include "../graphics/drawable/modelvbo.h"
 #include "../graphics/misc.h"
 
-extern int nbNew;
-extern int nbDel;
-
 class Base : public btRigidBody, public Drawable {
 private:
 	DiffuseModel *modelVBO;

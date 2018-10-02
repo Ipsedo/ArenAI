@@ -6,12 +6,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "base.h"
 
-int nbNew;
-int nbDel;
-
 Base::Base(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo,
 		   DiffuseModel *model, const glm::vec3 &s, bool hasOwnModel)
-		: scale(s), hasOwnModel(hasOwnModel), modelVBO(model), btRigidBody(constructionInfo) { nbNew++; }
+		: scale(s), hasOwnModel(hasOwnModel), modelVBO(model), btRigidBody(constructionInfo) {}
 
 
 void Base::update() {}
@@ -40,7 +37,6 @@ bool Base::needExplosion() {
 void Base::onContactFinish(Base *other) {}
 
 Base::~Base() {
-	nbDel++;
 	btRigidBody::~btRigidBody();
 	if (hasOwnModel)
 		delete modelVBO;

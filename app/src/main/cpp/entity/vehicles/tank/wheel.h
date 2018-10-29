@@ -15,8 +15,8 @@
 
 #define MAX_FRAME_TOP_VEL 30.f
 
-static float wheelRadius = 0.8f;
-static float wheelWidth = 0.4f;
+static float wheelRadius = 0.65f;
+static float wheelWidth = 0.5f;
 
 static float wheelOffset = 0.6f;
 
@@ -26,13 +26,18 @@ static float wheelMass = 300.f;
 
 static float wheelColor[4]{52.f / 255.f, 73.f / 255.f, 94.f / 255.f, 1.f};
 
-static btVector3 wheelPos[6]{
-		btVector3(-(chassisScale.x + wheelbaseOffset), -wheelOffset, +1.75f),
-		btVector3(+(chassisScale.x + wheelbaseOffset), -wheelOffset, +1.75f),
-		btVector3(-(chassisScale.x + wheelbaseOffset), -wheelOffset, +0),
-		btVector3(+(chassisScale.x + wheelbaseOffset), -wheelOffset, +0),
-		btVector3(+(chassisScale.x + wheelbaseOffset), -wheelOffset, -1.75f),
-		btVector3(-(chassisScale.x + wheelbaseOffset), -wheelOffset, -1.75f)
+static btVector3 wheelPos[8]{
+		btVector3(-(chassisScale.x + wheelbaseOffset), -wheelOffset, +0.75f*3.f),
+		btVector3(+(chassisScale.x + wheelbaseOffset), -wheelOffset, +0.75f*3.f),
+
+		btVector3(-(chassisScale.x + wheelbaseOffset), -wheelOffset, +0.75f),
+		btVector3(+(chassisScale.x + wheelbaseOffset), -wheelOffset, +0.75f),
+
+		btVector3(-(chassisScale.x + wheelbaseOffset), -wheelOffset, -0.75f),
+		btVector3(+(chassisScale.x + wheelbaseOffset), -wheelOffset, -0.75f),
+
+		btVector3(+(chassisScale.x + wheelbaseOffset), -wheelOffset, -0.75f*3.f),
+		btVector3(-(chassisScale.x + wheelbaseOffset), -wheelOffset, -0.75f*3.f)
 };
 
 class Wheel : public Poly, public Controls {

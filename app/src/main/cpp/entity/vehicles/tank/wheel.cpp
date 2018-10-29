@@ -13,7 +13,12 @@ auto l = [](glm::vec3 unused) {
 };
 
 Wheel::Wheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos, btVector3 pos)
-		: Poly(l, makeWheelMesh(mgr), btVector3ToVec3(pos + chassisPos),
+		: Poly([mgr](glm::vec3 scale) {
+				   string objTxt = getFileText(mgr, "obj/wheel.obj");
+				   btCollisionShape *shape = parseObj(objTxt);
+				   shape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
+				   return shape;
+			   }, makeWheelMesh(mgr), btVector3ToVec3(pos + chassisPos),
 			   glm::vec3(wheelWidth, wheelRadius, wheelRadius),
 			   glm::mat4(1.0f), wheelMass, true),
 		  pos(pos), chassisPos(chassisPos), isMotorEnabled(false),
@@ -46,10 +51,18 @@ Wheel::Wheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector
 
 	{
 		int index = 1;
-		hinge->setDamping(index, 2.3f, true);
-		hinge->setStiffness(index, 20.f, true);
-		hinge->setBounce(index, 0.1f);
+		hinge->enableSpring(index, true);
+		hinge->setDamping(index, 30.f, true);
+		hinge->setStiffness(index, 100.f, true);
+		hinge->setBounce(index, 1e-2f);
+		hinge->setEquilibriumPoint(index, -0.2f);
 	}
+
+	/*int axis[4] {0,2,4,5};
+	for (int i : axis) {
+		hinge->setLimit(i, 1, 0);
+		hinge->enableSpring(i, false);
+	}*/
 
 	hinge->setDbgDrawSize(btScalar(5.f));
 }
@@ -80,7 +93,7 @@ void Wheel::update() {
 
 	int motorAxis = 3;
 	hinge->enableMotor(motorAxis, isMotorEnabled);
-	hinge->setTargetVelocity(motorAxis, -targetSpeed * 16.f);
+	hinge->setTargetVelocity(motorAxis, -targetSpeed * 24.f);
 
 	if (respawn) {
 		btTransform tr;
@@ -123,6 +136,6 @@ void FrontWheel::update() {
 }
 
 ModelVBO *Wheel::makeWheelMesh(AAssetManager *mgr) {
-	std::string cylObjText = getFileText(mgr, "obj/cylinderX.obj");
+	std::string cylObjText = getFileText(mgr, "obj/wheel.obj");
 	return new ModelVBO(cylObjText, wheelColor[0], wheelColor[1], wheelColor[2], wheelColor[3]);
 }

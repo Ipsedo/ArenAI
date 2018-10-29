@@ -20,7 +20,14 @@ Chassis::Chassis(AAssetManager *mgr, btVector3 pos)
 				   return parseObj(chassisObjTxt);
 			   },
 			   makeChassisModel(mgr), glm::vec3(pos.x(), pos.y(), pos.z()),
-			   chassisScale, glm::mat4(1.0f), chassisMass, true), respawn(false), pos(pos) {}
+			   chassisScale, glm::mat4(1.0f), chassisMass, true), respawn(false), pos(pos) {
+	btVector3 centerOfMass = getCenterOfMassPosition();
+	btTransform tr;
+	tr.setIdentity();
+	tr.setOrigin(centerOfMass + btVector3(0, -0.4f, 0));
+	setCenterOfMassTransform(tr);
+
+}
 
 void Chassis::onInput(input in) {
 	respawn = in.respawn;

@@ -16,6 +16,8 @@ Tank::Tank(bool vr, AAssetManager *mgr, btDynamicsWorld *world, btVector3 center
 	wheels.push_back(new Wheel(mgr, world, chassis, centerPos, wheelPos[3]));
 	wheels.push_back(new Wheel(mgr, world, chassis, centerPos, wheelPos[4]));
 	wheels.push_back(new Wheel(mgr, world, chassis, centerPos, wheelPos[5]));
+	wheels.push_back(new Wheel(mgr, world, chassis, centerPos, wheelPos[6]));
+	wheels.push_back(new Wheel(mgr, world, chassis, centerPos, wheelPos[7]));
 
 	turret = new Turret(mgr, world, chassis, centerPos);
 

@@ -12,8 +12,6 @@
 extern "C"
 JNIEXPORT jlong JNICALL
 Java_com_samuelberrien_phyvr_wrappers_MainWrappers_makeLevel(JNIEnv *env, jobject instance, jint levelId) {
-	nbNew = 0;
-	nbDel = 0;
 	switch (int(levelId)) {
 		case 0:
 			return (long) new LevelDemo();

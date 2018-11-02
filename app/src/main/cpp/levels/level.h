@@ -32,6 +32,8 @@ public:
 
 	virtual Limits getLimits() = 0;
 
+	virtual glm::vec3 getLightPos() = 0;
+
 	void addBases(vector<Base *> bs);
 
 	virtual void step() = 0;

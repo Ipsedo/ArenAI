@@ -115,3 +115,7 @@ Level1::~Level1() {
 	delete map;
 	delete tank;
 }
+
+glm::vec3 Level1::getLightPos() {
+	return glm::vec3(0,200,0);
+}

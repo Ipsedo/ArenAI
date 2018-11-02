@@ -27,6 +27,8 @@ public:
 
 	Limits getLimits() override;
 
+	glm::vec3 getLightPos() override;
+
 	bool won() override;
 
 	bool lose() override;

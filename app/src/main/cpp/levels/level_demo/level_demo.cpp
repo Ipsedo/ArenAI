@@ -135,3 +135,7 @@ LevelDemo::~LevelDemo() {
 	delete map;
 	delete tank;
 }
+
+glm::vec3 LevelDemo::getLightPos() {
+	return glm::vec3(500, 400, 200);
+}

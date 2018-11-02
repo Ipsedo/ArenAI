@@ -47,13 +47,13 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_drawRenderer(JNIEnv *env, job
 
 	float *eyeProjectionMatrix = jfloatPtrToCppFloatPtr(mEyeProjectionMatrix, 16);
 	float *eyeViewMatrix = jfloatPtrToCppFloatPtr(mEyeViewMatrix, 16);
-	float *lighPosInEyeSpace = jfloatPtrToCppFloatPtr(myLighPosInEyeSpace, 4);
+	float *lighPosInEyeSpace = jfloatPtrToCppFloatPtr(myLighPosInEyeSpace, 3);
 	float *cameraPos = jfloatPtrToCppFloatPtr(mCameraPos, 3);
 
 	Renderer *renderer = (Renderer *) rendererPtr;
 	renderer->draw(glm::make_mat4(eyeProjectionMatrix),
 				   glm::make_mat4(eyeViewMatrix),
-				   glm::make_vec4(lighPosInEyeSpace),
+				   glm::make_vec3(lighPosInEyeSpace),
 				   glm::make_vec3(cameraPos));
 
 	env->ReleaseFloatArrayElements(mEyeProjectionMatrix_, mEyeProjectionMatrix, 0);

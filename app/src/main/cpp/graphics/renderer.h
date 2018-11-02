@@ -17,7 +17,7 @@ public:
 	void update(glm::mat4 mHeadView, bool VR);
 
 	void
-	draw(glm::mat4 mEyeProjectionMatrix, glm::mat4 mEyeViewMatrix, glm::vec4 myLighPosInEyeSpace, glm::vec3 mCameraPos);
+	draw(glm::mat4 mEyeProjectionMatrix, glm::mat4 mEyeViewMatrix, glm::vec3 myLighPosInEyeSpace, glm::vec3 mCameraPos);
 
 private:
 	Level *level;
@@ -27,7 +27,7 @@ private:
 	glm::vec3 camUpVec;
 	bool VR;
 
-	glm::vec4 updateLight(glm::mat4 viewMatrix, glm::vec3 xyz);
+	glm::vec3 updateLight(glm::mat4 viewMatrix, glm::vec3 xyz);
 };
 
 

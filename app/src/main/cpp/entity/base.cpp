@@ -7,8 +7,8 @@
 #include "base.h"
 
 Base::Base(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo,
-		   DiffuseModel *model, const glm::vec3 &s, bool hasOwnModel)
-		: scale(s), hasOwnModel(hasOwnModel), modelVBO(model), btRigidBody(constructionInfo) {}
+		   GLDrawable *drawable, const glm::vec3 &s, bool hasOwnModel)
+		: scale(s), hasOwnModel(hasOwnModel), drawable(drawable), btRigidBody(constructionInfo) {}
 
 
 void Base::update() {}
@@ -27,7 +27,14 @@ void Base::draw(draw_infos infos) {
 	glm::mat4 mvMatrix = infos.view_matrix * modelMatrix;
 	glm::mat4 mvpMatrix = infos.proj_matrix * mvMatrix;
 
-	modelVBO->draw(mvpMatrix, mvMatrix, infos.light_pos);
+	gl_draw_info gl_info {
+		mvpMatrix,
+		mvMatrix,
+		infos.light_pos,
+		infos.camera_pos
+	};
+
+	drawable->draw(gl_info);
 }
 
 bool Base::needExplosion() {
@@ -39,5 +46,5 @@ void Base::onContactFinish(Base *other) {}
 Base::~Base() {
 	btRigidBody::~btRigidBody();
 	if (hasOwnModel)
-		delete modelVBO;
+		delete drawable;
 }

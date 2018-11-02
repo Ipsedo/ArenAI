@@ -29,7 +29,7 @@ private:
 
 public:
 	template<typename FunShape>
-	Poly(FunShape makeShapFun, DiffuseModel *modelVBO, const glm::vec3 pos,
+	Poly(FunShape makeShapFun, GLDrawable *modelVBO, const glm::vec3 pos,
 		 const glm::vec3 &scale, glm::mat4 rotMat, float mass, bool hasOwnModel) : Base(
 			makeCInfo(makeShapFun, pos, rotMat, scale, mass), modelVBO, scale, hasOwnModel) {}
 

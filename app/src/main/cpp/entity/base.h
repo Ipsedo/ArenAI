@@ -12,14 +12,14 @@
 
 class Base : public btRigidBody, public Drawable {
 private:
-	DiffuseModel *modelVBO;
+	GLDrawable *drawable;
 	bool hasOwnModel;
 
 protected:
 	glm::vec3 scale;
 
 	Base(const btRigidBodyConstructionInfo &constructionInfo,
-		 DiffuseModel *modelVBO, const glm::vec3 &scale, bool hasOwnModel);
+		 GLDrawable *drawable, const glm::vec3 &scale, bool hasOwnModel);
 
 public:
 	virtual void update();

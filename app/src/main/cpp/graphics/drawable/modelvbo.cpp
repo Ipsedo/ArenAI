@@ -104,9 +104,9 @@ TransparentModelVBO::TransparentModelVBO(const string &obj_file_text, float r, f
 
 TransparentModelVBO::TransparentModelVBO(const string &obj_file_text) : ModelVBO(obj_file_text) {}
 
-void TransparentModelVBO::draw(glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos) {
+void TransparentModelVBO::draw(gl_draw_info info) {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	DiffuseModel::draw(mvp_matrix, mv_matrix, light_pos);
+	DiffuseModel::draw(info);
 	glDisable(GL_BLEND);
 }

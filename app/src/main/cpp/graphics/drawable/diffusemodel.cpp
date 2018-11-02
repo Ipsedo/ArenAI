@@ -66,7 +66,7 @@ void DiffuseModel::bindBuffer(std::vector<float> packedData) {
 	packedData.clear();
 }
 
-void DiffuseModel::draw(glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos) {
+void DiffuseModel::draw(gl_draw_info info) {
 	glUseProgram(mProgram);
 
 	glBindBuffer(GL_ARRAY_BUFFER, packedDataBufferId);
@@ -80,11 +80,11 @@ void DiffuseModel::draw(glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 lig
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	glUniformMatrix4fv(mMVPMatrixHandle, 1, GL_FALSE, glm::value_ptr(mvp_matrix));
+	glUniformMatrix4fv(mMVPMatrixHandle, 1, GL_FALSE, glm::value_ptr(info.mvp_matrix));
 
-	glUniformMatrix4fv(mMVMatrixHandle, 1, GL_FALSE, glm::value_ptr(mv_matrix));
+	glUniformMatrix4fv(mMVMatrixHandle, 1, GL_FALSE, glm::value_ptr(info.mv_matrix));
 
-	glUniform3fv(mLightPosHandle, 1, glm::value_ptr(light_pos));
+	glUniform3fv(mLightPosHandle, 1, glm::value_ptr(info.light_pos));
 
 	glUniform4fv(mColorHandle, 1, color);
 

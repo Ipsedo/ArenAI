@@ -8,10 +8,13 @@
 #include "../../../utils/vec.h"
 #include "../../../utils/assets.h"
 #include "../../../utils/rigidbody.h"
+#include "../../../graphics/drawable/normalmodel.h"
 
-ModelVBO *makeChassisModel(AAssetManager *mgr) {
-	std::string chassisObjTxt = getFileText(mgr, "obj/tank_chassis.obj");
-	return new ModelVBO(chassisObjTxt, chassisColor[0], chassisColor[1], chassisColor[2], chassisColor[3]);
+NormalMapModel *makeChassisModel(AAssetManager *mgr) {
+	return new NormalMapModel(mgr, "obj/tank_chassis.obj", "textures/chassis_tex.png", "textures/151_norm.png");
+}
+ModelVBO *f(AAssetManager *mgr) {
+	return new ModelVBO(getFileText(mgr, "obj/tank_chassis.obj"), 1.f, 0.f, 0.f , 1.f);
 }
 
 Chassis::Chassis(AAssetManager *mgr, btVector3 pos)

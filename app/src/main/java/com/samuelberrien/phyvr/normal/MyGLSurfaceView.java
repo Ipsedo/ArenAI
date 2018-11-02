@@ -46,7 +46,7 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 	private void init() {
 		willQuit = false;
 		setEGLConfigChooser(this);
-		setEGLContextClientVersion(2);
+		setEGLContextClientVersion(3);
 		setPreserveEGLContextOnPause(true);
 		setRenderer(this);
 		projectionMatrix = new float[16];
@@ -104,7 +104,7 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 		controls.sendInputs();
 		mainWrappers.update();
 		mainWrappers.willDraw(viewMatrix, false);
-		mainWrappers.draw(projectionMatrix, viewMatrix, new float[4], new float[3]);
+		mainWrappers.draw(projectionMatrix, viewMatrix, new float[3], new float[3]);
 		detectWinLose();
 	}
 

@@ -22,7 +22,7 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 	public MyGvrView(Context context) {
 		super(context);
 		setMultisampling(4);
-		setEGLContextClientVersion(2);
+		setEGLContextClientVersion(3);
 		mainWrappers = new MainWrappers(getContext(),
 				true,
 				((Activity) getContext()).getIntent().getIntExtra(MainActivity.levelIdxExtraStr, 0));
@@ -76,7 +76,7 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 		float[] eyeView = eye.getEyeView();
 
 		float[] mProjectionMatrix = eye.getPerspective(Z_NEAR, Z_FAR);
-		mainWrappers.draw(mProjectionMatrix, eyeView, new float[4], new float[3]);
+		mainWrappers.draw(mProjectionMatrix, eyeView, new float[3], new float[3]);
 	}
 
 	@Override

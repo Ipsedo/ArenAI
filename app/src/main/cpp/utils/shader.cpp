@@ -1,4 +1,6 @@
-#include <GLES2/gl2.h>
+#include <GLES3/gl3.h>
+#include <android/log.h>
+#include <cstdlib>
 #include "shader.h"
 
 GLuint loadShader(GLenum type, const char *shaderSource) {
@@ -9,9 +11,13 @@ GLuint loadShader(GLenum type, const char *shaderSource) {
 	glCompileShader(shader);
 
 
-	/*GLint success = 0;
+	GLint success = 0;
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
-	__android_log_print(ANDROID_LOG_INFO, "POIR", "POIR %s", success == 0 ? "pb" : "good");*/
+	if (!success) {
+		__android_log_print(ANDROID_LOG_ERROR, "PhyVR", "%s", "shader compilation problem");
+		__android_log_print(ANDROID_LOG_DEBUG, "PhyVR", "%s", shaderSource);
+		exit(SHADER_ERROR);
+	}
 	return shader;
 }

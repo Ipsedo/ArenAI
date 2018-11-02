@@ -4,7 +4,7 @@
 #ifndef PHYVR_OBJVBO_H
 #define PHYVR_OBJVBO_H
 
-#include <GLES2/gl2.h>
+#include <GLES3/gl3.h>
 #include <glm/glm.hpp>
 #include <vector>
 #include <string>
@@ -32,7 +32,7 @@ public:
 
 	TransparentModelVBO(const string &obj_file_text);
 
-	void draw(glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos) override;
+	void draw(gl_draw_info info) override;
 };
 
 #endif

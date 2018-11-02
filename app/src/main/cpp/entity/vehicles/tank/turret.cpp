@@ -4,6 +4,7 @@
 
 #include "turret.h"
 #include <glm/glm.hpp>
+#include "../../../graphics/drawable/normalmodel.h"
 #include "../../../utils/rigidbody.h"
 #include "../../../utils/assets.h"
 #include "../../../utils/vec.h"
@@ -11,10 +12,8 @@
 /////////////////////
 // Turret
 /////////////////////
-
-ModelVBO *makeTurretModel(AAssetManager *mgr) {
-	string turretObjTxt = getFileText(mgr, "obj/tank_turret.obj");
-	return new ModelVBO(turretObjTxt, turretColor[0], turretColor[1], turretColor[2], turretColor[3]);
+NormalMapModel *makeTurretModel(AAssetManager *mgr) {
+	return new NormalMapModel(mgr, "obj/tank_turret.obj", "textures/turret_tex.png", "textures/151_norm.png");
 }
 
 Turret::Turret(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos)

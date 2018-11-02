@@ -8,10 +8,6 @@
 #include "../../../utils/vec.h"
 #include <glm/glm.hpp>
 
-auto l = [](glm::vec3 unused) {
-	return new btCylinderShapeX(btVector3(wheelWidth, wheelRadius, wheelRadius));
-};
-
 Wheel::Wheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos, btVector3 pos)
 		: Poly([mgr](glm::vec3 scale) {
 				   string objTxt = getFileText(mgr, "obj/wheel.obj");

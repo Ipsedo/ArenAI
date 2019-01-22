@@ -18,7 +18,7 @@ Wheel::Wheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector
 			   glm::vec3(wheelWidth, wheelRadius, wheelRadius),
 			   glm::mat4(1.0f), wheelMass, true),
 		  pos(pos), chassisPos(chassisPos), isMotorEnabled(false),
-		  isBraking(true), targetSpeed(0.f), added(0.f), nbFrameMotorEnabled(0), hasReAccelerate(false) {
+		  isBraking(true), targetSpeed(0.f), hasReAccelerate(false) {
 	setFriction(500);
 
 	btTransform trA, trB;
@@ -41,7 +41,7 @@ Wheel::Wheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector
 	{
 		int motorAxis = 3;
 		hinge->enableMotor(motorAxis, isMotorEnabled);
-		hinge->setMaxMotorForce(motorAxis, 1e10f);
+		hinge->setMaxMotorForce(motorAxis, 1e5f);
 		hinge->setTargetVelocity(motorAxis, targetSpeed);
 	}
 
@@ -60,13 +60,13 @@ Wheel::Wheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector
 		hinge->enableSpring(i, false);
 	}*/
 
-	hinge->setDbgDrawSize(btScalar(5.f));
+	//hinge->setDbgDrawSize(btScalar(5.f));
 }
 
 
 void Wheel::onInput(input in) {
 	isMotorEnabled = abs(in.speed) > 1e-2f;
-	targetSpeed = tanh(float(nbFrameMotorEnabled) * in.speed / MAX_FRAME_TOP_VEL);
+	targetSpeed = in.speed;
 	respawn = in.respawn;
 	if (isMotorEnabled) hasReAccelerate = true;
 	if (hasReAccelerate) isBraking = in.brake;
@@ -76,14 +76,8 @@ void Wheel::onInput(input in) {
 void Wheel::update() {
 	Base::update();
 
-	if (hasReAccelerate)
-		nbFrameMotorEnabled++;
-	else
-		nbFrameMotorEnabled = 0;
-
 	if (isBraking) {
 		isMotorEnabled = true;
-		nbFrameMotorEnabled = 0;
 		targetSpeed = 0.f;
 	}
 
@@ -125,10 +119,8 @@ void FrontWheel::update() {
 	Wheel::update();
 
 	int motorAxis = 4;
-	hinge->setLimit(
-			motorAxis,
-			float(M_PI) * direction / 10.f,
-			float(M_PI) * direction / 10.f);
+	float angle = float(M_PI) * direction / 10.f;
+	hinge->setLimit(motorAxis, angle, angle);
 }
 
 ModelVBO *Wheel::makeWheelMesh(AAssetManager *mgr) {

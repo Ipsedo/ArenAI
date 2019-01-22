@@ -45,8 +45,6 @@ private:
 	bool isBraking;
 	bool isMotorEnabled;
 	bool hasReAccelerate;
-	int nbFrameMotorEnabled;
-	float added;
 	float targetSpeed;
 	bool respawn;
 	btVector3 pos;

@@ -8,6 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "../../../graphics/drawable/normalmodel.h"
 
 /////////////////////
 // Canon
@@ -15,9 +16,8 @@
 
 #define LIMIT_ANGLE_CAMERA -float(M_PI) / 8.f
 
-ModelVBO *makeCanonModel(AAssetManager *mgr) {
-	string canonObjTxt = getFileText(mgr, "obj/cylinderZ.obj");
-	return new ModelVBO(canonObjTxt, turretColor[0], turretColor[1], turretColor[2], turretColor[3]);
+NormalMapModel *makeCanonModel(AAssetManager *mgr) {
+	return new NormalMapModel(mgr, "obj/cylinderZ.obj", "textures/turret_tex.png", "textures/199_norm.png");
 }
 
 ModelVBO *makeMissileModel(AAssetManager *mgr) {

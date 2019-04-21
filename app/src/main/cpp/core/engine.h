@@ -37,7 +37,7 @@ private:
 	btCollisionDispatcher *dispatcher;
 	btDefaultCollisionConfiguration *collisionConfiguration;
 	btSequentialImpulseConstraintSolver *constraintSolver;
-	DiffuseModel *explosion;
+	DiffuseModel *particule;
 
 	void deleteBase(Base *base);
 };

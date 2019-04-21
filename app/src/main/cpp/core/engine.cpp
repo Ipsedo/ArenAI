@@ -38,7 +38,7 @@ bool callback_processed(btManifoldPoint &cp, void *body0, void *body1) {
 
 Engine::Engine(Level *level, AAssetManager *mgr)
 		: level(level),
-		  explosion(new TransparentModelVBO(getFileText(mgr, "obj/sphere.obj"), 1.f, 0.6f, 0.f, 0.7f)) {
+		  particule(new ModelVBO(getFileText(mgr, "obj/tetra.obj"), 1.f, 0.6f, 0.f, 0.8f)) {
 
 	collisionConfiguration = new btDefaultCollisionConfiguration();
 	dispatcher = new btCollisionDispatcher(collisionConfiguration);
@@ -76,8 +76,17 @@ void Engine::update(float delta) {
 		bool isDead = b->isDead() || !level->getLimits().isInside(b);
 		if (isDead) {
 			if (b->needExplosion()) {
-				Explosion *e = new Explosion(b->getWorldTransform().getOrigin(), explosion);
-				toAdd.push_back(e);
+
+                int nb_particules = 200;
+                vector<Base *> explosionGroup;
+				for (int i = 0; i < nb_particules; i++) {
+				    auto p = new Particules(b->getWorldTransform().getOrigin(), particule);
+				    explosionGroup.push_back(p);
+                    toAdd.push_back(p);
+
+                    for (int j = i - 1; j >= 0; j--)
+                        explosionGroup[j]->setIgnoreCollisionCheck(p, true);
+                }
 			}
 			deleteBase(b);
 		}

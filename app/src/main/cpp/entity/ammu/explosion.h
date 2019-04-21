@@ -7,6 +7,22 @@
 
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
 #include "entity/simple/sphere.h"
+#include "../simple/tetra.h"
+
+
+class Particules : public Tetra {
+private:
+	int nbFrames;
+public:
+	Particules(btVector3 explosionCenter, DiffuseModel *tetraede);
+
+	bool isDead() override;
+
+	void update() override;
+
+	bool needExplosion() override;
+};
+
 
 class Explosion : public Poly {
 private:

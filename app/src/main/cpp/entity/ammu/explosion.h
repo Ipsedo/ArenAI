@@ -10,7 +10,7 @@
 #include "../simple/tetra.h"
 
 
-class Particules : public Tetra {
+class Particules : public Sphere {
 private:
 	int nbFrames;
 public:

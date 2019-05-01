@@ -53,8 +53,8 @@ void Explosion::onContactFinish(Base *other) {
 
 
 Particules::Particules(btVector3 explosionCenter, DiffuseModel *triangle)
-	: Tetra(triangle, glm::vec3(explosionCenter.x(), explosionCenter.y(), explosionCenter.z()),
-	        glm::vec3(0.5f),
+	: Sphere(triangle, glm::vec3(explosionCenter.x(), explosionCenter.y(), explosionCenter.z()),
+	        glm::vec3(0.25f),
 	        glm::rotate(glm::mat4(1.f),
 	                2.f * float(M_PI) * static_cast <float> (rand()) / static_cast <float> (RAND_MAX),
 	                glm::normalize(glm::vec3(static_cast <float> (rand()) / static_cast <float> (RAND_MAX),

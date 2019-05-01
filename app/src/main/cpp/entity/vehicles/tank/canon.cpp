@@ -107,7 +107,7 @@ vector<Base *> Canon::fire() {
 
 	Missile *m = new Missile(missile, glm::vec3(vec), missileScale, rotMat, 10.f, 1);
 
-	glm::vec4 forceVec = modelMatrix * glm::vec4(0, 0, 500.f, 0);
+	glm::vec4 forceVec = modelMatrix * glm::vec4(0, 0, 1000.f, 0);
 	m->applyCentralImpulse(btVector3(forceVec.x, forceVec.y, forceVec.z));
 
 	vector<Base *> res;

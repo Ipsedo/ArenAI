@@ -38,7 +38,7 @@ bool callback_processed(btManifoldPoint &cp, void *body0, void *body1) {
 
 Engine::Engine(Level *level, AAssetManager *mgr)
 		: level(level),
-		  particule(new ModelVBO(getFileText(mgr, "obj/tetra.obj"), 1.f, 0.6f, 0.f, 0.8f)) {
+		  particule(new ModelVBO(getFileText(mgr, "obj/sphere.obj"), 1.f, 0.6f, 0.f, 0.8f)) {
 
 	collisionConfiguration = new btDefaultCollisionConfiguration();
 	dispatcher = new btCollisionDispatcher(collisionConfiguration);
@@ -76,7 +76,6 @@ void Engine::update(float delta) {
 		bool isDead = b->isDead() || !level->getLimits().isInside(b);
 		if (isDead) {
 			if (b->needExplosion()) {
-
                 int nb_particules = 200;
                 vector<Base *> explosionGroup;
 				for (int i = 0; i < nb_particules; i++) {
@@ -100,20 +99,12 @@ Engine::~Engine() {
 	for (int i = world->getNumCollisionObjects() - 1; i >= 0; i--) {
 		btCollisionObject *obj = world->getCollisionObjectArray()[i];
 		Base *base = (Base *) btRigidBody::upcast(obj);
-		if (base && base->getMotionState()) {
-			while (base->getNumConstraintRefs()) {
-				btTypedConstraint *constraint = base->getConstraintRef(0);
-				world->removeConstraint(constraint);
-				delete constraint;
-			}
-			delete base->getMotionState();
-			delete base->getCollisionShape();
-			world->removeRigidBody(base);
-		} else {
-			world->removeCollisionObject(obj);
-			delete obj;
-		}
-		delete base;
+		deleteBase(base);
+
+        if (!(base && base->getMotionState())) {
+            world->removeCollisionObject(obj);
+            delete obj;
+        }
 	}
 
 	delete world;

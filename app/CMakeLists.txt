@@ -11,7 +11,7 @@ set(LIBPNG_PATH "${LIBS_PATH}/libpng-android/jni")
 
 ##### Bullet3 #####
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DUSE_PTHREADS -mfpu=neon -mfloat-abi=softfp -pthread -DSCE_PFX_USE_SIMD_VECTORMATH")
+set(CMAKE_C_FLAGS "-DUSE_PTHREADS -mfpu=neon -mfloat-abi=softfp -pthread -DSCE_PFX_USE_SIMD_VECTORMATH")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -O3")
 
@@ -91,6 +91,6 @@ include_directories(${PHYVR_PATH})
 
 add_library(phyvr SHARED ${PHYVR_SRC})
 
-target_link_libraries(phyvr GLESv2 android log dl bullet3 libpng)
+target_link_libraries(phyvr GLESv3 android log dl bullet3 libpng)
 
 include_directories(${GLM_PATH})

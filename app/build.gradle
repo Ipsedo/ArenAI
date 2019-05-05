@@ -19,8 +19,12 @@ android {
         }
     }
     externalNativeBuild {
-        ndkBuild {
+        /*ndkBuild {
             path "../jni/Android.mk"
+        }*/
+        cmake {
+            path "CMakeLists.txt"
+            arguments "-DANDROID_ABI=all", "-DCMAKE_BUILD_TYPE=release", "-ANDROID_STL=c++_shared"
         }
     }
     compileOptions {

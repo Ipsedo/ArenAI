@@ -9,6 +9,11 @@ android {
         versionCode 7
         versionName "1.3d"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        externalNativeBuild {
+            cmake {
+                arguments "-DCMAKE_BUILD_TYPE=release"
+            }
+        }
     }
     buildTypes {
         release {
@@ -24,7 +29,6 @@ android {
         }*/
         cmake {
             path "CMakeLists.txt"
-            arguments "-DANDROID_ABI=all", "-DCMAKE_BUILD_TYPE=release", "-ANDROID_STL=c++_shared"
         }
     }
     compileOptions {

@@ -2,8 +2,8 @@
 // Created by samuel on 26/05/18.
 //
 #include "engine.h"
-#include "entity/ammu/explosion.h"
-#include "entity/ammu/shooter.h"
+#include "../entity/ammu/explosion.h"
+#include "../entity/ammu/shooter.h"
 #include "../utils/assets.h"
 #include "../utils/rigidbody.h"
 #include <algorithm>

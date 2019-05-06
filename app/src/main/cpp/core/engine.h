@@ -8,7 +8,7 @@
 #include "../levels/level.h"
 #include "../graphics/renderer.h"
 #include "../entity/base.h"
-#include "entity/ammu/shooter.h"
+#include "../entity/ammu/shooter.h"
 #include "limits.h"
 
 bool contact_callback(btManifoldPoint &btmanifoldpoint,

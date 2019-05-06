@@ -5,7 +5,7 @@
 #ifndef PHYVR_MAP_H
 #define PHYVR_MAP_H
 
-#include "entity/base.h"
+#include "../base.h"
 #include "../../graphics/drawable/heightmap.h"
 
 #include <BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>

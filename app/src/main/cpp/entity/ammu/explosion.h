@@ -6,7 +6,7 @@
 #define PHYVR_EXPLOSION_H
 
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
-#include "entity/simple/sphere.h"
+#include "../simple/sphere.h"
 #include "../simple/tetra.h"
 
 

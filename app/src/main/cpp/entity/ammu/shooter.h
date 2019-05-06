@@ -6,7 +6,7 @@
 #define PHYVR_SHOOTER_H
 
 #include <vector>
-#include "entity/base.h"
+#include "../base.h"
 
 class Shooter {
 public:

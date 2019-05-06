@@ -77,6 +77,7 @@ add_library(libpng STATIC ${LIBPNG_SRC})
 target_link_libraries(libpng z)
 
 unset(${CMAKE_C_FLAGS})
+unset(${CMAKE_CXX_FLAGS})
 
 
 ##### PhyVR #####
@@ -86,8 +87,6 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
 file(GLOB_RECURSE PHYVR_SRC "${PHYVR_PATH}/*.h" "${PHYVR_PATH}/*.cpp" "${PHYVR_PATH}/*.c")
-
-include_directories(${PHYVR_PATH})
 
 add_library(phyvr SHARED ${PHYVR_SRC})
 

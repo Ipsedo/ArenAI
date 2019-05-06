@@ -86,7 +86,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
-file(GLOB_RECURSE PHYVR_SRC "${PHYVR_PATH}/*.h" "${PHYVR_PATH}/*.cpp" "${PHYVR_PATH}/*.c")
+file(GLOB_RECURSE PHYVR_SRC "${PHYVR_PATH}/*.cpp" "${PHYVR_PATH}/*.c")
 
 add_library(phyvr SHARED ${PHYVR_SRC})
 

@@ -24,11 +24,11 @@ Chassis::Chassis(AAssetManager *mgr, btVector3 pos)
 			   },
 			   makeChassisModel(mgr), glm::vec3(pos.x(), pos.y(), pos.z()),
 			   chassisScale, glm::mat4(1.0f), chassisMass, true), respawn(false), pos(pos) {
-	btVector3 centerOfMass = getCenterOfMassPosition();
+	/*btVector3 centerOfMass = getCenterOfMassPosition();
 	btTransform tr;
 	tr.setIdentity();
-	tr.setOrigin(centerOfMass + btVector3(0, -0.4f, 0));
-	setCenterOfMassTransform(tr);
+	tr.setOrigin(centerOfMass + btVector3(0, -chassisScale.y, 0));
+	setCenterOfMassTransform(tr);*/
 
 }
 

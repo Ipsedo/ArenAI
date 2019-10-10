@@ -18,11 +18,11 @@
 static float wheelRadius = 0.65f;
 static float wheelWidth = 0.5f;
 
-static float wheelOffset = 0.6f;
+static float wheelOffset = 0.5f;
 
 static float wheelbaseOffset = 0.1f;
 
-static float wheelMass = 300.f;
+static float wheelMass = 100.f;
 
 static float wheelColor[4]{52.f / 255.f, 73.f / 255.f, 94.f / 255.f, 1.f};
 

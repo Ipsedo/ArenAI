@@ -3,6 +3,8 @@
 //
 
 #include "tetra.h"
+#include "../../utils/assets.h"
+#include "../../utils/rigidbody.h"
 
 Tetra::Tetra(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass)
         : Poly([mgr](glm::vec3 scale) {

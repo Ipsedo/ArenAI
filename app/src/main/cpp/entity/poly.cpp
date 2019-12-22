@@ -11,8 +11,8 @@
 
 
 btRigidBody::btRigidBodyConstructionInfo
-Poly::makeCInfo(std::function<btCollisionShape *(glm::vec3)> makeShapeFun, glm::vec3 pos,
-				glm::mat4 rotMat, glm::vec3 scale, float mass) {
+Poly::makeCInfo(std::function<btCollisionShape *(glm::vec3)> makeShapeFun,
+		glm::vec3 pos, glm::mat4 rotMat, glm::vec3 scale, float mass) {
 	btCollisionShape *shape = makeShapeFun(scale);
 
 	btTransform myTransform;
@@ -24,12 +24,11 @@ Poly::makeCInfo(std::function<btCollisionShape *(glm::vec3)> makeShapeFun, glm::
 	return localCreateInfo(mass, myTransform, shape);
 }
 
-Poly::Poly(std::function<btCollisionShape *(glm::vec3)> makeShapeFun, GLDrawable *modelVBO,
-		   const glm::vec3 pos, const glm::vec3 &scale, glm::mat4 rotMat, float mass,
-		   bool hasOwnModel)
-		   : Base(makeCInfo(std::move(makeShapeFun), pos, rotMat, scale, mass), modelVBO, scale, hasOwnModel) {
-
-}
+Poly::Poly(std::function<btCollisionShape *(glm::vec3)> makeShapeFun,
+		GLDrawable *modelVBO, const glm::vec3 pos, const glm::vec3 &scale,
+		glm::mat4 rotMat, float mass, bool hasOwnModel)
+		: Base(makeCInfo(std::move(makeShapeFun), pos, rotMat, scale, mass),
+				modelVBO, scale, hasOwnModel) {}
 
 DiffuseModel *Poly::makeModel(AAssetManager *mgr, string objFileName) {
 	string objTxt = getFileText(mgr, std::move(objFileName));

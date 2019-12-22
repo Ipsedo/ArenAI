@@ -8,7 +8,8 @@
 
 Base::Base(const btRigidBody::btRigidBodyConstructionInfo &constructionInfo,
 		   GLDrawable *drawable, const glm::vec3 &s, bool hasOwnModel)
-		: scale(s), hasOwnModel(hasOwnModel), drawable(drawable), btRigidBody(constructionInfo) {}
+		: scale(s), hasOwnModel(hasOwnModel),
+		drawable(drawable), btRigidBody(constructionInfo) {}
 
 
 void Base::update() {}

@@ -9,7 +9,7 @@ import com.samuelberrien.phyvr.controls.button.Button;
 
 import java.util.ArrayList;
 
-public class Controls {
+public class GamePad {
 
 
 	private final long controlPtr;
@@ -37,7 +37,7 @@ public class Controls {
 		System.loadLibrary("phyvr");
 	}
 
-	public Controls(Context context, long levelPtr) {
+	public GamePad(Context context, long levelPtr) {
 		this.controlPtr = levelPtr;
 		dir = 0.f;
 		turret = 0.f;

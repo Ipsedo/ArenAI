@@ -43,6 +43,13 @@
 				android:layout_height="match_parent"/>
 	</LinearLayout>
 
+	<CheckBox
+		android:id="@+id/use_controller_switch"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:gravity="center"
+		android:text="Use controller (instead of UI)"/>
+
 	<Button
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"

@@ -9,7 +9,7 @@ import com.google.vr.sdk.base.GvrView;
 import com.google.vr.sdk.base.HeadTransform;
 import com.google.vr.sdk.base.Viewport;
 import com.samuelberrien.phyvr.MainActivity;
-import com.samuelberrien.phyvr.controls.Controls;
+import com.samuelberrien.phyvr.controls.GamePad;
 import com.samuelberrien.phyvr.wrappers.MainWrappers;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -60,7 +60,7 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 
 	private MainWrappers mainWrappers;
 
-	private Controls controls;
+	private GamePad controls;
 
 	@Override
 	public void onNewFrame(HeadTransform headTransform) {
@@ -90,7 +90,7 @@ public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 	@Override
 	public void onSurfaceCreated(EGLConfig config) {
 		mainWrappers.init();
-		controls = new Controls(getContext(), mainWrappers.getLevelPtr());
+		controls = new GamePad(getContext(), mainWrappers.getLevelPtr());
 	}
 
 	@Override

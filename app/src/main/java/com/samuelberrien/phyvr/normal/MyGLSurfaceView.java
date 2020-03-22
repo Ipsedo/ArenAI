@@ -10,8 +10,15 @@ import android.opengl.Matrix;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.widget.Switch;
+
 import com.samuelberrien.phyvr.MainActivity;
-import com.samuelberrien.phyvr.controls.Controls;
+import com.samuelberrien.phyvr.R;
+import com.samuelberrien.phyvr.controls.GamePad;
+import com.samuelberrien.phyvr.controls.UI;
+import com.samuelberrien.phyvr.controls.ui.Cursor;
+import com.samuelberrien.phyvr.controls.ui.JoyStick;
+import com.samuelberrien.phyvr.controls.ui.PlayButton;
 import com.samuelberrien.phyvr.wrappers.MainWrappers;
 
 import javax.microedition.khronos.egl.EGL10;
@@ -24,14 +31,26 @@ import static com.samuelberrien.phyvr.utils.Dimens.Z_NEAR;
 
 public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer, GLSurfaceView.EGLConfigChooser {
 
+	private Activity playActivity;
+
+	private JoyStick dir;
+	private JoyStick turret;
+	private Cursor speed;
+	private PlayButton fireButton;
+	private PlayButton brakeButton;
+	private PlayButton respawnButton;
+
 	private float[] projectionMatrix;
 	private float[] viewMatrix;
 
-	private Controls controls;
+	private GamePad controls;
+	private UI uiControls;
 
 	private MainWrappers mainWrappers;
 
 	private boolean willQuit;
+
+	private boolean useController;
 
 	public MyGLSurfaceView(Context context) {
 		super(context);
@@ -44,6 +63,10 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 	}
 
 	private void init() {
+		playActivity = (Activity) getContext();
+
+		useController = playActivity.getIntent().getBooleanExtra(MainActivity.useControllerExtraStr, false);
+
 		willQuit = false;
 		setEGLConfigChooser(this);
 		setEGLContextClientVersion(3);
@@ -58,26 +81,26 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 	private void initWrappers() {
 		mainWrappers = new MainWrappers(getContext(),
 				false,
-				((Activity) getContext()).getIntent().getIntExtra(MainActivity.levelIdxExtraStr, 0));
+				playActivity.getIntent().getIntExtra(MainActivity.levelIdxExtraStr, 0));
 	}
 
 	@Override
 	public boolean onGenericMotionEvent(MotionEvent motionEvent) {
-		if (mainWrappers == null || !mainWrappers.isInit())
+		if (mainWrappers == null || !mainWrappers.isInit() || !useController)
 			return super.onGenericMotionEvent(motionEvent);
 		return controls.onMotionEvent(motionEvent) || super.onGenericMotionEvent(motionEvent);
 	}
 
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		if (mainWrappers == null || !mainWrappers.isInit())
+		if (mainWrappers == null || !mainWrappers.isInit() || !useController)
 			return super.onKeyDown(keyCode, event);
 		return controls.onKeyDown(keyCode, event) || super.onKeyDown(keyCode, event);
 	}
 
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
-		if (mainWrappers == null || !mainWrappers.isInit())
+		if (mainWrappers == null || !mainWrappers.isInit() || !useController)
 			return super.onKeyUp(keyCode, event);
 		return controls.onKeyUp(keyCode, event) || super.onKeyUp(keyCode, event);
 	}
@@ -85,8 +108,25 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 	@Override
 	public void onSurfaceCreated(GL10 unused, EGLConfig eglConfig) {
 		if (!mainWrappers.isInit()) {
+
 			mainWrappers.init();
-			controls = new Controls(getContext(), mainWrappers.getLevelPtr());
+
+			dir = playActivity.findViewById(R.id.direction_joystick);
+			turret = playActivity.findViewById(R.id.turret_canon_joystick);
+			speed = playActivity.findViewById(R.id.velocity_cursor);
+			fireButton = playActivity.findViewById(R.id.fire_button);
+			brakeButton = playActivity.findViewById(R.id.brake_button);
+			respawnButton = playActivity.findViewById(R.id.respawn_button);
+
+			if (useController) controls = new GamePad(getContext(), mainWrappers.getLevelPtr());
+			else {
+				playActivity.runOnUiThread(() -> {
+					dir.setVisibility(VISIBLE);
+					turret.setVisibility(VISIBLE);
+					speed.setVisibility(VISIBLE);
+				});
+				uiControls = new UI(mainWrappers.getLevelPtr(), dir, speed, turret, fireButton, brakeButton, respawnButton);
+			}
 		}
 	}
 
@@ -101,7 +141,8 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
 	@Override
 	public void onDrawFrame(GL10 unused) {
-		controls.sendInputs();
+		if (useController) controls.sendInputs();
+		else uiControls.sendInputs();
 		mainWrappers.update();
 		mainWrappers.willDraw(viewMatrix, false);
 		mainWrappers.draw(projectionMatrix, viewMatrix, new float[3], new float[3]);

@@ -7,6 +7,9 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.WindowManager;
 
+import com.samuelberrien.phyvr.MainActivity;
+import com.samuelberrien.phyvr.R;
+
 public class PlayActivity extends Activity {
 
 	private MyGLSurfaceView surfaceView;
@@ -17,9 +20,9 @@ public class PlayActivity extends Activity {
 		getWindow().setFlags(
 				WindowManager.LayoutParams.FLAG_FULLSCREEN,
 				WindowManager.LayoutParams.FLAG_FULLSCREEN);
-		surfaceView = new MyGLSurfaceView(this);
+		setContentView(R.layout.normal_game);
+		surfaceView = findViewById(R.id.surface_view);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-		setContentView(surfaceView);
 	}
 
 	@Override

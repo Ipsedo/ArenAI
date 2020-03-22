@@ -9,7 +9,7 @@
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_samuelberrien_phyvr_controls_Controls_control(JNIEnv *env, jobject instance,
+Java_com_samuelberrien_phyvr_controls_GamePad_control(JNIEnv *env, jobject instance,
 													   jlong levelPtr, jfloat direction,
 													   jfloat speed, jboolean brake, jfloat turretDir, jfloat turretUp,
 													   jboolean respawn, jboolean fire) {
@@ -30,7 +30,7 @@ Java_com_samuelberrien_phyvr_controls_Controls_control(JNIEnv *env, jobject inst
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_samuelberrien_phyvr_controls_Controls_control2(JNIEnv *env, jobject instance,
+Java_com_samuelberrien_phyvr_controls_GamePad_control2(JNIEnv *env, jobject instance,
 														jlong levelPtr, jfloatArray arrayControl_) {
 	jfloat *arrayControl = env->GetFloatArrayElements(arrayControl_, NULL);
 
@@ -49,6 +49,27 @@ Java_com_samuelberrien_phyvr_controls_Controls_control2(JNIEnv *env, jobject ins
 
 	delete[] controls;
 	env->ReleaseFloatArrayElements(arrayControl_, arrayControl, 0);
+	ctrl.clear();
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_samuelberrien_phyvr_controls_UI_control(JNIEnv *env, jobject instance,
+													  jlong levelPtr, jfloat direction,
+													  jfloat speed, jboolean brake, jfloat turretDir, jfloat turretUp,
+													  jboolean respawn, jboolean fire) {
+
+	vector<Controls *> ctrl = ((Level *) levelPtr)->getControls();
+	input in;
+	in.xAxis = direction;
+	in.speed = speed;
+	in.brake = brake;
+	in.turretDir = -turretDir;
+	in.turretUp = turretUp;
+	in.respawn = respawn;
+	in.fire = fire;
+	for (Controls *c : ctrl)
+		c->onInput(in);
 	ctrl.clear();
 }
 

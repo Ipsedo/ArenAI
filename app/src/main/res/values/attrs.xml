@@ -16,4 +16,37 @@
 			<enum name="fire" value="12"/>
 		</attr>
 	</declare-styleable>
+
+	<declare-styleable name="JoyStick">
+		<attr name="stick_color" format="color"/>
+		<attr name="circle_color" format="color"/>
+		<attr name="stick_color_accent" format="color"/>
+		<attr name="circle_color_accent" format="color"/>
+		<attr name="joystick_stroke_width" format="dimension"/>
+		<attr name="stick_radius_ratio" format="float"/>
+		<attr name="reset_stick_on_end" format="boolean" />
+		<attr name="factor" format="float"/>
+	</declare-styleable>
+
+	<declare-styleable name="Cursor">
+		<attr name="cursor_color" format="color"/>
+		<attr name="cursor_color_accent" format="color"/>
+		<attr name="container_color" format="color"/>
+		<attr name="container_color_accent" format="color"/>
+		<attr name="cursor_stroke_width" format="dimension"/>
+		<attr name="cursor_height_ratio" format="float"/>
+		<attr name="reset_cursor_on_end" format="boolean"/>
+	</declare-styleable>
+
+	<declare-styleable name="PlayButton">
+		<attr name="color" format="color"/>
+		<attr name="color_accent" format="color"/>
+		<attr name="button_type" format="enum">
+			<enum name="fire" value="0"/>
+			<enum name="brake" value="1"/>
+			<enum name="respawn" value="2"/>
+		</attr>
+		<attr name="button_stroke_width" format="dimension"/>
+	</declare-styleable>
 </resources>
+

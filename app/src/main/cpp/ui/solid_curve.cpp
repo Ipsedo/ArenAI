@@ -106,7 +106,7 @@ void Curve::draw(draw_infos infos) {
 	glUniformMatrix4fv(mVPMatrixHandle, 1, GL_FALSE, glm::value_ptr(vp_matrix));
 
 	glDrawArrays(GL_LINES, 0, pts.size() / 4);
-	
+
 	glDisable(GL_BLEND);
 }
 

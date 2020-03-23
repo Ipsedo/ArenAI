@@ -4,11 +4,11 @@
 
 #include "gl_utils.h"
 
-void checkGLError() {
+void checkGLError(int id) {
 	GLenum err;
 	bool failed = false;
 	while ((err = glGetError()) != GL_NO_ERROR) {
-		__android_log_print(ANDROID_LOG_DEBUG, "PhyVR", "OpenGL Error : %d", err);
+		__android_log_print(ANDROID_LOG_DEBUG, "PhyVR", "[%d] OpenGL Error : %d", id, err);
 		failed = true;
 	}
 	if (failed)

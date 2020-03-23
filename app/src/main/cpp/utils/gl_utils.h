@@ -9,6 +9,6 @@
 #include <android/log.h>
 #include <cstdlib>
 
-void checkGLError();
+void checkGLError(int id);
 
 #endif //PHYVR_GL_UTILS_H

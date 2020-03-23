@@ -5,9 +5,9 @@
 #ifndef PHYVR_LEVELDEMO_H
 #define PHYVR_LEVELDEMO_H
 
-#include "../../graphics/drawable/cubemap.h"
-#include "../level.h"
-#include "../../entity/tank/tank.h"
+#include "../graphics/drawable/cubemap.h"
+#include "level.h"
+#include "../entity/tank/tank.h"
 
 class LevelDemo : public Level {
 public:

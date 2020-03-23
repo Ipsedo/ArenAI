@@ -2,11 +2,11 @@
 // Created by samuel on 11/06/18.
 //
 #include "level_demo.h"
-#include "../../entity/ground/map.h"
-#include "../../entity/simple/box.h"
-#include "../../entity/simple/cylinder.h"
-#include "../../entity/simple/sphere.h"
-#include "../../entity/simple/cone.h"
+#include "../entity/ground/map.h"
+#include "../entity/simple/box.h"
+#include "../entity/simple/cylinder.h"
+#include "../entity/simple/sphere.h"
+#include "../entity/simple/cone.h"
 
 #define HEIGHT_SPAWN 30.f
 

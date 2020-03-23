@@ -3,8 +3,8 @@
 //
 
 #include "level1.h"
-#include "../../entity/tank/tank.h"
-#include "../../entity/ground/map.h"
+#include "../entity/tank/tank.h"
+#include "../entity/ground/map.h"
 
 Level1::Level1() : isInit(false), cibles(vector<Cible *>()), compass(vector<Compass *>()) {}
 

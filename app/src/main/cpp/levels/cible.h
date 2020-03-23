@@ -5,8 +5,8 @@
 #ifndef PHYVR_CIBLE_H
 #define PHYVR_CIBLE_H
 
-#include "../../entity/convex.h"
-#include "../../../../../../libs/glm/glm/vec3.hpp"
+#include "../entity/convex.h"
+#include "glm/vec3.hpp"
 
 
 class SupportCible : public Convex {

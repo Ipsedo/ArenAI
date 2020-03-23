@@ -5,12 +5,12 @@
 #ifndef PHYVR_LEVEL1_H
 #define PHYVR_LEVEL1_H
 
-#include "../level.h"
+#include "level.h"
 #include "cible.h"
-#include "../../entity/tank/tank.h"
-#include "../../entity/ground/map.h"
-#include "../../graphics/drawable/cubemap.h"
-#include "../../ui/compass.h"
+#include "../entity/tank/tank.h"
+#include "../entity/ground/map.h"
+#include "../graphics/drawable/cubemap.h"
+#include "../ui/compass.h"
 
 /**
  * Niveau 0 (training)

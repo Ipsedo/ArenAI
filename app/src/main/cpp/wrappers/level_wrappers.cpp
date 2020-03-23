@@ -5,8 +5,8 @@
 #include <jni.h>
 #include <android/asset_manager_jni.h>
 #include "../core/engine.h"
-#include "../levels/level1/level1.h"
-#include "../levels/level_demo/level_demo.h"
+#include "../levels/level1.h"
+#include "../levels/level_demo.h"
 #include "../levels/level.h"
 
 extern "C"

@@ -3,7 +3,7 @@
 //
 
 #include <jni.h>
-#include "../entity/vehicles/tank/tank.h"
+#include "../entity/tank/tank.h"
 #include "wrapper_utils.h"
 #include "../levels/level.h"
 

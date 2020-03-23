@@ -30,6 +30,7 @@ struct gl_draw_info {
 class GLDrawable {
 public:
 	virtual void draw(gl_draw_info infos) = 0;
+
 	virtual ~GLDrawable() {}
 };
 

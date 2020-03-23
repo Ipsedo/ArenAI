@@ -11,7 +11,8 @@
 
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_com_samuelberrien_phyvr_wrappers_MainWrappers_makeLevel(JNIEnv *env, jobject instance, jint levelId) {
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_makeLevel(JNIEnv *env, jobject instance,
+															 jint levelId) {
 	switch (int(levelId)) {
 		case 0:
 			return (long) new LevelDemo();
@@ -24,8 +25,10 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_makeLevel(JNIEnv *env, jobjec
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initLevel(JNIEnv *env, jobject instance, jobject manager,
-															 jboolean isVR, jlong levelPtr, jlong enginePtr) {
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initLevel(JNIEnv *env, jobject instance,
+															 jobject manager,
+															 jboolean isVR, jlong levelPtr,
+															 jlong enginePtr) {
 
 	AAssetManager *cppMgr = AAssetManager_fromJava(env, manager);
 	Engine *engine = (Engine *) enginePtr;
@@ -35,18 +38,21 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_initLevel(JNIEnv *env, jobjec
 
 extern "C"
 JNIEXPORT jboolean JNICALL
-Java_com_samuelberrien_phyvr_wrappers_MainWrappers_hasWon(JNIEnv *env, jobject instance, jlong levelPtr) {
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_hasWon(JNIEnv *env, jobject instance,
+														  jlong levelPtr) {
 	return (jboolean) ((Level *) levelPtr)->won();
 }
 
 extern "C"
 JNIEXPORT jboolean JNICALL
-Java_com_samuelberrien_phyvr_wrappers_MainWrappers_hasLose(JNIEnv *env, jobject instance, jlong levelPtr) {
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_hasLose(JNIEnv *env, jobject instance,
+														   jlong levelPtr) {
 	return (jboolean) ((Level *) levelPtr)->lose();
 }
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_samuelberrien_phyvr_wrappers_MainWrappers_freeLevel(JNIEnv *env, jobject instance, jlong levelPtr) {
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_freeLevel(JNIEnv *env, jobject instance,
+															 jlong levelPtr) {
 	delete (Level *) levelPtr;
 }

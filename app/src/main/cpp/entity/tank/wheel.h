@@ -27,8 +27,8 @@ static float wheelMass = 100.f;
 static float wheelColor[4]{52.f / 255.f, 73.f / 255.f, 94.f / 255.f, 1.f};
 
 static btVector3 wheelPos[8]{
-		btVector3(-(chassisScale.x + wheelbaseOffset), -wheelOffset, +0.75f*3.f),
-		btVector3(+(chassisScale.x + wheelbaseOffset), -wheelOffset, +0.75f*3.f),
+		btVector3(-(chassisScale.x + wheelbaseOffset), -wheelOffset, +0.75f * 3.f),
+		btVector3(+(chassisScale.x + wheelbaseOffset), -wheelOffset, +0.75f * 3.f),
 
 		btVector3(-(chassisScale.x + wheelbaseOffset), -wheelOffset, +0.75f),
 		btVector3(+(chassisScale.x + wheelbaseOffset), -wheelOffset, +0.75f),
@@ -36,8 +36,8 @@ static btVector3 wheelPos[8]{
 		btVector3(-(chassisScale.x + wheelbaseOffset), -wheelOffset, -0.75f),
 		btVector3(+(chassisScale.x + wheelbaseOffset), -wheelOffset, -0.75f),
 
-		btVector3(+(chassisScale.x + wheelbaseOffset), -wheelOffset, -0.75f*3.f),
-		btVector3(-(chassisScale.x + wheelbaseOffset), -wheelOffset, -0.75f*3.f)
+		btVector3(+(chassisScale.x + wheelbaseOffset), -wheelOffset, -0.75f * 3.f),
+		btVector3(-(chassisScale.x + wheelbaseOffset), -wheelOffset, -0.75f * 3.f)
 };
 
 class Wheel : public Controls, public Poly {
@@ -69,7 +69,8 @@ private:
 	float direction;
 
 public:
-	FrontWheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos, btVector3 pos);
+	FrontWheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos,
+			   btVector3 pos);
 
 	void onInput(input in) override;
 

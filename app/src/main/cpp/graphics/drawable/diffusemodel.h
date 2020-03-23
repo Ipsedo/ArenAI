@@ -51,7 +51,7 @@ protected:
 	void bindBuffer(std::vector<float> packedData);
 
 public:
-	void draw(gl_draw_info info) override ;
+	void draw(gl_draw_info info) override;
 
 	virtual ~DiffuseModel();
 };

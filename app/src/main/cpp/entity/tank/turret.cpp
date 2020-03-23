@@ -13,7 +13,8 @@
 // Turret
 /////////////////////
 NormalMapModel *makeTurretModel(AAssetManager *mgr) {
-	return new NormalMapModel(mgr, "obj/tank_turret.obj", "textures/turret_tex.png", "textures/199_norm.png");
+	return new NormalMapModel(mgr, "obj/tank_turret.obj", "textures/turret_tex.png",
+							  "textures/199_norm.png");
 }
 
 Turret::Turret(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos)
@@ -24,7 +25,8 @@ Turret::Turret(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVect
 				   return turretShape;
 			   },
 			   makeTurretModel(mgr),
-			   btVector3ToVec3(chassisPos + turretRelPos), turretScale, glm::mat4(1.0f), turretMass, true),
+			   btVector3ToVec3(chassisPos + turretRelPos), turretScale, glm::mat4(1.0f), turretMass,
+			   true),
 		  angle(0.f), respawn(false), added(0.f), pos(chassisPos + turretRelPos) {
 	btTransform tr;
 	tr.setIdentity();

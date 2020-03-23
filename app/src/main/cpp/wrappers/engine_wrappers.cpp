@@ -10,7 +10,8 @@
 
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_com_samuelberrien_phyvr_wrappers_MainWrappers_makeEngine(JNIEnv *env, jobject instance, jlong levelPtr,
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_makeEngine(JNIEnv *env, jobject instance,
+															  jlong levelPtr,
 															  jobject manager) {
 
 	Level *level = (Level *) levelPtr;
@@ -26,13 +27,15 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_makeEngine(JNIEnv *env, jobje
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_samuelberrien_phyvr_wrappers_MainWrappers_updateEngine(JNIEnv *env, jobject instance, jlong enginePtr) {
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_updateEngine(JNIEnv *env, jobject instance,
+																jlong enginePtr) {
 	Engine *engine = (Engine *) enginePtr;
 	engine->update(1.f / 60.f);
 }
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_samuelberrien_phyvr_wrappers_MainWrappers_freeEngine(JNIEnv *env, jobject instance, jlong enginePtr) {
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_freeEngine(JNIEnv *env, jobject instance,
+															  jlong enginePtr) {
 	delete (Engine *) enginePtr;
 }

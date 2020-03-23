@@ -10,8 +10,9 @@
 #include "../../utils/gl_utils.h"
 #include <glm/gtc/type_ptr.hpp>
 
-NormalMapModel::NormalMapModel(AAssetManager *mgr, string objFile, string textureFile, string normalsFile)
-		: textures(new GLuint[2]{0,0}), nbVertex(0) {
+NormalMapModel::NormalMapModel(AAssetManager *mgr, string objFile, string textureFile,
+							   string normalsFile)
+		: textures(new GLuint[2]{0, 0}), nbVertex(0) {
 	initPrgm(mgr);
 	bind();
 	initTex(mgr, move(textureFile), move(normalsFile));
@@ -30,7 +31,8 @@ void NormalMapModel::initTex(AAssetManager *mgr, string textureFile, string norm
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img1.width, img1.height, 0, GL_RGB, GL_UNSIGNED_BYTE, img1.pixels);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img1.width, img1.height, 0, GL_RGB, GL_UNSIGNED_BYTE,
+				 img1.pixels);
 
 	delete[] tmp1.data;
 	delete[] tmp1.rowPtrs;
@@ -45,7 +47,8 @@ void NormalMapModel::initTex(AAssetManager *mgr, string textureFile, string norm
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img2.width, img2.height, 0, GL_RGB, GL_UNSIGNED_BYTE, img2.pixels);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img2.width, img2.height, 0, GL_RGB, GL_UNSIGNED_BYTE,
+				 img2.pixels);
 
 	delete[] tmp2.data;
 	delete[] tmp2.rowPtrs;
@@ -54,8 +57,10 @@ void NormalMapModel::initTex(AAssetManager *mgr, string textureFile, string norm
 
 void NormalMapModel::initPrgm(AAssetManager *mgr) {
 	mProgram = glCreateProgram();
-	GLuint vs = loadShader(GL_VERTEX_SHADER, getFileText(mgr, "shaders/normal_map_vs.glsl").c_str());
-	GLuint fs = loadShader(GL_FRAGMENT_SHADER, getFileText(mgr, "shaders/normal_map_fs.glsl").c_str());
+	GLuint vs = loadShader(GL_VERTEX_SHADER,
+						   getFileText(mgr, "shaders/normal_map_vs.glsl").c_str());
+	GLuint fs = loadShader(GL_FRAGMENT_SHADER,
+						   getFileText(mgr, "shaders/normal_map_fs.glsl").c_str());
 	glAttachShader(mProgram, vs);
 	glAttachShader(mProgram, fs);
 	glLinkProgram(mProgram);
@@ -122,7 +127,8 @@ void NormalMapModel::genBuffer(AAssetManager *mgr, string objFile) {
 	glGenBuffers(1, &buffer);
 
 	glBindBuffer(GL_ARRAY_BUFFER, buffer);
-	glBufferData(GL_ARRAY_BUFFER, packedData.size() * BYTES_PER_FLOAT, packedData.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, packedData.size() * BYTES_PER_FLOAT, packedData.data(),
+				 GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }

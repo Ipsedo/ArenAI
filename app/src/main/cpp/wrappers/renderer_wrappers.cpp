@@ -9,7 +9,8 @@
 
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_com_samuelberrien_phyvr_wrappers_MainWrappers_makeRenderer(JNIEnv *env, jobject instance, jlong levelPtr) {
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_makeRenderer(JNIEnv *env, jobject instance,
+																jlong levelPtr) {
 
 	Level *level = (Level *) levelPtr;
 	Renderer *renderer = new Renderer(level);
@@ -20,7 +21,8 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_makeRenderer(JNIEnv *env, job
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_samuelberrien_phyvr_wrappers_MainWrappers_willDrawRenderer(JNIEnv *env, jobject instance,
-																	jlong rendererPtr, jfloatArray mHeadView_,
+																	jlong rendererPtr,
+																	jfloatArray mHeadView_,
 																	jboolean VR) {
 	jfloat *mHeadView = env->GetFloatArrayElements(mHeadView_, NULL);
 	float *headView = jfloatPtrToCppFloatPtr(mHeadView, 16);
@@ -68,6 +70,7 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_drawRenderer(JNIEnv *env, job
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_samuelberrien_phyvr_wrappers_MainWrappers_freeRenderer(JNIEnv *env, jobject instance, jlong rendererPtr) {
+Java_com_samuelberrien_phyvr_wrappers_MainWrappers_freeRenderer(JNIEnv *env, jobject instance,
+																jlong rendererPtr) {
 	delete (Renderer *) rendererPtr;
 }

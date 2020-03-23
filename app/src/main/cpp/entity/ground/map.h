@@ -12,7 +12,8 @@
 #include <android/asset_manager.h>
 #include <glm/glm.hpp>
 
-btRigidBody::btRigidBodyConstructionInfo makeMapCInfo(btHeightfieldTerrainShape *map, btVector3 pos, btVector3 scale);
+btRigidBody::btRigidBodyConstructionInfo
+makeMapCInfo(btHeightfieldTerrainShape *map, btVector3 pos, btVector3 scale);
 
 DiffuseModel *makeMapModel(btHeightfieldTerrainShape *map);
 

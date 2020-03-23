@@ -82,7 +82,8 @@ std::vector<float> HeightMap::initPlan(btHeightfieldTerrainShape *terrain, float
 	std::vector<float> res;
 	triangleCallBack callback;
 	// TODO limits aabb
-	terrain->processAllTriangles(&callback, btVector3(-1000, -1000, -1000), btVector3(1000, 1000, 1000));
+	terrain->processAllTriangles(&callback, btVector3(-1000, -1000, -1000),
+								 btVector3(1000, 1000, 1000));
 	nbVertex = callback.nbVertex;
 	return callback.packedData;
 }

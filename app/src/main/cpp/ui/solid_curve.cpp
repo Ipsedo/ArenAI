@@ -41,13 +41,13 @@ std::string vertex_shader =
 		"}";
 
 std::string fragment_shader =
-							  "precision mediump float;\n"
-							  "\n"
-							  "uniform vec4 vColor;\n"
-							  "\n"
-							  "void main() {\n"
-							  "    gl_FragColor = vColor;\n"
-							  "}";
+		"precision mediump float;\n"
+		"\n"
+		"uniform vec4 vColor;\n"
+		"\n"
+		"void main() {\n"
+		"    gl_FragColor = vColor;\n"
+		"}";
 
 
 void Curve::draw(draw_infos infos) {
@@ -59,27 +59,11 @@ void Curve::draw(draw_infos infos) {
 
 	for (int i = 0; i < nb_pts; i++) {
 
-		btTransform predictedTrans = body->getWorldTransform();
-
-		glm::vec4 prev(0.0, 0.0, 0.0, 1.0);
-		glm::vec4 actual(0.0, 0.0, 0.0, 1.0);
-
-		float tmp[16];
-
-		predictedTrans.getOpenGLMatrix(tmp);
-		glm::mat4 pred_trans = glm::make_mat4(tmp);
-
-		/*prev = prev_trans * prev;
-		pts.push_back(prev.x);
-		pts.push_back(prev.y);
-		pts.push_back(prev.z);
-		pts.push_back(glm::value_ptr(prev)[3]);*/
-
-		actual = pred_trans * actual;
-		pts.push_back(actual.x);
-		pts.push_back(actual.y);
-		pts.push_back(actual.z);
-		pts.push_back(glm::value_ptr(actual)[3]);
+		btVector3 pos = body->getWorldTransform().getOrigin();
+		pts.push_back(pos.x());
+		pts.push_back(pos.y());
+		pts.push_back(pos.z());
+		pts.push_back(1.f);
 
 		world->stepSimulation(1.f / 60.f);
 	}

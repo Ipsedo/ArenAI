@@ -8,32 +8,32 @@
 #include "../../utils/shader.h"
 
 std::string diffuse_vs = "uniform mat4 u_MVPMatrix;\n"
-		"uniform mat4 u_MVMatrix;\n"
-		"uniform vec4 v_Color;\n"
-		"attribute vec4 a_Position;\n"
-		"attribute vec3 a_Normal;\n"
-		"varying vec3 v_Position;\n"
-		"varying vec3 v_Normal;\n"
-		"void main(){\n"
-		"    v_Position = vec3(u_MVMatrix * a_Position);\n"
-		"    v_Normal = normalize(vec3(u_MVMatrix * vec4(a_Normal, 0.0)));\n"
-		"    gl_Position = u_MVPMatrix * a_Position;\n"
-		"}";
+						 "uniform mat4 u_MVMatrix;\n"
+						 "uniform vec4 v_Color;\n"
+						 "attribute vec4 a_Position;\n"
+						 "attribute vec3 a_Normal;\n"
+						 "varying vec3 v_Position;\n"
+						 "varying vec3 v_Normal;\n"
+						 "void main(){\n"
+						 "    v_Position = vec3(u_MVMatrix * a_Position);\n"
+						 "    v_Normal = normalize(vec3(u_MVMatrix * vec4(a_Normal, 0.0)));\n"
+						 "    gl_Position = u_MVPMatrix * a_Position;\n"
+						 "}";
 
 std::string diffuse_fs = "precision mediump float;\n"
-		"uniform vec3 u_LightPos;\n"
-		"uniform float u_distance_coef;\n"
-		"uniform float u_light_coef;\n"
-		"uniform vec4 u_Color;\n"
-		"varying vec3 v_Position;\n"
-		"varying vec3 v_Normal;\n"
-		"void main(){\n"
-		"    float distance = length(u_LightPos - v_Position);\n"
-		"    vec3 lightVector = normalize(u_LightPos - v_Position);\n"
-		"    float diffuse = max(dot(v_Normal, lightVector), 0.1) * u_light_coef;\n"
-		"    diffuse = diffuse * (1.0 / (1.0 + (u_distance_coef * distance * distance)));\n"
-		"    gl_FragColor = u_Color * diffuse;\n"
-		"}";
+						 "uniform vec3 u_LightPos;\n"
+						 "uniform float u_distance_coef;\n"
+						 "uniform float u_light_coef;\n"
+						 "uniform vec4 u_Color;\n"
+						 "varying vec3 v_Position;\n"
+						 "varying vec3 v_Normal;\n"
+						 "void main(){\n"
+						 "    float distance = length(u_LightPos - v_Position);\n"
+						 "    vec3 lightVector = normalize(u_LightPos - v_Position);\n"
+						 "    float diffuse = max(dot(v_Normal, lightVector), 0.1) * u_light_coef;\n"
+						 "    diffuse = diffuse * (1.0 / (1.0 + (u_distance_coef * distance * distance)));\n"
+						 "    gl_FragColor = u_Color * diffuse;\n"
+						 "}";
 
 void DiffuseModel::init() {
 	mProgram = glCreateProgram();
@@ -59,7 +59,8 @@ void DiffuseModel::bindBuffer(std::vector<float> packedData) {
 	glGenBuffers(1, &packedDataBufferId);
 
 	glBindBuffer(GL_ARRAY_BUFFER, packedDataBufferId);
-	glBufferData(GL_ARRAY_BUFFER, packedData.size() * BYTES_PER_FLOAT, &packedData[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, packedData.size() * BYTES_PER_FLOAT, &packedData[0],
+				 GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 

@@ -19,10 +19,10 @@ float getSize(int frame) {
 
 Explosion::Explosion(btVector3 pos, DiffuseModel *modelVBO)
 		: Poly([](glm::vec3 scale) {
-			btCollisionShape *shape = new btSphereShape(1.f);
-			shape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
-			return shape;
-			}, modelVBO, glm::vec3(pos.x(), pos.y(), pos.z()), glm::vec3(getSize(0)),
+				   btCollisionShape *shape = new btSphereShape(1.f);
+				   shape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
+				   return shape;
+			   }, modelVBO, glm::vec3(pos.x(), pos.y(), pos.z()), glm::vec3(getSize(0)),
 			   glm::mat4(1.f), MASS, false), nbFrames(MAX_FRAMES) {}
 
 bool Explosion::isDead() {
@@ -52,33 +52,33 @@ void Explosion::onContactFinish(Base *other) {
 
 
 Particules::Particules(btVector3 explosionCenter, DiffuseModel *triangle)
-	: Sphere(triangle, glm::vec3(explosionCenter.x(), explosionCenter.y(), explosionCenter.z()),
-	        glm::vec3(0.25f),
-	        glm::rotate(glm::mat4(1.f),
-	                2.f * float(M_PI) * float(rand()) / float(RAND_MAX),
-	                glm::normalize(glm::vec3(float(rand()) / float(RAND_MAX),
-                              float(rand()) / float(RAND_MAX),
-                              float(rand()) / float(RAND_MAX)))),
-            300.f),
-        nbFrames(15) {
+		: Sphere(triangle, glm::vec3(explosionCenter.x(), explosionCenter.y(), explosionCenter.z()),
+				 glm::vec3(0.25f),
+				 glm::rotate(glm::mat4(1.f),
+							 2.f * float(M_PI) * float(rand()) / float(RAND_MAX),
+							 glm::normalize(glm::vec3(float(rand()) / float(RAND_MAX),
+													  float(rand()) / float(RAND_MAX),
+													  float(rand()) / float(RAND_MAX)))),
+				 300.f),
+		  nbFrames(15) {
 
-    this->activate(true);
+	this->activate(true);
 
-    float phi = float(M_PI) * float(rand())
-            / float(RAND_MAX);
-    float theta = 2.f * float(M_PI) * float(rand())
-            / float(RAND_MAX);
+	float phi = float(M_PI) * float(rand())
+				/ float(RAND_MAX);
+	float theta = 2.f * float(M_PI) * float(rand())
+				  / float(RAND_MAX);
 
-    float x = sin(phi) * cos(theta), y = sin(phi) * sin(theta), z = cos(phi);
-    btVector3 dir = btVector3(x, y, z);
+	float x = sin(phi) * cos(theta), y = sin(phi) * sin(theta), z = cos(phi);
+	btVector3 dir = btVector3(x, y, z);
 
-    float max_force = 2e6f, min_force = 5e5f;
-    float factor = (max_force - min_force)
-            * static_cast <float> (rand()) / static_cast <float> (RAND_MAX)
-            + min_force;
+	float max_force = 2e6f, min_force = 5e5f;
+	float factor = (max_force - min_force)
+				   * static_cast <float> (rand()) / static_cast <float> (RAND_MAX)
+				   + min_force;
 
-    //this->setLinearVelocity(dir * vel);
-    this->applyCentralForce(dir * factor);
+	//this->setLinearVelocity(dir * vel);
+	this->applyCentralForce(dir * factor);
 }
 
 bool Particules::isDead() {
@@ -86,7 +86,7 @@ bool Particules::isDead() {
 }
 
 void Particules::update() {
-    nbFrames--;
+	nbFrames--;
 }
 
 bool Particules::needExplosion() {

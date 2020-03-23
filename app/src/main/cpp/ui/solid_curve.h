@@ -28,12 +28,13 @@ private:
 	btCollisionDispatcher *dispatcher;
 	btDefaultCollisionConfiguration *collisionConfiguration;
 	btSequentialImpulseConstraintSolver *constraintSolver;
-	btDiscreteDynamicsWorld * world;
+	btDiscreteDynamicsWorld *world;
 public:
 	Curve(Canon *canon);
+
 	void draw(draw_infos infos) override;
 };
 
-std::vector<btTransform> get_trajectory(btRigidBody* body);
+std::vector<btTransform> get_trajectory(btRigidBody *body);
 
 #endif //PHYVR_SOLID_CURVE_H

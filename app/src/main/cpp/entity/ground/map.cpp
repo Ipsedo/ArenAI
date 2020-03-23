@@ -45,7 +45,8 @@ public:
 	}
 };
 
-btRigidBody::btRigidBodyConstructionInfo makeMapCInfo(btHeightfieldTerrainShape *map, btVector3 pos, btVector3 scale) {
+btRigidBody::btRigidBodyConstructionInfo
+makeMapCInfo(btHeightfieldTerrainShape *map, btVector3 pos, btVector3 scale) {
 	btTransform myTransform;
 	myTransform.setIdentity();
 	myTransform.setOrigin(pos);
@@ -65,7 +66,8 @@ DiffuseModel *makeMapModel(btHeightfieldTerrainShape *map) {
 	return model;
 }
 
-btHeightfieldTerrainShape *makeTerrainShape(float *normalizedHeightValues, int width, int length, btVector3 scale) {
+btHeightfieldTerrainShape *
+makeTerrainShape(float *normalizedHeightValues, int width, int length, btVector3 scale) {
 	auto map = new btHeightfieldTerrainShape(width, length, normalizedHeightValues, 1.f, 0.f, 1.f,
 											 1, PHY_FLOAT, false);
 	map->setLocalScaling(btVector3(scale));

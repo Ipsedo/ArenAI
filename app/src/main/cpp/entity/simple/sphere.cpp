@@ -20,4 +20,4 @@ Sphere::Sphere(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rot
 
 
 Sphere::Sphere(GLDrawable *drawable, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass)
-	: Poly(l, drawable, pos, scale, rotMat, mass, false) {}
+		: Poly(l, drawable, pos, scale, rotMat, mass, false) {}

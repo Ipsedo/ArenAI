@@ -11,19 +11,19 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 string cube_vs = "attribute vec3 a_vp;\n"
-		"uniform mat4 u_MVPMatrix;\n"
-		"varying vec3 v_tex_coords;\n"
-		"void main () {\n"
-		"  v_tex_coords = a_vp;\n"
-		"  gl_Position = u_MVPMatrix * vec4(a_vp, 1.0);\n"
-		"}";
+				 "uniform mat4 u_MVPMatrix;\n"
+				 "varying vec3 v_tex_coords;\n"
+				 "void main () {\n"
+				 "  v_tex_coords = a_vp;\n"
+				 "  gl_Position = u_MVPMatrix * vec4(a_vp, 1.0);\n"
+				 "}";
 
 string cube_fs = "precision mediump float;\n"
-		"varying vec3 v_tex_coords;\n"
-		"uniform samplerCube u_cube_map;\n"
-		"void main () {\n"
-		"  gl_FragColor = textureCube(u_cube_map, v_tex_coords);\n"
-		"}";
+				 "varying vec3 v_tex_coords;\n"
+				 "uniform samplerCube u_cube_map;\n"
+				 "void main () {\n"
+				 "  gl_FragColor = textureCube(u_cube_map, v_tex_coords);\n"
+				 "}";
 
 CubeMap::CubeMap(AAssetManager *mgr, string cubeMapAssetPath, float sideLength)
 		: modelMatrix(glm::scale(glm::mat4(1.f), glm::vec3(sideLength))) {
@@ -75,8 +75,10 @@ void CubeMap::loadCubeMaptexture(AAssetManager *mgr, string cubaMapAssetPath) {
 	glBindTexture(GL_TEXTURE_CUBE_MAP, textures);
 
 	GLenum idTxt[]{
-			GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
-			GL_TEXTURE_CUBE_MAP_NEGATIVE_X, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
+			GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
+			GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
+			GL_TEXTURE_CUBE_MAP_NEGATIVE_X, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
+			GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
 	};
 	string fileName[]{
 			"posx.png", "posy.png", "posz.png", "negx.png", "negy.png", "negz.png"
@@ -84,7 +86,8 @@ void CubeMap::loadCubeMaptexture(AAssetManager *mgr, string cubaMapAssetPath) {
 	for (int i = 0; i < 6; i++) {
 		libpng_image tmp = readPNG(mgr, cubaMapAssetPath + fileName[i]);
 		imgRGB img = toImgRGB(tmp);
-		glTexImage2D(idTxt[i], 0, GL_RGB, img.width, img.height, 0, GL_RGB, GL_UNSIGNED_BYTE, img.pixels);
+		glTexImage2D(idTxt[i], 0, GL_RGB, img.width, img.height, 0, GL_RGB, GL_UNSIGNED_BYTE,
+					 img.pixels);
 		delete[] tmp.data;
 		delete[] tmp.rowPtrs;
 		delete[] img.pixels;

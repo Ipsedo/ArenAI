@@ -50,7 +50,7 @@ private:
 public:
 	NormalMapModel(AAssetManager *mgr, string objFile, string textureFile, string normalsFile);
 
-	void draw(gl_draw_info info) override ;
+	void draw(gl_draw_info info) override;
 
 	virtual ~NormalMapModel();
 };

@@ -76,16 +76,16 @@ void Engine::update(float delta) {
 		bool isDead = b->isDead() || !level->getLimits().isInside(b);
 		if (isDead) {
 			if (b->needExplosion()) {
-                int nb_particules = 200;
-                vector<Base *> explosionGroup;
+				int nb_particules = 200;
+				vector<Base *> explosionGroup;
 				for (int i = 0; i < nb_particules; i++) {
-				    auto p = new Particules(b->getWorldTransform().getOrigin(), particule);
-				    explosionGroup.push_back(p);
-                    toAdd.push_back(p);
+					auto p = new Particules(b->getWorldTransform().getOrigin(), particule);
+					explosionGroup.push_back(p);
+					toAdd.push_back(p);
 
-                    for (int j = i - 1; j >= 0; j--)
-                        explosionGroup[j]->setIgnoreCollisionCheck(p, true);
-                }
+					for (int j = i - 1; j >= 0; j--)
+						explosionGroup[j]->setIgnoreCollisionCheck(p, true);
+				}
 			}
 			deleteBase(b);
 		}
@@ -101,10 +101,10 @@ Engine::~Engine() {
 		Base *base = (Base *) btRigidBody::upcast(obj);
 		deleteBase(base);
 
-        if (!(base && base->getMotionState())) {
-            world->removeCollisionObject(obj);
-            delete obj;
-        }
+		if (!(base && base->getMotionState())) {
+			world->removeCollisionObject(obj);
+			delete obj;
+		}
 	}
 
 	delete world;

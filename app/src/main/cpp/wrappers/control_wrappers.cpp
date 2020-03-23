@@ -10,9 +10,10 @@
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_samuelberrien_phyvr_controls_GamePad_control(JNIEnv *env, jobject instance,
-													   jlong levelPtr, jfloat direction,
-													   jfloat speed, jboolean brake, jfloat turretDir, jfloat turretUp,
-													   jboolean respawn, jboolean fire) {
+													  jlong levelPtr, jfloat direction,
+													  jfloat speed, jboolean brake,
+													  jfloat turretDir, jfloat turretUp,
+													  jboolean respawn, jboolean fire) {
 
 	vector<Controls *> ctrl = ((Level *) levelPtr)->getControls();
 	input in;
@@ -31,7 +32,7 @@ Java_com_samuelberrien_phyvr_controls_GamePad_control(JNIEnv *env, jobject insta
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_samuelberrien_phyvr_controls_GamePad_control2(JNIEnv *env, jobject instance,
-														jlong levelPtr, jfloatArray arrayControl_) {
+													   jlong levelPtr, jfloatArray arrayControl_) {
 	jfloat *arrayControl = env->GetFloatArrayElements(arrayControl_, NULL);
 
 	float *controls = jfloatPtrToCppFloatPtr(arrayControl, 8);
@@ -55,9 +56,10 @@ Java_com_samuelberrien_phyvr_controls_GamePad_control2(JNIEnv *env, jobject inst
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_samuelberrien_phyvr_controls_UI_control(JNIEnv *env, jobject instance,
-													  jlong levelPtr, jfloat direction,
-													  jfloat speed, jboolean brake, jfloat turretDir, jfloat turretUp,
-													  jboolean respawn, jboolean fire) {
+												 jlong levelPtr, jfloat direction,
+												 jfloat speed, jboolean brake, jfloat turretDir,
+												 jfloat turretUp,
+												 jboolean respawn, jboolean fire) {
 
 	vector<Controls *> ctrl = ((Level *) levelPtr)->getControls();
 	input in;

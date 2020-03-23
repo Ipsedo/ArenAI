@@ -17,8 +17,8 @@ private:
 
 public:
 	Poly(std::function<btCollisionShape *(glm::vec3)> makeShapeFun,
-			GLDrawable *modelVBO, const glm::vec3 pos,
-			const glm::vec3 &scale, glm::mat4 rotMat, float mass, bool hasOwnModel);
+		 GLDrawable *modelVBO, const glm::vec3 pos,
+		 const glm::vec3 &scale, glm::mat4 rotMat, float mass, bool hasOwnModel);
 
 	static DiffuseModel *makeModel(AAssetManager *mgr, string objFileName);
 };

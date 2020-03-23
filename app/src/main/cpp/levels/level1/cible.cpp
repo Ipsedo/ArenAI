@@ -10,7 +10,8 @@
 #define HEIGHT_SUPPORT 0.3f
 
 Cible::Cible(AAssetManager *mgr, SupportCible *supportCible, btDynamicsWorld *world)
-		: Convex(mgr, "obj/cible.obj", supportCible->getPosHinge() + glm::vec3(0, CIBLE_SCALE.y, 0.f),
+		: Convex(mgr, "obj/cible.obj",
+				 supportCible->getPosHinge() + glm::vec3(0, CIBLE_SCALE.y, 0.f),
 				 CIBLE_SCALE, glm::mat4(1.f), 1000.f) {
 
 
@@ -33,7 +34,8 @@ bool Cible::isWon() {
 }
 
 SupportCible::SupportCible(AAssetManager *mgr, const glm::vec3 &pos)
-		: Convex(mgr, "obj/support_cible.obj", pos, glm::vec3(SUPPORT_SCALE), glm::mat4(1.f), 0.f) {}
+		: Convex(mgr, "obj/support_cible.obj", pos, glm::vec3(SUPPORT_SCALE), glm::mat4(1.f),
+				 0.f) {}
 
 
 glm::vec3 SupportCible::getPosHinge() {

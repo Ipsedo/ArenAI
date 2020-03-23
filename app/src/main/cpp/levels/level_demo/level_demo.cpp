@@ -27,7 +27,8 @@ void LevelDemo::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
 	delete[] tmp.rowPtrs;
 	delete[] tmp.data;
 	img.allpixels.clear();
-	Map *sol = new Map(array, img.width, img.height, btVector3(0.f, 40.f, 0.f), btVector3(10.f, 200.f, 10.f));
+	Map *sol = new Map(array, img.width, img.height, btVector3(0.f, 40.f, 0.f),
+					   btVector3(10.f, 200.f, 10.f));
 	entities.push_back(sol);
 
 	int width = 100, height = 100;
@@ -50,7 +51,8 @@ void LevelDemo::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
 		float scale = 2.f * (float) rand() / RAND_MAX;
 		float mass = maxMass * float(rand()) / RAND_MAX;
 
-		entities.push_back(new Cylinder(mgr, glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale), id, mass));
+		entities.push_back(
+				new Cylinder(mgr, glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale), id, mass));
 	}
 	for (int i = 0; i < nbEntity; i++) {
 		float x = spawnRange * (float) rand() / RAND_MAX - spawnRange * 0.5f;
@@ -58,14 +60,16 @@ void LevelDemo::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
 		float scale = 2.f * (float) rand() / RAND_MAX;
 		float mass = maxMass * float(rand()) / RAND_MAX;
 
-		entities.push_back(new Cone(mgr, glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale), id, mass));
+		entities.push_back(
+				new Cone(mgr, glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale), id, mass));
 	}
 	for (int i = 0; i < nbEntity; i++) {
 		float x = spawnRange * (float) rand() / RAND_MAX - spawnRange * 0.5f;
 		float z = spawnRange * (float) rand() / RAND_MAX - spawnRange * 0.5f;
 		float scale = 2.f * (float) rand() / RAND_MAX;
 		float mass = maxMass * float(rand()) / RAND_MAX;
-		entities.push_back(new Sphere(mgr, glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale), id, mass));
+		entities.push_back(
+				new Sphere(mgr, glm::vec3(x, HEIGHT_SPAWN, z), glm::vec3(scale), id, mass));
 	}
 
 	map = new CubeMap(mgr, "cubemap/2/", 1000.f);

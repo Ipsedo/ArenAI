@@ -99,7 +99,8 @@ std::vector<float> ModelVBO::parseObj(string obj_file_text) {
 	return packedData;
 }
 
-TransparentModelVBO::TransparentModelVBO(const string &obj_file_text, float r, float g, float b, float a)
+TransparentModelVBO::TransparentModelVBO(const string &obj_file_text, float r, float g, float b,
+										 float a)
 		: ModelVBO(obj_file_text, r, g, b, a) {}
 
 TransparentModelVBO::TransparentModelVBO(const string &obj_file_text) : ModelVBO(obj_file_text) {}

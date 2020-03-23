@@ -10,19 +10,19 @@
 using namespace std;
 
 string simple_vs = "uniform mat4 uMVPMatrix;\n"
-		"attribute vec4 vPosition;\n"
-		"\n"
-		"void main() {\n"
-		"    gl_Position = uMVPMatrix * vPosition;\n"
-		"}";
+				   "attribute vec4 vPosition;\n"
+				   "\n"
+				   "void main() {\n"
+				   "    gl_Position = uMVPMatrix * vPosition;\n"
+				   "}";
 
 string simple_fs = "precision mediump float;\n"
-		"\n"
-		"uniform vec4 vColor;\n"
-		"\n"
-		"void main() {\n"
-		"    gl_FragColor = vColor;\n"
-		"}";
+				   "\n"
+				   "uniform vec4 vColor;\n"
+				   "\n"
+				   "void main() {\n"
+				   "    gl_FragColor = vColor;\n"
+				   "}";
 
 void Triangle::makeProgram() {
 	mProgram = glCreateProgram();             // create empty OpenGL Program

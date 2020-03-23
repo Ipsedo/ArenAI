@@ -43,7 +43,8 @@ void Compass::draw(draw_infos infos) {
 						 glm::scale(glm::mat4(1.f), glm::vec3(5e-3f));
 
 	glm::mat4 mvpMatrix = projMat *
-						  glm::lookAt(glm::vec3(0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(0.f, 1.f, 0.f)) *
+						  glm::lookAt(glm::vec3(0.f), glm::vec3(0.f, 0.f, 1.f),
+									  glm::vec3(0.f, 1.f, 0.f)) *
 						  modelMat;
 
 	triangle.draw(mvpMatrix);

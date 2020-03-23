@@ -17,7 +17,8 @@
 #define LIMIT_ANGLE_CAMERA -float(M_PI) / 8.f
 
 NormalMapModel *makeCanonModel(AAssetManager *mgr) {
-	return new NormalMapModel(mgr, "obj/cylinderZ.obj", "textures/turret_tex.png", "textures/199_norm.png");
+	return new NormalMapModel(mgr, "obj/cylinderZ.obj", "textures/turret_tex.png",
+							  "textures/199_norm.png");
 }
 
 ModelVBO *makeMissileModel(AAssetManager *mgr) {
@@ -32,7 +33,8 @@ Canon::Canon(AAssetManager *mgr, btDynamicsWorld *world, Base *turret, btVector3
 			   makeCanonModel(mgr), btVector3ToVec3(turretPos + canonRelPos),
 			   canonScale, glm::mat4(1.0f), canonMass, true),
 		  angle(0.f), added(0), respawn(false), pos(turretPos + canonRelPos),
-		  hasClickedShoot(false), missile(makeMissileModel(mgr)), maxFramesFire(25), fireCounter(0), turret(turret) {
+		  hasClickedShoot(false), missile(makeMissileModel(mgr)), maxFramesFire(25), fireCounter(0),
+		  turret(turret) {
 	btRigidBody *pBodyA = turret;
 	btRigidBody *pBodyB = this;
 
@@ -137,7 +139,8 @@ glm::mat4 Canon::getCamRot() {
 
 	glm::mat3 rot = hinge->getHingeAngle() < LIMIT_ANGLE_CAMERA ?
 					glm::mat3(turretModelMatrix *
-							  glm::rotate(glm::mat4(1.0f), LIMIT_ANGLE_CAMERA, glm::vec3(1.f, 0.f, 0.f))) :
+							  glm::rotate(glm::mat4(1.0f), LIMIT_ANGLE_CAMERA,
+										  glm::vec3(1.f, 0.f, 0.f))) :
 					glm::mat3(canonModelMatrix);
 
 	canonModelMatrix[0] = glm::vec4(rot[0], canonModelMatrix[0][3]);

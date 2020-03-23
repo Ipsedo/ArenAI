@@ -23,7 +23,8 @@ void Level1::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
 	delete[] tmp.rowPtrs;
 	delete[] tmp.data;
 	img.allpixels.clear();
-	Map *sol = new Map(array, img.width, img.height, btVector3(0.f, 0.f, 0.f), btVector3(0.8f, 20.f, 0.8f));
+	Map *sol = new Map(array, img.width, img.height, btVector3(0.f, 0.f, 0.f),
+					   btVector3(0.8f, 20.f, 0.8f));
 	entities.push_back(sol);
 
 	SupportCible *supportCible1 = new SupportCible(mgr, glm::vec3(-28.f, 15.f, 40.f));
@@ -119,5 +120,5 @@ Level1::~Level1() {
 }
 
 glm::vec3 Level1::getLightPos() {
-	return glm::vec3(0,200,0);
+	return glm::vec3(0, 200, 0);
 }

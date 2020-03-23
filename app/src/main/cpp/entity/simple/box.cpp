@@ -14,4 +14,5 @@ auto l = [](glm::vec3 scale) {
 };
 
 Box::Box(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass)
-		: Poly(l, new NormalMapModel(mgr, "obj/cube.obj", "image/canard.png", "textures/NormalMap.png"), pos, scale, rotMat, mass, true) {}
+		: Poly(l, new NormalMapModel(mgr, "obj/cube.obj", "image/canard.png",
+									 "textures/NormalMap.png"), pos, scale, rotMat, mass, true) {}

@@ -14,7 +14,7 @@ LevelDemo::LevelDemo() : isInit(false) {}
 
 void LevelDemo::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
 	tank = new Tank(isVR, mgr, world, btVector3(5.f, -35.f, 20.f));
-	vector<Base *> tankBases = tank->getBase();
+	vector<Base *> tankBases = tank->getBases();
 	entities.insert(entities.end(), tankBases.begin(), tankBases.end());
 
 	// items
@@ -118,6 +118,8 @@ vector<Drawable *> LevelDemo::getDrawables() {
 	for (Base *b : entities)
 		d.push_back(b);
 	d.push_back(map);
+	for (Drawable *dr : tank->getDrawables())
+		d.push_back(dr);
 	return d;
 }
 

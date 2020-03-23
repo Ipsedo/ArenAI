@@ -7,7 +7,7 @@
 
 #include "../level.h"
 #include "cible.h"
-#include "../../entity/vehicles/tank/tank.h"
+#include "../../entity/tank/tank.h"
 #include "../../entity/ground/map.h"
 #include "../../graphics/drawable/cubemap.h"
 #include "../../ui/compass.h"

@@ -3,7 +3,7 @@
 //
 
 #include "level1.h"
-#include "../../entity/vehicles/tank/tank.h"
+#include "../../entity/tank/tank.h"
 #include "../../entity/ground/map.h"
 
 Level1::Level1() : isInit(false), cibles(vector<Cible *>()), compass(vector<Compass *>()) {}
@@ -11,7 +11,7 @@ Level1::Level1() : isInit(false), cibles(vector<Cible *>()), compass(vector<Comp
 void Level1::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
 	Level::init(isVR, mgr, world);
 	tank = new Tank(isVR, mgr, world, btVector3(-97.f, 1.f, -175.f));
-	vector<Base *> tankBases = tank->getBase();
+	vector<Base *> tankBases = tank->getBases();
 	entities.insert(entities.end(), tankBases.begin(), tankBases.end());
 
 	libpng_image tmp = readPNG(mgr, "heightmap/heightmap_road2.png");
@@ -87,6 +87,8 @@ vector<Drawable *> Level1::getDrawables() {
 		if (!cibles[i]->isWon())
 			d.push_back(compass[i]);
 	d.push_back(map);
+	for (Drawable *dr : tank->getDrawables())
+		d.push_back(dr);
 	return d;
 }
 

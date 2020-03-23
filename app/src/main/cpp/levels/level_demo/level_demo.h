@@ -7,7 +7,7 @@
 
 #include "../../graphics/drawable/cubemap.h"
 #include "../level.h"
-#include "../../entity/vehicles/tank/tank.h"
+#include "../../entity/tank/tank.h"
 
 class LevelDemo : public Level {
 public:

@@ -45,8 +45,9 @@
 
 	<CheckBox
 		android:id="@+id/use_controller_switch"
-		android:layout_width="match_parent"
+		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
+		android:layout_gravity="center"
 		android:gravity="center"
 		android:text="Use controller (instead of UI)"/>
 

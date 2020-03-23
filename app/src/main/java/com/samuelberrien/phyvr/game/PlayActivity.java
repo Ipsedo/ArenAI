@@ -1,4 +1,4 @@
-package com.samuelberrien.phyvr.normal;
+package com.samuelberrien.phyvr.game;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -7,7 +7,6 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.WindowManager;
 
-import com.samuelberrien.phyvr.MainActivity;
 import com.samuelberrien.phyvr.R;
 
 public class PlayActivity extends Activity {

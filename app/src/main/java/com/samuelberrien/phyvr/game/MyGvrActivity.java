@@ -1,4 +1,4 @@
-package com.samuelberrien.phyvr.vr;
+package com.samuelberrien.phyvr.game;
 
 import android.os.Bundle;
 import android.view.KeyEvent;

@@ -11,7 +11,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.samuelberrien.phyvr.R;
-import com.samuelberrien.phyvr.utils.Dimens;
+import com.samuelberrien.phyvr.Dimens;
 
 public class SetUpButton extends LinearLayout {
 

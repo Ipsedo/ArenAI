@@ -1,4 +1,4 @@
-package com.samuelberrien.phyvr.vr;
+package com.samuelberrien.phyvr.game;
 
 import android.app.Activity;
 import android.content.Context;
@@ -10,12 +10,12 @@ import com.google.vr.sdk.base.HeadTransform;
 import com.google.vr.sdk.base.Viewport;
 import com.samuelberrien.phyvr.MainActivity;
 import com.samuelberrien.phyvr.controls.GamePad;
-import com.samuelberrien.phyvr.wrappers.MainWrappers;
+import com.samuelberrien.phyvr.MainWrappers;
 
 import javax.microedition.khronos.egl.EGLConfig;
 
-import static com.samuelberrien.phyvr.utils.Dimens.Z_FAR;
-import static com.samuelberrien.phyvr.utils.Dimens.Z_NEAR;
+import static com.samuelberrien.phyvr.Dimens.Z_FAR;
+import static com.samuelberrien.phyvr.Dimens.Z_NEAR;
 
 public class MyGvrView extends GvrView implements GvrView.StereoRenderer {
 

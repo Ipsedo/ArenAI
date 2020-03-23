@@ -10,7 +10,7 @@ import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import com.samuelberrien.phyvr.R;
-import com.samuelberrien.phyvr.utils.Dimens;
+import com.samuelberrien.phyvr.Dimens;
 
 import java.util.Timer;
 import java.util.TimerTask;

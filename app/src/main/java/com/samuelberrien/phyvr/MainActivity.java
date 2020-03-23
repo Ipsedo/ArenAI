@@ -8,8 +8,8 @@ import android.widget.CheckBox;
 import android.widget.NumberPicker;
 
 import com.samuelberrien.phyvr.controls.ControlActivity;
-import com.samuelberrien.phyvr.normal.PlayActivity;
-import com.samuelberrien.phyvr.vr.MyGvrActivity;
+import com.samuelberrien.phyvr.game.PlayActivity;
+import com.samuelberrien.phyvr.game.MyGvrActivity;
 
 public class MainActivity extends AppCompatActivity implements NumberPicker.OnValueChangeListener {
 

@@ -1,4 +1,4 @@
-package com.samuelberrien.phyvr.wrappers;
+package com.samuelberrien.phyvr;
 
 import android.content.Context;
 import android.content.res.AssetManager;

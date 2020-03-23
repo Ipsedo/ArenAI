@@ -1,4 +1,4 @@
-package com.samuelberrien.phyvr.normal;
+package com.samuelberrien.phyvr.game;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -10,7 +10,6 @@ import android.opengl.Matrix;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
-import android.widget.Switch;
 
 import com.samuelberrien.phyvr.MainActivity;
 import com.samuelberrien.phyvr.R;
@@ -19,15 +18,15 @@ import com.samuelberrien.phyvr.controls.UI;
 import com.samuelberrien.phyvr.controls.ui.Cursor;
 import com.samuelberrien.phyvr.controls.ui.JoyStick;
 import com.samuelberrien.phyvr.controls.ui.PlayButton;
-import com.samuelberrien.phyvr.wrappers.MainWrappers;
+import com.samuelberrien.phyvr.MainWrappers;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.opengles.GL10;
 
-import static com.samuelberrien.phyvr.utils.Dimens.Z_FAR;
-import static com.samuelberrien.phyvr.utils.Dimens.Z_NEAR;
+import static com.samuelberrien.phyvr.Dimens.Z_FAR;
+import static com.samuelberrien.phyvr.Dimens.Z_NEAR;
 
 public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer, GLSurfaceView.EGLConfigChooser {
 

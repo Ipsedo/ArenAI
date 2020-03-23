@@ -6,7 +6,7 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.RelativeLayout;
 import com.samuelberrien.phyvr.R;
-import com.samuelberrien.phyvr.utils.Dimens;
+import com.samuelberrien.phyvr.Dimens;
 
 public class AxisGage extends View implements Axis.OnAxisMoveListener {
 

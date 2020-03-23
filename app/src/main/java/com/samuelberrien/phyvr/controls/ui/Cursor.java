@@ -62,6 +62,7 @@ public class Cursor extends View {
 		resetOnEnd = a.getBoolean(R.styleable.Cursor_reset_cursor_on_end, true);
 
 		paint = new Paint();
+		paint.setAntiAlias(true);
 		paint.setStyle(Paint.Style.STROKE);
 		paint.setStrokeWidth(strokeWidth);
 

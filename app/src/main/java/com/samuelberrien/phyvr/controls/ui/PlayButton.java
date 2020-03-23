@@ -59,6 +59,7 @@ public class PlayButton extends View {
 		strokeWidth = a.getDimension(R.styleable.PlayButton_button_stroke_width, 5.f);
 
 		paint = new Paint();
+		paint.setAntiAlias(true);
 		paint.setStyle(Paint.Style.STROKE);
 		paint.setStrokeWidth(strokeWidth);
 

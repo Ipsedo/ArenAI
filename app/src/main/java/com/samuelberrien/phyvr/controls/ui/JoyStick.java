@@ -73,6 +73,7 @@ public class JoyStick extends View {
 		touched = false;
 
 		paint = new Paint();
+		paint.setAntiAlias(true);
 		paint.setStyle(Paint.Style.STROKE);
 		paint.setStrokeWidth(strokeWidth);
 	}

@@ -5,10 +5,10 @@
 #include "chassis.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include "../../../utils/vec.h"
-#include "../../../utils/assets.h"
-#include "../../../utils/rigidbody.h"
-#include "../../../graphics/drawable/normalmodel.h"
+#include "../../utils/vec.h"
+#include "../../utils/assets.h"
+#include "../../utils/rigidbody.h"
+#include "../../graphics/drawable/normalmodel.h"
 
 NormalMapModel *makeChassisModel(AAssetManager *mgr) {
 	return new NormalMapModel(mgr, "obj/tank_chassis.obj", "textures/chassis_tex.png", "textures/158_norm.png");

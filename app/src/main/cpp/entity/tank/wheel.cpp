@@ -3,9 +3,9 @@
 //
 
 #include "wheel.h"
-#include "../../../utils/assets.h"
-#include "../../../utils/rigidbody.h"
-#include "../../../utils/vec.h"
+#include "../../utils/assets.h"
+#include "../../utils/rigidbody.h"
+#include "../../utils/vec.h"
 #include <glm/glm.hpp>
 
 Wheel::Wheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos, btVector3 pos)

@@ -3,12 +3,12 @@
 //
 
 #include "canon.h"
-#include "../../ammu/missile.h"
-#include "../../../utils/vec.h"
+#include "../ammu/missile.h"
+#include "../../utils/vec.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include "../../../graphics/drawable/normalmodel.h"
+#include "../../graphics/drawable/normalmodel.h"
 
 /////////////////////
 // Canon
@@ -78,13 +78,7 @@ void Canon::update() {
 	}
 }
 
-vector<Base *> Canon::fire() {
-	if (!hasClickedShoot || fireCounter < maxFramesFire) {
-		return vector<Base *>();
-	}
-	fireCounter = 0;
-	hasClickedShoot = false;
-
+Base *Canon::generateMissile() {
 	btScalar tmp[16];
 	glm::vec3 missileScale = glm::vec3(0.1f, 0.3f, 0.1f);
 
@@ -110,9 +104,22 @@ vector<Base *> Canon::fire() {
 	glm::vec4 forceVec = modelMatrix * glm::vec4(0, 0, 1000.f, 0);
 	m->applyCentralImpulse(btVector3(forceVec.x, forceVec.y, forceVec.z));
 
-	vector<Base *> res;
-	res.push_back(m);
-	return res;
+	return m;
+}
+
+vector<Base *> Canon::fire() {
+	if (!hasClickedShoot || fireCounter < maxFramesFire) {
+		return vector<Base *>();
+	}
+	fireCounter = 0;
+	hasClickedShoot = false;
+
+	return vector<Base *>{generateMissile()};
+}
+
+
+btRigidBody *Canon::getMissileCopy() {
+	return generateMissile();
 }
 
 glm::mat4 Canon::getCamRot() {

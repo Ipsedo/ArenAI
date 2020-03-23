@@ -5,11 +5,11 @@
 #ifndef PHYVR_WHEEL_H
 #define PHYVR_WHEEL_H
 
-#include "../../poly.h"
-#include "../../../controls/controls.h"
+#include "../poly.h"
+#include "../../controls/controls.h"
 #include "chassis.h"
-#include "../../../utils/rigidbody.h"
-#include "../../../utils/assets.h"
+#include "../../utils/rigidbody.h"
+#include "../../utils/assets.h"
 #include <glm/glm.hpp>
 #include <android/asset_manager.h>
 

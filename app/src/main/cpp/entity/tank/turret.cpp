@@ -4,10 +4,10 @@
 
 #include "turret.h"
 #include <glm/glm.hpp>
-#include "../../../graphics/drawable/normalmodel.h"
-#include "../../../utils/rigidbody.h"
-#include "../../../utils/assets.h"
-#include "../../../utils/vec.h"
+#include "../../graphics/drawable/normalmodel.h"
+#include "../../utils/rigidbody.h"
+#include "../../utils/assets.h"
+#include "../../utils/vec.h"
 
 /////////////////////
 // Turret

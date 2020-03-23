@@ -6,9 +6,9 @@
 #define PHYVR_CHASSIS_H
 
 
-#include "../../poly.h"
-#include "../../../controls/controls.h"
-#include "../../../graphics/camera.h"
+#include "../poly.h"
+#include "../../controls/controls.h"
+#include "../../graphics/camera.h"
 #include <glm/glm.hpp>
 #include <android/asset_manager.h>
 

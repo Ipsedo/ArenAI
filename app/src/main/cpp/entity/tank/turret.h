@@ -6,10 +6,10 @@
 #define PHYVR_TURRET_H
 
 
-#include "../../poly.h"
+#include "../poly.h"
 #include <glm/glm.hpp>
-#include "../../../controls/controls.h"
-#include "../../ammu/shooter.h"
+#include "../../controls/controls.h"
+#include "../ammu/shooter.h"
 #include "chassis.h"
 
 static const glm::vec3 turretScale(0.9f, 0.25f, 1.2f);

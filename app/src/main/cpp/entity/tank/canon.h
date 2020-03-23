@@ -41,6 +41,8 @@ private:
 	// Camera
 	glm::mat4 getCamRot();
 
+	Base *generateMissile();
+
 public:
 	Canon(AAssetManager *mgr, btDynamicsWorld *world, Base *turret, btVector3 turretPos);
 
@@ -55,6 +57,9 @@ public:
 	glm::vec3 camLookAtVec(bool VR) override;
 
 	glm::vec3 camUpVec(bool VR) override;
+
+
+	btRigidBody *getMissileCopy();
 
 	virtual ~Canon();
 };

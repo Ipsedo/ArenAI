@@ -30,9 +30,11 @@ Tank::Tank(bool vr, AAssetManager *mgr, btDynamicsWorld *world, btVector3 center
 	if (vr) camera = chassis;
 	else camera = canon;
 	//camera = chassis;
+
+	curve = new Curve(canon);
 }
 
-vector<Base *> Tank::getBase() {
+vector<Base *> Tank::getBases() {
 	vector<Base *> res;
 	res.push_back(chassis);
 	res.push_back(turret);
@@ -57,7 +59,9 @@ Camera *Tank::getCamera() {
 }
 
 vector<Shooter *> Tank::getShooters() {
-	vector<Shooter *> res;
-	res.push_back(canon);
-	return res;
+	return vector<Shooter *>{canon};
+}
+
+vector<Drawable *> Tank::getDrawables() {
+	return vector<Drawable *>{curve};
 }

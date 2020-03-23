@@ -124,6 +124,9 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 					dir.setVisibility(VISIBLE);
 					turret.setVisibility(VISIBLE);
 					speed.setVisibility(VISIBLE);
+					fireButton.setVisibility(VISIBLE);
+					brakeButton.setVisibility(VISIBLE);
+					respawnButton.setVisibility(VISIBLE);
 				});
 				uiControls = new UI(mainWrappers.getLevelPtr(), dir, speed, turret, fireButton, brakeButton, respawnButton);
 			}

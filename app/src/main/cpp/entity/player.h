@@ -12,13 +12,16 @@
 
 class Player {
 public:
-	virtual vector<Base *> getBase() = 0;
+	virtual vector<Base *> getBases() = 0;
 
 	virtual vector<Controls *> getControls() = 0;
 
 	virtual Camera *getCamera() = 0;
 
 	virtual vector<Shooter *> getShooters() = 0;
+
+	// Only drawable items, not Base
+	virtual vector<Drawable *> getDrawables() = 0;
 };
 
 #endif //PHYVR_PLAYER_H

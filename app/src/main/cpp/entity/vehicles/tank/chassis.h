@@ -16,7 +16,7 @@ static const glm::vec3 chassisScale = glm::vec3(1.2f, 0.5f, 2.f);
 static const float chassisMass = 10000.f;
 static float chassisColor[4]{150.f / 255.f, 40.f / 255.f, 27.f / 255.f, 1.f};
 
-class Chassis : public Poly, public Controls, public Camera {
+class Chassis : public Controls, public Camera, public Poly {
 private:
 	bool respawn;
 	btVector3 pos;

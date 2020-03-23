@@ -19,7 +19,7 @@ Wheel::Wheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector
 			   glm::mat4(1.0f), wheelMass, true),
 		  pos(pos), chassisPos(chassisPos), isMotorEnabled(false),
 		  isBraking(true), targetSpeed(0.f), hasReAccelerate(false) {
-	setFriction(500);
+	setFriction(500.f);
 
 	btTransform trA, trB;
 	trA.setIdentity();
@@ -36,8 +36,6 @@ Wheel::Wheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector
 	hinge->setLinearLowerLimit(btVector3(0, -0.4f, 0));
 	hinge->setLinearUpperLimit(btVector3(0, 0, 0));
 
-	world->addConstraint(hinge, true);
-
 	{
 		int motorAxis = 3;
 		hinge->enableMotor(motorAxis, isMotorEnabled);
@@ -53,6 +51,8 @@ Wheel::Wheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector
 		hinge->setBounce(index, 1e-2f);
 		hinge->setEquilibriumPoint(index, -0.2f);
 	}
+
+	world->addConstraint(hinge, true);
 
 	/*int axis[4] {0,2,4,5};
 	for (int i : axis) {

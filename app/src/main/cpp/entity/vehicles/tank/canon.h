@@ -13,7 +13,7 @@ static float canonOffset = 0.1f;
 static const glm::vec3 canonScale(0.1f, 0.1f, 0.8f);
 static const btVector3 canonRelPos(0.f, 0.f, turretScale.z + canonScale.z - canonOffset);
 
-class Canon : public Poly, public Controls, public Shooter, public Camera {
+class Canon : public Controls, public Camera, public Shooter, public Poly {
 private:
 	// Controls
 	float angle;

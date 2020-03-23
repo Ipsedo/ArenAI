@@ -17,7 +17,7 @@ static const btVector3 turretRelPos(0.f, chassisScale.y + turretScale.y, 0.f);
 static float turretColor[4]{4.f / 255.f, 147.f / 255.f, 114.f / 255.f, 1.f};
 static const float turretMass = 100.f;
 
-class Turret : public Poly, public Controls {
+class Turret : public Controls, public Poly {
 private:
 	// Controls
 	float angle;

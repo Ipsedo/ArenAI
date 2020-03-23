@@ -40,7 +40,7 @@ static btVector3 wheelPos[8]{
 		btVector3(-(chassisScale.x + wheelbaseOffset), -wheelOffset, -0.75f * 3.f)
 };
 
-class Wheel : public Controls, public Poly {
+class Wheel : public Poly, public Controls {
 private:
 	bool isBraking;
 	bool isMotorEnabled;

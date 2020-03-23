@@ -21,8 +21,10 @@ ModelVBO *f(AAssetManager *mgr) {
 
 Chassis::Chassis(AAssetManager *mgr, btVector3 pos)
 		: Poly([mgr](glm::vec3 scale) {
-				   std::string chassisObjTxt = getFileText(mgr, "obj/tank_chassis.obj");
-				   return parseObj(chassisObjTxt);
+				   string objTxt = getFileText(mgr, "obj/tank_chassis.obj");
+				   btCollisionShape *shape = parseObj(objTxt);
+				   shape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
+				   return shape;
 			   },
 			   makeChassisModel(mgr), glm::vec3(pos.x(), pos.y(), pos.z()),
 			   chassisScale, glm::mat4(1.0f), chassisMass, true), respawn(false), pos(pos) {

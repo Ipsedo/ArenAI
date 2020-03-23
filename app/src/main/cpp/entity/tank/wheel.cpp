@@ -8,7 +8,8 @@
 #include "../../utils/vec.h"
 #include <glm/glm.hpp>
 
-Wheel::Wheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos, btVector3 pos)
+Wheel::Wheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos,
+			 btVector3 pos)
 		: Poly([mgr](glm::vec3 scale) {
 				   string objTxt = getFileText(mgr, "obj/wheel.obj");
 				   btCollisionShape *shape = parseObj(objTxt);
@@ -18,7 +19,7 @@ Wheel::Wheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector
 			   glm::vec3(wheelWidth, wheelRadius, wheelRadius),
 			   glm::mat4(1.0f), wheelMass, true),
 		  pos(pos), chassisPos(chassisPos), isMotorEnabled(false),
-		  isBraking(true), targetSpeed(0.f), hasReAccelerate(false) {
+		  isBraking(true), targetSpeed(0.f), hasReAccelerate(false), respawn(false) {
 	setFriction(500.f);
 
 	btTransform trA, trB;
@@ -107,7 +108,8 @@ void Wheel::update() {
  *
  */
 
-FrontWheel::FrontWheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos, btVector3 pos)
+FrontWheel::FrontWheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis,
+					   btVector3 chassisPos, btVector3 pos)
 		: Wheel(mgr, world, chassis, chassisPos, pos), direction(0.f) {}
 
 void FrontWheel::onInput(input in) {

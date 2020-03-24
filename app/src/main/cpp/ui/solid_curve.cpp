@@ -8,30 +8,6 @@
 #include "../utils/shader.h"
 #include "../utils/gl_utils.h"
 
-/*
- * {
-	btScalar timeStep = 0.0;
-	btScalar totalTime = 10.0; // looking for a 10 sec preview
-	btScalar totalFrames = totalTime * 10.0; // each sec will calculate 10 points
-	btTransform predictedTrans;
-	btTransform previousTrans = body->getWorldTransform();
-
-	// cleanup my Debug Scene (it's used only for the trajectory preview)
-	mDebugDraw->CleanupDebugDraw();
-
-	for (timeStep = 0.0; timeStep < totalTime; timeStep += totalTime / totalFrames)
-	{
-		body->predictIntegratedTransform(timeStep, predictedTrans);
-
-		mDebugDraw->drawLine(previousTrans.getOrigin(),
-							 predictedTrans.getOrigin(),
-							 btVector3(0.5, 0.5, 0.0));
-
-		previousTrans = predictedTrans;
-	}
-
- */
-
 std::string vertex_shader =
 		"uniform mat4 uVPMatrix;\n"
 		"attribute vec4 vPosition;\n"
@@ -48,7 +24,6 @@ std::string fragment_shader =
 		"void main() {\n"
 		"    gl_FragColor = vColor;\n"
 		"}";
-
 
 void Curve::draw(draw_infos infos) {
 	btRigidBody *body = canon->getMissileCopy();

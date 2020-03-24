@@ -2,6 +2,7 @@ package com.samuelberrien.phyvr.controls.button;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.support.v4.content.ContextCompat;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -14,7 +15,7 @@ import com.samuelberrien.phyvr.Dimens;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class ButtonContener extends RelativeLayout implements SharedPreferences.OnSharedPreferenceChangeListener, View.OnClickListener {
+public class ButtonContainer extends RelativeLayout implements SharedPreferences.OnSharedPreferenceChangeListener, View.OnClickListener {
 
 	private TextView text;
 	private ButtonWitness witness;
@@ -22,7 +23,7 @@ public class ButtonContener extends RelativeLayout implements SharedPreferences.
 	private boolean listening;
 	private SharedPreferences pref;
 
-	public ButtonContener(Context context, Button button) {
+	public ButtonContainer(Context context, Button button) {
 		super(context);
 
 		listening = false;
@@ -38,7 +39,7 @@ public class ButtonContener extends RelativeLayout implements SharedPreferences.
 
 		text = new TextView(context);
 		text.setGravity(Gravity.CENTER);
-		text.setBackground(ContextCompat.getDrawable(context, R.drawable.control_text));
+		//text.setBackground(ContextCompat.getDrawable(context, R.drawable.control_text));
 
 		pref = context.getSharedPreferences(Button.buttonPref, Context.MODE_PRIVATE);
 		setText(pref);
@@ -68,7 +69,8 @@ public class ButtonContener extends RelativeLayout implements SharedPreferences.
 		for (int i = KeyEvent.KEYCODE_BUTTON_A; i < KeyEvent.KEYCODE_BUTTON_MODE; i++) {
 			if (keyCode == i) {
 				pref.edit().putInt(button.getMap().getName(), keyCode).apply();
-				text.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.control_text));
+				//text.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.control_text));
+				text.setBackgroundColor(Color.TRANSPARENT);
 				text.requestLayout();
 				listening = false;
 				handled = true;
@@ -94,7 +96,8 @@ public class ButtonContener extends RelativeLayout implements SharedPreferences.
 				@Override
 				public void run() {
 					post(() -> {
-						text.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.control_text));
+						//text.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.control_text));
+						text.setBackgroundColor(Color.TRANSPARENT);
 						text.requestLayout();
 						listening = false;
 					});

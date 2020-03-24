@@ -2,6 +2,7 @@ package com.samuelberrien.phyvr.controls.axis;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.support.v4.content.ContextCompat;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -15,7 +16,7 @@ import com.samuelberrien.phyvr.Dimens;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class AxisContener extends RelativeLayout implements SharedPreferences.OnSharedPreferenceChangeListener, View.OnClickListener {
+public class AxisContainer extends RelativeLayout implements SharedPreferences.OnSharedPreferenceChangeListener, View.OnClickListener {
 
 	private Axis axis;
 	private AxisGage axisGage;
@@ -25,7 +26,7 @@ public class AxisContener extends RelativeLayout implements SharedPreferences.On
 	private boolean listening;
 	private SharedPreferences pref;
 
-	public AxisContener(Context context, Axis axis, boolean isPlus) {
+	public AxisContainer(Context context, Axis axis, boolean isPlus) {
 		super(context);
 
 		this.axis = axis;
@@ -41,7 +42,7 @@ public class AxisContener extends RelativeLayout implements SharedPreferences.On
 
 		text = new TextView(context);
 		text.setGravity(Gravity.CENTER);
-		text.setBackground(ContextCompat.getDrawable(context, R.drawable.control_text));
+		//text.setBackground(ContextCompat.getDrawable(context, R.drawable.control_text));
 		setText(pref);
 
 		addView(axisGage, axisGage.makeLayoutParams());
@@ -80,7 +81,8 @@ public class AxisContener extends RelativeLayout implements SharedPreferences.On
 						.putInt(key, i)
 						.putBoolean(key + "?", v > 0.f)
 						.apply();
-				text.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.control_text));
+				//text.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.control_text));
+				text.setBackgroundColor(Color.TRANSPARENT);
 				text.requestLayout();
 				listening = false;
 				handled = true;
@@ -99,7 +101,8 @@ public class AxisContener extends RelativeLayout implements SharedPreferences.On
 				@Override
 				public void run() {
 					post(() -> {
-						text.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.control_text));
+						//text.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.control_text));
+						text.setBackgroundColor(Color.TRANSPARENT);
 						text.requestLayout();
 						listening = false;
 					});

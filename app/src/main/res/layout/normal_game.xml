@@ -55,8 +55,6 @@
 				app:button_type="brake"/>
 		</LinearLayout>
 
-
-
 		<com.samuelberrien.phyvr.controls.ui.JoyStick
 			android:id="@+id/turret_canon_joystick"
 			android:layout_width="150dp"

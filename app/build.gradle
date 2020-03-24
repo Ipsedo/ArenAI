@@ -6,8 +6,8 @@ android {
         applicationId "com.samuelberrien.phyvr"
         minSdkVersion 19
         targetSdkVersion 28
-        versionCode 13
-        versionName "1.5d"
+        versionCode 14
+        versionName "1.5d-patch"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {

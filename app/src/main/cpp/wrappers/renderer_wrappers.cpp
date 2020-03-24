@@ -9,7 +9,7 @@
 
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_com_samuelberrien_phyvr_wrappers_MainWrappers_makeRenderer(JNIEnv *env, jobject instance,
+Java_com_samuelberrien_phyvr_MainWrappers_makeRenderer(JNIEnv *env, jobject instance,
 																jlong levelPtr) {
 
 	Level *level = (Level *) levelPtr;
@@ -20,7 +20,7 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_makeRenderer(JNIEnv *env, job
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_samuelberrien_phyvr_wrappers_MainWrappers_willDrawRenderer(JNIEnv *env, jobject instance,
+Java_com_samuelberrien_phyvr_MainWrappers_willDrawRenderer(JNIEnv *env, jobject instance,
 																	jlong rendererPtr,
 																	jfloatArray mHeadView_,
 																	jboolean VR) {
@@ -36,7 +36,7 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_willDrawRenderer(JNIEnv *env,
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_samuelberrien_phyvr_wrappers_MainWrappers_drawRenderer(JNIEnv *env, jobject instance,
+Java_com_samuelberrien_phyvr_MainWrappers_drawRenderer(JNIEnv *env, jobject instance,
 																jlong rendererPtr,
 																jfloatArray mEyeProjectionMatrix_,
 																jfloatArray mEyeViewMatrix_,
@@ -70,7 +70,7 @@ Java_com_samuelberrien_phyvr_wrappers_MainWrappers_drawRenderer(JNIEnv *env, job
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_samuelberrien_phyvr_wrappers_MainWrappers_freeRenderer(JNIEnv *env, jobject instance,
+Java_com_samuelberrien_phyvr_MainWrappers_freeRenderer(JNIEnv *env, jobject instance,
 																jlong rendererPtr) {
 	delete (Renderer *) rendererPtr;
 }

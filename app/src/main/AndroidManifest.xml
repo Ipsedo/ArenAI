@@ -37,6 +37,9 @@
 
 		</activity>
 
+		<activity android:name=".controls.GamePadActivity">
+		</activity>
+
 		<activity android:name=".controls.ControlActivity">
 		</activity>
 

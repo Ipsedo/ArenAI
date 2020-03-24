@@ -54,9 +54,17 @@
 	<Button
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:text="Configure controls"
+			android:text="Configure GamePad"
 			android:background="@drawable/button"
 			android:layout_margin="@dimen/stroke_width"
-			android:onClick="configureControls"/>
+			android:onClick="configureGamePad"/>
+
+	<Button
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:text="Configure controls"
+		android:background="@drawable/button"
+		android:layout_margin="@dimen/stroke_width"
+		android:onClick="configureControls" />
 
 </LinearLayout>

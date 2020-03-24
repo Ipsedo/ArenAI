@@ -8,6 +8,7 @@ import android.widget.CheckBox;
 import android.widget.NumberPicker;
 
 import com.samuelberrien.phyvr.controls.ControlActivity;
+import com.samuelberrien.phyvr.controls.GamePadActivity;
 import com.samuelberrien.phyvr.game.PlayActivity;
 import com.samuelberrien.phyvr.game.MyGvrActivity;
 
@@ -44,6 +45,11 @@ public class MainActivity extends AppCompatActivity implements NumberPicker.OnVa
 	public void vr(View v) {
 		Intent myIntent = new Intent(this, MyGvrActivity.class);
 		myIntent.putExtra(levelIdxExtraStr, levelIdx);
+		startActivity(myIntent);
+	}
+
+	public void configureGamePad(View v) {
+		Intent myIntent = new Intent(this, GamePadActivity.class);
 		startActivity(myIntent);
 	}
 

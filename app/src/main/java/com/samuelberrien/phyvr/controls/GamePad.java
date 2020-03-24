@@ -51,9 +51,8 @@ public class GamePad {
 		// Axis
 		dirAxis = new Axis(context, Axis.AxisMap.DIR);
 		dirAxis.addListener((float value) -> {
-					dir = value;
-				}
-		);
+			dir = value;
+		});
 
 		speedAxis = new Axis(context, Axis.AxisMap.SPEED);
 		speedAxis.addListener((float value) -> {
@@ -62,12 +61,12 @@ public class GamePad {
 
 		turretAxis = new Axis(context, Axis.AxisMap.TURRET);
 		turretAxis.addListener((float value) -> {
-			turret = value;
+			turret = value * 0.3f;
 		});
 
 		canonAxis = new Axis(context, Axis.AxisMap.CANON);
 		canonAxis.addListener((float value) -> {
-			canon = value;
+			canon = value * 0.3f;
 		});
 
 		// Buttons

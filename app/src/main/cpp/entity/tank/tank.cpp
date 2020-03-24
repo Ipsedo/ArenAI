@@ -20,8 +20,6 @@ Tank::Tank(bool vr, AAssetManager *mgr, btDynamicsWorld *world, btVector3 center
 	wheels.push_back(new Wheel(mgr, world, chassis, centerPos, wheelPos[7]));
 
 	turret = new Turret(mgr, world, chassis, centerPos);
-	turret->setIgnoreCollisionCheck(chassis, true);
-
 	canon = new Canon(mgr, world, turret, centerPos + turretRelPos);
 
 	for (btRigidBody *rb : wheels) {
@@ -31,6 +29,7 @@ Tank::Tank(bool vr, AAssetManager *mgr, btDynamicsWorld *world, btVector3 center
 	}
 	canon->setIgnoreCollisionCheck(chassis, true);
 	canon->setIgnoreCollisionCheck(turret, true);
+	turret->setIgnoreCollisionCheck(chassis, true);
 
 	if (vr) camera = chassis;
 	else camera = canon;

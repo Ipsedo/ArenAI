@@ -17,7 +17,7 @@ public class SetUpButton extends LinearLayout {
 
 	private Button.ButtonMap map;
 	private Button button;
-	private ButtonContener contener;
+	private ButtonContainer contener;
 
 	public SetUpButton(Context context) {
 		super(context);
@@ -86,7 +86,7 @@ public class SetUpButton extends LinearLayout {
 		params = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
 		params.weight = 0.4f;
 
-		contener = new ButtonContener(context, button);
+		contener = new ButtonContainer(context, button);
 
 		addView(contener, params);
 	}

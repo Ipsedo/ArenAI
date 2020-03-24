@@ -19,8 +19,8 @@ public class SetUpAxis extends LinearLayout {
 
 	private Axis.AxisMap axisMap;
 	private Axis axis;
-	private AxisContener contenerMinus;
-	private AxisContener contenerPlus;
+	private AxisContainer contenerMinus;
+	private AxisContainer contenerPlus;
 
 	public SetUpAxis(Context context) {
 		super(context);
@@ -82,8 +82,8 @@ public class SetUpAxis extends LinearLayout {
 		l.setOrientation(HORIZONTAL);
 		LinearLayout.LayoutParams params = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
 		params.weight = 0.5f;
-		l.addView(contenerMinus = new AxisContener(context, axis, false), params);
-		l.addView(contenerPlus = new AxisContener(context, axis, true), params);
+		l.addView(contenerMinus = new AxisContainer(context, axis, false), params);
+		l.addView(contenerPlus = new AxisContainer(context, axis, true), params);
 
 		TextView name = new TextView(context);
 		name.setBackground(ContextCompat.getDrawable(getContext(), R.color.greyTransparent));

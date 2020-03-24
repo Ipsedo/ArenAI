@@ -16,7 +16,7 @@ public class ControlActivity extends AppCompatActivity implements SharedPreferen
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
+
 		setContentView(R.layout.activity_control);
 
 		SharedPreferences pref = getSharedPreferences(controlSharedPref, MODE_PRIVATE);

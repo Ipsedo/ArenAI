@@ -1,6 +1,7 @@
 package com.samuelberrien.phyvr.controls;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 
 import com.samuelberrien.phyvr.controls.ui.Cursor;
 import com.samuelberrien.phyvr.controls.ui.JoyStick;
@@ -19,11 +20,11 @@ public class UI {
 	private float canon;
 	private float speed;
 
-	boolean brake;
-	boolean respawn;
-	boolean fire;
+	private boolean brake;
+	private boolean respawn;
+	private boolean fire;
 
-	public UI(long levelPtr, JoyStick dirJoystick, Cursor speedCursor, JoyStick turretJoystick,
+	public UI(Context context, long levelPtr, JoyStick dirJoystick, Cursor speedCursor, JoyStick turretJoystick,
 			  PlayButton fireButton, PlayButton brakeButton, PlayButton respawnButton) {
 		this.controlPtr = levelPtr;
 		dir = 0.f;
@@ -35,8 +36,10 @@ public class UI {
 		respawn = false;
 		fire = false;
 
+		SharedPreferences controlPref = context.getSharedPreferences(ControlActivity.ControlSharedPref, Context.MODE_PRIVATE);
+
 		dirJoystick.setJoyStickListener((float relX, float relY) -> {
-				dir = relX;
+				dir = relX * controlPref.getFloat(ControlActivity.DirectionRatioKey, 1.f);
 		});
 
 		speedCursor.setListener((float relY) -> {
@@ -44,8 +47,8 @@ public class UI {
 		});
 
 		turretJoystick.setJoyStickListener((float relX, float relY) -> {
-				turret = relX;
-				canon = -relY;
+				turret = relX * controlPref.getFloat(ControlActivity.TurretRatioKey, 0.5f);
+				canon = -relY * controlPref.getFloat(ControlActivity.CanonRatioKey, 0.5f);
 		});
 
 		fireButton.setListener((boolean clicked) -> {

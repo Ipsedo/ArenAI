@@ -5,7 +5,7 @@
 #include "renderer.h"
 
 #include <glm/gtc/matrix_transform.hpp>
-#include <GLES3/gl3.h>
+#include <GLES2/gl2.h>
 #include <glm/gtc/type_ptr.hpp>
 
 Renderer::Renderer(Level *level) : level(level), VR(false) {

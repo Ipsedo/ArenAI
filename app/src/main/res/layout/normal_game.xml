@@ -61,8 +61,7 @@
 			android:layout_height="150dp"
 			android:layout_gravity="center"
 			android:visibility="gone"
-			app:circle_color_accent="@color/colorPrimary"
-			app:factor="0.3" />
+			app:circle_color_accent="@color/colorPrimary" />
 
 	</LinearLayout>
 

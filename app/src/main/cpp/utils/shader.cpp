@@ -1,4 +1,4 @@
-#include <GLES3/gl3.h>
+#include <GLES2/gl2.h>
 #include <android/log.h>
 #include <cstdlib>
 #include "shader.h"

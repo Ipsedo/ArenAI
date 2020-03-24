@@ -6,7 +6,7 @@
 #define PHYVR_NORMALMODEL_H
 
 #include <string>
-#include <GLES3/gl3.h>
+#include <GLES2/gl2.h>
 #include <android/asset_manager.h>
 #include <glm/glm.hpp>
 #include "../misc.h"

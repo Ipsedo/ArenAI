@@ -7,107 +7,117 @@
 	android:layout_height="match_parent"
 	tool:context=".controls.ControlActivity">
 
-	<TextView
+	<ScrollView
 		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:text="Direction sensibility"
-		android:layout_marginBottom="10dp"
-		android:layout_marginTop="10dp"
-		android:gravity="center"/>
+		android:layout_height="wrap_content">
 
-	<SeekBar
-		android:id="@+id/seekbar_dir"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:layout_marginBottom="10dp"/>
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical">
+			
+			<TextView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="Direction sensibility"
+				android:layout_marginBottom="10dp"
+				android:layout_marginTop="10dp"
+				android:gravity="center"/>
 
-	<TextView
-		android:id="@+id/textview_dir"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:text="Direction ratio : 0.0"
-		android:gravity="center"
-		android:layout_marginBottom="10dp"/>
+			<SeekBar
+				android:id="@+id/seekbar_dir"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginBottom="10dp"/>
 
-	<View
-		android:layout_width="match_parent"
-		android:layout_height="@dimen/stroke_width"
-		android:background="@color/colorPrimary"
-		android:layout_marginBottom="10dp"/>
+			<TextView
+				android:id="@+id/textview_dir"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="Direction ratio : 0.0"
+				android:gravity="center"
+				android:layout_marginBottom="10dp"/>
 
-	<TextView
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:text="Turret sensibility"
-		android:layout_marginBottom="10dp"
-		android:gravity="center"/>
+			<View
+				android:layout_width="match_parent"
+				android:layout_height="@dimen/stroke_width"
+				android:background="@color/colorPrimary"
+				android:layout_marginBottom="10dp"/>
 
-	<SeekBar
-		android:id="@+id/seekbar_turret"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:layout_marginBottom="10dp"/>
+			<TextView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="Turret sensibility"
+				android:layout_marginBottom="10dp"
+				android:gravity="center"/>
 
-	<TextView
-		android:id="@+id/textview_turret"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:text="Turret ratio : 0.0"
-		android:gravity="center"
-		android:layout_marginBottom="10dp"/>
+			<SeekBar
+				android:id="@+id/seekbar_turret"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginBottom="10dp"/>
 
-	<View
-		android:layout_width="match_parent"
-		android:layout_height="@dimen/stroke_width"
-		android:background="@color/colorPrimary"
-		android:layout_marginBottom="10dp"/>
+			<TextView
+				android:id="@+id/textview_turret"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="Turret ratio : 0.0"
+				android:gravity="center"
+				android:layout_marginBottom="10dp"/>
 
-	<TextView
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:text="Canon sensibility"
-		android:layout_marginBottom="10dp"
-		android:gravity="center"/>
+			<View
+				android:layout_width="match_parent"
+				android:layout_height="@dimen/stroke_width"
+				android:background="@color/colorPrimary"
+				android:layout_marginBottom="10dp"/>
 
-	<SeekBar
-		android:id="@+id/seekbar_canon"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:layout_marginBottom="10dp"/>
+			<TextView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="Canon sensibility"
+				android:layout_marginBottom="10dp"
+				android:gravity="center"/>
 
-	<TextView
-		android:id="@+id/textview_canon"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:text="Canon ratio : 0.0"
-		android:gravity="center"
-		android:layout_marginBottom="10dp"/>
+			<SeekBar
+				android:id="@+id/seekbar_canon"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginBottom="10dp"/>
 
-	<View
-		android:layout_width="match_parent"
-		android:layout_height="@dimen/stroke_width"
-		android:background="@color/colorPrimary"
-		android:layout_marginBottom="10dp"/>
+			<TextView
+				android:id="@+id/textview_canon"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="Canon ratio : 0.0"
+				android:gravity="center"
+				android:layout_marginBottom="10dp"/>
 
-	<TextView
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:text="Speed sensibility (not functionnal)"
-		android:layout_marginBottom="10dp"
-		android:gravity="center"/>
+			<View
+				android:layout_width="match_parent"
+				android:layout_height="@dimen/stroke_width"
+				android:background="@color/colorPrimary"
+				android:layout_marginBottom="10dp"/>
 
-	<SeekBar
-		android:id="@+id/seekbar_speed"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:layout_marginBottom="10dp"/>
+			<TextView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="Speed sensibility (not functionnal)"
+				android:layout_marginBottom="10dp"
+				android:gravity="center"/>
 
-	<TextView
-		android:id="@+id/textview_speed"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:text="Speed ratio : 0.0"
-		android:gravity="center"
-		android:layout_marginBottom="10dp"/>
+			<SeekBar
+				android:id="@+id/seekbar_speed"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginBottom="10dp"/>
 
+			<TextView
+				android:id="@+id/textview_speed"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="Speed ratio : 0.0"
+				android:gravity="center"
+				android:layout_marginBottom="10dp"/>
+		</LinearLayout>
+	</ScrollView>
 </LinearLayout>

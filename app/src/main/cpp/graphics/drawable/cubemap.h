@@ -5,7 +5,7 @@
 #ifndef PHYVR_CUBEMAP_H
 #define PHYVR_CUBEMAP_H
 
-#include <GLES3/gl3.h>
+#include <GLES2/gl2.h>
 #include "../misc.h"
 #include <string>
 #include <android/asset_manager.h>

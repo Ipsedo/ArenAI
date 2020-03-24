@@ -7,7 +7,7 @@
 
 #include <math.h>
 #include <glm/glm.hpp>
-#include <GLES3/gl3.h>
+#include <GLES2/gl2.h>
 
 class Triangle {
 private:

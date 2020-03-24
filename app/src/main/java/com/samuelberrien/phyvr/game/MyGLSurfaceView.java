@@ -68,7 +68,7 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
 		willQuit = false;
 		setEGLConfigChooser(this);
-		setEGLContextClientVersion(3);
+		setEGLContextClientVersion(2);
 		setPreserveEGLContextOnPause(true);
 		setRenderer(this);
 		projectionMatrix = new float[16];
@@ -127,7 +127,7 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 					brakeButton.setVisibility(VISIBLE);
 					respawnButton.setVisibility(VISIBLE);
 				});
-				uiControls = new UI(mainWrappers.getLevelPtr(), dir, speed, turret, fireButton, brakeButton, respawnButton);
+				uiControls = new UI(getContext(), mainWrappers.getLevelPtr(), dir, speed, turret, fireButton, brakeButton, respawnButton);
 			}
 		}
 	}

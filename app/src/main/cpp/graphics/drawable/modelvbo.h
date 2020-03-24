@@ -4,7 +4,7 @@
 #ifndef PHYVR_OBJVBO_H
 #define PHYVR_OBJVBO_H
 
-#include <GLES3/gl3.h>
+#include <GLES2/gl2.h>
 #include <glm/glm.hpp>
 #include <vector>
 #include <string>

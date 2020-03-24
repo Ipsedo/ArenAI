@@ -25,7 +25,6 @@
 		<attr name="joystick_stroke_width" format="dimension"/>
 		<attr name="stick_radius_ratio" format="float"/>
 		<attr name="reset_stick_on_end" format="boolean" />
-		<attr name="factor" format="float"/>
 	</declare-styleable>
 
 	<declare-styleable name="Cursor">

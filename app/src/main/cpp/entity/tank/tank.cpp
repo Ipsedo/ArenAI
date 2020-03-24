@@ -20,10 +20,15 @@ Tank::Tank(bool vr, AAssetManager *mgr, btDynamicsWorld *world, btVector3 center
 	wheels.push_back(new Wheel(mgr, world, chassis, centerPos, wheelPos[7]));
 
 	turret = new Turret(mgr, world, chassis, centerPos);
+	turret->setIgnoreCollisionCheck(chassis, true);
 
 	canon = new Canon(mgr, world, turret, centerPos + turretRelPos);
 
-	for (btRigidBody *rb : wheels) canon->setIgnoreCollisionCheck(rb, true);
+	for (btRigidBody *rb : wheels) {
+		canon->setIgnoreCollisionCheck(rb, true);
+		chassis->setIgnoreCollisionCheck(rb, true);
+		turret->setIgnoreCollisionCheck(rb, true);
+	}
 	canon->setIgnoreCollisionCheck(chassis, true);
 	canon->setIgnoreCollisionCheck(turret, true);
 

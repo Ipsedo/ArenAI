@@ -34,8 +34,6 @@ public class JoyStick extends View {
 	private int circleColor;
 	private int circleColorAccent;
 
-	private float factor;
-
 	public JoyStick(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		init(context, attrs);
@@ -64,8 +62,6 @@ public class JoyStick extends View {
 		stickColorAccent = a.getColor(R.styleable.JoyStick_stick_color_accent, ContextCompat.getColor(context, R.color.colorAccent));
 		circleColor = a.getColor(R.styleable.JoyStick_circle_color, ContextCompat.getColor(context, R.color.colorPrimary));
 		circleColorAccent = a.getColor(R.styleable.JoyStick_circle_color_accent, ContextCompat.getColor(context, R.color.colorAccent));
-
-		factor = a.getFloat(R.styleable.JoyStick_factor, 1.f);
 
 		listener = null;
 
@@ -159,7 +155,7 @@ public class JoyStick extends View {
 					float relX = (joystickCenterX - getWidth() / 2.f) / maxDist;
 					float relY = (joystickCenterY - getHeight() / 2.f) / maxDist;
 
-					if (listener != null) listener.onMove(relX * factor, relY * factor);
+					if (listener != null) listener.onMove(relX, relY);
 
 					invalidate();
 				}

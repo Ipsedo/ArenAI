@@ -1,6 +1,7 @@
 package com.samuelberrien.phyvr.controls;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -48,10 +49,12 @@ public class GamePad {
 		respawn = false;
 		fire = false;
 
+		SharedPreferences controlPref = context.getSharedPreferences(ControlActivity.ControlSharedPref, Context.MODE_PRIVATE);
+
 		// Axis
 		dirAxis = new Axis(context, Axis.AxisMap.DIR);
 		dirAxis.addListener((float value) -> {
-			dir = value;
+			dir = value * controlPref.getFloat(ControlActivity.DirectionRatioKey, 1.f);
 		});
 
 		speedAxis = new Axis(context, Axis.AxisMap.SPEED);
@@ -61,12 +64,12 @@ public class GamePad {
 
 		turretAxis = new Axis(context, Axis.AxisMap.TURRET);
 		turretAxis.addListener((float value) -> {
-			turret = value * 0.3f;
+			turret = value * controlPref.getFloat(ControlActivity.TurretRatioKey, 0.5f);
 		});
 
 		canonAxis = new Axis(context, Axis.AxisMap.CANON);
 		canonAxis.addListener((float value) -> {
-			canon = value * 0.3f;
+			canon = value * controlPref.getFloat(ControlActivity.CanonRatioKey, 0.5f);
 		});
 
 		// Buttons

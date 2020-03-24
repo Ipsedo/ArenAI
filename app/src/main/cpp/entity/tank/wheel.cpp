@@ -40,7 +40,7 @@ Wheel::Wheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector
 	{
 		int motorAxis = 3;
 		hinge->enableMotor(motorAxis, isMotorEnabled);
-		hinge->setMaxMotorForce(motorAxis, 5e4f);
+		hinge->setMaxMotorForce(motorAxis, 1e4f);
 		hinge->setTargetVelocity(motorAxis, targetSpeed);
 	}
 

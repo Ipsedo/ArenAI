@@ -6,7 +6,7 @@
 #define PHYVR_DIFFUSEMODEL_H
 
 
-#include <GLES2/gl2.h>
+#include <GLES3/gl3.h>
 #include <vector>
 #include <glm/glm.hpp>
 #include "../misc.h"

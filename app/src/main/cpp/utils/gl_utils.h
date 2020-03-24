@@ -5,7 +5,7 @@
 #ifndef PHYVR_GL_UTILS_H
 #define PHYVR_GL_UTILS_H
 
-#include <GLES2/gl2.h>
+#include <GLES3/gl3.h>
 #include <android/log.h>
 #include <cstdlib>
 

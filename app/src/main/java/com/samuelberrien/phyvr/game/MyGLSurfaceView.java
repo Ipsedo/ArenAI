@@ -68,7 +68,7 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
 		willQuit = false;
 		setEGLConfigChooser(this);
-		setEGLContextClientVersion(2);
+		setEGLContextClientVersion(3);
 		setPreserveEGLContextOnPause(true);
 		setRenderer(this);
 		projectionMatrix = new float[16];

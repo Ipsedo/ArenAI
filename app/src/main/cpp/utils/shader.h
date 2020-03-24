@@ -1,7 +1,7 @@
 #ifndef PHYVR_SHADER_H
 #define PHYVR_SHADER_H
 
-#include <GLES2/gl2.h>
+#include <GLES3/gl3.h>
 
 #define SHADER_ERROR 369
 

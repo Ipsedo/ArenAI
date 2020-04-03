@@ -117,8 +117,20 @@ public class MyGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 			brakeButton = playActivity.findViewById(R.id.brake_button);
 			respawnButton = playActivity.findViewById(R.id.respawn_button);
 
-			if (useController) controls = new GamePad(getContext(), mainWrappers.getLevelPtr());
-			else {
+			if (useController) {
+				controls = new GamePad(getContext(), mainWrappers.getLevelPtr());
+
+				try {
+					controls.initControllerIds();
+				} catch (GamePad.NoControllerException e) {
+					e.printStackTrace();
+					// Use UI instead
+					// TODO AlertDialog
+					useController = false;
+					controls = null;
+				}
+			}
+			if (!useController){
 				playActivity.runOnUiThread(() -> {
 					dir.setVisibility(VISIBLE);
 					turret.setVisibility(VISIBLE);

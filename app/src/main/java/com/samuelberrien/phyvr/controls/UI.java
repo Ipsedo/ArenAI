@@ -2,6 +2,9 @@ package com.samuelberrien.phyvr.controls;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 
 import com.samuelberrien.phyvr.controls.ui.Cursor;
 import com.samuelberrien.phyvr.controls.ui.JoyStick;
@@ -12,6 +15,8 @@ public class UI {
 	static {
 		System.loadLibrary("phyvr");
 	}
+
+	private Context context;
 
 	private final long controlPtr;
 
@@ -27,6 +32,9 @@ public class UI {
 	public UI(Context context, long levelPtr, JoyStick dirJoystick, Cursor speedCursor, JoyStick turretJoystick,
 			  PlayButton fireButton, PlayButton brakeButton, PlayButton respawnButton) {
 		this.controlPtr = levelPtr;
+
+		this.context = context;
+
 		dir = 0.f;
 		turret = 0.f;
 		canon = 0.f;
@@ -66,6 +74,15 @@ public class UI {
 	}
 
 	public void sendInputs() {
+		if (vibrate(controlPtr)) {
+			Vibrator v = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+				v.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE));
+			} else {
+				//deprecated in API 26
+				v.vibrate(50);
+			}
+		}
 		control(controlPtr, dir, speed, brake, turret, canon, respawn, fire);
 	}
 
@@ -77,4 +94,6 @@ public class UI {
 							   float turretUp,
 							   boolean respawn,
 							   boolean fire);
+
+	public native boolean vibrate(long level_ptr);
 }

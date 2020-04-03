@@ -27,7 +27,8 @@ Chassis::Chassis(AAssetManager *mgr, btVector3 pos)
 				   return shape;
 			   },
 			   makeChassisModel(mgr), glm::vec3(pos.x(), pos.y(), pos.z()),
-			   chassisScale, glm::mat4(1.0f), chassisMass, true), respawn(false), pos(pos) {
+			   chassisScale, glm::mat4(1.0f), chassisMass, true),
+			   respawn(false), pos(pos), isHit(false) {
 	/*btVector3 centerOfMass = getCenterOfMassPosition();
 	btTransform tr;
 	tr.setIdentity();
@@ -99,6 +100,17 @@ glm::vec3 Chassis::camPos(bool VR) {
 	p = modelMatrix * p;
 
 	return glm::vec3(p.x, p.y, p.z);
+}
+
+output Chassis::getOutput() {
+	bool vibrate = isHit;
+	isHit = false;
+	return {vibrate};
+}
+
+void Chassis::decreaseLife(int toSub) {
+	isHit = toSub > 0;
+	Base::decreaseLife(toSub);
 }
 
 

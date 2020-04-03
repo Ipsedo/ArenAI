@@ -6,7 +6,7 @@
 #define PHYVR_CONTROLS_H
 
 
-#include <tuple>
+#include "../../../../../../Android/Sdk/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include/c++/v1/tuple"
 
 struct input {
 	float xAxis;
@@ -18,10 +18,14 @@ struct input {
 	bool fire;
 };
 
+struct output {
+	bool vibrate;
+};
+
 class Controls {
 public:
 	virtual void onInput(input in) = 0;
+	virtual output getOutput() = 0;
 };
-
 
 #endif //PHYVR_CONTROLS_H

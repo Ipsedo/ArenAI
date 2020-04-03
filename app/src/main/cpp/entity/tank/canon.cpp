@@ -34,7 +34,7 @@ Canon::Canon(AAssetManager *mgr, btDynamicsWorld *world, Base *turret, btVector3
 			   canonScale, glm::mat4(1.0f), canonMass, true),
 		  angle(0.f), added(0), respawn(false), pos(turretPos + canonRelPos),
 		  hasClickedShoot(false), missile(makeMissileModel(mgr)), maxFramesFire(25), fireCounter(0),
-		  turret(turret) {
+		  turret(turret), isHit(false) {
 	btRigidBody *pBodyA = turret;
 	btRigidBody *pBodyB = this;
 
@@ -181,4 +181,15 @@ glm::vec3 Canon::camUpVec(bool VR) {
 
 Canon::~Canon() {
 	delete missile;
+}
+
+output Canon::getOutput() {
+	bool vibrate = isHit;
+	isHit = false;
+	return output();
+}
+
+void Canon::decreaseLife(int toSub) {
+	isHit = toSub > 0;
+	Base::decreaseLife(toSub);
 }

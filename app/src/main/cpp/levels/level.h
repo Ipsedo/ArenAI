@@ -8,7 +8,7 @@
 #include <android/asset_manager.h>
 #include "../entity/base.h"
 #include "../core/limits.h"
-#include "../controls/controls.h"
+#include "../controls.h"
 #include "../graphics/camera.h"
 #include "../entity/ammu/shooter.h"
 

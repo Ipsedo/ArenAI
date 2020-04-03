@@ -24,6 +24,8 @@ private:
 
 	float added;
 
+	bool isHit;
+
 	// Canon
 	btVector3 pos;
 
@@ -48,7 +50,11 @@ public:
 
 	void onInput(input in) override;
 
+	output getOutput() override;
+
 	void update() override;
+
+	void decreaseLife(int toSub) override;
 
 	vector<Base *> fire() override;
 

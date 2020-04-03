@@ -2,6 +2,9 @@ package com.samuelberrien.phyvr.controls;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -12,9 +15,9 @@ import java.util.ArrayList;
 
 public class GamePad {
 
-
 	private final long controlPtr;
 
+	private Vibrator v;
 
 	private float dir;
 	private float turret;
@@ -90,6 +93,14 @@ public class GamePad {
 	}
 
 	public void sendInputs() {
+		if (v.hasVibrator()  && vibrate(controlPtr)) {
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+				v.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE));
+			} else {
+				//deprecated in API 26
+				v.vibrate(50);
+			}
+		}
 		control(controlPtr, dir, speed, brake, turret, canon, respawn, fire);
 	}
 
@@ -133,14 +144,18 @@ public class GamePad {
 					gameControllerDeviceIds.add(deviceId);
 				}
 			}
+			if (dev.getVibrator().hasVibrator())
+				v = dev.getVibrator();
 		}
 		if (gameControllerDeviceIds.isEmpty()) {
 			throw new NoControllerException();
 		}
-		int controllerId = gameControllerDeviceIds.get(0);
+
+		if (v == null)
+			v = InputDevice.getDevice(gameControllerDeviceIds.get(0)).getVibrator();
 	}
 
-	private class NoControllerException extends Exception {
+	public static class NoControllerException extends Exception {
 
 	}
 
@@ -152,6 +167,8 @@ public class GamePad {
 							   float turretUp,
 							   boolean respawn,
 							   boolean fire);
+
+	public native boolean vibrate(long levelPtr);
 
 	public native void control2(long controlPtr, float[] arrayControl);
 }

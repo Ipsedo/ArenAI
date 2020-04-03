@@ -6,7 +6,7 @@
 #define PHYVR_PLAYER_H
 
 #include "base.h"
-#include "../controls/controls.h"
+#include "../controls.h"
 #include "ammu/shooter.h"
 #include "../graphics/camera.h"
 

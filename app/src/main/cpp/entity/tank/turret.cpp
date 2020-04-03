@@ -27,7 +27,7 @@ Turret::Turret(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVect
 			   makeTurretModel(mgr),
 			   btVector3ToVec3(chassisPos + turretRelPos), turretScale, glm::mat4(1.0f), turretMass,
 			   true),
-		  angle(0.f), respawn(false), added(0.f), pos(chassisPos + turretRelPos) {
+		  angle(0.f), respawn(false), added(0.f), pos(chassisPos + turretRelPos), isHit(false) {
 	btTransform tr;
 	tr.setIdentity();
 	tr.setOrigin(pos);
@@ -71,4 +71,15 @@ void Turret::update() {
 
 		respawn = false;
 	}
+}
+
+output Turret::getOutput() {
+	bool vibrate = isHit;
+	isHit = false;
+	return {vibrate};
+}
+
+void Turret::decreaseLife(int toSub) {
+	isHit = toSub > 0;
+	Base::decreaseLife(toSub);
 }

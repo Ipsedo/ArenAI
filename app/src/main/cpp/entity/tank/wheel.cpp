@@ -19,7 +19,8 @@ Wheel::Wheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector
 			   glm::vec3(wheelWidth, wheelRadius, wheelRadius),
 			   glm::mat4(1.0f), wheelMass, true),
 		  pos(pos), chassisPos(chassisPos), isMotorEnabled(true),
-		  isBraking(true), freeWheel(false), targetSpeed(0.f), hasReAccelerate(false), respawn(false) {
+		  isBraking(true), freeWheel(false), targetSpeed(0.f), hasReAccelerate(false),
+		  respawn(false) {
 	setFriction(500.f);
 
 	btTransform trA, trB;
@@ -130,4 +131,8 @@ void FrontWheel::update() {
 ModelVBO *Wheel::makeWheelMesh(AAssetManager *mgr) {
 	std::string cylObjText = getFileText(mgr, "obj/wheel.obj");
 	return new ModelVBO(cylObjText, wheelColor[0], wheelColor[1], wheelColor[2], wheelColor[3]);
+}
+
+output Wheel::getOutput() {
+	return {false};
 }

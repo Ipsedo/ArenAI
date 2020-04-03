@@ -3,6 +3,7 @@
 //
 
 #include <jni.h>
+#import <numeric>
 #include "../entity/tank/tank.h"
 #include "wrapper_utils.h"
 #include "../levels/level.h"
@@ -27,6 +28,17 @@ Java_com_samuelberrien_phyvr_controls_GamePad_control(JNIEnv *env, jobject insta
 	for (Controls *c : ctrl)
 		c->onInput(in);
 	ctrl.clear();
+}
+
+extern "C"
+JNIEXPORT jboolean JNICALL
+Java_com_samuelberrien_phyvr_controls_GamePad_vibrate(JNIEnv *env, jobject thiz, jlong level_ptr) {
+	vector<Controls *> ctrl = ((Level *) level_ptr)->getControls();
+
+	bool vibrate = false;
+	for (Controls *c: ctrl)
+		vibrate |= c->getOutput().vibrate;
+	return (jboolean) vibrate;
 }
 
 extern "C"
@@ -73,5 +85,16 @@ Java_com_samuelberrien_phyvr_controls_UI_control(JNIEnv *env, jobject instance,
 	for (Controls *c : ctrl)
 		c->onInput(in);
 	ctrl.clear();
+}
+
+extern "C"
+JNIEXPORT jboolean JNICALL
+Java_com_samuelberrien_phyvr_controls_UI_vibrate(JNIEnv *env, jobject thiz, jlong level_ptr) {
+	vector<Controls *> ctrl = ((Level *) level_ptr)->getControls();
+
+	bool vibrate = false;
+	for (Controls *c: ctrl)
+		vibrate |= c->getOutput().vibrate;
+	return (jboolean) vibrate;
 }
 

@@ -7,7 +7,7 @@
 
 
 #include "../poly.h"
-#include "../../controls/controls.h"
+#include "../../controls.h"
 #include "../../graphics/camera.h"
 #include <glm/glm.hpp>
 #include <android/asset_manager.h>
@@ -20,13 +20,18 @@ class Chassis : public Controls, public Camera, public Poly {
 private:
 	bool respawn;
 	btVector3 pos;
+	bool isHit;
 
 public:
 	Chassis(AAssetManager *mgr, btVector3 pos);
 
 	void onInput(input in) override;
 
+	output getOutput() override;
+
 	void update() override;
+
+	void decreaseLife(int toSub) override;
 
 	glm::vec3 camPos(bool VR) override;
 

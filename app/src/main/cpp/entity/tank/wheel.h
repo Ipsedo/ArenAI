@@ -6,7 +6,7 @@
 #define PHYVR_WHEEL_H
 
 #include "../poly.h"
-#include "../../controls/controls.h"
+#include "../../controls.h"
 #include "chassis.h"
 #include "../../utils/rigidbody.h"
 #include "../../utils/assets.h"
@@ -61,8 +61,15 @@ public:
 	Wheel(AAssetManager *mgr,
 		  btDynamicsWorld *world, Base *chassis, btVector3 chassisPos, btVector3 pos);
 
+	/*
+	 * Control overrides
+	 */
 	void onInput(input in) override;
+	output getOutput() override;
 
+	/*
+	 * Base override
+	 */
 	void update() override;
 };
 

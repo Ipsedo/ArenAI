@@ -7,7 +7,7 @@
 
 #include "../poly.h"
 #include <glm/glm.hpp>
-#include "../../controls/controls.h"
+#include "../../controls.h"
 #include "../ammu/shooter.h"
 #include "chassis.h"
 
@@ -25,6 +25,8 @@ private:
 
 	float added;
 
+	bool isHit;
+
 	// Turret
 	btVector3 pos;
 
@@ -32,10 +34,18 @@ private:
 public:
 	Turret(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos);
 
+	/*
+	 * Control overrides
+	 */
 	void onInput(input in) override;
+	output getOutput() override;
 
+	/*
+	 * Base override
+	 */
 	void update() override;
 
+	void decreaseLife(int toSub) override;
 };
 
 #endif //PHYVR_TURRET_H

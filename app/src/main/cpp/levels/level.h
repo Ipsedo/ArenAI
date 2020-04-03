@@ -18,6 +18,8 @@ protected:
 	AAssetManager *mgr;
 
 public:
+	Level();
+
 	virtual void init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world);
 
 	virtual vector<Controls *> getControls() = 0;

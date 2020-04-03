@@ -3,7 +3,6 @@
 //
 
 #include "tank.h"
-#include "chassis.h"
 
 Tank::Tank(bool vr, AAssetManager *mgr, btDynamicsWorld *world, btVector3 centerPos) {
 	chassis = new Chassis(mgr, centerPos);
@@ -22,7 +21,11 @@ Tank::Tank(bool vr, AAssetManager *mgr, btDynamicsWorld *world, btVector3 center
 	turret = new Turret(mgr, world, chassis, centerPos);
 	canon = new Canon(mgr, world, turret, centerPos + turretRelPos);
 
+	turret->setActivationState(DISABLE_DEACTIVATION);
+	canon->setActivationState(DISABLE_DEACTIVATION);
+
 	for (btRigidBody *rb : wheels) {
+		rb->setActivationState(DISABLE_DEACTIVATION);
 		canon->setIgnoreCollisionCheck(rb, true);
 		chassis->setIgnoreCollisionCheck(rb, true);
 		turret->setIgnoreCollisionCheck(rb, true);
@@ -66,6 +69,6 @@ vector<Shooter *> Tank::getShooters() {
 	return vector<Shooter *>{canon};
 }
 
-vector<Drawable *> Tank::getDrawables() {
+vector<Drawable *> Tank::getHUDDrawables() {
 	return vector<Drawable *>{curve};
 }

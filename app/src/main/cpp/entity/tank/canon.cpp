@@ -70,11 +70,13 @@ void Canon::update() {
 		btTransform tr;
 		tr.setIdentity();
 		tr.setOrigin(pos);
-		getMotionState()->setWorldTransform(tr);
-		setWorldTransform(tr);
+
 		clearForces();
 		setLinearVelocity(btVector3(0, 0, 0));
 		setAngularVelocity(btVector3(0, 0, 0));
+
+		getMotionState()->setWorldTransform(tr);
+		setWorldTransform(tr);
 
 		respawn = false;
 	}

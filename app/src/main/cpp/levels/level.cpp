@@ -4,6 +4,8 @@
 
 #include "level.h"
 
+Level::Level() : entities(), mgr(nullptr) {}
+
 void Level::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
 	this->mgr = mgr;
 }

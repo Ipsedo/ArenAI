@@ -9,6 +9,7 @@
 #include "../player.h"
 #include <android/asset_manager.h>
 #include "../../graphics/camera.h"
+#include "chassis.h"
 #include "wheel.h"
 #include "turret.h"
 #include "canon.h"
@@ -34,7 +35,7 @@ public:
 
 	vector<Shooter *> getShooters() override;
 
-	vector<Drawable *> getDrawables() override;
+	vector<Drawable *> getHUDDrawables() override;
 
 };
 

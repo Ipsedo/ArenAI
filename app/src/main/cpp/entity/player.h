@@ -21,7 +21,7 @@ public:
 	virtual vector<Shooter *> getShooters() = 0;
 
 	// Only drawable items, not Base
-	virtual vector<Drawable *> getDrawables() = 0;
+	virtual vector<Drawable *> getHUDDrawables() = 0;
 };
 
 #endif //PHYVR_PLAYER_H

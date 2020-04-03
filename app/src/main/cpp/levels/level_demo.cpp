@@ -10,9 +10,11 @@
 
 #define HEIGHT_SPAWN 30.f
 
-LevelDemo::LevelDemo() : isInit(false) {}
+LevelDemo::LevelDemo() : Level(), isInit(false) {}
 
 void LevelDemo::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
+	this->mgr = mgr;
+
 	tank = new Tank(isVR, mgr, world, btVector3(5.f, -35.f, 20.f));
 	vector<Base *> tankBases = tank->getBases();
 	entities.insert(entities.end(), tankBases.begin(), tankBases.end());
@@ -122,7 +124,7 @@ vector<Drawable *> LevelDemo::getDrawables() {
 	for (Base *b : entities)
 		d.push_back(b);
 	d.push_back(map);
-	for (Drawable *dr : tank->getDrawables())
+	for (Drawable *dr : tank->getHUDDrawables())
 		d.push_back(dr);
 	return d;
 }

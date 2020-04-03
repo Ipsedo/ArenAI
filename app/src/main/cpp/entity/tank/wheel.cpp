@@ -18,8 +18,8 @@ Wheel::Wheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector
 			   }, makeWheelMesh(mgr), btVector3ToVec3(pos + chassisPos),
 			   glm::vec3(wheelWidth, wheelRadius, wheelRadius),
 			   glm::mat4(1.0f), wheelMass, true),
-		  pos(pos), chassisPos(chassisPos), isMotorEnabled(false),
-		  isBraking(true), targetSpeed(0.f), hasReAccelerate(false), respawn(false) {
+		  pos(pos), chassisPos(chassisPos), isMotorEnabled(true),
+		  isBraking(true), freeWheel(false), targetSpeed(0.f), hasReAccelerate(false), respawn(false) {
 	setFriction(500.f);
 
 	btTransform trA, trB;
@@ -91,11 +91,13 @@ void Wheel::update() {
 		tr.setIdentity();
 		tr.setOrigin(pos + chassisPos);
 
-		getMotionState()->setWorldTransform(tr);
-		setWorldTransform(tr);
 		clearForces();
 		setLinearVelocity(btVector3(0, 0, 0));
 		setAngularVelocity(btVector3(0, 0, 0));
+
+		getMotionState()->setWorldTransform(tr);
+		setWorldTransform(tr);
+
 		respawn = false;
 	}
 }

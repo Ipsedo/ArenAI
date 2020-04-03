@@ -6,7 +6,7 @@
 #include "../entity/tank/tank.h"
 #include "../entity/ground/map.h"
 
-Level1::Level1() : isInit(false), cibles(vector<Cible *>()), compass(vector<Compass *>()) {}
+Level1::Level1() : Level(), isInit(false), cibles(vector<Cible *>()), compass(vector<Compass *>()) {}
 
 void Level1::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
 	Level::init(isVR, mgr, world);
@@ -88,7 +88,7 @@ vector<Drawable *> Level1::getDrawables() {
 		if (!cibles[i]->isWon())
 			d.push_back(compass[i]);
 	d.push_back(map);
-	for (Drawable *dr : tank->getDrawables())
+	for (Drawable *dr : tank->getHUDDrawables())
 		d.push_back(dr);
 	return d;
 }

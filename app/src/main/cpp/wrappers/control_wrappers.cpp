@@ -17,13 +17,13 @@ Java_com_samuelberrien_phyvr_controls_GamePad_control(JNIEnv *env, jobject insta
 
 	vector<Controls *> ctrl = ((Level *) levelPtr)->getControls();
 	input in;
-	in.xAxis = direction;
-	in.speed = speed;
-	in.brake = brake;
-	in.turretDir = -turretDir;
-	in.turretUp = turretUp;
-	in.respawn = respawn;
-	in.fire = fire;
+	in.xAxis = (float) direction == NULL ? 0.f : direction;
+	in.speed = (float) speed == NULL ? 0.f : speed;
+	in.brake = (bool) brake == NULL ? false : brake;
+	in.turretDir = (float) -turretDir == NULL ? 0.f : -turretDir;
+	in.turretUp = (float) turretUp == NULL ? 0.f : turretUp;
+	in.respawn = (bool) respawn == NULL ? false : respawn;
+	in.fire = (bool) fire == NULL ? false : fire;
 	for (Controls *c : ctrl)
 		c->onInput(in);
 	ctrl.clear();
@@ -63,13 +63,13 @@ Java_com_samuelberrien_phyvr_controls_UI_control(JNIEnv *env, jobject instance,
 
 	vector<Controls *> ctrl = ((Level *) levelPtr)->getControls();
 	input in;
-	in.xAxis = direction;
-	in.speed = speed;
-	in.brake = brake;
-	in.turretDir = -turretDir;
-	in.turretUp = turretUp;
-	in.respawn = respawn;
-	in.fire = fire;
+	in.xAxis = (float) direction == NULL ? 0.f : direction;
+	in.speed = (float) speed == NULL ? 0.f : speed;
+	in.brake = (bool) brake == NULL ? false : brake;
+	in.turretDir = (float) -turretDir == NULL ? 0.f : -turretDir;
+	in.turretUp = (float) turretUp == NULL ? 0.f : turretUp;
+	in.respawn = (bool) respawn == NULL ? false : respawn;
+	in.fire = (bool) fire == NULL ? false : fire;
 	for (Controls *c : ctrl)
 		c->onInput(in);
 	ctrl.clear();

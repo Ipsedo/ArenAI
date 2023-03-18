@@ -1,5 +1,6 @@
 package com.samuelberrien.phyvr;
 
+import android.app.NativeActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -43,9 +44,12 @@ public class MainActivity extends AppCompatActivity implements NumberPicker.OnVa
 	}
 
 	public void vr(View v) {
-		Intent myIntent = new Intent(this, MyGvrActivity.class);
+		/*Intent myIntent = new Intent(this, MyGvrActivity.class);
 		myIntent.putExtra(levelIdxExtraStr, levelIdx);
-		startActivity(myIntent);
+		startActivity(myIntent);*/
+		Intent intent = new Intent(this, NativeActivity.class);
+		startActivity(intent);
+
 	}
 
 	public void configureGamePad(View v) {

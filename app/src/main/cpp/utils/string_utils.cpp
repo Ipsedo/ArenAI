@@ -1,14 +1,18 @@
-#include "string_utils.h"
-#include <sstream>
-#include <vector>
-#include <string>
+//
+// Created by samuel on 18/03/2023.
+//
 
-std::vector<std::string> split(const std::string &s, char delim) {
-	std::stringstream ss(s);
-	std::string item;
-	std::vector<std::string> elems;
-	while (std::getline(ss, item, delim)) {
-		elems.push_back(item);
-	}
-	return elems;
+#include <sstream>
+#include "string_utils.h"
+
+std::vector<std::string> split_string(const std::string &input, char delimiter) {
+    std::stringstream ss(input);
+    std::string item;
+    std::vector<std::string> elems;
+
+    while (std::getline(ss, item, delimiter)) {
+        elems.push_back(item);
+    }
+
+    return elems;
 }

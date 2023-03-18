@@ -17,25 +17,12 @@
 			android:supportsRtl="true"
 			android:theme="@style/AppTheme">
 
-		<activity android:name=".MainActivity">
+		<activity android:name=".MainActivity" android:exported="true">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN"/>
 				<action android:name="android.intent.action.VIEW"/>
 				<category android:name="android.intent.category.LAUNCHER"/>
 			</intent-filter>
-		</activity>
-
-		<activity
-				android:name=".game.MyGvrActivity"
-				android:screenOrientation="landscape"
-				android:configChanges="orientation|keyboardHidden|screenSize"
-				android:enableVrMode="true"
-				android:resizeableActivity="false">
-			<intent-filter>
-				<category android:name="com.google.intent.category.CARDBOARD"/>
-				<category android:name="com.google.intent.category.DAYDREAM"/>
-			</intent-filter>
-
 		</activity>
 
 		<activity android:name=".controls.GamePadActivity">
@@ -49,6 +36,12 @@
 				android:screenOrientation="landscape"
 				android:configChanges="orientation|keyboardHidden|screenSize">
 		</activity>
+
+		<activity android:name="android.app.NativeActivity">
+			<meta-data android:name="android.app.lib_name"
+				android:value="phyvr"/>
+		</activity>
+
 	</application>
 
 </manifest>

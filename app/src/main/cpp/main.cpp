@@ -11,6 +11,7 @@
 #include "./utils/logging.h"
 #include "./view/renderer.h"
 #include "view/drawable/specular.h"
+#include "./view/drawable/cubemap.h"
 
 
 // https://github.com/JustJokerX/NativeActivityFromJavaActivity/blob/master/app/src/main/cpp/main.cpp
@@ -73,6 +74,10 @@ static void engine_handle_cmd(struct android_app *app, int32_t cmd) {
                         engine->state->camera
                 );
                 engine->renderer->enable();
+                engine->renderer->add_drawable("cubemap", std::make_shared<CubeMap>(
+                        engine->app->activity->assetManager,
+                        "cubemap/1"
+                ));
 
                 // TODO call first draw
             }
@@ -197,8 +202,10 @@ void android_main(struct android_app *state) {
         // If not animating, we will block forever waiting for events.
         // If animating, we loop until all events are read, then continue
         // to draw the next frame of animation.
-        while ((ident = ALooper_pollAll(engine.renderer != nullptr && engine.renderer->is_enabled() ? 0 : -1, nullptr, &events,
-                                        (void **) &source)) >= 0) {
+        while ((ident = ALooper_pollAll(
+                engine.renderer != nullptr && engine.renderer->is_enabled() ? 0 : -1, nullptr,
+                &events,
+                (void **) &source)) >= 0) {
 
             // Process this event.
             if (source != nullptr) {
@@ -211,9 +218,9 @@ void android_main(struct android_app *state) {
                     ASensorEvent event;
                     while (ASensorEventQueue_getEvents(engine.sensorEventQueue,
                                                        &event, 1) > 0) {
-                        LOG_INFO("accelerometer: x=%f y=%f z=%f",
+                        /*LOG_INFO("accelerometer: x=%f y=%f z=%f",
                              event.acceleration.x, event.acceleration.y,
-                             event.acceleration.z);
+                             event.acceleration.z);*/
                     }
                 }
             }
@@ -227,6 +234,8 @@ void android_main(struct android_app *state) {
         }
 
         if (engine.renderer->is_enabled())
-            engine.renderer->draw(std::map<std::string, glm::mat4>());
+            engine.renderer->draw({
+                                          {"cubemap", glm::mat4(1.)}
+                                  });
     }
 }

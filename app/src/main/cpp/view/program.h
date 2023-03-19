@@ -26,7 +26,8 @@ public:
 
         Program::Builder add_buffer(const std::string &name, const std::vector<float> &data);
 
-        Program::Builder add_cube_texture(const std::string &name, const std::string &cube_textures_root_path);
+        Program::Builder
+        add_cube_texture(const std::string &name, const std::string &cube_textures_root_path);
 
         Program::Builder add_texture(const std::string &name, const std::string &texture_path);
 
@@ -65,8 +66,16 @@ private:
 
     std::map<std::string, GLuint> buffer_ids;
 
+    static std::map<std::string, GLenum> get_file_to_texture_id();
+
+    std::map<std::string, std::tuple<GLuint, GLuint>> tex_name_to_idx_id;
+
     template<typename F, class... T>
     void _uniform(F uniform_fun, const std::string &name, T... args);
+
+    void _texture(GLenum texture_target, const std::string &name);
+
+    static void _disable_texture(GLenum texture_target);
 
 protected:
 public:
@@ -84,6 +93,14 @@ public:
                 int offset);
 
     void disable_attrib_array();
+
+    void cube_texture(const std::string &cube_texture_name);
+
+    void texture(const std::string &texture_name);
+
+    static void disable_cube_texture();
+
+    static void disable_texture();
 
     static void draw_arrays(GLenum type, int from, int nb_vertices);
 

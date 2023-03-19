@@ -12,7 +12,7 @@ img_rgb to_img_rgb(libpng_image image) {
     res.pixels = new char[res.width * res.height * 3];
 
     for (int row = 0; row < image.height; row++) {
-        png_bytep currRow = image.rowPtrs[row];
+        png_bytep currRow = image.row_ptrs[row];
         for (int col = 0; col < image.width; col++) {
             int idx = col * 3;
             int resId = int(row * image.width + col) * 3;

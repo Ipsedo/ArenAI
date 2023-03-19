@@ -28,7 +28,7 @@ std::string getFileText(AAssetManager *mgr, std::string fileName) {
 	return res;
 }
 
-void userReadData(png_structp pngPtr, png_bytep data, png_size_t length) {
+void user_read_data(png_structp pngPtr, png_bytep data, png_size_t length) {
 	png_voidp a = png_get_io_ptr(pngPtr);
 	AAsset_read((AAsset *) a, (char *) data, length);
 }

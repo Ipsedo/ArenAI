@@ -17,35 +17,32 @@ Renderer::Renderer(ANativeWindow *window, std::shared_ptr<Camera> camera) :
         light_pos(0., 100., 0.),
         is_animating(true) {
 
-    const EGLint attribs[] = {
+    const EGLint config_attrib[] = {
             EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
             EGL_BLUE_SIZE, 8,
             EGL_GREEN_SIZE, 8,
             EGL_RED_SIZE, 8,
             EGL_NONE
     };
+    const EGLint context_attrib[] = {
+            EGL_CONTEXT_CLIENT_VERSION, 3,
+            EGL_NONE
+    };
     EGLint w, h, format;
     EGLint numConfigs;
     EGLConfig config;
-    EGLContext context;
-
-    LOG_INFO("ici 1 %f", 1.f);
 
     display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 
-    LOG_INFO("ici 2 %f", 1.f);
-
     eglInitialize(display, nullptr, nullptr);
-
-    LOG_INFO("ici 3 %f", 2.f);
 
     /* Here, the application chooses the configuration it desires.
      * find the best match if possible, otherwise use the very first one
      */
-    eglChooseConfig(display, attribs, nullptr, 0, &numConfigs);
+    eglChooseConfig(display, config_attrib, nullptr, 0, &numConfigs);
     std::unique_ptr<EGLConfig[]> supportedConfigs(new EGLConfig[numConfigs]);
     assert(supportedConfigs);
-    eglChooseConfig(display, attribs, supportedConfigs.get(), numConfigs, &numConfigs);
+    eglChooseConfig(display, config_attrib, supportedConfigs.get(), numConfigs, &numConfigs);
     assert(numConfigs);
     auto i = 0;
     for (; i < numConfigs; i++) {
@@ -71,7 +68,7 @@ Renderer::Renderer(ANativeWindow *window, std::shared_ptr<Camera> camera) :
      * ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID. */
     eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format);
     surface = eglCreateWindowSurface(display, config, window, nullptr);
-    context = eglCreateContext(display, config, nullptr, nullptr);
+    context = eglCreateContext(display, config, EGL_NO_CONTEXT, context_attrib);
 
     if (eglMakeCurrent(display, surface, surface, context) == EGL_FALSE)
         throw std::runtime_error("Unable to eglMakeCurrent");
@@ -119,7 +116,7 @@ void Renderer::draw(std::map<std::string, glm::mat4> model_matrices) {
     glm::mat4 proj_matrix = glm::frustum(
             -1.f, 1.f,
             -float(height) / float(width), float(height) / float(width),
-            0.1f,
+            1.f,
             2000.f * sqrt(3.f)
     );
 
@@ -151,4 +148,20 @@ void Renderer::close() {
     disable();
 
     drawables.clear();
+
+    if (display != EGL_NO_DISPLAY) {
+        eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+
+        if (context != EGL_NO_CONTEXT)
+            eglDestroyContext(display, context);
+
+        if (surface != EGL_NO_SURFACE)
+            eglDestroySurface(display, surface);
+
+        eglTerminate(display);
+    }
+
+    display = EGL_NO_DISPLAY;
+    context = EGL_NO_CONTEXT;
+    surface = EGL_NO_SURFACE;
 }

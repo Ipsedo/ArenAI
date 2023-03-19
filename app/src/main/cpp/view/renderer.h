@@ -33,6 +33,8 @@ public:
 private:
     EGLDisplay display;
     EGLSurface surface;
+    EGLContext context;
+
     int width;
     int height;
 

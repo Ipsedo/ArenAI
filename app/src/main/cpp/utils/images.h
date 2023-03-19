@@ -19,7 +19,7 @@ struct libpng_image {
     png_uint_32 bitdepth;
     png_uint_32 channels;
     char *data;
-    png_bytep *rowPtrs;
+    png_bytep *row_ptrs;
 };
 
 img_rgb to_img_rgb(libpng_image image);

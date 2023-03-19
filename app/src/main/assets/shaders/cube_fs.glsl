@@ -1,5 +1,3 @@
-#version 150
-
 precision mediump float;
 
 varying vec3 v_tex_coords;

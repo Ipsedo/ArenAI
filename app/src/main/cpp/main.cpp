@@ -3,17 +3,18 @@
 //
 
 #include <android/sensor.h>
-#include <android/log.h>
-#include <android_native_app_glue.h>
 
+#include <android_native_app_glue.h>
+#include <dlfcn.h>
+#include <cassert>
+
+#include "./utils/logging.h"
 #include "./view/renderer.h"
 #include "./view/specular.h"
 
 
 // https://github.com/JustJokerX/NativeActivityFromJavaActivity/blob/master/app/src/main/cpp/main.cpp
 
-#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
-#define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
 
 struct saved_state {
     std::shared_ptr<Camera> camera;
@@ -60,6 +61,8 @@ static void engine_handle_cmd(struct android_app *app, int32_t cmd) {
         case APP_CMD_INIT_WINDOW:
             // The window is being shown, get it ready.
             if (engine->app->window != nullptr) {
+                LOG_INFO("opening window");
+
                 engine->state->camera = std::make_shared<StaticCamera>(
                         glm::vec3(0., 0., -1.),
                         glm::vec3(0., 0., 1.),
@@ -102,7 +105,7 @@ static void engine_handle_cmd(struct android_app *app, int32_t cmd) {
             /*engine_draw_frame(engine);*/
             break;
         default:
-            LOGI("unrecognized cmd");
+            LOG_WARN("unrecognized cmd");
     }
 }
 
@@ -111,8 +114,6 @@ static void engine_handle_cmd(struct android_app *app, int32_t cmd) {
  *    Workaround ASensorManager_getInstance() deprecation false alarm
  *    for Android-N and before, when compiling with NDK-r15
  */
-#include <dlfcn.h>
-#include <cassert>
 
 ASensorManager *AcquireASensorManagerInstance(android_app *app) {
 
@@ -181,6 +182,8 @@ void android_main(struct android_app *state) {
     if (state->savedState != nullptr) {
         // We are starting with a previous saved state; restore from it.
         engine.state = (saved_state *) state->savedState;
+    } else {
+        engine.state = new saved_state{};
     }
 
     // loop waiting for stuff to do.
@@ -194,8 +197,8 @@ void android_main(struct android_app *state) {
         // If not animating, we will block forever waiting for events.
         // If animating, we loop until all events are read, then continue
         // to draw the next frame of animation.
-        while ((ident = ALooper_pollAll(/*engine.animating*/engine.renderer->is_enable() ? 0 : -1, nullptr, &events,
-                                                            (void **) &source)) >= 0) {
+        while ((ident = ALooper_pollAll(engine.renderer != nullptr && engine.renderer->is_enabled() ? 0 : -1, nullptr, &events,
+                                        (void **) &source)) >= 0) {
 
             // Process this event.
             if (source != nullptr) {
@@ -208,7 +211,7 @@ void android_main(struct android_app *state) {
                     ASensorEvent event;
                     while (ASensorEventQueue_getEvents(engine.sensorEventQueue,
                                                        &event, 1) > 0) {
-                        LOGI("accelerometer: x=%f y=%f z=%f",
+                        LOG_INFO("accelerometer: x=%f y=%f z=%f",
                              event.acceleration.x, event.acceleration.y,
                              event.acceleration.z);
                     }
@@ -218,17 +221,12 @@ void android_main(struct android_app *state) {
             // Check if we are exiting.
             if (state->destroyRequested != 0) {
                 engine.renderer->close();
+                LOG_INFO("closing PhyVR");
                 return;
             }
         }
 
-        if (engine.renderer->is_enable()) {
-            // Done with events; draw next animation frame.
-
-            // Drawing is throttled to the screen update rate, so there
-            // is no need to do timing here.
-            //engine_draw_frame(&engine);
+        if (engine.renderer->is_enabled())
             engine.renderer->draw(std::map<std::string, glm::mat4>());
-        }
     }
 }

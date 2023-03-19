@@ -82,11 +82,6 @@ unset(${CMAKE_C_FLAGS})
 unset(${CMAKE_CXX_FLAGS})
 
 #### Android #####
-#add_library(
-#        native_app_glue
-#        STATIC
-#        ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c
-#)
 include(AndroidNdkModules)
 android_ndk_import_module_native_app_glue()
 
@@ -100,8 +95,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DANDROID_STL=c++_shared")
 file(GLOB_RECURSE PHYVR_SRC "${PHYVR_PATH}/*.cpp" "${PHYVR_PATH}/*.c")
 add_library(${APP_NAME} SHARED ${PHYVR_SRC})
 
-target_link_libraries(${APP_NAME} GLESv3 android log dl bullet3 libpng)
-target_link_libraries(${APP_NAME} -Wl,--whole-archive native_app_glue -Wl,--no-whole-archive)
+target_link_libraries(${APP_NAME} -Wl,--whole-archive native_app_glue -Wl,--no-whole-archive GLESv3 EGL android log dl bullet3 libpng)
 
 include_directories(${GLM_PATH})
-#include_directories(${ANDROID_NDK}/sources/android/native_app_glue)

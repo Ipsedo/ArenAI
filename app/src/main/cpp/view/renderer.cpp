@@ -3,6 +3,7 @@
 //
 
 #include "renderer.h"
+#include "../utils/logging.h"
 
 #include <string>
 #include <utility>
@@ -26,12 +27,17 @@ Renderer::Renderer(ANativeWindow *window, std::shared_ptr<Camera> camera) :
     EGLint w, h, format;
     EGLint numConfigs;
     EGLConfig config;
-    EGLSurface surface;
     EGLContext context;
+
+    LOG_INFO("ici 1 %f", 1.f);
 
     display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 
+    LOG_INFO("ici 2 %f", 1.f);
+
     eglInitialize(display, nullptr, nullptr);
+
+    LOG_INFO("ici 3 %f", 2.f);
 
     /* Here, the application chooses the configuration it desires.
      * find the best match if possible, otherwise use the very first one
@@ -126,6 +132,7 @@ void Renderer::draw(std::map<std::string, glm::mat4> model_matrices) {
         drawable->draw(mvp_matrix, mv_matrix, light_pos, camera->pos());
     }
 
+    eglSwapBuffers(display, surface);
 }
 
 void Renderer::enable() {
@@ -136,7 +143,7 @@ void Renderer::disable() {
     is_animating = false;
 }
 
-bool Renderer::is_enable() const {
+bool Renderer::is_enabled() const {
     return is_animating;
 }
 

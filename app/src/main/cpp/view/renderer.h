@@ -26,12 +26,13 @@ public:
 
     void disable();
 
-    bool is_enable() const;
+    bool is_enabled() const;
 
     void close();
 
 private:
     EGLDisplay display;
+    EGLSurface surface;
     int width;
     int height;
 

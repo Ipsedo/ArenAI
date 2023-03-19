@@ -36,20 +36,9 @@ public class MainActivity extends AppCompatActivity implements NumberPicker.OnVa
 		levelPicker.setOnValueChangedListener(this);
 	}
 
-	public void normal(View v) {
-		Intent myIntent = new Intent(this, PlayActivity.class);
-		myIntent.putExtra(levelIdxExtraStr, levelIdx);
-		myIntent.putExtra(useControllerExtraStr, ((CheckBox) findViewById(R.id.use_controller_switch)).isChecked());
-		startActivity(myIntent);
-	}
-
-	public void vr(View v) {
-		/*Intent myIntent = new Intent(this, MyGvrActivity.class);
-		myIntent.putExtra(levelIdxExtraStr, levelIdx);
-		startActivity(myIntent);*/
+	public void play(View v) {
 		Intent intent = new Intent(this, NativeActivity.class);
 		startActivity(intent);
-
 	}
 
 	public void configureGamePad(View v) {

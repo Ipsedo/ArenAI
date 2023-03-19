@@ -49,7 +49,7 @@ struct libpng_image {
 
 colored_image toColoredImg(libpng_image image);
 
-normalized_image toGrayImg(libpng_image image);
+normalized_image to_img_grey(libpng_image image);
 
 imgRGB toImgRGB(libpng_image image);
 

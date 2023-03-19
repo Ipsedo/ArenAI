@@ -13,7 +13,6 @@
 class Shape {
 public:
     virtual std::vector<std::tuple<float, float, float>> get_vertices() = 0;
-
     virtual std::vector<std::tuple<float, float, float>> get_normals() = 0;
 };
 
@@ -26,7 +25,17 @@ public:
     explicit ObjShape(AAssetManager *mgr, const std::string &obj_file_path);
 
     std::vector<std::tuple<float, float, float>> get_vertices() override;
+    std::vector<std::tuple<float, float, float>> get_normals() override;
+};
 
+class FromMeshShape : public Shape {
+private:
+    std::vector<std::tuple<float, float, float>> vertices;
+    std::vector<std::tuple<float, float, float>> normals;
+public:
+    FromMeshShape(std::vector<std::tuple<float, float, float>> vertices, std::vector<std::tuple<float, float, float>> normals);
+
+    std::vector<std::tuple<float, float, float>> get_vertices() override;
     std::vector<std::tuple<float, float, float>> get_normals() override;
 };
 

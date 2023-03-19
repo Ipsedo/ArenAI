@@ -22,7 +22,7 @@ colored_image toColoredImg(libpng_image image) {
 	return res;
 }
 
-normalized_image toGrayImg(libpng_image image) {
+normalized_image to_img_grey(libpng_image image) {
 	normalized_image res;
 
 	res.allpixels = vector<float>();

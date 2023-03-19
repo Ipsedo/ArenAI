@@ -29,8 +29,8 @@ Specular::Specular(AAssetManager *mgr,
 
     program = Program::Builder(
             mgr,
-            "./shaders/specular_vs.glsl",
-            "./shaders/specular_fs.glsl"
+            "shaders/specular_vs.glsl",
+            "shaders/specular_fs.glsl"
     )
             .add_uniform("u_mvp_matrix")
             .add_uniform("u_mv_matrix")

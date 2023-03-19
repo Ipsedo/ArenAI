@@ -8,6 +8,8 @@
 #include <string>
 #include <memory>
 #include <map>
+#include <tuple>
+#include <vector>
 #include <android/native_window.h>
 #include <EGL/egl.h>
 
@@ -19,8 +21,9 @@ public:
     Renderer(ANativeWindow *window, std::shared_ptr<Camera> camera);
 
     void add_drawable(const std::string &name, const std::shared_ptr<Drawable> &drawable);
+    void remove_drawable(const std::string &name);
 
-    void draw(std::map<std::string, glm::mat4> model_matrices);
+    void draw(const std::vector<std::tuple<std::string, glm::mat4>>& model_matrices);
 
     void enable();
 

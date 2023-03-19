@@ -5,6 +5,8 @@
 
 #include "shapes.h"
 
+#include <utility>
+
 #include "../utils/asset.h"
 #include "../utils/string_utils.h"
 
@@ -56,5 +58,21 @@ std::vector<std::tuple<float, float, float>> ObjShape::get_vertices() {
 }
 
 std::vector<std::tuple<float, float, float>> ObjShape::get_normals() {
+    return normals;
+}
+
+// FromMeshShape
+
+FromMeshShape::FromMeshShape(std::vector<std::tuple<float, float, float>> vertices,
+                             std::vector<std::tuple<float, float, float>> normals) :
+                             vertices(std::move(vertices)), normals(std::move(normals)) {
+
+}
+
+std::vector<std::tuple<float, float, float>> FromMeshShape::get_vertices() {
+    return vertices;
+}
+
+std::vector<std::tuple<float, float, float>> FromMeshShape::get_normals() {
     return normals;
 }

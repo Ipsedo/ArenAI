@@ -14,7 +14,7 @@
 Renderer::Renderer(ANativeWindow *window, std::shared_ptr<Camera> camera) :
         camera(std::move(camera)),
         drawables(),
-        light_pos(0., 100., 0.),
+        light_pos(0., 1000., 0.),
         is_animating(true) {
 
     const EGLint config_attrib[] = {
@@ -87,7 +87,7 @@ Renderer::Renderer(ANativeWindow *window, std::shared_ptr<Camera> camera) :
 
     glViewport(0, 0, width, height);
 
-    glClearColor(0.5, 0., 0., 1.);
+    glClearColor(1., 1., 1., 0.);
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -103,7 +103,11 @@ void Renderer::add_drawable(const std::string &name, const std::shared_ptr<Drawa
     drawables.insert({name, drawable});
 }
 
-void Renderer::draw(std::map<std::string, glm::mat4> model_matrices) {
+void Renderer::remove_drawable(const std::string &name) {
+    drawables.erase(name);
+}
+
+void Renderer::draw(const std::vector<std::tuple<std::string, glm::mat4>>& model_matrices) {
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -120,13 +124,11 @@ void Renderer::draw(std::map<std::string, glm::mat4> model_matrices) {
             2000.f * sqrt(3.f)
     );
 
-    for (auto [name, drawable]: drawables) {
-        glm::mat4 m_matrix = model_matrices[name];
-
+    for (auto [name, m_matrix]: model_matrices) {
         auto mv_matrix = view_matrix * m_matrix;
         auto mvp_matrix = proj_matrix * mv_matrix;
 
-        drawable->draw(mvp_matrix, mv_matrix, light_pos, camera->pos());
+        drawables[name]->draw(mvp_matrix, mv_matrix, light_pos, camera->pos());
     }
 
     eglSwapBuffers(display, surface);

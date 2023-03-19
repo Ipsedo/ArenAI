@@ -10,4 +10,6 @@
 
 std::string read_asset(AAssetManager *mgr, const std::string &file_name);
 
+
+
 #endif //PHYVR_ASSET_H

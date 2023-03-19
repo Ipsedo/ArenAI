@@ -6,6 +6,7 @@
 
 #include <utility>
 #include <glm/gtc//type_ptr.hpp>
+#include <filesystem>
 
 #include "constants.h"
 #include "shader.h"
@@ -22,36 +23,60 @@ Program::Builder::Builder(AAssetManager *mgr, std::string vertex_shader_path,
 
 }
 
-Program::Builder::Builder(
-        AAssetManager *mgr,
-        std::string vertex_shader_path,
-        std::string fragment_shader_path,
-        std::vector<std::string> uniforms,
-        std::vector<std::string> attributes,
-        std::map<std::string, std::vector<float>> buffers) :
+Program::Builder::Builder(AAssetManager *mgr, std::string vertex_shader_path,
+                          std::string fragment_shader_path,
+                          std::vector<std::string> uniforms, std::vector<std::string> attributes,
+                          std::map<std::string, std::vector<float>> buffers,
+                          std::map<std::string, std::vector<std::filesystem::path>> cube_textures,
+                          std::map<std::string, std::filesystem::path> textures) :
         mgr(mgr),
         vertex_shader_path(std::move(vertex_shader_path)),
         fragment_shader_path(std::move(fragment_shader_path)),
         uniforms(std::move(uniforms)),
         attributes(std::move(attributes)),
-        buffers(std::move(buffers)) {
+        buffers(std::move(buffers)),
+        cube_textures(std::move(cube_textures)),
+        textures(std::move(textures)) {
 
 }
 
 Program::Builder Program::Builder::add_uniform(const std::string &name) {
     uniforms.push_back(name);
-    return {mgr, vertex_shader_path, fragment_shader_path, uniforms, attributes, buffers};
+    return {mgr, vertex_shader_path, fragment_shader_path, uniforms, attributes, buffers, cube_textures, textures};
 }
 
 Program::Builder Program::Builder::add_attribute(const std::string &name) {
     attributes.push_back(name);
-    return {mgr, vertex_shader_path, fragment_shader_path, uniforms, attributes, buffers};
+    return {mgr, vertex_shader_path, fragment_shader_path, uniforms, attributes, buffers, cube_textures, textures};
 }
 
 Program::Builder
 Program::Builder::add_buffer(const std::string &name, const std::vector<float> &data) {
     buffers.insert({name, data});
-    return {mgr, vertex_shader_path, fragment_shader_path, uniforms, attributes, buffers};
+    return {mgr, vertex_shader_path, fragment_shader_path, uniforms, attributes, buffers, cube_textures, textures};
+}
+
+Program::Builder Program::Builder::add_cube_texture(const std::string &name,
+                                                    const std::string &cube_textures_root_path) {
+    std::vector<std::filesystem::path> texture_files = {
+            "posx.png", "posy.png", "posz.png", "negx.png", "negy.png", "negz.png"
+    };
+
+    std::filesystem::path root_path(cube_textures_root_path);
+
+    std::vector<std::filesystem::path> full_paths;
+    for (const auto& png_file: texture_files)
+        full_paths.push_back(root_path / png_file);
+
+    cube_textures.insert({name, full_paths});
+
+    return {mgr, vertex_shader_path, fragment_shader_path, uniforms, attributes, buffers, cube_textures, textures};
+}
+
+Program::Builder
+Program::Builder::add_texture(const std::string &name, const std::string &texture_path) {
+    textures.insert({name, std::filesystem::path(texture_path)});
+    return {mgr, vertex_shader_path, fragment_shader_path, uniforms, attributes, buffers, cube_textures, textures};
 }
 
 Program Program::Builder::build() {

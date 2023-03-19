@@ -12,7 +12,7 @@
 #include <EGL/egl.h>
 
 #include "camera.h"
-#include "drawable.h"
+#include "drawable/drawable.h"
 
 class Renderer {
 public:

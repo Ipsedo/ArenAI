@@ -11,6 +11,7 @@
 #include <GLES3/gl3.h>
 #include <glm/glm.hpp>
 #include <android/asset_manager.h>
+#include <filesystem>
 
 class Program {
 public:
@@ -25,18 +26,19 @@ public:
 
         Program::Builder add_buffer(const std::string &name, const std::vector<float> &data);
 
+        Program::Builder add_cube_texture(const std::string &name, const std::string &cube_textures_root_path);
+
+        Program::Builder add_texture(const std::string &name, const std::string &texture_path);
+
         Program build();
 
     private:
-        Builder(
-                AAssetManager *mgr,
-                std::string vertex_shader_path,
+        Builder(AAssetManager *mgr, std::string vertex_shader_path,
                 std::string fragment_shader_path,
-
-                std::vector<std::string> uniforms,
-                std::vector<std::string> attributes,
-                std::map<std::string, std::vector<float>> buffers
-        );
+                std::vector<std::string> uniforms, std::vector<std::string> attributes,
+                std::map<std::string, std::vector<float>> buffers,
+                std::map<std::string, std::vector<std::filesystem::path>> cube_textures,
+                std::map<std::string, std::filesystem::path> textures);
 
         AAssetManager *mgr;
 
@@ -47,6 +49,9 @@ public:
         std::vector<std::string> attributes;
 
         std::map<std::string, std::vector<float>> buffers;
+
+        std::map<std::string, std::vector<std::filesystem::path>> cube_textures;
+        std::map<std::string, std::filesystem::path> textures;
     };
 
 private:

@@ -119,8 +119,8 @@ void Renderer::draw(std::map<std::string, glm::mat4> model_matrices) {
     glm::mat4 proj_matrix = glm::frustum(
             -1.f, 1.f,
             -float(height) / float(width), float(height) / float(width),
-            1.f,
-            200.f
+            0.1f,
+            2000.f * sqrt(3.f)
     );
 
     for (auto [name, drawable]: drawables) {

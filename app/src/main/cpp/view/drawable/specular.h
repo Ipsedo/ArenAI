@@ -6,10 +6,10 @@
 #define PHYVR_SPECULAR_H
 
 #include "drawable.h"
-#include "program.h"
-#include "constants.h"
+#include "../program.h"
+#include "../constants.h"
 
-#include <glm/glm.hpp>
+#include "glm/glm.hpp"
 
 class Specular : public Drawable {
 private:

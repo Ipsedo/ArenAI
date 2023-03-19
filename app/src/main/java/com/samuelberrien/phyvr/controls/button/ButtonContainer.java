@@ -3,7 +3,7 @@ package com.samuelberrien.phyvr.controls.button;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.support.v4.content.ContextCompat;
+import androidx.core.content.ContextCompat;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;

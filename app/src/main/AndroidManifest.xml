@@ -31,13 +31,8 @@
 		<activity android:name=".controls.ControlActivity">
 		</activity>
 
-		<activity
-				android:name=".game.PlayActivity"
-				android:screenOrientation="landscape"
-				android:configChanges="orientation|keyboardHidden|screenSize">
-		</activity>
-
-		<activity android:name="android.app.NativeActivity">
+		<activity android:name="android.app.NativeActivity"
+			android:screenOrientation="landscape">
 			<meta-data android:name="android.app.lib_name"
 				android:value="phyvr"/>
 		</activity>

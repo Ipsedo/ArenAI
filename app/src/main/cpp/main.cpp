@@ -10,7 +10,7 @@
 
 #include "./utils/logging.h"
 #include "./view/renderer.h"
-#include "./view/specular.h"
+#include "view/drawable/specular.h"
 
 
 // https://github.com/JustJokerX/NativeActivityFromJavaActivity/blob/master/app/src/main/cpp/main.cpp

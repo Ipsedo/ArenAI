@@ -2,7 +2,7 @@ package com.samuelberrien.phyvr.game;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.WindowManager;

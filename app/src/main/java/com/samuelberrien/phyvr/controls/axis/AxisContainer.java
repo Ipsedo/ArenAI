@@ -3,7 +3,7 @@ package com.samuelberrien.phyvr.controls.axis;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.support.v4.content.ContextCompat;
+import androidx.core.content.ContextCompat;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;

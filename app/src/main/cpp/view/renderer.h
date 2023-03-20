@@ -21,9 +21,10 @@ public:
     Renderer(ANativeWindow *window, std::shared_ptr<Camera> camera);
 
     void add_drawable(const std::string &name, const std::shared_ptr<Drawable> &drawable);
+
     void remove_drawable(const std::string &name);
 
-    void draw(const std::vector<std::tuple<std::string, glm::mat4>>& model_matrices);
+    void draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices);
 
     void enable();
 
@@ -32,6 +33,8 @@ public:
     bool is_enabled() const;
 
     void close();
+
+    bool is_closed() const;
 
 private:
     EGLDisplay display;
@@ -47,6 +50,7 @@ private:
     std::map<std::string, std::shared_ptr<Drawable>> drawables;
 
     bool is_animating;
+    bool is_gl_closed;
 };
 
 #endif //PHYVR_RENDERER_H

@@ -65,14 +65,14 @@ CubeMap::CubeMap(AAssetManager *mgr, const std::string &pngs_root_path) {
 
 void CubeMap::draw(glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos_from_camera,
                    glm::vec3 camera_pos) {
-    program.use();
+    program->use();
 
-    program.uniform_mat4("u_mvp_matrix", mvp_matrix);
-    program.cube_texture("u_cube_map");
-    program.attrib("a_vp", "cube", POSITION_SIZE, STRIDE, 0);
+    program->uniform_mat4("u_mvp_matrix", mvp_matrix);
+    program->cube_texture("u_cube_map");
+    program->attrib("a_vp", "cube", POSITION_SIZE, STRIDE, 0);
 
     Program::draw_arrays(GL_TRIANGLES, 0, nb_vertices);
 
-    program.disable_attrib_array();
+    program->disable_attrib_array();
     Program::disable_cube_texture();
 }

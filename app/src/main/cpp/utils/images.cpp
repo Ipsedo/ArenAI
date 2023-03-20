@@ -3,6 +3,7 @@
 //
 
 #include "images.h"
+#include "logging.h"
 
 img_rgb to_img_rgb(libpng_image image) {
     img_rgb res{};
@@ -30,19 +31,10 @@ img_grey to_img_grey(libpng_image image) {
 
     res.pixels = new float[image.width * image.height];
 
-    float max = 0.f;
-
-    for (int row = 0; row < image.height; row++) {
-        png_bytep currRow = image.row_ptrs[row];
-        for (int col = 0; col < image.width; col++) {
-            float px = currRow[col];
-            max = max < px ? px : max;
-            res.pixels[row * image.height + image.width] = px;
-        }
-    }
-    for (int i = 0; i < image.width * image.height; i++) {
-        res.pixels[i] /= max;
-    }
+    for (int row = 0; row < image.height; row++)
+        for (int col = 0; col < image.width; col++)
+            res.pixels[row * image.height + col] =
+                    float(image.row_ptrs[row][col]) / 255.f;
 
     res.width = int(image.width);
     res.height = int(image.height);

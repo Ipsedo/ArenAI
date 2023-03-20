@@ -65,7 +65,7 @@ std::vector<std::tuple<float, float, float>> ObjShape::get_normals() {
 
 FromMeshShape::FromMeshShape(std::vector<std::tuple<float, float, float>> vertices,
                              std::vector<std::tuple<float, float, float>> normals) :
-                             vertices(std::move(vertices)), normals(std::move(normals)) {
+        vertices(std::move(vertices)), normals(std::move(normals)) {
 
 }
 

@@ -15,8 +15,11 @@
 class Engine {
 public:
     Engine();
-    void add_item(const std::shared_ptr<Item>& item);
+
+    void add_item(const std::shared_ptr<Item> &item);
+
     void step(float delta);
+
 private:
     btDefaultCollisionConfiguration *m_collision_configuration;
     btCollisionDispatcher *m_dispatcher;

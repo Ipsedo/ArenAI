@@ -87,26 +87,26 @@ Program::Builder::add_texture(const std::string &name, const std::string &textur
             cube_textures, textures};
 }
 
-Program Program::Builder::build() {
-    Program program{};
+std::shared_ptr<Program> Program::Builder::build() {
+    std::shared_ptr<Program> program = std::make_shared<Program>();
 
-    program.program_id = glCreateProgram();
+    program->program_id = glCreateProgram();
 
-    program.vertex_shader_id = load_shader(mgr, GL_VERTEX_SHADER, vertex_shader_path);
-    program.fragment_shader_id = load_shader(mgr, GL_FRAGMENT_SHADER, fragment_shader_path);
+    program->vertex_shader_id = load_shader(mgr, GL_VERTEX_SHADER, vertex_shader_path);
+    program->fragment_shader_id = load_shader(mgr, GL_FRAGMENT_SHADER, fragment_shader_path);
 
-    glAttachShader(program.program_id, program.vertex_shader_id);
-    glAttachShader(program.program_id, program.fragment_shader_id);
+    glAttachShader(program->program_id, program->vertex_shader_id);
+    glAttachShader(program->program_id, program->fragment_shader_id);
 
-    glLinkProgram(program.program_id);
+    glLinkProgram(program->program_id);
 
     // buffers
     for (const auto &[name, data]: buffers) {
-        program.buffer_ids.insert({name, 0});
+        program->buffer_ids.insert({name, 0});
 
-        glGenBuffers(1, &program.buffer_ids[name]);
+        glGenBuffers(1, &program->buffer_ids[name]);
 
-        glBindBuffer(GL_ARRAY_BUFFER, program.buffer_ids[name]);
+        glBindBuffer(GL_ARRAY_BUFFER, program->buffer_ids[name]);
         glBufferData(GL_ARRAY_BUFFER, int(data.size()) * BYTES_PER_FLOAT, &data[0], GL_STATIC_DRAW);
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -114,24 +114,31 @@ Program Program::Builder::build() {
 
     // uniforms
     for (const auto &name: uniforms)
-        program.uniform_handles.insert(
-                {name, glGetUniformLocation(program.program_id, name.c_str())});
+        program->uniform_handles.insert(
+                {name, glGetUniformLocation(program->program_id, name.c_str())});
 
     // attributes
     for (const auto &name: attributes)
-        program.attribute_handles.insert(
-                {name, glGetAttribLocation(program.program_id, name.c_str())});
+        program->attribute_handles.insert(
+                {name, glGetAttribLocation(program->program_id, name.c_str())});
     // textures
     GLenum curr_texture = GL_TEXTURE0;
 
     // cube textures
     std::map<std::string, GLenum> file_to_tex_id = Program::get_file_to_texture_id();
     for (const auto &[name, files_path]: cube_textures) {
-        program.tex_name_to_idx_id.insert({name, {curr_texture, 0}});
+        GLuint tex_id;
 
-        glGenTextures(1, &std::get<1>(program.tex_name_to_idx_id[name]));
+        program->uniform_handles.insert({
+                                                name, glGetUniformLocation(program->program_id,
+                                                                           name.c_str())
+                                        });
+
+        glGenTextures(1, &tex_id);
         glActiveTexture(curr_texture);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, std::get<1>(program.tex_name_to_idx_id[name]));
+        glBindTexture(GL_TEXTURE_CUBE_MAP, tex_id);
+
+        program->tex_name_to_idx_id.insert({name, {curr_texture, tex_id}});
 
         for (const auto &file: files_path) {
             libpng_image img = read_png(mgr, file);
@@ -178,7 +185,7 @@ std::map<std::string, GLenum> Program::get_file_to_texture_id() {
     };
 }
 
-void Program::kill() {
+Program::~Program() {
     glDeleteShader(vertex_shader_id);
     glDeleteShader(fragment_shader_id);
 

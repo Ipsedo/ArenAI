@@ -10,6 +10,7 @@
 #include <BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
 
 #include "../utils/asset.h"
+#include "../utils/logging.h"
 
 Item::Item(std::string name) : name(std::move(name)) {
 
@@ -34,7 +35,7 @@ glm::mat4 Item::get_model_matrix() {
 
 ConvexItem::ConvexItem(std::string name, const std::shared_ptr<Shape> &shape,
                        glm::vec3 position, glm::vec3 scale, float mass) :
-                       Item(std::move(name)), shape(shape), scale(scale) {
+        Item(std::move(name)), shape(shape), scale(scale) {
     auto *convex_hull_shape = new btConvexHullShape();
 
     for (auto [x, y, z]: shape->get_vertices())
@@ -54,7 +55,8 @@ ConvexItem::ConvexItem(std::string name, const std::shared_ptr<Shape> &shape,
 
     auto *motion_state = new btDefaultMotionState(original_tr);
 
-    btRigidBody::btRigidBodyConstructionInfo body_info(mass, motion_state, collision_shape, local_inertia);
+    btRigidBody::btRigidBodyConstructionInfo body_info(mass, motion_state, collision_shape,
+                                                       local_inertia);
 
     body = new btRigidBody(body_info);
 }
@@ -77,16 +79,20 @@ HeightMapItem::HeightMapItem(std::string name, AAssetManager *mgr,
                              const std::string &height_map_file, glm::vec3 pos,
                              glm::vec3 scale) :
         Item(std::move(name)), scale(scale) {
-    libpng_image tmp = read_png(mgr, "heightmap/heightmap6.png");
+    libpng_image tmp = read_png(mgr, height_map_file);
     img_grey img = to_img_grey(tmp);
 
-    auto map = new btHeightfieldTerrainShape(img.width, img.height, img.pixels, 1.f, 0.f, 1.f,
-                                             1, PHY_FLOAT, false);
+    auto map = new btHeightfieldTerrainShape(
+            img.width, img.height, img.pixels,
+            1.f, 0.f, 1.f,
+            1, PHY_FLOAT, false
+    );
     map->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
     map->processAllTriangles(
             this,
-            btVector3(-2000., -2000., -2000.),
-            btVector3(2000., 2000., 2000.));
+            btVector3(-1000., -1000., -1000.),
+            btVector3(1000., 1000., 1000.)
+    );
 
     btTransform myTransform;
     myTransform.setIdentity();
@@ -108,7 +114,7 @@ btRigidBody *HeightMapItem::get_body() {
 }
 
 glm::vec3 HeightMapItem::_get_scale() {
-    return scale;
+    return glm::vec3(1.);
 }
 
 void HeightMapItem::processTriangle(btVector3 *triangle, int partid, int triangleindex) {

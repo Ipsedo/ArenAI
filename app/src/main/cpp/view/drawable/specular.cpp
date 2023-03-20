@@ -51,9 +51,9 @@ Specular::Specular(AAssetManager *mgr,
 void
 Specular::draw(glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos_from_camera,
                glm::vec3 camera_pos) {
-    program.use();
+    program->use();
 
-    program.attrib(
+    program->attrib(
             "a_position",
             "vertices_normals_buffer",
             POSITION_SIZE,
@@ -61,7 +61,7 @@ Specular::draw(glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos_fr
             0
     );
 
-    program.attrib(
+    program->attrib(
             "a_normal",
             "vertices_normals_buffer",
             NORMAL_SIZE,
@@ -69,25 +69,21 @@ Specular::draw(glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos_fr
             POSITION_SIZE * BYTES_PER_FLOAT
     );
 
-    program.uniform_mat4("u_mvp_matrix", mvp_matrix);
-    program.uniform_mat4("u_mv_matrix", mv_matrix);
+    program->uniform_mat4("u_mvp_matrix", mvp_matrix);
+    program->uniform_mat4("u_mv_matrix", mv_matrix);
 
-    program.uniform_vec3("u_light_pos", light_pos_from_camera);
-    program.uniform_vec3("u_cam_pos", camera_pos);
+    program->uniform_vec3("u_light_pos", light_pos_from_camera);
+    program->uniform_vec3("u_cam_pos", camera_pos);
 
-    program.uniform_vec4("u_ambient_color", ambient_color);
-    program.uniform_vec4("u_diffuse_color", diffuse_color);
-    program.uniform_vec4("u_specular_color", specular_color);
+    program->uniform_vec4("u_ambient_color", ambient_color);
+    program->uniform_vec4("u_diffuse_color", diffuse_color);
+    program->uniform_vec4("u_specular_color", specular_color);
 
-    program.uniform_float("u_distance_coef", 0.f);
-    program.uniform_float("u_light_coef", 1.f);
-    program.uniform_float("u_shininess", shininess);
+    program->uniform_float("u_distance_coef", 0.f);
+    program->uniform_float("u_light_coef", 1.f);
+    program->uniform_float("u_shininess", shininess);
 
     Program::draw_arrays(GL_TRIANGLES, 0, nb_vertices);
 
-    program.disable_attrib_array();
-}
-
-Specular::~Specular() {
-    program.kill();
+    program->disable_attrib_array();
 }

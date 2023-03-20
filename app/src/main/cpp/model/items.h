@@ -16,10 +16,15 @@
 class Item {
 public:
     Item(std::string name);
+
     virtual std::shared_ptr<Shape> get_shape() = 0;
+
     std::string get_name();
+
     glm::mat4 get_model_matrix();
+
     virtual btRigidBody *get_body() = 0;
+
 private:
     std::string name;
 protected:
@@ -28,7 +33,8 @@ protected:
 
 class ConvexItem : public Item {
 public:
-    ConvexItem(std::string name, const std::shared_ptr<Shape> &shape, glm::vec3 position, glm::vec3 scale, float mass);
+    ConvexItem(std::string name, const std::shared_ptr<Shape> &shape, glm::vec3 position,
+               glm::vec3 scale, float mass);
 
     std::shared_ptr<Shape> get_shape() override;
 
@@ -49,7 +55,7 @@ private:
     glm::vec3 scale;
 };
 
-class HeightMapItem : public Item, public btTriangleCallback{
+class HeightMapItem : public Item, public btTriangleCallback {
 public:
     HeightMapItem(std::string name, AAssetManager *mgr,
                   const std::string &height_map_file, glm::vec3 pos,
@@ -63,6 +69,7 @@ public:
 
 protected:
     glm::vec3 _get_scale() override;
+
 private:
     std::shared_ptr<Shape> shape;
     glm::vec3 scale;

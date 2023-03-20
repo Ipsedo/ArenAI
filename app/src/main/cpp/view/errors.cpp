@@ -6,6 +6,7 @@
 
 #include <stdexcept>
 #include <GLES3/gl3.h>
+#include <iostream>
 
 #include "../utils/logging.h"
 
@@ -19,6 +20,7 @@ void check_gl_error(const std::string &message) {
         has_error = true;
     }
 
-    /*if (has_error)
-        exit(1);*/
+    /*if (has_error) {
+        exit(1);
+    }*/
 }

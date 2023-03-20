@@ -31,7 +31,7 @@ public:
 
         Program::Builder add_texture(const std::string &name, const std::string &texture_path);
 
-        Program build();
+        std::shared_ptr<Program> build();
 
     private:
         Builder(AAssetManager *mgr, std::string vertex_shader_path,
@@ -104,7 +104,7 @@ public:
 
     static void draw_arrays(GLenum type, int from, int nb_vertices);
 
-    void kill();
+    ~Program();
 };
 
 #endif //PHYVR_PROGRAM_H

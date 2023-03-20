@@ -21,7 +21,7 @@ Engine::Engine() :
 
 }
 
-void Engine::add_item(const std::shared_ptr<Item>& item) {
+void Engine::add_item(const std::shared_ptr<Item> &item) {
     items.push_back(item);
     m_world->addRigidBody(item->get_body());
 }

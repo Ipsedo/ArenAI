@@ -4,6 +4,7 @@
 
 #include "renderer.h"
 #include "../utils/logging.h"
+#include "errors.h"
 
 #include <string>
 #include <utility>
@@ -14,8 +15,9 @@
 Renderer::Renderer(ANativeWindow *window, std::shared_ptr<Camera> camera) :
         camera(std::move(camera)),
         drawables(),
-        light_pos(0., 1000., 0.),
-        is_animating(true) {
+        light_pos(0., 500., 100.),
+        is_animating(true),
+        is_gl_closed(false) {
 
     const EGLint config_attrib[] = {
             EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
@@ -107,7 +109,9 @@ void Renderer::remove_drawable(const std::string &name) {
     drawables.erase(name);
 }
 
-void Renderer::draw(const std::vector<std::tuple<std::string, glm::mat4>>& model_matrices) {
+void Renderer::draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
+    if (!is_animating)
+        return;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -117,11 +121,17 @@ void Renderer::draw(const std::vector<std::tuple<std::string, glm::mat4>>& model
             camera->up()
     );
 
-    glm::mat4 proj_matrix = glm::frustum(
+    /*glm::mat4 proj_matrix = glm::frustum(
             -1.f, 1.f,
             -float(height) / float(width), float(height) / float(width),
             1.f,
             2000.f * sqrt(3.f)
+    );*/
+
+    glm::mat4 proj_matrix = glm::perspective(
+            float(M_PI) / 4.f,
+            float(width) / float(height),
+            1.f, 2000.f * sqrt(3.f)
     );
 
     for (auto [name, m_matrix]: model_matrices) {
@@ -132,6 +142,8 @@ void Renderer::draw(const std::vector<std::tuple<std::string, glm::mat4>>& model
     }
 
     eglSwapBuffers(display, surface);
+
+    check_gl_error("draw");
 }
 
 void Renderer::enable() {
@@ -166,4 +178,11 @@ void Renderer::close() {
     display = EGL_NO_DISPLAY;
     context = EGL_NO_CONTEXT;
     surface = EGL_NO_SURFACE;
+
+    is_gl_closed = true;
 }
+
+bool Renderer::is_closed() const {
+    return is_gl_closed;
+}
+

@@ -8,15 +8,15 @@
 #include <dlfcn.h>
 #include <cassert>
 #include <random>
+#include <glm/gtx/transform.hpp>
 
 #include "./utils/logging.h"
 #include "./model/engine.h"
 #include "./model/items.h"
 #include "./view/renderer.h"
 #include "./controller/controller.h"
-#include "view/drawable/specular.h"
+#include "./view/drawable/specular.h"
 #include "./view/drawable/cubemap.h"
-#include "glm/gtx/transform.hpp"
 
 
 // https://github.com/JustJokerX/NativeActivityFromJavaActivity/blob/master/app/src/main/cpp/main.cpp
@@ -67,10 +67,13 @@ static void engine_handle_cmd(struct android_app *app, int32_t cmd) {
             engine->app->savedState = malloc(sizeof(saved_state));
             engine->app->savedState = engine->state;
             engine->app->savedStateSize = sizeof(saved_state);
+            LOG_INFO("save state");
             break;
         case APP_CMD_INIT_WINDOW:
             // The window is being shown, get it ready.
             if (engine->app->window != nullptr) {
+                if (engine->renderer && !engine->renderer->is_closed())
+                    break;
                 LOG_INFO("opening window");
 
                 engine->renderer = std::make_shared<Renderer>(
@@ -85,14 +88,14 @@ static void engine_handle_cmd(struct android_app *app, int32_t cmd) {
 
                 // TODO call first draw
 
-                for (const auto& item: engine->state->items) {
+                for (const auto &item: engine->state->items) {
                     std::uniform_real_distribution<float> u_dist(0., 1.);
                     glm::vec4 a_color(
                             u_dist(*engine->state->rng),
                             u_dist(*engine->state->rng),
                             u_dist(*engine->state->rng),
                             1.f
-                            );
+                    );
                     glm::vec4 d_color(
                             u_dist(*engine->state->rng),
                             u_dist(*engine->state->rng),
@@ -113,7 +116,7 @@ static void engine_handle_cmd(struct android_app *app, int32_t cmd) {
                             d_color,
                             s_color,
                             50.f
-                            );
+                    );
                     engine->renderer->add_drawable(item->get_name(), drawable);
                 }
             }
@@ -122,31 +125,33 @@ static void engine_handle_cmd(struct android_app *app, int32_t cmd) {
             // The window is being hidden or closed, clean it up.
             //engine_term_display(engine);
             engine->renderer->close();
+            LOG_INFO("close");
             break;
         case APP_CMD_GAINED_FOCUS:
             // When our app gains focus, we start monitoring the accelerometer.
-            if (engine->accelerometerSensor != nullptr) {
+            /*if (engine->accelerometerSensor != nullptr) {
                 ASensorEventQueue_enableSensor(engine->sensorEventQueue,
                                                engine->accelerometerSensor);
                 // We'd like to get 60 events per second (in us).
                 ASensorEventQueue_setEventRate(engine->sensorEventQueue,
                                                engine->accelerometerSensor,
                                                (1000L / 60) * 1000);
-            }
+            }*/
+            engine->renderer->enable();
             break;
         case APP_CMD_LOST_FOCUS:
             // When our app loses focus, we stop monitoring the accelerometer.
             // This is to avoid consuming battery while not being used.
-            if (engine->accelerometerSensor != nullptr) {
+            /*if (engine->accelerometerSensor != nullptr) {
                 ASensorEventQueue_disableSensor(engine->sensorEventQueue,
                                                 engine->accelerometerSensor);
-            }
+            }*/
             // Also stop animating.
             engine->renderer->disable();
             /*engine_draw_frame(engine);*/
             break;
         default:
-            LOG_WARN("unrecognized cmd");
+            break;
     }
 }
 
@@ -223,6 +228,7 @@ void android_main(struct android_app *state) {
     if (state->savedState != nullptr) {
         // We are starting with a previous saved state; restore from it.
         engine.state = (saved_state *) state->savedState;
+        LOG_INFO("load state");
     } else {
         engine.state = new saved_state{};
 
@@ -230,8 +236,8 @@ void android_main(struct android_app *state) {
         engine.state->rng = std::make_shared<std::mt19937>(dev());
 
         engine.state->camera = std::make_shared<StaticCamera>(
-                glm::vec3(0., 0., -1.),
-                glm::vec3(0., 0., 1.),
+                glm::vec3(0., 10., 0.),
+                glm::vec3(0., 10., 1.),
                 glm::vec3(0., 1., 0.)
         );
         engine.state->controller_engine = std::make_shared<ControllerEngine>();
@@ -240,10 +246,10 @@ void android_main(struct android_app *state) {
         auto map = std::make_shared<HeightMapItem>(
                 "height_map",
                 state->activity->assetManager,
-                "heightmap/heightmap6.png",
-                glm::vec3(0., -10., 0.),
-                glm::vec3(1000, 10., 1000)
-                );
+                "heightmap/heightmap6_2.png",
+                glm::vec3(0., 0., 0.),
+                glm::vec3(4., 40., 4.)
+        );
 
         engine.state->items.push_back(map);
         engine.state->physic_engine->add_item(map);
@@ -298,11 +304,12 @@ void android_main(struct android_app *state) {
             std::transform(
                     engine.state->items.begin(), engine.state->items.end(),
                     std::back_inserter(res),
-                    [](const std::shared_ptr<Item>& item){
-                        return std::tuple<std::string, glm::mat4>(item->get_name(), item->get_model_matrix());
+                    [](const std::shared_ptr<Item> &item) {
+                        return std::tuple<std::string, glm::mat4>(item->get_name(),
+                                                                  item->get_model_matrix());
                     });
 
-            res.emplace_back("cubemap", glm::scale(glm::mat4(1.), glm::vec3(1000., 1000., 1000.)));
+            res.emplace_back("cubemap", glm::scale(glm::mat4(1.), glm::vec3(2000., 2000., 2000.)));
 
             engine.renderer->draw(res);
         }

@@ -69,7 +69,7 @@ void android_main(struct android_app *state) {
         engine = (CoreEngine *) state->savedState;
         LOG_INFO("load state");
     } else {*/
-        engine = new CoreEngine(state->activity->assetManager, state->window);
+    engine = new CoreEngine(state->activity->assetManager, state->window);
     //}
 
     state->userData = engine;

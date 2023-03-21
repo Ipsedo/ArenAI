@@ -22,9 +22,11 @@ static void engine_handle_cmd(struct android_app *app, int32_t cmd) {
     switch (cmd) {
         case APP_CMD_SAVE_STATE:
             // The system has asked us to save our current state.  Do so.
-            app->savedState = malloc(sizeof(CoreEngine));
+            /*app->savedState = malloc(sizeof(CoreEngine));
+            // TODO real object copy...
             app->savedState = engine;
             app->savedStateSize = sizeof(CoreEngine);
+            */
             LOG_INFO("save state");
             break;
         case APP_CMD_INIT_WINDOW:
@@ -62,13 +64,13 @@ static int32_t on_input_wrapper(struct android_app *app, AInputEvent *event) {
 void android_main(struct android_app *state) {
     CoreEngine *engine;
 
-    if (state->savedState != nullptr) {
+    /*if (state->savedState != nullptr) {
         // We are starting with a previous saved state; restore from it.
         engine = (CoreEngine *) state->savedState;
         LOG_INFO("load state");
-    } else {
+    } else {*/
         engine = new CoreEngine(state->activity->assetManager, state->window);
-    }
+    //}
 
     state->userData = engine;
     state->onAppCmd = engine_handle_cmd;
@@ -86,7 +88,7 @@ void android_main(struct android_app *state) {
         // If animating, we loop until all events are read, then continue
         // to draw the next frame of animation.
         while ((ident = ALooper_pollAll(
-                1, nullptr,
+                engine->is_running() ? 0 : -1, nullptr,
                 &events,
                 (void **) &source)) >= 0) {
 

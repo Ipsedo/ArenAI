@@ -5,6 +5,7 @@
 #include "./core.h"
 #include "./view/drawable/specular.h"
 #include "./view/drawable/cubemap.h"
+#include "utils/logging.h"
 
 #include <glm/gtx/transform.hpp>
 
@@ -89,8 +90,9 @@ void CoreEngine::draw() {
 }
 
 void CoreEngine::step(float time_delta) {
-    if (!is_paused)
-        physic_engine.step(time_delta);
+    if (is_paused) return;
+
+    physic_engine.step(time_delta);
 }
 
 int32_t CoreEngine::on_input(struct android_app *app, AInputEvent *event) {
@@ -100,4 +102,8 @@ int32_t CoreEngine::on_input(struct android_app *app, AInputEvent *event) {
 void CoreEngine::pause() {
     is_paused = true;
     renderer = std::nullptr_t();
+}
+
+bool CoreEngine::is_running() const {
+    return !is_paused;
 }

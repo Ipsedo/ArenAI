@@ -18,6 +18,8 @@ public:
     void new_view(AAssetManager *mgr, ANativeWindow *window);
     void pause();
 
+    bool is_running() const;
+
     void draw();
     void step(float time_delta);
     int32_t on_input(struct android_app *app, AInputEvent *event);

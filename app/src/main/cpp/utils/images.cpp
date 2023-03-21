@@ -2,8 +2,8 @@
 // Created by samuel on 19/03/2023.
 //
 
-#include "images.h"
-#include "logging.h"
+#include "./images.h"
+#include "./logging.h"
 
 img_rgb to_img_rgb(libpng_image image) {
     img_rgb res{};

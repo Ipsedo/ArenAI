@@ -2,7 +2,7 @@
 // Created by samuel on 19/03/2023.
 //
 
-#include "items.h"
+#include "./items.h"
 
 #include <glm/gtc/type_ptr.hpp>
 #include <utility>

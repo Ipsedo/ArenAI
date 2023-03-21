@@ -5,7 +5,7 @@
 #ifndef PHYVR_DRAWABLE_H
 #define PHYVR_DRAWABLE_H
 
-#include "glm/glm.hpp"
+#include <glm/glm.hpp>
 
 class Drawable {
 public:

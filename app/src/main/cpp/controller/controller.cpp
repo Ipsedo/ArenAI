@@ -2,7 +2,7 @@
 // Created by samuel on 19/03/2023.
 //
 
-#include "controller.h"
+#include "./controller.h"
 
 #include <android/input.h>
 
@@ -16,10 +16,11 @@ void ControllerEngine::remove_controller(const std::string &name) {
     controllers.erase(name);
 }
 
-void ControllerEngine::on_event(AInputEvent *event) {
+int32_t ControllerEngine::on_event(AInputEvent *event) {
     switch (AInputEvent_getType(event)) {
         case AINPUT_EVENT_TYPE_MOTION:
             break;
 
     }
+    return 1;
 }

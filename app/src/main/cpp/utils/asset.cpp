@@ -2,11 +2,11 @@
 // Created by samuel on 18/03/2023.
 //
 
-#include "asset.h"
+#include "./asset.h"
 
 #include <android/asset_manager.h>
 
-#include "logging.h"
+#include "./logging.h"
 
 std::string read_asset(AAssetManager *mgr, const std::string &file_name) {
     // Open your file

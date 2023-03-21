@@ -2,7 +2,7 @@
 // Created by samuel on 18/03/2023.
 //
 
-#include "camera.h"
+#include "./camera.h"
 
 StaticCamera::StaticCamera(glm::vec3 pos, glm::vec3 look, glm::vec3 up) :
         pos_vec(pos),

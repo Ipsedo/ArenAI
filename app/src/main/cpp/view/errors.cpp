@@ -2,7 +2,7 @@
 // Created by samuel on 19/03/2023.
 //
 
-#include "errors.h"
+#include "./errors.h"
 
 #include <stdexcept>
 #include <GLES3/gl3.h>

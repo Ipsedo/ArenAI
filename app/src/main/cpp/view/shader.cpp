@@ -2,7 +2,7 @@
 // Created by samuel on 18/03/2023.
 //
 
-#include "shader.h"
+#include "./shader.h"
 
 #include <android/asset_manager.h>
 

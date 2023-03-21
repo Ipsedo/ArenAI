@@ -2,11 +2,11 @@
 // Created by samuel on 19/03/2023.
 //
 
-#include "engine.h"
+#include "./engine.h"
 
 #include <algorithm>
 
-Engine::Engine() :
+PhysicEngine::PhysicEngine() :
         m_collision_configuration(new btDefaultCollisionConfiguration()),
         m_dispatcher(new btCollisionDispatcher(m_collision_configuration)),
         m_broad_phase(new btDbvtBroadphase()),
@@ -21,11 +21,11 @@ Engine::Engine() :
 
 }
 
-void Engine::add_item(const std::shared_ptr<Item> &item) {
+void PhysicEngine::add_item(const std::shared_ptr<Item> &item) {
     items.push_back(item);
     m_world->addRigidBody(item->get_body());
 }
 
-void Engine::step(float delta) {
+void PhysicEngine::step(float delta) {
     m_world->stepSimulation(delta);
 }

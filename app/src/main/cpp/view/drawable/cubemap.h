@@ -5,7 +5,7 @@
 #ifndef PHYVR_CUBEMAP_H
 #define PHYVR_CUBEMAP_H
 
-#include "drawable.h"
+#include "./drawable.h"
 
 #include <string>
 

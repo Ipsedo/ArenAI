@@ -2,9 +2,9 @@
 // Created by samuel on 18/03/2023.
 //
 
-#include "renderer.h"
+#include "./renderer.h"
 #include "../utils/logging.h"
-#include "errors.h"
+#include "./errors.h"
 
 #include <string>
 #include <utility>
@@ -15,9 +15,7 @@
 Renderer::Renderer(ANativeWindow *window, std::shared_ptr<Camera> camera) :
         camera(std::move(camera)),
         drawables(),
-        light_pos(0., 500., 100.),
-        is_animating(true),
-        is_gl_closed(false) {
+        light_pos(0., 500., 100.) {
 
     const EGLint config_attrib[] = {
             EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
@@ -110,9 +108,6 @@ void Renderer::remove_drawable(const std::string &name) {
 }
 
 void Renderer::draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
-    if (!is_animating)
-        return;
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glm::mat4 view_matrix = glm::lookAt(
@@ -120,13 +115,6 @@ void Renderer::draw(const std::vector<std::tuple<std::string, glm::mat4>> &model
             camera->look(),
             camera->up()
     );
-
-    /*glm::mat4 proj_matrix = glm::frustum(
-            -1.f, 1.f,
-            -float(height) / float(width), float(height) / float(width),
-            1.f,
-            2000.f * sqrt(3.f)
-    );*/
 
     glm::mat4 proj_matrix = glm::perspective(
             float(M_PI) / 4.f,
@@ -146,21 +134,7 @@ void Renderer::draw(const std::vector<std::tuple<std::string, glm::mat4>> &model
     check_gl_error("draw");
 }
 
-void Renderer::enable() {
-    is_animating = true;
-}
-
-void Renderer::disable() {
-    is_animating = false;
-}
-
-bool Renderer::is_enabled() const {
-    return is_animating;
-}
-
-void Renderer::close() {
-    disable();
-
+Renderer::~Renderer() {
     drawables.clear();
 
     if (display != EGL_NO_DISPLAY) {
@@ -178,11 +152,4 @@ void Renderer::close() {
     display = EGL_NO_DISPLAY;
     context = EGL_NO_CONTEXT;
     surface = EGL_NO_SURFACE;
-
-    is_gl_closed = true;
 }
-
-bool Renderer::is_closed() const {
-    return is_gl_closed;
-}
-

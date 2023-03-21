@@ -13,8 +13,8 @@
 #include <android/native_window.h>
 #include <EGL/egl.h>
 
-#include "camera.h"
-#include "drawable/drawable.h"
+#include "./camera.h"
+#include "./drawable/drawable.h"
 
 class Renderer {
 public:
@@ -26,15 +26,7 @@ public:
 
     void draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices);
 
-    void enable();
-
-    void disable();
-
-    bool is_enabled() const;
-
-    void close();
-
-    bool is_closed() const;
+    ~Renderer();
 
 private:
     EGLDisplay display;
@@ -48,9 +40,6 @@ private:
     std::shared_ptr<Camera> camera;
 
     std::map<std::string, std::shared_ptr<Drawable>> drawables;
-
-    bool is_animating;
-    bool is_gl_closed;
 };
 
 #endif //PHYVR_RENDERER_H

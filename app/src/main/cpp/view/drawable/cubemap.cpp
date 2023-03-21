@@ -2,7 +2,7 @@
 // Created by samuel on 19/03/2023.
 //
 
-#include "cubemap.h"
+#include "./cubemap.h"
 
 #include "../errors.h"
 #include "../../utils/logging.h"

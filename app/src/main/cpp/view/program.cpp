@@ -2,20 +2,20 @@
 // Created by samuel on 18/03/2023.
 //
 
-#include "program.h"
+#include "./program.h"
 
 #include <utility>
 #include <glm/gtc//type_ptr.hpp>
 #include <filesystem>
 #include <png.h>
 
-#include "constants.h"
-#include "shader.h"
+#include "./constants.h"
+#include "./shader.h"
 #include "../utils/images.h"
 #include "../utils/asset.h"
 #include "../utils/string_utils.h"
 #include "../utils/logging.h"
-#include "errors.h"
+#include "./errors.h"
 
 /*
  * Buffer builder

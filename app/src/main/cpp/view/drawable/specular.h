@@ -5,7 +5,7 @@
 #ifndef PHYVR_SPECULAR_H
 #define PHYVR_SPECULAR_H
 
-#include "drawable.h"
+#include "./drawable.h"
 #include "../program.h"
 #include "../constants.h"
 

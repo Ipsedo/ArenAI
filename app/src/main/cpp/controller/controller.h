@@ -10,7 +10,7 @@
 #include <map>
 #include <android/input.h>
 
-#include "inputs.h"
+#include "./inputs.h"
 
 class Controller {
 public:
@@ -23,7 +23,7 @@ public:
 
     void remove_controller(const std::string &name);
 
-    void on_event(AInputEvent *event);
+    int32_t on_event(AInputEvent *event);
 
 private:
     std::map<std::string, std::shared_ptr<Controller>> controllers;

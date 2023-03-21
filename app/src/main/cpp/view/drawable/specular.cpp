@@ -2,7 +2,7 @@
 // Created by samuel on 18/03/2023.
 //
 
-#include "specular.h"
+#include "./specular.h"
 
 Specular::Specular(AAssetManager *mgr,
                    const std::vector<std::tuple<float, float, float>> &vertices,

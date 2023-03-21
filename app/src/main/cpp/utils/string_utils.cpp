@@ -3,7 +3,7 @@
 //
 
 #include <sstream>
-#include "string_utils.h"
+#include "./string_utils.h"
 
 std::vector<std::string> split_string(const std::string &input, char delimiter) {
     std::stringstream ss(input);

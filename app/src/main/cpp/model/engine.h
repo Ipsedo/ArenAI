@@ -10,11 +10,11 @@
 #include <vector>
 #include <glm/glm.hpp>
 
-#include "items.h"
+#include "./items.h"
 
-class Engine {
+class PhysicEngine {
 public:
-    Engine();
+    PhysicEngine();
 
     void add_item(const std::shared_ptr<Item> &item);
 

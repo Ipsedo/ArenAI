@@ -5,7 +5,7 @@
 #include "./core.h"
 #include "./view/drawable/specular.h"
 #include "./view/drawable/cubemap.h"
-#include "utils/logging.h"
+#include "./utils/logging.h"
 
 #include <glm/gtx/transform.hpp>
 
@@ -34,7 +34,7 @@ CoreEngine::CoreEngine(AAssetManager *mgr, ANativeWindow *window) :
     physic_engine.add_item(map);
 }
 
-void CoreEngine::new_view(AAssetManager *mgr, ANativeWindow *window) {
+void CoreEngine::_new_view(AAssetManager *mgr, ANativeWindow *window) {
     renderer = std::make_unique<Renderer>(window, camera);
 
     std::uniform_real_distribution<float> u_dist(0., 1.);
@@ -99,11 +99,46 @@ int32_t CoreEngine::on_input(struct android_app *app, AInputEvent *event) {
     return controller_engine.on_event(event);
 }
 
-void CoreEngine::pause() {
+void CoreEngine::_pause() {
     is_paused = true;
     renderer = std::nullptr_t();
 }
 
 bool CoreEngine::is_running() const {
     return !is_paused;
+}
+
+void CoreEngine::on_cmd(struct android_app *app, int32_t cmd) {
+    switch (cmd) {
+        case APP_CMD_SAVE_STATE:
+            // The system has asked us to save our current state.  Do so.
+            /*app->savedState = malloc(sizeof(CoreEngine));
+            // TODO real object copy...
+            app->savedState = engine;
+            app->savedStateSize = sizeof(CoreEngine);
+            */
+            LOG_INFO("save state");
+            break;
+        case APP_CMD_INIT_WINDOW:
+            // The window is being shown, get it ready.
+            if (app->window != nullptr) {
+                LOG_INFO("opening window");
+                _new_view(app->activity->assetManager, app->window);
+            }
+            break;
+        case APP_CMD_TERM_WINDOW:
+            _pause();
+            LOG_INFO("close");
+            break;
+        case APP_CMD_GAINED_FOCUS:
+            LOG_INFO("gained focus");
+            break;
+        case APP_CMD_LOST_FOCUS:
+            _pause();
+            LOG_INFO("lost focus");
+            /*engine_draw_frame(engine);*/
+            break;
+        default:
+            break;
+    }
 }

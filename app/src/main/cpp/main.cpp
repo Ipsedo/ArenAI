@@ -17,38 +17,9 @@
 /**
  * Process the next main command.
  */
-static void engine_handle_cmd(struct android_app *app, int32_t cmd) {
+static void on_cmd_wrapper(struct android_app *app, int32_t cmd) {
     auto *engine = (CoreEngine *) app->userData;
-    switch (cmd) {
-        case APP_CMD_SAVE_STATE:
-            // The system has asked us to save our current state.  Do so.
-            /*app->savedState = malloc(sizeof(CoreEngine));
-            // TODO real object copy...
-            app->savedState = engine;
-            app->savedStateSize = sizeof(CoreEngine);
-            */
-            LOG_INFO("save state");
-            break;
-        case APP_CMD_INIT_WINDOW:
-            // The window is being shown, get it ready.
-            if (app->window != nullptr) {
-                LOG_INFO("opening window");
-                engine->new_view(app->activity->assetManager, app->window);
-            }
-            break;
-        case APP_CMD_TERM_WINDOW:
-            engine->pause();
-            LOG_INFO("close");
-            break;
-        case APP_CMD_GAINED_FOCUS:
-            break;
-        case APP_CMD_LOST_FOCUS:
-            engine->pause();
-            /*engine_draw_frame(engine);*/
-            break;
-        default:
-            break;
-    }
+    engine->on_cmd(app, cmd);
 }
 
 static int32_t on_input_wrapper(struct android_app *app, AInputEvent *event) {
@@ -73,7 +44,7 @@ void android_main(struct android_app *state) {
     //}
 
     state->userData = engine;
-    state->onAppCmd = engine_handle_cmd;
+    state->onAppCmd = on_cmd_wrapper;
     state->onInputEvent = on_input_wrapper;
 
     // loop waiting for stuff to do.

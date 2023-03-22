@@ -19,9 +19,11 @@ public:
     bool is_running() const;
 
     void draw();
+
     void step(float time_delta);
 
     int32_t on_input(struct android_app *app, AInputEvent *event);
+
     void on_cmd(struct android_app *app, int32_t cmd);
 
 private:

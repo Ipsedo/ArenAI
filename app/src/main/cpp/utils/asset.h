@@ -8,10 +8,22 @@
 #include <string>
 #include <android/asset_manager.h>
 
-#include "./images.h"
+struct img_rgb {
+    int width;
+    int height;
+    char *pixels;
+};
+
+struct img_grey {
+    int width;
+    int height;
+    float *pixels;
+};
 
 std::string read_asset(AAssetManager *mgr, const std::string &file_name);
 
-libpng_image read_png(AAssetManager *mgr, const std::string &png_file_path);
+img_rgb read_png(AAssetManager *mgr, const std::string &png_file_path);
+
+img_grey to_img_grey(img_rgb image);
 
 #endif //PHYVR_ASSET_H

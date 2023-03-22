@@ -3,7 +3,7 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/libs/bullet3" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/libs/glm" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/libs/libpng-android" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/libs/nlohmann-json" vcs="Git" />
   </component>
 </project>

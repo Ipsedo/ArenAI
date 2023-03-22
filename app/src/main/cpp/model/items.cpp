@@ -79,7 +79,7 @@ HeightMapItem::HeightMapItem(std::string name, AAssetManager *mgr,
                              const std::string &height_map_file, glm::vec3 pos,
                              glm::vec3 scale) :
         Item(std::move(name)), scale(scale) {
-    libpng_image tmp = read_png(mgr, height_map_file);
+    img_rgb tmp = read_png(mgr, height_map_file);
     img_grey img = to_img_grey(tmp);
 
     auto map = new btHeightfieldTerrainShape(

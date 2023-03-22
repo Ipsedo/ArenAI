@@ -7,11 +7,9 @@
 #include <utility>
 #include <glm/gtc//type_ptr.hpp>
 #include <filesystem>
-#include <png.h>
 
 #include "./constants.h"
 #include "./shader.h"
-#include "../utils/images.h"
 #include "../utils/asset.h"
 #include "../utils/string_utils.h"
 #include "../utils/logging.h"
@@ -141,20 +139,17 @@ std::shared_ptr<Program> Program::Builder::build() {
         program->tex_name_to_idx_id.insert({name, {curr_texture, tex_id}});
 
         for (const auto &file: files_path) {
-            libpng_image img = read_png(mgr, file);
-            img_rgb img_rgb = to_img_rgb(img);
+            img_rgb img = read_png(mgr, file);
 
             std::string file_name = split_string(file, '/').back();
             glTexImage2D(
                     file_to_tex_id[file_name],
-                    0, GL_RGB,
-                    img_rgb.width, img_rgb.height,
-                    0, GL_RGB, GL_UNSIGNED_BYTE,
-                    img_rgb.pixels);
+                    0, GL_RGBA,
+                    img.width, img.height,
+                    0, GL_RGBA, GL_UNSIGNED_BYTE,
+                    img.pixels);
 
-            delete[] img.data;
-            delete[] img.row_ptrs;
-            delete[] img_rgb.pixels;
+            delete[] img.pixels;
         }
 
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

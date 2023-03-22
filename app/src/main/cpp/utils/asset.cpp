@@ -5,6 +5,7 @@
 #include "./asset.h"
 
 #include <android/asset_manager.h>
+#include <android/imagedecoder.h>
 
 #include "./logging.h"
 
@@ -32,100 +33,65 @@ std::string read_asset(AAssetManager *mgr, const std::string &file_name) {
     return res;
 }
 
-void user_read_data(png_structp pngPtr, png_bytep data, png_size_t length) {
-    png_voidp a = png_get_io_ptr(pngPtr);
-    AAsset_read((AAsset *) a, (char *) data, length);
-}
 
-libpng_image read_png(AAssetManager *mgr, const std::string &png_file_path) {
+img_rgb read_png(AAssetManager *mgr, const std::string &png_file_path) {
     AAsset *file = AAssetManager_open(mgr, png_file_path.c_str(), AASSET_MODE_BUFFER);
 
-    char header[8];
-    AAsset_read(file, header, 8);
-    if (png_sig_cmp((png_byte *) header, 0, 8)) {
-        LOG_ERROR("Unrecognized png sig %s", png_file_path.c_str());
-        exit(1);
+    AImageDecoder *decoder;
+    AImageDecoder_createFromAAsset(file, &decoder);
+
+    auto decoder_cleanup = [&decoder]() {
+        AImageDecoder_delete(decoder);
+    };
+
+    const AImageDecoderHeaderInfo *header_info = AImageDecoder_getHeaderInfo(decoder);
+
+    int bitmap_format = AImageDecoderHeaderInfo_getAndroidBitmapFormat(header_info);
+    if (bitmap_format != ANDROID_BITMAP_FORMAT_RGBA_8888) {
+        decoder_cleanup();
+        throw std::runtime_error("Only RGBA_8888 is accepted");
     }
 
-    // http://www.piko3d.net/tutorials/libpng-tutorial-loading-png-files-from-streams/
-    png_structp png_ptr = nullptr;
-    png_infop info_ptr = nullptr;
-    png_infop end_info = nullptr;
-    png_bytep row = nullptr;
+    int channels = 4;
+    int width = AImageDecoderHeaderInfo_getWidth(header_info);
+    int height = AImageDecoderHeaderInfo_getHeight(header_info);
 
-    png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
-    info_ptr = png_create_info_struct(png_ptr);
-    end_info = png_create_info_struct(png_ptr);
-    png_set_read_fn(png_ptr, (png_voidp) file, user_read_data);
+    size_t stride = AImageDecoder_getMinimumStride(decoder);
 
-    png_set_sig_bytes(png_ptr, 8);
+    int size = width * height * channels;
+    char *pixels = new char[size];
 
-    png_read_info(png_ptr, info_ptr);
-
-    png_uint_32 img_width = png_get_image_width(png_ptr, info_ptr);
-    png_uint_32 img_height = png_get_image_height(png_ptr, info_ptr);
-    png_uint_32 bit_depth = png_get_bit_depth(png_ptr, info_ptr);
-    png_uint_32 channels = png_get_channels(png_ptr, info_ptr);
-    png_uint_32 color_type = png_get_color_type(png_ptr, info_ptr);
-
-    // color palete -> RGB
-    // gray -> gray 1 octet
-    switch (color_type) {
-        case PNG_COLOR_TYPE_PALETTE:
-            png_set_palette_to_rgb(png_ptr);
-            channels = 3;
-            break;
-
-        case PNG_COLOR_TYPE_GRAY:
-            if (bit_depth < 8)
-                png_set_expand_gray_1_2_4_to_8(png_ptr);
-            bit_depth = 8;
-            break;
-        default:
-            break;
+    if (AImageDecoder_decodeImage(decoder, pixels, stride, size) != ANDROID_IMAGE_DECODER_SUCCESS) {
+        decoder_cleanup();
+        throw std::runtime_error("Error in image decoding");
     }
 
-    // full alpha conversion
-    if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
-        png_set_tRNS_to_alpha(png_ptr);
-        channels += 1;
-    }
-    if (color_type & PNG_COLOR_MASK_ALPHA) {
-        png_set_strip_alpha(png_ptr);
-        channels -= 1;
-    }
+    decoder_cleanup();
 
-    // Pass to 8 bits (1 byte) depth
-    if (bit_depth < 8) {
-        png_set_packing(png_ptr);
-        bit_depth = 8;
-    } else if (bit_depth == 16) {
-        png_set_strip_16(png_ptr);
-        bit_depth = 8;
-    }
+    return {
+            width,
+            height,
+            pixels
+    };
+}
 
-    png_read_update_info(png_ptr, info_ptr);
+img_grey to_img_grey(img_rgb image) {
+    img_grey res{};
 
-    auto *row_ptrs = new png_bytep[img_height];
-    char *data = new char[img_width * img_height * bit_depth * channels / 8];
-    const unsigned int stride = img_width * bit_depth * channels / 8u;
+    res.pixels = new float[image.width * image.height];
 
-    for (unsigned int i = 0u; i < img_height; i++) {
-        png_uint_32 q = (img_height - i - 1u) * stride;
-        row_ptrs[i] = (png_bytep) data + q;
-    }
+    for (int row = 0; row < image.height; row++)
+        for (int col = 0; col < image.width; col++)
+            // image.pixels -> RGBA -> * 4
+            res.pixels[row * image.height + col] =
+                    float(
+                            image.pixels[row * image.height * 4 + col * 4]
+                            + image.pixels[row * image.height * 4 + col * 4 + 1]
+                            + image.pixels[row * image.height * 4 + col * 4 + 2]
+                    ) / 3.f / 255.f;
 
-    png_read_image(png_ptr, row_ptrs);
+    res.width = int(image.width);
+    res.height = int(image.height);
 
-    png_read_end(png_ptr, end_info);
-
-    png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
-    AAsset_close(file);
-
-    return {img_width,
-            img_height,
-            bit_depth,
-            channels,
-            data,
-            row_ptrs};
+    return res;
 }

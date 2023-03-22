@@ -84,11 +84,10 @@ img_grey to_img_grey(img_rgb image) {
         for (int col = 0; col < image.width; col++)
             // image.pixels -> RGBA -> * 4
             res.pixels[row * image.height + col] =
-                    float(
-                            image.pixels[row * image.height * 4 + col * 4]
-                            + image.pixels[row * image.height * 4 + col * 4 + 1]
-                            + image.pixels[row * image.height * 4 + col * 4 + 2]
-                    ) / 3.f / 255.f;
+                    (float(image.pixels[row * image.height * 4 + col * 4])
+                     + float(image.pixels[row * image.height * 4 + col * 4 + 1])
+                     + float(image.pixels[row * image.height * 4 + col * 4 + 2]))
+                    / 3.f / 255.f;
 
     res.width = int(image.width);
     res.height = int(image.height);

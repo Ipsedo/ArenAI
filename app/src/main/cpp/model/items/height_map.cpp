@@ -1,79 +1,12 @@
 //
-// Created by samuel on 19/03/2023.
+// Created by samuel on 23/03/2023.
 //
 
-#include "./items.h"
+#include "./height_map.h"
+#include "../../utils/asset.h"
+#include "../../utils/logging.h"
 
-#include <glm/gtc/type_ptr.hpp>
-#include <utility>
-#include <btBulletCollisionCommon.h>
 #include <BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
-
-#include "../utils/asset.h"
-#include "../utils/logging.h"
-
-Item::Item(std::string name) : name(std::move(name)) {
-
-}
-
-std::string Item::get_name() {
-    return name;
-}
-
-glm::mat4 Item::get_model_matrix() {
-    btScalar tmp[16];
-    btTransform tr;
-
-    get_body()->getMotionState()->getWorldTransform(tr);
-
-    tr.getOpenGLMatrix(tmp);
-
-    return glm::make_mat4(tmp) * glm::scale(glm::mat4(1.f), _get_scale());
-}
-
-// ConvexItem / ConvexHull
-
-ConvexItem::ConvexItem(std::string name, const std::shared_ptr<Shape> &shape,
-                       glm::vec3 position, glm::vec3 scale, float mass) :
-        Item(std::move(name)), shape(shape), scale(scale) {
-    auto *convex_hull_shape = new btConvexHullShape();
-
-    for (auto [x, y, z]: shape->get_vertices())
-        convex_hull_shape->addPoint(btVector3(x, y, z));
-
-    collision_shape = convex_hull_shape;
-
-    collision_shape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
-
-    btVector3 local_inertia(0, 0, 0);
-    if (mass != 0.f)
-        collision_shape->calculateLocalInertia(mass, local_inertia);
-
-    btTransform original_tr;
-    original_tr.setIdentity();
-    original_tr.setOrigin(btVector3(position.x, position.y, position.z));
-
-    auto *motion_state = new btDefaultMotionState(original_tr);
-
-    btRigidBody::btRigidBodyConstructionInfo body_info(mass, motion_state, collision_shape,
-                                                       local_inertia);
-
-    body = new btRigidBody(body_info);
-}
-
-std::shared_ptr<Shape> ConvexItem::get_shape() {
-    return shape;
-}
-
-btRigidBody *ConvexItem::get_body() {
-    return body;
-}
-
-glm::vec3 ConvexItem::_get_scale() {
-    return scale;
-}
-
-// Height Map
 
 HeightMapItem::HeightMapItem(std::string name, AAssetManager *mgr,
                              const std::string &height_map_file, glm::vec3 pos,
@@ -137,3 +70,4 @@ void HeightMapItem::processTriangle(btVector3 *triangle, int partid, int triangl
     vertices.emplace_back(p3.x, p3.y, p3.z);
     normals.emplace_back(n.x, n.y, n.z);
 }
+

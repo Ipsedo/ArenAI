@@ -3,6 +3,7 @@
 //
 
 #include "./specular.h"
+#include "../errors.h"
 
 Specular::Specular(AAssetManager *mgr,
                    const std::vector<std::tuple<float, float, float>> &vertices,
@@ -60,7 +61,6 @@ Specular::draw(glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos_fr
             STRIDE,
             0
     );
-
     program->attrib(
             "a_normal",
             "vertices_normals_buffer",

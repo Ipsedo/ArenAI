@@ -15,14 +15,6 @@ android {
             }
         }
     }
-    buildTypes {
-        release {
-            minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            proguardFiles.add(file('../../proguard-gvr.txt'))
-
-        }
-    }
     externalNativeBuild {
         cmake {
             path "CMakeLists.txt"

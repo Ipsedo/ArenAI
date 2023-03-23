@@ -40,15 +40,12 @@ include(AndroidNdkModules)
 android_ndk_import_module_native_app_glue()
 
 ##### PhyVR #####
-unset(CMAKE_C_FLAGS)
-unset(CMAKE_CXX_FLAGS)
-
 set(PHYVR_PATH "src/main/cpp")
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DANDROID_STL=c++_shared")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
-file(GLOB_RECURSE PHYVR_SRC "${PHYVR_PATH}/*.cpp" "${PHYVR_PATH}/*.c")
+file(GLOB_RECURSE PHYVR_SRC "${PHYVR_PATH}/*.cpp")
 add_library(${APP_NAME} SHARED ${PHYVR_SRC})
 
 target_link_libraries(

@@ -22,10 +22,23 @@ PhysicEngine::PhysicEngine() :
 }
 
 void PhysicEngine::add_item(const std::shared_ptr<Item> &item) {
-    items.push_back(item);
     m_world->addRigidBody(item->get_body());
 }
 
 void PhysicEngine::step(float delta) {
     m_world->stepSimulation(delta);
+}
+
+PhysicEngine::~PhysicEngine() {
+    for (int i = m_world->getNumCollisionObjects() - 1; i >= 0; i--) {
+        btCollisionObject *obj = m_world->getCollisionObjectArray()[i];
+        m_world->removeCollisionObject(obj);
+        delete obj;
+    }
+
+    delete m_world;
+    delete m_broad_phase;
+    delete m_dispatcher;
+    delete m_collision_configuration;
+    delete m_constraint_solver;
 }

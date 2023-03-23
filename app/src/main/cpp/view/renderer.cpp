@@ -22,6 +22,7 @@ Renderer::Renderer(ANativeWindow *window, std::shared_ptr<Camera> camera) :
             EGL_BLUE_SIZE, 8,
             EGL_GREEN_SIZE, 8,
             EGL_RED_SIZE, 8,
+            EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT,
             EGL_NONE
     };
     const EGLint context_attrib[] = {
@@ -80,10 +81,11 @@ Renderer::Renderer(ANativeWindow *window, std::shared_ptr<Camera> camera) :
     height = h;
 
     // Check openGL on the system
-    /*auto opengl_info = {GL_VENDOR, GL_RENDERER, GL_VERSION, GL_EXTENSIONS};
-    for (auto name : opengl_info) {
+    auto opengl_info = {GL_VENDOR, GL_RENDERER, GL_VERSION, GL_EXTENSIONS};
+    for (auto name: opengl_info) {
         auto info = glGetString(name);
-    }*/
+        LOG_DEBUG("GL_INFO \"%d\" %s", name, info);
+    }
 
     glViewport(0, 0, width, height);
 
@@ -91,11 +93,11 @@ Renderer::Renderer(ANativeWindow *window, std::shared_ptr<Camera> camera) :
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    //glEnable(GL_MULTISAMPLE);
 
     glDepthFunc(GL_LEQUAL);
-
     glDepthMask(GL_TRUE);
+
+    glDisable(GL_BLEND);
 
 }
 

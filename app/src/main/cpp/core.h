@@ -14,7 +14,7 @@
 
 class CoreEngine {
 public:
-    CoreEngine(AAssetManager *mgr, ANativeWindow *window);
+    CoreEngine(AAssetManager *mgr);
 
     bool is_running() const;
 

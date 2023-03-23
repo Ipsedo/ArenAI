@@ -7,6 +7,7 @@
 #include <android/asset_manager.h>
 
 #include "../utils/asset.h"
+#include "../utils/logging.h"
 
 
 GLuint load_shader(AAssetManager *mgr, GLenum type, const std::string &file_name) {

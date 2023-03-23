@@ -8,25 +8,20 @@
 #include <android/imagedecoder.h>
 
 #include "./logging.h"
+#include "./string_utils.h"
 
 std::string read_asset(AAssetManager *mgr, const std::string &file_name) {
-    // Open your file
     AAsset *file = AAssetManager_open(mgr, file_name.c_str(), AASSET_MODE_BUFFER);
-    // Get the file length
     off_t file_length = AAsset_getLength(file);
 
-    // Allocate memory to read your file
     char *file_content = new char[file_length + 1];
 
-    // Read your file
     AAsset_read(file, file_content, size_t(file_length));
-    // For safety you can add a 0 terminating character at the end of your file ...
     file_content[file_length] = '\0';
 
-    // Do whatever you want with the content of the file
     AAsset_close(file);
 
-    std::string res = std::string(file_content);
+    std::string res(file_content);
 
     delete[] file_content;
 
@@ -83,10 +78,10 @@ img_grey to_img_grey(img_rgb image) {
     for (int row = 0; row < image.height; row++)
         for (int col = 0; col < image.width; col++)
             // image.pixels -> RGBA -> * 4
-            res.pixels[row * image.height + col] =
-                    (float(image.pixels[row * image.height * 4 + col * 4])
-                     + float(image.pixels[row * image.height * 4 + col * 4 + 1])
-                     + float(image.pixels[row * image.height * 4 + col * 4 + 2]))
+            res.pixels[row * image.width + col] =
+                    (float(image.pixels[4 * row * image.width + col * 4])
+                     + float(image.pixels[4 * row * image.width + col * 4 + 1])
+                     + float(image.pixels[4 * row * image.width + col * 4 + 2]))
                     / 3.f / 255.f;
 
     res.width = int(image.width);

@@ -10,7 +10,7 @@
 #include <vector>
 #include <glm/glm.hpp>
 
-#include "./items.h"
+#include "./item.h"
 
 class PhysicEngine {
 public:
@@ -20,14 +20,14 @@ public:
 
     void step(float delta);
 
+    ~PhysicEngine();
+
 private:
     btDefaultCollisionConfiguration *m_collision_configuration;
     btCollisionDispatcher *m_dispatcher;
     btBroadphaseInterface *m_broad_phase;
     btSequentialImpulseConstraintSolver *m_constraint_solver;
     btDiscreteDynamicsWorld *m_world;
-
-    std::vector<std::shared_ptr<Item>> items;
 };
 
 #endif //PHYVR_ENGINE_H

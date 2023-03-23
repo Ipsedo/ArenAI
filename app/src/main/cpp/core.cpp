@@ -3,19 +3,23 @@
 //
 
 #include "./core.h"
+#include "./model/items/height_map.h"
+#include "./model/items/convex.h"
+#include "./model/shapes.h"
 #include "./view/drawable/specular.h"
 #include "./view/drawable/cubemap.h"
 #include "./utils/logging.h"
 
 #include <glm/gtx/transform.hpp>
 
-CoreEngine::CoreEngine(AAssetManager *mgr, ANativeWindow *window) :
+CoreEngine::CoreEngine(AAssetManager *mgr) :
         is_paused(true),
         camera(std::make_shared<StaticCamera>(
                 glm::vec3(0., 10., 0.),
                 glm::vec3(0., 10., 1.),
                 glm::vec3(0., 1., 0.))
         ),
+        renderer(std::nullptr_t()),
         physic_engine(),
         controller_engine(),
         items(),
@@ -25,13 +29,26 @@ CoreEngine::CoreEngine(AAssetManager *mgr, ANativeWindow *window) :
     auto map = std::make_shared<HeightMapItem>(
             "height_map",
             mgr,
-            "heightmap/heightmap6_2.png",
+            "heightmap/heightmap6.png",
             glm::vec3(0., 0., 0.),
             glm::vec3(4., 40., 4.)
     );
 
+    auto sphere_shape = std::make_shared<ObjShape>(
+            mgr, "obj/sphere.obj"
+    );
+    auto sphere = std::make_shared<ConvexItem>(
+            "sphere", sphere_shape,
+            glm::vec3(0.f, 15.f, 20.f),
+            glm::vec3(4.f, 4.f, 4.f),
+            10.f
+    );
+
     items.push_back(map);
     physic_engine.add_item(map);
+
+    items.push_back(sphere);
+    physic_engine.add_item(sphere);
 }
 
 void CoreEngine::_new_view(AAssetManager *mgr, ANativeWindow *window) {
@@ -69,16 +86,17 @@ void CoreEngine::_new_view(AAssetManager *mgr, ANativeWindow *window) {
 }
 
 void CoreEngine::draw() {
-    if (is_paused)
-        return;
+    if (is_paused) return;
 
-    std::vector<std::tuple<std::string, glm::mat4>> model_matrices{};
+    auto model_matrices = std::vector<std::tuple<std::string, glm::mat4>>();
     std::transform(
             items.begin(), items.end(),
             std::back_inserter(model_matrices),
             [](const std::shared_ptr<Item> &item) {
-                return std::tuple<std::string, glm::mat4>(item->get_name(),
-                                                          item->get_model_matrix());
+                return std::tuple<std::string, glm::mat4>(
+                        item->get_name(),
+                        item->get_model_matrix()
+                );
             });
 
     model_matrices.emplace_back(

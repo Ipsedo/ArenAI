@@ -87,7 +87,7 @@ void CoreEngine::draw() {
     if (is_paused) return;
 
     auto model_matrices = std::vector<std::tuple<std::string, glm::mat4>>();
-    for (auto &item : items)
+    for (auto &item: items)
         model_matrices.emplace_back(item->get_name(), item->get_model_matrix());
 
     model_matrices.emplace_back(

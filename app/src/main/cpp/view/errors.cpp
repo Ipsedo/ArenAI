@@ -4,23 +4,23 @@
 
 #include "./errors.h"
 
-#include <stdexcept>
 #include <GLES3/gl3.h>
 #include <iostream>
+#include <stdexcept>
 
 #include "../utils/logging.h"
 
 void check_gl_error(const std::string &message) {
-    GLenum error_code;
+  GLenum error_code;
 
-    bool has_error;
+  bool has_error;
 
-    while ((error_code = glGetError()) != GL_NO_ERROR) {
-        LOG_ERROR("GL_ERROR \"%s\": %d", message.c_str(), error_code);
-        has_error = true;
-    }
+  while ((error_code = glGetError()) != GL_NO_ERROR) {
+    LOG_ERROR("GL_ERROR \"%s\": %d", message.c_str(), error_code);
+    has_error = true;
+  }
 
-    /*if (has_error) {
-        exit(1);
-    }*/
+  /*if (has_error) {
+      exit(1);
+  }*/
 }

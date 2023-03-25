@@ -33,7 +33,7 @@ include_directories("${bullet3_SOURCE_DIR}/src")
 #### JSON ####
 FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz)
 FetchContent_MakeAvailable(json)
-include_directories("${json_SOURCE_DIR}/include")
+#include_directories("${json_SOURCE_DIR}/include")
 
 #### Android #####
 include(AndroidNdkModules)

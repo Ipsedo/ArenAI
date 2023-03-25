@@ -5,39 +5,42 @@
 #ifndef PHYVR_TRIANGLE_H
 #define PHYVR_TRIANGLE_H
 
-#include <math.h>
 #include "glm/glm.hpp"
 #include <GLES3/gl3.h>
+#include <math.h>
 
 class Triangle {
 private:
-	const float vertex[9]
-			{0.f, 1.f, 0.f,
-			 (float) cos(-M_PI / 3.), (float) sin(-M_PI / 3.), 0.f,
-			 (float) cos(-M_PI * 2. / 3.), (float) sin(-M_PI * 2. / 3.), 0.f};
+  const float vertex[9]{0.f,
+                        1.f,
+                        0.f,
+                        (float)cos(-M_PI / 3.),
+                        (float)sin(-M_PI / 3.),
+                        0.f,
+                        (float)cos(-M_PI * 2. / 3.),
+                        (float)sin(-M_PI * 2. / 3.),
+                        0.f};
 
-	GLuint mPositionHandle;
-	GLuint mColorHandle;
-	GLuint mMVPMatrixHandle;
-	GLuint mProgram;
+  GLuint mPositionHandle;
+  GLuint mColorHandle;
+  GLuint mMVPMatrixHandle;
+  GLuint mProgram;
 
-	GLuint vertexShader;
-	GLuint fragmentShader;
+  GLuint vertexShader;
+  GLuint fragmentShader;
 
-	float color[4];
+  float color[4];
 
-	void makeProgram();
+  void makeProgram();
 
-	void bind();
+  void bind();
 
 public:
-	Triangle(float r, float g, float b);
+  Triangle(float r, float g, float b);
 
-	void draw(glm::mat4 MVPMatrix);
+  void draw(glm::mat4 MVPMatrix);
 
-	~Triangle();
-
+  ~Triangle();
 };
 
-
-#endif //PHYVR_TRIANGLE_H
+#endif // PHYVR_TRIANGLE_H

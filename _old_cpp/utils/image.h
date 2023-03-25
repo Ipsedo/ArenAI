@@ -11,40 +11,39 @@
 using namespace std;
 
 struct normalized_image {
-	int width;
-	int height;
-	vector<float> allpixels;
+  int width;
+  int height;
+  vector<float> allpixels;
 };
 
-template<typename T>
-class color {
+template <typename T> class color {
 public:
-	T r;
-	T g;
-	T b;
+  T r;
+  T g;
+  T b;
 
-	color(T r, T g, T b) : r(r), g(g), b(b) {};
+  color(T r, T g, T b) : r(r), g(g), b(b){};
 };
 
 struct colored_image {
-	int width;
-	int height;
-	vector<color<int>> allpixels;
+  int width;
+  int height;
+  vector<color<int>> allpixels;
 };
 
 struct imgRGB {
-	int width;
-	int height;
-	char *pixels;
+  int width;
+  int height;
+  char *pixels;
 };
 
 struct libpng_image {
-	png_uint_32 width;
-	png_uint_32 height;
-	png_uint_32 bitdepth;
-	png_uint_32 channels;
-	char *data;
-	png_bytep *rowPtrs;
+  png_uint_32 width;
+  png_uint_32 height;
+  png_uint_32 bitdepth;
+  png_uint_32 channels;
+  char *data;
+  png_bytep *rowPtrs;
 };
 
 colored_image toColoredImg(libpng_image image);
@@ -53,4 +52,4 @@ normalized_image to_img_grey(libpng_image image);
 
 imgRGB toImgRGB(libpng_image image);
 
-#endif //PHYVR_IMAGE_H
+#endif // PHYVR_IMAGE_H

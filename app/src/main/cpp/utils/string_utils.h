@@ -10,4 +10,4 @@
 
 std::vector<std::string> split_string(const std::string &input, char delimiter);
 
-#endif //PHYVR_STRING_UTILS_H
+#endif // PHYVR_STRING_UTILS_H

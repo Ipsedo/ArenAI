@@ -7,4 +7,4 @@
 
 #define BYTES_PER_FLOAT 4
 
-#endif //PHYVR_CONSTANTS_H
+#endif // PHYVR_CONSTANTS_H

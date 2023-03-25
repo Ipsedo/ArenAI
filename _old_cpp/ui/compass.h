@@ -5,19 +5,19 @@
 #ifndef PHYVR_COMPASS_H
 #define PHYVR_COMPASS_H
 
-#include "../graphics/misc.h"
 #include "../entity/base.h"
 #include "../graphics/drawable/triangle.h"
+#include "../graphics/misc.h"
 
 class Compass : public Drawable {
 private:
-	Base *target;
-	Triangle triangle;
+  Base *target;
+  Triangle triangle;
 
 public:
-	Compass(Base *target);
+  Compass(Base *target);
 
-	void draw(draw_infos infos) override;
+  void draw(draw_infos infos) override;
 };
 
-#endif //PHYVR_COMPASS_H
+#endif // PHYVR_COMPASS_H

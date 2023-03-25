@@ -10,4 +10,4 @@
 
 glm::vec3 btVector3ToVec3(btVector3 v);
 
-#endif //PHYVR_VEC_H
+#endif // PHYVR_VEC_H

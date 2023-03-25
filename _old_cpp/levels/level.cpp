@@ -7,17 +7,13 @@
 Level::Level() : entities(), mgr(nullptr) {}
 
 void Level::init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) {
-	this->mgr = mgr;
+  this->mgr = mgr;
 }
 
-AAssetManager *Level::getMgr() {
-	return mgr;
-}
+AAssetManager *Level::getMgr() { return mgr; }
 
 void Level::addBases(vector<Base *> bs) {
-	entities.insert(entities.end(), bs.begin(), bs.end());
+  entities.insert(entities.end(), bs.begin(), bs.end());
 }
 
-Level::~Level() {
-	entities.clear();
-}
+Level::~Level() { entities.clear(); }

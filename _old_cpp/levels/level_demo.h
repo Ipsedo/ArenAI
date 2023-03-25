@@ -5,43 +5,42 @@
 #ifndef PHYVR_LEVELDEMO_H
 #define PHYVR_LEVELDEMO_H
 
+#include "../entity/tank/tank.h"
 #include "../graphics/drawable/cubemap.h"
 #include "level.h"
-#include "../entity/tank/tank.h"
 
 class LevelDemo : public Level {
 public:
-	LevelDemo();
+  LevelDemo();
 
-	void init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) override;
+  void init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) override;
 
-	vector<Controls *> getControls() override;
+  vector<Controls *> getControls() override;
 
-	vector<Shooter *> getShooters() override;
+  vector<Shooter *> getShooters() override;
 
-	Camera *getCamera() override;
+  Camera *getCamera() override;
 
-	vector<Base *> getEntities() override;
+  vector<Base *> getEntities() override;
 
-	vector<Drawable *> getDrawables() override;
+  vector<Drawable *> getDrawables() override;
 
-	Limits getLimits() override;
+  Limits getLimits() override;
 
-	glm::vec3 getLightPos() override;
+  glm::vec3 getLightPos() override;
 
-	bool won() override;
+  bool won() override;
 
-	bool lose() override;
+  bool lose() override;
 
-	void step() override;
+  void step() override;
 
-	~LevelDemo();
+  ~LevelDemo();
 
 private:
-	CubeMap *map;
-	Tank *tank;
-	bool isInit;
+  CubeMap *map;
+  Tank *tank;
+  bool isInit;
 };
 
-
-#endif //PHYVR_LEVEL0_H
+#endif // PHYVR_LEVEL0_H

@@ -5,18 +5,19 @@
 #ifndef PHYVR_RIGODBODY_H
 #define PHYVR_RIGODBODY_H
 
-#include <tuple>
-#include "glm/glm.hpp"
 #include "btBulletDynamicsCommon.h"
-#include <string>
+#include "glm/glm.hpp"
 #include "glm/gtc/quaternion.hpp"
 #include <android/asset_manager.h>
+#include <string>
+#include <tuple>
 
 using namespace std;
 
 btRigidBody::btRigidBodyConstructionInfo
-localCreateInfo(btScalar mass, const btTransform &startTransform, btCollisionShape *shape);
+localCreateInfo(btScalar mass, const btTransform &startTransform,
+                btCollisionShape *shape);
 
 btConvexHullShape *parseObj(string objFileText);
 
-#endif //PHYVR_RIGODBODY_H
+#endif // PHYVR_RIGODBODY_H

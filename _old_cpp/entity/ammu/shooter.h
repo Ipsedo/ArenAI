@@ -5,12 +5,12 @@
 #ifndef PHYVR_SHOOTER_H
 #define PHYVR_SHOOTER_H
 
-#include <vector>
 #include "../base.h"
+#include <vector>
 
 class Shooter {
 public:
-	virtual vector<Base *> fire() = 0;
+  virtual vector<Base *> fire() = 0;
 };
 
-#endif //PHYVR_SHOOTER_H
+#endif // PHYVR_SHOOTER_H

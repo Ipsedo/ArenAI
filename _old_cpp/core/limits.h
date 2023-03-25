@@ -5,27 +5,25 @@
 #ifndef PHYVR_LIMITS_H
 #define PHYVR_LIMITS_H
 
-
 #include "../entity/base.h"
 #include "glm/glm.hpp"
 
 class Limits {
 public:
-	virtual bool isInside(Base *b) { return true; }
+  virtual bool isInside(Base *b) { return true; }
 
-	virtual ~Limits();
+  virtual ~Limits();
 };
 
 class BoxLimits : public Limits {
 private:
-	glm::vec3 startVert;
-	glm::vec3 edgeSize;
+  glm::vec3 startVert;
+  glm::vec3 edgeSize;
 
 public:
-	BoxLimits(glm::vec3 startVert, glm::vec3 edgeSize);
+  BoxLimits(glm::vec3 startVert, glm::vec3 edgeSize);
 
-	bool isInside(Base *b) override;
+  bool isInside(Base *b) override;
 };
 
-
-#endif //PHYVR_LIMITS_H
+#endif // PHYVR_LIMITS_H

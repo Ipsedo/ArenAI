@@ -11,4 +11,4 @@
 
 void checkGLError(int id);
 
-#endif //PHYVR_GL_UTILS_H
+#endif // PHYVR_GL_UTILS_H

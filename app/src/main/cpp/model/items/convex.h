@@ -9,26 +9,26 @@
 
 class ConvexItem : public Item {
 public:
-    ConvexItem(std::string name, const std::shared_ptr<Shape> &shape, glm::vec3 position,
-               glm::vec3 scale, float mass);
+  ConvexItem(std::string name, const std::shared_ptr<Shape> &shape,
+             glm::vec3 position, glm::vec3 scale, float mass);
 
-    std::shared_ptr<Shape> get_shape() override;
+  std::shared_ptr<Shape> get_shape() override;
 
-    btRigidBody *get_body() override;
+  btRigidBody *get_body() override;
 
 protected:
-    glm::vec3 _get_scale() override;
+  glm::vec3 _get_scale() override;
 
 private:
 private:
-    std::string name;
+  std::string name;
 
-    std::shared_ptr<Shape> shape;
+  std::shared_ptr<Shape> shape;
 
-    btRigidBody *body;
-    btCollisionShape *collision_shape;
+  btRigidBody *body;
+  btCollisionShape *collision_shape;
 
-    glm::vec3 scale;
+  glm::vec3 scale;
 };
 
-#endif //PHYVR_CONVEX_H
+#endif // PHYVR_CONVEX_H

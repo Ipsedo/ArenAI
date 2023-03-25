@@ -5,10 +5,11 @@
 #ifndef PHYVR_SHADER_H
 #define PHYVR_SHADER_H
 
-#include <string>
 #include <GLES3/gl3.h>
 #include <android/asset_manager.h>
+#include <string>
 
-GLuint load_shader(AAssetManager *mgr, GLenum type, const std::string &file_name);
+GLuint load_shader(AAssetManager *mgr, GLenum type,
+                   const std::string &file_name);
 
-#endif //PHYVR_SHADER_H
+#endif // PHYVR_SHADER_H

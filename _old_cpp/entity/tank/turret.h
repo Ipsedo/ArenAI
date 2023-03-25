@@ -5,11 +5,11 @@
 #ifndef PHYVR_TURRET_H
 #define PHYVR_TURRET_H
 
-#include "../poly.h"
-#include "glm/glm.hpp"
 #include "../../controls.h"
 #include "../ammu/shooter.h"
+#include "../poly.h"
 #include "chassis.h"
+#include "glm/glm.hpp"
 
 const glm::vec3 turretScale(0.9f, 0.25f, 1.2f);
 const btVector3 turretRelPos(0.f, chassisScale.y + turretScale.y, 0.f);
@@ -18,34 +18,36 @@ const float turretMass = 100.f;
 
 class Turret : public Controls, public Poly {
 private:
-	// Controls
-	float angle;
+  // Controls
+  float angle;
 
-	bool respawn;
+  bool respawn;
 
-	float added;
+  float added;
 
-	bool isHit;
+  bool isHit;
 
-	// Turret
-	btVector3 pos;
+  // Turret
+  btVector3 pos;
 
-	btHingeConstraint *hinge;
+  btHingeConstraint *hinge;
+
 public:
-	Turret(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos);
+  Turret(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis,
+         btVector3 chassisPos);
 
-	/*
-	 * Control overrides
-	 */
-	void onInput(input in) override;
-	output getOutput() override;
+  /*
+   * Control overrides
+   */
+  void onInput(input in) override;
+  output getOutput() override;
 
-	/*
-	 * Base override
-	 */
-	void update() override;
+  /*
+   * Base override
+   */
+  void update() override;
 
-	void decreaseLife(int toSub) override;
+  void decreaseLife(int toSub) override;
 };
 
-#endif //PHYVR_TURRET_H
+#endif // PHYVR_TURRET_H

@@ -6,28 +6,28 @@
 #define PHYVR_ENGINE_H
 
 #include <btBulletDynamicsCommon.h>
+#include <glm/glm.hpp>
 #include <tuple>
 #include <vector>
-#include <glm/glm.hpp>
 
 #include "./item.h"
 
 class PhysicEngine {
 public:
-    PhysicEngine();
+  PhysicEngine();
 
-    void add_item(const std::shared_ptr<Item> &item);
+  void add_item(const std::shared_ptr<Item> &item);
 
-    void step(float delta);
+  void step(float delta);
 
-    ~PhysicEngine();
+  ~PhysicEngine();
 
 private:
-    btDefaultCollisionConfiguration *m_collision_configuration;
-    btCollisionDispatcher *m_dispatcher;
-    btBroadphaseInterface *m_broad_phase;
-    btSequentialImpulseConstraintSolver *m_constraint_solver;
-    btDiscreteDynamicsWorld *m_world;
+  btDefaultCollisionConfiguration *m_collision_configuration;
+  btCollisionDispatcher *m_dispatcher;
+  btBroadphaseInterface *m_broad_phase;
+  btSequentialImpulseConstraintSolver *m_constraint_solver;
+  btDiscreteDynamicsWorld *m_world;
 };
 
-#endif //PHYVR_ENGINE_H
+#endif // PHYVR_ENGINE_H

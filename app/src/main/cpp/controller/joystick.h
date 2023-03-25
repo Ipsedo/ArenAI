@@ -5,4 +5,4 @@
 #ifndef PHYVR_JOYSTICK_H
 #define PHYVR_JOYSTICK_H
 
-#endif //PHYVR_JOYSTICK_H
+#endif // PHYVR_JOYSTICK_H

@@ -9,4 +9,4 @@
 
 void check_gl_error(const std::string &message);
 
-#endif //PHYVR_ERRORS_H
+#endif // PHYVR_ERRORS_H

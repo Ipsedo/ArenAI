@@ -22,6 +22,9 @@ Renderer::Renderer(ANativeWindow *window, std::shared_ptr<Camera> camera) :
             EGL_BLUE_SIZE, 8,
             EGL_GREEN_SIZE, 8,
             EGL_RED_SIZE, 8,
+            EGL_ALPHA_SIZE, 8,
+            EGL_DEPTH_SIZE, 16,
+            EGL_STENCIL_SIZE, 0,
             EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT,
             EGL_NONE
     };
@@ -48,12 +51,13 @@ Renderer::Renderer(ANativeWindow *window, std::shared_ptr<Camera> camera) :
     auto i = 0;
     for (; i < numConfigs; i++) {
         auto &cfg = supportedConfigs[i];
-        EGLint r, g, b, d;
+        EGLint r, g, b, d, s;
         if (eglGetConfigAttrib(display, cfg, EGL_RED_SIZE, &r) &&
             eglGetConfigAttrib(display, cfg, EGL_GREEN_SIZE, &g) &&
             eglGetConfigAttrib(display, cfg, EGL_BLUE_SIZE, &b) &&
             eglGetConfigAttrib(display, cfg, EGL_DEPTH_SIZE, &d) &&
-            r == 8 && g == 8 && b == 8 && d == 0) {
+            eglGetConfigAttrib(display, cfg, EGL_STENCIL_SIZE, &s) &&
+            r == 8 && g == 8 && b == 8 && d == 16 && s == 0) {
 
             config = supportedConfigs[i];
             break;
@@ -101,8 +105,8 @@ Renderer::Renderer(ANativeWindow *window, std::shared_ptr<Camera> camera) :
 
 }
 
-void Renderer::add_drawable(const std::string &name, const std::shared_ptr<Drawable> &drawable) {
-    drawables.insert({name, drawable});
+void Renderer::add_drawable(const std::string &name, std::unique_ptr<Drawable> drawable) {
+    drawables.insert({name, std::move(drawable)});
 }
 
 void Renderer::remove_drawable(const std::string &name) {

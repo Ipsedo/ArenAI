@@ -56,7 +56,7 @@ void CoreEngine::_new_view(AAssetManager *mgr, ANativeWindow *window) {
 
     std::uniform_real_distribution<float> u_dist(0., 1.);
 
-    renderer->add_drawable("cubemap", std::make_shared<CubeMap>(
+    renderer->add_drawable("cubemap", std::make_unique<CubeMap>(
             mgr,
             "cubemap/1"
     ));
@@ -69,7 +69,7 @@ void CoreEngine::_new_view(AAssetManager *mgr, ANativeWindow *window) {
                 1.f
         );
 
-        auto drawable = std::make_shared<Specular>(
+        renderer->add_drawable(item->get_name(), std::make_unique<Specular>(
                 mgr,
                 item->get_shape()->get_vertices(),
                 item->get_shape()->get_normals(),
@@ -77,9 +77,7 @@ void CoreEngine::_new_view(AAssetManager *mgr, ANativeWindow *window) {
                 color,
                 color,
                 50.f
-        );
-
-        renderer->add_drawable(item->get_name(), drawable);
+        ));
     }
 
     is_paused = false;
@@ -89,15 +87,8 @@ void CoreEngine::draw() {
     if (is_paused) return;
 
     auto model_matrices = std::vector<std::tuple<std::string, glm::mat4>>();
-    std::transform(
-            items.begin(), items.end(),
-            std::back_inserter(model_matrices),
-            [](const std::shared_ptr<Item> &item) {
-                return std::tuple<std::string, glm::mat4>(
-                        item->get_name(),
-                        item->get_model_matrix()
-                );
-            });
+    for (auto &item : items)
+        model_matrices.emplace_back(item->get_name(), item->get_model_matrix());
 
     model_matrices.emplace_back(
             "cubemap",

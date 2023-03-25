@@ -17,7 +17,7 @@ private:
     static const int POSITION_SIZE = 3;
     static const int STRIDE = POSITION_SIZE * BYTES_PER_FLOAT;
 
-    std::shared_ptr<Program> program;
+    std::unique_ptr<Program> program;
 
     int nb_vertices;
 public:

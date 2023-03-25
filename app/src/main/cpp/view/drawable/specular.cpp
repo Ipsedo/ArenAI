@@ -19,13 +19,15 @@ Specular::Specular(AAssetManager *mgr,
 
     std::vector<float> vbo_data;
     for (int i = 0; i < vertices.size(); i++) {
-        vbo_data.push_back(std::get<0>(vertices[i]));
-        vbo_data.push_back(std::get<1>(vertices[i]));
-        vbo_data.push_back(std::get<2>(vertices[i]));
+        auto [x, y, z] = vertices[i];
+        vbo_data.push_back(x);
+        vbo_data.push_back(y);
+        vbo_data.push_back(z);
 
-        vbo_data.push_back(std::get<0>(normals[i]));
-        vbo_data.push_back(std::get<1>(normals[i]));
-        vbo_data.push_back(std::get<2>(normals[i]));
+        auto [n_x, n_y, n_z] = normals[i];
+        vbo_data.push_back(n_x);
+        vbo_data.push_back(n_y);
+        vbo_data.push_back(n_z);
     }
 
     program = Program::Builder(

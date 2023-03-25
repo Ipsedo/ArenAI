@@ -20,7 +20,7 @@ class Renderer {
 public:
     Renderer(ANativeWindow *window, std::shared_ptr<Camera> camera);
 
-    void add_drawable(const std::string &name, const std::shared_ptr<Drawable> &drawable);
+    void add_drawable(const std::string &name, std::unique_ptr<Drawable> drawable);
 
     void remove_drawable(const std::string &name);
 
@@ -39,7 +39,7 @@ private:
     glm::vec3 light_pos;
     std::shared_ptr<Camera> camera;
 
-    std::map<std::string, std::shared_ptr<Drawable>> drawables;
+    std::map<std::string, std::unique_ptr<Drawable>> drawables;
 };
 
 #endif //PHYVR_RENDERER_H

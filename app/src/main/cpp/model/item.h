@@ -26,7 +26,8 @@ public:
 
   virtual btRigidBody *get_body() = 0;
 
-  nlohmann::json get_state();
+  virtual nlohmann::json get_state();
+  virtual void from_state(const nlohmann::json &state);
 
 private:
   std::string name;

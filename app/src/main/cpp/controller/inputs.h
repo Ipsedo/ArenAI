@@ -22,8 +22,6 @@ struct user_input {
   joystick left_joystick;
   joystick right_joystick;
 
-  slider speed_slider;
-
   button fire_button;
   button brake_button;
   button respawn_button;

@@ -14,7 +14,7 @@
 
 class CoreEngine {
 public:
-  CoreEngine(AAssetManager *mgr);
+  CoreEngine(struct android_app *app);
 
   bool is_running() const;
 

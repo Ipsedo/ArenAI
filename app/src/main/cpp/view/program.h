@@ -74,11 +74,11 @@ private:
   std::map<std::string, std::tuple<GLuint, GLuint>> tex_name_to_idx_id;
 
   template <typename F, class... T>
-  void _uniform(F uniform_fun, const std::string &name, T... args);
+  void uniform_(F uniform_fun, const std::string &name, T... args);
 
-  void _texture(GLenum texture_target, const std::string &name);
+  void texture_(GLenum texture_target, const std::string &name);
 
-  static void _disable_texture(GLenum texture_target);
+  static void disable_texture_(GLenum texture_target);
 
 protected:
 public:

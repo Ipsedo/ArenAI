@@ -13,7 +13,8 @@
 #include <utility>
 
 Renderer::Renderer(ANativeWindow *window, std::shared_ptr<Camera> camera)
-    : camera(std::move(camera)), drawables(), light_pos(0., 500., 100.) {
+    : camera(std::move(camera)), drawables(), hud_drawables(),
+      light_pos(0., 500., 100.) {
 
   const EGLint config_attrib[] = {EGL_SURFACE_TYPE,
                                   EGL_WINDOW_BIT,
@@ -111,6 +112,10 @@ void Renderer::add_drawable(const std::string &name,
   drawables.insert({name, std::move(drawable)});
 }
 
+void Renderer::add_hud_drawable(std::unique_ptr<HUDDrawable> hud_drawable) {
+  hud_drawables.push_back(std::move(hud_drawable));
+}
+
 void Renderer::remove_drawable(const std::string &name) {
   drawables.erase(name);
 }
@@ -125,12 +130,19 @@ void Renderer::draw(
   glm::mat4 proj_matrix = glm::perspective(
       float(M_PI) / 4.f, float(width) / float(height), 1.f, 2000.f * sqrt(3.f));
 
+  glEnable(GL_DEPTH_TEST);
+
   for (auto [name, m_matrix] : model_matrices) {
     auto mv_matrix = view_matrix * m_matrix;
     auto mvp_matrix = proj_matrix * mv_matrix;
 
     drawables[name]->draw(mvp_matrix, mv_matrix, light_pos, camera->pos());
   }
+
+  glDisable(GL_DEPTH_TEST);
+
+  for (auto &hud_drawable : hud_drawables)
+    hud_drawable->draw(width, height);
 
   eglSwapBuffers(display, surface);
 

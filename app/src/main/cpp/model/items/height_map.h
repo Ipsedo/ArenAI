@@ -22,6 +22,10 @@ public:
   void processTriangle(btVector3 *triangle, int partid,
                        int triangleindex) override;
 
+  nlohmann::json get_state() override;
+
+  void from_state(const nlohmann::json &state) override;
+
 protected:
   glm::vec3 _get_scale() override;
 

@@ -15,6 +15,7 @@
 
 #include "./camera.h"
 #include "./drawable/drawable.h"
+#include "./hud.h"
 
 class Renderer {
 public:
@@ -22,6 +23,8 @@ public:
 
   void add_drawable(const std::string &name,
                     std::unique_ptr<Drawable> drawable);
+
+  void add_hud_drawable(std::unique_ptr<HUDDrawable> hud_drawable);
 
   void remove_drawable(const std::string &name);
 
@@ -42,6 +45,7 @@ private:
   std::shared_ptr<Camera> camera;
 
   std::map<std::string, std::unique_ptr<Drawable>> drawables;
+  std::vector<std::unique_ptr<HUDDrawable>> hud_drawables;
 };
 
 #endif // PHYVR_RENDERER_H

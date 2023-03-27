@@ -219,24 +219,24 @@ Program::~Program() {
 void Program::use() const { glUseProgram(program_id); }
 
 template <typename F, class... T>
-void Program::_uniform(F uniform_fun, const std::string &name, T... args) {
+void Program::uniform_(F uniform_fun, const std::string &name, T... args) {
   uniform_fun(uniform_handles[name], args...);
 }
 
 void Program::uniform_mat4(const std::string &name, glm::mat4 mat4) {
-  _uniform(glUniformMatrix4fv, name, 1, GL_FALSE, glm::value_ptr(mat4));
+  uniform_(glUniformMatrix4fv, name, 1, GL_FALSE, glm::value_ptr(mat4));
 }
 
 void Program::uniform_vec4(const std::string &name, glm::vec4 vec4) {
-  _uniform(glUniform4fv, name, 1, glm::value_ptr(vec4));
+  uniform_(glUniform4fv, name, 1, glm::value_ptr(vec4));
 }
 
 void Program::uniform_vec3(const std::string &name, glm::vec3 vec3) {
-  _uniform(glUniform3fv, name, 1, glm::value_ptr(vec3));
+  uniform_(glUniform3fv, name, 1, glm::value_ptr(vec3));
 }
 
 void Program::uniform_float(const std::string &name, float f) {
-  _uniform(glUniform1f, name, f);
+  uniform_(glUniform1f, name, f);
 }
 
 void Program::attrib(const std::string &name, const std::string &buffer_name,
@@ -259,27 +259,27 @@ void Program::draw_arrays(GLenum type, int from, int nb_vertices) {
   glDrawArrays(type, from, nb_vertices);
 }
 
-void Program::_texture(GLenum texture_target, const std::string &name) {
+void Program::texture_(GLenum texture_target, const std::string &name) {
   auto [texture_index, texture_id] = tex_name_to_idx_id[name];
 
   glActiveTexture(texture_index);
   glBindTexture(texture_target, texture_id);
 
-  _uniform(glUniform1i, name, texture_index - GL_TEXTURE0);
+  uniform_(glUniform1i, name, texture_index - GL_TEXTURE0);
 }
 
 void Program::cube_texture(const std::string &cube_texture_name) {
-  _texture(GL_TEXTURE_CUBE_MAP, cube_texture_name);
+  texture_(GL_TEXTURE_CUBE_MAP, cube_texture_name);
 }
 
 void Program::texture(const std::string &texture_name) {
-  _texture(GL_TEXTURE_2D, texture_name);
+  texture_(GL_TEXTURE_2D, texture_name);
 }
 
-void Program::_disable_texture(GLenum texture_target) {
+void Program::disable_texture_(GLenum texture_target) {
   glBindTexture(texture_target, 0);
 }
 
-void Program::disable_cube_texture() { _disable_texture(GL_TEXTURE_CUBE_MAP); }
+void Program::disable_cube_texture() { disable_texture_(GL_TEXTURE_CUBE_MAP); }
 
-void Program::disable_texture() { _disable_texture(GL_TEXTURE_2D); }
+void Program::disable_texture() { disable_texture_(GL_TEXTURE_2D); }

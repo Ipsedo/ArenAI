@@ -149,6 +149,10 @@ void Renderer::draw(
   check_gl_error("draw");
 }
 
+int Renderer::get_width() const { return width; }
+
+int Renderer::get_height() const { return height; }
+
 Renderer::~Renderer() {
   drawables.clear();
 

@@ -6,10 +6,14 @@
 #include "../utils/logging.h"
 
 #include <android/input.h>
+#include <android_native_app_glue.h>
 
-ControllerEngine::ControllerEngine(AConfiguration *config) {
+ControllerEngine::ControllerEngine(AConfiguration *config, int width,
+                                   int height) {
   left_joystick =
-      std::make_shared<HUDJoyStick>(config, 10 + 100, 10 + 100, 600, 25);
+      std::make_shared<HUDJoyStick>(config, width, height, 20, true, 150, 25);
+  right_joystick =
+      std::make_shared<HUDJoyStick>(config, width, height, 20, false, 150, 25);
 }
 
 void ControllerEngine::add_controller(
@@ -23,13 +27,19 @@ void ControllerEngine::remove_controller(const std::string &name) {
 
 int32_t ControllerEngine::on_event(AInputEvent *event) {
   left_joystick->on_event(event);
+  right_joystick->on_event(event);
   return 1;
 }
 
 std::vector<std::unique_ptr<HUDDrawable>>
 ControllerEngine::get_hud_drawables(AAssetManager *mgr) {
-  auto left_joystick_drawable = left_joystick->get_hud_drawable(mgr);
   std::vector<std::unique_ptr<HUDDrawable>> result{};
+
+  auto left_joystick_drawable = left_joystick->get_hud_drawable(mgr);
   result.push_back(std::move(left_joystick_drawable));
+
+  auto right_joystick_drawable = right_joystick->get_hud_drawable(mgr);
+  result.push_back(std::move(right_joystick_drawable));
+
   return result;
 }

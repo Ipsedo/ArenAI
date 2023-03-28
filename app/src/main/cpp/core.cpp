@@ -18,7 +18,7 @@ CoreEngine::CoreEngine(struct android_app *app)
                                             glm::vec3(0., 9., 1.),
                                             glm::vec3(0., 1., 0.))),
       renderer(std::nullptr_t()), physic_engine(),
-      controller_engine(app->config), items(), dev(), rng(dev()) {
+      controller_engine(std::nullptr_t()), items(), dev(), rng(dev()) {
 
   auto map = std::make_shared<HeightMapItem>(
       "height_map", app->activity->assetManager, "heightmap/heightmap6.png",
@@ -37,8 +37,11 @@ CoreEngine::CoreEngine(struct android_app *app)
   physic_engine.add_item(sphere);
 }
 
-void CoreEngine::_new_view(AAssetManager *mgr, ANativeWindow *window) {
+void CoreEngine::_new_view(AAssetManager *mgr, ANativeWindow *window,
+                           AConfiguration *config) {
   renderer = std::make_unique<Renderer>(window, camera);
+  controller_engine = std::make_unique<ControllerEngine>(
+      config, renderer->get_width(), renderer->get_height());
 
   std::uniform_real_distribution<float> u_dist(0., 1.);
 
@@ -55,7 +58,7 @@ void CoreEngine::_new_view(AAssetManager *mgr, ANativeWindow *window) {
                                    color, color, 50.f));
   }
 
-  for (auto &hud_drawable : controller_engine.get_hud_drawables(mgr))
+  for (auto &hud_drawable : controller_engine->get_hud_drawables(mgr))
     renderer->add_hud_drawable(std::move(hud_drawable));
 
   is_paused = false;
@@ -83,7 +86,7 @@ void CoreEngine::step(float time_delta) {
 }
 
 int32_t CoreEngine::on_input(struct android_app *app, AInputEvent *event) {
-  return controller_engine.on_event(event);
+  return controller_engine->on_event(event);
 }
 
 void CoreEngine::_pause() {
@@ -108,7 +111,7 @@ void CoreEngine::on_cmd(struct android_app *app, int32_t cmd) {
     // The window is being shown, get it ready.
     if (app->window != nullptr) {
       LOG_INFO("opening window");
-      _new_view(app->activity->assetManager, app->window);
+      _new_view(app->activity->assetManager, app->window, app->config);
     }
     break;
   case APP_CMD_TERM_WINDOW:

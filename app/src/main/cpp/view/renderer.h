@@ -28,6 +28,9 @@ public:
 
   void remove_drawable(const std::string &name);
 
+  int get_width() const;
+  int get_height() const;
+
   void
   draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices);
 

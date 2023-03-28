@@ -31,7 +31,7 @@ private:
 
   PhysicEngine physic_engine;
   std::unique_ptr<Renderer> renderer;
-  ControllerEngine controller_engine;
+  std::unique_ptr<ControllerEngine> controller_engine;
 
   std::vector<std::shared_ptr<Item>> items;
 
@@ -40,7 +40,8 @@ private:
 
   bool is_paused;
 
-  void _new_view(AAssetManager *mgr, ANativeWindow *window);
+  void _new_view(AAssetManager *mgr, ANativeWindow *window,
+                 AConfiguration *config);
 
   void _pause();
 };

@@ -20,8 +20,8 @@ JoyStickDrawable::JoyStickDrawable(AAssetManager *mgr,
           .add_uniform("u_color")
           .add_uniform("u_mvp_matrix")
           .add_attribute("a_position")
-          .add_buffer("square_buffer", {-0.5f, 0.5f, 0.f, 0.5f, 0.5f, 0.f, 0.5f,
-                                        -0.5f, 0.f, -0.5f, -0.5f, 0.f})
+          .add_buffer("square_buffer", {-1.f, 1.f, 0.f, 1.f, 1.f, 0.f, 1.f,
+                                        -1.f, 0.f, -1.f, -1.f, 0.f})
           .build();
 }
 
@@ -35,8 +35,8 @@ void JoyStickDrawable::draw(int width, int height) {
   float stick_x_rel = ratio * ((stick_x / float(width)) * 2.f - 1.f);
   float stick_y_rel = (stick_y / float(height)) * 2.f - 1.f;
 
-  float size_rel = size / float(width);
-  float stick_size_rel = stick_size / float(width);
+  float size_rel = size / float(width) * ratio;
+  float stick_size_rel = stick_size / float(width) * ratio;
 
   glm::mat4 v_matrix =
       glm::lookAt(glm::vec3(0.f, 0.f, 1.f), glm::vec3(0.f, 0.f, 0.f),

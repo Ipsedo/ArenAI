@@ -22,7 +22,7 @@ public:
 
 class ControllerEngine {
 public:
-  ControllerEngine(AConfiguration *config);
+  ControllerEngine(AConfiguration *config, int width, int height);
 
   void add_controller(const std::string &name,
                       const std::shared_ptr<Controller> &controller);

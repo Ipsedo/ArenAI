@@ -20,8 +20,8 @@ public:
 
 class HUDJoyStick : public JoyStick {
 public:
-  HUDJoyStick(AConfiguration *config, int center_x_dp, int center_y_dp,
-              int size_dp, int stick_size_dp);
+  HUDJoyStick(AConfiguration *config, int width_px, int height_px,
+              int margin_dp, bool left, int size_dp, int stick_size_dp);
 
   bool on_event(AInputEvent *event) override;
 
@@ -36,10 +36,12 @@ private:
 
   const float size, stick_size;
 
-  const float center_pos_x, center_pos_y;
+  float center_pos_x, center_pos_y;
   float stick_x, stick_y;
 
   float x_value, y_value;
+
+  int width, height;
 
   bool is_inside_(float x, float y) const;
 };

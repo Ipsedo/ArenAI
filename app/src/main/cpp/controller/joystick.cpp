@@ -12,14 +12,11 @@
 HUDJoyStick::HUDJoyStick(AConfiguration *config, int width_px, int height_px,
                          int margin_dp, bool left, int size_dp,
                          int stick_size_dp)
-    : pointer_id(-1), touched(false),
-
-      size(dp_to_px(config, size_dp)),
+    : pointer_id(-1), touched(false), size(dp_to_px(config, size_dp)),
       stick_size(dp_to_px(config, stick_size_dp)),
       center_pos_x(dp_to_px(config, margin_dp) + size / 2.f),
-      center_pos_y(dp_to_px(config, margin_dp) + size / 2.f),
-      stick_x(dp_to_px(config, margin_dp) + size / 2.f),
-      stick_y(dp_to_px(config, margin_dp) + size / 2.f), x_value(0.f),
+      center_pos_y(center_pos_x), stick_x(center_pos_x), stick_y(stick_x),
+      pointer_rel_x(stick_x), pointer_rel_y(stick_y), x_value(0.f),
       y_value(0.f), width(width_px), height(height_px) {
   if (!left) {
     center_pos_x = float(width_px) - center_pos_x;
@@ -43,8 +40,11 @@ bool HUDJoyStick::on_event(AInputEvent *event) {
       pointer_id = curr_pointer_id;
       touched = true;
 
-      stick_x = pt_x;
-      stick_y = pt_y;
+      pointer_rel_x = pt_x - stick_x;
+      pointer_rel_y = pt_y - stick_y;
+
+      stick_x = pt_x - pointer_rel_x;
+      stick_y = pt_y - pointer_rel_y;
 
       return true;
     }
@@ -66,8 +66,8 @@ bool HUDJoyStick::on_event(AInputEvent *event) {
       if (touched && pointer_id == AMotionEvent_getPointerId(event, i)) {
         pt_x = AMotionEvent_getX(event, i);
         pt_y = float(height) - AMotionEvent_getY(event, i);
-        float rel_x = pt_x - center_pos_x;
-        float rel_y = pt_y - center_pos_y;
+        float rel_x = pt_x - pointer_rel_x - center_pos_x;
+        float rel_y = pt_y - pointer_rel_y - center_pos_y;
 
         float max_size = (size - stick_size) / 2.f;
 
@@ -94,8 +94,8 @@ bool HUDJoyStick::on_event(AInputEvent *event) {
 }
 
 bool HUDJoyStick::is_inside_(float x, float y) const {
-  return (center_pos_x - size / 2.f < x) && (x < center_pos_x + size / 2.f) &&
-         (center_pos_y - size / 2.f < y) && (y < center_pos_y + size / 2.f);
+  return (stick_x - stick_size / 2.f < x) && (x < stick_x + stick_size / 2.f) &&
+         (stick_y - stick_size / 2.f < y) && (y < stick_y + stick_size / 2.f);
 }
 
 joystick HUDJoyStick::get_input() { return {x_value, y_value}; }

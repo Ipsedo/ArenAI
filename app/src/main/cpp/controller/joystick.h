@@ -12,6 +12,7 @@
 #include "../view/hud.h"
 #include "./event.h"
 #include "./inputs.h"
+#include "./view.h"
 
 class JoyStick : public EventHandler {
 public:
@@ -40,6 +41,8 @@ private:
   float stick_x, stick_y;
 
   float x_value, y_value;
+
+  float pointer_rel_x, pointer_rel_y;
 
   int width, height;
 

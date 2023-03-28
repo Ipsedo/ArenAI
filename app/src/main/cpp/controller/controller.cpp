@@ -11,9 +11,9 @@
 ControllerEngine::ControllerEngine(AConfiguration *config, int width,
                                    int height) {
   left_joystick =
-      std::make_shared<HUDJoyStick>(config, width, height, 20, true, 150, 25);
+      std::make_shared<HUDJoyStick>(config, width, height, 20, true, 150, 40);
   right_joystick =
-      std::make_shared<HUDJoyStick>(config, width, height, 20, false, 150, 25);
+      std::make_shared<HUDJoyStick>(config, width, height, 20, false, 150, 40);
 }
 
 void ControllerEngine::add_controller(

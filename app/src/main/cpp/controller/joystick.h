@@ -9,7 +9,7 @@
 #include <glm/glm.hpp>
 #include <memory>
 
-#include "../view/hud.h"
+#include "../view/drawable/hud.h"
 #include "./event.h"
 #include "./inputs.h"
 #include "./view.h"

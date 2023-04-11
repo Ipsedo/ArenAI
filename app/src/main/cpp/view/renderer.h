@@ -15,7 +15,7 @@
 
 #include "./camera.h"
 #include "./drawable/drawable.h"
-#include "./hud.h"
+#include "drawable/hud.h"
 
 class Renderer {
 public:

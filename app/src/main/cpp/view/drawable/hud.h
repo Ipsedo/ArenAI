@@ -7,8 +7,8 @@
 
 #include <memory>
 
-#include "../controller/inputs.h"
-#include "./program.h"
+#include "../../controller/inputs.h"
+#include "../program.h"
 
 class HUDDrawable {
 public:

@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-#include "../view/hud.h"
+#include "../view/drawable/hud.h"
 #include "./inputs.h"
 #include "./joystick.h"
 

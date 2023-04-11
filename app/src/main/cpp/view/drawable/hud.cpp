@@ -3,9 +3,9 @@
 //
 
 #include "./hud.h"
-#include "../utils/logging.h"
+#include "../../utils/logging.h"
 
-#include <glm/gtx/transform.hpp>
+#include "glm/gtx/transform.hpp"
 #include <utility>
 
 HUDDrawable::~HUDDrawable() {}

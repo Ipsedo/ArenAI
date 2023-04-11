@@ -24,10 +24,7 @@ class ControllerEngine {
 public:
   ControllerEngine(AConfiguration *config, int width, int height);
 
-  void add_controller(const std::string &name,
-                      const std::shared_ptr<Controller> &controller);
-
-  void remove_controller(const std::string &name);
+  void add_controller(const std::shared_ptr<Controller> &controller);
 
   int32_t on_event(AInputEvent *event);
 
@@ -35,7 +32,7 @@ public:
   get_hud_drawables(AAssetManager *mgr);
 
 private:
-  std::map<std::string, std::shared_ptr<Controller>> controllers;
+  std::vector<std::shared_ptr<Controller>> controllers;
 
   std::shared_ptr<HUDJoyStick> left_joystick;
   std::shared_ptr<HUDJoyStick> right_joystick;

@@ -10,6 +10,7 @@
 
 #include "./controller/controller.h"
 #include "./model/engine.h"
+#include "./model/tank/tank_factory.h"
 #include "./view/renderer.h"
 
 class CoreEngine {
@@ -27,7 +28,9 @@ public:
   void on_cmd(struct android_app *app, int32_t cmd);
 
 private:
-  std::shared_ptr<StaticCamera> camera;
+  TankFactory tank_factory;
+
+  std::shared_ptr<Camera> camera;
 
   PhysicEngine physic_engine;
   std::unique_ptr<Renderer> renderer;

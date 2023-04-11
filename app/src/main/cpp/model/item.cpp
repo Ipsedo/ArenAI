@@ -79,3 +79,5 @@ void Item::from_state(const nlohmann::json &state) {
   body->setMassProps(mass, inertia);
   body->setFriction(friction);
 }
+
+std::vector<btTypedConstraint *> Item::get_constraints() { return {}; }

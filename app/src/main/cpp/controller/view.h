@@ -31,25 +31,54 @@ protected:
 
 class LinearLayout : public View {
 public:
-  enum START_FROM {
+  enum ORIENTATION { HORIZONTAL = 0, VERTICAL = 1 };
+
+  LinearLayout(int screen_width, int screen_height,
+               LinearLayout::ORIENTATION orientation);
+  void add_view(const std::shared_ptr<View> &view);
+  void build();
+
+  float get_width() override;
+
+  float get_height() override;
+
+  float get_margin() override;
+
+protected:
+  void set_width(float width) override;
+
+  void set_height(float height) override;
+
+private:
+  std::vector<std::shared_ptr<View>> views;
+  LinearLayout::ORIENTATION orientation;
+};
+
+class CornerLayout : public View {
+public:
+  enum CORNER {
     LEFT_TOP = 0,
     RIGHT_TOP = 1,
     RIGHT_BOTTOM = 2,
     LEFT_BOTTOM = 3
   };
-
-  enum ORIENTATION { HORIZONTAL = 0, VERTICAL = 1 };
-
-  LinearLayout(int screen_width, int screen_height,
-               LinearLayout::START_FROM start_from,
-               LinearLayout::ORIENTATION orientation);
-  void add_view(std::shared_ptr<View> view);
+  CornerLayout(int screen_width, int screen_height);
+  void add_view(const std::shared_ptr<View> &view, CornerLayout::CORNER corner);
   void build();
 
+  float get_width() override;
+
+  float get_height() override;
+
+  float get_margin() override;
+
+protected:
+  void set_width(float width) override;
+
+  void set_height(float height) override;
+
 private:
-  std::vector<std::shared_ptr<View>> views;
-  LinearLayout::START_FROM start_from;
-  LinearLayout::ORIENTATION orientation;
+  std::map<CornerLayout::CORNER, std::shared_ptr<View>> views;
 };
 
 #endif // PHYVR_VIEW_H

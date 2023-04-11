@@ -6,6 +6,7 @@
 #include "./model/items/convex.h"
 #include "./model/items/height_map.h"
 #include "./model/shapes.h"
+#include "./model/tank/tank_factory.h"
 #include "./utils/logging.h"
 #include "./view/drawable/cubemap.h"
 #include "./view/drawable/specular.h"
@@ -13,28 +14,24 @@
 #include <glm/gtx/transform.hpp>
 
 CoreEngine::CoreEngine(struct android_app *app)
-    : is_paused(true),
-      camera(std::make_shared<StaticCamera>(glm::vec3(0., 10., 0.),
-                                            glm::vec3(0., 9., 1.),
-                                            glm::vec3(0., 1., 0.))),
-      renderer(std::nullptr_t()), physic_engine(),
-      controller_engine(std::nullptr_t()), items(), dev(), rng(dev()) {
+    : tank_factory(app->activity->assetManager, glm::vec3(0., -40., 40)),
+      is_paused(true), camera(std::nullptr_t()), renderer(std::nullptr_t()),
+      physic_engine(), controller_engine(std::nullptr_t()), items(), dev(),
+      rng(dev()) {
 
   auto map = std::make_shared<HeightMapItem>(
       "height_map", app->activity->assetManager, "heightmap/heightmap6.png",
       glm::vec3(0., 40., 0.), glm::vec3(10., 200., 10.));
 
-  auto sphere_shape =
-      std::make_shared<ObjShape>(app->activity->assetManager, "obj/sphere.obj");
-  auto sphere = std::make_shared<ConvexItem>("sphere", sphere_shape,
-                                             glm::vec3(0.f, 15.f, 20.f),
-                                             glm::vec3(4.f, 4.f, 4.f), 10.f);
-
   items.push_back(map);
   physic_engine.add_item(map);
 
-  items.push_back(sphere);
-  physic_engine.add_item(sphere);
+  for (auto &item : tank_factory.get_items()) {
+    items.push_back(item);
+    physic_engine.add_item(item);
+  }
+
+  camera = tank_factory.get_camera();
 }
 
 void CoreEngine::_new_view(AAssetManager *mgr, ANativeWindow *window,
@@ -43,13 +40,19 @@ void CoreEngine::_new_view(AAssetManager *mgr, ANativeWindow *window,
   controller_engine = std::make_unique<ControllerEngine>(
       config, renderer->get_width(), renderer->get_height());
 
+  // init controller
+  for (auto &ctrl : tank_factory.get_controllers())
+    controller_engine->add_controller(ctrl);
+
+  // init renderer
   std::uniform_real_distribution<float> u_dist(0., 1.);
 
   renderer->add_drawable("cubemap",
                          std::make_unique<CubeMap>(mgr, "cubemap/1"));
 
   for (const auto &item : items) {
-    glm::vec4 color(u_dist(rng), u_dist(rng), u_dist(rng), 1.f);
+    glm::vec4 color(std::max(u_dist(rng), 0.7f), std::max(u_dist(rng), 0.7f),
+                    std::max(u_dist(rng), 0.7f), 1.f);
 
     renderer->add_drawable(
         item->get_name(),

@@ -8,6 +8,8 @@
 #include <glm/gtx/transform.hpp>
 #include <utility>
 
+HUDDrawable::~HUDDrawable() {}
+
 JoyStickDrawable::JoyStickDrawable(AAssetManager *mgr,
                                    std::function<joystick(void)> get_input_px,
                                    glm::vec2 center_px, float size_px,
@@ -71,3 +73,5 @@ void JoyStickDrawable::draw(int width, int height) {
 
   glLineWidth(1.f);
 }
+
+JoyStickDrawable::~JoyStickDrawable() { program.reset(); }

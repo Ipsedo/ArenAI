@@ -72,3 +72,5 @@ void Specular::draw(glm::mat4 mvp_matrix, glm::mat4 mv_matrix,
 
   program->disable_attrib_array();
 }
+
+Specular::~Specular() { program.reset(); }

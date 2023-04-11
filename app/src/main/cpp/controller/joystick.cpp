@@ -58,6 +58,9 @@ bool HUDJoyStick::on_event(AInputEvent *event) {
       stick_x = center_pos_x;
       stick_y = center_pos_y;
 
+      x_value = 0;
+      y_value = 0;
+
       return true;
     }
     break;

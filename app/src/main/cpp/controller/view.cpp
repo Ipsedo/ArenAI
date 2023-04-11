@@ -6,6 +6,10 @@
 
 #include "../utils/units.h"
 
+/*
+ * View
+ */
+
 View::View(int screen_width, int screen_height)
     : screen_width(screen_width), screen_height(screen_height), dimens_dps() {}
 
@@ -17,58 +21,50 @@ float View::get_pixel(AConfiguration *config, const std::string &dimen_name) {
   return dp_to_px(config, dimens_dps[dimen_name]);
 }
 
-LinearLayout::LinearLayout(int screen_width, int screen_height,
-                           LinearLayout::START_FROM start_from,
-                           LinearLayout::ORIENTATION orientation)
-    : View(screen_width, screen_height), start_from(start_from),
-      orientation(orientation) {}
+/*
+ * LinearLayout
+ */
 
-void LinearLayout::add_view(std::shared_ptr<View> view) {
+LinearLayout::LinearLayout(int screen_width, int screen_height,
+                           LinearLayout::ORIENTATION orientation)
+    : View(screen_width, screen_height), orientation(orientation) {}
+
+void LinearLayout::add_view(const std::shared_ptr<View> &view) {
   views.push_back(view);
 }
 
-void LinearLayout::build() {
+float LinearLayout::get_width() { return 0; }
 
-  int x_factor, y_factor;
-  switch (orientation) {
-  case VERTICAL:
-    x_factor = 0, y_factor = 1;
-  case HORIZONTAL:
-    x_factor = 1, y_factor = 0;
-  }
+float LinearLayout::get_height() { return 0; }
 
-  float start_x, start_y;
+float LinearLayout::get_margin() { return 0; }
 
-  switch (start_from) {
-  case LEFT_TOP:
-    start_x = 0.f, start_y = 0.f;
-  case LEFT_BOTTOM:
-    start_x = 0.f, start_y = float(screen_height);
-    y_factor *= -1;
-  case RIGHT_TOP:
-    start_x = float(screen_width), start_y = 0.f;
-    x_factor *= -1;
-  case RIGHT_BOTTOM:
-    start_x = float(screen_width), start_y = float(screen_height);
-    x_factor *= -1;
-    y_factor *= -1;
-  }
+void LinearLayout::set_width(float width) {}
 
-  if ((orientation == VERTICAL && y_factor < 0) ||
-      (orientation == HORIZONTAL && x_factor < 0))
-    std::reverse(views.begin(), views.end());
+void LinearLayout::set_height(float height) {}
 
-  float curr_px = orientation == VERTICAL ? start_y : start_x;
+void LinearLayout::build() {}
 
-  for (auto &view : views) {
-    float view_width = view->get_width();
-    float view_height = view->get_height();
-    float view_margin = view->get_margin();
+/*
+ * CornerLayout
+ */
 
-    if (orientation == VERTICAL) {
+CornerLayout::CornerLayout(int screen_width, int screen_height)
+    : View(screen_width, screen_height) {}
 
-    } else {
-      // horizontal
-    }
-  }
+void CornerLayout::add_view(const std::shared_ptr<View> &view,
+                            CornerLayout::CORNER corner) {
+  views.insert({corner, view});
 }
+
+float CornerLayout::get_width() { return 0; }
+
+float CornerLayout::get_height() { return 0; }
+
+float CornerLayout::get_margin() { return 0; }
+
+void CornerLayout::set_width(float width) {}
+
+void CornerLayout::set_height(float height) {}
+
+void CornerLayout::build() {}

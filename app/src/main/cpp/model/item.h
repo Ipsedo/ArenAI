@@ -25,6 +25,7 @@ public:
   glm::mat4 get_model_matrix();
 
   virtual btRigidBody *get_body() = 0;
+  virtual std::vector<btTypedConstraint *> get_constraints();
 
   virtual nlohmann::json get_state();
   virtual void from_state(const nlohmann::json &state);

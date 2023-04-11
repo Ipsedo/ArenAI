@@ -13,6 +13,7 @@
 class HUDDrawable {
 public:
   virtual void draw(int width, int height) = 0;
+  virtual ~HUDDrawable();
 };
 
 class JoyStickDrawable : public HUDDrawable {
@@ -22,6 +23,8 @@ public:
                    glm::vec2 center_px, float size_px, float stick_size_px);
 
   void draw(int width, int height) override;
+
+  ~JoyStickDrawable() override;
 
 private:
   std::function<joystick(void)> get_input;

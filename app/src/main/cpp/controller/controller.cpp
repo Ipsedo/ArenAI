@@ -9,25 +9,32 @@
 #include <android_native_app_glue.h>
 
 ControllerEngine::ControllerEngine(AConfiguration *config, int width,
-                                   int height) {
+                                   int height)
+    : controllers() {
   left_joystick =
-      std::make_shared<HUDJoyStick>(config, width, height, 20, true, 150, 40);
+      std::make_shared<HUDJoyStick>(config, width, height, 40, true, 150, 40);
   right_joystick =
-      std::make_shared<HUDJoyStick>(config, width, height, 20, false, 150, 40);
+      std::make_shared<HUDJoyStick>(config, width, height, 40, false, 150, 40);
 }
 
 void ControllerEngine::add_controller(
-    const std::string &name, const std::shared_ptr<Controller> &controller) {
-  controllers.insert({name, controller});
-}
-
-void ControllerEngine::remove_controller(const std::string &name) {
-  controllers.erase(name);
+    const std::shared_ptr<Controller> &controller) {
+  controllers.push_back(controller);
 }
 
 int32_t ControllerEngine::on_event(AInputEvent *event) {
   left_joystick->on_event(event);
   right_joystick->on_event(event);
+
+  user_input input{left_joystick->get_input(),
+                   right_joystick->get_input(),
+                   {false},
+                   {false},
+                   {false}};
+
+  for (auto &ctrl : controllers)
+    ctrl->on_input(input);
+
   return 1;
 }
 

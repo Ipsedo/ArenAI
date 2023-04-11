@@ -20,6 +20,9 @@ PhysicEngine::PhysicEngine()
 
 void PhysicEngine::add_item(const std::shared_ptr<Item> &item) {
   m_world->addRigidBody(item->get_body());
+
+  for (auto &constraint : item->get_constraints())
+    m_world->addConstraint(constraint, true);
 }
 
 void PhysicEngine::step(float delta) { m_world->stepSimulation(delta); }

@@ -43,6 +43,13 @@ TankFactory::TankFactory(AAssetManager *mgr, glm::vec3 chassis_pos)
     items.push_back(wheel);
     controllers.push_back(wheel);
   }
+
+  glm::vec3 turret_pos(0.f, 1.3f, 1.5f);
+  glm::vec3 turret_scale(1.2f);
+  auto turret = std::make_shared<TurretItem>(
+      "turret", mgr, chassis_pos + turret_pos, turret_pos, scale * turret_scale,
+      200, chassis_item->get_body());
+  items.push_back(turret), controllers.push_back(turret);
 }
 
 std::shared_ptr<Camera> TankFactory::get_camera() { return camera; }

@@ -8,19 +8,10 @@
 #include "../../view/camera.h"
 #include "../items/convex.h"
 
-class ChassisItem : public ConvexItem, public Camera {
+class ChassisItem : public ConvexItem {
 public:
   ChassisItem(AAssetManager *mgr, glm::vec3 position, glm::vec3 scale,
               float mass);
-
-  glm::vec3 pos() override;
-
-  glm::vec3 look() override;
-
-  glm::vec3 up() override;
-
-private:
-  glm::vec3 get_pos_();
 };
 
 #endif // PHYVR_CHASSIS_H

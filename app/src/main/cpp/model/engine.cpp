@@ -20,6 +20,7 @@ PhysicEngine::PhysicEngine()
 
 void PhysicEngine::add_item(const std::shared_ptr<Item> &item) {
   m_world->addRigidBody(item->get_body());
+  item->get_body()->setActivationState(DISABLE_DEACTIVATION);
 
   for (auto &constraint : item->get_constraints())
     m_world->addConstraint(constraint, true);

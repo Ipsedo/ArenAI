@@ -32,7 +32,7 @@ private:
 
   std::shared_ptr<Camera> camera;
 
-  PhysicEngine physic_engine;
+  std::unique_ptr<PhysicEngine> physic_engine;
   std::unique_ptr<Renderer> renderer;
   std::unique_ptr<ControllerEngine> controller_engine;
 

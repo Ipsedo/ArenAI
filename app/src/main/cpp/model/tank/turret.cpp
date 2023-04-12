@@ -25,7 +25,7 @@ TurretItem::TurretItem(std::string name, AAssetManager *mgr, glm::vec3 pos,
 }
 
 void TurretItem::on_input(const user_input &input) {
-  angle += -input.right_joystick.x * 3e-2f;
+  angle += -input.right_joystick.x * 1.5e-2f;
 
   angle = angle > 1.f ? 1.f : angle;
   angle = angle < -1.f ? -1.f : angle;

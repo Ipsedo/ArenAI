@@ -16,19 +16,19 @@
 CoreEngine::CoreEngine(struct android_app *app)
     : tank_factory(app->activity->assetManager, glm::vec3(0., -40., 40)),
       is_paused(true), camera(std::nullptr_t()), renderer(std::nullptr_t()),
-      physic_engine(), controller_engine(std::nullptr_t()), items(), dev(),
-      rng(dev()) {
+      physic_engine(std::make_unique<PhysicEngine>()),
+      controller_engine(std::nullptr_t()), items(), dev(), rng(dev()) {
 
   auto map = std::make_shared<HeightMapItem>(
       "height_map", app->activity->assetManager, "heightmap/heightmap6.png",
       glm::vec3(0., 40., 0.), glm::vec3(10., 200., 10.));
 
   items.push_back(map);
-  physic_engine.add_item(map);
+  physic_engine->add_item(map);
 
   for (auto &item : tank_factory.get_items()) {
     items.push_back(item);
-    physic_engine.add_item(item);
+    physic_engine->add_item(item);
   }
 
   camera = tank_factory.get_camera();
@@ -51,8 +51,8 @@ void CoreEngine::_new_view(AAssetManager *mgr, ANativeWindow *window,
                          std::make_unique<CubeMap>(mgr, "cubemap/1"));
 
   for (const auto &item : items) {
-    glm::vec4 color(std::max(u_dist(rng), 0.7f), std::max(u_dist(rng), 0.7f),
-                    std::max(u_dist(rng), 0.7f), 1.f);
+    glm::vec4 color(u_dist(rng) * 0.7f, u_dist(rng) * 0.7f, u_dist(rng) * 0.7f,
+                    1.f);
 
     renderer->add_drawable(
         item->get_name(),
@@ -85,7 +85,7 @@ void CoreEngine::step(float time_delta) {
   if (is_paused)
     return;
 
-  physic_engine.step(time_delta);
+  physic_engine->step(time_delta);
 }
 
 int32_t CoreEngine::on_input(struct android_app *app, AInputEvent *event) {

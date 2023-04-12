@@ -89,6 +89,11 @@ void CoreEngine::step(float time_delta) {
 }
 
 int32_t CoreEngine::on_input(struct android_app *app, AInputEvent *event) {
+  if (AKeyEvent_getKeyCode(event) == AKEYCODE_BACK) {
+    ANativeActivity_finish(app->activity);
+    return 1;
+  }
+
   return controller_engine->on_event(event);
 }
 

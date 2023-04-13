@@ -33,6 +33,8 @@ private:
 
   float center_x, center_y;
   float size, stick_size;
+
+  int nb_point_bound, nb_point_stick;
 };
 
 #endif // PHYVR_HUD_H

@@ -25,7 +25,7 @@ CanonItem::CanonItem(std::string name, AAssetManager *mgr, glm::vec3 pos,
 }
 
 void CanonItem::on_input(const user_input &input) {
-  angle += -input.right_joystick.y * 2e-2f;
+  angle += input.right_joystick.y * 2.f;
 
   angle = angle > 1.f ? 1.f : angle;
   angle = angle < -1.f ? -1.f : angle;

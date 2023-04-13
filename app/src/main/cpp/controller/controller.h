@@ -34,8 +34,8 @@ public:
 private:
   std::vector<std::shared_ptr<Controller>> controllers;
 
-  std::shared_ptr<HUDJoyStick> left_joystick;
-  std::shared_ptr<HUDJoyStick> right_joystick;
+  std::shared_ptr<HUDJoyStick> drive_joystick;
+  std::shared_ptr<ScreenJoyStick> turret_joystick;
 };
 
 #endif // PHYVR_CONTROLLER_H

@@ -8,14 +8,24 @@
 #include "glm/gtx/transform.hpp"
 #include <utility>
 
-HUDDrawable::~HUDDrawable() {}
+HUDDrawable::~HUDDrawable() = default;
 
 JoyStickDrawable::JoyStickDrawable(AAssetManager *mgr,
                                    std::function<joystick(void)> get_input_px,
                                    glm::vec2 center_px, float size_px,
                                    float stick_size_px)
     : get_input(std::move(get_input_px)), center_x(center_px.x),
-      center_y(center_px.y), size(size_px), stick_size(stick_size_px) {
+      center_y(center_px.y), size(size_px), stick_size(stick_size_px),
+      nb_point_bound(4), nb_point_stick(128) {
+
+  std::vector<float> circle_buffer{};
+  for (int i = 0; i < nb_point_stick; i++) {
+    double angle = double(i) * M_PI * 2. / double(nb_point_stick);
+
+    circle_buffer.push_back(float(cos(angle)));
+    circle_buffer.push_back(float(sin(angle)));
+    circle_buffer.push_back(0.f);
+  }
 
   program =
       Program::Builder(mgr, "shaders/simple_vs.glsl", "shaders/simple_fs.glsl")
@@ -24,6 +34,7 @@ JoyStickDrawable::JoyStickDrawable(AAssetManager *mgr,
           .add_attribute("a_position")
           .add_buffer("square_buffer", {-1.f, 1.f, 0.f, 1.f, 1.f, 0.f, 1.f,
                                         -1.f, 0.f, -1.f, -1.f, 0.f})
+          .add_buffer("circle_buffer", circle_buffer)
           .build();
 }
 
@@ -62,12 +73,12 @@ void JoyStickDrawable::draw(int width, int height) {
   program->attrib("a_position", "square_buffer", 3, 3 * 4, 0);
   program->uniform_mat4("u_mvp_matrix", vp_matrix * bounds_m_matrix);
   program->uniform_vec4("u_color", glm::vec4(1., 0, 0, 1.));
-  Program::draw_arrays(GL_LINE_LOOP, 0, 4);
+  Program::draw_arrays(GL_LINE_LOOP, 0, nb_point_bound);
 
-  program->attrib("a_position", "square_buffer", 3, 3 * 4, 0);
+  program->attrib("a_position", "circle_buffer", 3, 3 * 4, 0);
   program->uniform_mat4("u_mvp_matrix", vp_matrix * stick_m_matrix);
   program->uniform_vec4("u_color", glm::vec4(1., 0., 0., 1.));
-  Program::draw_arrays(GL_LINE_LOOP, 0, 4);
+  Program::draw_arrays(GL_LINE_LOOP, 0, nb_point_stick);
 
   program->disable_attrib_array();
 

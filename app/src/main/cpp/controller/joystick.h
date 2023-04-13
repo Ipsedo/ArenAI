@@ -19,10 +19,10 @@ public:
   virtual joystick get_input() = 0;
 };
 
-class HUDJoyStick : public JoyStick {
+class HUDJoyStick : public JoyStick, public PointerLocker {
 public:
   HUDJoyStick(AConfiguration *config, int width_px, int height_px,
-              int margin_dp, bool left, int size_dp, int stick_size_dp);
+              int margin_dp, int size_dp, int stick_size_dp);
 
   bool on_event(AInputEvent *event) override;
 
@@ -30,6 +30,8 @@ public:
   joystick get_input_px();
 
   std::unique_ptr<HUDDrawable> get_hud_drawable(AAssetManager *mgr);
+
+  int get_pointer_id() override;
 
 private:
   int pointer_id;
@@ -47,6 +49,29 @@ private:
   int width, height;
 
   bool is_inside_(float x, float y) const;
+};
+
+class ScreenJoyStick : public JoyStick {
+public:
+  ScreenJoyStick(int width, int height,
+                 std::vector<std::shared_ptr<PointerLocker>> pointer_lockers);
+  bool on_event(AInputEvent *event) override;
+
+  joystick get_input() override;
+
+private:
+  float width, height;
+
+  int pointer_id;
+
+  bool touched;
+
+  float last_x, last_y;
+  float x_value, y_value;
+
+  std::vector<std::shared_ptr<PointerLocker>> pointer_lockers;
+
+  bool is_pointer_free_(int pointer_id);
 };
 
 #endif // PHYVR_JOYSTICK_H

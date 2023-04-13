@@ -51,7 +51,7 @@ void CoreEngine::_new_view(AAssetManager *mgr, ANativeWindow *window,
                          std::make_unique<CubeMap>(mgr, "cubemap/1"));
 
   for (const auto &item : items) {
-    glm::vec4 color(u_dist(rng) * 0.7f, u_dist(rng) * 0.7f, u_dist(rng) * 0.7f,
+    glm::vec4 color(u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, u_dist(rng) * 0.8f,
                     1.f);
 
     renderer->add_drawable(

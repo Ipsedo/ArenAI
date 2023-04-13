@@ -14,7 +14,7 @@
 
 Renderer::Renderer(ANativeWindow *window, std::shared_ptr<Camera> camera)
     : camera(std::move(camera)), drawables(), hud_drawables(),
-      light_pos(0., 500., 100.) {
+      light_pos(500., 2000., 1000.) {
 
   const EGLint config_attrib[] = {EGL_SURFACE_TYPE,
                                   EGL_WINDOW_BIT,

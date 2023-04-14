@@ -17,21 +17,55 @@ CoreEngine::CoreEngine(struct android_app *app)
     : tank_factory(app->activity->assetManager, glm::vec3(0., -40., 40)),
       is_paused(true), camera(std::nullptr_t()), renderer(std::nullptr_t()),
       physic_engine(std::make_unique<PhysicEngine>()),
-      controller_engine(std::nullptr_t()), items(), dev(), rng(dev()) {
+      controller_engine(std::nullptr_t()), dev(), rng(dev()) {
 
   auto map = std::make_shared<HeightMapItem>(
       "height_map", app->activity->assetManager, "heightmap/heightmap6.png",
       glm::vec3(0., 40., 0.), glm::vec3(10., 200., 10.));
 
-  items.push_back(map);
   physic_engine->add_item(map);
 
   for (auto &item : tank_factory.get_items()) {
-    items.push_back(item);
     physic_engine->add_item(item);
   }
 
+  for (auto &item_producer : tank_factory.get_item_producers())
+    physic_engine->add_item_producer(item_producer);
+
   camera = tank_factory.get_camera();
+
+  // add basic shapes
+  int nb_shapes = 5;
+
+  std::uniform_real_distribution<float> pos_u_dist(-500, 500);
+  std::uniform_real_distribution<float> scale_u_dist(2.5, 10);
+  std::uniform_real_distribution<float> mass_u_dist(3, 100);
+
+  for (int i = 0; i < nb_shapes; i++) {
+    glm::vec3 pos(pos_u_dist(rng), 0.f, pos_u_dist(rng));
+    glm::vec3 scale(scale_u_dist(rng));
+    physic_engine->add_item(std::make_shared<SphereItem>(
+        "sphere_" + std::to_string(i), app->activity->assetManager, pos, scale,
+        mass_u_dist(rng)));
+
+    pos = glm::vec3(pos_u_dist(rng), 0.f, pos_u_dist(rng));
+    scale = glm::vec3(scale_u_dist(rng));
+    physic_engine->add_item(std::make_shared<CubeItem>(
+        "cube_" + std::to_string(i), app->activity->assetManager, pos, scale,
+        mass_u_dist(rng)));
+
+    pos = glm::vec3(pos_u_dist(rng), 0.f, pos_u_dist(rng));
+    scale = glm::vec3(scale_u_dist(rng));
+    physic_engine->add_item(std::make_shared<TetraItem>(
+        "tetra_" + std::to_string(i), app->activity->assetManager, pos, scale,
+        mass_u_dist(rng)));
+
+    pos = glm::vec3(pos_u_dist(rng), 0.f, pos_u_dist(rng));
+    scale = glm::vec3(scale_u_dist(rng));
+    physic_engine->add_item(std::make_shared<CylinderItem>(
+        "cylinder_" + std::to_string(i), app->activity->assetManager, pos,
+        scale, mass_u_dist(rng)));
+  }
 }
 
 void CoreEngine::_new_view(AAssetManager *mgr, ANativeWindow *window,
@@ -50,7 +84,7 @@ void CoreEngine::_new_view(AAssetManager *mgr, ANativeWindow *window,
   renderer->add_drawable("cubemap",
                          std::make_unique<CubeMap>(mgr, "cubemap/1"));
 
-  for (const auto &item : items) {
+  for (const auto &item : physic_engine->get_items()) {
     glm::vec4 color(u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, u_dist(rng) * 0.8f,
                     1.f);
 
@@ -59,6 +93,16 @@ void CoreEngine::_new_view(AAssetManager *mgr, ANativeWindow *window,
         std::make_unique<Specular>(mgr, item->get_shape()->get_vertices(),
                                    item->get_shape()->get_normals(), color,
                                    color, color, 50.f));
+  }
+
+  for (const auto &[name, shape] : tank_factory.load_ammu_shapes()) {
+    glm::vec4 color(u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, u_dist(rng) * 0.8f,
+                    1.f);
+
+    renderer->add_drawable(
+        name, std::make_unique<Specular>(mgr, shape->get_vertices(),
+                                         shape->get_normals(), color, color,
+                                         color, 50.f));
   }
 
   for (auto &hud_drawable : controller_engine->get_hud_drawables(mgr))
@@ -72,7 +116,8 @@ void CoreEngine::draw() {
     return;
 
   auto model_matrices = std::vector<std::tuple<std::string, glm::mat4>>();
-  for (auto &item : items)
+
+  for (auto &item : physic_engine->get_items())
     model_matrices.emplace_back(item->get_name(), item->get_model_matrix());
 
   model_matrices.emplace_back(

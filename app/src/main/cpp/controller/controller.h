@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "../view/drawable/hud.h"
+#include "./button.h"
 #include "./inputs.h"
 #include "./joystick.h"
 
@@ -35,6 +36,7 @@ private:
   std::vector<std::shared_ptr<Controller>> controllers;
 
   std::shared_ptr<HUDJoyStick> drive_joystick;
+  std::shared_ptr<HUDButton> fire_button;
   std::shared_ptr<ScreenJoyStick> turret_joystick;
 };
 

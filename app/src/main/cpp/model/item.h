@@ -37,4 +37,9 @@ protected:
   virtual glm::vec3 _get_scale() = 0;
 };
 
+class ItemProducer {
+public:
+  virtual std::vector<std::shared_ptr<Item>> get_produced_items() = 0;
+};
+
 #endif // PHYVR_ITEM_H

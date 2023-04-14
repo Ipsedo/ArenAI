@@ -5,18 +5,43 @@
 #ifndef PHYVR_BUTTON_H
 #define PHYVR_BUTTON_H
 
+#include <android/asset_manager.h>
+#include <android/configuration.h>
 #include <glm/glm.hpp>
+#include <memory>
 
-#include "./controller.h"
+#include "../view/drawable/hud.h"
+#include "./event.h"
+#include "./inputs.h"
 
 class Button : public EventHandler {
 public:
-  Button(glm::vec2 pos, float radius);
+  virtual button get_input() = 0;
+};
+
+class HUDButton : public Button, public PointerLocker {
+public:
+  HUDButton(AConfiguration *config, int width_px, int height_px, int margin_dp,
+            int size_dp);
   bool on_event(AInputEvent *event) override;
 
+  button get_input() override;
+
+  int get_pointer_id() override;
+
+  std::unique_ptr<HUDDrawable> get_hud_drawable(AAssetManager *mgr);
+
 private:
-  int x, y;
-  float radius;
+  float size;
+  float center_x, center_y;
+  int height;
+
+  bool touched;
+  int pointer_id;
+
+  bool pressed;
+
+  bool is_inside_(float x, float y) const;
 };
 
 #endif // PHYVR_BUTTON_H

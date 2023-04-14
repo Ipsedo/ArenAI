@@ -125,7 +125,7 @@ ScreenJoyStick::ScreenJoyStick(
       pointer_lockers(std::move(pointer_lockers)) {}
 
 bool ScreenJoyStick::is_pointer_free_(int event_pointer_id) {
-  return !std::all_of(
+  return !std::any_of(
       pointer_lockers.begin(), pointer_lockers.end(),
       [event_pointer_id](const std::shared_ptr<PointerLocker> &ptr_locker) {
         return ptr_locker->get_pointer_id() == event_pointer_id;

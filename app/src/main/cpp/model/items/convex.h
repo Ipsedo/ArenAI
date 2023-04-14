@@ -31,4 +31,28 @@ private:
   glm::vec3 scale;
 };
 
+class SphereItem : public ConvexItem {
+public:
+  SphereItem(std::string name, AAssetManager *mgr, glm::vec3 position,
+             glm::vec3 scale, float mass);
+};
+
+class CubeItem : public ConvexItem {
+public:
+  CubeItem(std::string name, AAssetManager *mgr, glm::vec3 position,
+           glm::vec3 scale, float mass);
+};
+
+class CylinderItem : public ConvexItem {
+public:
+  CylinderItem(std::string name, AAssetManager *mgr, glm::vec3 position,
+               glm::vec3 scale, float mass);
+};
+
+class TetraItem : public ConvexItem {
+public:
+  TetraItem(std::string name, AAssetManager *mgr, glm::vec3 position,
+            glm::vec3 scale, float mass);
+};
+
 #endif // PHYVR_CONVEX_H

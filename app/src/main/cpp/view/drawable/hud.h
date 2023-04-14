@@ -16,6 +16,24 @@ public:
   virtual ~HUDDrawable();
 };
 
+class ButtonDrawable : public HUDDrawable {
+public:
+  ButtonDrawable(AAssetManager *mgr, std::function<button(void)> get_input,
+                 glm::vec2 center_px, float size_px);
+
+  void draw(int width, int height) override;
+
+private:
+  std::function<button(void)> get_input;
+
+  std::unique_ptr<Program> program;
+
+  float center_x, center_y;
+  float size;
+
+  int nb_points;
+};
+
 class JoyStickDrawable : public HUDDrawable {
 public:
   JoyStickDrawable(AAssetManager *mgr,

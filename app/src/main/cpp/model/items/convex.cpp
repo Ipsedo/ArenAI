@@ -4,6 +4,8 @@
 
 #include "./convex.h"
 
+#include <utility>
+
 ConvexItem::ConvexItem(std::string name, const std::shared_ptr<Shape> &shape,
                        glm::vec3 position, glm::vec3 scale, float mass)
     : Item(std::move(name)), shape(shape), scale(scale) {
@@ -37,3 +39,31 @@ std::shared_ptr<Shape> ConvexItem::get_shape() { return shape; }
 btRigidBody *ConvexItem::get_body() { return body; }
 
 glm::vec3 ConvexItem::_get_scale() { return scale; }
+
+/*
+ * Basic shapes
+ */
+
+CubeItem::CubeItem(std::string name, AAssetManager *mgr, glm::vec3 position,
+                   glm::vec3 scale, float mass)
+    : ConvexItem(std::move(name),
+                 std::make_shared<ObjShape>(mgr, "obj/cube.obj"), position,
+                 scale, mass) {}
+
+SphereItem::SphereItem(std::string name, AAssetManager *mgr, glm::vec3 position,
+                       glm::vec3 scale, float mass)
+    : ConvexItem(std::move(name),
+                 std::make_shared<ObjShape>(mgr, "obj/sphere.obj"), position,
+                 scale, mass) {}
+
+CylinderItem::CylinderItem(std::string name, AAssetManager *mgr,
+                           glm::vec3 position, glm::vec3 scale, float mass)
+    : ConvexItem(std::move(name),
+                 std::make_shared<ObjShape>(mgr, "obj/cylinder.obj"), position,
+                 scale, mass) {}
+
+TetraItem::TetraItem(std::string name, AAssetManager *mgr, glm::vec3 position,
+                     glm::vec3 scale, float mass)
+    : ConvexItem(std::move(name),
+                 std::make_shared<ObjShape>(mgr, "obj/tetra.obj"), position,
+                 scale, mass) {}

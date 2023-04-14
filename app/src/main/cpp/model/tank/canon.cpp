@@ -4,6 +4,7 @@
 
 #include "./canon.h"
 #include "../../utils/logging.h"
+#include "./ammu.h"
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -13,7 +14,7 @@ CanonItem::CanonItem(std::string name, AAssetManager *mgr, glm::vec3 pos,
     : ConvexItem(std::move(name),
                  std::make_shared<ObjShape>(mgr, "obj/anubis_canon.obj"), pos,
                  scale, mass),
-      angle(0.f) {
+      angle(0.f), mgr(mgr), will_fire(false) {
 
   btVector3 turret_pivot = btVector3(rel_pos.x, rel_pos.y, rel_pos.z);
   btVector3 canon_pivot = btVector3(0.f, 0.f, 0);
@@ -24,6 +25,35 @@ CanonItem::CanonItem(std::string name, AAssetManager *mgr, glm::vec3 pos,
   hinge->setLimit(angle, angle);
 }
 
+std::vector<std::shared_ptr<Item>> CanonItem::get_produced_items() {
+
+  if (will_fire) {
+    btTransform canon_tr = ConvexItem::get_body()->getWorldTransform();
+    float tmp[16];
+    canon_tr.getOpenGLMatrix(tmp);
+    glm::mat4 m_matrix = glm::make_mat4(tmp);
+
+    glm::vec4 shell_pos(0.f, 0.f, 3.f, 1.f);
+    shell_pos = m_matrix * shell_pos;
+
+    will_fire = false;
+
+    auto shell_item = std::make_shared<ShellItem>(mgr, glm::vec3(shell_pos),
+                                                  glm::toQuat(m_matrix),
+                                                  glm::vec3(0.2f), 20.f);
+
+    glm::vec4 force_vec(0.f, 0.f, 1.f, 0.f);
+    force_vec = m_matrix * force_vec;
+
+    shell_item->get_body()->applyCentralForce(
+        btVector3(force_vec.x, force_vec.y, force_vec.z) * 1.5e5f);
+
+    return {shell_item};
+  }
+
+  return {};
+}
+
 void CanonItem::on_input(const user_input &input) {
   angle += input.right_joystick.y * 2.f;
 
@@ -31,6 +61,9 @@ void CanonItem::on_input(const user_input &input) {
   angle = angle < -1.f ? -1.f : angle;
 
   hinge->setLimit(angle * float(M_PI) * 0.2f, angle * float(M_PI) * 0.2f);
+
+  if (input.fire_button.pressed)
+    will_fire = true;
 }
 
 glm::vec3 CanonItem::pos() {

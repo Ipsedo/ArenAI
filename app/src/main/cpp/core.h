@@ -36,8 +36,6 @@ private:
   std::unique_ptr<Renderer> renderer;
   std::unique_ptr<ControllerEngine> controller_engine;
 
-  std::vector<std::shared_ptr<Item>> items;
-
   std::random_device dev;
   std::mt19937 rng;
 

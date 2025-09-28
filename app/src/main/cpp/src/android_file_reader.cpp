@@ -3,6 +3,8 @@
 //
 #include "./android_file_reader.h"
 
+#include <android/imagedecoder.h>
+
 AndroidFileReader::AndroidFileReader(AAssetManager *mgr) : mgr(mgr) {}
 
 std::string AndroidFileReader::read_text(const std::string &file_name) {

@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.11)
 
-set(APP_NAME phyvr)
-
-project(${APP_NAME})
+project(phyvr)
 
 include(FetchContent)
 
@@ -18,11 +16,11 @@ add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/phyvr_rl")
 
 set(PHYVR_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
-include_directories(${PHYVR_UTILS_PATH_INCLUDE_DIRS})
-include_directories(${PHYVR_CONTROLLER_PATH_INCLUDE_DIRS})
-include_directories(${PHYVR_VIEW_PATH_INCLUDE_DIRS})
-include_directories(${PHYVR_MODEL_PATH_INCLUDE_DIRS})
-include_directories(${PHYVR_RL_PATH_INCLUDE_DIRS})
+include_directories(${PHYVR_UTILS_INCLUDE_DIRS})
+include_directories(${PHYVR_CONTROLLER_INCLUDE_DIRS})
+include_directories(${PHYVR_VIEW_INCLUDE_DIRS})
+include_directories(${PHYVR_MODEL_INCLUDE_DIRS})
+include_directories(${PHYVR_RL_INCLUDE_DIRS})
 
 if (ANDROID)
     include(AndroidNdkModules)
@@ -30,28 +28,25 @@ if (ANDROID)
 
     file(GLOB_RECURSE PHYVR_SRC "${PHYVR_PATH}/*.cpp")
 
-    add_library(${APP_NAME} SHARED ${PHYVR_SRC})
+    add_library(phyvr SHARED ${PHYVR_SRC})
 
     target_link_libraries(
-            ${APP_NAME}
+            phyvr
             -Wl,--whole-archive native_app_glue -Wl,--no-whole-archive
             android
-            # phyvr
-            phyvr_utils
-            phyvr_view
-            phyvr_model
+            jnigraphics
     )
 
 else ()
     file(GLOB_RECURSE PHYVR_SRC "${PHYVR_PATH}/train/*.cpp")
 
-    add_executable(${APP_NAME} ${PHYVR_SRC})
-
-    target_link_libraries(
-            ${APP_NAME}
-            phyvr_utils
-            phyvr_view
-            phyvr_model
-            phyvr_rl
-    )
+    add_executable(phyvr ${PHYVR_SRC})
 endif ()
+
+target_link_libraries(
+        phyvr
+        phyvr_utils
+        phyvr_view
+        phyvr_model
+        phyvr_rl
+)

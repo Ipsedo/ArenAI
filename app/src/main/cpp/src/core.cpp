@@ -14,6 +14,7 @@
 #include <phyvr_view/cubemap.h>
 #include <phyvr_view/specular.h>
 
+#include "./android_file_reader.h"
 #include "./android_renderer.h"
 
 #include <glm/gtx/transform.hpp>

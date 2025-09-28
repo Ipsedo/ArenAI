@@ -5,7 +5,6 @@
 #ifndef PHYVR_FILE_READER_H
 #define PHYVR_FILE_READER_H
 
-#include <android/asset_manager.h>
 #include <string>
 
 struct img_rgb {
@@ -26,18 +25,6 @@ public:
   virtual img_rgb read_png(const std::string &png_file_path) = 0;
 
   static img_grey to_img_grey(img_rgb image);
-};
-
-class AndroidFileReader : public AbstractFileReader {
-public:
-  explicit AndroidFileReader(AAssetManager *mgr);
-
-  std::string read_text(const std::string &file_name) override;
-
-  img_rgb read_png(const std::string &png_file_path) override;
-
-private:
-  AAssetManager *mgr;
 };
 
 #endif // PHYVR_FILE_READER_H

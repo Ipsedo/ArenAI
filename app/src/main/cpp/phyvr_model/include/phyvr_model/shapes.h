@@ -5,7 +5,7 @@
 #ifndef PHYVR_SHAPES_H
 #define PHYVR_SHAPES_H
 
-#include <android/asset_manager.h>
+#include <memory>
 #include <string>
 #include <tuple>
 #include <vector>

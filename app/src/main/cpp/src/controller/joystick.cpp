@@ -8,7 +8,7 @@
 
 #include <utility>
 
-#include <phyvr_utils/units.h>
+#include "../units.h"
 
 /*
  * HUDJoyStick

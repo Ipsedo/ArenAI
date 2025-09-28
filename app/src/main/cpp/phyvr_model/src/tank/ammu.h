@@ -8,6 +8,7 @@
 #include <phyvr_model/convex.h>
 #include <phyvr_utils/file_reader.h>
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
 class ShellItem : public ConvexItem {

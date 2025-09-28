@@ -14,10 +14,6 @@ set(PHYVR_UTILS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src")
 file(GLOB_RECURSE PHYVR_UTILS_SRC "${PHYVR_UTILS_PATH}/*.cpp")
 add_library(${APP_NAME} SHARED ${PHYVR_UTILS_SRC})
 
-target_link_libraries(
-        ${APP_NAME}
-        android
-        log
-        dl
-        jnigraphics
-)
+if (ANDROID)
+    target_link_libraries(${APP_NAME} android)
+endif ()

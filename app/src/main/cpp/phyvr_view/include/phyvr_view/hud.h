@@ -5,6 +5,7 @@
 #ifndef PHYVR_HUD_H
 #define PHYVR_HUD_H
 
+#include <functional>
 #include <memory>
 
 #include "./program.h"

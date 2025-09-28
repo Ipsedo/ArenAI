@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.5)
 
 set(APP_NAME phyvr_view)
 
@@ -7,9 +7,13 @@ project(${APP_NAME})
 include(FetchContent)
 
 ##### GLM #####
-FetchContent_Declare(glm URL https://github.com/g-truc/glm/releases/download/0.9.9.8/glm-0.9.9.8.zip)
-FetchContent_MakeAvailable(glm)
-include_directories("${glm_SOURCE_DIR}")
+if (ANDROID)
+    FetchContent_Declare(glm URL https://github.com/g-truc/glm/releases/download/0.9.9.8/glm-0.9.9.8.zip)
+    FetchContent_MakeAvailable(glm)
+    include_directories("${glm_SOURCE_DIR}")
+else ()
+    find_package(glm REQUIRED)
+endif ()
 
 # PHYVR VIEW
 set(CMAKE_CXX_STANDARD 17)
@@ -27,10 +31,14 @@ add_library(${APP_NAME} SHARED ${PHYVR_VIEW_SRC})
 
 target_link_libraries(
         ${APP_NAME}
-        GLESv3
-        android
         EGL
-        log
         dl
         phyvr_utils
+        glm::glm
 )
+
+if (ANDROID)
+    target_link_libraries(${APP_NAME} GLESv3)
+else ()
+    target_link_libraries(${APP_NAME} GLESv2)
+endif ()

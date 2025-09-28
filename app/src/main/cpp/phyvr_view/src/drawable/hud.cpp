@@ -4,7 +4,8 @@
 
 #include <phyvr_view/hud.h>
 
-#include "glm/gtx/transform.hpp"
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/transform.hpp>
 #include <utility>
 
 HUDDrawable::~HUDDrawable() = default;

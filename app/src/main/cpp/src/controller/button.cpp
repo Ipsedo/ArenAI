@@ -4,7 +4,7 @@
 
 #include "./button.h"
 
-#include <phyvr_utils/units.h>
+#include "../units.h"
 #include <phyvr_view/hud.h>
 
 HUDButton::HUDButton(AConfiguration *config, int width_px, int height_px,

@@ -1,10 +1,8 @@
 //
 // Created by samuel on 28/09/2025.
 //
-
-#include <phyvr_rl/dummy.h>
-
+#include <iostream>
 int main(int argc, char **argv) {
-  dummy();
+  std::cout << "toyo" << std::endl;
   return 0;
 }

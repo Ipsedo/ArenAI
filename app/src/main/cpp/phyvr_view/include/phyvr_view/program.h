@@ -6,7 +6,6 @@
 #define PHYVR_PROGRAM_H
 
 #include <GLES3/gl3.h>
-#include <android/asset_manager.h>
 #include <filesystem>
 #include <glm/glm.hpp>
 #include <map>

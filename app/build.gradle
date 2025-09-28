@@ -44,14 +44,14 @@ def hostBuildDir = file("${rootProject.layout.buildDirectory.get()}/build_train"
 
 tasks.register("cmakeConfigureTrain", Exec) {
     commandLine 'cmake',
-            '-S', 'src/main/cpp/phyvr_rl',
+            '-S', 'src/main/cpp',
             '-B', hostBuildDir.absolutePath,
             '-DCMAKE_BUILD_TYPE=Release'
 }
 
 tasks.register("cmakeBuildTrain", Exec) {
     dependsOn 'cmakeConfigureTrain'
-    commandLine 'cmake', '--build', hostBuildDir.absolutePath, '--config', 'Release', '--target', 'phyvr_rl'
+    commandLine 'cmake', '--build', hostBuildDir.absolutePath, '--config', 'Release', '--target', 'phyvr'
 }
 
 tasks.register("runTrainCpp", Exec) {
@@ -60,11 +60,11 @@ tasks.register("runTrainCpp", Exec) {
     doFirst {
         def os = OperatingSystem.current()
         def exePath = os.isWindows() ?
-                new File(hostBuildDir, 'Release/phyvr_rl.exe') :
-                new File(hostBuildDir, 'phyvr_rl')
+                new File(hostBuildDir, 'Release/phyvr.exe') :
+                new File(hostBuildDir, 'phyvr')
 
         if (!exePath.exists()) {
-            throw new GradleException("Binaire introuvable: ${exePath.absolutePath}")
+            throw new GradleException("Binary not found: ${exePath.absolutePath}")
         }
 
         commandLine exePath.absolutePath

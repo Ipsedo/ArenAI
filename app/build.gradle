@@ -1,11 +1,11 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 33
+    compileSdkVersion 36
     defaultConfig {
         applicationId "com.samuelberrien.phyvr"
         minSdkVersion 30
-        targetSdkVersion 33
+        targetSdkVersion 36
         versionCode 17
         versionName "2.0"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
@@ -17,7 +17,7 @@ android {
     }
     externalNativeBuild {
         cmake {
-            path "CMakeLists.txt"
+            path "src/main/cpp/CMakeLists.txt"
         }
     }
     compileOptions {
@@ -25,12 +25,48 @@ android {
         targetCompatibility JavaVersion.VERSION_1_10
     }
     ndkVersion '25.2.9519653'
+    namespace 'com.samuelberrien.phyvr'
 }
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.appcompat:appcompat:1.7.1'
     testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation 'androidx.test.ext:junit:1.3.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.7.0'
+    implementation platform("org.jetbrains.kotlin:kotlin-bom:1.8.0")
+}
+
+// Desktop training
+import org.gradle.internal.os.OperatingSystem
+
+def hostBuildDir = file("${rootProject.layout.buildDirectory.get()}/build_train")
+
+tasks.register("cmakeConfigureTrain", Exec) {
+    commandLine 'cmake',
+            '-S', 'src/main/cpp/phyvr_rl',
+            '-B', hostBuildDir.absolutePath,
+            '-DCMAKE_BUILD_TYPE=Release'
+}
+
+tasks.register("cmakeBuildTrain", Exec) {
+    dependsOn 'cmakeConfigureTrain'
+    commandLine 'cmake', '--build', hostBuildDir.absolutePath, '--config', 'Release', '--target', 'phyvr_rl'
+}
+
+tasks.register("runTrainCpp", Exec) {
+    dependsOn 'cmakeBuildTrain'
+
+    doFirst {
+        def os = OperatingSystem.current()
+        def exePath = os.isWindows() ?
+                new File(hostBuildDir, 'Release/phyvr_rl.exe') :
+                new File(hostBuildDir, 'phyvr_rl')
+
+        if (!exePath.exists()) {
+            throw new GradleException("Binaire introuvable: ${exePath.absolutePath}")
+        }
+
+        commandLine exePath.absolutePath
+    }
 }

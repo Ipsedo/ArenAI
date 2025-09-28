@@ -1,5 +1,7 @@
 package com.samuelberrien.phyvr;
 
+import android.app.ActionBar;
+import android.app.Activity;
 import android.app.NativeActivity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -12,7 +14,7 @@ import android.widget.NumberPicker;
 import com.samuelberrien.phyvr.controls.ControlActivity;
 import com.samuelberrien.phyvr.controls.GamePadActivity;
 
-public class MainActivity extends AppCompatActivity implements NumberPicker.OnValueChangeListener {
+public class MainActivity extends Activity implements NumberPicker.OnValueChangeListener {
 
 	private int levelIdx;
 	public static final String levelIdxExtraStr = "Level_Idx";

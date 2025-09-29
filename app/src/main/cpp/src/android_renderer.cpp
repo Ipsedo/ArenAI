@@ -20,9 +20,25 @@
  */
 
 NormalRenderer::NormalRenderer(ANativeWindow *window,
-                               std::shared_ptr<Camera> camera)
-    : camera(std::move(camera)), drawables(), hud_drawables(),
-      light_pos(500., 2000., 1000.), width(0), height(0) {
+                               const std::shared_ptr<Camera> &camera)
+    : Renderer(std::make_shared<AndroidGLContext>(window),
+               ANativeWindow_getWidth(window), ANativeWindow_getHeight(window),
+               glm::vec3(), camera) {}
+
+void NormalRenderer::_on_end_frame() {
+  eglSwapBuffers(_get_display(), _get_surface());
+}
+
+/*
+ * Context
+ */
+
+EGLDisplay AndroidGLContext::get_display() { return display; }
+
+AndroidGLContext::AndroidGLContext(ANativeWindow *window) {
+  display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+
+  eglInitialize(display, nullptr, nullptr);
 
   const EGLint config_attrib[] = {EGL_SURFACE_TYPE,
                                   EGL_WINDOW_BIT,
@@ -46,13 +62,6 @@ NormalRenderer::NormalRenderer(ANativeWindow *window,
   EGLint numConfigs;
   EGLConfig config;
 
-  display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-
-  eglInitialize(display, nullptr, nullptr);
-
-  /* Here, the application chooses the configuration it desires.
-   * find the best match if possible, otherwise use the very first one
-   */
   eglChooseConfig(display, config_attrib, nullptr, 0, &numConfigs);
   std::unique_ptr<EGLConfig[]> supportedConfigs(new EGLConfig[numConfigs]);
   assert(supportedConfigs);
@@ -78,12 +87,9 @@ NormalRenderer::NormalRenderer(ANativeWindow *window,
     config = supportedConfigs[0];
   }
 
-  /* EGL_NATIVE_VISUAL_ID is an attribute of the EGLConfig that is
-   * guaranteed to be accepted by ANativeWindow_setBuffersGeometry().
-   * As soon as we picked a EGLConfig, we can safely reconfigure the
-   * ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID. */
   eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format);
   surface = eglCreateWindowSurface(display, config, window, nullptr);
+
   context = eglCreateContext(display, config, EGL_NO_CONTEXT, context_attrib);
 
   if (eglMakeCurrent(display, surface, surface, context) == EGL_FALSE)
@@ -91,93 +97,8 @@ NormalRenderer::NormalRenderer(ANativeWindow *window,
 
   eglQuerySurface(display, surface, EGL_WIDTH, &w);
   eglQuerySurface(display, surface, EGL_HEIGHT, &h);
-
-  width = w;
-  height = h;
-
-  // Check openGL on the system
-  auto opengl_info = {GL_VENDOR, GL_RENDERER, GL_VERSION, GL_EXTENSIONS};
-  for (auto name : opengl_info) {
-    auto info = glGetString(name);
-    LOG_DEBUG("GL_INFO \"%d\" %s", name, info);
-  }
-
-  glViewport(0, 0, width, height);
-
-  glClearColor(1., 1., 1., 0.);
-
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_CULL_FACE);
-
-  glDepthFunc(GL_LEQUAL);
-  glDepthMask(GL_TRUE);
-
-  glDisable(GL_BLEND);
 }
 
-void NormalRenderer::add_drawable(const std::string &name,
-                                  std::unique_ptr<Drawable> drawable) {
-  drawables.insert({name, std::move(drawable)});
-}
+EGLSurface AndroidGLContext::get_surface() { return surface; }
 
-void NormalRenderer::add_hud_drawable(
-    std::unique_ptr<HUDDrawable> hud_drawable) {
-  hud_drawables.push_back(std::move(hud_drawable));
-}
-
-void NormalRenderer::remove_drawable(const std::string &name) {
-  drawables.erase(name);
-}
-
-void NormalRenderer::draw(
-    const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  glm::mat4 view_matrix =
-      glm::lookAt(camera->pos(), camera->look(), camera->up());
-
-  glm::mat4 proj_matrix = glm::perspective(
-      float(M_PI) / 4.f, float(width) / float(height), 1.f, 2000.f * sqrt(3.f));
-
-  glEnable(GL_DEPTH_TEST);
-
-  for (auto [name, m_matrix] : model_matrices) {
-    auto mv_matrix = view_matrix * m_matrix;
-    auto mvp_matrix = proj_matrix * mv_matrix;
-
-    drawables[name]->draw(mvp_matrix, mv_matrix, light_pos, camera->pos());
-  }
-
-  glDisable(GL_DEPTH_TEST);
-
-  for (auto &hud_drawable : hud_drawables)
-    hud_drawable->draw(width, height);
-
-  eglSwapBuffers(display, surface);
-
-  check_gl_error("draw");
-}
-
-int NormalRenderer::get_width() const { return width; }
-
-int NormalRenderer::get_height() const { return height; }
-
-NormalRenderer::~NormalRenderer() {
-  drawables.clear();
-
-  if (display != EGL_NO_DISPLAY) {
-    eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-
-    if (context != EGL_NO_CONTEXT)
-      eglDestroyContext(display, context);
-
-    if (surface != EGL_NO_SURFACE)
-      eglDestroySurface(display, surface);
-
-    eglTerminate(display);
-  }
-
-  display = EGL_NO_DISPLAY;
-  context = EGL_NO_CONTEXT;
-  surface = EGL_NO_SURFACE;
-}
+EGLContext AndroidGLContext::get_context() { return context; }

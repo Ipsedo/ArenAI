@@ -13,39 +13,24 @@
 #include <phyvr_view/drawable.h>
 #include <phyvr_view/renderer.h>
 
-class NormalRenderer : public Renderer {
+class AndroidGLContext : public AbstractGLContext {
 public:
-  NormalRenderer(ANativeWindow *window, std::shared_ptr<Camera> camera);
-
-  void add_drawable(const std::string &name,
-                    std::unique_ptr<Drawable> drawable) override;
-
-  void add_hud_drawable(std::unique_ptr<HUDDrawable> hud_drawable) override;
-
-  void remove_drawable(const std::string &name);
-
-  int get_width() const override;
-  int get_height() const override;
-
-  void draw(const std::vector<std::tuple<std::string, glm::mat4>>
-                &model_matrices) override;
-
-  ~NormalRenderer();
+  explicit AndroidGLContext(ANativeWindow *window);
+  EGLDisplay get_display() override;
+  EGLSurface get_surface() override;
+  EGLContext get_context() override;
 
 private:
-  int width;
-  int height;
-
-protected:
   EGLDisplay display;
   EGLSurface surface;
   EGLContext context;
+};
 
-  glm::vec3 light_pos;
+class NormalRenderer : public Renderer {
+public:
+  NormalRenderer(ANativeWindow *window, const std::shared_ptr<Camera> &camera);
 
-  std::shared_ptr<Camera> camera;
-
-  std::map<std::string, std::unique_ptr<Drawable>> drawables;
-  std::vector<std::unique_ptr<HUDDrawable>> hud_drawables;
+protected:
+  void _on_end_frame() override;
 };
 #endif // PHYVR_ANDROID_RENDERER_H

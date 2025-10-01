@@ -57,8 +57,6 @@ private:
 
   std::shared_ptr<AbstractGLContext> gl_context;
 
-  std::vector<std::vector<std::vector<pixel>>> draw_and_get_enemy_view();
-
   void worker_enemy_vision(int index,
                            const std::shared_ptr<PBufferRenderer> &renderer);
 

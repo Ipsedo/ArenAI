@@ -24,9 +24,21 @@ BaseTanksEnvironment::BaseTanksEnvironment(
 std::vector<std::tuple<State, Reward, IsFinish>>
 BaseTanksEnvironment::step(float time_delta,
                            const std::vector<Action> &actions) {
-  physic_engine->step(time_delta);
+  model_matrices.clear();
 
-  auto enemy_visions = draw_and_get_enemy_view();
+  for (auto &item : physic_engine->get_items())
+    model_matrices.emplace_back(item->get_name(), item->get_model_matrix());
+
+  model_matrices.emplace_back(
+      "cubemap", glm::scale(glm::mat4(1.), glm::vec3(2000., 2000., 2000.)));
+
+  start_barrier.arrive_and_wait();
+
+  physic_engine->step(time_delta);
+  on_draw(model_matrices);
+
+  end_barrier.arrive_and_wait();
+  // TODO get enemy visions
 
   return std::vector<std::tuple<State, Reward, IsFinish>>();
 }
@@ -85,6 +97,8 @@ std::vector<State> BaseTanksEnvironment::reset_physics() {
   }
 
   on_reset_physics(physic_engine);
+
+  physic_engine->step(1.f / 60.f); // TODO attribute
 
   return std::vector<State>();
 }
@@ -159,25 +173,4 @@ void BaseTanksEnvironment::worker_enemy_vision(
 
     end_barrier.arrive_and_wait();
   }
-}
-
-std::vector<std::vector<std::vector<pixel>>>
-BaseTanksEnvironment::draw_and_get_enemy_view() {
-  model_matrices.clear();
-
-  for (auto &item : physic_engine->get_items())
-    model_matrices.emplace_back(item->get_name(), item->get_model_matrix());
-
-  model_matrices.emplace_back(
-      "cubemap", glm::scale(glm::mat4(1.), glm::vec3(2000., 2000., 2000.)));
-
-  start_barrier.arrive_and_wait();
-
-  // TODO
-
-  on_draw(model_matrices);
-
-  end_barrier.arrive_and_wait();
-
-  return {};
 }

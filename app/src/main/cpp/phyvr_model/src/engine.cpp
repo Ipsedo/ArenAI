@@ -9,8 +9,8 @@
 InitBtThread::InitBtThread(const int num_threads) {
   btSetTaskScheduler(btCreateDefaultTaskScheduler());
   btGetTaskScheduler()->setNumThreads(num_threads);
-  cci.m_defaultMaxPersistentManifoldPoolSize = 8192;
-  cci.m_defaultMaxCollisionAlgorithmPoolSize = 8192;
+  cci.m_defaultMaxPersistentManifoldPoolSize = 1024;
+  cci.m_defaultMaxCollisionAlgorithmPoolSize = 1024;
 }
 
 btDefaultCollisionConstructionInfo InitBtThread::get_cci() const { return cci; }
@@ -18,7 +18,7 @@ btDefaultCollisionConstructionInfo InitBtThread::get_cci() const { return cci; }
 PhysicEngine::PhysicEngine(int threads_num)
     : threads_num(threads_num), init_thread(threads_num),
       m_collision_configuration(new btDefaultCollisionConfiguration()),
-      m_dispatcher(new btCollisionDispatcherMt(m_collision_configuration)),
+      m_dispatcher(new btCollisionDispatcherMt(m_collision_configuration, 40)),
       m_broad_phase(new btDbvtBroadphase()),
       m_pool_solver(new btConstraintSolverPoolMt(threads_num)),
       m_constraint_solver(new btSequentialImpulseConstraintSolverMt()),

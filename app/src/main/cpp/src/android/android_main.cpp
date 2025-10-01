@@ -61,17 +61,17 @@ void android_main(struct android_app *state) {
       }
 
       if (state->destroyRequested != 0) {
-        delete env;
+        // delete env;
         LOG_INFO("closing PhyVR");
         return;
       }
     }
 
-    env->step(1.f / 60.f, {});
+    env->step(1.f / 30.f, {});
 
     std::clock_t now = std::clock();
     auto delta = std::chrono::milliseconds(
-        1000L / 60L - 1000L * (now - last_time) / CLOCKS_PER_SEC);
+        1000L / 30L - 1000L * (now - last_time) / CLOCKS_PER_SEC);
     delta = std::max(delta, std::chrono::milliseconds(0L));
 
     std::this_thread::sleep_for(delta);

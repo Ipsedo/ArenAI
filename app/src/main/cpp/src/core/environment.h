@@ -40,6 +40,8 @@ public:
   void
   reset_drawables(const std::shared_ptr<AbstractGLContext> &new_gl_context);
 
+  ~BaseTanksEnvironment() = default;
+
 private:
   int nb_tanks;
 

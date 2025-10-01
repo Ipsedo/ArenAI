@@ -9,7 +9,7 @@
 HeightMapItem::HeightMapItem(
     std::string name, const std::shared_ptr<AbstractFileReader> &img_reader,
     const std::string &height_map_file, glm::vec3 pos, glm::vec3 scale)
-    : Item(std::move(name)), scale(scale) {
+    : Item(std::move(name)), shape_id(height_map_file), scale(scale) {
   img_rgb tmp = img_reader->read_png(height_map_file);
   img_grey img = AbstractFileReader::to_img_grey(tmp);
 
@@ -32,7 +32,7 @@ HeightMapItem::HeightMapItem(
 }
 
 std::shared_ptr<Shape> HeightMapItem::get_shape() {
-  return std::make_shared<FromMeshShape>(vertices, normals);
+  return std::make_shared<FromMeshShape>(shape_id, vertices, normals);
 }
 
 btRigidBody *HeightMapItem::get_body() { return body; }

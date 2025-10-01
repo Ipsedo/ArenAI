@@ -93,8 +93,8 @@ Program::Builder::add_texture(const std::string &name,
           cube_textures,        textures};
 }
 
-std::unique_ptr<Program> Program::Builder::build() {
-  std::unique_ptr<Program> program = std::make_unique<Program>();
+std::shared_ptr<Program> Program::Builder::build() {
+  auto program = std::make_shared<Program>();
 
   program->program_id = glCreateProgram();
 

@@ -11,7 +11,7 @@
 
 class WheelItem : public ConvexItem, public Controller {
 public:
-  WheelItem(std::string name,
+  WheelItem(const std::string &prefix_name,
             const std::shared_ptr<AbstractFileReader> &file_reader,
             glm::vec3 pos, glm::vec3 rel_pos, glm::vec3 scale, float mass,
             btRigidBody *chassis);

@@ -10,33 +10,35 @@
 #include <dlfcn.h>
 #include <thread>
 
-#include "./core.h"
+#include "./game_environment.h"
 #include <phyvr_utils/logging.h>
 
 // https://github.com/JustJokerX/NativeActivityFromJavaActivity/blob/master/app/src/main/cpp/main.cpp
 
 static void on_cmd_wrapper(struct android_app *app, int32_t cmd) {
-  auto *engine = (CoreEngine *)app->userData;
+  auto *engine = (UserGameTanksEnvironment *)app->userData;
   engine->on_cmd(app, cmd);
 }
 
 static int32_t on_input_wrapper(struct android_app *app, AInputEvent *event) {
-  auto *engine = (class CoreEngine *)app->userData;
+  auto *engine = (class UserGameTanksEnvironment *)app->userData;
   return engine->on_input(app, event);
 }
 
 void android_main(struct android_app *state) {
-  CoreEngine *engine;
+  UserGameTanksEnvironment *env;
 
   /*if (state->savedState != nullptr) {
       // We are starting with a previous saved state; restore from it.
-      engine = (CoreEngine *) state->savedState;
+      env = (UserGameTanksEnvironment *) state->savedState;
       LOG_INFO("load state");
   } else {*/
-  engine = new CoreEngine(state);
+  env = new UserGameTanksEnvironment(state);
   //}
 
-  state->userData = engine;
+  env->reset_physics();
+
+  state->userData = env;
   state->onAppCmd = on_cmd_wrapper;
   state->onInputEvent = on_input_wrapper;
 
@@ -47,8 +49,8 @@ void android_main(struct android_app *state) {
     int events;
     struct android_poll_source *source;
 
-    while ((ident = ALooper_pollAll(engine->is_running() ? 0 : -1, nullptr,
-                                    &events, (void **)&source)) >= 0) {
+    while ((ident = ALooper_pollOnce(env->is_running() ? 0 : -1, nullptr,
+                                     &events, (void **)&source)) >= 0) {
 
       if (source != nullptr) {
         source->process(state, source);
@@ -59,14 +61,13 @@ void android_main(struct android_app *state) {
       }
 
       if (state->destroyRequested != 0) {
-        delete engine;
+        delete env;
         LOG_INFO("closing PhyVR");
         return;
       }
     }
 
-    engine->step(1.f / 60.f);
-    engine->draw();
+    env->step(1.f / 60.f, {});
 
     std::clock_t now = std::clock();
     auto delta = std::chrono::milliseconds(

@@ -5,6 +5,9 @@
 #ifndef PHYVR_ENGINE_H
 #define PHYVR_ENGINE_H
 
+#include <BulletCollision/CollisionDispatch/btCollisionDispatcherMt.h>
+#include <BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolverMt.h>
+#include <BulletDynamics/Dynamics/btDiscreteDynamicsWorldMt.h>
 #include <btBulletDynamicsCommon.h>
 #include <glm/glm.hpp>
 #include <tuple>
@@ -12,9 +15,18 @@
 
 #include "./item.h"
 
+class InitBtThread {
+public:
+  explicit InitBtThread(int num_threads);
+  btDefaultCollisionConstructionInfo get_cci() const;
+
+private:
+  btDefaultCollisionConstructionInfo cci;
+};
+
 class PhysicEngine {
 public:
-  PhysicEngine();
+  explicit PhysicEngine(int threads_num);
 
   void add_item(const std::shared_ptr<Item> &item);
   void add_item_producer(const std::shared_ptr<ItemProducer> &item_producer);
@@ -23,14 +35,19 @@ public:
 
   std::vector<std::shared_ptr<Item>> get_items();
 
+  void remove_bodies_and_constraints();
+
   ~PhysicEngine();
 
 private:
+  int threads_num;
+  InitBtThread init_thread;
   btDefaultCollisionConfiguration *m_collision_configuration;
-  btCollisionDispatcher *m_dispatcher;
+  btCollisionDispatcherMt *m_dispatcher;
   btBroadphaseInterface *m_broad_phase;
-  btSequentialImpulseConstraintSolver *m_constraint_solver;
-  btDiscreteDynamicsWorld *m_world;
+  btConstraintSolverPoolMt *m_pool_solver;
+  btSequentialImpulseConstraintSolverMt *m_constraint_solver;
+  btDiscreteDynamicsWorldMt *m_world;
 
   std::vector<std::shared_ptr<Item>> items;
   std::vector<std::shared_ptr<ItemProducer>> item_producers;

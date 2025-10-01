@@ -29,7 +29,7 @@ public:
 private:
   std::function<button(void)> get_input;
 
-  std::unique_ptr<Program> program;
+  std::shared_ptr<Program> program;
 
   float center_x, center_y;
   float size;
@@ -50,7 +50,7 @@ public:
 private:
   std::function<joystick(void)> get_input;
 
-  std::unique_ptr<Program> program;
+  std::shared_ptr<Program> program;
 
   float center_x, center_y;
   float size, stick_size;

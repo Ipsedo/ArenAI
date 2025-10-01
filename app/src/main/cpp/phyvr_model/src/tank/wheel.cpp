@@ -6,12 +6,12 @@
 
 #include <utility>
 
-WheelItem::WheelItem(std::string name,
+WheelItem::WheelItem(const std::string &prefix_name,
                      const std::shared_ptr<AbstractFileReader> &file_reader,
                      glm::vec3 pos, glm::vec3 rel_pos, glm::vec3 scale,
                      float mass, btRigidBody *chassis)
     : ConvexItem(
-          std::move(name),
+          prefix_name + "_wheel",
           std::make_shared<ObjShape>(file_reader, "obj/anubis_wheel.obj"), pos,
           scale, mass) {
 

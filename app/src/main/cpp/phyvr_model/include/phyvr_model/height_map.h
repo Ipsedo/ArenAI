@@ -35,7 +35,7 @@ protected:
   glm::vec3 _get_scale() override;
 
 private:
-  std::shared_ptr<Shape> shape;
+  std::string shape_id;
   glm::vec3 scale;
 
   std::vector<std::tuple<float, float, float>> vertices;

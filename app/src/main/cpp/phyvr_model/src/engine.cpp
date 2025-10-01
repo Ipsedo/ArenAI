@@ -6,14 +6,25 @@
 
 #include <algorithm>
 
-PhysicEngine::PhysicEngine()
-    : m_collision_configuration(new btDefaultCollisionConfiguration()),
-      m_dispatcher(new btCollisionDispatcher(m_collision_configuration)),
+InitBtThread::InitBtThread(const int num_threads) {
+  btSetTaskScheduler(btCreateDefaultTaskScheduler());
+  btGetTaskScheduler()->setNumThreads(num_threads);
+  cci.m_defaultMaxPersistentManifoldPoolSize = 8192;
+  cci.m_defaultMaxCollisionAlgorithmPoolSize = 8192;
+}
+
+btDefaultCollisionConstructionInfo InitBtThread::get_cci() const { return cci; }
+
+PhysicEngine::PhysicEngine(int threads_num)
+    : threads_num(threads_num), init_thread(threads_num),
+      m_collision_configuration(new btDefaultCollisionConfiguration()),
+      m_dispatcher(new btCollisionDispatcherMt(m_collision_configuration)),
       m_broad_phase(new btDbvtBroadphase()),
-      m_constraint_solver(new btSequentialImpulseConstraintSolver()),
-      m_world(new btDiscreteDynamicsWorld(m_dispatcher, m_broad_phase,
-                                          m_constraint_solver,
-                                          m_collision_configuration)),
+      m_pool_solver(new btConstraintSolverPoolMt(threads_num)),
+      m_constraint_solver(new btSequentialImpulseConstraintSolverMt()),
+      m_world(new btDiscreteDynamicsWorldMt(m_dispatcher, m_broad_phase,
+                                            m_pool_solver, m_constraint_solver,
+                                            m_collision_configuration)),
       item_producers(), items() {
 
   m_world->setGravity(btVector3(0, -9.8f, 0));
@@ -38,17 +49,27 @@ void PhysicEngine::step(float delta) {
     for (const auto &item : item_producer->get_produced_items())
       add_item(item);
 
-  m_world->stepSimulation(delta);
+  m_world->stepSimulation(delta, threads_num, delta);
 }
 
 std::vector<std::shared_ptr<Item>> PhysicEngine::get_items() { return items; }
 
-PhysicEngine::~PhysicEngine() {
+void PhysicEngine::remove_bodies_and_constraints() {
+  for (int i = m_world->getNumConstraints() - 1; i >= 0; i--) {
+    btTypedConstraint *constraint = m_world->getConstraint(i);
+    m_world->removeConstraint(constraint);
+    delete constraint;
+  }
+
   for (int i = m_world->getNumCollisionObjects() - 1; i >= 0; i--) {
     btCollisionObject *obj = m_world->getCollisionObjectArray()[i];
     m_world->removeCollisionObject(obj);
     delete obj;
   }
+}
+
+PhysicEngine::~PhysicEngine() {
+  remove_bodies_and_constraints();
 
   delete m_world;
   delete m_broad_phase;

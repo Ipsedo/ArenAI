@@ -4,23 +4,42 @@
 
 #include <phyvr_model/convex.h>
 
+#include <phyvr_utils/cache.h>
+#include <phyvr_utils/singleton.h>
 #include <utility>
 
 ConvexItem::ConvexItem(std::string name, const std::shared_ptr<Shape> &shape,
                        glm::vec3 position, glm::vec3 scale, float mass)
     : Item(std::move(name)), shape(shape), scale(scale) {
-  auto *convex_hull_shape = new btConvexHullShape();
 
-  for (auto [x, y, z] : shape->get_vertices())
-    convex_hull_shape->addPoint(btVector3(x, y, z));
-
-  collision_shape = convex_hull_shape;
-
-  collision_shape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
+  auto collision_shape_cache =
+      Singleton<Cache<btCollisionShape *>>::get_singleton();
+  auto local_inertia_cache = Singleton<Cache<btVector3>>::get_singleton();
 
   btVector3 local_inertia(0, 0, 0);
-  if (mass != 0.f)
-    collision_shape->calculateLocalInertia(mass, local_inertia);
+
+  auto tmp = shape->get_id();
+
+  if (collision_shape_cache->exists(shape->get_id())) {
+    collision_shape = collision_shape_cache->get(shape->get_id());
+    local_inertia = local_inertia_cache->get(shape->get_id());
+  } else {
+    auto *convex_hull_shape = new btConvexHullShape();
+
+    for (auto [x, y, z] : shape->get_vertices())
+      convex_hull_shape->addPoint(btVector3(x, y, z));
+
+    collision_shape = convex_hull_shape;
+
+    collision_shape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
+
+    if (mass != 0.f) {
+      collision_shape->calculateLocalInertia(mass, local_inertia);
+    }
+
+    collision_shape_cache->add(shape->get_id(), collision_shape);
+    local_inertia_cache->add(shape->get_id(), local_inertia);
+  }
 
   btTransform original_tr;
   original_tr.setIdentity();

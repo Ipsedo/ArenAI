@@ -9,13 +9,15 @@
 
 #include <EGL/egl.h>
 #include <array>
+#include <glm/glm.hpp>
 #include <vector>
 
 typedef std::array<std::uint8_t, 4> pixel;
 
-class FrameBufferContext : public AbstractGLContext {
+class PBufferGLContext : public AbstractGLContext {
 public:
-  FrameBufferContext(int width, int height);
+  PBufferGLContext();
+
   EGLDisplay get_display() override;
 
   EGLSurface get_surface() override;
@@ -28,20 +30,22 @@ private:
   EGLContext context;
 };
 
-class FrameBufferRenderer : public Renderer {
+class PBufferRenderer : public Renderer {
 public:
-  FrameBufferRenderer(const std::shared_ptr<Camera> &camera,
-                      glm::vec3 light_pos);
+  PBufferRenderer(int width, int height, glm::vec3 light_pos,
+                  const std::shared_ptr<Camera> &camera);
 
-  void add_hud_drawable(std::unique_ptr<HUDDrawable> hud_drawable) override;
+  std::vector<std::vector<pixel>> draw_and_get_frame(
+      const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices);
 
-  std::vector<std::vector<pixel>> get_frame();
+  ~PBufferRenderer() override;
 
 protected:
-  void _on_end_frame() override;
+  void
+  on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_context) override;
 
-private:
-  std::vector<std::vector<pixel>> last_frame;
+  void
+  on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_context) override;
 };
 
 #endif // PHYVR_FRAMEBUFFER_RENDERER_H

@@ -5,14 +5,28 @@
 #include <phyvr_view/errors.h>
 #include <phyvr_view/specular.h>
 
+#include <phyvr_utils/cache.h>
+#include <phyvr_utils/singleton.h>
+
+/*
+ * Specular
+ */
+
 Specular::Specular(const std::shared_ptr<AbstractFileReader> &file_reader,
                    const std::vector<std::tuple<float, float, float>> &vertices,
                    const std::vector<std::tuple<float, float, float>> &normals,
                    glm::vec4 ambient_color, glm::vec4 diffuse_color,
-                   glm::vec4 specular_color, float shininess)
+                   glm::vec4 specular_color, float shininess,
+                   const std::string &shape_id)
     : ambient_color(ambient_color), diffuse_color(diffuse_color),
       specular_color(specular_color), nb_vertices(int(vertices.size())),
       shininess(shininess) {
+
+  auto cache = Singleton<Cache<std::shared_ptr<Program>>>::get_singleton();
+  if (cache->exists(shape_id)) {
+    program = cache->get(shape_id);
+    return;
+  }
 
   std::vector<float> vbo_data;
   for (int i = 0; i < vertices.size(); i++) {
@@ -43,6 +57,8 @@ Specular::Specular(const std::shared_ptr<AbstractFileReader> &file_reader,
                 .add_attribute("a_position")
                 .add_attribute("a_normal")
                 .build();
+
+  cache->add(shape_id, program);
 }
 
 void Specular::draw(glm::mat4 mvp_matrix, glm::mat4 mv_matrix,

@@ -2,8 +2,8 @@
 // Created by samuel on 28/09/2025.
 //
 
-#ifndef PHYVR_ANDROID_RENDERER_H
-#define PHYVR_ANDROID_RENDERER_H
+#ifndef PHYVR_ANDROID_GL_CONTEXT_H
+#define PHYVR_ANDROID_GL_CONTEXT_H
 
 #include <EGL/egl.h>
 #include <android/native_activity.h>
@@ -26,11 +26,4 @@ private:
   EGLContext context;
 };
 
-class NormalRenderer : public Renderer {
-public:
-  NormalRenderer(ANativeWindow *window, const std::shared_ptr<Camera> &camera);
-
-protected:
-  void _on_end_frame() override;
-};
-#endif // PHYVR_ANDROID_RENDERER_H
+#endif // PHYVR_ANDROID_GL_CONTEXT_H

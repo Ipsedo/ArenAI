@@ -16,7 +16,7 @@
 class TankFactory {
 public:
   TankFactory(const std::shared_ptr<AbstractFileReader> &file_reader,
-              glm::vec3 chassis_pos);
+              const std::string &tank_prefix_name, glm::vec3 chassis_pos);
 
   std::shared_ptr<Camera> get_camera();
   std::vector<std::shared_ptr<Item>> get_items();
@@ -26,6 +26,8 @@ public:
   std::map<std::string, std::shared_ptr<Shape>> load_ammu_shapes();
 
 private:
+  std::string name;
+
   std::shared_ptr<Camera> camera;
   std::vector<std::shared_ptr<Item>> items;
   std::vector<std::shared_ptr<ItemProducer>> item_producers;

@@ -1,104 +1,113 @@
 //
 // Created by samuel on 29/09/2025.
 //
-#include <array>
-#include <glm/glm.hpp>
-#include <iostream>
 #include <phyvr_view/framebuffer_renderer.h>
+
+#include <array>
+#include <iostream>
 #include <vector>
 
-FrameBufferRenderer::FrameBufferRenderer(const std::shared_ptr<Camera> &camera,
-                                         glm::vec3 light_pos)
-    : Renderer(std::make_shared<FrameBufferContext>(256, 256), 256, 256,
-               light_pos, camera) {}
+/*
+ * Context
+ */
 
-void FrameBufferRenderer::add_hud_drawable(
-    std::unique_ptr<HUDDrawable> hud_drawable) {
-  throw std::runtime_error("can't add hud drawable to RL agent renderer");
+PBufferGLContext::PBufferGLContext() : AbstractGLContext() {
+  display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+
+  const EGLint config_attrib[] = {EGL_RENDERABLE_TYPE,
+                                  EGL_OPENGL_ES3_BIT,
+                                  EGL_SURFACE_TYPE,
+                                  EGL_PBUFFER_BIT,
+                                  EGL_RED_SIZE,
+                                  4,
+                                  EGL_GREEN_SIZE,
+                                  4,
+                                  EGL_BLUE_SIZE,
+                                  4,
+                                  EGL_ALPHA_SIZE,
+                                  0,
+                                  EGL_DEPTH_SIZE,
+                                  16,
+                                  EGL_STENCIL_SIZE,
+                                  8,
+                                  EGL_SAMPLES,
+                                  0,
+                                  EGL_NONE};
+  const EGLint context_attrib[] = {EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE};
+  EGLint num_config = 0;
+  EGLConfig config;
+
+  eglChooseConfig(display, config_attrib, &config, 1, &num_config);
+
+  context = eglCreateContext(display, config, EGL_NO_CONTEXT, context_attrib);
+
+  const EGLint pbattribs[] = {EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE};
+  surface = eglCreatePbufferSurface(display, config, pbattribs);
 }
 
-void FrameBufferRenderer::_on_end_frame() {
-  std::vector<std::uint8_t> rgba(get_width() * get_height() * 4);
+EGLDisplay PBufferGLContext::get_display() { return display; }
 
-  glPixelStorei(GL_PACK_ALIGNMENT, 1);
-  glReadPixels(0, 0, get_width(), get_height(), GL_RGBA, GL_UNSIGNED_BYTE,
-               rgba.data());
+EGLSurface PBufferGLContext::get_surface() { return surface; }
+
+EGLContext PBufferGLContext::get_context() { return context; }
+
+/*
+ * Frame Buffer
+ */
+
+PBufferRenderer::PBufferRenderer(int width, int height, glm::vec3 light_pos,
+                                 const std::shared_ptr<Camera> &camera)
+    : Renderer(std::make_shared<PBufferGLContext>(), width, height, light_pos,
+               camera) {}
+
+void PBufferRenderer::on_new_frame(
+    const std::shared_ptr<AbstractGLContext> &gl_context) {
+
+  glViewport(0, 0, get_width(), get_height());
+  glScissor(0, 0, get_width(), get_height());
+
+  glDisable(GL_BLEND);
+  glDisable(GL_DITHER);
+  glEnable(GL_CULL_FACE);
+  // glCullFace(GL_BACK);
+  // glFrontFace(GL_CCW);
+
+  glEnable(GL_DEPTH_TEST);
+  glDepthFunc(GL_LEQUAL);
+  glDepthMask(GL_TRUE);
+
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void PBufferRenderer::on_end_frame(
+    const std::shared_ptr<AbstractGLContext> &gl_context) {}
+
+std::vector<std::vector<pixel>> PBufferRenderer::draw_and_get_frame(
+    const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
+  draw(model_matrices);
 
   std::vector<std::vector<pixel>> image(get_height(),
                                         std::vector<pixel>(get_width()));
-  for (int y = 0; y < get_height(); ++y) {
-    for (int x = 0; x < get_width(); ++x) {
-      size_t idx = (static_cast<size_t>(y) * get_width() + x) * 4;
-      image[y][x] = {rgba[idx + 0], rgba[idx + 1], rgba[idx + 2],
-                     rgba[idx + 3]};
-    }
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glPixelStorei(GL_PACK_ALIGNMENT, 1);
+  glFinish();
+
+  const int width = get_width();
+  const int height = get_height();
+
+  std::vector<pixel> linear(static_cast<size_t>(width) *
+                            static_cast<size_t>(height));
+  glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, linear.data());
+
+  for (int y = 0; y < height; ++y) {
+    const int src_y = y;
+    const int dst_y = (height - 1 - y);
+    std::memcpy(image[dst_y].data(),
+                linear.data() + static_cast<size_t>(src_y) * width,
+                sizeof(pixel) * static_cast<size_t>(width));
   }
-
-  last_frame = image;
+  return image;
 }
 
-std::vector<std::vector<pixel>> FrameBufferRenderer::get_frame() {
-  return last_frame;
-}
-
-/*
- * GL Context
- */
-
-FrameBufferContext::FrameBufferContext(int width, int height) {
-  display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-  if (display == EGL_NO_DISPLAY)
-    throw std::runtime_error("Can't create display");
-
-  EGLint major = 0, minor = 0;
-  if (eglInitialize(display, &major, &minor) != EGL_TRUE)
-    throw std::runtime_error("Can't initialise EGL");
-
-  const EGLint config_attributes[] = {EGL_SURFACE_TYPE,
-                                      EGL_PBUFFER_BIT,
-                                      EGL_RENDERABLE_TYPE,
-                                      EGL_OPENGL_ES3_BIT,
-                                      EGL_RED_SIZE,
-                                      8,
-                                      EGL_GREEN_SIZE,
-                                      8,
-                                      EGL_BLUE_SIZE,
-                                      8,
-                                      EGL_ALPHA_SIZE,
-                                      8,
-                                      EGL_DEPTH_SIZE,
-                                      24,
-                                      EGL_NONE};
-  EGLConfig config;
-  EGLint num_configs = 0;
-  if (eglChooseConfig(display, config_attributes, &config, 1, &num_configs) !=
-          EGL_TRUE ||
-      num_configs == 0)
-    throw std::runtime_error("Can't choose config");
-
-  const EGLint pbuf_attributes[] = {EGL_WIDTH, width, EGL_HEIGHT, height,
-                                    EGL_NONE};
-  surface = eglCreatePbufferSurface(display, config, pbuf_attributes);
-
-  if (surface == EGL_NO_SURFACE)
-    throw std::runtime_error("Can't create surface");
-
-  if (eglBindAPI(EGL_OPENGL_ES_API) != EGL_TRUE)
-    throw std::runtime_error("Can't bind API");
-
-  const EGLint context_attributes[] = {EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE};
-  context =
-      eglCreateContext(display, config, EGL_NO_CONTEXT, context_attributes);
-
-  if (context == EGL_NO_CONTEXT)
-    throw std::runtime_error("Can't create context");
-
-  if (eglMakeCurrent(display, surface, surface, context) != EGL_TRUE)
-    throw std::runtime_error("Can't make context");
-}
-
-EGLDisplay FrameBufferContext::get_display() { return display; }
-
-EGLSurface FrameBufferContext::get_surface() { return surface; }
-
-EGLContext FrameBufferContext::get_context() { return context; }
+PBufferRenderer::~PBufferRenderer() = default;

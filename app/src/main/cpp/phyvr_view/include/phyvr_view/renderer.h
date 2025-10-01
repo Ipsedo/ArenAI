@@ -22,9 +22,15 @@
 
 class AbstractGLContext {
 public:
+  AbstractGLContext();
   virtual EGLDisplay get_display() = 0;
   virtual EGLSurface get_surface() = 0;
   virtual EGLContext get_context() = 0;
+
+  void make_current();
+
+private:
+  bool current_called;
 };
 
 class Renderer {
@@ -36,7 +42,6 @@ public:
                             std::unique_ptr<Drawable> drawable);
   virtual void remove_drawable(const std::string &name);
 
-  virtual void add_hud_drawable(std::unique_ptr<HUDDrawable> hud_drawable);
   void
   draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices);
 
@@ -46,11 +51,11 @@ public:
   virtual ~Renderer();
 
 protected:
-  virtual void _on_end_frame() = 0;
+  virtual void
+  on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_context) = 0;
 
-  EGLDisplay _get_display();
-  EGLSurface _get_surface();
-  EGLContext _get_context();
+  virtual void
+  on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_context) = 0;
 
 private:
   int width;
@@ -58,14 +63,30 @@ private:
 
   glm::vec3 light_pos;
 
-  std::shared_ptr<Camera> camera;
-
   std::map<std::string, std::unique_ptr<Drawable>> drawables;
-  std::vector<std::unique_ptr<HUDDrawable>> hud_drawables;
 
-  EGLDisplay display;
-  EGLSurface surface;
-  EGLContext context;
+  std::shared_ptr<AbstractGLContext> gl_context;
+
+  std::shared_ptr<Camera> camera;
+};
+
+class PlayerRenderer : public Renderer {
+public:
+  PlayerRenderer(const std::shared_ptr<AbstractGLContext> &gl_context,
+                 int width, int height, const glm::vec3 &lightPos,
+                 const std::shared_ptr<Camera> &camera);
+
+  virtual void add_hud_drawable(std::unique_ptr<HUDDrawable> hud_drawable);
+
+protected:
+  void
+  on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_context) override;
+
+  void
+  on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_context) override;
+
+private:
+  std::vector<std::unique_ptr<HUDDrawable>> hud_drawables;
 };
 
 #endif // PHYVR_RENDERER_H

@@ -65,7 +65,7 @@ void ButtonDrawable::draw(int width, int height) {
 
   glLineWidth(pressed ? 8.f : 5.f);
 
-  // draw
+  // on_draw
   program->use();
 
   program->attrib("a_position", "circle_buffer", 3, 3 * 4, 0);
@@ -130,7 +130,7 @@ void JoyStickDrawable::draw(int width, int height) {
 
   glLineWidth(5.f);
 
-  // draw
+  // on_draw
   program->use();
 
   program->attrib("a_position", "square_buffer", 3, 3 * 4, 0);

@@ -3,20 +3,38 @@
 //
 
 #include <phyvr_model/shapes.h>
+#include <phyvr_utils/cache.h>
+#include <phyvr_utils/singleton.h>
 
 #include <utility>
 
 #include <phyvr_utils/string_utils.h>
 
-ObjShape::ObjShape(const std::shared_ptr<AbstractFileReader> &text_reader,
+/*
+ * Obj Shape
+ */
+
+ObjShape::ObjShape(const std::shared_ptr<AbstractFileReader> &file_reader,
                    const std::string &obj_file_path) {
+
+  auto cache = Singleton<Cache<std::shared_ptr<Shape>>>::get_singleton();
+  if (cache->exists(obj_file_path)) {
+    auto shape = cache->get(obj_file_path);
+    shape_id = shape->get_id();
+    vertices = shape->get_vertices();
+    normals = shape->get_normals();
+    return;
+  }
+
+  shape_id = obj_file_path;
+
   std::vector<std::tuple<float, float, float>> vertices_ref;
   std::vector<std::tuple<float, float, float>> normals_ref;
 
   std::vector<int> vertices_order;
   std::vector<int> normals_order;
 
-  std::string file_content = text_reader->read_text(obj_file_path);
+  std::string file_content = file_reader->read_text(obj_file_path);
   std::vector<std::string> lines = split_string(file_content, '\n');
 
   for (const auto &line : lines) {
@@ -46,6 +64,9 @@ ObjShape::ObjShape(const std::shared_ptr<AbstractFileReader> &text_reader,
     vertices.push_back(vertices_ref[vertices_order[i] - 1]);
     normals.push_back(normals_ref[normals_order[i] - 1]);
   }
+
+  cache->add(obj_file_path,
+             std::make_shared<FromMeshShape>(shape_id, vertices, normals));
 }
 
 std::vector<std::tuple<float, float, float>> ObjShape::get_vertices() {
@@ -56,12 +77,16 @@ std::vector<std::tuple<float, float, float>> ObjShape::get_normals() {
   return normals;
 }
 
+std::string ObjShape::get_id() { return shape_id; }
+
 // FromMeshShape
 
 FromMeshShape::FromMeshShape(
+    const std::string &shape_id,
     std::vector<std::tuple<float, float, float>> vertices,
     std::vector<std::tuple<float, float, float>> normals)
-    : vertices(std::move(vertices)), normals(std::move(normals)) {}
+    : shape_id(shape_id), vertices(std::move(vertices)),
+      normals(std::move(normals)) {}
 
 std::vector<std::tuple<float, float, float>> FromMeshShape::get_vertices() {
   return vertices;
@@ -70,3 +95,5 @@ std::vector<std::tuple<float, float, float>> FromMeshShape::get_vertices() {
 std::vector<std::tuple<float, float, float>> FromMeshShape::get_normals() {
   return normals;
 }
+
+std::string FromMeshShape::get_id() { return shape_id; }

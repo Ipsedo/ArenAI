@@ -17,7 +17,8 @@ btDefaultCollisionConstructionInfo InitBtThread::get_cci() const { return cci; }
 
 PhysicEngine::PhysicEngine(int threads_num)
     : threads_num(threads_num), init_thread(threads_num),
-      m_collision_configuration(new btDefaultCollisionConfiguration(init_thread.get_cci())),
+      m_collision_configuration(
+          new btDefaultCollisionConfiguration(init_thread.get_cci())),
       m_dispatcher(new btCollisionDispatcherMt(m_collision_configuration, 40)),
       m_broad_phase(new btDbvtBroadphase()),
       m_pool_solver(new btConstraintSolverPoolMt(threads_num)),

@@ -45,7 +45,7 @@ void android_main(struct android_app *state) {
   state->onAppCmd = on_cmd_wrapper;
   state->onInputEvent = on_input_wrapper;
 
-  const float target_fps = 30.0f;
+  const float target_fps = 60.0f;
   const secs_f frame_dt = secs_f(1.0f / target_fps);
 
   auto last_time = steady_clock_t::now();

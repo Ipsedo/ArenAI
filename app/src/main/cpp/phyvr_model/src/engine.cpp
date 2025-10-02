@@ -9,15 +9,15 @@
 InitBtThread::InitBtThread(const int num_threads) {
   btSetTaskScheduler(btCreateDefaultTaskScheduler());
   btGetTaskScheduler()->setNumThreads(num_threads);
-  cci.m_defaultMaxPersistentManifoldPoolSize = 1024;
-  cci.m_defaultMaxCollisionAlgorithmPoolSize = 1024;
+  cci.m_defaultMaxPersistentManifoldPoolSize = 8192;
+  cci.m_defaultMaxCollisionAlgorithmPoolSize = 8192;
 }
 
 btDefaultCollisionConstructionInfo InitBtThread::get_cci() const { return cci; }
 
 PhysicEngine::PhysicEngine(int threads_num)
     : threads_num(threads_num), init_thread(threads_num),
-      m_collision_configuration(new btDefaultCollisionConfiguration()),
+      m_collision_configuration(new btDefaultCollisionConfiguration(init_thread.get_cci())),
       m_dispatcher(new btCollisionDispatcherMt(m_collision_configuration, 40)),
       m_broad_phase(new btDbvtBroadphase()),
       m_pool_solver(new btConstraintSolverPoolMt(threads_num)),
@@ -28,15 +28,6 @@ PhysicEngine::PhysicEngine(int threads_num)
       item_producers(), items() {
 
   m_world->setGravity(btVector3(0, -9.8f, 0));
-
-  auto &solver_info = m_world->getSolverInfo();
-  solver_info.m_numIterations = 6;
-  solver_info.m_warmstartingFactor = 0.9f;
-  solver_info.m_splitImpulse = true;
-  solver_info.m_erp = 0.2f;
-  solver_info.m_erp2 = 0.8f;
-  solver_info.m_sor = 1.0f;
-  solver_info.m_minimumSolverBatchSize = 128;
 }
 
 void PhysicEngine::add_item(const std::shared_ptr<Item> &item) {
@@ -58,7 +49,7 @@ void PhysicEngine::step(float delta) {
     for (const auto &item : item_producer->get_produced_items())
       add_item(item);
 
-  m_world->stepSimulation(delta, 2, 1.f / 60.f);
+  m_world->stepSimulation(delta, 1, 1.f / 60.f);
 }
 
 std::vector<std::shared_ptr<Item>> PhysicEngine::get_items() { return items; }

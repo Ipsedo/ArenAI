@@ -47,7 +47,6 @@ void android_main(struct android_app *state) {
 
   const float target_fps = 30.0f;
   const secs_f frame_dt = secs_f(1.0f / target_fps);
-  const float max_dt_seconds = 0.25f;
 
   auto last_time = steady_clock_t::now();
   auto next_frame =
@@ -72,13 +71,11 @@ void android_main(struct android_app *state) {
     }
 
     auto now = steady_clock_t::now();
-    auto dt = std::chrono::duration_cast<secs_f>(now - last_time);
+    auto elapsed_time = std::chrono::duration_cast<secs_f>(now - last_time);
     last_time = now;
 
-    dt = std::max(secs_f(max_dt_seconds), dt);
+    std::this_thread::sleep_for(frame_dt - elapsed_time);
 
-    std::this_thread::sleep_for(frame_dt - dt);
-
-    env->step(dt.count(), {});
+    env->step(frame_dt.count(), {});
   }
 }

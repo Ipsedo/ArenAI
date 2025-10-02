@@ -22,7 +22,7 @@
 UserGameTanksEnvironment::UserGameTanksEnvironment(struct android_app *app)
     : BaseTanksEnvironment(
           std::make_shared<AndroidFileReader>(app->activity->assetManager),
-          std::make_shared<AndroidGLContext>(app->window), 5, 2),
+          std::make_shared<AndroidGLContext>(app->window), 4, 3),
       app(app), tank_factory(std::nullptr_t()), is_paused(true),
       player_renderer(std::nullptr_t()),
       player_controller_engine(std::nullptr_t()) {}

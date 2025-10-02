@@ -25,6 +25,9 @@ static int32_t on_input_wrapper(struct android_app *app, AInputEvent *event) {
   return engine->on_input(app, event);
 }
 
+typedef std::chrono::steady_clock steady_clock_t;
+typedef std::chrono::duration<float> secs_f;
+
 void android_main(struct android_app *state) {
   UserGameTanksEnvironment *env;
 
@@ -42,7 +45,14 @@ void android_main(struct android_app *state) {
   state->onAppCmd = on_cmd_wrapper;
   state->onInputEvent = on_input_wrapper;
 
-  std::clock_t last_time = std::clock();
+  const float target_fps = 30.0f;
+  const secs_f frame_dt = secs_f(1.0f / target_fps);
+  const float max_dt_seconds = 0.25f;
+
+  auto last_time = steady_clock_t::now();
+  auto next_frame =
+      last_time +
+      std::chrono::duration_cast<steady_clock_t::duration>(frame_dt);
 
   while (true) {
     int ident;
@@ -51,15 +61,9 @@ void android_main(struct android_app *state) {
 
     while ((ident = ALooper_pollOnce(env->is_running() ? 0 : -1, nullptr,
                                      &events, (void **)&source)) >= 0) {
-
       if (source != nullptr) {
         source->process(state, source);
       }
-
-      // If a sensor has data, process it now.
-      if (ident == LOOPER_ID_USER) {
-      }
-
       if (state->destroyRequested != 0) {
         // delete env;
         LOG_INFO("closing PhyVR");
@@ -67,15 +71,14 @@ void android_main(struct android_app *state) {
       }
     }
 
-    env->step(1.f / 30.f, {});
-
-    std::clock_t now = std::clock();
-    auto delta = std::chrono::milliseconds(
-        1000L / 30L - 1000L * (now - last_time) / CLOCKS_PER_SEC);
-    delta = std::max(delta, std::chrono::milliseconds(0L));
-
-    std::this_thread::sleep_for(delta);
-
+    auto now = steady_clock_t::now();
+    auto dt = std::chrono::duration_cast<secs_f>(now - last_time);
     last_time = now;
+
+    dt = std::max(secs_f(max_dt_seconds), dt);
+
+    std::this_thread::sleep_for(frame_dt - dt);
+
+    env->step(dt.count(), {});
   }
 }

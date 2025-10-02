@@ -28,6 +28,15 @@ PhysicEngine::PhysicEngine(int threads_num)
       item_producers(), items() {
 
   m_world->setGravity(btVector3(0, -9.8f, 0));
+
+  auto &solver_info = m_world->getSolverInfo();
+  solver_info.m_numIterations = 6;
+  solver_info.m_warmstartingFactor = 0.9f;
+  solver_info.m_splitImpulse = true;
+  solver_info.m_erp = 0.2f;
+  solver_info.m_erp2 = 0.8f;
+  solver_info.m_sor = 1.0f;
+  solver_info.m_minimumSolverBatchSize = 128;
 }
 
 void PhysicEngine::add_item(const std::shared_ptr<Item> &item) {
@@ -49,7 +58,7 @@ void PhysicEngine::step(float delta) {
     for (const auto &item : item_producer->get_produced_items())
       add_item(item);
 
-  m_world->stepSimulation(delta, threads_num, delta);
+  m_world->stepSimulation(delta, 2, 1.f / 60.f);
 }
 
 std::vector<std::shared_ptr<Item>> PhysicEngine::get_items() { return items; }

@@ -4,6 +4,7 @@
 #include <phyvr_view/framebuffer_renderer.h>
 
 #include <array>
+#include <cstring>
 #include <iostream>
 #include <vector>
 

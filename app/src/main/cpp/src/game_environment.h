@@ -16,7 +16,7 @@
 #include <phyvr_utils/file_reader.h>
 #include <phyvr_view/renderer.h>
 
-#include "../core/environment.h"
+#include <phyvr_core/environment.h>
 
 class UserGameTanksEnvironment : public BaseTanksEnvironment {
 public:

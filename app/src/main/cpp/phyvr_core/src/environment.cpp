@@ -1,7 +1,7 @@
 //
 // Created by samuel on 29/09/2025.
 //
-#include "./environment.h"
+#include <phyvr_core/environment.h>
 
 #include <phyvr_model/convex.h>
 #include <phyvr_model/height_map.h>

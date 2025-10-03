@@ -4,6 +4,6 @@
 
 #include <iostream>
 
-#include <phyvr_rl/dummy.h>
+#include "./dummy.h"
 
 void dummy() { std::cout << "la" << std::endl; }

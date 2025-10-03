@@ -2,12 +2,9 @@ cmake_minimum_required(VERSION 3.11)
 
 project(phyvr_controller)
 
-# PHYVR CONTROLLER
+include(FetchContent)
+
+##### PhyVR #####
 set(CMAKE_CXX_STANDARD 20)
 
 set(PHYVR_CONTROLLER_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include" CACHE INTERNAL "")
-include_directories(${PHYVR_CONTROLLER_INCLUDE_DIRS})
-
-#set(PHYVR_CONTROLLER_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src")
-#file(GLOB_RECURSE PHYVR_CONTROLLER_SRC "${PHYVR_CONTROLLER_PATH}/*.cpp")
-#add_library(phyvr_controller SHARED ${PHYVR_CONTROLLER_SRC})

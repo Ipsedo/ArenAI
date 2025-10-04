@@ -21,6 +21,8 @@ struct img_grey {
 
 class AbstractFileReader {
 public:
+  virtual ~AbstractFileReader() = default;
+
   virtual std::string read_text(const std::string &file_name) = 0;
   virtual img_rgb read_png(const std::string &png_file_path) = 0;
 

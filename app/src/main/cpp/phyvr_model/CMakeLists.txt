@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.29)
 
 project(phyvr_model)
 
@@ -38,14 +38,6 @@ else ()
     include_directories("${BULLET_INCLUDE_DIR}")
 endif ()
 
-#### JSON ####
-if (ANDROID)
-    FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz)
-    FetchContent_MakeAvailable(json)
-else ()
-    find_package(nlohmann_json 3.12.0 REQUIRED)
-endif ()
-
 ##### PhyVR #####
 set(CMAKE_CXX_STANDARD 20)
 
@@ -63,7 +55,6 @@ add_library(phyvr_model SHARED ${PHYVR_MODEL_SRC})
 target_link_libraries(
         phyvr_model
         BulletDynamics BulletCollision LinearMath
-        nlohmann_json::nlohmann_json
         phyvr_utils
         phyvr_view
         glm::glm

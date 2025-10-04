@@ -63,17 +63,3 @@ void HeightMapItem::processTriangle(btVector3 *triangle, int partid,
   vertices.emplace_back(p3.x, p3.y, p3.z);
   normals.emplace_back(n.x, n.y, n.z);
 }
-
-nlohmann::json HeightMapItem::get_state() {
-  auto state = Item::get_state();
-
-  state["scale"] = {{"x", scale.x}, {"y", scale.y}, {"z", scale.z}};
-
-  return state;
-}
-
-void HeightMapItem::from_state(const nlohmann::json &state) {
-  Item::from_state(state);
-  scale =
-      glm::vec3(state["scale"]["x"], state["scale"]["y"], state["scale"]["z"]);
-}

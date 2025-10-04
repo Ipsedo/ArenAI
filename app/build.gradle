@@ -14,6 +14,10 @@ android {
                 arguments "-DCMAKE_VERBOSE_MAKEFILE=ON"
             }
         }
+        ndk {
+            //noinspection ChromeOsAbiSupport
+            abiFilters "arm64-v8a"
+        }
     }
     buildTypes {
         debug {
@@ -36,13 +40,14 @@ android {
     externalNativeBuild {
         cmake {
             path "CMakeLists.txt"
+            version "3.30.3"
         }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_10
         targetCompatibility JavaVersion.VERSION_1_10
     }
-    ndkVersion "26.3.11579264"
+    ndkVersion "27.3.13750724"
     namespace 'com.samuelberrien.phyvr'
 }
 

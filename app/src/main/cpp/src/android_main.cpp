@@ -13,6 +13,8 @@
 #include "./game_environment.h"
 #include <phyvr_utils/logging.h>
 
+#include "./agent/executorch_agent.h"
+
 // https://github.com/JustJokerX/NativeActivityFromJavaActivity/blob/master/app/src/main/cpp/main.cpp
 
 static void on_cmd_wrapper(struct android_app *app, int32_t cmd) {
@@ -76,6 +78,6 @@ void android_main(struct android_app *state) {
 
     std::this_thread::sleep_for(frame_dt - elapsed_time);
 
-    env->step(frame_dt.count(), {});
+    auto step_result = env->step(frame_dt.count(), {});
   }
 }

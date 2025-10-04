@@ -1,0 +1,8 @@
+torch
+numpy
+executorch
+
+pre-commit
+mypy
+pylint
+pytest

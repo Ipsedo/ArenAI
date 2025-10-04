@@ -11,6 +11,10 @@ find_package(Torch REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 include_directories(${TORCH_INCLUDE_DIRS})
 
+# SOIL
+find_package(SOIL2 REQUIRED)
+include_directories(${SOIL_INCLUDE_DIR})
+
 # PHYVR
 set(PHYVR_CPP_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/../app/src/main/cpp")
 
@@ -30,10 +34,7 @@ set(PHYVR_TRAIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 file(GLOB_RECURSE PHYVR_TRAIN_SRC "${PHYVR_TRAIN_PATH}/*.cpp")
 
-add_executable(phyvr_train_host ${PHYVR_TRAIN_SRC}
-        src/vision.h
-        src/agent.cpp
-)
+add_executable(phyvr_train_host ${PHYVR_TRAIN_SRC})
 
 target_link_libraries(
         phyvr_train_host
@@ -42,4 +43,5 @@ target_link_libraries(
         phyvr_utils
         phyvr_core
         ${TORCH_LIBRARIES}
+        ${SOIL_LIBRARY}
 )

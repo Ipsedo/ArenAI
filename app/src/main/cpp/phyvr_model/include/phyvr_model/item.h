@@ -10,7 +10,6 @@
 
 #include <btBulletDynamicsCommon.h>
 #include <glm/glm.hpp>
-#include <nlohmann/json.hpp>
 
 #include "./shapes.h"
 
@@ -26,9 +25,6 @@ public:
 
   virtual btRigidBody *get_body() = 0;
   virtual std::vector<btTypedConstraint *> get_constraints();
-
-  virtual nlohmann::json get_state();
-  virtual void from_state(const nlohmann::json &state);
 
 private:
   std::string name;

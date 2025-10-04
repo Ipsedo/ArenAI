@@ -2,5 +2,38 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/backends/arm/third-party/ethos-u-core-driver" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/backends/arm/third-party/serialization_lib" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/backends/arm/third-party/serialization_lib/third_party/flatbuffers" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/backends/cadence/utils/FACTO" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/backends/vulkan/third-party/Vulkan-Headers" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/backends/vulkan/third-party/VulkanMemoryAllocator" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/backends/vulkan/third-party/volk" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/backends/xnnpack/third-party/FP16" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/backends/xnnpack/third-party/FXdiv" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/backends/xnnpack/third-party/XNNPACK" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/backends/xnnpack/third-party/cpuinfo" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/backends/xnnpack/third-party/pthreadpool" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/extension/llm/tokenizers" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/extension/llm/tokenizers/third-party/abseil-cpp" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/extension/llm/tokenizers/third-party/json" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/extension/llm/tokenizers/third-party/pcre2" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/extension/llm/tokenizers/third-party/pcre2/deps/sljit" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/extension/llm/tokenizers/third-party/re2" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/extension/llm/tokenizers/third-party/sentencepiece" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/kernels/optimized/third-party/eigen" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/shim" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/third-party/ao" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/third-party/ao/third_party/cutlass" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/third-party/flatbuffers" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/third-party/flatcc" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/third-party/gflags" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/third-party/googletest" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/third-party/ios-cmake" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/third-party/json" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/third-party/pocketfft" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/third-party/prelude" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/build/executorch/third-party/pybind11" vcs="Git" />
   </component>
 </project>

@@ -3,6 +3,7 @@
 //
 
 #include "./loader.h"
+#include <vector>
 
 std::string copy_asset_to_files(AAssetManager *mgr, const char *asset_name,
                                 const char *dst_dir) {

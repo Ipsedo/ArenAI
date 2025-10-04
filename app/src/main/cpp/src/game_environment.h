@@ -20,7 +20,8 @@
 
 class UserGameTanksEnvironment : public BaseTanksEnvironment {
 public:
-  explicit UserGameTanksEnvironment(struct android_app *app);
+  explicit UserGameTanksEnvironment(struct android_app *app, int nb_tanks,
+                                    int threads_num);
 
   bool is_running() const;
 

@@ -6,9 +6,14 @@
 #define PHYVR_LOADER_H
 
 #include <android/asset_manager.h>
+#include <android_native_app_glue.h>
+#include <jni.h>
 #include <string>
 
-std::string copy_asset_to_files(AAssetManager *mgr, const char *asset_name,
-                                const char *dst_dir);
+std::string get_cache_dir(android_app *app);
+
+std::string copy_asset_to_files(AAssetManager *mgr,
+                                const std::string &asset_name,
+                                const std::string &dst_dir);
 
 #endif // PHYVR_LOADER_H

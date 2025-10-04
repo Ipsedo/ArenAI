@@ -31,6 +31,9 @@ typedef std::chrono::steady_clock steady_clock_t;
 typedef std::chrono::duration<float> secs_f;
 
 void android_main(struct android_app *state) {
+  constexpr int nb_tanks = 4;
+  constexpr int threads_num = 4;
+
   UserGameTanksEnvironment *env;
 
   /*if (state->savedState != nullptr) {
@@ -38,10 +41,12 @@ void android_main(struct android_app *state) {
       env = (UserGameTanksEnvironment *) state->savedState;
       LOG_INFO("load state");
   } else {*/
-  env = new UserGameTanksEnvironment(state);
+  env = new UserGameTanksEnvironment(state, nb_tanks, threads_num);
   //}
 
-  env->reset_physics();
+  auto agents_state = env->reset_physics();
+
+  ExecuTorchAgent agent(state, "executorch/actor.pte");
 
   state->userData = env;
   state->onAppCmd = on_cmd_wrapper;
@@ -78,6 +83,11 @@ void android_main(struct android_app *state) {
 
     std::this_thread::sleep_for(frame_dt - elapsed_time);
 
-    auto step_result = env->step(frame_dt.count(), {});
+    auto actions = agent.act(agents_state);
+    auto step_result = env->step(frame_dt.count(), actions);
+
+    agents_state.clear();
+    std::transform(step_result.begin(), step_result.end(), agents_state.end(),
+                   [](auto t) { return std::get<0>(t); });
   }
 }

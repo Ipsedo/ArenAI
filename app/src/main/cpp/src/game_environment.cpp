@@ -19,10 +19,13 @@
 
 #include <glm/gtx/transform.hpp>
 
-UserGameTanksEnvironment::UserGameTanksEnvironment(struct android_app *app)
+UserGameTanksEnvironment::UserGameTanksEnvironment(struct android_app *app,
+                                                   int nb_tanks,
+                                                   int threads_num)
     : BaseTanksEnvironment(
           std::make_shared<AndroidFileReader>(app->activity->assetManager),
-          std::make_shared<AndroidGLContext>(app->window), 4, 4),
+          std::make_shared<AndroidGLContext>(app->window), nb_tanks,
+          threads_num),
       app(app), tank_factory(std::nullptr_t()), is_paused(true),
       player_renderer(std::nullptr_t()),
       player_controller_engine(std::nullptr_t()) {}

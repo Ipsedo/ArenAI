@@ -11,7 +11,7 @@ android_ndk_import_module_native_app_glue()
 # ExecuTorch #
 ##############
 
-set(ET_SOURCE_DIR "${CMAKE_SOURCE_DIR}/build/executorch")
+set(ET_SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/_deps/executorch")
 set(PYTHON_VENV_DIR "${CMAKE_SOURCE_DIR}/build/venv_et")
 set(PYTHON_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python3.12")
 execute_process(

@@ -28,7 +28,7 @@ private:
     std::shared_ptr<Shape> shape;
 
     btRigidBody *body;
-    btCollisionShape *collision_shape;
+    btConvexHullShape *collision_shape;
 
     glm::vec3 scale;
 };

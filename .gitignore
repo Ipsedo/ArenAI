@@ -11,4 +11,7 @@
 /captures
 .externalNativeBuild
 .cxx
-venv_precommit/
+
+venv*/
+.venv*/
+__pycache__/

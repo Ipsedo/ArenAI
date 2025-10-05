@@ -4,6 +4,4 @@
 
 #include "vec.h"
 
-glm::vec3 btVector3ToVec3(btVector3 v) {
-  return glm::vec3(v.x(), v.y(), v.z());
-}
+glm::vec3 btVector3ToVec3(btVector3 v) { return glm::vec3(v.x(), v.y(), v.z()); }

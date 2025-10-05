@@ -6,9 +6,9 @@
 #define PHYVR_TRAIN_HOST_SAVER_H
 
 #include <filesystem>
+
 #include <torch/torch.h>
 
-void export_state_dict_neutral(torch::nn::Module m,
-                               const std::filesystem::path &outdir);
+void export_state_dict_neutral(torch::nn::Module m, const std::filesystem::path &outdir);
 
-#endif // PHYVR_TRAIN_HOST_SAVER_H
+#endif// PHYVR_TRAIN_HOST_SAVER_H

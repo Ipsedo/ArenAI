@@ -5,60 +5,61 @@
 #ifndef PHYVR_CUBEMAP_H
 #define PHYVR_CUBEMAP_H
 
-#include "../misc.h"
-#include <GLES3/gl3.h>
-#include <android/asset_manager.h>
 #include <string>
+
+#include <android/asset_manager.h>
+#include <GLES3/gl3.h>
+
+#include "../misc.h"
 
 using namespace std;
 
 class CubeMap : public Drawable {
 private:
-  GLuint mProgram;
-  GLuint vertexShader;
-  GLuint fragmentShader;
+    GLuint mProgram;
+    GLuint vertexShader;
+    GLuint fragmentShader;
 
-  GLuint texCoordHandle;
-  GLuint mvpMatrixHandle;
-  GLuint samplerCubeHandle;
+    GLuint texCoordHandle;
+    GLuint mvpMatrixHandle;
+    GLuint samplerCubeHandle;
 
-  GLuint textures;
+    GLuint textures;
 
-  float vertices[6 * 2 * 3 * 3] = {
-      -1.f, 1.f,  -1.f, -1.f, -1.f, -1.f, 1.f,  -1.f, -1.f,
-      1.f,  -1.f, -1.f, 1.f,  1.f,  -1.f, -1.f, 1.f,  -1.f,
+    float vertices[6 * 2 * 3 * 3] = {-1.f, 1.f,  -1.f, -1.f, -1.f, -1.f, 1.f,  -1.f, -1.f,
+                                     1.f,  -1.f, -1.f, 1.f,  1.f,  -1.f, -1.f, 1.f,  -1.f,
 
-      -1.f, -1.f, 1.f,  -1.f, -1.f, -1.f, -1.f, 1.f,  -1.f,
-      -1.f, 1.f,  -1.f, -1.f, 1.f,  1.f,  -1.f, -1.f, 1.f,
+                                     -1.f, -1.f, 1.f,  -1.f, -1.f, -1.f, -1.f, 1.f,  -1.f,
+                                     -1.f, 1.f,  -1.f, -1.f, 1.f,  1.f,  -1.f, -1.f, 1.f,
 
-      1.f,  -1.f, -1.f, 1.f,  -1.f, 1.f,  1.f,  1.f,  1.f,
-      1.f,  1.f,  1.f,  1.f,  1.f,  -1.f, 1.f,  -1.f, -1.f,
+                                     1.f,  -1.f, -1.f, 1.f,  -1.f, 1.f,  1.f,  1.f,  1.f,
+                                     1.f,  1.f,  1.f,  1.f,  1.f,  -1.f, 1.f,  -1.f, -1.f,
 
-      -1.f, -1.f, 1.f,  -1.f, 1.f,  1.f,  1.f,  1.f,  1.f,
-      1.f,  1.f,  1.f,  1.f,  -1.f, 1.f,  -1.f, -1.f, 1.f,
+                                     -1.f, -1.f, 1.f,  -1.f, 1.f,  1.f,  1.f,  1.f,  1.f,
+                                     1.f,  1.f,  1.f,  1.f,  -1.f, 1.f,  -1.f, -1.f, 1.f,
 
-      -1.f, 1.f,  -1.f, 1.f,  1.f,  -1.f, 1.f,  1.f,  1.f,
-      1.f,  1.f,  1.f,  -1.f, 1.f,  1.f,  -1.f, 1.f,  -1.f,
+                                     -1.f, 1.f,  -1.f, 1.f,  1.f,  -1.f, 1.f,  1.f,  1.f,
+                                     1.f,  1.f,  1.f,  -1.f, 1.f,  1.f,  -1.f, 1.f,  -1.f,
 
-      -1.f, -1.f, -1.f, -1.f, -1.f, 1.f,  1.f,  -1.f, -1.f,
-      1.f,  -1.f, -1.f, -1.f, -1.f, 1.f,  1.f,  -1.f, 1.f};
+                                     -1.f, -1.f, -1.f, -1.f, -1.f, 1.f,  1.f,  -1.f, -1.f,
+                                     1.f,  -1.f, -1.f, -1.f, -1.f, 1.f,  1.f,  -1.f, 1.f};
 
-  int nbTriangle = 6 * 2 * 3;
+    int nbTriangle = 6 * 2 * 3;
 
-  glm::mat4 modelMatrix;
+    glm::mat4 modelMatrix;
 
-  void bind();
+    void bind();
 
-  void makeProgram();
+    void makeProgram();
 
-  void loadCubeMaptexture(AAssetManager *mgr, string cubaMapAssetPath);
+    void loadCubeMaptexture(AAssetManager *mgr, string cubaMapAssetPath);
 
 public:
-  CubeMap(AAssetManager *mgr, string cubeMapAssetPath, float sideLength);
+    CubeMap(AAssetManager *mgr, string cubeMapAssetPath, float sideLength);
 
-  void draw(draw_infos infos) override;
+    void draw(draw_infos infos) override;
 
-  ~CubeMap();
+    ~CubeMap();
 };
 
-#endif // PHYVR_CUBEMAP_H
+#endif// PHYVR_CUBEMAP_H

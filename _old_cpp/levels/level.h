@@ -5,53 +5,54 @@
 #ifndef PHYVR_LEVEL_H
 #define PHYVR_LEVEL_H
 
+#include <android/asset_manager.h>
+
 #include "../controls.h"
 #include "../core/limits.h"
 #include "../entity/ammu/shooter.h"
 #include "../entity/base.h"
 #include "../graphics/camera.h"
-#include <android/asset_manager.h>
 
 class Level {
 protected:
-  vector<Base *> entities;
-  AAssetManager *mgr;
+    vector<Base *> entities;
+    AAssetManager *mgr;
 
 public:
-  Level();
+    Level();
 
-  virtual void init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world);
+    virtual void init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world);
 
-  virtual vector<Controls *> getControls() = 0;
+    virtual vector<Controls *> getControls() = 0;
 
-  virtual Camera *getCamera() = 0;
+    virtual Camera *getCamera() = 0;
 
-  virtual vector<Shooter *> getShooters() = 0;
+    virtual vector<Shooter *> getShooters() = 0;
 
-  virtual vector<Base *> getEntities() = 0;
+    virtual vector<Base *> getEntities() = 0;
 
-  virtual vector<Drawable *> getDrawables() = 0;
+    virtual vector<Drawable *> getDrawables() = 0;
 
-  virtual Limits getLimits() = 0;
+    virtual Limits getLimits() = 0;
 
-  virtual glm::vec3 getLightPos() = 0;
+    virtual glm::vec3 getLightPos() = 0;
 
-  void addBases(vector<Base *> bs);
+    void addBases(vector<Base *> bs);
 
-  virtual void step() = 0;
+    virtual void step() = 0;
 
-  AAssetManager *getMgr();
+    AAssetManager *getMgr();
 
-  virtual bool won() = 0;
+    virtual bool won() = 0;
 
-  virtual bool lose() = 0;
+    virtual bool lose() = 0;
 
-  template <typename FunDeleteBase> void deleteBase(FunDeleteBase fn) {
-    entities.erase(remove_if(entities.begin(), entities.end(), fn),
-                   entities.end());
-  }
+    template<typename FunDeleteBase>
+    void deleteBase(FunDeleteBase fn) {
+        entities.erase(remove_if(entities.begin(), entities.end(), fn), entities.end());
+    }
 
-  virtual ~Level();
+    virtual ~Level();
 };
 
-#endif // PHYVR_LEVEL_H
+#endif// PHYVR_LEVEL_H

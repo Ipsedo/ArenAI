@@ -4,12 +4,13 @@
 #ifndef PHYVR_OBJVBO_H
 #define PHYVR_OBJVBO_H
 
-#include "glm/glm.hpp"
-#include <GLES3/gl3.h>
 #include <string>
 #include <vector>
 
+#include <GLES3/gl3.h>
+
 #include "diffusemodel.h"
+#include "glm/glm.hpp"
 
 using namespace std;
 
@@ -18,22 +19,21 @@ using namespace std;
  * Use OBJ or STL file
  */
 class ModelVBO : public DiffuseModel {
-  std::vector<float> parseObj(std::string obj_file_text);
+    std::vector<float> parseObj(std::string obj_file_text);
 
 public:
-  ModelVBO(std::string obj_file_text);
+    ModelVBO(std::string obj_file_text);
 
-  ModelVBO(std::string obj_file_text, float r, float g, float b, float a);
+    ModelVBO(std::string obj_file_text, float r, float g, float b, float a);
 };
 
 class TransparentModelVBO : public ModelVBO {
 public:
-  TransparentModelVBO(const string &obj_file_text, float r, float g, float b,
-                      float a);
+    TransparentModelVBO(const string &obj_file_text, float r, float g, float b, float a);
 
-  TransparentModelVBO(const string &obj_file_text);
+    TransparentModelVBO(const string &obj_file_text);
 
-  void draw(gl_draw_info info) override;
+    void draw(gl_draw_info info) override;
 };
 
 #endif

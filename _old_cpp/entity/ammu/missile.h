@@ -9,15 +9,16 @@
 
 class Missile : public Cone {
 public:
-  Missile(DiffuseModel *modelVBO, const glm::vec3 &pos, const glm::vec3 &scale,
-          const glm::mat4 &rotMat, float mass, int life);
+    Missile(
+        DiffuseModel *modelVBO, const glm::vec3 &pos, const glm::vec3 &scale,
+        const glm::mat4 &rotMat, float mass, int life);
 
-  void decreaseLife(int toSub) override;
+    void decreaseLife(int toSub) override;
 
-  bool isDead() override;
+    bool isDead() override;
 
 private:
-  int life;
+    int life;
 };
 
-#endif // PHYVR_MISSILE_H
+#endif// PHYVR_MISSILE_H

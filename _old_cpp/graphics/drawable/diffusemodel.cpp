@@ -3,23 +3,24 @@
 //
 
 #include "diffusemodel.h"
-#include "../../utils/shader.h"
-#include "glm/gtc/type_ptr.hpp"
+
 #include <string>
 
-std::string diffuse_vs =
-    "uniform mat4 u_MVPMatrix;\n"
-    "uniform mat4 u_MVMatrix;\n"
-    "uniform vec4 v_Color;\n"
-    "attribute vec4 a_Position;\n"
-    "attribute vec3 a_Normal;\n"
-    "varying vec3 v_Position;\n"
-    "varying vec3 v_Normal;\n"
-    "void main(){\n"
-    "    v_Position = vec3(u_MVMatrix * a_Position);\n"
-    "    v_Normal = normalize(vec3(u_MVMatrix * vec4(a_Normal, 0.0)));\n"
-    "    gl_Position = u_MVPMatrix * a_Position;\n"
-    "}";
+#include "../../utils/shader.h"
+#include "glm/gtc/type_ptr.hpp"
+
+std::string diffuse_vs = "uniform mat4 u_MVPMatrix;\n"
+                         "uniform mat4 u_MVMatrix;\n"
+                         "uniform vec4 v_Color;\n"
+                         "attribute vec4 a_Position;\n"
+                         "attribute vec3 a_Normal;\n"
+                         "varying vec3 v_Position;\n"
+                         "varying vec3 v_Normal;\n"
+                         "void main(){\n"
+                         "    v_Position = vec3(u_MVMatrix * a_Position);\n"
+                         "    v_Normal = normalize(vec3(u_MVMatrix * vec4(a_Normal, 0.0)));\n"
+                         "    gl_Position = u_MVPMatrix * a_Position;\n"
+                         "}";
 
 std::string diffuse_fs =
     "precision mediump float;\n"
@@ -39,75 +40,72 @@ std::string diffuse_fs =
     "}";
 
 void DiffuseModel::init() {
-  mProgram = glCreateProgram();
-  vertexShader = loadShader(GL_VERTEX_SHADER, diffuse_vs.c_str());
-  fragmentShader = loadShader(GL_FRAGMENT_SHADER, diffuse_fs.c_str());
-  glAttachShader(mProgram, vertexShader);
-  glAttachShader(mProgram, fragmentShader);
-  glLinkProgram(mProgram);
+    mProgram = glCreateProgram();
+    vertexShader = loadShader(GL_VERTEX_SHADER, diffuse_vs.c_str());
+    fragmentShader = loadShader(GL_FRAGMENT_SHADER, diffuse_fs.c_str());
+    glAttachShader(mProgram, vertexShader);
+    glAttachShader(mProgram, fragmentShader);
+    glLinkProgram(mProgram);
 }
 
 void DiffuseModel::bind() {
-  mMVPMatrixHandle = (GLuint)glGetUniformLocation(mProgram, "u_MVPMatrix");
-  mMVMatrixHandle = (GLuint)glGetUniformLocation(mProgram, "u_MVMatrix");
-  mPositionHandle = (GLuint)glGetAttribLocation(mProgram, "a_Position");
-  mColorHandle = (GLuint)glGetUniformLocation(mProgram, "u_Color");
-  mLightPosHandle = (GLuint)glGetUniformLocation(mProgram, "u_LightPos");
-  mDistanceCoefHandle =
-      (GLuint)glGetUniformLocation(mProgram, "u_distance_coef");
-  mLightCoefHandle = (GLuint)glGetUniformLocation(mProgram, "u_light_coef");
-  mNormalHandle = (GLuint)glGetAttribLocation(mProgram, "a_Normal");
+    mMVPMatrixHandle = (GLuint) glGetUniformLocation(mProgram, "u_MVPMatrix");
+    mMVMatrixHandle = (GLuint) glGetUniformLocation(mProgram, "u_MVMatrix");
+    mPositionHandle = (GLuint) glGetAttribLocation(mProgram, "a_Position");
+    mColorHandle = (GLuint) glGetUniformLocation(mProgram, "u_Color");
+    mLightPosHandle = (GLuint) glGetUniformLocation(mProgram, "u_LightPos");
+    mDistanceCoefHandle = (GLuint) glGetUniformLocation(mProgram, "u_distance_coef");
+    mLightCoefHandle = (GLuint) glGetUniformLocation(mProgram, "u_light_coef");
+    mNormalHandle = (GLuint) glGetAttribLocation(mProgram, "a_Normal");
 }
 
 void DiffuseModel::bindBuffer(std::vector<float> packedData) {
-  glGenBuffers(1, &packedDataBufferId);
+    glGenBuffers(1, &packedDataBufferId);
 
-  glBindBuffer(GL_ARRAY_BUFFER, packedDataBufferId);
-  glBufferData(GL_ARRAY_BUFFER, packedData.size() * BYTES_PER_FLOAT,
-               &packedData[0], GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, packedDataBufferId);
+    glBufferData(
+        GL_ARRAY_BUFFER, packedData.size() * BYTES_PER_FLOAT, &packedData[0], GL_STATIC_DRAW);
 
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-  packedData.clear();
+    packedData.clear();
 }
 
 void DiffuseModel::draw(gl_draw_info info) {
-  glUseProgram(mProgram);
+    glUseProgram(mProgram);
 
-  glBindBuffer(GL_ARRAY_BUFFER, packedDataBufferId);
-  glEnableVertexAttribArray(mPositionHandle);
-  glVertexAttribPointer(mPositionHandle, POSITION_SIZE, GL_FLOAT, GL_FALSE,
-                        STRIDE, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, packedDataBufferId);
+    glEnableVertexAttribArray(mPositionHandle);
+    glVertexAttribPointer(mPositionHandle, POSITION_SIZE, GL_FLOAT, GL_FALSE, STRIDE, 0);
 
-  glEnableVertexAttribArray(mNormalHandle);
-  glVertexAttribPointer(mNormalHandle, NORMAL_SIZE, GL_FLOAT, GL_FALSE, STRIDE,
-                        (char *)NULL + POSITION_SIZE * BYTES_PER_FLOAT);
+    glEnableVertexAttribArray(mNormalHandle);
+    glVertexAttribPointer(
+        mNormalHandle, NORMAL_SIZE, GL_FLOAT, GL_FALSE, STRIDE,
+        (char *) NULL + POSITION_SIZE * BYTES_PER_FLOAT);
 
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-  glUniformMatrix4fv(mMVPMatrixHandle, 1, GL_FALSE,
-                     glm::value_ptr(info.mvp_matrix));
+    glUniformMatrix4fv(mMVPMatrixHandle, 1, GL_FALSE, glm::value_ptr(info.mvp_matrix));
 
-  glUniformMatrix4fv(mMVMatrixHandle, 1, GL_FALSE,
-                     glm::value_ptr(info.mv_matrix));
+    glUniformMatrix4fv(mMVMatrixHandle, 1, GL_FALSE, glm::value_ptr(info.mv_matrix));
 
-  glUniform3fv(mLightPosHandle, 1, glm::value_ptr(info.light_pos));
+    glUniform3fv(mLightPosHandle, 1, glm::value_ptr(info.light_pos));
 
-  glUniform4fv(mColorHandle, 1, color);
+    glUniform4fv(mColorHandle, 1, color);
 
-  glUniform1f(mDistanceCoefHandle, distanceCoef);
+    glUniform1f(mDistanceCoefHandle, distanceCoef);
 
-  glUniform1f(mLightCoefHandle, lightCoef);
+    glUniform1f(mLightCoefHandle, lightCoef);
 
-  glDrawArrays(GL_TRIANGLES, 0, nbVertex);
+    glDrawArrays(GL_TRIANGLES, 0, nbVertex);
 
-  glDisableVertexAttribArray(mPositionHandle);
-  glDisableVertexAttribArray(mNormalHandle);
+    glDisableVertexAttribArray(mPositionHandle);
+    glDisableVertexAttribArray(mNormalHandle);
 }
 
 DiffuseModel::~DiffuseModel() {
-  glDeleteBuffers(1, &packedDataBufferId);
-  glDeleteShader(vertexShader);
-  glDeleteShader(fragmentShader);
-  glDeleteProgram(mProgram);
+    glDeleteBuffers(1, &packedDataBufferId);
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+    glDeleteProgram(mProgram);
 }

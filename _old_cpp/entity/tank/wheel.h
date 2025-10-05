@@ -5,13 +5,14 @@
 #ifndef PHYVR_WHEEL_H
 #define PHYVR_WHEEL_H
 
+#include <android/asset_manager.h>
+
 #include "../../controls.h"
 #include "../../utils/assets.h"
 #include "../../utils/rigidbody.h"
 #include "../poly.h"
 #include "chassis.h"
 #include "glm/glm.hpp"
-#include <android/asset_manager.h>
 
 #define MAX_FRAME_TOP_VEL 30.f
 
@@ -41,48 +42,50 @@ const btVector3 wheelPos[8]{
 
 class Wheel : public Poly, public Controls {
 private:
-  bool isBraking;
-  bool isMotorEnabled;
-  bool hasReAccelerate;
-  bool freeWheel;
+    bool isBraking;
+    bool isMotorEnabled;
+    bool hasReAccelerate;
+    bool freeWheel;
 
-  float targetSpeed;
-  bool respawn;
-  btVector3 pos;
-  btVector3 chassisPos;
+    float targetSpeed;
+    bool respawn;
+    btVector3 pos;
+    btVector3 chassisPos;
 
-  static ModelVBO *makeWheelMesh(AAssetManager *mgr);
+    static ModelVBO *makeWheelMesh(AAssetManager *mgr);
 
 protected:
-  btGeneric6DofSpring2Constraint *hinge;
+    btGeneric6DofSpring2Constraint *hinge;
 
 public:
-  Wheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis,
-        btVector3 chassisPos, btVector3 pos);
+    Wheel(
+        AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos,
+        btVector3 pos);
 
-  /*
+    /*
    * Control overrides
    */
-  void onInput(input in) override;
-  output getOutput() override;
+    void onInput(input in) override;
+    output getOutput() override;
 
-  /*
+    /*
    * Base override
    */
-  void update() override;
+    void update() override;
 };
 
 class FrontWheel : public Wheel {
 private:
-  float direction;
+    float direction;
 
 public:
-  FrontWheel(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis,
-             btVector3 chassisPos, btVector3 pos);
+    FrontWheel(
+        AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos,
+        btVector3 pos);
 
-  void onInput(input in) override;
+    void onInput(input in) override;
 
-  void update() override;
+    void update() override;
 };
 
-#endif // PHYVR_WHEEL_H
+#endif// PHYVR_WHEEL_H

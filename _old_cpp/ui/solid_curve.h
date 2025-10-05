@@ -11,31 +11,31 @@
 
 class Curve : public Drawable {
 private:
-  Canon *canon;
+    Canon *canon;
 
-  // GPU program handle
-  GLuint mProgram;
-  GLuint vertexShader;
-  GLuint fragmentShader;
+    // GPU program handle
+    GLuint mProgram;
+    GLuint vertexShader;
+    GLuint fragmentShader;
 
-  GLuint mPositionHandle;
-  GLuint mVPMatrixHandle;
-  GLuint mColorHandle;
+    GLuint mPositionHandle;
+    GLuint mVPMatrixHandle;
+    GLuint mColorHandle;
 
-  const int nb_pts = 120;
+    const int nb_pts = 120;
 
-  btBroadphaseInterface *broadPhase;
-  btCollisionDispatcher *dispatcher;
-  btDefaultCollisionConfiguration *collisionConfiguration;
-  btSequentialImpulseConstraintSolver *constraintSolver;
-  btDiscreteDynamicsWorld *world;
+    btBroadphaseInterface *broadPhase;
+    btCollisionDispatcher *dispatcher;
+    btDefaultCollisionConfiguration *collisionConfiguration;
+    btSequentialImpulseConstraintSolver *constraintSolver;
+    btDiscreteDynamicsWorld *world;
 
 public:
-  Curve(Canon *canon);
+    Curve(Canon *canon);
 
-  void draw(draw_infos infos) override;
+    void draw(draw_infos infos) override;
 };
 
 std::vector<btTransform> get_trajectory(btRigidBody *body);
 
-#endif // PHYVR_SOLID_CURVE_H
+#endif// PHYVR_SOLID_CURVE_H

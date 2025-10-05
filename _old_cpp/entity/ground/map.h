@@ -5,12 +5,12 @@
 #ifndef PHYVR_MAP_H
 #define PHYVR_MAP_H
 
+#include <android/asset_manager.h>
+
 #include "../../graphics/drawable/heightmap.h"
 #include "../base.h"
-
 #include "BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h"
 #include "glm/glm.hpp"
-#include <android/asset_manager.h>
 
 btRigidBody::btRigidBodyConstructionInfo
 makeMapCInfo(btHeightfieldTerrainShape *map, btVector3 pos, btVector3 scale);
@@ -19,26 +19,24 @@ DiffuseModel *makeMapModel(btHeightfieldTerrainShape *map);
 
 class Ground : public Base {
 public:
-  Ground(btHeightfieldTerrainShape *shape, btVector3 pos, btVector3 scale)
-      : Base(makeMapCInfo(shape, pos, scale), makeMapModel(shape),
-             glm::vec3(1.0f), true){};
+    Ground(btHeightfieldTerrainShape *shape, btVector3 pos, btVector3 scale)
+        : Base(makeMapCInfo(shape, pos, scale), makeMapModel(shape), glm::vec3(1.0f), true){};
 };
 
 class Map : public Ground {
 private:
-  glm::vec3 minPos;
-  glm::vec3 maxPos;
-  float *normalizedHeightValues;
+    glm::vec3 minPos;
+    glm::vec3 maxPos;
+    float *normalizedHeightValues;
 
 public:
-  Map(float *normalizedHeightValues, int width, int length, btVector3 pos,
-      btVector3 scale);
+    Map(float *normalizedHeightValues, int width, int length, btVector3 pos, btVector3 scale);
 
-  glm::vec3 getMinPos();
+    glm::vec3 getMinPos();
 
-  glm::vec3 getMaxPos();
+    glm::vec3 getMaxPos();
 
-  ~Map();
+    ~Map();
 };
 
-#endif // PHYVR_MAP_H
+#endif// PHYVR_MAP_H

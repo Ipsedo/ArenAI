@@ -9,4 +9,4 @@
 
 float *jfloatPtrToCppFloatPtr(jfloat *array, int length);
 
-#endif // PHYVR_UTILS_H
+#endif// PHYVR_UTILS_H

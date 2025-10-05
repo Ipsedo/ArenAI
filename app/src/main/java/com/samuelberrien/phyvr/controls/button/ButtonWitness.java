@@ -1,7 +1,7 @@
 package com.samuelberrien.phyvr.controls.button;
 
 import android.content.Context;
-import android.support.v4.content.ContextCompat;
+import androidx.core.content.ContextCompat;
 import android.view.View;
 import com.samuelberrien.phyvr.R;
 

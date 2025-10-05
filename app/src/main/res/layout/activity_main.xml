@@ -21,15 +21,8 @@
 				android:layout_height="wrap_content"
 				android:background="@drawable/button"
 				android:layout_margin="@dimen/stroke_width"
-				android:text="Normal"
-				android:onClick="normal"/>
-			<Button
-					android:layout_width="match_parent"
-					android:layout_height="wrap_content"
-					android:background="@drawable/button"
-					android:layout_margin="@dimen/stroke_width"
-					android:text="VR"
-					android:onClick="vr"/>
+				android:text="Play"
+				android:onClick="play"/>
 		</LinearLayout>
 
 

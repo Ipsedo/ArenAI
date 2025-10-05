@@ -1,18 +1,20 @@
 package com.samuelberrien.phyvr;
 
+import android.app.ActionBar;
+import android.app.Activity;
+import android.app.NativeActivity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.util.DisplayMetrics;
 import android.view.View;
-import android.widget.CheckBox;
 import android.widget.NumberPicker;
 
 import com.samuelberrien.phyvr.controls.ControlActivity;
 import com.samuelberrien.phyvr.controls.GamePadActivity;
-import com.samuelberrien.phyvr.game.PlayActivity;
-import com.samuelberrien.phyvr.game.MyGvrActivity;
 
-public class MainActivity extends AppCompatActivity implements NumberPicker.OnValueChangeListener {
+public class MainActivity extends Activity implements NumberPicker.OnValueChangeListener {
 
 	private int levelIdx;
 	public static final String levelIdxExtraStr = "Level_Idx";
@@ -35,17 +37,9 @@ public class MainActivity extends AppCompatActivity implements NumberPicker.OnVa
 		levelPicker.setOnValueChangedListener(this);
 	}
 
-	public void normal(View v) {
-		Intent myIntent = new Intent(this, PlayActivity.class);
-		myIntent.putExtra(levelIdxExtraStr, levelIdx);
-		myIntent.putExtra(useControllerExtraStr, ((CheckBox) findViewById(R.id.use_controller_switch)).isChecked());
-		startActivity(myIntent);
-	}
-
-	public void vr(View v) {
-		Intent myIntent = new Intent(this, MyGvrActivity.class);
-		myIntent.putExtra(levelIdxExtraStr, levelIdx);
-		startActivity(myIntent);
+	public void play(View v) {
+		Intent intent = new Intent(this, NativeActivity.class);
+		startActivity(intent);
 	}
 
 	public void configureGamePad(View v) {

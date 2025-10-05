@@ -13,13 +13,14 @@
 
 class ShellItem : public ConvexItem {
 public:
-  static std::shared_ptr<Shape>
-  load_shape(const std::shared_ptr<AbstractFileReader> &file_reader);
+    static std::shared_ptr<Shape>
+    load_shape(const std::shared_ptr<AbstractFileReader> &file_reader);
 
-  ShellItem(const std::shared_ptr<AbstractFileReader> &file_reader,
-            glm::vec3 pos, glm::quat rot, glm::vec3 scale, float mass);
+    ShellItem(
+        const std::shared_ptr<AbstractFileReader> &file_reader, glm::vec3 pos, glm::quat rot,
+        glm::vec3 scale, float mass);
 
-  inline const static std::string NAME = "shell_item";
+    inline const static std::string NAME = "shell_item";
 };
 
-#endif // PHYVR_AMMU_H
+#endif// PHYVR_AMMU_H

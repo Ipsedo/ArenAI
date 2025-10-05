@@ -9,4 +9,4 @@
 
 float dp_to_px(AConfiguration *config, int dp);
 
-#endif // PHYVR_UNITS_H
+#endif// PHYVR_UNITS_H

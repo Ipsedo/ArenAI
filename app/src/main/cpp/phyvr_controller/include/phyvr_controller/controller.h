@@ -14,7 +14,7 @@
 
 class Controller {
 public:
-  virtual void on_input(const user_input &input) = 0;
+    virtual void on_input(const user_input &input) = 0;
 };
 
-#endif // PHYVR_CONTROLLER_H
+#endif// PHYVR_CONTROLLER_H

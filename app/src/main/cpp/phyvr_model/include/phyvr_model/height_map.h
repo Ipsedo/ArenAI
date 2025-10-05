@@ -7,37 +7,33 @@
 
 #include <btBulletDynamicsCommon.h>
 
-#include <phyvr_utils/file_reader.h>
-
 #include <phyvr_model/item.h>
 #include <phyvr_model/shapes.h>
 #include <phyvr_utils/file_reader.h>
 
 class HeightMapItem : public Item, public btTriangleCallback {
 public:
-  HeightMapItem(std::string name,
-                const std::shared_ptr<AbstractFileReader> &img_reader,
-                const std::string &height_map_file, glm::vec3 pos,
-                glm::vec3 scale);
+    HeightMapItem(
+        std::string name, const std::shared_ptr<AbstractFileReader> &img_reader,
+        const std::string &height_map_file, glm::vec3 pos, glm::vec3 scale);
 
-  std::shared_ptr<Shape> get_shape() override;
+    std::shared_ptr<Shape> get_shape() override;
 
-  btRigidBody *get_body() override;
+    btRigidBody *get_body() override;
 
-  void processTriangle(btVector3 *triangle, int partid,
-                       int triangleindex) override;
+    void processTriangle(btVector3 *triangle, int partid, int triangleindex) override;
 
 protected:
-  glm::vec3 _get_scale() override;
+    glm::vec3 _get_scale() override;
 
 private:
-  std::string shape_id;
-  glm::vec3 scale;
+    std::string shape_id;
+    glm::vec3 scale;
 
-  std::vector<std::tuple<float, float, float>> vertices;
-  std::vector<std::tuple<float, float, float>> normals;
+    std::vector<std::tuple<float, float, float>> vertices;
+    std::vector<std::tuple<float, float, float>> normals;
 
-  btRigidBody *body;
+    btRigidBody *body;
 };
 
-#endif // PHYVR_HEIGHT_MAP_H
+#endif// PHYVR_HEIGHT_MAP_H

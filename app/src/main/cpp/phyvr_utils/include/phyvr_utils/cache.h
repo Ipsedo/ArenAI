@@ -8,26 +8,25 @@
 #include <map>
 #include <memory>
 
-template <template <class> class C, class Type>
+template<template<class> class C, class Type>
 static std::shared_ptr<C<Type>> get_singleton() {
-  if (C<Type>::singleton_cache == std::nullptr_t())
-    C<Type>::singleton_cache = std::shared_ptr<C<Type>>(new C<Type>());
-  return C<Type>::singleton_cache;
+    if (C<Type>::singleton_cache == std::nullptr_t())
+        C<Type>::singleton_cache = std::shared_ptr<C<Type>>(new C<Type>());
+    return C<Type>::singleton_cache;
 }
 
-template <class T> class Cache {
+template<class T>
+class Cache {
 private:
-  std::map<std::string, T> cache;
+    std::map<std::string, T> cache;
 
 public:
-  Cache() : cache() {}
+    Cache() : cache() {}
 
-  bool exists(const std::string &name) {
-    return cache.find(name) != cache.end();
-  }
+    bool exists(const std::string &name) { return cache.find(name) != cache.end(); }
 
-  void add(const std::string &name, const T &obj) { cache[name] = obj; }
-  T get(const std::string &name) { return cache[name]; }
+    void add(const std::string &name, const T &obj) { cache[name] = obj; }
+    T get(const std::string &name) { return cache[name]; }
 };
 
-#endif // PHYVR_CACHE_H
+#endif// PHYVR_CACHE_H

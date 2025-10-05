@@ -9,9 +9,10 @@
 
 class Drawable {
 public:
-  virtual void draw(glm::mat4 mvp_matrix, glm::mat4 mv_matrix,
-                    glm::vec3 light_pos_from_camera, glm::vec3 camera_pos) = 0;
-  virtual ~Drawable(){};
+    virtual void draw(
+        glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos_from_camera,
+        glm::vec3 camera_pos) = 0;
+    virtual ~Drawable(){};
 };
 
-#endif // PHYVR_DRAWABLE_H
+#endif// PHYVR_DRAWABLE_H

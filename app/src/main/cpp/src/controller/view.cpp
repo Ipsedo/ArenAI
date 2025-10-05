@@ -14,24 +14,22 @@ View::View(int screen_width, int screen_height)
     : screen_width(screen_width), screen_height(screen_height), dimens_dps() {}
 
 void View::add_dimen(const std::string &dimen_name, int dimen_dp) {
-  dimens_dps.insert({dimen_name, dimen_dp});
+    dimens_dps.insert({dimen_name, dimen_dp});
 }
 
 float View::get_pixel(AConfiguration *config, const std::string &dimen_name) {
-  return dp_to_px(config, dimens_dps[dimen_name]);
+    return dp_to_px(config, dimens_dps[dimen_name]);
 }
 
 /*
  * LinearLayout
  */
 
-LinearLayout::LinearLayout(int screen_width, int screen_height,
-                           LinearLayout::ORIENTATION orientation)
+LinearLayout::LinearLayout(
+    int screen_width, int screen_height, LinearLayout::ORIENTATION orientation)
     : View(screen_width, screen_height), orientation(orientation) {}
 
-void LinearLayout::add_view(const std::shared_ptr<View> &view) {
-  views.push_back(view);
-}
+void LinearLayout::add_view(const std::shared_ptr<View> &view) { views.push_back(view); }
 
 float LinearLayout::get_width() { return 0; }
 
@@ -52,9 +50,8 @@ void LinearLayout::build() {}
 CornerLayout::CornerLayout(int screen_width, int screen_height)
     : View(screen_width, screen_height) {}
 
-void CornerLayout::add_view(const std::shared_ptr<View> &view,
-                            CornerLayout::CORNER corner) {
-  views.insert({corner, view});
+void CornerLayout::add_view(const std::shared_ptr<View> &view, CornerLayout::CORNER corner) {
+    views.insert({corner, view});
 }
 
 float CornerLayout::get_width() { return 0; }

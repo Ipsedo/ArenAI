@@ -30,7 +30,7 @@ typedef std::chrono::steady_clock steady_clock_t;
 typedef std::chrono::duration<float> secs_f;
 
 void android_main(struct android_app *app) {
-    constexpr int nb_tanks = 4;
+    constexpr int nb_tanks = 8;
     bool will_quit = false;
 
     auto env = std::make_unique<UserGameTanksEnvironment>(app, nb_tanks);

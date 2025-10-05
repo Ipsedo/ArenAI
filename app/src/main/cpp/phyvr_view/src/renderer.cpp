@@ -90,6 +90,8 @@ Renderer::~Renderer() {
   display = EGL_NO_DISPLAY;
   context = EGL_NO_CONTEXT;
   surface = EGL_NO_SURFACE;
+
+  eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 }
 
 /*

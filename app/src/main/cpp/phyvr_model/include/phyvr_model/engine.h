@@ -20,7 +20,10 @@ public:
   explicit InitBtThread(int num_threads);
   btDefaultCollisionConstructionInfo get_cci() const;
 
+  ~InitBtThread();
+
 private:
+  btITaskScheduler *scheduler;
   btDefaultCollisionConstructionInfo cci;
 };
 

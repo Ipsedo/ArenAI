@@ -40,20 +40,20 @@ public:
   void
   reset_drawables(const std::shared_ptr<AbstractGLContext> &new_gl_context);
 
-  virtual ~BaseTanksEnvironment() = default;
+  virtual ~BaseTanksEnvironment();
 
 private:
   int nb_tanks;
 
   std::atomic<bool> threads_running;
-  std::barrier<> start_barrier;
-  std::barrier<> end_barrier;
+  std::barrier<> thread_barrier;
   std::vector<std::thread> pool;
 
   std::vector<std::tuple<std::string, glm::mat4>> model_matrices;
 
   std::vector<TankFactory> tank_factories;
   std::vector<std::shared_ptr<PBufferRenderer>> tank_renderers;
+  std::vector<std::vector<std::vector<pixel>>> enemy_visions;
 
   std::shared_ptr<PhysicEngine> physic_engine;
 
@@ -71,6 +71,9 @@ protected:
   virtual void
   on_reset_drawables(const std::shared_ptr<PhysicEngine> &engine,
                      const std::shared_ptr<AbstractGLContext> &gl_context) = 0;
+
+  void start_threads();
+  void kill_threads();
 
   std::random_device dev;
   std::mt19937 rng;

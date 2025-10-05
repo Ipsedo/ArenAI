@@ -30,27 +30,19 @@ static int32_t on_input_wrapper(struct android_app *app, AInputEvent *event) {
 typedef std::chrono::steady_clock steady_clock_t;
 typedef std::chrono::duration<float> secs_f;
 
-void android_main(struct android_app *state) {
+void android_main(struct android_app *app) {
   constexpr int nb_tanks = 4;
   constexpr int threads_num = 4;
+  bool will_quit = false;
 
-  UserGameTanksEnvironment *env;
-
-  /*if (state->savedState != nullptr) {
-      // We are starting with a previous saved state; restore from it.
-      env = (UserGameTanksEnvironment *) state->savedState;
-      LOG_INFO("load state");
-  } else {*/
-  env = new UserGameTanksEnvironment(state, nb_tanks, threads_num);
-  //}
-
+  auto env = new UserGameTanksEnvironment(app, nb_tanks, threads_num);
   auto agents_state = env->reset_physics();
 
-  ExecuTorchAgent agent(state, "executorch/actor.pte");
+  ExecuTorchAgent agent(app, "executorch/actor.pte");
 
-  state->userData = env;
-  state->onAppCmd = on_cmd_wrapper;
-  state->onInputEvent = on_input_wrapper;
+  app->userData = env;
+  app->onAppCmd = on_cmd_wrapper;
+  app->onInputEvent = on_input_wrapper;
 
   const float target_fps = 60.0f;
   const secs_f frame_dt = secs_f(1.0f / target_fps);
@@ -60,20 +52,19 @@ void android_main(struct android_app *state) {
       last_time +
       std::chrono::duration_cast<steady_clock_t::duration>(frame_dt);
 
-  while (true) {
+  while (!will_quit) {
     int ident;
     int events;
     struct android_poll_source *source;
 
     while ((ident = ALooper_pollOnce(env->is_running() ? 0 : -1, nullptr,
                                      &events, (void **)&source)) >= 0) {
-      if (source != nullptr) {
-        source->process(state, source);
-      }
-      if (state->destroyRequested != 0) {
-        // delete env;
-        LOG_INFO("closing PhyVR");
-        return;
+      if (source != nullptr)
+        source->process(app, source);
+
+      if (app->destroyRequested != 0) {
+        will_quit = true;
+        break;
       }
     }
 
@@ -90,4 +81,8 @@ void android_main(struct android_app *state) {
     std::transform(step_result.begin(), step_result.end(), agents_state.end(),
                    [](auto t) { return std::get<0>(t); });
   }
+  app->onAppCmd = nullptr;
+  app->onInputEvent = nullptr;
+  app->userData = nullptr;
+  delete env;
 }

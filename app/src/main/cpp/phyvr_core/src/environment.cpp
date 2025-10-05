@@ -15,11 +15,11 @@ BaseTanksEnvironment::BaseTanksEnvironment(
     const std::shared_ptr<AbstractGLContext> &gl_context, int nb_tanks,
     int threads_num)
     : nb_tanks(nb_tanks), threads_running(true),
-      start_barrier{static_cast<std::ptrdiff_t>(nb_tanks + 1)},
-      end_barrier{static_cast<std::ptrdiff_t>(nb_tanks + 1)}, tank_factories(),
-      tank_renderers(),
+      thread_barrier{static_cast<std::ptrdiff_t>(nb_tanks + 1)},
+      tank_factories(), tank_renderers(), pool(),
       physic_engine(std::make_shared<PhysicEngine>(threads_num)), dev(),
-      rng(dev()), file_reader(file_reader), gl_context(gl_context) {}
+      rng(dev()), file_reader(file_reader), gl_context(gl_context),
+      enemy_visions() {}
 
 std::vector<std::tuple<State, Reward, IsFinish>>
 BaseTanksEnvironment::step(float time_delta,
@@ -32,12 +32,11 @@ BaseTanksEnvironment::step(float time_delta,
   model_matrices.emplace_back(
       "cubemap", glm::scale(glm::mat4(1.), glm::vec3(2000., 2000., 2000.)));
 
-  start_barrier.arrive_and_wait();
+  thread_barrier.arrive_and_wait();
 
   physic_engine->step(time_delta);
   on_draw(model_matrices);
 
-  end_barrier.arrive_and_wait();
   // TODO get enemy visions
 
   return std::vector<std::tuple<State, Reward, IsFinish>>();
@@ -147,30 +146,51 @@ void BaseTanksEnvironment::reset_drawables(
     }
   }
 
-  if (!pool.empty()) {
-    threads_running.store(false, std::memory_order_release);
-    start_barrier.arrive_and_wait();
-  }
-
+  kill_threads();
   threads_running.store(true, std::memory_order_release);
-
-  pool.clear();
-  pool.reserve(tank_renderers.size());
-  for (int i = 0; i < tank_renderers.size(); i++)
-    pool.emplace_back(
-        [this, i]() { worker_enemy_vision(i, tank_renderers[i]); });
+  start_threads();
 }
 
 void BaseTanksEnvironment::worker_enemy_vision(
     int index, const std::shared_ptr<PBufferRenderer> &renderer) {
+
+  enemy_visions[index] = renderer->draw_and_get_frame(model_matrices);
   while (true) {
-    start_barrier.arrive_and_wait();
+    thread_barrier.arrive_and_wait();
 
     if (!threads_running.load(std::memory_order_acquire))
       break;
 
-    // auto frame = renderer->draw_and_get_frame(model_matrices);
-
-    end_barrier.arrive_and_wait();
+    enemy_visions[index] = renderer->draw_and_get_frame(model_matrices);
   }
+}
+
+void BaseTanksEnvironment::start_threads() {
+  pool.reserve(tank_renderers.size());
+  for (int i = 0; i < tank_renderers.size(); i++) {
+    enemy_visions.emplace_back();
+    pool.emplace_back(
+        [this, i]() { worker_enemy_vision(i, tank_renderers[i]); });
+  }
+}
+
+void BaseTanksEnvironment::kill_threads() {
+  if (!pool.empty()) {
+    threads_running.store(false, std::memory_order_release);
+    thread_barrier.arrive_and_wait();
+    for (auto &thread : pool)
+      if (thread.joinable())
+        thread.join();
+    pool.clear();
+  }
+}
+
+BaseTanksEnvironment::~BaseTanksEnvironment() {
+  kill_threads();
+
+  tank_renderers.clear();
+  tank_factories.clear();
+  gl_context = std::nullptr_t();
+  physic_engine = std::nullptr_t();
+  file_reader = std::nullptr_t();
 }

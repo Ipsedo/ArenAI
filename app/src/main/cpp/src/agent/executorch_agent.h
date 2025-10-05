@@ -8,7 +8,6 @@
 #include <android_native_app_glue.h>
 #include <executorch/extension/module/module.h>
 #include <phyvr_core/environment.h>
-#include <vector>
 
 class ExecuTorchAgent {
 public:

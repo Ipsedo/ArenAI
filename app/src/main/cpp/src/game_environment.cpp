@@ -45,13 +45,6 @@ int32_t UserGameTanksEnvironment::on_input(struct android_app *app,
   return player_controller_engine->on_event(event);
 }
 
-void UserGameTanksEnvironment::_pause() {
-  is_paused = true;
-  player_renderer = std::nullptr_t();
-}
-
-bool UserGameTanksEnvironment::is_running() const { return !is_paused; }
-
 void UserGameTanksEnvironment::on_cmd(struct android_app *new_app,
                                       int32_t cmd) {
   switch (cmd) {
@@ -74,21 +67,22 @@ void UserGameTanksEnvironment::on_cmd(struct android_app *new_app,
     }
     break;
   case APP_CMD_TERM_WINDOW:
-    _pause();
+    pause();
     LOG_INFO("close");
     break;
   case APP_CMD_GAINED_FOCUS:
     LOG_INFO("gained focus");
     break;
   case APP_CMD_LOST_FOCUS:
-    _pause();
+    pause();
     LOG_INFO("lost focus");
-    /*engine_draw_frame(engine);*/
     break;
   default:
     break;
   }
 }
+
+bool UserGameTanksEnvironment::is_running() const { return !is_paused; }
 
 void UserGameTanksEnvironment::on_reset_physics(
     const std::shared_ptr<PhysicEngine> &engine) {
@@ -145,4 +139,12 @@ void UserGameTanksEnvironment::on_reset_drawables(
   for (auto &hud_drawable :
        player_controller_engine->get_hud_drawables(file_reader))
     player_renderer->add_hud_drawable(std::move(hud_drawable));
+}
+
+void UserGameTanksEnvironment::pause() { is_paused = true; }
+
+UserGameTanksEnvironment::~UserGameTanksEnvironment() {
+  player_renderer = std::nullptr_t();
+  player_controller_engine = std::nullptr_t();
+  tank_factory = std::nullptr_t();
 }

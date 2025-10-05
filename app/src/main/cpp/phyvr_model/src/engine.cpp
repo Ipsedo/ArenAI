@@ -6,14 +6,17 @@
 
 #include <algorithm>
 
-InitBtThread::InitBtThread(const int num_threads) {
-  btSetTaskScheduler(btCreateDefaultTaskScheduler());
+InitBtThread::InitBtThread(const int num_threads)
+    : scheduler(btCreateDefaultTaskScheduler()) {
+  btSetTaskScheduler(scheduler);
   btGetTaskScheduler()->setNumThreads(num_threads);
   cci.m_defaultMaxPersistentManifoldPoolSize = 8192;
   cci.m_defaultMaxCollisionAlgorithmPoolSize = 8192;
 }
 
 btDefaultCollisionConstructionInfo InitBtThread::get_cci() const { return cci; }
+
+InitBtThread::~InitBtThread() { delete scheduler; }
 
 PhysicEngine::PhysicEngine(int threads_num)
     : threads_num(threads_num), init_thread(threads_num),

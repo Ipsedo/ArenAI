@@ -29,6 +29,10 @@ public:
 
   void on_cmd(struct android_app *app, int32_t cmd);
 
+  void pause();
+
+  ~UserGameTanksEnvironment() override;
+
 protected:
   void on_draw(const std::vector<std::tuple<std::string, glm::mat4>>
                    &model_matrices) override;
@@ -48,8 +52,6 @@ private:
   std::unique_ptr<ControllerEngine> player_controller_engine;
 
   bool is_paused;
-
-  void _pause();
 };
 
 #endif // PHYVR_GAME_ENVIRONMENT_H

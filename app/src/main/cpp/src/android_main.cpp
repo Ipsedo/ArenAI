@@ -85,6 +85,7 @@ void android_main(struct android_app *app) {
     app->onInputEvent = nullptr;
 
     env.reset();
+    agent.reset();
     UserGameTanksEnvironment::reset_singleton();
     eglTerminate(eglGetDisplay(EGL_DEFAULT_DISPLAY));
 }

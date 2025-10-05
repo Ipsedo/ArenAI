@@ -115,6 +115,4 @@ void PlayerRenderer::on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_c
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-PlayerRenderer::~PlayerRenderer() {
-    hud_drawables.clear();
-}
+PlayerRenderer::~PlayerRenderer() { hud_drawables.clear(); }

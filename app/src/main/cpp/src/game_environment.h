@@ -31,7 +31,7 @@ public:
 
   void pause();
 
-    static void reset_singleton();
+  static void reset_singleton();
 
 protected:
   void on_draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) override;

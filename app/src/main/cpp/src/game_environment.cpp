@@ -11,11 +11,11 @@
 #include <phyvr_model/height_map.h>
 #include <phyvr_model/shapes.h>
 #include <phyvr_model/tank_factory.h>
+#include <phyvr_utils/cache.h>
 #include <phyvr_utils/logging.h>
+#include <phyvr_utils/singleton.h>
 #include <phyvr_view/cubemap.h>
 #include <phyvr_view/specular.h>
-#include <phyvr_utils/cache.h>
-#include <phyvr_utils/singleton.h>
 
 #include "./android_file_reader.h"
 #include "./android_gl_context.h"
@@ -66,9 +66,9 @@ void UserGameTanksEnvironment::on_cmd(struct android_app *app, int32_t cmd) {
       LOG_INFO("close");
       break;
     case APP_CMD_GAINED_FOCUS:
-        is_paused = false;
-        LOG_INFO("gained focus");
-        break;
+      is_paused = false;
+      LOG_INFO("gained focus");
+      break;
     case APP_CMD_LOST_FOCUS:
       pause();
       LOG_INFO("lost focus");
@@ -126,22 +126,20 @@ void UserGameTanksEnvironment::on_reset_drawables(
     player_renderer->add_hud_drawable(std::move(hud_drawable));
 }
 
-void UserGameTanksEnvironment::pause() {
-    is_paused = true;
-}
+void UserGameTanksEnvironment::pause() { is_paused = true; }
 
 void UserGameTanksEnvironment::reset_singleton() {
-    Singleton<Cache<std::shared_ptr<Shape>>>::get_singleton()->clear();
-    Singleton<Cache<std::shared_ptr<Shape>>>::reset_singleton();
+  Singleton<Cache<std::shared_ptr<Shape>>>::get_singleton()->clear();
+  Singleton<Cache<std::shared_ptr<Shape>>>::reset_singleton();
 
-    Singleton<Cache<btVector3>>::get_singleton()->clear();
-    Singleton<Cache<btVector3>>::reset_singleton();
+  Singleton<Cache<btVector3>>::get_singleton()->clear();
+  Singleton<Cache<btVector3>>::reset_singleton();
 
-    auto cache_collision_shape = Singleton<Cache<btCollisionShape *>>::get_singleton();
-    cache_collision_shape->apply_on_items([](auto s){delete s; } );
-    cache_collision_shape->clear();
-    Singleton<Cache<btCollisionShape *>>::reset_singleton();
+  auto cache_collision_shape = Singleton<Cache<btCollisionShape *>>::get_singleton();
+  cache_collision_shape->apply_on_items([](auto s) { delete s; });
+  cache_collision_shape->clear();
+  Singleton<Cache<btCollisionShape *>>::reset_singleton();
 
-    Singleton<Cache<std::shared_ptr<Program>>>::get_singleton()->clear();
-    Singleton<Cache<std::shared_ptr<Program>>>::reset_singleton();
+  Singleton<Cache<std::shared_ptr<Program>>>::get_singleton()->clear();
+  Singleton<Cache<std::shared_ptr<Program>>>::reset_singleton();
 }

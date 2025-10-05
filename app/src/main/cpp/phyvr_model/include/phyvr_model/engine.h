@@ -21,10 +21,10 @@ public:
   explicit InitBtThread(int num_threads);
   btDefaultCollisionConstructionInfo get_cci() const;
 
-    virtual ~InitBtThread();
+  virtual ~InitBtThread();
 
 private:
-    btITaskScheduler *task_scheduler;
+  btITaskScheduler *task_scheduler;
   btDefaultCollisionConstructionInfo cci;
 };
 

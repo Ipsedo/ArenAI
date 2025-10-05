@@ -22,13 +22,10 @@ public:
   T get(const std::string &name) { return cache[name]; }
 
   void apply_on_items(const std::function<void(T)> apply_fn) {
-      for (auto [_, t] : cache)
-          apply_fn(t);
+    for (auto [_, t]: cache) apply_fn(t);
   }
 
-  void clear() {
-      cache.clear();
-  }
+  void clear() { cache.clear(); }
 };
 
 #endif// PHYVR_CACHE_H

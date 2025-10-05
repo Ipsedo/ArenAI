@@ -75,16 +75,16 @@ void android_main(struct android_app *app) {
     auto step_result = env->step(frame_dt.count(), actions);
 
     agents_state.clear();
-    std::transform(step_result.begin(), step_result.end(), std::back_inserter(agents_state), [](auto t) {
-      return std::get<0>(t);
-    });
+    std::transform(
+      step_result.begin(), step_result.end(), std::back_inserter(agents_state),
+      [](auto t) { return std::get<0>(t); });
   }
 
-    app->userData = nullptr;
-    app->onAppCmd = nullptr;
-    app->onInputEvent = nullptr;
+  app->userData = nullptr;
+  app->onAppCmd = nullptr;
+  app->onInputEvent = nullptr;
 
-    env.reset();
-    UserGameTanksEnvironment::reset_singleton();
-    eglTerminate(eglGetDisplay(EGL_DEFAULT_DISPLAY));
+  env.reset();
+  UserGameTanksEnvironment::reset_singleton();
+  eglTerminate(eglGetDisplay(EGL_DEFAULT_DISPLAY));
 }

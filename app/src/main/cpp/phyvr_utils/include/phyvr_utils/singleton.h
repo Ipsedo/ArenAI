@@ -15,8 +15,7 @@ public:
   }
 
   static void reset_singleton() {
-      if (Singleton<T, Args...>::instance)
-        Singleton<T, Args...>::instance = nullptr;
+    if (Singleton<T, Args...>::instance) Singleton<T, Args...>::instance = nullptr;
   }
 
   Singleton(const Singleton &) = delete;

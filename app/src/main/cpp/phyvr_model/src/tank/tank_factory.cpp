@@ -90,7 +90,7 @@ std::vector<std::shared_ptr<ItemProducer>> TankFactory::get_item_producers() {
 }
 
 TankFactory::~TankFactory() {
-    item_producers.clear();
-    items.clear();
-    controllers.clear();
+  item_producers.clear();
+  items.clear();
+  controllers.clear();
 }

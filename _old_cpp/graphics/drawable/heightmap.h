@@ -13,18 +13,18 @@
 
 class HeightMap : public DiffuseModel {
 public:
-  /**
+    /**
    * heightValues is width * height float values
    * @param heightValues
    * @param width
    * @param height
    */
-  HeightMap(btHeightfieldTerrainShape *terrain, float maxheight);
+    HeightMap(btHeightfieldTerrainShape *terrain, float maxheight);
 
-  HeightMap(btHeightfieldTerrainShape *terrain, float maxheight, float color[4]);
+    HeightMap(btHeightfieldTerrainShape *terrain, float maxheight, float color[4]);
 
 private:
-  std::vector<float> initPlan(btHeightfieldTerrainShape *terrain, float maxheight);
+    std::vector<float> initPlan(btHeightfieldTerrainShape *terrain, float maxheight);
 };
 
 #endif// PHYVR_HEIGHTMAP_H

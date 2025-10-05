@@ -19,32 +19,32 @@
 
 class Button : public EventHandler {
 public:
-  virtual button get_input() = 0;
+    virtual button get_input() = 0;
 };
 
 class HUDButton : public Button, public PointerLocker {
 public:
-  HUDButton(AConfiguration *config, int width_px, int height_px, int margin_dp, int size_dp);
-  bool on_event(AInputEvent *event) override;
+    HUDButton(AConfiguration *config, int width_px, int height_px, int margin_dp, int size_dp);
+    bool on_event(AInputEvent *event) override;
 
-  button get_input() override;
+    button get_input() override;
 
-  int get_pointer_id() override;
+    int get_pointer_id() override;
 
-  std::unique_ptr<HUDDrawable>
-  get_hud_drawable(const std::shared_ptr<AbstractFileReader> &file_reader);
+    std::unique_ptr<HUDDrawable>
+    get_hud_drawable(const std::shared_ptr<AbstractFileReader> &file_reader);
 
 private:
-  float size;
-  float center_x, center_y;
-  int height;
+    float size;
+    float center_x, center_y;
+    int height;
 
-  bool touched;
-  int pointer_id;
+    bool touched;
+    int pointer_id;
 
-  bool pressed;
+    bool pressed;
 
-  bool is_inside_(float x, float y) const;
+    bool is_inside_(float x, float y) const;
 };
 
 #endif// PHYVR_BUTTON_H

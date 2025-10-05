@@ -6,25 +6,25 @@
 #define PHYVR_INPUTS_H
 
 struct joystick {
-  float x;
-  float y;
+    float x;
+    float y;
 };
 
 struct slider {
-  float level;
+    float level;
 };
 
 struct button {
-  bool pressed;
+    bool pressed;
 };
 
 struct user_input {
-  joystick left_joystick;
-  joystick right_joystick;
+    joystick left_joystick;
+    joystick right_joystick;
 
-  button fire_button;
-  button brake_button;
-  button respawn_button;
+    button fire_button;
+    button brake_button;
+    button respawn_button;
 };
 
 #endif// PHYVR_INPUTS_H

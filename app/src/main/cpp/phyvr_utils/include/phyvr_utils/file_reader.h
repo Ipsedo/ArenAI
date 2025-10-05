@@ -8,25 +8,25 @@
 #include <string>
 
 struct img_rgb {
-  int width;
-  int height;
-  char *pixels;
+    int width;
+    int height;
+    char *pixels;
 };
 
 struct img_grey {
-  int width;
-  int height;
-  float *pixels;
+    int width;
+    int height;
+    float *pixels;
 };
 
 class AbstractFileReader {
 public:
-  virtual ~AbstractFileReader() = default;
+    virtual ~AbstractFileReader() = default;
 
-  virtual std::string read_text(const std::string &file_name) = 0;
-  virtual img_rgb read_png(const std::string &png_file_path) = 0;
+    virtual std::string read_text(const std::string &file_name) = 0;
+    virtual img_rgb read_png(const std::string &png_file_path) = 0;
 
-  static img_grey to_img_grey(img_rgb image);
+    static img_grey to_img_grey(img_rgb image);
 };
 
 #endif// PHYVR_FILE_READER_H

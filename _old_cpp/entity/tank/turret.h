@@ -18,35 +18,35 @@ const float turretMass = 100.f;
 
 class Turret : public Controls, public Poly {
 private:
-  // Controls
-  float angle;
+    // Controls
+    float angle;
 
-  bool respawn;
+    bool respawn;
 
-  float added;
+    float added;
 
-  bool isHit;
+    bool isHit;
 
-  // Turret
-  btVector3 pos;
+    // Turret
+    btVector3 pos;
 
-  btHingeConstraint *hinge;
+    btHingeConstraint *hinge;
 
 public:
-  Turret(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos);
+    Turret(AAssetManager *mgr, btDynamicsWorld *world, Base *chassis, btVector3 chassisPos);
 
-  /*
+    /*
    * Control overrides
    */
-  void onInput(input in) override;
-  output getOutput() override;
+    void onInput(input in) override;
+    output getOutput() override;
 
-  /*
+    /*
    * Base override
    */
-  void update() override;
+    void update() override;
 
-  void decreaseLife(int toSub) override;
+    void decreaseLife(int toSub) override;
 };
 
 #endif// PHYVR_TURRET_H

@@ -13,7 +13,7 @@
 #include <phyvr_utils/file_reader.h>
 
 GLuint load_shader(
-  const std::shared_ptr<AbstractFileReader> &text_reader, GLenum type,
-  const std::string &file_name);
+    const std::shared_ptr<AbstractFileReader> &text_reader, GLenum type,
+    const std::string &file_name);
 
 #endif// PHYVR_SHADER_H

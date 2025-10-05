@@ -15,58 +15,58 @@ const btVector3 canonRelPos(0.f, 0.f, turretScale.z + canonScale.z - canonOffset
 
 class Canon : public Controls, public Camera, public Shooter, public Poly {
 private:
-  // Controls
-  float angle;
+    // Controls
+    float angle;
 
-  bool respawn;
+    bool respawn;
 
-  bool hasClickedShoot;
+    bool hasClickedShoot;
 
-  float added;
+    float added;
 
-  bool isHit;
+    bool isHit;
 
-  // Canon
-  btVector3 pos;
+    // Canon
+    btVector3 pos;
 
-  btHingeConstraint *hinge;
+    btHingeConstraint *hinge;
 
-  Base *turret;
+    Base *turret;
 
-  // Shooter
-  DiffuseModel *missile;
+    // Shooter
+    DiffuseModel *missile;
 
-  const int maxFramesFire;
+    const int maxFramesFire;
 
-  int fireCounter;
+    int fireCounter;
 
-  // Camera
-  glm::mat4 getCamRot();
+    // Camera
+    glm::mat4 getCamRot();
 
-  Base *generateMissile();
+    Base *generateMissile();
 
 public:
-  Canon(AAssetManager *mgr, btDynamicsWorld *world, Base *turret, btVector3 turretPos);
+    Canon(AAssetManager *mgr, btDynamicsWorld *world, Base *turret, btVector3 turretPos);
 
-  void onInput(input in) override;
+    void onInput(input in) override;
 
-  output getOutput() override;
+    output getOutput() override;
 
-  void update() override;
+    void update() override;
 
-  void decreaseLife(int toSub) override;
+    void decreaseLife(int toSub) override;
 
-  vector<Base *> fire() override;
+    vector<Base *> fire() override;
 
-  glm::vec3 camPos(bool VR) override;
+    glm::vec3 camPos(bool VR) override;
 
-  glm::vec3 camLookAtVec(bool VR) override;
+    glm::vec3 camLookAtVec(bool VR) override;
 
-  glm::vec3 camUpVec(bool VR) override;
+    glm::vec3 camUpVec(bool VR) override;
 
-  btRigidBody *getMissileCopy();
+    btRigidBody *getMissileCopy();
 
-  virtual ~Canon();
+    virtual ~Canon();
 };
 
 #endif// PHYVR_CANON_H

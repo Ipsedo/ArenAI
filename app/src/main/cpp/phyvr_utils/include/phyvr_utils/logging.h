@@ -19,16 +19,16 @@
 #include <iostream>
 
 #define LOG_DEBUG(msg, ...)                                                                        \
-  do { printf("[DEBUG] " msg "\n", ##__VA_ARGS__); } while (0)
+    do { printf("[DEBUG] " msg "\n", ##__VA_ARGS__); } while (0)
 
 #define LOG_INFO(msg, ...)                                                                         \
-  do { printf("[INFO] " msg "\n", ##__VA_ARGS__); } while (0)
+    do { printf("[INFO] " msg "\n", ##__VA_ARGS__); } while (0)
 
 #define LOG_WARN(msg, ...)                                                                         \
-  do { printf("[WARN] " msg "\n", ##__VA_ARGS__); } while (0)
+    do { printf("[WARN] " msg "\n", ##__VA_ARGS__); } while (0)
 
 #define LOG_ERROR(msg, ...)                                                                        \
-  do { printf("[ERROR] " msg "\n", ##__VA_ARGS__); } while (0)
+    do { printf("[ERROR] " msg "\n", ##__VA_ARGS__); } while (0)
 
 #endif
 

@@ -21,36 +21,36 @@
 
 class UserGameTanksEnvironment : public BaseTanksEnvironment {
 public:
-  explicit UserGameTanksEnvironment(struct android_app *app, int nb_tanks, int threads_num);
+    explicit UserGameTanksEnvironment(struct android_app *app, int nb_tanks, int threads_num);
 
-  bool is_running() const;
+    bool is_running() const;
 
-  int32_t on_input(struct android_app *new_app, AInputEvent *event);
+    int32_t on_input(struct android_app *new_app, AInputEvent *event);
 
-  void on_cmd(struct android_app *app, int32_t cmd);
+    void on_cmd(struct android_app *app, int32_t cmd);
 
-  void pause();
+    void pause();
 
-  static void reset_singleton();
+    static void reset_singleton();
 
 protected:
-  void on_draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) override;
+    void on_draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) override;
 
-  void on_reset_physics(const std::unique_ptr<PhysicEngine> &engine) override;
+    void on_reset_physics(const std::unique_ptr<PhysicEngine> &engine) override;
 
-  void on_reset_drawables(
-    const std::unique_ptr<PhysicEngine> &engine,
-    const std::shared_ptr<AbstractGLContext> &gl_context) override;
+    void on_reset_drawables(
+        const std::unique_ptr<PhysicEngine> &engine,
+        const std::shared_ptr<AbstractGLContext> &gl_context) override;
 
 private:
-  android_app *app;
+    android_app *app;
 
-  std::unique_ptr<TankFactory> tank_factory;
+    std::unique_ptr<TankFactory> tank_factory;
 
-  std::unique_ptr<PlayerRenderer> player_renderer;
-  std::unique_ptr<ControllerEngine> player_controller_engine;
+    std::unique_ptr<PlayerRenderer> player_renderer;
+    std::unique_ptr<ControllerEngine> player_controller_engine;
 
-  bool is_paused;
+    bool is_paused;
 };
 
 #endif// PHYVR_GAME_ENVIRONMENT_H

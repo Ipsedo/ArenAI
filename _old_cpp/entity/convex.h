@@ -12,9 +12,9 @@
 
 class Convex : public Poly {
 public:
-  Convex(
-    AAssetManager *mgr, std::string objFileName, glm::vec3 pos, glm::vec3 scale,
-    glm::mat4 rotationMatrix, float mass);
+    Convex(
+        AAssetManager *mgr, std::string objFileName, glm::vec3 pos, glm::vec3 scale,
+        glm::mat4 rotationMatrix, float mass);
 };
 
 #endif// PHYVR_CONVEX_H

@@ -11,18 +11,18 @@
 #include "./utils/saver.h"
 
 int main(int argc, char **argv) {
-  std::cout << "toyo" << std::endl;
+    std::cout << "toyo" << std::endl;
 
-  constexpr int nb_sensors = 10;
-  constexpr int nb_actions = 8;
-  const auto actor = SacActor(nb_sensors, nb_actions, 128, 256);
-  auto critic = std::make_shared<SacCritic>(nb_sensors, nb_actions, 128, 256);
+    constexpr int nb_sensors = 10;
+    constexpr int nb_actions = 8;
+    const auto actor = SacActor(nb_sensors, nb_actions, 128, 256);
+    auto critic = std::make_shared<SacCritic>(nb_sensors, nb_actions, 128, 256);
 
-  const auto output_dir = "/home/samuel/Téléchargements/actor_export";
+    const auto output_dir = "/home/samuel/Téléchargements/actor_export";
 
-  const std::filesystem::path path(output_dir);
+    const std::filesystem::path path(output_dir);
 
-  export_state_dict_neutral(static_cast<torch::nn::Module>(actor), output_dir);
+    export_state_dict_neutral(static_cast<torch::nn::Module>(actor), output_dir);
 
-  return 0;
+    return 0;
 }

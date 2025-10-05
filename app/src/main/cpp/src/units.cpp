@@ -5,9 +5,9 @@
 #include "./units.h"
 
 float dp_to_px(AConfiguration *config, int dp) {
-  int32_t density = AConfiguration_getDensity(config);
+    int32_t density = AConfiguration_getDensity(config);
 
-  /*switch (density_enum) {
+    /*switch (density_enum) {
     case ACONFIGURATION_DENSITY_LOW:
       density = 0.75f;
       break;
@@ -30,5 +30,5 @@ float dp_to_px(AConfiguration *config, int dp) {
       density = 1.f;
   }*/
 
-  return float(dp) * float(density) / 160.f;
+    return float(dp) * float(density) / 160.f;
 }

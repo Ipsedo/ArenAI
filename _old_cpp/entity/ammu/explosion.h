@@ -11,32 +11,32 @@
 
 class Particules : public Sphere {
 private:
-  int nbFrames;
+    int nbFrames;
 
 public:
-  Particules(btVector3 explosionCenter, DiffuseModel *tetraede);
+    Particules(btVector3 explosionCenter, DiffuseModel *tetraede);
 
-  bool isDead() override;
+    bool isDead() override;
 
-  void update() override;
+    void update() override;
 
-  bool needExplosion() override;
+    bool needExplosion() override;
 };
 
 class Explosion : public Poly {
 private:
-  int nbFrames;
+    int nbFrames;
 
 public:
-  Explosion(btVector3 pos, DiffuseModel *modelVBO);
+    Explosion(btVector3 pos, DiffuseModel *modelVBO);
 
-  bool isDead() override;
+    bool isDead() override;
 
-  void update() override;
+    void update() override;
 
-  bool needExplosion() override;
+    bool needExplosion() override;
 
-  void onContactFinish(Base *other) override;
+    void onContactFinish(Base *other) override;
 };
 
 #endif// PHYVR_EXPLOSION_H

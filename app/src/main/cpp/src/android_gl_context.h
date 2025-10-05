@@ -17,15 +17,15 @@
 
 class AndroidGLContext : public AbstractGLContext {
 public:
-  explicit AndroidGLContext(ANativeWindow *window);
-  EGLDisplay get_display() override;
-  EGLSurface get_surface() override;
-  EGLContext get_context() override;
+    explicit AndroidGLContext(ANativeWindow *window);
+    EGLDisplay get_display() override;
+    EGLSurface get_surface() override;
+    EGLContext get_context() override;
 
 private:
-  EGLDisplay display;
-  EGLSurface surface;
-  EGLContext context;
+    EGLDisplay display;
+    EGLSurface surface;
+    EGLContext context;
 };
 
 #endif// PHYVR_ANDROID_GL_CONTEXT_H

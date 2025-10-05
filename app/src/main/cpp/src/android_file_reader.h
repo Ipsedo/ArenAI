@@ -11,14 +11,14 @@
 
 class AndroidFileReader : public AbstractFileReader {
 public:
-  explicit AndroidFileReader(AAssetManager *mgr);
+    explicit AndroidFileReader(AAssetManager *mgr);
 
-  std::string read_text(const std::string &file_name) override;
+    std::string read_text(const std::string &file_name) override;
 
-  img_rgb read_png(const std::string &png_file_path) override;
+    img_rgb read_png(const std::string &png_file_path) override;
 
 private:
-  AAssetManager *mgr;
+    AAssetManager *mgr;
 };
 
 #endif// PHYVR_ANDROID_FILE_READER_H

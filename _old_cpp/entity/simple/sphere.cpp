@@ -10,9 +10,9 @@
 #include "glm/gtc/quaternion.hpp"
 
 auto l = [](glm::vec3 scale) {
-  btCollisionShape *shape = new btSphereShape(1.f);
-  shape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
-  return shape;
+    btCollisionShape *shape = new btSphereShape(1.f);
+    shape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
+    return shape;
 };
 
 Sphere::Sphere(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass)

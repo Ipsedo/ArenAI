@@ -10,19 +10,19 @@
 
 class SupportCible : public Convex {
 public:
-  SupportCible(AAssetManager *mgr, const glm::vec3 &pos);
+    SupportCible(AAssetManager *mgr, const glm::vec3 &pos);
 
-  glm::vec3 getPosHinge();
+    glm::vec3 getPosHinge();
 };
 
 class Cible : public Convex {
 public:
-  Cible(AAssetManager *mgr, SupportCible *supportCible, btDynamicsWorld *world);
+    Cible(AAssetManager *mgr, SupportCible *supportCible, btDynamicsWorld *world);
 
-  bool isWon();
+    bool isWon();
 
 private:
-  btHingeConstraint *hinge;
+    btHingeConstraint *hinge;
 };
 
 #endif// PHYVR_CIBLE_H

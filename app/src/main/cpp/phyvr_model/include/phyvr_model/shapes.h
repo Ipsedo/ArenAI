@@ -15,46 +15,46 @@
 
 class Shape {
 public:
-  virtual std::vector<std::tuple<float, float, float>> get_vertices() = 0;
+    virtual std::vector<std::tuple<float, float, float>> get_vertices() = 0;
 
-  virtual std::vector<std::tuple<float, float, float>> get_normals() = 0;
+    virtual std::vector<std::tuple<float, float, float>> get_normals() = 0;
 
-  virtual std::string get_id() = 0;
+    virtual std::string get_id() = 0;
 };
 
 class ObjShape : public Shape {
 private:
-  std::string shape_id;
-  std::vector<std::tuple<float, float, float>> vertices;
-  std::vector<std::tuple<float, float, float>> normals;
+    std::string shape_id;
+    std::vector<std::tuple<float, float, float>> vertices;
+    std::vector<std::tuple<float, float, float>> normals;
 
 public:
-  explicit ObjShape(
-    const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &obj_file_path);
+    explicit ObjShape(
+        const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &obj_file_path);
 
-  std::vector<std::tuple<float, float, float>> get_vertices() override;
+    std::vector<std::tuple<float, float, float>> get_vertices() override;
 
-  std::vector<std::tuple<float, float, float>> get_normals() override;
+    std::vector<std::tuple<float, float, float>> get_normals() override;
 
-  std::string get_id() override;
+    std::string get_id() override;
 };
 
 class FromMeshShape : public Shape {
 private:
-  std::string shape_id;
-  std::vector<std::tuple<float, float, float>> vertices;
-  std::vector<std::tuple<float, float, float>> normals;
+    std::string shape_id;
+    std::vector<std::tuple<float, float, float>> vertices;
+    std::vector<std::tuple<float, float, float>> normals;
 
 public:
-  FromMeshShape(
-    const std::string &shape_id, std::vector<std::tuple<float, float, float>> vertices,
-    std::vector<std::tuple<float, float, float>> normals);
+    FromMeshShape(
+        const std::string &shape_id, std::vector<std::tuple<float, float, float>> vertices,
+        std::vector<std::tuple<float, float, float>> normals);
 
-  std::vector<std::tuple<float, float, float>> get_vertices() override;
+    std::vector<std::tuple<float, float, float>> get_vertices() override;
 
-  std::vector<std::tuple<float, float, float>> get_normals() override;
+    std::vector<std::tuple<float, float, float>> get_normals() override;
 
-  std::string get_id() override;
+    std::string get_id() override;
 };
 
 #endif// PHYVR_SHAPES_H

@@ -22,42 +22,42 @@
 class Level1 : public Level {
 
 public:
-  Level1();
+    Level1();
 
-  void init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) override;
+    void init(bool isVR, AAssetManager *mgr, btDynamicsWorld *world) override;
 
-  vector<Controls *> getControls() override;
+    vector<Controls *> getControls() override;
 
-  Camera *getCamera() override;
+    Camera *getCamera() override;
 
-  vector<Shooter *> getShooters() override;
+    vector<Shooter *> getShooters() override;
 
-  vector<Base *> getEntities() override;
+    vector<Base *> getEntities() override;
 
-  vector<Drawable *> getDrawables() override;
+    vector<Drawable *> getDrawables() override;
 
-  Limits getLimits() override;
+    Limits getLimits() override;
 
-  glm::vec3 getLightPos() override;
+    glm::vec3 getLightPos() override;
 
-  bool won() override;
+    bool won() override;
 
-  bool lose() override;
+    bool lose() override;
 
-  void step() override;
+    void step() override;
 
-  ~Level1();
+    ~Level1();
 
 private:
-  bool isInit;
+    bool isInit;
 
-  Tank *tank;
+    Tank *tank;
 
-  vector<Cible *> cibles;
+    vector<Cible *> cibles;
 
-  vector<Compass *> compass;
+    vector<Compass *> compass;
 
-  CubeMap *map;
+    CubeMap *map;
 };
 
 #endif// PHYVR_LEVEL0_H

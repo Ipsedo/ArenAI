@@ -12,12 +12,12 @@
 
 class ExecuTorchAgent {
 public:
-  ExecuTorchAgent(android_app *app, const std::string &pte_asset_path);
+    ExecuTorchAgent(android_app *app, const std::string &pte_asset_path);
 
-  std::vector<Action> act(const std::vector<State> &state);
+    std::vector<Action> act(const std::vector<State> &state);
 
 private:
-  executorch::extension::module::Module actor_module;
+    executorch::extension::module::Module actor_module;
 };
 
 #endif// PHYVR_EXECUTORCH_AGENT_H

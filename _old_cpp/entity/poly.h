@@ -12,17 +12,16 @@
 
 class Poly : public Base {
 private:
-    static btRigidBodyConstructionInfo makeCInfo(
-        std::function<btCollisionShape *(glm::vec3)> makeShapeFun, glm::vec3 pos, glm::mat4 rotMat,
-        glm::vec3 scale, float mass);
+  static btRigidBodyConstructionInfo makeCInfo(
+    std::function<btCollisionShape *(glm::vec3)> makeShapeFun, glm::vec3 pos, glm::mat4 rotMat,
+    glm::vec3 scale, float mass);
 
 public:
-    Poly(
-        std::function<btCollisionShape *(glm::vec3)> makeShapeFun, GLDrawable *modelVBO,
-        const glm::vec3 pos, const glm::vec3 &scale, glm::mat4 rotMat, float mass,
-        bool hasOwnModel);
+  Poly(
+    std::function<btCollisionShape *(glm::vec3)> makeShapeFun, GLDrawable *modelVBO,
+    const glm::vec3 pos, const glm::vec3 &scale, glm::mat4 rotMat, float mass, bool hasOwnModel);
 
-    static DiffuseModel *makeModel(AAssetManager *mgr, string objFileName);
+  static DiffuseModel *makeModel(AAssetManager *mgr, string objFileName);
 };
 
 #endif// PHYVR_POLY_H

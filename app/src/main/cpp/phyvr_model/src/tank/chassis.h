@@ -9,9 +9,9 @@
 
 class ChassisItem : public ConvexItem {
 public:
-    ChassisItem(
-        const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,
-        glm::vec3 position, glm::vec3 scale, float mass);
+  ChassisItem(
+    const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,
+    glm::vec3 position, glm::vec3 scale, float mass);
 };
 
 #endif// PHYVR_CHASSIS_H

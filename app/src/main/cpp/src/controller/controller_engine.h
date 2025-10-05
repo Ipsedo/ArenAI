@@ -20,21 +20,21 @@
 
 class ControllerEngine {
 public:
-    ControllerEngine(AConfiguration *config, int width, int height);
+  ControllerEngine(AConfiguration *config, int width, int height);
 
-    void add_controller(const std::shared_ptr<Controller> &controller);
+  void add_controller(const std::shared_ptr<Controller> &controller);
 
-    int32_t on_event(AInputEvent *event);
+  int32_t on_event(AInputEvent *event);
 
-    std::vector<std::unique_ptr<HUDDrawable>>
-    get_hud_drawables(const std::shared_ptr<AbstractFileReader> &file_reader);
+  std::vector<std::unique_ptr<HUDDrawable>>
+  get_hud_drawables(const std::shared_ptr<AbstractFileReader> &file_reader);
 
 private:
-    std::vector<std::shared_ptr<Controller>> controllers;
+  std::vector<std::shared_ptr<Controller>> controllers;
 
-    std::shared_ptr<HUDJoyStick> drive_joystick;
-    std::shared_ptr<HUDButton> fire_button;
-    std::shared_ptr<ScreenJoyStick> turret_joystick;
+  std::shared_ptr<HUDJoyStick> drive_joystick;
+  std::shared_ptr<HUDButton> fire_button;
+  std::shared_ptr<ScreenJoyStick> turret_joystick;
 };
 
 #endif// PHYVR_CONTROLLER_ENGINE_H

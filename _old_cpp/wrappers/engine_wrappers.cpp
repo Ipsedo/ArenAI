@@ -10,26 +10,26 @@
 #include "../levels/level.h"
 
 extern "C" JNIEXPORT jlong JNICALL Java_com_samuelberrien_phyvr_MainWrappers_makeEngine(
-    JNIEnv *env, jobject instance, jlong levelPtr, jobject manager) {
+  JNIEnv *env, jobject instance, jlong levelPtr, jobject manager) {
 
-    Level *level = (Level *) levelPtr;
+  Level *level = (Level *) levelPtr;
 
-    glm::vec3 start(-1000.f, -200.f, -1000.f);
-    glm::vec3 end(1000.f, 200.f, 1000.f);
+  glm::vec3 start(-1000.f, -200.f, -1000.f);
+  glm::vec3 end(1000.f, 200.f, 1000.f);
 
-    AAssetManager *mgr = AAssetManager_fromJava(env, manager);
-    Engine *engine = new Engine(level, mgr);
+  AAssetManager *mgr = AAssetManager_fromJava(env, manager);
+  Engine *engine = new Engine(level, mgr);
 
-    return (long) engine;
+  return (long) engine;
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_samuelberrien_phyvr_MainWrappers_updateEngine(
-    JNIEnv *env, jobject instance, jlong enginePtr) {
-    Engine *engine = (Engine *) enginePtr;
-    engine->update(1.f / 60.f);
+  JNIEnv *env, jobject instance, jlong enginePtr) {
+  Engine *engine = (Engine *) enginePtr;
+  engine->update(1.f / 60.f);
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_samuelberrien_phyvr_MainWrappers_freeEngine(
-    JNIEnv *env, jobject instance, jlong enginePtr) {
-    delete (Engine *) enginePtr;
+  JNIEnv *env, jobject instance, jlong enginePtr) {
+  delete (Engine *) enginePtr;
 }

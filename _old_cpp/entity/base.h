@@ -12,30 +12,30 @@
 
 class Base : public btRigidBody, public Drawable {
 private:
-    GLDrawable *drawable;
-    bool hasOwnModel;
+  GLDrawable *drawable;
+  bool hasOwnModel;
 
 protected:
-    glm::vec3 scale;
+  glm::vec3 scale;
 
-    Base(
-        const btRigidBodyConstructionInfo &constructionInfo, GLDrawable *drawable,
-        const glm::vec3 &scale, bool hasOwnModel);
+  Base(
+    const btRigidBodyConstructionInfo &constructionInfo, GLDrawable *drawable,
+    const glm::vec3 &scale, bool hasOwnModel);
 
 public:
-    virtual void update();
+  virtual void update();
 
-    virtual void decreaseLife(int toSub);
+  virtual void decreaseLife(int toSub);
 
-    virtual bool isDead();
+  virtual bool isDead();
 
-    void draw(draw_infos infos) override;
+  void draw(draw_infos infos) override;
 
-    virtual bool needExplosion();
+  virtual bool needExplosion();
 
-    virtual void onContactFinish(Base *other);
+  virtual void onContactFinish(Base *other);
 
-    virtual ~Base();
+  virtual ~Base();
 };
 
 #endif// PHYVR_BASETEST_H

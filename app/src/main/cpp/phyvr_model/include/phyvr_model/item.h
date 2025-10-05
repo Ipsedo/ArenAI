@@ -15,27 +15,27 @@
 
 class Item {
 public:
-    Item(std::string name);
+  Item(std::string name);
 
-    virtual std::shared_ptr<Shape> get_shape() = 0;
+  virtual std::shared_ptr<Shape> get_shape() = 0;
 
-    std::string get_name();
+  std::string get_name();
 
-    glm::mat4 get_model_matrix();
+  glm::mat4 get_model_matrix();
 
-    virtual btRigidBody *get_body() = 0;
-    virtual std::vector<btTypedConstraint *> get_constraints();
+  virtual btRigidBody *get_body() = 0;
+  virtual std::vector<btTypedConstraint *> get_constraints();
 
 private:
-    std::string name;
+  std::string name;
 
 protected:
-    virtual glm::vec3 _get_scale() = 0;
+  virtual glm::vec3 _get_scale() = 0;
 };
 
 class ItemProducer {
 public:
-    virtual std::vector<std::shared_ptr<Item>> get_produced_items() = 0;
+  virtual std::vector<std::shared_ptr<Item>> get_produced_items() = 0;
 };
 
 #endif// PHYVR_ITEM_H

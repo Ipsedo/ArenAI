@@ -11,13 +11,13 @@
 
 class Compass : public Drawable {
 private:
-    Base *target;
-    Triangle triangle;
+  Base *target;
+  Triangle triangle;
 
 public:
-    Compass(Base *target);
+  Compass(Base *target);
 
-    void draw(draw_infos infos) override;
+  void draw(draw_infos infos) override;
 };
 
 #endif// PHYVR_COMPASS_H

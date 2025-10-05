@@ -9,9 +9,9 @@
 
 class Tetra : public Poly {
 public:
-    Tetra(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass);
+  Tetra(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass);
 
-    Tetra(DiffuseModel *modelVBO, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass);
+  Tetra(DiffuseModel *modelVBO, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass);
 };
 
 #endif// PHYVR_TETRA_H

@@ -9,30 +9,28 @@
 #include "glm/gtc/quaternion.hpp"
 
 btRigidBody::btRigidBodyConstructionInfo Poly::makeCInfo(
-    std::function<btCollisionShape *(glm::vec3)> makeShapeFun, glm::vec3 pos, glm::mat4 rotMat,
-    glm::vec3 scale, float mass) {
-    btCollisionShape *shape = makeShapeFun(scale);
+  std::function<btCollisionShape *(glm::vec3)> makeShapeFun, glm::vec3 pos, glm::mat4 rotMat,
+  glm::vec3 scale, float mass) {
+  btCollisionShape *shape = makeShapeFun(scale);
 
-    btTransform myTransform;
-    myTransform.setIdentity();
-    myTransform.setOrigin(btVector3(pos.x, pos.y, pos.z));
-    glm::quat tmp = glm::quat_cast(rotMat);
-    myTransform.setRotation(btQuaternion(tmp.x, tmp.y, tmp.z, tmp.w));
+  btTransform myTransform;
+  myTransform.setIdentity();
+  myTransform.setOrigin(btVector3(pos.x, pos.y, pos.z));
+  glm::quat tmp = glm::quat_cast(rotMat);
+  myTransform.setRotation(btQuaternion(tmp.x, tmp.y, tmp.z, tmp.w));
 
-    return localCreateInfo(mass, myTransform, shape);
+  return localCreateInfo(mass, myTransform, shape);
 }
 
 Poly::Poly(
-    std::function<btCollisionShape *(glm::vec3)> makeShapeFun, GLDrawable *modelVBO,
-    const glm::vec3 pos, const glm::vec3 &scale, glm::mat4 rotMat, float mass, bool hasOwnModel)
+  std::function<btCollisionShape *(glm::vec3)> makeShapeFun, GLDrawable *modelVBO,
+  const glm::vec3 pos, const glm::vec3 &scale, glm::mat4 rotMat, float mass, bool hasOwnModel)
     : Base(
-        makeCInfo(std::move(makeShapeFun), pos, rotMat, scale, mass), modelVBO, scale,
-        hasOwnModel) {}
+      makeCInfo(std::move(makeShapeFun), pos, rotMat, scale, mass), modelVBO, scale, hasOwnModel) {}
 
 DiffuseModel *Poly::makeModel(AAssetManager *mgr, string objFileName) {
-    string objTxt = getFileText(mgr, std::move(objFileName));
-    // TODO #include <random>
-    return new ModelVBO(
-        objTxt, (float) rand() / RAND_MAX, (float) rand() / RAND_MAX, (float) rand() / RAND_MAX,
-        1.F);
+  string objTxt = getFileText(mgr, std::move(objFileName));
+  // TODO #include <random>
+  return new ModelVBO(
+    objTxt, (float) rand() / RAND_MAX, (float) rand() / RAND_MAX, (float) rand() / RAND_MAX, 1.F);
 }

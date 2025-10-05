@@ -12,34 +12,33 @@
 
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_samuelberrien_phyvr_MainWrappers_makeLevel(JNIEnv *env, jobject instance, jint levelId) {
-    switch (int(levelId)) {
-        case 0: return (long) new LevelDemo();
-        case 1: return (long) new Level1();
-        default: return (long) new LevelDemo();
-    }
+  switch (int(levelId)) {
+    case 0: return (long) new LevelDemo();
+    case 1: return (long) new Level1();
+    default: return (long) new LevelDemo();
+  }
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_samuelberrien_phyvr_MainWrappers_initLevel(
-    JNIEnv *env, jobject instance, jobject manager, jboolean isVR, jlong levelPtr,
-    jlong enginePtr) {
+  JNIEnv *env, jobject instance, jobject manager, jboolean isVR, jlong levelPtr, jlong enginePtr) {
 
-    AAssetManager *cppMgr = AAssetManager_fromJava(env, manager);
-    Engine *engine = (Engine *) enginePtr;
-    Level *level = (Level *) levelPtr;
-    level->init(isVR, cppMgr, engine->world);
+  AAssetManager *cppMgr = AAssetManager_fromJava(env, manager);
+  Engine *engine = (Engine *) enginePtr;
+  Level *level = (Level *) levelPtr;
+  level->init(isVR, cppMgr, engine->world);
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_samuelberrien_phyvr_MainWrappers_hasWon(JNIEnv *env, jobject instance, jlong levelPtr) {
-    return (jboolean) ((Level *) levelPtr)->won();
+  return (jboolean) ((Level *) levelPtr)->won();
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_samuelberrien_phyvr_MainWrappers_hasLose(JNIEnv *env, jobject instance, jlong levelPtr) {
-    return (jboolean) ((Level *) levelPtr)->lose();
+  return (jboolean) ((Level *) levelPtr)->lose();
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_samuelberrien_phyvr_MainWrappers_freeLevel(JNIEnv *env, jobject instance, jlong levelPtr) {
-    delete (Level *) levelPtr;
+  delete (Level *) levelPtr;
 }

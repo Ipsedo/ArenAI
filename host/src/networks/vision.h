@@ -9,12 +9,12 @@
 
 class ConvolutionNetwork final : public torch::nn::Module {
 public:
-    ConvolutionNetwork();
+  ConvolutionNetwork();
 
-    torch::Tensor forward(torch::Tensor input);
+  torch::Tensor forward(torch::Tensor input);
 
 private:
-    torch::nn::Sequential cnn{nullptr};
+  torch::nn::Sequential cnn{nullptr};
 };
 
 #endif// PHYVR_TRAIN_HOST_VISION_H

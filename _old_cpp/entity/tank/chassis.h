@@ -18,26 +18,26 @@ const float chassisColor[4]{150.f / 255.f, 40.f / 255.f, 27.f / 255.f, 1.f};
 
 class Chassis : public Controls, public Camera, public Poly {
 private:
-    bool respawn;
-    btVector3 pos;
-    bool isHit;
+  bool respawn;
+  btVector3 pos;
+  bool isHit;
 
 public:
-    Chassis(AAssetManager *mgr, btVector3 pos);
+  Chassis(AAssetManager *mgr, btVector3 pos);
 
-    void onInput(input in) override;
+  void onInput(input in) override;
 
-    output getOutput() override;
+  output getOutput() override;
 
-    void update() override;
+  void update() override;
 
-    void decreaseLife(int toSub) override;
+  void decreaseLife(int toSub) override;
 
-    glm::vec3 camPos(bool VR) override;
+  glm::vec3 camPos(bool VR) override;
 
-    glm::vec3 camLookAtVec(bool VR) override;
+  glm::vec3 camLookAtVec(bool VR) override;
 
-    glm::vec3 camUpVec(bool VR) override;
+  glm::vec3 camUpVec(bool VR) override;
 };
 
 #endif// PHYVR_CHASSIS_H

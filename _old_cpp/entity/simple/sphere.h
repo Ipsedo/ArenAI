@@ -13,9 +13,9 @@
 
 class Sphere : public Poly {
 public:
-    Sphere(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass);
+  Sphere(AAssetManager *mgr, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass);
 
-    Sphere(GLDrawable *drawable, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass);
+  Sphere(GLDrawable *drawable, glm::vec3 pos, glm::vec3 scale, glm::mat4 rotMat, float mass);
 };
 
 #endif// PHYVR_SPHERE_H

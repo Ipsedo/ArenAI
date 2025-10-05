@@ -9,15 +9,15 @@
 
 class TrainTankEnvironment final : public BaseTanksEnvironment {
 public:
-    TrainTankEnvironment(int nb_tanks, int threads_num);
+    explicit TrainTankEnvironment(int nb_tanks);
 
 protected:
     void on_draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) override;
 
-    void on_reset_physics(const std::shared_ptr<PhysicEngine> &engine) override;
+    void on_reset_physics(const std::unique_ptr<PhysicEngine> &engine) override;
 
     void on_reset_drawables(
-        const std::shared_ptr<PhysicEngine> &engine,
+        const std::unique_ptr<PhysicEngine> &engine,
         const std::shared_ptr<AbstractGLContext> &gl_context) override;
 };
 

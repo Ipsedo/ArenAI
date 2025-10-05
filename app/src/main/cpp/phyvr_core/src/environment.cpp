@@ -110,7 +110,7 @@ void BaseTanksEnvironment::reset_drawables(
 
     for (auto &tank_factory: tank_factories)
         tank_renderers.push_back(std::make_unique<PBufferRenderer>(
-            128, 128,
+            256, 256,
             glm::vec3(light_pos_u_dist(rng), light_height_u_dist(rng), light_pos_u_dist(rng)),
             tank_factory->get_camera()));
 

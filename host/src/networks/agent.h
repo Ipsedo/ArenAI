@@ -36,7 +36,7 @@ private:
 class SacCritic final : public torch::nn::Module {
 public:
     SacCritic(
-        const int &nb_sensors, const int &nb_actions, const int &hidden_size_encoders,
+        const int &nb_sensors, const int &nb_actions, const int &hidden_size_latent,
         const int &hidden_size);
     torch::Tensor
     value(const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &action);

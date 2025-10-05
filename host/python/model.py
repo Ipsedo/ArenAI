@@ -24,6 +24,9 @@ class ConvolutionNetwork(nn.Module):
             nn.Conv2d(128, 256, 3, 2, 1),
             nn.Mish(),
             nn.InstanceNorm2d(256),
+            nn.Conv2d(256, 512, 3, 2, 1),
+            nn.Mish(),
+            nn.InstanceNorm2d(512),
             nn.Flatten(1, -1),
         )
 
@@ -53,7 +56,7 @@ class SacActor(nn.Module):
         )
 
         self.head = nn.Sequential(
-            nn.Linear(hidden_size_sensors + 2 * 2 * 256, hidden_size),
+            nn.Linear(hidden_size_sensors + 2 * 2 * 512, hidden_size),
             nn.Mish(),
             nn.LayerNorm(hidden_size)
         )

@@ -11,13 +11,13 @@ def main() -> None:
     nb_sensors = 10
     nb_actions = 8
 
-    actor = SacActor(nb_sensors, nb_actions, 128, 256)
+    actor = SacActor(nb_sensors, nb_actions, 256, 512)
 
     load_neutral_state_into(actor, state_dict_path)
 
-    inputs = (th.randn(1, 3, 128, 128), th.randn(1, nb_sensors))
+    example_input = (th.randn(1, 3, 256, 256), th.randn(1, nb_sensors))
 
-    exported_program = export(actor, inputs)
+    exported_program = export(actor, example_input)
     executorch_program = to_edge_transform_and_lower(
         exported_program,
         partitioner=[XnnpackPartitioner()]

@@ -8,16 +8,16 @@
 
 #include "./utils/linux_file_reader.h"
 
-TrainTankEnvironment::TrainTankEnvironment(const int nb_tanks, const int threads_num)
+TrainTankEnvironment::TrainTankEnvironment(const int nb_tanks)
     : BaseTanksEnvironment(
         std::make_shared<LinuxAndroidAssetFileReader>(std::filesystem::path("")),
-        std::make_shared<PBufferGLContext>(), nb_tanks, threads_num) {}
+        std::make_shared<PBufferGLContext>(), nb_tanks) {}
 
 void TrainTankEnvironment::on_draw(
     const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {}
 
-void TrainTankEnvironment::on_reset_physics(const std::shared_ptr<PhysicEngine> &engine) {}
+void TrainTankEnvironment::on_reset_physics(const std::unique_ptr<PhysicEngine> &engine) {}
 
 void TrainTankEnvironment::on_reset_drawables(
-    const std::shared_ptr<PhysicEngine> &engine,
+    const std::unique_ptr<PhysicEngine> &engine,
     const std::shared_ptr<AbstractGLContext> &gl_context) {}

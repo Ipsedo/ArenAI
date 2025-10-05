@@ -15,8 +15,8 @@ int main(int argc, char **argv) {
 
     constexpr int nb_sensors = 10;
     constexpr int nb_actions = 8;
-    const auto actor = SacActor(nb_sensors, nb_actions, 128, 256);
-    auto critic = std::make_shared<SacCritic>(nb_sensors, nb_actions, 128, 256);
+    const auto actor = SacActor(nb_sensors, nb_actions, 256, 512);
+    auto critic = std::make_shared<SacCritic>(nb_sensors, nb_actions, 256, 512);
 
     const auto output_dir = "/home/samuel/Téléchargements/actor_export";
 

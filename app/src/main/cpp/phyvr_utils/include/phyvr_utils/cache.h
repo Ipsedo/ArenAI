@@ -5,6 +5,7 @@
 #ifndef PHYVR_CACHE_H
 #define PHYVR_CACHE_H
 
+#include <functional>
 #include <map>
 #include <memory>
 

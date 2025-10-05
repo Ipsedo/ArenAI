@@ -26,6 +26,9 @@ public:
     virtual btRigidBody *get_body() = 0;
     virtual std::vector<btTypedConstraint *> get_constraints();
 
+    virtual void on_contact(Item *other);
+    virtual bool need_destroy();
+
 private:
     std::string name;
 

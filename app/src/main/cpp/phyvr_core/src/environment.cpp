@@ -11,12 +11,11 @@
 
 BaseTanksEnvironment::BaseTanksEnvironment(
     const std::shared_ptr<AbstractFileReader> &file_reader,
-    const std::shared_ptr<AbstractGLContext> &gl_context, int nb_tanks, int threads_num)
+    const std::shared_ptr<AbstractGLContext> &gl_context, int nb_tanks)
     : nb_tanks(nb_tanks), threads_running(true),
       thread_barrier(std::make_unique<std::barrier<>>(static_cast<std::ptrdiff_t>(nb_tanks + 1))),
-      tank_factories(), tank_renderers(), pool(),
-      physic_engine(std::make_unique<PhysicEngine>(threads_num)), dev(), rng(dev()),
-      file_reader(file_reader), gl_context(gl_context), enemy_visions() {}
+      tank_factories(), tank_renderers(), pool(), physic_engine(std::make_unique<PhysicEngine>()),
+      dev(), rng(dev()), file_reader(file_reader), gl_context(gl_context), enemy_visions() {}
 
 std::vector<std::tuple<State, Reward, IsFinish>>
 BaseTanksEnvironment::step(float time_delta, const std::vector<Action> &actions) {

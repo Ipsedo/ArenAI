@@ -20,7 +20,14 @@ public:
         const std::shared_ptr<AbstractFileReader> &file_reader, glm::vec3 pos, glm::quat rot,
         glm::vec3 scale, float mass);
 
+    void on_contact(Item *other) override;
+
+    bool need_destroy() override;
+
     inline const static std::string NAME = "shell_item";
+
+private:
+    int health_point;
 };
 
 #endif// PHYVR_AMMU_H

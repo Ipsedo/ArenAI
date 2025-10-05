@@ -14,7 +14,8 @@ ShellItem::load_shape(const std::shared_ptr<AbstractFileReader> &file_reader) {
 ShellItem::ShellItem(
     const std::shared_ptr<AbstractFileReader> &file_reader, glm::vec3 pos, glm::quat rot,
     glm::vec3 scale, float mass)
-    : ConvexItem(ShellItem::NAME, ShellItem::load_shape(file_reader), pos, scale, mass) {
+    : ConvexItem(ShellItem::NAME, ShellItem::load_shape(file_reader), pos, scale, mass),
+      health_point(10) {
 
     btTransform shell_tr;
     shell_tr.setIdentity();
@@ -23,3 +24,10 @@ ShellItem::ShellItem(
 
     ConvexItem::get_body()->setWorldTransform(shell_tr);
 }
+
+void ShellItem::on_contact(Item *other) {
+    Item::on_contact(other);
+    health_point--;
+}
+
+bool ShellItem::need_destroy() { return Item::need_destroy() || health_point <= 0; }

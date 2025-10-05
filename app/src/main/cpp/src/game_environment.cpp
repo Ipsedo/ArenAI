@@ -20,11 +20,10 @@
 #include "./android_file_reader.h"
 #include "./android_gl_context.h"
 
-UserGameTanksEnvironment::UserGameTanksEnvironment(
-    struct android_app *app, int nb_tanks, int threads_num)
+UserGameTanksEnvironment::UserGameTanksEnvironment(struct android_app *app, int nb_tanks)
     : BaseTanksEnvironment(
         std::make_shared<AndroidFileReader>(app->activity->assetManager),
-        std::make_shared<AndroidGLContext>(app->window), nb_tanks, threads_num),
+        std::make_shared<AndroidGLContext>(app->window), nb_tanks),
       app(app), tank_factory(std::nullptr_t()), is_paused(true), player_renderer(std::nullptr_t()),
       player_controller_engine(std::nullptr_t()) {}
 
@@ -137,7 +136,7 @@ void UserGameTanksEnvironment::reset_singleton() {
     Singleton<Cache<btVector3>>::reset_singleton();
 
     auto cache_collision_shape = Singleton<Cache<btCollisionShape *>>::get_singleton();
-    cache_collision_shape->apply_on_items([](auto s) { delete s; });
+    //cache_collision_shape->apply_on_items([](auto s) { delete s; });
     cache_collision_shape->clear();
     Singleton<Cache<btCollisionShape *>>::reset_singleton();
 

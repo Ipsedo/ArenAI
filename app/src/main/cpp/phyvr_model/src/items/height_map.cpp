@@ -28,6 +28,7 @@ HeightMapItem::HeightMapItem(
     btRigidBody::btRigidBodyConstructionInfo info(0.f, motionState, map, intertie);
 
     body = new btRigidBody(info);
+    body->setUserPointer(this);
 }
 
 std::shared_ptr<Shape> HeightMapItem::get_shape() {

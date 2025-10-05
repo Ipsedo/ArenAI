@@ -31,10 +31,9 @@ typedef std::chrono::duration<float> secs_f;
 
 void android_main(struct android_app *app) {
     constexpr int nb_tanks = 4;
-    constexpr int threads_num = 4;
     bool will_quit = false;
 
-    auto env = std::make_unique<UserGameTanksEnvironment>(app, nb_tanks, threads_num);
+    auto env = std::make_unique<UserGameTanksEnvironment>(app, nb_tanks);
     auto agent = std::make_unique<ExecuTorchAgent>(app, "executorch/actor.pte");
 
     app->userData = env.get();
@@ -84,8 +83,9 @@ void android_main(struct android_app *app) {
     app->onAppCmd = nullptr;
     app->onInputEvent = nullptr;
 
+    UserGameTanksEnvironment::reset_singleton();
     env.reset();
     agent.reset();
-    UserGameTanksEnvironment::reset_singleton();
+
     eglTerminate(eglGetDisplay(EGL_DEFAULT_DISPLAY));
 }

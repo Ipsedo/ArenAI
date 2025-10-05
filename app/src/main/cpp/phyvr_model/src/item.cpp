@@ -22,3 +22,7 @@ glm::mat4 Item::get_model_matrix() {
 }
 
 std::vector<btTypedConstraint *> Item::get_constraints() { return {}; }
+
+bool Item::need_destroy() { return false; }
+
+void Item::on_contact(Item *other) {}

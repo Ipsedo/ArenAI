@@ -32,7 +32,7 @@ class BaseTanksEnvironment {
 public:
     BaseTanksEnvironment(
         const std::shared_ptr<AbstractFileReader> &file_reader,
-        const std::shared_ptr<AbstractGLContext> &gl_context, int nb_tanks, int threads_num);
+        const std::shared_ptr<AbstractGLContext> &gl_context, int nb_tanks);
 
     virtual std::vector<std::tuple<State, Reward, IsFinish>>
     step(float time_delta, const std::vector<Action> &actions);

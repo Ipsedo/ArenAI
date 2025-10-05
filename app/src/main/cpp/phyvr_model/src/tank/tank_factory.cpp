@@ -88,3 +88,9 @@ std::map<std::string, std::shared_ptr<Shape>> TankFactory::load_ammu_shapes() {
 std::vector<std::shared_ptr<ItemProducer>> TankFactory::get_item_producers() {
   return item_producers;
 }
+
+TankFactory::~TankFactory() {
+    item_producers.clear();
+    items.clear();
+    controllers.clear();
+}

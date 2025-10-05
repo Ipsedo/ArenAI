@@ -74,15 +74,7 @@ Renderer::~Renderer() {
     if (context != EGL_NO_CONTEXT) eglDestroyContext(display, context);
 
     if (surface != EGL_NO_SURFACE) eglDestroySurface(display, surface);
-
-    eglTerminate(display);
   }
-
-  display = EGL_NO_DISPLAY;
-  context = EGL_NO_CONTEXT;
-  surface = EGL_NO_SURFACE;
-
-  eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 }
 
 /*
@@ -92,7 +84,7 @@ Renderer::~Renderer() {
 PlayerRenderer::PlayerRenderer(
   const std::shared_ptr<AbstractGLContext> &gl_context, int width, int height,
   const glm::vec3 &lightPos, const std::shared_ptr<Camera> &camera)
-    : Renderer(gl_context, width, height, lightPos, camera) {}
+    : Renderer(gl_context, width, height, lightPos, camera), hud_drawables() {}
 
 void PlayerRenderer::add_hud_drawable(std::unique_ptr<HUDDrawable> hud_drawable) {
   hud_drawables.push_back(std::move(hud_drawable));
@@ -121,4 +113,8 @@ void PlayerRenderer::on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_c
   glDisable(GL_BLEND);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+PlayerRenderer::~PlayerRenderer() {
+    hud_drawables.clear();
 }

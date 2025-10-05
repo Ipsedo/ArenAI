@@ -138,5 +138,3 @@ void JoyStickDrawable::draw(int width, int height) {
 
   glLineWidth(1.f);
 }
-
-JoyStickDrawable::~JoyStickDrawable() { program.reset(); }

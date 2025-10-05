@@ -27,6 +27,8 @@ public:
 
   std::map<std::string, std::shared_ptr<Shape>> load_ammu_shapes();
 
+    virtual ~TankFactory();
+
 private:
   std::string name;
 

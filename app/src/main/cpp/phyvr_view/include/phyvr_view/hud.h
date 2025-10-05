@@ -47,8 +47,6 @@ public:
 
   void draw(int width, int height) override;
 
-  ~JoyStickDrawable() override;
-
 private:
   std::function<joystick(void)> get_input;
 

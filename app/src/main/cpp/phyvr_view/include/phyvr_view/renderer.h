@@ -76,6 +76,8 @@ public:
 
   virtual void add_hud_drawable(std::unique_ptr<HUDDrawable> hud_drawable);
 
+    ~PlayerRenderer() override;
+
 protected:
   void on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_context) override;
 

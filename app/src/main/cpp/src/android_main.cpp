@@ -8,7 +8,6 @@
 
 #include <android/sensor.h>
 #include <android_native_app_glue.h>
-#include <dlfcn.h>
 
 #include <phyvr_utils/logging.h>
 
@@ -35,12 +34,10 @@ void android_main(struct android_app *app) {
   constexpr int threads_num = 4;
   bool will_quit = false;
 
-  auto env = new UserGameTanksEnvironment(app, nb_tanks, threads_num);
-  auto agents_state = env->reset_physics();
+  auto env = std::make_unique<UserGameTanksEnvironment>(app, nb_tanks, threads_num);
+  auto agent = std::make_unique<ExecuTorchAgent>(app, "executorch/actor.pte");
 
-  ExecuTorchAgent agent(app, "executorch/actor.pte");
-
-  app->userData = env;
+  app->userData = env.get();
   app->onAppCmd = on_cmd_wrapper;
   app->onInputEvent = on_input_wrapper;
 
@@ -49,6 +46,8 @@ void android_main(struct android_app *app) {
 
   auto last_time = steady_clock_t::now();
   auto next_frame = last_time + std::chrono::duration_cast<steady_clock_t::duration>(frame_dt);
+
+  auto agents_state = env->reset_physics();
 
   while (!will_quit) {
     int ident;
@@ -72,16 +71,20 @@ void android_main(struct android_app *app) {
 
     std::this_thread::sleep_for(frame_dt - elapsed_time);
 
-    auto actions = agent.act(agents_state);
+    auto actions = agent->act(agents_state);
     auto step_result = env->step(frame_dt.count(), actions);
 
     agents_state.clear();
-    std::transform(step_result.begin(), step_result.end(), agents_state.end(), [](auto t) {
+    std::transform(step_result.begin(), step_result.end(), std::back_inserter(agents_state), [](auto t) {
       return std::get<0>(t);
     });
   }
-  app->onAppCmd = nullptr;
-  app->onInputEvent = nullptr;
-  app->userData = nullptr;
-  delete env;
+
+    app->userData = nullptr;
+    app->onAppCmd = nullptr;
+    app->onInputEvent = nullptr;
+
+    env.reset();
+    UserGameTanksEnvironment::reset_singleton();
+    eglTerminate(eglGetDisplay(EGL_DEFAULT_DISPLAY));
 }

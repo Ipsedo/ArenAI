@@ -46,27 +46,27 @@ private:
   int nb_tanks;
 
   std::atomic<bool> threads_running;
-  std::barrier<> thread_barrier;
+  std::unique_ptr<std::barrier<>> thread_barrier;
   std::vector<std::thread> pool;
 
   std::vector<std::tuple<std::string, glm::mat4>> model_matrices;
 
-  std::vector<TankFactory> tank_factories;
-  std::vector<std::shared_ptr<PBufferRenderer>> tank_renderers;
+  std::vector<std::unique_ptr<TankFactory>> tank_factories;
+  std::vector<std::unique_ptr<PBufferRenderer>> tank_renderers;
   std::vector<std::vector<std::vector<pixel>>> enemy_visions;
 
-  std::shared_ptr<PhysicEngine> physic_engine;
+  std::unique_ptr<PhysicEngine> physic_engine;
 
   std::shared_ptr<AbstractGLContext> gl_context;
 
-  void worker_enemy_vision(int index, const std::shared_ptr<PBufferRenderer> &renderer);
+  void worker_enemy_vision(int index, std::unique_ptr<PBufferRenderer> &renderer);
 
 protected:
   virtual void on_draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) = 0;
 
-  virtual void on_reset_physics(const std::shared_ptr<PhysicEngine> &engine) = 0;
+  virtual void on_reset_physics(const std::unique_ptr<PhysicEngine> &engine) = 0;
   virtual void on_reset_drawables(
-    const std::shared_ptr<PhysicEngine> &engine,
+    const std::unique_ptr<PhysicEngine> &engine,
     const std::shared_ptr<AbstractGLContext> &gl_context) = 0;
 
   void start_threads();

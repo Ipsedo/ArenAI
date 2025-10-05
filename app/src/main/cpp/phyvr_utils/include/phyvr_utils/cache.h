@@ -8,13 +8,6 @@
 #include <map>
 #include <memory>
 
-template<template<class> class C, class Type>
-static std::shared_ptr<C<Type>> get_singleton() {
-  if (C<Type>::singleton_cache == std::nullptr_t())
-    C<Type>::singleton_cache = std::shared_ptr<C<Type>>(new C<Type>());
-  return C<Type>::singleton_cache;
-}
-
 template<class T>
 class Cache {
 private:
@@ -27,6 +20,15 @@ public:
 
   void add(const std::string &name, const T &obj) { cache[name] = obj; }
   T get(const std::string &name) { return cache[name]; }
+
+  void apply_on_items(const std::function<void(T)> apply_fn) {
+      for (auto [_, t] : cache)
+          apply_fn(t);
+  }
+
+  void clear() {
+      cache.clear();
+  }
 };
 
 #endif// PHYVR_CACHE_H

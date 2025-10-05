@@ -13,7 +13,7 @@
  */
 
 PBufferGLContext::PBufferGLContext() : AbstractGLContext() {
-  display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+  display = eglGetDisplay(EGL_NO_DISPLAY);
 
   const EGLint config_attrib[] = {
     EGL_RENDERABLE_TYPE,

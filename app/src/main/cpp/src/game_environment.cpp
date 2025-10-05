@@ -14,6 +14,8 @@
 #include <phyvr_utils/logging.h>
 #include <phyvr_view/cubemap.h>
 #include <phyvr_view/specular.h>
+#include <phyvr_utils/cache.h>
+#include <phyvr_utils/singleton.h>
 
 #include "./android_file_reader.h"
 #include "./android_gl_context.h"
@@ -40,7 +42,7 @@ int32_t UserGameTanksEnvironment::on_input(struct android_app *app, AInputEvent 
   return player_controller_engine->on_event(event);
 }
 
-void UserGameTanksEnvironment::on_cmd(struct android_app *new_app, int32_t cmd) {
+void UserGameTanksEnvironment::on_cmd(struct android_app *app, int32_t cmd) {
   switch (cmd) {
     case APP_CMD_SAVE_STATE:
       // The system has asked us to save our current state.  Do so.
@@ -55,7 +57,6 @@ void UserGameTanksEnvironment::on_cmd(struct android_app *new_app, int32_t cmd) 
       // The window is being shown, get it ready.
       if (app->window != nullptr) {
         LOG_INFO("opening window");
-        app = new_app;
         reset_drawables(std::make_shared<AndroidGLContext>(app->window));
         is_paused = false;
       }
@@ -64,7 +65,10 @@ void UserGameTanksEnvironment::on_cmd(struct android_app *new_app, int32_t cmd) 
       pause();
       LOG_INFO("close");
       break;
-    case APP_CMD_GAINED_FOCUS: LOG_INFO("gained focus"); break;
+    case APP_CMD_GAINED_FOCUS:
+        is_paused = false;
+        LOG_INFO("gained focus");
+        break;
     case APP_CMD_LOST_FOCUS:
       pause();
       LOG_INFO("lost focus");
@@ -75,7 +79,7 @@ void UserGameTanksEnvironment::on_cmd(struct android_app *new_app, int32_t cmd) 
 
 bool UserGameTanksEnvironment::is_running() const { return !is_paused; }
 
-void UserGameTanksEnvironment::on_reset_physics(const std::shared_ptr<PhysicEngine> &engine) {
+void UserGameTanksEnvironment::on_reset_physics(const std::unique_ptr<PhysicEngine> &engine) {
   tank_factory = std::make_unique<TankFactory>(file_reader, "player", glm::vec3(0., -40., 40));
 
   for (auto &item: tank_factory->get_items()) { engine->add_item(item); }
@@ -85,7 +89,7 @@ void UserGameTanksEnvironment::on_reset_physics(const std::shared_ptr<PhysicEngi
 }
 
 void UserGameTanksEnvironment::on_reset_drawables(
-  const std::shared_ptr<PhysicEngine> &engine,
+  const std::unique_ptr<PhysicEngine> &engine,
   const std::shared_ptr<AbstractGLContext> &gl_context) {
   player_renderer = std::make_unique<PlayerRenderer>(
     gl_context, ANativeWindow_getWidth(app->window), ANativeWindow_getHeight(app->window),
@@ -122,10 +126,22 @@ void UserGameTanksEnvironment::on_reset_drawables(
     player_renderer->add_hud_drawable(std::move(hud_drawable));
 }
 
-void UserGameTanksEnvironment::pause() { is_paused = true; }
+void UserGameTanksEnvironment::pause() {
+    is_paused = true;
+}
 
-UserGameTanksEnvironment::~UserGameTanksEnvironment() {
-  player_renderer = std::nullptr_t();
-  player_controller_engine = std::nullptr_t();
-  tank_factory = std::nullptr_t();
+void UserGameTanksEnvironment::reset_singleton() {
+    Singleton<Cache<std::shared_ptr<Shape>>>::get_singleton()->clear();
+    Singleton<Cache<std::shared_ptr<Shape>>>::reset_singleton();
+
+    Singleton<Cache<btVector3>>::get_singleton()->clear();
+    Singleton<Cache<btVector3>>::reset_singleton();
+
+    auto cache_collision_shape = Singleton<Cache<btCollisionShape *>>::get_singleton();
+    cache_collision_shape->apply_on_items([](auto s){delete s; } );
+    cache_collision_shape->clear();
+    Singleton<Cache<btCollisionShape *>>::reset_singleton();
+
+    Singleton<Cache<std::shared_ptr<Program>>>::get_singleton()->clear();
+    Singleton<Cache<std::shared_ptr<Program>>>::reset_singleton();
 }

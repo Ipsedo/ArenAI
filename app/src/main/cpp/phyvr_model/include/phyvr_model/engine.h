@@ -21,10 +21,10 @@ public:
   explicit InitBtThread(int num_threads);
   btDefaultCollisionConstructionInfo get_cci() const;
 
-  ~InitBtThread();
+    virtual ~InitBtThread();
 
 private:
-  btITaskScheduler *scheduler;
+    btITaskScheduler *task_scheduler;
   btDefaultCollisionConstructionInfo cci;
 };
 
@@ -44,8 +44,7 @@ public:
   ~PhysicEngine();
 
 private:
-  int threads_num;
-  InitBtThread init_thread;
+  std::unique_ptr<InitBtThread> init_thread;
   btDefaultCollisionConfiguration *m_collision_configuration;
   btCollisionDispatcherMt *m_dispatcher;
   btBroadphaseInterface *m_broad_phase;

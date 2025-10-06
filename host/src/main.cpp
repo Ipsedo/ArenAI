@@ -3,6 +3,7 @@
 //
 #include <iostream>
 
+#include <phyvr_core/environment.h>
 #include <phyvr_model/engine.h>
 #include <phyvr_view/framebuffer_renderer.h>
 
@@ -11,12 +12,8 @@
 #include "./utils/saver.h"
 
 int main(int argc, char **argv) {
-    std::cout << "toyo" << std::endl;
-
-    constexpr int nb_sensors = 10;
-    constexpr int nb_actions = 8;
-    const auto actor = SacActor(nb_sensors, nb_actions, 256, 512);
-    auto critic = std::make_shared<SacCritic>(nb_sensors, nb_actions, 256, 512);
+    const auto actor = SacActor(ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, 256, 512);
+    auto critic = std::make_shared<SacCritic>(ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, 256, 512);
 
     const auto output_dir = "/home/samuel/Téléchargements/actor_export";
 

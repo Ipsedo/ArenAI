@@ -4,6 +4,9 @@
 
 #include "./executorch_agent.h"
 
+#include <executorch/extension/module/module.h>
+#include <executorch/extension/tensor/tensor.h>
+
 #include "./loader.h"
 
 #define SIGMA_MIN 1e-6f
@@ -65,7 +68,35 @@ float truncated_normal_sample(
  */
 
 ExecuTorchAgent::ExecuTorchAgent(android_app *app, const std::string &pte_asset_path)
-    : actor_module(copy_asset_to_files(
-        app->activity->assetManager, pte_asset_path.c_str(), get_cache_dir(app))) {}
+    : actor_module(
+        copy_asset_to_files(app->activity->assetManager, pte_asset_path, get_cache_dir(app))) {}
 
-std::vector<Action> ExecuTorchAgent::act(const std::vector<State> &state) { return {}; }
+std::vector<Action> ExecuTorchAgent::act(const std::vector<State> &state) {
+    std::vector<float> visions(state.size() * 3 * ENEMY_VISION_SIZE * ENEMY_VISION_SIZE);
+    std::vector<float> proprioception(state.size() * ENEMY_PROPRIOCEPTION_SIZE);
+
+    int64_t idx_v = 0;
+    int64_t idx_p = 0;
+
+    for (const auto &s: state) {
+        for (int64_t c = 0; c < 3; c++) {
+            for (int64_t h = 0; h < ENEMY_VISION_SIZE; h++) {
+                for (int64_t w = 0; w < ENEMY_VISION_SIZE; w++) {
+                    visions[idx_v++] = 2.f * static_cast<float>(s.vision[h][w][c]) / 255.f - 1.f;
+                }
+            }
+        }
+
+        for (int f = 0; f < ENEMY_PROPRIOCEPTION_SIZE; f++)
+            proprioception[idx_p++] = s.proprioception[f];
+    }
+
+    auto vision_tensor = executorch::extension::from_blob(
+        visions.data(), {static_cast<int>(state.size()), 3, ENEMY_VISION_SIZE, ENEMY_VISION_SIZE});
+    auto proprioception_tensor = executorch::extension::from_blob(
+        proprioception.data(), {static_cast<int>(state.size()), ENEMY_PROPRIOCEPTION_SIZE});
+
+    auto output = actor_module.forward({vision_tensor, proprioception_tensor});
+
+    return {};
+}

@@ -17,6 +17,11 @@
 #include <phyvr_utils/file_reader.h>
 #include <phyvr_view/framebuffer_renderer.h>
 
+#define ENEMY_VISION_SIZE 256
+// 3 * (pos + vel + acc) + 3 * (ang + vel_ang + acc_and)
+#define ENEMY_PROPRIOCEPTION_SIZE (3 * 3 + 3 * 3)
+#define ENEMY_NB_ACTION (2 + 2 + 1)
+
 struct State {
     std::vector<std::vector<pixel>> vision;
     std::vector<float> proprioception;

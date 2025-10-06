@@ -15,7 +15,10 @@ BaseTanksEnvironment::BaseTanksEnvironment(
     : nb_tanks(nb_tanks), threads_running(true),
       thread_barrier(std::make_unique<std::barrier<>>(static_cast<std::ptrdiff_t>(nb_tanks + 1))),
       tank_factories(), tank_renderers(), pool(), physic_engine(std::make_unique<PhysicEngine>()),
-      dev(), rng(dev()), file_reader(file_reader), gl_context(gl_context), enemy_visions() {}
+      dev(), rng(dev()), file_reader(file_reader), gl_context(gl_context),
+      enemy_visions(
+          nb_tanks, std::vector<std::vector<pixel>>(
+                        ENEMY_VISION_SIZE, std::vector<pixel>(ENEMY_VISION_SIZE, {0, 0, 0}))) {}
 
 std::vector<std::tuple<State, Reward, IsFinish>>
 BaseTanksEnvironment::step(float time_delta, const std::vector<Action> &actions) {
@@ -32,9 +35,14 @@ BaseTanksEnvironment::step(float time_delta, const std::vector<Action> &actions)
     physic_engine->step(time_delta);
     on_draw(model_matrices);
 
-    // TODO get enemy visions
+    std::vector<std::tuple<State, Reward, IsFinish>> result;
+    result.reserve(tank_factories.size());
+    for (int i = 0; i < tank_factories.size(); i++)
+        result.emplace_back(
+            State(enemy_visions[i], std::vector<float>(ENEMY_PROPRIOCEPTION_SIZE, 0.f)), 0.f,
+            false);
 
-    return std::vector<std::tuple<State, Reward, IsFinish>>(nb_tanks);
+    return result;
 }
 
 std::vector<State> BaseTanksEnvironment::reset_physics() {
@@ -91,7 +99,12 @@ std::vector<State> BaseTanksEnvironment::reset_physics() {
 
     physic_engine->step(1.f / 60.f);// TODO attribute
 
-    return std::vector<State>(nb_tanks);
+    std::vector<State> states;
+    states.reserve(tank_factories.size());
+    for (int i = 0; i < tank_factories.size(); i++)
+        states.emplace_back(enemy_visions[i], std::vector<float>(ENEMY_PROPRIOCEPTION_SIZE, 0.f));
+
+    return states;
 }
 
 void BaseTanksEnvironment::reset_drawables(
@@ -110,7 +123,7 @@ void BaseTanksEnvironment::reset_drawables(
 
     for (auto &tank_factory: tank_factories)
         tank_renderers.push_back(std::make_unique<PBufferRenderer>(
-            256, 256,
+            ENEMY_VISION_SIZE, ENEMY_VISION_SIZE,
             glm::vec3(light_pos_u_dist(rng), light_height_u_dist(rng), light_pos_u_dist(rng)),
             tank_factory->get_camera()));
 

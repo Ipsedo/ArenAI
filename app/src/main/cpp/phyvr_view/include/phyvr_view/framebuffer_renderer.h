@@ -13,7 +13,7 @@
 
 #include "./renderer.h"
 
-typedef std::array<std::uint8_t, 4> pixel;
+typedef std::array<std::uint8_t, 3> pixel;
 
 class PBufferGLContext : public AbstractGLContext {
 public:

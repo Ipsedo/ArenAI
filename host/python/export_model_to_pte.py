@@ -8,8 +8,8 @@ from python.loader import load_neutral_state_into
 def main() -> None:
     output_pte = "/home/samuel/Téléchargements/actor.pte"
     state_dict_path = "/home/samuel/Téléchargements/actor_export"
-    nb_sensors = 10
-    nb_actions = 8
+    nb_sensors = 3 * 3 + 3 * 3
+    nb_actions = 2 + 2 + 1
 
     actor = SacActor(nb_sensors, nb_actions, 256, 512)
 

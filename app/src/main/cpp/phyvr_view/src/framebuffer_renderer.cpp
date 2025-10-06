@@ -95,7 +95,7 @@ std::vector<std::vector<pixel>> PBufferRenderer::draw_and_get_frame(
     const int height = get_height();
 
     std::vector<pixel> linear(static_cast<size_t>(width) * static_cast<size_t>(height));
-    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, linear.data());
+    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, linear.data());
 
     for (int y = 0; y < height; ++y) {
         const int src_y = y;

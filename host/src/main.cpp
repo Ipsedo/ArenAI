@@ -12,8 +12,8 @@
 #include "./utils/saver.h"
 
 int main(int argc, char **argv) {
-    const auto actor = SacActor(ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, 256, 512);
-    auto critic = std::make_shared<SacCritic>(ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, 256, 512);
+    const auto actor = SacActor(ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, 64, 256);
+    auto critic = std::make_shared<SacCritic>(ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, 64, 256);
 
     const auto output_dir = "/home/samuel/Téléchargements/actor_export";
 

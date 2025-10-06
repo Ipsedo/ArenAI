@@ -2,6 +2,8 @@
 // Created by samuel on 29/09/2025.
 //
 #include <glm/gtc/matrix_transform.hpp>
+#include <mutex>
+#include <thread>
 
 #include <phyvr_core/environment.h>
 #include <phyvr_model/convex.h>
@@ -12,13 +14,19 @@
 BaseTanksEnvironment::BaseTanksEnvironment(
     const std::shared_ptr<AbstractFileReader> &file_reader,
     const std::shared_ptr<AbstractGLContext> &gl_context, int nb_tanks)
-    : nb_tanks(nb_tanks), threads_running(true),
+    : nb_tanks(nb_tanks), data_mutex(), threads_running(true),
       thread_barrier(std::make_unique<std::barrier<>>(static_cast<std::ptrdiff_t>(nb_tanks + 1))),
       tank_factories(), tank_renderers(), pool(), physic_engine(std::make_unique<PhysicEngine>()),
       dev(), rng(dev()), file_reader(file_reader), gl_context(gl_context),
       enemy_visions(
-          nb_tanks, std::vector<std::vector<pixel>>(
-                        ENEMY_VISION_SIZE, std::vector<pixel>(ENEMY_VISION_SIZE, {0, 0, 0}))) {}
+          nb_tanks, {
+                      std::vector<std::vector<uint8_t>>(ENEMY_VISION_SIZE,
+                                                      std::vector<uint8_t>(ENEMY_VISION_SIZE, 0)),
+                      std::vector<std::vector<uint8_t>>(ENEMY_VISION_SIZE,
+                                                      std::vector<uint8_t>(ENEMY_VISION_SIZE, 0)),
+                      std::vector<std::vector<uint8_t>>(ENEMY_VISION_SIZE,
+                                                      std::vector<uint8_t>(ENEMY_VISION_SIZE, 0))
+              }) {}
 
 std::vector<std::tuple<State, Reward, IsFinish>>
 BaseTanksEnvironment::step(float time_delta, const std::vector<Action> &actions) {
@@ -37,11 +45,14 @@ BaseTanksEnvironment::step(float time_delta, const std::vector<Action> &actions)
 
     std::vector<std::tuple<State, Reward, IsFinish>> result;
     result.reserve(tank_factories.size());
-    for (int i = 0; i < tank_factories.size(); i++)
-        result.emplace_back(
-            State(enemy_visions[i], std::vector<float>(ENEMY_PROPRIOCEPTION_SIZE, 0.f)), 0.f,
-            false);
+    for (int i = 0; i < tank_factories.size(); i++){
+        std::lock_guard<std::mutex> lock_guard(data_mutex);
 
+        result.emplace_back(
+                State(enemy_visions[i], std::vector<float>(ENEMY_PROPRIOCEPTION_SIZE, 0.f)), 0.f,
+                false);
+
+    }
     return result;
 }
 
@@ -101,8 +112,10 @@ std::vector<State> BaseTanksEnvironment::reset_physics() {
 
     std::vector<State> states;
     states.reserve(tank_factories.size());
-    for (int i = 0; i < tank_factories.size(); i++)
+    for (int i = 0; i < tank_factories.size(); i++){
+        std::lock_guard<std::mutex> lock(data_mutex);
         states.emplace_back(enemy_visions[i], std::vector<float>(ENEMY_PROPRIOCEPTION_SIZE, 0.f));
+    }
 
     return states;
 }
@@ -155,8 +168,6 @@ void BaseTanksEnvironment::reset_drawables(
 void BaseTanksEnvironment::worker_enemy_vision(
     int index, std::unique_ptr<PBufferRenderer> &renderer) {
 
-    enemy_visions[index] = renderer->draw_and_get_frame(model_matrices);
-
     bool is_running = true;
 
     while (is_running) {
@@ -164,7 +175,10 @@ void BaseTanksEnvironment::worker_enemy_vision(
 
         if (!threads_running.load(std::memory_order_acquire)) is_running = false;
 
-        enemy_visions[index] = renderer->draw_and_get_frame(model_matrices);
+        {
+            std::lock_guard<std::mutex> lock(data_mutex);
+            enemy_visions[index] = renderer->draw_and_get_frame(model_matrices);
+        }
 
         std::this_thread::sleep_for(std::chrono::duration<float>(1.f / 90.f));
     }

@@ -13,7 +13,8 @@
 
 #include "./renderer.h"
 
-typedef std::array<std::uint8_t, 3> pixel;
+template<typename T>
+using image = std::array<std::vector<std::vector<T>>, 3>;
 
 class PBufferGLContext : public AbstractGLContext {
 public:
@@ -36,7 +37,7 @@ public:
     PBufferRenderer(
         int width, int height, glm::vec3 light_pos, const std::shared_ptr<Camera> &camera);
 
-    std::vector<std::vector<pixel>>
+    image<uint8_t>
     draw_and_get_frame(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices);
 
     ~PBufferRenderer() override;

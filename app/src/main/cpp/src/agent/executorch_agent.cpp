@@ -72,29 +72,50 @@ ExecuTorchAgent::ExecuTorchAgent(android_app *app, const std::string &pte_asset_
         copy_asset_to_files(app->activity->assetManager, pte_asset_path, get_cache_dir(app))) {}
 
 std::vector<Action> ExecuTorchAgent::act(const std::vector<State> &state) {
-    std::vector<float> visions(state.size() * 3 * ENEMY_VISION_SIZE * ENEMY_VISION_SIZE);
-    std::vector<float> proprioception(state.size() * ENEMY_PROPRIOCEPTION_SIZE);
+    const auto b = static_cast<int64_t>(state.size());
+    const int64_t c = 3;
+    const int64_t w = ENEMY_VISION_SIZE;
+    const int64_t h = ENEMY_VISION_SIZE;
+    const int64_t hw = h * w;
+    const int64_t chw = c * hw;
 
-    int64_t idx_v = 0;
-    int64_t idx_p = 0;
+    // Pre-allocate once, contiguous NCHW
+    std::vector<float> visions(static_cast<size_t>(b * chw));
+    std::vector<float> proprioception(static_cast<size_t>(b * ENEMY_PROPRIOCEPTION_SIZE));
 
-    for (const auto &s: state) {
-        for (int64_t c = 0; c < 3; c++) {
-            for (int64_t h = 0; h < ENEMY_VISION_SIZE; h++) {
-                for (int64_t w = 0; w < ENEMY_VISION_SIZE; w++) {
-                    visions[idx_v++] = 2.f * static_cast<float>(s.vision[h][w][c]) / 255.f - 1.f;
+    float * __restrict dst_v = visions.data();
+    float* __restrict dst_p = proprioception.data();
+
+    for (int64_t batch_idx = 0; batch_idx < b; ++batch_idx) {
+        const auto& s = state[static_cast<size_t>(batch_idx)];
+
+        // vision -> NCHW, normalisée [-1,1]
+        for (int64_t channel_idx = 0; channel_idx < c; ++channel_idx) {
+            const int64_t base = batch_idx * chw + channel_idx * hw;
+            float* out = dst_v + base;
+
+            for (int64_t height_idx = 0; height_idx < h; ++height_idx) {
+                const uint8_t* row = s.vision[static_cast<size_t>(channel_idx)]
+                [static_cast<size_t>(height_idx)]
+                        .data();
+                float* out_row = out + height_idx * w;
+                for (int64_t width_idx = 0; width_idx < w; ++width_idx) {
+                    out_row[width_idx] = static_cast<float>(row[width_idx]) * 2.f / 255.f - 1.f;
                 }
             }
         }
 
-        for (int f = 0; f < ENEMY_PROPRIOCEPTION_SIZE; f++)
-            proprioception[idx_p++] = s.proprioception[f];
+        // proprio (déjà en float) → copie contiguë
+        std::memcpy(dst_p + batch_idx * ENEMY_PROPRIOCEPTION_SIZE, s.proprioception.data(), sizeof(float) * static_cast<size_t>(ENEMY_PROPRIOCEPTION_SIZE));
     }
 
+    // Create ExecuTorch tensors as views (zero-copy)
     auto vision_tensor = executorch::extension::from_blob(
-        visions.data(), {static_cast<int>(state.size()), 3, ENEMY_VISION_SIZE, ENEMY_VISION_SIZE});
+            visions.data(), {static_cast<int>(b), static_cast<int>(c), static_cast<int>(h), static_cast<int>(w)}
+    );
     auto proprioception_tensor = executorch::extension::from_blob(
-        proprioception.data(), {static_cast<int>(state.size()), ENEMY_PROPRIOCEPTION_SIZE});
+            proprioception.data(), {static_cast<int>(b), ENEMY_PROPRIOCEPTION_SIZE}
+    );
 
     auto output = actor_module.forward({vision_tensor, proprioception_tensor});
 

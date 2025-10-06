@@ -17,13 +17,13 @@
 #include <phyvr_utils/file_reader.h>
 #include <phyvr_view/framebuffer_renderer.h>
 
-#define ENEMY_VISION_SIZE 256
+#define ENEMY_VISION_SIZE 128
 // 3 * (pos + vel + acc) + 3 * (ang + vel_ang + acc_and)
 #define ENEMY_PROPRIOCEPTION_SIZE (3 * 3 + 3 * 3)
 #define ENEMY_NB_ACTION (2 + 2 + 1)
 
 struct State {
-    std::vector<std::vector<pixel>> vision;
+    image<uint8_t> vision;
     std::vector<float> proprioception;
 };
 
@@ -49,6 +49,7 @@ public:
 
 private:
     int nb_tanks;
+    std::mutex data_mutex;
 
     std::atomic<bool> threads_running;
     std::unique_ptr<std::barrier<>> thread_barrier;
@@ -58,7 +59,7 @@ private:
 
     std::vector<std::unique_ptr<TankFactory>> tank_factories;
     std::vector<std::unique_ptr<PBufferRenderer>> tank_renderers;
-    std::vector<std::vector<std::vector<pixel>>> enemy_visions;
+    std::vector<image<uint8_t>> enemy_visions;
 
     std::unique_ptr<PhysicEngine> physic_engine;
 

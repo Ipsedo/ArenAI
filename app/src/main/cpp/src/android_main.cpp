@@ -5,6 +5,7 @@
 #include <cassert>
 #include <chrono>
 #include <thread>
+#include <future>
 
 #include <android/sensor.h>
 #include <android_native_app_glue.h>
@@ -30,7 +31,7 @@ typedef std::chrono::steady_clock steady_clock_t;
 typedef std::chrono::duration<float> secs_f;
 
 void android_main(struct android_app *app) {
-    constexpr int nb_tanks = 8;
+    constexpr int nb_tanks = 4;
     bool will_quit = false;
 
     auto env = std::make_unique<UserGameTanksEnvironment>(app, nb_tanks);
@@ -47,6 +48,12 @@ void android_main(struct android_app *app) {
     auto next_frame = last_time + std::chrono::duration_cast<steady_clock_t::duration>(frame_dt);
 
     auto agents_state = env->reset_physics();
+
+    auto agent_exec = [&agents_state, &agent](){
+        return agent->act(agents_state);
+    };
+
+    auto action_future = std::async(agent_exec);
 
     while (!will_quit) {
         int ident;
@@ -70,13 +77,14 @@ void android_main(struct android_app *app) {
 
         std::this_thread::sleep_for(frame_dt - elapsed_time);
 
-        auto actions = agent->act(agents_state);
-        auto step_result = env->step(frame_dt.count(), actions);
+        auto step_result = env->step(frame_dt.count(), action_future.get());
 
         agents_state.clear();
         std::transform(
             step_result.begin(), step_result.end(), std::back_inserter(agents_state),
             [](auto t) { return std::get<0>(t); });
+
+        action_future = std::async(agent_exec);
     }
 
     app->userData = nullptr;

@@ -81,30 +81,40 @@ void PBufferRenderer::on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_
 
 void PBufferRenderer::on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_context) {}
 
-std::vector<std::vector<pixel>> PBufferRenderer::draw_and_get_frame(
+image<uint8_t> PBufferRenderer::draw_and_get_frame(
     const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
     draw(model_matrices);
 
-    std::vector<std::vector<pixel>> image(get_height(), std::vector<pixel>(get_width()));
+    const int width = get_width();
+    const int height = get_height();
+
+    std::array<std::vector<std::vector<uint8_t>>, 3> channels = {
+            std::vector<std::vector<uint8_t>>(height, std::vector<uint8_t>(width)),
+            std::vector<std::vector<uint8_t>>(height, std::vector<uint8_t>(width)),
+            std::vector<std::vector<uint8_t>>(height, std::vector<uint8_t>(width))
+    };
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
     glFinish();
 
-    const int width = get_width();
-    const int height = get_height();
-
-    std::vector<pixel> linear(static_cast<size_t>(width) * static_cast<size_t>(height));
+    std::vector<unsigned char> linear(static_cast<size_t>(width) * static_cast<size_t>(height) * 3);
     glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, linear.data());
 
     for (int y = 0; y < height; ++y) {
         const int src_y = y;
-        const int dst_y = (height - 1 - y);
-        std::memcpy(
-            image[dst_y].data(), linear.data() + static_cast<size_t>(src_y) * width,
-            sizeof(pixel) * static_cast<size_t>(width));
+        const int dst_y = height - 1 - y;
+        const unsigned char* src_row = linear.data() + static_cast<size_t>(src_y) * width * 3;
+
+        for (int x = 0; x < width; ++x) {
+            const unsigned char* pixel_ptr = src_row + x * 3;
+            channels[0][dst_y][x] = pixel_ptr[0];
+            channels[1][dst_y][x] = pixel_ptr[1];
+            channels[2][dst_y][x] = pixel_ptr[2];
+        }
     }
-    return image;
+
+    return channels;
 }
 
 PBufferRenderer::~PBufferRenderer() = default;

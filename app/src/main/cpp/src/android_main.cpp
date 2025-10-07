@@ -34,7 +34,7 @@ void android_main(struct android_app *app) {
     const float target_fps = 30.0f;
     const secs_f frame_dt = secs_f(1.0f / target_fps);
 
-    constexpr int nb_tanks = 4;
+    constexpr int nb_tanks = 2;
     bool will_quit = false;
 
     auto env = std::make_unique<UserGameTanksEnvironment>(app, nb_tanks, frame_dt.count());

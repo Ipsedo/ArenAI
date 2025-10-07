@@ -6,41 +6,28 @@
 #define PHYVR_ENVIRONMENT_H
 
 #include <barrier>
+#include <future>
 #include <memory>
 #include <random>
 #include <thread>
 #include <tuple>
 
-#include <phyvr_controller/inputs.h>
 #include <phyvr_model/engine.h>
 #include <phyvr_model/tank_factory.h>
 #include <phyvr_utils/file_reader.h>
 #include <phyvr_view/framebuffer_renderer.h>
 
-#define ENEMY_VISION_SIZE 128
-// 3 * (pos + vel + acc) + 3 * (ang + vel_ang + acc_and)
-#define ENEMY_PROPRIOCEPTION_SIZE (3 * 3 + 3 * 3)
-#define ENEMY_NB_ACTION (2 + 2 + 1)
-
-struct State {
-    image<uint8_t> vision;
-    std::vector<float> proprioception;
-};
-
-typedef float Reward;
-
-typedef bool IsFinish;
-
-typedef user_input Action;
+#include "./enemy_handler.h"
+#include "./types.h"
 
 class BaseTanksEnvironment {
 public:
     BaseTanksEnvironment(
         const std::shared_ptr<AbstractFileReader> &file_reader,
-        const std::shared_ptr<AbstractGLContext> &gl_context, int nb_tanks);
+        const std::shared_ptr<AbstractGLContext> &gl_context, int nb_tanks, float wanted_frequency);
 
     virtual std::vector<std::tuple<State, Reward, IsFinish>>
-    step(float time_delta, const std::vector<Action> &actions);
+    step(float time_delta, std::future<std::vector<Action>> &actions_future);
 
     std::vector<State> reset_physics();
     void reset_drawables(const std::shared_ptr<AbstractGLContext> &new_gl_context);
@@ -48,8 +35,9 @@ public:
     virtual ~BaseTanksEnvironment();
 
 private:
+    float wanted_frequency;
     int nb_tanks;
-    std::mutex data_mutex;
+    std::vector<std::mutex> data_mutex;
 
     std::atomic<bool> threads_running;
     std::unique_ptr<std::barrier<>> thread_barrier;
@@ -59,6 +47,7 @@ private:
 
     std::vector<std::unique_ptr<TankFactory>> tank_factories;
     std::vector<std::unique_ptr<PBufferRenderer>> tank_renderers;
+    std::vector<std::unique_ptr<EnemyControllerHandler>> tank_controller_handler;
     std::vector<image<uint8_t>> enemy_visions;
 
     std::unique_ptr<PhysicEngine> physic_engine;

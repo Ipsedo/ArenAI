@@ -5,6 +5,8 @@
 #ifndef PHYVR_EXECUTORCH_AGENT_H
 #define PHYVR_EXECUTORCH_AGENT_H
 
+#include <random>
+
 #include <android_native_app_glue.h>
 #include <executorch/extension/module/module.h>
 
@@ -18,6 +20,9 @@ public:
 
 private:
     executorch::extension::module::Module actor_module;
+
+    std::random_device dev;
+    std::mt19937 rng;
 };
 
 #endif// PHYVR_EXECUTORCH_AGENT_H

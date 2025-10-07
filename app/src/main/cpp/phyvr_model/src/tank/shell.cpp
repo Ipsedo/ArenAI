@@ -2,7 +2,7 @@
 // Created by samuel on 13/04/2023.
 //
 
-#include "./ammu.h"
+#include "./shell.h"
 
 #include <utility>
 
@@ -13,9 +13,9 @@ ShellItem::load_shape(const std::shared_ptr<AbstractFileReader> &file_reader) {
 
 ShellItem::ShellItem(
     const std::shared_ptr<AbstractFileReader> &file_reader, glm::vec3 pos, glm::quat rot,
-    glm::vec3 scale, float mass)
+    glm::vec3 scale, float mass, const std::function<void(Item *)> &contact_callback)
     : ConvexItem(ShellItem::NAME, ShellItem::load_shape(file_reader), pos, scale, mass),
-      health_point(10) {
+      health_point(10), contact_callback(contact_callback) {
 
     btTransform shell_tr;
     shell_tr.setIdentity();
@@ -28,6 +28,7 @@ ShellItem::ShellItem(
 void ShellItem::on_contact(Item *other) {
     Item::on_contact(other);
     health_point--;
+    contact_callback(other);
 }
 
 bool ShellItem::need_destroy() { return Item::need_destroy() || health_point <= 0; }

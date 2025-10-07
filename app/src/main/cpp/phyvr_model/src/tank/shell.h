@@ -2,8 +2,10 @@
 // Created by samuel on 13/04/2023.
 //
 
-#ifndef PHYVR_AMMU_H
-#define PHYVR_AMMU_H
+#ifndef PHYVR_SHELL_H
+#define PHYVR_SHELL_H
+
+#include <functional>
 
 #include <phyvr_model/convex.h>
 #include <phyvr_utils/file_reader.h>
@@ -18,7 +20,8 @@ public:
 
     ShellItem(
         const std::shared_ptr<AbstractFileReader> &file_reader, glm::vec3 pos, glm::quat rot,
-        glm::vec3 scale, float mass);
+        glm::vec3 scale, float mass,
+        const std::function<void(Item *)> &contact_callback = [](Item *i) {});
 
     void on_contact(Item *other) override;
 
@@ -28,6 +31,7 @@ public:
 
 private:
     int health_point;
+    std::function<void(Item *)> contact_callback;
 };
 
-#endif// PHYVR_AMMU_H
+#endif// PHYVR_SHELL_H

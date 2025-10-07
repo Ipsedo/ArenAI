@@ -43,12 +43,16 @@ WheelItem::WheelItem(
     hinge->setBounce(index, 1e-2f);
     hinge->setEquilibriumPoint(index, -0.2f);
 
+    // disable axis Z
+    hinge->setLimit(2, 0, 0);
+    hinge->setLimit(5, 0, 0);
+
     ConvexItem::get_body()->setFriction(500.f);
 }
 
 void WheelItem::on_input(const user_input &input) {
     int motor_axis = 3;
-    hinge->setTargetVelocity(motor_axis, -input.left_joystick.y * 25.f);
+    hinge->setTargetVelocity(motor_axis, -input.left_joystick.y * 15.f);
 }
 
 std::vector<btTypedConstraint *> WheelItem::get_constraints() {

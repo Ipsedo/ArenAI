@@ -1,6 +1,6 @@
-torch
+torch==2.8.0
 numpy
-executorch
+executorch==1.0.0
 
 pre-commit
 mypy

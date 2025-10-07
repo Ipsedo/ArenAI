@@ -11,7 +11,7 @@ class ConvolutionNetwork final : public torch::nn::Module {
 public:
     ConvolutionNetwork();
 
-    torch::Tensor forward(torch::Tensor input);
+    torch::Tensor forward(const torch::Tensor &input);
 
 private:
     torch::nn::Sequential cnn{nullptr};

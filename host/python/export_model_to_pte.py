@@ -5,26 +5,42 @@ from executorch.exir import to_edge_transform_and_lower
 from python.model import SacActor
 from python.loader import load_neutral_state_into
 
+
 def main() -> None:
     output_pte = "/home/samuel/Téléchargements/actor.pte"
     state_dict_path = "/home/samuel/Téléchargements/actor_export"
     nb_sensors = 3 * 3 + 3 * 3
-    nb_actions = 2 + 2 + 1
+    nb_actions = 2 + 2 + 3
 
     actor = SacActor(nb_sensors, nb_actions, 64, 256)
 
     load_neutral_state_into(actor, state_dict_path)
 
-    example_input = (th.randn(1, 3, 128, 128), th.randn(1, nb_sensors))
+    batch = Dim("batch", min=1, max=32)
+    dynamic_shapes = (
+        {0: batch},
+        {0: batch},
+    )
 
-    exported_program = export(actor, example_input)
+    example_input = (th.randn(2, 3, 128, 128), th.randn(2, nb_sensors))
+
+    exported_program = export(actor, example_input, dynamic_shapes=dynamic_shapes)
+
+    gm = exported_program.module()
+    with th.no_grad():
+        out_gm = gm(*example_input)
+        print(out_gm)
+
     executorch_program = to_edge_transform_and_lower(
         exported_program,
-        partitioner=[XnnpackPartitioner()]
+        partitioner=[XnnpackPartitioner()],
     ).to_executorch()
 
     with open(output_pte, "wb") as file:
         file.write(executorch_program.buffer)
+
+    print(actor(*example_input))
+
 
 if __name__ == '__main__':
     main()

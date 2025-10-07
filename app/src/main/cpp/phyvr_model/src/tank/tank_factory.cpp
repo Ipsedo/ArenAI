@@ -4,9 +4,9 @@
 
 #include <phyvr_model/tank_factory.h>
 
-#include "./ammu.h"
 #include "./canon.h"
 #include "./chassis.h"
+#include "./shell.h"
 #include "./turret.h"
 #include "./wheel.h"
 

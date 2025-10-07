@@ -13,8 +13,10 @@
 
 #include "./renderer.h"
 
+// Indexing :
+// Channels x Height x Width
 template<typename T>
-using image = std::array<std::vector<std::vector<T>>, 3>;
+using image = std::vector<std::vector<std::vector<T>>>;
 
 class PBufferGLContext : public AbstractGLContext {
 public:

@@ -88,11 +88,8 @@ image<uint8_t> PBufferRenderer::draw_and_get_frame(
     const int width = get_width();
     const int height = get_height();
 
-    std::array<std::vector<std::vector<uint8_t>>, 3> channels = {
-            std::vector<std::vector<uint8_t>>(height, std::vector<uint8_t>(width)),
-            std::vector<std::vector<uint8_t>>(height, std::vector<uint8_t>(width)),
-            std::vector<std::vector<uint8_t>>(height, std::vector<uint8_t>(width))
-    };
+    std::vector<std::vector<std::vector<uint8_t>>> channels(
+        3, std::vector<std::vector<uint8_t>>(height, std::vector<uint8_t>(width)));
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
@@ -104,10 +101,10 @@ image<uint8_t> PBufferRenderer::draw_and_get_frame(
     for (int y = 0; y < height; ++y) {
         const int src_y = y;
         const int dst_y = height - 1 - y;
-        const unsigned char* src_row = linear.data() + static_cast<size_t>(src_y) * width * 3;
+        const unsigned char *src_row = linear.data() + static_cast<size_t>(src_y) * width * 3;
 
         for (int x = 0; x < width; ++x) {
-            const unsigned char* pixel_ptr = src_row + x * 3;
+            const unsigned char *pixel_ptr = src_row + x * 3;
             channels[0][dst_y][x] = pixel_ptr[0];
             channels[1][dst_y][x] = pixel_ptr[1];
             channels[2][dst_y][x] = pixel_ptr[2];

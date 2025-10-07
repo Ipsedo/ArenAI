@@ -6,8 +6,9 @@
 
 #include <phyvr_model/engine.h>
 
-PhysicEngine::PhysicEngine()
-    : m_collision_configuration(new btDefaultCollisionConfiguration()),
+PhysicEngine::PhysicEngine(float wanted_frequency)
+    : wanted_frequency(wanted_frequency),
+      m_collision_configuration(new btDefaultCollisionConfiguration()),
       m_dispatcher(new btCollisionDispatcher(m_collision_configuration)),
       m_broad_phase(new btDbvtBroadphase()),
       m_constraint_solver(new btSequentialImpulseConstraintSolver()),
@@ -34,7 +35,7 @@ void PhysicEngine::step(float delta) {
     for (const auto &item_producer: item_producers)
         for (const auto &item: item_producer->get_produced_items()) add_item(item);
 
-    m_world->stepSimulation(delta, 1, 1.f / 60.f);
+    m_world->stepSimulation(delta, 1, wanted_frequency);
 
     for (int i = 0; i < m_dispatcher->getNumManifolds(); i++) {
         btPersistentManifold *manifold = m_dispatcher->getManifoldByIndexInternal(i);

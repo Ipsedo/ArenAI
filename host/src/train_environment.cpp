@@ -11,7 +11,7 @@
 TrainTankEnvironment::TrainTankEnvironment(const int nb_tanks)
     : BaseTanksEnvironment(
         std::make_shared<LinuxAndroidAssetFileReader>(std::filesystem::path("")),
-        std::make_shared<PBufferGLContext>(), nb_tanks) {}
+        std::make_shared<PBufferGLContext>(), nb_tanks, 1.f / 30.f) {}
 
 void TrainTankEnvironment::on_draw(
     const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {}

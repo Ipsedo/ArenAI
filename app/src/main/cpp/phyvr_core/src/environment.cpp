@@ -1,9 +1,10 @@
 //
 // Created by samuel on 29/09/2025.
 //
-#include <glm/gtc/matrix_transform.hpp>
 #include <mutex>
 #include <thread>
+
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <phyvr_core/environment.h>
 #include <phyvr_model/convex.h>
@@ -13,23 +14,27 @@
 
 BaseTanksEnvironment::BaseTanksEnvironment(
     const std::shared_ptr<AbstractFileReader> &file_reader,
-    const std::shared_ptr<AbstractGLContext> &gl_context, int nb_tanks)
-    : nb_tanks(nb_tanks), data_mutex(), threads_running(true),
+    const std::shared_ptr<AbstractGLContext> &gl_context, int nb_tanks, float wanted_frequency)
+    : wanted_frequency(wanted_frequency), nb_tanks(nb_tanks), data_mutex(nb_tanks),
+      threads_running(true),
       thread_barrier(std::make_unique<std::barrier<>>(static_cast<std::ptrdiff_t>(nb_tanks + 1))),
-      tank_factories(), tank_renderers(), pool(), physic_engine(std::make_unique<PhysicEngine>()),
-      dev(), rng(dev()), file_reader(file_reader), gl_context(gl_context),
+      tank_factories(), tank_renderers(), tank_controller_handler(), pool(),
+      physic_engine(std::make_unique<PhysicEngine>(wanted_frequency)), dev(), rng(dev()),
+      file_reader(file_reader), gl_context(gl_context),
       enemy_visions(
-          nb_tanks, {
-                      std::vector<std::vector<uint8_t>>(ENEMY_VISION_SIZE,
-                                                      std::vector<uint8_t>(ENEMY_VISION_SIZE, 0)),
-                      std::vector<std::vector<uint8_t>>(ENEMY_VISION_SIZE,
-                                                      std::vector<uint8_t>(ENEMY_VISION_SIZE, 0)),
-                      std::vector<std::vector<uint8_t>>(ENEMY_VISION_SIZE,
-                                                      std::vector<uint8_t>(ENEMY_VISION_SIZE, 0))
-              }) {}
+          nb_tanks, image<uint8_t>(
+                        3, std::vector<std::vector<uint8_t>>(
+                               ENEMY_VISION_SIZE, std::vector<uint8_t>(ENEMY_VISION_SIZE, 0)))) {
+
+    std::uniform_int_distribution<u_int8_t> u_dist(0, 255);
+    for (int i = 0; i < nb_tanks; i++)
+        for (int c = 0; c < 3; c++)
+            for (int h = 0; h < ENEMY_VISION_SIZE; h++)
+                for (int w = 0; w < ENEMY_VISION_SIZE; w++) enemy_visions[i][c][h][w] = u_dist(rng);
+}
 
 std::vector<std::tuple<State, Reward, IsFinish>>
-BaseTanksEnvironment::step(float time_delta, const std::vector<Action> &actions) {
+BaseTanksEnvironment::step(float time_delta, std::future<std::vector<Action>> &actions_future) {
     model_matrices.clear();
 
     for (auto &item: physic_engine->get_items())
@@ -45,20 +50,27 @@ BaseTanksEnvironment::step(float time_delta, const std::vector<Action> &actions)
 
     std::vector<std::tuple<State, Reward, IsFinish>> result;
     result.reserve(tank_factories.size());
-    for (int i = 0; i < tank_factories.size(); i++){
-        std::lock_guard<std::mutex> lock_guard(data_mutex);
 
-        result.emplace_back(
-                State(enemy_visions[i], std::vector<float>(ENEMY_PROPRIOCEPTION_SIZE, 0.f)), 0.f,
-                false);
+    std::uniform_real_distribution<float> u_dist(-1.f, 1.f);
+    for (int i = 0; i < tank_factories.size(); i++) {
+        std::lock_guard<std::mutex> lock_guard(data_mutex[i]);
 
+        std::vector<float> proprioception(ENEMY_PROPRIOCEPTION_SIZE);
+        for (int j = 0; j < ENEMY_PROPRIOCEPTION_SIZE; j++) proprioception[j] = u_dist(rng);
+
+        result.emplace_back(State(enemy_visions[i], proprioception), 0.f, false);
     }
+
+    auto actions = actions_future.get();
+    for (int i = 0; i < tank_controller_handler.size(); i++)
+        tank_controller_handler[i]->on_event(actions[i]);
     return result;
 }
 
 std::vector<State> BaseTanksEnvironment::reset_physics() {
     physic_engine->remove_bodies_and_constraints();
     tank_factories.clear();
+    tank_controller_handler.clear();
 
     auto map = std::make_shared<HeightMapItem>(
         "height_map", file_reader, "heightmap/heightmap6.png", glm::vec3(0., 40., 0.),
@@ -74,11 +86,16 @@ std::vector<State> BaseTanksEnvironment::reset_physics() {
     for (int i = 0; i < nb_tanks; i++) {
         tank_factories.push_back(std::make_unique<TankFactory>(
             file_reader, "enemy_" + std::to_string(i),
-            glm::vec3(pos_u_dist(rng), 20.f, pos_u_dist(rng))));
+            glm::vec3(pos_u_dist(rng), 0.f, pos_u_dist(rng))));
 
         for (const auto &item: tank_factories.back()->get_items()) physic_engine->add_item(item);
         for (const auto &item_producer: tank_factories.back()->get_item_producers())
             physic_engine->add_item_producer(item_producer);
+
+        tank_controller_handler.push_back(std::make_unique<EnemyControllerHandler>(1.f / 6.f));
+
+        for (const auto &controller: tank_factories.back()->get_controllers())
+            tank_controller_handler.back()->add_controller(controller);
     }
 
     // add basic shapes
@@ -108,13 +125,18 @@ std::vector<State> BaseTanksEnvironment::reset_physics() {
 
     on_reset_physics(physic_engine);
 
-    physic_engine->step(1.f / 60.f);// TODO attribute
+    physic_engine->step(wanted_frequency);
+
+    std::uniform_real_distribution<float> u_dist(-1.f, 1.f);
 
     std::vector<State> states;
     states.reserve(tank_factories.size());
-    for (int i = 0; i < tank_factories.size(); i++){
-        std::lock_guard<std::mutex> lock(data_mutex);
-        states.emplace_back(enemy_visions[i], std::vector<float>(ENEMY_PROPRIOCEPTION_SIZE, 0.f));
+    for (int i = 0; i < tank_factories.size(); i++) {
+        std::vector<float> proprioception(ENEMY_PROPRIOCEPTION_SIZE);
+        for (int j = 0; j < ENEMY_PROPRIOCEPTION_SIZE; j++) proprioception[j] = u_dist(rng);
+
+        std::lock_guard<std::mutex> lock(data_mutex[i]);
+        states.emplace_back(enemy_visions[i], proprioception);
     }
 
     return states;
@@ -170,17 +192,24 @@ void BaseTanksEnvironment::worker_enemy_vision(
 
     bool is_running = true;
 
+    auto frame_dt = std::chrono::milliseconds(static_cast<int>(wanted_frequency * 1000.f));
+
+    auto last_time = std::chrono::steady_clock::now();
+
     while (is_running) {
         thread_barrier->arrive_and_wait();
 
         if (!threads_running.load(std::memory_order_acquire)) is_running = false;
 
         {
-            std::lock_guard<std::mutex> lock(data_mutex);
+            std::lock_guard<std::mutex> lock(data_mutex[index]);
             enemy_visions[index] = renderer->draw_and_get_frame(model_matrices);
         }
 
-        std::this_thread::sleep_for(std::chrono::duration<float>(1.f / 90.f));
+        auto now = std::chrono::steady_clock::now();
+        auto dt = now - last_time;
+        last_time = now;
+        std::this_thread::sleep_for(frame_dt - dt);
     }
 }
 

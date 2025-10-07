@@ -30,7 +30,7 @@ option(EXECUTORCH_BUILD_XNNPACK "" ON)
 FetchContent_Declare(
         executorch
         GIT_REPOSITORY https://github.com/pytorch/executorch.git
-        GIT_TAG        "v0.7.0"
+        GIT_TAG        "v1.0.0-rc2"
         GIT_SHALLOW    TRUE
         GIT_PROGRESS   TRUE
         GIT_SUBMODULES_RECURSE TRUE
@@ -41,10 +41,9 @@ execute_process(
         COMMAND bash -lc
         "source ${PYTHON_VENV_DIR}/bin/activate \
         && cd '${ET_SOURCE_DIR}' \
+        && ./install_executorch.sh --clean \
         && git submodule sync \
-        && git submodule update --init --recursive \
-        && ./install_requirements.sh \
-        && ./install_executorch.sh --clean"
+        && git submodule update --init --recursive"
         RESULT_VARIABLE _et_submods_rv
 )
 
@@ -83,9 +82,8 @@ target_link_libraries(
         phyvr_view
         phyvr_model
         phyvr_core
-        extension_module_static
-        extension_flat_tensor
-        extension_tensor
-        optimized_native_cpu_ops_lib
-        xnnpack_backend
+        executorch
+        executorch::backends
+        executorch::extensions
+        executorch::kernels
 )

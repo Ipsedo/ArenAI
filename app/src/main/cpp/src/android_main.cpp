@@ -4,8 +4,8 @@
 
 #include <cassert>
 #include <chrono>
-#include <thread>
 #include <future>
+#include <thread>
 
 #include <android/sensor.h>
 #include <android_native_app_glue.h>
@@ -31,29 +31,26 @@ typedef std::chrono::steady_clock steady_clock_t;
 typedef std::chrono::duration<float> secs_f;
 
 void android_main(struct android_app *app) {
+    const float target_fps = 30.0f;
+    const secs_f frame_dt = secs_f(1.0f / target_fps);
+
     constexpr int nb_tanks = 4;
     bool will_quit = false;
 
-    auto env = std::make_unique<UserGameTanksEnvironment>(app, nb_tanks);
+    auto env = std::make_unique<UserGameTanksEnvironment>(app, nb_tanks, frame_dt.count());
     auto agent = std::make_unique<ExecuTorchAgent>(app, "executorch/actor.pte");
 
     app->userData = env.get();
     app->onAppCmd = on_cmd_wrapper;
     app->onInputEvent = on_input_wrapper;
 
-    const float target_fps = 60.0f;
-    const secs_f frame_dt = secs_f(1.0f / target_fps);
-
     auto last_time = steady_clock_t::now();
-    auto next_frame = last_time + std::chrono::duration_cast<steady_clock_t::duration>(frame_dt);
 
     auto agents_state = env->reset_physics();
 
-    auto agent_exec = [&agents_state, &agent](){
-        return agent->act(agents_state);
-    };
-
-    auto action_future = std::async(agent_exec);
+    auto action_promise = std::promise<std::vector<Action>>();
+    action_promise.set_value(agent->act(agents_state));
+    auto action_future = action_promise.get_future();
 
     while (!will_quit) {
         int ident;
@@ -77,14 +74,14 @@ void android_main(struct android_app *app) {
 
         std::this_thread::sleep_for(frame_dt - elapsed_time);
 
-        auto step_result = env->step(frame_dt.count(), action_future.get());
+        auto step_result = env->step(frame_dt.count(), action_future);
 
         agents_state.clear();
         std::transform(
             step_result.begin(), step_result.end(), std::back_inserter(agents_state),
             [](auto t) { return std::get<0>(t); });
 
-        action_future = std::async(agent_exec);
+        action_future = std::async([agents_state, &agent]() { return agent->act(agents_state); });
     }
 
     app->userData = nullptr;

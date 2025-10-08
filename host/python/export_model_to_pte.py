@@ -28,8 +28,7 @@ def main() -> None:
 
     gm = exported_program.module()
     with th.no_grad():
-        out_gm = gm(*example_input)
-        print(out_gm)
+        print(gm(*example_input))
 
     executorch_program = to_edge_transform_and_lower(
         exported_program,
@@ -39,7 +38,8 @@ def main() -> None:
     with open(output_pte, "wb") as file:
         file.write(executorch_program.buffer)
 
-    print(actor(*example_input))
+    with th.no_grad():
+        print(actor(*example_input))
 
 
 if __name__ == '__main__':

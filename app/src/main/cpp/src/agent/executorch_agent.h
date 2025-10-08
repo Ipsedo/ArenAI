@@ -12,6 +12,17 @@
 
 #include <phyvr_core/environment.h>
 
+using namespace executorch;
+
+float erfinv(const float x);
+float phi(const float z);
+float theta(const float x);
+float theta_inv(const float theta);
+
+float truncated_normal_sample(
+    std::mt19937 rng, const float mu, const float sigma, const float min_value,
+    const float max_value);
+
 class ExecuTorchAgent {
 public:
     ExecuTorchAgent(android_app *app, const std::string &pte_asset_path);
@@ -19,7 +30,7 @@ public:
     std::vector<Action> act(const std::vector<State> &state);
 
 private:
-    executorch::extension::module::Module actor_module;
+    extension::module::Module actor_module;
 
     std::random_device dev;
     std::mt19937 rng;

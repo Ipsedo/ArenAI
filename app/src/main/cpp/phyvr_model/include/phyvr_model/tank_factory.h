@@ -27,7 +27,12 @@ public:
 
     std::map<std::string, std::shared_ptr<Shape>> load_ammu_shapes();
 
+    virtual bool is_dead();
+
     virtual ~TankFactory();
+
+protected:
+    virtual void on_fired_shell_contact(Item *item) = 0;
 
 private:
     std::string name;
@@ -38,6 +43,34 @@ private:
     std::vector<std::shared_ptr<Controller>> controllers;
 
     std::shared_ptr<AbstractFileReader> file_reader;
+};
+
+class EnemyTankFactory : public TankFactory {
+public:
+    EnemyTankFactory(
+        const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
+        glm::vec3 chassis_pos);
+    float get_reward();
+
+    bool is_dead() override;
+
+    std::vector<float> get_proprioception();
+
+protected:
+    void on_fired_shell_contact(Item *item) override;
+
+private:
+    float reward;
+};
+
+class PlayerTankFactory : public TankFactory {
+public:
+    PlayerTankFactory(
+        const std::shared_ptr<AbstractFileReader> &fileReader, const std::string &tankPrefixName,
+        const glm::vec3 &chassisPos);
+
+protected:
+    void on_fired_shell_contact(Item *item) override;
 };
 
 #endif// PHYVR_TANK_FACTORY_H

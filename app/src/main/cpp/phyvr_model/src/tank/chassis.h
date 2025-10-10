@@ -7,7 +7,7 @@
 
 #include <phyvr_model/convex.h>
 
-class ChassisItem : public ConvexItem {
+class ChassisItem : public LifeItem, public ConvexItem {
 public:
     ChassisItem(
         const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,

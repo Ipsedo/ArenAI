@@ -11,7 +11,7 @@
 
 PlayerControllerHandler::PlayerControllerHandler(AConfiguration *config, int width, int height)
     : ControllerHandler<AInputEvent *>() {
-    drive_joystick = std::make_shared<HUDJoyStick>(config, width, height, 40, 150, 65);
+    drive_joystick = std::make_shared<HUDJoyStick>(config, width, height, 40, 175, 65);
     fire_button = std::make_shared<HUDButton>(config, width, height, 60, 80);
     turret_joystick = std::make_shared<ScreenJoyStick>(
         width, height, std::vector<std::shared_ptr<PointerLocker>>{drive_joystick, fire_button});

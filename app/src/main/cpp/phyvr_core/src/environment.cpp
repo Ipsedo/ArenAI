@@ -84,7 +84,7 @@ std::vector<State> BaseTanksEnvironment::reset_physics() {
 
     // add tanks
     for (int i = 0; i < nb_tanks; i++) {
-        tank_factories.push_back(std::make_unique<TankFactory>(
+        tank_factories.push_back(std::make_unique<EnemyTankFactory>(
             file_reader, "enemy_" + std::to_string(i),
             glm::vec3(pos_u_dist(rng), 0.f, pos_u_dist(rng))));
 

@@ -9,7 +9,7 @@
 #include <phyvr_controller/inputs.h>
 #include <phyvr_model/convex.h>
 
-class WheelItem : public ConvexItem, public Controller {
+class WheelItem : public LifeItem, public ConvexItem, public Controller {
 public:
     WheelItem(
         const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,

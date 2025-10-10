@@ -2,6 +2,8 @@
 // Created by samuel on 02/04/2023.
 //
 
+#include <numeric>
+
 #include <phyvr_model/tank_factory.h>
 
 #include "./canon.h"
@@ -62,7 +64,8 @@ TankFactory::TankFactory(
     glm::vec3 canon_scale = turret_scale;
     auto canon = std::make_shared<CanonItem>(
         tank_prefix_name, file_reader, chassis_pos + turret_pos + canon_pos, canon_pos,
-        scale * canon_scale, 50, turret->get_body());
+        scale * canon_scale, 50, turret->get_body(),
+        [this](Item *i) { on_fired_shell_contact(i); });
 
     item_producers.push_back(canon);
     items.push_back(canon), controllers.push_back(canon);
@@ -89,8 +92,54 @@ std::vector<std::shared_ptr<ItemProducer>> TankFactory::get_item_producers() {
     return item_producers;
 }
 
+bool TankFactory::is_dead() {
+    return std::transform_reduce(
+        items.begin(), items.end(), false, [](bool b1, bool b2) { return b1 || b2; },
+        [](const auto &i) {
+            if (auto t = std::dynamic_pointer_cast<LifeItem>(i)) return t->is_dead();
+            return false;
+        });
+}
+
 TankFactory::~TankFactory() {
     item_producers.clear();
     items.clear();
     controllers.clear();
 }
+
+/*
+ * Enemy
+ */
+
+EnemyTankFactory::EnemyTankFactory(
+    const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
+    glm::vec3 chassis_pos)
+    : TankFactory(file_reader, tank_prefix_name, chassis_pos), reward(0.f) {}
+
+float EnemyTankFactory::get_reward() {
+    float actual_reward = reward;
+
+    // prepare next frame
+    reward = 0.f;
+
+    return actual_reward;
+}
+
+void EnemyTankFactory::on_fired_shell_contact(Item *item) {}
+
+bool EnemyTankFactory::is_dead() { return TankFactory::is_dead(); }
+
+std::vector<float> EnemyTankFactory::get_proprioception() {
+    return std::vector<float>(3 * 3 + 3 * 3);
+}
+
+/*
+ * Player
+ */
+
+PlayerTankFactory::PlayerTankFactory(
+    const std::shared_ptr<AbstractFileReader> &fileReader, const std::string &tankPrefixName,
+    const glm::vec3 &chassisPos)
+    : TankFactory(fileReader, tankPrefixName, chassisPos) {}
+
+void PlayerTankFactory::on_fired_shell_contact(Item *item) {}

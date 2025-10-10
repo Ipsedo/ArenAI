@@ -13,7 +13,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
-class ShellItem : public ConvexItem {
+class ShellItem : public LifeItem, public ConvexItem {
 public:
     static std::shared_ptr<Shape>
     load_shape(const std::shared_ptr<AbstractFileReader> &file_reader);
@@ -25,12 +25,9 @@ public:
 
     void on_contact(Item *other) override;
 
-    bool need_destroy() override;
-
     inline const static std::string NAME = "shell_item";
 
 private:
-    int health_point;
     std::function<void(Item *)> contact_callback;
 };
 

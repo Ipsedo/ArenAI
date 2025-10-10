@@ -80,7 +80,8 @@ void UserGameTanksEnvironment::on_cmd(struct android_app *app, int32_t cmd) {
 bool UserGameTanksEnvironment::is_running() const { return !is_paused; }
 
 void UserGameTanksEnvironment::on_reset_physics(const std::unique_ptr<PhysicEngine> &engine) {
-    tank_factory = std::make_unique<TankFactory>(file_reader, "player", glm::vec3(0., -40., 40));
+    tank_factory =
+        std::make_unique<PlayerTankFactory>(file_reader, "player", glm::vec3(0., -40., 40));
 
     for (auto &item: tank_factory->get_items()) { engine->add_item(item); }
 

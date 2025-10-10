@@ -8,6 +8,9 @@
 
 #include <nlohmann/json.hpp>
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+
 std::string dtype_to_string(const c10::ScalarType dt) {
     switch (dt) {
         case c10::kFloat: return "float32";
@@ -82,4 +85,38 @@ void export_state_dict_neutral(torch::nn::Module m, const std::filesystem::path 
 
     std::ofstream mf(outdir / "manifest.json");
     mf << manifest.dump(2) << std::endl;
+}
+
+/*
+ * Save PNG
+ */
+
+void save_png_rgb(
+    const std::vector<std::vector<std::vector<uint8_t>>> &image, const std::string &filename) {
+    if (image.empty() || image[0].empty() || image[0][0].empty()) {
+        throw std::runtime_error("image vide");
+    }
+
+    const int channels = static_cast<int>(image.size());
+    const int height = static_cast<int>(image[0].size());
+    const int width = static_cast<int>(image[0][0].size());
+
+    if (channels != 3) { throw std::runtime_error("L'image doit avoir 3 canaux (R,G,B)"); }
+
+    std::vector<uint8_t> buffer(width * height * channels);
+
+    // Remplissage interleavé
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            for (int c = 0; c < channels; ++c) {
+                buffer[(y * width + x) * channels + c] = image[c][y][x];
+            }
+        }
+    }
+
+    // Sauvegarde en PNG
+    if (!stbi_write_png(
+            filename.c_str(), width, height, channels, buffer.data(), width * channels)) {
+        throw std::runtime_error("Erreur lors de la sauvegarde PNG");
+    }
 }

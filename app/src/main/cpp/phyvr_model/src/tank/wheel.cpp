@@ -8,7 +8,8 @@
 
 WheelItem::WheelItem(
     const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,
-    glm::vec3 pos, glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *chassis)
+    const glm::vec3 pos, const glm::vec3 rel_pos, const glm::vec3 scale, const float mass,
+    btRigidBody *chassis)
     : LifeItem(10),
       ConvexItem(
           prefix_name + "_wheel", std::make_shared<ObjShape>(file_reader, "obj/anubis_wheel.obj"),
@@ -32,12 +33,12 @@ WheelItem::WheelItem(
     hinge->setLinearLowerLimit(btVector3(0, -0.4f, 0));
     hinge->setLinearUpperLimit(btVector3(0, 0, 0));
 
-    int motor_axis = 3;
+    constexpr int motor_axis = 3;
     hinge->enableMotor(motor_axis, true);
     hinge->setMaxMotorForce(motor_axis, 4e3f);
     hinge->setTargetVelocity(motor_axis, 0.f);
 
-    int index = 1;
+    constexpr int index = 1;
     hinge->enableSpring(index, true);
     hinge->setDamping(index, 30.f, true);
     hinge->setStiffness(index, 100.f, true);
@@ -52,7 +53,7 @@ WheelItem::WheelItem(
 }
 
 void WheelItem::on_input(const user_input &input) {
-    int motor_axis = 3;
+    constexpr int motor_axis = 3;
     hinge->setTargetVelocity(motor_axis, -input.left_joystick.y * 15.f);
 }
 
@@ -69,13 +70,13 @@ std::vector<btTypedConstraint *> WheelItem::get_constraints() {
 void DirectionalWheelItem::on_input(const user_input &input) {
     WheelItem::on_input(input);
 
-    int motor_axis = 4;
-    float angle = float(M_PI) * input.left_joystick.x / 10.f;
+    constexpr int motor_axis = 4;
+    const float angle = static_cast<float>(M_PI) * input.left_joystick.x / 10.f;
 
     hinge->setLimit(motor_axis, angle, angle);
 }
 
 DirectionalWheelItem::DirectionalWheelItem(
-    std::string name, const std::shared_ptr<AbstractFileReader> &file_reader, glm::vec3 pos,
-    glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *chassis)
+    std::string name, const std::shared_ptr<AbstractFileReader> &file_reader, const glm::vec3 pos,
+    const glm::vec3 rel_pos, const glm::vec3 scale, const float mass, btRigidBody *chassis)
     : WheelItem(std::move(name), file_reader, pos, rel_pos, scale, mass, chassis) {}

@@ -12,20 +12,19 @@
  * Context
  */
 
-PBufferGLContext::PBufferGLContext() : AbstractGLContext() {
-    display = eglGetDisplay(EGL_NO_DISPLAY);
-
+PBufferGLContext::PBufferGLContext(const EGLDisplay display)
+    : AbstractGLContext(), display(display) {
     const EGLint config_attrib[] = {
         EGL_RENDERABLE_TYPE,
         EGL_OPENGL_ES3_BIT,
         EGL_SURFACE_TYPE,
         EGL_PBUFFER_BIT,
         EGL_RED_SIZE,
-        4,
+        8,
         EGL_GREEN_SIZE,
-        4,
+        8,
         EGL_BLUE_SIZE,
-        4,
+        8,
         EGL_ALPHA_SIZE,
         0,
         EGL_DEPTH_SIZE,
@@ -35,7 +34,7 @@ PBufferGLContext::PBufferGLContext() : AbstractGLContext() {
         EGL_SAMPLES,
         0,
         EGL_NONE};
-    const EGLint context_attrib[] = {EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE};
+    constexpr EGLint context_attrib[] = {EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE};
     EGLint num_config = 0;
     EGLConfig config;
 
@@ -58,8 +57,9 @@ EGLContext PBufferGLContext::get_context() { return context; }
  */
 
 PBufferRenderer::PBufferRenderer(
-    int width, int height, glm::vec3 light_pos, const std::shared_ptr<Camera> &camera)
-    : Renderer(std::make_shared<PBufferGLContext>(), width, height, light_pos, camera) {}
+    const int width, const int height, EGLDisplay display, const glm::vec3 light_pos,
+    const std::shared_ptr<Camera> &camera)
+    : Renderer(std::make_shared<PBufferGLContext>(display), width, height, light_pos, camera) {}
 
 void PBufferRenderer::on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_context) {
 

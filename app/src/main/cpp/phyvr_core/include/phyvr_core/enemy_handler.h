@@ -11,7 +11,7 @@
 
 #include "./types.h"
 
-class EnemyControllerHandler : public ControllerHandler<Action> {
+class EnemyControllerHandler final : public ControllerHandler<Action> {
 public:
     explicit EnemyControllerHandler(float fire_latency_seconds);
 

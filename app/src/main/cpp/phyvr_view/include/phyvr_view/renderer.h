@@ -24,6 +24,8 @@
 
 class AbstractGLContext {
 public:
+    virtual ~AbstractGLContext() = default;
+
     AbstractGLContext();
     virtual EGLDisplay get_display() = 0;
     virtual EGLSurface get_surface() = 0;
@@ -68,7 +70,7 @@ private:
     std::shared_ptr<Camera> camera;
 };
 
-class PlayerRenderer : public Renderer {
+class PlayerRenderer final : public Renderer {
 public:
     PlayerRenderer(
         const std::shared_ptr<AbstractGLContext> &gl_context, int width, int height,

@@ -25,7 +25,7 @@ public:
     std::vector<std::shared_ptr<ItemProducer>> get_item_producers();
     std::vector<std::shared_ptr<Controller>> get_controllers();
 
-    std::map<std::string, std::shared_ptr<Shape>> load_ammu_shapes();
+    std::map<std::string, std::shared_ptr<Shape>> load_ammu_shapes() const;
 
     virtual bool is_dead();
 
@@ -45,11 +45,11 @@ private:
     std::shared_ptr<AbstractFileReader> file_reader;
 };
 
-class EnemyTankFactory : public TankFactory {
+class EnemyTankFactory final : public TankFactory {
 public:
     EnemyTankFactory(
         const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
-        glm::vec3 chassis_pos);
+        glm::vec3 chassis_pos, int max_frames_upside_down);
     float get_reward();
 
     bool is_dead() override;
@@ -61,9 +61,11 @@ protected:
 
 private:
     float reward;
+    int max_frames_upside_down;
+    int curr_frame_upside_down;
 };
 
-class PlayerTankFactory : public TankFactory {
+class PlayerTankFactory final : public TankFactory {
 public:
     PlayerTankFactory(
         const std::shared_ptr<AbstractFileReader> &fileReader, const std::string &tankPrefixName,

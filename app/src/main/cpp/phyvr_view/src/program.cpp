@@ -3,6 +3,7 @@
 //
 
 #include <filesystem>
+#include <ranges>
 #include <utility>
 
 #include <glm/gtc/type_ptr.hpp>
@@ -65,7 +66,7 @@ Program::Builder::add_buffer(const std::string &name, const std::vector<float> &
 Program::Builder Program::Builder::add_cube_texture(
     const std::string &name, const std::string &cube_textures_root_path) {
 
-    std::filesystem::path root_path(cube_textures_root_path);
+    const std::filesystem::path root_path(cube_textures_root_path);
 
     std::vector<std::filesystem::path> full_paths;
     for (const auto &[png_file, _]: Program::get_file_to_texture_id())
@@ -109,7 +110,9 @@ std::shared_ptr<Program> Program::Builder::build() {
         glGenBuffers(1, &program->buffer_ids[name]);
 
         glBindBuffer(GL_ARRAY_BUFFER, program->buffer_ids[name]);
-        glBufferData(GL_ARRAY_BUFFER, int(data.size()) * BYTES_PER_FLOAT, &data[0], GL_STATIC_DRAW);
+        glBufferData(
+            GL_ARRAY_BUFFER, static_cast<int>(data.size()) * BYTES_PER_FLOAT, &data[0],
+            GL_STATIC_DRAW);
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
@@ -179,9 +182,9 @@ Program::~Program() {
     glDeleteShader(vertex_shader_id);
     glDeleteShader(fragment_shader_id);
 
-    for (const auto &[name, buffer_id]: buffer_ids) glDeleteBuffers(1, &buffer_id);
+    for (const auto &buffer_id: buffer_ids | std::views::values) glDeleteBuffers(1, &buffer_id);
 
-    for (const auto &[name, tuple]: tex_name_to_idx_id) {
+    for (const auto &tuple: tex_name_to_idx_id | std::views::values) {
         auto [texture_index, cube_texture_id] = tuple;
         glDeleteTextures(1, &cube_texture_id);
     }
@@ -208,11 +211,13 @@ void Program::uniform_vec3(const std::string &name, glm::vec3 vec3) {
     uniform_(glUniform3fv, name, 1, glm::value_ptr(vec3));
 }
 
-void Program::uniform_float(const std::string &name, float f) { uniform_(glUniform1f, name, f); }
+void Program::uniform_float(const std::string &name, const float f) {
+    uniform_(glUniform1f, name, f);
+}
 
 void Program::attrib(
-    const std::string &name, const std::string &buffer_name, int data_size, int stride,
-    int offset) {
+    const std::string &name, const std::string &buffer_name, const int data_size, const int stride,
+    const int offset) {
     glBindBuffer(GL_ARRAY_BUFFER, buffer_ids[buffer_name]);
 
     glEnableVertexAttribArray(attribute_handles[name]);
@@ -223,14 +228,15 @@ void Program::attrib(
 }
 
 void Program::disable_attrib_array() {
-    for (auto [name, attrib_id]: attribute_handles) glDisableVertexAttribArray(attrib_id);
+    for (auto attrib_id: attribute_handles | std::views::values)
+        glDisableVertexAttribArray(attrib_id);
 }
 
-void Program::draw_arrays(GLenum type, int from, int nb_vertices) {
+void Program::draw_arrays(const GLenum type, const int from, const int nb_vertices) {
     glDrawArrays(type, from, nb_vertices);
 }
 
-void Program::texture_(GLenum texture_target, const std::string &name) {
+void Program::texture_(const GLenum texture_target, const std::string &name) {
     auto [texture_index, texture_id] = tex_name_to_idx_id[name];
 
     glActiveTexture(texture_index);
@@ -245,7 +251,7 @@ void Program::cube_texture(const std::string &cube_texture_name) {
 
 void Program::texture(const std::string &texture_name) { texture_(GL_TEXTURE_2D, texture_name); }
 
-void Program::disable_texture_(GLenum texture_target) { glBindTexture(texture_target, 0); }
+void Program::disable_texture_(const GLenum texture_target) { glBindTexture(texture_target, 0); }
 
 void Program::disable_cube_texture() { disable_texture_(GL_TEXTURE_CUBE_MAP); }
 

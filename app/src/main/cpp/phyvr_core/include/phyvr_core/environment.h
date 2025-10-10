@@ -45,7 +45,7 @@ private:
 
     std::vector<std::tuple<std::string, glm::mat4>> model_matrices;
 
-    std::vector<std::unique_ptr<TankFactory>> tank_factories;
+    std::vector<std::unique_ptr<EnemyTankFactory>> tank_factories;
     std::vector<std::unique_ptr<PBufferRenderer>> tank_renderers;
     std::vector<std::unique_ptr<EnemyControllerHandler>> tank_controller_handler;
     std::vector<image<uint8_t>> enemy_visions;
@@ -54,7 +54,7 @@ private:
 
     std::shared_ptr<AbstractGLContext> gl_context;
 
-    void worker_enemy_vision(int index, std::unique_ptr<PBufferRenderer> &renderer);
+    void worker_enemy_vision(int index, const std::unique_ptr<PBufferRenderer> &renderer);
 
 protected:
     virtual void on_draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) = 0;

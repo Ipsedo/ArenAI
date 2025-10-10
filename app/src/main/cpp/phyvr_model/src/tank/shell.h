@@ -13,7 +13,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
-class ShellItem : public LifeItem, public ConvexItem {
+class ShellItem final : public LifeItem, public ConvexItem {
 public:
     static std::shared_ptr<Shape>
     load_shape(const std::shared_ptr<AbstractFileReader> &file_reader);

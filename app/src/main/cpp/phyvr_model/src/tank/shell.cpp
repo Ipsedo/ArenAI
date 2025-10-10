@@ -12,8 +12,9 @@ ShellItem::load_shape(const std::shared_ptr<AbstractFileReader> &file_reader) {
 }
 
 ShellItem::ShellItem(
-    const std::shared_ptr<AbstractFileReader> &file_reader, glm::vec3 pos, glm::quat rot,
-    glm::vec3 scale, float mass, const std::function<void(Item *)> &contact_callback)
+    const std::shared_ptr<AbstractFileReader> &file_reader, const glm::vec3 pos,
+    const glm::quat rot, const glm::vec3 scale, const float mass,
+    const std::function<void(Item *)> &contact_callback)
     : LifeItem(10),
       ConvexItem(ShellItem::NAME, ShellItem::load_shape(file_reader), pos, scale, mass),
       contact_callback(contact_callback) {

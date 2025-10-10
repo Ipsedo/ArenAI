@@ -22,7 +22,7 @@
 class UserGameTanksEnvironment : public BaseTanksEnvironment {
 public:
     explicit UserGameTanksEnvironment(
-        struct android_app *app, int nb_tanks, float wanted_frequency);
+        struct android_app *app, EGLDisplay display, int nb_tanks, float wanted_frequency);
 
     bool is_running() const;
 
@@ -45,6 +45,7 @@ protected:
 
 private:
     android_app *app;
+    EGLDisplay display;
 
     std::unique_ptr<TankFactory> tank_factory;
 

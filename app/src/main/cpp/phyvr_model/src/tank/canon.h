@@ -5,17 +5,19 @@
 #ifndef PHYVR_CANON_H
 #define PHYVR_CANON_H
 
+#include <functional>
+
 #include <phyvr_controller/controller.h>
 #include <phyvr_controller/inputs.h>
 #include <phyvr_model/convex.h>
 #include <phyvr_utils/file_reader.h>
 #include <phyvr_view/camera.h>
 
-class CanonItem : public LifeItem,
-                  public ConvexItem,
-                  public ItemProducer,
-                  public Controller,
-                  public Camera {
+class CanonItem final : public LifeItem,
+                        public ConvexItem,
+                        public ItemProducer,
+                        public Controller,
+                        public Camera {
 public:
     CanonItem(
         const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,

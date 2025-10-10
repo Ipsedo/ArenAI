@@ -37,8 +37,8 @@ void Item::on_contact(Item *other) {}
  * Life Item
  */
 
-LifeItem::LifeItem(int health_points) : health_points(health_points) {}
+LifeItem::LifeItem(const int health_points) : health_points(health_points) {}
 
 bool LifeItem::is_dead() const { return health_points <= 0; }
 
-void LifeItem::receive_damages(int damages) { health_points -= damages; }
+void LifeItem::receive_damages(const int damages) { health_points -= damages; }

@@ -19,7 +19,7 @@ public:
     virtual ~HUDDrawable();
 };
 
-class ButtonDrawable : public HUDDrawable {
+class ButtonDrawable final : public HUDDrawable {
 public:
     ButtonDrawable(
         const std::shared_ptr<AbstractFileReader> &file_reader,
@@ -38,7 +38,7 @@ private:
     int nb_points;
 };
 
-class JoyStickDrawable : public HUDDrawable {
+class JoyStickDrawable final : public HUDDrawable {
 public:
     JoyStickDrawable(
         const std::shared_ptr<AbstractFileReader> &file_reader,

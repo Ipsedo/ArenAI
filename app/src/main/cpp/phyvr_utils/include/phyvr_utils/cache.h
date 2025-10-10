@@ -17,7 +17,7 @@ private:
 public:
     Cache() : cache() {}
 
-    bool exists(const std::string &name) { return cache.find(name) != cache.end(); }
+    bool exists(const std::string &name) { return cache.contains(name); }
 
     void add(const std::string &name, const T &obj) { cache[name] = obj; }
     T get(const std::string &name) { return cache[name]; }

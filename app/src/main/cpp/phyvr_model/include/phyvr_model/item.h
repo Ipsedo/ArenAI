@@ -15,7 +15,9 @@
 
 class Item {
 public:
-    Item(std::string name);
+    virtual ~Item() = default;
+
+    explicit Item(std::string name);
 
     virtual std::shared_ptr<Shape> get_shape() = 0;
 
@@ -40,12 +42,16 @@ protected:
 
 class ItemProducer {
 public:
+    virtual ~ItemProducer() = default;
+
     virtual std::vector<std::shared_ptr<Item>> get_produced_items() = 0;
 };
 
 class LifeItem {
 public:
-    LifeItem(int health_points);
+    virtual ~LifeItem() = default;
+
+    explicit LifeItem(int health_points);
     bool is_dead() const;
     void receive_damages(int damages);
 

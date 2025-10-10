@@ -10,6 +10,8 @@
 template<typename Input>
 class ControllerHandler {
 public:
+    virtual ~ControllerHandler() = default;
+
     ControllerHandler() : controllers() {}
 
     void add_controller(const std::shared_ptr<Controller> &controller) {

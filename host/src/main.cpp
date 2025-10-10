@@ -12,8 +12,8 @@
 #include "./utils/saver.h"
 
 int main(int argc, char **argv) {
-    auto actor = SacActor(ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, 64, 256);
-    auto critic = SacCritic(ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, 64, 256);
+    auto actor = SacActor(ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, 160, 320);
+    auto critic = SacCritic(ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, 160, 320);
 
     const auto v = torch::randn({2, 3, ENEMY_VISION_SIZE, ENEMY_VISION_SIZE});
     const auto p = torch::randn({2, ENEMY_PROPRIOCEPTION_SIZE});
@@ -32,6 +32,10 @@ int main(int argc, char **argv) {
     export_state_dict_neutral(static_cast<torch::nn::Module>(actor), output_dir);
 
     std::cout << "model saved" << std::endl;
+
+    train(
+        std::filesystem::path("/home/samuel/Téléchargements/phyvr_outputs"),
+        std::filesystem::path("/home/samuel/StudioProjects/PhyVR/app/src/main/assets"));
 
     return 0;
 }

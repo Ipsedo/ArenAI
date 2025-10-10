@@ -14,7 +14,7 @@
 #include <phyvr_view/drawable.h>
 #include <phyvr_view/program.h>
 
-class Specular : public Drawable {
+class Specular final : public Drawable {
 private:
     static const int POSITION_SIZE = 3;
     static const int NORMAL_SIZE = 3;

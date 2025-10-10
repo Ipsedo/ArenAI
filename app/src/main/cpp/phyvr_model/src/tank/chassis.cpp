@@ -8,12 +8,12 @@
 
 ChassisItem::ChassisItem(
     const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,
-    glm::vec3 position, glm::vec3 scale, float mass)
+    const glm::vec3 position, const glm::vec3 scale, const float mass)
     : LifeItem(60), ConvexItem(
                         prefix_name + "_chassis",
                         std::make_shared<ObjShape>(file_reader, "obj/anubis_chassis.obj"), position,
                         scale, mass) {
-    btVector3 center_of_mass = ConvexItem::get_body()->getCenterOfMassPosition();
+    const btVector3 center_of_mass = ConvexItem::get_body()->getCenterOfMassPosition();
 
     btTransform center_of_mass_tr;
     center_of_mass_tr.setIdentity();

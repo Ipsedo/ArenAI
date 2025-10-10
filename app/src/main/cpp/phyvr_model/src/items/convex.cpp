@@ -44,29 +44,29 @@ glm::vec3 ConvexItem::_get_scale() { return scale; }
  */
 
 CubeItem::CubeItem(
-    std::string name, const std::shared_ptr<AbstractFileReader> &file_reader, glm::vec3 position,
-    glm::vec3 scale, float mass)
+    std::string name, const std::shared_ptr<AbstractFileReader> &file_reader,
+    const glm::vec3 position, const glm::vec3 scale, const float mass)
     : ConvexItem(
         std::move(name), std::make_shared<ObjShape>(file_reader, "obj/cube.obj"), position, scale,
         mass) {}
 
 SphereItem::SphereItem(
-    std::string name, const std::shared_ptr<AbstractFileReader> &file_reader, glm::vec3 position,
-    glm::vec3 scale, float mass)
+    std::string name, const std::shared_ptr<AbstractFileReader> &file_reader,
+    const glm::vec3 position, const glm::vec3 scale, const float mass)
     : ConvexItem(
         std::move(name), std::make_shared<ObjShape>(file_reader, "obj/sphere.obj"), position, scale,
         mass) {}
 
 CylinderItem::CylinderItem(
-    std::string name, const std::shared_ptr<AbstractFileReader> &file_reader, glm::vec3 position,
-    glm::vec3 scale, float mass)
+    std::string name, const std::shared_ptr<AbstractFileReader> &file_reader,
+    const glm::vec3 position, const glm::vec3 scale, const float mass)
     : ConvexItem(
         std::move(name), std::make_shared<ObjShape>(file_reader, "obj/cylinder.obj"), position,
         scale, mass) {}
 
 TetraItem::TetraItem(
-    std::string name, const std::shared_ptr<AbstractFileReader> &file_reader, glm::vec3 position,
-    glm::vec3 scale, float mass)
+    std::string name, const std::shared_ptr<AbstractFileReader> &file_reader,
+    const glm::vec3 position, const glm::vec3 scale, const float mass)
     : ConvexItem(
         std::move(name), std::make_shared<ObjShape>(file_reader, "obj/tetra.obj"), position, scale,
         mass) {}

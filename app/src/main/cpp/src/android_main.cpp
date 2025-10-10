@@ -37,7 +37,10 @@ void android_main(struct android_app *app) {
     constexpr int nb_tanks = 8;
     bool will_quit = false;
 
-    auto env = std::make_unique<UserGameTanksEnvironment>(app, nb_tanks, frame_dt.count());
+    auto display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    eglInitialize(display, nullptr, nullptr);
+
+    auto env = std::make_unique<UserGameTanksEnvironment>(app, display, nb_tanks, frame_dt.count());
     auto agent = std::make_unique<ExecuTorchAgent>(app, "executorch/actor.pte");
 
     app->userData = env.get();

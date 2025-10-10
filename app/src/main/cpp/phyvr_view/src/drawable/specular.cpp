@@ -17,7 +17,7 @@ Specular::Specular(
     const std::vector<std::tuple<float, float, float>> &normals, glm::vec4 ambient_color,
     glm::vec4 diffuse_color, glm::vec4 specular_color, float shininess, const std::string &shape_id)
     : ambient_color(ambient_color), diffuse_color(diffuse_color), specular_color(specular_color),
-      nb_vertices(int(vertices.size())), shininess(shininess) {
+      shininess(shininess), nb_vertices(static_cast<int>(vertices.size())) {
 
     auto cache = Singleton<Cache<std::shared_ptr<Program>>>::get_singleton();
     if (cache->exists(shape_id)) {
@@ -58,8 +58,8 @@ Specular::Specular(
 }
 
 void Specular::draw(
-    glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos_from_camera,
-    glm::vec3 camera_pos) {
+    const glm::mat4 mvp_matrix, const glm::mat4 mv_matrix, const glm::vec3 light_pos_from_camera,
+    const glm::vec3 camera_pos) {
     program->use();
 
     program->attrib("a_position", "vertices_normals_buffer", POSITION_SIZE, STRIDE, 0);

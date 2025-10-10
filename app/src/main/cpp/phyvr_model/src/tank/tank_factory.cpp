@@ -13,16 +13,16 @@
 #include "./wheel.h"
 
 template<class... Args>
-std::shared_ptr<WheelItem> make_wheel_(bool front_wheel, const Args...& args) {
+std::shared_ptr<WheelItem> make_wheel_(const bool front_wheel, Args... args) {
     if (front_wheel) return std::make_shared<DirectionalWheelItem>(args...);
-    else return std::make_shared<WheelItem>(args...);
+    return std::make_shared<WheelItem>(args...);
 }
 
 TankFactory::TankFactory(
     const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
     glm::vec3 chassis_pos)
-    : name(tank_prefix_name), camera(std::nullptr_t()), items(), controllers(),
-      file_reader(file_reader), item_producers() {
+    : name(tank_prefix_name), camera(std::nullptr_t()), items(), item_producers(), controllers(),
+      file_reader(file_reader) {
 
     glm::vec3 scale(0.5);
 
@@ -84,7 +84,7 @@ std::vector<std::shared_ptr<Item>> TankFactory::get_items() { return items; }
 
 std::vector<std::shared_ptr<Controller>> TankFactory::get_controllers() { return controllers; }
 
-std::map<std::string, std::shared_ptr<Shape>> TankFactory::load_ammu_shapes() {
+std::map<std::string, std::shared_ptr<Shape>> TankFactory::load_ammu_shapes() const {
     return {{ShellItem::NAME, ShellItem::load_shape(file_reader)}};
 }
 
@@ -94,7 +94,7 @@ std::vector<std::shared_ptr<ItemProducer>> TankFactory::get_item_producers() {
 
 bool TankFactory::is_dead() {
     return std::transform_reduce(
-        items.begin(), items.end(), false, [](bool b1, bool b2) { return b1 || b2; },
+        items.begin(), items.end(), false, [](const bool b1, const bool b2) { return b1 || b2; },
         [](const auto &i) {
             if (auto t = std::dynamic_pointer_cast<LifeItem>(i)) return t->is_dead();
             return false;
@@ -113,8 +113,9 @@ TankFactory::~TankFactory() {
 
 EnemyTankFactory::EnemyTankFactory(
     const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
-    glm::vec3 chassis_pos)
-    : TankFactory(file_reader, tank_prefix_name, chassis_pos), reward(0.f) {}
+    const glm::vec3 chassis_pos, const int max_frames_upside_down)
+    : TankFactory(file_reader, tank_prefix_name, chassis_pos), reward(0.f),
+      max_frames_upside_down(max_frames_upside_down), curr_frame_upside_down(0) {}
 
 float EnemyTankFactory::get_reward() {
     float actual_reward = reward;
@@ -122,15 +123,65 @@ float EnemyTankFactory::get_reward() {
     // prepare next frame
     reward = 0.f;
 
+    if (const auto chassis = get_items()[0];
+        chassis->get_body()->getOrientation().getAxis().y() < 0) {
+        curr_frame_upside_down++;
+        actual_reward -= -0.1f;
+    } else curr_frame_upside_down = 0;
+
+    if (curr_frame_upside_down > max_frames_upside_down) actual_reward -= 1.f;
+
     return actual_reward;
 }
 
-void EnemyTankFactory::on_fired_shell_contact(Item *item) {}
+void EnemyTankFactory::on_fired_shell_contact(Item *item) {
+    bool self_shoot = false;
+    for (const auto &i: get_items()) {
+        if (i->get_name() == item->get_name()) {
+            reward -= 1.0f;
+            self_shoot = true;
+        }
+    }
 
-bool EnemyTankFactory::is_dead() { return TankFactory::is_dead(); }
+    if (!self_shoot && dynamic_cast<LifeItem *>(item)) reward += 1.f;
+}
+
+bool EnemyTankFactory::is_dead() {
+    return TankFactory::is_dead() || curr_frame_upside_down > max_frames_upside_down;
+}
 
 std::vector<float> EnemyTankFactory::get_proprioception() {
-    return std::vector<float>(3 * 3 + 3 * 3);
+    const auto items = get_items();
+
+    const auto &chassis = items[0];
+
+    const auto chassis_pos = chassis->get_body()->getCenterOfMassPosition();
+    const auto chassis_vel = chassis->get_body()->getLinearVelocity();
+
+    const auto chassis_ang = chassis->get_body()->getOrientation();
+    const auto chassis_ang_vel = chassis->get_body()->getAngularVelocity();
+
+    std::vector<float> result{chassis_pos.x(),    chassis_pos.y(),     chassis_pos.z(),
+                              chassis_vel.x(),    chassis_vel.y(),     chassis_vel.z(),
+                              chassis_ang.x(),    chassis_ang.y(),     chassis_ang.z(),
+                              chassis_ang.w(),    chassis_ang_vel.x(), chassis_ang_vel.y(),
+                              chassis_ang_vel.z()};
+    result.reserve((3 * 2 + 4 + 3) * items.size());
+
+    for (int i = 1; i < items.size(); i++) {
+        const auto body = items[i]->get_body();
+
+        auto pos = body->getCenterOfMassPosition() - chassis_pos;
+        auto vel = body->getLinearVelocity();
+
+        auto ang = body->getCenterOfMassTransform().getRotation();
+        auto ang_vel = body->getAngularVelocity();
+
+        result.insert(
+            result.end(), {pos.x(), pos.y(), pos.z(), vel.x(), vel.y(), vel.y(), ang.x(), ang.y(),
+                           ang.z(), ang.w(), ang_vel.x(), ang_vel.y(), ang_vel.z()});
+    }
+    return result;
 }
 
 /*

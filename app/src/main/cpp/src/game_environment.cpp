@@ -21,11 +21,13 @@
 #include "./android_gl_context.h"
 
 UserGameTanksEnvironment::UserGameTanksEnvironment(
-    struct android_app *app, int nb_tanks, float wanted_frequency)
+    struct android_app *app, EGLDisplay display, int nb_tanks, float wanted_frequency)
     : BaseTanksEnvironment(
         std::make_shared<AndroidFileReader>(app->activity->assetManager),
-        std::make_shared<AndroidGLContext>(app->window), nb_tanks, wanted_frequency),
-      app(app), tank_factory(std::nullptr_t()), is_paused(true), player_renderer(std::nullptr_t()),
+        std::make_shared<AndroidGLContext>(app->window, eglGetDisplay(EGL_DEFAULT_DISPLAY)),
+        nb_tanks, wanted_frequency),
+      app(app), display(eglGetDisplay(EGL_DEFAULT_DISPLAY)), tank_factory(std::nullptr_t()),
+      is_paused(true), player_renderer(std::nullptr_t()),
       player_controller_handler(std::nullptr_t()) {}
 
 void UserGameTanksEnvironment::on_draw(
@@ -47,17 +49,19 @@ void UserGameTanksEnvironment::on_cmd(struct android_app *app, int32_t cmd) {
         case APP_CMD_SAVE_STATE:
             // The system has asked us to save our current state.  Do so.
             /*app->savedState = malloc(sizeof(UserGameTanksEnvironment));
-    // TODO real object copy...
-    app->savedState = engine;
-    app->savedStateSize = sizeof(UserGameTanksEnvironment);
-    */
+            // TODO real object copy...
+            app->savedState = engine;
+            app->savedStateSize = sizeof(UserGameTanksEnvironment);
+            */
             LOG_INFO("save state");
             break;
         case APP_CMD_INIT_WINDOW:
             // The window is being shown, get it ready.
             if (app->window != nullptr) {
                 LOG_INFO("opening window");
-                reset_drawables(std::make_shared<AndroidGLContext>(app->window));
+                // TODO fix resuming
+                reset_drawables(std::make_shared<AndroidGLContext>(
+                    app->window, eglGetDisplay(EGL_DEFAULT_DISPLAY)));
                 is_paused = false;
             }
             break;

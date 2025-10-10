@@ -11,7 +11,7 @@
 #include <phyvr_model/shapes.h>
 #include <phyvr_utils/file_reader.h>
 
-class HeightMapItem : public Item, public btTriangleCallback {
+class HeightMapItem final : public Item, public btTriangleCallback {
 public:
     HeightMapItem(
         std::string name, const std::shared_ptr<AbstractFileReader> &img_reader,

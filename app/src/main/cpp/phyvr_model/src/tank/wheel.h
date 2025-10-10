@@ -22,7 +22,7 @@ protected:
     btGeneric6DofSpring2Constraint *hinge;
 };
 
-class DirectionalWheelItem : public WheelItem {
+class DirectionalWheelItem final : public WheelItem {
 public:
     DirectionalWheelItem(
         std::string name, const std::shared_ptr<AbstractFileReader> &file_reader, glm::vec3 pos,

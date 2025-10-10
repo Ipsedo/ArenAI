@@ -15,6 +15,8 @@
 
 class Shape {
 public:
+    virtual ~Shape() = default;
+
     virtual std::vector<std::tuple<float, float, float>> get_vertices() = 0;
 
     virtual std::vector<std::tuple<float, float, float>> get_normals() = 0;
@@ -22,7 +24,7 @@ public:
     virtual std::string get_id() = 0;
 };
 
-class ObjShape : public Shape {
+class ObjShape final : public Shape {
 private:
     std::string shape_id;
     std::vector<std::tuple<float, float, float>> vertices;
@@ -39,7 +41,7 @@ public:
     std::string get_id() override;
 };
 
-class FromMeshShape : public Shape {
+class FromMeshShape final : public Shape {
 private:
     std::string shape_id;
     std::vector<std::tuple<float, float, float>> vertices;

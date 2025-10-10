@@ -16,9 +16,9 @@
 ObjShape::ObjShape(
     const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &obj_file_path) {
 
-    auto cache = Singleton<Cache<std::shared_ptr<Shape>>>::get_singleton();
+    const auto cache = Singleton<Cache<std::shared_ptr<Shape>>>::get_singleton();
     if (cache->exists(obj_file_path)) {
-        auto shape = cache->get(obj_file_path);
+        const auto shape = cache->get(obj_file_path);
         shape_id = shape->get_id();
         vertices = shape->get_vertices();
         normals = shape->get_normals();
@@ -33,13 +33,11 @@ ObjShape::ObjShape(
     std::vector<int> vertices_order;
     std::vector<int> normals_order;
 
-    std::string file_content = file_reader->read_text(obj_file_path);
-    std::vector<std::string> lines = split_string(file_content, '\n');
+    const std::string file_content = file_reader->read_text(obj_file_path);
 
-    for (const auto &line: lines) {
-        std::vector<std::string> split_line = split_string(line, ' ');
-
-        if (split_line[0] == "vn") {
+    for (const std::vector<std::string> lines = split_string(file_content, '\n');
+         const auto &line: lines) {
+        if (std::vector<std::string> split_line = split_string(line, ' '); split_line[0] == "vn") {
             normals_ref.emplace_back(
                 std::stof(split_line[1]), std::stof(split_line[2]), std::stof(split_line[3]));
         } else if (split_line[0] == "v") {

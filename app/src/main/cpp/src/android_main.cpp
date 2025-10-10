@@ -34,7 +34,7 @@ void android_main(struct android_app *app) {
     const float target_fps = 30.0f;
     const secs_f frame_dt = secs_f(1.0f / target_fps);
 
-    constexpr int nb_tanks = 16;
+    constexpr int nb_tanks = 8;
     bool will_quit = false;
 
     auto display = eglGetDisplay(EGL_DEFAULT_DISPLAY);

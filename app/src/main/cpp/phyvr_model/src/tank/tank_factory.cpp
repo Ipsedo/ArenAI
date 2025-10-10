@@ -13,7 +13,7 @@
 #include "./wheel.h"
 
 template<class... Args>
-std::shared_ptr<WheelItem> make_wheel_(bool front_wheel, Args... args) {
+std::shared_ptr<WheelItem> make_wheel_(bool front_wheel, const Args...& args) {
     if (front_wheel) return std::make_shared<DirectionalWheelItem>(args...);
     else return std::make_shared<WheelItem>(args...);
 }

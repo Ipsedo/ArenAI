@@ -14,16 +14,18 @@ LinuxAndroidAssetFileReader::LinuxAndroidAssetFileReader(
     : path_to_assets(path_to_assets) {}
 
 std::string LinuxAndroidAssetFileReader::read_text(const std::string &file_name) {
-    std::ifstream t(path_to_assets / file_name);
+    std::ifstream file(path_to_assets / file_name);
+    if (!file) throw std::runtime_error("Could not open " + file_name);
+
     std::stringstream buffer;
-    buffer << t.rdbuf();
+    buffer << file.rdbuf();
+
     return buffer.str();
 }
 
 img_rgb LinuxAndroidAssetFileReader::read_png(const std::string &png_file_path) {
     int w = 0, h = 0, channels = 0;
 
-    // Force le chargement en RGB (3 canaux)
     unsigned char *data = SOIL_load_image(
         (path_to_assets / png_file_path).c_str(), &w, &h, &channels, SOIL_LOAD_RGBA);
 

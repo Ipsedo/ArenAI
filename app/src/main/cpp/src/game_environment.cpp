@@ -60,6 +60,7 @@ void UserGameTanksEnvironment::on_cmd(struct android_app *app, int32_t cmd) {
             if (app->window != nullptr) {
                 LOG_INFO("opening window");
                 // TODO fix resuming
+                UserGameTanksEnvironment::reset_singleton();
                 reset_drawables(std::make_shared<AndroidGLContext>(
                     app->window, eglGetDisplay(EGL_DEFAULT_DISPLAY)));
                 is_paused = false;

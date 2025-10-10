@@ -12,9 +12,15 @@
 void train(
     const std::filesystem::path &output_folder, const std::filesystem::path &android_assets_path) {
     auto display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-    eglInitialize(display, nullptr, nullptr);
-    const auto env = std::make_unique<TrainTankEnvironment>(4, display, android_assets_path);
+
+    if (!eglInitialize(display, nullptr, nullptr)) throw std::runtime_error("eglInitialize failed");
+
+    eglBindAPI(EGL_OPENGL_ES_API);
+
+    const auto env = std::make_unique<TrainTankEnvironment>(4, android_assets_path);
+
     env->reset_physics();
+    TrainTankEnvironment::reset_singleton();
     env->reset_drawables(std::make_shared<PBufferGLContext>(display));
 
     for (int i = 0; i < 10; i++) {
@@ -22,7 +28,7 @@ void train(
         promise.set_value(std::vector<Action>(4));
         auto future = promise.get_future();
 
-        auto state_1 = env->step(0.1f, future);
+        auto state_1 = env->step(1.f / 30.f, future);
 
         int j = 0;
         for (auto [s, _, __]: state_1)

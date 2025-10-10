@@ -1,3 +1,5 @@
+#version 330
+
 uniform mat4 u_mvp_matrix;
 uniform mat4 u_mv_matrix;
 

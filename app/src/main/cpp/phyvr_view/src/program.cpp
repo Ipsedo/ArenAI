@@ -228,7 +228,7 @@ void Program::attrib(
 }
 
 void Program::disable_attrib_array() {
-    for (auto attrib_id: attribute_handles | std::views::values)
+    for (const auto attrib_id: attribute_handles | std::views::values)
         glDisableVertexAttribArray(attrib_id);
 }
 

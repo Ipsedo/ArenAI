@@ -1,5 +1,3 @@
-#version 330
-
 #extension GL_OES_standard_derivatives : enable
 precision mediump float;
 uniform sampler2D u_tex;

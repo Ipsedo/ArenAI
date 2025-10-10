@@ -69,18 +69,11 @@ void Specular::draw(
         "a_normal", "vertices_normals_buffer", NORMAL_SIZE, STRIDE,
         POSITION_SIZE * BYTES_PER_FLOAT);
 
-    check_gl_error("attrib");
-
-    std::cout << mvp_matrix[0][0] << std::endl;
     program->uniform_mat4("u_mvp_matrix", mvp_matrix);
-    check_gl_error("mvp");
     program->uniform_mat4("u_mv_matrix", mv_matrix);
-    check_gl_error("mv");
 
     program->uniform_vec3("u_light_pos", light_pos_from_camera);
-    check_gl_error("light");
     program->uniform_vec3("u_cam_pos", camera_pos);
-    check_gl_error("cam");
 
     program->uniform_vec4("u_ambient_color", ambient_color);
     program->uniform_vec4("u_diffuse_color", diffuse_color);
@@ -89,7 +82,6 @@ void Specular::draw(
     program->uniform_float("u_distance_coef", 0.f);
     program->uniform_float("u_light_coef", 1.f);
     program->uniform_float("u_shininess", shininess);
-    check_gl_error("specular");
 
     Program::draw_arrays(GL_TRIANGLES, 0, nb_vertices);
 

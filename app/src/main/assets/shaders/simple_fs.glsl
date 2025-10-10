@@ -1,5 +1,3 @@
-#version 330
-
 precision mediump float;
 
 uniform vec4 u_color;

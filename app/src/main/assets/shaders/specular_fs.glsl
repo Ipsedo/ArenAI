@@ -6,8 +6,6 @@ uniform vec3 u_light_pos;
 uniform float u_distance_coef;
 uniform float u_light_coef;
 
-#version 330
-
 uniform vec4 u_ambient_color;
 uniform vec4 u_diffuse_color;
 uniform vec4 u_specular_color;

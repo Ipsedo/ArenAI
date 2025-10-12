@@ -7,7 +7,7 @@
 ReplayBuffer::ReplayBuffer(const int memory_size, const int seed)
     : rng(seed), memory_size(memory_size) {}
 
-TorchStep ReplayBuffer::sample(const int batch_size) {
+TorchStep ReplayBuffer::sample(const int batch_size, torch::Device device) {
     std::uniform_int_distribution<int> distribution(0, static_cast<int>(memory.size()) - 1);
 
     std::vector<torch::Tensor> states_vision, states_proprioception, actions, rewards, dones,
@@ -28,11 +28,12 @@ TorchStep ReplayBuffer::sample(const int batch_size) {
     }
 
     return {
-        {torch::stack(states_vision), torch::stack(states_proprioception)},
-        torch::stack(actions),
-        torch::stack(rewards),
-        torch::stack(dones),
-        {torch::stack(next_states_vision), torch::stack(next_states_proprioception)}};
+        {torch::stack(states_vision).to(device), torch::stack(states_proprioception).to(device)},
+        torch::stack(actions).detach().to(device),
+        torch::stack(rewards).unsqueeze(-1).to(device),
+        torch::stack(dones).unsqueeze(-1).to(device),
+        {torch::stack(next_states_vision).to(device),
+         torch::stack(next_states_proprioception).to(device)}};
 }
 
 void ReplayBuffer::add(const TorchStep &step) {

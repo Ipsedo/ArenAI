@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
 
     std::cout << "model saved" << std::endl;
 
-    train(
+    train_main(
         std::filesystem::path("/home/samuel/Téléchargements/phyvr_outputs"),
         std::filesystem::path("/home/samuel/StudioProjects/PhyVR/app/src/main/assets"));
 

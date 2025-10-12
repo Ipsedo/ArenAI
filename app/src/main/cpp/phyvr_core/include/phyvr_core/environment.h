@@ -47,6 +47,7 @@ private:
     std::shared_mutex model_matrices_mutex;
     std::vector<std::tuple<std::string, glm::mat4>> model_matrices;
 
+    std::vector<bool> tank_dead_already_set;
     std::vector<std::unique_ptr<EnemyTankFactory>> tank_factories;
     std::vector<std::unique_ptr<PBufferRenderer>> tank_renderers;
     std::vector<std::unique_ptr<EnemyControllerHandler>> tank_controller_handler;

@@ -21,7 +21,8 @@ BaseTanksEnvironment::BaseTanksEnvironment(
     : wanted_frequency(wanted_frequency), nb_tanks(nb_tanks), visions_mutex(nb_tanks),
       threads_running(true),
       thread_barrier(std::make_unique<std::barrier<>>(static_cast<std::ptrdiff_t>(nb_tanks + 1))),
-      pool(), model_matrices_mutex(), tank_factories(), tank_renderers(), tank_controller_handler(),
+      pool(), model_matrices_mutex(), tank_dead_already_set(nb_tanks, false), tank_factories(),
+      tank_renderers(), tank_controller_handler(),
       enemy_visions(
           nb_tanks, image<uint8_t>(
                         3, std::vector<std::vector<uint8_t>>(
@@ -59,18 +60,27 @@ std::vector<std::tuple<State, Reward, IsFinish>> BaseTanksEnvironment::step(
     result.reserve(tank_factories.size());
 
     for (int i = 0; i < tank_factories.size(); i++) {
-        std::lock_guard<std::mutex> lock_guard(visions_mutex[i]);
-        result.emplace_back(
-            State(enemy_visions[i], tank_factories[i]->get_proprioception()),
-            tank_factories[i]->get_reward(), tank_factories[i]->is_dead());
+        if (!tank_dead_already_set[i]) {
+            std::lock_guard<std::mutex> lock_guard(visions_mutex[i]);
+            result.emplace_back(
+                State(enemy_visions[i], tank_factories[i]->get_proprioception()),
+                tank_factories[i]->get_reward(), tank_factories[i]->is_dead());
+        }
     }
 
     const auto actions = actions_future.get();
-    for (int i = 0; i < tank_controller_handler.size(); i++)
-        if (!tank_factories[i]->is_dead()) tank_controller_handler[i]->on_event(actions[i]);
-        else
+    int index_action = 0;
+    for (int i = 0; i < tank_controller_handler.size(); i++) {
+        if (!tank_dead_already_set[i])
+            tank_controller_handler[i]->on_event(actions[index_action++]);
+
+        if (tank_factories[i]->is_dead()) {
             for (const auto &item: tank_factories[i]->dead_and_get_items())
                 physic_engine->remove_item_constraints(item);
+            tank_dead_already_set[i] = true;
+        }
+    }
+
     return result;
 }
 

@@ -4,6 +4,20 @@ project(phyvr_core)
 
 include(FetchContent)
 
+# argparse
+FetchContent_Declare(
+        argparse
+        GIT_REPOSITORY https://github.com/p-ranav/argparse.git
+)
+FetchContent_MakeAvailable(argparse)
+
+# indicators
+FetchContent_Declare(
+        indicators
+        GIT_REPOSITORY https://github.com/p-ranav/indicators.git
+)
+FetchContent_MakeAvailable(indicators)
+
 ##### PhyVR #####
 set(CMAKE_CXX_STANDARD 20)
 
@@ -24,4 +38,6 @@ target_link_libraries(
         phyvr_utils
         phyvr_view
         phyvr_model
+        argparse
+        indicators
 )

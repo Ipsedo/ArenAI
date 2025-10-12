@@ -135,7 +135,7 @@ float EnemyTankFactory::get_reward() {
         actual_reward -= -0.1f;
     } else curr_frame_upside_down = 0;
 
-    if (curr_frame_upside_down > max_frames_upside_down) actual_reward -= 1.f;
+    if (curr_frame_upside_down > max_frames_upside_down || is_dead()) actual_reward -= 1.f;
 
     return actual_reward;
 }
@@ -150,7 +150,7 @@ void EnemyTankFactory::on_fired_shell_contact(Item *item) {
     }
 
     if (const auto &life_item = dynamic_cast<LifeItem *>(item); !self_shoot && life_item)
-        reward += life_item->is_dead() ? 0.f : 1.f;
+        reward += life_item->is_dead() ? 0.f : 1.f + 0.5f;
 }
 
 bool EnemyTankFactory::is_dead() {

@@ -94,21 +94,21 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
             const auto [next_vision, next_proprioception] = state_core_to_tensor(next_state);
 
             // save to replay buffer
-            int index = 0;
+            int index_action = 0;
             for (int i = 0; i < train_options.nb_tanks; i++) {
                 if (already_done[i]) continue;
 
-                const auto v = vision[index];
-                const auto p = proprioception[index];
+                const auto v = vision[i];
+                const auto p = proprioception[i];
 
-                const auto n_v = next_vision[index];
-                const auto n_p = next_proprioception[index];
+                const auto n_v = next_vision[i];
+                const auto n_p = next_proprioception[i];
 
-                const auto [_, r, d] = steps[index];
+                const auto [_, r, d] = steps[i];
 
                 replay_buffer->add(
                     {{v, p},
-                     action[index],
+                     action[index_action],
                      torch::tensor(
                          r, torch::TensorOptions().device(torch_device).dtype(torch::kFloat)),
                      torch::tensor(
@@ -119,7 +119,7 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
 
                 if (d) already_done[i] = true;
 
-                index++;
+                index_action++;
             }
 
             // set new state

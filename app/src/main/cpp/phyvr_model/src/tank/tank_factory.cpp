@@ -123,8 +123,13 @@ float EnemyTankFactory::get_reward() {
     // prepare next frame
     reward = 0.f;
 
-    if (const auto chassis = get_items()[0];
-        chassis->get_body()->getOrientation().getAxis().y() < 0) {
+    const auto chassis = get_items()[0];
+    auto chassis_tr = chassis->get_body()->getWorldTransform();
+    btVector3 up(0.f, 1.f, 0.f);
+    btVector3 up_in_chassis = chassis_tr.getBasis() * up;
+    btScalar dot = up_in_chassis.normalized().dot(up.normalized());
+
+    if (dot < 0) {
         curr_frame_upside_down++;
         actual_reward -= -0.1f;
     } else curr_frame_upside_down = 0;

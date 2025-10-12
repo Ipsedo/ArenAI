@@ -99,6 +99,8 @@ void UserGameTanksEnvironment::on_reset_drawables(
     player_renderer = std::make_unique<PlayerRenderer>(
         gl_context, ANativeWindow_getWidth(app->window), ANativeWindow_getHeight(app->window),
         glm::vec3(200, 300, 200), tank_factory->get_camera());
+    player_renderer->make_current();
+
     player_controller_handler = std::make_unique<PlayerControllerHandler>(
         app->config, player_renderer->get_width(), player_renderer->get_height());
 
@@ -130,6 +132,8 @@ void UserGameTanksEnvironment::on_reset_drawables(
 
     for (auto &hud_drawable: player_controller_handler->get_hud_drawables(file_reader))
         player_renderer->add_hud_drawable(std::move(hud_drawable));
+
+    player_renderer->release_current();
 }
 
 void UserGameTanksEnvironment::pause() { is_paused = true; }

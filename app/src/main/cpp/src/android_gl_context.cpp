@@ -54,6 +54,8 @@ AndroidGLContext::AndroidGLContext(ANativeWindow *window, EGLDisplay display)
 
     eglQuerySurface(display, surface, EGL_WIDTH, &width);
     eglQuerySurface(display, surface, EGL_HEIGHT, &height);
+
+    eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 }
 
 EGLDisplay AndroidGLContext::get_display() { return display; }

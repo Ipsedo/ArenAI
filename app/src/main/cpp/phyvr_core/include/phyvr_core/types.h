@@ -8,7 +8,7 @@
 #include <vector>
 
 #include <phyvr_controller/inputs.h>
-#include <phyvr_view/framebuffer_renderer.h>
+#include <phyvr_view/pbuffer_renderer.h>
 
 #define ENEMY_VISION_SIZE 128
 // 3 * (pos + vel + acc) + 3 * (ang + vel_ang + acc_and)

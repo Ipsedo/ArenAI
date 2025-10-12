@@ -5,7 +5,7 @@
 
 #include <phyvr_core/environment.h>
 #include <phyvr_model/engine.h>
-#include <phyvr_view/framebuffer_renderer.h>
+#include <phyvr_view/pbuffer_renderer.h>
 
 #include "./networks/agent.h"
 #include "./train.h"

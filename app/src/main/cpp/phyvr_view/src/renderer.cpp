@@ -8,14 +8,16 @@
 #include <phyvr_view/errors.h>
 #include <phyvr_view/renderer.h>
 
-AbstractGLContext::AbstractGLContext() : current_called(false) {}
+AbstractGLContext::AbstractGLContext() {}
 
 void AbstractGLContext::make_current() {
-    if (!current_called) {
-        current_called = true;
-        if (eglMakeCurrent(get_display(), get_surface(), get_surface(), get_context()) != EGL_TRUE)
-            throw std::runtime_error("Can't make context");
-    }
+
+    if (eglMakeCurrent(get_display(), get_surface(), get_surface(), get_context()) != EGL_TRUE)
+        throw std::runtime_error("Can't make context");
+}
+
+void AbstractGLContext::release_current() {
+    eglMakeCurrent(get_display(), EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 }
 
 /*
@@ -34,9 +36,6 @@ void Renderer::add_drawable(const std::string &name, std::unique_ptr<Drawable> d
 void Renderer::remove_drawable(const std::string &name) { drawables.erase(name); }
 
 void Renderer::draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
-
-    gl_context->make_current();
-
     on_new_frame(gl_context);
 
     // on_draw
@@ -54,13 +53,15 @@ void Renderer::draw(const std::vector<std::tuple<std::string, glm::mat4>> &model
     }
 
     on_end_frame(gl_context);
-
-    check_gl_error("on_draw");
 }
 
 int Renderer::get_width() const { return width; }
 
 int Renderer::get_height() const { return height; }
+
+void Renderer::make_current() const { gl_context->make_current(); }
+
+void Renderer::release_current() const { gl_context->release_current(); }
 
 Renderer::~Renderer() {
     drawables.clear();

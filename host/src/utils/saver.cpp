@@ -106,13 +106,10 @@ void save_png_rgb(
     std::vector<uint8_t> buffer(width * height * channels);
 
     // Remplissage interleavé
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            for (int c = 0; c < channels; ++c) {
+    for (int y = 0; y < height; ++y)
+        for (int x = 0; x < width; ++x)
+            for (int c = 0; c < channels; ++c)
                 buffer[(y * width + x) * channels + c] = image[c][y][x];
-            }
-        }
-    }
 
     // Sauvegarde en PNG
     if (!stbi_write_png(

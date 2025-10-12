@@ -15,7 +15,7 @@
 #include <phyvr_model/engine.h>
 #include <phyvr_model/tank_factory.h>
 #include <phyvr_utils/file_reader.h>
-#include <phyvr_view/framebuffer_renderer.h>
+#include <phyvr_view/pbuffer_renderer.h>
 
 #include "./enemy_handler.h"
 #include "./types.h"

@@ -5,25 +5,23 @@
 #include "./train.h"
 
 #include "./train_environment.h"
+#include "./train_gl_context.h"
 #include "./utils/linux_file_reader.h"
 #include "./utils/replay_buffer.h"
 #include "./utils/saver.h"
+#include "phyvr_view/errors.h"
 
 void train(
     const std::filesystem::path &output_folder, const std::filesystem::path &android_assets_path) {
-    auto display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-
-    if (!eglInitialize(display, nullptr, nullptr)) throw std::runtime_error("eglInitialize failed");
-
-    eglBindAPI(EGL_OPENGL_ES_API);
 
     const auto env = std::make_unique<TrainTankEnvironment>(4, android_assets_path);
 
     env->reset_physics();
-    TrainTankEnvironment::reset_singleton();
-    env->reset_drawables(std::make_shared<PBufferGLContext>(display));
+    env->reset_drawables(std::make_shared<TrainGlContext>());
 
-    for (int i = 0; i < 10; i++) {
+    check_gl_error("reset");
+
+    for (int i = 0; i < 100; i++) {
         auto promise = std::promise<std::vector<Action>>();
         promise.set_value(std::vector<Action>(4));
         auto future = promise.get_future();

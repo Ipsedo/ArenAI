@@ -32,9 +32,7 @@ public:
     virtual EGLContext get_context() = 0;
 
     void make_current();
-
-private:
-    bool current_called;
+    void release_current();
 };
 
 class Renderer {
@@ -49,6 +47,9 @@ public:
 
     virtual int get_width() const;
     virtual int get_height() const;
+
+    void make_current() const;
+    void release_current() const;
 
     virtual ~Renderer();
 
@@ -76,7 +77,7 @@ public:
         const std::shared_ptr<AbstractGLContext> &gl_context, int width, int height,
         const glm::vec3 &lightPos, const std::shared_ptr<Camera> &camera);
 
-    virtual void add_hud_drawable(std::unique_ptr<HUDDrawable> hud_drawable);
+    void add_hud_drawable(std::unique_ptr<HUDDrawable> hud_drawable);
 
     ~PlayerRenderer() override;
 

@@ -7,7 +7,7 @@
 #include <phyvr_utils/cache.h>
 #include <phyvr_utils/singleton.h>
 #include <phyvr_view/errors.h>
-#include <phyvr_view/framebuffer_renderer.h>
+#include <phyvr_view/pbuffer_renderer.h>
 
 #include "./utils/linux_file_reader.h"
 

@@ -1,6 +1,7 @@
 //
 // Created by samuel on 29/09/2025.
 //
+#include <iostream>
 #include <mutex>
 #include <thread>
 
@@ -11,6 +12,8 @@
 #include <phyvr_model/height_map.h>
 #include <phyvr_view/cubemap.h>
 #include <phyvr_view/specular.h>
+
+#include "phyvr_view/errors.h"
 
 BaseTanksEnvironment::BaseTanksEnvironment(
     const std::shared_ptr<AbstractFileReader> &file_reader,
@@ -147,52 +150,56 @@ void BaseTanksEnvironment::reset_drawables(
 
     tank_renderers.clear();
     gl_context = new_gl_context;
+    gl_context->make_current();
 
     on_reset_drawables(physic_engine, gl_context);
 
-    std::uniform_real_distribution<float> u_dist(0.f, 1.f);
+    gl_context->release_current();
 
     std::uniform_real_distribution<float> light_pos_u_dist(-400.f, 400.f);
-    std::uniform_real_distribution<float> light_height_u_dist(40.f, 400.f);
+    std::uniform_real_distribution<float> light_height_u_dist(200.f, 400.f);
 
     for (const auto &tank_factory: tank_factories)
         tank_renderers.push_back(std::make_unique<PBufferRenderer>(
-            ENEMY_VISION_SIZE, ENEMY_VISION_SIZE, gl_context->get_display(),
+            gl_context, ENEMY_VISION_SIZE, ENEMY_VISION_SIZE,
             glm::vec3(light_pos_u_dist(rng), light_height_u_dist(rng), light_pos_u_dist(rng)),
             tank_factory->get_camera()));
 
-    glm::vec4 color(u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, 1.f);
-
-    for (const auto &tank_renderer: tank_renderers) {
-        tank_renderer->add_drawable("cubemap", std::make_unique<CubeMap>(file_reader, "cubemap/1"));
-
-        for (const auto &item: physic_engine->get_items())
-            tank_renderer->add_drawable(
-                item->get_name(), std::make_unique<Specular>(
-                                      file_reader, item->get_shape()->get_vertices(),
-                                      item->get_shape()->get_normals(), color, color, color, 50.f,
-                                      item->get_shape()->get_id()));
-
-        for (const auto &[name, shape]: tank_factories[0]->load_ammu_shapes()) {
-            glm::vec4 shell_color(u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, 1.f);
-
-            tank_renderer->add_drawable(
-                name, std::make_unique<Specular>(
-                          file_reader, shape->get_vertices(), shape->get_normals(), shell_color,
-                          shell_color, shell_color, 50.f, shape->get_id()));
-        }
-    }
-
     start_threads();
+
+    gl_context->make_current();
 }
 
 void BaseTanksEnvironment::worker_enemy_vision(
     const int index, const std::unique_ptr<PBufferRenderer> &renderer) {
 
     bool is_running = true;
+    renderer->make_current();
+
+    std::uniform_real_distribution<float> u_dist(0.f, 1.f);
+
+    renderer->add_drawable("cubemap", std::make_unique<CubeMap>(file_reader, "cubemap/1"));
+
+    for (const auto &item: physic_engine->get_items()) {
+
+        glm::vec4 color(u_dist(rng), u_dist(rng), u_dist(rng), 1.f);
+        renderer->add_drawable(
+            item->get_name(),
+            std::make_unique<Specular>(
+                file_reader, item->get_shape()->get_vertices(), item->get_shape()->get_normals(),
+                color, color, color, 50.f, item->get_shape()->get_id()));
+    }
+
+    for (const auto &[name, shape]: tank_factories[0]->load_ammu_shapes()) {
+        glm::vec4 shell_color(u_dist(rng), u_dist(rng), u_dist(rng), 1.f);
+
+        renderer->add_drawable(
+            name, std::make_unique<Specular>(
+                      file_reader, shape->get_vertices(), shape->get_normals(), shell_color,
+                      shell_color, shell_color, 50.f, shape->get_id()));
+    }
 
     const auto frame_dt = std::chrono::milliseconds(static_cast<int>(wanted_frequency * 1000.f));
-
     auto last_time = std::chrono::steady_clock::now();
 
     while (is_running) {
@@ -200,14 +207,17 @@ void BaseTanksEnvironment::worker_enemy_vision(
 
         if (!threads_running.load(std::memory_order_acquire)) is_running = false;
 
-        {
-            std::lock_guard<std::mutex> lock(data_mutex[index]);
-            enemy_visions[index] = renderer->draw_and_get_frame(model_matrices);
-        }
+        const image<uint8_t> image = renderer->draw_and_get_frame(model_matrices);
 
         auto now = std::chrono::steady_clock::now();
         auto dt = now - last_time;
         last_time = now;
+
+        {
+            std::lock_guard<std::mutex> lock(data_mutex[index]);
+            enemy_visions[index] = image;
+        }
+
         std::this_thread::sleep_for(frame_dt - dt);
     }
 }
@@ -216,8 +226,10 @@ void BaseTanksEnvironment::start_threads() {
     const auto participants = static_cast<std::ptrdiff_t>(tank_renderers.size() + 1);
     thread_barrier = std::make_unique<std::barrier<>>(participants);
 
-    enemy_visions.clear();
-    enemy_visions.resize(tank_renderers.size());
+    enemy_visions = std::vector(
+        nb_tanks,
+        image<uint8_t>(
+            3, std::vector(ENEMY_VISION_SIZE, std::vector<uint8_t>(ENEMY_VISION_SIZE, 0))));
 
     threads_running.store(true, std::memory_order_release);
     pool.clear();

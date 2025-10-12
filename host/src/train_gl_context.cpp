@@ -13,10 +13,10 @@ TrainGlContext::TrainGlContext() {
     if (!eglInitialize(display, &major, &minor)) throw std::runtime_error("eglInitialize() failed");
 
     const EGLint cfgAttribs[] = {
-        EGL_SURFACE_TYPE,
-        EGL_PBUFFER_BIT,
         EGL_RENDERABLE_TYPE,
         EGL_OPENGL_ES3_BIT,
+        EGL_SURFACE_TYPE,
+        EGL_PBUFFER_BIT,
         EGL_RED_SIZE,
         8,
         EGL_GREEN_SIZE,
@@ -25,6 +25,12 @@ TrainGlContext::TrainGlContext() {
         8,
         EGL_ALPHA_SIZE,
         8,
+        EGL_DEPTH_SIZE,
+        16,
+        EGL_STENCIL_SIZE,
+        8,
+        EGL_SAMPLES,
+        0,
         EGL_NONE};
     EGLConfig config;
     EGLint ncfg = 0;

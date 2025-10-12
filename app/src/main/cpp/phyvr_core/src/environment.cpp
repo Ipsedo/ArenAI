@@ -3,6 +3,7 @@
 //
 #include <iostream>
 #include <mutex>
+#include <shared_mutex>
 #include <thread>
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -19,10 +20,10 @@ BaseTanksEnvironment::BaseTanksEnvironment(
     const std::shared_ptr<AbstractFileReader> &file_reader,
     const std::shared_ptr<AbstractGLContext> &gl_context, const int nb_tanks,
     float wanted_frequency)
-    : wanted_frequency(wanted_frequency), nb_tanks(nb_tanks), data_mutex(nb_tanks),
+    : wanted_frequency(wanted_frequency), nb_tanks(nb_tanks), visions_mutex(nb_tanks),
       threads_running(true),
       thread_barrier(std::make_unique<std::barrier<>>(static_cast<std::ptrdiff_t>(nb_tanks + 1))),
-      pool(), tank_factories(), tank_renderers(), tank_controller_handler(),
+      pool(), model_matrices_mutex(), tank_factories(), tank_renderers(), tank_controller_handler(),
       enemy_visions(
           nb_tanks, image<uint8_t>(
                         3, std::vector<std::vector<uint8_t>>(
@@ -39,13 +40,17 @@ BaseTanksEnvironment::BaseTanksEnvironment(
 
 std::vector<std::tuple<State, Reward, IsFinish>> BaseTanksEnvironment::step(
     const float time_delta, std::future<std::vector<Action>> &actions_future) {
-    model_matrices.clear();
 
-    for (const auto &item: physic_engine->get_items())
-        model_matrices.emplace_back(item->get_name(), item->get_model_matrix());
+    {
+        std::unique_lock lock_write(model_matrices_mutex);
+        model_matrices.clear();
 
-    model_matrices.emplace_back(
-        "cubemap", glm::scale(glm::mat4(1.), glm::vec3(2000., 2000., 2000.)));
+        for (const auto &item: physic_engine->get_items())
+            model_matrices.emplace_back(item->get_name(), item->get_model_matrix());
+
+        model_matrices.emplace_back(
+            "cubemap", glm::scale(glm::mat4(1.), glm::vec3(2000., 2000., 2000.)));
+    }
 
     thread_barrier->arrive_and_wait();
 
@@ -56,7 +61,7 @@ std::vector<std::tuple<State, Reward, IsFinish>> BaseTanksEnvironment::step(
     result.reserve(tank_factories.size());
 
     for (int i = 0; i < tank_factories.size(); i++) {
-        std::lock_guard<std::mutex> lock_guard(data_mutex[i]);
+        std::lock_guard<std::mutex> lock_guard(visions_mutex[i]);
         result.emplace_back(
             State(enemy_visions[i], tank_factories[i]->get_proprioception()),
             tank_factories[i]->get_reward(), tank_factories[i]->is_dead());
@@ -129,7 +134,7 @@ std::vector<State> BaseTanksEnvironment::reset_physics() {
 
     std::vector<State> states;
     for (int i = 0; i < tank_factories.size(); i++) {
-        std::lock_guard<std::mutex> lock_guard(data_mutex[i]);
+        std::lock_guard<std::mutex> lock_guard(visions_mutex[i]);
         states.emplace_back(enemy_visions[i], tank_factories[i]->get_proprioception());
     }
 
@@ -156,13 +161,9 @@ void BaseTanksEnvironment::reset_drawables(
 
     gl_context->release_current();
 
-    std::uniform_real_distribution<float> light_pos_u_dist(-400.f, 400.f);
-    std::uniform_real_distribution<float> light_height_u_dist(200.f, 400.f);
-
     for (const auto &tank_factory: tank_factories)
         tank_renderers.push_back(std::make_unique<PBufferRenderer>(
-            gl_context, ENEMY_VISION_SIZE, ENEMY_VISION_SIZE,
-            glm::vec3(light_pos_u_dist(rng), light_height_u_dist(rng), light_pos_u_dist(rng)),
+            gl_context, ENEMY_VISION_SIZE, ENEMY_VISION_SIZE, glm::vec3(200, 300, 200),
             tank_factory->get_camera()));
 
     start_threads();
@@ -207,15 +208,15 @@ void BaseTanksEnvironment::worker_enemy_vision(
 
         if (!threads_running.load(std::memory_order_acquire)) is_running = false;
 
-        const image<uint8_t> image = renderer->draw_and_get_frame(model_matrices);
-
         auto now = std::chrono::steady_clock::now();
         auto dt = now - last_time;
         last_time = now;
 
         {
-            std::lock_guard<std::mutex> lock(data_mutex[index]);
-            enemy_visions[index] = image;
+            std::lock_guard lock(visions_mutex[index]);
+            std::shared_lock lock_read(model_matrices_mutex);
+            enemy_visions[index] = renderer->draw_and_get_frame(model_matrices);
+            ;
         }
 
         std::this_thread::sleep_for(frame_dt - dt);

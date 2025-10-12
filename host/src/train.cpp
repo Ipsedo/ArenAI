@@ -19,8 +19,6 @@ void train(
     env->reset_physics();
     env->reset_drawables(std::make_shared<TrainGlContext>());
 
-    check_gl_error("reset");
-
     for (int i = 0; i < 100; i++) {
         auto promise = std::promise<std::vector<Action>>();
         promise.set_value(std::vector<Action>(4));

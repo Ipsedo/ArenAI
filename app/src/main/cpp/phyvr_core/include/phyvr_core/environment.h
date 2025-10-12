@@ -9,6 +9,7 @@
 #include <future>
 #include <memory>
 #include <random>
+#include <shared_mutex>
 #include <thread>
 #include <tuple>
 
@@ -37,12 +38,13 @@ public:
 private:
     float wanted_frequency;
     int nb_tanks;
-    std::vector<std::mutex> data_mutex;
+    std::vector<std::mutex> visions_mutex;
 
     std::atomic<bool> threads_running;
     std::unique_ptr<std::barrier<>> thread_barrier;
     std::vector<std::thread> pool;
 
+    std::shared_mutex model_matrices_mutex;
     std::vector<std::tuple<std::string, glm::mat4>> model_matrices;
 
     std::vector<std::unique_ptr<EnemyTankFactory>> tank_factories;

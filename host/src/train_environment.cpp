@@ -18,9 +18,7 @@ TrainTankEnvironment::TrainTankEnvironment(
         nb_tanks, 1.f / 30.f) {}
 
 void TrainTankEnvironment::on_draw(
-    const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
-    check_gl_error("train");
-}
+    const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {}
 
 void TrainTankEnvironment::on_reset_physics(const std::unique_ptr<PhysicEngine> &engine) {}
 

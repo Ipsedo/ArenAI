@@ -108,8 +108,6 @@ image<uint8_t> PBufferRenderer::draw_and_get_frame(
     std::vector<unsigned char> linear(static_cast<size_t>(width) * static_cast<size_t>(height) * 4);
     glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, linear.data());
 
-    glFinish();
-
     for (int y = 0; y < height; ++y) {
         const int src_y = y;
         const int dst_y = height - 1 - y;

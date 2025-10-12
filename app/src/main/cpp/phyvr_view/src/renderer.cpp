@@ -97,8 +97,9 @@ void PlayerRenderer::on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_c
     glDisable(GL_DEPTH_TEST);
 
     for (const auto &hud_drawable: hud_drawables) hud_drawable->draw(get_width(), get_height());
-
     eglSwapBuffers(gl_context->get_display(), gl_context->get_surface());
+
+    glEnable(GL_DEPTH_TEST);
 }
 
 void PlayerRenderer::on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_context) {

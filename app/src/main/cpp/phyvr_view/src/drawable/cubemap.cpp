@@ -31,20 +31,12 @@ CubeMap::CubeMap(
 
     nb_vertices = static_cast<int>(vertices.size() / 3);
 
-    const auto cache = Singleton<Cache<std::shared_ptr<Program>>>::get_singleton();
-    if (cache->exists(pngs_root_path)) {
-        program = cache->get(pngs_root_path);
-        return;
-    }
-
     program = Program::Builder(file_reader, "shaders/cube_vs.glsl", "shaders/cube_fs.glsl")
                   .add_cube_texture("u_cube_map", pngs_root_path)
                   .add_uniform("u_mvp_matrix")
                   .add_attribute("a_vp")
                   .add_buffer("cube", vertices)
                   .build();
-
-    cache->add(pngs_root_path, program);
 }
 
 void CubeMap::draw(

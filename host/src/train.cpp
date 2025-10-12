@@ -24,38 +24,29 @@ bool is_all_done(const std::vector<std::tuple<State, Reward, IsFinish>> &result)
     return true;
 }
 
-void train_main(
-    const std::filesystem::path &output_folder, const std::filesystem::path &android_assets_path) {
-    constexpr float learning_rate = 1e-4f;
-    int batch_size = 256;
-    int nb_episodes = 2048;
-    int train_every = 32;
-    constexpr int max_episode_steps = 30 * 60 * 5;
-    constexpr int replay_buffer_size = 16384;
-    int nb_tanks = 8;
+void train_main(const ModelOptions &model_options, const TrainOptions &train_options) {
+    torch::Device torch_device =
+        train_options.cuda ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU);
 
-    bool cuda = true;
-
-    torch::Device torch_device = cuda ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU);
-
-    const auto env = std::make_unique<TrainTankEnvironment>(nb_tanks, android_assets_path);
+    const auto env = std::make_unique<TrainTankEnvironment>(
+        train_options.nb_tanks, train_options.android_asset_folder);
     auto sac = std::make_shared<SacNetworks>(
-        ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, learning_rate, 160, 320, torch_device, 64,
-        1e-3f, 0.95f);
+        ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, train_options.learning_rate,
+        model_options.hidden_size_latent, model_options.hidden_size, torch_device,
+        train_options.metric_window_size, model_options.tau, model_options.gamma);
 
-    Saver saver(
-        sac, "/home/samuel/StudioProjects/PhyVR/host/outputs/train_sac_first_try",
-        max_episode_steps);
+    Saver saver(sac, train_options.output_folder, train_options.max_episode_steps);
 
-    auto replay_buffer = std::make_shared<ReplayBuffer>(replay_buffer_size, 12345);
+    auto replay_buffer = std::make_shared<ReplayBuffer>(train_options.replay_buffer_size, 12345);
 
-    Metric reward_metric("reward", 64);
+    Metric reward_metric("reward", train_options.metric_window_size);
 
     int counter = 0;
 
     indicators::ProgressBar p_bar{
         indicators::option::MinProgress{0},
-        indicators::option::MaxProgress{nb_episodes * max_episode_steps},
+        indicators::option::MaxProgress{
+            train_options.nb_episodes * train_options.max_episode_steps},
         indicators::option::BarWidth{30},
         indicators::option::Start{"["},
         indicators::option::Fill{"="},
@@ -66,9 +57,9 @@ void train_main(
         indicators::option::ShowElapsedTime{true},
         indicators::option::ShowRemainingTime{true}};
 
-    for (int episode_index = 0; episode_index < nb_episodes; episode_index++) {
+    for (int episode_index = 0; episode_index < train_options.nb_episodes; episode_index++) {
         bool is_done = false;
-        std::vector already_done(nb_tanks, false);
+        std::vector already_done(train_options.nb_tanks, false);
         auto state = env->reset_physics();
         env->reset_drawables(std::make_shared<TrainGlContext>());
 
@@ -103,7 +94,7 @@ void train_main(
 
             // save to replay buffer
             int index = 0;
-            for (int i = 0; i < nb_tanks; i++) {
+            for (int i = 0; i < train_options.nb_tanks; i++) {
                 if (already_done[i]) continue;
 
                 const auto v = vision[index];
@@ -134,8 +125,8 @@ void train_main(
             state = next_state;
 
             // check if it's time to train
-            if (counter % train_every == train_every - 1) {
-                sac->train(replay_buffer, batch_size);
+            if (counter % train_options.train_every == train_options.train_every - 1) {
+                sac->train(replay_buffer, train_options.epochs, train_options.batch_size);
 
                 auto metrics = sac->get_metrics();
 
@@ -151,7 +142,7 @@ void train_main(
                 p_bar.tick();
             }
 
-            is_done = is_all_done(steps) || episode_step_idx >= max_episode_steps;
+            is_done = is_all_done(steps) || episode_step_idx >= train_options.max_episode_steps;
 
             counter++;
             episode_step_idx++;

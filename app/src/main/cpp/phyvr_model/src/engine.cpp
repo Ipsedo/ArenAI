@@ -31,7 +31,7 @@ void PhysicEngine::add_item_producer(const std::shared_ptr<ItemProducer> &item_p
     item_producers.push_back(item_producer);
 }
 
-void PhysicEngine::remove_item_constraints(const std::shared_ptr<Item> &item) {
+void PhysicEngine::remove_item_constraints(const std::shared_ptr<Item> &item) const {
     for (const auto &constraint: item->get_constraints()) m_world->removeConstraint(constraint);
 }
 

@@ -57,11 +57,13 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
         indicators::option::ShowElapsedTime{true},
         indicators::option::ShowRemainingTime{true}};
 
+    auto gl_context = std::make_shared<TrainGlContext>();
+
     for (int episode_index = 0; episode_index < train_options.nb_episodes; episode_index++) {
         bool is_done = false;
         std::vector already_done(train_options.nb_tanks, false);
         auto state = env->reset_physics();
-        env->reset_drawables(std::make_shared<TrainGlContext>());
+        env->reset_drawables(gl_context);
 
         int episode_step_idx = 0;
         while (!is_done) {

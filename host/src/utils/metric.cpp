@@ -6,7 +6,7 @@
 
 #include <numeric>
 
-Metric::Metric(const std::string &name, int window_size) : name(name), window_size(window_size) {}
+Metric::Metric(const std::string &name, const int window_size) : name(name), window_size(window_size) {}
 
 float Metric::last_value() const { return values.back(); }
 

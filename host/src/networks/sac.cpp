@@ -4,13 +4,15 @@
 
 #include "./sac.h"
 
+#include <phyvr_core/types.h>
+
+#include "../utils/saver.h"
 #include "./target_update.h"
 #include "./truncated_normal.h"
-#include "phyvr_core/types.h"
 
 SacNetworks::SacNetworks(
     int nb_sensors, int nb_action, float learning_rate, int hidden_size_sensors, int hidden_size,
-    const torch::Device device, int metric_window_size)
+    const torch::Device device, int metric_window_size, float tau, float gamma)
     : actor(std::make_shared<SacActor>(nb_sensors, nb_action, hidden_size_sensors, hidden_size)),
       critic_1(
           std::make_shared<SacCritic>(nb_sensors, nb_action, hidden_size_sensors, hidden_size)),
@@ -32,7 +34,8 @@ SacNetworks::SacNetworks(
       actor_loss_metric(std::make_shared<Metric>("actor", metric_window_size)),
       critic_1_loss_metric(std::make_shared<Metric>("critic_1", metric_window_size)),
       critic_2_loss_metric(std::make_shared<Metric>("critic_2", metric_window_size)),
-      entropy_loss_metric(std::make_shared<Metric>("entropy", metric_window_size)) {
+      entropy_loss_metric(std::make_shared<Metric>("entropy", metric_window_size)), tau(tau),
+      gamma(gamma), target_entropy(-nb_action) {
 
     hard_update(target_critic_1, critic_1);
     hard_update(target_critic_2, critic_2);
@@ -49,38 +52,32 @@ actor_response SacNetworks::act(const torch::Tensor &vision, const torch::Tensor
     return actor->act(vision, sensors);
 }
 
-void SacNetworks::train(const std::shared_ptr<ReplayBuffer> &replay_buffer, int batch_size) {
-    const auto steps = replay_buffer->sample(batch_size, actor->parameters().back().device());
-
-    float tau = 1e-3f;
-    float gamma = 0.95f;
-    float target_entropy = -static_cast<float>(ENEMY_NB_ACTION);
+void SacNetworks::train(const std::shared_ptr<ReplayBuffer> &replay_buffer, const int batch_size) {
+    const auto [state, action, reward, done, next_state] =
+        replay_buffer->sample(batch_size, actor->parameters().back().device());
 
     torch::Tensor target_q_values;
     {
         torch::NoGradGuard no_grad;
 
-        const auto [next_mu, next_sigma] =
-            actor->act(steps.next_state.vision, steps.next_state.proprioception);
+        const auto [next_mu, next_sigma] = actor->act(next_state.vision, next_state.proprioception);
         const auto next_action = truncated_normal_sample(next_mu, next_sigma, -1.f, 1.f);
         const auto next_log_proba =
             truncated_normal_log_pdf(next_action, next_mu, next_sigma, -1.f, 1.f).sum(-1, true);
 
-        const auto next_target_q_value_1 = target_critic_1->value(
-            steps.next_state.vision, steps.next_state.proprioception, next_action);
-        const auto next_target_q_value_2 = target_critic_2->value(
-            steps.next_state.vision, steps.next_state.proprioception, next_action);
+        const auto next_target_q_value_1 =
+            target_critic_1->value(next_state.vision, next_state.proprioception, next_action);
+        const auto next_target_q_value_2 =
+            target_critic_2->value(next_state.vision, next_state.proprioception, next_action);
 
         const auto target_v_value = torch::min(next_target_q_value_1, next_target_q_value_2)
                                     - alpha_entropy->alpha() * next_log_proba;
 
-        target_q_values =
-            steps.reward + (1.f - steps.done.to(torch::kFloat)) * gamma * target_v_value;
+        target_q_values = reward + (1.f - done.to(torch::kFloat)) * gamma * target_v_value;
     }
 
     // critic 1
-    const auto q_value_1 =
-        critic_1->value(steps.state.vision, steps.state.proprioception, steps.action);
+    const auto q_value_1 = critic_1->value(state.vision, state.proprioception, action);
     const auto critic_1_loss = torch::mse_loss(q_value_1, target_q_values, at::Reduction::Mean);
 
     critic_1_optim.zero_grad();
@@ -88,8 +85,7 @@ void SacNetworks::train(const std::shared_ptr<ReplayBuffer> &replay_buffer, int 
     critic_1_optim.step();
 
     // critic 2
-    const auto q_value_2 =
-        critic_2->value(steps.state.vision, steps.state.proprioception, steps.action);
+    const auto q_value_2 = critic_2->value(state.vision, state.proprioception, action);
     const auto critic_2_loss = torch::mse_loss(q_value_2, target_q_values, at::Reduction::Mean);
 
     critic_2_optim.zero_grad();
@@ -97,15 +93,13 @@ void SacNetworks::train(const std::shared_ptr<ReplayBuffer> &replay_buffer, int 
     critic_2_optim.step();
 
     // policy
-    const auto [curr_mu, curr_sigma] = actor->act(steps.state.vision, steps.state.proprioception);
+    const auto [curr_mu, curr_sigma] = actor->act(state.vision, state.proprioception);
     const auto curr_action = truncated_normal_sample(curr_mu, curr_sigma, -1.f, 1.f);
     const auto curr_log_proba =
         truncated_normal_log_pdf(curr_action, curr_mu, curr_sigma, -1.f, 1.f).sum(-1, true);
 
-    const auto curr_q_value_1 =
-        critic_1->value(steps.state.vision, steps.state.proprioception, curr_action);
-    const auto curr_q_value_2 =
-        critic_2->value(steps.state.vision, steps.state.proprioception, curr_action);
+    const auto curr_q_value_1 = critic_1->value(state.vision, state.proprioception, curr_action);
+    const auto curr_q_value_2 = critic_2->value(state.vision, state.proprioception, curr_action);
     const auto q_value = torch::min(curr_q_value_1, curr_q_value_2);
 
     const auto actor_loss = torch::mean(alpha_entropy->alpha().detach() * curr_log_proba - q_value);
@@ -135,4 +129,18 @@ void SacNetworks::train(const std::shared_ptr<ReplayBuffer> &replay_buffer, int 
 
 std::vector<std::shared_ptr<Metric>> SacNetworks::get_metrics() const {
     return {actor_loss_metric, critic_1_loss_metric, critic_2_loss_metric, entropy_loss_metric};
+}
+
+void SacNetworks::save(const std::filesystem::path &output_folder) const {
+    save_torch(output_folder, actor, "actor.pt");
+
+    save_torch(output_folder, critic_1, "critic_1.pt");
+    save_torch(output_folder, critic_2, "critic_2.pt");
+
+    save_torch(output_folder, target_critic_1, "target_critic_1.pt");
+    save_torch(output_folder, target_critic_2, "target_critic_2.pt");
+
+    save_torch(output_folder, alpha_entropy, "alpha_entropy.pt");
+
+    export_state_dict_neutral(actor, output_folder / "actor_state_dict.pt");
 }

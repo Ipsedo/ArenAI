@@ -17,9 +17,9 @@
 BaseTanksEnvironment::BaseTanksEnvironment(
     const std::shared_ptr<AbstractFileReader> &file_reader,
     const std::shared_ptr<AbstractGLContext> &gl_context, const int nb_tanks,
-    float wanted_frequency)
+    float wanted_frequency, const bool thread_sleep)
     : wanted_frequency(wanted_frequency), nb_tanks(nb_tanks), visions_mutex(nb_tanks),
-      threads_running(true),
+      thread_sleep(thread_sleep), threads_running(true),
       thread_barrier(std::make_unique<std::barrier<>>(static_cast<std::ptrdiff_t>(nb_tanks + 1))),
       pool(), model_matrices_mutex(), tank_dead_already_set(nb_tanks, false), tank_factories(),
       tank_renderers(), tank_controller_handler(),
@@ -86,6 +86,7 @@ std::vector<std::tuple<State, Reward, IsFinish>> BaseTanksEnvironment::step(
 
 std::vector<State> BaseTanksEnvironment::reset_physics() {
     physic_engine->remove_bodies_and_constraints();
+    tank_dead_already_set = std::vector(nb_tanks, false);
     tank_factories.clear();
     tank_controller_handler.clear();
 
@@ -229,7 +230,7 @@ void BaseTanksEnvironment::worker_enemy_vision(
             enemy_visions[index] = renderer->draw_and_get_frame(model_matrices);
         }
 
-        std::this_thread::sleep_for(frame_dt - dt);
+        if (thread_sleep) std::this_thread::sleep_for(frame_dt - dt);
     }
 }
 

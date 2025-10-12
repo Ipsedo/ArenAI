@@ -26,11 +26,11 @@ bool is_all_done(const std::vector<std::tuple<State, Reward, IsFinish>> &result)
 void train_main(
     const std::filesystem::path &output_folder, const std::filesystem::path &android_assets_path) {
     constexpr float learning_rate = 1e-4f;
-    int batch_size = 32;
+    int batch_size = 256;
     int nb_episodes = 2048;
     int train_every = 32;
     constexpr int max_episode_steps = 30 * 60 * 5;
-    constexpr int replay_buffer_size = max_episode_steps * 10;
+    constexpr int replay_buffer_size = 16384;
     int nb_tanks = 8;
 
     bool cuda = true;
@@ -39,7 +39,8 @@ void train_main(
 
     const auto env = std::make_unique<TrainTankEnvironment>(nb_tanks, android_assets_path);
     auto sac = SacNetworks(
-        ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, learning_rate, 160, 320, torch_device, 64);
+        ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, learning_rate, 160, 320, torch_device, 64,
+        1e-3f, 0.95f);
 
     auto replay_buffer = std::make_shared<ReplayBuffer>(replay_buffer_size, 12345);
 
@@ -62,9 +63,10 @@ void train_main(
 
     for (int episode_index = 0; episode_index < nb_episodes; episode_index++) {
         bool is_done = false;
-        const auto state = env->reset_physics();
+        auto state = env->reset_physics();
         env->reset_drawables(std::make_shared<TrainGlContext>());
 
+        int episode_step_idx = 0;
         while (!is_done) {
             const auto [vision, proprioception] = state_core_to_tensor(state);
 
@@ -109,6 +111,13 @@ void train_main(
                 reward_metric.add(r);
             }
 
+            state = next_state;
+
+            for (int i = state.size() - 1; i >= 0; i--) {
+                const auto [s, r, d] = steps[i];
+                if (d) state.erase(state.begin() + i);
+            }
+
             if (counter % train_every == train_every - 1) {
                 sac.train(replay_buffer, batch_size);
                 auto metrics = sac.get_metrics();
@@ -124,8 +133,10 @@ void train_main(
                 p_bar.tick();
             }
 
-            is_done = is_all_done(steps);
+            is_done = is_all_done(steps) || episode_step_idx >= max_episode_steps;
+
             counter++;
+            episode_step_idx++;
         }
     }
 }

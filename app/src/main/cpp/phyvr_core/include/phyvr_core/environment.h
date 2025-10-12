@@ -25,7 +25,8 @@ class BaseTanksEnvironment {
 public:
     BaseTanksEnvironment(
         const std::shared_ptr<AbstractFileReader> &file_reader,
-        const std::shared_ptr<AbstractGLContext> &gl_context, int nb_tanks, float wanted_frequency);
+        const std::shared_ptr<AbstractGLContext> &gl_context, int nb_tanks, float wanted_frequency,
+        bool thread_sleep);
 
     virtual std::vector<std::tuple<State, Reward, IsFinish>>
     step(float time_delta, std::future<std::vector<Action>> &actions_future);
@@ -40,6 +41,7 @@ private:
     int nb_tanks;
     std::vector<std::mutex> visions_mutex;
 
+    bool thread_sleep;
     std::atomic<bool> threads_running;
     std::unique_ptr<std::barrier<>> thread_barrier;
     std::vector<std::thread> pool;

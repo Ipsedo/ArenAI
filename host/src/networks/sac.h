@@ -5,6 +5,7 @@
 #ifndef PHYVR_TRAIN_HOST_SAC_H
 #define PHYVR_TRAIN_HOST_SAC_H
 
+#include <filesystem>
 #include <memory>
 
 #include "../utils/metric.h"
@@ -16,13 +17,15 @@ class SacNetworks {
 public:
     SacNetworks(
         int nb_sensors, int nb_action, float learning_rate, int hidden_size_sensors,
-        int hidden_size, torch::Device device, int metric_window_size);
+        int hidden_size, torch::Device device, int metric_window_size, float tau, float gamma);
 
     void train(const std::shared_ptr<ReplayBuffer> &replay_buffer, int batch_size);
 
     actor_response act(const torch::Tensor &vision, const torch::Tensor &sensors) const;
 
     std::vector<std::shared_ptr<Metric>> get_metrics() const;
+
+    void save(const std::filesystem::path &output_folder) const;
 
 private:
     std::shared_ptr<SacActor> actor;
@@ -44,6 +47,10 @@ private:
     std::shared_ptr<Metric> critic_1_loss_metric;
     std::shared_ptr<Metric> critic_2_loss_metric;
     std::shared_ptr<Metric> entropy_loss_metric;
+
+    float tau;
+    float gamma;
+    float target_entropy;
 };
 
 #endif//PHYVR_TRAIN_HOST_SAC_H

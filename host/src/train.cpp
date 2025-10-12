@@ -26,7 +26,7 @@ bool is_all_done(const std::vector<std::tuple<State, Reward, IsFinish>> &result)
 
 void train_main(
     const std::filesystem::path &output_folder, const std::filesystem::path &android_assets_path) {
-    constexpr float learning_rate = 1e-3f;
+    constexpr float learning_rate = 1e-4f;
     int batch_size = 256;
     int nb_episodes = 2048;
     int train_every = 32;
@@ -70,13 +70,19 @@ void train_main(
         bool is_done = false;
         std::vector already_done(nb_tanks, false);
         auto state = env->reset_physics();
-        auto state_without_dead = state;
         env->reset_drawables(std::make_shared<TrainGlContext>());
 
         int episode_step_idx = 0;
         while (!is_done) {
+            // prepare state (remove dead agents)
+            auto state_without_dead = state;
+
+            for (int i = static_cast<int>(state_without_dead.size()) - 1; i >= 0; i--)
+                if (already_done[i]) state_without_dead.erase(state.begin() + i);
+
             const auto [vision, proprioception] = state_core_to_tensor(state_without_dead);
 
+            // sample action
             const auto [mu, sigma] =
                 sac->act(vision.to(torch_device), proprioception.to(torch_device));
             const auto action = truncated_normal_sample(mu, sigma, -1.f, 1.f);
@@ -86,15 +92,16 @@ void train_main(
             action_promise.set_value(action_core);
             auto action_future = action_promise.get_future();
 
+            // step environment
             const auto steps = env->step(1.f / 30.f, action_future);
 
+            // prepare next state
             std::vector<State> next_state;
             next_state.reserve(steps.size());
-
             for (const auto &[s, r, d]: steps) next_state.push_back(s);
-
             const auto [next_vision, next_proprioception] = state_core_to_tensor(next_state);
 
+            // save to replay buffer
             int index = 0;
             for (int i = 0; i < nb_tanks; i++) {
                 if (already_done[i]) continue;
@@ -107,16 +114,14 @@ void train_main(
 
                 const auto [_, r, d] = steps[index];
 
-                TorchStep torch_step{
-                    {v, p},
-                    action[index],
-                    torch::tensor(
-                        r, torch::TensorOptions().device(torch_device).dtype(torch::kFloat)),
-                    torch::tensor(
-                        d, torch::TensorOptions().device(torch_device).dtype(torch::kBool)),
-                    {n_v, n_p}};
-
-                replay_buffer->add(torch_step);
+                replay_buffer->add(
+                    {{v, p},
+                     action[index],
+                     torch::tensor(
+                         r, torch::TensorOptions().device(torch_device).dtype(torch::kFloat)),
+                     torch::tensor(
+                         d, torch::TensorOptions().device(torch_device).dtype(torch::kBool)),
+                     {n_v, n_p}});
 
                 reward_metric.add(r);
 
@@ -125,13 +130,10 @@ void train_main(
                 index++;
             }
 
-            state_without_dead = state = next_state;
+            // set new state
+            state = next_state;
 
-            for (int i = state_without_dead.size() - 1; i >= 0; i--) {
-                const auto [s, r, d] = steps[i];
-                if (d) state_without_dead.erase(state.begin() + i);
-            }
-
+            // check if it's time to train
             if (counter % train_every == train_every - 1) {
                 sac->train(replay_buffer, batch_size);
 
@@ -154,6 +156,7 @@ void train_main(
             counter++;
             episode_step_idx++;
 
+            // attempt to save
             saver.attempt_save();
         }
     }

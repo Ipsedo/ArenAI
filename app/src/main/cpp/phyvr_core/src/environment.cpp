@@ -67,7 +67,7 @@ std::vector<std::tuple<State, Reward, IsFinish>> BaseTanksEnvironment::step(
 
     const auto actions = actions_future.get();
     int index_action = 0;
-    for (int i = 0; i < tank_controller_handler.size(); i++) {
+    for (int i = 0; i < tank_factories.size(); i++) {
         if (!tank_factories[i]->is_dead())
             tank_controller_handler[i]->on_event(actions[index_action++]);
         else

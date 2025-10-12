@@ -22,7 +22,7 @@ TankFactory::TankFactory(
     const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
     glm::vec3 chassis_pos)
     : name(tank_prefix_name), camera(std::nullptr_t()), items(), item_producers(), controllers(),
-      file_reader(file_reader) {
+      file_reader(file_reader), is_already_dead(false) {
 
     glm::vec3 scale(0.5);
 
@@ -93,12 +93,16 @@ std::vector<std::shared_ptr<ItemProducer>> TankFactory::get_item_producers() {
 }
 
 bool TankFactory::is_dead() {
-    return std::transform_reduce(
+    const auto will_die = std::transform_reduce(
         items.begin(), items.end(), false, [](const bool b1, const bool b2) { return b1 || b2; },
         [](const auto &i) {
             if (auto t = std::dynamic_pointer_cast<LifeItem>(i)) return t->is_dead();
             return false;
         });
+
+    if (!is_already_dead && will_die) is_already_dead = true;
+
+    return is_already_dead;
 }
 
 TankFactory::~TankFactory() {

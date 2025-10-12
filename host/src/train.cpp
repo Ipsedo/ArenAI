@@ -26,7 +26,7 @@ bool is_all_done(const std::vector<std::tuple<State, Reward, IsFinish>> &result)
 void train_main(
     const std::filesystem::path &output_folder, const std::filesystem::path &android_assets_path) {
     constexpr float learning_rate = 1e-4f;
-    int batch_size = 4;
+    int batch_size = 32;
     int nb_episodes = 2048;
     int train_every = 32;
     constexpr int max_episode_steps = 30 * 60 * 5;
@@ -43,11 +43,13 @@ void train_main(
 
     auto replay_buffer = std::make_shared<ReplayBuffer>(replay_buffer_size, 12345);
 
+    Metric reward_metric("reward", 64);
+
     int counter = 0;
 
     indicators::ProgressBar p_bar{
         indicators::option::MinProgress{0},
-        indicators::option::MaxProgress{nb_episodes},
+        indicators::option::MaxProgress{nb_episodes * max_episode_steps},
         indicators::option::BarWidth{30},
         indicators::option::Start{"["},
         indicators::option::Fill{"="},
@@ -103,24 +105,27 @@ void train_main(
                     {n_v, n_p}};
 
                 replay_buffer->add(torch_step);
+
+                reward_metric.add(r);
             }
 
-            if (counter % train_every == 0) {
+            if (counter % train_every == train_every - 1) {
                 sac.train(replay_buffer, batch_size);
                 auto metrics = sac.get_metrics();
                 std::stringstream stream;
-                stream << std::accumulate(
-                    metrics.begin(), metrics.end(), std::string(),
-                    [](std::string acc, std::shared_ptr<Metric> m) {
-                        return acc.append(", ").append(m->to_string());
-                    }) << " ";
+                stream << reward_metric.to_string()
+                       << std::accumulate(
+                              metrics.begin(), metrics.end(), std::string(),
+                              [](std::string acc, const std::shared_ptr<Metric> &m) {
+                                  return acc.append(", ").append(m->to_string());
+                              })
+                       << " ";
                 p_bar.set_option(indicators::option::PrefixText{stream.str()});
+                p_bar.tick();
             }
 
             is_done = is_all_done(steps);
             counter++;
         }
-
-        p_bar.tick();
     }
 }

@@ -52,7 +52,7 @@ actor_response SacNetworks::act(const torch::Tensor &vision, const torch::Tensor
 void SacNetworks::train(const std::shared_ptr<ReplayBuffer> &replay_buffer, int batch_size) {
     const auto steps = replay_buffer->sample(batch_size, actor->parameters().back().device());
 
-    float tau = 1e-2f;
+    float tau = 1e-3f;
     float gamma = 0.95f;
     float target_entropy = -static_cast<float>(ENEMY_NB_ACTION);
 

@@ -29,7 +29,7 @@ TorchStep ReplayBuffer::sample(const int batch_size, torch::Device device) {
 
     return {
         {torch::stack(states_vision).to(device), torch::stack(states_proprioception).to(device)},
-        torch::stack(actions).detach().to(device),
+        torch::stack(actions).to(device),
         torch::stack(rewards).unsqueeze(-1).to(device),
         torch::stack(dones).unsqueeze(-1).to(device),
         {torch::stack(next_states_vision).to(device),
@@ -37,6 +37,11 @@ TorchStep ReplayBuffer::sample(const int batch_size, torch::Device device) {
 }
 
 void ReplayBuffer::add(const TorchStep &step) {
-    memory.push_back(step);
+    memory.push_back(
+        {{step.state.vision.clone(), step.state.proprioception.clone()},
+         step.action.detach().cpu().clone(),
+         step.reward.clone(),
+         step.done.clone(),
+         {step.next_state.vision.clone(), step.next_state.proprioception.clone()}});
     while (memory.size() > memory_size) memory.erase(memory.begin());
 }

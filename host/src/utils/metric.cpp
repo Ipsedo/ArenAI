@@ -22,6 +22,6 @@ void Metric::add(const float value) {
 
 std::string Metric::to_string() {
     std::stringstream stream;
-    stream << name << " " << std::setprecision(6) << std::fixed << average_value();
+    stream << name << " = " << std::setprecision(6) << std::fixed << average_value();
     return stream.str();
 }

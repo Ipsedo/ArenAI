@@ -2,10 +2,7 @@
 // Created by samuel on 19/03/2023.
 //
 
-#include <phyvr_utils/cache.h>
-#include <phyvr_utils/singleton.h>
 #include <phyvr_view/cubemap.h>
-#include <phyvr_view/errors.h>
 #include <phyvr_view/program.h>
 
 CubeMap::CubeMap(

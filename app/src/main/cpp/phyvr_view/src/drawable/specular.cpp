@@ -4,8 +4,6 @@
 
 #include <iostream>
 
-#include <phyvr_utils/cache.h>
-#include <phyvr_utils/singleton.h>
 #include <phyvr_view/errors.h>
 #include <phyvr_view/specular.h>
 

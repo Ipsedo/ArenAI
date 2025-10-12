@@ -14,8 +14,6 @@
 #include <phyvr_view/cubemap.h>
 #include <phyvr_view/specular.h>
 
-#include "phyvr_view/errors.h"
-
 BaseTanksEnvironment::BaseTanksEnvironment(
     const std::shared_ptr<AbstractFileReader> &file_reader,
     const std::shared_ptr<AbstractGLContext> &gl_context, const int nb_tanks,
@@ -216,7 +214,6 @@ void BaseTanksEnvironment::worker_enemy_vision(
             std::lock_guard lock(visions_mutex[index]);
             std::shared_lock lock_read(model_matrices_mutex);
             enemy_visions[index] = renderer->draw_and_get_frame(model_matrices);
-            ;
         }
 
         std::this_thread::sleep_for(frame_dt - dt);

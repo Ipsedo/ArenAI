@@ -142,5 +142,5 @@ void SacNetworks::save(const std::filesystem::path &output_folder) const {
 
     save_torch(output_folder, alpha_entropy, "alpha_entropy.pt");
 
-    export_state_dict_neutral(actor, output_folder / "actor_state_dict.pt");
+    export_state_dict_neutral(actor, output_folder / "actor_state_dict");
 }

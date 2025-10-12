@@ -43,7 +43,9 @@ void train_main(
         ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, learning_rate, 160, 320, torch_device, 64,
         1e-3f, 0.95f);
 
-    Saver saver(sac, "/home/samuel/StudioProjects/PhyVR/host/outputs/train_sac_first_try", 1024);
+    Saver saver(
+        sac, "/home/samuel/StudioProjects/PhyVR/host/outputs/train_sac_first_try",
+        max_episode_steps);
 
     auto replay_buffer = std::make_shared<ReplayBuffer>(replay_buffer_size, 12345);
 

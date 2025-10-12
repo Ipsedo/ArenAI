@@ -122,8 +122,8 @@ void save_png_rgb(
 
 Saver::Saver(
     const std::shared_ptr<SacNetworks> &sac_networks, const std::filesystem::path &output_path,
-    int save_every)
-    : sac_networks(sac_networks), output_path(output_path), curr_step(0), save_every(save_every) {}
+    const int save_every)
+    : sac_networks(sac_networks), curr_step(0), save_every(save_every), output_path(output_path) {}
 
 void Saver::attempt_save() {
     if (curr_step % save_every == 0) {

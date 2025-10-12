@@ -10,6 +10,8 @@
 
 #include <torch/torch.h>
 
+#include "../networks/sac.h"
+
 void export_state_dict_neutral(
     const std::shared_ptr<torch::nn::Module> &m, const std::filesystem::path &outdir);
 
@@ -29,5 +31,20 @@ void save_torch(
     to_save->save(archive);
     archive.save_to(file);
 }
+
+class Saver {
+public:
+    Saver(
+        const std::shared_ptr<SacNetworks> &sac_networks, const std::filesystem::path &output_path,
+        int save_every);
+
+    void attempt_save();
+
+private:
+    std::shared_ptr<SacNetworks> sac_networks;
+    long curr_step;
+    int save_every;
+    std::filesystem::path output_path;
+};
 
 #endif// PHYVR_TRAIN_HOST_SAVER_H

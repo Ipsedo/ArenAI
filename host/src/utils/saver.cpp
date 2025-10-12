@@ -115,3 +115,23 @@ void save_png_rgb(
         throw std::runtime_error("Erreur lors de la sauvegarde PNG");
     }
 }
+
+/*
+ * SacSaver
+ */
+
+Saver::Saver(
+    const std::shared_ptr<SacNetworks> &sac_networks, const std::filesystem::path &output_path,
+    int save_every)
+    : sac_networks(sac_networks), output_path(output_path), curr_step(0), save_every(save_every) {}
+
+void Saver::attempt_save() {
+    if (curr_step % save_every == 0) {
+        const auto output_folder = output_path / ("save_" + std::to_string(curr_step / save_every));
+        if (!std::filesystem::exists(output_folder))
+            std::filesystem::create_directories(output_folder);
+        sac_networks->save(output_folder);
+    }
+
+    curr_step++;
+}

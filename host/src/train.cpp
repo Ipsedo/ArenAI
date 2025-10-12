@@ -16,6 +16,7 @@
 #include "./utils/linux_file_reader.h"
 #include "./utils/replay_buffer.h"
 #include "./utils/torch_converter.h"
+#include "utils/saver.h"
 
 bool is_all_done(const std::vector<std::tuple<State, Reward, IsFinish>> &result) {
     for (const auto &[s, r, is_done]: result)
@@ -25,7 +26,7 @@ bool is_all_done(const std::vector<std::tuple<State, Reward, IsFinish>> &result)
 
 void train_main(
     const std::filesystem::path &output_folder, const std::filesystem::path &android_assets_path) {
-    constexpr float learning_rate = 1e-4f;
+    constexpr float learning_rate = 1e-3f;
     int batch_size = 256;
     int nb_episodes = 2048;
     int train_every = 32;
@@ -38,9 +39,11 @@ void train_main(
     torch::Device torch_device = cuda ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU);
 
     const auto env = std::make_unique<TrainTankEnvironment>(nb_tanks, android_assets_path);
-    auto sac = SacNetworks(
+    auto sac = std::make_shared<SacNetworks>(
         ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, learning_rate, 160, 320, torch_device, 64,
         1e-3f, 0.95f);
+
+    Saver saver(sac, "/home/samuel/StudioProjects/PhyVR/host/outputs/train_sac_first_try", 1024);
 
     auto replay_buffer = std::make_shared<ReplayBuffer>(replay_buffer_size, 12345);
 
@@ -63,15 +66,17 @@ void train_main(
 
     for (int episode_index = 0; episode_index < nb_episodes; episode_index++) {
         bool is_done = false;
+        std::vector already_done(nb_tanks, false);
         auto state = env->reset_physics();
+        auto state_without_dead = state;
         env->reset_drawables(std::make_shared<TrainGlContext>());
 
         int episode_step_idx = 0;
         while (!is_done) {
-            const auto [vision, proprioception] = state_core_to_tensor(state);
+            const auto [vision, proprioception] = state_core_to_tensor(state_without_dead);
 
             const auto [mu, sigma] =
-                sac.act(vision.to(torch_device), proprioception.to(torch_device));
+                sac->act(vision.to(torch_device), proprioception.to(torch_device));
             const auto action = truncated_normal_sample(mu, sigma, -1.f, 1.f);
             const auto action_core = actions_tensor_to_core(action);
 
@@ -88,18 +93,21 @@ void train_main(
 
             const auto [next_vision, next_proprioception] = state_core_to_tensor(next_state);
 
-            for (int i = 0; i < state.size(); i++) {
-                const auto v = vision[i];
-                const auto p = proprioception[i];
+            int index = 0;
+            for (int i = 0; i < nb_tanks; i++) {
+                if (already_done[i]) continue;
 
-                const auto n_v = next_vision[i];
-                const auto n_p = next_proprioception[i];
+                const auto v = vision[index];
+                const auto p = proprioception[index];
 
-                const auto [_, r, d] = steps[i];
+                const auto n_v = next_vision[index];
+                const auto n_p = next_proprioception[index];
+
+                const auto [_, r, d] = steps[index];
 
                 TorchStep torch_step{
                     {v, p},
-                    action[i],
+                    action[index],
                     torch::tensor(
                         r, torch::TensorOptions().device(torch_device).dtype(torch::kFloat)),
                     torch::tensor(
@@ -109,18 +117,24 @@ void train_main(
                 replay_buffer->add(torch_step);
 
                 reward_metric.add(r);
+
+                if (d) already_done[i] = true;
+
+                index++;
             }
 
-            state = next_state;
+            state_without_dead = state = next_state;
 
-            for (int i = state.size() - 1; i >= 0; i--) {
+            for (int i = state_without_dead.size() - 1; i >= 0; i--) {
                 const auto [s, r, d] = steps[i];
-                if (d) state.erase(state.begin() + i);
+                if (d) state_without_dead.erase(state.begin() + i);
             }
 
             if (counter % train_every == train_every - 1) {
-                sac.train(replay_buffer, batch_size);
-                auto metrics = sac.get_metrics();
+                sac->train(replay_buffer, batch_size);
+
+                auto metrics = sac->get_metrics();
+
                 std::stringstream stream;
                 stream << reward_metric.to_string()
                        << std::accumulate(
@@ -137,6 +151,8 @@ void train_main(
 
             counter++;
             episode_step_idx++;
+
+            saver.attempt_save();
         }
     }
 }

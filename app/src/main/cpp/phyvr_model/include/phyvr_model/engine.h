@@ -15,7 +15,7 @@
 
 class PhysicEngine {
 public:
-    PhysicEngine();
+    explicit PhysicEngine(float wanted_frequency);
 
     void add_item(const std::shared_ptr<Item> &item);
     void add_item_producer(const std::shared_ptr<ItemProducer> &item_producer);
@@ -29,6 +29,8 @@ public:
     ~PhysicEngine();
 
 private:
+    float wanted_frequency;
+
     btDefaultCollisionConfiguration *m_collision_configuration;
     btCollisionDispatcher *m_dispatcher;
     btBroadphaseInterface *m_broad_phase;

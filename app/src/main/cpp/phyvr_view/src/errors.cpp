@@ -13,14 +13,12 @@
 void check_gl_error(const std::string &message) {
     GLenum error_code;
 
-    bool has_error;
+    bool has_error = false;
 
     while ((error_code = glGetError()) != GL_NO_ERROR) {
         LOG_ERROR("GL_ERROR \"%s\": %d", message.c_str(), error_code);
         has_error = true;
     }
 
-    /*if (has_error) {
-      exit(1);
-  }*/
+    if (has_error) throw std::runtime_error(message);
 }

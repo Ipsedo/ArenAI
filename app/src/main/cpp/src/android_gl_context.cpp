@@ -17,11 +17,8 @@
 #include <phyvr_utils/logging.h>
 #include <phyvr_view/errors.h>
 
-AndroidGLContext::AndroidGLContext(ANativeWindow *window) : AbstractGLContext() {
-    display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-
-    eglInitialize(display, nullptr, nullptr);
-
+AndroidGLContext::AndroidGLContext(ANativeWindow *window, EGLDisplay display)
+    : AbstractGLContext(), display(display) {
     const EGLint config_attrib[] = {
         EGL_RENDERABLE_TYPE,
         EGL_OPENGL_ES3_BIT,
@@ -57,6 +54,8 @@ AndroidGLContext::AndroidGLContext(ANativeWindow *window) : AbstractGLContext() 
 
     eglQuerySurface(display, surface, EGL_WIDTH, &width);
     eglQuerySurface(display, surface, EGL_HEIGHT, &height);
+
+    eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 }
 
 EGLDisplay AndroidGLContext::get_display() { return display; }

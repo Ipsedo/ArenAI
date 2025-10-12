@@ -5,17 +5,24 @@
 #ifndef PHYVR_CANON_H
 #define PHYVR_CANON_H
 
+#include <functional>
+
 #include <phyvr_controller/controller.h>
 #include <phyvr_controller/inputs.h>
 #include <phyvr_model/convex.h>
 #include <phyvr_utils/file_reader.h>
 #include <phyvr_view/camera.h>
 
-class CanonItem : public ConvexItem, public ItemProducer, public Controller, public Camera {
+class CanonItem final : public LifeItem,
+                        public ConvexItem,
+                        public ItemProducer,
+                        public Controller,
+                        public Camera {
 public:
     CanonItem(
         const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,
-        glm::vec3 pos, glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *turret);
+        glm::vec3 pos, glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *turret,
+        const std::function<void(Item *)> &on_contact);
 
     void on_input(const user_input &input) override;
 
@@ -34,6 +41,7 @@ private:
     btHingeConstraint *hinge;
     std::shared_ptr<AbstractFileReader> file_reader;
     bool will_fire;
+    std::function<void(Item *)> on_contact;
 };
 
 #endif// PHYVR_CANON_H

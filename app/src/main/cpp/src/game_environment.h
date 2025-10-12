@@ -17,11 +17,12 @@
 #include <phyvr_view/renderer.h>
 
 #include "./android_gl_context.h"
-#include "./controller/controller_engine.h"
+#include "./controller/player_handler.h"
 
 class UserGameTanksEnvironment : public BaseTanksEnvironment {
 public:
-    explicit UserGameTanksEnvironment(struct android_app *app, int nb_tanks);
+    explicit UserGameTanksEnvironment(
+        struct android_app *app, EGLDisplay display, int nb_tanks, float wanted_frequency);
 
     bool is_running() const;
 
@@ -44,11 +45,12 @@ protected:
 
 private:
     android_app *app;
+    EGLDisplay display;
 
     std::unique_ptr<TankFactory> tank_factory;
 
     std::unique_ptr<PlayerRenderer> player_renderer;
-    std::unique_ptr<ControllerEngine> player_controller_engine;
+    std::unique_ptr<PlayerControllerHandler> player_controller_handler;
 
     bool is_paused;
 };

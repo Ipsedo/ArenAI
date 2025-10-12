@@ -1,5 +1,7 @@
 import torch as th
 from torch import nn
+import math
+
 
 class ConvolutionNetwork(nn.Module):
     def __init__(self) -> None:
@@ -7,26 +9,17 @@ class ConvolutionNetwork(nn.Module):
 
         self.cnn = nn.Sequential(
             nn.Conv2d(3, 8, 3, 2, 1),
-            nn.Mish(),
-            nn.InstanceNorm2d(8),
+            nn.SiLU(),
             nn.Conv2d(8, 16, 3, 2, 1),
-            nn.Mish(),
-            nn.InstanceNorm2d(16),
-            nn.Conv2d(16, 32, 3, 2, 1),
-            nn.Mish(),
-            nn.InstanceNorm2d(32),
-            nn.Conv2d(32, 64, 3, 2, 1),
-            nn.Mish(),
-            nn.InstanceNorm2d(64),
-            nn.Conv2d(64, 128, 3, 2, 1),
-            nn.Mish(),
-            nn.InstanceNorm2d(128),
-            nn.Conv2d(128, 256, 3, 2, 1),
-            nn.Mish(),
-            nn.InstanceNorm2d(256),
-            nn.Conv2d(256, 512, 3, 2, 1),
-            nn.Mish(),
-            nn.InstanceNorm2d(512),
+            nn.SiLU(),
+            nn.Conv2d(16, 24, 3, 2, 1),
+            nn.SiLU(),
+            nn.Conv2d(24, 32, 3, 2, 1),
+            nn.SiLU(),
+            nn.Conv2d(32, 40, 3, 2, 1),
+            nn.SiLU(),
+            nn.Conv2d(40, 48, 3, 2, 1),
+            nn.SiLU(),
             nn.Flatten(1, -1),
         )
 
@@ -48,17 +41,12 @@ class SacActor(nn.Module):
         self.vision_encoder = ConvolutionNetwork()
         self.sensors_encoder = nn.Sequential(
             nn.Linear(nb_sensors, hidden_size_sensors),
-            nn.Mish(),
-            nn.LayerNorm(hidden_size_sensors),
-            nn.Linear(hidden_size_sensors, hidden_size_sensors),
-            nn.Mish(),
-            nn.LayerNorm(hidden_size_sensors),
+            nn.SiLU(),
         )
 
         self.head = nn.Sequential(
-            nn.Linear(hidden_size_sensors + 2 * 2 * 512, hidden_size),
-            nn.Mish(),
-            nn.LayerNorm(hidden_size)
+            nn.Linear(hidden_size_sensors + 2 * 2 * 48, hidden_size),
+            nn.SiLU(),
         )
 
         self.mu = nn.Sequential(

@@ -9,7 +9,9 @@
 
 class TrainTankEnvironment final : public BaseTanksEnvironment {
 public:
-    explicit TrainTankEnvironment(int nb_tanks);
+    explicit TrainTankEnvironment(int nb_tanks, const std::filesystem::path &android_assets_path);
+
+    static void reset_singleton();
 
 protected:
     void on_draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) override;

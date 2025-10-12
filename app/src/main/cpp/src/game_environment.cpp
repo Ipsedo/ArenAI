@@ -20,12 +20,15 @@
 #include "./android_file_reader.h"
 #include "./android_gl_context.h"
 
-UserGameTanksEnvironment::UserGameTanksEnvironment(struct android_app *app, int nb_tanks)
+UserGameTanksEnvironment::UserGameTanksEnvironment(
+    struct android_app *app, EGLDisplay display, int nb_tanks, float wanted_frequency)
     : BaseTanksEnvironment(
         std::make_shared<AndroidFileReader>(app->activity->assetManager),
-        std::make_shared<AndroidGLContext>(app->window), nb_tanks),
-      app(app), tank_factory(std::nullptr_t()), is_paused(true), player_renderer(std::nullptr_t()),
-      player_controller_engine(std::nullptr_t()) {}
+        std::make_shared<AndroidGLContext>(app->window, eglGetDisplay(EGL_DEFAULT_DISPLAY)),
+        nb_tanks, wanted_frequency),
+      app(app), display(eglGetDisplay(EGL_DEFAULT_DISPLAY)), tank_factory(std::nullptr_t()),
+      is_paused(true), player_renderer(std::nullptr_t()),
+      player_controller_handler(std::nullptr_t()) {}
 
 void UserGameTanksEnvironment::on_draw(
     const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
@@ -38,7 +41,7 @@ int32_t UserGameTanksEnvironment::on_input(struct android_app *app, AInputEvent 
         return 1;
     }
 
-    return player_controller_engine->on_event(event);
+    return player_controller_handler->on_event(event);
 }
 
 void UserGameTanksEnvironment::on_cmd(struct android_app *app, int32_t cmd) {
@@ -46,17 +49,19 @@ void UserGameTanksEnvironment::on_cmd(struct android_app *app, int32_t cmd) {
         case APP_CMD_SAVE_STATE:
             // The system has asked us to save our current state.  Do so.
             /*app->savedState = malloc(sizeof(UserGameTanksEnvironment));
-    // TODO real object copy...
-    app->savedState = engine;
-    app->savedStateSize = sizeof(UserGameTanksEnvironment);
-    */
+            // TODO real object copy...
+            app->savedState = engine;
+            app->savedStateSize = sizeof(UserGameTanksEnvironment);
+            */
             LOG_INFO("save state");
             break;
         case APP_CMD_INIT_WINDOW:
             // The window is being shown, get it ready.
             if (app->window != nullptr) {
                 LOG_INFO("opening window");
-                reset_drawables(std::make_shared<AndroidGLContext>(app->window));
+                // TODO fix resuming
+                reset_drawables(std::make_shared<AndroidGLContext>(
+                    app->window, eglGetDisplay(EGL_DEFAULT_DISPLAY)));
                 is_paused = false;
             }
             break;
@@ -79,7 +84,8 @@ void UserGameTanksEnvironment::on_cmd(struct android_app *app, int32_t cmd) {
 bool UserGameTanksEnvironment::is_running() const { return !is_paused; }
 
 void UserGameTanksEnvironment::on_reset_physics(const std::unique_ptr<PhysicEngine> &engine) {
-    tank_factory = std::make_unique<TankFactory>(file_reader, "player", glm::vec3(0., -40., 40));
+    tank_factory =
+        std::make_unique<PlayerTankFactory>(file_reader, "player", glm::vec3(0., -40., 40));
 
     for (auto &item: tank_factory->get_items()) { engine->add_item(item); }
 
@@ -93,11 +99,13 @@ void UserGameTanksEnvironment::on_reset_drawables(
     player_renderer = std::make_unique<PlayerRenderer>(
         gl_context, ANativeWindow_getWidth(app->window), ANativeWindow_getHeight(app->window),
         glm::vec3(200, 300, 200), tank_factory->get_camera());
-    player_controller_engine = std::make_unique<ControllerEngine>(
+    player_renderer->make_current();
+
+    player_controller_handler = std::make_unique<PlayerControllerHandler>(
         app->config, player_renderer->get_width(), player_renderer->get_height());
 
     for (auto &ctrl: tank_factory->get_controllers())
-        player_controller_engine->add_controller(ctrl);
+        player_controller_handler->add_controller(ctrl);
 
     player_renderer->add_drawable("cubemap", std::make_unique<CubeMap>(file_reader, "cubemap/1"));
 
@@ -122,8 +130,10 @@ void UserGameTanksEnvironment::on_reset_drawables(
                 color, color, color, 50.f, item->get_shape()->get_id()));
     }
 
-    for (auto &hud_drawable: player_controller_engine->get_hud_drawables(file_reader))
+    for (auto &hud_drawable: player_controller_handler->get_hud_drawables(file_reader))
         player_renderer->add_hud_drawable(std::move(hud_drawable));
+
+    player_renderer->release_current();
 }
 
 void UserGameTanksEnvironment::pause() { is_paused = true; }

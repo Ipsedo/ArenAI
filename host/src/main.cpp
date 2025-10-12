@@ -3,26 +3,39 @@
 //
 #include <iostream>
 
+#include <phyvr_core/environment.h>
 #include <phyvr_model/engine.h>
-#include <phyvr_view/framebuffer_renderer.h>
+#include <phyvr_view/pbuffer_renderer.h>
 
 #include "./networks/agent.h"
 #include "./train.h"
 #include "./utils/saver.h"
 
 int main(int argc, char **argv) {
-    std::cout << "toyo" << std::endl;
+    auto actor = SacActor(ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, 160, 320);
+    auto critic = SacCritic(ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, 160, 320);
 
-    constexpr int nb_sensors = 10;
-    constexpr int nb_actions = 8;
-    const auto actor = SacActor(nb_sensors, nb_actions, 256, 512);
-    auto critic = std::make_shared<SacCritic>(nb_sensors, nb_actions, 256, 512);
+    const auto v = torch::randn({2, 3, ENEMY_VISION_SIZE, ENEMY_VISION_SIZE});
+    const auto p = torch::randn({2, ENEMY_PROPRIOCEPTION_SIZE});
+
+    const auto [mu, sigma] = actor.act(v, p);
+    const auto value = critic.value(v, p, mu);
+
+    std::cout << "mu :" << std::endl << mu << std::endl;
+    std::cout << "sigma :" << std::endl << sigma << std::endl;
+    std::cout << "value :" << std::endl << value << std::endl;
 
     const auto output_dir = "/home/samuel/Téléchargements/actor_export";
 
     const std::filesystem::path path(output_dir);
 
     export_state_dict_neutral(static_cast<torch::nn::Module>(actor), output_dir);
+
+    std::cout << "model saved" << std::endl;
+
+    train(
+        std::filesystem::path("/home/samuel/Téléchargements/phyvr_outputs"),
+        std::filesystem::path("/home/samuel/StudioProjects/PhyVR/app/src/main/assets"));
 
     return 0;
 }

@@ -38,12 +38,12 @@ copy_asset_to_files(AAssetManager *mgr, const std::string &asset_name, const std
     const size_t len = AAsset_getLength(asset);
     std::vector<char> buf(len);
 
+    std::filesystem::path out_path =
+        std::filesystem::path(dst_dir) / asset_name.substr(asset_name.find_last_of("/\\") + 1);
+    std::ofstream output_file(out_path, std::ios::out | std::ios::binary);
+
     AAsset_read(asset, buf.data(), len);
     AAsset_close(asset);
-
-    std::string out_path = std::filesystem::path(dst_dir) / asset_name;
-
-    std::ofstream output_file(out_path, std::ofstream::out);
 
     output_file.write(buf.data(), static_cast<std::streamsize>(buf.size()));
     output_file.close();

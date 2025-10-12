@@ -2,8 +2,8 @@
 // Created by samuel on 18/03/2023.
 //
 
-#include <phyvr_utils/cache.h>
-#include <phyvr_utils/singleton.h>
+#include <iostream>
+
 #include <phyvr_view/errors.h>
 #include <phyvr_view/specular.h>
 
@@ -17,13 +17,7 @@ Specular::Specular(
     const std::vector<std::tuple<float, float, float>> &normals, glm::vec4 ambient_color,
     glm::vec4 diffuse_color, glm::vec4 specular_color, float shininess, const std::string &shape_id)
     : ambient_color(ambient_color), diffuse_color(diffuse_color), specular_color(specular_color),
-      nb_vertices(int(vertices.size())), shininess(shininess) {
-
-    auto cache = Singleton<Cache<std::shared_ptr<Program>>>::get_singleton();
-    if (cache->exists(shape_id)) {
-        program = cache->get(shape_id);
-        return;
-    }
+      shininess(shininess), nb_vertices(static_cast<int>(vertices.size())) {
 
     std::vector<float> vbo_data;
     for (int i = 0; i < vertices.size(); i++) {
@@ -45,21 +39,17 @@ Specular::Specular(
                   .add_uniform("u_diffuse_color")
                   .add_uniform("u_specular_color")
                   .add_uniform("u_light_pos")
-                  .add_uniform("u_distance_coef")
-                  .add_uniform("u_light_coef")
                   .add_uniform("u_shininess")
                   .add_uniform("u_cam_pos")
                   .add_buffer("vertices_normals_buffer", vbo_data)
                   .add_attribute("a_position")
                   .add_attribute("a_normal")
                   .build();
-
-    cache->add(shape_id, program);
 }
 
 void Specular::draw(
-    glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos_from_camera,
-    glm::vec3 camera_pos) {
+    const glm::mat4 mvp_matrix, const glm::mat4 mv_matrix, const glm::vec3 light_pos_from_camera,
+    const glm::vec3 camera_pos) {
     program->use();
 
     program->attrib("a_position", "vertices_normals_buffer", POSITION_SIZE, STRIDE, 0);
@@ -77,8 +67,6 @@ void Specular::draw(
     program->uniform_vec4("u_diffuse_color", diffuse_color);
     program->uniform_vec4("u_specular_color", specular_color);
 
-    program->uniform_float("u_distance_coef", 0.f);
-    program->uniform_float("u_light_coef", 1.f);
     program->uniform_float("u_shininess", shininess);
 
     Program::draw_arrays(GL_TRIANGLES, 0, nb_vertices);

@@ -9,7 +9,7 @@
 #include <phyvr_controller/inputs.h>
 #include <phyvr_model/convex.h>
 
-class WheelItem : public ConvexItem, public Controller {
+class WheelItem : public LifeItem, public ConvexItem, public Controller {
 public:
     WheelItem(
         const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,
@@ -22,7 +22,7 @@ protected:
     btGeneric6DofSpring2Constraint *hinge;
 };
 
-class DirectionalWheelItem : public WheelItem {
+class DirectionalWheelItem final : public WheelItem {
 public:
     DirectionalWheelItem(
         std::string name, const std::shared_ptr<AbstractFileReader> &file_reader, glm::vec3 pos,

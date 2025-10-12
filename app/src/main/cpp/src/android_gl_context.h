@@ -17,7 +17,7 @@
 
 class AndroidGLContext : public AbstractGLContext {
 public:
-    explicit AndroidGLContext(ANativeWindow *window);
+    explicit AndroidGLContext(ANativeWindow *window, EGLDisplay display);
     EGLDisplay get_display() override;
     EGLSurface get_surface() override;
     EGLContext get_context() override;

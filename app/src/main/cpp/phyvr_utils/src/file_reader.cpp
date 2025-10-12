@@ -17,13 +17,13 @@ img_grey AbstractFileReader::to_img_grey(img_rgb image) {
         for (int col = 0; col < image.width; col++)
             // image.pixels -> RGBA -> * 4
             res.pixels[row * image.width + col] =
-                (float(image.pixels[4 * row * image.width + col * 4])
-                 + float(image.pixels[4 * row * image.width + col * 4 + 1])
-                 + float(image.pixels[4 * row * image.width + col * 4 + 2]))
+                (static_cast<float>(image.pixels[4 * row * image.width + col * 4])
+                 + static_cast<float>(image.pixels[4 * row * image.width + col * 4 + 1])
+                 + static_cast<float>(image.pixels[4 * row * image.width + col * 4 + 2]))
                 / 3.f / 255.f;
 
-    res.width = int(image.width);
-    res.height = int(image.height);
+    res.width = image.width;
+    res.height = image.height;
 
     return res;
 }

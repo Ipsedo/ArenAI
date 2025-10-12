@@ -13,7 +13,7 @@
 #include <phyvr_view/drawable.h>
 #include <phyvr_view/program.h>
 
-class CubeMap : public Drawable {
+class CubeMap final : public Drawable {
 private:
     static const int POSITION_SIZE = 3;
     static const int STRIDE = POSITION_SIZE * BYTES_PER_FLOAT;

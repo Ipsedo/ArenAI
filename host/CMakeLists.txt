@@ -4,6 +4,18 @@ project(phyvr_train_host)
 
 set(CMAKE_CXX_STANDARD 20)
 
+include(FetchContent)
+
+# Save to png with STB
+FetchContent_Declare(
+        stb
+        GIT_REPOSITORY https://github.com/nothings/stb.git
+        GIT_TAG        master
+)
+
+FetchContent_Populate(stb)
+include_directories(${stb_SOURCE_DIR})
+
 # libtorch
 set(LIBTORCH_PATH "/opt/libtorch")
 list(APPEND CMAKE_PREFIX_PATH "${LIBTORCH_PATH}/share/cmake")
@@ -12,8 +24,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 include_directories(${TORCH_INCLUDE_DIRS})
 
 # SOIL
-find_package(SOIL2 REQUIRED)
-include_directories(${SOIL_INCLUDE_DIR})
+find_package(soil2 REQUIRED)
+include_directories(${SOIL2_INCLUDE_DIR})
 
 # PHYVR
 set(PHYVR_CPP_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/../app/src/main/cpp")
@@ -43,5 +55,5 @@ target_link_libraries(
         phyvr_utils
         phyvr_core
         ${TORCH_LIBRARIES}
-        ${SOIL_LIBRARY}
+        soil2
 )

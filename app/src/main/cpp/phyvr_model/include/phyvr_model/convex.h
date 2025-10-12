@@ -22,7 +22,6 @@ protected:
     glm::vec3 _get_scale() override;
 
 private:
-private:
     std::string name;
 
     std::shared_ptr<Shape> shape;
@@ -33,28 +32,28 @@ private:
     glm::vec3 scale;
 };
 
-class SphereItem : public ConvexItem {
+class SphereItem final : public ConvexItem {
 public:
     SphereItem(
         std::string name, const std::shared_ptr<AbstractFileReader> &file_reader,
         glm::vec3 position, glm::vec3 scale, float mass);
 };
 
-class CubeItem : public ConvexItem {
+class CubeItem final : public ConvexItem {
 public:
     CubeItem(
         std::string name, const std::shared_ptr<AbstractFileReader> &file_reader,
         glm::vec3 position, glm::vec3 scale, float mass);
 };
 
-class CylinderItem : public ConvexItem {
+class CylinderItem final : public ConvexItem {
 public:
     CylinderItem(
         std::string name, const std::shared_ptr<AbstractFileReader> &file_reader,
         glm::vec3 position, glm::vec3 scale, float mass);
 };
 
-class TetraItem : public ConvexItem {
+class TetraItem final : public ConvexItem {
 public:
     TetraItem(
         std::string name, const std::shared_ptr<AbstractFileReader> &file_reader,

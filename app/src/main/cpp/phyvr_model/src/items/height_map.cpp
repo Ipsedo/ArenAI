@@ -11,10 +11,10 @@ HeightMapItem::HeightMapItem(
     const std::string &height_map_file, glm::vec3 pos, glm::vec3 scale)
     : Item(std::move(name)), shape_id(height_map_file), scale(scale) {
     img_rgb tmp = img_reader->read_png(height_map_file);
-    img_grey img = AbstractFileReader::to_img_grey(tmp);
+    auto [width, height, pixels] = AbstractFileReader::to_img_grey(tmp);
 
-    auto map = new btHeightfieldTerrainShape(
-        img.width, img.height, img.pixels, 1.f, 0.f, 1.f, 1, PHY_FLOAT, false);
+    auto map =
+        new btHeightfieldTerrainShape(width, height, pixels, 1.f, 0.f, 1.f, 1, PHY_FLOAT, false);
     map->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
     map->processAllTriangles(
         this, btVector3(-1000., -1000., -1000.), btVector3(1000., 1000., 1000.));
@@ -40,12 +40,12 @@ btRigidBody *HeightMapItem::get_body() { return body; }
 glm::vec3 HeightMapItem::_get_scale() { return glm::vec3(1.); }
 
 void HeightMapItem::processTriangle(btVector3 *triangle, int partid, int triangleindex) {
-    glm::vec3 p1 = glm::vec3(triangle[0].getX(), triangle[0].getY(), triangle[0].getZ());
-    glm::vec3 p2 = glm::vec3(triangle[1].getX(), triangle[1].getY(), triangle[1].getZ());
-    glm::vec3 p3 = glm::vec3(triangle[2].getX(), triangle[2].getY(), triangle[2].getZ());
+    auto p1 = glm::vec3(triangle[0].getX(), triangle[0].getY(), triangle[0].getZ());
+    auto p2 = glm::vec3(triangle[1].getX(), triangle[1].getY(), triangle[1].getZ());
+    auto p3 = glm::vec3(triangle[2].getX(), triangle[2].getY(), triangle[2].getZ());
 
-    glm::vec3 n1 = glm::cross(p1 - p2, p3 - p2);
-    glm::vec3 n2 = glm::cross(p3 - p2, p1 - p2);
+    const glm::vec3 n1 = glm::cross(p1 - p2, p3 - p2);
+    const glm::vec3 n2 = glm::cross(p3 - p2, p1 - p2);
 
     // y : up axis
     glm::vec3 n = n1.y > 0 ? n1 : n2;

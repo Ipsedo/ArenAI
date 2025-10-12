@@ -11,13 +11,13 @@
 
 HUDDrawable::~HUDDrawable() = default;
 
-std::vector<float> get_circle_points_(int nb_points) {
+std::vector<float> get_circle_points_(const int nb_points) {
     std::vector<float> circle_points{};
     for (int i = 0; i < nb_points; i++) {
-        double angle = double(i) * M_PI * 2. / double(nb_points);
+        const double angle = static_cast<double>(i) * M_PI * 2. / static_cast<double>(nb_points);
 
-        circle_points.push_back(float(cos(angle)));
-        circle_points.push_back(float(sin(angle)));
+        circle_points.push_back(static_cast<float>(cos(angle)));
+        circle_points.push_back(static_cast<float>(sin(angle)));
         circle_points.push_back(0.f);
     }
 
@@ -30,7 +30,7 @@ std::vector<float> get_circle_points_(int nb_points) {
 
 ButtonDrawable::ButtonDrawable(
     const std::shared_ptr<AbstractFileReader> &file_reader, std::function<button(void)> get_input,
-    glm::vec2 center_px, float size_px)
+    const glm::vec2 center_px, const float size_px)
     : get_input(std::move(get_input)), center_x(center_px.x), center_y(center_px.y), size(size_px),
       nb_points(128) {
 
@@ -42,23 +42,23 @@ ButtonDrawable::ButtonDrawable(
                   .build();
 }
 
-void ButtonDrawable::draw(int width, int height) {
-    float ratio = float(width) / float(height);
+void ButtonDrawable::draw(const int width, const int height) {
+    const float ratio = static_cast<float>(width) / static_cast<float>(height);
 
-    float center_x_rel = ratio * ((center_x / float(width)) * 2.f - 1.f);
-    float center_y_rel = (center_y / float(height)) * 2.f - 1.f;
+    const float center_x_rel = ratio * (center_x / static_cast<float>(width) * 2.f - 1.f);
+    const float center_y_rel = center_y / static_cast<float>(height) * 2.f - 1.f;
 
     auto [pressed] = get_input();
 
-    float size_rel = size / float(width) * ratio;
+    const float size_rel = size / static_cast<float>(width) * ratio;
 
-    glm::mat4 v_matrix =
+    const glm::mat4 v_matrix =
         glm::lookAt(glm::vec3(0.f, 0.f, 1.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 1.f, 0.f));
-    glm::mat4 p_matrix = glm::ortho(-1.f * ratio, 1.f * ratio, -1.f, 1.f, -1.f, 1.f);
-    glm::mat4 vp_matrix = p_matrix * v_matrix;
+    const glm::mat4 p_matrix = glm::ortho(-1.f * ratio, 1.f * ratio, -1.f, 1.f, -1.f, 1.f);
+    const glm::mat4 vp_matrix = p_matrix * v_matrix;
 
-    glm::mat4 button_m_matrix = glm::translate(glm::vec3(center_x_rel, center_y_rel, 0.f))
-                                * glm::scale(glm::vec3(size_rel, size_rel, 1.f));
+    const glm::mat4 button_m_matrix = glm::translate(glm::vec3(center_x_rel, center_y_rel, 0.f))
+                                      * glm::scale(glm::vec3(size_rel, size_rel, 1.f));
 
     glLineWidth(pressed ? 8.f : 5.f);
 
@@ -81,8 +81,8 @@ void ButtonDrawable::draw(int width, int height) {
 
 JoyStickDrawable::JoyStickDrawable(
     const std::shared_ptr<AbstractFileReader> &file_reader,
-    std::function<joystick(void)> get_input_px, glm::vec2 center_px, float size_px,
-    float stick_size_px)
+    std::function<joystick(void)> get_input_px, const glm::vec2 center_px, const float size_px,
+    const float stick_size_px)
     : get_input(std::move(get_input_px)), center_x(center_px.x), center_y(center_px.y),
       size(size_px), stick_size(stick_size_px), nb_point_bound(4), nb_point_stick(128) {
 
@@ -97,28 +97,28 @@ JoyStickDrawable::JoyStickDrawable(
             .build();
 }
 
-void JoyStickDrawable::draw(int width, int height) {
-    float ratio = float(width) / float(height);
+void JoyStickDrawable::draw(const int width, const int height) {
+    const float ratio = static_cast<float>(width) / static_cast<float>(height);
 
-    float center_x_rel = ratio * ((center_x / float(width)) * 2.f - 1.f);
-    float center_y_rel = (center_y / float(height)) * 2.f - 1.f;
+    const float center_x_rel = ratio * (center_x / static_cast<float>(width) * 2.f - 1.f);
+    const float center_y_rel = center_y / static_cast<float>(height) * 2.f - 1.f;
 
     auto [stick_x, stick_y] = get_input();
-    float stick_x_rel = ratio * ((stick_x / float(width)) * 2.f - 1.f);
-    float stick_y_rel = (stick_y / float(height)) * 2.f - 1.f;
+    const float stick_x_rel = ratio * (stick_x / static_cast<float>(width) * 2.f - 1.f);
+    const float stick_y_rel = stick_y / static_cast<float>(height) * 2.f - 1.f;
 
-    float size_rel = size / float(width) * ratio;
-    float stick_size_rel = stick_size / float(width) * ratio;
+    const float size_rel = size / static_cast<float>(width) * ratio;
+    const float stick_size_rel = stick_size / static_cast<float>(width) * ratio;
 
-    glm::mat4 v_matrix =
+    const glm::mat4 v_matrix =
         glm::lookAt(glm::vec3(0.f, 0.f, 1.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 1.f, 0.f));
-    glm::mat4 p_matrix = glm::ortho(-1.f * ratio, 1.f * ratio, -1.f, 1.f, -1.f, 1.f);
-    glm::mat4 vp_matrix = p_matrix * v_matrix;
+    const glm::mat4 p_matrix = glm::ortho(-1.f * ratio, 1.f * ratio, -1.f, 1.f, -1.f, 1.f);
+    const glm::mat4 vp_matrix = p_matrix * v_matrix;
 
-    glm::mat4 bounds_m_matrix = glm::translate(glm::vec3(center_x_rel, center_y_rel, 0.f))
-                                * glm::scale(glm::vec3(size_rel, size_rel, 1.f));
-    glm::mat4 stick_m_matrix = glm::translate(glm::vec3(stick_x_rel, stick_y_rel, 0.f))
-                               * glm::scale(glm::vec3(stick_size_rel, stick_size_rel, 1.f));
+    const glm::mat4 bounds_m_matrix = glm::translate(glm::vec3(center_x_rel, center_y_rel, 0.f))
+                                      * glm::scale(glm::vec3(size_rel, size_rel, 1.f));
+    const glm::mat4 stick_m_matrix = glm::translate(glm::vec3(stick_x_rel, stick_y_rel, 0.f))
+                                     * glm::scale(glm::vec3(stick_size_rel, stick_size_rel, 1.f));
 
     glLineWidth(5.f);
 

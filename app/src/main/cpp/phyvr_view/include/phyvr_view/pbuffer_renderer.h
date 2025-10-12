@@ -2,8 +2,8 @@
 // Created by samuel on 29/09/2025.
 //
 
-#ifndef PHYVR_FRAMEBUFFER_RENDERER_H
-#define PHYVR_FRAMEBUFFER_RENDERER_H
+#ifndef PHYVR_PBUFFER_RENDERER_H
+#define PHYVR_PBUFFER_RENDERER_H
 
 #include <array>
 #include <vector>
@@ -13,11 +13,15 @@
 
 #include "./renderer.h"
 
-typedef std::array<std::uint8_t, 4> pixel;
+// Indexing :
+// Channels x Height x Width
+template<typename T>
+using image = std::vector<std::vector<std::vector<T>>>;
 
-class PBufferGLContext : public AbstractGLContext {
+class PBufferGLContext final : public AbstractGLContext {
 public:
-    PBufferGLContext();
+    explicit PBufferGLContext(
+        const std::shared_ptr<AbstractGLContext> &main_context, int width, int height);
 
     EGLDisplay get_display() override;
 
@@ -31,12 +35,13 @@ private:
     EGLContext context;
 };
 
-class PBufferRenderer : public Renderer {
+class PBufferRenderer final : public Renderer {
 public:
     PBufferRenderer(
-        int width, int height, glm::vec3 light_pos, const std::shared_ptr<Camera> &camera);
+        const std::shared_ptr<AbstractGLContext> &main_context, int width, int height,
+        glm::vec3 light_pos, const std::shared_ptr<Camera> &camera);
 
-    std::vector<std::vector<pixel>>
+    image<uint8_t>
     draw_and_get_frame(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices);
 
     ~PBufferRenderer() override;
@@ -47,4 +52,4 @@ protected:
     void on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_context) override;
 };
 
-#endif// PHYVR_FRAMEBUFFER_RENDERER_H
+#endif// PHYVR_PBUFFER_RENDERER_H

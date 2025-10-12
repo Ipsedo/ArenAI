@@ -2,53 +2,56 @@ cmake_minimum_required(VERSION 3.29)
 
 project(phyvr)
 
-include(FetchContent)
-
 include(AndroidNdkModules)
 android_ndk_import_module_native_app_glue()
+
+include(FetchContent)
 
 ##############
 # ExecuTorch #
 ##############
 
-set(ET_SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/_deps/executorch")
-set(PYTHON_VENV_DIR "${CMAKE_SOURCE_DIR}/build/venv_et")
-set(PYTHON_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python3.12")
-execute_process(
-        COMMAND bash -c
-        "python3.12 -m venv ${CMAKE_SOURCE_DIR}/build/venv_et"
-)
-
-option(EXECUTORCH_ENABLE_LOGGING "" ON)
-option(EXECUTORCH_BUILD_EXTENSION_DATA_LOADER "" ON)
-option(EXECUTORCH_BUILD_EXTENSION_FLAT_TENSOR "" ON)
-option(EXECUTORCH_BUILD_EXTENSION_MODULE "" ON)
-option(EXECUTORCH_BUILD_PYBIND "" OFF)
-option(EXECUTORCH_BUILD_EXTENSION_TENSOR "" ON)
-option(EXECUTORCH_BUILD_KERNELS_OPTIMIZED "" ON)
-option(EXECUTORCH_BUILD_XNNPACK "" ON)
 FetchContent_Declare(
         executorch
         GIT_REPOSITORY https://github.com/pytorch/executorch.git
-        GIT_TAG        "v0.7.0"
+        GIT_TAG        "viable/strict"
         GIT_SHALLOW    TRUE
         GIT_PROGRESS   TRUE
         GIT_SUBMODULES_RECURSE TRUE
-        SOURCE_DIR     "${ET_SOURCE_DIR}"
-)
-FetchContent_Populate(executorch)
-execute_process(
-        COMMAND bash -lc
-        "source ${PYTHON_VENV_DIR}/bin/activate \
-        && cd '${ET_SOURCE_DIR}' \
-        && git submodule sync \
-        && git submodule update --init --recursive \
-        && ./install_requirements.sh \
-        && ./install_executorch.sh --clean"
-        RESULT_VARIABLE _et_submods_rv
+        SOURCE_DIR     "${CMAKE_CURRENT_BINARY_DIR}/_deps/executorch"
 )
 
-add_subdirectory("${ET_SOURCE_DIR}")
+set(ET_VENV "${CMAKE_CURRENT_BINARY_DIR}/.venv_et")
+execute_process(
+        COMMAND bash -lc
+        "/usr/bin/python3.12 -m venv \"${ET_VENV}\" \
+        && ${ET_VENV}/bin/pip install --upgrade pip pyyaml \
+        && ${ET_VENV}/bin/pip install torch --index-url https://download.pytorch.org/whl/cpu"
+        COMMAND_ECHO STDOUT
+        RESULT_VARIABLE _venv_rc
+)
+if(NOT _venv_rc EQUAL 0)
+    message(FATAL_ERROR "Error when creating ExecuTorch python venv")
+endif()
+
+set(PYTHON_EXECUTABLE "${ET_VENV}/bin/python" CACHE FILEPATH "")
+
+set(EXECUTORCH_ENABLE_LOGGING ON CACHE BOOL "")
+set(EXECUTORCH_BUILD_EXTENSION_DATA_LOADER ON CACHE BOOL "")
+set(EXECUTORCH_BUILD_EXTENSION_FLAT_TENSOR ON CACHE BOOL "")
+set(EXECUTORCH_BUILD_TESTS OFF CACHE BOOL "")
+set(EXECUTORCH_BUILD_EXTENSION_MODULE ON CACHE BOOL "")
+set(EXECUTORCH_BUILD_EXTENSION_NAMED_DATA_MAP ON CACHE BOOL "")
+set(EXECUTORCH_BUILD_EXTENSION_RUNNER_UTIL ON CACHE BOOL "")
+set(EXECUTORCH_BUILD_PYBIND OFF CACHE BOOL "")
+set(EXECUTORCH_BUILD_PYTHON OFF CACHE BOOL "")
+set(EXECUTORCH_ENABLE_PYTHON_API OFF CACHE BOOL "")
+set(EXECUTORCH_BUILD_EXTENSION_TENSOR ON CACHE BOOL "")
+set(EXECUTORCH_BUILD_KERNELS_OPTIMIZED ON CACHE BOOL "")
+set(EXECUTORCH_BUILD_XNNPACK ON CACHE BOOL "")
+set(EXECUTORCH_BUILD_VULKAN OFF CACHE BOOL "")
+
+FetchContent_MakeAvailable(executorch)
 
 #########
 # PhyVR #
@@ -83,9 +86,8 @@ target_link_libraries(
         phyvr_view
         phyvr_model
         phyvr_core
-        extension_module_static
-        extension_flat_tensor
-        extension_tensor
-        optimized_native_cpu_ops_lib
-        xnnpack_backend
+        executorch
+        executorch::backends
+        executorch::extensions
+        executorch::kernels
 )

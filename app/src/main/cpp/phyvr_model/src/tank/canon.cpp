@@ -6,19 +6,21 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include "./ammu.h"
+#include "./shell.h"
 
 CanonItem::CanonItem(
     const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,
-    glm::vec3 pos, glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *turret)
-    : ConvexItem(
-        prefix_name + "_canon", std::make_shared<ObjShape>(file_reader, "obj/anubis_canon.obj"),
-        pos, scale, mass),
-      angle(0.f), file_reader(file_reader), will_fire(false) {
+    glm::vec3 pos, glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *turret,
+    const std::function<void(Item *)> &on_contact)
+    : LifeItem(10),
+      ConvexItem(
+          prefix_name + "_canon", std::make_shared<ObjShape>(file_reader, "obj/anubis_canon.obj"),
+          pos, scale, mass),
+      angle(0.f), file_reader(file_reader), will_fire(false), on_contact(on_contact) {
 
-    btVector3 turret_pivot = btVector3(rel_pos.x, rel_pos.y, rel_pos.z);
-    btVector3 canon_pivot = btVector3(0.f, 0.f, 0);
-    btVector3 axis = btVector3(1, 0, 0);
+    auto turret_pivot = btVector3(rel_pos.x, rel_pos.y, rel_pos.z);
+    auto canon_pivot = btVector3(0.f, 0.f, 0);
+    auto axis = btVector3(1, 0, 0);
     hinge = new btHingeConstraint(
         *turret, *ConvexItem::get_body(), turret_pivot, canon_pivot, axis, axis, true);
 
@@ -28,10 +30,10 @@ CanonItem::CanonItem(
 std::vector<std::shared_ptr<Item>> CanonItem::get_produced_items() {
 
     if (will_fire) {
-        btTransform canon_tr = ConvexItem::get_body()->getWorldTransform();
+        const btTransform canon_tr = ConvexItem::get_body()->getWorldTransform();
         float tmp[16];
         canon_tr.getOpenGLMatrix(tmp);
-        glm::mat4 m_matrix = glm::make_mat4(tmp);
+        const glm::mat4 m_matrix = glm::make_mat4(tmp);
 
         glm::vec4 shell_pos(0.f, 0.f, 3.f, 1.f);
         shell_pos = m_matrix * shell_pos;
@@ -39,7 +41,8 @@ std::vector<std::shared_ptr<Item>> CanonItem::get_produced_items() {
         will_fire = false;
 
         auto shell_item = std::make_shared<ShellItem>(
-            file_reader, glm::vec3(shell_pos), glm::toQuat(m_matrix), glm::vec3(0.2f), 20.f);
+            file_reader, glm::vec3(shell_pos), glm::toQuat(m_matrix), glm::vec3(0.2f), 20.f,
+            on_contact);
 
         glm::vec4 force_vec(0.f, 0.f, 1.f, 0.f);
         force_vec = m_matrix * force_vec;
@@ -59,34 +62,35 @@ void CanonItem::on_input(const user_input &input) {
     angle = angle > 1.f ? 1.f : angle;
     angle = angle < -1.f ? -1.f : angle;
 
-    hinge->setLimit(angle * float(M_PI) * 0.2f, angle * float(M_PI) * 0.2f);
+    hinge->setLimit(
+        angle * static_cast<float>(M_PI) * 0.2f, angle * static_cast<float>(M_PI) * 0.2f);
 
     if (input.fire_button.pressed) will_fire = true;
 }
 
 glm::vec3 CanonItem::pos() {
-    btTransform tr = ConvexItem::get_body()->getWorldTransform();
+    const btTransform tr = ConvexItem::get_body()->getWorldTransform();
     float tmp[16];
     tr.getOpenGLMatrix(tmp);
-    glm::mat4 model_mat = glm::make_mat4(tmp);
+    const glm::mat4 model_mat = glm::make_mat4(tmp);
 
     return model_mat * glm::vec4(0, 4, -20, 1);
 }
 
 glm::vec3 CanonItem::look() {
-    btTransform tr = ConvexItem::get_body()->getWorldTransform();
+    const btTransform tr = ConvexItem::get_body()->getWorldTransform();
     float tmp[16];
     tr.getOpenGLMatrix(tmp);
-    glm::mat4 model_mat = glm::make_mat4(tmp);
+    const glm::mat4 model_mat = glm::make_mat4(tmp);
 
     return model_mat * glm::vec4(0, 0, 1, 1);
 }
 
 glm::vec3 CanonItem::up() {
-    btTransform tr = ConvexItem::get_body()->getWorldTransform();
+    const btTransform tr = ConvexItem::get_body()->getWorldTransform();
     float tmp[16];
     tr.getOpenGLMatrix(tmp);
-    glm::mat4 model_mat = glm::make_mat4(tmp);
+    const glm::mat4 model_mat = glm::make_mat4(tmp);
 
     return model_mat * glm::vec4(0, 1, 0, 0);
 }

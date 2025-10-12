@@ -24,15 +24,15 @@
 
 class AbstractGLContext {
 public:
+    virtual ~AbstractGLContext() = default;
+
     AbstractGLContext();
     virtual EGLDisplay get_display() = 0;
     virtual EGLSurface get_surface() = 0;
     virtual EGLContext get_context() = 0;
 
     void make_current();
-
-private:
-    bool current_called;
+    void release_current();
 };
 
 class Renderer {
@@ -47,6 +47,9 @@ public:
 
     virtual int get_width() const;
     virtual int get_height() const;
+
+    void make_current() const;
+    void release_current() const;
 
     virtual ~Renderer();
 
@@ -68,13 +71,13 @@ private:
     std::shared_ptr<Camera> camera;
 };
 
-class PlayerRenderer : public Renderer {
+class PlayerRenderer final : public Renderer {
 public:
     PlayerRenderer(
         const std::shared_ptr<AbstractGLContext> &gl_context, int width, int height,
         const glm::vec3 &lightPos, const std::shared_ptr<Camera> &camera);
 
-    virtual void add_hud_drawable(std::unique_ptr<HUDDrawable> hud_drawable);
+    void add_hud_drawable(std::unique_ptr<HUDDrawable> hud_drawable);
 
     ~PlayerRenderer() override;
 

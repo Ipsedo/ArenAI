@@ -54,6 +54,8 @@ public:
 
     bool is_dead() override;
 
+    std::vector<std::shared_ptr<Item>> dead_and_get_items();
+
     std::vector<float> get_proprioception();
 
 protected:
@@ -63,6 +65,8 @@ private:
     float reward;
     int max_frames_upside_down;
     int curr_frame_upside_down;
+
+    bool is_dead_already_triggered;
 };
 
 class PlayerTankFactory final : public TankFactory {

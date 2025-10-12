@@ -115,7 +115,8 @@ EnemyTankFactory::EnemyTankFactory(
     const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
     const glm::vec3 chassis_pos, const int max_frames_upside_down)
     : TankFactory(file_reader, tank_prefix_name, chassis_pos), reward(0.f),
-      max_frames_upside_down(max_frames_upside_down), curr_frame_upside_down(0) {}
+      max_frames_upside_down(max_frames_upside_down), curr_frame_upside_down(0),
+      is_dead_already_triggered(false) {}
 
 float EnemyTankFactory::get_reward() {
     float actual_reward = reward;
@@ -148,11 +149,21 @@ void EnemyTankFactory::on_fired_shell_contact(Item *item) {
         }
     }
 
-    if (!self_shoot && dynamic_cast<LifeItem *>(item)) reward += 1.f;
+    if (const auto &life_item = dynamic_cast<LifeItem *>(item); !self_shoot && life_item)
+        reward += life_item->is_dead() ? 0.f : 1.f;
 }
 
 bool EnemyTankFactory::is_dead() {
     return TankFactory::is_dead() || curr_frame_upside_down > max_frames_upside_down;
+}
+
+std::vector<std::shared_ptr<Item>> EnemyTankFactory::dead_and_get_items() {
+    if (is_dead() && !is_dead_already_triggered) {
+        is_dead_already_triggered = true;
+        return get_items();
+    }
+
+    return {};
 }
 
 std::vector<float> EnemyTankFactory::get_proprioception() {

@@ -51,12 +51,12 @@ class LifeItem {
 public:
     virtual ~LifeItem() = default;
 
-    explicit LifeItem(int health_points);
+    explicit LifeItem(float health_points);
     bool is_dead() const;
-    void receive_damages(int damages);
+    float receive_damages(float damages);
 
 private:
-    int health_points;
+    float health_points;
 };
 
 #endif// PHYVR_ITEM_H

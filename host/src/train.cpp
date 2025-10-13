@@ -67,10 +67,10 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
         int episode_step_idx = 0;
         while (!is_done) {
             // prepare state (remove dead agents)
-            auto state_without_dead = state;
+            std::vector<State> state_without_dead;
 
-            for (int i = static_cast<int>(state_without_dead.size()) - 1; i >= 0; i--)
-                if (already_done[i]) state_without_dead.erase(state.begin() + i);
+            for (int i = 0; i < static_cast<int>(state.size()); i++)
+                if (!already_done[i]) state_without_dead.push_back(state[i]);
 
             const auto [vision, proprioception] = state_core_to_tensor(state_without_dead);
 
@@ -98,8 +98,8 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
             for (int i = 0; i < train_options.nb_tanks; i++) {
                 if (already_done[i]) continue;
 
-                const auto v = vision[i];
-                const auto p = proprioception[i];
+                const auto v = vision[index_action];
+                const auto p = proprioception[index_action];
 
                 const auto n_v = next_vision[i];
                 const auto n_p = next_proprioception[i];

@@ -36,9 +36,9 @@ std::tuple<torch::Tensor, torch::Tensor> state_core_to_tensor(const std::vector<
     constexpr int64_t P = ENEMY_PROPRIOCEPTION_SIZE;
 
     const torch::Tensor visions_u8 =
-        torch::empty({N, C, H, W}, torch::TensorOptions().dtype(torch::kUInt8));
+        torch::zeros({N, C, H, W}, torch::TensorOptions().dtype(torch::kUInt8));
 
-    torch::Tensor proprio = torch::empty({N, P}, torch::TensorOptions().dtype(torch::kFloat32));
+    torch::Tensor proprio = torch::zeros({N, P}, torch::TensorOptions().dtype(torch::kFloat32));
 
     auto *vis_ptr = visions_u8.data_ptr<uint8_t>();
     auto *prop_ptr = proprio.data_ptr<float>();

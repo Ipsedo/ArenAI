@@ -66,13 +66,7 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
 
         int episode_step_idx = 0;
         while (!is_done) {
-            // prepare state (remove dead agents)
-            std::vector<State> state_without_dead;
-
-            for (int i = 0; i < static_cast<int>(state.size()); i++)
-                if (!already_done[i]) state_without_dead.push_back(state[i]);
-
-            const auto [vision, proprioception] = state_core_to_tensor(state_without_dead);
+            const auto [vision, proprioception] = state_core_to_tensor(state);
 
             // sample action
             const auto [mu, sigma] =
@@ -94,12 +88,11 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
             const auto [next_vision, next_proprioception] = state_core_to_tensor(next_state);
 
             // save to replay buffer
-            int index_action = 0;
             for (int i = 0; i < train_options.nb_tanks; i++) {
                 if (already_done[i]) continue;
 
-                const auto v = vision[index_action];
-                const auto p = proprioception[index_action];
+                const auto v = vision[i];
+                const auto p = proprioception[i];
 
                 const auto n_v = next_vision[i];
                 const auto n_p = next_proprioception[i];
@@ -108,7 +101,7 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
 
                 replay_buffer->add(
                     {{v, p},
-                     action[index_action],
+                     action[i],
                      torch::tensor(
                          r, torch::TensorOptions().device(torch_device).dtype(torch::kFloat)),
                      torch::tensor(
@@ -118,8 +111,6 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
                 reward_metric.add(r);
 
                 if (d) already_done[i] = true;
-
-                index_action++;
             }
 
             // set new state

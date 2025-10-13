@@ -35,7 +35,7 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
         model_options.hidden_size, torch_device, train_options.metric_window_size,
         model_options.tau, model_options.gamma);
 
-    Saver saver(sac, train_options.output_folder, train_options.max_episode_steps);
+    Saver saver(sac, train_options.output_folder, train_options.save_every);
 
     auto replay_buffer = std::make_shared<ReplayBuffer>(train_options.replay_buffer_size, 12345);
 
@@ -61,9 +61,6 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
     auto gl_context = std::make_shared<TrainGlContext>();
 
     for (int episode_index = 0; episode_index < train_options.nb_episodes; episode_index++) {
-        // attempt to save
-        saver.attempt_save();
-
         // set variable for episode
         bool is_done = false;
         std::vector already_done(train_options.nb_tanks, false);
@@ -144,6 +141,9 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
 
             counter++;
             episode_step_idx++;
+
+            // attempt to save
+            saver.attempt_save();
         }
     }
 }

@@ -28,6 +28,7 @@ int main(int argc, char **argv) {
     parser.add_argument("--nb_episodes").scan<'i', int>().default_value(2048);
     parser.add_argument("--replay_buffer_size").scan<'i', int>().default_value(32768);
     parser.add_argument("--train_every").scan<'i', int>().default_value(512);
+    parser.add_argument("--save_every").scan<'i', int>().default_value(16384);
     parser.add_argument("--cuda").default_value(false).implicit_value(true);
     parser.add_argument("--metric_window_size").scan<'i', int>().default_value(64);
 
@@ -43,8 +44,8 @@ int main(int argc, char **argv) {
          parser.get<float>("--learning_rate"), parser.get<int>("--epochs"),
          parser.get<int>("--batch_size"), parser.get<int>("--max_episode_steps"),
          parser.get<int>("--nb_episodes"), parser.get<int>("--replay_buffer_size"),
-         parser.get<int>("--train_every"), parser.get<bool>("--cuda"),
-         parser.get<int>("--metric_window_size")});
+         parser.get<int>("--train_every"), parser.get<int>("--save_every"),
+         parser.get<bool>("--cuda"), parser.get<int>("--metric_window_size")});
 
     return 0;
 }

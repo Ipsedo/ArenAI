@@ -29,6 +29,7 @@ struct TrainOptions {
     int nb_episodes;
     int replay_buffer_size;
     int train_every;
+    int save_every;
     bool cuda;
     int metric_window_size;
 };

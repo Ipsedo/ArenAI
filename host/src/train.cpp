@@ -110,7 +110,7 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
 
                 reward_metric.add(r);
 
-                if (d) already_done[i] = true;
+                if (d && !already_done[i]) already_done[i] = true;
             }
 
             // set new state

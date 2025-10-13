@@ -1,6 +1,5 @@
 import torch as th
 from torch import nn
-import math
 
 
 class ConvolutionNetwork(nn.Module):
@@ -32,11 +31,11 @@ class ConvolutionNetwork(nn.Module):
 
 class SacActor(nn.Module):
     def __init__(
-            self,
-            nb_sensors: int,
-            nb_actions: int,
-            hidden_size_sensors: int,
-            hidden_size: int,
+        self,
+        nb_sensors: int,
+        nb_actions: int,
+        hidden_size_sensors: int,
+        hidden_size: int,
     ) -> None:
         super().__init__()
 
@@ -63,10 +62,14 @@ class SacActor(nn.Module):
             nn.Softplus(),
         )
 
-    def forward(self, vision: th.Tensor, sensors: th.Tensor) -> tuple[th.Tensor, th.Tensor]:
+    def forward(
+        self, vision: th.Tensor, sensors: th.Tensor
+    ) -> tuple[th.Tensor, th.Tensor]:
         encoded_vision = self.vision_encoder(vision)
         encoded_sensors = self.sensors_encoder(sensors)
 
-        encoded_latent = self.head(th.cat([encoded_vision, encoded_sensors], dim=1))
+        encoded_latent = self.head(
+            th.cat([encoded_vision, encoded_sensors], dim=1)
+        )
 
         return self.mu(encoded_latent), self.sigma(encoded_latent)

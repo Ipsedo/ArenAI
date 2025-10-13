@@ -1,8 +1,11 @@
-torch==2.8.0
+torch
 numpy
-executorch==1.0.0
+executorch
 
 pre-commit
+black
+isort
+pycln
 mypy
 pylint
 pytest

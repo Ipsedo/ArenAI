@@ -1,21 +1,38 @@
+import argparse
+
 import torch as th
-from torch.export import export, Dim
-from executorch.backends.xnnpack.partition.xnnpack_partitioner import XnnpackPartitioner
+from executorch.backends.xnnpack.partition.xnnpack_partitioner import (
+    XnnpackPartitioner,
+)
 from executorch.exir import to_edge_transform_and_lower
-from python.model import SacActor
+from torch.export import Dim, export
+
 from python.loader import load_neutral_state_into
+from python.model import SacActor
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser("phyvr convert model to PTE")
+
+    parser.add_argument("-o", "--output-pte", type=str, required=True)
+    parser.add_argument(
+        "-i", "--input-state-dict-folder", type=str, required=True
+    )
+
+    parser.add_argument("--hidden-size-sensors", type=int, default=192)
+    parser.add_argument("--hidden-size", type=int, default=512)
+
+    args = parser.parse_args()
+
     with th.no_grad():
-        output_pte = "/home/samuel/Téléchargements/actor.pte"
-        state_dict_path = "/home/samuel/StudioProjects/PhyVR/host/outputs/train_1/save_0/actor_state_dict"
         nb_sensors = (3 * 2 + 4 + 3) * (6 + 3)
         nb_actions = 2 + 2 + 1
 
-        actor = SacActor(nb_sensors, nb_actions, 192, 512)
+        actor = SacActor(
+            nb_sensors, nb_actions, args.hidden_size_senros, args.hidden_size
+        )
 
-        load_neutral_state_into(actor, state_dict_path)
+        load_neutral_state_into(actor, args.input_state_dict_folder)
 
         print("Model loaded from C++ !")
 
@@ -27,18 +44,20 @@ def main() -> None:
 
         example_input = (th.randn(2, 3, 128, 128), th.randn(2, nb_sensors))
 
-        exported_program = export(actor, example_input, dynamic_shapes=dynamic_shapes)
+        exported_program = export(
+            actor, example_input, dynamic_shapes=dynamic_shapes
+        )
 
         executorch_program = to_edge_transform_and_lower(
             exported_program,
             partitioner=[XnnpackPartitioner()],
         ).to_executorch()
 
-        with open(output_pte, "wb") as file:
+        with open(args.output_pte, "wb") as file:
             file.write(executorch_program.buffer)
 
-        print("Model saved at", output_pte)
+        print("Model saved at", args.output_pte)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

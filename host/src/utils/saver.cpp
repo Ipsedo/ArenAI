@@ -78,8 +78,8 @@ void export_state_dict_neutral(
         manifest["tensors"].push_back(j);
     };
 
-    for (const auto &p: m->named_parameters(/*recurse=*/true)) add_entry(p.key(), p.value(), false);
-    for (const auto &b: m->named_buffers(/*recurse=*/true)) add_entry(b.key(), b.value(), true);
+    for (const auto &p: m->named_parameters(true)) add_entry(p.key(), p.value(), false);
+    for (const auto &b: m->named_buffers(true)) add_entry(b.key(), b.value(), true);
 
     std::ofstream mf(outdir / "manifest.json");
     mf << manifest.dump(2) << std::endl;

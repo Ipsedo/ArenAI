@@ -31,8 +31,9 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
         train_options.nb_tanks, train_options.android_asset_folder);
     auto sac = std::make_shared<SacNetworks>(
         ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, train_options.learning_rate,
-        model_options.hidden_size_latent, model_options.hidden_size, torch_device,
-        train_options.metric_window_size, model_options.tau, model_options.gamma);
+        model_options.hidden_size_sensors, model_options.hidden_size_actions,
+        model_options.hidden_size, torch_device, train_options.metric_window_size,
+        model_options.tau, model_options.gamma);
 
     Saver saver(sac, train_options.output_folder, train_options.max_episode_steps);
 
@@ -45,7 +46,8 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
     indicators::ProgressBar p_bar{
         indicators::option::MinProgress{0},
         indicators::option::MaxProgress{
-            train_options.nb_episodes * train_options.max_episode_steps},
+            train_options.nb_episodes * train_options.max_episode_steps
+            / train_options.train_every},
         indicators::option::BarWidth{30},
         indicators::option::Start{"["},
         indicators::option::Fill{"="},
@@ -59,6 +61,10 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
     auto gl_context = std::make_shared<TrainGlContext>();
 
     for (int episode_index = 0; episode_index < train_options.nb_episodes; episode_index++) {
+        // attempt to save
+        saver.attempt_save();
+
+        // set variable for episode
         bool is_done = false;
         std::vector already_done(train_options.nb_tanks, false);
         auto state = env->reset_physics();
@@ -138,9 +144,6 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
 
             counter++;
             episode_step_idx++;
-
-            // attempt to save
-            saver.attempt_save();
         }
     }
 }

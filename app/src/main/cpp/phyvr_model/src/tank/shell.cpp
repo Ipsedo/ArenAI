@@ -31,7 +31,7 @@ void ShellItem::on_contact(Item *other) {
     Item::on_contact(other);
     contact_callback(other);
 
-    if (auto t = dynamic_cast<LifeItem *>(other)) t->receive_damages(1);
+    if (const auto t = dynamic_cast<LifeItem *>(other)) t->receive_damages(1);
 
     receive_damages(1);
 

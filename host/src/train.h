@@ -11,7 +11,8 @@
 #include "./networks/entropy.h"
 
 struct ModelOptions {
-    int hidden_size_latent;
+    int hidden_size_sensors;
+    int hidden_size_actions;
     int hidden_size;
     float tau;
     float gamma;

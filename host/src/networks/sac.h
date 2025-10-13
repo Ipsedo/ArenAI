@@ -17,7 +17,8 @@ class SacNetworks {
 public:
     SacNetworks(
         int nb_sensors, int nb_action, float learning_rate, int hidden_size_sensors,
-        int hidden_size, torch::Device device, int metric_window_size, float tau, float gamma);
+        int hidden_size_actions, int hidden_size, torch::Device device, int metric_window_size,
+        float tau, float gamma);
 
     void train(const std::shared_ptr<ReplayBuffer> &replay_buffer, int nb_epoch, int batch_size);
 

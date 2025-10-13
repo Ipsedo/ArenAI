@@ -89,6 +89,10 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
 
             // save to replay buffer
             for (int i = 0; i < train_options.nb_tanks; i++) {
+                const auto [_, r, d] = steps[i];
+
+                reward_metric.add(r);
+
                 if (already_done[i]) continue;
 
                 const auto v = vision[i];
@@ -96,8 +100,6 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
 
                 const auto n_v = next_vision[i];
                 const auto n_p = next_proprioception[i];
-
-                const auto [_, r, d] = steps[i];
 
                 replay_buffer->add(
                     {{v, p},
@@ -107,8 +109,6 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
                      torch::tensor(
                          d, torch::TensorOptions().device(torch_device).dtype(torch::kBool)),
                      {n_v, n_p}});
-
-                reward_metric.add(r);
 
                 if (d && !already_done[i]) already_done[i] = true;
             }

@@ -9,11 +9,11 @@ from python.loader import load_neutral_state_into
 def main() -> None:
     with th.no_grad():
         output_pte = "/home/samuel/Téléchargements/actor.pte"
-        state_dict_path = "/home/samuel/Téléchargements/actor_export"
+        state_dict_path = "/home/samuel/StudioProjects/PhyVR/host/outputs/train_1/save_0/actor_state_dict"
         nb_sensors = (3 * 2 + 4 + 3) * (6 + 3)
         nb_actions = 2 + 2 + 1
 
-        actor = SacActor(nb_sensors, nb_actions, 160, 320)
+        actor = SacActor(nb_sensors, nb_actions, 192, 512)
 
         load_neutral_state_into(actor, state_dict_path)
 

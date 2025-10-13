@@ -12,13 +12,15 @@ class ConvolutionNetwork(nn.Module):
             nn.SiLU(),
             nn.Conv2d(8, 16, 3, 2, 1),
             nn.SiLU(),
-            nn.Conv2d(16, 24, 3, 2, 1),
+            nn.Conv2d(16, 32, 3, 2, 1),
             nn.SiLU(),
-            nn.Conv2d(24, 32, 3, 2, 1),
+            nn.Conv2d(32, 48, 3, 2, 1),
             nn.SiLU(),
-            nn.Conv2d(32, 40, 3, 2, 1),
+            nn.Conv2d(48, 64, 3, 2, 1),
             nn.SiLU(),
-            nn.Conv2d(40, 48, 3, 2, 1),
+            nn.Conv2d(64, 96, 3, 2, 1),
+            nn.SiLU(),
+            nn.Conv2d(96, 128, 3, 2, 1),
             nn.SiLU(),
             nn.Flatten(1, -1),
         )
@@ -39,14 +41,17 @@ class SacActor(nn.Module):
         super().__init__()
 
         self.vision_encoder = ConvolutionNetwork()
+
         self.sensors_encoder = nn.Sequential(
             nn.Linear(nb_sensors, hidden_size_sensors),
             nn.SiLU(),
+            nn.LayerNorm(hidden_size_sensors),
         )
 
         self.head = nn.Sequential(
-            nn.Linear(hidden_size_sensors + 2 * 2 * 48, hidden_size),
+            nn.Linear(hidden_size_sensors + 1 * 1 * 128, hidden_size),
             nn.SiLU(),
+            nn.LayerNorm(hidden_size),
         )
 
         self.mu = nn.Sequential(

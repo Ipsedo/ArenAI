@@ -13,7 +13,7 @@ float Metric::last_value() const { return values.back(); }
 
 float Metric::average_value() {
     return std::reduce(values.begin(), values.end(), 0.0f, std::plus<>())
-           / static_cast<float>(values.size());
+           / std::max(static_cast<float>(values.size()), 1.f);
 }
 
 void Metric::add(const float value) {

@@ -37,7 +37,7 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
 
     Saver saver(sac, train_options.output_folder, train_options.save_every);
 
-    auto replay_buffer = std::make_shared<ReplayBuffer>(train_options.replay_buffer_size, 12345);
+    auto replay_buffer = std::make_unique<ReplayBuffer>(train_options.replay_buffer_size, 12345);
 
     Metric reward_metric("reward", train_options.metric_window_size);
 
@@ -46,8 +46,7 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
     indicators::ProgressBar p_bar{
         indicators::option::MinProgress{0},
         indicators::option::MaxProgress{
-            train_options.nb_episodes * train_options.max_episode_steps
-            / train_options.train_every},
+            train_options.nb_episodes * train_options.max_episode_steps},
         indicators::option::BarWidth{30},
         indicators::option::Start{"["},
         indicators::option::Fill{"="},
@@ -120,30 +119,32 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
             state = next_state;
 
             // check if it's time to train
-            if (counter % train_options.train_every == train_options.train_every - 1) {
+            if (counter % train_options.train_every == train_options.train_every - 1)
                 sac->train(replay_buffer, train_options.epochs, train_options.batch_size);
 
-                auto metrics = sac->get_metrics();
-
-                std::stringstream stream;
-                stream << reward_metric.to_string()
-                       << std::accumulate(
-                              metrics.begin(), metrics.end(), std::string(),
-                              [](std::string acc, const std::shared_ptr<Metric> &m) {
-                                  return acc.append(", ").append(m->to_string());
-                              })
-                       << " ";
-                p_bar.set_option(indicators::option::PrefixText{stream.str()});
-                p_bar.tick();
-            }
-
+            // check if episode is done
             is_done = is_all_done(steps) || episode_step_idx >= train_options.max_episode_steps;
 
+            // counters
             counter++;
             episode_step_idx++;
 
             // attempt to save
             saver.attempt_save();
+
+            // progress bar
+            auto metrics = sac->get_metrics();
+
+            std::stringstream stream;
+            stream << reward_metric.to_string()
+                   << std::accumulate(
+                          metrics.begin(), metrics.end(), std::string(),
+                          [](std::string acc, const std::shared_ptr<Metric> &m) {
+                              return acc.append(", ").append(m->to_string());
+                          })
+                   << " ";
+            p_bar.set_option(indicators::option::PrefixText{stream.str()});
+            p_bar.tick();
         }
     }
 }

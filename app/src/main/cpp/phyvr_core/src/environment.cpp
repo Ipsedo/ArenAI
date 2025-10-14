@@ -79,7 +79,7 @@ std::vector<std::tuple<State, Reward, IsFinish>> BaseTanksEnvironment::step(
 }
 
 std::vector<State> BaseTanksEnvironment::reset_physics() {
-    physic_engine->remove_bodies_and_constraints();
+    physic_engine = std::make_unique<PhysicEngine>(wanted_frequency);
     tank_factories.clear();
     tank_controller_handler.clear();
 

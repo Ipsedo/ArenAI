@@ -147,15 +147,14 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
                    << " ";
             p_bar.set_option(indicators::option::PrefixText{stream.str()});
             p_bar.tick();
+
+            is_done = is_all_done(steps) || episode_step_idx >= train_options.max_episode_steps;
+
+            counter++;
+            episode_step_idx++;
+
+            // attempt to save
+            saver.attempt_save();
         }
-
-        is_done = is_all_done(steps) || episode_step_idx >= train_options.max_episode_steps;
-
-        counter++;
-        episode_step_idx++;
-
-        // attempt to save
-        saver.attempt_save();
     }
-}
 }

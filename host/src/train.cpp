@@ -73,15 +73,15 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
             // sample action
             const auto [mu, sigma] =
                 sac->act(vision.to(torch_device), proprioception.to(torch_device));
-            const auto action = truncated_normal_sample(mu, sigma, -1.f, 1.f);
-            const auto action_core = actions_tensor_to_core(action);
+            const auto actions = truncated_normal_sample(mu, sigma, -1.f, 1.f);
+            const auto actions_core = actions_tensor_to_core(actions);
 
-            auto action_promise = std::promise<std::vector<Action>>();
-            action_promise.set_value(action_core);
-            auto action_future = action_promise.get_future();
+            auto actions_promise = std::promise<std::vector<Action>>();
+            actions_promise.set_value(actions_core);
+            auto actions_future = actions_promise.get_future();
 
             // step environment
-            const auto steps = env->step(1.f / 30.f, action_future);
+            const auto steps = env->step(1.f / 30.f, actions_future);
 
             // prepare next state
             std::vector<State> next_state;
@@ -96,6 +96,8 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
                 const auto v = vision[i];
                 const auto p = proprioception[i];
 
+                const auto action = actions[i];
+
                 const auto n_v = next_vision[i];
                 const auto n_p = next_proprioception[i];
 
@@ -105,7 +107,7 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
 
                 replay_buffer->add(
                     {{v, p},
-                     action[i],
+                     action,
                      torch::tensor(
                          r, torch::TensorOptions().device(torch_device).dtype(torch::kFloat)),
                      torch::tensor(

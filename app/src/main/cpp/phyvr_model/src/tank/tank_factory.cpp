@@ -109,6 +109,8 @@ TankFactory::~TankFactory() {
     item_producers.clear();
     items.clear();
     controllers.clear();
+    camera = std::nullptr_t();
+    file_reader = std::nullptr_t();
 }
 
 /*
@@ -135,7 +137,7 @@ float EnemyTankFactory::get_reward() {
 
     if (const btScalar dot = up_in_chassis.normalized().dot(up.normalized()); dot < 0) {
         curr_frame_upside_down++;
-        actual_reward -= -0.1f;
+        actual_reward -= -0.125f;
     } else curr_frame_upside_down = 0;
 
     if (is_dead()) actual_reward -= 1.f;
@@ -147,13 +149,15 @@ void EnemyTankFactory::on_fired_shell_contact(Item *item) {
     bool self_shoot = false;
     for (const auto &i: get_items()) {
         if (i->get_name() == item->get_name()) {
-            reward -= 1.0f;
+            reward -= 0.25f;
             self_shoot = true;
         }
     }
 
-    if (const auto &life_item = dynamic_cast<LifeItem *>(item); !self_shoot && life_item)
-        reward += life_item->is_dead() ? 0.f : 1.f;
+    if (const auto &life_item = dynamic_cast<LifeItem *>(item); !self_shoot && life_item) {
+        if (life_item->is_dead() && !life_item->is_already_dead()) reward += 1.0f;
+        else if (!life_item->is_dead()) reward += 0.5f;
+    }
 }
 
 bool EnemyTankFactory::is_dead() {

@@ -2,8 +2,6 @@
 // Created by samuel on 23/03/2023.
 //
 
-#include <BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
-
 #include <phyvr_model/height_map.h>
 
 HeightMapItem::HeightMapItem(
@@ -13,8 +11,7 @@ HeightMapItem::HeightMapItem(
     img_rgb tmp = img_reader->read_png(height_map_file);
     auto [width, height, pixels] = AbstractFileReader::to_img_grey(tmp);
 
-    auto map =
-        new btHeightfieldTerrainShape(width, height, pixels, 1.f, 0.f, 1.f, 1, PHY_FLOAT, false);
+    map = new btHeightfieldTerrainShape(width, height, pixels, 1.f, 0.f, 1.f, 1, PHY_FLOAT, false);
     map->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
     map->processAllTriangles(
         this, btVector3(-1000., -1000., -1000.), btVector3(1000., 1000., 1000.));
@@ -58,4 +55,10 @@ void HeightMapItem::processTriangle(btVector3 *triangle, int partid, int triangl
 
     vertices.emplace_back(p3.x, p3.y, p3.z);
     normals.emplace_back(n.x, n.y, n.z);
+}
+
+HeightMapItem::~HeightMapItem() {
+    vertices.clear();
+    normals.clear();
+    delete map;
 }

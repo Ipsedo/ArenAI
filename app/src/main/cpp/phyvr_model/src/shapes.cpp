@@ -69,6 +69,11 @@ std::vector<std::tuple<float, float, float>> ObjShape::get_normals() { return no
 
 std::string ObjShape::get_id() { return shape_id; }
 
+ObjShape::~ObjShape() {
+    vertices.clear();
+    normals.clear();
+}
+
 // FromMeshShape
 
 FromMeshShape::FromMeshShape(
@@ -81,3 +86,8 @@ std::vector<std::tuple<float, float, float>> FromMeshShape::get_vertices() { ret
 std::vector<std::tuple<float, float, float>> FromMeshShape::get_normals() { return normals; }
 
 std::string FromMeshShape::get_id() { return shape_id; }
+
+FromMeshShape::~FromMeshShape() {
+    vertices.clear();
+    normals.clear();
+}

@@ -52,11 +52,15 @@ public:
     virtual ~LifeItem() = default;
 
     explicit LifeItem(float health_points);
+
     bool is_dead() const;
+    bool is_already_dead();
+
     float receive_damages(float damages);
 
 private:
     float health_points;
+    bool already_dead;
 };
 
 #endif// PHYVR_ITEM_H

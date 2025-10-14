@@ -27,9 +27,7 @@ public:
     void on_input(const user_input &input) override;
 
     glm::vec3 pos() override;
-
     glm::vec3 look() override;
-
     glm::vec3 up() override;
 
     std::vector<btTypedConstraint *> get_constraints() override;

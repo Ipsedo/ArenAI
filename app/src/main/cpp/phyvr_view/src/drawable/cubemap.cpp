@@ -50,3 +50,5 @@ void CubeMap::draw(
     program->disable_attrib_array();
     Program::disable_cube_texture();
 }
+
+CubeMap::~CubeMap() { program = std::nullptr_t(); }

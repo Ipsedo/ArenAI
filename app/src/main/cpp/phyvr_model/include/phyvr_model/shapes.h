@@ -39,6 +39,8 @@ public:
     std::vector<std::tuple<float, float, float>> get_normals() override;
 
     std::string get_id() override;
+
+    ~ObjShape() override;
 };
 
 class FromMeshShape final : public Shape {
@@ -57,6 +59,8 @@ public:
     std::vector<std::tuple<float, float, float>> get_normals() override;
 
     std::string get_id() override;
+
+    ~FromMeshShape() override;
 };
 
 #endif// PHYVR_SHAPES_H

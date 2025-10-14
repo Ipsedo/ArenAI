@@ -73,3 +73,5 @@ void Specular::draw(
 
     program->disable_attrib_array();
 }
+
+Specular::~Specular() { program = std::nullptr_t(); }

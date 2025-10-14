@@ -18,7 +18,7 @@ private:
     static const int POSITION_SIZE = 3;
     static const int STRIDE = POSITION_SIZE * BYTES_PER_FLOAT;
 
-    std::shared_ptr<Program> program;
+    std::unique_ptr<Program> program;
 
     int nb_vertices;
 
@@ -29,6 +29,8 @@ public:
     void draw(
         glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos_from_camera,
         glm::vec3 camera_pos) override;
+
+    ~CubeMap() override;
 };
 
 #endif// PHYVR_CUBEMAP_H

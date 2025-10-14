@@ -28,12 +28,11 @@ ShellItem::ShellItem(
 }
 
 void ShellItem::on_contact(Item *other) {
+    if (const auto t = dynamic_cast<LifeItem *>(other)) t->receive_damages(1);
+    receive_damages(1);
+
     Item::on_contact(other);
     contact_callback(other);
-
-    if (const auto t = dynamic_cast<LifeItem *>(other)) t->receive_damages(1);
-
-    receive_damages(1);
 
     if (is_dead()) destroy();
 }

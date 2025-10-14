@@ -109,8 +109,6 @@ TankFactory::~TankFactory() {
     item_producers.clear();
     items.clear();
     controllers.clear();
-    camera = std::nullptr_t();
-    file_reader = std::nullptr_t();
 }
 
 /*

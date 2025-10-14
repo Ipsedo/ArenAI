@@ -54,7 +54,7 @@ actor_response SacNetworks::act(const torch::Tensor &vision, const torch::Tensor
 }
 
 void SacNetworks::train(
-    const std::unique_ptr<ReplayBuffer> &replay_buffer, const int nb_epoch, const int batch_size) {
+    const std::shared_ptr<ReplayBuffer> &replay_buffer, const int nb_epoch, const int batch_size) {
     for (int e = 0; e < nb_epoch; e++) {
         const auto [state, action, reward, done, next_state] =
             replay_buffer->sample(batch_size, actor->parameters().back().device());

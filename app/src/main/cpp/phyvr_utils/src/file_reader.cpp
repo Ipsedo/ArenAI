@@ -8,8 +8,8 @@
  * Common
  */
 
-img_grey AbstractFileReader::to_img_grey(img_rgb image) {
-    img_grey res{};
+ImageGrey AbstractFileReader::to_img_grey(ImageChannels image) {
+    ImageGrey res{};
 
     res.pixels = new float[image.width * image.height];
 

@@ -25,7 +25,7 @@ std::string AndroidFileReader::read_text(const std::string &file_name) {
     return res;
 }
 
-img_rgb AndroidFileReader::read_png(const std::string &png_file_path) {
+ImageChannels AndroidFileReader::read_png(const std::string &png_file_path) {
     AAsset *file = AAssetManager_open(mgr, png_file_path.c_str(), AASSET_MODE_BUFFER);
 
     AImageDecoder *decoder;
@@ -57,5 +57,5 @@ img_rgb AndroidFileReader::read_png(const std::string &png_file_path) {
 
     decoder_cleanup();
 
-    return {width, height, pixels};
+    return {width, height, channels, pixels};
 }

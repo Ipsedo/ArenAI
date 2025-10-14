@@ -15,7 +15,7 @@ public:
 
     std::string read_text(const std::string &file_name) override;
 
-    img_rgb read_png(const std::string &png_file_path) override;
+    ImageChannels read_png(const std::string &png_file_path) override;
 
 private:
     AAssetManager *mgr;

@@ -154,7 +154,7 @@ std::unique_ptr<Program> Program::Builder::build() {
             std::string file_name = split_string(file, '/').back();
             glTexImage2D(
                 file_to_tex_id[file_name], 0, GL_RGBA, width, height, 0, format, GL_UNSIGNED_BYTE,
-                pixels);
+                pixels.data());
         }
 
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

@@ -39,7 +39,9 @@ ImageChannels LinuxAndroidAssetFileReader::read_png(const std::string &png_file_
     out.width = w;
     out.height = h;
     out.channels = channels;
-    out.pixels = reinterpret_cast<char *>(data);
+    out.pixels = std::vector(data, data + w * h * channels);
+
+    //delete[] data;
 
     return out;
 }

@@ -32,7 +32,10 @@ void PhysicEngine::add_item_producer(const std::shared_ptr<ItemProducer> &item_p
 }
 
 void PhysicEngine::remove_item_constraints(const std::shared_ptr<Item> &item) const {
-    for (const auto &constraint: item->get_constraints()) m_world->removeConstraint(constraint);
+    for (const auto &constraint: item->get_constraints()) {
+        m_world->removeConstraint(constraint);
+        delete constraint;
+    }
 }
 
 void PhysicEngine::step(const float delta) {
@@ -64,10 +67,16 @@ void PhysicEngine::step(const float delta) {
             m_world->removeCollisionObject(body);
             m_world->removeRigidBody(body);
 
-            for (int j = body->getNumConstraintRefs() - 1; j >= 0; j--)
-                m_world->removeConstraint(body->getConstraintRef(j));
+            for (int j = body->getNumConstraintRefs() - 1; j >= 0; j--) {
+                const auto constraint = body->getConstraintRef(j);
+                m_world->removeConstraint(constraint);
+                delete constraint;
+            }
 
             items.erase(items.begin() + i);
+
+            delete body->getMotionState();
+            delete body;
         }
     }
 }

@@ -39,6 +39,10 @@ btRigidBody *ConvexItem::get_body() { return body; }
 
 glm::vec3 ConvexItem::_get_scale() { return scale; }
 
+ConvexItem::~ConvexItem() {
+    delete collision_shape;
+}
+
 /*
  * Basic shapes
  */

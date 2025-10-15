@@ -36,6 +36,7 @@ private:
     std::vector<std::tuple<float, float, float>> vertices;
     std::vector<std::tuple<float, float, float>> normals;
 
+    std::vector<float> image_grey;
     btHeightfieldTerrainShape *map;
     btRigidBody *body;
 };

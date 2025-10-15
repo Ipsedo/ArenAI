@@ -12,16 +12,18 @@ HeightMapItem::HeightMapItem(
     ImageChannels tmp = img_reader->read_png(height_map_file);
     auto [width, height, pixels] = AbstractFileReader::to_img_grey(tmp);
 
+    image_grey = pixels;
+
     float min_height = std::numeric_limits<float>::infinity();
     float max_height = -std::numeric_limits<float>::infinity();
 
     for (int i = 0; i < width * height; i++) {
-        min_height = std::min(pixels[i], min_height);
-        max_height = std::max(pixels[i], max_height);
+        min_height = std::min(image_grey[i], min_height);
+        max_height = std::max(image_grey[i], max_height);
     }
 
     map =
-        new btHeightfieldTerrainShape(width, height, pixels.data(), 1.f, min_height, max_height, 1, PHY_FLOAT, false);
+        new btHeightfieldTerrainShape(width, height, image_grey.data(), 1.f, min_height, max_height, 1, PHY_FLOAT, false);
     map->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
     //map->setLocalScaling(btVector3(1.0, 1.0, 1.0));
     map->processAllTriangles(
@@ -71,4 +73,5 @@ void HeightMapItem::processTriangle(btVector3 *triangle, int partid, int triangl
 
 HeightMapItem::~HeightMapItem() {
     delete map;
+    image_grey.clear();
 }

@@ -124,16 +124,6 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
             if (counter % train_options.train_every == train_options.train_every - 1)
                 sac->train(replay_buffer, train_options.epochs, train_options.batch_size);
 
-            // check if episode is done
-            is_done = is_all_done(steps) || episode_step_idx >= train_options.max_episode_steps;
-
-            // counters
-            counter++;
-            episode_step_idx++;
-
-            // attempt to save
-            saver.attempt_save();
-
             // progress bar
             auto metrics = sac->get_metrics();
 

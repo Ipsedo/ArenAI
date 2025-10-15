@@ -2,7 +2,6 @@
 // Created by samuel on 23/03/2023.
 //
 
-
 #include <phyvr_model/height_map.h>
 
 HeightMapItem::HeightMapItem(
@@ -22,8 +21,8 @@ HeightMapItem::HeightMapItem(
         max_height = std::max(image_grey[i], max_height);
     }
 
-    map =
-        new btHeightfieldTerrainShape(width, height, image_grey.data(), 1.f, min_height, max_height, 1, PHY_FLOAT, false);
+    map = new btHeightfieldTerrainShape(
+        width, height, image_grey.data(), 1.f, min_height, max_height, 1, PHY_FLOAT, false);
     map->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
     //map->setLocalScaling(btVector3(1.0, 1.0, 1.0));
     map->processAllTriangles(

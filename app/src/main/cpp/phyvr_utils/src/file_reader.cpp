@@ -19,9 +19,11 @@ ImageGrey AbstractFileReader::to_img_grey(const ImageChannels &image) {
         for (int col = 0; col < image.width; col++) {
             float channels_sum = 0.f;
             for (int c = 0; c < out_channels; c++)
-                channels_sum += static_cast<float>(image.pixels[image.channels * row * image.width + col * image.channels + c]);
+                channels_sum += static_cast<float>(
+                    image.pixels[image.channels * row * image.width + col * image.channels + c]);
 
-            res.pixels[row * image.width + col] = channels_sum / static_cast<float>(out_channels) / 255.f;
+            res.pixels[row * image.width + col] =
+                channels_sum / static_cast<float>(out_channels) / 255.f;
         }
 
     res.width = image.width;

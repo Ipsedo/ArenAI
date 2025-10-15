@@ -50,7 +50,8 @@ ImageChannels AndroidFileReader::read_png(const std::string &png_file_path) {
     size_t size = width * height * channels;
     auto pixels = std::vector<uint8_t>(size);
 
-    if (AImageDecoder_decodeImage(decoder, pixels.data(), stride, size) != ANDROID_IMAGE_DECODER_SUCCESS) {
+    if (AImageDecoder_decodeImage(decoder, pixels.data(), stride, size)
+        != ANDROID_IMAGE_DECODER_SUCCESS) {
         decoder_cleanup();
         throw std::runtime_error("Error in image decoding");
     }

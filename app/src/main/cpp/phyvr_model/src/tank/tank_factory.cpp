@@ -12,12 +12,6 @@
 #include "./turret.h"
 #include "./wheel.h"
 
-template<class... Args>
-std::shared_ptr<WheelItem> make_wheel_(const bool front_wheel, Args... args) {
-    if (front_wheel) return std::make_shared<DirectionalWheelItem>(args...);
-    return std::make_shared<WheelItem>(args...);
-}
-
 TankFactory::TankFactory(
     const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
     glm::vec3 chassis_pos)
@@ -33,19 +27,30 @@ TankFactory::TankFactory(
     items.push_back(chassis_item);
 
     // wheels
-    std::vector<std::tuple<std::string, bool, glm::vec3>> wheel_config{
-        {"dir_wheel_right_1", true, {-2.7, -1., 3.}}, {"dir_wheel_left_1", true, {2.7, -1., 3.}},
-        {"wheel_right_2", false, {-2.7, -1., 0.}},    {"wheel_left_2", false, {2.7, -1., 0.}},
-        {"wheel_right_3", false, {-2.7, -1., -3.}},   {"wheel_left_3", false, {2.7, -1., -3.}}};
+    float wheel_mass = 10.f;
+    glm::vec3 wheel_scale = scale * glm::vec3(1.3, 1.1, 1.1);
+    std::vector<std::tuple<std::string, glm::vec3>> front_wheel_config{
+        {"dir_wheel_right_1", {-2.7, -1., 3.}}, {"dir_wheel_left_1", {2.7, -1., 3.}}};
 
-    for (auto &[wheel_name, is_directional, wheel_pos]: wheel_config) {
-        std::shared_ptr<WheelItem> wheel;
-        float wheel_mass = 10.f;
-        glm::vec3 wheel_scale = scale * glm::vec3(1.3, 1.1, 1.1);
+    for (auto &[wheel_name, wheel_pos]: front_wheel_config) {
+        auto wheel = std::make_shared<DirectionalWheelItem>(
+            tank_prefix_name + "_" + wheel_name, file_reader, wheel_pos + chassis_pos, wheel_pos,
+            wheel_scale, wheel_mass, chassis_item->get_body());
 
-        wheel = make_wheel_(
-            is_directional, tank_prefix_name + "_" + wheel_name, file_reader,
-            wheel_pos + chassis_pos, wheel_pos, wheel_scale, wheel_mass, chassis_item->get_body());
+        items.push_back(wheel);
+        controllers.push_back(wheel);
+    }
+
+    std::vector<std::tuple<std::string, glm::vec3>> wheel_config{
+        {"wheel_right_2", {-2.7, -1., 0.}},
+        {"wheel_left_2", {2.7, -1., 0.}},
+        {"wheel_right_3", {-2.7, -1., -3.}},
+        {"wheel_left_3", {2.7, -1., -3.}}};
+
+    for (auto &[wheel_name, wheel_pos]: wheel_config) {
+        auto wheel = std::make_shared<WheelItem>(
+            tank_prefix_name + "_" + wheel_name, file_reader, wheel_pos + chassis_pos, wheel_pos,
+            wheel_scale, wheel_mass, chassis_item->get_body());
 
         items.push_back(wheel);
         controllers.push_back(wheel);
@@ -93,14 +98,10 @@ std::vector<std::shared_ptr<ItemProducer>> TankFactory::get_item_producers() {
 }
 
 bool TankFactory::is_dead() {
-    const auto is_dead = std::transform_reduce(
-        items.begin(), items.end(), false, [](const bool b1, const bool b2) { return b1 || b2; },
-        [](const auto &i) {
-            if (auto t = std::dynamic_pointer_cast<LifeItem>(i); t) return t->is_dead();
-            return false;
-        });
-
-    return is_dead;
+    for (const auto &item: items)
+        if (const auto life_item = std::dynamic_pointer_cast<LifeItem>(item); life_item->is_dead())
+            return true;
+    return false;
 }
 
 TankFactory::~TankFactory() {

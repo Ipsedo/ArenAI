@@ -31,7 +31,8 @@ TorchStep ReplayBuffer::sample(int batch_size, torch::Device device) {
     }
 
     return {
-        {torch::stack(states_vision).to(device, false, true), torch::stack(states_proprioception).to(device, false, true)},
+        {torch::stack(states_vision).to(device, false, true),
+         torch::stack(states_proprioception).to(device, false, true)},
         torch::stack(actions).to(device, false, true),
         torch::stack(rewards).to(device, false, true),
         torch::stack(dones).to(device, false, true),

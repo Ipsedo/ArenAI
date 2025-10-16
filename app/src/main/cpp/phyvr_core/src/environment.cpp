@@ -67,19 +67,18 @@ std::vector<std::tuple<State, Reward, IsFinish>> BaseTanksEnvironment::step(
 
     const auto actions = actions_future.get();
     for (int i = 0; i < tank_factories.size(); i++) {
-        if (!tank_factories[i]->is_dead())
-            tank_controller_handler[i]->on_event(actions[i]);
+        if (!tank_factories[i]->is_dead()) tank_controller_handler[i]->on_event(actions[i]);
         else
             for (const auto &item: tank_factories[i]->dead_and_get_items())
-                physic_engine->remove_item_constraints(item);
+                physic_engine->remove_item_constraints_from_world(item);
     }
 
     return result;
 }
 
 std::vector<State> BaseTanksEnvironment::reset_physics() {
-    tank_controller_handler.clear();
     physic_engine->remove_bodies_and_constraints();
+    tank_controller_handler.clear();
     tank_factories.clear();
 
     const auto map = std::make_shared<HeightMapItem>(

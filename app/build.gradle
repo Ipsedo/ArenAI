@@ -14,10 +14,6 @@ android {
                 arguments "-DCMAKE_VERBOSE_MAKEFILE=ON"
             }
         }
-        ndk {
-            //noinspection ChromeOsAbiSupport
-            abiFilters "arm64-v8a"
-        }
     }
     buildTypes {
         debug {

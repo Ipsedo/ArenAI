@@ -8,20 +8,21 @@ class ConvolutionNetwork(nn.Module):
 
         self.cnn = nn.Sequential(
             nn.Conv2d(3, 8, 3, 2, 1),
-            nn.SiLU(),
+            nn.SiLU(), nn.InstanceNorm2d(8),
             nn.Conv2d(8, 16, 3, 2, 1),
-            nn.SiLU(),
+            nn.SiLU(), nn.InstanceNorm2d(16),
             nn.Conv2d(16, 32, 3, 2, 1),
-            nn.SiLU(),
+            nn.SiLU(), nn.InstanceNorm2d(32),
             nn.Conv2d(32, 48, 3, 2, 1),
-            nn.SiLU(),
+            nn.SiLU(), nn.InstanceNorm2d(48),
             nn.Conv2d(48, 64, 3, 2, 1),
-            nn.SiLU(),
+            nn.SiLU(), nn.InstanceNorm2d(64),
             nn.Conv2d(64, 96, 3, 2, 1),
-            nn.SiLU(),
+            nn.SiLU(), nn.InstanceNorm2d(96),
             nn.Conv2d(96, 128, 3, 2, 1),
             nn.SiLU(),
             nn.Flatten(1, -1),
+            nn.LayerNorm(128)
         )
 
     def forward(self, vision: th.Tensor) -> th.Tensor:

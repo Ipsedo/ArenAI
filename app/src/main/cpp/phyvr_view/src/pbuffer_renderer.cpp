@@ -113,7 +113,8 @@ image<uint8_t> PBufferRenderer::draw_and_get_frame(
     for (int y = 0; y < height; ++y) {
         const int src_y = y;
         const int dst_y = height - 1 - y;
-        const unsigned char *src_row = linear.data() + static_cast<size_t>(src_y) * width * in_channels;
+        const unsigned char *src_row =
+            linear.data() + static_cast<size_t>(src_y) * width * in_channels;
 
         for (int x = 0; x < width; ++x) {
             const unsigned char *pixel_ptr = src_row + x * in_channels;

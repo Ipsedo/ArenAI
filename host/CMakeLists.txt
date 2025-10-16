@@ -6,9 +6,6 @@ set(CMAKE_CXX_STANDARD 20)
 
 include(FetchContent)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer -g")
-set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -fsanitize=address")
-
 # Save to png with STB
 FetchContent_Declare(
         stb

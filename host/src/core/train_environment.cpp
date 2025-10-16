@@ -9,13 +9,13 @@
 #include <phyvr_view/errors.h>
 #include <phyvr_view/pbuffer_renderer.h>
 
-#include "./utils/linux_file_reader.h"
+#include "../utils/linux_file_reader.h"
 
 TrainTankEnvironment::TrainTankEnvironment(
     const int nb_tanks, const std::filesystem::path &android_assets_path)
     : BaseTanksEnvironment(
         std::make_shared<LinuxAndroidAssetFileReader>(android_assets_path), std::nullptr_t(),
-        nb_tanks, 1.f / 30.f) {}
+        nb_tanks, 1.f / 30.f, false) {}
 
 void TrainTankEnvironment::on_draw(
     const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {}

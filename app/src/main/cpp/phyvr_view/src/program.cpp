@@ -89,8 +89,8 @@ Program::Builder::add_texture(const std::string &name, const std::string &textur
             cube_textures,        textures};
 }
 
-std::shared_ptr<Program> Program::Builder::build() {
-    auto program = std::make_shared<Program>();
+std::unique_ptr<Program> Program::Builder::build() {
+    auto program = std::make_unique<Program>();
 
     program->program_id = glCreateProgram();
 
@@ -144,14 +144,17 @@ std::shared_ptr<Program> Program::Builder::build() {
         program->tex_name_to_idx_id.insert({name, {curr_texture, tex_id}});
 
         for (const auto &file: files_path) {
-            img_rgb img = file_reader->read_png(file);
+            auto [width, height, channels, pixels] = file_reader->read_png(file);
+
+            if (channels != 4 && channels != 3)
+                throw std::runtime_error("image need 3 or 4 channels");
+
+            const auto format = channels == 4 ? GL_RGBA : GL_RGB;
 
             std::string file_name = split_string(file, '/').back();
             glTexImage2D(
-                file_to_tex_id[file_name], 0, GL_RGBA, img.width, img.height, 0, GL_RGBA,
-                GL_UNSIGNED_BYTE, img.pixels);
-
-            delete[] img.pixels;
+                file_to_tex_id[file_name], 0, GL_RGBA, width, height, 0, format, GL_UNSIGNED_BYTE,
+                pixels.data());
         }
 
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

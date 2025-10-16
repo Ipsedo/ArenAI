@@ -25,7 +25,7 @@ UserGameTanksEnvironment::UserGameTanksEnvironment(
     : BaseTanksEnvironment(
         std::make_shared<AndroidFileReader>(app->activity->assetManager),
         std::make_shared<AndroidGLContext>(app->window, eglGetDisplay(EGL_DEFAULT_DISPLAY)),
-        nb_tanks, wanted_frequency),
+        nb_tanks, wanted_frequency, true),
       app(app), display(eglGetDisplay(EGL_DEFAULT_DISPLAY)), tank_factory(std::nullptr_t()),
       is_paused(true), player_renderer(std::nullptr_t()),
       player_controller_handler(std::nullptr_t()) {}

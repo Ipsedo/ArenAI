@@ -19,6 +19,7 @@ public:
 
     void add_item(const std::shared_ptr<Item> &item);
     void add_item_producer(const std::shared_ptr<ItemProducer> &item_producer);
+    void remove_item_constraints_from_world(const std::shared_ptr<Item> &item) const;
 
     void step(float delta);
 

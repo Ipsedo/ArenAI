@@ -1,41 +1,51 @@
 //
 // Created by samuel on 28/09/2025.
 //
-#include <iostream>
 
-#include <phyvr_core/environment.h>
-#include <phyvr_model/engine.h>
-#include <phyvr_view/pbuffer_renderer.h>
+#include <argparse/argparse.hpp>
 
-#include "./networks/agent.h"
 #include "./train.h"
-#include "./utils/saver.h"
 
 int main(int argc, char **argv) {
-    auto actor = SacActor(ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, 160, 320);
-    auto critic = SacCritic(ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, 160, 320);
 
-    const auto v = torch::randn({2, 3, ENEMY_VISION_SIZE, ENEMY_VISION_SIZE});
-    const auto p = torch::randn({2, ENEMY_PROPRIOCEPTION_SIZE});
+    argparse::ArgumentParser parser("phyvr train");
 
-    const auto [mu, sigma] = actor.act(v, p);
-    const auto value = critic.value(v, p, mu);
+    // model
+    parser.add_argument("--hidden_size_sensors").scan<'i', int>().default_value(192);
+    parser.add_argument("--hidden_size_actions").scan<'i', int>().default_value(64);
+    parser.add_argument("--hidden_size").scan<'i', int>().default_value(512);
+    parser.add_argument("--tau").scan<'g', float>().default_value(1e-3f);
+    parser.add_argument("--gamma").scan<'g', float>().default_value(0.99f);
 
-    std::cout << "mu :" << std::endl << mu << std::endl;
-    std::cout << "sigma :" << std::endl << sigma << std::endl;
-    std::cout << "value :" << std::endl << value << std::endl;
+    // train
+    parser.add_argument("--nb_tanks").scan<'i', int>().default_value(8);
+    parser.add_argument("--output_folder").required();
+    parser.add_argument("--asset_folder").required();
+    parser.add_argument("--learning_rate").scan<'g', float>().default_value(1e-4f);
+    parser.add_argument("--epochs").scan<'i', int>().default_value(8);
+    parser.add_argument("--batch_size").scan<'i', int>().default_value(1024);
+    parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60 * 3);
+    parser.add_argument("--nb_episodes").scan<'i', int>().default_value(2048);
+    parser.add_argument("--replay_buffer_size").scan<'i', int>().default_value(16384);
+    parser.add_argument("--train_every").scan<'i', int>().default_value(1024);
+    parser.add_argument("--save_every").scan<'i', int>().default_value(30 * 60 * 3);
+    parser.add_argument("--cuda").default_value(false).implicit_value(true);
+    parser.add_argument("--metric_window_size").scan<'i', int>().default_value(256);
 
-    const auto output_dir = "/home/samuel/Téléchargements/actor_export";
+    parser.parse_args(argc, argv);
 
-    const std::filesystem::path path(output_dir);
-
-    export_state_dict_neutral(static_cast<torch::nn::Module>(actor), output_dir);
-
-    std::cout << "model saved" << std::endl;
-
-    train(
-        std::filesystem::path("/home/samuel/Téléchargements/phyvr_outputs"),
-        std::filesystem::path("/home/samuel/StudioProjects/PhyVR/app/src/main/assets"));
+    train_main(
+        {parser.get<int>("--hidden_size_sensors"), parser.get<int>("--hidden_size_actions"),
+         parser.get<int>("--hidden_size"), parser.get<float>("--tau"),
+         parser.get<float>("--gamma")},
+        {parser.get<int>("--nb_tanks"),
+         std::filesystem::path(parser.get<std::string>("--output_folder")),
+         std::filesystem::path(parser.get<std::string>("--asset_folder")),
+         parser.get<float>("--learning_rate"), parser.get<int>("--epochs"),
+         parser.get<int>("--batch_size"), parser.get<int>("--max_episode_steps"),
+         parser.get<int>("--nb_episodes"), parser.get<int>("--replay_buffer_size"),
+         parser.get<int>("--train_every"), parser.get<int>("--save_every"),
+         parser.get<bool>("--cuda"), parser.get<int>("--metric_window_size")});
 
     return 0;
 }

@@ -1,4 +1,4 @@
-package com.samuelberrien.phyvr.controls.ui;
+package com.samuelberrien.phyvr.set_controls.ui;
 
 import android.content.Context;
 import android.content.res.TypedArray;

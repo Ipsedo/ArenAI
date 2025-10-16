@@ -1,4 +1,4 @@
-package com.samuelberrien.phyvr.controls.axis;
+package com.samuelberrien.phyvr.set_controls.axis;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -13,7 +13,7 @@ import android.widget.TextView;
 import com.samuelberrien.phyvr.R;
 import com.samuelberrien.phyvr.Dimens;
 
-import static com.samuelberrien.phyvr.controls.axis.Axis.AxisMap.*;
+import static com.samuelberrien.phyvr.set_controls.axis.Axis.AxisMap.*;
 
 public class SetUpAxis extends LinearLayout {
 

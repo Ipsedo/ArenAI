@@ -18,6 +18,8 @@ public:
 
     btRigidBody *get_body() override;
 
+    ~ConvexItem() override;
+
 protected:
     glm::vec3 _get_scale() override;
 

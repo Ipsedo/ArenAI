@@ -35,7 +35,7 @@ public:
 
         Program::Builder add_texture(const std::string &name, const std::string &texture_path);
 
-        std::shared_ptr<Program> build();
+        std::unique_ptr<Program> build();
 
     private:
         Builder(

@@ -1,4 +1,4 @@
-package com.samuelberrien.phyvr.controls.axis;
+package com.samuelberrien.phyvr.set_controls.axis;
 
 import android.content.Context;
 import androidx.core.content.ContextCompat;

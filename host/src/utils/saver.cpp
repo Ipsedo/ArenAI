@@ -43,7 +43,6 @@ size_t dtype_nbytes(const c10::ScalarType dt) {
     }
 }
 
-// Sauve un tenseur CPU contigu dans un fichier binaire “raw” (little-endian)
 void save_tensor_binary(const torch::Tensor &t, const std::filesystem::path &path) {
     const auto contig = t.contiguous();
     TORCH_CHECK(!contig.is_sparse(), "Sparse tensors not supported in this saver");
@@ -54,9 +53,8 @@ void save_tensor_binary(const torch::Tensor &t, const std::filesystem::path &pat
         contig.numel() * dtype_nbytes(contig.scalar_type()));
 }
 
-// Exporte paramètres + buffers avec un manifeste JSON (nom, dtype, shape,
-// fichier)
-void export_state_dict_neutral(torch::nn::Module m, const std::filesystem::path &outdir) {
+void export_state_dict_neutral(
+    const std::shared_ptr<torch::nn::Module> &m, const std::filesystem::path &outdir) {
     std::filesystem::create_directories(outdir);
 
     nlohmann::json manifest;
@@ -80,8 +78,8 @@ void export_state_dict_neutral(torch::nn::Module m, const std::filesystem::path 
         manifest["tensors"].push_back(j);
     };
 
-    for (const auto &p: m.named_parameters(/*recurse=*/true)) add_entry(p.key(), p.value(), false);
-    for (const auto &b: m.named_buffers(/*recurse=*/true)) add_entry(b.key(), b.value(), true);
+    for (const auto &p: m->named_parameters(true)) add_entry(p.key(), p.value(), false);
+    for (const auto &b: m->named_buffers(true)) add_entry(b.key(), b.value(), true);
 
     std::ofstream mf(outdir / "manifest.json");
     mf << manifest.dump(2) << std::endl;
@@ -116,4 +114,24 @@ void save_png_rgb(
             filename.c_str(), width, height, channels, buffer.data(), width * channels)) {
         throw std::runtime_error("Erreur lors de la sauvegarde PNG");
     }
+}
+
+/*
+ * SacSaver
+ */
+
+Saver::Saver(
+    const std::shared_ptr<SacNetworks> &sac_networks, const std::filesystem::path &output_path,
+    const int save_every)
+    : sac_networks(sac_networks), curr_step(0), save_every(save_every), output_path(output_path) {}
+
+void Saver::attempt_save() {
+    if (curr_step % save_every == 0) {
+        const auto output_folder = output_path / ("save_" + std::to_string(curr_step / save_every));
+        if (!std::filesystem::exists(output_folder))
+            std::filesystem::create_directories(output_folder);
+        sac_networks->save(output_folder);
+    }
+
+    curr_step++;
 }

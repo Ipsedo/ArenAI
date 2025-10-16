@@ -4,6 +4,7 @@
 
 #include "./linux_file_reader.h"
 
+#include <cstring>
 #include <fstream>
 #include <iostream>
 
@@ -23,7 +24,7 @@ std::string LinuxAndroidAssetFileReader::read_text(const std::string &file_name)
     return buffer.str();
 }
 
-img_rgb LinuxAndroidAssetFileReader::read_png(const std::string &png_file_path) {
+ImageChannels LinuxAndroidAssetFileReader::read_png(const std::string &png_file_path) {
     int w = 0, h = 0, channels = 0;
 
     unsigned char *data = SOIL_load_image(
@@ -35,10 +36,15 @@ img_rgb LinuxAndroidAssetFileReader::read_png(const std::string &png_file_path) 
             + SOIL_last_result());
     }
 
-    img_rgb out;
+    ImageChannels out{};
     out.width = w;
     out.height = h;
-    out.pixels = reinterpret_cast<char *>(data);
+    out.channels = channels;
+    out.pixels = std::vector<uint8_t>(w * h * channels);
+
+    std::memcpy(out.pixels.data(), data, w * h * channels);
+
+    SOIL_free_image_data(data);
 
     return out;
 }

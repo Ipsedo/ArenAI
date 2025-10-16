@@ -1,4 +1,4 @@
-package com.samuelberrien.phyvr.controls;
+package com.samuelberrien.phyvr.set_controls;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -8,8 +8,8 @@ import android.os.Vibrator;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
-import com.samuelberrien.phyvr.controls.axis.Axis;
-import com.samuelberrien.phyvr.controls.button.Button;
+import com.samuelberrien.phyvr.set_controls.axis.Axis;
+import com.samuelberrien.phyvr.set_controls.button.Button;
 
 import java.util.ArrayList;
 

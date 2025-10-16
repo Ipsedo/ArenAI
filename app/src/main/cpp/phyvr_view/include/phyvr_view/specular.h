@@ -20,7 +20,7 @@ private:
     static const int NORMAL_SIZE = 3;
     static const int STRIDE = (POSITION_SIZE + NORMAL_SIZE) * BYTES_PER_FLOAT;
 
-    std::shared_ptr<Program> program;
+    std::unique_ptr<Program> program;
 
     glm::vec4 ambient_color;
     glm::vec4 diffuse_color;

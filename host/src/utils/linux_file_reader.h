@@ -9,13 +9,13 @@
 
 #include <phyvr_utils/file_reader.h>
 
-class LinuxAndroidAssetFileReader : public AbstractFileReader {
+class LinuxAndroidAssetFileReader final : public AbstractFileReader {
 public:
     explicit LinuxAndroidAssetFileReader(const std::filesystem::path &path_to_assets);
 
     std::string read_text(const std::string &file_name) override;
 
-    img_rgb read_png(const std::string &png_file_path) override;
+    ImageChannels read_png(const std::string &png_file_path) override;
 
 private:
     std::filesystem::path path_to_assets;

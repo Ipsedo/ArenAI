@@ -1,4 +1,4 @@
-package com.samuelberrien.phyvr.controls;
+package com.samuelberrien.phyvr.set_controls;
 
 import android.os.Bundle;
 import androidx.annotation.Nullable;

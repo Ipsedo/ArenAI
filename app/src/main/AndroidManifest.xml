@@ -23,10 +23,10 @@
 			</intent-filter>
 		</activity>
 
-		<activity android:name=".controls.GamePadActivity">
+		<activity android:name=".set_controls.GamePadActivity">
 		</activity>
 
-		<activity android:name=".controls.ControlActivity">
+		<activity android:name=".set_controls.ControlActivity">
 		</activity>
 
 		<activity android:name="android.app.NativeActivity"

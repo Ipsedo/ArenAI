@@ -9,7 +9,7 @@ import com.google.vr.sdk.base.GvrView;
 import com.google.vr.sdk.base.HeadTransform;
 import com.google.vr.sdk.base.Viewport;
 import com.samuelberrien.phyvr.MainActivity;
-import com.samuelberrien.phyvr.controls.GamePad;
+import com.samuelberrien.phyvr.set_controls.GamePad;
 import com.samuelberrien.phyvr.MainWrappers;
 
 import javax.microedition.khronos.egl.EGLConfig;

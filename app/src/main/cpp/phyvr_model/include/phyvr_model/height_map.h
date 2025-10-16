@@ -6,6 +6,7 @@
 #define PHYVR_HEIGHT_MAP_H
 
 #include <btBulletDynamicsCommon.h>
+#include <BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
 
 #include <phyvr_model/item.h>
 #include <phyvr_model/shapes.h>
@@ -23,6 +24,8 @@ public:
 
     void processTriangle(btVector3 *triangle, int partid, int triangleindex) override;
 
+    ~HeightMapItem() override;
+
 protected:
     glm::vec3 _get_scale() override;
 
@@ -33,6 +36,8 @@ private:
     std::vector<std::tuple<float, float, float>> vertices;
     std::vector<std::tuple<float, float, float>> normals;
 
+    std::vector<float> image_grey;
+    btHeightfieldTerrainShape *map;
     btRigidBody *body;
 };
 

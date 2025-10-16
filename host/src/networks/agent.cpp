@@ -11,11 +11,13 @@ SacActor::SacActor(
       sensors_encoder(register_module(
           "sensors_encoder",
           torch::nn::Sequential(
-              torch::nn::Linear(nb_sensors, hidden_size_sensors), torch::nn::SiLU()))),
+              torch::nn::Linear(nb_sensors, hidden_size_sensors), torch::nn::SiLU(),
+              torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_sensors}))))),
       head(register_module(
-          "head", torch::nn::Sequential(
-                      torch::nn::Linear(hidden_size_sensors + 2 * 2 * 48, hidden_size),
-                      torch::nn::SiLU()))),
+          "head",
+          torch::nn::Sequential(
+              torch::nn::Linear(hidden_size_sensors + 1 * 1 * 128, hidden_size), torch::nn::SiLU(),
+              torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size}))))),
       mu(register_module(
           "mu",
           torch::nn::Sequential(torch::nn::Linear(hidden_size, nb_actions), torch::nn::Tanh()))),
@@ -31,21 +33,26 @@ actor_response SacActor::act(const torch::Tensor &vision, const torch::Tensor &s
 }
 
 SacCritic::SacCritic(
-    const int &nb_sensors, const int &nb_actions, const int &hidden_size_latent,
-    const int &hidden_size)
+    const int &nb_sensors, const int &nb_actions, const int &hidden_size_sensors,
+    const int &hidden_size_actions, const int &hidden_size)
     : vision_encoder(register_module("vision_encoder", std::make_shared<ConvolutionNetwork>())),
       sensors_encoder(register_module(
           "sensors_encoder",
           torch::nn::Sequential(
-              torch::nn::Linear(nb_sensors, hidden_size_latent), torch::nn::SiLU()))),
+              torch::nn::Linear(nb_sensors, hidden_size_sensors), torch::nn::SiLU(),
+              torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_sensors}))))),
       action_encoder(register_module(
           "action_encoder",
           torch::nn::Sequential(
-              torch::nn::Linear(nb_actions, hidden_size_latent), torch::nn::SiLU()))),
+              torch::nn::Linear(nb_actions, hidden_size_actions), torch::nn::SiLU(),
+              torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_actions}))))),
       head(register_module(
-          "head", torch::nn::Sequential(
-                      torch::nn::Linear(2 * hidden_size_latent + 2 * 2 * 48, hidden_size),
-                      torch::nn::SiLU(), torch::nn::Linear(hidden_size, 1)))) {}
+          "head",
+          torch::nn::Sequential(
+              torch::nn::Linear(
+                  hidden_size_actions + hidden_size_sensors + 1 * 1 * 128, hidden_size),
+              torch::nn::SiLU(), torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})),
+              torch::nn::Linear(hidden_size, 1)))) {}
 
 torch::Tensor SacCritic::value(
     const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &action) {

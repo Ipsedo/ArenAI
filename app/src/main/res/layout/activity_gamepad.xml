@@ -4,7 +4,7 @@
 				   xmlns:app="http://schemas.android.com/apk/res-auto"
 				   android:layout_width="match_parent"
 				   android:layout_height="match_parent"
-				   tool:context=".controls.GamePadActivity">
+				   tool:context=".set_controls.GamePadActivity">
 
 	<ScrollView
 			android:layout_width="match_parent"
@@ -28,25 +28,25 @@
 					android:layout_height="wrap_content"
 					android:id="@+id/axis_set_up_layout">
 
-				<com.samuelberrien.phyvr.controls.axis.SetUpAxis
+				<com.samuelberrien.phyvr.set_controls.axis.SetUpAxis
 						android:layout_width="match_parent"
 						android:layout_height="100dp"
 						app:axis="direction"
 						android:layout_margin="15dp"/>
 
-				<com.samuelberrien.phyvr.controls.axis.SetUpAxis
+				<com.samuelberrien.phyvr.set_controls.axis.SetUpAxis
 						android:layout_width="match_parent"
 						android:layout_height="100dp"
 						app:axis="speed"
 						android:layout_margin="15dp"/>
 
-				<com.samuelberrien.phyvr.controls.axis.SetUpAxis
+				<com.samuelberrien.phyvr.set_controls.axis.SetUpAxis
 						android:layout_width="match_parent"
 						android:layout_height="100dp"
 						app:axis="turret"
 						android:layout_margin="15dp"/>
 
-				<com.samuelberrien.phyvr.controls.axis.SetUpAxis
+				<com.samuelberrien.phyvr.set_controls.axis.SetUpAxis
 						android:layout_width="match_parent"
 						android:layout_height="100dp"
 						app:axis="canon"
@@ -59,19 +59,19 @@
 					android:layout_height="wrap_content"
 					android:id="@+id/button_set_up_layout">
 
-				<com.samuelberrien.phyvr.controls.button.SetUpButton
+				<com.samuelberrien.phyvr.set_controls.button.SetUpButton
 						android:layout_width="match_parent"
 						android:layout_height="100dp"
 						android:layout_margin="15dp"
 						app:button="brake"/>
 
-				<com.samuelberrien.phyvr.controls.button.SetUpButton
+				<com.samuelberrien.phyvr.set_controls.button.SetUpButton
 						android:layout_width="match_parent"
 						android:layout_height="100dp"
 						android:layout_margin="15dp"
 						app:button="respawn"/>
 
-				<com.samuelberrien.phyvr.controls.button.SetUpButton
+				<com.samuelberrien.phyvr.set_controls.button.SetUpButton
 						android:layout_width="match_parent"
 						android:layout_height="100dp"
 						android:layout_margin="15dp"

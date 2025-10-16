@@ -2,22 +2,32 @@
 // Created by samuel on 23/03/2023.
 //
 
-#include <BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
-
 #include <phyvr_model/height_map.h>
 
 HeightMapItem::HeightMapItem(
     std::string name, const std::shared_ptr<AbstractFileReader> &img_reader,
     const std::string &height_map_file, glm::vec3 pos, glm::vec3 scale)
     : Item(std::move(name)), shape_id(height_map_file), scale(scale) {
-    img_rgb tmp = img_reader->read_png(height_map_file);
+    ImageChannels tmp = img_reader->read_png(height_map_file);
     auto [width, height, pixels] = AbstractFileReader::to_img_grey(tmp);
 
-    auto map =
-        new btHeightfieldTerrainShape(width, height, pixels, 1.f, 0.f, 1.f, 1, PHY_FLOAT, false);
+    image_grey = pixels;
+
+    float min_height = std::numeric_limits<float>::infinity();
+    float max_height = -std::numeric_limits<float>::infinity();
+
+    for (int i = 0; i < width * height; i++) {
+        min_height = std::min(image_grey[i], min_height);
+        max_height = std::max(image_grey[i], max_height);
+    }
+
+    map = new btHeightfieldTerrainShape(
+        width, height, image_grey.data(), 1.f, min_height, max_height, 1, PHY_FLOAT, false);
     map->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
+    //map->setLocalScaling(btVector3(1.0, 1.0, 1.0));
     map->processAllTriangles(
         this, btVector3(-1000., -1000., -1000.), btVector3(1000., 1000., 1000.));
+    map->setUseDiamondSubdivision(true);
 
     btTransform myTransform;
     myTransform.setIdentity();
@@ -37,7 +47,7 @@ std::shared_ptr<Shape> HeightMapItem::get_shape() {
 
 btRigidBody *HeightMapItem::get_body() { return body; }
 
-glm::vec3 HeightMapItem::_get_scale() { return glm::vec3(1.); }
+glm::vec3 HeightMapItem::_get_scale() { return {1.f, 1.f, 1.f}; }
 
 void HeightMapItem::processTriangle(btVector3 *triangle, int partid, int triangleindex) {
     auto p1 = glm::vec3(triangle[0].getX(), triangle[0].getY(), triangle[0].getZ());
@@ -58,4 +68,9 @@ void HeightMapItem::processTriangle(btVector3 *triangle, int partid, int triangl
 
     vertices.emplace_back(p3.x, p3.y, p3.z);
     normals.emplace_back(n.x, n.y, n.z);
+}
+
+HeightMapItem::~HeightMapItem() {
+    delete map;
+    image_grey.clear();
 }

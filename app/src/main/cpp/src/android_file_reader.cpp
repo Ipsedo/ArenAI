@@ -25,7 +25,7 @@ std::string AndroidFileReader::read_text(const std::string &file_name) {
     return res;
 }
 
-img_rgb AndroidFileReader::read_png(const std::string &png_file_path) {
+ImageChannels AndroidFileReader::read_png(const std::string &png_file_path) {
     AAsset *file = AAssetManager_open(mgr, png_file_path.c_str(), AASSET_MODE_BUFFER);
 
     AImageDecoder *decoder;
@@ -47,15 +47,16 @@ img_rgb AndroidFileReader::read_png(const std::string &png_file_path) {
 
     size_t stride = AImageDecoder_getMinimumStride(decoder);
 
-    int size = width * height * channels;
-    char *pixels = new char[size];
+    size_t size = width * height * channels;
+    auto pixels = std::vector<uint8_t>(size);
 
-    if (AImageDecoder_decodeImage(decoder, pixels, stride, size) != ANDROID_IMAGE_DECODER_SUCCESS) {
+    if (AImageDecoder_decodeImage(decoder, pixels.data(), stride, size)
+        != ANDROID_IMAGE_DECODER_SUCCESS) {
         decoder_cleanup();
         throw std::runtime_error("Error in image decoding");
     }
 
     decoder_cleanup();
 
-    return {width, height, pixels};
+    return {width, height, channels, pixels};
 }

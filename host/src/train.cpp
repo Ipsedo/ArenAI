@@ -17,8 +17,8 @@
 #include "./utils/saver.h"
 #include "./utils/torch_converter.h"
 
-bool is_all_done(const std::vector<std::tuple<State, Reward, IsFinish>> &result) {
-    for (const auto &[s, r, is_done]: result)
+bool is_all_done(const std::vector<bool> &already_done) {
+    for (const auto &is_done: already_done)
         if (!is_done) return false;
     return true;
 }
@@ -63,62 +63,56 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
         // set variable for episode
         bool is_done = false;
         std::vector already_done(train_options.nb_tanks, false);
-        auto state = env->reset_physics();
+
+        auto last_state = env->reset_physics();
         env->reset_drawables(gl_context);
 
         int episode_step_idx = 0;
         while (!is_done) {
-            const auto [vision, proprioception] = state_core_to_tensor(state);
+            const auto [vision, proprioception] = states_to_tensor(last_state);
 
             // sample action
-            const auto [mu, sigma] =
-                sac->act(vision.to(torch_device), proprioception.to(torch_device));
-            const auto actions = truncated_normal_sample(mu, sigma, -1.f, 1.f);
-            const auto actions_core = actions_tensor_to_core(actions);
+            std::future<std::vector<Action>> actions_future;
+            torch::Tensor actions;
+            {
+                torch::NoGradGuard no_grad_guard;
 
-            auto actions_promise = std::promise<std::vector<Action>>();
-            actions_promise.set_value(actions_core);
-            auto actions_future = actions_promise.get_future();
+                const auto [mu, sigma] =
+                    sac->act(vision.to(torch_device), proprioception.to(torch_device));
+                actions = truncated_normal_sample(mu, sigma, -1.f, 1.f).cpu();
+                auto actions_core = tensor_to_actions(actions);
+
+                auto actions_promise = std::promise<std::vector<Action>>();
+                actions_promise.set_value(std::move(actions_core));
+                actions_future = actions_promise.get_future();
+            }
 
             // step environment
             const auto steps = env->step(1.f / 30.f, actions_future);
 
-            // prepare next state
-            std::vector<State> next_state;
-            next_state.reserve(steps.size());
-            for (const auto &[s, r, d]: steps) next_state.push_back(s);
-            const auto [next_vision, next_proprioception] = state_core_to_tensor(next_state);
+            last_state.clear();
+            last_state.reserve(train_options.nb_tanks);
 
             // save to replay buffer
             for (int i = 0; i < train_options.nb_tanks; i++) {
+                const auto [next_state, r, d] = steps[i];
+                last_state.push_back(next_state);
+
                 if (already_done[i]) continue;
 
-                const auto v = vision[i];
-                const auto p = proprioception[i];
-
-                const auto action = actions[i];
-
-                const auto n_v = next_vision[i];
-                const auto n_p = next_proprioception[i];
-
-                const auto [_, r, d] = steps[i];
+                const auto [next_vision, next_proprioception] = state_to_tensor(next_state);
 
                 reward_metric.add(r);
 
                 replay_buffer->add(
-                    {{v, p},
-                     action,
-                     torch::tensor(
-                         r, torch::TensorOptions().device(torch_device).dtype(torch::kFloat)),
-                     torch::tensor(
-                         d, torch::TensorOptions().device(torch_device).dtype(torch::kBool)),
-                     {n_v, n_p}});
+                    {{vision[i], proprioception[i]},
+                     actions[i],
+                     torch::tensor(r, torch::TensorOptions().dtype(torch::kFloat)).unsqueeze(0),
+                     torch::tensor(d, torch::TensorOptions().dtype(torch::kBool)).unsqueeze(0),
+                     {next_vision, next_proprioception}});
 
                 if (d && !already_done[i]) already_done[i] = true;
             }
-
-            // set new state
-            state = next_state;
 
             // check if it's time to train
             if (counter % train_options.train_every == train_options.train_every - 1)
@@ -138,7 +132,8 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
             p_bar.set_option(indicators::option::PrefixText{stream.str()});
             p_bar.tick();
 
-            is_done = is_all_done(steps) || episode_step_idx >= train_options.max_episode_steps;
+            is_done =
+                is_all_done(already_done) || episode_step_idx >= train_options.max_episode_steps;
 
             counter++;
             episode_step_idx++;
@@ -146,5 +141,8 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
             // attempt to save
             saver.attempt_save();
         }
+
+        last_state.clear();
+        env->stop_drawing();
     }
 }

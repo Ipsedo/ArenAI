@@ -22,7 +22,7 @@ TankFactory::TankFactory(
     const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
     glm::vec3 chassis_pos)
     : name(tank_prefix_name), camera(std::nullptr_t()), items(), item_producers(), controllers(),
-      file_reader(file_reader), is_already_dead(false) {
+      file_reader(file_reader) {
 
     glm::vec3 scale(0.5);
 
@@ -93,22 +93,20 @@ std::vector<std::shared_ptr<ItemProducer>> TankFactory::get_item_producers() {
 }
 
 bool TankFactory::is_dead() {
-    const auto will_die = std::transform_reduce(
+    const auto is_dead = std::transform_reduce(
         items.begin(), items.end(), false, [](const bool b1, const bool b2) { return b1 || b2; },
         [](const auto &i) {
-            if (auto t = std::dynamic_pointer_cast<LifeItem>(i)) return t->is_dead();
+            if (auto t = std::dynamic_pointer_cast<LifeItem>(i); t) return t->is_dead();
             return false;
         });
 
-    if (!is_already_dead && will_die) is_already_dead = true;
-
-    return is_already_dead;
+    return is_dead;
 }
 
 TankFactory::~TankFactory() {
     item_producers.clear();
-    items.clear();
     controllers.clear();
+    items.clear();
 }
 
 /*
@@ -135,7 +133,7 @@ float EnemyTankFactory::get_reward() {
 
     if (const btScalar dot = up_in_chassis.normalized().dot(up.normalized()); dot < 0) {
         curr_frame_upside_down++;
-        actual_reward -= -0.125f;
+        actual_reward -= 0.125f;
     } else curr_frame_upside_down = 0;
 
     if (is_dead()) actual_reward -= 1.f;
@@ -182,11 +180,11 @@ std::vector<float> EnemyTankFactory::get_proprioception() {
     const auto chassis_ang = chassis->get_body()->getOrientation();
     const auto chassis_ang_vel = chassis->get_body()->getAngularVelocity();
 
-    std::vector<float> result{chassis_pos.x(),    chassis_pos.y(),     chassis_pos.z(),
-                              chassis_vel.x(),    chassis_vel.y(),     chassis_vel.z(),
-                              chassis_ang.x(),    chassis_ang.y(),     chassis_ang.z(),
-                              chassis_ang.w(),    chassis_ang_vel.x(), chassis_ang_vel.y(),
-                              chassis_ang_vel.z()};
+    std::vector result{chassis_pos.x(),    chassis_pos.y(),     chassis_pos.z(),
+                       chassis_vel.x(),    chassis_vel.y(),     chassis_vel.z(),
+                       chassis_ang.x(),    chassis_ang.y(),     chassis_ang.z(),
+                       chassis_ang.w(),    chassis_ang_vel.x(), chassis_ang_vel.y(),
+                       chassis_ang_vel.z()};
     result.reserve((3 * 2 + 4 + 3) * items.size());
 
     for (int i = 1; i < items.size(); i++) {

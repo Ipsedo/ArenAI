@@ -32,7 +32,7 @@ void PhysicEngine::add_item_producer(const std::shared_ptr<ItemProducer> &item_p
 }
 
 void PhysicEngine::remove_item_constraints(const std::shared_ptr<Item> &item) const {
-    for (const auto &constraint: item->get_constraints()) {
+    for (auto *constraint: item->get_constraints()) {
         m_world->removeConstraint(constraint);
         delete constraint;
     }
@@ -63,20 +63,21 @@ void PhysicEngine::step(const float delta) {
 
     for (int i = static_cast<int>(items.size()) - 1; i >= 0; i--) {
         if (const auto item = items[i]; item->need_destroy()) {
-            const auto body = item->get_body();
-            m_world->removeCollisionObject(body);
+            auto *body = item->get_body();
+
             m_world->removeRigidBody(body);
 
             for (int j = body->getNumConstraintRefs() - 1; j >= 0; j--) {
-                const auto constraint = body->getConstraintRef(j);
+                auto *constraint = body->getConstraintRef(j);
                 m_world->removeConstraint(constraint);
                 delete constraint;
             }
 
-            items.erase(items.begin() + i);
+            if (const auto *m = body->getMotionState(); m) delete body->getMotionState();
 
-            delete body->getMotionState();
             delete body;
+
+            items.erase(items.begin() + i);
         }
     }
 }
@@ -84,9 +85,6 @@ void PhysicEngine::step(const float delta) {
 std::vector<std::shared_ptr<Item>> PhysicEngine::get_items() { return items; }
 
 void PhysicEngine::remove_bodies_and_constraints() {
-    item_producers.clear();
-    items.clear();
-
     m_world->clearForces();
 
     for (int i = m_world->getNumConstraints() - 1; i >= 0; --i) {
@@ -96,13 +94,16 @@ void PhysicEngine::remove_bodies_and_constraints() {
     }
 
     for (int i = m_world->getNumCollisionObjects() - 1; i >= 0; --i) {
-        btCollisionObject *obj = m_world->getCollisionObjectArray()[i];
-        if (btRigidBody *body = btRigidBody::upcast(obj); body && body->getMotionState()) {
-            delete body->getMotionState();
-        }
-        m_world->removeCollisionObject(obj);
-        delete obj;
+        btRigidBody *body = btRigidBody::upcast(m_world->getCollisionObjectArray()[i]);
+
+        if (const auto *m = body->getMotionState()) delete m;
+
+        m_world->removeRigidBody(body);
+        delete body;
     }
+
+    item_producers.clear();
+    items.clear();
 }
 
 PhysicEngine::~PhysicEngine() {

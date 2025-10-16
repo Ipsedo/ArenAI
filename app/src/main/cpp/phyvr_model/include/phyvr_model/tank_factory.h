@@ -43,8 +43,6 @@ private:
     std::vector<std::shared_ptr<Controller>> controllers;
 
     std::shared_ptr<AbstractFileReader> file_reader;
-
-    bool is_already_dead;
 };
 
 class EnemyTankFactory final : public TankFactory {

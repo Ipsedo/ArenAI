@@ -4,6 +4,7 @@
 
 #include "./linux_file_reader.h"
 
+#include <cstring>
 #include <fstream>
 #include <iostream>
 
@@ -39,9 +40,11 @@ ImageChannels LinuxAndroidAssetFileReader::read_png(const std::string &png_file_
     out.width = w;
     out.height = h;
     out.channels = channels;
-    out.pixels = std::vector(data, data + w * h * channels);
+    out.pixels = std::vector<uint8_t>(w * h * channels);
 
-    //delete[] data;
+    std::memcpy(out.pixels.data(), data, w * h * channels);
+
+    SOIL_free_image_data(data);
 
     return out;
 }

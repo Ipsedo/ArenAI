@@ -9,9 +9,9 @@
 #include <future>
 #include <memory>
 #include <random>
-#include <shared_mutex>
 #include <thread>
 #include <tuple>
+#include <vector>
 
 #include <phyvr_model/engine.h>
 #include <phyvr_model/tank_factory.h>
@@ -33,6 +33,7 @@ public:
 
     std::vector<State> reset_physics();
     void reset_drawables(const std::shared_ptr<AbstractGLContext> &new_gl_context);
+    void stop_drawing();
 
     virtual ~BaseTanksEnvironment();
 
@@ -41,12 +42,12 @@ private:
     int nb_tanks;
     std::vector<std::mutex> visions_mutex;
 
+    bool thread_killed;
     bool thread_sleep;
     std::atomic<bool> threads_running;
     std::unique_ptr<std::barrier<>> thread_barrier;
     std::vector<std::thread> pool;
 
-    std::shared_mutex model_matrices_mutex;
     std::vector<std::tuple<std::string, glm::mat4>> model_matrices;
 
     std::vector<std::unique_ptr<EnemyTankFactory>> tank_factories;
@@ -58,6 +59,8 @@ private:
     std::shared_ptr<AbstractGLContext> gl_context;
 
     void worker_enemy_vision(int index, const std::unique_ptr<EnemyTankFactory> &tank_factory);
+
+    void lock_all_thread_model_matrix();
 
 protected:
     virtual void on_draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) = 0;

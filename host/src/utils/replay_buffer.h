@@ -29,7 +29,7 @@ public:
 
     TorchStep sample(int batch_size, torch::Device device);
 
-    void add(const TorchStep &step);
+    void add(TorchStep step);
 
 private:
     std::mt19937 rng;

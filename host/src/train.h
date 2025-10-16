@@ -7,9 +7,6 @@
 
 #include <filesystem>
 
-#include "./networks/agent.h"
-#include "./networks/entropy.h"
-
 struct ModelOptions {
     int hidden_size_sensors;
     int hidden_size_actions;

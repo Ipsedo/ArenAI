@@ -9,7 +9,7 @@
 
 #include <phyvr_utils/file_reader.h>
 
-class LinuxAndroidAssetFileReader : public AbstractFileReader {
+class LinuxAndroidAssetFileReader final : public AbstractFileReader {
 public:
     explicit LinuxAndroidAssetFileReader(const std::filesystem::path &path_to_assets);
 

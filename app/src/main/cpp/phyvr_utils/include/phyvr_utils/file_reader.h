@@ -5,6 +5,7 @@
 #ifndef PHYVR_FILE_READER_H
 #define PHYVR_FILE_READER_H
 
+#include <cstdint>
 #include <string>
 #include <vector>
 

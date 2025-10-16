@@ -21,23 +21,22 @@ TorchStep ReplayBuffer::sample(int batch_size, torch::Device device) {
 
         auto [state, action, reward, done, next_state] = memory[random_index];
 
-        states_vision.push_back(state.vision.contiguous());
-        states_proprioception.push_back(state.proprioception.contiguous());
-        actions.push_back(action.contiguous().detach());
-        rewards.push_back(reward.contiguous());
-        dones.push_back(done.contiguous());
-        next_states_vision.push_back(next_state.vision.contiguous());
-        next_states_proprioception.push_back(next_state.proprioception.contiguous());
+        states_vision.push_back(state.vision);
+        states_proprioception.push_back(state.proprioception);
+        actions.push_back(action.detach());
+        rewards.push_back(reward);
+        dones.push_back(done);
+        next_states_vision.push_back(next_state.vision);
+        next_states_proprioception.push_back(next_state.proprioception);
     }
 
     return {
-        {torch::stack(states_vision).to(device, false, true),
-         torch::stack(states_proprioception).to(device, false, true)},
-        torch::stack(actions).to(device, false, true),
-        torch::stack(rewards).to(device, false, true),
-        torch::stack(dones).to(device, false, true),
-        {torch::stack(next_states_vision).to(device, false, true),
-         torch::stack(next_states_proprioception).to(device, false, true)}};
+        {torch::stack(states_vision).to(device), torch::stack(states_proprioception).to(device)},
+        torch::stack(actions).to(device),
+        torch::stack(rewards).to(device),
+        torch::stack(dones).to(device),
+        {torch::stack(next_states_vision).to(device),
+         torch::stack(next_states_proprioception).to(device)}};
 }
 
 void ReplayBuffer::add(TorchStep step) {

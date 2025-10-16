@@ -13,11 +13,11 @@ import android.view.MotionEvent;
 
 import com.samuelberrien.phyvr.MainActivity;
 import com.samuelberrien.phyvr.R;
-import com.samuelberrien.phyvr.controls.GamePad;
-import com.samuelberrien.phyvr.controls.UI;
-import com.samuelberrien.phyvr.controls.ui.Cursor;
-import com.samuelberrien.phyvr.controls.ui.JoyStick;
-import com.samuelberrien.phyvr.controls.ui.PlayButton;
+import com.samuelberrien.phyvr.set_controls.GamePad;
+import com.samuelberrien.phyvr.set_controls.UI;
+import com.samuelberrien.phyvr.set_controls.ui.Cursor;
+import com.samuelberrien.phyvr.set_controls.ui.JoyStick;
+import com.samuelberrien.phyvr.set_controls.ui.PlayButton;
 import com.samuelberrien.phyvr.MainWrappers;
 
 import javax.microedition.khronos.egl.EGL10;

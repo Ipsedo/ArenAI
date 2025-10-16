@@ -111,12 +111,15 @@ image<uint8_t> PBufferRenderer::draw_and_get_frame(
     glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, linear.data());
 
     for (int y = 0; y < height; ++y) {
-        int flat_y = y * width * in_channels;
+        const int src_y = y;
+        const int dst_y = height - 1 - y;
+        const unsigned char *src_row = linear.data() + static_cast<size_t>(src_y) * width * in_channels;
+
         for (int x = 0; x < width; ++x) {
-            int flat_x_y = flat_y + x * in_channels;
-            channels[0][y][x] = linear[flat_x_y];
-            channels[1][y][x] = linear[flat_x_y + 1];
-            channels[2][y][x] = linear[flat_x_y + 2];
+            const unsigned char *pixel_ptr = src_row + x * in_channels;
+            channels[0][dst_y][x] = pixel_ptr[0];
+            channels[1][dst_y][x] = pixel_ptr[1];
+            channels[2][dst_y][x] = pixel_ptr[2];
         }
     }
 

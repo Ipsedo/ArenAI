@@ -1,4 +1,4 @@
-package com.samuelberrien.phyvr.controls;
+package com.samuelberrien.phyvr.set_controls;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -6,9 +6,9 @@ import android.os.Build;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 
-import com.samuelberrien.phyvr.controls.ui.Cursor;
-import com.samuelberrien.phyvr.controls.ui.JoyStick;
-import com.samuelberrien.phyvr.controls.ui.PlayButton;
+import com.samuelberrien.phyvr.set_controls.ui.Cursor;
+import com.samuelberrien.phyvr.set_controls.ui.JoyStick;
+import com.samuelberrien.phyvr.set_controls.ui.PlayButton;
 
 public class UI {
 

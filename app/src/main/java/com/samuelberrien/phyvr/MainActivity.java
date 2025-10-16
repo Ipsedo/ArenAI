@@ -1,18 +1,15 @@
 package com.samuelberrien.phyvr;
 
-import android.app.ActionBar;
 import android.app.Activity;
 import android.app.NativeActivity;
 import android.content.Intent;
 import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
 
-import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.NumberPicker;
 
-import com.samuelberrien.phyvr.controls.ControlActivity;
-import com.samuelberrien.phyvr.controls.GamePadActivity;
+import com.samuelberrien.phyvr.set_controls.ControlActivity;
+import com.samuelberrien.phyvr.set_controls.GamePadActivity;
 
 public class MainActivity extends Activity implements NumberPicker.OnValueChangeListener {
 

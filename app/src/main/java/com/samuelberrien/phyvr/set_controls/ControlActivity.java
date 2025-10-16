@@ -1,4 +1,4 @@
-package com.samuelberrien.phyvr.controls;
+package com.samuelberrien.phyvr.set_controls;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;

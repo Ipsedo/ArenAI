@@ -1,4 +1,4 @@
-package com.samuelberrien.phyvr.controls.button;
+package com.samuelberrien.phyvr.set_controls.button;
 
 import android.content.Context;
 import android.content.SharedPreferences;

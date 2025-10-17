@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.29)
 
-project(phyvr)
+project(arenai)
 
 include(AndroidNdkModules)
 android_ndk_import_module_native_app_glue()
@@ -57,33 +57,33 @@ FetchContent_MakeAvailable(executorch)
 
 set(CMAKE_CXX_STANDARD 20)
 
-set(PHYVR_CPP_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp")
+set(ARENAI_CPP_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp")
 
-add_subdirectory("${PHYVR_CPP_FOLDER}/phyvr_utils")
-add_subdirectory("${PHYVR_CPP_FOLDER}/phyvr_controller")
-add_subdirectory("${PHYVR_CPP_FOLDER}/phyvr_view")
-add_subdirectory("${PHYVR_CPP_FOLDER}/phyvr_model")
-add_subdirectory("${PHYVR_CPP_FOLDER}/phyvr_core")
+add_subdirectory("${ARENAI_CPP_FOLDER}/arenai_utils")
+add_subdirectory("${ARENAI_CPP_FOLDER}/arenai_controller")
+add_subdirectory("${ARENAI_CPP_FOLDER}/arenai_view")
+add_subdirectory("${ARENAI_CPP_FOLDER}/arenai_model")
+add_subdirectory("${ARENAI_CPP_FOLDER}/arenai_core")
 
-include_directories(${PHYVR_UTILS_INCLUDE_DIRS})
-include_directories(${PHYVR_CONTROLLER_INCLUDE_DIRS})
-include_directories(${PHYVR_VIEW_INCLUDE_DIRS})
-include_directories(${PHYVR_MODEL_INCLUDE_DIRS})
-include_directories(${PHYVR_CORE_INCLUDE_DIRS})
+include_directories(${ARENAI_UTILS_INCLUDE_DIRS})
+include_directories(${ARENAI_CONTROLLER_INCLUDE_DIRS})
+include_directories(${ARENAI_VIEW_INCLUDE_DIRS})
+include_directories(${ARENAI_MODEL_INCLUDE_DIRS})
+include_directories(${ARENAI_CORE_INCLUDE_DIRS})
 
-file(GLOB_RECURSE PHYVR_ANDROID_SRC "${PHYVR_CPP_FOLDER}/src/*.cpp")
+file(GLOB_RECURSE ARENAI_ANDROID_SRC "${ARENAI_CPP_FOLDER}/src/*.cpp")
 
-add_library(phyvr SHARED ${PHYVR_ANDROID_SRC})
+add_library(arenai SHARED ${ARENAI_ANDROID_SRC})
 
 target_link_libraries(
-        phyvr
+        arenai
         -Wl,--whole-archive native_app_glue -Wl,--no-whole-archive
         android
         jnigraphics
-        phyvr_utils
-        phyvr_view
-        phyvr_model
-        phyvr_core
+        arenai_utils
+        arenai_view
+        arenai_model
+        arenai_core
         executorch
         executorch::backends
         executorch::extensions

@@ -2,8 +2,8 @@
 // Created by samuel on 28/09/2025.
 //
 
-#ifndef PHYVR_PLAYER_HANDLER_H
-#define PHYVR_PLAYER_HANDLER_H
+#ifndef ARENAI_PLAYER_HANDLER_H
+#define ARENAI_PLAYER_HANDLER_H
 
 #include <memory>
 #include <vector>
@@ -11,10 +11,10 @@
 #include <android/configuration.h>
 #include <android/input.h>
 
-#include <phyvr_controller/controller.h>
-#include <phyvr_controller/handler.h>
-#include <phyvr_utils/file_reader.h>
-#include <phyvr_view/hud.h>
+#include <arenai_controller/controller.h>
+#include <arenai_controller/handler.h>
+#include <arenai_utils/file_reader.h>
+#include <arenai_view/hud.h>
 
 #include "./button.h"
 #include "./joystick.h"
@@ -35,4 +35,4 @@ private:
     std::shared_ptr<ScreenJoyStick> turret_joystick;
 };
 
-#endif// PHYVR_PLAYER_HANDLER_H
+#endif// ARENAI_PLAYER_HANDLER_H

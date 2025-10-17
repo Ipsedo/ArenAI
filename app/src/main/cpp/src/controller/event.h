@@ -2,8 +2,8 @@
 // Created by samuel on 26/03/2023.
 //
 
-#ifndef PHYVR_EVENT_H
-#define PHYVR_EVENT_H
+#ifndef ARENAI_EVENT_H
+#define ARENAI_EVENT_H
 
 #include <android/input.h>
 
@@ -17,4 +17,4 @@ public:
     virtual int get_pointer_id() = 0;
 };
 
-#endif// PHYVR_EVENT_H
+#endif// ARENAI_EVENT_H

@@ -2,8 +2,8 @@
 // Created by samuel on 12/10/2025.
 //
 
-#ifndef PHYVR_TRAIN_HOST_ENTROPY_H
-#define PHYVR_TRAIN_HOST_ENTROPY_H
+#ifndef ARENAI_TRAIN_HOST_ENTROPY_H
+#define ARENAI_TRAIN_HOST_ENTROPY_H
 
 #include <torch/torch.h>
 
@@ -18,4 +18,4 @@ private:
     torch::Tensor log_alpha_tensor;
 };
 
-#endif//PHYVR_TRAIN_HOST_ENTROPY_H
+#endif//ARENAI_TRAIN_HOST_ENTROPY_H

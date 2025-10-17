@@ -3,11 +3,11 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 36
     defaultConfig {
-        applicationId "com.samuelberrien.phyvr"
+        applicationId "com.samuelberrien.arenai"
         minSdkVersion 30
         targetSdkVersion 36
-        versionCode 17
-        versionName "2.0"
+        versionCode 1
+        versionName "1.0.0"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         externalNativeBuild {
             cmake {
@@ -44,7 +44,7 @@ android {
         targetCompatibility JavaVersion.VERSION_1_10
     }
     ndkVersion "27.3.13750724"
-    namespace 'com.samuelberrien.phyvr'
+    namespace 'com.samuelberrien.arenai'
 }
 
 dependencies {

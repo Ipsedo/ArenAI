@@ -2,8 +2,8 @@
 // Created by samuel on 03/10/2025.
 //
 
-#ifndef PHYVR_TRAIN_HOST_VISION_H
-#define PHYVR_TRAIN_HOST_VISION_H
+#ifndef ARENAI_TRAIN_HOST_VISION_H
+#define ARENAI_TRAIN_HOST_VISION_H
 
 #include <torch/torch.h>
 
@@ -17,4 +17,4 @@ private:
     torch::nn::Sequential cnn{nullptr};
 };
 
-#endif// PHYVR_TRAIN_HOST_VISION_H
+#endif// ARENAI_TRAIN_HOST_VISION_H

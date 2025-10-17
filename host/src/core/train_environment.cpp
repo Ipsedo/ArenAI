@@ -4,10 +4,10 @@
 
 #include "./train_environment.h"
 
-#include <phyvr_utils/cache.h>
-#include <phyvr_utils/singleton.h>
-#include <phyvr_view/errors.h>
-#include <phyvr_view/pbuffer_renderer.h>
+#include <arenai_utils/cache.h>
+#include <arenai_utils/singleton.h>
+#include <arenai_view/errors.h>
+#include <arenai_view/pbuffer_renderer.h>
 
 #include "../utils/linux_file_reader.h"
 

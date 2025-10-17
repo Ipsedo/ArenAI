@@ -8,7 +8,7 @@
 
 int main(int argc, char **argv) {
 
-    argparse::ArgumentParser parser("phyvr train");
+    argparse::ArgumentParser parser("arenai train");
 
     // model
     parser.add_argument("--hidden_size_sensors").scan<'i', int>().default_value(192);

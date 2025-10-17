@@ -2,17 +2,17 @@
 // Created by samuel on 20/03/2023.
 //
 
-#ifndef PHYVR_JOYSTICK_H
-#define PHYVR_JOYSTICK_H
+#ifndef ARENAI_JOYSTICK_H
+#define ARENAI_JOYSTICK_H
 
 #include <memory>
 
 #include <android/configuration.h>
 #include <glm/glm.hpp>
 
-#include <phyvr_controller/inputs.h>
-#include <phyvr_utils/file_reader.h>
-#include <phyvr_view/hud.h>
+#include <arenai_controller/inputs.h>
+#include <arenai_utils/file_reader.h>
+#include <arenai_view/hud.h>
 
 #include "./event.h"
 #include "./view.h"
@@ -79,4 +79,4 @@ private:
     bool is_pointer_free_(int pointer_id);
 };
 
-#endif// PHYVR_JOYSTICK_H
+#endif// ARENAI_JOYSTICK_H

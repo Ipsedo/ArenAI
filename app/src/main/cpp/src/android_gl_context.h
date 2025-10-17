@@ -2,8 +2,8 @@
 // Created by samuel on 28/09/2025.
 //
 
-#ifndef PHYVR_ANDROID_GL_CONTEXT_H
-#define PHYVR_ANDROID_GL_CONTEXT_H
+#ifndef ARENAI_ANDROID_GL_CONTEXT_H
+#define ARENAI_ANDROID_GL_CONTEXT_H
 
 #include <memory>
 
@@ -12,8 +12,8 @@
 #include <android_native_app_glue.h>
 #include <EGL/egl.h>
 
-#include <phyvr_view/drawable.h>
-#include <phyvr_view/renderer.h>
+#include <arenai_view/drawable.h>
+#include <arenai_view/renderer.h>
 
 class AndroidGLContext : public AbstractGLContext {
 public:
@@ -28,4 +28,4 @@ private:
     EGLContext context;
 };
 
-#endif// PHYVR_ANDROID_GL_CONTEXT_H
+#endif// ARENAI_ANDROID_GL_CONTEXT_H

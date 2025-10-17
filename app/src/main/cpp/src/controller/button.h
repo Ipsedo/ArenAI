@@ -2,8 +2,8 @@
 // Created by samuel on 26/03/2023.
 //
 
-#ifndef PHYVR_BUTTON_H
-#define PHYVR_BUTTON_H
+#ifndef ARENAI_BUTTON_H
+#define ARENAI_BUTTON_H
 
 #include <memory>
 
@@ -11,9 +11,9 @@
 #include <android/configuration.h>
 #include <glm/glm.hpp>
 
-#include <phyvr_controller/inputs.h>
-#include <phyvr_utils/file_reader.h>
-#include <phyvr_view/hud.h>
+#include <arenai_controller/inputs.h>
+#include <arenai_utils/file_reader.h>
+#include <arenai_view/hud.h>
 
 #include "./event.h"
 
@@ -47,4 +47,4 @@ private:
     bool is_inside_(float x, float y) const;
 };
 
-#endif// PHYVR_BUTTON_H
+#endif// ARENAI_BUTTON_H

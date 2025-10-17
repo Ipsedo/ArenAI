@@ -7,7 +7,7 @@
 #include <android/input.h>
 #include <android_native_app_glue.h>
 
-#include <phyvr_controller/controller.h>
+#include <arenai_controller/controller.h>
 
 PlayerControllerHandler::PlayerControllerHandler(AConfiguration *config, int width, int height)
     : ControllerHandler<AInputEvent *>() {

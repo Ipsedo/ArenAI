@@ -6,16 +6,16 @@
 
 #include <glm/gtx/transform.hpp>
 
-#include <phyvr_model/convex.h>
-#include <phyvr_model/engine.h>
-#include <phyvr_model/height_map.h>
-#include <phyvr_model/shapes.h>
-#include <phyvr_model/tank_factory.h>
-#include <phyvr_utils/cache.h>
-#include <phyvr_utils/logging.h>
-#include <phyvr_utils/singleton.h>
-#include <phyvr_view/cubemap.h>
-#include <phyvr_view/specular.h>
+#include <arenai_model/convex.h>
+#include <arenai_model/engine.h>
+#include <arenai_model/height_map.h>
+#include <arenai_model/shapes.h>
+#include <arenai_model/tank_factory.h>
+#include <arenai_utils/cache.h>
+#include <arenai_utils/logging.h>
+#include <arenai_utils/singleton.h>
+#include <arenai_view/cubemap.h>
+#include <arenai_view/specular.h>
 
 #include "./android_file_reader.h"
 #include "./android_gl_context.h"
@@ -111,7 +111,7 @@ void UserGameTanksEnvironment::on_reset_drawables(
 
     std::uniform_real_distribution<float> u_dist(0.f, 1.f);
 
-    for (const auto &[name, shape]: tank_factory->load_ammu_shapes()) {
+    for (const auto &[name, shape]: tank_factory->load_shell_shapes()) {
         glm::vec4 color(u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, 1.f);
 
         player_renderer->add_drawable(

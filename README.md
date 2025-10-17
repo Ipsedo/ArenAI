@@ -1,4 +1,4 @@
-# PhyVR
+# ArenAI
 
 An Android game with AI
 

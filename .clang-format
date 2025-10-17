@@ -73,7 +73,7 @@ IncludeCategories:
   - Regex: '"[-\w\/-_\.]*"'
     Priority: 4
   # Headers in <> from PhyVR libraries.
-  - Regex: '<phyvr_.+'
+  - Regex: '<arenai.+'
     Priority: 3
   # External headers in <> with extension or /
   - Regex: '<[-\w\/-_]+[\.\/][-\w\/-_]+>'

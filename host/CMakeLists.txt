@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.11)
 
-project(phyvr_train_host)
+project(arenai_train_host)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -27,33 +27,33 @@ include_directories(${TORCH_INCLUDE_DIRS})
 find_package(soil2 REQUIRED)
 include_directories(${SOIL2_INCLUDE_DIR})
 
-# PHYVR
-set(PHYVR_CPP_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/../app/src/main/cpp")
+# ARENAI
+set(ARENAI_CPP_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/../app/src/main/cpp")
 
-add_subdirectory("${PHYVR_CPP_FOLDER}/phyvr_controller" "${CMAKE_CURRENT_BINARY_DIR}/phyvr_controller")
-add_subdirectory("${PHYVR_CPP_FOLDER}/phyvr_utils" "${CMAKE_CURRENT_BINARY_DIR}/phyvr_utils")
-add_subdirectory("${PHYVR_CPP_FOLDER}/phyvr_view" "${CMAKE_CURRENT_BINARY_DIR}/phyvr_view")
-add_subdirectory("${PHYVR_CPP_FOLDER}/phyvr_model" "${CMAKE_CURRENT_BINARY_DIR}/phyvr_model")
-add_subdirectory("${PHYVR_CPP_FOLDER}/phyvr_core" "${CMAKE_CURRENT_BINARY_DIR}/phyvr_core")
+add_subdirectory("${ARENAI_CPP_FOLDER}/arenai_controller" "${CMAKE_CURRENT_BINARY_DIR}/arenai_controller")
+add_subdirectory("${ARENAI_CPP_FOLDER}/arenai_utils" "${CMAKE_CURRENT_BINARY_DIR}/arenai_utils")
+add_subdirectory("${ARENAI_CPP_FOLDER}/arenai_view" "${CMAKE_CURRENT_BINARY_DIR}/arenai_view")
+add_subdirectory("${ARENAI_CPP_FOLDER}/arenai_model" "${CMAKE_CURRENT_BINARY_DIR}/arenai_model")
+add_subdirectory("${ARENAI_CPP_FOLDER}/arenai_core" "${CMAKE_CURRENT_BINARY_DIR}/arenai_core")
 
-include_directories(${PHYVR_CONTROLLER_INCLUDE_DIRS})
-include_directories(${PHYVR_UTILS_INCLUDE_DIRS})
-include_directories(${PHYVR_VIEW_INCLUDE_DIRS})
-include_directories(${PHYVR_MODEL_INCLUDE_DIRS})
-include_directories(${PHYVR_CORE_INCLUDE_DIRS})
+include_directories(${ARENAI_CONTROLLER_INCLUDE_DIRS})
+include_directories(${ARENAI_UTILS_INCLUDE_DIRS})
+include_directories(${ARENAI_VIEW_INCLUDE_DIRS})
+include_directories(${ARENAI_MODEL_INCLUDE_DIRS})
+include_directories(${ARENAI_CORE_INCLUDE_DIRS})
 
-set(PHYVR_TRAIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src")
+set(ARENAI_TRAIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
-file(GLOB_RECURSE PHYVR_TRAIN_SRC "${PHYVR_TRAIN_PATH}/*.cpp")
+file(GLOB_RECURSE ARENAI_TRAIN_SRC "${ARENAI_TRAIN_PATH}/*.cpp")
 
-add_executable(phyvr_train_host ${PHYVR_TRAIN_SRC})
+add_executable(arenai_train_host ${ARENAI_TRAIN_SRC})
 
 target_link_libraries(
-        phyvr_train_host
-        phyvr_model
-        phyvr_view
-        phyvr_utils
-        phyvr_core
+        arenai_train_host
+        arenai_model
+        arenai_view
+        arenai_utils
+        arenai_core
         ${TORCH_LIBRARIES}
         soil2
 )

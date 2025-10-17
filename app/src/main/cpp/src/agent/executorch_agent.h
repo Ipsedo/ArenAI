@@ -2,15 +2,15 @@
 // Created by samuel on 03/10/2025.
 //
 
-#ifndef PHYVR_EXECUTORCH_AGENT_H
-#define PHYVR_EXECUTORCH_AGENT_H
+#ifndef ARENAI_EXECUTORCH_AGENT_H
+#define ARENAI_EXECUTORCH_AGENT_H
 
 #include <random>
 
 #include <android_native_app_glue.h>
 #include <executorch/extension/module/module.h>
 
-#include <phyvr_core/environment.h>
+#include <arenai_core/environment.h>
 
 using namespace executorch;
 
@@ -36,4 +36,4 @@ private:
     std::mt19937 rng;
 };
 
-#endif// PHYVR_EXECUTORCH_AGENT_H
+#endif// ARENAI_EXECUTORCH_AGENT_H

@@ -29,7 +29,7 @@ def main() -> None:
         nb_actions = 2 + 2 + 1
 
         actor = SacActor(
-            nb_sensors, nb_actions, args.hidden_size_senros, args.hidden_size
+            nb_sensors, nb_actions, args.hidden_size_sensors, args.hidden_size
         )
 
         load_neutral_state_into(actor, args.input_state_dict_folder)

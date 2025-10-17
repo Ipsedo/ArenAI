@@ -2,8 +2,8 @@
 // Created by samuel on 03/10/2025.
 //
 
-#ifndef PHYVR_TRAIN_HOST_REPLAY_BUFFER_H
-#define PHYVR_TRAIN_HOST_REPLAY_BUFFER_H
+#ifndef ARENAI_TRAIN_HOST_REPLAY_BUFFER_H
+#define ARENAI_TRAIN_HOST_REPLAY_BUFFER_H
 
 #include <random>
 #include <vector>
@@ -37,4 +37,4 @@ private:
     std::vector<TorchStep> memory;
 };
 
-#endif// PHYVR_TRAIN_HOST_REPLAY_BUFFER_H
+#endif// ARENAI_TRAIN_HOST_REPLAY_BUFFER_H

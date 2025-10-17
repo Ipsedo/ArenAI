@@ -14,8 +14,8 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <phyvr_utils/logging.h>
-#include <phyvr_view/errors.h>
+#include <arenai_utils/logging.h>
+#include <arenai_view/errors.h>
 
 AndroidGLContext::AndroidGLContext(ANativeWindow *window, EGLDisplay display)
     : AbstractGLContext(), display(display) {

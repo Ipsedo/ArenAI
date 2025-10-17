@@ -2,8 +2,8 @@
 // Created by samuel on 12/10/2025.
 //
 
-#ifndef PHYVR_TRAIN_HOST_METRIC_H
-#define PHYVR_TRAIN_HOST_METRIC_H
+#ifndef ARENAI_TRAIN_HOST_METRIC_H
+#define ARENAI_TRAIN_HOST_METRIC_H
 
 #include <string>
 #include <vector>
@@ -27,4 +27,4 @@ private:
     std::vector<float> values;
 };
 
-#endif//PHYVR_TRAIN_HOST_METRIC_H
+#endif//ARENAI_TRAIN_HOST_METRIC_H

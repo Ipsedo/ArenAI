@@ -2,8 +2,8 @@
 // Created by samuel on 28/03/2023.
 //
 
-#ifndef PHYVR_VIEW_H
-#define PHYVR_VIEW_H
+#ifndef ARENAI_VIEW_H
+#define ARENAI_VIEW_H
 
 #include <map>
 #include <string>
@@ -76,4 +76,4 @@ private:
     std::map<CornerLayout::CORNER, std::shared_ptr<View>> views;
 };
 
-#endif// PHYVR_VIEW_H
+#endif// ARENAI_VIEW_H

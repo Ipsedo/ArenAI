@@ -2,8 +2,8 @@
 // Created by samuel on 03/10/2025.
 //
 
-#ifndef PHYVR_TRAIN_HOST_SAVER_H
-#define PHYVR_TRAIN_HOST_SAVER_H
+#ifndef ARENAI_TRAIN_HOST_SAVER_H
+#define ARENAI_TRAIN_HOST_SAVER_H
 
 #include <filesystem>
 #include <memory>
@@ -47,4 +47,4 @@ private:
     std::filesystem::path output_path;
 };
 
-#endif// PHYVR_TRAIN_HOST_SAVER_H
+#endif// ARENAI_TRAIN_HOST_SAVER_H

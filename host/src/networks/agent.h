@@ -2,8 +2,8 @@
 // Created by samuel on 02/10/2025.
 //
 
-#ifndef PHYVR_AGENT_H
-#define PHYVR_AGENT_H
+#ifndef ARENAI_AGENT_H
+#define ARENAI_AGENT_H
 
 #include <memory>
 #include <tuple>
@@ -48,4 +48,4 @@ private:
     torch::nn::Sequential head;
 };
 
-#endif// PHYVR_AGENT_H
+#endif// ARENAI_AGENT_H

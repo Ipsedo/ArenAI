@@ -4,7 +4,7 @@
 
 #include "./button.h"
 
-#include <phyvr_view/hud.h>
+#include <arenai_view/hud.h>
 
 #include "../units.h"
 

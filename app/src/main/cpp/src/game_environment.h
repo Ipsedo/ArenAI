@@ -2,19 +2,19 @@
 // Created by samuel on 21/03/2023.
 //
 
-#ifndef PHYVR_GAME_ENVIRONMENT_H
-#define PHYVR_GAME_ENVIRONMENT_H
+#ifndef ARENAI_GAME_ENVIRONMENT_H
+#define ARENAI_GAME_ENVIRONMENT_H
 
 #include <random>
 
 #include <android_native_app_glue.h>
 
-#include <phyvr_controller/controller.h>
-#include <phyvr_core/environment.h>
-#include <phyvr_model/engine.h>
-#include <phyvr_model/tank_factory.h>
-#include <phyvr_utils/file_reader.h>
-#include <phyvr_view/renderer.h>
+#include <arenai_controller/controller.h>
+#include <arenai_core/environment.h>
+#include <arenai_model/engine.h>
+#include <arenai_model/tank_factory.h>
+#include <arenai_utils/file_reader.h>
+#include <arenai_view/renderer.h>
 
 #include "./android_gl_context.h"
 #include "./controller/player_handler.h"
@@ -55,4 +55,4 @@ private:
     bool is_paused;
 };
 
-#endif// PHYVR_GAME_ENVIRONMENT_H
+#endif// ARENAI_GAME_ENVIRONMENT_H

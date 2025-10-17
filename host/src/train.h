@@ -2,8 +2,8 @@
 // Created by samuel on 03/10/2025.
 //
 
-#ifndef PHYVR_TRAIN_HOST_TRAIN_H
-#define PHYVR_TRAIN_HOST_TRAIN_H
+#ifndef ARENAI_TRAIN_HOST_TRAIN_H
+#define ARENAI_TRAIN_HOST_TRAIN_H
 
 #include <filesystem>
 
@@ -33,4 +33,4 @@ struct TrainOptions {
 
 void train_main(const ModelOptions &model_options, const TrainOptions &train_options);
 
-#endif// PHYVR_TRAIN_HOST_TRAIN_H
+#endif// ARENAI_TRAIN_HOST_TRAIN_H

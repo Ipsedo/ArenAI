@@ -2,12 +2,12 @@
 // Created by samuel on 29/09/2025.
 //
 
-#ifndef PHYVR_ANDROID_FILE_READER_H
-#define PHYVR_ANDROID_FILE_READER_H
+#ifndef ARENAI_ANDROID_FILE_READER_H
+#define ARENAI_ANDROID_FILE_READER_H
 
 #include <android/asset_manager.h>
 
-#include <phyvr_utils/file_reader.h>
+#include <arenai_utils/file_reader.h>
 
 class AndroidFileReader : public AbstractFileReader {
 public:
@@ -21,4 +21,4 @@ private:
     AAssetManager *mgr;
 };
 
-#endif// PHYVR_ANDROID_FILE_READER_H
+#endif// ARENAI_ANDROID_FILE_READER_H

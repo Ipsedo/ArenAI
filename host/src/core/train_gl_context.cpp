@@ -4,7 +4,7 @@
 
 #include "./train_gl_context.h"
 
-#include "phyvr_view/errors.h"
+#include "arenai_view/errors.h"
 
 TrainGlContext::TrainGlContext() {
     display = eglGetDisplay(EGL_DEFAULT_DISPLAY);

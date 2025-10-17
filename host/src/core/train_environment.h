@@ -2,10 +2,10 @@
 // Created by samuel on 03/10/2025.
 //
 
-#ifndef PHYVR_TRAIN_HOST_TRAIN_ENVIRONMENT_H
-#define PHYVR_TRAIN_HOST_TRAIN_ENVIRONMENT_H
+#ifndef ARENAI_TRAIN_HOST_TRAIN_ENVIRONMENT_H
+#define ARENAI_TRAIN_HOST_TRAIN_ENVIRONMENT_H
 
-#include <phyvr_core/environment.h>
+#include <arenai_core/environment.h>
 
 class TrainTankEnvironment final : public BaseTanksEnvironment {
 public:
@@ -23,4 +23,4 @@ protected:
         const std::shared_ptr<AbstractGLContext> &gl_context) override;
 };
 
-#endif// PHYVR_TRAIN_HOST_TRAIN_ENVIRONMENT_H
+#endif// ARENAI_TRAIN_HOST_TRAIN_ENVIRONMENT_H

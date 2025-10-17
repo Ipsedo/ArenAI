@@ -2,8 +2,8 @@
 // Created by samuel on 12/10/2025.
 //
 
-#ifndef PHYVR_TRAIN_HOST_SAC_H
-#define PHYVR_TRAIN_HOST_SAC_H
+#ifndef ARENAI_TRAIN_HOST_SAC_H
+#define ARENAI_TRAIN_HOST_SAC_H
 
 #include <filesystem>
 #include <memory>
@@ -54,4 +54,4 @@ private:
     float target_entropy;
 };
 
-#endif//PHYVR_TRAIN_HOST_SAC_H
+#endif//ARENAI_TRAIN_HOST_SAC_H

@@ -1,5 +1,5 @@
 <resources>
-	<string name="app_name">PhyVR</string>
+	<string name="app_name">ArenAI</string>
 	<string name="activity_control_text">Click to define control :</string>
 
 	<!-- control names -> for shared preference and display -->

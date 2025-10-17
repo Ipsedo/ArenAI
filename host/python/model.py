@@ -22,6 +22,7 @@ class ConvolutionNetwork(nn.Module):
             nn.Conv2d(96, 128, 3, 2, 1),
             nn.SiLU(),
             nn.Flatten(1, -1),
+            nn.LayerNorm(128)
         )
 
     def forward(self, vision: th.Tensor) -> th.Tensor:

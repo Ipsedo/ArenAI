@@ -2,12 +2,12 @@
 // Created by samuel on 03/10/2025.
 //
 
-#ifndef PHYVR_TRAIN_HOST_LINUX_FILE_READER_H
-#define PHYVR_TRAIN_HOST_LINUX_FILE_READER_H
+#ifndef ARENAI_TRAIN_HOST_LINUX_FILE_READER_H
+#define ARENAI_TRAIN_HOST_LINUX_FILE_READER_H
 
 #include <filesystem>
 
-#include <phyvr_utils/file_reader.h>
+#include <arenai_utils/file_reader.h>
 
 class LinuxAndroidAssetFileReader final : public AbstractFileReader {
 public:
@@ -21,4 +21,4 @@ private:
     std::filesystem::path path_to_assets;
 };
 
-#endif// PHYVR_TRAIN_HOST_LINUX_FILE_READER_H
+#endif// ARENAI_TRAIN_HOST_LINUX_FILE_READER_H

@@ -176,16 +176,31 @@ std::vector<float> EnemyTankFactory::get_proprioception() {
     const auto &chassis = items[0];
 
     const auto chassis_pos = chassis->get_body()->getCenterOfMassPosition();
+    const auto chassis_pos_norm = std::log(chassis_pos.norm());
+    const auto yaw = std::atan2(chassis_pos.x(), chassis_pos.z());
+    const auto pitch = std::atan2(
+        chassis_pos.y(),
+        std::sqrt(std::pow(chassis_pos.x(), 2.f) + std::pow(chassis_pos.z(), 2.f)));
+
     const auto chassis_vel = chassis->get_body()->getLinearVelocity();
 
     const auto chassis_ang = chassis->get_body()->getOrientation();
     const auto chassis_ang_vel = chassis->get_body()->getAngularVelocity();
 
-    std::vector result{chassis_pos.x(),    chassis_pos.y(),     chassis_pos.z(),
-                       chassis_vel.x(),    chassis_vel.y(),     chassis_vel.z(),
-                       chassis_ang.x(),    chassis_ang.y(),     chassis_ang.z(),
-                       chassis_ang.w(),    chassis_ang_vel.x(), chassis_ang_vel.y(),
-                       chassis_ang_vel.z()};
+    std::vector result{
+        chassis_pos_norm,
+        yaw,
+        pitch,
+        chassis_vel.x(),
+        chassis_vel.y(),
+        chassis_vel.z(),
+        chassis_ang.x(),
+        chassis_ang.y(),
+        chassis_ang.z(),
+        chassis_ang.w(),
+        chassis_ang_vel.x(),
+        chassis_ang_vel.y(),
+        chassis_ang_vel.z()};
     result.reserve((3 * 2 + 4 + 3) * items.size());
 
     for (int i = 1; i < items.size(); i++) {

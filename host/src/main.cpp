@@ -16,6 +16,7 @@ int main(int argc, char **argv) {
     parser.add_argument("--hidden_size").scan<'i', int>().default_value(512);
     parser.add_argument("--tau").scan<'g', float>().default_value(1e-2f);
     parser.add_argument("--gamma").scan<'g', float>().default_value(0.99f);
+    parser.add_argument("--initial_alpha").scan<'g', float>().default_value(1.f);
 
     // train
     parser.add_argument("--nb_tanks").scan<'i', int>().default_value(8);
@@ -36,8 +37,8 @@ int main(int argc, char **argv) {
 
     train_main(
         {parser.get<int>("--hidden_size_sensors"), parser.get<int>("--hidden_size_actions"),
-         parser.get<int>("--hidden_size"), parser.get<float>("--tau"),
-         parser.get<float>("--gamma")},
+         parser.get<int>("--hidden_size"), parser.get<float>("--tau"), parser.get<float>("--gamma"),
+         parser.get<float>("--initial_alpha")},
         {parser.get<int>("--nb_tanks"),
          std::filesystem::path(parser.get<std::string>("--output_folder")),
          std::filesystem::path(parser.get<std::string>("--asset_folder")),

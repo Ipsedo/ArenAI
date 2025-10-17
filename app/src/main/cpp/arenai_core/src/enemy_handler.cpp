@@ -4,18 +4,23 @@
 
 #include <arenai_core/enemy_handler.h>
 
-EnemyControllerHandler::EnemyControllerHandler(const float fire_latency_seconds)
-    : fire_latency_seconds(fire_latency_seconds), last_time(std::chrono::steady_clock::now()) {}
+EnemyControllerHandler::EnemyControllerHandler(
+    const float refresh_frequency, const float wanted_fire_frequency)
+    : nb_frames_to_fire(static_cast<int>(wanted_fire_frequency / refresh_frequency)),
+      curr_frame(nb_frames_to_fire) {}
 
 std::tuple<bool, user_input> EnemyControllerHandler::to_output(const Action event) {
 
-    const auto now = std::chrono::steady_clock::now();
-    const auto dt = std::chrono::duration_cast<std::chrono::milliseconds>(last_time - now);
-    const auto can_fire = static_cast<float>(dt.count()) >= 1000.f * fire_latency_seconds;
+    curr_frame = std::min(curr_frame + 1, nb_frames_to_fire);
 
-    const button fire_button_restricted(event.fire_button.pressed && can_fire);
+    bool has_fire = false;
 
-    if (can_fire) last_time = now;
+    if (event.fire_button.pressed && curr_frame >= nb_frames_to_fire) {
+        has_fire = true;
+        curr_frame = 0;
+    }
+
+    const button fire_button_restricted(has_fire);
 
     return {
         true,

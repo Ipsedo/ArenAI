@@ -45,16 +45,23 @@ WheelItem::WheelItem(
     hinge->setBounce(index, 1e-2f);
     hinge->setEquilibriumPoint(index, -0.2f);
 
-    // disable axis Z
-    hinge->setLimit(2, 0, 0);
-    hinge->setLimit(5, 0, 0);
+    // disable axis
+    for (float axis_to_disable[] = {0, 2, 5}; const auto axis: axis_to_disable) {
+        hinge->setParam(BT_CONSTRAINT_STOP_ERP, 0.9, axis);
+        hinge->setParam(BT_CONSTRAINT_STOP_CFM, 0.0, axis);
+        hinge->setLimit(axis, 0, 0);
+        hinge->enableMotor(axis, false);
+        hinge->enableSpring(axis, false);
+    }
 
     ConvexItem::get_body()->setFriction(500.f);
 }
 
 void WheelItem::on_input(const user_input &input) {
     constexpr int motor_axis = 3;
-    hinge->setTargetVelocity(motor_axis, -input.left_joystick.y * 15.f);
+    const auto radial_velocity = -input.left_joystick.y * static_cast<float>(M_PI) * 5.f;
+
+    hinge->setTargetVelocity(motor_axis, radial_velocity);
 }
 
 std::vector<btTypedConstraint *> WheelItem::get_constraints() {
@@ -71,7 +78,7 @@ void DirectionalWheelItem::on_input(const user_input &input) {
     WheelItem::on_input(input);
 
     constexpr int motor_axis = 4;
-    const float angle = static_cast<float>(M_PI) * input.left_joystick.x / 10.f;
+    const float angle = input.left_joystick.x * static_cast<float>(M_PI) / 8.f;
 
     hinge->setLimit(motor_axis, angle, angle);
 }

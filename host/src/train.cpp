@@ -33,7 +33,7 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
         ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, train_options.learning_rate,
         model_options.hidden_size_sensors, model_options.hidden_size_actions,
         model_options.hidden_size, torch_device, train_options.metric_window_size,
-        model_options.tau, model_options.gamma);
+        model_options.tau, model_options.gamma, model_options.initial_alpha);
 
     Saver saver(sac, train_options.output_folder, train_options.save_every);
 

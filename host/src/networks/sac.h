@@ -18,9 +18,10 @@ public:
     SacNetworks(
         int nb_sensors, int nb_action, float learning_rate, int hidden_size_sensors,
         int hidden_size_actions, int hidden_size, torch::Device device, int metric_window_size,
-        float tau, float gamma);
+        float tau, float gamma, float initial_alpha);
 
-    void train(const std::unique_ptr<ReplayBuffer> &replay_buffer, int nb_epoch, int batch_size);
+    void
+    train(const std::unique_ptr<ReplayBuffer> &replay_buffer, int nb_epoch, int batch_size) const;
 
     actor_response act(const torch::Tensor &vision, const torch::Tensor &sensors) const;
 
@@ -39,10 +40,10 @@ private:
 
     std::shared_ptr<AlphaParameter> alpha_entropy;
 
-    torch::optim::Adam actor_optim;
-    torch::optim::Adam critic_1_optim;
-    torch::optim::Adam critic_2_optim;
-    torch::optim::Adam entropy_optim;
+    std::shared_ptr<torch::optim::Adam> actor_optim;
+    std::shared_ptr<torch::optim::Adam> critic_1_optim;
+    std::shared_ptr<torch::optim::Adam> critic_2_optim;
+    std::shared_ptr<torch::optim::Adam> entropy_optim;
 
     std::shared_ptr<Metric> actor_loss_metric;
     std::shared_ptr<Metric> critic_1_loss_metric;

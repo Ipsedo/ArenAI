@@ -13,6 +13,7 @@ struct ModelOptions {
     int hidden_size;
     float tau;
     float gamma;
+    float initial_alpha;
 };
 
 struct TrainOptions {

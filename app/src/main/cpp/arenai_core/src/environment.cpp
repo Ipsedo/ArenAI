@@ -102,7 +102,8 @@ std::vector<State> BaseTanksEnvironment::reset_physics() {
         for (const auto &item_producer: tank_factories.back()->get_item_producers())
             physic_engine->add_item_producer(item_producer);
 
-        tank_controller_handler.push_back(std::make_unique<EnemyControllerHandler>(1.f / 6.f));
+        tank_controller_handler.push_back(
+            std::make_unique<EnemyControllerHandler>(wanted_frequency, 1.f / 6.f));
 
         for (const auto &controller: tank_factories.back()->get_controllers())
             tank_controller_handler.back()->add_controller(controller);

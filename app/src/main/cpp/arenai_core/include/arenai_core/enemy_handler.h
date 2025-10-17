@@ -13,15 +13,14 @@
 
 class EnemyControllerHandler final : public ControllerHandler<Action> {
 public:
-    explicit EnemyControllerHandler(float fire_latency_seconds);
+    explicit EnemyControllerHandler(float refresh_frequency, float wanted_fire_frequency);
 
 protected:
     std::tuple<bool, user_input> to_output(Action event) override;
 
 private:
-    float fire_latency_seconds;
-
-    std::chrono::time_point<std::chrono::steady_clock> last_time;
+    int nb_frames_to_fire;
+    int curr_frame;
 };
 
 #endif//ARENAI_ENEMY_HANDLER_H

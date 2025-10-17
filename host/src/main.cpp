@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
     parser.add_argument("--hidden_size_sensors").scan<'i', int>().default_value(192);
     parser.add_argument("--hidden_size_actions").scan<'i', int>().default_value(64);
     parser.add_argument("--hidden_size").scan<'i', int>().default_value(512);
-    parser.add_argument("--tau").scan<'g', float>().default_value(1e-3f);
+    parser.add_argument("--tau").scan<'g', float>().default_value(1e-2f);
     parser.add_argument("--gamma").scan<'g', float>().default_value(0.99f);
 
     // train

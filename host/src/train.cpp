@@ -46,7 +46,7 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
     indicators::ProgressBar p_bar{
         indicators::option::MinProgress{0},
         indicators::option::MaxProgress{
-            train_options.nb_episodes * train_options.max_episode_steps},
+            train_options.nb_episodes},
         indicators::option::BarWidth{30},
         indicators::option::Start{"["},
         indicators::option::Fill{"="},
@@ -130,7 +130,6 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
                           })
                    << " ";
             p_bar.set_option(indicators::option::PrefixText{stream.str()});
-            p_bar.tick();
 
             is_done =
                 is_all_done(already_done) || episode_step_idx >= train_options.max_episode_steps;
@@ -144,5 +143,6 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
 
         last_state.clear();
         env->stop_drawing();
+        p_bar.tick();
     }
 }

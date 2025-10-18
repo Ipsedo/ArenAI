@@ -15,4 +15,6 @@
 	<string name="respawn_control">Respawn</string>
 	<string name="fire_control">Fire</string>
 	<string name="undefined_control">Unedefined</string>
+	<string name="navigation_drawer_open">Open drawer</string>
+	<string name="navigation_drawer_close">Close drawer</string>
 </resources>

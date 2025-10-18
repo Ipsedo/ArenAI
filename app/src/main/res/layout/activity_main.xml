@@ -23,7 +23,7 @@
         android:background="@drawable/button"
         android:onClick="play"
         android:text="Play"
-        android:textColor="@color/grey"/>
+        android:textColor="@color/white"/>
 
 
     <CheckBox
@@ -42,7 +42,7 @@
         android:background="@drawable/button"
         android:onClick="configureGamePad"
         android:text="Configure GamePad"
-        android:textColor="@color/grey" />
+        android:textColor="@color/white" />
 
     <Button
         android:layout_width="match_parent"
@@ -51,6 +51,6 @@
         android:background="@drawable/button"
         android:onClick="configureControls"
         android:text="Configure controls"
-        android:textColor="@color/grey"/>
+        android:textColor="@color/white"/>
 
 </LinearLayout>

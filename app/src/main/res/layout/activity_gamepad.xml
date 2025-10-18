@@ -1,82 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
 <tool:LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-				   xmlns:tool="http://schemas.android.com/tools"
-				   xmlns:app="http://schemas.android.com/apk/res-auto"
-				   android:layout_width="match_parent"
-				   android:layout_height="match_parent"
-				   tool:context=".set_controls.GamePadActivity">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tool="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tool:context=".set_controls.GamePadActivity">
 
-	<ScrollView
-			android:layout_width="match_parent"
-			android:layout_height="match_parent">
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
-		<LinearLayout
-				android:orientation="vertical"
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-			<TextView
-					android:layout_width="match_parent"
-					android:layout_height="wrap_content"
-					android:text="@string/activity_control_text"
-					android:gravity="center"
-					android:layout_margin="15dp"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="15dp"
+                android:gravity="center"
+                android:text="@string/activity_control_text" />
 
-			<LinearLayout
-					android:orientation="vertical"
-					android:layout_width="match_parent"
-					android:layout_height="wrap_content"
-					android:id="@+id/axis_set_up_layout">
+            <LinearLayout
+                android:id="@+id/axis_set_up_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
 
-				<com.samuelberrien.arenai.set_controls.axis.SetUpAxis
-						android:layout_width="match_parent"
-						android:layout_height="100dp"
-						app:axis="direction"
-						android:layout_margin="15dp"/>
+                <com.samuelberrien.arenai.set_controls.axis.SetUpAxis
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:layout_margin="15dp"
+                    app:axis="direction" />
 
-				<com.samuelberrien.arenai.set_controls.axis.SetUpAxis
-						android:layout_width="match_parent"
-						android:layout_height="100dp"
-						app:axis="speed"
-						android:layout_margin="15dp"/>
+                <com.samuelberrien.arenai.set_controls.axis.SetUpAxis
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:layout_margin="15dp"
+                    app:axis="speed" />
 
-				<com.samuelberrien.arenai.set_controls.axis.SetUpAxis
-						android:layout_width="match_parent"
-						android:layout_height="100dp"
-						app:axis="turret"
-						android:layout_margin="15dp"/>
+                <com.samuelberrien.arenai.set_controls.axis.SetUpAxis
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:layout_margin="15dp"
+                    app:axis="turret" />
 
-				<com.samuelberrien.arenai.set_controls.axis.SetUpAxis
-						android:layout_width="match_parent"
-						android:layout_height="100dp"
-						app:axis="canon"
-						android:layout_margin="15dp"/>
-			</LinearLayout>
+                <com.samuelberrien.arenai.set_controls.axis.SetUpAxis
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:layout_margin="15dp"
+                    app:axis="canon" />
+            </LinearLayout>
 
-			<LinearLayout
-					android:orientation="vertical"
-					android:layout_width="match_parent"
-					android:layout_height="wrap_content"
-					android:id="@+id/button_set_up_layout">
+            <LinearLayout
+                android:id="@+id/button_set_up_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
 
-				<com.samuelberrien.arenai.set_controls.button.SetUpButton
-						android:layout_width="match_parent"
-						android:layout_height="100dp"
-						android:layout_margin="15dp"
-						app:button="brake"/>
+                <com.samuelberrien.arenai.set_controls.button.SetUpButton
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:layout_margin="15dp"
+                    app:button="brake" />
 
-				<com.samuelberrien.arenai.set_controls.button.SetUpButton
-						android:layout_width="match_parent"
-						android:layout_height="100dp"
-						android:layout_margin="15dp"
-						app:button="respawn"/>
+                <com.samuelberrien.arenai.set_controls.button.SetUpButton
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:layout_margin="15dp"
+                    app:button="respawn" />
 
-				<com.samuelberrien.arenai.set_controls.button.SetUpButton
-						android:layout_width="match_parent"
-						android:layout_height="100dp"
-						android:layout_margin="15dp"
-						app:button="fire"/>
-			</LinearLayout>
-		</LinearLayout>
-	</ScrollView>
+                <com.samuelberrien.arenai.set_controls.button.SetUpButton
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:layout_margin="15dp"
+                    app:button="fire" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
 </tool:LinearLayout>

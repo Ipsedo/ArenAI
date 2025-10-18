@@ -11,27 +11,14 @@ import android.widget.NumberPicker;
 import com.samuelberrien.arenai.set_controls.ControlActivity;
 import com.samuelberrien.arenai.set_controls.GamePadActivity;
 
-public class MainActivity extends Activity implements NumberPicker.OnValueChangeListener {
+public class MainActivity extends Activity {
 
-	private int levelIdx;
-	public static final String levelIdxExtraStr = "Level_Idx";
 	public static final String useControllerExtraStr = "Use_Controller";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-
-		String[] levelName = new String[]{"Demo", "Practice"};
-		NumberPicker levelPicker = findViewById(R.id.level_picker);
-		levelPicker.setMinValue(0);
-		levelPicker.setMaxValue(levelName.length - 1);
-		levelPicker.setDisplayedValues(levelName);
-		levelPicker.setValue(0);
-
-		levelIdx = 0;
-
-		levelPicker.setOnValueChangedListener(this);
 	}
 
 	public void play(View v) {
@@ -47,10 +34,5 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
 	public void configureControls(View v) {
 		Intent myIntent = new Intent(this, ControlActivity.class);
 		startActivity(myIntent);
-	}
-
-	@Override
-	public void onValueChange(NumberPicker numberPicker, int oldVal, int newVal) {
-		levelIdx = newVal;
 	}
 }

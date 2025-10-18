@@ -6,7 +6,7 @@
 
 	<color name="whiteTransparent">#AAEEEEEE</color>
 	<color name="greyTransparent">#AAAAAAAA</color>
-	<color name="grey">#b4b4b4</color>
+	<color name="grey">#c4c4c4</color>
 	<color name="greySelected">#a4a4a4</color>
 	<color name="redTransparent">#AAFF9048</color>
 </resources>

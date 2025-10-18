@@ -20,8 +20,5 @@ std::tuple<bool, user_input> EnemyControllerHandler::to_output(const Action even
 
     const button fire_button_restricted(has_fire);
 
-    return {
-        true,
-        user_input(
-            event.left_joystick, event.right_joystick, fire_button_restricted, {false}, {false})};
+    return {true, user_input(event.left_joystick, event.right_joystick, fire_button_restricted)};
 }

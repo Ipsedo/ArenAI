@@ -14,6 +14,7 @@
 
 #include "./agent/executorch_agent.h"
 #include "./game_environment.h"
+#include "./utils.h"
 
 // https://github.com/JustJokerX/NativeActivityFromJavaActivity/blob/master/app/src/main/cpp/main.cpp
 
@@ -31,6 +32,8 @@ typedef std::chrono::steady_clock steady_clock_t;
 typedef std::chrono::duration<float> secs_f;
 
 void android_main(struct android_app *app) {
+    hide_system_status_bar(app);
+
     const float target_fps = 30.0f;
     const secs_f frame_dt = secs_f(1.0f / target_fps);
 

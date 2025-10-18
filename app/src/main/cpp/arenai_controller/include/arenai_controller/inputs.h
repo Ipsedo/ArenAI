@@ -23,8 +23,6 @@ struct user_input {
     joystick right_joystick;
 
     button fire_button;
-    button brake_button;
-    button respawn_button;
 };
 
 #endif// ARENAI_INPUTS_H

@@ -135,7 +135,7 @@ std::vector<Action> ExecuTorchAgent::act(const std::vector<State> &state) {
         joystick joystick_canon{sampled_action[2], sampled_action[3]};
         button fire_button(sampled_action[4] > 0);
 
-        actions[i] = {joystick_direction, joystick_canon, fire_button, {false}, {false}};
+        actions[i] = {joystick_direction, joystick_canon, fire_button};
     }
 
     return actions;

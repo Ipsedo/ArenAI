@@ -23,11 +23,7 @@ std::tuple<bool, user_input> PlayerControllerHandler::to_output(AInputEvent *eve
     int turret_joystick_used = turret_joystick->on_event(event);
 
     user_input input{
-        drive_joystick->get_input(),
-        turret_joystick->get_input(),
-        {fire_button->get_input()},
-        {false},
-        {false}};
+        drive_joystick->get_input(), turret_joystick->get_input(), {fire_button->get_input()}};
 
     return {drive_joystick_used || fire_button_used || turret_joystick_used, input};
 }

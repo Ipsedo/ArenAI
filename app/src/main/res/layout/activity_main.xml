@@ -34,7 +34,9 @@
         android:layout_gravity="center"
         android:layout_marginBottom="@dimen/menu_horizontal_margin"
         android:gravity="center"
-        android:text="Use controller (instead of UI)" />
+        android:text="Use controller (instead of UI)"
+        android:textColor="@color/colorPrimary"
+        android:textStyle="bold"/>
 
     <Button
         android:layout_width="match_parent"

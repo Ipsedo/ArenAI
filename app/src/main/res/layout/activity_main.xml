@@ -13,7 +13,7 @@
         android:id="@+id/navigation_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/white">
+        android:background="@color/colorBackground">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/main_toolbar"
@@ -29,7 +29,8 @@
             android:layout_centerHorizontal="true"
             android:layout_centerVertical="true"
             android:layout_marginHorizontal="@dimen/menu_horizontal_margin"
-            android:gravity="center">
+            android:gravity="center"
+            android:orientation="vertical">
 
             <Button
                 android:layout_width="match_parent"
@@ -38,7 +39,7 @@
                 android:background="@drawable/button"
                 android:onClick="play"
                 android:text="Play"
-                android:textColor="@color/white" />
+                android:textColor="@color/colorButtonText" />
 
             <CheckBox
                 android:id="@+id/use_controller_switch"
@@ -58,6 +59,7 @@
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:layout_marginHorizontal="@dimen/menu_horizontal_margin"
+        android:background="@color/colorBackground"
         android:fitsSystemWindows="true">
 
         <LinearLayout
@@ -73,7 +75,7 @@
                 android:background="@drawable/button"
                 android:onClick="configureGamePad"
                 android:text="Configure GamePad"
-                android:textColor="@color/white" />
+                android:textColor="@color/colorButtonText" />
 
             <Button
                 android:layout_width="match_parent"
@@ -82,7 +84,7 @@
                 android:background="@drawable/button"
                 android:onClick="configureControls"
                 android:text="Configure controls"
-                android:textColor="@color/white" />
+                android:textColor="@color/colorButtonText" />
         </LinearLayout>
 
     </com.google.android.material.navigation.NavigationView>

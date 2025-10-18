@@ -26,8 +26,8 @@ int main(int argc, char **argv) {
     parser.add_argument("--epochs").scan<'i', int>().default_value(4);
     parser.add_argument("--batch_size").scan<'i', int>().default_value(1024);
     parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60 * 3);
-    parser.add_argument("--nb_episodes").scan<'i', int>().default_value(32768);
-    parser.add_argument("--replay_buffer_size").scan<'i', int>().default_value(16384);
+    parser.add_argument("--nb_episodes").scan<'i', int>().default_value(65536);
+    parser.add_argument("--replay_buffer_size").scan<'i', int>().default_value(32768);
     parser.add_argument("--train_every").scan<'i', int>().default_value(256);
     parser.add_argument("--save_every").scan<'i', int>().default_value(30 * 60 * 3 * 25);
     parser.add_argument("--cuda").default_value(false).implicit_value(true);

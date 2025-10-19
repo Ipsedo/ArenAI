@@ -40,3 +40,31 @@ void hide_system_status_bar(struct android_app *app) {
 
     vm->DetachCurrentThread();
 }
+
+/*
+ * Intent
+ */
+
+JNIEnv *get_env(struct android_app *app) {
+    JNIEnv *env = nullptr;
+    app->activity->vm->AttachCurrentThread(&env, nullptr);
+    return env;
+}
+
+jobject get_intent(JNIEnv *env, jobject activity) {
+    jclass cls = env->GetObjectClass(activity);
+    jmethodID mid = env->GetMethodID(cls, "getIntent", "()Landroid/content/Intent;");
+    jobject intent = env->CallObjectMethod(activity, mid);
+    env->DeleteLocalRef(cls);
+    return intent;
+}
+
+int get_int_extra(JNIEnv *env, jobject intent, const char *key, int default_value) {
+    jclass cls = env->GetObjectClass(intent);
+    jmethodID mid = env->GetMethodID(cls, "getIntExtra", "(Ljava/lang/String;I)I");
+    jstring jkey = env->NewStringUTF(key);
+    jint res = env->CallIntMethod(intent, mid, jkey, (jint) default_value);
+    env->DeleteLocalRef(jkey);
+    env->DeleteLocalRef(cls);
+    return (int) res;
+}

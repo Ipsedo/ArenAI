@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import android.view.View;
+import android.widget.NumberPicker;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -20,6 +21,7 @@ import com.samuelberrien.arenai.set_controls.GamePadActivity;
 public class MainActivity extends AppCompatActivity {
 
 	private ActionBarDrawerToggle drawerToggle;
+	private NumberPicker numberPicker;
 
     @Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +39,11 @@ public class MainActivity extends AppCompatActivity {
 
 		drawerLayout.addDrawerListener(drawerToggle);
 		drawerToggle.syncState();
+
+		numberPicker = findViewById(R.id.nb_tanks_number_picker);
+		numberPicker.setMinValue(1);
+		numberPicker.setMaxValue(16);
+		numberPicker.setValue(4);
 	}
 
 	@Override
@@ -53,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
 
 	public void play(View v) {
 		Intent intent = new Intent(this, NativeActivity.class);
+		intent.putExtra("nb_tanks", numberPicker.getValue());
 		startActivity(intent);
 	}
 

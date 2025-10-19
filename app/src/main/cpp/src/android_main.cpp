@@ -37,7 +37,10 @@ void android_main(struct android_app *app) {
     const float target_fps = 30.0f;
     const secs_f frame_dt = secs_f(1.0f / target_fps);
 
-    constexpr int nb_tanks = 8;
+    auto jni_env = get_env(app);
+    auto intent = get_intent(jni_env, app->activity->clazz);
+    auto nb_tanks = get_int_extra(jni_env, intent, "nb_tanks", 4);
+
     bool will_quit = false;
 
     auto display = eglGetDisplay(EGL_DEFAULT_DISPLAY);

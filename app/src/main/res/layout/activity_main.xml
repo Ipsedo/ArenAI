@@ -32,6 +32,30 @@
             android:gravity="center"
             android:orientation="vertical">
 
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.75"
+                    android:layout_marginRight="10dp"
+                    android:gravity="center"
+                    android:text="Choose enemy number : "
+                    android:textColor="@color/colorPrimary"
+                    android:textStyle="bold" />
+
+                <NumberPicker
+                    android:id="@+id/nb_tanks_number_picker"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:theme="@style/AppTheme.Picker"
+                    android:layout_weight="0.25" />
+            </LinearLayout>
+
             <Button
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -47,6 +71,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginBottom="@dimen/menu_horizontal_margin"
+                android:layout_marginTop="@dimen/menu_horizontal_margin"
                 android:gravity="center"
                 android:text="Use controller (instead of UI)"
                 android:textColor="@color/colorPrimary"

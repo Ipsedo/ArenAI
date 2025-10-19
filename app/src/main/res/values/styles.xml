@@ -38,4 +38,9 @@
 		<item name="android:textStyle">bold</item>
 		<item name="android:textColor">@color/colorButtonText</item>
 	</style>
+
+	<style name="AppTheme.Picker" parent="Theme.AppCompat.Light.NoActionBar" >
+		<item name="android:textColorPrimary">@color/colorPrimary</item>
+		<item name="colorControlNormal">@color/colorPrimary</item>
+	</style>
 </resources>

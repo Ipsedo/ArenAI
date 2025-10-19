@@ -45,8 +45,7 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
 
     indicators::ProgressBar p_bar{
         indicators::option::MinProgress{0},
-        indicators::option::MaxProgress{
-            train_options.nb_episodes},
+        indicators::option::MaxProgress{train_options.nb_episodes},
         indicators::option::BarWidth{30},
         indicators::option::Start{"["},
         indicators::option::Fill{"="},

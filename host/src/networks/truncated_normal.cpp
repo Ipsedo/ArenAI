@@ -29,7 +29,7 @@ torch::Tensor truncated_normal_log_pdf(
 
     const auto z = theta(beta) - theta(alpha);
 
-    return -0.5 * std::log(2.0 * static_cast<double>(M_PI)) - torch::log(safe_sigma)
+    return -0.5 * std::log(2.0 * M_PI) - torch::log(safe_sigma)
            - 0.5 * torch::pow((x - mu) / safe_sigma, 2.0) - torch::log(z);
 }
 

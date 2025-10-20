@@ -95,15 +95,14 @@ std::vector<State> BaseTanksEnvironment::reset_physics() {
     for (int i = 0; i < nb_tanks; i++) {
         tank_factories.push_back(std::make_unique<EnemyTankFactory>(
             file_reader, "enemy_" + std::to_string(i),
-            glm::vec3(pos_u_dist(rng), 0.f, pos_u_dist(rng)),
-            static_cast<int>(4.f / wanted_frequency)));
+            glm::vec3(pos_u_dist(rng), 0.f, pos_u_dist(rng)), wanted_frequency));
 
         for (const auto &item: tank_factories.back()->get_items()) physic_engine->add_item(item);
         for (const auto &item_producer: tank_factories.back()->get_item_producers())
             physic_engine->add_item_producer(item_producer);
 
-        tank_controller_handler.push_back(
-            std::make_unique<EnemyControllerHandler>(wanted_frequency, 1.f / 6.f));
+        tank_controller_handler.push_back(std::make_unique<EnemyControllerHandler>(
+            wanted_frequency, 1.f / 6.f, tank_factories.back()->get_action_stats()));
 
         for (const auto &controller: tank_factories.back()->get_controllers())
             tank_controller_handler.back()->add_controller(controller);

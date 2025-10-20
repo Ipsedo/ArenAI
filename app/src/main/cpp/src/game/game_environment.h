@@ -12,12 +12,12 @@
 #include <arenai_controller/controller.h>
 #include <arenai_core/environment.h>
 #include <arenai_model/engine.h>
-#include <arenai_model/tank_factory.h>
 #include <arenai_utils/file_reader.h>
 #include <arenai_view/renderer.h>
 
+#include "../controller/player_handler.h"
 #include "./android_gl_context.h"
-#include "./controller/player_handler.h"
+#include "./player_tank_factory.h"
 
 class UserGameTanksEnvironment : public BaseTanksEnvironment {
 public:

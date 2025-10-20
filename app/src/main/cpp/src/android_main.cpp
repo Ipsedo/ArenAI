@@ -13,8 +13,8 @@
 #include <arenai_utils/logging.h>
 
 #include "./agent/executorch_agent.h"
-#include "./game_environment.h"
-#include "./utils.h"
+#include "./game/game_environment.h"
+#include "./utils/utils.h"
 
 // https://github.com/JustJokerX/NativeActivityFromJavaActivity/blob/master/app/src/main/cpp/main.cpp
 

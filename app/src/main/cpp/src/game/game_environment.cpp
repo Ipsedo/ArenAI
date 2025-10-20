@@ -17,7 +17,7 @@
 #include <arenai_view/cubemap.h>
 #include <arenai_view/specular.h>
 
-#include "./android_file_reader.h"
+#include "../utils/android_file_reader.h"
 #include "./android_gl_context.h"
 
 UserGameTanksEnvironment::UserGameTanksEnvironment(

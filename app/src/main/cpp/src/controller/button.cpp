@@ -6,7 +6,7 @@
 
 #include <arenai_view/hud.h>
 
-#include "../units.h"
+#include "../utils/units.h"
 
 HUDButton::HUDButton(
     AConfiguration *config, int width_px, int height_px, int margin_dp, int size_dp)

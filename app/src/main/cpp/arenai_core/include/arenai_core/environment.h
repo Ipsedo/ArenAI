@@ -14,11 +14,11 @@
 #include <vector>
 
 #include <arenai_model/engine.h>
-#include <arenai_model/tank_factory.h>
 #include <arenai_utils/file_reader.h>
 #include <arenai_view/pbuffer_renderer.h>
 
 #include "./enemy_handler.h"
+#include "./enemy_tank_factory.h"
 #include "./types.h"
 
 class BaseTanksEnvironment {

@@ -8,7 +8,7 @@
 
 #include <android/input.h>
 
-#include "../units.h"
+#include "../utils/units.h"
 
 /*
  * HUDJoyStick

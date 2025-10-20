@@ -71,7 +71,7 @@ std::tuple<torch::Tensor, torch::Tensor> states_to_tensor(const std::vector<Stat
         }
     });
 
-    return {visions_u8.to(torch::kFloat).mul_(2.0f / 255.0f).add_(-1.0f), proprio};
+    return {visions_u8, proprio};
 }
 
 std::tuple<torch::Tensor, torch::Tensor> state_to_tensor(const State &state) {
@@ -108,5 +108,5 @@ std::tuple<torch::Tensor, torch::Tensor> state_to_tensor(const State &state) {
     }
     std::memcpy(prop_ptr, state.proprioception.data(), static_cast<size_t>(P) * sizeof(float));
 
-    return {visions_u8.to(torch::kFloat).mul_(2.0f / 255.0f).add_(-1.0f), proprio};
+    return {visions_u8, proprio};
 }

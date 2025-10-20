@@ -26,5 +26,7 @@ ConvolutionNetwork::ConvolutionNetwork()
                    torch::nn::LayerNorm(torch::nn::LayerNormOptions({128}))))) {}
 
 torch::Tensor ConvolutionNetwork::forward(const torch::Tensor &input) {
-    return cnn->forward(input);
+    if (input.dtype() != torch::kUInt8) throw std::runtime_error("Input must be UInt8");
+
+    return cnn->forward(input.to(torch::kFloat).mul_(2.0f / 255.0f).add_(-1.0f));
 }

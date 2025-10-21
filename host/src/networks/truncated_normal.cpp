@@ -4,7 +4,7 @@
 
 #include "./truncated_normal.h"
 
-#include <arenai_core/types.h>
+#include <arenai_core/constants.h>
 
 torch::Tensor phi(const torch::Tensor &z) {
     return torch::exp(-0.5 * torch::pow(z, 2.0)) / std::sqrt(2.0 * M_PI);

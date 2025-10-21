@@ -8,6 +8,8 @@
 
 #include <indicators/progress_bar.hpp>
 
+#include <arenai_core/constants.h>
+
 #include "./core/train_environment.h"
 #include "./core/train_gl_context.h"
 #include "./networks/sac.h"

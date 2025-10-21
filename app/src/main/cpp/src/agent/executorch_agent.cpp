@@ -8,15 +8,13 @@
 #include <executorch/extension/tensor/tensor.h>
 #include <executorch/runtime/core/error.h>
 
+#include <arenai_core/constants.h>
+
 #include "./loader.h"
 
 /*
  * Truncated normal sample
  */
-
-float phi(const float z) {
-    return std::exp(-0.5f * std::pow(z, 2.f)) / std::sqrt(2.f * static_cast<float>(M_PI));
-}
 
 float erfinv(const float x) {
     if (std::isnan(x)) return std::numeric_limits<float>::quiet_NaN();
@@ -94,6 +92,7 @@ std::vector<Action> ExecuTorchAgent::act(const std::vector<State> &state) {
             for (int64_t h = 0; h < H; h++) {
                 const auto &row = plane[static_cast<size_t>(h)];
                 for (int64_t w = 0; w < W; w++) {
+                    // need convert it because LibTorch model doesn't export normalization [-1.0, 1.0]
                     buffer_vision[idx_vision] = 2.f * static_cast<float>(row[w]) / 255.f - 1.f;
                     idx_vision += 1;
                 }

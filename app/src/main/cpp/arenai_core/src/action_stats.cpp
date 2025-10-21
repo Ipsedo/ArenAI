@@ -32,9 +32,9 @@ void ActionStats::process_input(const Action &action) {
 
     const bool has_fire = action.fire_button.pressed != last_action.fire_button.pressed;
 
-    if (!(has_move_left_x || has_move_left_y || has_move_right_x || has_move_right_y || has_fire))
-        frames_since_last_action++;
-    else frames_since_last_action = 0;
+    if (has_move_left_x || has_move_left_y || has_move_right_x || has_move_right_y || has_fire)
+        frames_since_last_action = 0;
+    else frames_since_last_action++;
 
     last_action = action;
 }

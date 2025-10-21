@@ -8,6 +8,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <arenai_core/constants.h>
 #include <arenai_core/environment.h>
 #include <arenai_model/convex.h>
 #include <arenai_model/height_map.h>

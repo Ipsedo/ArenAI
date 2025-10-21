@@ -6,6 +6,8 @@
 
 #include <ATen/Parallel.h>
 
+#include <arenai_core/constants.h>
+
 std::vector<Action> tensor_to_actions(const torch::Tensor &actions_tensor) {
     if (actions_tensor.sizes().size() != 2)
         throw std::invalid_argument("actions_tensor.sizes().size() != 2");

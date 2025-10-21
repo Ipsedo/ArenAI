@@ -10,8 +10,8 @@ EnemyTankFactory::EnemyTankFactory(
     : TankFactory(file_reader, tank_prefix_name, chassis_pos), reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frequency)), curr_frame_upside_down(0),
       is_dead_already_triggered(false),
-      action_stats(std::make_shared<ActionStats>(1.5f, wanted_frequency, 5e-2f)),
-      max_frames_without_hit(static_cast<int>(30.f / wanted_frequency)),
+      action_stats(std::make_shared<ActionStats>(3.f, wanted_frequency, 5e-1f)),
+      max_frames_without_hit(static_cast<int>(60.f / wanted_frequency)),
       nb_frames_since_last_hit(0) {}
 
 float EnemyTankFactory::get_reward() {
@@ -34,11 +34,11 @@ float EnemyTankFactory::get_reward() {
 
     actual_reward += 1.125e-1f * action_stats->get_reward();
 
-    actual_reward +=
-        -1.125e-1f * static_cast<float>(std::min(nb_frames_since_last_hit, max_frames_without_hit))
+    actual_reward -=
+        1.125e-1f * static_cast<float>(std::min(nb_frames_since_last_hit, max_frames_without_hit))
         / static_cast<float>(max_frames_without_hit);
 
-    nb_frames_since_last_hit += 1;
+    nb_frames_since_last_hit++;
 
     return actual_reward;
 }
@@ -47,8 +47,8 @@ void EnemyTankFactory::on_fired_shell_contact(Item *item) {
     bool self_shoot = false;
     for (const auto &i: get_items()) {
         if (i->get_name() == item->get_name()) {
-            reward -= 0.25f;
             self_shoot = true;
+            break;
         }
     }
 

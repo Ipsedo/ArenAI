@@ -4,8 +4,6 @@
 
 #include "./sac.h"
 
-#include <arenai_core/types.h>
-
 #include "../utils/saver.h"
 #include "./target_update.h"
 #include "./truncated_normal.h"

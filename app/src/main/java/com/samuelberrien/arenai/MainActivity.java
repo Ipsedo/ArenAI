@@ -6,6 +6,8 @@ import android.os.Bundle;
 
 import android.view.View;
 import android.widget.NumberPicker;
+import android.widget.SeekBar;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -21,7 +23,8 @@ import com.samuelberrien.arenai.set_controls.GamePadActivity;
 public class MainActivity extends AppCompatActivity {
 
 	private ActionBarDrawerToggle drawerToggle;
-	private NumberPicker numberPicker;
+
+	int nb_tanks_chosen = 1;
 
     @Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -31,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
 		MaterialToolbar toolbar = findViewById(R.id.main_toolbar);
 		setSupportActionBar(toolbar);
 
-        DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
+		DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
 		drawerToggle = new ActionBarDrawerToggle(
 				this, drawerLayout, toolbar,
 				R.string.navigation_drawer_open, R.string.navigation_drawer_close
@@ -40,10 +43,28 @@ public class MainActivity extends AppCompatActivity {
 		drawerLayout.addDrawerListener(drawerToggle);
 		drawerToggle.syncState();
 
-		numberPicker = findViewById(R.id.nb_tanks_number_picker);
-		numberPicker.setMinValue(1);
-		numberPicker.setMaxValue(16);
-		numberPicker.setValue(4);
+		TextView chosenEnemyNumberTextView = findViewById(R.id.chosen_enemy_number_textview);
+		String originalChosenEnemyNumberMessage = chosenEnemyNumberTextView.getText().toString();
+		chosenEnemyNumberTextView.setText(String.format(originalChosenEnemyNumberMessage, nb_tanks_chosen));
+
+        SeekBar numberSeekBar = findViewById(R.id.enemy_number_seekbar);
+		numberSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				nb_tanks_chosen = progress;
+				chosenEnemyNumberTextView.setText(String.format(originalChosenEnemyNumberMessage, nb_tanks_chosen));
+			}
+
+			@Override
+			public void onStartTrackingTouch(SeekBar seekBar) {
+
+			}
+
+			@Override
+			public void onStopTrackingTouch(SeekBar seekBar) {
+
+			}
+		});
 	}
 
 	@Override
@@ -60,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
 
 	public void play(View v) {
 		Intent intent = new Intent(this, NativeActivity.class);
-		intent.putExtra("nb_tanks", numberPicker.getValue());
+		intent.putExtra("nb_tanks", nb_tanks_chosen);
 		startActivity(intent);
 	}
 

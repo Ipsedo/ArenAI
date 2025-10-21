@@ -33,37 +33,35 @@
             android:orientation="vertical">
 
             <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.75"
-                    android:layout_marginRight="10dp"
-                    android:gravity="center"
-                    android:text="Choose enemy number : "
-                    android:textColor="@color/colorPrimary"
-                    android:textStyle="bold" />
-
-                <NumberPicker
-                    android:id="@+id/nb_tanks_number_picker"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:theme="@style/AppTheme.Picker"
-                    android:layout_weight="0.25" />
-            </LinearLayout>
-
-            <Button
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="@dimen/stroke_width"
-                android:background="@drawable/button"
-                android:onClick="play"
-                android:text="Play"
-                android:textColor="@color/colorButtonText" />
+                android:gravity="center"
+                android:orientation="vertical"
+                android:layout_marginBottom="30dp"
+                android:layout_marginHorizontal="20dp"
+                android:background="@drawable/rectangle">
+
+                    <TextView
+                        android:id="@+id/chosen_enemy_number_textview"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginVertical="10dp"
+                        android:gravity="center"
+                        android:text="@string/chosen_enemy_number_text"
+                        android:textColor="@color/colorPrimary"
+                        android:textStyle="bold" />
+
+                    <SeekBar
+                        android:id="@+id/enemy_number_seekbar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="30dp"
+                        android:layout_marginBottom="20dp"
+                        android:min="1"
+                        android:max="16"
+                        android:progress="1"/>
+
+            </LinearLayout>
 
             <CheckBox
                 android:id="@+id/use_controller_switch"
@@ -73,9 +71,17 @@
                 android:layout_marginBottom="@dimen/menu_horizontal_margin"
                 android:layout_marginTop="@dimen/menu_horizontal_margin"
                 android:gravity="center"
-                android:text="Use controller (instead of UI)"
+                android:text="@string/use_controller_text"
                 android:textColor="@color/colorPrimary"
                 android:textStyle="bold" />
+
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button"
+                android:onClick="play"
+                android:text="@string/play_button_text"
+                android:textColor="@color/colorButtonText" />
         </LinearLayout>
     </RelativeLayout>
 
@@ -99,7 +105,7 @@
                 android:layout_margin="@dimen/stroke_width"
                 android:background="@drawable/button"
                 android:onClick="configureGamePad"
-                android:text="Configure GamePad"
+                android:text="@string/configure_game_pad_text"
                 android:textColor="@color/colorButtonText" />
 
             <Button
@@ -108,7 +114,7 @@
                 android:layout_margin="@dimen/stroke_width"
                 android:background="@drawable/button"
                 android:onClick="configureControls"
-                android:text="Configure controls"
+                android:text="@string/configure_controls_text"
                 android:textColor="@color/colorButtonText" />
         </LinearLayout>
 

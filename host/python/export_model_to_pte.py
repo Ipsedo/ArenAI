@@ -20,7 +20,7 @@ def main() -> None:
     )
 
     parser.add_argument("--hidden-size-sensors", type=int, default=192)
-    parser.add_argument("--hidden-size", type=int, default=512)
+    parser.add_argument("--hidden-size", type=int, default=1024)
 
     args = parser.parse_args()
 

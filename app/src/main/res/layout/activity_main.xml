@@ -28,7 +28,7 @@
             android:layout_centerInParent="true"
             android:layout_centerHorizontal="true"
             android:layout_centerVertical="true"
-            android:layout_marginHorizontal="@dimen/menu_horizontal_margin"
+            android:paddingHorizontal="@dimen/menu_horizontal_margin"
             android:gravity="center"
             android:orientation="vertical">
 
@@ -39,7 +39,8 @@
                 android:orientation="vertical"
                 android:layout_marginBottom="30dp"
                 android:layout_marginHorizontal="20dp"
-                android:background="@drawable/rectangle">
+                android:background="@drawable/rectangle"
+                android:elevation="10dp">
 
                     <TextView
                         android:id="@+id/chosen_enemy_number_textview"
@@ -59,7 +60,8 @@
                         android:layout_marginBottom="20dp"
                         android:min="1"
                         android:max="16"
-                        android:progress="1"/>
+                        android:progress="1"
+                        android:tickMark="@drawable/seekbar_tick_dot"/>
 
             </LinearLayout>
 

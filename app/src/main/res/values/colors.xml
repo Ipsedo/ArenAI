@@ -4,6 +4,7 @@
 	<color name="colorPrimaryTransparent">#AA3F51B5</color>
 	<color name="colorPrimaryDark">#303F9F</color>
 	<color name="colorAccent">#FF4081</color>
+	<color name="colorAccentDark">#CC3265</color>
 
 	<color name="whiteTransparent">#AAEEEEEE</color>
 
@@ -12,7 +13,7 @@
 	<color name="colorButtonText">#EEEEEE</color>
 
 	<color name="greyTransparent">#AAC8C8C8</color>
-	<color name="grey">#c4c4c4</color>
+	<color name="grey">#C8C8C8</color>
 	<color name="greySelected">#a4a4a4</color>
 	<color name="redTransparent">#AAFF9048</color>
 </resources>

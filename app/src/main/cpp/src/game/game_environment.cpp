@@ -65,17 +65,13 @@ void UserGameTanksEnvironment::on_cmd(struct android_app *app, int32_t cmd) {
                 is_paused = false;
             }
             break;
-        case APP_CMD_TERM_WINDOW:
+        case APP_CMD_PAUSE:
             pause();
             LOG_INFO("close");
             break;
         case APP_CMD_GAINED_FOCUS:
             is_paused = false;
             LOG_INFO("gained focus");
-            break;
-        case APP_CMD_LOST_FOCUS:
-            pause();
-            LOG_INFO("lost focus");
             break;
         default: break;
     }
@@ -136,7 +132,10 @@ void UserGameTanksEnvironment::on_reset_drawables(
     player_renderer->release_current();
 }
 
-void UserGameTanksEnvironment::pause() { is_paused = true; }
+void UserGameTanksEnvironment::pause() {
+    is_paused = true;
+    stop_drawing();
+}
 
 void UserGameTanksEnvironment::reset_singleton() {
     Singleton<Cache<std::shared_ptr<Shape>>>::get_singleton()->clear();

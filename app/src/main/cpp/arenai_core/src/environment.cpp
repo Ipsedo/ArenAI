@@ -236,10 +236,13 @@ void BaseTanksEnvironment::worker_enemy_vision(
 }
 
 void BaseTanksEnvironment::lock_all_thread_model_matrix() {
+    if (thread_killed) return;
+
     std::vector<std::unique_lock<std::mutex>> locks;
     locks.reserve(visions_mutex.size());
 
     std::vector<std::mutex *> ptrs;
+    ptrs.reserve(visions_mutex.size());
     for (auto &m: visions_mutex) ptrs.push_back(&m);
 
     std::sort(ptrs.begin(), ptrs.end(), std::less<std::mutex *>{});
@@ -282,7 +285,7 @@ void BaseTanksEnvironment::kill_threads() {
 }
 
 BaseTanksEnvironment::~BaseTanksEnvironment() {
-    kill_threads();
+    stop_drawing();
 
     tank_factories.clear();
     enemy_visions.clear();

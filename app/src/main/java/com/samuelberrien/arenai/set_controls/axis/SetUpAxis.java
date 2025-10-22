@@ -86,7 +86,7 @@ public class SetUpAxis extends LinearLayout {
 		l.addView(contenerPlus = new AxisContainer(context, axis, true), params);
 
 		TextView name = new TextView(context);
-		name.setBackground(ContextCompat.getDrawable(getContext(), R.color.greyTransparent));
+		name.setBackground(ContextCompat.getDrawable(getContext(), R.color.grey));
 		name.setGravity(Gravity.CENTER);
 		name.setText(axisMap.getFullName());
 

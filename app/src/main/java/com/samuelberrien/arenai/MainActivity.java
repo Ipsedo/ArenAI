@@ -5,8 +5,8 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.NumberPicker;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -14,20 +14,21 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
-import androidx.core.view.WindowCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.material.appbar.MaterialToolbar;
-import com.google.android.material.navigation.NavigationView;
 import com.samuelberrien.arenai.set_controls.ControlActivity;
 import com.samuelberrien.arenai.set_controls.GamePadActivity;
+
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
 	private ActionBarDrawerToggle drawerToggle;
 
-	int nb_tanks_chosen = 1;
+	private int nbTanksChosen = 1;
+	private Map<String, String> difficultyLevelToExecutorchModelAsset;
+	private Spinner spinner;
 
     @Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -48,31 +49,33 @@ public class MainActivity extends AppCompatActivity {
 
 		TextView chosenEnemyNumberTextView = findViewById(R.id.chosen_enemy_number_textview);
 		String originalChosenEnemyNumberMessage = chosenEnemyNumberTextView.getText().toString();
-		chosenEnemyNumberTextView.setText(String.format(originalChosenEnemyNumberMessage, nb_tanks_chosen));
+		chosenEnemyNumberTextView.setText(String.format(originalChosenEnemyNumberMessage, nbTanksChosen));
 
         SeekBar numberSeekBar = findViewById(R.id.enemy_number_seekbar);
 		numberSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 			@Override
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-				nb_tanks_chosen = progress;
-				chosenEnemyNumberTextView.setText(String.format(originalChosenEnemyNumberMessage, nb_tanks_chosen));
+				nbTanksChosen = progress;
+				chosenEnemyNumberTextView.setText(String.format(originalChosenEnemyNumberMessage, nbTanksChosen));
 			}
 
 			@Override
-			public void onStartTrackingTouch(SeekBar seekBar) {
-
-			}
+			public void onStartTrackingTouch(SeekBar seekBar) {}
 
 			@Override
-			public void onStopTrackingTouch(SeekBar seekBar) {
-
-			}
+			public void onStopTrackingTouch(SeekBar seekBar) {}
 		});
 
 		// enemies level
-		Spinner spinner = findViewById(R.id.enemy_level_spinner);
+		spinner = findViewById(R.id.enemy_level_spinner);
 
 		String[] levels = {"Easy", "Medium", "Hard"};
+
+		difficultyLevelToExecutorchModelAsset = Map.of(
+				levels[0], "executorch/actor.pte",
+				levels[1], "executorch/actor.pte",
+				levels[2], "executorch/actor.pte"
+		);
 
 		ArrayAdapter<String> adapter = new ArrayAdapter<>(
 				this,
@@ -98,7 +101,8 @@ public class MainActivity extends AppCompatActivity {
 
 	public void play(View v) {
 		Intent intent = new Intent(this, NativeActivity.class);
-		intent.putExtra("nb_tanks", nb_tanks_chosen);
+		intent.putExtra("nb_tanks", nbTanksChosen);
+		intent.putExtra("executorch_model_asset", difficultyLevelToExecutorchModelAsset.get(spinner.getSelectedItem().toString()));
 		startActivity(intent);
 	}
 

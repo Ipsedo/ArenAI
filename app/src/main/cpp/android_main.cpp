@@ -47,7 +47,8 @@ void android_main(struct android_app *app) {
     eglInitialize(display, nullptr, nullptr);
 
     auto env = std::make_unique<UserGameTanksEnvironment>(app, display, nb_tanks, frame_dt.count());
-    auto agent = std::make_unique<ExecuTorchAgent>(app, "executorch/actor.pte");
+    auto agent = std::make_unique<ExecuTorchAgent>(
+        app, get_string_extra(jni_env, intent, "executorch_model_asset", "actor.pte"));
 
     app->userData = env.get();
     app->onAppCmd = on_cmd_wrapper;

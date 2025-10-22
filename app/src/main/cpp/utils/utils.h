@@ -15,5 +15,7 @@ void hide_system_status_bar(struct android_app *app);
 JNIEnv *get_env(struct android_app *app);
 jobject get_intent(JNIEnv *env, jobject activity);
 int get_int_extra(JNIEnv *env, jobject intent, const char *key, int default_value = 0);
+std::string get_string_extra(
+    JNIEnv *env, jobject intent, const char *key, const std::string &default_value = "");
 
 #endif//PHYVR_UTILS_H

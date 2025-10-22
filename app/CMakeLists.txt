@@ -57,13 +57,14 @@ FetchContent_MakeAvailable(executorch)
 
 set(CMAKE_CXX_STANDARD 20)
 
-set(ARENAI_CPP_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp")
+set(ARENAI_FOLDER "${PROJECT_ROOT}/arenai")
+set(ARENAI_BINARY_ROOT_PATH "${CMAKE_CURRENT_BINARY_DIR}/arenai")
 
-add_subdirectory("${ARENAI_CPP_FOLDER}/arenai_utils")
-add_subdirectory("${ARENAI_CPP_FOLDER}/arenai_controller")
-add_subdirectory("${ARENAI_CPP_FOLDER}/arenai_view")
-add_subdirectory("${ARENAI_CPP_FOLDER}/arenai_model")
-add_subdirectory("${ARENAI_CPP_FOLDER}/arenai_core")
+add_subdirectory("${ARENAI_FOLDER}/arenai_utils" "${ARENAI_BINARY_ROOT_PATH}/arenai_utils")
+add_subdirectory("${ARENAI_FOLDER}/arenai_controller" "${ARENAI_BINARY_ROOT_PATH}/arenai_controller")
+add_subdirectory("${ARENAI_FOLDER}/arenai_view" "${ARENAI_BINARY_ROOT_PATH}/arenai_view")
+add_subdirectory("${ARENAI_FOLDER}/arenai_model" "${ARENAI_BINARY_ROOT_PATH}/arenai_model")
+add_subdirectory("${ARENAI_FOLDER}/arenai_core" "${ARENAI_BINARY_ROOT_PATH}/arenai_core")
 
 include_directories(${ARENAI_UTILS_INCLUDE_DIRS})
 include_directories(${ARENAI_CONTROLLER_INCLUDE_DIRS})
@@ -71,7 +72,7 @@ include_directories(${ARENAI_VIEW_INCLUDE_DIRS})
 include_directories(${ARENAI_MODEL_INCLUDE_DIRS})
 include_directories(${ARENAI_CORE_INCLUDE_DIRS})
 
-file(GLOB_RECURSE ARENAI_ANDROID_SRC "${ARENAI_CPP_FOLDER}/src/*.cpp")
+file(GLOB_RECURSE ARENAI_ANDROID_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/*.cpp")
 
 add_library(arenai SHARED ${ARENAI_ANDROID_SRC})
 

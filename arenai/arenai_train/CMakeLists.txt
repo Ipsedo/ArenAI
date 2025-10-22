@@ -28,7 +28,7 @@ find_package(soil2 REQUIRED)
 include_directories(${SOIL2_INCLUDE_DIR})
 
 # ARENAI
-set(ARENAI_CPP_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/../app/src/main/cpp")
+set(ARENAI_CPP_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/..")
 
 add_subdirectory("${ARENAI_CPP_FOLDER}/arenai_controller" "${CMAKE_CURRENT_BINARY_DIR}/arenai_controller")
 add_subdirectory("${ARENAI_CPP_FOLDER}/arenai_utils" "${CMAKE_CURRENT_BINARY_DIR}/arenai_utils")

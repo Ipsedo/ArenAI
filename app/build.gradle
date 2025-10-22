@@ -11,7 +11,7 @@ android {
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         externalNativeBuild {
             cmake {
-                arguments "-DCMAKE_VERBOSE_MAKEFILE=ON"
+                arguments "-DCMAKE_VERBOSE_MAKEFILE=ON", "-DPROJECT_ROOT=$rootProject.projectDir.absolutePath"
             }
         }
     }

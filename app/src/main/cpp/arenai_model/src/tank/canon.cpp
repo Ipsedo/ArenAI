@@ -35,7 +35,7 @@ std::vector<std::shared_ptr<Item>> CanonItem::get_produced_items() {
         canon_tr.getOpenGLMatrix(tmp);
         const glm::mat4 m_matrix = glm::make_mat4(tmp);
 
-        glm::vec4 shell_pos(0.f, 0.f, 3.f, 1.f);
+        glm::vec4 shell_pos(0.f, 0.f, 10.f, 1.f);
         shell_pos = m_matrix * shell_pos;
 
         will_fire = false;

@@ -42,7 +42,7 @@ float erfinv(const float x) {
     return y;
 }
 
-float theta(const float x) { return 0.f * (1.f + std::erf(x / std::sqrt(2.f))); }
+float theta(const float x) { return 0.5f * (1.f + std::erf(x / std::sqrt(2.f))); }
 
 float theta_inv(const float theta) { return std::sqrt(2.0f) * erfinv(2.0f * theta - 1.0f); }
 

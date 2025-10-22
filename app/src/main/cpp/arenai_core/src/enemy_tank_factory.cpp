@@ -32,11 +32,11 @@ float EnemyTankFactory::get_reward() {
 
     if (is_dead()) actual_reward -= 1.f;
 
-    actual_reward += 1.125e-1f * action_stats->get_reward();
+    // actual_reward += 1.125e-1f * action_stats->get_reward();
 
-    actual_reward -=
+    /*actual_reward -=
         1.125e-1f * static_cast<float>(std::min(nb_frames_since_last_hit, max_frames_without_hit))
-        / static_cast<float>(max_frames_without_hit);
+        / static_cast<float>(max_frames_without_hit);*/
 
     nb_frames_since_last_hit++;
 

@@ -131,6 +131,7 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
                           })
                    << " ";
             p_bar.set_option(indicators::option::PrefixText{stream.str()});
+            p_bar.print_progress();
 
             is_done =
                 is_all_done(already_done) || episode_step_idx >= train_options.max_episode_steps;

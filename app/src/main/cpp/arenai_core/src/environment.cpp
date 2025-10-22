@@ -51,7 +51,7 @@ std::vector<std::tuple<State, Reward, IsFinish>> BaseTanksEnvironment::step(
             "cubemap", glm::scale(glm::mat4(1.), glm::vec3(2000., 2000., 2000.)));
     }
 
-    thread_barrier->arrive_and_wait();
+    if (!thread_killed) thread_barrier->arrive_and_wait();
 
     physic_engine->step(time_delta);
     on_draw(model_matrices);

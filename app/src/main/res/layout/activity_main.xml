@@ -28,40 +28,74 @@
             android:layout_centerInParent="true"
             android:layout_centerHorizontal="true"
             android:layout_centerVertical="true"
-            android:paddingHorizontal="@dimen/menu_horizontal_margin"
             android:gravity="center"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/menu_horizontal_margin">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:layout_marginBottom="30dp"
                 android:layout_marginHorizontal="20dp"
+                android:layout_marginBottom="30dp"
                 android:background="@drawable/rectangle"
-                android:elevation="10dp">
+                android:elevation="10dp"
+                android:gravity="center"
+                android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/chosen_enemy_number_textview"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginVertical="10dp"
-                        android:gravity="center"
-                        android:text="@string/chosen_enemy_number_text"
-                        android:textColor="@color/colorPrimary"
-                        android:textStyle="bold" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="10dp"
+                    android:gravity="center"
+                    android:text="@string/choose_enemy_level_text"
+                    android:textColor="@color/colorPrimary"
+                    android:textStyle="bold" />
 
-                    <SeekBar
-                        android:id="@+id/enemy_number_seekbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="30dp"
-                        android:layout_marginBottom="20dp"
-                        android:min="1"
-                        android:max="16"
-                        android:progress="1"
-                        android:tickMark="@drawable/seekbar_tick_dot"/>
+                <Spinner
+                    android:id="@+id/enemy_level_spinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="60dp"
+                    android:layout_marginBottom="20dp"
+                    android:background="@drawable/spinner"
+                    android:dropDownWidth="120dp"
+                    android:dropDownVerticalOffset="4dp"
+                    android:gravity="center"
+                    android:prompt="@color/colorPrimary"
+                    android:spinnerMode="dropdown" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginBottom="30dp"
+                android:background="@drawable/rectangle"
+                android:elevation="10dp"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/chosen_enemy_number_textview"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="10dp"
+                    android:gravity="center"
+                    android:text="@string/chosen_enemy_number_text"
+                    android:textColor="@color/colorPrimary"
+                    android:textStyle="bold" />
+
+                <SeekBar
+                    android:id="@+id/enemy_number_seekbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="30dp"
+                    android:layout_marginBottom="20dp"
+                    android:max="16"
+                    android:min="1"
+                    android:progress="1"
+                    android:tickMark="@drawable/seekbar_tick_dot" />
 
             </LinearLayout>
 
@@ -70,8 +104,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:layout_marginBottom="@dimen/menu_horizontal_margin"
                 android:layout_marginTop="@dimen/menu_horizontal_margin"
+                android:layout_marginBottom="@dimen/menu_horizontal_margin"
                 android:gravity="center"
                 android:text="@string/use_controller_text"
                 android:textColor="@color/colorPrimary"

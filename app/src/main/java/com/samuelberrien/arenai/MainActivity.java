@@ -5,8 +5,10 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.NumberPicker;
 import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -66,6 +68,20 @@ public class MainActivity extends AppCompatActivity {
 
 			}
 		});
+
+		// enemies level
+		Spinner spinner = findViewById(R.id.enemy_level_spinner);
+
+		String[] levels = {"Easy", "Medium", "Hard"};
+
+		ArrayAdapter<String> adapter = new ArrayAdapter<>(
+				this,
+				R.layout.spinner_item,
+				levels
+		);
+		adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
+
+		spinner.setAdapter(adapter);
 	}
 
 	@Override

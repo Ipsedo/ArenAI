@@ -1,46 +1,46 @@
 <resources>
 
-	<!-- Base application theme. -->
-	<style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-		<!-- Customize your theme here. -->
-		<item name="colorPrimary">@color/colorPrimary</item>
-		<item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-		<item name="colorAccent">@color/colorAccent</item>
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
 
 
-		<item name="android:statusBarColor">@color/colorPrimary</item>
-		<item name="toolbarStyle">@style/Widget.ArenAI.Toolbar</item>
-		<item name="android:navigationBarColor">@color/colorBackgroundDark</item>
+        <item name="android:statusBarColor">@color/colorPrimary</item>
+        <item name="toolbarStyle">@style/Widget.ArenAI.Toolbar</item>
+        <item name="android:navigationBarColor">@color/colorBackgroundDark</item>
 
-		<item name="windowActionBar">false</item>
-		<item name="windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
 
-		<item name="drawerArrowStyle">@style/Widget.ArenAI.DrawerArrowToggle</item>
-	</style>
+        <item name="drawerArrowStyle">@style/Widget.ArenAI.DrawerArrowToggle</item>
+    </style>
 
-	<style name="Widget.ArenAI.DrawerArrowToggle" parent="Widget.AppCompat.DrawerArrowToggle">
-		<item name="color">@color/colorBackground</item>
-	</style>
+    <style name="Widget.ArenAI.DrawerArrowToggle" parent="Widget.AppCompat.DrawerArrowToggle">
+        <item name="color">@color/colorBackground</item>
+    </style>
 
-	<style name="Widget.ArenAI.Toolbar" parent="Widget.Material3.Toolbar">
-		<item name="android:background">?attr/colorPrimary</item>
+    <style name="Widget.ArenAI.Toolbar" parent="Widget.Material3.Toolbar">
+        <item name="android:background">?attr/colorPrimary</item>
 
-		<item name="titleTextColor">@color/colorButtonText</item>
-		<item name="subtitleTextColor">@color/colorButtonText</item>
+        <item name="titleTextColor">@color/colorButtonText</item>
+        <item name="subtitleTextColor">@color/colorButtonText</item>
 
-		<item name="navigationIconTint">@color/colorBackground</item>
-		<item name="android:tint">@color/colorBackground</item>
+        <item name="navigationIconTint">@color/colorBackground</item>
+        <item name="android:tint">@color/colorBackground</item>
 
-		<item name="titleTextAppearance">@style/Widget.ArenAI.Toolbar.Title</item>
-	</style>
+        <item name="titleTextAppearance">@style/Widget.ArenAI.Toolbar.Title</item>
+    </style>
 
-	<style name="Widget.ArenAI.Toolbar.Title" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
-		<item name="android:textStyle">bold</item>
-		<item name="android:textColor">@color/colorButtonText</item>
-	</style>
+    <style name="Widget.ArenAI.Toolbar.Title" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/colorButtonText</item>
+    </style>
 
-	<style name="AppTheme.Picker" parent="Theme.AppCompat.Light.NoActionBar" >
-		<item name="android:textColorPrimary">@color/colorPrimary</item>
-		<item name="colorControlNormal">@color/colorPrimary</item>
-	</style>
+    <style name="AppTheme.Picker" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:textColorPrimary">@color/colorPrimary</item>
+        <item name="colorControlNormal">@color/colorPrimary</item>
+    </style>
 </resources>

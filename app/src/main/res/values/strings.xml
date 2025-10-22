@@ -1,18 +1,28 @@
 <resources>
-	<string name="app_name">ArenAI</string>
-	<string name="activity_control_text">Click to define control :</string>
+    <string name="app_name">ArenAI</string>
+    <string name="activity_control_text">Click to define control :</string>
 
-	<!-- control names -> for shared preference and display -->
-	<string name="left_control">Left</string>
-	<string name="right_control">Right</string>
-	<string name="speed_up_control">Speed up</string>
-	<string name="speed_down_control">Speed down</string>
-	<string name="brake_control">Brake</string>
-	<string name="turret_left_control">Turret left</string>
-	<string name="turret_right_control">Turret right</string>
-	<string name="turret_up_control">Turret up</string>
-	<string name="turret_down_control">Turret down</string>
-	<string name="respawn_control">Respawn</string>
-	<string name="fire_control">Fire</string>
-	<string name="undefined_control">Unedefined</string>
+    <!-- main activity -->
+    <string name="chosen_enemy_number_text">Number of enemies : %1$d</string>
+    <string name="choose_enemy_level_text">Choose enemies level :</string>
+    <string name="play_button_text">Play</string>
+    <string name="use_controller_text">Use controller (instead of UI)</string>
+    <string name="configure_game_pad_text">Configure GamePad</string>
+    <string name="configure_controls_text">Configure controls</string>
+
+    <!-- control names -> for shared preference and display -->
+    <string name="left_control">Left</string>
+    <string name="right_control">Right</string>
+    <string name="speed_up_control">Speed up</string>
+    <string name="speed_down_control">Speed down</string>
+    <string name="brake_control">Brake</string>
+    <string name="turret_left_control">Turret left</string>
+    <string name="turret_right_control">Turret right</string>
+    <string name="turret_up_control">Turret up</string>
+    <string name="turret_down_control">Turret down</string>
+    <string name="respawn_control">Respawn</string>
+    <string name="fire_control">Fire</string>
+    <string name="undefined_control">Unedefined</string>
+    <string name="navigation_drawer_open">Open drawer</string>
+    <string name="navigation_drawer_close">Close drawer</string>
 </resources>

@@ -1,41 +1,104 @@
 package com.samuelberrien.arenai;
 
-import android.app.Activity;
 import android.app.NativeActivity;
 import android.content.Intent;
 import android.os.Bundle;
 
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.NumberPicker;
+import android.widget.SeekBar;
+import android.widget.Spinner;
+import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.core.view.WindowCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.navigation.NavigationView;
 import com.samuelberrien.arenai.set_controls.ControlActivity;
 import com.samuelberrien.arenai.set_controls.GamePadActivity;
 
-public class MainActivity extends Activity implements NumberPicker.OnValueChangeListener {
+public class MainActivity extends AppCompatActivity {
 
-	private int levelIdx;
-	public static final String levelIdxExtraStr = "Level_Idx";
-	public static final String useControllerExtraStr = "Use_Controller";
+	private ActionBarDrawerToggle drawerToggle;
 
-	@Override
+	int nb_tanks_chosen = 1;
+
+    @Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		String[] levelName = new String[]{"Demo", "Practice"};
-		NumberPicker levelPicker = findViewById(R.id.level_picker);
-		levelPicker.setMinValue(0);
-		levelPicker.setMaxValue(levelName.length - 1);
-		levelPicker.setDisplayedValues(levelName);
-		levelPicker.setValue(0);
+		MaterialToolbar toolbar = findViewById(R.id.main_toolbar);
+		setSupportActionBar(toolbar);
 
-		levelIdx = 0;
+		DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
+		drawerToggle = new ActionBarDrawerToggle(
+				this, drawerLayout, toolbar,
+				R.string.navigation_drawer_open, R.string.navigation_drawer_close
+		);
 
-		levelPicker.setOnValueChangedListener(this);
+		drawerLayout.addDrawerListener(drawerToggle);
+		drawerToggle.syncState();
+
+		TextView chosenEnemyNumberTextView = findViewById(R.id.chosen_enemy_number_textview);
+		String originalChosenEnemyNumberMessage = chosenEnemyNumberTextView.getText().toString();
+		chosenEnemyNumberTextView.setText(String.format(originalChosenEnemyNumberMessage, nb_tanks_chosen));
+
+        SeekBar numberSeekBar = findViewById(R.id.enemy_number_seekbar);
+		numberSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				nb_tanks_chosen = progress;
+				chosenEnemyNumberTextView.setText(String.format(originalChosenEnemyNumberMessage, nb_tanks_chosen));
+			}
+
+			@Override
+			public void onStartTrackingTouch(SeekBar seekBar) {
+
+			}
+
+			@Override
+			public void onStopTrackingTouch(SeekBar seekBar) {
+
+			}
+		});
+
+		// enemies level
+		Spinner spinner = findViewById(R.id.enemy_level_spinner);
+
+		String[] levels = {"Easy", "Medium", "Hard"};
+
+		ArrayAdapter<String> adapter = new ArrayAdapter<>(
+				this,
+				R.layout.spinner_item,
+				levels
+		);
+		adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
+
+		spinner.setAdapter(adapter);
+	}
+
+	@Override
+	public void onPostCreate(Bundle savedInstanceState) {
+		super.onPostCreate(savedInstanceState);
+		if (drawerToggle != null) drawerToggle.syncState();
+	}
+
+	@Override
+	public void onConfigurationChanged(@NonNull android.content.res.Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
+		if (drawerToggle != null) drawerToggle.onConfigurationChanged(newConfig);
 	}
 
 	public void play(View v) {
 		Intent intent = new Intent(this, NativeActivity.class);
+		intent.putExtra("nb_tanks", nb_tanks_chosen);
 		startActivity(intent);
 	}
 
@@ -47,10 +110,5 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
 	public void configureControls(View v) {
 		Intent myIntent = new Intent(this, ControlActivity.class);
 		startActivity(myIntent);
-	}
-
-	@Override
-	public void onValueChange(NumberPicker numberPicker, int oldVal, int newVal) {
-		levelIdx = newVal;
 	}
 }

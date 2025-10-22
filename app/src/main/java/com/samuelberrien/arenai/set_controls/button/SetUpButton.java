@@ -73,7 +73,7 @@ public class SetUpButton extends LinearLayout {
 
 		TextView name = new TextView(context);
 		name.setGravity(Gravity.CENTER);
-		name.setBackground(ContextCompat.getDrawable(context, R.color.greyTransparent));
+		name.setBackground(ContextCompat.getDrawable(context, R.color.grey));
 		name.setText(map.getFullName());
 
 		LinearLayout.LayoutParams params = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);

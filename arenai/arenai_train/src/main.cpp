@@ -19,16 +19,16 @@ int main(int argc, char **argv) {
     parser.add_argument("--initial_alpha").scan<'g', float>().default_value(1.f);
 
     // train
-    parser.add_argument("--nb_tanks").scan<'i', int>().default_value(8);
+    parser.add_argument("--nb_tanks").scan<'i', int>().default_value(16);
     parser.add_argument("--output_folder").required();
     parser.add_argument("--asset_folder").required();
     parser.add_argument("--learning_rate").scan<'g', float>().default_value(1e-4f);
     parser.add_argument("--epochs").scan<'i', int>().default_value(8);
     parser.add_argument("--batch_size").scan<'i', int>().default_value(512);
-    parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60);
+    parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60 * 3);
     parser.add_argument("--nb_episodes").scan<'i', int>().default_value(32768);
     parser.add_argument("--replay_buffer_size").scan<'i', int>().default_value(131072);
-    parser.add_argument("--train_every").scan<'i', int>().default_value(128);
+    parser.add_argument("--train_every").scan<'i', int>().default_value(256);
     parser.add_argument("--save_every").scan<'i', int>().default_value(30 * 60 * 3 * 25);
     parser.add_argument("--cuda").default_value(false).implicit_value(true);
     parser.add_argument("--metric_window_size").scan<'i', int>().default_value(256);

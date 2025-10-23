@@ -10,7 +10,8 @@
 
 #include "../utils/metric.h"
 #include "../utils/replay_buffer.h"
-#include "./agent.h"
+#include "./actor.h"
+#include "./critic.h"
 #include "./entropy.h"
 
 class SacNetworks {

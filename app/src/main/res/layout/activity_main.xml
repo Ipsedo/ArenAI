@@ -30,34 +30,34 @@
             android:layout_centerVertical="true"
             android:gravity="center"
             android:orientation="vertical"
-            android:paddingHorizontal="@dimen/menu_horizontal_margin">
+            android:paddingHorizontal="@dimen/main_activity_margin_horizontal">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="20dp"
-                android:layout_marginBottom="30dp"
+                android:layout_marginHorizontal="@dimen/main_activity_option_margin_horizontal"
+                android:layout_marginBottom="@dimen/main_activity_option_margin_bottom"
                 android:background="@drawable/rectangle"
-                android:elevation="10dp"
+                android:elevation="@dimen/main_activity_option_elevation"
                 android:gravity="center"
                 android:orientation="vertical">
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginVertical="20dp"
+                    android:layout_marginVertical="@dimen/main_activity_option_inner_margin_vertical"
                     android:gravity="center"
                     android:text="@string/choose_enemy_level_text"
                     android:textColor="@color/colorPrimary"
-                    android:textSize="20sp"
+                    android:textSize="@dimen/main_activity_text_size"
                     android:textStyle="bold" />
 
                 <Spinner
                     android:id="@+id/enemy_level_spinner"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="60dp"
-                    android:layout_marginBottom="30dp"
+                    android:layout_marginHorizontal="@dimen/main_activity_option_content_margin_horizontal"
+                    android:layout_marginBottom="@dimen/main_activity_option_margin_bottom"
                     android:background="@drawable/spinner"
                     android:dropDownWidth="120dp"
                     android:dropDownVerticalOffset="4dp"
@@ -70,10 +70,10 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="20dp"
-                android:layout_marginBottom="30dp"
+                android:layout_marginHorizontal="@dimen/main_activity_option_margin_horizontal"
+                android:layout_marginBottom="@dimen/main_activity_option_margin_bottom"
                 android:background="@drawable/rectangle"
-                android:elevation="10dp"
+                android:elevation="@dimen/main_activity_option_elevation"
                 android:gravity="center"
                 android:orientation="vertical">
 
@@ -81,19 +81,19 @@
                     android:id="@+id/chosen_enemy_number_textview"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginVertical="20dp"
-                    android:textSize="20sp"
+                    android:layout_marginVertical="@dimen/main_activity_option_inner_margin_vertical"
                     android:gravity="center"
                     android:text="@string/chosen_enemy_number_text"
                     android:textColor="@color/colorPrimary"
+                    android:textSize="@dimen/main_activity_text_size"
                     android:textStyle="bold" />
 
                 <SeekBar
                     android:id="@+id/enemy_number_seekbar"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="30dp"
-                    android:layout_marginBottom="30dp"
+                    android:layout_marginHorizontal="@dimen/main_activity_option_content_margin_horizontal"
+                    android:layout_marginBottom="@dimen/main_activity_option_margin_bottom"
                     android:max="8"
                     android:min="1"
                     android:progress="1"
@@ -102,27 +102,68 @@
 
             </LinearLayout>
 
-            <CheckBox
-                android:id="@+id/use_controller_switch"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="@dimen/menu_horizontal_margin"
-                android:layout_marginBottom="@dimen/menu_horizontal_margin"
-                android:textSize="20sp"
+
+                android:layout_marginHorizontal="@dimen/main_activity_option_margin_horizontal"
+                android:layout_marginBottom="@dimen/main_activity_option_margin_bottom"
+                android:background="@drawable/rectangle"
+                android:elevation="@dimen/main_activity_option_elevation"
                 android:gravity="center"
-                android:text="@string/use_controller_text"
-                android:textColor="@color/colorPrimary"
-                android:textStyle="bold" />
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="@dimen/main_activity_option_inner_margin_vertical"
+                    android:text="@string/choose_controller_text"
+                    android:textColor="@color/colorPrimary"
+                    android:textSize="@dimen/main_activity_text_size"
+                    android:textStyle="bold" />
+
+                <RadioGroup
+                    android:id="@+id/radio_group_controller"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/main_activity_option_margin_bottom"
+                    android:checkedButton="@id/radio_button_ui"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="@dimen/main_activity_option_content_margin_horizontal">
+
+                    <RadioButton
+                        android:id="@+id/radio_button_ui"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:text="@string/radio_button_ui_text"
+                        android:textColor="@color/colorPrimary"
+                        android:textSize="@dimen/main_activity_text_size" />
+
+                    <RadioButton
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:text="@string/radio_button_gamepad_text"
+                        android:textColor="@color/colorPrimary"
+                        android:textSize="@dimen/main_activity_text_size" />
+
+                    <RadioButton
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:text="@string/radio_button_keyboard_text"
+                        android:textColor="@color/colorPrimary"
+                        android:textSize="@dimen/main_activity_text_size" />
+                </RadioGroup>
+            </LinearLayout>
 
             <Button
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginVertical="20dp"
                 android:background="@drawable/button"
                 android:onClick="play"
                 android:text="@string/play_button_text"
-                android:textSize="24sp"
-                android:textColor="@color/colorButtonText" />
+                android:textColor="@color/colorButtonText"
+                android:textSize="20sp" />
         </LinearLayout>
     </RelativeLayout>
 

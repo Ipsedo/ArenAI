@@ -4,6 +4,6 @@
     android:layout_height="wrap_content"
     android:background="@color/colorBackground"
     android:padding="8dp"
-    android:textSize="16sp"
+    android:textSize="@dimen/main_activity_text_size"
     android:textAlignment="viewStart"
     android:textColor="@color/colorPrimary" />

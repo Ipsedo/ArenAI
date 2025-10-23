@@ -10,7 +10,7 @@ WheelItem::WheelItem(
     const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,
     const glm::vec3 pos, const glm::vec3 rel_pos, const glm::vec3 scale, const float mass,
     btRigidBody *chassis)
-    : LifeItem(10),
+    : LifeItem(5),
       ConvexItem(
           prefix_name + "_wheel", std::make_shared<ObjShape>(file_reader, "obj/anubis_wheel.obj"),
           pos, scale, mass) {

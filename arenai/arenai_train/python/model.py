@@ -19,9 +19,7 @@ class ConvolutionNetwork(nn.Module):
             nn.SiLU(),
             nn.Conv2d(96, 128, 3, 2, 1),
             nn.SiLU(),
-            nn.Conv2d(128, 192, 3, 2, 1),
-            nn.SiLU(),
-            nn.Conv2d(192, 256, 3, 2, 1),
+            nn.Conv2d(128, 256, 3, 2, 1),
             nn.SiLU(),
             nn.Flatten(1, -1),
             nn.LayerNorm(256)

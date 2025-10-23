@@ -19,9 +19,7 @@ ConvolutionNetwork::ConvolutionNetwork()
                    torch::nn::SiLU(),
                    torch::nn::Conv2d(torch::nn::Conv2dOptions(96, 128, 3).padding(1).stride(2)),
                    torch::nn::SiLU(),
-                   torch::nn::Conv2d(torch::nn::Conv2dOptions(128, 192, 3).padding(1).stride(2)),
-                   torch::nn::SiLU(),
-                   torch::nn::Conv2d(torch::nn::Conv2dOptions(192, 256, 3).padding(1).stride(2)),
+                   torch::nn::Conv2d(torch::nn::Conv2dOptions(128, 256, 3).padding(1).stride(2)),
                    torch::nn::SiLU(),
                    // 1 * 1 * 256
                    torch::nn::Flatten(torch::nn::FlattenOptions().start_dim(1).end_dim(-1)),

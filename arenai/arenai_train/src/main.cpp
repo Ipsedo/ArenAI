@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
     parser.add_argument("--asset_folder").required();
     parser.add_argument("--learning_rate").scan<'g', float>().default_value(1e-4f);
     parser.add_argument("--epochs").scan<'i', int>().default_value(8);
-    parser.add_argument("--batch_size").scan<'i', int>().default_value(512);
+    parser.add_argument("--batch_size").scan<'i', int>().default_value(2048);
     parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60 * 3);
     parser.add_argument("--nb_episodes").scan<'i', int>().default_value(32768);
     parser.add_argument("--replay_buffer_size").scan<'i', int>().default_value(131072);

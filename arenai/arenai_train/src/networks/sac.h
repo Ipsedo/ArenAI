@@ -30,6 +30,8 @@ public:
 
     void save(const std::filesystem::path &output_folder) const;
 
+    void train(bool train) const;
+
 private:
     std::shared_ptr<SacActor> actor;
 

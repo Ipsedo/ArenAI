@@ -76,6 +76,7 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
             std::future<std::vector<Action>> actions_future;
             torch::Tensor actions;
             {
+                sac->train(false);
                 torch::NoGradGuard no_grad_guard;
 
                 const auto [mu, sigma] =

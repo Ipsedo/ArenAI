@@ -54,6 +54,9 @@ actor_response SacNetworks::act(const torch::Tensor &vision, const torch::Tensor
 void SacNetworks::train(
     const std::unique_ptr<ReplayBuffer> &replay_buffer, const int nb_epoch,
     const int batch_size) const {
+
+    train(true);
+
     for (int e = 0; e < nb_epoch; e++) {
         const auto [state, action, reward, done, next_state] =
             replay_buffer->sample(batch_size, actor->parameters().back().device());
@@ -159,4 +162,13 @@ void SacNetworks::save(const std::filesystem::path &output_folder) const {
     save_torch(output_folder, critic_2_optim, "critic_2_optim.pt");
 
     save_torch(output_folder, entropy_optim, "entropy_optim.pt");
+}
+
+void SacNetworks::train(const bool train) const {
+    actor->train(train);
+    critic_1->train(train);
+    critic_2->train(train);
+    target_critic_1->train(train);
+    target_critic_2->train(train);
+    alpha_entropy->train(train);
 }

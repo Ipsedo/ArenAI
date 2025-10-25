@@ -16,7 +16,7 @@ void init_weights(torch::nn::Module &module) {
             ln->options.elementwise_affine()) {
             torch::nn::init::ones_(ln->weight);
             torch::nn::init::zeros_(ln->bias);
-            }
+        }
     } else if (typeid(module) == typeid(torch::nn::Conv2d)) {
         auto conv = *dynamic_cast<torch::nn::Conv2d *>(&module);
 

@@ -9,4 +9,4 @@
 
 void init_weights(torch::nn::Module &module);
 
-#endif //ARENAI_TRAIN_HOST_INIT_H
+#endif//ARENAI_TRAIN_HOST_INIT_H

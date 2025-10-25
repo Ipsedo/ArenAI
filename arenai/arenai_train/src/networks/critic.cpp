@@ -4,6 +4,8 @@
 
 #include "./critic.h"
 
+#include "./init.h"
+
 SacCritic::SacCritic(
     const int &nb_sensors, const int &nb_actions, const int &hidden_size_sensors,
     const int &hidden_size_actions, const int &hidden_size)
@@ -24,7 +26,9 @@ SacCritic::SacCritic(
               torch::nn::Linear(
                   hidden_size_actions + hidden_size_sensors + 1 * 1 * 256, hidden_size),
               torch::nn::SiLU(), torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})),
-              torch::nn::Linear(hidden_size, 1)))) {}
+              torch::nn::Linear(hidden_size, 1)))) {
+    apply(init_weights);
+}
 
 torch::Tensor SacCritic::value(
     const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &action) {

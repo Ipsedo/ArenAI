@@ -4,6 +4,8 @@
 
 #include "./actor.h"
 
+#include "./init.h"
+
 SacActor::SacActor(
     const int &nb_sensors, const int &nb_actions, const int &hidden_size_sensors,
     const int &hidden_size)
@@ -23,7 +25,9 @@ SacActor::SacActor(
           torch::nn::Sequential(torch::nn::Linear(hidden_size, nb_actions), torch::nn::Tanh()))),
       sigma(register_module(
           "sigma", torch::nn::Sequential(
-                       torch::nn::Linear(hidden_size, nb_actions), torch::nn::Softplus()))) {}
+                       torch::nn::Linear(hidden_size, nb_actions), torch::nn::Softplus()))) {
+    apply(init_weights);
+}
 
 actor_response SacActor::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
     auto vision_encoded = vision_encoder->forward(vision);

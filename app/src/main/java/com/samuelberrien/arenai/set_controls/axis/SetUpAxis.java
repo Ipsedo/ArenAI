@@ -19,8 +19,8 @@ public class SetUpAxis extends LinearLayout {
 
 	private Axis.AxisMap axisMap;
 	private Axis axis;
-	private AxisContainer contenerMinus;
-	private AxisContainer contenerPlus;
+	private ContinuousInputView containerMinus;
+	private ContinuousInputView containerPlus;
 
 	public SetUpAxis(Context context) {
 		super(context);
@@ -82,8 +82,8 @@ public class SetUpAxis extends LinearLayout {
 		l.setOrientation(HORIZONTAL);
 		LinearLayout.LayoutParams params = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
 		params.weight = 0.5f;
-		l.addView(contenerMinus = new AxisContainer(context, axis, false), params);
-		l.addView(contenerPlus = new AxisContainer(context, axis, true), params);
+		l.addView(containerMinus = new ContinuousInputView(context, axis, false), params);
+		l.addView(containerPlus = new ContinuousInputView(context, axis, true), params);
 
 		TextView name = new TextView(context);
 		name.setBackground(ContextCompat.getDrawable(getContext(), R.color.grey));
@@ -104,8 +104,8 @@ public class SetUpAxis extends LinearLayout {
 	@Override
 	public boolean onGenericMotionEvent(MotionEvent event) {
 		axis.onGenericMotion(event);
-		boolean handled = contenerMinus.onGenericMotionEvent(event);
-		handled = contenerPlus.onGenericMotionEvent(event) || handled;
+		boolean handled = containerMinus.onGenericMotionEvent(event);
+		handled = containerPlus.onGenericMotionEvent(event) || handled;
 		return handled || super.onGenericMotionEvent(event);
 	}
 }

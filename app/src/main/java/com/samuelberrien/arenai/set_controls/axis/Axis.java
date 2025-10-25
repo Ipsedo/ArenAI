@@ -16,9 +16,9 @@ public class Axis implements SharedPreferences.OnSharedPreferenceChangeListener 
 		CANON(2, "CANON", "Canon"),
 		TURRET(3, "TURRET", "Turret");
 
-		private int id;
-		private String name;
-		private String fullName;
+		private final int id;
+		private final String name;
+		private final String fullName;
 
 		AxisMap(int id, String name, String fullName) {
 			this.id = id;
@@ -47,9 +47,9 @@ public class Axis implements SharedPreferences.OnSharedPreferenceChangeListener 
 	private int idMinus;
 	private boolean hasMinusAxisPositive;
 
-	private AxisMap axisMap;
+	private final AxisMap axisMap;
 
-	private ArrayList<OnAxisMoveListener> listeners;
+	private final ArrayList<OnAxisMoveListener> listeners;
 
 	public Axis(Context context, AxisMap axisMap) {
 		idMinus = -1;

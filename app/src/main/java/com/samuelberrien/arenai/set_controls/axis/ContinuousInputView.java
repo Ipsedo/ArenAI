@@ -16,7 +16,11 @@ import com.samuelberrien.arenai.Dimens;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class AxisContainer extends RelativeLayout implements SharedPreferences.OnSharedPreferenceChangeListener, View.OnClickListener {
+public class ContinuousInputView extends RelativeLayout implements SharedPreferences.OnSharedPreferenceChangeListener, View.OnClickListener {
+
+	public enum OrientationEnum {
+
+	}
 
 	private Axis axis;
 	private AxisGage axisGage;
@@ -26,7 +30,7 @@ public class AxisContainer extends RelativeLayout implements SharedPreferences.O
 	private boolean listening;
 	private SharedPreferences pref;
 
-	public AxisContainer(Context context, Axis axis, boolean isPlus) {
+	public ContinuousInputView(Context context, Axis axis, boolean isPlus) {
 		super(context);
 
 		this.axis = axis;

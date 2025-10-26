@@ -7,8 +7,6 @@
 
 #include <arenai_model/tank_factory.h>
 
-#include "./action_stats.h"
-
 class EnemyTankFactory final : public TankFactory {
 public:
     EnemyTankFactory(
@@ -22,8 +20,6 @@ public:
 
     std::vector<float> get_proprioception();
 
-    std::shared_ptr<ActionStats> get_action_stats();
-
 protected:
     void on_fired_shell_contact(Item *item) override;
 
@@ -33,8 +29,6 @@ private:
     int curr_frame_upside_down;
 
     bool is_dead_already_triggered;
-
-    std::shared_ptr<ActionStats> action_stats;
 
     int max_frames_without_hit;
     int nb_frames_since_last_hit;

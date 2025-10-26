@@ -30,9 +30,9 @@ execute_process(
         COMMAND_ECHO STDOUT
         RESULT_VARIABLE _venv_rc
 )
-if(NOT _venv_rc EQUAL 0)
+if (NOT _venv_rc EQUAL 0)
     message(FATAL_ERROR "Error when creating ExecuTorch python venv")
-endif()
+endif ()
 
 set(PYTHON_EXECUTABLE "${ET_VENV}/bin/python" CACHE FILEPATH "")
 

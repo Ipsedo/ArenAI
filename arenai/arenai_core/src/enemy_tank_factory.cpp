@@ -10,7 +10,6 @@ EnemyTankFactory::EnemyTankFactory(
     : TankFactory(file_reader, tank_prefix_name, chassis_pos), reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frequency)), curr_frame_upside_down(0),
       is_dead_already_triggered(false),
-      action_stats(std::make_shared<ActionStats>(3.f, wanted_frequency, 5e-1f)),
       max_frames_without_hit(static_cast<int>(60.f / wanted_frequency)),
       nb_frames_since_last_hit(0) {}
 
@@ -25,17 +24,14 @@ float EnemyTankFactory::get_reward() {
     const btVector3 up(0.f, 1.f, 0.f);
     const btVector3 up_in_chassis = chassis_tr.getBasis() * up;
 
-    if (const btScalar dot = up_in_chassis.normalized().dot(up.normalized()); dot < 0) {
+    if (const btScalar dot = up_in_chassis.normalized().dot(up.normalized()); dot < 0)
         curr_frame_upside_down++;
-        actual_reward -= 0.125f;
-    } else curr_frame_upside_down = 0;
+    else curr_frame_upside_down = 0;
 
     if (is_dead()) actual_reward -= 1.f;
 
-    // actual_reward += 1.125e-1f * action_stats->get_reward();
-
     /*actual_reward -=
-        1.125e-1f * static_cast<float>(std::min(nb_frames_since_last_hit, max_frames_without_hit))
+        1e-1f * static_cast<float>(std::min(nb_frames_since_last_hit, max_frames_without_hit))
         / static_cast<float>(max_frames_without_hit);*/
 
     nb_frames_since_last_hit++;
@@ -124,5 +120,3 @@ std::vector<float> EnemyTankFactory::get_proprioception() {
     }
     return result;
 }
-
-std::shared_ptr<ActionStats> EnemyTankFactory::get_action_stats() { return action_stats; }

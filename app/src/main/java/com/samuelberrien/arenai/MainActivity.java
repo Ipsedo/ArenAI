@@ -74,9 +74,9 @@ public class MainActivity extends AppCompatActivity {
         String[] levels = {"Easy", "Medium", "Hard"};
 
         difficultyLevelToExecutorchModelAsset = Map.of(
-                levels[0], "executorch/actor.pte",
-                levels[1], "executorch/actor.pte",
-                levels[2], "executorch/actor.pte"
+                levels[0], "executorch/actor_25.pte",
+                levels[1], "executorch/actor_50.pte",
+                levels[2], "executorch/actor_77.pte"
         );
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(

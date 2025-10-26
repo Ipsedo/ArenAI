@@ -5,13 +5,11 @@
 #include <arenai_core/enemy_handler.h>
 
 EnemyControllerHandler::EnemyControllerHandler(
-    const float refresh_frequency, const float wanted_fire_frequency,
-    const std::shared_ptr<ActionStats> &action_stats)
+    const float refresh_frequency, const float wanted_fire_frequency)
     : nb_frames_to_fire(static_cast<int>(wanted_fire_frequency / refresh_frequency)),
-      curr_frame(nb_frames_to_fire), action_stats(action_stats) {}
+      curr_frame(nb_frames_to_fire) {}
 
 std::tuple<bool, user_input> EnemyControllerHandler::to_output(const Action event) {
-    action_stats->process_input(event);
 
     curr_frame = std::min(curr_frame + 1, nb_frames_to_fire);
 

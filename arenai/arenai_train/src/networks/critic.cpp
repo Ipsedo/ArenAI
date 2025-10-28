@@ -13,19 +13,19 @@ SacCritic::SacCritic(
       sensors_encoder(register_module(
           "sensors_encoder",
           torch::nn::Sequential(
-              torch::nn::Linear(nb_sensors, hidden_size_sensors), torch::nn::SiLU(),
+              torch::nn::Linear(nb_sensors, hidden_size_sensors), torch::nn::Mish(),
               torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_sensors}))))),
       action_encoder(register_module(
           "action_encoder",
           torch::nn::Sequential(
-              torch::nn::Linear(nb_actions, hidden_size_actions), torch::nn::SiLU(),
+              torch::nn::Linear(nb_actions, hidden_size_actions), torch::nn::Mish(),
               torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_actions}))))),
       head(register_module(
           "head",
           torch::nn::Sequential(
               torch::nn::Linear(
                   hidden_size_actions + hidden_size_sensors + 1 * 1 * 256, hidden_size),
-              torch::nn::SiLU(), torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})),
+              torch::nn::Mish(), torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})),
               torch::nn::Linear(hidden_size, 1)))) {
     apply(init_weights);
 }

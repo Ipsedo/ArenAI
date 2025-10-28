@@ -28,7 +28,7 @@ UserGameTanksEnvironment::UserGameTanksEnvironment(
         nb_tanks, wanted_frequency, true),
       app(app), display(eglGetDisplay(EGL_DEFAULT_DISPLAY)), tank_factory(std::nullptr_t()),
       is_paused(true), player_renderer(std::nullptr_t()),
-      player_controller_handler(std::nullptr_t()) {}
+      player_controller_handler(std::nullptr_t()), wanted_frequency(wanted_frequency) {}
 
 void UserGameTanksEnvironment::on_draw(
     const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
@@ -80,8 +80,8 @@ void UserGameTanksEnvironment::on_cmd(struct android_app *app, int32_t cmd) {
 bool UserGameTanksEnvironment::is_running() const { return !is_paused; }
 
 void UserGameTanksEnvironment::on_reset_physics(const std::unique_ptr<PhysicEngine> &engine) {
-    tank_factory =
-        std::make_unique<PlayerTankFactory>(file_reader, "player", glm::vec3(0., -40., 40));
+    tank_factory = std::make_unique<PlayerTankFactory>(
+        file_reader, "player", glm::vec3(0., -40., 40), wanted_frequency);
 
     for (auto &item: tank_factory->get_items()) { engine->add_item(item); }
 

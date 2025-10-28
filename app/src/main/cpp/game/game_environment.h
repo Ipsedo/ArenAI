@@ -53,6 +53,8 @@ private:
     std::unique_ptr<PlayerControllerHandler> player_controller_handler;
 
     bool is_paused;
+
+    float wanted_frequency;
 };
 
 #endif// ARENAI_GAME_ENVIRONMENT_H

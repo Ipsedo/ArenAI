@@ -11,7 +11,7 @@ class PlayerTankFactory final : public TankFactory {
 public:
     PlayerTankFactory(
         const std::shared_ptr<AbstractFileReader> &fileReader, const std::string &tankPrefixName,
-        const glm::vec3 &chassisPos);
+        const glm::vec3 &chassisPos, float wanted_frame_frequency);
 
 protected:
     void on_fired_shell_contact(Item *item) override;

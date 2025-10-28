@@ -11,19 +11,13 @@
 
 class ActionStats {
 public:
-    ActionStats(float nb_seconds_idle_tolerated, float wanted_frequency, float delta_action);
+    ActionStats();
 
-    float get_reward() const;
+    bool has_fire() const;
     void process_input(const Action &action);
 
 private:
-    int nb_frames_idle;
-    float delta_action;
-
-    int frames_since_last_action;
-    int max_frames_penalty;
-
-    Action last_action;
+    bool has_fire_;
 };
 
 #endif//ARENAI_TRAIN_HOST_ACTION_STATS_H

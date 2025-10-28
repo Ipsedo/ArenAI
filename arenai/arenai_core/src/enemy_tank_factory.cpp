@@ -6,12 +6,16 @@
 
 EnemyTankFactory::EnemyTankFactory(
     const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
-    const glm::vec3 chassis_pos, const float wanted_frequency)
-    : TankFactory(file_reader, tank_prefix_name, chassis_pos), reward(0.f),
-      max_frames_upside_down(static_cast<int>(4.f / wanted_frequency)), curr_frame_upside_down(0),
-      is_dead_already_triggered(false),
-      max_frames_without_hit(static_cast<int>(60.f / wanted_frequency)),
-      nb_frames_since_last_hit(0) {}
+    const glm::vec3 chassis_pos, const float wanted_frame_frequency)
+    : TankFactory(file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency),
+      tank_prefix_name(tank_prefix_name), reward(0.f),
+      max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
+      curr_frame_upside_down(0), is_dead_already_triggered(false),
+      max_frames_without_hit(static_cast<int>(60.f / wanted_frame_frequency)),
+      nb_frames_since_last_hit(0), action_stats(std::make_shared<ActionStats>()),
+      min_distance_potential_reward(20.f), max_distance_potential_reward(100.f),
+      aim_min_angle_potential_reward(static_cast<float>(M_PI) / 6.f),
+      aim_max_angle_potential_reward(static_cast<float>(M_PI) / 3.f) {}
 
 float EnemyTankFactory::get_reward() {
     float actual_reward = reward;
@@ -30,13 +34,63 @@ float EnemyTankFactory::get_reward() {
 
     if (is_dead()) actual_reward -= 1.f;
 
-    /*actual_reward -=
-        1e-1f * static_cast<float>(std::min(nb_frames_since_last_hit, max_frames_without_hit))
-        / static_cast<float>(max_frames_without_hit);*/
-
-    nb_frames_since_last_hit++;
-
+    // return reward
     return actual_reward;
+}
+
+float EnemyTankFactory::get_potential_reward(
+    const std::vector<std::unique_ptr<EnemyTankFactory>> &all_enemy_tank_factories) {
+    const auto chassis_pos = get_items()[0]->get_body()->getWorldTransform().getOrigin();
+
+    float nearest_enemy_index = -1;
+    float shortest_distance = std::numeric_limits<float>::max();
+    float max_distance = 0.f;
+    for (int i = 0; i < all_enemy_tank_factories.size(); i++) {
+        if (all_enemy_tank_factories[i]->tank_prefix_name != tank_prefix_name) {
+            auto other_chassis_pos = all_enemy_tank_factories[i]
+                                         ->get_items()[0]
+                                         ->get_body()
+                                         ->getWorldTransform()
+                                         .getOrigin();
+            const float distance = (chassis_pos - other_chassis_pos).length();
+
+            if (distance < shortest_distance) {
+                shortest_distance = distance;
+                nearest_enemy_index = i;
+            }
+
+            max_distance = std::max(max_distance, distance);
+        }
+    }
+
+    const float reward_distance =
+        (max_distance_potential_reward - std::max(shortest_distance, min_distance_potential_reward))
+        / max_distance_potential_reward;
+
+    const auto camera = get_camera();
+    const auto other_pos = all_enemy_tank_factories[nearest_enemy_index]
+                               ->get_items()[0]
+                               ->get_body()
+                               ->getWorldTransform()
+                               .getOrigin();
+
+    const glm::vec3 unit_look_at = camera->look();
+
+    const btVector3 target_look_at_bullet = (other_pos - chassis_pos).normalize();
+    const glm::vec3 target_look_at(
+        target_look_at_bullet.x(), target_look_at_bullet.y(), target_look_at_bullet.z());
+
+    const float aim_angle = std::acos(
+        glm::dot(unit_look_at, target_look_at)
+        / (glm::length(unit_look_at) * glm::length(target_look_at)));
+    const float aim_reward =
+        (aim_max_angle_potential_reward - std::max(aim_angle, aim_min_angle_potential_reward))
+        / aim_max_angle_potential_reward;
+
+    const float fire_reward =
+        action_stats->has_fire() ? (aim_angle < aim_min_angle_potential_reward ? 1.f : -1.f) : 0.f;
+
+    return 1e-1f * fire_reward + 2.5e-2 * reward_distance + 2.5e-2f * aim_reward;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {
@@ -120,3 +174,5 @@ std::vector<float> EnemyTankFactory::get_proprioception() {
     }
     return result;
 }
+
+std::shared_ptr<ActionStats> EnemyTankFactory::get_action_stats() { return action_stats; }

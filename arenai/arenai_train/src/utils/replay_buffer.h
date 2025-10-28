@@ -13,6 +13,7 @@
 struct TorchState {
     torch::Tensor vision;
     torch::Tensor proprioception;
+    torch::Tensor potential_reward;
 };
 
 struct TorchStep {

@@ -171,9 +171,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        android:layout_marginHorizontal="@dimen/menu_horizontal_margin"
         android:background="@color/colorBackground"
-        android:fitsSystemWindows="true">
+        android:fitsSystemWindows="true"
+        android:paddingHorizontal="@dimen/main_activity_margin_horizontal">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -184,7 +184,7 @@
             <Button
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="@dimen/stroke_width"
+                android:layout_marginBottom="@dimen/main_activity_option_margin_bottom"
                 android:background="@drawable/button"
                 android:onClick="configureGamePad"
                 android:text="@string/configure_game_pad_text"
@@ -193,7 +193,6 @@
             <Button
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="@dimen/stroke_width"
                 android:background="@drawable/button"
                 android:onClick="configureControls"
                 android:text="@string/configure_controls_text"

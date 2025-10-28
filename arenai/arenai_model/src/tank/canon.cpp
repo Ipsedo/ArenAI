@@ -11,12 +11,13 @@
 CanonItem::CanonItem(
     const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,
     glm::vec3 pos, glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *turret,
-    const std::function<void(Item *)> &on_contact)
+    const float wanted_frame_frequency, const std::function<void(Item *)> &on_contact)
     : LifeItem(5),
       ConvexItem(
           prefix_name + "_canon", std::make_shared<ObjShape>(file_reader, "obj/anubis_canon.obj"),
           pos, scale, mass),
-      angle(0.f), file_reader(file_reader), will_fire(false), on_contact(on_contact) {
+      angle(0.f), file_reader(file_reader), will_fire(false), on_contact(on_contact),
+      wanted_frame_frequency(wanted_frame_frequency) {
 
     auto turret_pivot = btVector3(rel_pos.x, rel_pos.y, rel_pos.z);
     auto canon_pivot = btVector3(0.f, 0.f, 0);
@@ -42,7 +43,7 @@ std::vector<std::shared_ptr<Item>> CanonItem::get_produced_items() {
 
         auto shell_item = std::make_shared<ShellItem>(
             file_reader, glm::vec3(shell_pos), glm::toQuat(m_matrix), glm::vec3(0.2f), 20.f,
-            on_contact);
+            wanted_frame_frequency, on_contact);
 
         glm::vec4 force_vec(0.f, 0.f, 1.f, 0.f);
         force_vec = m_matrix * force_vec;

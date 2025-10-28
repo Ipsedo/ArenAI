@@ -79,7 +79,10 @@ void SacNetworks::train(
             const auto target_v_value = torch::min(next_target_q_value_1, next_target_q_value_2)
                                         - alpha_entropy->alpha() * next_log_proba;
 
-            target_q_values = reward + (1.f - done.to(torch::kFloat)) * gamma * target_v_value;
+            target_q_values = reward
+                              + (1.f - done.to(torch::kFloat)) * gamma
+                                    * (target_v_value + next_state.potential_reward)
+                              - state.potential_reward;
         }
 
         // critic 1

@@ -42,6 +42,7 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
     auto replay_buffer = std::make_unique<ReplayBuffer>(train_options.replay_buffer_size, 12345);
 
     Metric reward_metric("reward", train_options.metric_window_size);
+    Metric potential_reward_metric("potential_reward", train_options.metric_window_size);
 
     int counter = 0;
 
@@ -89,31 +90,43 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
                 actions_future = actions_promise.get_future();
             }
 
+            const auto potential_rewards = env->get_potential_rewards();
+
             // step environment
             const auto steps = env->step(1.f / 30.f, actions_future);
+
+            const auto next_potential_rewards = env->get_potential_rewards();
 
             last_state.clear();
             last_state.reserve(train_options.nb_tanks);
 
             // save to replay buffer
             for (int i = 0; i < train_options.nb_tanks; i++) {
-                const auto [next_state, r, d] = steps[i];
+                const auto [next_state, reward, done] = steps[i];
                 last_state.push_back(next_state);
 
                 if (already_done[i]) continue;
 
                 const auto [next_vision, next_proprioception] = state_to_tensor(next_state);
 
-                reward_metric.add(r);
+                reward_metric.add(reward);
+                potential_reward_metric.add(potential_rewards[i]);
 
                 replay_buffer->add(
-                    {{vision[i], proprioception[i]},
+                    {{vision[i], proprioception[i],
+                      torch::tensor(
+                          potential_rewards[i], torch::TensorOptions().dtype(torch::kFloat))
+                          .unsqueeze(0)},
                      actions[i],
-                     torch::tensor(r, torch::TensorOptions().dtype(torch::kFloat)).unsqueeze(0),
-                     torch::tensor(d, torch::TensorOptions().dtype(torch::kBool)).unsqueeze(0),
-                     {next_vision, next_proprioception}});
+                     torch::tensor(reward, torch::TensorOptions().dtype(torch::kFloat))
+                         .unsqueeze(0),
+                     torch::tensor(done, torch::TensorOptions().dtype(torch::kBool)).unsqueeze(0),
+                     {next_vision, next_proprioception,
+                      torch::tensor(
+                          next_potential_rewards[i], torch::TensorOptions().dtype(torch::kFloat))
+                          .unsqueeze(0)}});
 
-                if (d && !already_done[i]) already_done[i] = true;
+                if (done && !already_done[i]) already_done[i] = true;
             }
 
             // check if it's time to train
@@ -124,7 +137,7 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
             auto metrics = sac->get_metrics();
 
             std::stringstream stream;
-            stream << reward_metric.to_string()
+            stream << reward_metric.to_string() << ", " << potential_reward_metric.to_string()
                    << std::accumulate(
                           metrics.begin(), metrics.end(), std::string(),
                           [](std::string acc, const std::shared_ptr<Metric> &m) {

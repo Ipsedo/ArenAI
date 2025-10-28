@@ -22,7 +22,7 @@ public:
     CanonItem(
         const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,
         glm::vec3 pos, glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *turret,
-        const std::function<void(Item *)> &on_contact);
+        float wanted_frame_frequency, const std::function<void(Item *)> &on_contact);
 
     void on_input(const user_input &input) override;
 
@@ -40,6 +40,7 @@ private:
     std::shared_ptr<AbstractFileReader> file_reader;
     bool will_fire;
     std::function<void(Item *)> on_contact;
+    float wanted_frame_frequency;
 };
 
 #endif// ARENAI_CANON_H

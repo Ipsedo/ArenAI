@@ -14,7 +14,7 @@
 
 TankFactory::TankFactory(
     const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
-    glm::vec3 chassis_pos)
+    glm::vec3 chassis_pos, float wanted_frame_frequency)
     : name(tank_prefix_name), camera(std::nullptr_t()), items(), item_producers(), controllers(),
       file_reader(file_reader) {
 
@@ -72,7 +72,7 @@ TankFactory::TankFactory(
     glm::vec3 canon_scale = turret_scale;
     auto canon = std::make_shared<CanonItem>(
         tank_prefix_name, file_reader, chassis_pos + turret_pos + canon_pos, canon_pos,
-        scale * canon_scale, 50, turret->get_body(),
+        scale * canon_scale, 50, turret->get_body(), wanted_frame_frequency,
         [this](Item *i) { on_fired_shell_contact(i); });
 
     item_producers.push_back(canon);

@@ -33,6 +33,8 @@ void Item::destroy() { will_destroy = true; }
 
 void Item::on_contact(Item *other) {}
 
+void Item::tick() {}
+
 /*
  * Life Item
  */

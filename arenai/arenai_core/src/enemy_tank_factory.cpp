@@ -40,9 +40,12 @@ float EnemyTankFactory::get_reward() {
 
 float EnemyTankFactory::get_potential_reward(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &all_enemy_tank_factories) {
+    constexpr float epsilon = 1e-8f;
+
     const auto chassis_pos = get_items()[0]->get_body()->getWorldTransform().getOrigin();
 
-    float nearest_enemy_index = -1;
+    // distance
+    int nearest_enemy_index = -1;
     float shortest_distance = std::numeric_limits<float>::max();
     float max_distance = 0.f;
     for (int i = 0; i < all_enemy_tank_factories.size(); i++) {
@@ -67,6 +70,7 @@ float EnemyTankFactory::get_potential_reward(
         (max_distance_potential_reward - std::max(shortest_distance, min_distance_potential_reward))
         / max_distance_potential_reward;
 
+    // AIM
     const auto camera = get_camera();
     const auto other_pos = all_enemy_tank_factories[nearest_enemy_index]
                                ->get_items()[0]
@@ -80,17 +84,20 @@ float EnemyTankFactory::get_potential_reward(
     const glm::vec3 target_look_at(
         target_look_at_bullet.x(), target_look_at_bullet.y(), target_look_at_bullet.z());
 
-    const float aim_angle = std::acos(
+    const float aim_cos_angle =
         glm::dot(unit_look_at, target_look_at)
-        / (glm::length(unit_look_at) * glm::length(target_look_at)));
+        / (glm::length(unit_look_at) * glm::length(target_look_at) + epsilon);
+    const float aim_angle = std::acos(std::max(-1.0f, std::min(aim_cos_angle, 1.f)));
     const float aim_reward =
         (aim_max_angle_potential_reward - std::max(aim_angle, aim_min_angle_potential_reward))
         / aim_max_angle_potential_reward;
 
+    // fire
     const float fire_reward =
         action_stats->has_fire() ? (aim_angle < aim_min_angle_potential_reward ? 1.f : -1.f) : 0.f;
 
-    return 1e-1f * fire_reward + 2.5e-2 * reward_distance + 2.5e-2f * aim_reward;
+    // potential reward
+    return 1e-1f * fire_reward + 2.5e-2f * reward_distance + 2.5e-2f * aim_reward;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

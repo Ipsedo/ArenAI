@@ -4,6 +4,8 @@
 
 #include <arenai_core/enemy_tank_factory.h>
 
+#include <algorithm>
+
 EnemyTankFactory::EnemyTankFactory(
     const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
     const glm::vec3 chassis_pos, const float wanted_frame_frequency)
@@ -87,7 +89,7 @@ float EnemyTankFactory::get_potential_reward(
     const float aim_cos_angle =
         glm::dot(unit_look_at, target_look_at)
         / (glm::length(unit_look_at) * glm::length(target_look_at) + epsilon);
-    const float aim_angle = std::acos(std::max(-1.0f, std::min(aim_cos_angle, 1.f)));
+    const float aim_angle = std::acos(std::clamp(aim_cos_angle, -1.f, 1.f));
     const float aim_reward =
         (aim_max_angle_potential_reward - std::max(aim_angle, aim_min_angle_potential_reward))
         / aim_max_angle_potential_reward;

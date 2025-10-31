@@ -71,24 +71,22 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
 
         int episode_step_idx = 0;
         while (!is_done) {
+
+            torch::Tensor actions;
+
             const auto [vision, proprioception] = states_to_tensor(last_state);
 
-            // sample action
-            std::future<std::vector<Action>> actions_future;
-            torch::Tensor actions;
-            {
-                sac->train(false);
+            auto actions_future = std::async([&]() {
                 torch::NoGradGuard no_grad_guard;
+
+                sac->train(false);
 
                 const auto [mu, sigma] =
                     sac->act(vision.to(torch_device), proprioception.to(torch_device));
                 actions = truncated_normal_sample(mu, sigma, -1.f, 1.f).cpu();
-                auto actions_core = tensor_to_actions(actions);
 
-                auto actions_promise = std::promise<std::vector<Action>>();
-                actions_promise.set_value(std::move(actions_core));
-                actions_future = actions_promise.get_future();
-            }
+                return tensor_to_actions(actions);
+            });
 
             const auto potential_rewards = env->get_potential_rewards();
 
@@ -113,18 +111,15 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
                 potential_reward_metric.add(potential_rewards[i]);
 
                 replay_buffer->add(
-                    {{vision[i], proprioception[i],
-                      torch::tensor(
-                          potential_rewards[i], torch::TensorOptions().dtype(torch::kFloat))
-                          .unsqueeze(0)},
+                    {{vision[i], proprioception[i]},
                      actions[i],
-                     torch::tensor(reward, torch::TensorOptions().dtype(torch::kFloat))
+                     torch::tensor(
+                         reward + (done ? 0.f : model_options.gamma * next_potential_rewards[i])
+                             - potential_rewards[i],
+                         torch::TensorOptions().dtype(torch::kFloat))
                          .unsqueeze(0),
                      torch::tensor(done, torch::TensorOptions().dtype(torch::kBool)).unsqueeze(0),
-                     {next_vision, next_proprioception,
-                      torch::tensor(
-                          next_potential_rewards[i], torch::TensorOptions().dtype(torch::kFloat))
-                          .unsqueeze(0)}});
+                     {next_vision, next_proprioception}});
 
                 if (done && !already_done[i]) already_done[i] = true;
             }

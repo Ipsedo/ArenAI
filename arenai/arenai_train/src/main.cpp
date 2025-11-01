@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
     parser.add_argument("--learning_rate").scan<'g', float>().default_value(3e-4f);
     parser.add_argument("--epochs").scan<'i', int>().default_value(5);
     parser.add_argument("--batch_size").scan<'i', int>().default_value(800);
-    parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60);
+    parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60 * 2);
     parser.add_argument("--nb_episodes").scan<'i', int>().default_value(30000);
     parser.add_argument("--replay_buffer_size").scan<'i', int>().default_value(200000);
     parser.add_argument("--train_every").scan<'i', int>().default_value(250);

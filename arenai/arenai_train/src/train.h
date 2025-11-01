@@ -20,7 +20,7 @@ struct TrainOptions {
     int nb_tanks;
     std::filesystem::path output_folder;
     std::filesystem::path android_asset_folder;
-    float potential_reward_factor;
+    float potential_reward_scale;
     float learning_rate;
     int epochs;
     int batch_size;

@@ -117,7 +117,8 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
                     {{vision[i], proprioception[i]},
                      actions[i],
                      torch::tensor(
-                         reward + train_options.potential_reward_scale * potential_reward, torch::TensorOptions().dtype(torch::kFloat))
+                         reward + train_options.potential_reward_scale * potential_reward,
+                         torch::TensorOptions().dtype(torch::kFloat))
                          .unsqueeze(0),
                      torch::tensor(done, torch::TensorOptions().dtype(torch::kBool)).unsqueeze(0),
                      {next_vision, next_proprioception}});

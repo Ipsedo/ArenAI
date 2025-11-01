@@ -1,5 +1,6 @@
 package com.samuelberrien.arenai.set_controls.axis;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import androidx.core.content.ContextCompat;
 import android.view.View;
@@ -8,18 +9,17 @@ import android.widget.RelativeLayout;
 import com.samuelberrien.arenai.R;
 import com.samuelberrien.arenai.Dimens;
 
+@SuppressLint("ViewConstructor")
 public class AxisGage extends View implements Axis.OnAxisMoveListener {
 
-	private Axis axis;
-	private boolean isPlus;
+    private final boolean isPlus;
 	private float size;
 
 	public AxisGage(Context context, Axis axis, boolean isPlus) {
 		super(context);
 
 		this.isPlus = isPlus;
-		this.axis = axis;
-		this.axis.addListener(this);
+        axis.addListener(this);
 
 		setBackground(ContextCompat.getDrawable(context, R.color.colorAccent));
 

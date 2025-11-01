@@ -14,7 +14,7 @@
 
 TankFactory::TankFactory(
     const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
-    glm::vec3 chassis_pos)
+    glm::vec3 chassis_pos, float wanted_frame_frequency)
     : name(tank_prefix_name), camera(std::nullptr_t()), items(), item_producers(), controllers(),
       file_reader(file_reader) {
 
@@ -27,15 +27,18 @@ TankFactory::TankFactory(
     items.push_back(chassis_item);
 
     // wheels
+    float front_axle_z = 3.f;
+
     float wheel_mass = 10.f;
     glm::vec3 wheel_scale = scale * glm::vec3(1.3, 1.1, 1.1);
     std::vector<std::tuple<std::string, glm::vec3>> front_wheel_config{
-        {"dir_wheel_right_1", {-2.7, -1., 3.}}, {"dir_wheel_left_1", {2.7, -1., 3.}}};
+        {"dir_wheel_right_1", {-2.7, -1., front_axle_z}},
+        {"dir_wheel_left_1", {2.7, -1., front_axle_z}}};
 
     for (auto &[wheel_name, wheel_pos]: front_wheel_config) {
         auto wheel = std::make_shared<DirectionalWheelItem>(
             tank_prefix_name + "_" + wheel_name, file_reader, wheel_pos + chassis_pos, wheel_pos,
-            wheel_scale, wheel_mass, chassis_item->get_body());
+            wheel_scale, wheel_mass, chassis_item->get_body(), front_axle_z);
 
         items.push_back(wheel);
         controllers.push_back(wheel);
@@ -44,13 +47,13 @@ TankFactory::TankFactory(
     std::vector<std::tuple<std::string, glm::vec3>> wheel_config{
         {"wheel_right_2", {-2.7, -1., 0.}},
         {"wheel_left_2", {2.7, -1., 0.}},
-        {"wheel_right_3", {-2.7, -1., -3.}},
-        {"wheel_left_3", {2.7, -1., -3.}}};
+        {"wheel_right_3", {-2.7, -1., -front_axle_z}},
+        {"wheel_left_3", {2.7, -1., -front_axle_z}}};
 
     for (auto &[wheel_name, wheel_pos]: wheel_config) {
         auto wheel = std::make_shared<WheelItem>(
             tank_prefix_name + "_" + wheel_name, file_reader, wheel_pos + chassis_pos, wheel_pos,
-            wheel_scale, wheel_mass, chassis_item->get_body());
+            wheel_scale, wheel_mass, chassis_item->get_body(), front_axle_z);
 
         items.push_back(wheel);
         controllers.push_back(wheel);
@@ -69,7 +72,7 @@ TankFactory::TankFactory(
     glm::vec3 canon_scale = turret_scale;
     auto canon = std::make_shared<CanonItem>(
         tank_prefix_name, file_reader, chassis_pos + turret_pos + canon_pos, canon_pos,
-        scale * canon_scale, 50, turret->get_body(),
+        scale * canon_scale, 50, turret->get_body(), wanted_frame_frequency,
         [this](Item *i) { on_fired_shell_contact(i); });
 
     item_producers.push_back(canon);

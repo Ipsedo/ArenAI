@@ -2,4 +2,14 @@
 <resources>
     <dimen name="stroke_width">4dp</dimen>
     <dimen name="menu_horizontal_margin">16dp</dimen>
+
+    <!-- Main activity -->
+    <dimen name="main_activity_margin_horizontal">12dp</dimen>
+    <dimen name="main_activity_option_margin_bottom">20dp</dimen>
+    <dimen name="main_activity_option_margin_horizontal">12dp</dimen>
+    <dimen name="main_activity_option_elevation">10dp</dimen>
+    <dimen name="main_activity_option_inner_margin_vertical">15dp</dimen>
+    <dimen name="main_activity_option_content_margin_horizontal">60dp</dimen>
+    <dimen name="main_activity_text_size">16sp</dimen>
+    <dimen name="main_activity_sub_text_size">12sp</dimen>
 </resources>

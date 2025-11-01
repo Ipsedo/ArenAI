@@ -104,10 +104,6 @@ std::vector<Action> ExecuTorchAgent::act(const std::vector<State> &state) {
         idx_proprioception += static_cast<size_t>(ENEMY_PROPRIOCEPTION_SIZE);
     }
 
-    /*std::memcpy(
-        dst_p + batch_idx * ENEMY_PROPRIOCEPTION_SIZE, s.proprioception.data(),
-        sizeof(float) * static_cast<size_t>(ENEMY_PROPRIOCEPTION_SIZE));*/
-
     const auto dtype = torch::executor::ScalarType::Float;
 
     auto vision_tensor = executorch::extension::from_blob(

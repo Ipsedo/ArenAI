@@ -24,6 +24,7 @@ protected:
 private:
     int nb_frames_to_fire;
     int curr_frame;
+
     std::shared_ptr<ActionStats> action_stats;
 };
 

@@ -10,7 +10,8 @@
 
 #include "../utils/metric.h"
 #include "../utils/replay_buffer.h"
-#include "./agent.h"
+#include "./actor.h"
+#include "./critic.h"
 #include "./entropy.h"
 
 class SacNetworks {
@@ -28,6 +29,8 @@ public:
     std::vector<std::shared_ptr<Metric>> get_metrics() const;
 
     void save(const std::filesystem::path &output_folder) const;
+
+    void train(bool train) const;
 
 private:
     std::shared_ptr<SacActor> actor;

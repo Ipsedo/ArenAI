@@ -23,9 +23,11 @@ TorchStep ReplayBuffer::sample(int batch_size, torch::Device device) {
 
         states_vision.push_back(state.vision);
         states_proprioception.push_back(state.proprioception);
+
         actions.push_back(action.detach());
         rewards.push_back(reward);
         dones.push_back(done);
+
         next_states_vision.push_back(next_state.vision);
         next_states_proprioception.push_back(next_state.proprioception);
     }

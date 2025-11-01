@@ -14,10 +14,10 @@ ShellItem::load_shape(const std::shared_ptr<AbstractFileReader> &file_reader) {
 ShellItem::ShellItem(
     const std::shared_ptr<AbstractFileReader> &file_reader, const glm::vec3 pos,
     const glm::quat rot, const glm::vec3 scale, const float mass,
-    const std::function<void(Item *)> &contact_callback)
-    : LifeItem(10),
-      ConvexItem(ShellItem::NAME, ShellItem::load_shape(file_reader), pos, scale, mass),
-      contact_callback(contact_callback) {
+    const float wanted_frame_frequency, const std::function<void(Item *)> &contact_callback)
+    : LifeItem(2), ConvexItem(NAME, load_shape(file_reader), pos, scale, mass),
+      contact_callback(contact_callback),
+      nb_frames_alive(static_cast<int>(20.f / wanted_frame_frequency)) {
 
     btTransform shell_tr;
     shell_tr.setIdentity();
@@ -35,4 +35,12 @@ void ShellItem::on_contact(Item *other) {
     contact_callback(other);
 
     if (is_dead()) destroy();
+}
+
+void ShellItem::tick() {
+    ConvexItem::tick();
+
+    nb_frames_alive--;
+
+    if (nb_frames_alive <= 0) destroy();
 }

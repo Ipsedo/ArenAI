@@ -9,8 +9,8 @@
 WheelItem::WheelItem(
     const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,
     const glm::vec3 pos, const glm::vec3 rel_pos, const glm::vec3 scale, const float mass,
-    btRigidBody *chassis)
-    : LifeItem(10),
+    btRigidBody *chassis, float front_axle_z)
+    : LifeItem(5),
       ConvexItem(
           prefix_name + "_wheel", std::make_shared<ObjShape>(file_reader, "obj/anubis_wheel.obj"),
           pos, scale, mass) {
@@ -46,7 +46,7 @@ WheelItem::WheelItem(
     hinge->setEquilibriumPoint(index, -0.2f);
 
     // disable axis
-    for (float axis_to_disable[] = {0, 2, 5}; const auto axis: axis_to_disable) {
+    for (int axis_to_disable[] = {0, 2, 5}; const auto axis: axis_to_disable) {
         hinge->setParam(BT_CONSTRAINT_STOP_ERP, 0.9, axis);
         hinge->setParam(BT_CONSTRAINT_STOP_CFM, 0.0, axis);
         hinge->setLimit(axis, 0, 0);
@@ -55,19 +55,53 @@ WheelItem::WheelItem(
     }
 
     ConvexItem::get_body()->setFriction(500.f);
+
+    // for differential
+    wheel_center_pos_rel_to_chassis = rel_pos;
+    this->front_axle_z = front_axle_z;
 }
 
 void WheelItem::on_input(const user_input &input) {
     constexpr int motor_axis = 3;
     const auto radial_velocity = -input.left_joystick.y * static_cast<float>(M_PI) * 5.f;
 
-    hinge->setTargetVelocity(motor_axis, radial_velocity);
+    const float angle = input.left_joystick.x * WHEEL_DIRECTION_MAX_RADIAN;
+
+    hinge->setTargetVelocity(
+        motor_axis, adjust_rotation_velocity_differential(angle, radial_velocity));
 }
 
 std::vector<btTypedConstraint *> WheelItem::get_constraints() {
     auto constraints = Item::get_constraints();
     constraints.push_back(hinge);
     return constraints;
+}
+
+float WheelItem::adjust_rotation_velocity_differential(
+    float front_wheel_orientation_radian, float original_rotation_velocity) const {
+
+    const float delta = front_wheel_orientation_radian;
+
+    const float eps = 1e-6f;
+    if (std::fabs(delta) < 1e-6f || std::fabs(std::tan(delta)) < eps) {
+        return original_rotation_velocity;
+    }
+
+    const float Rc = -front_axle_z / std::tan(delta);
+
+    const auto xw = wheel_center_pos_rel_to_chassis.x;
+    const auto zw = wheel_center_pos_rel_to_chassis.z;
+
+    const float rw = std::sqrt((xw - Rc) * (xw - Rc) + zw * zw);
+    const float rc = std::fabs(Rc);
+
+    if (rc < eps) {
+        const float ratio = rw / eps;
+        return original_rotation_velocity * ratio;
+    }
+
+    const float ratio = rw / rc;
+    return original_rotation_velocity * ratio;
 }
 
 /*
@@ -78,12 +112,13 @@ void DirectionalWheelItem::on_input(const user_input &input) {
     WheelItem::on_input(input);
 
     constexpr int motor_axis = 4;
-    const float angle = input.left_joystick.x * static_cast<float>(M_PI) / 8.f;
+    const float angle = input.left_joystick.x * WHEEL_DIRECTION_MAX_RADIAN;
 
     hinge->setLimit(motor_axis, angle, angle);
 }
 
 DirectionalWheelItem::DirectionalWheelItem(
-    std::string name, const std::shared_ptr<AbstractFileReader> &file_reader, const glm::vec3 pos,
-    const glm::vec3 rel_pos, const glm::vec3 scale, const float mass, btRigidBody *chassis)
-    : WheelItem(std::move(name), file_reader, pos, rel_pos, scale, mass, chassis) {}
+    const std::string &name, const std::shared_ptr<AbstractFileReader> &file_reader,
+    const glm::vec3 pos, const glm::vec3 rel_pos, const glm::vec3 scale, const float mass,
+    btRigidBody *chassis, float front_axle_z)
+    : WheelItem(name, file_reader, pos, rel_pos, scale, mass, chassis, front_axle_z) {}

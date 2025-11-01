@@ -13,8 +13,12 @@ class EnemyTankFactory final : public TankFactory {
 public:
     EnemyTankFactory(
         const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
-        glm::vec3 chassis_pos, float wanted_frequency);
+        glm::vec3 chassis_pos, float wanted_frame_frequency);
+
     float get_reward();
+
+    float get_potential_reward(
+        const std::vector<std::unique_ptr<EnemyTankFactory>> &all_enemy_tank_factories);
 
     bool is_dead() override;
 
@@ -28,16 +32,23 @@ protected:
     void on_fired_shell_contact(Item *item) override;
 
 private:
+    std::string tank_prefix_name;
+
     float reward;
     int max_frames_upside_down;
     int curr_frame_upside_down;
 
     bool is_dead_already_triggered;
 
-    std::shared_ptr<ActionStats> action_stats;
-
     int max_frames_without_hit;
     int nb_frames_since_last_hit;
+
+    std::shared_ptr<ActionStats> action_stats;
+
+    float min_distance_potential_reward;
+    float max_distance_potential_reward;
+    float aim_min_angle_potential_reward;
+    float aim_max_angle_potential_reward;
 };
 
 #endif//ARENAI_TRAIN_HOST_ENEMY_TANK_FACTORY_H

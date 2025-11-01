@@ -42,6 +42,7 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
     auto replay_buffer = std::make_unique<ReplayBuffer>(train_options.replay_buffer_size, 12345);
 
     Metric reward_metric("reward", train_options.metric_window_size);
+    Metric potential_reward_metric("potential_reward", train_options.metric_window_size);
 
     int counter = 0;
 
@@ -70,49 +71,59 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
 
         int episode_step_idx = 0;
         while (!is_done) {
+
+            torch::Tensor actions;
+
             const auto [vision, proprioception] = states_to_tensor(last_state);
 
-            // sample action
-            std::future<std::vector<Action>> actions_future;
-            torch::Tensor actions;
-            {
+            auto actions_future = std::async([&]() {
                 torch::NoGradGuard no_grad_guard;
+
+                sac->train(false);
 
                 const auto [mu, sigma] =
                     sac->act(vision.to(torch_device), proprioception.to(torch_device));
                 actions = truncated_normal_sample(mu, sigma, -1.f, 1.f).cpu();
-                auto actions_core = tensor_to_actions(actions);
 
-                auto actions_promise = std::promise<std::vector<Action>>();
-                actions_promise.set_value(std::move(actions_core));
-                actions_future = actions_promise.get_future();
-            }
+                return tensor_to_actions(actions);
+            });
+
+            const auto potential_rewards = env->get_potential_rewards();
 
             // step environment
             const auto steps = env->step(1.f / 30.f, actions_future);
+
+            const auto next_potential_rewards = env->get_potential_rewards();
 
             last_state.clear();
             last_state.reserve(train_options.nb_tanks);
 
             // save to replay buffer
             for (int i = 0; i < train_options.nb_tanks; i++) {
-                const auto [next_state, r, d] = steps[i];
+                const auto [next_state, reward, done] = steps[i];
                 last_state.push_back(next_state);
 
                 if (already_done[i]) continue;
 
                 const auto [next_vision, next_proprioception] = state_to_tensor(next_state);
+                const float potential_reward =
+                    (done ? 0.f : model_options.gamma * next_potential_rewards[i])
+                    - potential_rewards[i];
 
-                reward_metric.add(r);
+                reward_metric.add(reward);
+                potential_reward_metric.add(potential_reward);
 
                 replay_buffer->add(
                     {{vision[i], proprioception[i]},
                      actions[i],
-                     torch::tensor(r, torch::TensorOptions().dtype(torch::kFloat)).unsqueeze(0),
-                     torch::tensor(d, torch::TensorOptions().dtype(torch::kBool)).unsqueeze(0),
+                     torch::tensor(
+                         reward + train_options.potential_reward_scale * potential_reward,
+                         torch::TensorOptions().dtype(torch::kFloat))
+                         .unsqueeze(0),
+                     torch::tensor(done, torch::TensorOptions().dtype(torch::kBool)).unsqueeze(0),
                      {next_vision, next_proprioception}});
 
-                if (d && !already_done[i]) already_done[i] = true;
+                if (done && !already_done[i]) already_done[i] = true;
             }
 
             // check if it's time to train
@@ -123,7 +134,7 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
             auto metrics = sac->get_metrics();
 
             std::stringstream stream;
-            stream << reward_metric.to_string()
+            stream << reward_metric.to_string() << ", " << potential_reward_metric.to_string()
                    << std::accumulate(
                           metrics.begin(), metrics.end(), std::string(),
                           [](std::string acc, const std::shared_ptr<Metric> &m) {

@@ -6,7 +6,6 @@ import android.os.Bundle;
 
 import android.view.View;
 import android.widget.ArrayAdapter;
-import android.widget.NumberPicker;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -14,101 +13,109 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
-import androidx.core.view.WindowCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.material.appbar.MaterialToolbar;
-import com.google.android.material.navigation.NavigationView;
 import com.samuelberrien.arenai.set_controls.ControlActivity;
 import com.samuelberrien.arenai.set_controls.GamePadActivity;
 
+import java.util.Map;
+
 public class MainActivity extends AppCompatActivity {
 
-	private ActionBarDrawerToggle drawerToggle;
+    private ActionBarDrawerToggle drawerToggle;
 
-	int nb_tanks_chosen = 1;
+    private int nbTanksChosen = 1;
+
+    private Map<String, String> difficultyLevelToExecutorchModelAsset;
+    private Spinner spinner;
 
     @Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
-		MaterialToolbar toolbar = findViewById(R.id.main_toolbar);
-		setSupportActionBar(toolbar);
+        MaterialToolbar toolbar = findViewById(R.id.main_toolbar);
+        setSupportActionBar(toolbar);
 
-		DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
-		drawerToggle = new ActionBarDrawerToggle(
-				this, drawerLayout, toolbar,
-				R.string.navigation_drawer_open, R.string.navigation_drawer_close
-		);
+        DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
+        drawerToggle = new ActionBarDrawerToggle(
+                this, drawerLayout, toolbar,
+                R.string.navigation_drawer_open, R.string.navigation_drawer_close
+        );
 
-		drawerLayout.addDrawerListener(drawerToggle);
-		drawerToggle.syncState();
+        drawerLayout.addDrawerListener(drawerToggle);
+        drawerToggle.syncState();
 
-		TextView chosenEnemyNumberTextView = findViewById(R.id.chosen_enemy_number_textview);
-		String originalChosenEnemyNumberMessage = chosenEnemyNumberTextView.getText().toString();
-		chosenEnemyNumberTextView.setText(String.format(originalChosenEnemyNumberMessage, nb_tanks_chosen));
+        TextView chosenEnemyNumberTextView = findViewById(R.id.chosen_enemy_number_textview);
+        String originalChosenEnemyNumberMessage = chosenEnemyNumberTextView.getText().toString();
+        chosenEnemyNumberTextView.setText(String.format(originalChosenEnemyNumberMessage, nbTanksChosen));
 
         SeekBar numberSeekBar = findViewById(R.id.enemy_number_seekbar);
-		numberSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-			@Override
-			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-				nb_tanks_chosen = progress;
-				chosenEnemyNumberTextView.setText(String.format(originalChosenEnemyNumberMessage, nb_tanks_chosen));
-			}
+        numberSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                nbTanksChosen = progress;
+                chosenEnemyNumberTextView.setText(String.format(originalChosenEnemyNumberMessage, nbTanksChosen));
+            }
 
-			@Override
-			public void onStartTrackingTouch(SeekBar seekBar) {
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
 
-			}
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+        });
 
-			@Override
-			public void onStopTrackingTouch(SeekBar seekBar) {
+        // enemies level
+        spinner = findViewById(R.id.enemy_level_spinner);
 
-			}
-		});
+        String[] levels = {"Dummy", "Easy", "Medium", "Hard"};
 
-		// enemies level
-		Spinner spinner = findViewById(R.id.enemy_level_spinner);
+        difficultyLevelToExecutorchModelAsset = Map.of(
+                levels[0], "executorch/actor.pte",
+                levels[1], "executorch/actor_easy.pte",
+                levels[2], "executorch/actor_medium.pte",
+                levels[3], "executorch/actor_hard.pte"
+        );
 
-		String[] levels = {"Easy", "Medium", "Hard"};
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this,
+                R.layout.spinner_item,
+                levels
+        );
+        adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
 
-		ArrayAdapter<String> adapter = new ArrayAdapter<>(
-				this,
-				R.layout.spinner_item,
-				levels
-		);
-		adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+    }
 
-		spinner.setAdapter(adapter);
-	}
+    @Override
+    public void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        if (drawerToggle != null) drawerToggle.syncState();
+    }
 
-	@Override
-	public void onPostCreate(Bundle savedInstanceState) {
-		super.onPostCreate(savedInstanceState);
-		if (drawerToggle != null) drawerToggle.syncState();
-	}
+    @Override
+    public void onConfigurationChanged(@NonNull android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (drawerToggle != null) drawerToggle.onConfigurationChanged(newConfig);
+    }
 
-	@Override
-	public void onConfigurationChanged(@NonNull android.content.res.Configuration newConfig) {
-		super.onConfigurationChanged(newConfig);
-		if (drawerToggle != null) drawerToggle.onConfigurationChanged(newConfig);
-	}
+    public void play(View v) {
+        Intent intent = new Intent(this, NativeActivity.class);
+        intent.putExtra("nb_tanks", nbTanksChosen);
+        intent.putExtra("executorch_model_asset", difficultyLevelToExecutorchModelAsset.get(spinner.getSelectedItem().toString()));
+        startActivity(intent);
+    }
 
-	public void play(View v) {
-		Intent intent = new Intent(this, NativeActivity.class);
-		intent.putExtra("nb_tanks", nb_tanks_chosen);
-		startActivity(intent);
-	}
+    public void configureGamePad(View v) {
+        Intent myIntent = new Intent(this, GamePadActivity.class);
+        startActivity(myIntent);
+    }
 
-	public void configureGamePad(View v) {
-		Intent myIntent = new Intent(this, GamePadActivity.class);
-		startActivity(myIntent);
-	}
-
-	public void configureControls(View v) {
-		Intent myIntent = new Intent(this, ControlActivity.class);
-		startActivity(myIntent);
-	}
+    public void configureControls(View v) {
+        Intent myIntent = new Intent(this, ControlActivity.class);
+        startActivity(myIntent);
+    }
 }

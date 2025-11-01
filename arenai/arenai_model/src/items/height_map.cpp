@@ -26,7 +26,7 @@ HeightMapItem::HeightMapItem(
     map->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
     //map->setLocalScaling(btVector3(1.0, 1.0, 1.0));
     map->processAllTriangles(
-        this, btVector3(-1000., -1000., -1000.), btVector3(1000., 1000., 1000.));
+        this, btVector3(-2000., -2000., -2000.), btVector3(2000., 2000., 2000.));
     map->setUseDiamondSubdivision(true);
 
     btTransform myTransform;

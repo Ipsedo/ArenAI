@@ -68,3 +68,23 @@ int get_int_extra(JNIEnv *env, jobject intent, const char *key, int default_valu
     env->DeleteLocalRef(cls);
     return (int) res;
 }
+
+std::string
+get_string_extra(JNIEnv *env, jobject intent, const char *key, const std::string &default_value) {
+    jclass cls = env->GetObjectClass(intent);
+    jmethodID mid =
+        env->GetMethodID(cls, "getStringExtra", "(Ljava/lang/String;)Ljava/lang/String;");
+    jstring jkey = env->NewStringUTF(key);
+
+    jstring jres = (jstring) env->CallObjectMethod(intent, mid, jkey);
+    std::string result = default_value;
+
+    const char *cstr = env->GetStringUTFChars(jres, nullptr);
+    result = cstr;
+    env->ReleaseStringUTFChars(jres, cstr);
+    env->DeleteLocalRef(jres);
+
+    env->DeleteLocalRef(jkey);
+    env->DeleteLocalRef(cls);
+    return result;
+}

@@ -73,6 +73,12 @@ protected:
     void start_threads();
     void kill_threads();
 
+    template<typename T>
+    T apply_on_factories(
+        std::function<T(const std::vector<std::unique_ptr<EnemyTankFactory>> &)> apply_function) {
+        return apply_function(tank_factories);
+    }
+
     std::random_device dev;
     std::mt19937 rng;
 

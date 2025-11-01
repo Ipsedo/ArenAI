@@ -9,7 +9,7 @@
 ChassisItem::ChassisItem(
     const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,
     const glm::vec3 position, const glm::vec3 scale, const float mass)
-    : LifeItem(60), ConvexItem(
+    : LifeItem(10), ConvexItem(
                         prefix_name + "_chassis",
                         std::make_shared<ObjShape>(file_reader, "obj/anubis_chassis.obj"), position,
                         scale, mass) {

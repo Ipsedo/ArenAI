@@ -9,24 +9,35 @@
 #include <arenai_controller/inputs.h>
 #include <arenai_model/convex.h>
 
+#define WHEEL_DIRECTION_MAX_RADIAN (static_cast<float>(M_PI) / 12.f)
+
 class WheelItem : public LifeItem, public ConvexItem, public Controller {
 public:
     WheelItem(
         const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,
-        glm::vec3 pos, glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *chassis);
+        glm::vec3 pos, glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *chassis,
+        float front_axle_z);
     void on_input(const user_input &input) override;
 
     std::vector<btTypedConstraint *> get_constraints() override;
 
 protected:
     btGeneric6DofSpring2Constraint *hinge;
+
+private:
+    float front_axle_z;
+    glm::vec3 wheel_center_pos_rel_to_chassis{};
+
+    float adjust_rotation_velocity_differential(
+        float front_wheel_orientation_radian, float original_rotation_velocity) const;
 };
 
 class DirectionalWheelItem final : public WheelItem {
 public:
     DirectionalWheelItem(
-        std::string name, const std::shared_ptr<AbstractFileReader> &file_reader, glm::vec3 pos,
-        glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *chassis);
+        const std::string &name, const std::shared_ptr<AbstractFileReader> &file_reader,
+        glm::vec3 pos, glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *chassis,
+        float front_axle_z);
     void on_input(const user_input &input) override;
 };
 

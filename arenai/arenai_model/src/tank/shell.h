@@ -20,15 +20,18 @@ public:
 
     ShellItem(
         const std::shared_ptr<AbstractFileReader> &file_reader, glm::vec3 pos, glm::quat rot,
-        glm::vec3 scale, float mass,
+        glm::vec3 scale, float mass, float wanted_frame_frequency,
         const std::function<void(Item *)> &contact_callback = [](Item *i) {});
 
     void on_contact(Item *other) override;
 
     inline const static std::string NAME = "shell_item";
 
+    void tick() override;
+
 private:
     std::function<void(Item *)> contact_callback;
+    int nb_frames_alive;
 };
 
 #endif// ARENAI_SHELL_H

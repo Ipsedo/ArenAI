@@ -6,6 +6,8 @@
 
 #include <arenai_model/engine.h>
 
+#include "tank/shell.h"
+
 PhysicEngine::PhysicEngine(const float wanted_frequency)
     : wanted_frequency(wanted_frequency),
       m_collision_configuration(new btDefaultCollisionConfiguration()),
@@ -59,7 +61,11 @@ void PhysicEngine::step(const float delta) {
     }
 
     for (int i = static_cast<int>(items.size()) - 1; i >= 0; i--) {
-        if (const auto item = items[i]; item->need_destroy()) {
+        const auto item = items[i];
+
+        item->tick();
+
+        if (item->need_destroy()) {
             auto *body = item->get_body();
 
             m_world->removeRigidBody(body);

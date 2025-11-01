@@ -47,4 +47,39 @@
         </attr>
         <attr name="button_stroke_width" format="dimension" />
     </declare-styleable>
+
+    <declare-styleable name="ContinuousInputView">
+        <!-- Couleur de fond du rectangle fixe -->
+        <attr name="fixedRectColor" format="color"/>
+
+        <!-- Couleur et épaisseur du contour du rectangle fixe -->
+        <attr name="fixedRectStrokeColor" format="color"/>
+        <attr name="fixedRectStrokeWidth" format="dimension"/>
+
+        <!-- Couleur du rectangle qui change -->
+        <attr name="fillRectColor" format="color"/>
+
+        <!-- Côté d'où débute le remplissage -->
+        <attr name="growFrom">
+            <enum name="left" value="0"/>
+            <enum name="right" value="1"/>
+            <enum name="top" value="2"/>
+            <enum name="bottom" value="3"/>
+        </attr>
+
+        <attr name="input">
+            <enum name="forward" value="0"/>
+            <enum name="backward" value="1"/>
+            <enum name="left" value="2"/>
+            <enum name="right" value="3"/>
+            <enum name="canon_up" value="4"/>
+            <enum name="canon_down" value="5"/>
+            <enum name="turret_left" value="6"/>
+            <enum name="turret_right" value="7"/>
+        </attr>
+
+        <!-- Valeur et maximum (si vous préférez exprimer une valeur absolue) -->
+        <attr name="value" format="float"/>
+        <attr name="max" format="float"/>
+    </declare-styleable>
 </resources>

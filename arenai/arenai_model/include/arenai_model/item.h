@@ -25,6 +25,8 @@ public:
 
     glm::mat4 get_model_matrix();
 
+    virtual void tick();
+
     virtual btRigidBody *get_body() = 0;
     virtual std::vector<btTypedConstraint *> get_constraints();
 

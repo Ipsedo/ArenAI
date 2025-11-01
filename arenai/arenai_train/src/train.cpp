@@ -106,17 +106,18 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
                 if (already_done[i]) continue;
 
                 const auto [next_vision, next_proprioception] = state_to_tensor(next_state);
+                const float potential_reward =
+                    (done ? 0.f : model_options.gamma * next_potential_rewards[i])
+                    - potential_rewards[i];
 
                 reward_metric.add(reward);
-                potential_reward_metric.add(potential_rewards[i]);
+                potential_reward_metric.add(potential_reward);
 
                 replay_buffer->add(
                     {{vision[i], proprioception[i]},
                      actions[i],
                      torch::tensor(
-                         reward + (done ? 0.f : model_options.gamma * next_potential_rewards[i])
-                             - potential_rewards[i],
-                         torch::TensorOptions().dtype(torch::kFloat))
+                         reward + train_options.potential_reward_factor * potential_reward, torch::TensorOptions().dtype(torch::kFloat))
                          .unsqueeze(0),
                      torch::tensor(done, torch::TensorOptions().dtype(torch::kBool)).unsqueeze(0),
                      {next_vision, next_proprioception}});

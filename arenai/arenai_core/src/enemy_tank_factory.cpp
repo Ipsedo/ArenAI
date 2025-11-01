@@ -2,9 +2,9 @@
 // Created by samuel on 20/10/2025.
 //
 
-#include <arenai_core/enemy_tank_factory.h>
-
 #include <algorithm>
+
+#include <arenai_core/enemy_tank_factory.h>
 
 EnemyTankFactory::EnemyTankFactory(
     const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,

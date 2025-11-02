@@ -10,17 +10,19 @@
 
 SacNetworks::SacNetworks(
     int nb_sensors, int nb_action, const float learning_rate, int hidden_size_sensors,
-    int hidden_size_actions, int hidden_size, const torch::Device device, int metric_window_size,
-    const float tau, const float gamma, const float initial_alpha)
-    : actor(std::make_shared<SacActor>(nb_sensors, nb_action, hidden_size_sensors, hidden_size)),
+    int hidden_size_actions, int actor_hidden_size, int critic_hidden_size,
+    const torch::Device device, int metric_window_size, const float tau, const float gamma,
+    const float initial_alpha)
+    : actor(
+        std::make_shared<SacActor>(nb_sensors, nb_action, hidden_size_sensors, actor_hidden_size)),
       critic_1(std::make_shared<SacCritic>(
-          nb_sensors, nb_action, hidden_size_sensors, hidden_size_actions, hidden_size)),
+          nb_sensors, nb_action, hidden_size_sensors, hidden_size_actions, critic_hidden_size)),
       critic_2(std::make_shared<SacCritic>(
-          nb_sensors, nb_action, hidden_size_sensors, hidden_size_actions, hidden_size)),
+          nb_sensors, nb_action, hidden_size_sensors, hidden_size_actions, critic_hidden_size)),
       target_critic_1(std::make_shared<SacCritic>(
-          nb_sensors, nb_action, hidden_size_sensors, hidden_size_actions, hidden_size)),
+          nb_sensors, nb_action, hidden_size_sensors, hidden_size_actions, critic_hidden_size)),
       target_critic_2(std::make_shared<SacCritic>(
-          nb_sensors, nb_action, hidden_size_sensors, hidden_size_actions, hidden_size)),
+          nb_sensors, nb_action, hidden_size_sensors, hidden_size_actions, critic_hidden_size)),
       alpha_entropy(std::make_shared<AlphaParameter>(initial_alpha)),
       actor_optim(std::make_unique<torch::optim::Adam>(
           actor->parameters(), torch::optim::AdamOptions(learning_rate))),

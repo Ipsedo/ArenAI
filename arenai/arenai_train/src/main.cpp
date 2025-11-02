@@ -13,7 +13,8 @@ int main(int argc, char **argv) {
     // model
     parser.add_argument("--hidden_size_sensors").scan<'i', int>().default_value(192);
     parser.add_argument("--hidden_size_actions").scan<'i', int>().default_value(64);
-    parser.add_argument("--hidden_size").scan<'i', int>().default_value(1024);
+    parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(1024);
+    parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(2048);
     parser.add_argument("--tau").scan<'g', float>().default_value(0.005f);
     parser.add_argument("--gamma").scan<'g', float>().default_value(0.99f);
     parser.add_argument("--initial_alpha").scan<'g', float>().default_value(1.f);
@@ -38,7 +39,8 @@ int main(int argc, char **argv) {
 
     train_main(
         {parser.get<int>("--hidden_size_sensors"), parser.get<int>("--hidden_size_actions"),
-         parser.get<int>("--hidden_size"), parser.get<float>("--tau"), parser.get<float>("--gamma"),
+         parser.get<int>("--actor_hidden_size"), parser.get<int>("--critic_hidden_size"),
+         parser.get<float>("--tau"), parser.get<float>("--gamma"),
          parser.get<float>("--initial_alpha")},
         {parser.get<int>("--nb_tanks"),
          std::filesystem::path(parser.get<std::string>("--output_folder")),

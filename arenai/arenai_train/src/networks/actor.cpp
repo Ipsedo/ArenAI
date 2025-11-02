@@ -18,7 +18,7 @@ SacActor::SacActor(
       head(register_module(
           "head",
           torch::nn::Sequential(
-              torch::nn::Linear(hidden_size_sensors + 1 * 1 * 256, hidden_size), torch::nn::Mish(),
+              torch::nn::Linear(hidden_size_sensors + 1 * 1 * 512, hidden_size), torch::nn::Mish(),
               torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size}))))),
       mu(register_module(
           "mu",

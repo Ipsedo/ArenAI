@@ -19,13 +19,13 @@ def main() -> None:
         "-i", "--input-state-dict-folder", type=str, required=True
     )
 
-    parser.add_argument("--hidden-size-sensors", type=int, default=192)
-    parser.add_argument("--hidden-size", type=int, default=1024)
+    parser.add_argument("--hidden-size-sensors", type=int, default=256)
+    parser.add_argument("--hidden-size", type=int, default=2048)
 
     args = parser.parse_args()
 
     with th.no_grad():
-        nb_sensors = (3 * 2 + 4 + 3) * (6 + 3)
+        nb_sensors = (3 + 3 + 3 + 4 + 3 + 3) * (6 + 3) - 2
         nb_actions = 2 + 2 + 1
 
         actor = SacActor(
@@ -36,7 +36,7 @@ def main() -> None:
 
         print("Model loaded from C++ !")
 
-        batch = Dim("batch", min=1, max=32)
+        batch = Dim("batch", min=1, max=8)
         dynamic_shapes = (
             {0: batch},
             {0: batch},

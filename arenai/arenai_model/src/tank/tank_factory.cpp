@@ -107,13 +107,9 @@ bool TankFactory::is_dead() {
     return false;
 }
 
-std::shared_ptr<ChassisItem> TankFactory::get_chassis() {
-    return chassis;
-}
+std::shared_ptr<ChassisItem> TankFactory::get_chassis() { return chassis; }
 
-std::shared_ptr<CanonItem> TankFactory::get_canon() {
-    return canon;
-}
+std::shared_ptr<CanonItem> TankFactory::get_canon() { return canon; }
 
 TankFactory::~TankFactory() {
     item_producers.clear();

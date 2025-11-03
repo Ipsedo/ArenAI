@@ -80,12 +80,12 @@ float EnemyTankFactory::get_potential_reward(
                                ->getWorldTransform()
                                .getOrigin();
 
-    const auto unit_look_at = btVector3(canon->get_body()->getWorldTransform() * btVector4(0, 0, 1, 0));
+    const auto unit_look_at =
+        btVector3(canon->get_body()->getWorldTransform() * btVector4(0, 0, 1, 0));
     const btVector3 target_look_at = (other_pos - chassis_pos).normalize();
 
-    const float aim_cos_angle =
-        unit_look_at.dot(target_look_at)
-        / (unit_look_at.length() * target_look_at.length() + epsilon);
+    const float aim_cos_angle = unit_look_at.dot(target_look_at)
+                                / (unit_look_at.length() * target_look_at.length() + epsilon);
     const float aim_angle = std::acos(std::clamp(aim_cos_angle, -1.f, 1.f));
     const float aim_reward =
         (aim_max_angle_potential_reward - std::max(aim_angle, aim_min_angle_potential_reward))

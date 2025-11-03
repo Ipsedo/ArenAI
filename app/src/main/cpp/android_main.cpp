@@ -48,7 +48,7 @@ void android_main(struct android_app *app) {
 
     auto env = std::make_unique<UserGameTanksEnvironment>(app, display, nb_tanks, frame_dt.count());
     auto agent = std::make_unique<ExecuTorchAgent>(
-        app, get_string_extra(jni_env, intent, "executorch_model_asset", "actor.pte"));
+        app, get_string_extra(jni_env, intent, "executorch_model_asset", "actor_dummy.pte"));
 
     app->userData = env.get();
     app->onAppCmd = on_cmd_wrapper;

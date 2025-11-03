@@ -13,6 +13,8 @@
 #include <arenai_view/camera.h>
 
 #include "./item.h"
+#include "src/tank/canon.h"
+#include "src/tank/chassis.h"
 
 class TankFactory {
 public:
@@ -34,6 +36,9 @@ public:
 protected:
     virtual void on_fired_shell_contact(Item *item) = 0;
 
+    std::shared_ptr<ChassisItem> get_chassis();
+    std::shared_ptr<CanonItem> get_canon();
+
 private:
     std::string name;
 
@@ -41,6 +46,9 @@ private:
     std::vector<std::shared_ptr<Item>> items;
     std::vector<std::shared_ptr<ItemProducer>> item_producers;
     std::vector<std::shared_ptr<Controller>> controllers;
+
+    std::shared_ptr<ChassisItem> chassis;
+    std::shared_ptr<CanonItem> canon;
 
     std::shared_ptr<AbstractFileReader> file_reader;
 };

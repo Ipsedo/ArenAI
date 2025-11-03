@@ -25,7 +25,7 @@ float EnemyTankFactory::get_reward() {
     // prepare next frame
     reward = 0.f;
 
-    const auto chassis = get_items()[0];
+    const auto chassis = get_chassis();
     auto chassis_tr = chassis->get_body()->getWorldTransform();
     const btVector3 up(0.f, 1.f, 0.f);
     const btVector3 up_in_chassis = chassis_tr.getBasis() * up;
@@ -44,7 +44,7 @@ float EnemyTankFactory::get_potential_reward(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &all_enemy_tank_factories) {
     constexpr float epsilon = 1e-8f;
 
-    const auto chassis_pos = get_items()[0]->get_body()->getWorldTransform().getOrigin();
+    const auto chassis_pos = get_chassis()->get_body()->getWorldTransform().getOrigin();
 
     // distance
     int nearest_enemy_index = -1;
@@ -53,7 +53,7 @@ float EnemyTankFactory::get_potential_reward(
     for (int i = 0; i < all_enemy_tank_factories.size(); i++) {
         if (all_enemy_tank_factories[i]->tank_prefix_name != tank_prefix_name) {
             auto other_chassis_pos = all_enemy_tank_factories[i]
-                                         ->get_items()[0]
+                                         ->get_chassis()
                                          ->get_body()
                                          ->getWorldTransform()
                                          .getOrigin();
@@ -73,22 +73,19 @@ float EnemyTankFactory::get_potential_reward(
         / max_distance_potential_reward;
 
     // AIM
-    const auto camera = get_camera();
+    const auto canon = get_canon();
     const auto other_pos = all_enemy_tank_factories[nearest_enemy_index]
-                               ->get_items()[0]
+                               ->get_chassis()
                                ->get_body()
                                ->getWorldTransform()
                                .getOrigin();
 
-    const glm::vec3 unit_look_at = camera->look();
-
-    const btVector3 target_look_at_bullet = (other_pos - chassis_pos).normalize();
-    const glm::vec3 target_look_at(
-        target_look_at_bullet.x(), target_look_at_bullet.y(), target_look_at_bullet.z());
+    const auto unit_look_at = btVector3(canon->get_body()->getWorldTransform() * btVector4(0, 0, 1, 0));
+    const btVector3 target_look_at = (other_pos - chassis_pos).normalize();
 
     const float aim_cos_angle =
-        glm::dot(unit_look_at, target_look_at)
-        / (glm::length(unit_look_at) * glm::length(target_look_at) + epsilon);
+        unit_look_at.dot(target_look_at)
+        / (unit_look_at.length() * target_look_at.length() + epsilon);
     const float aim_angle = std::acos(std::clamp(aim_cos_angle, -1.f, 1.f));
     const float aim_reward =
         (aim_max_angle_potential_reward - std::max(aim_angle, aim_min_angle_potential_reward))
@@ -138,7 +135,7 @@ std::vector<std::shared_ptr<Item>> EnemyTankFactory::dead_and_get_items() {
 std::vector<float> EnemyTankFactory::get_proprioception() {
     const auto items = get_items();
 
-    const auto &chassis = items[0];
+    const auto &chassis = get_chassis();
 
     const auto chassis_pos = chassis->get_body()->getCenterOfMassPosition();
 

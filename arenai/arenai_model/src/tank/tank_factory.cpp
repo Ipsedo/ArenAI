@@ -70,14 +70,14 @@ TankFactory::TankFactory(
     // canon
     glm::vec3 canon_pos(0.f, 0.5f, 1.7f);
     glm::vec3 canon_scale = turret_scale;
-    canon = std::make_shared<CanonItem>(
+    const auto canon_item = std::make_shared<CanonItem>(
         tank_prefix_name, file_reader, chassis_pos + turret_pos + canon_pos, canon_pos,
         scale * canon_scale, 50, turret->get_body(), wanted_frame_frequency,
         [this](Item *i) { on_fired_shell_contact(i); });
 
-    item_producers.push_back(canon);
-    items.push_back(canon), controllers.push_back(canon);
-    camera = canon;
+    item_producers.push_back(canon_item);
+    items.push_back(canon_item), controllers.push_back(canon_item);
+    camera = canon_item;
 
     for (int i = 0; i < items.size() - 1; i++)
         for (int j = i + 1; j < items.size(); j++)
@@ -107,9 +107,9 @@ bool TankFactory::is_dead() {
     return false;
 }
 
-std::shared_ptr<ChassisItem> TankFactory::get_chassis() { return chassis; }
+std::shared_ptr<Item> TankFactory::get_chassis() { return chassis; }
 
-std::shared_ptr<CanonItem> TankFactory::get_canon() { return canon; }
+std::shared_ptr<Item> TankFactory::get_canon() { return canon; }
 
 TankFactory::~TankFactory() {
     item_producers.clear();

@@ -77,7 +77,9 @@ TankFactory::TankFactory(
 
     item_producers.push_back(canon_item);
     items.push_back(canon_item), controllers.push_back(canon_item);
+
     camera = canon_item;
+    canon = canon_item;
 
     for (int i = 0; i < items.size() - 1; i++)
         for (int j = i + 1; j < items.size(); j++)

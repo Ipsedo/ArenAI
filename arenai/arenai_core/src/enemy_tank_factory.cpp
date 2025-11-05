@@ -15,9 +15,9 @@ EnemyTankFactory::EnemyTankFactory(
       curr_frame_upside_down(0), is_dead_already_triggered(false),
       max_frames_without_hit(static_cast<int>(60.f / wanted_frame_frequency)),
       nb_frames_since_last_hit(0), action_stats(std::make_shared<ActionStats>()),
-      min_distance_potential_reward(50.f), max_distance_potential_reward(200.f),
+      min_distance_potential_reward(25.f), max_distance_potential_reward(200.f),
       aim_min_angle_potential_reward(static_cast<float>(M_PI) / 6.f),
-      aim_max_angle_potential_reward(2.f * static_cast<float>(M_PI) / 3.f) {}
+      aim_max_angle_potential_reward(static_cast<float>(M_PI) / 2.f) {}
 
 float EnemyTankFactory::get_reward() {
     float actual_reward = reward;
@@ -69,27 +69,35 @@ float EnemyTankFactory::get_potential_reward(
     }
 
     const float reward_distance =
-        (max_distance_potential_reward - std::max(shortest_distance, min_distance_potential_reward))
-        / max_distance_potential_reward;
+        (max_distance_potential_reward
+         - std::clamp(
+             shortest_distance, min_distance_potential_reward, max_distance_potential_reward * 2.f))
+        / (max_distance_potential_reward - min_distance_potential_reward);
 
     // AIM
-    const auto canon = get_canon();
+    const auto canon_tr = get_canon()->get_body()->getWorldTransform();
     const auto other_pos = all_enemy_tank_factories[nearest_enemy_index]
                                ->get_chassis()
                                ->get_body()
                                ->getWorldTransform()
                                .getOrigin();
 
-    const auto unit_look_at =
-        btVector3(canon->get_body()->getWorldTransform() * btVector4(0, 0, 1, 0));
-    const btVector3 target_look_at = (other_pos - chassis_pos).normalize();
+    const btVector3 pos = canon_tr.getOrigin();
+    const btVector3 forward = canon_tr.getBasis() * btVector3(0, 0, 1);
 
-    const float aim_cos_angle = unit_look_at.dot(target_look_at)
-                                / (unit_look_at.length() * target_look_at.length() + epsilon);
-    const float aim_angle = std::acos(std::clamp(aim_cos_angle, -1.f, 1.f));
+    const btVector3 to_target = (other_pos - pos).normalize();
+
+    const btScalar dot = std::clamp(forward.dot(to_target), -1.f, 1.f);
+    const btVector3 cross = forward.cross(to_target);
+    const btScalar sine = cross.length();
+
+    const auto aim_angle = std::atan2(sine, dot);
+
     const float aim_reward =
-        (aim_max_angle_potential_reward - std::max(aim_angle, aim_min_angle_potential_reward))
-        / aim_max_angle_potential_reward;
+        (aim_max_angle_potential_reward
+         - std::clamp(
+             aim_angle, aim_min_angle_potential_reward, aim_max_angle_potential_reward * 2.f))
+        / (aim_max_angle_potential_reward - aim_min_angle_potential_reward);
 
     // fire
     const float fire_reward =

@@ -41,8 +41,6 @@ void android_main(struct android_app *app) {
     auto intent = get_intent(jni_env, app->activity->clazz);
     auto nb_tanks = get_int_extra(jni_env, intent, "nb_tanks", 4);
 
-    bool will_quit = false;
-
     auto display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     eglInitialize(display, nullptr, nullptr);
 
@@ -62,7 +60,8 @@ void android_main(struct android_app *app) {
     action_promise.set_value(agent->act(agents_state));
     auto action_future = action_promise.get_future();
 
-    while (!will_quit) {
+    for (;;) {
+        bool will_quit = false;
         int ident;
         int events;
         struct android_poll_source *source;
@@ -77,6 +76,8 @@ void android_main(struct android_app *app) {
                 break;
             }
         }
+
+        if (will_quit) break;
 
         auto now = steady_clock_t::now();
         auto elapsed_time = std::chrono::duration_cast<secs_f>(now - last_time);

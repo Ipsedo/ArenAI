@@ -10,7 +10,8 @@
 struct ModelOptions {
     int hidden_size_sensors;
     int hidden_size_actions;
-    int hidden_size;
+    int actor_hidden_size;
+    int critic_hidden_size;
     float tau;
     float gamma;
     float initial_alpha;

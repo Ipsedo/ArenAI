@@ -34,6 +34,9 @@ public:
 protected:
     virtual void on_fired_shell_contact(Item *item) = 0;
 
+    std::shared_ptr<Item> get_chassis();
+    std::shared_ptr<Item> get_canon();
+
 private:
     std::string name;
 
@@ -41,6 +44,9 @@ private:
     std::vector<std::shared_ptr<Item>> items;
     std::vector<std::shared_ptr<ItemProducer>> item_producers;
     std::vector<std::shared_ptr<Controller>> controllers;
+
+    std::shared_ptr<Item> chassis;
+    std::shared_ptr<Item> canon;
 
     std::shared_ptr<AbstractFileReader> file_reader;
 };

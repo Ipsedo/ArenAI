@@ -21,10 +21,10 @@ TankFactory::TankFactory(
     glm::vec3 scale(0.5);
 
     // chassis
-    auto chassis_item =
+    chassis =
         std::make_shared<ChassisItem>(tank_prefix_name, file_reader, chassis_pos, scale, 2000.f);
 
-    items.push_back(chassis_item);
+    items.push_back(chassis);
 
     // wheels
     float front_axle_z = 3.f;
@@ -38,7 +38,7 @@ TankFactory::TankFactory(
     for (auto &[wheel_name, wheel_pos]: front_wheel_config) {
         auto wheel = std::make_shared<DirectionalWheelItem>(
             tank_prefix_name + "_" + wheel_name, file_reader, wheel_pos + chassis_pos, wheel_pos,
-            wheel_scale, wheel_mass, chassis_item->get_body(), front_axle_z);
+            wheel_scale, wheel_mass, chassis->get_body(), front_axle_z);
 
         items.push_back(wheel);
         controllers.push_back(wheel);
@@ -53,7 +53,7 @@ TankFactory::TankFactory(
     for (auto &[wheel_name, wheel_pos]: wheel_config) {
         auto wheel = std::make_shared<WheelItem>(
             tank_prefix_name + "_" + wheel_name, file_reader, wheel_pos + chassis_pos, wheel_pos,
-            wheel_scale, wheel_mass, chassis_item->get_body(), front_axle_z);
+            wheel_scale, wheel_mass, chassis->get_body(), front_axle_z);
 
         items.push_back(wheel);
         controllers.push_back(wheel);
@@ -64,20 +64,22 @@ TankFactory::TankFactory(
     glm::vec3 turret_scale(1.2f);
     auto turret = std::make_shared<TurretItem>(
         tank_prefix_name, file_reader, chassis_pos + turret_pos, turret_pos, scale * turret_scale,
-        200, chassis_item->get_body());
+        200, chassis->get_body());
     items.push_back(turret), controllers.push_back(turret);
 
     // canon
     glm::vec3 canon_pos(0.f, 0.5f, 1.7f);
     glm::vec3 canon_scale = turret_scale;
-    auto canon = std::make_shared<CanonItem>(
+    const auto canon_item = std::make_shared<CanonItem>(
         tank_prefix_name, file_reader, chassis_pos + turret_pos + canon_pos, canon_pos,
         scale * canon_scale, 50, turret->get_body(), wanted_frame_frequency,
         [this](Item *i) { on_fired_shell_contact(i); });
 
-    item_producers.push_back(canon);
-    items.push_back(canon), controllers.push_back(canon);
-    camera = canon;
+    item_producers.push_back(canon_item);
+    items.push_back(canon_item), controllers.push_back(canon_item);
+
+    camera = canon_item;
+    canon = canon_item;
 
     for (int i = 0; i < items.size() - 1; i++)
         for (int j = i + 1; j < items.size(); j++)
@@ -106,6 +108,10 @@ bool TankFactory::is_dead() {
             return true;
     return false;
 }
+
+std::shared_ptr<Item> TankFactory::get_chassis() { return chassis; }
+
+std::shared_ptr<Item> TankFactory::get_canon() { return canon; }
 
 TankFactory::~TankFactory() {
     item_producers.clear();

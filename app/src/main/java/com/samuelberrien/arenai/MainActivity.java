@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
         String[] levels = {"Dummy", "Easy", "Medium", "Hard"};
 
         difficultyLevelToExecutorchModelAsset = Map.of(
-                levels[0], "executorch/actor.pte",
+                levels[0], "executorch/actor_dummy.pte",
                 levels[1], "executorch/actor_easy.pte",
                 levels[2], "executorch/actor_medium.pte",
                 levels[3], "executorch/actor_hard.pte"

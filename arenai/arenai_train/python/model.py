@@ -11,18 +11,18 @@ class ConvolutionNetwork(nn.Module):
             nn.Mish(),
             nn.Conv2d(8, 16, 3, 2, 1),
             nn.Mish(),
-            nn.Conv2d(16, 32, 3, 2, 1),
+            nn.Conv2d(16, 24, 3, 2, 1),
             nn.Mish(),
-            nn.Conv2d(32, 64, 3, 2, 1),
+            nn.Conv2d(24, 48, 3, 2, 1),
             nn.Mish(),
-            nn.Conv2d(64, 128, 3, 2, 1),
+            nn.Conv2d(48, 80, 3, 2, 1),
             nn.Mish(),
-            nn.Conv2d(128, 256, 3, 2, 1),
+            nn.Conv2d(80, 144, 3, 2, 1),
             nn.Mish(),
-            nn.Conv2d(256, 512, 3, 2, 1),
+            nn.Conv2d(144, 256, 3, 2, 1),
             nn.Mish(),
             nn.Flatten(1, -1),
-            nn.LayerNorm(512)
+            nn.LayerNorm(256)
         )
 
     def forward(self, vision: th.Tensor) -> th.Tensor:
@@ -49,7 +49,7 @@ class SacActor(nn.Module):
         )
 
         self.head = nn.Sequential(
-            nn.Linear(hidden_size_sensors + 1 * 1 * 512, hidden_size),
+            nn.Linear(hidden_size_sensors + 1 * 1 * 256, hidden_size),
             nn.Mish(),
             nn.LayerNorm(hidden_size),
         )

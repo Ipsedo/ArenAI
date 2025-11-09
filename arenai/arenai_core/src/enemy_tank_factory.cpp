@@ -43,7 +43,6 @@ float EnemyTankFactory::get_reward() {
 
 float EnemyTankFactory::get_potential_reward(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &all_enemy_tank_factories) {
-    constexpr float epsilon = 1e-8f;
 
     const auto chassis_pos = get_chassis()->get_body()->getWorldTransform().getOrigin();
 
@@ -155,12 +154,11 @@ std::vector<float> EnemyTankFactory::get_proprioception() {
     const auto chassis_ang_vel = chassis->get_body()->getAngularVelocity();
     const auto chassis_torque = chassis->get_body()->getTotalTorque();
 
-    std::vector result{chassis_vel.x(),     chassis_vel.y(),
-                       chassis_vel.z(),     chassis_force.x(),   chassis_force.y(),
-                       chassis_force.z(),   chassis_ang.x(),     chassis_ang.y(),
-                       chassis_ang.z(),     chassis_ang.w(),     chassis_ang_vel.x(),
-                       chassis_ang_vel.y(), chassis_ang_vel.z(), chassis_torque.x(),
-                       chassis_torque.y(),  chassis_torque.z()};
+    std::vector result{
+        chassis_vel.x(),     chassis_vel.y(),    chassis_vel.z(),     chassis_force.x(),
+        chassis_force.y(),   chassis_force.z(),  chassis_ang.x(),     chassis_ang.y(),
+        chassis_ang.z(),     chassis_ang.w(),    chassis_ang_vel.x(), chassis_ang_vel.y(),
+        chassis_ang_vel.z(), chassis_torque.x(), chassis_torque.y(),  chassis_torque.z()};
     result.reserve((3 * 2 + 4 + 3) * items.size());
 
     for (int i = 1; i < items.size(); i++) {

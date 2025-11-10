@@ -35,7 +35,8 @@ SacNetworks::SacNetworks(
       actor_loss_metric(std::make_shared<Metric>("actor", metric_window_size)),
       critic_1_loss_metric(std::make_shared<Metric>("critic_1", metric_window_size)),
       critic_2_loss_metric(std::make_shared<Metric>("critic_2", metric_window_size)),
-      entropy_loss_metric(std::make_shared<Metric>("entropy", metric_window_size)), tau(tau),
+      entropy_loss_metric(std::make_shared<Metric>("entropy", metric_window_size)),
+      entropy_alpha_metric(std::make_shared<Metric>("alpha", metric_window_size)), tau(tau),
       gamma(gamma), target_entropy(-static_cast<float>(nb_action)) {
 
     hard_update(target_critic_1, critic_1);
@@ -136,11 +137,12 @@ void SacNetworks::train(
         critic_1_loss_metric->add(critic_1_loss.cpu().item().toFloat());
         critic_2_loss_metric->add(critic_2_loss.cpu().item().toFloat());
         entropy_loss_metric->add(entropy_loss.cpu().item().toFloat());
+        entropy_alpha_metric->add(alpha_entropy->alpha().cpu().item().toFloat());
     }
 }
 
 std::vector<std::shared_ptr<Metric>> SacNetworks::get_metrics() const {
-    return {actor_loss_metric, critic_1_loss_metric, critic_2_loss_metric, entropy_loss_metric};
+    return {actor_loss_metric, critic_1_loss_metric, critic_2_loss_metric, entropy_loss_metric, entropy_alpha_metric};
 }
 
 void SacNetworks::save(const std::filesystem::path &output_folder) const {

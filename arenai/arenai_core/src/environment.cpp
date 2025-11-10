@@ -180,7 +180,9 @@ void BaseTanksEnvironment::stop_drawing() {
 
 void BaseTanksEnvironment::worker_enemy_vision(
     const int index, const std::unique_ptr<EnemyTankFactory> &tank_factory) {
-    std::mt19937 thread_rng;
+    const auto seed = static_cast<unsigned long>(
+        std::chrono::high_resolution_clock::now().time_since_epoch().count());
+    std::mt19937 thread_rng(seed);
 
     auto renderer = std::make_unique<PBufferRenderer>(
         gl_context, ENEMY_VISION_SIZE, ENEMY_VISION_SIZE, glm::vec3(200, 300, 200),

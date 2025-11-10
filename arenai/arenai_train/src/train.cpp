@@ -108,8 +108,7 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
 
                 const auto [next_vision, next_proprioception] = state_to_tensor(next_state);
                 const float potential_reward =
-                    (done ? 0.f : model_options.gamma * next_potential_rewards[i])
-                    - potential_rewards[i];
+                    model_options.gamma * next_potential_rewards[i] - potential_rewards[i];
 
                 reward_metric.add(reward);
                 potential_reward_metric.add(potential_reward);

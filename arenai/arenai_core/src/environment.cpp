@@ -22,13 +22,11 @@ BaseTanksEnvironment::BaseTanksEnvironment(
     : wanted_frequency(wanted_frequency), nb_tanks(nb_tanks), visions_mutex(nb_tanks),
       thread_killed(true), thread_sleep(thread_sleep), threads_running(true),
       thread_barrier(std::make_unique<std::barrier<>>(static_cast<std::ptrdiff_t>(nb_tanks + 1))),
-      pool(), tank_factories(), tank_controller_handler(),
       enemy_visions(
-          nb_tanks, image<uint8_t>(
-                        3, std::vector<std::vector<uint8_t>>(
-                               ENEMY_VISION_SIZE, std::vector<uint8_t>(ENEMY_VISION_SIZE, 0)))),
+          nb_tanks,
+          image(3, std::vector(ENEMY_VISION_SIZE, std::vector<uint8_t>(ENEMY_VISION_SIZE, 0)))),
       physic_engine(std::make_unique<PhysicEngine>(wanted_frequency)), gl_context(gl_context),
-      dev(), rng(dev()), file_reader(file_reader) {
+      rng(dev()), file_reader(file_reader) {
 
     std::uniform_int_distribution<u_int8_t> u_dist(0, 255);
     for (int i = 0; i < nb_tanks; i++)
@@ -180,9 +178,7 @@ void BaseTanksEnvironment::stop_drawing() {
 
 void BaseTanksEnvironment::worker_enemy_vision(
     const int index, const std::unique_ptr<EnemyTankFactory> &tank_factory) {
-    const auto seed = static_cast<unsigned long>(
-        std::chrono::high_resolution_clock::now().time_since_epoch().count());
-    std::mt19937 thread_rng(seed);
+    std::mt19937 thread_rng(dev());
 
     auto renderer = std::make_unique<PBufferRenderer>(
         gl_context, ENEMY_VISION_SIZE, ENEMY_VISION_SIZE, glm::vec3(200, 300, 200),
@@ -190,7 +186,7 @@ void BaseTanksEnvironment::worker_enemy_vision(
 
     renderer->make_current();
 
-    std::uniform_real_distribution<float> u_dist(0.f, 1.f);
+    std::uniform_real_distribution u_dist(0.f, 1.f);
 
     renderer->add_drawable("cubemap", std::make_unique<CubeMap>(file_reader, "cubemap/1"));
 
@@ -260,15 +256,14 @@ void BaseTanksEnvironment::start_threads() {
 
     enemy_visions = std::vector(
         nb_tanks,
-        image<uint8_t>(
-            3, std::vector(ENEMY_VISION_SIZE, std::vector<uint8_t>(ENEMY_VISION_SIZE, 0))));
+        image(3, std::vector(ENEMY_VISION_SIZE, std::vector<uint8_t>(ENEMY_VISION_SIZE, 0))));
 
     threads_running.store(true, std::memory_order_release);
     pool.clear();
     pool.reserve(tank_factories.size());
 
     for (int i = 0; i < tank_factories.size(); ++i)
-        pool.emplace_back([this, i]() { worker_enemy_vision(i, tank_factories[i]); });
+        pool.emplace_back([this, i] { worker_enemy_vision(i, tank_factories[i]); });
 
     thread_killed = false;
 }

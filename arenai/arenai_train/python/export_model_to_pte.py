@@ -12,7 +12,7 @@ from python.model import SacActor
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser("phyvr convert model to PTE")
+    parser = argparse.ArgumentParser("arenai convert model to PTE")
 
     parser.add_argument("-o", "--output-pte", type=str, required=True)
     parser.add_argument(

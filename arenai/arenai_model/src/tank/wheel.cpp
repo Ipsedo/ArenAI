@@ -78,11 +78,11 @@ std::vector<btTypedConstraint *> WheelItem::get_constraints() {
 }
 
 float WheelItem::adjust_rotation_velocity_differential(
-    float front_wheel_orientation_radian, float original_rotation_velocity) const {
+    const float front_wheel_orientation_radian, const float original_rotation_velocity) const {
 
     const float delta = front_wheel_orientation_radian;
 
-    const float eps = 1e-6f;
+    constexpr float eps = 1e-6f;
     if (std::fabs(delta) < 1e-6f || std::fabs(std::tan(delta)) < eps) {
         return original_rotation_velocity;
     }

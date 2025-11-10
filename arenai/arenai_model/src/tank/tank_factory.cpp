@@ -15,8 +15,7 @@
 TankFactory::TankFactory(
     const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
     glm::vec3 chassis_pos, float wanted_frame_frequency)
-    : name(tank_prefix_name), camera(std::nullptr_t()), items(), item_producers(), controllers(),
-      file_reader(file_reader) {
+    : name(tank_prefix_name), camera(std::nullptr_t()), file_reader(file_reader) {
 
     glm::vec3 scale(0.5);
 

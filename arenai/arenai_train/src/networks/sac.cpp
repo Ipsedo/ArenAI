@@ -142,7 +142,9 @@ void SacNetworks::train(
 }
 
 std::vector<std::shared_ptr<Metric>> SacNetworks::get_metrics() const {
-    return {actor_loss_metric, critic_1_loss_metric, critic_2_loss_metric, entropy_loss_metric, entropy_alpha_metric};
+    return {
+        actor_loss_metric, critic_1_loss_metric, critic_2_loss_metric, entropy_loss_metric,
+        entropy_alpha_metric};
 }
 
 void SacNetworks::save(const std::filesystem::path &output_folder) const {

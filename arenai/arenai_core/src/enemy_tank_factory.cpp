@@ -101,7 +101,7 @@ float EnemyTankFactory::get_potential_reward(
 
     // fire
     const float fire_reward =
-        action_stats->has_fire() ? (aim_angle < aim_max_angle_potential_reward ? 1.f : -1.f) : 0.f;
+        action_stats->has_fire() ? (aim_angle < aim_min_angle_potential_reward ? 1.f : -1.f) : 0.f;
 
     // potential reward
     return 1e-1f * fire_reward + 3e-1f * aim_reward + 6e-1f * reward_distance;

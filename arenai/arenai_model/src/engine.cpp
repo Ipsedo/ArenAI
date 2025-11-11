@@ -75,7 +75,7 @@ void PhysicEngine::step(const float delta) {
                 delete constraint;
             }
 
-            if (const auto *m = body->getMotionState(); m) delete body->getMotionState();
+            delete body->getMotionState();
 
             delete body;
 
@@ -92,15 +92,18 @@ void PhysicEngine::remove_bodies_and_constraints() {
     for (int i = m_world->getNumConstraints() - 1; i >= 0; --i) {
         btTypedConstraint *constraint = m_world->getConstraint(i);
         m_world->removeConstraint(constraint);
-        delete constraint;
     }
 
     for (int i = m_world->getNumCollisionObjects() - 1; i >= 0; --i) {
         btRigidBody *body = btRigidBody::upcast(m_world->getCollisionObjectArray()[i]);
-
-        delete body->getMotionState();
-
         m_world->removeRigidBody(body);
+    }
+
+    for (const auto &item: items) {
+        for (auto *constraint: item->get_constraints()) delete constraint;
+
+        auto *body = item->get_body();
+        delete body->getMotionState();
         delete body;
     }
 

@@ -24,7 +24,8 @@ BaseTanksEnvironment::BaseTanksEnvironment(
       thread_barrier(std::make_unique<std::barrier<>>(static_cast<std::ptrdiff_t>(nb_tanks + 1))),
       enemy_visions(
           nb_tanks,
-          image(3, std::vector(ENEMY_VISION_SIZE, std::vector<uint8_t>(ENEMY_VISION_SIZE, 0)))),
+          image<uint8_t>(
+              3, std::vector(ENEMY_VISION_SIZE, std::vector<uint8_t>(ENEMY_VISION_SIZE, 0)))),
       physic_engine(std::make_unique<PhysicEngine>(wanted_frequency)), gl_context(gl_context),
       rng(dev()), file_reader(file_reader) {
 
@@ -256,7 +257,8 @@ void BaseTanksEnvironment::start_threads() {
 
     enemy_visions = std::vector(
         nb_tanks,
-        image(3, std::vector(ENEMY_VISION_SIZE, std::vector<uint8_t>(ENEMY_VISION_SIZE, 0))));
+        image<uint8_t>(
+            3, std::vector(ENEMY_VISION_SIZE, std::vector<uint8_t>(ENEMY_VISION_SIZE, 0))));
 
     threads_running.store(true, std::memory_order_release);
     pool.clear();

@@ -20,9 +20,7 @@
 #include "./utils/torch_converter.h"
 
 bool is_all_done(const std::vector<bool> &already_done) {
-    for (const auto &is_done: already_done)
-        if (!is_done) return false;
-    return true;
+    return std::ranges::all_of(already_done, [](const bool is_done) { return is_done; });
 }
 
 void train_main(const ModelOptions &model_options, const TrainOptions &train_options) {
@@ -77,7 +75,7 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
 
             const auto [vision, proprioception] = states_to_tensor(last_state);
 
-            auto actions_future = std::async([&]() {
+            auto actions_future = std::async([&] {
                 torch::NoGradGuard no_grad_guard;
 
                 sac->train(false);

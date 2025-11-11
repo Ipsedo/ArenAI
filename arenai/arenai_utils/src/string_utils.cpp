@@ -6,7 +6,7 @@
 
 #include <arenai_utils/string_utils.h>
 
-std::vector<std::string> split_string(const std::string &input, char delimiter) {
+std::vector<std::string> split_string(const std::string &input, const char delimiter) {
     std::stringstream ss(input);
     std::string item;
     std::vector<std::string> elements;

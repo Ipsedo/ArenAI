@@ -6,7 +6,7 @@
 
 #include "./train.h"
 
-int main(int argc, char **argv) {
+int main(const int argc, char **argv) {
 
     argparse::ArgumentParser parser("arenai train");
 

@@ -49,8 +49,8 @@ void save_tensor_binary(const torch::Tensor &t, const std::filesystem::path &pat
     std::ofstream ofs(path, std::ios::binary);
     if (!ofs) throw std::runtime_error("Cannot open file for writing: " + path.string());
     ofs.write(
-        reinterpret_cast<const char *>(contig.data_ptr()),
-        contig.numel() * dtype_nbytes(contig.scalar_type()));
+        static_cast<const char *>(contig.data_ptr()),
+        static_cast<size_t>(contig.numel()) * dtype_nbytes(contig.scalar_type()));
 }
 
 void export_state_dict_neutral(
@@ -62,16 +62,16 @@ void export_state_dict_neutral(
 
     auto add_entry = [&](const std::string &name, const torch::Tensor &t, bool is_buffer) {
         const torch::Tensor cpu_t = t.detach().to(torch::kCPU);
-        std::vector<int64_t> shape(cpu_t.sizes().begin(), cpu_t.sizes().end());
-        std::string fname = name;
-        // remplace les '.' par '_' pour un nom de fichier safe
-        std::ranges::replace(fname, '.', '_');
-        std::filesystem::path binpath = outdir / (fname + ".bin");
-        save_tensor_binary(cpu_t, binpath);
+        std::vector shape(cpu_t.sizes().begin(), cpu_t.sizes().end());
+        std::string filename = name;
+
+        std::ranges::replace(filename, '.', '_');
+        const std::filesystem::path binary_path = outdir / (filename + ".bin");
+        save_tensor_binary(cpu_t, binary_path);
 
         nlohmann::json j;
         j["name"] = name;
-        j["file"] = binpath.filename().string();
+        j["file"] = binary_path.filename().string();
         j["dtype"] = dtype_to_string(cpu_t.scalar_type());
         j["shape"] = shape;
         j["is_buffer"] = is_buffer;

@@ -2,6 +2,7 @@
 // Created by samuel on 02/04/2023.
 //
 
+#include <algorithm>
 #include <numeric>
 
 #include <arenai_model/tank_factory.h>
@@ -102,10 +103,11 @@ std::vector<std::shared_ptr<ItemProducer>> TankFactory::get_item_producers() {
 }
 
 bool TankFactory::is_dead() {
-    for (const auto &item: items)
+    return std::ranges::any_of(items, [](const auto &item) {
         if (const auto life_item = std::dynamic_pointer_cast<LifeItem>(item); life_item->is_dead())
             return true;
-    return false;
+        return false;
+    });
 }
 
 std::shared_ptr<Item> TankFactory::get_chassis() { return chassis; }

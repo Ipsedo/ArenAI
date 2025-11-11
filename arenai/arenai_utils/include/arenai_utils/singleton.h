@@ -9,13 +9,12 @@ template<typename T, typename... Args>
 class Singleton {
 public:
     static std::shared_ptr<T> get_singleton(Args... args) {
-        if (!Singleton<T, Args...>::instance)
-            Singleton<T, Args...>::instance = std::make_shared<T>(args...);
-        return Singleton<T, Args...>::instance;
+        if (!instance) instance = std::make_shared<T>(args...);
+        return instance;
     }
 
     static void reset_singleton() {
-        if (Singleton<T, Args...>::instance) Singleton<T, Args...>::instance = nullptr;
+        if (instance) instance = nullptr;
     }
 
     Singleton(const Singleton &) = delete;

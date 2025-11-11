@@ -11,9 +11,6 @@
 
 template<class T>
 class Cache {
-private:
-    std::map<std::string, T> cache;
-
 public:
     Cache() : cache() {}
 
@@ -27,6 +24,9 @@ public:
     }
 
     void clear() { cache.clear(); }
+
+private:
+    std::map<std::string, T> cache;
 };
 
 #endif// ARENAI_CACHE_H

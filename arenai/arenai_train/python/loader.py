@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from torch import nn
 
-# dtype string -> torch dtype
+
 DTYPE_MAP = {
     "float32": torch.float32,
     "float64": torch.float64,
@@ -23,7 +23,7 @@ NP_MAP = {
     "float32": np.float32,
     "float64": np.float64,
     "float16": np.float16,
-    "bfloat16": np.float16,  # pas natif numpy bfloat16
+    "bfloat16": np.float16,
     "uint8": np.uint8,
     "int8": np.int8,
     "int16": np.int16,
@@ -53,7 +53,7 @@ def load_neutral_state_into(model: nn.Module, ckpt_dir: str):
             )
         arr = arr.reshape(shape)
         ten = torch.from_numpy(arr).to(DTYPE_MAP[dtype])
-        # Copie vers le paramètre/buffer existant
+
         sd[name].copy_(ten)
     model.load_state_dict(sd, strict=False)
     if missing:

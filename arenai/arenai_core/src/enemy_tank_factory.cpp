@@ -5,9 +5,8 @@
 #include <algorithm>
 #include <iostream>
 
-#include <arenai_core/enemy_tank_factory.h>
-
 #include <arenai_core/constants.h>
+#include <arenai_core/enemy_tank_factory.h>
 
 EnemyTankFactory::EnemyTankFactory(
     const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
@@ -20,8 +19,7 @@ EnemyTankFactory::EnemyTankFactory(
       nb_frames_since_last_hit(0), action_stats(std::make_shared<ActionStats>()),
       min_distance_potential_reward(25.f), max_distance_potential_reward(200.f),
       aim_min_angle_potential_reward(static_cast<float>(M_PI) / 6.f),
-      aim_max_angle_potential_reward(static_cast<float>(M_PI) / 2.f) {
-}
+      aim_max_angle_potential_reward(static_cast<float>(M_PI) / 2.f) {}
 
 float EnemyTankFactory::get_reward() {
     float actual_reward = reward;
@@ -45,7 +43,7 @@ float EnemyTankFactory::get_reward() {
 }
 
 float EnemyTankFactory::get_potential_reward(
-    const std::vector<std::unique_ptr<EnemyTankFactory> > &all_enemy_tank_factories) {
+    const std::vector<std::unique_ptr<EnemyTankFactory>> &all_enemy_tank_factories) {
     const auto chassis_pos = get_chassis()->get_body()->getWorldTransform().getOrigin();
 
     // distance
@@ -55,10 +53,10 @@ float EnemyTankFactory::get_potential_reward(
     for (int i = 0; i < all_enemy_tank_factories.size(); i++) {
         if (all_enemy_tank_factories[i]->tank_prefix_name != tank_prefix_name) {
             auto other_chassis_pos = all_enemy_tank_factories[i]
-                    ->get_chassis()
-                    ->get_body()
-                    ->getWorldTransform()
-                    .getOrigin();
+                                         ->get_chassis()
+                                         ->get_body()
+                                         ->getWorldTransform()
+                                         .getOrigin();
             const float distance = (chassis_pos - other_chassis_pos).length();
 
             if (distance < shortest_distance) {
@@ -71,18 +69,18 @@ float EnemyTankFactory::get_potential_reward(
     }
 
     const float reward_distance =
-            (max_distance_potential_reward
-             - std::clamp(
-                 shortest_distance, min_distance_potential_reward, max_distance_potential_reward * 2.f))
-            / (max_distance_potential_reward - min_distance_potential_reward);
+        (max_distance_potential_reward
+         - std::clamp(
+             shortest_distance, min_distance_potential_reward, max_distance_potential_reward * 2.f))
+        / (max_distance_potential_reward - min_distance_potential_reward);
 
     // AIM
     const auto canon_tr = get_canon()->get_body()->getWorldTransform();
     const auto other_pos = all_enemy_tank_factories[nearest_enemy_index]
-            ->get_chassis()
-            ->get_body()
-            ->getWorldTransform()
-            .getOrigin();
+                               ->get_chassis()
+                               ->get_body()
+                               ->getWorldTransform()
+                               .getOrigin();
 
     const btVector3 pos = canon_tr.getOrigin();
     const btVector3 forward = canon_tr.getBasis() * btVector3(0, 0, 1);
@@ -96,14 +94,14 @@ float EnemyTankFactory::get_potential_reward(
     const auto aim_angle = std::atan2(sine, dot);
 
     const float aim_reward =
-            (aim_max_angle_potential_reward
-             - std::clamp(
-                 aim_angle, aim_min_angle_potential_reward, aim_max_angle_potential_reward * 2.f))
-            / (aim_max_angle_potential_reward - aim_min_angle_potential_reward);
+        (aim_max_angle_potential_reward
+         - std::clamp(
+             aim_angle, aim_min_angle_potential_reward, aim_max_angle_potential_reward * 2.f))
+        / (aim_max_angle_potential_reward - aim_min_angle_potential_reward);
 
     // fire
     const float fire_reward =
-            action_stats->has_fire() ? (aim_angle < aim_min_angle_potential_reward ? 1.f : -1.f) : 0.f;
+        action_stats->has_fire() ? (aim_angle < aim_min_angle_potential_reward ? 1.f : -1.f) : 0.f;
 
     // potential reward
     return 1e-1f * fire_reward + 3e-1f * aim_reward + 6e-1f * reward_distance;
@@ -133,7 +131,7 @@ bool EnemyTankFactory::is_dead() {
     return TankFactory::is_dead() || curr_frame_upside_down > max_frames_upside_down;
 }
 
-std::vector<std::shared_ptr<Item> > EnemyTankFactory::dead_and_get_items() {
+std::vector<std::shared_ptr<Item>> EnemyTankFactory::dead_and_get_items() {
     if (is_dead() && !is_dead_already_triggered) {
         is_dead_already_triggered = true;
         return get_items();
@@ -157,11 +155,10 @@ std::vector<float> EnemyTankFactory::get_proprioception() {
     const auto chassis_ang_axis = chassis_ang_quat.getAxis();
     const auto chassis_ang_vel = chassis->get_body()->getAngularVelocity();
 
-    std::vector result{
-        chassis_vel.x(), chassis_vel.y(), chassis_vel.z(), chassis_ang, chassis_ang_axis.x(),
-        chassis_ang_axis.y(), chassis_ang_axis.z(), chassis_ang_vel.x(), chassis_ang_vel.y(),
-        chassis_ang_vel.z()
-    };
+    std::vector result{chassis_vel.x(),      chassis_vel.y(),      chassis_vel.z(),
+                       chassis_ang,          chassis_ang_axis.x(), chassis_ang_axis.y(),
+                       chassis_ang_axis.z(), chassis_ang_vel.x(),  chassis_ang_vel.y(),
+                       chassis_ang_vel.z()};
     result.reserve(ENEMY_PROPRIOCEPTION_SIZE);
 
     for (int i = 1; i < items.size(); i++) {
@@ -177,10 +174,8 @@ std::vector<float> EnemyTankFactory::get_proprioception() {
         auto ang_vel = body->getAngularVelocity() - chassis_ang_vel;
 
         result.insert(
-            result.end(), {
-                pos.x(), pos.y(), pos.z(), vel.x(), vel.y(), vel.y(), ang, ang_axis.x(), ang_axis.y(), ang_axis.z(), ang_vel.x(),
-                ang_vel.y(), ang_vel.z()
-            });
+            result.end(), {pos.x(), pos.y(), pos.z(), vel.x(), vel.y(), vel.y(), ang, ang_axis.x(),
+                           ang_axis.y(), ang_axis.z(), ang_vel.x(), ang_vel.y(), ang_vel.z()});
     }
     return result;
 }

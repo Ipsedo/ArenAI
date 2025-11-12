@@ -21,8 +21,10 @@ BaseTanksEnvironment::BaseTanksEnvironment(
     float wanted_frequency, const bool thread_sleep)
     : wanted_frequency(wanted_frequency), nb_tanks(nb_tanks), visions_mutex(nb_tanks),
       thread_killed(true), thread_sleep(thread_sleep), threads_running(true),
-      thread_fst_barrier(std::make_unique<std::barrier<> >(static_cast<std::ptrdiff_t>(nb_tanks + 1))),
-      thread_snd_barrier(std::make_unique<std::barrier<> >(static_cast<std::ptrdiff_t>(nb_tanks + 1))),
+      thread_fst_barrier(
+          std::make_unique<std::barrier<>>(static_cast<std::ptrdiff_t>(nb_tanks + 1))),
+      thread_snd_barrier(
+          std::make_unique<std::barrier<>>(static_cast<std::ptrdiff_t>(nb_tanks + 1))),
       enemy_visions(
           nb_tanks,
           image<uint8_t>(
@@ -36,8 +38,8 @@ BaseTanksEnvironment::BaseTanksEnvironment(
                 for (int w = 0; w < ENEMY_VISION_SIZE; w++) enemy_visions[i][c][h][w] = u_dist(rng);
 }
 
-std::vector<std::tuple<State, Reward, IsFinish> > BaseTanksEnvironment::step(
-    const float time_delta, std::future<std::vector<Action> > &actions_future) {
+std::vector<std::tuple<State, Reward, IsFinish>> BaseTanksEnvironment::step(
+    const float time_delta, std::future<std::vector<Action>> &actions_future) {
 
     if (!thread_killed) thread_fst_barrier->arrive_and_wait();
 
@@ -49,13 +51,12 @@ std::vector<std::tuple<State, Reward, IsFinish> > BaseTanksEnvironment::step(
     model_matrices.emplace_back(
         "cubemap", glm::scale(glm::mat4(1.), glm::vec3(2000., 2000., 2000.)));
 
-
     if (!thread_killed) thread_snd_barrier->arrive_and_wait();
 
     physic_engine->step(time_delta);
     on_draw(model_matrices);
 
-    std::vector<std::tuple<State, Reward, IsFinish> > result;
+    std::vector<std::tuple<State, Reward, IsFinish>> result;
     result.reserve(tank_factories.size());
 
     for (int i = 0; i < tank_factories.size(); i++) {
@@ -146,10 +147,10 @@ std::vector<State> BaseTanksEnvironment::reset_physics() {
     model_matrices.clear();
 
     for (const auto &item: physic_engine->get_items())
-            model_matrices.emplace_back(item->get_name(), item->get_model_matrix());
+        model_matrices.emplace_back(item->get_name(), item->get_model_matrix());
 
     model_matrices.emplace_back(
-            "cubemap", glm::scale(glm::mat4(1.), glm::vec3(2000., 2000., 2000.)));
+        "cubemap", glm::scale(glm::mat4(1.), glm::vec3(2000., 2000., 2000.)));
 
     return states;
 }
@@ -202,8 +203,8 @@ void BaseTanksEnvironment::worker_enemy_vision(
 
         renderer->add_drawable(
             name, std::make_unique<Specular>(
-                file_reader, shape->get_vertices(), shape->get_normals(), shell_color,
-                shell_color, shell_color, 50.f, shape->get_id()));
+                      file_reader, shape->get_vertices(), shape->get_normals(), shell_color,
+                      shell_color, shell_color, 50.f, shape->get_id()));
     }
 
     const auto frame_dt = std::chrono::milliseconds(static_cast<int>(wanted_frequency * 1000.f));
@@ -235,8 +236,8 @@ void BaseTanksEnvironment::worker_enemy_vision(
 
 void BaseTanksEnvironment::start_threads() {
     const auto participants = static_cast<std::ptrdiff_t>(tank_factories.size() + 1);
-    thread_fst_barrier = std::make_unique<std::barrier<> >(participants);
-    thread_snd_barrier = std::make_unique<std::barrier<> >(participants);
+    thread_fst_barrier = std::make_unique<std::barrier<>>(participants);
+    thread_snd_barrier = std::make_unique<std::barrier<>>(participants);
 
     enemy_visions = std::vector(
         nb_tanks,

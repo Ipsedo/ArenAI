@@ -25,7 +25,7 @@ def main() -> None:
     args = parser.parse_args()
 
     with th.no_grad():
-        nb_sensors = (3 + 3 + 3 + 4 + 3 + 3) * (6 + 3) - 3
+        nb_sensors = (3 + 3 + 4 + 3) * (6 + 3) - 3
         nb_actions = 2 + 2 + 1
 
         actor = SacActor(

@@ -17,9 +17,9 @@ EnemyTankFactory::EnemyTankFactory(
       curr_frame_upside_down(0), is_dead_already_triggered(false),
       max_frames_without_hit(static_cast<int>(60.f / wanted_frame_frequency)),
       nb_frames_since_last_hit(0), action_stats(std::make_shared<ActionStats>()),
-      min_distance_potential_reward(25.f), max_distance_potential_reward(200.f),
-      aim_min_angle_potential_reward(static_cast<float>(M_PI) / 6.f),
-      aim_max_angle_potential_reward(static_cast<float>(M_PI) / 2.f) {}
+      min_distance_potential_reward(20.f), max_distance_potential_reward(100.f),
+      aim_min_angle_potential_reward(static_cast<float>(M_PI) / 4.f),
+      aim_max_angle_potential_reward(static_cast<float>(M_PI) / 3.f) {}
 
 float EnemyTankFactory::get_reward() {
     float actual_reward = reward;
@@ -104,7 +104,7 @@ float EnemyTankFactory::get_potential_reward(
         action_stats->has_fire() ? (aim_angle < aim_min_angle_potential_reward ? 1.f : -1.f) : 0.f;
 
     // potential reward
-    return 1e-1f * fire_reward + 3e-1f * aim_reward + 6e-1f * reward_distance;
+    return 0.6 * fire_reward + 0.3 * aim_reward + 0.1 * reward_distance;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

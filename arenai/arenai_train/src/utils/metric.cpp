@@ -12,7 +12,7 @@ Metric::Metric(const std::string &name, const int window_size)
 float Metric::last_value() const { return values.back(); }
 
 float Metric::average_value() {
-    return std::reduce(values.begin(), values.end(), 0.0f, std::plus<>())
+    return std::reduce(values.begin(), values.end(), 0.0f, std::plus())
            / std::max(static_cast<float>(values.size()), 1.f);
 }
 

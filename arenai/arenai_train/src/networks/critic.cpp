@@ -24,7 +24,7 @@ SacCritic::SacCritic(
           "head",
           torch::nn::Sequential(
               torch::nn::Linear(
-                  hidden_size_actions + hidden_size_sensors + 1 * 1 * 512, hidden_size),
+                  hidden_size_actions + hidden_size_sensors + 1 * 1 * 256, hidden_size),
               torch::nn::Mish(), torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})),
               torch::nn::Linear(hidden_size, 1)))) {
     apply(init_weights);

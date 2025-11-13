@@ -39,7 +39,8 @@ void Renderer::draw(const std::vector<std::tuple<std::string, glm::mat4>> &model
     on_new_frame(gl_context);
 
     // on_draw
-    const glm::mat4 view_matrix = glm::lookAt(camera->pos(), camera->look(), camera->up());
+    const auto camera_pos = camera->pos();
+    const glm::mat4 view_matrix = glm::lookAt(camera_pos, camera->look(), camera->up());
 
     const glm::mat4 proj_matrix = glm::perspective(
         static_cast<float>(M_PI) / 4.f, static_cast<float>(width) / static_cast<float>(height), 1.f,
@@ -49,7 +50,7 @@ void Renderer::draw(const std::vector<std::tuple<std::string, glm::mat4>> &model
         auto mv_matrix = view_matrix * m_matrix;
         const auto mvp_matrix = proj_matrix * mv_matrix;
 
-        drawables[name]->draw(mvp_matrix, mv_matrix, light_pos, camera->pos());
+        drawables[name]->draw(mvp_matrix, mv_matrix, light_pos, camera_pos);
     }
 
     on_end_frame(gl_context);

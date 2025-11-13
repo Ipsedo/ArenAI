@@ -12,20 +12,20 @@ from python.model import SacActor
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser("phyvr convert model to PTE")
+    parser = argparse.ArgumentParser("arenai convert model to PTE")
 
     parser.add_argument("-o", "--output-pte", type=str, required=True)
     parser.add_argument(
         "-i", "--input-state-dict-folder", type=str, required=True
     )
 
-    parser.add_argument("--hidden-size-sensors", type=int, default=256)
-    parser.add_argument("--hidden-size", type=int, default=2048)
+    parser.add_argument("--hidden-size-sensors", type=int, default=128)
+    parser.add_argument("--hidden-size", type=int, default=1024)
 
     args = parser.parse_args()
 
     with th.no_grad():
-        nb_sensors = (3 + 3 + 3 + 4 + 3 + 3) * (6 + 3) - 2
+        nb_sensors = (3 + 3 + 4 + 3) * (6 + 3) - 3
         nb_actions = 2 + 2 + 1
 
         actor = SacActor(

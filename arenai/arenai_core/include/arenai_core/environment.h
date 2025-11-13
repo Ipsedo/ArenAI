@@ -45,7 +45,8 @@ private:
     bool thread_killed;
     bool thread_sleep;
     std::atomic<bool> threads_running;
-    std::unique_ptr<std::barrier<>> thread_barrier;
+    std::unique_ptr<std::barrier<>> thread_fst_barrier;
+    std::unique_ptr<std::barrier<>> thread_snd_barrier;
     std::vector<std::thread> pool;
 
     std::vector<std::tuple<std::string, glm::mat4>> model_matrices;
@@ -59,8 +60,6 @@ private:
     std::shared_ptr<AbstractGLContext> gl_context;
 
     void worker_enemy_vision(int index, const std::unique_ptr<EnemyTankFactory> &tank_factory);
-
-    void lock_all_thread_model_matrix();
 
 protected:
     virtual void on_draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) = 0;

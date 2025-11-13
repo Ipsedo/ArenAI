@@ -21,7 +21,7 @@ public:
     ShellItem(
         const std::shared_ptr<AbstractFileReader> &file_reader, glm::vec3 pos, glm::quat rot,
         glm::vec3 scale, float mass, float wanted_frame_frequency,
-        const std::function<void(Item *)> &contact_callback = [](Item *i) {});
+        const std::function<void(Item *)> &contact_callback = [](Item *_) {});
 
     void on_contact(Item *other) override;
 

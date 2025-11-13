@@ -3,7 +3,9 @@
 //
 
 #include <algorithm>
+#include <iostream>
 
+#include <arenai_core/constants.h>
 #include <arenai_core/enemy_tank_factory.h>
 
 EnemyTankFactory::EnemyTankFactory(
@@ -42,8 +44,6 @@ float EnemyTankFactory::get_reward() {
 
 float EnemyTankFactory::get_potential_reward(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &all_enemy_tank_factories) {
-    constexpr float epsilon = 1e-8f;
-
     const auto chassis_pos = get_chassis()->get_body()->getWorldTransform().getOrigin();
 
     // distance
@@ -148,35 +148,34 @@ std::vector<float> EnemyTankFactory::get_proprioception() {
     const auto chassis_pos = chassis->get_body()->getCenterOfMassPosition();
 
     const auto chassis_vel = chassis->get_body()->getLinearVelocity();
-    const auto chassis_force = chassis->get_body()->getTotalForce();
 
-    const auto chassis_ang = chassis->get_body()->getOrientation();
+    const auto chassis_tr = chassis->get_body()->getWorldTransform();
+    const auto chassis_ang_quat = chassis->get_body()->getOrientation();
+    const auto chassis_ang = chassis_ang_quat.getAngle();
+    const auto chassis_ang_axis = chassis_ang_quat.getAxis();
     const auto chassis_ang_vel = chassis->get_body()->getAngularVelocity();
-    const auto chassis_torque = chassis->get_body()->getTotalTorque();
 
-    std::vector result{chassis_pos.y(),     chassis_vel.x(),     chassis_vel.y(),
-                       chassis_vel.z(),     chassis_force.x(),   chassis_force.y(),
-                       chassis_force.z(),   chassis_ang.x(),     chassis_ang.y(),
-                       chassis_ang.z(),     chassis_ang.w(),     chassis_ang_vel.x(),
-                       chassis_ang_vel.y(), chassis_ang_vel.z(), chassis_torque.x(),
-                       chassis_torque.y(),  chassis_torque.z()};
-    result.reserve((3 * 2 + 4 + 3) * items.size());
+    std::vector result{chassis_vel.x(),      chassis_vel.y(),      chassis_vel.z(),
+                       chassis_ang,          chassis_ang_axis.x(), chassis_ang_axis.y(),
+                       chassis_ang_axis.z(), chassis_ang_vel.x(),  chassis_ang_vel.y(),
+                       chassis_ang_vel.z()};
+    result.reserve(ENEMY_PROPRIOCEPTION_SIZE);
 
     for (int i = 1; i < items.size(); i++) {
         const auto body = items[i]->get_body();
 
         auto pos = body->getCenterOfMassPosition() - chassis_pos;
-        auto vel = body->getLinearVelocity();
-        auto force = body->getTotalForce();
+        auto vel = body->getLinearVelocity() - chassis_vel;
 
-        auto ang = body->getCenterOfMassTransform().getRotation();
-        auto ang_vel = body->getAngularVelocity();
-        auto torque = body->getTotalTorque();
+        auto ang_quat = (chassis_tr.inverse() * body->getCenterOfMassTransform()).getRotation();
+        auto ang = ang_quat.getAngle();
+        auto ang_axis = ang_quat.getAxis();
+
+        auto ang_vel = body->getAngularVelocity() - chassis_ang_vel;
 
         result.insert(
-            result.end(), {pos.x(), pos.y(), pos.z(), vel.x(), vel.y(), vel.y(), force.x(),
-                           force.y(), force.y(), ang.x(), ang.y(), ang.z(), ang.w(), ang_vel.x(),
-                           ang_vel.y(), ang_vel.z(), torque.x(), torque.y(), torque.z()});
+            result.end(), {pos.x(), pos.y(), pos.z(), vel.x(), vel.y(), vel.y(), ang, ang_axis.x(),
+                           ang_axis.y(), ang_axis.z(), ang_vel.x(), ang_vel.y(), ang_vel.z()});
     }
     return result;
 }

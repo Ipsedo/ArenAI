@@ -52,6 +52,7 @@ private:
     std::shared_ptr<Metric> critic_1_loss_metric;
     std::shared_ptr<Metric> critic_2_loss_metric;
     std::shared_ptr<Metric> entropy_loss_metric;
+    std::shared_ptr<Metric> entropy_alpha_metric;
 
     float tau;
     float gamma;

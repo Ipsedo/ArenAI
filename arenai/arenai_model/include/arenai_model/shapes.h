@@ -25,11 +25,6 @@ public:
 };
 
 class ObjShape final : public Shape {
-private:
-    std::string shape_id;
-    std::vector<std::tuple<float, float, float>> vertices;
-    std::vector<std::tuple<float, float, float>> normals;
-
 public:
     explicit ObjShape(
         const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &obj_file_path);
@@ -39,14 +34,14 @@ public:
     std::vector<std::tuple<float, float, float>> get_normals() override;
 
     std::string get_id() override;
-};
 
-class FromMeshShape final : public Shape {
 private:
     std::string shape_id;
     std::vector<std::tuple<float, float, float>> vertices;
     std::vector<std::tuple<float, float, float>> normals;
+};
 
+class FromMeshShape final : public Shape {
 public:
     FromMeshShape(
         const std::string &shape_id, std::vector<std::tuple<float, float, float>> vertices,
@@ -57,6 +52,11 @@ public:
     std::vector<std::tuple<float, float, float>> get_normals() override;
 
     std::string get_id() override;
+
+private:
+    std::string shape_id;
+    std::vector<std::tuple<float, float, float>> vertices;
+    std::vector<std::tuple<float, float, float>> normals;
 };
 
 #endif// ARENAI_SHAPES_H

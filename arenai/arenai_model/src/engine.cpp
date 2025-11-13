@@ -15,8 +15,7 @@ PhysicEngine::PhysicEngine(const float wanted_frequency)
       m_broad_phase(new btDbvtBroadphase()),
       m_constraint_solver(new btSequentialImpulseConstraintSolver()),
       m_world(new btDiscreteDynamicsWorld(
-          m_dispatcher, m_broad_phase, m_constraint_solver, m_collision_configuration)),
-      items(), item_producers() {
+          m_dispatcher, m_broad_phase, m_constraint_solver, m_collision_configuration)) {
 
     m_world->setGravity(btVector3(0, -9.8f, 0));
 }
@@ -76,7 +75,7 @@ void PhysicEngine::step(const float delta) {
                 delete constraint;
             }
 
-            if (const auto *m = body->getMotionState(); m) delete body->getMotionState();
+            delete body->getMotionState();
 
             delete body;
 
@@ -93,15 +92,18 @@ void PhysicEngine::remove_bodies_and_constraints() {
     for (int i = m_world->getNumConstraints() - 1; i >= 0; --i) {
         btTypedConstraint *constraint = m_world->getConstraint(i);
         m_world->removeConstraint(constraint);
-        delete constraint;
     }
 
     for (int i = m_world->getNumCollisionObjects() - 1; i >= 0; --i) {
         btRigidBody *body = btRigidBody::upcast(m_world->getCollisionObjectArray()[i]);
-
-        if (const auto *m = body->getMotionState()) delete m;
-
         m_world->removeRigidBody(body);
+    }
+
+    for (const auto &item: items) {
+        for (auto *constraint: item->get_constraints()) delete constraint;
+
+        auto *body = item->get_body();
+        delete body->getMotionState();
         delete body;
     }
 

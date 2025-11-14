@@ -20,7 +20,7 @@ std::tuple<bool, user_input> EnemyControllerHandler::to_output(const Action even
     }
 
     const user_input restricted_event{event.left_joystick, event.right_joystick, {has_fire}};
-    
+
     action_stats->process_input(restricted_event);
 
     return {true, restricted_event};

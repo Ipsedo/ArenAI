@@ -15,16 +15,16 @@ int main(const int argc, char **argv) {
     parser.add_argument("--hidden_size_actions").scan<'i', int>().default_value(64);
     parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(1024);
     parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(1024);
-    parser.add_argument("--tau").scan<'g', float>().default_value(0.01f);
+    parser.add_argument("--tau").scan<'g', float>().default_value(0.005f);
     parser.add_argument("--gamma").scan<'g', float>().default_value(0.99f);
-    parser.add_argument("--initial_alpha").scan<'g', float>().default_value(0.1f);
+    parser.add_argument("--initial_alpha").scan<'g', float>().default_value(0.001f);
 
     // train
     parser.add_argument("--nb_tanks").scan<'i', int>().default_value(8);
     parser.add_argument("--output_folder").required();
     parser.add_argument("--asset_folder").required();
     parser.add_argument("--potential_reward_scale").scan<'g', float>().default_value(10.f);
-    parser.add_argument("--learning_rate").scan<'g', float>().default_value(1e-3f);
+    parser.add_argument("--learning_rate").scan<'g', float>().default_value(5e-4f);
     parser.add_argument("--epochs").scan<'i', int>().default_value(8);
     parser.add_argument("--batch_size").scan<'i', int>().default_value(256);
     parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60 * 3);

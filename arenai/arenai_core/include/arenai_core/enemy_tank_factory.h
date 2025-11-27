@@ -36,9 +36,6 @@ private:
 
     bool is_dead_already_triggered;
 
-    int max_frames_without_hit;
-    int nb_frames_since_last_hit;
-
     float min_distance_potential_reward;
     float max_distance_potential_reward;
     float aim_min_angle_potential_reward;

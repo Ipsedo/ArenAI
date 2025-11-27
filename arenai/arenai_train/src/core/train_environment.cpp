@@ -4,6 +4,8 @@
 
 #include "./train_environment.h"
 
+#include <algorithm>
+
 #include <arenai_utils/cache.h>
 #include <arenai_utils/singleton.h>
 #include <arenai_view/errors.h>
@@ -15,7 +17,27 @@ TrainTankEnvironment::TrainTankEnvironment(
     const int nb_tanks, const std::filesystem::path &android_assets_path)
     : BaseTanksEnvironment(
         std::make_shared<LinuxAndroidAssetFileReader>(android_assets_path), std::nullptr_t(),
-        nb_tanks, 1.f / 30.f, false) {}
+        nb_tanks, 1.f / 30.f, false),
+      nb_frames_without_positive_reward(nb_tanks, 0), max_frames_without_positive_reward(512) {}
+
+std::vector<std::tuple<State, Reward, IsDone>> TrainTankEnvironment::step(
+    const float time_delta, std::future<std::vector<Action>> &actions_future) {
+
+    auto step_result = BaseTanksEnvironment::step(time_delta, actions_future);
+
+    for (int i = 0; i < step_result.size(); i++) {
+        nb_frames_without_positive_reward[i]++;
+
+        const auto &[state, reward, is_done] = step_result[i];
+
+        if (reward > 0) nb_frames_without_positive_reward[i] = 0;
+
+        if (nb_frames_without_positive_reward[i] > max_frames_without_positive_reward)
+            step_result[i] = {state, -1.f, true};
+    }
+
+    return step_result;
+}
 
 void TrainTankEnvironment::on_draw(
     const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {}

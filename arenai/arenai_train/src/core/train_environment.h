@@ -11,6 +11,9 @@ class TrainTankEnvironment final : public BaseTanksEnvironment {
 public:
     explicit TrainTankEnvironment(int nb_tanks, const std::filesystem::path &android_assets_path);
 
+    std::vector<std::tuple<State, Reward, IsDone>>
+    step(float time_delta, std::future<std::vector<Action>> &actions_future) override;
+
     static void reset_singleton();
 
     std::vector<Reward> get_potential_rewards();
@@ -23,6 +26,10 @@ protected:
     void on_reset_drawables(
         const std::unique_ptr<PhysicEngine> &engine,
         const std::shared_ptr<AbstractGLContext> &gl_context) override;
+
+private:
+    std::vector<int> nb_frames_without_positive_reward;
+    int max_frames_without_positive_reward;
 };
 
 #endif// ARENAI_TRAIN_HOST_TRAIN_ENVIRONMENT_H

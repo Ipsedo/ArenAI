@@ -7,6 +7,8 @@
 
 #include <arenai_core/constants.h>
 #include <arenai_core/enemy_tank_factory.h>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/norm.hpp>
 
 EnemyTankFactory::EnemyTankFactory(
     const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
@@ -15,9 +17,7 @@ EnemyTankFactory::EnemyTankFactory(
       tank_prefix_name(tank_prefix_name), reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), is_dead_already_triggered(false),
-      max_frames_without_hit(static_cast<int>(60.f / wanted_frame_frequency)),
-      nb_frames_since_last_hit(0), min_distance_potential_reward(2.f),
-      max_distance_potential_reward(50.f),
+      min_distance_potential_reward(20.f), max_distance_potential_reward(100.f),
       aim_min_angle_potential_reward(static_cast<float>(M_PI) / 4.f),
       aim_max_angle_potential_reward(static_cast<float>(M_PI) / 3.f) {}
 
@@ -43,17 +43,18 @@ float EnemyTankFactory::get_reward() {
 }
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
-    const auto canon_tr = get_canon()->get_body()->getWorldTransform();
-    const auto other_pos = other_tank->get_chassis()->get_body()->getWorldTransform().getOrigin();
+    const auto canon_tr = get_canon()->get_model_matrix();
+    const glm::vec3 other_pos =
+        other_tank->get_chassis()->get_model_matrix() * glm::vec4(glm::vec3(0.f), 1.f);
 
-    const btVector3 pos = canon_tr.getOrigin();
-    const btVector3 forward = canon_tr.getBasis() * btVector3(0, 0, 1);
+    const glm::vec3 pos = canon_tr * glm::vec4(glm::vec3(0.f), 1.f);
+    const glm::vec3 forward = canon_tr * glm::vec4(glm::vec3(0.f, 0.f, 1.f), 0.f);
 
-    const btVector3 to_target = (other_pos - pos).normalize();
+    const glm::vec3 to_target = glm::normalize(other_pos - pos);
 
-    const btScalar dot = std::clamp(forward.dot(to_target), -1.f, 1.f);
-    const btVector3 cross = forward.cross(to_target);
-    const btScalar sine = cross.length();
+    const float dot = std::clamp(glm::dot(forward, to_target), -1.f, 1.f);
+    const glm::vec3 cross = glm::cross(forward, to_target);
+    const float sine = glm::length(cross);
 
     return std::atan2(sine, dot);
 }
@@ -90,18 +91,15 @@ float EnemyTankFactory::get_potential_reward(
     // AIM
     const auto aim_angle = compute_aim_angle(all_enemy_tank_factories[nearest_enemy_index]);
 
-    const float aim_reward =
+    float aim_reward =
         (aim_max_angle_potential_reward
          - std::clamp(
              aim_angle, aim_min_angle_potential_reward, aim_max_angle_potential_reward * 2.f))
         / (aim_max_angle_potential_reward - aim_min_angle_potential_reward);
-
-    // Penalty without hit
-    const float hit_penalty =
-        -std::clamp(nb_frames_since_last_hit, 0, max_frames_without_hit) / max_frames_without_hit;
+    aim_reward = reward_distance >= 0 ? aim_reward : 0;
 
     // potential reward
-    return 0.3f * aim_reward + 0.3f * reward_distance + 0.4f * hit_penalty;
+    return 0.7f * aim_reward + 0.3f * reward_distance;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {
@@ -114,13 +112,8 @@ void EnemyTankFactory::on_fired_shell_contact(Item *item) {
     }
 
     if (const auto &life_item = dynamic_cast<LifeItem *>(item); !self_shoot && life_item) {
-        if (life_item->is_dead() && !life_item->is_already_dead()) {
-            reward += 1.0f;
-            nb_frames_since_last_hit = 0;
-        } else if (!life_item->is_dead()) {
-            reward += 0.5f;
-            nb_frames_since_last_hit = 0;
-        }
+        if (life_item->is_dead() && !life_item->is_already_dead()) reward += 1.0f;
+        else if (!life_item->is_dead()) reward += 0.1f;
     }
 }
 

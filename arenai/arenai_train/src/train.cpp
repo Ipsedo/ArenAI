@@ -19,11 +19,18 @@
 #include "./utils/saver.h"
 #include "./utils/torch_converter.h"
 
-bool is_all_done(const std::vector<bool> &already_done) {
-    return std::ranges::all_of(already_done, [](const bool is_done) { return is_done; });
+bool is_episode_finish(const std::vector<bool> &already_done) {
+    return std::accumulate(
+               already_done.begin(), already_done.end(), 0,
+               [](const int nb_done, const bool done) { return done ? nb_done + 1 : nb_done; })
+           >= already_done.size() - 1;
 }
 
 void train_main(const ModelOptions &model_options, const TrainOptions &train_options) {
+    std::cout << "Vision size : " << ENEMY_VISION_SIZE << " * " << ENEMY_VISION_SIZE << std::endl;
+    std::cout << "Proprioception size : " << ENEMY_PROPRIOCEPTION_SIZE << std::endl;
+    std::cout << "Action size : " << ENEMY_NB_ACTION << std::endl;
+
     torch::Device torch_device =
         train_options.cuda ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU);
 
@@ -143,8 +150,8 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
                 p_bar.print_progress();
             }
 
-            is_done =
-                is_all_done(already_done) || episode_step_idx >= train_options.max_episode_steps;
+            is_done = is_episode_finish(already_done)
+                      || episode_step_idx >= train_options.max_episode_steps;
 
             counter++;
             episode_step_idx++;

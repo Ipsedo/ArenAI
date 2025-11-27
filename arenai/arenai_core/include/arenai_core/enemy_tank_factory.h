@@ -7,8 +7,6 @@
 
 #include <arenai_model/tank_factory.h>
 
-#include "./action_stats.h"
-
 class EnemyTankFactory final : public TankFactory {
 public:
     EnemyTankFactory(
@@ -26,8 +24,6 @@ public:
 
     std::vector<float> get_proprioception();
 
-    std::shared_ptr<ActionStats> get_action_stats();
-
 protected:
     void on_fired_shell_contact(Item *item) override;
 
@@ -43,12 +39,12 @@ private:
     int max_frames_without_hit;
     int nb_frames_since_last_hit;
 
-    std::shared_ptr<ActionStats> action_stats;
-
     float min_distance_potential_reward;
     float max_distance_potential_reward;
     float aim_min_angle_potential_reward;
     float aim_max_angle_potential_reward;
+
+    float compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank);
 };
 
 #endif//ARENAI_TRAIN_HOST_ENEMY_TANK_FACTORY_H

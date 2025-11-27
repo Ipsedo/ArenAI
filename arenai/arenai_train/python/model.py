@@ -8,19 +8,19 @@ class ConvolutionNetwork(nn.Module):
 
         self.cnn = nn.Sequential(
             nn.Conv2d(3, 8, 3, 2, 1),
-            nn.Mish(),
+            nn.SiLU(),
             nn.Conv2d(8, 16, 3, 2, 1),
-            nn.Mish(),
+            nn.SiLU(),
             nn.Conv2d(16, 24, 3, 2, 1),
-            nn.Mish(),
+            nn.SiLU(),
             nn.Conv2d(24, 48, 3, 2, 1),
-            nn.Mish(),
+            nn.SiLU(),
             nn.Conv2d(48, 80, 3, 2, 1),
-            nn.Mish(),
+            nn.SiLU(),
             nn.Conv2d(80, 144, 3, 2, 1),
-            nn.Mish(),
+            nn.SiLU(),
             nn.Conv2d(144, 256, 3, 2, 1),
-            nn.Mish(),
+            nn.SiLU(),
             nn.Flatten(1, -1),
             nn.LayerNorm(256)
         )
@@ -44,13 +44,13 @@ class SacActor(nn.Module):
 
         self.sensors_encoder = nn.Sequential(
             nn.Linear(nb_sensors, hidden_size_sensors),
-            nn.Mish(),
+            nn.SiLU(),
             nn.LayerNorm(hidden_size_sensors),
         )
 
         self.head = nn.Sequential(
             nn.Linear(hidden_size_sensors + 1 * 1 * 256, hidden_size),
-            nn.Mish(),
+            nn.SiLU(),
             nn.LayerNorm(hidden_size),
         )
 

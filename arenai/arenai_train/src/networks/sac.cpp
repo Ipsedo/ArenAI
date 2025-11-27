@@ -178,3 +178,12 @@ void SacNetworks::train(const bool train) const {
     target_critic_2->train(train);
     alpha_entropy->train(train);
 }
+
+void SacNetworks::to(const torch::Device device) const {
+    actor->to(device);
+    critic_1->to(device);
+    critic_2->to(device);
+    target_critic_1->to(device);
+    target_critic_2->to(device);
+    alpha_entropy->to(device);
+}

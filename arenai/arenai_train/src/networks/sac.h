@@ -32,6 +32,8 @@ public:
 
     void train(bool train) const;
 
+    void to(torch::Device device) const;
+
 private:
     std::shared_ptr<SacActor> actor;
 

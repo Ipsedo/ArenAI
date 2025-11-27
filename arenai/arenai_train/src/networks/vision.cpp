@@ -8,19 +8,19 @@ ConvolutionNetwork::ConvolutionNetwork()
     : cnn(register_module(
         "cnn", torch::nn::Sequential(
                    torch::nn::Conv2d(torch::nn::Conv2dOptions(3, 8, 3).padding(1).stride(2)),
-                   torch::nn::Mish(),
+                   torch::nn::SiLU(),
                    torch::nn::Conv2d(torch::nn::Conv2dOptions(8, 16, 3).padding(1).stride(2)),
-                   torch::nn::Mish(),
+                   torch::nn::SiLU(),
                    torch::nn::Conv2d(torch::nn::Conv2dOptions(16, 24, 3).padding(1).stride(2)),
-                   torch::nn::Mish(),
+                   torch::nn::SiLU(),
                    torch::nn::Conv2d(torch::nn::Conv2dOptions(24, 48, 3).padding(1).stride(2)),
-                   torch::nn::Mish(),
+                   torch::nn::SiLU(),
                    torch::nn::Conv2d(torch::nn::Conv2dOptions(48, 80, 3).padding(1).stride(2)),
-                   torch::nn::Mish(),
+                   torch::nn::SiLU(),
                    torch::nn::Conv2d(torch::nn::Conv2dOptions(80, 144, 3).padding(1).stride(2)),
-                   torch::nn::Mish(),
+                   torch::nn::SiLU(),
                    torch::nn::Conv2d(torch::nn::Conv2dOptions(144, 256, 3).padding(1).stride(2)),
-                   torch::nn::Mish(),
+                   torch::nn::SiLU(),
                    // 1 * 1 * 256
                    torch::nn::Flatten(torch::nn::FlattenOptions().start_dim(1).end_dim(-1)),
                    torch::nn::LayerNorm(torch::nn::LayerNormOptions({256}))))) {}

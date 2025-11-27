@@ -41,7 +41,7 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
     auto replay_buffer = std::make_unique<ReplayBuffer>(train_options.replay_buffer_size, 12345);
 
     Metric reward_metric("reward", train_options.metric_window_size);
-    Metric potential_reward_metric("potential_reward", train_options.metric_window_size);
+    Metric potential_reward_metric("pot_reward", train_options.metric_window_size);
 
     int counter = 0;
 
@@ -125,22 +125,23 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
             }
 
             // check if it's time to train
-            if (counter % train_options.train_every == train_options.train_every - 1)
+            if (counter % train_options.train_every == train_options.train_every - 1) {
                 sac->train(replay_buffer, train_options.epochs, train_options.batch_size);
 
-            // progress bar
-            auto metrics = sac->get_metrics();
+                // progress bar
+                auto metrics = sac->get_metrics();
 
-            std::stringstream stream;
-            stream << reward_metric.to_string() << ", " << potential_reward_metric.to_string()
-                   << std::accumulate(
-                          metrics.begin(), metrics.end(), std::string(),
-                          [](std::string acc, const std::shared_ptr<Metric> &m) {
-                              return acc.append(", ").append(m->to_string());
-                          })
-                   << " ";
-            p_bar.set_option(indicators::option::PrefixText{stream.str()});
-            p_bar.print_progress();
+                std::stringstream stream;
+                stream << reward_metric.to_string() << ", " << potential_reward_metric.to_string()
+                       << std::accumulate(
+                              metrics.begin(), metrics.end(), std::string(),
+                              [](std::string acc, const std::shared_ptr<Metric> &m) {
+                                  return acc.append(", ").append(m->to_string());
+                              })
+                       << " ";
+                p_bar.set_option(indicators::option::PrefixText{stream.str()});
+                p_bar.print_progress();
+            }
 
             is_done =
                 is_all_done(already_done) || episode_step_idx >= train_options.max_episode_steps;
@@ -154,6 +155,11 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
 
         last_state.clear();
         env->stop_drawing();
+
+        std::stringstream stream;
+        stream << episode_index << " / " << train_options.nb_episodes;
+        p_bar.set_option(indicators::option::PostfixText{stream.str()});
+
         p_bar.tick();
     }
 }

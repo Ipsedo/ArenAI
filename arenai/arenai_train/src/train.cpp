@@ -163,10 +163,6 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
         last_state.clear();
         env->stop_drawing();
 
-        std::stringstream stream;
-        stream << episode_index << " / " << train_options.nb_episodes;
-        p_bar.set_option(indicators::option::PostfixText{stream.str()});
-
         p_bar.tick();
     }
 }

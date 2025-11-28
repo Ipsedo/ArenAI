@@ -20,10 +20,9 @@ ConvolutionNetwork::ConvolutionNetwork()
                    torch::nn::Conv2d(torch::nn::Conv2dOptions(80, 144, 3).padding(1).stride(2)),
                    torch::nn::SiLU(),
                    torch::nn::Conv2d(torch::nn::Conv2dOptions(144, 256, 3).padding(1).stride(2)),
-                   torch::nn::SiLU(),
                    // 1 * 1 * 256
                    torch::nn::Flatten(torch::nn::FlattenOptions().start_dim(1).end_dim(-1)),
-                   torch::nn::LayerNorm(torch::nn::LayerNormOptions({256}))))) {}
+                   torch::nn::LayerNorm(torch::nn::LayerNormOptions({256})), torch::nn::SiLU()))) {}
 
 torch::Tensor ConvolutionNetwork::forward(const torch::Tensor &input) {
     if (input.dtype() != torch::kUInt8) throw std::runtime_error("Input must be UInt8");

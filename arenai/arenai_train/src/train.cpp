@@ -55,7 +55,7 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
     indicators::ProgressBar p_bar{
         indicators::option::MinProgress{0},
         indicators::option::MaxProgress{train_options.nb_episodes},
-        indicators::option::BarWidth{30},
+        indicators::option::BarWidth{10},
         indicators::option::Start{"["},
         indicators::option::Fill{"="},
         indicators::option::Lead{">"},
@@ -139,7 +139,8 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
                 auto metrics = sac->get_metrics();
 
                 std::stringstream stream;
-                stream << reward_metric.to_string() << ", " << potential_reward_metric.to_string()
+                stream << "Episode " << episode_index << " / " << train_options.nb_episodes << " : "
+                       << reward_metric.to_string() << ", " << potential_reward_metric.to_string()
                        << std::accumulate(
                               metrics.begin(), metrics.end(), std::string(),
                               [](std::string acc, const std::shared_ptr<Metric> &m) {

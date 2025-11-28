@@ -28,7 +28,7 @@ int main(const int argc, char **argv) {
     parser.add_argument("--epochs").scan<'i', int>().default_value(8);
     parser.add_argument("--batch_size").scan<'i', int>().default_value(512);
     parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60);
-    parser.add_argument("--nb_episodes").scan<'i', int>().default_value(100000);
+    parser.add_argument("--nb_episodes").scan<'i', int>().default_value(500000);
     parser.add_argument("--replay_buffer_size").scan<'i', int>().default_value(200000);
     parser.add_argument("--train_every").scan<'i', int>().default_value(128);
     parser.add_argument("--save_every").scan<'i', int>().default_value(30 * 60 * 3 * 25);

@@ -42,6 +42,14 @@ float EnemyTankFactory::get_reward() {
     return actual_reward;
 }
 
+float EnemyTankFactory::compute_value_range_reward(
+    const float value, const float min_value, const float max_value) {
+    if (value <= min_value) return 1.0f;
+    if (value <= max_value) return 1.0f - (value - min_value) / (max_value - min_value);// 1 -> 0
+    if (value <= 2.0f * max_value) return -(value - max_value) / max_value;             // 0 -> -1
+    return -1.0f;
+}
+
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
     const auto canon_tr = get_canon()->get_model_matrix();
     const glm::vec3 other_pos =
@@ -82,21 +90,13 @@ float EnemyTankFactory::get_potential_reward(
         }
     }
 
-    const float reward_distance =
-        (max_distance_potential_reward
-         - std::clamp(
-             shortest_distance, min_distance_potential_reward, max_distance_potential_reward * 2.f))
-        / (max_distance_potential_reward - min_distance_potential_reward);
+    const float reward_distance = compute_value_range_reward(
+        shortest_distance, min_distance_potential_reward, max_distance_potential_reward);
 
     // AIM
     const auto aim_angle = compute_aim_angle(all_enemy_tank_factories[nearest_enemy_index]);
-
-    float aim_reward =
-        (aim_max_angle_potential_reward
-         - std::clamp(
-             aim_angle, aim_min_angle_potential_reward, aim_max_angle_potential_reward * 2.f))
-        / (aim_max_angle_potential_reward - aim_min_angle_potential_reward);
-    aim_reward = reward_distance >= 0 ? aim_reward : 0;
+    const float aim_reward = compute_value_range_reward(
+        aim_angle, aim_min_angle_potential_reward, aim_max_angle_potential_reward);
 
     // potential reward
     return 0.7f * aim_reward + 0.3f * reward_distance;

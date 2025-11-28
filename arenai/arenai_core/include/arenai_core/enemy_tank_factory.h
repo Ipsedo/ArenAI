@@ -42,6 +42,7 @@ private:
     float aim_max_angle_potential_reward;
 
     float compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank);
+    static float compute_value_range_reward(float value, float min_value, float max_value);
 };
 
 #endif//ARENAI_TRAIN_HOST_ENEMY_TANK_FACTORY_H

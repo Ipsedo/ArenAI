@@ -20,9 +20,9 @@ class ConvolutionNetwork(nn.Module):
             nn.Conv2d(80, 144, 3, 2, 1),
             nn.SiLU(),
             nn.Conv2d(144, 256, 3, 2, 1),
-            nn.SiLU(),
             nn.Flatten(1, -1),
-            nn.LayerNorm(256)
+            nn.LayerNorm(256),
+            nn.SiLU(),
         )
 
     def forward(self, vision: th.Tensor) -> th.Tensor:
@@ -44,14 +44,14 @@ class SacActor(nn.Module):
 
         self.sensors_encoder = nn.Sequential(
             nn.Linear(nb_sensors, hidden_size_sensors),
-            nn.SiLU(),
             nn.LayerNorm(hidden_size_sensors),
+            nn.SiLU(),
         )
 
         self.head = nn.Sequential(
             nn.Linear(hidden_size_sensors + 1 * 1 * 256, hidden_size),
-            nn.SiLU(),
             nn.LayerNorm(hidden_size),
+            nn.SiLU(),
         )
 
         self.mu = nn.Sequential(

@@ -25,7 +25,7 @@ float erfinv(const float x) {
     float xc = std::clamp(x, -1.0f + eps, 1.0f - eps);
 
     constexpr float a = 0.147f;
-    constexpr float pi = static_cast<float>(M_PI);
+    constexpr auto pi = static_cast<float>(M_PI);
     const float s = (xc >= 0.0f) ? 1.0f : -1.0f;
 
     const float ln = std::log1p(-xc * xc);

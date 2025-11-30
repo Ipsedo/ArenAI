@@ -113,7 +113,7 @@ void train_main(
 
                 if (already_done[i]) continue;
 
-                const auto [next_vision, next_proprioception] = state_to_tensor(next_state);
+                const auto [next_vision, next_proprioception] = states_to_tensor({next_state});
                 const float potential_reward =
                     model_options.gamma * next_potential_rewards[i] - potential_rewards[i];
 
@@ -128,7 +128,7 @@ void train_main(
                          torch::TensorOptions().dtype(torch::kFloat))
                          .unsqueeze(0),
                      torch::tensor(done, torch::TensorOptions().dtype(torch::kBool)).unsqueeze(0),
-                     {next_vision, next_proprioception}});
+                     {next_vision[0], next_proprioception[0]}});
 
                 if (done && !already_done[i]) already_done[i] = true;
             }

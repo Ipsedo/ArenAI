@@ -67,33 +67,3 @@ std::tuple<torch::Tensor, torch::Tensor> states_to_tensor(const std::vector<Stat
 
     return {visions_u8, proprioceptions};
 }
-
-std::tuple<torch::Tensor, torch::Tensor> state_to_tensor(const State &state) {
-    constexpr int64_t C = 3;
-    constexpr int64_t H = ENEMY_VISION_SIZE;
-    constexpr int64_t W = ENEMY_VISION_SIZE;
-    constexpr int64_t P = ENEMY_PROPRIOCEPTION_SIZE;
-
-    const torch::Tensor vision_u8 =
-        torch::zeros({C, H, W}, torch::TensorOptions().dtype(torch::kUInt8).requires_grad(false));
-
-    torch::Tensor proprioception =
-        torch::zeros({P}, torch::TensorOptions().dtype(torch::kFloat).requires_grad(false));
-
-    auto *vision_ptr = vision_u8.data_ptr<uint8_t>();
-    auto *proprioception_ptr = proprioception.data_ptr<float>();
-
-    constexpr auto vision_row_bytes = static_cast<size_t>(W);
-
-    for (int64_t c = 0; c < C; ++c) {
-        for (int64_t h = 0; h < H; ++h) {
-            const uint8_t *vision_src_row = state.vision[c][h].data();
-            std::memcpy(vision_ptr, vision_src_row, vision_row_bytes);
-            vision_ptr += static_cast<size_t>(W);
-        }
-    }
-    std::memcpy(
-        proprioception_ptr, state.proprioception.data(), static_cast<size_t>(P) * sizeof(float));
-
-    return {vision_u8, proprioception};
-}

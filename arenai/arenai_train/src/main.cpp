@@ -14,7 +14,7 @@ int main(const int argc, char **argv) {
     parser.add_argument("--wanted_frequency").scan<'g', float>().default_value(1.f / 30.f);
 
     // model
-    parser.add_argument("--hidden_size_sensors").scan<'i', int>().default_value(128);
+    parser.add_argument("--hidden_size_sensors").scan<'i', int>().default_value(256);
     parser.add_argument("--hidden_size_actions").scan<'i', int>().default_value(32);
     parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(1024);
     parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(1024);

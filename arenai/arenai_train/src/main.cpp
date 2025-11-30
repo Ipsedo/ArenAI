@@ -10,6 +10,9 @@ int main(const int argc, char **argv) {
 
     argparse::ArgumentParser parser("arenai train");
 
+    // physic simulation
+    parser.add_argument("--wanted_frequency").scan<'g', float>().default_value(1.f / 30.f);
+
     // model
     parser.add_argument("--hidden_size_sensors").scan<'i', int>().default_value(128);
     parser.add_argument("--hidden_size_actions").scan<'i', int>().default_value(32);
@@ -17,7 +20,7 @@ int main(const int argc, char **argv) {
     parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(1024);
     parser.add_argument("--tau").scan<'g', float>().default_value(0.005f);
     parser.add_argument("--gamma").scan<'g', float>().default_value(0.99f);
-    parser.add_argument("--initial_alpha").scan<'g', float>().default_value(0.001f);
+    parser.add_argument("--initial_alpha").scan<'g', float>().default_value(1.f);
 
     // train
     parser.add_argument("--nb_tanks").scan<'i', int>().default_value(8);
@@ -27,7 +30,7 @@ int main(const int argc, char **argv) {
     parser.add_argument("--learning_rate").scan<'g', float>().default_value(5e-4f);
     parser.add_argument("--epochs").scan<'i', int>().default_value(8);
     parser.add_argument("--batch_size").scan<'i', int>().default_value(512);
-    parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60);
+    parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60 * 3);
     parser.add_argument("--nb_episodes").scan<'i', int>().default_value(500000);
     parser.add_argument("--replay_buffer_size").scan<'i', int>().default_value(200000);
     parser.add_argument("--train_every").scan<'i', int>().default_value(128);
@@ -38,6 +41,7 @@ int main(const int argc, char **argv) {
     parser.parse_args(argc, argv);
 
     train_main(
+        parser.get<float>("--wanted_frequency"),
         {parser.get<int>("--hidden_size_sensors"), parser.get<int>("--hidden_size_actions"),
          parser.get<int>("--actor_hidden_size"), parser.get<int>("--critic_hidden_size"),
          parser.get<float>("--tau"), parser.get<float>("--gamma"),

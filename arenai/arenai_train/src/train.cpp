@@ -26,7 +26,9 @@ bool is_episode_finish(const std::vector<bool> &already_done) {
            >= already_done.size() - 1;
 }
 
-void train_main(const ModelOptions &model_options, const TrainOptions &train_options) {
+void train_main(
+    const float wanted_frequency, const ModelOptions &model_options,
+    const TrainOptions &train_options) {
     std::cout << "Vision size : " << ENEMY_VISION_SIZE << " * " << ENEMY_VISION_SIZE << std::endl;
     std::cout << "Proprioception size : " << ENEMY_PROPRIOCEPTION_SIZE << std::endl;
     std::cout << "Action size : " << ENEMY_NB_ACTION << std::endl;
@@ -35,7 +37,7 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
         train_options.cuda ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU);
 
     const auto env = std::make_unique<TrainTankEnvironment>(
-        train_options.nb_tanks, train_options.android_asset_folder);
+        train_options.nb_tanks, train_options.android_asset_folder, wanted_frequency);
     auto sac = std::make_shared<SacNetworks>(
         ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, train_options.learning_rate,
         model_options.hidden_size_sensors, model_options.hidden_size_actions,

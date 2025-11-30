@@ -34,6 +34,7 @@ struct TrainOptions {
     int metric_window_size;
 };
 
-void train_main(const ModelOptions &model_options, const TrainOptions &train_options);
+void train_main(
+    float wanted_frequency, const ModelOptions &model_options, const TrainOptions &train_options);
 
 #endif// ARENAI_TRAIN_HOST_TRAIN_H

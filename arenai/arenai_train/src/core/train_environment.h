@@ -9,7 +9,8 @@
 
 class TrainTankEnvironment final : public BaseTanksEnvironment {
 public:
-    explicit TrainTankEnvironment(int nb_tanks, const std::filesystem::path &android_assets_path);
+    TrainTankEnvironment(
+        int nb_tanks, const std::filesystem::path &android_assets_path, float wanted_frequency);
 
     std::vector<std::tuple<State, Reward, IsDone>>
     step(float time_delta, std::future<std::vector<Action>> &actions_future) override;
@@ -28,8 +29,9 @@ protected:
         const std::shared_ptr<AbstractGLContext> &gl_context) override;
 
 private:
-    std::vector<int> nb_frames_without_positive_reward;
     int max_frames_without_positive_reward;
+    std::vector<int> remaining_frames;
+    int nb_frames_added_when_positive_reward;
 };
 
 #endif// ARENAI_TRAIN_HOST_TRAIN_ENVIRONMENT_H

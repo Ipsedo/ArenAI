@@ -58,15 +58,16 @@ float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory
         other_tank->get_chassis()->get_model_matrix() * glm::vec4(glm::vec3(0.f), 1.f);
 
     const glm::vec3 pos = canon_tr * glm::vec4(glm::vec3(0.f), 1.f);
-    const glm::vec3 forward = canon_tr * glm::vec4(glm::vec3(0.f, 0.f, 1.f), 0.f);
+    const glm::vec3 forward_3d = canon_tr * glm::vec4(glm::vec3(0.f, 0.f, 1.f), 0.f);
 
-    const glm::vec3 to_target = glm::normalize(other_pos - pos);
+    const glm::vec3 forward = glm::normalize(glm::vec3(forward_3d.x, 0.f, forward_3d.z));
+    const glm::vec3 to_target = glm::normalize(glm::vec3(other_pos.x - pos.x, 0.f, other_pos.z - pos.z));
 
     const float dot = std::clamp(glm::dot(forward, to_target), -1.f, 1.f);
-    const glm::vec3 cross = glm::cross(forward, to_target);
-    const float sine = glm::length(cross);
 
-    return std::atan2(sine, dot);
+    const float cross_y = forward.x * to_target.z - forward.z * to_target.x;
+
+    return std::atan2(cross_y, dot);
 }
 
 float EnemyTankFactory::get_potential_reward(
@@ -92,7 +93,7 @@ float EnemyTankFactory::get_potential_reward(
         }
     }
 
-    const float reward_distance = compute_value_range_reward(
+    const float distance_reward = compute_value_range_reward(
         shortest_distance, min_distance_potential_reward, max_distance_potential_reward);
 
     // AIM
@@ -101,7 +102,7 @@ float EnemyTankFactory::get_potential_reward(
         aim_angle, aim_min_angle_potential_reward, aim_max_angle_potential_reward);
 
     // potential reward
-    return 0.7f * aim_reward + 0.3f * reward_distance;
+    return (distance_reward > 0.f ? aim_reward : 0.f) + distance_reward;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

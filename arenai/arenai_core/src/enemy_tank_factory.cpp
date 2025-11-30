@@ -27,6 +27,7 @@ float EnemyTankFactory::get_reward() {
     // prepare next frame
     reward = 0.f;
 
+    // flipped penalty
     const auto chassis = get_chassis();
     auto chassis_tr = chassis->get_body()->getWorldTransform();
     const btVector3 up(0.f, 1.f, 0.f);
@@ -36,6 +37,7 @@ float EnemyTankFactory::get_reward() {
         curr_frame_upside_down++;
     else curr_frame_upside_down = 0;
 
+    // dead penalty
     if (is_dead()) actual_reward -= 1.f;
 
     // return reward
@@ -45,8 +47,8 @@ float EnemyTankFactory::get_reward() {
 float EnemyTankFactory::compute_value_range_reward(
     const float value, const float min_value, const float max_value) {
     if (value <= min_value) return 1.0f;
-    if (value <= max_value) return 1.0f - (value - min_value) / (max_value - min_value);// 1 -> 0
-    if (value <= 2.0f * max_value) return -(value - max_value) / max_value;             // 0 -> -1
+    if (value <= max_value) return 1.0f - (value - min_value) / (max_value - min_value);
+    if (value <= 2.0f * max_value) return -(value - max_value) / max_value;
     return -1.0f;
 }
 

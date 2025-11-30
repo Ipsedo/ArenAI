@@ -12,7 +12,7 @@ class ControllerHandler {
 public:
     virtual ~ControllerHandler() = default;
 
-    ControllerHandler() : controllers() {}
+    ControllerHandler() = default;
 
     void add_controller(const std::shared_ptr<Controller> &controller) {
         controllers.push_back(controller);

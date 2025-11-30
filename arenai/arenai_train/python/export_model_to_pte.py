@@ -19,7 +19,7 @@ def main() -> None:
         "-i", "--input-state-dict-folder", type=str, required=True
     )
 
-    parser.add_argument("--hidden-size-sensors", type=int, default=128)
+    parser.add_argument("--hidden-size-sensors", type=int, default=256)
     parser.add_argument("--hidden-size", type=int, default=1024)
 
     args = parser.parse_args()

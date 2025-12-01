@@ -50,7 +50,7 @@ void train_main(
     auto replay_buffer = std::make_unique<ReplayBuffer>(train_options.replay_buffer_size, 12345);
 
     Metric reward_metric("reward", train_options.metric_window_size);
-    Metric potential_reward_metric("pot_reward", train_options.metric_window_size);
+    Metric potential_reward_metric("potential_reward", train_options.metric_window_size);
 
     int counter = 0;
 
@@ -67,7 +67,7 @@ void train_main(
         indicators::option::ShowElapsedTime{true},
         indicators::option::ShowRemainingTime{true}};
 
-    std::string sac_metric_p_bar_description;
+    std::string sac_metric_p_bar_description = " ";
 
     auto gl_context = std::make_shared<TrainGlContext>();
 

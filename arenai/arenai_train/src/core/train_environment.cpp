@@ -21,7 +21,8 @@ TrainTankEnvironment::TrainTankEnvironment(
         nb_tanks, wanted_frequency, false),
       max_frames_without_positive_reward(static_cast<int>(30.f / wanted_frequency)),
       remaining_frames(nb_tanks, max_frames_without_positive_reward),
-      nb_frames_added_when_positive_reward(static_cast<int>(2.f / wanted_frequency)) {}
+      nb_frames_added_when_positive_reward(static_cast<int>(2.f / wanted_frequency)),
+      nb_tanks(nb_tanks) {}
 
 std::vector<std::tuple<State, Reward, IsDone>> TrainTankEnvironment::step(
     const float time_delta, std::future<std::vector<Action>> &actions_future) {
@@ -44,7 +45,9 @@ std::vector<std::tuple<State, Reward, IsDone>> TrainTankEnvironment::step(
 void TrainTankEnvironment::on_draw(
     const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {}
 
-void TrainTankEnvironment::on_reset_physics(const std::unique_ptr<PhysicEngine> &engine) {}
+void TrainTankEnvironment::on_reset_physics(const std::unique_ptr<PhysicEngine> &engine) {
+    remaining_frames = std::vector<int>(nb_tanks, max_frames_without_positive_reward);
+}
 
 void TrainTankEnvironment::on_reset_drawables(
     const std::unique_ptr<PhysicEngine> &engine,

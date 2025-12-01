@@ -67,6 +67,8 @@ void train_main(
         indicators::option::ShowElapsedTime{true},
         indicators::option::ShowRemainingTime{true}};
 
+    std::string sac_metric_p_bar_description;
+
     auto gl_context = std::make_shared<TrainGlContext>();
 
     for (int episode_index = 0; episode_index < train_options.nb_episodes; episode_index++) {
@@ -141,16 +143,12 @@ void train_main(
                 auto metrics = sac->get_metrics();
 
                 std::stringstream stream;
-                stream << "Episode " << episode_index << " / " << train_options.nb_episodes << " : "
-                       << reward_metric.to_string() << ", " << potential_reward_metric.to_string()
-                       << std::accumulate(
-                              metrics.begin(), metrics.end(), std::string(),
-                              [](std::string acc, const std::shared_ptr<Metric> &m) {
-                                  return acc.append(", ").append(m->to_string());
-                              })
-                       << " ";
-                p_bar.set_option(indicators::option::PrefixText{stream.str()});
-                p_bar.print_progress();
+                stream << std::accumulate(
+                    metrics.begin(), metrics.end(), std::string(),
+                    [](std::string acc, const std::shared_ptr<Metric> &m) {
+                        return acc.append(", ").append(m->to_string());
+                    }) << " ";
+                sac_metric_p_bar_description = stream.str();
             }
 
             is_done = is_episode_finish(already_done)
@@ -161,6 +159,15 @@ void train_main(
 
             // attempt to save
             saver.attempt_save();
+
+            // metric
+            std::stringstream stream;
+            stream << "Episode " << episode_index << " / " << train_options.nb_episodes << " : "
+                   << reward_metric.to_string() << ", " << potential_reward_metric.to_string()
+                   << sac_metric_p_bar_description;
+
+            p_bar.set_option(indicators::option::PrefixText{stream.str()});
+            p_bar.print_progress();
         }
 
         last_state.clear();

@@ -32,6 +32,7 @@ private:
     int max_frames_without_positive_reward;
     std::vector<int> remaining_frames;
     int nb_frames_added_when_positive_reward;
+    int nb_tanks;
 };
 
 #endif// ARENAI_TRAIN_HOST_TRAIN_ENVIRONMENT_H

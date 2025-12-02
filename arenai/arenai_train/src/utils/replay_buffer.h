@@ -5,7 +5,6 @@
 #ifndef ARENAI_TRAIN_HOST_REPLAY_BUFFER_H
 #define ARENAI_TRAIN_HOST_REPLAY_BUFFER_H
 
-#include <random>
 #include <vector>
 
 #include <torch/torch.h>
@@ -25,14 +24,15 @@ struct TorchStep {
 
 class ReplayBuffer {
 public:
-    explicit ReplayBuffer(int memory_size, int seed);
+    explicit ReplayBuffer(int memory_size);
 
     TorchStep sample(int batch_size, torch::Device device);
 
     void add(TorchStep step);
 
+    int size() const;
+
 private:
-    std::mt19937 rng;
     int memory_size;
     std::vector<TorchStep> memory;
 };

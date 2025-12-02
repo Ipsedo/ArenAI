@@ -26,6 +26,18 @@ bool is_episode_finish(const std::vector<bool> &already_done) {
            >= already_done.size() - 1;
 }
 
+std::string metrics_to_string(const std::vector<std::shared_ptr<Metric>> &metrics) {
+    std::stringstream stream;
+
+    stream << std::accumulate(
+        metrics.begin(), metrics.end(), std::string(),
+        [](std::string acc, const std::shared_ptr<Metric> &m) {
+            return acc.append(", ").append(m->to_string());
+        }) << " ";
+
+    return stream.str();
+}
+
 void train_main(
     const float wanted_frequency, const ModelOptions &model_options,
     const TrainOptions &train_options) {
@@ -47,10 +59,12 @@ void train_main(
 
     Saver saver(sac, train_options.output_folder, train_options.save_every);
 
-    auto replay_buffer = std::make_unique<ReplayBuffer>(train_options.replay_buffer_size, 12345);
+    auto replay_buffer = std::make_unique<ReplayBuffer>(train_options.replay_buffer_size);
 
     Metric reward_metric("reward", train_options.metric_window_size);
     Metric potential_reward_metric("potential_reward", train_options.metric_window_size);
+
+    auto sac_metrics = sac->get_metrics();
 
     int counter = 0;
 
@@ -67,7 +81,7 @@ void train_main(
         indicators::option::ShowElapsedTime{true},
         indicators::option::ShowRemainingTime{true}};
 
-    std::string sac_metric_p_bar_description = " ";
+    std::string sac_metric_p_bar_description = metrics_to_string(sac_metrics);
 
     auto gl_context = std::make_shared<TrainGlContext>();
 
@@ -136,19 +150,11 @@ void train_main(
             }
 
             // check if it's time to train
-            if (counter % train_options.train_every == train_options.train_every - 1) {
+            if (counter % train_options.train_every == train_options.train_every - 1
+                && replay_buffer->size() >= train_options.batch_size * train_options.epochs) {
                 sac->train(replay_buffer, train_options.epochs, train_options.batch_size);
 
-                // progress bar
-                auto metrics = sac->get_metrics();
-
-                std::stringstream stream;
-                stream << std::accumulate(
-                    metrics.begin(), metrics.end(), std::string(),
-                    [](std::string acc, const std::shared_ptr<Metric> &m) {
-                        return acc.append(", ").append(m->to_string());
-                    }) << " ";
-                sac_metric_p_bar_description = stream.str();
+                sac_metric_p_bar_description = metrics_to_string(sac_metrics);
             }
 
             is_done = is_episode_finish(already_done)

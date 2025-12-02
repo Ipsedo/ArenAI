@@ -4,8 +4,7 @@
 
 #include "./replay_buffer.h"
 
-ReplayBuffer::ReplayBuffer(const int memory_size, const int seed)
-    : rng(seed), memory_size(memory_size) {}
+ReplayBuffer::ReplayBuffer(const int memory_size) : memory_size(memory_size) {}
 
 TorchStep ReplayBuffer::sample(int batch_size, torch::Device device) {
     batch_size = std::min(batch_size, static_cast<int>(memory.size()));
@@ -16,10 +15,10 @@ TorchStep ReplayBuffer::sample(int batch_size, torch::Device device) {
 
     if (batch_size == 0) throw std::invalid_argument("batch size must be greater than 0");
 
-    for (int i = 0; i < batch_size; i++) {
-        const int random_index = distribution(rng);
+    const auto rand_perm = torch::randperm(memory.size());
 
-        auto [state, action, reward, done, next_state] = memory[random_index];
+    for (int i = 0; i < batch_size; i++) {
+        auto [state, action, reward, done, next_state] = memory[rand_perm[i].item().toInt()];
 
         states_vision.push_back(state.vision);
         states_proprioception.push_back(state.proprioception);
@@ -45,3 +44,5 @@ void ReplayBuffer::add(TorchStep step) {
     memory.push_back(std::move(step));
     while (memory.size() > memory_size) memory.erase(memory.begin());
 }
+
+int ReplayBuffer::size() const { return memory.size(); }

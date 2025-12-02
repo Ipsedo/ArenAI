@@ -46,7 +46,7 @@ float EnemyTankFactory::get_reward() {
 
 float EnemyTankFactory::compute_value_range_reward(
     const float value, const float min_value, const float max_value) {
-    return std::clamp(1.0f - (value - min_value) / (max_value - min_value), 0.f, 1.f);
+    return std::clamp(1.0f - (value - min_value) / (max_value - min_value), -1.f, 1.f);
 }
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {

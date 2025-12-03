@@ -12,7 +12,7 @@
 
 #define SIGMA_MIN 1e-6f
 #define SIGMA_MAX 1e6f
-#define ALPHA_BETA_BOUND 32.f
+#define ALPHA_BETA_BOUND 5.f
 #define EPSILON 1e-12f
 
 #endif//ARENAI_TRAIN_HOST_CONSTANTS_H

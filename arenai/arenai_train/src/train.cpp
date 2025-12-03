@@ -115,7 +115,7 @@ void train_main(
             const auto potential_rewards = env->get_potential_rewards();
 
             // step environment
-            const auto steps = env->step(1.f / 30.f, actions_future);
+            const auto steps = env->step(wanted_frequency, actions_future);
 
             const auto next_potential_rewards = env->get_potential_rewards();
 

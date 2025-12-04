@@ -23,6 +23,7 @@ ConvolutionNetwork::ConvolutionNetwork(const std::vector<std::tuple<int, int>> &
             torch::nn::Conv2dOptions(c_i, c_o, kernel).stride(stride).padding(padding)));
         if (i < channels.size() - 1) cnn->push_back(torch::nn::SiLU());
     }
+
     output_size = w * h * std::get<1>(channels.back());
 
     cnn->push_back(torch::nn::Flatten(torch::nn::FlattenOptions().start_dim(1).end_dim(-1)));

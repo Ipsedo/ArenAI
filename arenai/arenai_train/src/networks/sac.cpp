@@ -191,3 +191,17 @@ void SacNetworks::to(const torch::Device device) const {
     target_critic_2->to(device);
     alpha_entropy->to(device);
 }
+
+int SacNetworks::count_parameters_impl(const std::vector<torch::Tensor> &params) {
+    return std::accumulate(params.begin(), params.end(), 0, [](int c, auto tensor) {
+        auto s = tensor.sizes();
+        return c + std::accumulate(s.begin(), s.end(), 1, std::multiplies<int>());
+    });
+}
+
+int SacNetworks::count_parameters() const {
+    return count_parameters_impl(actor->parameters())
+           + count_parameters_impl(critic_1->parameters())
+           + count_parameters_impl(critic_2->parameters())
+           + count_parameters_impl(alpha_entropy->parameters());
+}

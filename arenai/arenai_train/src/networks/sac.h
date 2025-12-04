@@ -35,6 +35,8 @@ public:
 
     void to(torch::Device device) const;
 
+    int count_parameters() const;
+
 private:
     std::shared_ptr<SacActor> actor;
 
@@ -60,6 +62,8 @@ private:
     float tau;
     float gamma;
     float target_entropy;
+
+    static int count_parameters_impl(const std::vector<torch::Tensor> &params);
 };
 
 #endif//ARENAI_TRAIN_HOST_SAC_H

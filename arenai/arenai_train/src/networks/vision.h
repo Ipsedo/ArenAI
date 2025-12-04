@@ -16,8 +16,8 @@ public:
     int get_output_size() const;
 
 private:
-    std::vector<std::tuple<int, int>> channels;
     torch::nn::Sequential cnn{nullptr};
+    int output_size;
 };
 
 #endif// ARENAI_TRAIN_HOST_VISION_H

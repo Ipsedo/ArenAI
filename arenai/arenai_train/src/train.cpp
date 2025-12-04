@@ -57,6 +57,8 @@ void train_main(
         model_options.vision_channels, torch_device, train_options.metric_window_size,
         model_options.tau, model_options.gamma, model_options.initial_alpha);
 
+    std::cout << "Parameters : " << sac->count_parameters() << std::endl;
+
     Saver saver(sac, train_options.output_folder, train_options.save_every);
 
     auto replay_buffer = std::make_unique<ReplayBuffer>(train_options.replay_buffer_size);

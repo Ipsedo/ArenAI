@@ -5,7 +5,6 @@ import numpy as np
 import torch
 from torch import nn
 
-
 DTYPE_MAP = {
     "float32": torch.float32,
     "float64": torch.float64,
@@ -46,7 +45,7 @@ def load_neutral_state_into(model: nn.Module, ckpt_dir: str):
         if name not in sd:
             missing.append(name)
             continue
-        arr = np.fromfile(path, dtype=NP_MAP[dtype])
+        arr: np.ndarray = np.fromfile(path, dtype=NP_MAP[dtype])
         if np.prod(shape) != arr.size:
             raise RuntimeError(
                 f"Shape mismatch for {name}: file has {arr.size} elements, expected {np.prod(shape)}."
@@ -54,7 +53,10 @@ def load_neutral_state_into(model: nn.Module, ckpt_dir: str):
         arr = arr.reshape(shape)
         ten = torch.from_numpy(arr).to(DTYPE_MAP[dtype])
 
-        sd[name].copy_(ten)
+        try:
+            sd[name].copy_(ten)
+        except RuntimeError as e:
+            raise RuntimeError(f"{name} failed to load") from e
     model.load_state_dict(sd, strict=False)
     if missing:
         print("[warn] missing tensors in model:", missing)

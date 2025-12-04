@@ -4,13 +4,6 @@ project(arenai_core)
 
 include(FetchContent)
 
-# argparse
-FetchContent_Declare(
-        argparse
-        GIT_REPOSITORY https://github.com/p-ranav/argparse.git
-)
-FetchContent_MakeAvailable(argparse)
-
 # indicators
 FetchContent_Declare(
         indicators
@@ -38,6 +31,5 @@ target_link_libraries(
         arenai_utils
         arenai_view
         arenai_model
-        argparse
         indicators
 )

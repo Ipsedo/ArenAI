@@ -2,9 +2,15 @@
 // Created by samuel on 28/09/2025.
 //
 
+#include <regex>
+
 #include <argparse/argparse.hpp>
 
 #include "./train.h"
+
+struct vision_channels {
+    std::vector<std::tuple<int, int>> channels;
+};
 
 int main(const int argc, char **argv) {
 
@@ -14,6 +20,36 @@ int main(const int argc, char **argv) {
     parser.add_argument("--wanted_frequency").scan<'g', float>().default_value(1.f / 30.f);
 
     // model
+    parser.add_argument("--vision_channels")
+        .default_value<vision_channels>(
+            {{{3, 8}, {8, 16}, {16, 24}, {24, 48}, {48, 80}, {80, 144}, {144, 256}}})
+        .action([](const std::string &value) -> vision_channels {
+            const std::regex regex_match(
+                R"(^ *\[(?: *\( *\d+ *, *\d+ *\) *,)* *\( *\d+ *, *\d+ *\) *] *$)");
+            const std::regex regex_layer(R"(\( *\d+ *, *\d+ *\))");
+            const std::regex regex_channel(R"(\d+)");
+
+            if (!std::regex_match(value.begin(), value.end(), regex_match))
+                throw std::invalid_argument(
+                    "invalid --vision_channels format, usage : [(10, 20), (20, 40), ...]");
+
+            vision_channels vision_channels;
+
+            std::sregex_iterator it_layer(value.begin(), value.end(), regex_layer);
+            for (const std::sregex_iterator end; it_layer != end; ++it_layer) {
+                const auto layer_str = it_layer->str();
+
+                std::sregex_iterator it_channel(layer_str.begin(), layer_str.end(), regex_channel);
+
+                const int c_i = std::stoi(it_channel->str());
+                it_channel = std::next(it_channel);
+                const int c_o = std::stoi(it_channel->str());
+
+                vision_channels.channels.emplace_back(c_i, c_o);
+            }
+
+            return vision_channels;
+        });
     parser.add_argument("--hidden_size_sensors").scan<'i', int>().default_value(256);
     parser.add_argument("--hidden_size_actions").scan<'i', int>().default_value(32);
     parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(1024);
@@ -42,7 +78,8 @@ int main(const int argc, char **argv) {
 
     train_main(
         parser.get<float>("--wanted_frequency"),
-        {parser.get<int>("--hidden_size_sensors"), parser.get<int>("--hidden_size_actions"),
+        {parser.get<vision_channels>("--vision_channels").channels,
+         parser.get<int>("--hidden_size_sensors"), parser.get<int>("--hidden_size_actions"),
          parser.get<int>("--actor_hidden_size"), parser.get<int>("--critic_hidden_size"),
          parser.get<float>("--tau"), parser.get<float>("--gamma"),
          parser.get<float>("--initial_alpha")},

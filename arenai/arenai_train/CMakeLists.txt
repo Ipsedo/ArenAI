@@ -16,6 +16,14 @@ FetchContent_Declare(
 FetchContent_Populate(stb)
 include_directories(${stb_SOURCE_DIR})
 
+# argparse
+FetchContent_Declare(
+        argparse
+        GIT_REPOSITORY https://github.com/p-ranav/argparse.git
+        GIT_TAG v3.2
+)
+FetchContent_MakeAvailable(argparse)
+
 # libtorch
 set(LIBTORCH_PATH "/opt/libtorch")
 list(APPEND CMAKE_PREFIX_PATH "${LIBTORCH_PATH}/share/cmake")
@@ -56,4 +64,5 @@ target_link_libraries(
         arenai_core
         ${TORCH_LIBRARIES}
         soil2
+        argparse
 )

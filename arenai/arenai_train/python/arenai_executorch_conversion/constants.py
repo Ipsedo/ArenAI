@@ -1,0 +1,5 @@
+from typing import Final
+
+ENEMY_VISION_SIZE: Final[int] = 128
+ENEMY_PROPRIOCEPTION_SIZE: Final[int] = (3 + 3 + 4 + 3) * (6 + 3) - 3
+ENEMY_NB_ACTIONS: Final[int] = 2 + 2 + 1

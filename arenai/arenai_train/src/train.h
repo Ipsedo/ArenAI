@@ -11,6 +11,7 @@
 #include "./utils/metric.h"
 
 struct ModelOptions {
+    std::vector<std::tuple<int, int>> vision_channels;
     int hidden_size_sensors;
     int hidden_size_actions;
     int actor_hidden_size;

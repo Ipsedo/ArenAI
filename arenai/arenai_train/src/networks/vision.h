@@ -9,11 +9,14 @@
 
 class ConvolutionNetwork final : public torch::nn::Module {
 public:
-    ConvolutionNetwork();
+    explicit ConvolutionNetwork(const std::vector<std::tuple<int, int>> &channels);
 
     torch::Tensor forward(const torch::Tensor &input);
 
+    int get_output_size() const;
+
 private:
+    std::vector<std::tuple<int, int>> channels;
     torch::nn::Sequential cnn{nullptr};
 };
 

@@ -1,33 +1,48 @@
 import torch as th
 from torch import nn
 
+from .constants import ENEMY_VISION_SIZE
+
 
 class ConvolutionNetwork(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self, channels: list[tuple[int, int]]) -> None:
         super().__init__()
 
-        self.cnn = nn.Sequential(
-            nn.Conv2d(3, 8, 3, 2, 1),
-            nn.SiLU(),
-            nn.Conv2d(8, 16, 3, 2, 1),
-            nn.SiLU(),
-            nn.Conv2d(16, 24, 3, 2, 1),
-            nn.SiLU(),
-            nn.Conv2d(24, 48, 3, 2, 1),
-            nn.SiLU(),
-            nn.Conv2d(48, 80, 3, 2, 1),
-            nn.SiLU(),
-            nn.Conv2d(80, 144, 3, 2, 1),
-            nn.SiLU(),
-            nn.Conv2d(144, 256, 3, 2, 1),
-            nn.Flatten(1, -1),
-            nn.LayerNorm(256),
-            nn.SiLU(),
+        self.cnn = nn.Sequential()
+
+        padding = 1
+        stride = 2
+        kernel = 3
+
+        w = ENEMY_VISION_SIZE
+        h = ENEMY_VISION_SIZE
+
+        for i, (c_i, c_o) in enumerate(channels):
+            self.cnn.append(nn.Conv2d(c_i, c_o, kernel, stride, padding))
+
+            if i < len(channels) - 1:
+                self.cnn.append(nn.SiLU())
+
+            w = (w - kernel + 2 * padding) // stride + 1
+            h = (h - kernel + 2 * padding) // stride + 1
+
+        self.__output_size = w * h * channels[-1][1]
+
+        self.cnn.extend(
+            nn.Sequential(
+                nn.Flatten(1, -1),
+                nn.LayerNorm(self.__output_size),
+                nn.SiLU(),
+            )
         )
 
     def forward(self, vision: th.Tensor) -> th.Tensor:
         out: th.Tensor = self.cnn(vision)
         return out
+
+    @property
+    def output_size(self) -> int:
+        return self.__output_size
 
 
 class SacActor(nn.Module):
@@ -37,10 +52,11 @@ class SacActor(nn.Module):
         nb_actions: int,
         hidden_size_sensors: int,
         hidden_size: int,
+        channels: list[tuple[int, int]],
     ) -> None:
         super().__init__()
 
-        self.vision_encoder = ConvolutionNetwork()
+        self.vision_encoder = ConvolutionNetwork(channels)
 
         self.sensors_encoder = nn.Sequential(
             nn.Linear(nb_sensors, hidden_size_sensors),
@@ -49,7 +65,10 @@ class SacActor(nn.Module):
         )
 
         self.head = nn.Sequential(
-            nn.Linear(hidden_size_sensors + 1 * 1 * 256, hidden_size),
+            nn.Linear(
+                hidden_size_sensors + self.vision_encoder.output_size,
+                hidden_size,
+            ),
             nn.LayerNorm(hidden_size),
             nn.SiLU(),
         )

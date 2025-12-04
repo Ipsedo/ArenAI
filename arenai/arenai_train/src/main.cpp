@@ -42,8 +42,7 @@ int main(const int argc, char **argv) {
                 std::sregex_iterator it_channel(layer_str.begin(), layer_str.end(), regex_channel);
 
                 const int c_i = std::stoi(it_channel->str());
-                it_channel = std::next(it_channel);
-                const int c_o = std::stoi(it_channel->str());
+                const int c_o = std::stoi(std::next(it_channel)->str());
 
                 vision_channels.channels.emplace_back(c_i, c_o);
             }

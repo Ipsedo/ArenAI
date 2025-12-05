@@ -39,7 +39,8 @@ int main(const int argc, char **argv) {
             for (const std::sregex_iterator end; it_layer != end; ++it_layer) {
                 const auto layer_str = it_layer->str();
 
-                std::sregex_iterator it_channel(layer_str.begin(), layer_str.end(), regex_channel);
+                const std::sregex_iterator it_channel(
+                    layer_str.begin(), layer_str.end(), regex_channel);
 
                 const int c_i = std::stoi(it_channel->str());
                 const int c_o = std::stoi(std::next(it_channel)->str());

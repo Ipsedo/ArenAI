@@ -38,7 +38,7 @@ float EnemyTankFactory::get_reward() {
     else curr_frame_upside_down = 0;
 
     // dead penalty
-    if (is_dead()) actual_reward -= 1.f;
+    if (is_dead()) actual_reward = -1.f;
 
     // return reward
     return actual_reward;
@@ -57,15 +57,15 @@ float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory
     const glm::vec3 pos = canon_tr * glm::vec4(glm::vec3(0.f), 1.f);
     const glm::vec3 forward_3d = canon_tr * glm::vec4(glm::vec3(0.f, 0.f, 1.f), 0.f);
 
-    const glm::vec3 forward = glm::normalize(glm::vec3(forward_3d.x, 0.f, forward_3d.z));
-    const glm::vec3 to_target =
-        glm::normalize(glm::vec3(other_pos.x - pos.x, 0.f, other_pos.z - pos.z));
+    const glm::vec3 forward = glm::normalize(forward_3d);
+    const glm::vec3 to_target = glm::normalize(other_pos - pos);
 
     const float dot = std::clamp(glm::dot(forward, to_target), -1.f, 1.f);
 
-    const float cross_y = forward.x * to_target.z - forward.z * to_target.x;
+    const glm::vec3 cross = glm::cross(forward, to_target);
+    const float sine = glm::length(cross);
 
-    return std::atan2(cross_y, dot);
+    return std::atan2(sine, dot);
 }
 
 float EnemyTankFactory::get_potential_reward(
@@ -114,7 +114,7 @@ void EnemyTankFactory::on_fired_shell_contact(Item *item) {
 
     if (const auto &life_item = dynamic_cast<LifeItem *>(item); !self_shoot && life_item) {
         if (life_item->is_dead() && !life_item->is_already_dead()) reward += 1.0f;
-        else if (!life_item->is_dead()) reward += 0.1f;
+        else if (!life_item->is_dead()) reward += 0.75f;
     }
 }
 

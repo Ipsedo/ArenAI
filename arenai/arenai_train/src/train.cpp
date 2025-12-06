@@ -129,14 +129,15 @@ void train_main(
                 const auto [next_state, reward, done] = steps[i];
                 last_state.push_back(next_state);
 
-                if (already_done[i]) continue;
-
-                const auto [next_vision, next_proprioception] = states_to_tensor({next_state});
                 const float potential_reward =
                     model_options.gamma * next_potential_rewards[i] - potential_rewards[i];
 
                 reward_metric.add(reward);
                 potential_reward_metric.add(potential_reward);
+
+                if (already_done[i]) continue;
+
+                const auto [next_vision, next_proprioception] = states_to_tensor({next_state});
 
                 replay_buffer->add(
                     {{vision[i], proprioception[i]},

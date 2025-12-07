@@ -148,7 +148,7 @@ void train_main(
                          torch::TensorOptions().dtype(torch::kFloat))
                          .unsqueeze(0),
                      torch::tensor(done, torch::TensorOptions().dtype(torch::kBool)).unsqueeze(0),
-                     {next_vision[0], next_proprioception[0]}});
+                     {next_vision[i], next_proprioception[i]}});
 
                 if (done && !already_done[i]) already_done[i] = true;
             }

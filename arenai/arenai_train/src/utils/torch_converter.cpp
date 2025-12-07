@@ -67,3 +67,8 @@ std::tuple<torch::Tensor, torch::Tensor> states_to_tensor(const std::vector<Stat
 
     return {visions_u8, proprioceptions};
 }
+
+std::tuple<torch::Tensor, torch::Tensor> state_to_tensor(const State &state) {
+    const auto [vision, proprioception] = states_to_tensor({state});
+    return {vision[0], proprioception[0]};
+}

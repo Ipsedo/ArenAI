@@ -46,6 +46,7 @@ def main() -> None:
 
     parser.add_argument("--hidden-size-sensors", type=int, default=256)
     parser.add_argument("--hidden-size", type=int, default=1024)
+    parser.add_argument("--num-group-norm", type=int, default=4)
     parser.add_argument(
         "--vision-channels",
         type=_channels,
@@ -81,6 +82,7 @@ def main() -> None:
             args.hidden_size_sensors,
             args.hidden_size,
             args.vision_channels,
+            args.num_group_norm,
         )
 
         load_neutral_state_into(actor, args.input_state_dict_folder)

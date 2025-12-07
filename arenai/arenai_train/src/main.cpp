@@ -51,6 +51,7 @@ int main(const int argc, char **argv) {
             return vision_channels;
         });
     parser.add_argument("--hidden_size_sensors").scan<'i', int>().default_value(256);
+    parser.add_argument("--num_group_norm").scan<'i', int>().default_value(4);
     parser.add_argument("--hidden_size_actions").scan<'i', int>().default_value(32);
     parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(1024);
     parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(1024);
@@ -79,10 +80,10 @@ int main(const int argc, char **argv) {
     train_main(
         parser.get<float>("--wanted_frequency"),
         {parser.get<vision_channels>("--vision_channels").channels,
-         parser.get<int>("--hidden_size_sensors"), parser.get<int>("--hidden_size_actions"),
-         parser.get<int>("--actor_hidden_size"), parser.get<int>("--critic_hidden_size"),
-         parser.get<float>("--tau"), parser.get<float>("--gamma"),
-         parser.get<float>("--initial_alpha")},
+         parser.get<int>("--num_group_norm"), parser.get<int>("--hidden_size_sensors"),
+         parser.get<int>("--hidden_size_actions"), parser.get<int>("--actor_hidden_size"),
+         parser.get<int>("--critic_hidden_size"), parser.get<float>("--tau"),
+         parser.get<float>("--gamma"), parser.get<float>("--initial_alpha")},
         {parser.get<int>("--nb_tanks"),
          std::filesystem::path(parser.get<std::string>("--output_folder")),
          std::filesystem::path(parser.get<std::string>("--asset_folder")),

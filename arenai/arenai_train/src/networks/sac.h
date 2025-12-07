@@ -19,8 +19,8 @@ public:
     SacNetworks(
         int nb_sensors, int nb_action, float learning_rate, int hidden_size_sensors,
         int hidden_size_actions, int actor_hidden_size, int critic_hidden_size,
-        const std::vector<std::tuple<int, int>> &vision_channels, torch::Device device,
-        int metric_window_size, float tau, float gamma, float initial_alpha);
+        const std::vector<std::tuple<int, int>> &vision_channels, int num_group_norm,
+        torch::Device device, int metric_window_size, float tau, float gamma, float initial_alpha);
 
     void
     train(const std::unique_ptr<ReplayBuffer> &replay_buffer, int nb_epoch, int batch_size) const;

@@ -20,7 +20,8 @@ class SacActor final : public torch::nn::Module {
 public:
     explicit SacActor(
         const int &nb_sensors, const int &nb_actions, const int &hidden_size_sensors,
-        const int &hidden_size, const std::vector<std::tuple<int, int>> &vision_channels);
+        const int &hidden_size, const std::vector<std::tuple<int, int>> &vision_channels,
+        int num_group_norm);
     actor_response act(const torch::Tensor &vision, const torch::Tensor &sensors);
 
 private:

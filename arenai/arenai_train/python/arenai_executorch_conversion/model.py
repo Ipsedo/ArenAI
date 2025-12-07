@@ -5,7 +5,7 @@ from .constants import ENEMY_VISION_SIZE
 
 
 class ConvolutionNetwork(nn.Module):
-    def __init__(self, channels: list[tuple[int, int]]) -> None:
+    def __init__(self, channels: list[tuple[int, int]], num_group_norm: int) -> None:
         super().__init__()
 
         self.cnn = nn.Sequential()
@@ -21,6 +21,7 @@ class ConvolutionNetwork(nn.Module):
             self.cnn.append(nn.Conv2d(c_i, c_o, kernel, stride, padding))
 
             if i < len(channels) - 1:
+                self.cnn.append(nn.GroupNorm(num_group_norm, c_o, affine=True))
                 self.cnn.append(nn.SiLU())
 
             w = (w - kernel + 2 * padding) // stride + 1
@@ -53,10 +54,11 @@ class SacActor(nn.Module):
         hidden_size_sensors: int,
         hidden_size: int,
         channels: list[tuple[int, int]],
+        num_group_norm: int,
     ) -> None:
         super().__init__()
 
-        self.vision_encoder = ConvolutionNetwork(channels)
+        self.vision_encoder = ConvolutionNetwork(channels, num_group_norm)
 
         self.sensors_encoder = nn.Sequential(
             nn.Linear(nb_sensors, hidden_size_sensors),

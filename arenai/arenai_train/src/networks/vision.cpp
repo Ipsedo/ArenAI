@@ -6,7 +6,8 @@
 
 #include "arenai_core/constants.h"
 
-ConvolutionNetwork::ConvolutionNetwork(const std::vector<std::tuple<int, int>> &channels)
+ConvolutionNetwork::ConvolutionNetwork(
+    const std::vector<std::tuple<int, int>> &channels, const int num_group_norm)
     : cnn(register_module("cnn", torch::nn::Sequential())) {
 
     int w = ENEMY_VISION_SIZE, h = ENEMY_VISION_SIZE;
@@ -21,7 +22,11 @@ ConvolutionNetwork::ConvolutionNetwork(const std::vector<std::tuple<int, int>> &
 
         cnn->push_back(torch::nn::Conv2d(
             torch::nn::Conv2dOptions(c_i, c_o, kernel).stride(stride).padding(padding)));
-        if (i < channels.size() - 1) cnn->push_back(torch::nn::SiLU());
+
+        if (i < channels.size() - 1) {
+            cnn->push_back(torch::nn::GroupNorm(torch::nn::GroupNormOptions(num_group_norm, c_o)));
+            cnn->push_back(torch::nn::SiLU());
+        }
     }
 
     output_size = w * h * std::get<1>(channels.back());

@@ -54,8 +54,9 @@ void train_main(
         ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, train_options.learning_rate,
         model_options.hidden_size_sensors, model_options.hidden_size_actions,
         model_options.actor_hidden_size, model_options.critic_hidden_size,
-        model_options.vision_channels, torch_device, train_options.metric_window_size,
-        model_options.tau, model_options.gamma, model_options.initial_alpha);
+        model_options.vision_channels, model_options.num_group_norm, torch_device,
+        train_options.metric_window_size, model_options.tau, model_options.gamma,
+        model_options.initial_alpha);
 
     std::cout << "Parameters : " << sac->count_parameters() << std::endl;
 

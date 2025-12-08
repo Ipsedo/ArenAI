@@ -55,9 +55,8 @@ float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory
         other_tank->get_chassis()->get_model_matrix() * glm::vec4(glm::vec3(0.f), 1.f);
 
     const glm::vec3 pos = canon_tr * glm::vec4(glm::vec3(0.f), 1.f);
-    const glm::vec3 forward_3d = canon_tr * glm::vec4(glm::vec3(0.f, 0.f, 1.f), 0.f);
 
-    const glm::vec3 forward = glm::normalize(forward_3d);
+    const glm::vec3 forward = glm::normalize(glm::vec3(canon_tr * glm::vec4(0.f, 0.f, 1.f, 0.f)));
     const glm::vec3 to_target = glm::normalize(other_pos - pos);
 
     const float dot = std::clamp(glm::dot(forward, to_target), -1.f, 1.f);

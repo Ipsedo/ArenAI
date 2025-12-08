@@ -63,7 +63,7 @@ int main(const int argc, char **argv) {
     parser.add_argument("--nb_tanks").scan<'i', int>().default_value(8);
     parser.add_argument("--output_folder").required();
     parser.add_argument("--asset_folder").required();
-    parser.add_argument("--potential_reward_scale").scan<'g', float>().default_value(1.f);
+    parser.add_argument("--potential_reward_scale").scan<'g', float>().default_value(100.f);
     parser.add_argument("--learning_rate").scan<'g', float>().default_value(5e-4f);
     parser.add_argument("--epochs").scan<'i', int>().default_value(8);
     parser.add_argument("--batch_size").scan<'i', int>().default_value(256);

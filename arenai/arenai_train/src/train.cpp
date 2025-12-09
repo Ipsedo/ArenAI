@@ -131,7 +131,9 @@ void train_main(
                 last_state.push_back(next_state);
 
                 const float potential_reward =
-                    model_options.gamma * next_potential_rewards[i] - potential_rewards[i];
+                    train_options.potential_reward_scale
+                    * ((done ? 0.f : model_options.gamma * next_potential_rewards[i])
+                       - potential_rewards[i]);
 
                 reward_metric.add(reward);
                 potential_reward_metric.add(potential_reward);
@@ -144,8 +146,7 @@ void train_main(
                     {{vision[i], proprioception[i]},
                      actions[i],
                      torch::tensor(
-                         reward + train_options.potential_reward_scale * potential_reward,
-                         torch::TensorOptions().dtype(torch::kFloat))
+                         reward + potential_reward, torch::TensorOptions().dtype(torch::kFloat))
                          .unsqueeze(0),
                      torch::tensor(done, torch::TensorOptions().dtype(torch::kBool)).unsqueeze(0),
                      {next_vision, next_proprioception}});

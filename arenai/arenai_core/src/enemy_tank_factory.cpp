@@ -97,8 +97,9 @@ float EnemyTankFactory::get_potential_reward(
 
     // AIM
     const auto aim_angle = compute_aim_angle(all_enemy_tank_factories[nearest_enemy_index]);
-    const float aim_reward = compute_value_range_reward(
+    float aim_reward = compute_value_range_reward(
         aim_angle, aim_min_angle_potential_reward, aim_max_angle_potential_reward);
+    aim_reward = distance_reward > 0.f ? aim_reward : 0.f;
 
     const float reward_has_fire_in_aim =
         action_stats->has_fire() && distance_reward > 0 && aim_reward > 0 ? 1.f : 0.f;
@@ -106,8 +107,7 @@ float EnemyTankFactory::get_potential_reward(
     const float reward_fire = reward_has_fire_in_aim + fire_penalty;
 
     // potential reward
-    return 0.3f * (distance_reward > 0.f ? aim_reward : 0.f) + 0.2f * distance_reward
-           + 0.5f * reward_fire;
+    return 0.3f * aim_reward + 0.2f * distance_reward + 0.5f * reward_fire;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

@@ -8,7 +8,6 @@ ReplayBuffer::ReplayBuffer(const int memory_size) : memory_size(memory_size) {}
 
 TorchStep ReplayBuffer::sample(int batch_size, torch::Device device) {
     batch_size = std::min(batch_size, static_cast<int>(memory.size()));
-    std::uniform_int_distribution distribution(0, static_cast<int>(memory.size()) - 1);
 
     std::vector<torch::Tensor> states_vision, states_proprioception, actions, rewards, dones,
         next_states_vision, next_states_proprioception;

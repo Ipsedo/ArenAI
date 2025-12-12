@@ -103,7 +103,7 @@ float EnemyTankFactory::get_potential_reward(
 
     const float reward_has_fire_in_aim =
         action_stats->has_fire() && distance_reward > 0 && aim_reward > 0 ? 1.f : 0.f;
-    const float fire_penalty = action_stats->has_fire() ? -0.5f : 0.f;
+    const float fire_penalty = action_stats->has_fire() ? -0.25f : 0.f;
     const float reward_fire = reward_has_fire_in_aim + fire_penalty;
 
     // potential reward

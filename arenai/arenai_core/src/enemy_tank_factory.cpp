@@ -49,8 +49,6 @@ float EnemyTankFactory::compute_value_range_reward(
     const float value, const float min_value, const float max_value) {
     const float max_penalty_value = max_value * 2.f;
 
-    if (!(min_value < max_value && max_value < max_penalty_value)) return 0.f;
-
     // bounds
     if (value <= min_value) return 1.f;
     if (value >= max_penalty_value) return -1.f;

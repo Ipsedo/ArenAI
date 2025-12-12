@@ -22,7 +22,7 @@ int main(const int argc, char **argv) {
     // model
     parser.add_argument("--vision_channels")
         .default_value<vision_channels>(
-            {{{3, 8}, {8, 16}, {16, 24}, {24, 48}, {48, 80}, {80, 144}, {144, 256}}})
+            {{{3, 8}, {8, 16}, {16, 32}, {32, 64}, {64, 96}, {96, 128}, {128, 256}}})
         .action([](const std::string &value) -> vision_channels {
             const std::regex regex_match(
                 R"(^ *\[(?: *\( *\d+ *, *\d+ *\) *,)* *\( *\d+ *, *\d+ *\) *] *$)");
@@ -50,7 +50,7 @@ int main(const int argc, char **argv) {
 
             return vision_channels;
         });
-    parser.add_argument("--hidden_size_sensors").scan<'i', int>().default_value(256);
+    parser.add_argument("--hidden_size_sensors").scan<'i', int>().default_value(128);
     parser.add_argument("--num_group_norm").scan<'i', int>().default_value(4);
     parser.add_argument("--hidden_size_actions").scan<'i', int>().default_value(32);
     parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(1024);

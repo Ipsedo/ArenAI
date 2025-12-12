@@ -47,8 +47,19 @@ float EnemyTankFactory::get_reward() {
 
 float EnemyTankFactory::compute_value_range_reward(
     const float value, const float min_value, const float max_value) {
-    return std::clamp(
-        1.f - 2.f * (value - min_value) / (2.f * max_value - min_value - min_value), -1.f, 1.f);
+    const float max_penalty_value = max_value * 2.f;
+
+    if (!(min_value < max_value && max_value < max_penalty_value)) return 0.f;
+
+    // bounds
+    if (value <= min_value) return 1.f;
+    if (value >= max_penalty_value) return -1.f;
+
+    // [min_value, max_value] : 1 -> 0
+    if (value <= max_value) return (max_value - value) / (max_value - min_value);
+
+    // [max_value, 2 * max_value] : 0 -> -1
+    return -(value - max_value) / (max_penalty_value - max_value);
 }
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {

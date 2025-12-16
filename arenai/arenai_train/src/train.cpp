@@ -13,8 +13,6 @@
 #include "./core/train_environment.h"
 #include "./core/train_gl_context.h"
 #include "./networks/sac.h"
-#include "./networks/target_update.h"
-#include "./networks/truncated_normal.h"
 #include "./utils/replay_buffer.h"
 #include "./utils/saver.h"
 #include "./utils/torch_converter.h"

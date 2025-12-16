@@ -5,8 +5,8 @@
 #include "./sac.h"
 
 #include "../utils/saver.h"
-#include "./target_update.h"
-#include "./truncated_normal.h"
+#include "../utils/target_update.h"
+#include "../utils/truncated_normal.h"
 
 SacNetworks::SacNetworks(
     int nb_sensors, int nb_action, const float learning_rate, int hidden_size_sensors,

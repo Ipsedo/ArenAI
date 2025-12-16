@@ -51,3 +51,22 @@ torch::Tensor truncated_normal_sample(
 
     return torch::clamp(theta_inv(cdf) * safe_sigma + mu, min_value, max_value);
 }
+
+torch::Tensor gaussian_tanh_sample(const torch::Tensor &mu, const torch::Tensor &sigma) {
+    const auto eps = torch::randn_like(mu);
+    const auto u = mu + sigma * eps;
+    return torch::tanh(u);
+}
+
+torch::Tensor
+gaussian_tanh_log_pdf(const torch::Tensor &x, const torch::Tensor &mu, const torch::Tensor &sigma) {
+    const auto u = 0.5 * torch::log((1.0 + x + EPSILON) / (1.0 - x + EPSILON));
+
+    const auto log_unnormalized = -0.5 * torch::pow((u - mu) / sigma, 2);
+    const auto log_normalization = torch::log(sigma) + 0.5 * std::log(2.0 * M_PI);
+
+    const auto log_gaussian = log_unnormalized - log_normalization;
+    const auto log_det_jacobian = torch::log(1.0 - x.pow(2.0) + EPSILON);
+
+    return log_gaussian - log_det_jacobian;
+}

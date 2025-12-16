@@ -93,7 +93,8 @@ void SacNetworks::train(
 
         // critic 1
         const auto q_value_1 = critic_1->value(state.vision, state.proprioception, action);
-        const auto critic_1_loss = torch::mse_loss(q_value_1, target_q_values, at::Reduction::Mean);
+        const auto critic_1_loss =
+            torch::smooth_l1_loss(q_value_1, target_q_values, at::Reduction::Mean);
 
         critic_1_optim->zero_grad();
         critic_1_loss.backward();
@@ -101,7 +102,8 @@ void SacNetworks::train(
 
         // critic 2
         const auto q_value_2 = critic_2->value(state.vision, state.proprioception, action);
-        const auto critic_2_loss = torch::mse_loss(q_value_2, target_q_values, at::Reduction::Mean);
+        const auto critic_2_loss =
+            torch::smooth_l1_loss(q_value_2, target_q_values, at::Reduction::Mean);
 
         critic_2_optim->zero_grad();
         critic_2_loss.backward();

@@ -7,11 +7,11 @@
 
 #include <torch/torch.h>
 
-class GumbelSoftmax final : public torch::nn::Module {
+class GumbelSoftmax : public torch::nn::Module {
 public:
     explicit GumbelSoftmax(const int &dim, const float &tau = 1.f, const float &epsilon = 1e-20f);
 
-    torch::Tensor forward(const torch::Tensor &x) const;
+    torch::Tensor forward(const torch::Tensor &x);
 
 private:
     int dim;

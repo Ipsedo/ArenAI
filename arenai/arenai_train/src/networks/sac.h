@@ -14,6 +14,10 @@
 #include "./critic.h"
 #include "./entropy.h"
 
+struct agent_response {
+    torch::Tensor action;
+};
+
 class SacNetworks {
 public:
     SacNetworks(
@@ -25,7 +29,7 @@ public:
     void
     train(const std::unique_ptr<ReplayBuffer> &replay_buffer, int nb_epoch, int batch_size) const;
 
-    actor_response act(const torch::Tensor &vision, const torch::Tensor &sensors) const;
+    agent_response act(const torch::Tensor &vision, const torch::Tensor &sensors) const;
 
     std::vector<std::shared_ptr<Metric>> get_metrics() const;
 

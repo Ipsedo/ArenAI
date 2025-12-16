@@ -56,8 +56,9 @@ SacNetworks::SacNetworks(
     alpha_entropy->to(device);
 }
 
-actor_response SacNetworks::act(const torch::Tensor &vision, const torch::Tensor &sensors) const {
-    return actor->act(vision, sensors);
+agent_response SacNetworks::act(const torch::Tensor &vision, const torch::Tensor &sensors) const {
+    const auto &[mu, sigma] = actor->act(vision, sensors);
+    return {truncated_normal_sample(mu, sigma, -1.0, 1.0)};
 }
 
 void SacNetworks::train(

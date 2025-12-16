@@ -109,9 +109,7 @@ void train_main(
 
                 sac->train(false);
 
-                const auto [mu, sigma] =
-                    sac->act(vision.to(torch_device), proprioception.to(torch_device));
-                actions = truncated_normal_sample(mu, sigma, -1.f, 1.f).cpu();
+                actions = sac->act(vision.to(torch_device), proprioception.to(torch_device)).action;
 
                 actions_for_env = tensor_to_actions(actions);
             }

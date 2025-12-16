@@ -43,7 +43,8 @@ torch::Tensor truncated_normal_sample(
     return theta_inv(cdf) * sigma + mu;
 }
 
-float get_target_entropy(const int nb_actions, const float min_value, const float max_value) {
+float get_truncated_normal_target_entropy(
+    const int nb_actions, const float min_value, const float max_value) {
     return -static_cast<float>(nb_actions) * std::log(max_value - min_value);
 }
 

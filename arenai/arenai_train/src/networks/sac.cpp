@@ -62,12 +62,12 @@ agent_response SacNetworks::act(const torch::Tensor &vision, const torch::Tensor
 }
 
 void SacNetworks::train(
-    const std::unique_ptr<ReplayBuffer> &replay_buffer, const int nb_epoch,
-    const int batch_size) const {
+    const std::unique_ptr<ReplayBuffer> &replay_buffer, const int actor_epochs,
+    const int critic_epochs, const int batch_size) const {
 
     train(true);
 
-    for (int e = 0; e < nb_epoch; e++) {
+    for (int e = 0; e < critic_epochs; e++) {
         const auto [state, action, reward, done, next_state] =
             replay_buffer->sample(batch_size, actor->parameters().back().device());
 
@@ -110,6 +110,19 @@ void SacNetworks::train(
         critic_2_loss.backward();
         critic_2_optim->step();
 
+        // target value soft update
+        soft_update(target_critic_1, critic_1, tau);
+        soft_update(target_critic_2, critic_2, tau);
+
+        // metrics
+        critic_1_loss_metric->add(critic_1_loss.cpu().item().toFloat());
+        critic_2_loss_metric->add(critic_2_loss.cpu().item().toFloat());
+    }
+
+    for (int e = 0; e < actor_epochs; e++) {
+        const auto [state, action, reward, done, next_state] =
+            replay_buffer->sample(batch_size, actor->parameters().back().device());
+
         // policy
         const auto [curr_mu, curr_sigma] = actor->act(state.vision, state.proprioception);
         const auto curr_action = truncated_normal_sample(curr_mu, curr_sigma, -1.f, 1.f);
@@ -137,14 +150,8 @@ void SacNetworks::train(
         entropy_loss.backward();
         entropy_optim->step();
 
-        // target value soft update
-        soft_update(target_critic_1, critic_1, tau);
-        soft_update(target_critic_2, critic_2, tau);
-
         // metrics
         actor_loss_metric->add(actor_loss.cpu().item().toFloat());
-        critic_1_loss_metric->add(critic_1_loss.cpu().item().toFloat());
-        critic_2_loss_metric->add(critic_2_loss.cpu().item().toFloat());
         entropy_loss_metric->add(entropy_loss.cpu().item().toFloat());
         entropy_alpha_metric->add(alpha_entropy->alpha().cpu().item().toFloat());
     }

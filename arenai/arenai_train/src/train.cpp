@@ -157,8 +157,13 @@ void train_main(
 
             // check if it's time to train
             if (counter % train_options.train_every == train_options.train_every - 1
-                && replay_buffer->size() >= train_options.batch_size * train_options.epochs) {
-                sac->train(replay_buffer, train_options.epochs, train_options.batch_size);
+                && replay_buffer->size()
+                       >= train_options.batch_size
+                              * std::max(
+                                  train_options.critic_epochs, train_options.critic_epochs)) {
+                sac->train(
+                    replay_buffer, train_options.actor_epochs, train_options.critic_epochs,
+                    train_options.batch_size);
 
                 sac_metric_p_bar_description = metrics_to_string(sac_metrics);
             }

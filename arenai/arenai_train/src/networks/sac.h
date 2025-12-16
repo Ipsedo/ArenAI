@@ -26,8 +26,9 @@ public:
         const std::vector<std::tuple<int, int>> &vision_channels, int num_group_norm,
         torch::Device device, int metric_window_size, float tau, float gamma, float initial_alpha);
 
-    void
-    train(const std::unique_ptr<ReplayBuffer> &replay_buffer, int nb_epoch, int batch_size) const;
+    void train(
+        const std::unique_ptr<ReplayBuffer> &replay_buffer, int actor_epochs, int critic_epochs,
+        int batch_size) const;
 
     agent_response act(const torch::Tensor &vision, const torch::Tensor &sensors) const;
 

@@ -17,8 +17,8 @@ EnemyTankFactory::EnemyTankFactory(
       tank_prefix_name(tank_prefix_name), reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), is_dead_already_triggered(false),
-      min_distance_potential_reward(20.f), max_distance_potential_reward(100.f),
-      aim_min_angle_potential_reward(static_cast<float>(M_PI) / 4.f),
+      min_distance_potential_reward(5.f), max_distance_potential_reward(30.f),
+      aim_min_angle_potential_reward(static_cast<float>(M_PI) / 6.f),
       aim_max_angle_potential_reward(static_cast<float>(M_PI) / 3.f),
       action_stats(std::make_shared<ActionStats>()) {}
 
@@ -116,7 +116,7 @@ float EnemyTankFactory::get_potential_reward(
     const float reward_fire = reward_has_fire_in_aim + fire_penalty;
 
     // potential reward
-    return 0.3f * aim_reward + 0.2f * distance_reward + 0.5f * reward_fire;
+    return 0.3f * aim_reward + 0.3f * distance_reward + 0.3f * reward_fire;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

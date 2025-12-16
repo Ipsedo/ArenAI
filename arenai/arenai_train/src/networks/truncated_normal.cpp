@@ -20,36 +20,27 @@ torch::Tensor truncated_normal_log_pdf(
     const torch::Tensor &x, const torch::Tensor &mu, const torch::Tensor &sigma,
     const float min_value, const float max_value) {
 
-    const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
-
-    const auto alpha =
-        torch::clamp((min_value - mu) / safe_sigma, -ALPHA_BETA_BOUND, ALPHA_BETA_BOUND);
-    const auto beta =
-        torch::clamp((max_value - mu) / safe_sigma, -ALPHA_BETA_BOUND, ALPHA_BETA_BOUND);
+    const auto alpha = (min_value - mu) / sigma;
+    const auto beta = (max_value - mu) / sigma;
 
     const auto z = theta(beta) - theta(alpha);
 
-    return -0.5 * std::log(2.0 * M_PI) - torch::log(safe_sigma)
-           - 0.5 * torch::pow((x - mu) / safe_sigma, 2.0) - torch::log(z);
+    return -0.5 * std::log(2.0 * M_PI) - torch::log(sigma) - 0.5 * torch::pow((x - mu) / sigma, 2.0)
+           - torch::log(z);
 }
 
 torch::Tensor truncated_normal_sample(
     const torch::Tensor &mu, const torch::Tensor &sigma, const float min_value,
     const float max_value) {
 
-    const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
+    const auto alpha = (min_value - mu) / sigma;
+    const auto beta = (max_value - mu) / sigma;
 
-    const auto alpha =
-        torch::clamp((min_value - mu) / safe_sigma, -ALPHA_BETA_BOUND, ALPHA_BETA_BOUND);
-    const auto beta =
-        torch::clamp((max_value - mu) / safe_sigma, -ALPHA_BETA_BOUND, ALPHA_BETA_BOUND);
-
-    const auto cdf = torch::clamp(
+    const auto cdf =
         theta(alpha)
-            + at::rand(mu.sizes(), at::TensorOptions(mu.device())) * (theta(beta) - theta(alpha)),
-        EPSILON, 1.f - EPSILON);
+        + at::rand(mu.sizes(), at::TensorOptions(mu.device())) * (theta(beta) - theta(alpha));
 
-    return torch::clamp(theta_inv(cdf) * safe_sigma + mu, min_value, max_value);
+    return theta_inv(cdf) * sigma + mu;
 }
 
 torch::Tensor gaussian_tanh_sample(const torch::Tensor &mu, const torch::Tensor &sigma) {

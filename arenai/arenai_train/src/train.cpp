@@ -100,10 +100,11 @@ void train_main(
         while (!is_done) {
 
             torch::Tensor actions;
+            std::vector<Action> actions_for_env;
 
             const auto [vision, proprioception] = states_to_tensor(last_state);
 
-            auto actions_future = std::async([&] {
+            {
                 torch::NoGradGuard no_grad_guard;
 
                 sac->train(false);
@@ -112,8 +113,10 @@ void train_main(
                     sac->act(vision.to(torch_device), proprioception.to(torch_device));
                 actions = truncated_normal_sample(mu, sigma, -1.f, 1.f).cpu();
 
-                return tensor_to_actions(actions);
-            });
+                actions_for_env = tensor_to_actions(actions);
+            }
+
+            auto actions_future = std::async([&] { return actions_for_env; });
 
             const auto potential_rewards = env->get_potential_rewards();
 

@@ -17,7 +17,7 @@ struct State {
 
 typedef float Reward;
 
-typedef bool IsFinish;
+typedef bool IsDone;
 
 typedef user_input Action;
 

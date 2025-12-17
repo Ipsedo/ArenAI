@@ -100,7 +100,7 @@ void PhysicEngine::remove_bodies_and_constraints() {
     }
 
     for (const auto &item: items) {
-        for (auto *constraint: item->get_constraints()) delete constraint;
+        for (const auto *constraint: item->get_constraints()) delete constraint;
 
         auto *body = item->get_body();
         delete body->getMotionState();

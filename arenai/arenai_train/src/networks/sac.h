@@ -14,23 +14,33 @@
 #include "./critic.h"
 #include "./entropy.h"
 
+struct agent_response {
+    torch::Tensor action;
+};
+
 class SacNetworks {
 public:
     SacNetworks(
         int nb_sensors, int nb_action, float learning_rate, int hidden_size_sensors,
         int hidden_size_actions, int actor_hidden_size, int critic_hidden_size,
+        const std::vector<std::tuple<int, int>> &vision_channels, int num_group_norm,
         torch::Device device, int metric_window_size, float tau, float gamma, float initial_alpha);
 
-    void
-    train(const std::unique_ptr<ReplayBuffer> &replay_buffer, int nb_epoch, int batch_size) const;
+    void train(
+        const std::unique_ptr<ReplayBuffer> &replay_buffer, int actor_epochs, int critic_epochs,
+        int batch_size) const;
 
-    actor_response act(const torch::Tensor &vision, const torch::Tensor &sensors) const;
+    agent_response act(const torch::Tensor &vision, const torch::Tensor &sensors) const;
 
     std::vector<std::shared_ptr<Metric>> get_metrics() const;
 
     void save(const std::filesystem::path &output_folder) const;
 
     void train(bool train) const;
+
+    void to(torch::Device device) const;
+
+    int count_parameters() const;
 
 private:
     std::shared_ptr<SacActor> actor;
@@ -57,6 +67,8 @@ private:
     float tau;
     float gamma;
     float target_entropy;
+
+    static int count_parameters_impl(const std::vector<torch::Tensor> &params);
 };
 
 #endif//ARENAI_TRAIN_HOST_SAC_H

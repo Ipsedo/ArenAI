@@ -28,7 +28,7 @@ public:
         const std::shared_ptr<AbstractGLContext> &gl_context, int nb_tanks, float wanted_frequency,
         bool thread_sleep);
 
-    virtual std::vector<std::tuple<State, Reward, IsFinish>>
+    virtual std::vector<std::tuple<State, Reward, IsDone>>
     step(float time_delta, std::future<std::vector<Action>> &actions_future);
 
     std::vector<State> reset_physics();

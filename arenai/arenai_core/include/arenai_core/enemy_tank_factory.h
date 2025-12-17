@@ -26,7 +26,7 @@ public:
 
     std::vector<float> get_proprioception();
 
-    std::shared_ptr<ActionStats> get_action_stats();
+    std::shared_ptr<ActionStats> get_action_stats() const;
 
 protected:
     void on_fired_shell_contact(Item *item) override;
@@ -40,15 +40,15 @@ private:
 
     bool is_dead_already_triggered;
 
-    int max_frames_without_hit;
-    int nb_frames_since_last_hit;
-
-    std::shared_ptr<ActionStats> action_stats;
-
     float min_distance_potential_reward;
     float max_distance_potential_reward;
     float aim_min_angle_potential_reward;
     float aim_max_angle_potential_reward;
+
+    std::shared_ptr<ActionStats> action_stats;
+
+    float compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank);
+    static float compute_value_range_reward(float value, float min_value, float max_value);
 };
 
 #endif//ARENAI_TRAIN_HOST_ENEMY_TANK_FACTORY_H

@@ -6,8 +6,13 @@
 #define ARENAI_TRAIN_HOST_TRAIN_H
 
 #include <filesystem>
+#include <vector>
+
+#include "./utils/metric.h"
 
 struct ModelOptions {
+    std::vector<std::tuple<int, int>> vision_channels;
+    int num_group_norm;
     int hidden_size_sensors;
     int hidden_size_actions;
     int actor_hidden_size;
@@ -23,7 +28,8 @@ struct TrainOptions {
     std::filesystem::path android_asset_folder;
     float potential_reward_scale;
     float learning_rate;
-    int epochs;
+    int actor_epochs;
+    int critic_epochs;
     int batch_size;
     int max_episode_steps;
     int nb_episodes;
@@ -34,6 +40,11 @@ struct TrainOptions {
     int metric_window_size;
 };
 
-void train_main(const ModelOptions &model_options, const TrainOptions &train_options);
+bool is_episode_finish(const std::vector<bool> &already_done);
+
+std::string metrics_to_string(const std::vector<std::shared_ptr<Metric>> &metrics);
+
+void train_main(
+    float wanted_frequency, const ModelOptions &model_options, const TrainOptions &train_options);
 
 #endif// ARENAI_TRAIN_HOST_TRAIN_H

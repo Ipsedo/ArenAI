@@ -11,8 +11,6 @@ EnemyControllerHandler::EnemyControllerHandler(
       curr_frame(nb_frames_to_fire), action_stats(action_stats) {}
 
 std::tuple<bool, user_input> EnemyControllerHandler::to_output(const Action event) {
-    action_stats->process_input(event);
-
     curr_frame = std::min(curr_frame + 1, nb_frames_to_fire);
 
     bool has_fire = false;
@@ -21,7 +19,9 @@ std::tuple<bool, user_input> EnemyControllerHandler::to_output(const Action even
         curr_frame = 0;
     }
 
-    const button fire_button_restricted(has_fire);
+    const user_input action{event.left_joystick, event.right_joystick, {has_fire}};
 
-    return {true, user_input(event.left_joystick, event.right_joystick, fire_button_restricted)};
+    action_stats->process_input({action});
+
+    return {true, action};
 }

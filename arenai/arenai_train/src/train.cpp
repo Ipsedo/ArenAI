@@ -13,42 +13,69 @@
 #include "./core/train_environment.h"
 #include "./core/train_gl_context.h"
 #include "./networks/sac.h"
-#include "./networks/target_update.h"
-#include "./networks/truncated_normal.h"
 #include "./utils/replay_buffer.h"
 #include "./utils/saver.h"
 #include "./utils/torch_converter.h"
 
-bool is_all_done(const std::vector<bool> &already_done) {
-    return std::ranges::all_of(already_done, [](const bool is_done) { return is_done; });
+bool is_episode_finish(const std::vector<bool> &already_done) {
+    return std::accumulate(
+               already_done.begin(), already_done.end(), 0,
+               [](const int nb_done, const bool done) { return done ? nb_done + 1 : nb_done; })
+           >= already_done.size() - 1;
 }
 
-void train_main(const ModelOptions &model_options, const TrainOptions &train_options) {
+std::string metrics_to_string(const std::vector<std::shared_ptr<Metric>> &metrics) {
+    std::stringstream stream;
+
+    stream << std::accumulate(
+        metrics.begin(), metrics.end(), std::string(),
+        [](std::string acc, const std::shared_ptr<Metric> &m) {
+            return acc.append(", ").append(m->to_string());
+        }) << " ";
+
+    return stream.str();
+}
+
+void train_main(
+    const float wanted_frequency, const ModelOptions &model_options,
+    const TrainOptions &train_options) {
+    std::cout << "Vision size : " << ENEMY_VISION_SIZE << " * " << ENEMY_VISION_SIZE << std::endl;
+    std::cout << "Proprioception size : " << ENEMY_PROPRIOCEPTION_SIZE << std::endl;
+    std::cout << "Action size : " << ENEMY_NB_ACTION << std::endl;
+
     torch::Device torch_device =
         train_options.cuda ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU);
 
     const auto env = std::make_unique<TrainTankEnvironment>(
-        train_options.nb_tanks, train_options.android_asset_folder);
+        train_options.nb_tanks, train_options.android_asset_folder, wanted_frequency);
     auto sac = std::make_shared<SacNetworks>(
         ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, train_options.learning_rate,
         model_options.hidden_size_sensors, model_options.hidden_size_actions,
-        model_options.actor_hidden_size, model_options.critic_hidden_size, torch_device,
+        model_options.actor_hidden_size, model_options.critic_hidden_size,
+        model_options.vision_channels, model_options.num_group_norm, torch_device,
         train_options.metric_window_size, model_options.tau, model_options.gamma,
         model_options.initial_alpha);
 
+    std::cout << "Parameters : " << sac->count_parameters() << std::endl;
+
     Saver saver(sac, train_options.output_folder, train_options.save_every);
 
-    auto replay_buffer = std::make_unique<ReplayBuffer>(train_options.replay_buffer_size, 12345);
+    auto replay_buffer = std::make_unique<ReplayBuffer>(train_options.replay_buffer_size);
 
     Metric reward_metric("reward", train_options.metric_window_size);
-    Metric potential_reward_metric("potential_reward", train_options.metric_window_size);
+    Metric potential_reward_metric("potential", train_options.metric_window_size);
+    Metric global_reward_metric("global", train_options.metric_window_size);
+
+    auto sac_metrics = sac->get_metrics();
+
+    std::cout << "Start training on " << train_options.nb_episodes << " episodes" << std::endl;
 
     int counter = 0;
 
     indicators::ProgressBar p_bar{
         indicators::option::MinProgress{0},
         indicators::option::MaxProgress{train_options.nb_episodes},
-        indicators::option::BarWidth{30},
+        indicators::option::BarWidth{10},
         indicators::option::Start{"["},
         indicators::option::Fill{"="},
         indicators::option::Lead{">"},
@@ -57,6 +84,8 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
         indicators::option::ShowPercentage{true},
         indicators::option::ShowElapsedTime{true},
         indicators::option::ShowRemainingTime{true}};
+
+    std::string sac_metric_p_bar_description = metrics_to_string(sac_metrics);
 
     auto gl_context = std::make_shared<TrainGlContext>();
 
@@ -72,25 +101,26 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
         while (!is_done) {
 
             torch::Tensor actions;
+            std::vector<Action> actions_for_env;
 
             const auto [vision, proprioception] = states_to_tensor(last_state);
 
-            auto actions_future = std::async([&] {
+            {
                 torch::NoGradGuard no_grad_guard;
 
                 sac->train(false);
 
-                const auto [mu, sigma] =
-                    sac->act(vision.to(torch_device), proprioception.to(torch_device));
-                actions = truncated_normal_sample(mu, sigma, -1.f, 1.f).cpu();
+                actions = sac->act(vision.to(torch_device), proprioception.to(torch_device)).action;
 
-                return tensor_to_actions(actions);
-            });
+                actions_for_env = tensor_to_actions(actions);
+            }
+
+            auto actions_future = std::async([&] { return actions_for_env; });
 
             const auto potential_rewards = env->get_potential_rewards();
 
             // step environment
-            const auto steps = env->step(1.f / 30.f, actions_future);
+            const auto steps = env->step(wanted_frequency, actions_future);
 
             const auto next_potential_rewards = env->get_potential_rewards();
 
@@ -102,21 +132,25 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
                 const auto [next_state, reward, done] = steps[i];
                 last_state.push_back(next_state);
 
-                if (already_done[i]) continue;
-
-                const auto [next_vision, next_proprioception] = state_to_tensor(next_state);
                 const float potential_reward =
-                    model_options.gamma * next_potential_rewards[i] - potential_rewards[i];
+                    (done ? 0.f : model_options.gamma * next_potential_rewards[i])
+                    - potential_rewards[i];
+
+                const float global_reward =
+                    train_options.potential_reward_scale * potential_reward + reward;
 
                 reward_metric.add(reward);
                 potential_reward_metric.add(potential_reward);
+                global_reward_metric.add(global_reward);
+
+                if (already_done[i]) continue;
+
+                const auto [next_vision, next_proprioception] = state_to_tensor(next_state);
 
                 replay_buffer->add(
                     {{vision[i], proprioception[i]},
                      actions[i],
-                     torch::tensor(
-                         reward + train_options.potential_reward_scale * potential_reward,
-                         torch::TensorOptions().dtype(torch::kFloat))
+                     torch::tensor(global_reward, torch::TensorOptions().dtype(torch::kFloat))
                          .unsqueeze(0),
                      torch::tensor(done, torch::TensorOptions().dtype(torch::kBool)).unsqueeze(0),
                      {next_vision, next_proprioception}});
@@ -125,35 +159,40 @@ void train_main(const ModelOptions &model_options, const TrainOptions &train_opt
             }
 
             // check if it's time to train
-            if (counter % train_options.train_every == train_options.train_every - 1)
-                sac->train(replay_buffer, train_options.epochs, train_options.batch_size);
+            if (counter % train_options.train_every == train_options.train_every - 1
+                && replay_buffer->size()
+                       >= train_options.batch_size
+                              * std::max(
+                                  train_options.critic_epochs, train_options.critic_epochs)) {
+                sac->train(
+                    replay_buffer, train_options.actor_epochs, train_options.critic_epochs,
+                    train_options.batch_size);
 
-            // progress bar
-            auto metrics = sac->get_metrics();
+                sac_metric_p_bar_description = metrics_to_string(sac_metrics);
+            }
 
-            std::stringstream stream;
-            stream << reward_metric.to_string() << ", " << potential_reward_metric.to_string()
-                   << std::accumulate(
-                          metrics.begin(), metrics.end(), std::string(),
-                          [](std::string acc, const std::shared_ptr<Metric> &m) {
-                              return acc.append(", ").append(m->to_string());
-                          })
-                   << " ";
-            p_bar.set_option(indicators::option::PrefixText{stream.str()});
-            p_bar.print_progress();
-
-            is_done =
-                is_all_done(already_done) || episode_step_idx >= train_options.max_episode_steps;
+            is_done = is_episode_finish(already_done)
+                      || episode_step_idx >= train_options.max_episode_steps;
 
             counter++;
             episode_step_idx++;
 
             // attempt to save
             saver.attempt_save();
+
+            // metric
+            std::stringstream stream;
+            stream << "[" << episode_index << "] : " << reward_metric.to_string() << ", "
+                   << potential_reward_metric.to_string() << ", "
+                   << global_reward_metric.to_string() << sac_metric_p_bar_description;
+
+            p_bar.set_option(indicators::option::PrefixText{stream.str()});
+            p_bar.print_progress();
         }
 
         last_state.clear();
         env->stop_drawing();
+
         p_bar.tick();
     }
 }

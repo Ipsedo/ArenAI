@@ -8,18 +8,22 @@
 
 SacActor::SacActor(
     const int &nb_sensors, const int &nb_actions, const int &hidden_size_sensors,
-    const int &hidden_size)
-    : vision_encoder(register_module("vision_encoder", std::make_shared<ConvolutionNetwork>())),
+    const int &hidden_size, const std::vector<std::tuple<int, int>> &vision_channels,
+    const int num_group_norm)
+    : vision_encoder(register_module(
+        "vision_encoder", std::make_shared<ConvolutionNetwork>(vision_channels, num_group_norm))),
       sensors_encoder(register_module(
           "sensors_encoder",
           torch::nn::Sequential(
-              torch::nn::Linear(nb_sensors, hidden_size_sensors), torch::nn::Mish(),
-              torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_sensors}))))),
+              torch::nn::Linear(nb_sensors, hidden_size_sensors),
+              torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_sensors})),
+              torch::nn::SiLU()))),
       head(register_module(
-          "head",
-          torch::nn::Sequential(
-              torch::nn::Linear(hidden_size_sensors + 1 * 1 * 256, hidden_size), torch::nn::Mish(),
-              torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size}))))),
+          "head", torch::nn::Sequential(
+                      torch::nn::Linear(
+                          hidden_size_sensors + vision_encoder->get_output_size(), hidden_size),
+                      torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})),
+                      torch::nn::SiLU()))),
       mu(register_module(
           "mu",
           torch::nn::Sequential(torch::nn::Linear(hidden_size, nb_actions), torch::nn::Tanh()))),

@@ -38,7 +38,7 @@ BaseTanksEnvironment::BaseTanksEnvironment(
                 for (int w = 0; w < ENEMY_VISION_SIZE; w++) enemy_visions[i][c][h][w] = u_dist(rng);
 }
 
-std::vector<std::tuple<State, Reward, IsFinish>> BaseTanksEnvironment::step(
+std::vector<std::tuple<State, Reward, IsDone>> BaseTanksEnvironment::step(
     const float time_delta, std::future<std::vector<Action>> &actions_future) {
 
     if (!thread_killed) thread_fst_barrier->arrive_and_wait();
@@ -56,7 +56,7 @@ std::vector<std::tuple<State, Reward, IsFinish>> BaseTanksEnvironment::step(
     physic_engine->step(time_delta);
     on_draw(model_matrices);
 
-    std::vector<std::tuple<State, Reward, IsFinish>> result;
+    std::vector<std::tuple<State, Reward, IsDone>> result;
     result.reserve(tank_factories.size());
 
     for (int i = 0; i < tank_factories.size(); i++) {

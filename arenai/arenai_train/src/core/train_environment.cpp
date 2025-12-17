@@ -4,6 +4,8 @@
 
 #include "./train_environment.h"
 
+#include <algorithm>
+
 #include <arenai_utils/cache.h>
 #include <arenai_utils/singleton.h>
 #include <arenai_view/errors.h>
@@ -12,15 +14,40 @@
 #include "../utils/linux_file_reader.h"
 
 TrainTankEnvironment::TrainTankEnvironment(
-    const int nb_tanks, const std::filesystem::path &android_assets_path)
+    const int nb_tanks, const std::filesystem::path &android_assets_path,
+    const float wanted_frequency)
     : BaseTanksEnvironment(
         std::make_shared<LinuxAndroidAssetFileReader>(android_assets_path), std::nullptr_t(),
-        nb_tanks, 1.f / 30.f, false) {}
+        nb_tanks, wanted_frequency, false),
+      max_frames_without_positive_reward(static_cast<int>(30.f / wanted_frequency)),
+      remaining_frames(nb_tanks, max_frames_without_positive_reward),
+      nb_frames_added_when_positive_reward(static_cast<int>(2.f / wanted_frequency)),
+      nb_tanks(nb_tanks) {}
+
+std::vector<std::tuple<State, Reward, IsDone>> TrainTankEnvironment::step(
+    const float time_delta, std::future<std::vector<Action>> &actions_future) {
+
+    auto step_result = BaseTanksEnvironment::step(time_delta, actions_future);
+
+    for (int i = 0; i < step_result.size(); i++) {
+        remaining_frames[i]--;
+
+        const auto &[state, reward, is_done] = step_result[i];
+
+        if (reward > 0) remaining_frames[i] += nb_frames_added_when_positive_reward;
+
+        if (remaining_frames[i] <= 0) step_result[i] = {state, -1.f, true};
+    }
+
+    return step_result;
+}
 
 void TrainTankEnvironment::on_draw(
     const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {}
 
-void TrainTankEnvironment::on_reset_physics(const std::unique_ptr<PhysicEngine> &engine) {}
+void TrainTankEnvironment::on_reset_physics(const std::unique_ptr<PhysicEngine> &engine) {
+    remaining_frames = std::vector<int>(nb_tanks, max_frames_without_positive_reward);
+}
 
 void TrainTankEnvironment::on_reset_drawables(
     const std::unique_ptr<PhysicEngine> &engine,

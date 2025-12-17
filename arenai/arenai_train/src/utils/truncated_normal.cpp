@@ -55,7 +55,8 @@ torch::Tensor truncated_normal_entropy(
            + (alpha * phi(alpha) - beta * phi(beta)) / (2.0 * z);
 }
 
-float get_truncated_normal_target_entropy(const int nb_actions, const float min_value, const float max_value) {
+float get_truncated_normal_target_entropy(
+    const int nb_actions, const float min_value, const float max_value) {
     return static_cast<float>(nb_actions)
            * truncated_normal_entropy(torch::zeros({1}), torch::ones({1}), min_value, max_value)
                  .item()

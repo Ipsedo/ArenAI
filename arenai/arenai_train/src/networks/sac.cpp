@@ -7,6 +7,7 @@
 #include "../utils/saver.h"
 #include "../utils/target_update.h"
 #include "../utils/truncated_normal.h"
+#include "arenai_core/constants.h"
 
 SacNetworks::SacNetworks(
     int nb_sensors, int nb_action, const float learning_rate, int hidden_size_sensors,
@@ -86,7 +87,8 @@ void SacNetworks::train(
             const auto next_target_q_value_2 =
                 target_critic_2->value(next_state.vision, next_state.proprioception, next_action);
 
-            target_q_values = reward
+            const auto normalized_reward = (reward - reward.mean()) / (reward.std() + 1e-8);
+            target_q_values = normalized_reward
                               + (1.f - done.to(torch::kFloat)) * gamma
                                     * (torch::min(next_target_q_value_1, next_target_q_value_2)
                                        + alpha_entropy->alpha() * next_entropy);
@@ -120,7 +122,7 @@ void SacNetworks::train(
     }
 
     for (int e = 0; e < actor_epochs; e++) {
-        const auto [state, action, reward, done, next_state] =
+        const auto [state, action, _, __, ___] =
             replay_buffer->sample(batch_size, actor->parameters().back().device());
 
         // policy

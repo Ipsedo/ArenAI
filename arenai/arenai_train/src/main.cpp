@@ -64,7 +64,6 @@ int main(const int argc, char **argv) {
     parser.add_argument("--output_folder").required();
     parser.add_argument("--asset_folder").required();
     parser.add_argument("--potential_reward_scale").scan<'g', float>().default_value(1.f);
-    parser.add_argument("--global_reward_scale").scan<'g', float>().default_value(10.f);
     parser.add_argument("--learning_rate").scan<'g', float>().default_value(3e-4f);
     parser.add_argument("--actor_epochs").scan<'i', int>().default_value(8);
     parser.add_argument("--critic_epochs").scan<'i', int>().default_value(8);
@@ -89,13 +88,12 @@ int main(const int argc, char **argv) {
         {parser.get<int>("--nb_tanks"),
          std::filesystem::path(parser.get<std::string>("--output_folder")),
          std::filesystem::path(parser.get<std::string>("--asset_folder")),
-         parser.get<float>("--potential_reward_scale"), parser.get<float>("--global_reward_scale"),
-         parser.get<float>("--learning_rate"), parser.get<int>("--actor_epochs"),
-         parser.get<int>("--critic_epochs"), parser.get<int>("--batch_size"),
-         parser.get<int>("--max_episode_steps"), parser.get<int>("--nb_episodes"),
-         parser.get<int>("--replay_buffer_size"), parser.get<int>("--train_every"),
-         parser.get<int>("--save_every"), parser.get<bool>("--cuda"),
-         parser.get<int>("--metric_window_size")});
+         parser.get<float>("--potential_reward_scale"), parser.get<float>("--learning_rate"),
+         parser.get<int>("--actor_epochs"), parser.get<int>("--critic_epochs"),
+         parser.get<int>("--batch_size"), parser.get<int>("--max_episode_steps"),
+         parser.get<int>("--nb_episodes"), parser.get<int>("--replay_buffer_size"),
+         parser.get<int>("--train_every"), parser.get<int>("--save_every"),
+         parser.get<bool>("--cuda"), parser.get<int>("--metric_window_size")});
 
     return 0;
 }

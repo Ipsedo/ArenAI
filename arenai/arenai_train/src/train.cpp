@@ -135,8 +135,7 @@ void train_main(
                     - potential_rewards[i];
 
                 const float global_reward =
-                    train_options.global_reward_scale
-                    * (train_options.potential_reward_scale * potential_reward + reward);
+                    train_options.potential_reward_scale * potential_reward + reward;
 
                 reward_metric.add(reward);
                 potential_reward_metric.add(potential_reward);

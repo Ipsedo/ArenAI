@@ -173,7 +173,7 @@ void train_main(
 
             // metric
             std::stringstream stream;
-            stream << "[" << episode_index << "] : " << reward_metric.to_string() << ", "
+            stream << " [" << episode_index << "] : " << reward_metric.to_string() << ", "
                    << potential_reward_metric.to_string() << ", "
                    << global_reward_metric.to_string() << sac_metric_p_bar_description;
 

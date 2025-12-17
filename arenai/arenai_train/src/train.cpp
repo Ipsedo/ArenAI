@@ -107,21 +107,17 @@ void train_main(
 
             {
                 torch::NoGradGuard no_grad_guard;
-
                 sac->train(false);
 
                 actions = sac->act(vision.to(torch_device), proprioception.to(torch_device)).action;
-
                 actions_for_env = tensor_to_actions(actions);
             }
 
             auto actions_future = std::async([&] { return actions_for_env; });
 
+            // step environment & potential reward
             const auto potential_rewards = env->get_potential_rewards();
-
-            // step environment
             const auto steps = env->step(wanted_frequency, actions_future);
-
             const auto next_potential_rewards = env->get_potential_rewards();
 
             last_state.clear();
@@ -160,13 +156,8 @@ void train_main(
 
             // check if it's time to train
             if (counter % train_options.train_every == train_options.train_every - 1
-                && replay_buffer->size()
-                       >= train_options.batch_size
-                              * std::max(
-                                  train_options.critic_epochs, train_options.critic_epochs)) {
-                sac->train(
-                    replay_buffer, train_options.actor_epochs, train_options.critic_epochs,
-                    train_options.batch_size);
+                && replay_buffer->size() >= train_options.batch_size * train_options.epochs) {
+                sac->train(replay_buffer, train_options.epochs, train_options.batch_size);
 
                 sac_metric_p_bar_description = metrics_to_string(sac_metrics);
             }

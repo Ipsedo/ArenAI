@@ -43,9 +43,23 @@ torch::Tensor truncated_normal_sample(
     return theta_inv(cdf) * sigma + mu;
 }
 
-float get_truncated_normal_target_entropy(
-    const int nb_actions, const float min_value, const float max_value) {
-    return -static_cast<float>(nb_actions) * std::log(max_value - min_value);
+torch::Tensor truncated_normal_entropy(
+    const torch::Tensor &mu, const torch::Tensor &sigma, const float min_value,
+    const float max_value) {
+    const auto alpha = (min_value - mu) / sigma;
+    const auto beta = (max_value - mu) / sigma;
+
+    const auto z = theta(beta) - theta(alpha);
+
+    return torch::log(std::sqrt(2.0 * M_PI * M_E) * sigma * z)
+           + (alpha * phi(alpha) - beta * phi(beta)) / (2.0 * z);
+}
+
+float get_truncated_normal_target_entropy(const int nb_actions, const float min_value, const float max_value) {
+    return static_cast<float>(nb_actions)
+           * truncated_normal_entropy(torch::zeros({1}), torch::ones({1}), min_value, max_value)
+                 .item()
+                 .toFloat();
 }
 
 torch::Tensor gaussian_tanh_sample(const torch::Tensor &mu, const torch::Tensor &sigma) {

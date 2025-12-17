@@ -64,6 +64,7 @@ void train_main(
 
     Metric reward_metric("reward", train_options.metric_window_size);
     Metric potential_reward_metric("potential", train_options.metric_window_size);
+    Metric global_reward_metric("global", train_options.metric_window_size);
 
     auto sac_metrics = sac->get_metrics();
 
@@ -130,12 +131,16 @@ void train_main(
                 last_state.push_back(next_state);
 
                 const float potential_reward =
-                    train_options.potential_reward_scale
-                    * ((done ? 0.f : model_options.gamma * next_potential_rewards[i])
-                       - potential_rewards[i]);
+                    (done ? 0.f : model_options.gamma * next_potential_rewards[i])
+                    - potential_rewards[i];
+
+                const float global_reward =
+                    train_options.global_reward_scale
+                    * (train_options.potential_reward_scale * potential_reward + reward);
 
                 reward_metric.add(reward);
                 potential_reward_metric.add(potential_reward);
+                global_reward_metric.add(global_reward);
 
                 if (already_done[i]) continue;
 
@@ -144,8 +149,7 @@ void train_main(
                 replay_buffer->add(
                     {{vision[i], proprioception[i]},
                      actions[i],
-                     torch::tensor(
-                         reward + potential_reward, torch::TensorOptions().dtype(torch::kFloat))
+                     torch::tensor(global_reward, torch::TensorOptions().dtype(torch::kFloat))
                          .unsqueeze(0),
                      torch::tensor(done, torch::TensorOptions().dtype(torch::kBool)).unsqueeze(0),
                      {next_vision, next_proprioception}});

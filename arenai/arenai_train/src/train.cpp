@@ -68,6 +68,8 @@ void train_main(
 
     auto sac_metrics = sac->get_metrics();
 
+    std::cout << "Start training on " << train_options.nb_episodes << " episodes" << std::endl;
+
     int counter = 0;
 
     indicators::ProgressBar p_bar{
@@ -180,9 +182,9 @@ void train_main(
 
             // metric
             std::stringstream stream;
-            stream << "Episode " << episode_index << " / " << train_options.nb_episodes << " : "
-                   << reward_metric.to_string() << ", " << potential_reward_metric.to_string()
-                   << sac_metric_p_bar_description;
+            stream << "[" << episode_index << "] : " << reward_metric.to_string() << ", "
+                   << potential_reward_metric.to_string() << ", "
+                   << global_reward_metric.to_string() << sac_metric_p_bar_description;
 
             p_bar.set_option(indicators::option::PrefixText{stream.str()});
             p_bar.print_progress();

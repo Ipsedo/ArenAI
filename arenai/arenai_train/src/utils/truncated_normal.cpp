@@ -20,12 +20,12 @@ torch::Tensor truncated_normal_log_pdf(
     const torch::Tensor &x, const torch::Tensor &mu, const torch::Tensor &sigma,
     const float min_value, const float max_value) {
 
-    const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIG_ATOMIC_MAX);
+    const auto safe_sigma = torch::clamp_min(sigma, SIGMA_MIN);
 
     const auto alpha = (min_value - mu) / safe_sigma;
     const auto beta = (max_value - mu) / safe_sigma;
 
-    const auto z = theta(beta) - theta(alpha);
+    const auto z = torch::clamp_min(theta(beta) - theta(alpha), EPSILON);
 
     return -0.5 * std::log(2.0 * M_PI) - torch::log(safe_sigma)
            - 0.5 * torch::pow((x - mu) / safe_sigma, 2.0) - torch::log(z);
@@ -35,7 +35,7 @@ torch::Tensor truncated_normal_sample(
     const torch::Tensor &mu, const torch::Tensor &sigma, const float min_value,
     const float max_value) {
 
-    const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIG_ATOMIC_MAX);
+    const auto safe_sigma = torch::clamp_min(sigma, SIGMA_MIN);
 
     const auto alpha = (min_value - mu) / safe_sigma;
     const auto beta = (max_value - mu) / safe_sigma;
@@ -51,18 +51,18 @@ torch::Tensor truncated_normal_entropy(
     const torch::Tensor &mu, const torch::Tensor &sigma, const float min_value,
     const float max_value) {
 
-    const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIG_ATOMIC_MAX);
+    const auto safe_sigma = torch::clamp_min(sigma, SIGMA_MIN);
 
     const auto alpha = (min_value - mu) / safe_sigma;
     const auto beta = (max_value - mu) / safe_sigma;
 
-    const auto z = theta(beta) - theta(alpha);
+    const auto z = torch::clamp_min(theta(beta) - theta(alpha), EPSILON);
 
     return torch::log(std::sqrt(2.0 * M_PI * M_E) * safe_sigma * z)
-           + (alpha * phi(alpha) - beta * phi(beta)) / (2.0 * z + EPSILON);
+           + (alpha * phi(alpha) - beta * phi(beta)) / (2.0 * z);
 }
 
-float get_truncated_normal_target_entropy(
+float truncated_normal_target_entropy(
     const int nb_actions, const float min_value, const float max_value) {
     return static_cast<float>(nb_actions)
            * truncated_normal_entropy(torch::zeros({1}), torch::ones({1}), min_value, max_value)

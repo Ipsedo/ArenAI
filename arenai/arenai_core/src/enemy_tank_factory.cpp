@@ -17,10 +17,9 @@ EnemyTankFactory::EnemyTankFactory(
       tank_prefix_name(tank_prefix_name), reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), is_dead_already_triggered(false),
-      min_distance_potential_reward(5.f), max_distance_potential_reward(30.f),
+      min_distance_potential_reward(5.f), max_distance_potential_reward(100.f),
       aim_min_angle_potential_reward(static_cast<float>(M_PI) / 6.f),
-      aim_max_angle_potential_reward(static_cast<float>(M_PI) / 3.f),
-      action_stats(std::make_shared<ActionStats>()) {}
+      aim_max_angle_potential_reward(static_cast<float>(M_PI) * 2.f / 3.f) {}
 
 float EnemyTankFactory::get_reward() {
     float actual_reward = reward;
@@ -106,17 +105,13 @@ float EnemyTankFactory::get_potential_reward(
 
     // AIM
     const auto aim_angle = compute_aim_angle(all_enemy_tank_factories[nearest_enemy_index]);
-    float aim_reward = compute_value_range_reward(
-        aim_angle, aim_min_angle_potential_reward, aim_max_angle_potential_reward);
-    aim_reward = distance_reward > 0.f ? aim_reward : 0.f;
-
-    const float reward_has_fire_in_aim =
-        action_stats->has_fire() && distance_reward > 0 && aim_reward > 0 ? 1.f : 0.f;
-    const float fire_penalty = action_stats->has_fire() ? -0.25f : 0.f;
-    const float reward_fire = reward_has_fire_in_aim + fire_penalty;
+    const float aim_reward =
+        compute_value_range_reward(
+            aim_angle, aim_min_angle_potential_reward, aim_max_angle_potential_reward)
+        * std::clamp(distance_reward, 0.f, 1.f);
 
     // potential reward
-    return 0.3f * aim_reward + 0.3f * distance_reward + 0.3f * reward_fire;
+    return 0.5f * aim_reward + 0.5f * distance_reward;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {
@@ -186,5 +181,3 @@ std::vector<float> EnemyTankFactory::get_proprioception() {
     }
     return result;
 }
-
-std::shared_ptr<ActionStats> EnemyTankFactory::get_action_stats() const { return action_stats; }

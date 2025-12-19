@@ -65,9 +65,8 @@ int main(const int argc, char **argv) {
     parser.add_argument("--asset_folder").required();
     parser.add_argument("--potential_reward_scale").scan<'g', float>().default_value(1.f);
     parser.add_argument("--learning_rate").scan<'g', float>().default_value(3e-4f);
-    parser.add_argument("--actor_epochs").scan<'i', int>().default_value(8);
-    parser.add_argument("--critic_epochs").scan<'i', int>().default_value(8);
-    parser.add_argument("--batch_size").scan<'i', int>().default_value(64);
+    parser.add_argument("--epochs").scan<'i', int>().default_value(16);
+    parser.add_argument("--batch_size").scan<'i', int>().default_value(128);
     parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60);
     parser.add_argument("--nb_episodes").scan<'i', int>().default_value(50000);
     parser.add_argument("--replay_buffer_size").scan<'i', int>().default_value(100000);
@@ -89,11 +88,11 @@ int main(const int argc, char **argv) {
          std::filesystem::path(parser.get<std::string>("--output_folder")),
          std::filesystem::path(parser.get<std::string>("--asset_folder")),
          parser.get<float>("--potential_reward_scale"), parser.get<float>("--learning_rate"),
-         parser.get<int>("--actor_epochs"), parser.get<int>("--critic_epochs"),
-         parser.get<int>("--batch_size"), parser.get<int>("--max_episode_steps"),
-         parser.get<int>("--nb_episodes"), parser.get<int>("--replay_buffer_size"),
-         parser.get<int>("--train_every"), parser.get<int>("--save_every"),
-         parser.get<bool>("--cuda"), parser.get<int>("--metric_window_size")});
+         parser.get<int>("--epochs"), parser.get<int>("--batch_size"),
+         parser.get<int>("--max_episode_steps"), parser.get<int>("--nb_episodes"),
+         parser.get<int>("--replay_buffer_size"), parser.get<int>("--train_every"),
+         parser.get<int>("--save_every"), parser.get<bool>("--cuda"),
+         parser.get<int>("--metric_window_size")});
 
     return 0;
 }

@@ -50,18 +50,15 @@ float truncated_normal_sample(
     std::mt19937 rng, const float mu, const float sigma, const float min_value,
     const float max_value) {
 
-    const auto safe_sigma = std::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
+    const auto safe_sigma = std::max(sigma, SIGMA_MIN);
 
-    const auto alpha =
-        std::clamp((min_value - mu) / safe_sigma, -ALPHA_BETA_BOUND, ALPHA_BETA_BOUND);
-    const auto beta =
-        std::clamp((max_value - mu) / safe_sigma, -ALPHA_BETA_BOUND, ALPHA_BETA_BOUND);
+    const auto alpha = (min_value - mu) / safe_sigma;
+    const auto beta = (max_value - mu) / safe_sigma;
 
     std::uniform_real_distribution<float> u_dist(0.f, 1.f);
-    const auto cdf =
-        std::clamp(theta(alpha) + u_dist(rng) * (theta(beta) - theta(alpha)), 0.f, 1.f);
+    const auto cdf = theta(alpha) + u_dist(rng) * (theta(beta) - theta(alpha));
 
-    return std::clamp(theta_inv(cdf) * safe_sigma + mu, min_value, max_value);
+    return theta_inv(cdf) * safe_sigma + mu;
 }
 
 /*

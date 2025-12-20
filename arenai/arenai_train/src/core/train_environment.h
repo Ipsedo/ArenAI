@@ -29,9 +29,9 @@ protected:
         const std::shared_ptr<AbstractGLContext> &gl_context) override;
 
 private:
-    int max_frames_without_positive_reward;
+    int max_frames_without_shoot;
     std::vector<int> remaining_frames;
-    int nb_frames_added_when_positive_reward;
+    int nb_frames_added_when_shoot;
     int nb_tanks;
 };
 

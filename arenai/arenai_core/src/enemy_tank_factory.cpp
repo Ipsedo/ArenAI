@@ -17,9 +17,9 @@ EnemyTankFactory::EnemyTankFactory(
       tank_prefix_name(tank_prefix_name), reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), is_dead_already_triggered(false),
-      min_distance_potential_reward(5.f), max_distance_potential_reward(100.f),
+      min_distance_potential_reward(3.f), max_distance_potential_reward(40.f),
       aim_min_angle_potential_reward(static_cast<float>(M_PI) / 6.f),
-      aim_max_angle_potential_reward(static_cast<float>(M_PI) * 2.f / 3.f) {}
+      aim_max_angle_potential_reward(static_cast<float>(M_PI) * 2.f / 3.f), has_touch(false) {}
 
 float EnemyTankFactory::get_reward() {
     float actual_reward = reward;
@@ -111,7 +111,7 @@ float EnemyTankFactory::get_potential_reward(
         * std::clamp(distance_reward, 0.f, 1.f);
 
     // potential reward
-    return 0.5f * aim_reward + 0.5f * distance_reward;
+    return 0.7f * aim_reward + 0.3f * distance_reward;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {
@@ -124,9 +124,22 @@ void EnemyTankFactory::on_fired_shell_contact(Item *item) {
     }
 
     if (const auto &life_item = dynamic_cast<LifeItem *>(item); !self_shoot && life_item) {
-        if (life_item->is_dead() && !life_item->is_already_dead()) reward += 1.0f;
-        else if (!life_item->is_dead()) reward += 0.75f;
+        if (life_item->is_dead() && !life_item->is_already_dead()) {
+            reward += 1.0f;
+            has_touch = true;
+        } else if (!life_item->is_dead()) {
+            reward += 0.75f;
+            has_touch = true;
+        }
     }
+}
+
+bool EnemyTankFactory::has_shoot_other_tank() {
+    if (has_touch) {
+        has_touch = false;
+        return true;
+    }
+    return false;
 }
 
 bool EnemyTankFactory::is_dead() {

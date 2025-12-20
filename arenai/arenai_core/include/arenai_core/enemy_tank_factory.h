@@ -22,6 +22,8 @@ public:
 
     bool is_dead() override;
 
+    bool has_shoot_other_tank();
+
     std::vector<std::shared_ptr<Item>> dead_and_get_items();
 
     std::vector<float> get_proprioception();
@@ -42,6 +44,8 @@ private:
     float max_distance_potential_reward;
     float aim_min_angle_potential_reward;
     float aim_max_angle_potential_reward;
+
+    bool has_touch;
 
     float compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank);
     static float compute_value_range_reward(float value, float min_value, float max_value);

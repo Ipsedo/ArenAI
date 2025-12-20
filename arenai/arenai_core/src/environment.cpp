@@ -177,7 +177,6 @@ void BaseTanksEnvironment::stop_drawing() {
 
 void BaseTanksEnvironment::worker_enemy_vision(
     const int index, const std::unique_ptr<EnemyTankFactory> &tank_factory) {
-    std::mt19937 thread_rng(dev());
 
     auto renderer = std::make_unique<PBufferRenderer>(
         gl_context, ENEMY_VISION_SIZE, ENEMY_VISION_SIZE, glm::vec3(200, 300, 200),
@@ -190,7 +189,7 @@ void BaseTanksEnvironment::worker_enemy_vision(
     renderer->add_drawable("cubemap", std::make_unique<CubeMap>(file_reader, "cubemap/1"));
 
     for (const auto &item: physic_engine->get_items()) {
-        glm::vec4 color(u_dist(thread_rng), u_dist(thread_rng), u_dist(thread_rng), 1.f);
+        glm::vec4 color(u_dist(rng), u_dist(rng), u_dist(rng), 1.f);
         renderer->add_drawable(
             item->get_name(),
             std::make_unique<Specular>(
@@ -199,7 +198,7 @@ void BaseTanksEnvironment::worker_enemy_vision(
     }
 
     for (const auto &[name, shape]: tank_factories[0]->load_shell_shapes()) {
-        glm::vec4 shell_color(u_dist(thread_rng), u_dist(thread_rng), u_dist(thread_rng), 1.f);
+        glm::vec4 shell_color(u_dist(rng), u_dist(rng), u_dist(rng), 1.f);
 
         renderer->add_drawable(
             name, std::make_unique<Specular>(

@@ -87,8 +87,7 @@ void SacNetworks::train(
             const auto next_target_q_value_2 =
                 target_critic_2->value(next_state.vision, next_state.proprioception, next_action);
 
-            const auto normalized_reward = (reward - reward.mean()) / (reward.std() + EPSILON);
-            target_q_values = normalized_reward
+            target_q_values = reward
                               + (1.f - done.to(torch::kFloat)) * gamma
                                     * (torch::min(next_target_q_value_1, next_target_q_value_2)
                                        + alpha_entropy->alpha() * next_entropy);

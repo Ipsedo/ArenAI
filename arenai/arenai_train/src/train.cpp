@@ -70,7 +70,7 @@ void train_main(
 
     std::cout << "Start training on " << train_options.nb_episodes << " episodes" << std::endl;
 
-    int counter = 0;
+    int train_counter = 0;
 
     indicators::ProgressBar p_bar{
         indicators::option::MinProgress{0},
@@ -155,7 +155,7 @@ void train_main(
             }
 
             // check if it's time to train
-            if (counter % train_options.train_every == train_options.train_every - 1
+            if (train_counter % train_options.train_every == train_options.train_every - 1
                 && replay_buffer->size() >= train_options.batch_size * train_options.epochs) {
                 sac->train(replay_buffer, train_options.epochs, train_options.batch_size);
 
@@ -165,7 +165,7 @@ void train_main(
             is_done = is_episode_finish(already_done)
                       || episode_step_idx >= train_options.max_episode_steps;
 
-            counter++;
+            train_counter = train_counter + 1 % train_options.train_every;
             episode_step_idx++;
 
             // attempt to save

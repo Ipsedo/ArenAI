@@ -30,7 +30,8 @@ BaseTanksEnvironment::BaseTanksEnvironment(
           image<uint8_t>(
               3, std::vector(ENEMY_VISION_SIZE, std::vector<uint8_t>(ENEMY_VISION_SIZE, 0)))),
       physic_engine(std::make_unique<PhysicEngine>(wanted_frequency)), gl_context(gl_context),
-      rng(dev()), file_reader(file_reader) {
+      rng(dev()), file_reader(file_reader),
+      nb_reset_frames(static_cast<int>(4.f / wanted_frequency)) {
     std::uniform_int_distribution<u_int8_t> u_dist(0, 255);
     for (int i = 0; i < nb_tanks; i++)
         for (int c = 0; c < 3; c++)
@@ -136,7 +137,7 @@ std::vector<State> BaseTanksEnvironment::reset_physics() {
 
     on_reset_physics(physic_engine);
 
-    physic_engine->step(wanted_frequency);
+    for (int i = 0; i < nb_reset_frames; i++) physic_engine->step(wanted_frequency);
 
     std::vector<State> states;
     for (int i = 0; i < tank_factories.size(); i++) {

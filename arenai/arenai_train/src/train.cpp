@@ -128,9 +128,10 @@ void train_main(
                 const auto [next_state, reward, done] = steps[i];
                 last_state.push_back(next_state);
 
-                const float potential_reward =
+                float potential_reward =
                     (done ? 0.f : 1.f) * model_options.gamma * next_potential_rewards[i]
                     - potential_rewards[i];
+                potential_reward = train_options.potential_reward_scale * potential_reward;
 
                 const float global_reward = potential_reward + reward;
 

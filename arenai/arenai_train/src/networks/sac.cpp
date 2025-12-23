@@ -44,7 +44,7 @@ SacNetworks::SacNetworks(
       critic_2_loss_metric(std::make_shared<Metric>("critic_2", metric_window_size)),
       entropy_loss_metric(std::make_shared<Metric>("entropy", metric_window_size)),
       entropy_alpha_metric(std::make_shared<Metric>("alpha", metric_window_size)), tau(tau),
-      gamma(gamma), target_entropy(-static_cast<float>(nb_action)) {
+      gamma(gamma), target_entropy(truncated_normal_target_entropy(nb_action, -1.f, 1.f)) {
 
     hard_update(target_critic_1, critic_1);
     hard_update(target_critic_2, critic_2);
@@ -79,8 +79,8 @@ void SacNetworks::train(
             const auto [next_mu, next_sigma] =
                 actor->act(next_state.vision, next_state.proprioception);
             const auto next_action = truncated_normal_sample(next_mu, next_sigma, -1.f, 1.f);
-            const auto next_log_proba =
-                truncated_normal_log_pdf(next_action, next_mu, next_sigma, -1.f, 1.f).sum(-1, true);
+            const auto next_entropy =
+                truncated_normal_entropy(next_mu, next_sigma, -1.f, 1.f).sum(-1, true);
 
             const auto next_target_q_value_1 =
                 target_critic_1->value(next_state.vision, next_state.proprioception, next_action);
@@ -90,7 +90,7 @@ void SacNetworks::train(
             target_q_values = reward
                               + (1.f - done.to(torch::kFloat)) * gamma
                                     * (torch::min(next_target_q_value_1, next_target_q_value_2)
-                                       - alpha_entropy->alpha() * next_log_proba);
+                                       + alpha_entropy->alpha() * next_entropy);
         }
 
         // critic 1
@@ -112,8 +112,8 @@ void SacNetworks::train(
         // policy
         const auto [curr_mu, curr_sigma] = actor->act(state.vision, state.proprioception);
         const auto curr_action = truncated_normal_sample(curr_mu, curr_sigma, -1.f, 1.f);
-        const auto curr_log_proba =
-            truncated_normal_log_pdf(curr_action, curr_mu, curr_sigma, -1.f, 1.f).sum(-1, true);
+        const auto curr_entropy =
+            truncated_normal_entropy(curr_mu, curr_sigma, -1.f, 1.f).sum(-1, true);
 
         const auto curr_q_value_1 =
             critic_1->value(state.vision, state.proprioception, curr_action);
@@ -122,7 +122,7 @@ void SacNetworks::train(
         const auto q_value = torch::min(curr_q_value_1, curr_q_value_2);
 
         const auto actor_loss =
-            torch::mean(alpha_entropy->alpha().detach() * curr_log_proba - q_value);
+            -torch::mean(alpha_entropy->alpha().detach() * curr_entropy + q_value);
 
         actor_optim->zero_grad();
         actor_loss.backward();
@@ -130,7 +130,7 @@ void SacNetworks::train(
 
         // entropy
         const auto entropy_loss =
-            -torch::mean(alpha_entropy->log_alpha() * (curr_log_proba.detach() + target_entropy));
+            torch::mean(alpha_entropy->log_alpha() * (curr_entropy.detach() - target_entropy));
 
         entropy_optim->zero_grad();
         entropy_loss.backward();

@@ -21,6 +21,7 @@ public:
         const std::vector<std::unique_ptr<EnemyTankFactory>> &all_enemy_tank_factories);
 
     bool is_dead() override;
+    bool is_suicide() const;
 
     bool has_shoot_other_tank();
 

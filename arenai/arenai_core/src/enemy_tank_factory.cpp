@@ -38,7 +38,10 @@ float EnemyTankFactory::get_reward() {
     else curr_frame_upside_down = 0;
 
     // dead penalty
-    if (is_dead()) actual_reward = -1.f;
+    if (is_dead()) {
+        if (is_suicide()) actual_reward = -0.5f;
+        else actual_reward = -1.f;
+    }
 
     // return reward
     return actual_reward;
@@ -128,7 +131,7 @@ void EnemyTankFactory::on_fired_shell_contact(Item *item) {
             reward += 1.0f;
             has_touch = true;
         } else if (!life_item->is_dead()) {
-            reward += 0.75f;
+            reward += 0.5f;
             has_touch = true;
         }
     }
@@ -144,6 +147,10 @@ bool EnemyTankFactory::has_shoot_other_tank() {
 
 bool EnemyTankFactory::is_dead() {
     return TankFactory::is_dead() || curr_frame_upside_down > max_frames_upside_down;
+}
+
+bool EnemyTankFactory::is_suicide() const {
+    return curr_frame_upside_down > max_frames_upside_down;
 }
 
 std::vector<std::shared_ptr<Item>> EnemyTankFactory::dead_and_get_items() {

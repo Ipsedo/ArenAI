@@ -56,10 +56,10 @@ torch::Tensor truncated_normal_entropy(
     const auto alpha = (min_value - mu) / safe_sigma;
     const auto beta = (max_value - mu) / safe_sigma;
 
-    const auto z = torch::clamp_min(theta(beta) - theta(alpha), EPSILON);
+    const auto Z = torch::clamp_min(theta(beta) - theta(alpha), EPSILON);
 
-    return torch::log(std::sqrt(2.0 * M_PI * M_E) * safe_sigma * z)
-           + (alpha * phi(alpha) - beta * phi(beta)) / (2.0 * z);
+    return 0.5 * torch::log(2.0 * M_PI * M_E * torch::pow(safe_sigma, 2.0)) + torch::log(Z)
+           + (alpha * phi(alpha) - beta * phi(beta)) / (2.0 * Z);
 }
 
 float truncated_normal_target_entropy(

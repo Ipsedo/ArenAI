@@ -17,9 +17,9 @@ EnemyTankFactory::EnemyTankFactory(
       tank_prefix_name(tank_prefix_name), reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), is_dead_already_triggered(false),
-      min_distance_potential_reward(3.f), max_distance_potential_reward(40.f),
+      min_distance_potential_reward(10.f), max_distance_potential_reward(100.f),
       aim_min_angle_potential_reward(static_cast<float>(M_PI) / 6.f),
-      aim_max_angle_potential_reward(static_cast<float>(M_PI) * 2.f / 3.f), has_touch(false) {}
+      aim_max_angle_potential_reward(static_cast<float>(M_PI) / 3.f), has_touch(false) {}
 
 float EnemyTankFactory::get_reward() {
     float actual_reward = reward;
@@ -108,7 +108,7 @@ float EnemyTankFactory::get_potential_reward(
     const float aim_reward =
         compute_value_range_reward(
             aim_angle, aim_min_angle_potential_reward, aim_max_angle_potential_reward)
-        * std::clamp(distance_reward, 0.f, 1.f);
+        * (distance_reward + 1.f) / 2.f;
 
     // potential reward
     return 0.7f * aim_reward + 0.3f * distance_reward;

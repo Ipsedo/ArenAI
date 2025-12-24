@@ -141,11 +141,11 @@ void SacNetworks::train(
         soft_update(target_critic_2, critic_2, tau);
 
         // metrics
-        critic_1_loss_metric->add(critic_1_loss.cpu().item().toFloat());
-        critic_2_loss_metric->add(critic_2_loss.cpu().item().toFloat());
-        actor_loss_metric->add(actor_loss.cpu().item().toFloat());
-        entropy_loss_metric->add(entropy_loss.cpu().item().toFloat());
-        entropy_alpha_metric->add(alpha_entropy->alpha().cpu().item().toFloat());
+        critic_1_loss_metric->add(critic_1_loss.cpu().item<float>());
+        critic_2_loss_metric->add(critic_2_loss.cpu().item<float>());
+        actor_loss_metric->add(actor_loss.cpu().item<float>());
+        entropy_loss_metric->add(entropy_loss.cpu().item<float>());
+        entropy_alpha_metric->add(alpha_entropy->alpha().cpu().item<float>());
     }
 }
 

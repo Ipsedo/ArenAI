@@ -132,8 +132,7 @@ void train_main(
                     (done ? 0.f : 1.f) * model_options.gamma * next_potential_rewards[i]
                     - potential_rewards[i];
 
-                const float global_reward =
-                    train_options.potential_reward_scale * potential_reward + reward;
+                const float global_reward = potential_reward + reward;
 
                 reward_metric.add(reward);
                 potential_reward_metric.add(potential_reward);

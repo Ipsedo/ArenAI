@@ -19,7 +19,8 @@ EnemyTankFactory::EnemyTankFactory(
       curr_frame_upside_down(0), is_dead_already_triggered(false),
       min_distance_potential_reward(10.f), max_distance_potential_reward(100.f),
       aim_min_angle_potential_reward(static_cast<float>(M_PI) / 6.f),
-      aim_max_angle_potential_reward(static_cast<float>(M_PI) / 3.f), has_touch(false) {}
+      aim_max_angle_potential_reward(static_cast<float>(M_PI) / 3.f), has_touch(false),
+      action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::get_reward() {
     float actual_reward = reward;
@@ -111,10 +112,16 @@ float EnemyTankFactory::get_potential_reward(
     const float aim_reward =
         compute_value_range_reward(
             aim_angle, aim_min_angle_potential_reward, aim_max_angle_potential_reward)
-        * (distance_reward + 1.f) / 2.f;
+        * std::clamp(distance_reward, 0.f, 1.f);
+
+    // shoot
+    const auto fire_penalty = action_stats->has_fire() ? -0.1f : 0.f;
+    const float fire_in_aim_reward =
+        action_stats->has_fire() && distance_reward > 0.f && aim_reward > 0.f ? 1.f : 0.f;
+    const auto fire_reward = fire_penalty + fire_in_aim_reward;
 
     // potential reward
-    return 0.6f * aim_reward + 0.4f * distance_reward;
+    return 0.4f * fire_reward + 0.3f * aim_reward + 0.3f * distance_reward;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {
@@ -201,3 +208,5 @@ std::vector<float> EnemyTankFactory::get_proprioception() {
     }
     return result;
 }
+
+std::shared_ptr<ActionStats> EnemyTankFactory::get_action_stats() { return action_stats; }

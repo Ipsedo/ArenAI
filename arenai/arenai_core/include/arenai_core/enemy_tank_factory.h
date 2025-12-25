@@ -29,6 +29,8 @@ public:
 
     std::vector<float> get_proprioception();
 
+    std::shared_ptr<ActionStats> get_action_stats();
+
 protected:
     void on_fired_shell_contact(Item *item) override;
 
@@ -47,6 +49,8 @@ private:
     float aim_max_angle_potential_reward;
 
     bool has_touch;
+
+    std::shared_ptr<ActionStats> action_stats;
 
     float compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank);
     static float compute_value_range_reward(float value, float min_value, float max_value);

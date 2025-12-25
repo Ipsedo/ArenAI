@@ -114,7 +114,7 @@ float EnemyTankFactory::get_potential_reward(
         * (distance_reward + 1.f) / 2.f;
 
     // potential reward
-    return 0.7f * aim_reward + 0.3f * distance_reward;
+    return 0.6f * aim_reward + 0.4f * distance_reward;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

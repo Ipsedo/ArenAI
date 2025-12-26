@@ -153,9 +153,7 @@ bool EnemyTankFactory::has_shoot_other_tank() {
     return false;
 }
 
-bool EnemyTankFactory::is_dead() {
-    return TankFactory::is_dead() || curr_frame_upside_down > max_frames_upside_down;
-}
+bool EnemyTankFactory::is_dead() { return TankFactory::is_dead() || is_suicide(); }
 
 bool EnemyTankFactory::is_suicide() const {
     return curr_frame_upside_down > max_frames_upside_down;

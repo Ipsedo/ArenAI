@@ -28,14 +28,13 @@ std::vector<std::tuple<State, Reward, IsDone>> TrainTankEnvironment::step(
 
     auto step_result = BaseTanksEnvironment::step(time_delta, actions_future);
 
-    const std::vector<bool> has_shoot =
-        apply_on_factories<std::vector<bool>>([&](const auto &factories) {
-            std::vector<bool> has_shoot_result;
-            has_shoot_result.reserve(nb_tanks);
-            for (const auto &factory: factories)
-                has_shoot_result.push_back(factory->has_shoot_other_tank());
-            return has_shoot_result;
-        });
+    const auto has_shoot = apply_on_factories<std::vector<bool>>([&](const auto &factories) {
+        std::vector<bool> has_shoot_result;
+        has_shoot_result.reserve(nb_tanks);
+        for (const auto &factory: factories)
+            has_shoot_result.push_back(factory->has_shoot_other_tank());
+        return has_shoot_result;
+    });
 
     for (int i = 0; i < step_result.size(); i++) {
         remaining_frames[i]--;

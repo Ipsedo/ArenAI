@@ -17,7 +17,7 @@ EnemyTankFactory::EnemyTankFactory(
       tank_prefix_name(tank_prefix_name), reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), is_dead_already_triggered(false),
-      min_distance_potential_reward(10.f), max_distance_potential_reward(100.f),
+      min_distance_potential_reward(5.f), max_distance_potential_reward(50.f),
       aim_min_angle_potential_reward(static_cast<float>(M_PI) / 6.f),
       aim_max_angle_potential_reward(static_cast<float>(M_PI) / 3.f), has_touch(false),
       action_stats(std::make_shared<ActionStats>()) {}
@@ -114,15 +114,14 @@ float EnemyTankFactory::get_potential_reward(
             aim_angle, aim_min_angle_potential_reward, aim_max_angle_potential_reward)
         * std::clamp(distance_reward, 0.f, 1.f);
 
-    // shoot
-    const auto fire_penalty = action_stats->has_fire() ? -0.1f : 0.f;
+    // shot
+    /*const auto fire_penalty = action_stats->has_fire() ? -0.1f : 0.f;
     const float fire_in_aim_reward =
         action_stats->has_fire() && distance_reward > 0.f && aim_reward > 0.f ? 1.f : 0.f;
-    //action_stats->has_fire() ? std::clamp(distance_reward, 0.f, 1.f) * std::clamp(aim_reward, 0.f, 1.f) * 1.f : 0.f;
-    const auto fire_reward = fire_penalty + fire_in_aim_reward;
+    const auto fire_reward = fire_penalty + fire_in_aim_reward;*/
 
     // potential reward
-    return 0.4f * fire_reward + 0.3f * aim_reward + 0.3f * distance_reward;
+    return 0.5f * aim_reward + 0.5f * distance_reward;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

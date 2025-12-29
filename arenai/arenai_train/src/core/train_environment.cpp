@@ -53,7 +53,7 @@ void TrainTankEnvironment::on_draw(
     const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {}
 
 void TrainTankEnvironment::on_reset_physics(const std::unique_ptr<PhysicEngine> &engine) {
-    remaining_frames = std::vector<int>(nb_tanks, max_frames_without_shoot);
+    remaining_frames = std::vector(nb_tanks, max_frames_without_shoot);
 }
 
 void TrainTankEnvironment::on_reset_drawables(
@@ -74,13 +74,4 @@ void TrainTankEnvironment::reset_singleton() {
 
     Singleton<Cache<std::shared_ptr<Program>>>::get_singleton()->clear();
     Singleton<Cache<std::shared_ptr<Program>>>::reset_singleton();
-}
-
-std::vector<Reward> TrainTankEnvironment::get_potential_rewards() {
-    return apply_on_factories<std::vector<Reward>>([](const auto &factories) {
-        std::vector<Reward> result;
-        for (int i = 0; i < factories.size(); i++)
-            result.push_back(factories[i]->get_potential_reward(factories));
-        return result;
-    });
 }

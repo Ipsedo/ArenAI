@@ -63,8 +63,6 @@ void train_main(
     auto replay_buffer = std::make_unique<ReplayBuffer>(train_options.replay_buffer_size);
 
     Metric reward_metric("reward", train_options.metric_window_size);
-    Metric potential_reward_metric("potential", train_options.metric_window_size);
-    Metric global_reward_metric("global", train_options.metric_window_size);
 
     auto sac_metrics = sac->get_metrics();
 
@@ -115,10 +113,8 @@ void train_main(
 
             auto actions_future = std::async([&] { return actions_for_env; });
 
-            // step environment & potential reward
-            const auto potential_rewards = env->get_potential_rewards();
+            // step environment
             const auto steps = env->step(wanted_frequency, actions_future);
-            const auto next_potential_rewards = env->get_potential_rewards();
 
             last_state.clear();
             last_state.reserve(train_options.nb_tanks);
@@ -128,15 +124,9 @@ void train_main(
                 const auto [next_state, reward, done] = steps[i];
                 last_state.push_back(next_state);
 
-                const float potential_reward =
-                    (done ? 0.f : 1.f) * model_options.gamma * next_potential_rewards[i]
-                    - potential_rewards[i];
-
-                const float global_reward = potential_reward + reward;
+                const float global_reward = reward;
 
                 reward_metric.add(reward);
-                potential_reward_metric.add(potential_reward);
-                global_reward_metric.add(global_reward);
 
                 if (already_done[i]) continue;
 
@@ -172,9 +162,8 @@ void train_main(
 
             // metric
             std::stringstream stream;
-            stream << " [" << episode_index << "] : " << reward_metric.to_string() << ", "
-                   << potential_reward_metric.to_string() << ", "
-                   << global_reward_metric.to_string() << sac_metric_p_bar_description;
+            stream << "Episode [" << episode_index << " / " << train_options.nb_episodes
+                   << "] : " << reward_metric.to_string() << sac_metric_p_bar_description;
 
             p_bar.set_option(indicators::option::PrefixText{stream.str()});
             p_bar.print_progress();

@@ -64,7 +64,7 @@ std::vector<std::tuple<State, Reward, IsDone>> BaseTanksEnvironment::step(
         std::lock_guard lock_guard(visions_mutex[i]);
         result.emplace_back(
             State(enemy_visions[i], tank_factories[i]->get_proprioception()),
-            tank_factories[i]->get_reward(), tank_factories[i]->is_dead());
+            tank_factories[i]->get_reward(tank_factories), tank_factories[i]->is_dead());
     }
 
     const auto actions = actions_future.get();

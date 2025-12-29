@@ -15,10 +15,7 @@ public:
         const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
         glm::vec3 chassis_pos, float wanted_frame_frequency);
 
-    float get_reward();
-
-    float get_potential_reward(
-        const std::vector<std::unique_ptr<EnemyTankFactory>> &all_enemy_tank_factories);
+    float get_reward(const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories);
 
     bool is_dead() override;
     bool is_suicide() const;
@@ -53,7 +50,6 @@ private:
     std::shared_ptr<ActionStats> action_stats;
 
     float compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank);
-    static float compute_value_range_reward(float value, float min_value, float max_value);
 };
 
 #endif//ARENAI_TRAIN_HOST_ENEMY_TANK_FACTORY_H

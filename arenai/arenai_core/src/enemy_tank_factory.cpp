@@ -16,10 +16,8 @@ EnemyTankFactory::EnemyTankFactory(
     : TankFactory(file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency),
       tank_prefix_name(tank_prefix_name), reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-      curr_frame_upside_down(0), is_dead_already_triggered(false),
-      min_distance_potential_reward(5.f), max_distance_potential_reward(50.f),
-      aim_min_angle_potential_reward(static_cast<float>(M_PI) / 6.f),
-      aim_max_angle_potential_reward(static_cast<float>(M_PI) / 3.f), has_touch(false),
+      curr_frame_upside_down(0), is_dead_already_triggered(false), max_distance_fire_reward(50.f),
+      max_aim_angle_fire_reward(static_cast<float>(M_PI) / 3.f), has_touch(false),
       action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
@@ -66,8 +64,11 @@ float EnemyTankFactory::get_reward(
 
     const float angle = compute_aim_angle(tank_factories[nearest_enemy_index]);
     const float fire_penalty = action_stats->has_fire() ? -0.01f : 0.f;
-    const float fire_reward =
-        action_stats->has_fire() && angle <= aim_max_angle_potential_reward ? 0.1f : 0.f;
+    const float fire_reward = action_stats->has_fire()
+                                      && shortest_distance < max_distance_fire_reward
+                                      && angle <= max_aim_angle_fire_reward
+                                  ? 0.1f
+                                  : 0.f;
 
     actual_reward += fire_penalty + fire_reward;
 

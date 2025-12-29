@@ -40,10 +40,8 @@ private:
 
     bool is_dead_already_triggered;
 
-    float min_distance_potential_reward;
-    float max_distance_potential_reward;
-    float aim_min_angle_potential_reward;
-    float aim_max_angle_potential_reward;
+    float max_distance_fire_reward;
+    float max_aim_angle_fire_reward;
 
     bool has_touch;
 

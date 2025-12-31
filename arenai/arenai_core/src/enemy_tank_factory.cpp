@@ -16,9 +16,10 @@ EnemyTankFactory::EnemyTankFactory(
     : TankFactory(file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency),
       tank_prefix_name(tank_prefix_name), reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-      curr_frame_upside_down(0), is_dead_already_triggered(false), max_distance_fire_reward(50.f),
-      max_aim_angle_fire_reward(static_cast<float>(M_PI) / 3.f), has_touch(false),
-      action_stats(std::make_shared<ActionStats>()) {}
+      curr_frame_upside_down(0), is_dead_already_triggered(false),
+      min_aim_angle_reward(static_cast<float>(M_PI) / 6.f),
+      max_aim_angle_reward(static_cast<float>(M_PI) / 3.f), min_distance_reward(5.f),
+      max_distance_reward(50.f), has_touch(false), action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
     const auto canon_tr = get_canon()->get_model_matrix();
@@ -38,17 +39,30 @@ float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory
     return std::atan2(sine, dot);
 }
 
+float EnemyTankFactory::compute_value_range_reward(
+    const float value, const float min_value, const float max_value) {
+    const float max_penalty_value = max_value * 2.f;
+
+    // bounds
+    if (value <= min_value) return 1.f;
+    if (value >= max_penalty_value) return -1.f;
+
+    // [min_value, max_value] : 1 -> 0
+    if (value <= max_value) return (max_value - value) / (max_value - min_value);
+
+    // [max_value, 2 * max_value] : 0 -> -1
+    return -(value - max_value) / (max_penalty_value - max_value);
+}
+
 float EnemyTankFactory::get_reward(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
-    float actual_reward = reward;
 
-    // 1. fire reward / penalty
+    // 0. nearest enemy
     const auto chassis_pos = get_chassis()->get_body()->getWorldTransform().getOrigin();
 
-    // find nearest enemy
     int nearest_enemy_index = -1;
     float shortest_distance = std::numeric_limits<float>::max();
-    ;
+
     for (int i = 0; i < tank_factories.size(); i++) {
         if (tank_factories[i]->tank_prefix_name != tank_prefix_name) {
             auto other_chassis_pos =
@@ -62,17 +76,23 @@ float EnemyTankFactory::get_reward(
         }
     }
 
+    // 1. distance reward
+    const auto distance_reward =
+        compute_value_range_reward(shortest_distance, min_distance_reward, max_distance_reward);
+
+    // 2. angle reward
     const float angle = compute_aim_angle(tank_factories[nearest_enemy_index]);
-    const float fire_penalty = action_stats->has_fire() ? -0.01f : 0.f;
-    const float fire_reward = action_stats->has_fire()
-                                      && shortest_distance < max_distance_fire_reward
-                                      && angle <= max_aim_angle_fire_reward
-                                  ? 0.1f
-                                  : 0.f;
+    const auto angle_reward =
+        compute_value_range_reward(angle, min_aim_angle_reward, max_aim_angle_reward);
 
-    actual_reward += fire_penalty + fire_reward;
+    // 3. fire reward
+    const float fire_penalty = action_stats->has_fire() ? -1e-3f : 0.f;
+    const float fire_reward = action_stats->has_fire() && angle_reward > 0.f ? 1.f : 0.f;
+    const auto shot_reward = fire_penalty + fire_reward;
 
-    // 2. flipped penalty
+    const auto shaped_reward = 0.4f * shot_reward + 0.3f * angle_reward + 0.3f * distance_reward;
+
+    // 5. flipped penalty
     const auto chassis = get_chassis();
     auto chassis_tr = chassis->get_body()->getWorldTransform();
     const btVector3 up(0.f, 1.f, 0.f);
@@ -82,13 +102,11 @@ float EnemyTankFactory::get_reward(
         curr_frame_upside_down++;
     else curr_frame_upside_down = 0;
 
-    // 3. dead penalty
-    if (is_dead()) {
-        if (is_suicide()) actual_reward = -0.5f;
-        else actual_reward = -1.f;
-    }
+    // 6. dead penalty
+    const auto dead_penalty = is_dead() ? (is_suicide() ? -0.5f : -1.f) : 0.f;
 
     // prepare next frame
+    const auto actual_reward = reward + dead_penalty + 0.5f * shaped_reward;
     reward = 0.f;
 
     // return reward
@@ -106,10 +124,10 @@ void EnemyTankFactory::on_fired_shell_contact(Item *item) {
 
     if (const auto &life_item = dynamic_cast<LifeItem *>(item); !self_shoot && life_item) {
         if (life_item->is_dead() && !life_item->is_already_dead()) {
-            reward += 1.0f;
+            reward += 2.0f;
             has_touch = true;
         } else if (!life_item->is_dead()) {
-            reward += 0.5f;
+            reward += 1.0f;
             has_touch = true;
         }
     }

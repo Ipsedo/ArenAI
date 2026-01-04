@@ -11,6 +11,21 @@ include(FetchContent)
 # ExecuTorch #
 ##############
 
+set(ET_VENV "${CMAKE_CURRENT_BINARY_DIR}/.venv_et")
+execute_process(
+        COMMAND bash -lc
+        "/usr/bin/python3.12 -m venv \"${ET_VENV}\" \
+        && ${ET_VENV}/bin/pip install --upgrade pip pyyaml \
+        && ${ET_VENV}/bin/pip install torch --index-url https://download.pytorch.org/whl/cpu"
+        COMMAND_ECHO STDOUT
+        RESULT_VARIABLE _venv_rc
+)
+if (NOT _venv_rc EQUAL 0)
+    message(FATAL_ERROR "Error when creating ExecuTorch python venv")
+endif ()
+
+set(PYTHON_EXECUTABLE "${ET_VENV}/bin/python" CACHE FILEPATH "")
+
 FetchContent_Declare(
         executorch
         GIT_REPOSITORY https://github.com/pytorch/executorch.git

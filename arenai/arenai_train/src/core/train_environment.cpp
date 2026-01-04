@@ -19,7 +19,7 @@ TrainTankEnvironment::TrainTankEnvironment(
     : BaseTanksEnvironment(
         std::make_shared<LinuxAndroidAssetFileReader>(android_assets_path), std::nullptr_t(),
         nb_tanks, wanted_frequency, false),
-      max_frames_without_shoot(static_cast<int>(30.f / wanted_frequency)),
+      max_frames_without_shoot(static_cast<int>(90.f / wanted_frequency)),
       remaining_frames(nb_tanks, max_frames_without_shoot),
       nb_frames_added_when_shoot(static_cast<int>(5.f / wanted_frequency)), nb_tanks(nb_tanks) {}
 

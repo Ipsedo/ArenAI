@@ -124,18 +124,16 @@ void train_main(
                 const auto [next_state, reward, done] = steps[i];
                 last_state.push_back(next_state);
 
-                const float global_reward = reward;
+                if (already_done[i]) continue;
 
                 reward_metric.add(reward);
-
-                if (already_done[i]) continue;
 
                 const auto [next_vision, next_proprioception] = state_to_tensor(next_state);
 
                 replay_buffer->add(
                     {{vision[i], proprioception[i]},
                      actions[i],
-                     torch::tensor(global_reward, torch::TensorOptions().dtype(torch::kFloat))
+                     torch::tensor(reward, torch::TensorOptions().dtype(torch::kFloat))
                          .unsqueeze(0),
                      torch::tensor(done, torch::TensorOptions().dtype(torch::kBool)).unsqueeze(0),
                      {next_vision, next_proprioception}});

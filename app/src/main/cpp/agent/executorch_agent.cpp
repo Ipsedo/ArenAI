@@ -4,6 +4,7 @@
 
 #include "./executorch_agent.h"
 
+#include <boost/math/special_functions/erf.hpp>
 #include <executorch/extension/module/module.h>
 #include <executorch/extension/tensor/tensor.h>
 #include <executorch/runtime/core/error.h>
@@ -16,35 +17,11 @@
  * Truncated normal sample
  */
 
-float erfinv(const float x) {
-    if (std::isnan(x)) return std::numeric_limits<float>::quiet_NaN();
-    if (x == 1.0f) return std::numeric_limits<float>::infinity();
-    if (x == -1.0f) return -std::numeric_limits<float>::infinity();
-
-    const float eps = 10.0f * std::numeric_limits<float>::epsilon();
-    float xc = std::clamp(x, -1.0f + eps, 1.0f - eps);
-
-    constexpr float a = 0.147f;
-    constexpr auto pi = static_cast<float>(M_PI);
-    const float s = (xc >= 0.0f) ? 1.0f : -1.0f;
-
-    const float ln = std::log1p(-xc * xc);
-    const float t = 2.0f / (pi * a) + 0.5f * ln;
-    float y = s * std::sqrt(std::sqrt(t * t - ln / a) - t);
-
-    const float c = 2.0f / std::sqrt(pi);
-    for (int i = 0; i < 3; ++i) {
-        float ey = std::erf(y);
-        float dy = c * std::exp(-(y * y));
-        y = y - (ey - xc) / dy;
-    }
-
-    return y;
-}
-
 float theta(const float x) { return 0.5f * (1.f + std::erf(x / std::sqrt(2.f))); }
 
-float theta_inv(const float theta) { return std::sqrt(2.0f) * erfinv(2.0f * theta - 1.0f); }
+float theta_inv(const float theta) {
+    return std::sqrt(2.0f) * boost::math::erf_inv(2.0f * theta - 1.0f);
+}
 
 float truncated_normal_sample(
     std::mt19937 rng, const float mu, const float sigma, const float min_value,

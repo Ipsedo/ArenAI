@@ -64,23 +64,30 @@ torch::Tensor truncated_normal_entropy(
 
 float truncated_normal_target_entropy(
     const int nb_actions, const float min_value, const float max_value) {
-    return static_cast<float>(nb_actions)
-           * truncated_normal_entropy(torch::zeros({1}), torch::ones({1}), min_value, max_value)
-                 .item<float>();
+    return truncated_normal_entropy(
+               torch::zeros({nb_actions}), torch::ones({nb_actions}) * std::sqrt(2.0), min_value,
+               max_value)
+        .sum()
+        .item<float>();
 }
 
 torch::Tensor gaussian_tanh_sample(const torch::Tensor &mu, const torch::Tensor &sigma) {
+    const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
+
     const auto eps = torch::randn_like(mu);
-    const auto u = mu + sigma * eps;
+
+    const auto u = mu + safe_sigma * eps;
     return torch::tanh(u);
 }
 
 torch::Tensor
 gaussian_tanh_log_pdf(const torch::Tensor &x, const torch::Tensor &mu, const torch::Tensor &sigma) {
+    const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
+
     const auto u = 0.5 * torch::log((1.0 + x + EPSILON) / (1.0 - x + EPSILON));
 
-    const auto log_unnormalized = -0.5 * torch::pow((u - mu) / sigma, 2);
-    const auto log_normalization = torch::log(sigma) + 0.5 * std::log(2.0 * M_PI);
+    const auto log_unnormalized = -0.5 * torch::pow((u - mu) / safe_sigma, 2.0);
+    const auto log_normalization = torch::log(safe_sigma) + 0.5 * std::log(2.0 * M_PI);
 
     const auto log_gaussian = log_unnormalized - log_normalization;
     const auto log_det_jacobian = torch::log(1.0 - x.pow(2.0) + EPSILON);

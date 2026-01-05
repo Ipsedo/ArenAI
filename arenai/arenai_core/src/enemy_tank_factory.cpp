@@ -57,6 +57,7 @@ float EnemyTankFactory::compute_value_range_reward(
 float EnemyTankFactory::get_reward(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
 
+    /*
     // 0. nearest enemy
     const auto chassis_pos = get_chassis()->get_body()->getWorldTransform().getOrigin();
 
@@ -89,7 +90,7 @@ float EnemyTankFactory::get_reward(
     // 3. fire reward
     const float fire_reward = action_stats->has_fire() ? angle_reward + distance_reward : 0.f;
 
-    const auto shaped_reward = fire_reward;
+    const auto shaped_reward = fire_reward;*/
 
     // 5. flipped penalty
     const auto chassis = get_chassis();
@@ -105,7 +106,7 @@ float EnemyTankFactory::get_reward(
     const auto dead_penalty = is_dead() ? (is_suicide() ? -0.5f : -1.f) : 0.f;
 
     // prepare next frame
-    const auto actual_reward = reward + dead_penalty + shaped_reward;
+    const auto actual_reward = reward + dead_penalty;
     reward = 0.f;
 
     // return reward

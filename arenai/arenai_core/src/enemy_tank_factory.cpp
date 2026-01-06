@@ -88,7 +88,7 @@ float EnemyTankFactory::get_reward(
 
     // 3. fire reward
     const float fire_penalty = action_stats->has_fire() ? -1e-2f : 0.f;
-    const float fire_reward = action_stats->has_fire() && angle_reward > 0 ? 1.f : 0.f;
+    const float fire_reward = action_stats->has_fire() && angle_reward > 0.f ? 1.f : 0.f;
 
     const auto shaped_reward = fire_reward + fire_penalty + angle_reward + distance_reward;
 

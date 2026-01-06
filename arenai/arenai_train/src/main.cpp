@@ -22,7 +22,7 @@ int main(const int argc, char **argv) {
     // model
     parser.add_argument("--vision_channels")
         .default_value<vision_channels>(
-            {{{3, 8}, {8, 16}, {16, 32}, {32, 64}, {64, 96}, {96, 128}}})
+            {{{3, 8}, {8, 16}, {16, 32}, {32, 64}, {64, 128}, {128, 256}, {256, 512}}})
         .action([](const std::string &value) -> vision_channels {
             const std::regex regex_match(
                 R"(^ *\[(?: *\( *\d+ *, *\d+ *\) *,)* *\( *\d+ *, *\d+ *\) *] *$)");
@@ -53,8 +53,8 @@ int main(const int argc, char **argv) {
     parser.add_argument("--hidden_size_sensors").scan<'i', int>().default_value(256);
     parser.add_argument("--num_group_norm").scan<'i', int>().default_value(4);
     parser.add_argument("--hidden_size_actions").scan<'i', int>().default_value(64);
-    parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(2048);
-    parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(2048);
+    parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(1536);
+    parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(1536);
     parser.add_argument("--tau").scan<'g', float>().default_value(0.005f);
     parser.add_argument("--gamma").scan<'g', float>().default_value(0.99f);
     parser.add_argument("--initial_alpha").scan<'g', float>().default_value(1.f);
@@ -64,11 +64,11 @@ int main(const int argc, char **argv) {
     parser.add_argument("--output_folder").required();
     parser.add_argument("--asset_folder").required();
     parser.add_argument("--learning_rate").scan<'g', float>().default_value(3e-4f);
-    parser.add_argument("--epochs").scan<'i', int>().default_value(8);
-    parser.add_argument("--batch_size").scan<'i', int>().default_value(128);
+    parser.add_argument("--epochs").scan<'i', int>().default_value(32);
+    parser.add_argument("--batch_size").scan<'i', int>().default_value(512);
     parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60 * 3);
     parser.add_argument("--nb_episodes").scan<'i', int>().default_value(50000);
-    parser.add_argument("--replay_buffer_size").scan<'i', int>().default_value(10000);
+    parser.add_argument("--replay_buffer_size").scan<'i', int>().default_value(100000);
     parser.add_argument("--train_every").scan<'i', int>().default_value(64);
     parser.add_argument("--save_every").scan<'i', int>().default_value(30 * 60 * 3 * 25);
     parser.add_argument("--cuda").default_value(false).implicit_value(true);

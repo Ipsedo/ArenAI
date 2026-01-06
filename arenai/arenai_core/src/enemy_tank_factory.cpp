@@ -14,7 +14,7 @@ EnemyTankFactory::EnemyTankFactory(
     const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
     const glm::vec3 chassis_pos, const float wanted_frame_frequency)
     : TankFactory(file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency),
-      tank_prefix_name(tank_prefix_name), reward(0.f),
+      tank_prefix_name(tank_prefix_name), hit_reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), is_dead_already_triggered(false),
       min_aim_angle_reward(static_cast<float>(M_PI) / 8.f),
@@ -57,7 +57,6 @@ float EnemyTankFactory::compute_value_range_reward(
 float EnemyTankFactory::get_reward(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
 
-    /*
     // 0. nearest enemy
     const auto chassis_pos = get_chassis()->get_body()->getWorldTransform().getOrigin();
 
@@ -88,9 +87,10 @@ float EnemyTankFactory::get_reward(
         * std::clamp(distance_reward, 0.f, 1.f);
 
     // 3. fire reward
-    const float fire_reward = action_stats->has_fire() ? angle_reward + distance_reward : 0.f;
+    const float fire_penalty = action_stats->has_fire() ? -1e-2f : 0.f;
+    const float fire_reward = action_stats->has_fire() && angle_reward > 0 ? 1.f : 0.f;
 
-    const auto shaped_reward = fire_reward;*/
+    const auto shaped_reward = fire_reward + fire_penalty + angle_reward + distance_reward;
 
     // 5. flipped penalty
     const auto chassis = get_chassis();
@@ -106,11 +106,11 @@ float EnemyTankFactory::get_reward(
     const auto dead_penalty = is_dead() ? (is_suicide() ? -0.5f : -1.f) : 0.f;
 
     // prepare next frame
-    const auto actual_reward = reward + dead_penalty;
-    reward = 0.f;
+    const auto reward = hit_reward + dead_penalty + shaped_reward;
+    hit_reward = 0.f;
 
     // return reward
-    return actual_reward;
+    return reward;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {
@@ -124,10 +124,10 @@ void EnemyTankFactory::on_fired_shell_contact(Item *item) {
 
     if (const auto &life_item = dynamic_cast<LifeItem *>(item); !self_shoot && life_item) {
         if (life_item->is_dead() && !life_item->is_already_dead()) {
-            reward += 2.0f;
+            hit_reward += 2.0f;
             has_touch = true;
         } else if (!life_item->is_dead()) {
-            reward += 1.0f;
+            hit_reward += 1.0f;
             has_touch = true;
         }
     }

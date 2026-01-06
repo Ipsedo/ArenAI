@@ -34,7 +34,7 @@ protected:
 private:
     std::string tank_prefix_name;
 
-    float reward;
+    float hit_reward;
     int max_frames_upside_down;
     int curr_frame_upside_down;
 

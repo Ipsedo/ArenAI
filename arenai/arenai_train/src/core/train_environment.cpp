@@ -75,3 +75,13 @@ void TrainTankEnvironment::reset_singleton() {
     Singleton<Cache<std::shared_ptr<Program>>>::get_singleton()->clear();
     Singleton<Cache<std::shared_ptr<Program>>>::reset_singleton();
 }
+
+std::vector<Reward> TrainTankEnvironment::get_potential_rewards() {
+    return apply_on_factories<std::vector<Reward>>([&](const auto &factories) {
+        std::vector<Reward> potential_rewards;
+        potential_rewards.reserve(factories.size());
+        for (const auto &factory: factories)
+            potential_rewards.push_back(factory->get_potential_reward(factories));
+        return potential_rewards;
+    });
+}

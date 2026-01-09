@@ -57,42 +57,7 @@ float EnemyTankFactory::compute_value_range_reward(
 float EnemyTankFactory::get_reward(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
 
-    // 0. nearest enemy
-    const auto chassis_pos = get_chassis()->get_body()->getWorldTransform().getOrigin();
-
-    int nearest_enemy_index = -1;
-    float shortest_distance = std::numeric_limits<float>::max();
-
-    for (int i = 0; i < tank_factories.size(); i++) {
-        if (tank_factories[i]->tank_prefix_name != tank_prefix_name) {
-            auto other_chassis_pos =
-                tank_factories[i]->get_chassis()->get_body()->getWorldTransform().getOrigin();
-
-            if (const float distance = (chassis_pos - other_chassis_pos).length();
-                distance < shortest_distance) {
-                shortest_distance = distance;
-                nearest_enemy_index = i;
-            }
-        }
-    }
-
-    // 1. distance reward
-    const auto distance_reward =
-        compute_value_range_reward(shortest_distance, min_distance_reward, max_distance_reward);
-
-    // 2. angle reward
-    const float angle = compute_aim_angle(tank_factories[nearest_enemy_index]);
-    const auto angle_reward =
-        compute_value_range_reward(angle, min_aim_angle_reward, max_aim_angle_reward)
-        * std::clamp(distance_reward, 0.f, 1.f);
-
-    // 3. fire reward
-    const float fire_penalty = action_stats->has_fire() ? -1e-2f : 0.f;
-    const float fire_reward = action_stats->has_fire() && angle_reward > 0.f ? 1.f : 0.f;
-
-    const auto shaped_reward = fire_reward + fire_penalty + angle_reward + distance_reward;
-
-    // 5. flipped penalty
+    // 1. flipped penalty
     const auto chassis = get_chassis();
     auto chassis_tr = chassis->get_body()->getWorldTransform();
     const btVector3 up(0.f, 1.f, 0.f);
@@ -102,15 +67,66 @@ float EnemyTankFactory::get_reward(
         curr_frame_upside_down++;
     else curr_frame_upside_down = 0;
 
-    // 6. dead penalty
+    // 2. dead penalty
     const auto dead_penalty = is_dead() ? (is_suicide() ? -0.5f : -1.f) : 0.f;
 
     // prepare next frame
-    const auto reward = hit_reward + dead_penalty + shaped_reward;
+    const auto reward = hit_reward + dead_penalty;
     hit_reward = 0.f;
 
     // return reward
     return reward;
+}
+
+float EnemyTankFactory::get_potential_reward(
+    const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
+    // from ChatGPT lol
+
+    const auto chassis_pos = get_chassis()->get_body()->getWorldTransform().getOrigin();
+
+    const float d_min = min_distance_reward;
+    const float d_max = max_distance_reward;
+
+    const float band = std::max(1e-3f, d_max - d_min);
+
+    const float d_opt = 0.5f * (d_min + d_max);
+
+    const float sigma_d = 0.5f * band;
+    const float inv_sigma_d2 = 1.0f / (sigma_d * sigma_d + 1e-6f);
+
+    const float tau = std::max(1e-3f, sigma_d);
+
+    float sum_w = 0.0f;
+    float sum_w_phi = 0.0f;
+
+    for (const auto &other: tank_factories) {
+        if (other->tank_prefix_name == tank_prefix_name) continue;
+
+        const auto other_pos = other->get_chassis()->get_body()->getWorldTransform().getOrigin();
+
+        const float d = (chassis_pos - other_pos).length();
+        if (!std::isfinite(d)) continue;
+
+        const float diff = d - d_opt;
+        const float phi_dist = std::exp(-(diff * diff) * inv_sigma_d2);
+
+        const float angle = compute_aim_angle(other);
+        const float c = std::cos(angle);
+        const float phi_angle = 0.5f * (1.0f + c);
+
+        const float phi_i = phi_dist * phi_angle;
+
+        const float w_i = std::exp(-d / tau);
+
+        sum_w += w_i;
+        sum_w_phi += w_i * phi_i;
+    }
+
+    if (sum_w <= 1e-12f) return 0.0f;
+
+    const float phi = sum_w_phi / sum_w;
+
+    return phi;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

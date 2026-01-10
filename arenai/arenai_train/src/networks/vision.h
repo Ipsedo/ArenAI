@@ -10,7 +10,7 @@
 class ConvolutionNetwork final : public torch::nn::Module {
 public:
     explicit ConvolutionNetwork(
-        const std::vector<std::tuple<int, int>> &channels, int num_group_norm);
+        const std::vector<std::tuple<int, int>> &channels, const std::vector<int> &group_norm_nums);
 
     torch::Tensor forward(const torch::Tensor &input);
 

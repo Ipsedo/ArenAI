@@ -12,6 +12,10 @@ struct vision_channels {
     std::vector<std::tuple<int, int>> channels;
 };
 
+struct group_norm_nums {
+    std::vector<int> groups;
+};
+
 int main(const int argc, char **argv) {
 
     argparse::ArgumentParser parser("arenai train");
@@ -50,11 +54,28 @@ int main(const int argc, char **argv) {
 
             return vision_channels;
         });
+    parser.add_argument("--group_norm_nums")
+        .default_value<group_norm_nums>({{2, 4, 8, 16, 32, 64, 128}})
+        .action([](const std::string &value) -> group_norm_nums {
+            const std::regex regex_match(R"(^ *\[(?: *\d+ *,)* *\d+ *] *$)");
+            const std::regex regex_groups(R"(\d+)");
+
+            if (!std::regex_match(value.begin(), value.end(), regex_match))
+                throw std::invalid_argument(
+                    "invalid --group_norm_nums format, usage : [4, 8, 16, ...]");
+
+            group_norm_nums group_nums;
+
+            std::sregex_iterator it_layer(value.begin(), value.end(), regex_groups);
+            for (const std::sregex_iterator end; it_layer != end; ++it_layer)
+                group_nums.groups.emplace_back(std::stoi(it_layer->str()));
+
+            return group_nums;
+        });
     parser.add_argument("--hidden_size_sensors").scan<'i', int>().default_value(256);
-    parser.add_argument("--num_group_norm").scan<'i', int>().default_value(4);
     parser.add_argument("--hidden_size_actions").scan<'i', int>().default_value(64);
-    parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(1536);
-    parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(1536);
+    parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(2048);
+    parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(2048);
     parser.add_argument("--tau").scan<'g', float>().default_value(0.005f);
     parser.add_argument("--gamma").scan<'g', float>().default_value(0.99f);
     parser.add_argument("--initial_alpha").scan<'g', float>().default_value(1.f);
@@ -79,10 +100,11 @@ int main(const int argc, char **argv) {
     train_main(
         parser.get<float>("--wanted_frequency"),
         {parser.get<vision_channels>("--vision_channels").channels,
-         parser.get<int>("--num_group_norm"), parser.get<int>("--hidden_size_sensors"),
-         parser.get<int>("--hidden_size_actions"), parser.get<int>("--actor_hidden_size"),
-         parser.get<int>("--critic_hidden_size"), parser.get<float>("--tau"),
-         parser.get<float>("--gamma"), parser.get<float>("--initial_alpha")},
+         parser.get<group_norm_nums>("--group_norm_nums").groups,
+         parser.get<int>("--hidden_size_sensors"), parser.get<int>("--hidden_size_actions"),
+         parser.get<int>("--actor_hidden_size"), parser.get<int>("--critic_hidden_size"),
+         parser.get<float>("--tau"), parser.get<float>("--gamma"),
+         parser.get<float>("--initial_alpha")},
         {parser.get<int>("--nb_tanks"),
          std::filesystem::path(parser.get<std::string>("--output_folder")),
          std::filesystem::path(parser.get<std::string>("--asset_folder")),

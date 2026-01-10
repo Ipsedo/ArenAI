@@ -80,24 +80,11 @@ float EnemyTankFactory::get_reward(
 
 float EnemyTankFactory::get_potential_reward(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
-    // from ChatGPT lol
 
     const auto chassis_pos = get_chassis()->get_body()->getWorldTransform().getOrigin();
 
-    const float d_min = min_distance_reward;
-    const float d_max = max_distance_reward;
-
-    const float band = std::max(1e-3f, d_max - d_min);
-
-    const float d_opt = 0.5f * (d_min + d_max);
-
-    const float sigma_d = 0.5f * band;
-    const float inv_sigma_d2 = 1.0f / (sigma_d * sigma_d + 1e-6f);
-
-    const float tau = std::max(1e-3f, sigma_d);
-
-    float sum_w = 0.0f;
-    float sum_w_phi = 0.0f;
+    float sum_weight = 0.0f;
+    float sum_score = 0.0f;
 
     for (const auto &other: tank_factories) {
         if (other->tank_prefix_name == tank_prefix_name) continue;
@@ -107,38 +94,28 @@ float EnemyTankFactory::get_potential_reward(
         const float d = (chassis_pos - other_pos).length();
         if (!std::isfinite(d)) continue;
 
-        const float diff = d - d_opt;
-        const float phi_dist = std::exp(-(diff * diff) * inv_sigma_d2);
+        const float diff = std::clamp(
+            (max_distance_reward - d) / (max_distance_reward - min_distance_reward), 0.f, 1.f);
+        const float angle = std::clamp(
+            (max_aim_angle_reward - compute_aim_angle(other))
+                / (max_aim_angle_reward - min_aim_angle_reward),
+            0.f, 1.f);
 
-        const float angle = compute_aim_angle(other);
-        const float c = std::cos(angle);
-        const float phi_angle = 0.5f * (1.0f + c);
+        const float score = diff + angle;
+        const float weight = -d;
 
-        const float phi_i = phi_dist * phi_angle;
-
-        const float w_i = std::exp(-d / tau);
-
-        sum_w += w_i;
-        sum_w_phi += w_i * phi_i;
+        sum_weight += weight;
+        sum_score += weight * score;
     }
 
-    if (sum_w <= 1e-12f) return 0.0f;
-
-    const float phi = sum_w_phi / sum_w;
-
-    return phi;
+    return sum_score / (EPSILON + sum_weight);
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {
-    bool self_shoot = false;
-    for (const auto &i: get_items()) {
-        if (i->get_name() == item->get_name()) {
-            self_shoot = true;
-            break;
-        }
-    }
+    for (const auto &i: get_items())
+        if (i->get_name() == item->get_name()) return;
 
-    if (const auto &life_item = dynamic_cast<LifeItem *>(item); !self_shoot && life_item) {
+    if (const auto &life_item = dynamic_cast<LifeItem *>(item); life_item) {
         if (life_item->is_dead() && !life_item->is_already_dead()) {
             hit_reward += 2.0f;
             has_touch = true;

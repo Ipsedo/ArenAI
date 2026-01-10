@@ -63,7 +63,7 @@ void train_main(
     auto replay_buffer = std::make_unique<ReplayBuffer>(train_options.replay_buffer_size);
 
     Metric reward_metric("reward", train_options.metric_window_size);
-    Metric potential_reward_metric("potential", train_options.metric_window_size);
+    Metric potential_reward_metric("potential", train_options.metric_window_size, 3, true);
 
     auto sac_metrics = sac->get_metrics();
 

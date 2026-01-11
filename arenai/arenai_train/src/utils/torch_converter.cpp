@@ -19,10 +19,10 @@ std::vector<Action> tensor_to_actions(const torch::Tensor &actions_tensor) {
 
     for (int i = 0; i < batch_size; i++) {
         const joystick joystick_direction{
-            actions_tensor[i][0].item().toFloat(), actions_tensor[i][1].item().toFloat()};
+            actions_tensor[i][0].item<float>(), actions_tensor[i][1].item<float>()};
         const joystick joystick_canon{
-            actions_tensor[i][2].item().toFloat(), actions_tensor[i][3].item().toFloat()};
-        const button fire_button(actions_tensor[i][4].item().toFloat() > 0);
+            actions_tensor[i][2].item<float>(), actions_tensor[i][3].item<float>()};
+        const button fire_button(actions_tensor[i][4].item<float>() > 0);
 
         actions.push_back({joystick_direction, joystick_canon, fire_button});
     }

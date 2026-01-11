@@ -12,7 +12,8 @@
 
 class Metric {
 public:
-    explicit Metric(const std::string &name, int window_size);
+    explicit Metric(
+        const std::string &name, int window_size, int precision = 6, bool scientific = false);
 
     float last_value() const;
     float average_value();
@@ -25,6 +26,9 @@ private:
     std::string name;
     int window_size;
     std::vector<float> values;
+
+    bool float_display_scientific;
+    int float_display_precision;
 };
 
 #endif//ARENAI_TRAIN_HOST_METRIC_H

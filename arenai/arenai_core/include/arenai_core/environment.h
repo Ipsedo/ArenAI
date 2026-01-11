@@ -59,6 +59,8 @@ private:
 
     std::shared_ptr<AbstractGLContext> gl_context;
 
+    int nb_reset_frames;
+
     void worker_enemy_vision(int index, const std::unique_ptr<EnemyTankFactory> &tank_factory);
 
 protected:

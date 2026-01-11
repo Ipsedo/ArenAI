@@ -17,7 +17,7 @@ TorchStep ReplayBuffer::sample(int batch_size, torch::Device device) {
     const auto rand_perm = torch::randperm(memory.size());
 
     for (int i = 0; i < batch_size; i++) {
-        auto [state, action, reward, done, next_state] = memory[rand_perm[i].item().toInt()];
+        auto [state, action, reward, done, next_state] = memory[rand_perm[i].item<int>()];
 
         states_vision.push_back(state.vision);
         states_proprioception.push_back(state.proprioception);

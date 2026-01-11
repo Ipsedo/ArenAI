@@ -16,7 +16,8 @@ public:
     SacCritic(
         const int &nb_sensors, const int &nb_actions, const int &hidden_size_sensors,
         const int &hidden_size_actions, const int &hidden_size,
-        const std::vector<std::tuple<int, int>> &vision_channels, int num_group_norm);
+        const std::vector<std::tuple<int, int>> &vision_channels,
+        const std::vector<int> &group_norm_nums);
     torch::Tensor
     value(const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &action);
 

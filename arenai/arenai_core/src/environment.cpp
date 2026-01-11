@@ -30,7 +30,8 @@ BaseTanksEnvironment::BaseTanksEnvironment(
           image<uint8_t>(
               3, std::vector(ENEMY_VISION_SIZE, std::vector<uint8_t>(ENEMY_VISION_SIZE, 0)))),
       physic_engine(std::make_unique<PhysicEngine>(wanted_frequency)), gl_context(gl_context),
-      rng(dev()), file_reader(file_reader) {
+      nb_reset_frames(static_cast<int>(4.f / wanted_frequency)), rng(dev()),
+      file_reader(file_reader) {
     std::uniform_int_distribution<u_int8_t> u_dist(0, 255);
     for (int i = 0; i < nb_tanks; i++)
         for (int c = 0; c < 3; c++)
@@ -63,7 +64,7 @@ std::vector<std::tuple<State, Reward, IsDone>> BaseTanksEnvironment::step(
         std::lock_guard lock_guard(visions_mutex[i]);
         result.emplace_back(
             State(enemy_visions[i], tank_factories[i]->get_proprioception()),
-            tank_factories[i]->get_reward(), tank_factories[i]->is_dead());
+            tank_factories[i]->get_reward(tank_factories), tank_factories[i]->is_dead());
     }
 
     const auto actions = actions_future.get();
@@ -102,8 +103,8 @@ std::vector<State> BaseTanksEnvironment::reset_physics() {
         for (const auto &item_producer: tank_factories.back()->get_item_producers())
             physic_engine->add_item_producer(item_producer);
 
-        tank_controller_handler.push_back(
-            std::make_unique<EnemyControllerHandler>(wanted_frequency, 1.f / 6.f));
+        tank_controller_handler.push_back(std::make_unique<EnemyControllerHandler>(
+            wanted_frequency, 1.f / 6.f, tank_factories.back()->get_action_stats()));
 
         for (const auto &controller: tank_factories.back()->get_controllers())
             tank_controller_handler.back()->add_controller(controller);
@@ -136,7 +137,7 @@ std::vector<State> BaseTanksEnvironment::reset_physics() {
 
     on_reset_physics(physic_engine);
 
-    physic_engine->step(wanted_frequency);
+    for (int i = 0; i < nb_reset_frames; i++) physic_engine->step(wanted_frequency);
 
     std::vector<State> states;
     for (int i = 0; i < tank_factories.size(); i++) {
@@ -177,7 +178,6 @@ void BaseTanksEnvironment::stop_drawing() {
 
 void BaseTanksEnvironment::worker_enemy_vision(
     const int index, const std::unique_ptr<EnemyTankFactory> &tank_factory) {
-    std::mt19937 thread_rng(dev());
 
     auto renderer = std::make_unique<PBufferRenderer>(
         gl_context, ENEMY_VISION_SIZE, ENEMY_VISION_SIZE, glm::vec3(200, 300, 200),
@@ -190,7 +190,7 @@ void BaseTanksEnvironment::worker_enemy_vision(
     renderer->add_drawable("cubemap", std::make_unique<CubeMap>(file_reader, "cubemap/1"));
 
     for (const auto &item: physic_engine->get_items()) {
-        glm::vec4 color(u_dist(thread_rng), u_dist(thread_rng), u_dist(thread_rng), 1.f);
+        glm::vec4 color(u_dist(rng), u_dist(rng), u_dist(rng), 1.f);
         renderer->add_drawable(
             item->get_name(),
             std::make_unique<Specular>(
@@ -199,7 +199,7 @@ void BaseTanksEnvironment::worker_enemy_vision(
     }
 
     for (const auto &[name, shape]: tank_factories[0]->load_shell_shapes()) {
-        glm::vec4 shell_color(u_dist(thread_rng), u_dist(thread_rng), u_dist(thread_rng), 1.f);
+        glm::vec4 shell_color(u_dist(rng), u_dist(rng), u_dist(rng), 1.f);
 
         renderer->add_drawable(
             name, std::make_unique<Specular>(

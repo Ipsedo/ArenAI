@@ -12,7 +12,7 @@
 
 struct ModelOptions {
     std::vector<std::tuple<int, int>> vision_channels;
-    int num_group_norm;
+    std::vector<int> group_norm_nums;
     int hidden_size_sensors;
     int hidden_size_actions;
     int actor_hidden_size;
@@ -26,7 +26,6 @@ struct TrainOptions {
     int nb_tanks;
     std::filesystem::path output_folder;
     std::filesystem::path android_asset_folder;
-    float potential_reward_scale;
     float learning_rate;
     int epochs;
     int batch_size;

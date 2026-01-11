@@ -9,9 +9,10 @@
 SacCritic::SacCritic(
     const int &nb_sensors, const int &nb_actions, const int &hidden_size_sensors,
     const int &hidden_size_actions, const int &hidden_size,
-    const std::vector<std::tuple<int, int>> &vision_channels, const int num_group_norm)
+    const std::vector<std::tuple<int, int>> &vision_channels,
+    const std::vector<int> &group_norm_nums)
     : vision_encoder(register_module(
-        "vision_encoder", std::make_shared<ConvolutionNetwork>(vision_channels, num_group_norm))),
+        "vision_encoder", std::make_shared<ConvolutionNetwork>(vision_channels, group_norm_nums))),
       sensors_encoder(register_module(
           "sensors_encoder",
           torch::nn::Sequential(

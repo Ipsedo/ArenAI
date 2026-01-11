@@ -12,24 +12,24 @@
 SacNetworks::SacNetworks(
     int nb_sensors, int nb_action, const float learning_rate, int hidden_size_sensors,
     int hidden_size_actions, int actor_hidden_size, int critic_hidden_size,
-    const std::vector<std::tuple<int, int>> &vision_channels, const int num_group_norm,
-    const torch::Device device, int metric_window_size, const float tau, const float gamma,
-    const float initial_alpha)
+    const std::vector<std::tuple<int, int>> &vision_channels,
+    const std::vector<int> &group_norm_nums, const torch::Device device, int metric_window_size,
+    const float tau, const float gamma, const float initial_alpha)
     : actor(std::make_shared<SacActor>(
         nb_sensors, nb_action, hidden_size_sensors, actor_hidden_size, vision_channels,
-        num_group_norm)),
+        group_norm_nums)),
       critic_1(std::make_shared<SacCritic>(
           nb_sensors, nb_action, hidden_size_sensors, hidden_size_actions, critic_hidden_size,
-          vision_channels, num_group_norm)),
+          vision_channels, group_norm_nums)),
       critic_2(std::make_shared<SacCritic>(
           nb_sensors, nb_action, hidden_size_sensors, hidden_size_actions, critic_hidden_size,
-          vision_channels, num_group_norm)),
+          vision_channels, group_norm_nums)),
       target_critic_1(std::make_shared<SacCritic>(
           nb_sensors, nb_action, hidden_size_sensors, hidden_size_actions, critic_hidden_size,
-          vision_channels, num_group_norm)),
+          vision_channels, group_norm_nums)),
       target_critic_2(std::make_shared<SacCritic>(
           nb_sensors, nb_action, hidden_size_sensors, hidden_size_actions, critic_hidden_size,
-          vision_channels, num_group_norm)),
+          vision_channels, group_norm_nums)),
       alpha_entropy(std::make_shared<AlphaParameter>(initial_alpha)),
       actor_optim(std::make_unique<torch::optim::Adam>(
           actor->parameters(), torch::optim::AdamOptions(learning_rate))),
@@ -42,7 +42,7 @@ SacNetworks::SacNetworks(
       actor_loss_metric(std::make_shared<Metric>("actor", metric_window_size)),
       critic_1_loss_metric(std::make_shared<Metric>("critic_1", metric_window_size)),
       critic_2_loss_metric(std::make_shared<Metric>("critic_2", metric_window_size)),
-      entropy_loss_metric(std::make_shared<Metric>("entropy", metric_window_size)),
+      entropy_loss_metric(std::make_shared<Metric>("entropy", metric_window_size, 3, true)),
       entropy_alpha_metric(std::make_shared<Metric>("alpha", metric_window_size)), tau(tau),
       gamma(gamma), target_entropy(truncated_normal_target_entropy(nb_action, -1.f, 1.f)) {
 
@@ -87,7 +87,7 @@ void SacNetworks::train(
             const auto next_target_q_value_2 =
                 target_critic_2->value(next_state.vision, next_state.proprioception, next_action);
 
-            const auto normalized_reward = (reward - reward.mean()) / (reward.std() + 1e-8);
+            const auto normalized_reward = (reward - reward.mean()) / (reward.std() + EPSILON);
             target_q_values = normalized_reward
                               + (1.f - done.to(torch::kFloat)) * gamma
                                     * (torch::min(next_target_q_value_1, next_target_q_value_2)
@@ -96,8 +96,7 @@ void SacNetworks::train(
 
         // critic 1
         const auto q_value_1 = critic_1->value(state.vision, state.proprioception, action);
-        const auto critic_1_loss =
-            torch::smooth_l1_loss(q_value_1, target_q_values, at::Reduction::Mean);
+        const auto critic_1_loss = torch::mse_loss(q_value_1, target_q_values, at::Reduction::Mean);
 
         critic_1_optim->zero_grad();
         critic_1_loss.backward();
@@ -105,8 +104,7 @@ void SacNetworks::train(
 
         // critic 2
         const auto q_value_2 = critic_2->value(state.vision, state.proprioception, action);
-        const auto critic_2_loss =
-            torch::smooth_l1_loss(q_value_2, target_q_values, at::Reduction::Mean);
+        const auto critic_2_loss = torch::mse_loss(q_value_2, target_q_values, at::Reduction::Mean);
 
         critic_2_optim->zero_grad();
         critic_2_loss.backward();
@@ -144,11 +142,11 @@ void SacNetworks::train(
         soft_update(target_critic_2, critic_2, tau);
 
         // metrics
-        critic_1_loss_metric->add(critic_1_loss.cpu().item().toFloat());
-        critic_2_loss_metric->add(critic_2_loss.cpu().item().toFloat());
-        actor_loss_metric->add(actor_loss.cpu().item().toFloat());
-        entropy_loss_metric->add(entropy_loss.cpu().item().toFloat());
-        entropy_alpha_metric->add(alpha_entropy->alpha().cpu().item().toFloat());
+        critic_1_loss_metric->add(critic_1_loss.cpu().item<float>());
+        critic_2_loss_metric->add(critic_2_loss.cpu().item<float>());
+        actor_loss_metric->add(actor_loss.cpu().item<float>());
+        entropy_loss_metric->add(entropy_loss.cpu().item<float>());
+        entropy_alpha_metric->add(alpha_entropy->alpha().cpu().item<float>());
     }
 }
 

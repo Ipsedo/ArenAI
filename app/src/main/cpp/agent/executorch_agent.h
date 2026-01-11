@@ -14,7 +14,6 @@
 
 using namespace executorch;
 
-float erfinv(const float x);
 float phi(const float z);
 float theta(const float x);
 float theta_inv(const float theta);

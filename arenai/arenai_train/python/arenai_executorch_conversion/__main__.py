@@ -44,8 +44,8 @@ def main() -> None:
         "-i", "--input-state-dict-folder", type=str, required=True
     )
 
-    parser.add_argument("--hidden-size-sensors", type=int, default=128)
-    parser.add_argument("--hidden-size", type=int, default=1024)
+    parser.add_argument("--hidden-size-sensors", type=int, default=256)
+    parser.add_argument("--hidden-size", type=int, default=2048)
     parser.add_argument("--num-group-norm", type=int, default=4)
     parser.add_argument(
         "--vision-channels",
@@ -57,7 +57,6 @@ def main() -> None:
             (32, 64),
             (64, 96),
             (96, 128),
-            (128, 256),
         ],
     )
 

@@ -20,29 +20,29 @@ torch::Tensor truncated_normal_log_pdf(
     const torch::Tensor &x, const torch::Tensor &mu, const torch::Tensor &sigma,
     const float min_value, const float max_value) {
 
-    const auto safe_sigma = torch::clamp_min(sigma, SIGMA_MIN);
+    const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
 
     const auto alpha = (min_value - mu) / safe_sigma;
     const auto beta = (max_value - mu) / safe_sigma;
 
-    const auto z = torch::clamp_min(theta(beta) - theta(alpha), EPSILON);
+    const auto Z = torch::clamp_min(theta(beta) - theta(alpha), EPSILON);
 
-    return -0.5 * std::log(2.0 * M_PI) - torch::log(safe_sigma)
-           - 0.5 * torch::pow((x - mu) / safe_sigma, 2.0) - torch::log(z);
+    return -0.5 * torch::pow((x - mu) / safe_sigma, 2.0) - torch::log(safe_sigma)
+           - 0.5 * std::log(2.0 * M_PI) - torch::log(Z);
 }
 
 torch::Tensor truncated_normal_sample(
     const torch::Tensor &mu, const torch::Tensor &sigma, const float min_value,
     const float max_value) {
 
-    const auto safe_sigma = torch::clamp_min(sigma, SIGMA_MIN);
+    const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
 
     const auto alpha = (min_value - mu) / safe_sigma;
     const auto beta = (max_value - mu) / safe_sigma;
 
-    const auto cdf =
-        theta(alpha)
-        + at::rand(mu.sizes(), at::TensorOptions(mu.device())) * (theta(beta) - theta(alpha));
+    const auto Z = torch::clamp_min(theta(beta) - theta(alpha), EPSILON);
+
+    const auto cdf = theta(alpha) + at::rand(mu.sizes(), at::TensorOptions(mu.device())) * Z;
 
     return theta_inv(cdf) * safe_sigma + mu;
 }
@@ -51,37 +51,43 @@ torch::Tensor truncated_normal_entropy(
     const torch::Tensor &mu, const torch::Tensor &sigma, const float min_value,
     const float max_value) {
 
-    const auto safe_sigma = torch::clamp_min(sigma, SIGMA_MIN);
+    const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
 
     const auto alpha = (min_value - mu) / safe_sigma;
     const auto beta = (max_value - mu) / safe_sigma;
 
-    const auto z = torch::clamp_min(theta(beta) - theta(alpha), EPSILON);
+    const auto Z = torch::clamp_min(theta(beta) - theta(alpha), EPSILON);
 
-    return torch::log(std::sqrt(2.0 * M_PI * M_E) * safe_sigma * z)
-           + (alpha * phi(alpha) - beta * phi(beta)) / (2.0 * z);
+    return 0.5 * torch::log(2.0 * M_PI * M_E * torch::pow(safe_sigma, 2.0)) + torch::log(Z)
+           + (alpha * phi(alpha) - beta * phi(beta)) / (2.0 * Z);
 }
 
 float truncated_normal_target_entropy(
     const int nb_actions, const float min_value, const float max_value) {
-    return static_cast<float>(nb_actions)
-           * truncated_normal_entropy(torch::zeros({1}), torch::ones({1}), min_value, max_value)
-                 .item()
-                 .toFloat();
+    return truncated_normal_entropy(
+               torch::zeros({nb_actions}), torch::ones({nb_actions}) * std::sqrt(2.0), min_value,
+               max_value)
+        .sum()
+        .item<float>();
 }
 
 torch::Tensor gaussian_tanh_sample(const torch::Tensor &mu, const torch::Tensor &sigma) {
+    const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
+
     const auto eps = torch::randn_like(mu);
-    const auto u = mu + sigma * eps;
+
+    const auto u = mu + safe_sigma * eps;
     return torch::tanh(u);
 }
 
 torch::Tensor
 gaussian_tanh_log_pdf(const torch::Tensor &x, const torch::Tensor &mu, const torch::Tensor &sigma) {
+    const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
+
     const auto u = 0.5 * torch::log((1.0 + x + EPSILON) / (1.0 - x + EPSILON));
 
-    const auto log_unnormalized = -0.5 * torch::pow((u - mu) / sigma, 2);
-    const auto log_normalization = torch::log(sigma) + 0.5 * std::log(2.0 * M_PI);
+    const auto log_unnormalized = -0.5 * torch::pow((u - mu) / safe_sigma, 2.0);
+    const auto log_normalization = torch::log(safe_sigma) + 0.5 * std::log(2.0 * M_PI);
 
     const auto log_gaussian = log_unnormalized - log_normalization;
     const auto log_det_jacobian = torch::log(1.0 - x.pow(2.0) + EPSILON);

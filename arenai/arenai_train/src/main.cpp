@@ -71,8 +71,8 @@ int main(const int argc, char **argv) {
 
             return group_nums;
         });
-    parser.add_argument("--hidden_size_sensors").scan<'i', int>().default_value(256);
-    parser.add_argument("--hidden_size_actions").scan<'i', int>().default_value(64);
+    parser.add_argument("--sensors_hidden_size").scan<'i', int>().default_value(256);
+    parser.add_argument("--actions_hidden_size").scan<'i', int>().default_value(64);
     parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(2048);
     parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(2048);
     parser.add_argument("--tau").scan<'g', float>().default_value(0.005f);
@@ -100,7 +100,7 @@ int main(const int argc, char **argv) {
         parser.get<float>("--wanted_frequency"),
         {parser.get<vision_channels>("--vision_channels").channels,
          parser.get<group_norm_nums>("--group_norm_nums").groups,
-         parser.get<int>("--hidden_size_sensors"), parser.get<int>("--hidden_size_actions"),
+         parser.get<int>("--sensors_hidden_size"), parser.get<int>("--actions_hidden_size"),
          parser.get<int>("--actor_hidden_size"), parser.get<int>("--critic_hidden_size"),
          parser.get<float>("--tau"), parser.get<float>("--gamma"),
          parser.get<float>("--initial_alpha")},

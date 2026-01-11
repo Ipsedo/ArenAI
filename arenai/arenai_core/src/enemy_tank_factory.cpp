@@ -39,21 +39,6 @@ float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory
     return std::atan2(sine, dot);
 }
 
-float EnemyTankFactory::compute_value_range_reward(
-    const float value, const float min_value, const float max_value) {
-    const float max_penalty_value = max_value * 2.f;
-
-    // bounds
-    if (value <= min_value) return 1.f;
-    if (value >= max_penalty_value) return -1.f;
-
-    // [min_value, max_value] : 1 -> 0
-    if (value <= max_value) return (max_value - value) / (max_value - min_value);
-
-    // [max_value, 2 * max_value] : 0 -> -1
-    return -(value - max_value) / (max_penalty_value - max_value);
-}
-
 float EnemyTankFactory::get_reward(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
 
@@ -84,18 +69,16 @@ float EnemyTankFactory::get_reward(
         const auto other_pos = other->get_chassis()->get_body()->getWorldTransform().getOrigin();
         const float distance = (chassis_tr.getOrigin() - other_pos).length();
 
-        const float theta = compute_aim_angle(other);
-        const float phi_angle = 0.5f * (1.0f + std::cos(theta));
-
+        const float clamped_cos_theta = std::clamp(std::cos(compute_aim_angle(other)), 0.f, 1.f);
         const float weight = std::exp(-distance / band);
 
-        potential_hit_reward += (has_shot ? 0.1f * phi_angle : 0.f) * weight;
+        potential_hit_reward += (has_shot ? 0.1f * clamped_cos_theta : 0.f) * weight;
         softmax_sum += weight;
     }
 
     potential_hit_reward /= softmax_sum + EPSILON;
 
-    const float shoot_penalty = has_shot ? -0.01f : 0.f;
+    const float shoot_penalty = has_shot ? -0.05f : 0.f;
 
     // prepare next frame
     const auto reward = hit_reward + dead_penalty + shoot_penalty + potential_hit_reward;
@@ -105,7 +88,7 @@ float EnemyTankFactory::get_reward(
     return reward;
 }
 
-static float sigmoid(const float x) {
+float EnemyTankFactory::sigmoid(const float x) {
     if (x >= 0.0f) return 1.0f / (1.0f + std::exp(-x));
 
     const float z = std::exp(x);

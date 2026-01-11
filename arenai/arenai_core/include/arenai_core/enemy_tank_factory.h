@@ -51,7 +51,7 @@ private:
 
     std::shared_ptr<ActionStats> action_stats;
 
-    static float compute_value_range_reward(float value, float min_value, float max_value);
+    static float sigmoid(float x);
     float compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank);
 };
 

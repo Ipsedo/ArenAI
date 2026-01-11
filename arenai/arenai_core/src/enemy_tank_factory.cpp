@@ -70,8 +70,35 @@ float EnemyTankFactory::get_reward(
     // 2. dead penalty
     const auto dead_penalty = is_dead() ? (is_suicide() ? -0.5f : -1.f) : 0.f;
 
+    // 3. fire reward
+    const float band = max_distance_reward - min_distance_reward;
+
+    float potential_hit_reward = 0.f;
+    float softmax_sum = 0.f;
+
+    const bool has_shot = action_stats->has_fire();
+
+    for (const auto &other: tank_factories) {
+        if (other->tank_prefix_name == tank_prefix_name or other->is_dead()) continue;
+
+        const auto other_pos = other->get_chassis()->get_body()->getWorldTransform().getOrigin();
+        const float distance = (chassis_tr.getOrigin() - other_pos).length();
+
+        const float theta = compute_aim_angle(other);
+        const float phi_angle = 0.5f * (1.0f + std::cos(theta));
+
+        const float weight = std::exp(-distance / band);
+
+        potential_hit_reward += (has_shot ? 0.1f * phi_angle : 0.f) * weight;
+        softmax_sum += weight;
+    }
+
+    potential_hit_reward /= softmax_sum + EPSILON;
+
+    const float shoot_penalty = has_shot ? -0.01f : 0.f;
+
     // prepare next frame
-    const auto reward = hit_reward + dead_penalty;
+    const auto reward = hit_reward + dead_penalty + shoot_penalty + potential_hit_reward;
     hit_reward = 0.f;
 
     // return reward
@@ -107,18 +134,18 @@ float EnemyTankFactory::get_potential_reward(
         if (other->tank_prefix_name == tank_prefix_name or other->is_dead()) continue;
 
         const auto other_pos = other->get_chassis()->get_body()->getWorldTransform().getOrigin();
-        const float d = (chassis_pos - other_pos).length();
+        const float distance = (chassis_pos - other_pos).length();
 
-        if (!std::isfinite(d)) continue;
+        if (!std::isfinite(distance)) continue;
 
-        const float x = (d_opt - d) / k_dist;
+        const float x = (d_opt - distance) / k_dist;
         const float phi_dist = sigmoid(x);
 
         const float theta = compute_aim_angle(other);
         const float phi_angle = 0.5f * (1.0f + std::cos(theta));
 
-        const auto reward = (phi_dist + phi_angle) / 2.f;
-        const auto weight = std::exp(-d / tau_gate);
+        const auto reward = phi_angle * phi_dist;
+        const auto weight = std::exp(-distance / tau_gate);
 
         phi += reward * weight;
         softmax_sum += weight;
@@ -129,7 +156,7 @@ float EnemyTankFactory::get_potential_reward(
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {
     for (const auto &i: get_items())
-        if (i->get_name() == item->get_name()) return;
+        if (i->get_name() == item->get_name()) return;// self shoot
 
     if (const auto &life_item = dynamic_cast<LifeItem *>(item); life_item) {
         if (life_item->is_dead() && !life_item->is_already_dead()) {

@@ -17,7 +17,6 @@ struct group_norm_nums {
 };
 
 int main(const int argc, char **argv) {
-
     argparse::ArgumentParser parser("arenai train");
 
     // physic simulation

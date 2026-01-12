@@ -23,20 +23,17 @@ EnemyTankFactory::EnemyTankFactory(
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
     const auto canon_tr = get_canon()->get_model_matrix();
-    const glm::vec3 other_pos =
-        other_tank->get_chassis()->get_model_matrix() * glm::vec4(glm::vec3(0.f), 1.f);
+    const auto other_tr = other_tank->get_chassis()->get_model_matrix();
 
-    const glm::vec3 pos = canon_tr * glm::vec4(glm::vec3(0.f), 1.f);
+    const auto canon_pos = glm::vec3(canon_tr * glm::vec4(0.f, 0.f, 0.f, 1.f));
+    const auto other_pos = glm::vec3(other_tr * glm::vec4(0.f, 0.f, 0.f, 1.f));
 
-    const glm::vec3 forward = glm::normalize(glm::vec3(canon_tr * glm::vec4(0.f, 0.f, 1.f, 0.f)));
-    const glm::vec3 to_target = glm::normalize(other_pos - pos);
+    const glm::vec3 to_other = glm::normalize(other_pos - canon_pos);
+    const auto forward = glm::normalize(glm::vec3(canon_tr * glm::vec4(0.f, 0.f, 1.f, 0.f)));
 
-    const float dot = std::clamp(glm::dot(forward, to_target), -1.f, 1.f);
+    const float d = std::clamp(glm::dot(forward, to_other), -1.f, 1.f);
 
-    const glm::vec3 cross = glm::cross(forward, to_target);
-    const float sine = glm::length(cross);
-
-    return std::atan2(sine, dot);
+    return std::acos(d);
 }
 
 float EnemyTankFactory::get_reward(
@@ -78,7 +75,7 @@ float EnemyTankFactory::get_reward(
 
     potential_hit_reward /= softmax_sum + EPSILON;
 
-    const float shoot_penalty = has_shot ? -0.05f : 0.f;
+    const float shoot_penalty = has_shot ? -0.01f : 0.f;
 
     // prepare next frame
     const auto reward = hit_reward + dead_penalty + shoot_penalty + potential_hit_reward;

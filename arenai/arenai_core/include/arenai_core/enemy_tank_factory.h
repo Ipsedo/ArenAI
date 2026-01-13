@@ -42,16 +42,17 @@ private:
 
     bool is_dead_already_triggered;
 
-    float min_aim_angle_reward;
-    float max_aim_angle_reward;
-    float min_distance_reward;
-    float max_distance_reward;
+    float min_aim_angle;
+    float max_aim_angle;
+    float min_distance;
+    float max_distance;
 
     bool has_touch;
 
     std::shared_ptr<ActionStats> action_stats;
 
     static float sigmoid(float x);
+    static float compute_range_reward(float value, float min, float max);
     float compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank);
 };
 

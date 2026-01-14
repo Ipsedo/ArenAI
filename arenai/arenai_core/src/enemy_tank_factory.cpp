@@ -18,7 +18,7 @@ EnemyTankFactory::EnemyTankFactory(
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), is_dead_already_triggered(false),
       min_aim_angle(static_cast<float>(M_PI) / 8.f), max_aim_angle(static_cast<float>(M_PI) / 3.f),
-      min_distance(5.f), max_distance(50.f), has_touch(false),
+      min_distance(5.f), max_distance(100.f), has_touch(false),
       action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
@@ -70,17 +70,17 @@ float EnemyTankFactory::get_reward(
         const auto other_pos = other->get_chassis()->get_body()->getWorldTransform().getOrigin();
         const float distance = (chassis_tr.getOrigin() - other_pos).length();
 
-        const float angle = compute_aim_angle(other);
-        const float angle_reward = compute_range_reward(angle, min_aim_angle, max_aim_angle);
+        const float aim_reward =
+            compute_range_reward(compute_aim_angle(other), min_aim_angle, max_aim_angle);
         const float weight = std::exp(-distance / band);
 
-        potential_hit_reward += (has_shot ? 0.1f * angle_reward : 0.f) * weight;
+        potential_hit_reward += (has_shot ? 0.1f * aim_reward : 0.f) * weight;
         softmax_sum += weight;
     }
 
     potential_hit_reward /= softmax_sum + EPSILON;
 
-    const float shoot_penalty = has_shot ? -0.01f : 0.f;
+    const float shoot_penalty = has_shot ? -1e-3f : 0.f;
 
     // prepare next frame
     const auto reward = hit_reward + dead_penalty + shoot_penalty + potential_hit_reward;
@@ -108,6 +108,10 @@ float EnemyTankFactory::get_potential_reward(
     const float d_max = max_distance;
     const float band = d_max - d_min;
 
+    const float d_opt = 0.5f * (d_min + d_max);
+    const float sigma = 0.5f * band;
+    const float inv_sigma2 = 1.0f / (sigma * sigma + EPSILON);
+
     const float tau_gate = band;
 
     float phi = 0.f;
@@ -121,14 +125,14 @@ float EnemyTankFactory::get_potential_reward(
 
         if (!std::isfinite(distance)) continue;
 
-        const float phi_dist = compute_range_reward(distance, min_distance, max_distance);
-        const float phi_angle =
-            compute_range_reward(compute_aim_angle(other), min_aim_angle, max_aim_angle);
+        const float diff = distance - d_opt;
+        const float phi_dist = std::exp(-(diff * diff) * inv_sigma2);
+        const float phi_angle = 0.5f * (1.f + std::cos(compute_aim_angle(other)));
 
-        const auto reward = phi_angle + phi_dist;
+        const auto shaped_reward = phi_angle * phi_dist;
         const auto weight = std::exp(-distance / tau_gate);
 
-        phi += reward * weight;
+        phi += shaped_reward * weight;
         softmax_sum += weight;
     }
 

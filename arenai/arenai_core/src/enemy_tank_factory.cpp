@@ -74,7 +74,7 @@ float EnemyTankFactory::get_reward(
             compute_range_reward(compute_aim_angle(other), min_aim_angle, max_aim_angle);
         const float weight = std::exp(-distance / band);
 
-        potential_hit_reward += (has_shot ? 0.1f * aim_reward : 0.f) * weight;
+        potential_hit_reward += (has_shot ? 0.5f * aim_reward : 0.f) * weight;
         softmax_sum += weight;
     }
 

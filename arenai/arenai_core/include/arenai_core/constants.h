@@ -5,7 +5,7 @@
 #ifndef ARENAI_TRAIN_HOST_CONSTANTS_H
 #define ARENAI_TRAIN_HOST_CONSTANTS_H
 
-#define ENEMY_VISION_SIZE 512
+#define ENEMY_VISION_SIZE 256
 // (position + velocity + angle_quaternion + angle_velocity) * (6 * wheel + chassis + turret + canon) - chassis_pos
 #define ENEMY_PROPRIOCEPTION_SIZE ((3 + 3 + 4 + 3) * (6 + 3) - 3)
 #define ENEMY_NB_ACTION (2 + 2 + 1)

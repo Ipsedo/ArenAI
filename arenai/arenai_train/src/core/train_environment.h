@@ -17,8 +17,6 @@ public:
 
     static void reset_singleton();
 
-    std::vector<Reward> get_potential_rewards();
-
 protected:
     void on_draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) override;
 

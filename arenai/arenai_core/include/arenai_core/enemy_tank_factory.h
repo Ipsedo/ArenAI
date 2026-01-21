@@ -16,8 +16,6 @@ public:
         glm::vec3 chassis_pos, float wanted_frame_frequency);
 
     float get_reward(const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories);
-    float
-    get_potential_reward(const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories);
 
     bool is_dead() override;
     bool is_suicide() const;
@@ -51,7 +49,6 @@ private:
 
     std::shared_ptr<ActionStats> action_stats;
 
-    static float sigmoid(float x);
     static float compute_range_reward(float value, float min, float max);
     float compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank);
 };

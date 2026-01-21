@@ -54,7 +54,7 @@ int main(const int argc, char **argv) {
             return vision_channels;
         });
     parser.add_argument("--group_norm_nums")
-        .default_value<group_norm_nums>({{4, 8, 16, 16, 32, 32, 48, 64}})
+        .default_value<group_norm_nums>({{2, 4, 8, 16, 24, 32, 48, 64}})
         .action([](const std::string &value) -> group_norm_nums {
             const std::regex regex_match(R"(^ *\[(?: *\d+ *,)* *\d+ *] *$)");
             const std::regex regex_groups(R"(\d+)");

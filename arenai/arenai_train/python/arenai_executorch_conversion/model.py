@@ -21,23 +21,15 @@ class ConvolutionNetwork(nn.Module):
 
         for i, ((c_i, c_o), g) in enumerate(zip(channels, group_norm_nums)):
             self.cnn.append(nn.Conv2d(c_i, c_o, kernel, stride, padding))
-
-            if i < len(channels) - 1:
-                self.cnn.append(nn.GroupNorm(g, c_o, affine=True))
-                self.cnn.append(nn.SiLU())
+            self.cnn.append(nn.GroupNorm(g, c_o, affine=True))
+            self.cnn.append(nn.SiLU())
 
             w = (w - kernel + 2 * padding) // stride + 1
             h = (h - kernel + 2 * padding) // stride + 1
 
         self.__output_size = w * h * channels[-1][1]
 
-        self.cnn.extend(
-            nn.Sequential(
-                nn.Flatten(1, -1),
-                nn.LayerNorm(self.__output_size),
-                nn.SiLU(),
-            )
-        )
+        self.cnn.append(nn.Flatten(1, -1))
 
     def forward(self, vision: th.Tensor) -> th.Tensor:
         out: th.Tensor = self.cnn(vision)

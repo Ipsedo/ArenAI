@@ -1,5 +1,5 @@
 //
-// Created by samuel on 12/10/2025.
+// Created by samuel on 21/01/2026.
 //
 
 #include "./sac.h"
@@ -7,27 +7,26 @@
 #include "../utils/saver.h"
 #include "../utils/target_update.h"
 #include "../utils/truncated_normal.h"
-#include "arenai_core/constants.h"
 
-SacNetworks::SacNetworks(
+SacAgent::SacAgent(
     int nb_sensors, int nb_action, const float learning_rate, int hidden_size_sensors,
     int hidden_size_actions, int actor_hidden_size, int critic_hidden_size,
     const std::vector<std::tuple<int, int>> &vision_channels,
     const std::vector<int> &group_norm_nums, const torch::Device device, int metric_window_size,
     const float tau, const float gamma, const float initial_alpha)
-    : actor(std::make_shared<SacActor>(
+    : actor(std::make_shared<Actor>(
         nb_sensors, nb_action, hidden_size_sensors, actor_hidden_size, vision_channels,
         group_norm_nums)),
-      critic_1(std::make_shared<SacCritic>(
+      critic_1(std::make_shared<QFunction>(
           nb_sensors, nb_action, hidden_size_sensors, hidden_size_actions, critic_hidden_size,
           vision_channels, group_norm_nums)),
-      critic_2(std::make_shared<SacCritic>(
+      critic_2(std::make_shared<QFunction>(
           nb_sensors, nb_action, hidden_size_sensors, hidden_size_actions, critic_hidden_size,
           vision_channels, group_norm_nums)),
-      target_critic_1(std::make_shared<SacCritic>(
+      target_critic_1(std::make_shared<QFunction>(
           nb_sensors, nb_action, hidden_size_sensors, hidden_size_actions, critic_hidden_size,
           vision_channels, group_norm_nums)),
-      target_critic_2(std::make_shared<SacCritic>(
+      target_critic_2(std::make_shared<QFunction>(
           nb_sensors, nb_action, hidden_size_sensors, hidden_size_actions, critic_hidden_size,
           vision_channels, group_norm_nums)),
       alpha_entropy(std::make_shared<AlphaParameter>(initial_alpha)),
@@ -57,16 +56,15 @@ SacNetworks::SacNetworks(
     alpha_entropy->to(device);
 }
 
-agent_response SacNetworks::act(const torch::Tensor &vision, const torch::Tensor &sensors) const {
+agent_response SacAgent::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
     const auto &[mu, sigma] = actor->act(vision, sensors);
     return {truncated_normal_sample(mu, sigma, -1.0, 1.0)};
 }
 
-void SacNetworks::train(
-    const std::unique_ptr<ReplayBuffer> &replay_buffer, const int epochs,
-    const int batch_size) const {
+void SacAgent::train(
+    const std::unique_ptr<ReplayBuffer> &replay_buffer, const int epochs, const int batch_size) {
 
-    train(true);
+    set_train(true);
 
     for (int e = 0; e < epochs; e++) {
         const auto [state, action, reward, done, next_state] =
@@ -150,13 +148,13 @@ void SacNetworks::train(
     }
 }
 
-std::vector<std::shared_ptr<Metric>> SacNetworks::get_metrics() const {
+std::vector<std::shared_ptr<Metric>> SacAgent::get_metrics() {
     return {
         actor_loss_metric, critic_1_loss_metric, critic_2_loss_metric, entropy_loss_metric,
         entropy_alpha_metric};
 }
 
-void SacNetworks::save(const std::filesystem::path &output_folder) const {
+void SacAgent::save(const std::filesystem::path &output_folder) {
     // Models
     save_torch(output_folder, actor, "actor.pt");
 
@@ -179,7 +177,7 @@ void SacNetworks::save(const std::filesystem::path &output_folder) const {
     save_torch(output_folder, entropy_optim, "entropy_optim.pt");
 }
 
-void SacNetworks::train(const bool train) const {
+void SacAgent::set_train(const bool train) {
     actor->train(train);
     critic_1->train(train);
     critic_2->train(train);
@@ -188,7 +186,7 @@ void SacNetworks::train(const bool train) const {
     alpha_entropy->train(train);
 }
 
-void SacNetworks::to(const torch::Device device) const {
+void SacAgent::to(const torch::Device device) {
     actor->to(device);
     critic_1->to(device);
     critic_2->to(device);
@@ -197,14 +195,7 @@ void SacNetworks::to(const torch::Device device) const {
     alpha_entropy->to(device);
 }
 
-int SacNetworks::count_parameters_impl(const std::vector<torch::Tensor> &params) {
-    return std::accumulate(params.begin(), params.end(), 0, [](int c, auto tensor) {
-        auto s = tensor.sizes();
-        return c + std::accumulate(s.begin(), s.end(), 1, std::multiplies<int>());
-    });
-}
-
-int SacNetworks::count_parameters() const {
+int SacAgent::count_parameters() {
     return count_parameters_impl(actor->parameters())
            + count_parameters_impl(critic_1->parameters())
            + count_parameters_impl(critic_2->parameters())

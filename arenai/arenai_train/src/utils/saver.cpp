@@ -121,16 +121,16 @@ void save_png_rgb(
  */
 
 Saver::Saver(
-    const std::shared_ptr<SacNetworks> &sac_networks, const std::filesystem::path &output_path,
+    const std::shared_ptr<AbstractAgent> &agent, const std::filesystem::path &output_path,
     const int save_every)
-    : sac_networks(sac_networks), curr_step(0), save_every(save_every), output_path(output_path) {}
+    : agent(agent), curr_step(0), save_every(save_every), output_path(output_path) {}
 
 void Saver::attempt_save() {
     if (curr_step % save_every == 0) {
         const auto output_folder = output_path / ("save_" + std::to_string(curr_step / save_every));
         if (!std::filesystem::exists(output_folder))
             std::filesystem::create_directories(output_folder);
-        sac_networks->save(output_folder);
+        agent->save(output_folder);
     }
 
     curr_step++;

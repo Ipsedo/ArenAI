@@ -10,9 +10,10 @@
 
 #include <arenai_core/constants.h>
 
+#include "./agents/ppo.h"
+#include "./agents/sac.h"
 #include "./core/train_environment.h"
 #include "./core/train_gl_context.h"
-#include "./networks/sac.h"
 #include "./utils/replay_buffer.h"
 #include "./utils/saver.h"
 #include "./utils/torch_converter.h"
@@ -48,23 +49,30 @@ void train_main(
 
     const auto env = std::make_unique<TrainTankEnvironment>(
         train_options.nb_tanks, train_options.android_asset_folder, wanted_frequency);
-    auto sac = std::make_shared<SacNetworks>(
+
+    auto agent = std::make_shared<SacAgent>(
         ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, train_options.learning_rate,
         model_options.hidden_size_sensors, model_options.hidden_size_actions,
         model_options.actor_hidden_size, model_options.critic_hidden_size,
         model_options.vision_channels, model_options.group_norm_nums, torch_device,
         train_options.metric_window_size, model_options.tau, model_options.gamma,
         model_options.initial_alpha);
+    /*auto agent = std::make_shared<PpoAgent>(
+        ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, train_options.learning_rate,
+        model_options.hidden_size_sensors, model_options.actor_hidden_size,
+        model_options.critic_hidden_size, model_options.vision_channels,
+        model_options.group_norm_nums, torch_device, train_options.metric_window_size,
+        model_options.gamma, 0.2);*/
 
-    std::cout << "Parameters : " << sac->count_parameters() << std::endl;
+    std::cout << "Parameters : " << agent->count_parameters() << std::endl;
 
-    Saver saver(sac, train_options.output_folder, train_options.save_every);
+    Saver saver(agent, train_options.output_folder, train_options.save_every);
 
     auto replay_buffer = std::make_unique<ReplayBuffer>(train_options.replay_buffer_size);
 
     Metric reward_metric("reward", train_options.metric_window_size);
 
-    auto sac_metrics = sac->get_metrics();
+    auto sac_metrics = agent->get_metrics();
 
     std::cout << "Start training on " << train_options.nb_episodes << " episodes" << std::endl;
 
@@ -105,9 +113,10 @@ void train_main(
 
             {
                 torch::NoGradGuard no_grad_guard;
-                sac->train(false);
+                agent->set_train(false);
 
-                actions = sac->act(vision.to(torch_device), proprioception.to(torch_device)).action;
+                actions =
+                    agent->act(vision.to(torch_device), proprioception.to(torch_device)).action;
                 actions_for_env = tensor_to_actions(actions);
             }
 
@@ -144,7 +153,7 @@ void train_main(
             // check if it's time to train
             if (train_counter % train_options.train_every == train_options.train_every - 1
                 && replay_buffer->size() >= train_options.batch_size * train_options.epochs) {
-                sac->train(replay_buffer, train_options.epochs, train_options.batch_size);
+                agent->train(replay_buffer, train_options.epochs, train_options.batch_size);
 
                 sac_metric_p_bar_description = metrics_to_string(sac_metrics);
             }

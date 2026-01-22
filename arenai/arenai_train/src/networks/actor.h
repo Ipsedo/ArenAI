@@ -16,9 +16,9 @@ struct actor_response {
     torch::Tensor sigma;
 };
 
-class SacActor final : public torch::nn::Module {
+class Actor final : public torch::nn::Module {
 public:
-    explicit SacActor(
+    explicit Actor(
         const int &nb_sensors, const int &nb_actions, const int &hidden_size_sensors,
         const int &hidden_size, const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums);

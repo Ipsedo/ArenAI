@@ -43,7 +43,7 @@ std::vector<std::tuple<State, Reward, IsDone>> TrainTankEnvironment::step(
 
         if (has_shoot[i]) remaining_frames[i] += nb_frames_added_when_shoot;
 
-        if (remaining_frames[i] <= 0) step_result[i] = {state, reward - 0.25f, true};
+        if (remaining_frames[i] <= 0) step_result[i] = {state, reward, true};
     }
 
     return step_result;

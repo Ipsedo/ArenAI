@@ -68,6 +68,7 @@ float EnemyTankFactory::get_reward(
     const float inv_sigma2 = 1.0f / (sigma * sigma + EPSILON);
 
     float shaped_reward = 0.f;
+    float shoot_in_aim_reward = 0.f;
 
     const bool has_shot = action_stats->has_fire();
 
@@ -80,19 +81,24 @@ float EnemyTankFactory::get_reward(
         if (!std::isfinite(distance)) continue;
 
         const float diff = distance - d_opt;
+        const float angle = compute_aim_angle(other);
+
         const float phi_dist = std::exp(-(diff * diff) * inv_sigma2);
-        const float phi_angle = 0.5f * (1.f + std::cos(compute_aim_angle(other)));
-        const float phi_shoot = has_shot ? 0.1f * phi_angle : 0.f;
+        const float phi_angle = 0.5f * (1.f + std::cos(angle));
 
-        const auto curr_shaped_reward = phi_angle * phi_dist + phi_shoot;
-
+        const auto curr_shaped_reward = phi_angle * phi_dist;
         shaped_reward = std::max(curr_shaped_reward, shaped_reward);
+
+        const float curr_shoot_in_aim_reward =
+            has_shot ? compute_range_reward(angle, min_aim_angle, max_aim_angle) : 0.f;
+        shoot_in_aim_reward = std::max(curr_shoot_in_aim_reward, shoot_in_aim_reward);
     }
 
     const float shoot_penalty = has_shot ? -0.01f : 0.f;
+    const float shoot_reward = shoot_penalty + shoot_in_aim_reward;
 
     // prepare next frame
-    const auto reward = hit_reward + dead_penalty + shoot_penalty + shaped_reward;
+    const auto reward = hit_reward + dead_penalty + shoot_reward + shaped_reward;
     hit_reward = 0.f;
 
     // return reward

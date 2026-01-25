@@ -106,3 +106,16 @@ gaussian_tanh_log_pdf(const torch::Tensor &x, const torch::Tensor &mu, const tor
 
     return log_gaussian - log_det_jacobian;
 }
+
+torch::Tensor
+gaussian_tanh_pdf(const torch::Tensor &x, const torch::Tensor &mu, const torch::Tensor &sigma) {
+    const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
+    const auto u = 0.5 * torch::log((1.0 + x + EPSILON) / (1.0 - x + EPSILON));
+
+    const auto z = (u - mu) / safe_sigma;
+    const auto gaussian = torch::exp(-0.5 * z.pow(2.0)) / (safe_sigma * std::sqrt(2.0 * M_PI));
+
+    const auto inv_1mx2 = 1.0 / (1.0 - x.pow(2.0) + EPSILON);
+
+    return gaussian * inv_1mx2;
+}

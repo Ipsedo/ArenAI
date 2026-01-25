@@ -61,10 +61,10 @@ void PpoAgent::train(
 
         // train actor
         const auto &[old_mu, old_sigma] = old_actor->act(state.vision, state.proprioception);
-        const auto old_proba = truncated_normal_pdf(action, old_mu, old_sigma, -1.f, 1.f).detach();
+        const auto old_proba = gaussian_tanh_pdf(action, old_mu, old_sigma).sum(1, true).detach();
 
         const auto &[mu, sigma] = actor->act(state.vision, state.proprioception);
-        const auto proba = truncated_normal_pdf(action, mu, sigma, -1.f, 1.f);
+        const auto proba = gaussian_tanh_pdf(action, mu, sigma).sum(1, true);
 
         const auto r = proba / (old_proba + EPSILON);
 

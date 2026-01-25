@@ -21,6 +21,8 @@ PpoAgent::PpoAgent(
       actor(std::make_shared<Actor>(
           nb_sensors, nb_action, hidden_size_sensors, actor_hidden_size, vision_channels,
           group_norm_nums)),
+      old_critic(std::make_shared<Critic>(
+          nb_sensors, hidden_size_sensors, critic_hidden_size, vision_channels, group_norm_nums)),
       critic(std::make_shared<Critic>(
           nb_sensors, hidden_size_sensors, critic_hidden_size, vision_channels, group_norm_nums)),
       actor_optim(std::make_shared<torch::optim::Adam>(actor->parameters(), learning_rate)),
@@ -31,9 +33,12 @@ PpoAgent::PpoAgent(
 
     old_actor->to(device);
     actor->to(device);
+
+    old_critic->to(device);
     critic->to(device);
 
     hard_update(old_actor, actor);
+    hard_update(old_critic, critic);
 }
 
 void PpoAgent::train(
@@ -41,18 +46,20 @@ void PpoAgent::train(
     set_train(true);
 
     hard_update(old_actor, actor);
+    hard_update(old_critic, critic);
 
     for (int e = 0; e < epochs; e++) {
         const auto [state, action, reward, done, next_state] =
             replay_buffer->sample(batch_size, actor->parameters().back().device());
 
-        const auto curr_value = critic->value(state.vision, state.proprioception);
-        const auto next_value = critic->value(next_state.vision, next_state.proprioception);
+        const auto value_old = old_critic->value(state.vision, state.proprioception);
+        const auto next_value_old = old_critic->value(next_state.vision, next_state.proprioception);
 
-        const auto advantage = torch::detach(reward + gamma * next_value - curr_value);
-        const auto target_value = torch::detach(advantage + curr_value);
+        const auto target_value =
+            torch::detach(reward + (1.f - done.to(torch::kFloat)) * gamma * next_value_old);
+        const auto advantage = torch::detach(target_value - value_old);
 
-        // update actor
+        // train actor
         const auto &[old_mu, old_sigma] = old_actor->act(state.vision, state.proprioception);
         const auto old_proba = truncated_normal_pdf(action, old_mu, old_sigma, -1.f, 1.f).detach();
 
@@ -68,15 +75,16 @@ void PpoAgent::train(
         actor_loss.backward();
         actor_optim->step();
 
-        actor_loss_metric->add(actor_loss.item<float>());
-
         // train critic
-        const auto critic_loss = torch::mse_loss(curr_value, target_value);
+        const auto value = critic->value(state.vision, state.proprioception);
+        const auto critic_loss = torch::mse_loss(value, target_value);
 
         critic_optim->zero_grad();
         critic_loss.backward();
         critic_optim->step();
 
+        // metrics
+        actor_loss_metric->add(actor_loss.item<float>());
         critic_loss_metric->add(critic_loss.item<float>());
     }
 }
@@ -88,7 +96,10 @@ agent_response PpoAgent::act(const torch::Tensor &vision, const torch::Tensor &s
 
 void PpoAgent::set_train(const bool train) {
     actor->train(train);
+    old_critic->train(train);
+
     critic->train(train);
+    old_critic->train(train);
 }
 
 std::vector<std::shared_ptr<Metric>> PpoAgent::get_metrics() {
@@ -108,6 +119,8 @@ void PpoAgent::save(const std::filesystem::path &output_folder) {
 void PpoAgent::to(const torch::Device device) {
     old_actor->to(device);
     actor->to(device);
+
+    old_critic->to(device);
     critic->to(device);
 }
 

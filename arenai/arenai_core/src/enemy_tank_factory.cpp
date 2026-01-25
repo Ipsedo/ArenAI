@@ -18,7 +18,7 @@ EnemyTankFactory::EnemyTankFactory(
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), is_dead_already_triggered(false),
       min_aim_angle(static_cast<float>(M_PI) / 8.f), max_aim_angle(static_cast<float>(M_PI) / 3.f),
-      min_distance(5.f), max_distance(100.f), has_touch(false),
+      min_distance(10.f), max_distance(50.f), has_touch(false),
       action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
@@ -40,6 +40,17 @@ float EnemyTankFactory::compute_range_reward(const float value, const float min,
     return std::clamp((max - value) / (max - min), 0.f, 1.f);
 }
 
+float EnemyTankFactory::compute_full_range_reward(
+    const float value, const float min, const float max) {
+
+    if (value <= min) return 1.0f;
+
+    if (value <= max) return (max - value) / (max - min);
+    if (value <= 2.0f * max) return -(value - max) / max;
+
+    return -1.0f;
+}
+
 float EnemyTankFactory::get_reward(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
 
@@ -59,13 +70,7 @@ float EnemyTankFactory::get_reward(
     // 3. shaped reward
     const auto chassis_pos = get_chassis()->get_body()->getWorldTransform().getOrigin();
 
-    const float d_min = min_distance;
-    const float d_max = max_distance;
-    const float band = d_max - d_min;
-
-    const float d_opt = 0.5f * (d_min + d_max);
-    const float sigma = 0.5f * band;
-    const float inv_sigma2 = 1.0f / (sigma * sigma + EPSILON);
+    const float band = max_distance - min_distance;
 
     float shaped_reward = 0.f;
     float shoot_in_aim_reward = 0.f;
@@ -83,13 +88,12 @@ float EnemyTankFactory::get_reward(
         if (!std::isfinite(distance)) continue;
 
         const float weight = std::exp(-distance / band);
-        const float diff = distance - d_opt;
         const float angle = compute_aim_angle(other);
 
-        const float phi_dist = std::exp(-(diff * diff) * inv_sigma2);
-        const float phi_angle = 0.5f * (1.f + std::cos(angle));
+        const float phi_dist = compute_full_range_reward(distance, min_distance, max_distance);
+        const float phi_angle = std::cos(angle);
 
-        shaped_reward += phi_angle * phi_dist * weight;
+        shaped_reward += 0.5f * (phi_angle + phi_dist) * weight;
         shoot_in_aim_reward =
             (has_shot ? compute_range_reward(angle, min_aim_angle, max_aim_angle) : 0.f) * weight;
 

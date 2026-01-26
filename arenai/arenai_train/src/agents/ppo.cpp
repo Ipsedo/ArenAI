@@ -38,12 +38,12 @@ void PpoAgent::train(
         const auto [state, action, old_log_proba, reward, done, next_state] =
             replay_buffer->sample(batch_size, actor->parameters().back().device());
 
-        const auto value_old = critic->value(state.vision, state.proprioception);
-        const auto next_value_old = critic->value(next_state.vision, next_state.proprioception);
+        const auto value = critic->value(state.vision, state.proprioception);
+        const auto next_value = critic->value(next_state.vision, next_state.proprioception);
 
         const auto target_value =
-            torch::detach(reward + (1.f - done.to(torch::kFloat)) * gamma * next_value_old);
-        const auto advantage = torch::detach(target_value - value_old);
+            torch::detach(reward + (1.f - done.to(torch::kFloat)) * gamma * next_value);
+        const auto advantage = torch::detach(target_value - value);
 
         // train actor
         const auto &[mu, sigma] = actor->act(state.vision, state.proprioception);
@@ -61,7 +61,6 @@ void PpoAgent::train(
         actor_optim->step();
 
         // train critic
-        const auto value = critic->value(state.vision, state.proprioception);
         const auto critic_loss = torch::mse_loss(value, target_value);
 
         critic_optim->zero_grad();

@@ -58,7 +58,8 @@ SacAgent::SacAgent(
 
 agent_response SacAgent::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
     const auto &[mu, sigma] = actor->act(vision, sensors);
-    return {gaussian_tanh_sample(mu, sigma)};
+    const auto action = gaussian_tanh_sample(mu, sigma);
+    return {action, gaussian_tanh_log_pdf(action, mu, sigma)};
 }
 
 void SacAgent::train(
@@ -67,7 +68,7 @@ void SacAgent::train(
     set_train(true);
 
     for (int e = 0; e < epochs; e++) {
-        const auto [state, action, reward, done, next_state] =
+        const auto [state, action, _, reward, done, next_state] =
             replay_buffer->sample(batch_size, actor->parameters().back().device());
 
         torch::Tensor target_q_values;

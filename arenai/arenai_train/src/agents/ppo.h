@@ -34,9 +34,7 @@ public:
     int count_parameters() override;
 
 private:
-    std::shared_ptr<Actor> old_actor;
     std::shared_ptr<Actor> actor;
-    std::shared_ptr<Critic> old_critic;
     std::shared_ptr<Critic> critic;
 
     std::shared_ptr<torch::optim::Adam> actor_optim;

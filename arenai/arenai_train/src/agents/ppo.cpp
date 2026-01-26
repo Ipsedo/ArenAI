@@ -15,14 +15,9 @@ PpoAgent::PpoAgent(
     const std::vector<std::tuple<int, int>> &vision_channels,
     const std::vector<int> &group_norm_nums, const torch::Device device, int metric_window_size,
     const float gamma, const float epsilon)
-    : old_actor(std::make_shared<Actor>(
+    : actor(std::make_shared<Actor>(
         nb_sensors, nb_action, hidden_size_sensors, actor_hidden_size, vision_channels,
         group_norm_nums)),
-      actor(std::make_shared<Actor>(
-          nb_sensors, nb_action, hidden_size_sensors, actor_hidden_size, vision_channels,
-          group_norm_nums)),
-      old_critic(std::make_shared<Critic>(
-          nb_sensors, hidden_size_sensors, critic_hidden_size, vision_channels, group_norm_nums)),
       critic(std::make_shared<Critic>(
           nb_sensors, hidden_size_sensors, critic_hidden_size, vision_channels, group_norm_nums)),
       actor_optim(std::make_shared<torch::optim::Adam>(actor->parameters(), learning_rate)),
@@ -31,45 +26,35 @@ PpoAgent::PpoAgent(
       critic_loss_metric(std::make_shared<Metric>("critic", metric_window_size)), gamma(gamma),
       epsilon(epsilon) {
 
-    old_actor->to(device);
     actor->to(device);
-
-    old_critic->to(device);
     critic->to(device);
-
-    hard_update(old_actor, actor);
-    hard_update(old_critic, critic);
 }
 
 void PpoAgent::train(
     const std::unique_ptr<ReplayBuffer> &replay_buffer, const int epochs, const int batch_size) {
     set_train(true);
 
-    hard_update(old_actor, actor);
-    hard_update(old_critic, critic);
-
     for (int e = 0; e < epochs; e++) {
-        const auto [state, action, reward, done, next_state] =
+        const auto [state, action, old_log_proba, reward, done, next_state] =
             replay_buffer->sample(batch_size, actor->parameters().back().device());
 
-        const auto value_old = old_critic->value(state.vision, state.proprioception);
-        const auto next_value_old = old_critic->value(next_state.vision, next_state.proprioception);
+        const auto value_old = critic->value(state.vision, state.proprioception);
+        const auto next_value_old = critic->value(next_state.vision, next_state.proprioception);
 
         const auto target_value =
             torch::detach(reward + (1.f - done.to(torch::kFloat)) * gamma * next_value_old);
         const auto advantage = torch::detach(target_value - value_old);
 
         // train actor
-        const auto &[old_mu, old_sigma] = old_actor->act(state.vision, state.proprioception);
-        const auto old_proba = gaussian_tanh_pdf(action, old_mu, old_sigma).detach();
-
         const auto &[mu, sigma] = actor->act(state.vision, state.proprioception);
-        const auto proba = gaussian_tanh_pdf(action, mu, sigma);
+        const auto log_proba = truncated_normal_log_pdf(action, mu, sigma, -1.f, 1.f).sum(1, true);
 
-        const auto r = proba / (old_proba + EPSILON);
+        const auto r = torch::exp(log_proba - old_log_proba);
+        const auto r_clipped =
+            torch::clamp(torch::exp(log_proba - old_log_proba), 1.f - epsilon, 1.f + epsilon);
 
         const auto actor_loss =
-            -torch::mean(advantage * torch::min(r, torch::clamp(r, 1.f - epsilon, 1.f + epsilon)));
+            -torch::mean(torch::sum(torch::min(r * advantage, r_clipped * advantage), 1));
 
         actor_optim->zero_grad();
         actor_loss.backward();
@@ -91,15 +76,13 @@ void PpoAgent::train(
 
 agent_response PpoAgent::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
     const auto &[mu, sigma] = actor->act(vision, sensors);
-    return {gaussian_tanh_sample(mu, sigma)};
+    const auto action = truncated_normal_sample(mu, sigma, -1.f, 1.f);
+    return {action, truncated_normal_log_pdf(action, mu, sigma, -1.f, 1.f).sum(1, true)};
 }
 
 void PpoAgent::set_train(const bool train) {
     actor->train(train);
-    old_critic->train(train);
-
     critic->train(train);
-    old_critic->train(train);
 }
 
 std::vector<std::shared_ptr<Metric>> PpoAgent::get_metrics() {
@@ -117,10 +100,7 @@ void PpoAgent::save(const std::filesystem::path &output_folder) {
 }
 
 void PpoAgent::to(const torch::Device device) {
-    old_actor->to(device);
     actor->to(device);
-
-    old_critic->to(device);
     critic->to(device);
 }
 

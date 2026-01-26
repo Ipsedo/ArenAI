@@ -107,6 +107,7 @@ void train_main(
         while (!is_done) {
 
             torch::Tensor actions;
+            torch::Tensor log_probas;
             std::vector<Action> actions_for_env;
 
             const auto [vision, proprioception] = states_to_tensor(last_state);
@@ -115,8 +116,12 @@ void train_main(
                 torch::NoGradGuard no_grad_guard;
                 agent->set_train(false);
 
-                actions =
-                    agent->act(vision.to(torch_device), proprioception.to(torch_device)).action;
+                const auto [action, log_proba] =
+                    agent->act(vision.to(torch_device), proprioception.to(torch_device));
+
+                actions = action;
+                log_probas = log_proba;
+
                 actions_for_env = tensor_to_actions(actions);
             }
 
@@ -142,6 +147,7 @@ void train_main(
                 replay_buffer->add(
                     {{vision[i], proprioception[i]},
                      actions[i],
+                     log_probas[i],
                      torch::tensor(reward, torch::TensorOptions().dtype(torch::kFloat))
                          .unsqueeze(0),
                      torch::tensor(done, torch::TensorOptions().dtype(torch::kBool)).unsqueeze(0),

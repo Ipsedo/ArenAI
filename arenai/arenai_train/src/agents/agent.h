@@ -15,6 +15,7 @@
 
 struct agent_response {
     torch::Tensor action;
+    torch::Tensor log_proba;
 };
 
 class AbstractAgent {

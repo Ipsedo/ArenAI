@@ -58,8 +58,8 @@ SacAgent::SacAgent(
 
 agent_response SacAgent::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
     const auto &[mu, sigma] = actor->act(vision, sensors);
-    const auto action = gaussian_tanh_sample(mu, sigma);
-    return {action, gaussian_tanh_log_pdf(action, mu, sigma)};
+    const auto action = truncated_normal_sample(mu, sigma, -1.f, 1.f);
+    return {action, truncated_normal_log_pdf(action, mu, sigma, -1.f, 1.f)};
 }
 
 void SacAgent::train(
@@ -77,9 +77,9 @@ void SacAgent::train(
 
             const auto [next_mu, next_sigma] =
                 actor->act(next_state.vision, next_state.proprioception);
-            const auto next_action = gaussian_tanh_sample(next_mu, next_sigma);
+            const auto next_action = truncated_normal_sample(next_mu, next_sigma, -1.f, 1.f);
             const auto next_log_proba =
-                gaussian_tanh_log_pdf(next_action, next_mu, next_sigma).sum(-1, true);
+                truncated_normal_log_pdf(next_action, next_mu, next_sigma, -1.f, 1.f).sum(-1, true);
 
             const auto next_target_q_value_1 =
                 target_critic_1->value(next_state.vision, next_state.proprioception, next_action);
@@ -111,9 +111,9 @@ void SacAgent::train(
 
         // policy
         const auto [curr_mu, curr_sigma] = actor->act(state.vision, state.proprioception);
-        const auto curr_action = gaussian_tanh_sample(curr_mu, curr_sigma);
+        const auto curr_action = truncated_normal_sample(curr_mu, curr_sigma, -1.f, 1.f);
         const auto curr_log_proba =
-            gaussian_tanh_log_pdf(curr_action, curr_mu, curr_sigma).sum(-1, true);
+            truncated_normal_log_pdf(curr_action, curr_mu, curr_sigma, -1.f, 1.f).sum(-1, true);
 
         const auto curr_q_value_1 =
             critic_1->value(state.vision, state.proprioception, curr_action);

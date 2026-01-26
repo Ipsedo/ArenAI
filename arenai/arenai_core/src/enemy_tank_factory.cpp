@@ -100,7 +100,7 @@ float EnemyTankFactory::get_reward(
         softmax_weight_sum += weight;
     }
 
-    const float shoot_penalty = has_shot ? -0.01f : 0.f;
+    const float shoot_penalty = has_shot ? -0.1f : 0.f;
     const float shoot_reward = shoot_penalty + shoot_in_aim_reward / (softmax_weight_sum + EPSILON);
 
     shaped_reward /= softmax_weight_sum + EPSILON;

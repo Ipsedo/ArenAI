@@ -61,15 +61,15 @@ void PpoAgent::train(
 
         // train actor
         const auto &[old_mu, old_sigma] = old_actor->act(state.vision, state.proprioception);
-        const auto old_proba = gaussian_tanh_pdf(action, old_mu, old_sigma).sum(1, true).detach();
+        const auto old_proba = gaussian_tanh_pdf(action, old_mu, old_sigma).detach();
 
         const auto &[mu, sigma] = actor->act(state.vision, state.proprioception);
-        const auto proba = gaussian_tanh_pdf(action, mu, sigma).sum(1, true);
+        const auto proba = gaussian_tanh_pdf(action, mu, sigma);
 
         const auto r = proba / (old_proba + EPSILON);
 
         const auto actor_loss =
-            torch::mean(advantage * torch::min(r, torch::clamp(r, 1.f - epsilon, 1.f + epsilon)));
+            -torch::mean(advantage * torch::min(r, torch::clamp(r, 1.f - epsilon, 1.f + epsilon)));
 
         actor_optim->zero_grad();
         actor_loss.backward();
@@ -91,7 +91,7 @@ void PpoAgent::train(
 
 agent_response PpoAgent::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
     const auto &[mu, sigma] = actor->act(vision, sensors);
-    return {truncated_normal_sample(mu, sigma, -1.f, 1.f)};
+    return {gaussian_tanh_sample(mu, sigma)};
 }
 
 void PpoAgent::set_train(const bool train) {

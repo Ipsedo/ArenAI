@@ -77,8 +77,7 @@ torch::Tensor truncated_normal_entropy(
 float truncated_normal_target_entropy(
     const int nb_actions, const float min_value, const float max_value) {
     return truncated_normal_entropy(
-               torch::zeros({nb_actions}), torch::ones({nb_actions}) * std::sqrt(2.0), min_value,
-               max_value)
+               torch::zeros({nb_actions}), torch::ones({nb_actions}), min_value, max_value)
         .sum()
         .item<float>();
 }

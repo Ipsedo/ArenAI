@@ -15,9 +15,6 @@
 void export_state_dict_neutral(
     const std::shared_ptr<torch::nn::Module> &m, const std::filesystem::path &outdir);
 
-void save_png_rgb(
-    const std::vector<std::vector<std::vector<uint8_t>>> &image, const std::string &filename);
-
 template<typename T>
 void save_torch(
     const std::string &output_folder_path, const T &to_save, const std::string &file_name) {

@@ -43,7 +43,7 @@ SacAgent::SacAgent(
       critic_2_loss_metric(std::make_shared<Metric>("critic_2", metric_window_size)),
       entropy_loss_metric(std::make_shared<Metric>("entropy", metric_window_size, 3, true)),
       entropy_alpha_metric(std::make_shared<Metric>("alpha", metric_window_size)), tau(tau),
-      gamma(gamma), target_entropy(-static_cast<float>(nb_action)) {
+      gamma(gamma), target_entropy(truncated_normal_target_entropy(nb_action, -1.f, 1.f)) {
 
     hard_update(target_critic_1, critic_1);
     hard_update(target_critic_2, critic_2);
@@ -59,7 +59,7 @@ SacAgent::SacAgent(
 agent_response SacAgent::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
     const auto &[mu, sigma] = actor->act(vision, sensors);
     const auto action = truncated_normal_sample(mu, sigma, -1.f, 1.f);
-    return {action, truncated_normal_log_pdf(action, mu, sigma, -1.f, 1.f)};
+    return {action, truncated_normal_log_pdf(action, mu, sigma, -1.f, 1.f).sum(1, true)};
 }
 
 void SacAgent::train(

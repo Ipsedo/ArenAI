@@ -32,8 +32,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 include_directories(${TORCH_INCLUDE_DIRS})
 
 # SOIL
-find_package(soil2 REQUIRED)
-include_directories(${SOIL2_INCLUDE_DIR})
+FetchContent_Declare(
+        soil2
+        GIT_REPOSITORY https://github.com/SpartanJ/SOIL2.git
+)
+FetchContent_MakeAvailable(soil2)
 
 # ARENAI
 set(ARENAI_CPP_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/..")

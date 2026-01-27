@@ -67,7 +67,16 @@ float EnemyTankFactory::get_reward(
     // 2. dead penalty
     const auto dead_penalty = is_dead() ? (is_suicide() ? -0.1f : -1.f) : 0.f;
 
-    // 3. shaped reward
+    // prepare next frame
+    const auto reward = hit_reward + dead_penalty;
+    hit_reward = 0.f;
+
+    // return reward
+    return reward;
+}
+
+float EnemyTankFactory::get_potential_reward(
+    const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
     const auto chassis_pos = get_chassis()->get_body()->getWorldTransform().getOrigin();
 
     const float band = max_distance - min_distance;
@@ -94,23 +103,18 @@ float EnemyTankFactory::get_reward(
         const float phi_angle = std::cos(angle);
 
         shaped_reward += 0.5f * (phi_angle + phi_dist) * weight;
-        shoot_in_aim_reward =
+        shoot_in_aim_reward +=
             (has_shot ? compute_range_reward(angle, min_aim_angle, max_aim_angle) : 0.f) * weight;
 
         softmax_weight_sum += weight;
     }
 
-    const float shoot_penalty = has_shot ? -0.1f : 0.f;
+    const float shoot_penalty = has_shot ? -0.01f : 0.f;
     const float shoot_reward = shoot_penalty + shoot_in_aim_reward / (softmax_weight_sum + EPSILON);
 
     shaped_reward /= softmax_weight_sum + EPSILON;
 
-    // prepare next frame
-    const auto reward = hit_reward + dead_penalty + shoot_reward + shaped_reward;
-    hit_reward = 0.f;
-
-    // return reward
-    return reward;
+    return shoot_reward + shaped_reward;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

@@ -86,6 +86,8 @@ float EnemyTankFactory::get_potential_reward(
 
     float softmax_weight_sum = 0.f;
 
+    const float d_opt = min_distance + band / 2.f;
+
     const bool has_shot = action_stats->has_fire();
 
     for (const auto &other: tank_factories) {
@@ -99,10 +101,10 @@ float EnemyTankFactory::get_potential_reward(
         const float weight = std::exp(-distance / band);
         const float angle = compute_aim_angle(other);
 
-        const float phi_dist = compute_full_range_reward(distance, min_distance, max_distance);
-        const float phi_angle = std::cos(angle);
+        const float phi_dist = std::exp(-std::abs(distance - d_opt) / band);
+        const float phi_angle = std::clamp(std::cos(angle), 0.f, 1.f);
 
-        shaped_reward += 0.5f * (phi_angle + phi_dist) * weight;
+        shaped_reward += phi_angle * phi_dist * weight;
         shoot_in_aim_reward +=
             (has_shot ? compute_range_reward(angle, min_aim_angle, max_aim_angle) : 0.f) * weight;
 

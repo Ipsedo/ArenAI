@@ -49,12 +49,11 @@ void PpoAgent::train(
         const auto &[mu, sigma] = actor->act(state.vision, state.proprioception);
         const auto log_proba = truncated_normal_log_pdf(action, mu, sigma, -1.f, 1.f).sum(1, true);
 
-        const auto r = torch::exp(log_proba - old_log_proba);
-        const auto r_clipped =
-            torch::clamp(torch::exp(log_proba - old_log_proba), 1.f - epsilon, 1.f + epsilon);
+        const auto ratio = torch::exp(log_proba - old_log_proba);
+        const auto clipped_ratio = torch::clamp(ratio, 1.f - epsilon, 1.f + epsilon);
 
         const auto actor_loss =
-            -torch::mean(torch::sum(torch::min(r * advantage, r_clipped * advantage), 1));
+            -torch::mean(torch::sum(torch::min(ratio * advantage, clipped_ratio * advantage), 1));
 
         actor_optim->zero_grad();
         actor_loss.backward();

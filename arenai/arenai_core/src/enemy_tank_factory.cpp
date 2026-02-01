@@ -111,7 +111,7 @@ float EnemyTankFactory::get_potential_reward(
     float max_shaped_reward = -std::numeric_limits<float>::infinity();
 
     for (const auto &other: tank_factories) {
-        if (other->tank_prefix_name == tank_prefix_name or other->is_dead()) continue;
+        if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;
 
         const auto other_pos = other->get_chassis()->get_body()->getWorldTransform().getOrigin();
         const float distance = (chassis_pos - other_pos).length();

@@ -142,8 +142,7 @@ void train_main(
                 last_state.push_back(next_state);
 
                 const auto potential_reward =
-                    (done ? 0.f : 1.f) * model_options.gamma * next_potential_rewards[i]
-                    - potential_rewards[i];
+                    model_options.gamma * next_potential_rewards[i] - potential_rewards[i];
 
                 if (already_done[i]) continue;
 

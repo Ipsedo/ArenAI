@@ -17,7 +17,7 @@ EnemyTankFactory::EnemyTankFactory(
       tank_prefix_name(tank_prefix_name), hit_reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), is_dead_already_triggered(false),
-      min_aim_angle(static_cast<float>(M_PI) / 12.f), max_aim_angle(static_cast<float>(M_PI) / 6.f),
+      min_aim_angle(static_cast<float>(M_PI) / 12.f), max_aim_angle(static_cast<float>(M_PI) / 3.f),
       min_distance(5.f), max_distance(100.f), has_touch(false),
       action_stats(std::make_shared<ActionStats>()) {}
 
@@ -107,7 +107,7 @@ float EnemyTankFactory::get_potential_reward(
 
     const float band = max_distance - min_distance;
 
-    float max_shaped_reward = 0.f;
+    float max_shaped_reward = -std::numeric_limits<float>::infinity();
 
     for (const auto &other: tank_factories) {
         if (other->tank_prefix_name == tank_prefix_name or other->is_dead()) continue;
@@ -117,16 +117,14 @@ float EnemyTankFactory::get_potential_reward(
 
         if (!std::isfinite(distance)) continue;
 
-        const float weight = std::exp(-(distance - min_distance) / band);
         const float angle = compute_aim_angle(other);
 
         const float aim_gate = compute_range_reward(angle, min_aim_angle, max_aim_angle);
-        const float phi = -distance * aim_gate;
+        const float phi = -(distance / band) * aim_gate;
 
-        max_shaped_reward = std::max(phi * weight, max_shaped_reward);
+        max_shaped_reward = std::max(phi, max_shaped_reward);
     }
-
-    return max_shaped_reward;
+    return std::isfinite(max_shaped_reward) ? max_shaped_reward : 0.f;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

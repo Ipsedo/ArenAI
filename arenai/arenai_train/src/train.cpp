@@ -50,12 +50,15 @@ void train_main(
     const auto env = std::make_unique<TrainTankEnvironment>(
         train_options.nb_tanks, train_options.android_asset_folder, wanted_frequency);
 
+    const float adjusted_gamma = std::pow(model_options.gamma, wanted_frequency);
+    const float potential_reward_lambda = 1.f / wanted_frequency;
+
     auto agent = std::make_shared<SacAgent>(
         ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, train_options.learning_rate,
         model_options.hidden_size_sensors, model_options.hidden_size_actions,
         model_options.actor_hidden_size, model_options.critic_hidden_size,
         model_options.vision_channels, model_options.group_norm_nums, torch_device,
-        train_options.metric_window_size, model_options.tau, model_options.gamma,
+        train_options.metric_window_size, model_options.tau, adjusted_gamma,
         model_options.initial_alpha);
     /*auto agent = std::make_shared<PpoAgent>(
         ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, train_options.learning_rate,
@@ -142,9 +145,9 @@ void train_main(
                 last_state.push_back(next_state);
 
                 const auto potential_reward =
-                    ((done ? 0.f : 1.f) * model_options.gamma * next_potential_rewards[i]
+                    ((done ? 0.f : 1.f) * adjusted_gamma * next_potential_rewards[i]
                      - potential_rewards[i])
-                    / wanted_frequency;
+                    * potential_reward_lambda;
 
                 if (already_done[i]) continue;
 

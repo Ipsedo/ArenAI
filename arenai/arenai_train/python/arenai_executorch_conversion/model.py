@@ -56,7 +56,6 @@ class SacActor(nn.Module):
 
         self.sensors_encoder = nn.Sequential(
             nn.Linear(nb_sensors, hidden_size_sensors),
-            nn.LayerNorm(hidden_size_sensors),
             nn.SiLU(),
         )
 
@@ -65,7 +64,6 @@ class SacActor(nn.Module):
                 hidden_size_sensors + self.vision_encoder.output_size,
                 hidden_size,
             ),
-            nn.LayerNorm(hidden_size),
             nn.SiLU(),
         )
 

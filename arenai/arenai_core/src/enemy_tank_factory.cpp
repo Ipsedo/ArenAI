@@ -25,7 +25,7 @@ float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory
     const auto canon_tr = get_canon()->get_model_matrix();
     const auto other_tr = other_tank->get_chassis()->get_model_matrix();
 
-    const auto canon_pos = glm::vec3(canon_tr * glm::vec4(0.f, 0.f, -1.7f, 1.f));
+    const auto canon_pos = glm::vec3(canon_tr * glm::vec4(0.f, 0.f, 1.7f, 1.f));
     const auto other_pos = glm::vec3(other_tr * glm::vec4(0.f, 0.f, 0.f, 1.f));
 
     const glm::vec3 to_other = glm::normalize(other_pos - canon_pos);
@@ -73,30 +73,28 @@ float EnemyTankFactory::get_reward(
     const bool has_shot = action_stats->has_fire();
     const float shoot_penalty = has_shot ? -0.01f : 0.f;
 
-    float weight_sum = 0.f;
-    float shoot_reward = 0.f;
+    float max_shoot_reward = 0.f;
 
     for (const auto &other: tank_factories) {
         if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;
 
         const auto other_pos = other->get_chassis()->get_body()->getWorldTransform().getOrigin();
-        const float d = (chassis_tr.getOrigin() - other_pos).length();
-        if (!std::isfinite(d)) continue;
+        const float distance = (chassis_tr.getOrigin() - other_pos).length();
+        if (!std::isfinite(distance)) continue;
 
-        const float weight = std::exp(-d / band);
+        const float weight = std::exp(-(distance - min_distance) / band);
 
-        const float angle = compute_aim_angle(other);// radians
-        const float score = compute_range_reward(angle, min_aim_angle, max_aim_angle);
+        const float angle = compute_aim_angle(other);
+        const float score = std::clamp((min_aim_angle - angle) / min_aim_angle, 0.f, 1.f);
 
-        weight_sum += weight;
-        shoot_reward += weight * score;
+        max_shoot_reward = std::max(max_shoot_reward, score * weight);
     }
 
-    const float avg_score = shoot_reward / (weight_sum + EPSILON);
-    const float shoot_in_aim_bonus = has_shot ? 0.05f * avg_score : 0.f;
+    const float shoot_in_aim_bonus = has_shot ? 0.05f * max_shoot_reward : 0.f;
+    const float shoot_reward = shoot_penalty + shoot_in_aim_bonus;
 
     // prepare next frame
-    const auto reward = hit_reward + dead_penalty + shoot_penalty + shoot_in_aim_bonus;
+    const auto reward = hit_reward + dead_penalty + shoot_reward;
     hit_reward = 0.f;
 
     // return reward
@@ -109,12 +107,7 @@ float EnemyTankFactory::get_potential_reward(
 
     const float band = max_distance - min_distance;
 
-    float shaped_reward = 0.f;
-    float weights_sum = 0.f;
-
-    const float d_opt = min_distance + band / 2.f;
-    const float dist_scale = 0.15f * band;
-    const float angle_scale = max_aim_angle;
+    float max_shaped_reward = 0.f;
 
     for (const auto &other: tank_factories) {
         if (other->tank_prefix_name == tank_prefix_name or other->is_dead()) continue;
@@ -124,17 +117,16 @@ float EnemyTankFactory::get_potential_reward(
 
         if (!std::isfinite(distance)) continue;
 
-        const float weight = std::exp(-(distance - min_distance) / (band + EPSILON));
+        const float weight = std::exp(-(distance - min_distance) / band);
         const float angle = compute_aim_angle(other);
 
-        const float phi_dist = std::exp(-std::abs(distance - d_opt) / (dist_scale + EPSILON));
-        const float phi_angle = std::exp(-angle / (angle_scale + EPSILON));
+        const float aim_gate = compute_range_reward(angle, min_aim_angle, max_aim_angle);
+        const float phi = -distance * aim_gate;
 
-        shaped_reward += (0.7f * phi_angle + 0.3f * phi_dist) * weight;
-        weights_sum += weight;
+        max_shaped_reward = std::max(phi * weight, max_shaped_reward);
     }
 
-    return shaped_reward / (weights_sum + EPSILON);
+    return max_shaped_reward;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

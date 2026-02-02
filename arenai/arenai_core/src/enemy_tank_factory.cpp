@@ -80,12 +80,13 @@ float EnemyTankFactory::get_reward(
 
         const auto other_pos = other->get_chassis()->get_body()->getWorldTransform().getOrigin();
         const float distance = (chassis_tr.getOrigin() - other_pos).length();
+
         if (!std::isfinite(distance)) continue;
 
-        const float weight = std::exp(-(distance - min_distance) / band);
-
+        const float weight = std::exp(-distance / band);
         const float angle = compute_aim_angle(other);
-        const float score = std::clamp((min_aim_angle - angle) / min_aim_angle, 0.f, 1.f);
+
+        const float score = compute_range_reward(angle, min_aim_angle, max_aim_angle);
 
         max_shoot_reward = std::max(max_shoot_reward, score * weight);
     }
@@ -107,10 +108,6 @@ float EnemyTankFactory::get_potential_reward(
 
     const float band = max_distance - min_distance;
 
-    const float optimal_distance = 0.5f * (min_distance + max_distance);
-    const float sigma_dist = 0.25f * (max_distance - min_distance);
-    const float sigma_angle = 0.33f * max_aim_angle;
-
     float max_shaped_reward = -std::numeric_limits<float>::infinity();
 
     for (const auto &other: tank_factories) {
@@ -120,14 +117,14 @@ float EnemyTankFactory::get_potential_reward(
         const float distance = (chassis_pos - other_pos).length();
 
         if (!std::isfinite(distance)) continue;
-        const float weight = std::exp(-(distance - min_distance) / band);
 
+        const float weight = std::exp(-distance / band);
         const float angle = compute_aim_angle(other);
 
-        const float cost =
-            std::pow(distance / band, 2.f) + 2.0f * std::pow(angle / max_aim_angle, 2.f);
+        const float phi_angle = compute_full_range_reward(angle, min_aim_angle, min_aim_angle);
+        const float phi_dist = compute_full_range_reward(distance, min_distance, max_distance);
 
-        const float phi = -cost;
+        const float phi = phi_dist + 2.f * phi_angle;
 
         max_shaped_reward = std::max(phi * weight, max_shaped_reward);
     }

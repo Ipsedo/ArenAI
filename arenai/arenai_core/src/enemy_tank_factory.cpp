@@ -121,11 +121,7 @@ float EnemyTankFactory::get_potential_reward(
 
         const float weight = std::exp(-distance / band);
         const float angle = compute_aim_angle(other);
-
-        const float phi_angle = std::exp(-angle / max_aim_angle);
-        const float phi_dist = std::exp(-distance / max_distance);
-
-        const float phi = phi_dist * phi_angle;
+        const float phi = std::exp(-angle / max_aim_angle);
 
         shaped_reward += phi * weight;
         weight_sum += weight;

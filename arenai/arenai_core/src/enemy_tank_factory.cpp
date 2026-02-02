@@ -108,7 +108,8 @@ float EnemyTankFactory::get_potential_reward(
 
     const float band = max_distance - min_distance;
 
-    float max_shaped_reward = -std::numeric_limits<float>::infinity();
+    float shaped_reward = 0.f;
+    float weight_sum = 0.f;
 
     for (const auto &other: tank_factories) {
         if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;
@@ -121,14 +122,16 @@ float EnemyTankFactory::get_potential_reward(
         const float weight = std::exp(-distance / band);
         const float angle = compute_aim_angle(other);
 
-        const float phi_angle = compute_full_range_reward(angle, min_aim_angle, min_aim_angle);
-        const float phi_dist = compute_full_range_reward(distance, min_distance, max_distance);
+        const float phi_angle = std::exp(-angle / max_aim_angle);
+        const float phi_dist = std::exp(-distance / max_distance);
 
-        const float phi = phi_dist + 2.f * phi_angle;
+        const float phi = phi_dist * phi_angle;
 
-        max_shaped_reward = std::max(phi * weight, max_shaped_reward);
+        shaped_reward += phi * weight;
+        weight_sum += weight;
     }
-    return std::isfinite(max_shaped_reward) ? max_shaped_reward : 0.f;
+
+    return shaped_reward / (weight_sum + EPSILON);
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

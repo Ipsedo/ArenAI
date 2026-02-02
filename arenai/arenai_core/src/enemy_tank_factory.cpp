@@ -106,7 +106,10 @@ float EnemyTankFactory::get_potential_reward(
     const auto chassis_pos = get_chassis()->get_body()->getWorldTransform().getOrigin();
 
     const float band = max_distance - min_distance;
-    const float angle_scale = max_aim_angle;
+
+    const float optimal_distance = 0.5f * (min_distance + max_distance);
+    const float sigma_dist = 0.25f * (max_distance - min_distance);
+    const float sigma_angle = 0.33f * max_aim_angle;
 
     float max_shaped_reward = -std::numeric_limits<float>::infinity();
 
@@ -117,13 +120,16 @@ float EnemyTankFactory::get_potential_reward(
         const float distance = (chassis_pos - other_pos).length();
 
         if (!std::isfinite(distance)) continue;
+        const float weight = std::exp(-(distance - min_distance) / band);
 
         const float angle = compute_aim_angle(other);
 
-        const float aim_gate = std::exp(-angle / angle_scale);
-        const float phi = -(distance / band) * aim_gate;
+        const float cost =
+            std::pow(distance / band, 2.f) + 2.0f * std::pow(angle / max_aim_angle, 2.f);
 
-        max_shaped_reward = std::max(phi, max_shaped_reward);
+        const float phi = -cost;
+
+        max_shaped_reward = std::max(phi * weight, max_shaped_reward);
     }
     return std::isfinite(max_shaped_reward) ? max_shaped_reward : 0.f;
 }

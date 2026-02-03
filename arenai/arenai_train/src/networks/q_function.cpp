@@ -16,17 +16,22 @@ QFunction::QFunction(
       sensors_encoder(register_module(
           "sensors_encoder",
           torch::nn::Sequential(
-              torch::nn::Linear(nb_sensors, hidden_size_sensors), torch::nn::SiLU()))),
+              torch::nn::Linear(nb_sensors, hidden_size_sensors),
+              torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_sensors})),
+              torch::nn::SiLU()))),
       action_encoder(register_module(
           "action_encoder",
           torch::nn::Sequential(
-              torch::nn::Linear(nb_actions, hidden_size_actions), torch::nn::SiLU()))),
+              torch::nn::Linear(nb_actions, hidden_size_actions),
+              torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_actions})),
+              torch::nn::SiLU()))),
       head(register_module(
           "head",
           torch::nn::Sequential(
               torch::nn::Linear(
                   hidden_size_actions + hidden_size_sensors + vision_encoder->get_output_size(),
                   hidden_size),
+              torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})), torch::nn::SiLU(),
               torch::nn::Linear(hidden_size, 1)))) {
     apply(init_weights);
 }

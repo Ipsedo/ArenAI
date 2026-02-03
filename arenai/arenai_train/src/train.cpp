@@ -142,7 +142,7 @@ void train_main(
                 last_state.push_back(next_state);
 
                 const auto potential_reward =
-                    100.f
+                    train_options.potentiel_reward_scale
                     * (model_options.gamma * next_potential_rewards[i] - potential_rewards[i]);
 
                 if (already_done[i]) continue;

@@ -83,7 +83,8 @@ float EnemyTankFactory::get_reward(
 
         if (!std::isfinite(distance)) continue;
 
-        const float weight = std::exp(-distance / band);
+        const float weight =
+            std::exp(-std::max(distance - 0.5f * (max_distance + min_distance), 0.f) / band);
         const float angle = compute_aim_angle(other);
 
         const float score = compute_range_reward(angle, min_aim_angle, max_aim_angle);

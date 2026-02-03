@@ -91,7 +91,7 @@ float EnemyTankFactory::get_reward(
         max_shoot_reward = std::max(max_shoot_reward, score * weight);
     }
 
-    const float shoot_in_aim_bonus = has_shot ? 0.05f * max_shoot_reward : 0.f;
+    const float shoot_in_aim_bonus = has_shot ? 0.1f * max_shoot_reward : 0.f;
     const float shoot_reward = shoot_penalty + shoot_in_aim_bonus;
 
     // prepare next frame

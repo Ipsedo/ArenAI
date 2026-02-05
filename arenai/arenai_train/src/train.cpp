@@ -62,7 +62,7 @@ void train_main(
         model_options.hidden_size_sensors, model_options.actor_hidden_size,
         model_options.critic_hidden_size, model_options.vision_channels,
         model_options.group_norm_nums, torch_device, train_options.metric_window_size,
-        model_options.gamma, 0.2);*/
+        model_options.gamma, 0.1);*/
 
     std::cout << "Parameters : " << agent->count_parameters() << std::endl;
 

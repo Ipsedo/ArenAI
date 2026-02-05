@@ -5,7 +5,9 @@ from .constants import ENEMY_VISION_SIZE
 
 
 class ConvolutionNetwork(nn.Module):
-    def __init__(self, channels: list[tuple[int, int]], num_group_norm: int) -> None:
+    def __init__(
+        self, channels: list[tuple[int, int]], group_norm_nums: list[int]
+    ) -> None:
         super().__init__()
 
         self.cnn = nn.Sequential()
@@ -17,25 +19,17 @@ class ConvolutionNetwork(nn.Module):
         w = ENEMY_VISION_SIZE
         h = ENEMY_VISION_SIZE
 
-        for i, (c_i, c_o) in enumerate(channels):
+        for i, ((c_i, c_o), g) in enumerate(zip(channels, group_norm_nums)):
             self.cnn.append(nn.Conv2d(c_i, c_o, kernel, stride, padding))
-
-            if i < len(channels) - 1:
-                self.cnn.append(nn.GroupNorm(num_group_norm, c_o, affine=True))
-                self.cnn.append(nn.SiLU())
+            self.cnn.append(nn.GroupNorm(g, c_o, affine=True))
+            self.cnn.append(nn.SiLU())
 
             w = (w - kernel + 2 * padding) // stride + 1
             h = (h - kernel + 2 * padding) // stride + 1
 
         self.__output_size = w * h * channels[-1][1]
 
-        self.cnn.extend(
-            nn.Sequential(
-                nn.Flatten(1, -1),
-                nn.LayerNorm(self.__output_size),
-                nn.SiLU(),
-            )
-        )
+        self.cnn.append(nn.Flatten(1, -1))
 
     def forward(self, vision: th.Tensor) -> th.Tensor:
         out: th.Tensor = self.cnn(vision)
@@ -54,11 +48,11 @@ class SacActor(nn.Module):
         hidden_size_sensors: int,
         hidden_size: int,
         channels: list[tuple[int, int]],
-        num_group_norm: int,
+        group_norm_nums: list[int],
     ) -> None:
         super().__init__()
 
-        self.vision_encoder = ConvolutionNetwork(channels, num_group_norm)
+        self.vision_encoder = ConvolutionNetwork(channels, group_norm_nums)
 
         self.sensors_encoder = nn.Sequential(
             nn.Linear(nb_sensors, hidden_size_sensors),

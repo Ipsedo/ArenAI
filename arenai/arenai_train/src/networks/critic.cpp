@@ -6,9 +6,8 @@
 
 #include "./init.h"
 
-SacCritic::SacCritic(
-    const int &nb_sensors, const int &nb_actions, const int &hidden_size_sensors,
-    const int &hidden_size_actions, const int &hidden_size,
+Critic::Critic(
+    const int &nb_sensors, const int &hidden_size_sensors, const int &hidden_size,
     const std::vector<std::tuple<int, int>> &vision_channels,
     const std::vector<int> &group_norm_nums)
     : vision_encoder(register_module(
@@ -19,28 +18,17 @@ SacCritic::SacCritic(
               torch::nn::Linear(nb_sensors, hidden_size_sensors),
               torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_sensors})),
               torch::nn::SiLU()))),
-      action_encoder(register_module(
-          "action_encoder",
-          torch::nn::Sequential(
-              torch::nn::Linear(nb_actions, hidden_size_actions),
-              torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_actions})),
-              torch::nn::SiLU()))),
       head(register_module(
-          "head",
-          torch::nn::Sequential(
-              torch::nn::Linear(
-                  hidden_size_actions + hidden_size_sensors + vision_encoder->get_output_size(),
-                  hidden_size),
-              torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})), torch::nn::SiLU(),
-              torch::nn::Linear(hidden_size, 1)))) {
+          "head", torch::nn::Sequential(
+                      torch::nn::Linear(
+                          hidden_size_sensors + vision_encoder->get_output_size(), hidden_size),
+                      torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})),
+                      torch::nn::SiLU(), torch::nn::Linear(hidden_size, 1)))) {
     apply(init_weights);
 }
 
-torch::Tensor SacCritic::value(
-    const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &action) {
-    auto vision_encoded = vision_encoder->forward(vision);
-    auto sensors_encoded = sensors_encoder->forward(sensors);
-    auto action_encoded = action_encoder->forward(action);
-
-    return head->forward(torch::cat({vision_encoded, sensors_encoded, action_encoded}, 1));
+torch::Tensor Critic::value(const torch::Tensor &vision, const torch::Tensor &sensors) {
+    const auto encoded_state =
+        torch::cat({vision_encoder->forward(vision), sensors_encoder->forward(sensors)}, 1);
+    return head->forward(encoded_state);
 }

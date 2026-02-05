@@ -15,9 +15,9 @@ public:
     std::vector<std::tuple<State, Reward, IsDone>>
     step(float time_delta, std::future<std::vector<Action>> &actions_future) override;
 
-    static void reset_singleton();
-
     std::vector<Reward> get_potential_rewards();
+
+    static void reset_singleton();
 
 protected:
     void on_draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) override;

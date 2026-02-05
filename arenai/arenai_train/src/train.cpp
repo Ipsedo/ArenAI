@@ -10,9 +10,10 @@
 
 #include <arenai_core/constants.h>
 
+#include "./agents/ppo.h"
+#include "./agents/sac.h"
 #include "./core/train_environment.h"
 #include "./core/train_gl_context.h"
-#include "./networks/sac.h"
 #include "./utils/replay_buffer.h"
 #include "./utils/saver.h"
 #include "./utils/torch_converter.h"
@@ -48,24 +49,31 @@ void train_main(
 
     const auto env = std::make_unique<TrainTankEnvironment>(
         train_options.nb_tanks, train_options.android_asset_folder, wanted_frequency);
-    auto sac = std::make_shared<SacNetworks>(
+
+    auto agent = std::make_shared<SacAgent>(
         ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, train_options.learning_rate,
         model_options.hidden_size_sensors, model_options.hidden_size_actions,
         model_options.actor_hidden_size, model_options.critic_hidden_size,
         model_options.vision_channels, model_options.group_norm_nums, torch_device,
         train_options.metric_window_size, model_options.tau, model_options.gamma,
         model_options.initial_alpha);
+    /*auto agent = std::make_shared<PpoAgent>(
+        ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, train_options.learning_rate,
+        model_options.hidden_size_sensors, model_options.actor_hidden_size,
+        model_options.critic_hidden_size, model_options.vision_channels,
+        model_options.group_norm_nums, torch_device, train_options.metric_window_size,
+        model_options.gamma, 0.2);*/
 
-    std::cout << "Parameters : " << sac->count_parameters() << std::endl;
+    std::cout << "Parameters : " << agent->count_parameters() << std::endl;
 
-    Saver saver(sac, train_options.output_folder, train_options.save_every);
+    Saver saver(agent, train_options.output_folder, train_options.save_every);
 
     auto replay_buffer = std::make_unique<ReplayBuffer>(train_options.replay_buffer_size);
 
     Metric reward_metric("reward", train_options.metric_window_size);
     Metric potential_reward_metric("potential", train_options.metric_window_size, 3, true);
 
-    auto sac_metrics = sac->get_metrics();
+    auto sac_metrics = agent->get_metrics();
 
     std::cout << "Start training on " << train_options.nb_episodes << " episodes" << std::endl;
 
@@ -100,22 +108,28 @@ void train_main(
         while (!is_done) {
 
             torch::Tensor actions;
+            torch::Tensor log_probas;
             std::vector<Action> actions_for_env;
 
             const auto [vision, proprioception] = states_to_tensor(last_state);
 
             {
                 torch::NoGradGuard no_grad_guard;
-                sac->train(false);
+                agent->set_train(false);
 
-                actions = sac->act(vision.to(torch_device), proprioception.to(torch_device)).action;
+                const auto [action, log_proba] =
+                    agent->act(vision.to(torch_device), proprioception.to(torch_device));
+
+                actions = action;
+                log_probas = log_proba;
+
                 actions_for_env = tensor_to_actions(actions);
             }
 
             auto actions_future = std::async([&] { return actions_for_env; });
 
             // step environment
-            const auto curr_potential_rewards = env->get_potential_rewards();
+            const auto potential_rewards = env->get_potential_rewards();
             const auto steps = env->step(wanted_frequency, actions_future);
             const auto next_potential_rewards = env->get_potential_rewards();
 
@@ -127,11 +141,11 @@ void train_main(
                 const auto [next_state, reward, done] = steps[i];
                 last_state.push_back(next_state);
 
-                if (already_done[i]) continue;
-
                 const auto potential_reward =
-                    (done ? 0.f : 1.f) * model_options.gamma * next_potential_rewards[i]
-                    - curr_potential_rewards[i];
+                    train_options.potentiel_reward_scale
+                    * (model_options.gamma * next_potential_rewards[i] - potential_rewards[i]);
+
+                if (already_done[i]) continue;
 
                 reward_metric.add(reward);
                 potential_reward_metric.add(potential_reward);
@@ -141,6 +155,7 @@ void train_main(
                 replay_buffer->add(
                     {{vision[i], proprioception[i]},
                      actions[i],
+                     log_probas[i],
                      torch::tensor(
                          reward + potential_reward, torch::TensorOptions().dtype(torch::kFloat))
                          .unsqueeze(0),
@@ -153,7 +168,7 @@ void train_main(
             // check if it's time to train
             if (train_counter % train_options.train_every == train_options.train_every - 1
                 && replay_buffer->size() >= train_options.batch_size * train_options.epochs) {
-                sac->train(replay_buffer, train_options.epochs, train_options.batch_size);
+                agent->train(replay_buffer, train_options.epochs, train_options.batch_size);
 
                 sac_metric_p_bar_description = metrics_to_string(sac_metrics);
             }
@@ -161,7 +176,7 @@ void train_main(
             is_done = is_episode_finish(already_done)
                       || episode_step_idx >= train_options.max_episode_steps;
 
-            train_counter = train_counter + 1 % train_options.train_every;
+            train_counter = (train_counter + 1) % train_options.train_every;
             episode_step_idx++;
 
             // attempt to save

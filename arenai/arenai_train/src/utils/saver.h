@@ -10,13 +10,10 @@
 
 #include <torch/torch.h>
 
-#include "../networks/sac.h"
+#include "../agents/agent.h"
 
 void export_state_dict_neutral(
     const std::shared_ptr<torch::nn::Module> &m, const std::filesystem::path &outdir);
-
-void save_png_rgb(
-    const std::vector<std::vector<std::vector<uint8_t>>> &image, const std::string &filename);
 
 template<typename T>
 void save_torch(
@@ -35,13 +32,13 @@ void save_torch(
 class Saver {
 public:
     Saver(
-        const std::shared_ptr<SacNetworks> &sac_networks, const std::filesystem::path &output_path,
+        const std::shared_ptr<AbstractAgent> &agent, const std::filesystem::path &output_path,
         int save_every);
 
     void attempt_save();
 
 private:
-    std::shared_ptr<SacNetworks> sac_networks;
+    std::shared_ptr<AbstractAgent> agent;
     long curr_step;
     int save_every;
     std::filesystem::path output_path;

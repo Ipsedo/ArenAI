@@ -17,41 +17,38 @@ EnemyTankFactory::EnemyTankFactory(
       tank_prefix_name(tank_prefix_name), hit_reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), is_dead_already_triggered(false),
-      min_aim_angle_reward(static_cast<float>(M_PI) / 8.f),
-      max_aim_angle_reward(static_cast<float>(M_PI) / 3.f), min_distance_reward(5.f),
-      max_distance_reward(50.f), has_touch(false), action_stats(std::make_shared<ActionStats>()) {}
+      min_aim_angle(static_cast<float>(M_PI) / 12.f), max_aim_angle(static_cast<float>(M_PI) / 3.f),
+      min_distance(5.f), max_distance(100.f), has_touch(false),
+      action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
     const auto canon_tr = get_canon()->get_model_matrix();
-    const glm::vec3 other_pos =
-        other_tank->get_chassis()->get_model_matrix() * glm::vec4(glm::vec3(0.f), 1.f);
+    const auto other_tr = other_tank->get_chassis()->get_model_matrix();
 
-    const glm::vec3 pos = canon_tr * glm::vec4(glm::vec3(0.f), 1.f);
+    const auto canon_pos = glm::vec3(canon_tr * glm::vec4(0.f, 0.f, 1.7f, 1.f));
+    const auto other_pos = glm::vec3(other_tr * glm::vec4(0.f, 0.f, 0.f, 1.f));
 
-    const glm::vec3 forward = glm::normalize(glm::vec3(canon_tr * glm::vec4(0.f, 0.f, 1.f, 0.f)));
-    const glm::vec3 to_target = glm::normalize(other_pos - pos);
+    const glm::vec3 to_other = glm::normalize(other_pos - canon_pos);
+    const auto forward = glm::normalize(glm::vec3(canon_tr * glm::vec4(0.f, 0.f, 1.f, 0.f)));
 
-    const float dot = std::clamp(glm::dot(forward, to_target), -1.f, 1.f);
+    const float d = std::clamp(glm::dot(forward, to_other), -1.f, 1.f);
 
-    const glm::vec3 cross = glm::cross(forward, to_target);
-    const float sine = glm::length(cross);
-
-    return std::atan2(sine, dot);
+    return std::acos(d);
 }
 
-float EnemyTankFactory::compute_value_range_reward(
-    const float value, const float min_value, const float max_value) {
-    const float max_penalty_value = max_value * 2.f;
+float EnemyTankFactory::compute_range_reward(const float value, const float min, const float max) {
+    return std::clamp((max - value) / (max - min), 0.f, 1.f);
+}
 
-    // bounds
-    if (value <= min_value) return 1.f;
-    if (value >= max_penalty_value) return -1.f;
+float EnemyTankFactory::compute_full_range_reward(
+    const float value, const float min, const float max) {
 
-    // [min_value, max_value] : 1 -> 0
-    if (value <= max_value) return (max_value - value) / (max_value - min_value);
+    if (value <= min) return 1.0f;
 
-    // [max_value, 2 * max_value] : 0 -> -1
-    return -(value - max_value) / (max_penalty_value - max_value);
+    if (value <= max) return (max - value) / (max - min);
+    if (value <= 2.0f * max) return -(value - max) / max;
+
+    return -1.0f;
 }
 
 float EnemyTankFactory::get_reward(
@@ -68,90 +65,70 @@ float EnemyTankFactory::get_reward(
     else curr_frame_upside_down = 0;
 
     // 2. dead penalty
-    const auto dead_penalty = is_dead() ? (is_suicide() ? -0.5f : -1.f) : 0.f;
+    const float band = max_distance - min_distance;
+    const auto dead_penalty = is_dead() ? (is_suicide() ? -0.1f : -1.f) : 0.f;
 
-    // 3. fire reward
-    const float band = max_distance_reward - min_distance_reward;
-
-    float potential_hit_reward = 0.f;
-    float softmax_sum = 0.f;
+    // 3. shoot reward
 
     const bool has_shot = action_stats->has_fire();
+    const float shoot_penalty = has_shot ? -0.01f : 0.f;
+
+    float max_shoot_reward = 0.f;
 
     for (const auto &other: tank_factories) {
-        if (other->tank_prefix_name == tank_prefix_name or other->is_dead()) continue;
+        if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;
 
         const auto other_pos = other->get_chassis()->get_body()->getWorldTransform().getOrigin();
         const float distance = (chassis_tr.getOrigin() - other_pos).length();
 
-        const float theta = compute_aim_angle(other);
-        const float phi_angle = 0.5f * (1.0f + std::cos(theta));
+        if (!std::isfinite(distance)) continue;
 
-        const float weight = std::exp(-distance / band);
+        const float weight =
+            std::exp(-std::max(distance - 0.5f * (max_distance + min_distance), 0.f) / band);
+        const float angle = compute_aim_angle(other);
 
-        potential_hit_reward += (has_shot ? 0.1f * phi_angle : 0.f) * weight;
-        softmax_sum += weight;
+        const float score = compute_range_reward(angle, min_aim_angle, max_aim_angle);
+
+        max_shoot_reward = std::max(max_shoot_reward, score * weight);
     }
 
-    potential_hit_reward /= softmax_sum + EPSILON;
-
-    const float shoot_penalty = has_shot ? -0.01f : 0.f;
+    const float shoot_in_aim_bonus = has_shot ? 0.1f * max_shoot_reward : 0.f;
+    const float shoot_reward = shoot_penalty + shoot_in_aim_bonus;
 
     // prepare next frame
-    const auto reward = hit_reward + dead_penalty + shoot_penalty + potential_hit_reward;
+    const auto reward = hit_reward + dead_penalty + shoot_reward;
     hit_reward = 0.f;
 
     // return reward
     return reward;
 }
 
-static float sigmoid(const float x) {
-    if (x >= 0.0f) return 1.0f / (1.0f + std::exp(-x));
-
-    const float z = std::exp(x);
-    return z / (1.0f + z);
-}
-
 float EnemyTankFactory::get_potential_reward(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
-
-    // From ChatGPT lol (with little modifications)
-
     const auto chassis_pos = get_chassis()->get_body()->getWorldTransform().getOrigin();
 
-    const float d_min = min_distance_reward;
-    const float d_max = max_distance_reward;
-    const float band = d_max - d_min;
+    const float band = max_distance - min_distance;
 
-    const float d_opt = 0.5f * (d_min + d_max);
-    const float k_dist = band / 4.0f;
-    const float tau_gate = band;
-
-    float phi = 0.f;
-    float softmax_sum = 0.f;
+    float shaped_reward = 0.f;
+    float weight_sum = 0.f;
 
     for (const auto &other: tank_factories) {
-        if (other->tank_prefix_name == tank_prefix_name or other->is_dead()) continue;
+        if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;
 
         const auto other_pos = other->get_chassis()->get_body()->getWorldTransform().getOrigin();
         const float distance = (chassis_pos - other_pos).length();
 
         if (!std::isfinite(distance)) continue;
 
-        const float x = (d_opt - distance) / k_dist;
-        const float phi_dist = sigmoid(x);
+        const float weight = std::exp(-distance / band);
+        const float angle = compute_aim_angle(other);
+        const float phi = std::exp(-angle / max_aim_angle);
 
-        const float theta = compute_aim_angle(other);
-        const float phi_angle = 0.5f * (1.0f + std::cos(theta));
-
-        const auto reward = phi_angle * phi_dist;
-        const auto weight = std::exp(-distance / tau_gate);
-
-        phi += reward * weight;
-        softmax_sum += weight;
+        shaped_reward += phi * weight;
+        weight_sum += weight;
     }
 
-    return phi / (softmax_sum + EPSILON);
+    return shaped_reward / (weight_sum + EPSILON);
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {
@@ -196,38 +173,40 @@ std::vector<float> EnemyTankFactory::get_proprioception() {
     const auto items = get_items();
 
     const auto &chassis = get_chassis();
-
-    const auto chassis_pos = chassis->get_body()->getCenterOfMassPosition();
+    const auto chassis_model_matrix = chassis->get_model_matrix();
 
     const auto chassis_vel = chassis->get_body()->getLinearVelocity();
 
-    const auto chassis_tr = chassis->get_body()->getWorldTransform();
-    const auto chassis_ang_quat = chassis->get_body()->getOrientation();
-    const auto chassis_ang = chassis_ang_quat.getAngle();
-    const auto chassis_ang_axis = chassis_ang_quat.getAxis();
+    const auto chassis_forward = chassis_model_matrix * glm::vec4(0.f, 0.f, 1.f, 0.f);
+    const auto chassis_up = chassis_model_matrix * glm::vec4(0.f, 1.f, 0.f, 0.f);
+
     const auto chassis_ang_vel = chassis->get_body()->getAngularVelocity();
 
-    std::vector result{chassis_vel.x(),      chassis_vel.y(),      chassis_vel.z(),
-                       chassis_ang,          chassis_ang_axis.x(), chassis_ang_axis.y(),
-                       chassis_ang_axis.z(), chassis_ang_vel.x(),  chassis_ang_vel.y(),
-                       chassis_ang_vel.z()};
+    std::vector result{chassis_vel.x(),     chassis_vel.y(),     chassis_vel.z(),
+                       chassis_forward.x,   chassis_forward.y,   chassis_forward.z,
+                       chassis_up.x,        chassis_up.y,        chassis_up.z,
+                       chassis_ang_vel.x(), chassis_ang_vel.y(), chassis_ang_vel.z()};
+
     result.reserve(ENEMY_PROPRIOCEPTION_SIZE);
 
     for (int i = 1; i < items.size(); i++) {
         const auto body = items[i]->get_body();
+        const auto item_model_matrix = items[i]->get_model_matrix();
 
-        auto pos = body->getCenterOfMassPosition() - chassis_pos;
+        auto relative_model_matrix = glm::inverse(chassis_model_matrix) * item_model_matrix;
+
+        auto pos = relative_model_matrix * glm::vec4(glm::vec3(0.f), 1.f);
         auto vel = body->getLinearVelocity() - chassis_vel;
 
-        auto ang_quat = (chassis_tr.inverse() * body->getCenterOfMassTransform()).getRotation();
-        auto ang = ang_quat.getAngle();
-        auto ang_axis = ang_quat.getAxis();
+        auto item_forward = relative_model_matrix * glm::vec4(0.f, 0.f, 1.f, 0.f);
+        auto item_up = relative_model_matrix * glm::vec4(0.f, 1.f, 0.f, 0.f);
 
         auto ang_vel = body->getAngularVelocity() - chassis_ang_vel;
 
         result.insert(
-            result.end(), {pos.x(), pos.y(), pos.z(), vel.x(), vel.y(), vel.y(), ang, ang_axis.x(),
-                           ang_axis.y(), ang_axis.z(), ang_vel.x(), ang_vel.y(), ang_vel.z()});
+            result.end(), {pos.x, pos.y, pos.z, vel.x(), vel.y(), vel.z(), item_forward.x,
+                           item_forward.y, item_forward.z, item_up.x, item_up.y, item_up.z,
+                           ang_vel.x(), ang_vel.y(), ang_vel.z()});
     }
     return result;
 }

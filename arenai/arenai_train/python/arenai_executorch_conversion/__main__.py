@@ -36,27 +36,39 @@ def _channels(string: str) -> list[tuple[int, int]]:
     return [_match_channels(layer) for layer in regex_layer.findall(string)]
 
 
+def _groups(string: str) -> list[int]:
+    regex_match = re.compile(r"^ *\[(?: *\d+ *,)* *\d+ *] *$")
+    regex_group = re.compile(r"\d+")
+
+    assert regex_match.match(string), "usage : [4, 8, 16, ...]"
+
+    return [int(group) for group in regex_group.findall(string)]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser("arenai convert model to PTE")
 
-    parser.add_argument("-o", "--output-pte", type=str, required=True)
+    parser.add_argument("-o", "--output_pte", type=str, required=True)
     parser.add_argument(
-        "-i", "--input-state-dict-folder", type=str, required=True
+        "-i", "--input_state_dict_folder", type=str, required=True
     )
 
-    parser.add_argument("--hidden-size-sensors", type=int, default=256)
-    parser.add_argument("--hidden-size", type=int, default=2048)
-    parser.add_argument("--num-group-norm", type=int, default=4)
+    parser.add_argument("--sensors_hidden_size", type=int, default=256)
+    parser.add_argument("--actor_hidden_size", type=int, default=1536)
     parser.add_argument(
-        "--vision-channels",
+        "--group_norm_nums", type=_groups, default=[2, 4, 8, 16, 32, 64, 64]
+    )
+    parser.add_argument(
+        "--vision_channels",
         type=_channels,
         default=[
             (3, 8),
             (8, 16),
             (16, 32),
             (32, 64),
-            (64, 96),
-            (96, 128),
+            (64, 128),
+            (128, 256),
+            (256, 512),
         ],
     )
 
@@ -78,10 +90,10 @@ def main() -> None:
         actor = SacActor(
             ENEMY_PROPRIOCEPTION_SIZE,
             ENEMY_NB_ACTIONS,
-            args.hidden_size_sensors,
-            args.hidden_size,
+            args.sensors_hidden_size,
+            args.actor_hidden_size,
             args.vision_channels,
-            args.num_group_norm,
+            args.group_norm_nums,
         )
 
         load_neutral_state_into(actor, args.input_state_dict_folder)

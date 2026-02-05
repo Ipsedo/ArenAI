@@ -6,7 +6,7 @@
 
 #include "./init.h"
 
-SacActor::SacActor(
+Actor::Actor(
     const int &nb_sensors, const int &nb_actions, const int &hidden_size_sensors,
     const int &hidden_size, const std::vector<std::tuple<int, int>> &vision_channels,
     const std::vector<int> &group_norm_nums)
@@ -33,7 +33,7 @@ SacActor::SacActor(
     apply(init_weights);
 }
 
-actor_response SacActor::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
+actor_response Actor::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
     auto vision_encoded = vision_encoder->forward(vision);
     auto sensors_encoded = sensors_encoder->forward(sensors);
     auto encoded = head->forward(torch::cat({vision_encoded, sensors_encoded}, 1));

@@ -31,6 +31,18 @@ torch::Tensor truncated_normal_log_pdf(
            - 0.5 * std::log(2.0 * M_PI) - torch::log(Z);
 }
 
+torch::Tensor truncated_normal_pdf(
+    const torch::Tensor &x, const torch::Tensor &mu, const torch::Tensor &sigma,
+    const float min_value, const float max_value) {
+
+    const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
+
+    const auto alpha = (min_value - mu) / safe_sigma;
+    const auto beta = (max_value - mu) / safe_sigma;
+
+    return phi((x - mu) / safe_sigma) / ((theta(beta) - theta(alpha)) * safe_sigma);
+}
+
 torch::Tensor truncated_normal_sample(
     const torch::Tensor &mu, const torch::Tensor &sigma, const float min_value,
     const float max_value) {
@@ -65,8 +77,7 @@ torch::Tensor truncated_normal_entropy(
 float truncated_normal_target_entropy(
     const int nb_actions, const float min_value, const float max_value) {
     return truncated_normal_entropy(
-               torch::zeros({nb_actions}), torch::ones({nb_actions}) * std::sqrt(2.0), min_value,
-               max_value)
+               torch::zeros({nb_actions}), torch::ones({nb_actions}), min_value, max_value)
         .sum()
         .item<float>();
 }
@@ -84,13 +95,28 @@ torch::Tensor
 gaussian_tanh_log_pdf(const torch::Tensor &x, const torch::Tensor &mu, const torch::Tensor &sigma) {
     const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
 
-    const auto u = 0.5 * torch::log((1.0 + x + EPSILON) / (1.0 - x + EPSILON));
+    const auto x_clamped = torch::clamp(x, -1.f + EPSILON, 1.f - EPSILON);
 
-    const auto log_unnormalized = -0.5 * torch::pow((u - mu) / safe_sigma, 2.0);
-    const auto log_normalization = torch::log(safe_sigma) + 0.5 * std::log(2.0 * M_PI);
+    const auto u = 0.5f * torch::log((1.f + x_clamped) / (1.f - x_clamped));
 
-    const auto log_gaussian = log_unnormalized - log_normalization;
-    const auto log_det_jacobian = torch::log(1.0 - x.pow(2.0) + EPSILON);
+    const auto z = (u - mu) / (safe_sigma + EPSILON);
+    const auto log_gaussian =
+        -0.5f * z.pow(2.f) - torch::log(safe_sigma + EPSILON) - 0.5f * std::log(2.f * M_PI);
+
+    const auto log_det_jacobian = torch::log(1.f - x_clamped.pow(2.f) + EPSILON);
 
     return log_gaussian - log_det_jacobian;
+}
+
+torch::Tensor
+gaussian_tanh_pdf(const torch::Tensor &x, const torch::Tensor &mu, const torch::Tensor &sigma) {
+    const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
+    const auto u = 0.5 * torch::log((1.0 + x + EPSILON) / (1.0 - x + EPSILON));
+
+    const auto z = (u - mu) / safe_sigma;
+    const auto gaussian = torch::exp(-0.5 * z.pow(2.0)) / (safe_sigma * std::sqrt(2.0 * M_PI));
+
+    const auto inv_1mx2 = 1.0 / (1.0 - x.pow(2.0) + EPSILON);
+
+    return gaussian * inv_1mx2;
 }

@@ -17,6 +17,7 @@ struct TorchState {
 struct TorchStep {
     TorchState state;
     torch::Tensor action;
+    torch::Tensor log_proba;
     torch::Tensor reward;
     torch::Tensor done;
     TorchState next_state;

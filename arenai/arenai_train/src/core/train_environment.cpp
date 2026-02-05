@@ -43,10 +43,22 @@ std::vector<std::tuple<State, Reward, IsDone>> TrainTankEnvironment::step(
 
         if (has_shoot[i]) remaining_frames[i] += nb_frames_added_when_shoot;
 
-        if (remaining_frames[i] <= 0) step_result[i] = {state, reward - 0.25f, true};
+        if (remaining_frames[i] <= 0) step_result[i] = {state, reward, true};
     }
 
     return step_result;
+}
+
+std::vector<Reward> TrainTankEnvironment::get_potential_rewards() {
+    return apply_on_factories<std::vector<Reward>>([&](const auto &factories) {
+        std::vector<Reward> potential_rewards;
+        potential_rewards.reserve(factories.size());
+
+        for (const auto &factory: factories)
+            potential_rewards.push_back(factory->get_potential_reward(factories));
+
+        return potential_rewards;
+    });
 }
 
 void TrainTankEnvironment::on_draw(
@@ -74,14 +86,4 @@ void TrainTankEnvironment::reset_singleton() {
 
     Singleton<Cache<std::shared_ptr<Program>>>::get_singleton()->clear();
     Singleton<Cache<std::shared_ptr<Program>>>::reset_singleton();
-}
-
-std::vector<Reward> TrainTankEnvironment::get_potential_rewards() {
-    return apply_on_factories<std::vector<Reward>>([&](const auto &factories) {
-        std::vector<Reward> potential_rewards;
-        potential_rewards.reserve(factories.size());
-        for (const auto &factory: factories)
-            potential_rewards.push_back(factory->get_potential_reward(factories));
-        return potential_rewards;
-    });
 }

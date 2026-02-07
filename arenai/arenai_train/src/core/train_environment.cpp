@@ -25,7 +25,6 @@ TrainTankEnvironment::TrainTankEnvironment(
 
 std::vector<std::tuple<State, Reward, IsDone>> TrainTankEnvironment::step(
     const float time_delta, std::future<std::vector<Action>> &actions_future) {
-
     auto step_result = BaseTanksEnvironment::step(time_delta, actions_future);
 
     const auto has_shoot = apply_on_factories<std::vector<bool>>([&](const auto &factories) {
@@ -47,18 +46,6 @@ std::vector<std::tuple<State, Reward, IsDone>> TrainTankEnvironment::step(
     }
 
     return step_result;
-}
-
-std::vector<Reward> TrainTankEnvironment::get_potential_rewards() {
-    return apply_on_factories<std::vector<Reward>>([&](const auto &factories) {
-        std::vector<Reward> potential_rewards;
-        potential_rewards.reserve(factories.size());
-
-        for (const auto &factory: factories)
-            potential_rewards.push_back(factory->get_potential_reward(factories));
-
-        return potential_rewards;
-    });
 }
 
 void TrainTankEnvironment::on_draw(

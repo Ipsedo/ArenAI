@@ -71,15 +71,28 @@ float EnemyTankFactory::get_reward(
     float max_shoot_reward = 0.f;
     const bool has_shot = action_stats->has_fire();
 
+    const float optimal_distance = 0.5f * (max_distance + min_distance);
+
+    const float band_div = std::pow(max_distance - min_distance, 2.f);
     const float angle_div = std::pow(max_aim_angle - min_aim_angle, 2.f);
+
+    const auto chassis_pos =
+        glm::vec3(chassis->get_model_matrix() * glm::vec4(glm::vec3(0.f), 1.f));
 
     for (const auto &other: tank_factories) {
         if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;
 
-        const auto angle = compute_aim_angle(other);
-        const auto in_aim_reward = std::exp(-std::pow(angle, 2.f) / angle_div);
+        const auto other_pos =
+            glm::vec3(other->get_chassis()->get_model_matrix() * glm::vec4(glm::vec3(0.f), 1.f));
 
-        max_shoot_reward = std::max(in_aim_reward, max_shoot_reward);
+        const auto clamped_distance =
+            std::max(glm::length(chassis_pos - other_pos) - optimal_distance, 0.f);
+        const auto angle = compute_aim_angle(other);
+
+        const auto shoot_reward = std::exp(-std::pow(angle, 2.f) / angle_div)
+                                  * std::exp(-std::pow(clamped_distance, 2.f) / band_div);
+
+        max_shoot_reward = std::max(shoot_reward, max_shoot_reward);
     }
 
     constexpr float shoot_penalty = -0.1f;

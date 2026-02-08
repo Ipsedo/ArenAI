@@ -21,7 +21,8 @@ torch::Tensor truncated_normal_log_pdf(
 torch::Tensor truncated_normal_entropy(
     const torch::Tensor &mu, const torch::Tensor &sigma, float min_value, float max_value);
 
-float truncated_normal_target_entropy(int nb_actions, float min_value, float max_value);
+float truncated_normal_target_entropy(
+    int nb_actions, float min_value, float max_value, float sigma);
 
 torch::Tensor gaussian_tanh_sample(const torch::Tensor &mu, const torch::Tensor &sigma);
 torch::Tensor

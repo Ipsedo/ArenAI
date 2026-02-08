@@ -4,6 +4,8 @@
 
 #include "./sac.h"
 
+#include <arenai_core/constants.h>
+
 #include "../utils/saver.h"
 #include "../utils/target_update.h"
 #include "../utils/truncated_normal.h"
@@ -41,9 +43,9 @@ SacAgent::SacAgent(
       actor_loss_metric(std::make_shared<Metric>("actor", metric_window_size)),
       critic_1_loss_metric(std::make_shared<Metric>("critic_1", metric_window_size)),
       critic_2_loss_metric(std::make_shared<Metric>("critic_2", metric_window_size)),
-      entropy_loss_metric(std::make_shared<Metric>("entropy", metric_window_size, 3, true)),
+      entropy_loss_metric(std::make_shared<Metric>("alpha_loss", metric_window_size, 3, true)),
       entropy_alpha_metric(std::make_shared<Metric>("alpha", metric_window_size)), tau(tau),
-      gamma(gamma), target_entropy(truncated_normal_target_entropy(nb_action, -1.f, 1.f)) {
+      gamma(gamma), target_entropy(truncated_normal_target_entropy(nb_action, -1.f, 1.f, 1.f)) {
 
     hard_update(target_critic_1, critic_1);
     hard_update(target_critic_2, critic_2);
@@ -86,8 +88,8 @@ void SacAgent::train(
             const auto next_target_q_value_2 =
                 target_critic_2->value(next_state.vision, next_state.proprioception, next_action);
 
-            //const auto normalized_reward = (reward - reward.mean()) / (reward.std() + EPSILON);
-            target_q_values = reward
+            const auto normalized_reward = (reward - reward.mean()) / (reward.std() + EPSILON);
+            target_q_values = normalized_reward
                               + (1.f - done.to(torch::kFloat)) * gamma
                                     * (torch::min(next_target_q_value_1, next_target_q_value_2)
                                        - alpha_entropy->alpha() * next_log_proba);

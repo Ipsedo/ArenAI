@@ -54,7 +54,7 @@ torch::Tensor truncated_normal_sample(
 
     const auto Z = torch::clamp_min(theta(beta) - theta(alpha), EPSILON);
 
-    const auto cdf = theta(alpha) + at::rand(mu.sizes(), at::TensorOptions(mu.device())) * Z;
+    const auto cdf = theta(alpha) + torch::rand_like(mu) * Z;
 
     return theta_inv(cdf) * safe_sigma + mu;
 }
@@ -75,9 +75,9 @@ torch::Tensor truncated_normal_entropy(
 }
 
 float truncated_normal_target_entropy(
-    const int nb_actions, const float min_value, const float max_value) {
+    const int nb_actions, const float min_value, const float max_value, const float sigma) {
     return truncated_normal_entropy(
-               torch::zeros({nb_actions}), torch::ones({nb_actions}), min_value, max_value)
+               torch::zeros({nb_actions}), torch::ones({nb_actions}) * sigma, min_value, max_value)
         .sum()
         .item<float>();
 }

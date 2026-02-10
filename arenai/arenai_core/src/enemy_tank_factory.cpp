@@ -135,7 +135,7 @@ float EnemyTankFactory::get_phi(
 
         const float phi = 0.2f * phi_dist + 0.3f * phi_angle + 0.5f * phi_angle * phi_dist;
 
-        max_phi = std::max(max_phi, phi);
+        max_phi = std::max(phi, max_phi);
     }
 
     return max_phi;

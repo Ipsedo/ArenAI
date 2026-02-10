@@ -24,10 +24,4 @@ torch::Tensor truncated_normal_entropy(
 float truncated_normal_target_entropy(
     int nb_actions, float min_value, float max_value, float sigma);
 
-torch::Tensor gaussian_tanh_sample(const torch::Tensor &mu, const torch::Tensor &sigma);
-torch::Tensor
-gaussian_tanh_log_pdf(const torch::Tensor &x, const torch::Tensor &mu, const torch::Tensor &sigma);
-torch::Tensor
-gaussian_tanh_pdf(const torch::Tensor &x, const torch::Tensor &mu, const torch::Tensor &sigma);
-
 #endif//ARENAI_TRAIN_HOST_TRUNCATED_NORMAL_H

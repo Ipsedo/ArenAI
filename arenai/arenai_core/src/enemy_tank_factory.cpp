@@ -70,23 +70,15 @@ float EnemyTankFactory::get_reward(
     // 3. shaped reward
     const bool has_shot = action_stats->has_fire();
 
-    const float sigma_distance = max_distance;
-    const float sigma_angle = max_aim_angle;
+    const float optimal_distance = 0.5f * (max_distance + max_distance);
 
-    const float optimal_distance = 0.5f * (max_distance + min_distance);
-
-    const float band_div = std::pow(sigma_distance, 2.f);
-    const float angle_div = std::pow(sigma_angle, 2.f);
-
-    const float temperature = std::max(1.f, 0.35f * (max_distance - min_distance));
+    const float band_div = std::pow(max_distance, 2.f);
+    const float angle_div = std::pow(max_aim_angle, 2.f);
 
     const auto chassis_pos =
         glm::vec3(chassis->get_model_matrix() * glm::vec4(glm::vec3(0.f), 1.f));
 
-    std::vector<std::tuple<float, float, float>> distances_angles_logits;
-    distances_angles_logits.reserve(tank_factories.size() - 1);
-
-    float max_logit = -std::numeric_limits<float>::infinity();
+    float max_shoot_reward = 0.f;
 
     for (const auto &other: tank_factories) {
         if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;
@@ -94,58 +86,20 @@ float EnemyTankFactory::get_reward(
         const auto other_pos =
             glm::vec3(other->get_chassis()->get_model_matrix() * glm::vec4(glm::vec3(0.f), 1.f));
 
-        const float distance = glm::length(chassis_pos - other_pos);
+        const auto clamped_distance =
+            std::max(glm::length(chassis_pos - other_pos) - optimal_distance, 0.f);
         const auto angle = compute_aim_angle(other);
 
-        const float logit = -distance / temperature;
+        const auto shoot_reward = std::exp(-std::pow(angle, 2.f) / angle_div)
+                                  * std::exp(-std::pow(clamped_distance, 2.f) / band_div);
 
-        distances_angles_logits.push_back({distance, angle, logit});
-        max_logit = std::max(max_logit, logit);
+        max_shoot_reward = std::max(shoot_reward, max_shoot_reward);
     }
 
-    float shaped_reward = 0.f;
-    float shoot_reward = 0.f;
-
-    if (!distances_angles_logits.empty()) {
-        float sum_w = 0.f;
-        std::vector weights(distances_angles_logits.size(), 0.f);
-
-        for (size_t i = 0; i < distances_angles_logits.size(); ++i) {
-            const auto [_, __, logits] = distances_angles_logits[i];
-
-            const float w = std::exp(logits - max_logit);
-            weights[i] = w;
-            sum_w += w;
-        }
-        sum_w = std::max(sum_w, EPSILON);
-
-        float shaped_sum = 0.f;
-        float shoot_sum = 0.f;
-
-        for (size_t i = 0; i < distances_angles_logits.size(); ++i) {
-            const auto [distance, angle, _] = distances_angles_logits[i];
-
-            const float weight = weights[i] / sum_w;
-
-            const float phi_dist = std::exp(-std::pow(distance - optimal_distance, 2.f) / band_div);
-            const float phi_angle = std::exp(-std::pow(angle, 2.f) / angle_div);
-
-            const float local_shaped =
-                0.2f * phi_dist + 0.3f * phi_angle + 0.5f * phi_dist * phi_angle;
-            shaped_sum += weight * local_shaped;
-
-            const float local_shoot = compute_range_reward(angle, min_aim_angle, max_aim_angle);
-            shoot_sum += weight * local_shoot;
-        }
-
-        shaped_reward = shaped_sum;
-
-        constexpr float shoot_penalty = -0.01f;
-        shoot_reward = has_shot ? (shoot_sum + shoot_penalty) : 0.f;
-    }
+    const float shoot_reward = has_shot ? max_shoot_reward - 0.01f : 0.f;
 
     // prepare next frame
-    const auto reward = hit_reward + dead_penalty + shoot_reward + shaped_reward;
+    const auto reward = 0.4f * hit_reward + 0.4f * dead_penalty + 0.2f * shoot_reward;
     hit_reward = 0.f;
 
     // return reward
@@ -157,8 +111,8 @@ float EnemyTankFactory::get_phi(
     const glm::vec3 chassis_pos =
         get_chassis()->get_model_matrix() * glm::vec4(glm::vec3(0.f), 1.f);
 
-    const float band_div = std::pow(max_distance - min_distance, 2.f);
-    const float angle_div = std::pow(max_aim_angle - min_aim_angle, 2.f);
+    const float band_div = std::pow(max_distance, 2.f);
+    const float angle_div = std::pow(max_aim_angle, 2.f);
 
     float max_phi = 0.f;
 

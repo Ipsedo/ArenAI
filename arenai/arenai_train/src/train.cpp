@@ -65,6 +65,7 @@ void train_main(
         model_options.gamma, 0.1);*/
 
     std::cout << "Parameters : " << agent->count_parameters() << std::endl;
+    std::cout << "Target entropy : " << agent->get_target_entropy() << std::endl;
 
     Saver saver(agent, train_options.output_folder, train_options.save_every);
 

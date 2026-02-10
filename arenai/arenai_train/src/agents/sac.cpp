@@ -43,7 +43,7 @@ SacAgent::SacAgent(
       critic_2_loss_metric(std::make_shared<Metric>("critic_2", metric_window_size)),
       entropy_metric(std::make_shared<Metric>("entropy", metric_window_size)),
       entropy_alpha_metric(std::make_shared<Metric>("alpha", metric_window_size)), tau(tau),
-      gamma(gamma), target_entropy(static_cast<float>(nb_action)) {
+      gamma(gamma), target_entropy(truncated_normal_target_entropy(nb_action, -1.f, 1.f, 1.f)) {
 
     hard_update(target_critic_1, critic_1);
     hard_update(target_critic_2, critic_2);
@@ -200,3 +200,5 @@ int SacAgent::count_parameters() {
            + count_parameters_impl(critic_2->parameters())
            + count_parameters_impl(alpha->parameters());
 }
+
+float SacAgent::get_target_entropy() const { return target_entropy; }

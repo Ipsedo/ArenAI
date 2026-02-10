@@ -31,6 +31,8 @@ public:
 
     int count_parameters() override;
 
+    float get_target_entropy() const;
+
 private:
     std::shared_ptr<Actor> actor;
 

@@ -70,8 +70,8 @@ float EnemyTankFactory::get_reward(
     // 3. shaped reward
     const bool has_shot = action_stats->has_fire();
 
-    const float sigma_distance = 0.5f * (max_distance - min_distance);
-    const float sigma_angle = 0.5f * (max_aim_angle - min_aim_angle);
+    const float sigma_distance = max_distance;
+    const float sigma_angle = max_aim_angle;
 
     const float optimal_distance = 0.5f * (max_distance + min_distance);
 
@@ -124,17 +124,18 @@ float EnemyTankFactory::get_reward(
 
         for (size_t i = 0; i < distances_angles_logits.size(); ++i) {
             const auto [distance, angle, _] = distances_angles_logits[i];
-            const float w = weights[i] / sum_w;
-            const float phi_dist = std::exp(
-                -((distance - optimal_distance) * (distance - optimal_distance)) / band_div);
-            const float phi_angle = std::exp(-(angle * angle) / angle_div);
+
+            const float weight = weights[i] / sum_w;
+
+            const float phi_dist = std::exp(-std::pow(distance - optimal_distance, 2.f) / band_div);
+            const float phi_angle = std::exp(-std::pow(angle, 2.f) / angle_div);
 
             const float local_shaped =
-                0.2f * phi_dist + 0.3f * phi_angle + 0.5f * (phi_dist * phi_angle);
-            shaped_sum += w * local_shaped;
+                0.2f * phi_dist + 0.3f * phi_angle + 0.5f * phi_dist * phi_angle;
+            shaped_sum += weight * local_shaped;
 
             const float local_shoot = compute_range_reward(angle, min_aim_angle, max_aim_angle);
-            shoot_sum += w * local_shoot;
+            shoot_sum += weight * local_shoot;
         }
 
         shaped_reward = shaped_sum;

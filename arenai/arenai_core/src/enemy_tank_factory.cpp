@@ -86,8 +86,11 @@ float EnemyTankFactory::get_reward(
         const auto other_pos =
             glm::vec3(other->get_chassis()->get_model_matrix() * glm::vec4(glm::vec3(0.f), 1.f));
 
-        const auto clamped_distance =
-            std::max(glm::length(chassis_pos - other_pos) - optimal_distance, 0.f);
+        const float distance = glm::length(chassis_pos - other_pos);
+
+        if (!std::isfinite(distance)) continue;
+
+        const auto clamped_distance = std::max(distance - optimal_distance, 0.f);
         const auto angle = compute_aim_angle(other);
 
         const auto shoot_reward = std::exp(-std::pow(angle, 2.f) / angle_div)

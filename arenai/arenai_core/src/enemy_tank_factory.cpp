@@ -99,7 +99,7 @@ float EnemyTankFactory::get_reward(
         max_shoot_reward = std::max(shoot_reward, max_shoot_reward);
     }
 
-    const float shoot_reward = has_shot ? max_shoot_reward - 0.01f : 0.f;
+    const float shoot_reward = has_shot ? max_shoot_reward - 0.1f : 0.f;
 
     // prepare next frame
     const auto reward = 0.4f * hit_reward + 0.4f * dead_penalty + 0.2f * shoot_reward;

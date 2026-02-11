@@ -110,16 +110,20 @@ image<uint8_t> PBufferRenderer::draw_and_get_frame(
         static_cast<size_t>(width) * static_cast<size_t>(height) * in_channels);
     glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, linear.data());
 
+    const int hw = width * height;
+
     for (int y = 0; y < height; ++y) {
         const int src_y = y;
         const int dst_y = height - 1 - y;
 
-        const uint8_t *src = linear.data() + src_y * width * 3;
+        const uint8_t *src = linear.data() + src_y * width * in_channels;
 
         for (int x = 0; x < width; ++x) {
-            img.pixels[0 + dst_y * width + x] = src[3 * x + 0];
-            img.pixels[1 + dst_y * width + x] = src[3 * x + 1];
-            img.pixels[2 + dst_y * width + x] = src[3 * x + 2];
+            const int dst = dst_y * width + x;
+
+            img.pixels[0 * hw + dst] = src[in_channels * x + 0];
+            img.pixels[1 * hw + dst] = src[in_channels * x + 1];
+            img.pixels[2 * hw + dst] = src[in_channels * x + 2];
         }
     }
 

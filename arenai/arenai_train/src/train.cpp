@@ -57,12 +57,6 @@ void train_main(
         model_options.vision_channels, model_options.group_norm_nums, torch_device,
         train_options.metric_window_size, model_options.tau, model_options.gamma,
         model_options.initial_alpha);
-    /*auto agent = std::make_shared<PpoAgent>(
-        ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, train_options.learning_rate,
-        model_options.hidden_size_sensors, model_options.actor_hidden_size,
-        model_options.critic_hidden_size, model_options.vision_channels,
-        model_options.group_norm_nums, torch_device, train_options.metric_window_size,
-        model_options.gamma, 0.1);*/
 
     std::cout << "Parameters : " << agent->count_parameters() << std::endl;
     std::cout << "Target entropy : " << agent->get_target_entropy() << std::endl;

@@ -55,35 +55,43 @@ std::vector<Action> ExecuTorchAgent::act(const std::vector<State> &state) {
     const int64_t H = ENEMY_VISION_SIZE;
     const int64_t W = ENEMY_VISION_SIZE;
 
+    const auto vision_elems_per_sample = static_cast<size_t>(C * H * W);
+    const auto proprio_elems_per_sample = static_cast<size_t>(ENEMY_PROPRIOCEPTION_SIZE);
+
     auto buffer_vision = std::vector<float>(static_cast<size_t>(N * C * H * W));
     auto buffer_proprioception =
         std::vector<float>(static_cast<size_t>(N * ENEMY_PROPRIOCEPTION_SIZE));
 
-    unsigned long idx_vision = 0;
-    size_t idx_proprioception = 0;
-    for (int64_t n = 0; n < N; n++) {
+    size_t vision_off = 0;
+    size_t proprio_off = 0;
+
+    for (int64_t n = 0; n < N; ++n) {
         const auto &[img, proprioception] = state[static_cast<size_t>(n)];
-        for (int64_t c = 0; c < C; c++) {
-            const auto &plane = img[static_cast<size_t>(c)];
-            for (int64_t h = 0; h < H; h++) {
-                const auto &row = plane[static_cast<size_t>(h)];
-                for (int64_t w = 0; w < W; w++)
-                    buffer_vision[idx_vision++] = 2.f * static_cast<float>(row[w]) / 255.f - 1.f;
-            }
-        }
+
+        const uint8_t *src = img.pixels.data();
+        float *dst = buffer_vision.data() + vision_off;
+
+        for (size_t k = 0; k < vision_elems_per_sample; ++k)
+            dst[k] = 2.f * (static_cast<float>(src[k]) * (1.0f / 255.0f)) - 1.f;
+
+        vision_off += vision_elems_per_sample;
+
         std::memcpy(
-            buffer_proprioception.data() + idx_proprioception, proprioception.data(),
-            sizeof(float) * static_cast<size_t>(ENEMY_PROPRIOCEPTION_SIZE));
-        idx_proprioception += static_cast<size_t>(ENEMY_PROPRIOCEPTION_SIZE);
+            buffer_proprioception.data() + proprio_off, proprioception.data(),
+            sizeof(float) * proprio_elems_per_sample);
+        proprio_off += proprio_elems_per_sample;
     }
 
     const auto dtype = torch::executor::ScalarType::Float;
 
     auto vision_tensor = executorch::extension::from_blob(
-        static_cast<void *>(buffer_vision.data()), {static_cast<int>(N), C, H, W}, dtype);
+        static_cast<void *>(buffer_vision.data()),
+        {static_cast<int>(N), static_cast<int>(C), static_cast<int>(H), static_cast<int>(W)},
+        dtype);
+
     auto proprioception_tensor = executorch::extension::from_blob(
         static_cast<void *>(buffer_proprioception.data()),
-        {static_cast<int>(N), ENEMY_PROPRIOCEPTION_SIZE}, dtype);
+        {static_cast<int>(N), static_cast<int>(ENEMY_PROPRIOCEPTION_SIZE)}, dtype);
 
     auto output = actor_module.forward({vision_tensor, proprioception_tensor});
 

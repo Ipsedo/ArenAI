@@ -16,7 +16,9 @@
 // Indexing :
 // Channels x Height x Width
 template<typename T>
-using image = std::vector<std::vector<std::vector<T>>>;
+struct image {
+    std::vector<T> pixels;
+};
 
 class PBufferGLContext final : public AbstractGLContext {
 public:

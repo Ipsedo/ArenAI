@@ -100,7 +100,7 @@ image<uint8_t> PBufferRenderer::draw_and_get_frame(
     const int width = get_width();
     const int height = get_height();
 
-    std::vector channels(3, std::vector(height, std::vector<uint8_t>(width, 0)));
+    image img{std::vector<uint8_t>(3 * height * width, 0)};
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
@@ -113,18 +113,17 @@ image<uint8_t> PBufferRenderer::draw_and_get_frame(
     for (int y = 0; y < height; ++y) {
         const int src_y = y;
         const int dst_y = height - 1 - y;
-        const unsigned char *src_row =
-            linear.data() + static_cast<size_t>(src_y) * width * in_channels;
+
+        const uint8_t *src = linear.data() + src_y * width * 3;
 
         for (int x = 0; x < width; ++x) {
-            const unsigned char *pixel_ptr = src_row + x * in_channels;
-            channels[0][dst_y][x] = pixel_ptr[0];
-            channels[1][dst_y][x] = pixel_ptr[1];
-            channels[2][dst_y][x] = pixel_ptr[2];
+            img.pixels[0 + dst_y * width + x] = src[3 * x + 0];
+            img.pixels[1 + dst_y * width + x] = src[3 * x + 1];
+            img.pixels[2 + dst_y * width + x] = src[3 * x + 2];
         }
     }
 
-    return channels;
+    return img;
 }
 
 PBufferRenderer::~PBufferRenderer() = default;

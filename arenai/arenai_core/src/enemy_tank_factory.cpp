@@ -70,7 +70,7 @@ float EnemyTankFactory::get_reward(
     // 3. shaped reward
     const bool has_shot = action_stats->has_fire();
 
-    const float optimal_distance = 0.5f * (max_distance + max_distance);
+    const float optimal_distance = 0.15f * (max_distance + max_distance);
 
     const float band_div = std::pow(max_distance, 2.f);
     const float angle_div = std::pow(max_aim_angle, 2.f);

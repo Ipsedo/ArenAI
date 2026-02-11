@@ -26,17 +26,14 @@ BaseTanksEnvironment::BaseTanksEnvironment(
       thread_snd_barrier(
           std::make_unique<std::barrier<>>(static_cast<std::ptrdiff_t>(nb_tanks + 1))),
       enemy_visions(
-          nb_tanks,
-          image<uint8_t>(
-              3, std::vector(ENEMY_VISION_SIZE, std::vector<uint8_t>(ENEMY_VISION_SIZE, 0)))),
+          nb_tanks, image(std::vector<uint8_t>(3 * ENEMY_VISION_SIZE * ENEMY_VISION_SIZE, 0))),
       physic_engine(std::make_unique<PhysicEngine>(wanted_frequency)), gl_context(gl_context),
       nb_reset_frames(static_cast<int>(4.f / wanted_frequency)), rng(dev()),
       file_reader(file_reader) {
     std::uniform_int_distribution<u_int8_t> u_dist(0, 255);
     for (int i = 0; i < nb_tanks; i++)
-        for (int c = 0; c < 3; c++)
-            for (int h = 0; h < ENEMY_VISION_SIZE; h++)
-                for (int w = 0; w < ENEMY_VISION_SIZE; w++) enemy_visions[i][c][h][w] = u_dist(rng);
+        for (int j = 0; j < 3 * ENEMY_VISION_SIZE * ENEMY_VISION_SIZE; j++)
+            enemy_visions[i].pixels[j] = u_dist(rng);
 }
 
 std::vector<std::tuple<State, Reward, IsDone>> BaseTanksEnvironment::step(
@@ -240,9 +237,7 @@ void BaseTanksEnvironment::start_threads() {
     thread_snd_barrier = std::make_unique<std::barrier<>>(participants);
 
     enemy_visions = std::vector(
-        nb_tanks,
-        image<uint8_t>(
-            3, std::vector(ENEMY_VISION_SIZE, std::vector<uint8_t>(ENEMY_VISION_SIZE, 0))));
+        nb_tanks, image(std::vector<uint8_t>(3 * ENEMY_VISION_SIZE * ENEMY_VISION_SIZE, 0)));
 
     threads_running.store(true, std::memory_order_release);
     pool.clear();

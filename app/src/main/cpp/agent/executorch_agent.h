@@ -14,13 +14,12 @@
 
 using namespace executorch;
 
-float phi(const float z);
-float theta(const float x);
-float theta_inv(const float theta);
+float phi(float z);
+float theta(float x);
+float theta_inv(float theta);
 
 float truncated_normal_sample(
-    std::mt19937 rng, const float mu, const float sigma, const float min_value,
-    const float max_value);
+    std::mt19937 &rng, float mu, float sigma, float min_value, float max_value);
 
 class ExecuTorchAgent {
 public:

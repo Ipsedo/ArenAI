@@ -49,15 +49,14 @@ std::vector<std::tuple<State, Reward, IsDone>> TrainTankEnvironment::step(
     return step_result;
 }
 
-std::vector<Reward> TrainTankEnvironment::get_potential_rewards() {
+std::vector<Reward> TrainTankEnvironment::get_phi_vector() {
     return apply_on_factories<std::vector<Reward>>([&](const auto &factories) {
-        std::vector<Reward> potential_rewards;
-        potential_rewards.reserve(factories.size());
+        std::vector<Reward> phi_vector;
+        phi_vector.reserve(factories.size());
 
-        for (const auto &factory: factories)
-            potential_rewards.push_back(factory->get_potential_reward(factories));
+        for (const auto &factory: factories) phi_vector.push_back(factory->get_phi(factories));
 
-        return potential_rewards;
+        return phi_vector;
     });
 }
 

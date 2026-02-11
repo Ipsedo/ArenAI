@@ -24,7 +24,7 @@ float theta_inv(const float theta) {
 }
 
 float truncated_normal_sample(
-    std::mt19937 rng, const float mu, const float sigma, const float min_value,
+    std::mt19937 &rng, const float mu, const float sigma, const float min_value,
     const float max_value) {
 
     const auto safe_sigma = std::clamp(sigma, SIGMA_MIN, SIGMA_MAX);

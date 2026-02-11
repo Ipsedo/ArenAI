@@ -54,7 +54,7 @@ torch::Tensor truncated_normal_sample(
 
     const auto Z = torch::clamp_min(theta(beta) - theta(alpha), EPSILON);
 
-    const auto cdf = theta(alpha) + at::rand(mu.sizes(), at::TensorOptions(mu.device())) * Z;
+    const auto cdf = theta(alpha) + torch::rand_like(mu) * Z;
 
     return theta_inv(cdf) * safe_sigma + mu;
 }
@@ -75,48 +75,9 @@ torch::Tensor truncated_normal_entropy(
 }
 
 float truncated_normal_target_entropy(
-    const int nb_actions, const float min_value, const float max_value) {
+    const int nb_actions, const float min_value, const float max_value, const float sigma) {
     return truncated_normal_entropy(
-               torch::zeros({nb_actions}), torch::ones({nb_actions}), min_value, max_value)
+               torch::zeros({nb_actions}), torch::ones({nb_actions}) * sigma, min_value, max_value)
         .sum()
         .item<float>();
-}
-
-torch::Tensor gaussian_tanh_sample(const torch::Tensor &mu, const torch::Tensor &sigma) {
-    const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
-
-    const auto eps = torch::randn_like(mu);
-
-    const auto u = mu + safe_sigma * eps;
-    return torch::tanh(u);
-}
-
-torch::Tensor
-gaussian_tanh_log_pdf(const torch::Tensor &x, const torch::Tensor &mu, const torch::Tensor &sigma) {
-    const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
-
-    const auto x_clamped = torch::clamp(x, -1.f + EPSILON, 1.f - EPSILON);
-
-    const auto u = 0.5f * torch::log((1.f + x_clamped) / (1.f - x_clamped));
-
-    const auto z = (u - mu) / (safe_sigma + EPSILON);
-    const auto log_gaussian =
-        -0.5f * z.pow(2.f) - torch::log(safe_sigma + EPSILON) - 0.5f * std::log(2.f * M_PI);
-
-    const auto log_det_jacobian = torch::log(1.f - x_clamped.pow(2.f) + EPSILON);
-
-    return log_gaussian - log_det_jacobian;
-}
-
-torch::Tensor
-gaussian_tanh_pdf(const torch::Tensor &x, const torch::Tensor &mu, const torch::Tensor &sigma) {
-    const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
-    const auto u = 0.5 * torch::log((1.0 + x + EPSILON) / (1.0 - x + EPSILON));
-
-    const auto z = (u - mu) / safe_sigma;
-    const auto gaussian = torch::exp(-0.5 * z.pow(2.0)) / (safe_sigma * std::sqrt(2.0 * M_PI));
-
-    const auto inv_1mx2 = 1.0 / (1.0 - x.pow(2.0) + EPSILON);
-
-    return gaussian * inv_1mx2;
 }

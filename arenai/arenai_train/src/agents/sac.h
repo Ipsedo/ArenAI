@@ -31,6 +31,8 @@ public:
 
     int count_parameters() override;
 
+    float get_target_entropy() const;
+
 private:
     std::shared_ptr<Actor> actor;
 
@@ -40,17 +42,17 @@ private:
     std::shared_ptr<QFunction> target_critic_1;
     std::shared_ptr<QFunction> target_critic_2;
 
-    std::shared_ptr<AlphaParameter> alpha_entropy;
+    std::shared_ptr<AlphaParameter> alpha;
 
     std::shared_ptr<torch::optim::Adam> actor_optim;
     std::shared_ptr<torch::optim::Adam> critic_1_optim;
     std::shared_ptr<torch::optim::Adam> critic_2_optim;
-    std::shared_ptr<torch::optim::Adam> entropy_optim;
+    std::shared_ptr<torch::optim::Adam> alpha_optim;
 
     std::shared_ptr<Metric> actor_loss_metric;
     std::shared_ptr<Metric> critic_1_loss_metric;
     std::shared_ptr<Metric> critic_2_loss_metric;
-    std::shared_ptr<Metric> entropy_loss_metric;
+    std::shared_ptr<Metric> entropy_metric;
     std::shared_ptr<Metric> entropy_alpha_metric;
 
     float tau;

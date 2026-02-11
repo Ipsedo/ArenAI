@@ -15,7 +15,7 @@ public:
     std::vector<std::tuple<State, Reward, IsDone>>
     step(float time_delta, std::future<std::vector<Action>> &actions_future) override;
 
-    std::vector<Reward> get_potential_rewards();
+    std::vector<Reward> get_phi_vector();
 
     static void reset_singleton();
 

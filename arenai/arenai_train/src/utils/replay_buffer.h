@@ -29,13 +29,17 @@ public:
 
     TorchStep sample(int batch_size, torch::Device device);
 
-    void add(TorchStep step);
+    void add(const TorchStep &step);
 
     int size() const;
 
 private:
-    int memory_size;
+    size_t memory_size_;
+    size_t write_idx_;
+    size_t size_;
     std::vector<TorchStep> memory;
+
+    static TorchStep clone_step(const TorchStep &to_clone);
 };
 
 #endif// ARENAI_TRAIN_HOST_REPLAY_BUFFER_H

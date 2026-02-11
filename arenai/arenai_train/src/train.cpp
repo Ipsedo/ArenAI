@@ -57,21 +57,16 @@ void train_main(
         model_options.vision_channels, model_options.group_norm_nums, torch_device,
         train_options.metric_window_size, model_options.tau, model_options.gamma,
         model_options.initial_alpha);
-    /*auto agent = std::make_shared<PpoAgent>(
-        ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, train_options.learning_rate,
-        model_options.hidden_size_sensors, model_options.actor_hidden_size,
-        model_options.critic_hidden_size, model_options.vision_channels,
-        model_options.group_norm_nums, torch_device, train_options.metric_window_size,
-        model_options.gamma, 0.2);*/
 
     std::cout << "Parameters : " << agent->count_parameters() << std::endl;
+    std::cout << "Target entropy : " << agent->get_target_entropy() << std::endl;
 
     Saver saver(agent, train_options.output_folder, train_options.save_every);
 
     auto replay_buffer = std::make_unique<ReplayBuffer>(train_options.replay_buffer_size);
 
     Metric reward_metric("reward", train_options.metric_window_size);
-    Metric potential_reward_metric("potential", train_options.metric_window_size, 3, true);
+    Metric potential_metric("potential", train_options.metric_window_size, 3, true);
 
     auto sac_metrics = agent->get_metrics();
 
@@ -129,9 +124,9 @@ void train_main(
             auto actions_future = std::async([&] { return actions_for_env; });
 
             // step environment
-            const auto potential_rewards = env->get_potential_rewards();
+            const auto phi_vector = env->get_phi_vector();
             const auto steps = env->step(wanted_frequency, actions_future);
-            const auto next_potential_rewards = env->get_potential_rewards();
+            const auto next_phi_vector = env->get_phi_vector();
 
             last_state.clear();
             last_state.reserve(train_options.nb_tanks);
@@ -141,14 +136,13 @@ void train_main(
                 const auto [next_state, reward, done] = steps[i];
                 last_state.push_back(next_state);
 
-                const auto potential_reward =
-                    train_options.potentiel_reward_scale
-                    * (model_options.gamma * next_potential_rewards[i] - potential_rewards[i]);
-
                 if (already_done[i]) continue;
 
+                const float potential_reward =
+                    model_options.gamma * next_phi_vector[i] - phi_vector[i];
+
                 reward_metric.add(reward);
-                potential_reward_metric.add(potential_reward);
+                potential_metric.add(potential_reward);
 
                 const auto [next_vision, next_proprioception] = state_to_tensor(next_state);
 
@@ -157,9 +151,8 @@ void train_main(
                      actions[i],
                      log_probas[i],
                      torch::tensor(
-                         reward + potential_reward, torch::TensorOptions().dtype(torch::kFloat))
-                         .unsqueeze(0),
-                     torch::tensor(done, torch::TensorOptions().dtype(torch::kBool)).unsqueeze(0),
+                         {reward + potential_reward}, torch::TensorOptions().dtype(torch::kFloat)),
+                     torch::tensor({done}, torch::TensorOptions().dtype(torch::kBool)),
                      {next_vision, next_proprioception}});
 
                 if (done && !already_done[i]) already_done[i] = true;
@@ -185,8 +178,8 @@ void train_main(
             // metric
             std::stringstream stream;
             stream << "Episode [" << episode_index << " / " << train_options.nb_episodes
-                   << "] : " << reward_metric.to_string() << ", "
-                   << potential_reward_metric.to_string() << sac_metric_p_bar_description;
+                   << "] : " << reward_metric.to_string() << ", " << potential_metric.to_string()
+                   << sac_metric_p_bar_description;
 
             p_bar.set_option(indicators::option::PrefixText{stream.str()});
             p_bar.print_progress();

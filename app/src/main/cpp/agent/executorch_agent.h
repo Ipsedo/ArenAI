@@ -19,7 +19,7 @@ float theta(const float x);
 float theta_inv(const float theta);
 
 float truncated_normal_sample(
-    const std::mt19937 &rng, const float mu, const float sigma, const float min_value,
+    std::mt19937 &rng, const float mu, const float sigma, const float min_value,
     const float max_value);
 
 class ExecuTorchAgent {

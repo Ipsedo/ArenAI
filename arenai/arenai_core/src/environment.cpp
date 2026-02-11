@@ -41,9 +41,12 @@ std::vector<std::tuple<State, Reward, IsDone>> BaseTanksEnvironment::step(
 
     if (!thread_killed) thread_fst_barrier->arrive_and_wait();
 
-    model_matrices.clear();
+    const auto items = physic_engine->get_items();
 
-    for (const auto &item: physic_engine->get_items())
+    model_matrices.clear();
+    model_matrices.reserve(items.size());
+
+    for (const auto &item: items)
         model_matrices.emplace_back(item->get_name(), item->get_model_matrix());
 
     model_matrices.emplace_back(
@@ -221,7 +224,7 @@ void BaseTanksEnvironment::worker_enemy_vision(
 
         {
             std::lock_guard lock(visions_mutex[index]);
-            enemy_visions[index] = renderer->draw_and_get_frame(model_matrices);
+            renderer->draw_and_get_frame_into(model_matrices, enemy_visions[index]);
         }
 
         if (thread_sleep) std::this_thread::sleep_for(frame_dt - dt);

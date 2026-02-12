@@ -2,7 +2,7 @@
 // Created by samuel on 10/02/2026.
 //
 
-#include "./gaussian_tanh.h"
+#include "../distributions/gaussian_tanh.h"
 
 #include <arenai_core/constants.h>
 

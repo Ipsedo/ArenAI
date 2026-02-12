@@ -93,9 +93,8 @@ void PBufferRenderer::on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_
 
 void PBufferRenderer::on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_context) {}
 
-void PBufferRenderer::draw_and_get_frame_into(
-    const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices,
-    image<uint8_t> &copy_into) {
+std::shared_ptr<image<uint8_t>> PBufferRenderer::draw_and_get(
+    const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
     draw(model_matrices);
 
     const int width = get_width();
@@ -111,6 +110,8 @@ void PBufferRenderer::draw_and_get_frame_into(
 
     const int hw = width * height;
 
+    auto frame = std::make_shared<image<uint8_t>>(std::vector<uint8_t>(hw * 3));
+
     for (int y = 0; y < height; ++y) {
         const int src_y = y;
         const int dst_y = height - 1 - y;
@@ -120,11 +121,13 @@ void PBufferRenderer::draw_and_get_frame_into(
         for (int x = 0; x < width; ++x) {
             const int dst = dst_y * width + x;
 
-            copy_into.pixels[0 * hw + dst] = src[in_channels * x + 0];
-            copy_into.pixels[1 * hw + dst] = src[in_channels * x + 1];
-            copy_into.pixels[2 * hw + dst] = src[in_channels * x + 2];
+            frame->pixels[0 * hw + dst] = src[in_channels * x + 0];
+            frame->pixels[1 * hw + dst] = src[in_channels * x + 1];
+            frame->pixels[2 * hw + dst] = src[in_channels * x + 2];
         }
     }
+
+    return frame;
 }
 
 PBufferRenderer::~PBufferRenderer() = default;

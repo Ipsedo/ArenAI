@@ -4,9 +4,9 @@
 
 #include "./sac.h"
 
+#include "../distributions/truncated_normal.h"
 #include "../utils/saver.h"
 #include "../utils/target_update.h"
-#include "../utils/truncated_normal.h"
 
 SacAgent::SacAgent(
     int nb_sensors, int nb_action, const float learning_rate, int hidden_size_sensors,
@@ -127,11 +127,11 @@ void SacAgent::train(
         actor_optim->step();
 
         // entropy
-        const auto entropy_loss =
+        const auto alpha_loss =
             torch::mean(alpha->alpha() * (-curr_log_proba.detach() - target_entropy));
 
         alpha_optim->zero_grad();
-        entropy_loss.backward();
+        alpha_loss.backward();
         alpha_optim->step();
 
         // target value soft update

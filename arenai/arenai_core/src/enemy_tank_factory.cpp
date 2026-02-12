@@ -18,7 +18,8 @@ EnemyTankFactory::EnemyTankFactory(
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), is_dead_already_triggered(false),
       min_aim_angle(static_cast<float>(M_PI) / 12.f), max_aim_angle(static_cast<float>(M_PI) / 3.f),
-      min_distance(5.f), max_distance(100.f), has_touch(false),
+      min_distance(5.f), max_distance(30.f), optimal_distance(0.5f * (max_distance + min_distance)),
+      softmax_beta(3.f), softmax_lambda(0.5f * max_distance), has_touch(false),
       action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
@@ -70,15 +71,14 @@ float EnemyTankFactory::get_reward(
     // 3. shaped reward
     const bool has_shot = action_stats->has_fire();
 
-    const float optimal_distance = 0.25f * (max_distance + min_distance);
-
     const float band_div = std::pow(max_distance, 2.f);
     const float angle_div = std::pow(max_aim_angle, 2.f);
 
     const auto chassis_pos =
         glm::vec3(chassis->get_model_matrix() * glm::vec4(glm::vec3(0.f), 1.f));
 
-    float max_shoot_reward = 0.f;
+    std::vector<float> scores;
+    std::vector<float> weights;
 
     for (const auto &other: tank_factories) {
         if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;
@@ -93,13 +93,31 @@ float EnemyTankFactory::get_reward(
         const auto clamped_distance = std::max(distance - optimal_distance, 0.f);
         const auto angle = compute_aim_angle(other);
 
-        const auto shoot_reward = std::exp(-std::pow(angle, 2.f) / angle_div)
-                                  * std::exp(-std::pow(clamped_distance, 2.f) / band_div);
-
-        max_shoot_reward = std::max(shoot_reward, max_shoot_reward);
+        scores.push_back(
+            std::exp(-std::pow(angle, 2.f) / angle_div)
+            * std::exp(-std::pow(clamped_distance, 2.f) / band_div));
+        weights.push_back(std::exp(-distance / softmax_lambda));
     }
 
-    const float shoot_reward = has_shot ? max_shoot_reward - 0.1f : 0.f;
+    float soft_score = 0.f;
+
+    if (!scores.empty()) {
+        float denom = 0.f;
+        std::vector<float> soft_weights(scores.size());
+
+        for (size_t i = 0; i < scores.size(); i++) {
+            soft_weights[i] = weights[i] * std::exp(softmax_beta * scores[i]);
+            denom += soft_weights[i];
+        }
+
+        if (denom > EPSILON) {
+            for (size_t i = 0; i < scores.size(); i++) {
+                soft_score += (soft_weights[i] / denom) * scores[i];
+            }
+        }
+    }
+
+    const float shoot_reward = has_shot ? soft_score - 0.1f : 0.f;
 
     // prepare next frame
     const auto reward = 0.4f * hit_reward + 0.4f * dead_penalty + 0.2f * shoot_reward;
@@ -117,7 +135,8 @@ float EnemyTankFactory::get_phi(
     const float band_div = std::pow(max_distance, 2.f);
     const float angle_div = std::pow(max_aim_angle, 2.f);
 
-    float max_phi = 0.f;
+    std::vector<float> scores;
+    std::vector<float> weights;
 
     for (const auto &other: tank_factories) {
         if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;
@@ -133,12 +152,29 @@ float EnemyTankFactory::get_phi(
         const float phi_dist = std::exp(-std::pow(distance, 2.f) / band_div);
         const float phi_angle = std::exp(-std::pow(angle, 2.f) / angle_div);
 
-        const float phi = 0.2f * phi_dist + 0.3f * phi_angle + 0.5f * phi_angle * phi_dist;
-
-        max_phi = std::max(phi, max_phi);
+        scores.push_back(0.2f * phi_dist + 0.3f * phi_angle + 0.5f * phi_angle * phi_dist);
+        weights.push_back(std::exp(-distance / softmax_lambda));
     }
 
-    return max_phi;
+    float phi = 0.f;
+
+    if (!scores.empty()) {
+        float denom = 0.f;
+        std::vector<float> soft_weights(scores.size());
+
+        for (size_t i = 0; i < scores.size(); i++) {
+            soft_weights[i] = weights[i] * std::exp(softmax_beta * scores[i]);
+            denom += soft_weights[i];
+        }
+
+        if (denom > EPSILON) {
+            for (size_t i = 0; i < scores.size(); i++) {
+                phi += (soft_weights[i] / denom) * scores[i];
+            }
+        }
+    }
+
+    return phi;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

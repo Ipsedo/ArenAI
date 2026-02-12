@@ -2,7 +2,7 @@
 // Created by samuel on 08/02/2026.
 //
 
-#include "./beta_law.h"
+#include "../distributions/beta_law.h"
 
 #include <arenai_core/constants.h>
 

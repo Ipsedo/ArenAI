@@ -21,6 +21,20 @@
 #include "./enemy_tank_factory.h"
 #include "./types.h"
 
+struct VisionDoubleBuffer {
+    std::shared_ptr<image<uint8_t>> buf[2];
+    std::atomic<int> front{0};
+
+    void init(std::mt19937 &rng, int height, int width);
+};
+
+struct ModelMatricesDoubleBuffer {
+    std::vector<std::tuple<std::string, glm::mat4>> buf[2];
+
+    std::atomic<int> front_idx{0};
+    std::atomic<uint64_t> frame_id{0};
+};
+
 class BaseTanksEnvironment {
 public:
     BaseTanksEnvironment(
@@ -40,20 +54,17 @@ public:
 private:
     float wanted_frequency;
     int nb_tanks;
-    std::vector<std::mutex> visions_mutex;
 
     bool thread_killed;
     bool thread_sleep;
     std::atomic<bool> threads_running;
-    std::unique_ptr<std::barrier<>> thread_fst_barrier;
-    std::unique_ptr<std::barrier<>> thread_snd_barrier;
     std::vector<std::thread> pool;
 
-    std::vector<std::tuple<std::string, glm::mat4>> model_matrices;
+    ModelMatricesDoubleBuffer model_matrices;
 
     std::vector<std::unique_ptr<EnemyTankFactory>> tank_factories;
     std::vector<std::unique_ptr<EnemyControllerHandler>> tank_controller_handler;
-    std::vector<image<uint8_t>> enemy_visions;
+    std::vector<VisionDoubleBuffer> enemy_visions;
 
     std::unique_ptr<PhysicEngine> physic_engine;
 

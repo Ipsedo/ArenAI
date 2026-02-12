@@ -51,7 +51,8 @@ std::tuple<torch::Tensor, torch::Tensor> states_to_tensor(const std::vector<Stat
 
     at::parallel_for(0, N, 1, [&](const int64_t begin, const int64_t end) {
         for (int64_t n = begin; n < end; ++n) {
-            std::memcpy(vision_ptr + n * (C * H * W), states[n].vision.pixels.data(), vision_bytes);
+            std::memcpy(
+                vision_ptr + n * (C * H * W), states[n].vision->pixels.data(), vision_bytes);
 
             std::memcpy(
                 proprioception_ptr + n * P, states[n].proprioception.data(), proprioception_bytes);

@@ -46,6 +46,11 @@ private:
     float min_distance;
     float max_distance;
 
+    float optimal_distance;
+
+    float softmax_beta;
+    float softmax_lambda;
+
     bool has_touch;
 
     std::shared_ptr<ActionStats> action_stats;

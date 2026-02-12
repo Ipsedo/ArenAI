@@ -11,7 +11,7 @@
 #include <arenai_view/pbuffer_renderer.h>
 
 struct State {
-    image<uint8_t> vision;
+    std::shared_ptr<image<uint8_t>> vision;
     std::vector<float> proprioception;
 };
 

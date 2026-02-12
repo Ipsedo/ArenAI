@@ -4,9 +4,9 @@
 
 #include "./ppo.h"
 
+#include "../distributions/truncated_normal.h"
 #include "../utils/saver.h"
 #include "../utils/target_update.h"
-#include "../utils/truncated_normal.h"
 #include "arenai_core/constants.h"
 
 PpoAgent::PpoAgent(

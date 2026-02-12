@@ -43,9 +43,8 @@ public:
         const std::shared_ptr<AbstractGLContext> &main_context, int width, int height,
         glm::vec3 light_pos, const std::shared_ptr<Camera> &camera);
 
-    void draw_and_get_frame_into(
-        const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices,
-        image<uint8_t> &copy_into);
+    std::shared_ptr<image<uint8_t>>
+    draw_and_get(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices);
 
     ~PBufferRenderer() override;
 

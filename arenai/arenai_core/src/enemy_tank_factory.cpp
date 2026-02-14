@@ -55,7 +55,7 @@ float EnemyTankFactory::compute_full_range_reward(
 
 float EnemyTankFactory::softmax_scores(const std::vector<float> &scores) const {
     float max_score = -std::numeric_limits<float>::infinity();
-    for (const float s: scores) max_score = std::max(s, max_score);
+    for (const float s: scores) max_score = std::max(softmax_beta * s, max_score);
 
     float numerator = 0.f, denominator = 0.f;
 

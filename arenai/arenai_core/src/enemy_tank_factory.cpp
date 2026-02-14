@@ -19,8 +19,8 @@ EnemyTankFactory::EnemyTankFactory(
       curr_frame_upside_down(0), is_dead_already_triggered(false),
       min_aim_angle(static_cast<float>(M_PI) / 12.f), max_aim_angle(static_cast<float>(M_PI) / 4.f),
       min_distance(5.f), max_distance(100.f),
-      optimal_distance(0.5f * (max_distance + min_distance)), sigma_distance(0.25f * max_distance),
-      sigma_angle(0.25f * max_aim_angle), softmax_beta(5.f), has_touch(false),
+      optimal_distance(0.25f * (max_distance + min_distance)), sigma_distance(0.25f * max_distance),
+      sigma_angle(0.25f * max_aim_angle), softmax_beta(6.f), has_touch(false),
       action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
@@ -111,7 +111,7 @@ float EnemyTankFactory::get_reward(
     }
 
     const float shaped_reward = softmax_scores(shaped_rewards);
-    const float shoot_reward = has_shot ? shaped_reward - 0.1f : 0.f;
+    const float shoot_reward = has_shot ? shaped_reward - 0.5f : 0.f;
 
     // prepare next frame
     const auto reward =

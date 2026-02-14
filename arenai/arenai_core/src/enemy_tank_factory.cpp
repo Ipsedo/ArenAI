@@ -105,10 +105,7 @@ float EnemyTankFactory::get_reward(
             glm::vec3(other->get_chassis()->get_model_matrix() * glm::vec4(glm::vec3(0.f), 1.f));
 
         const float distance = glm::length(chassis_pos - other_pos);
-
-        if (!std::isfinite(distance)) continue;
-
-        const auto angle = compute_aim_angle(other);
+        const float angle = compute_aim_angle(other);
 
         shaped_rewards.push_back(quality_score(distance, angle));
     }

@@ -16,7 +16,6 @@ public:
         glm::vec3 chassis_pos, float wanted_frame_frequency);
 
     float get_reward(const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories);
-    float get_phi(const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories);
 
     bool is_dead() override;
     bool is_suicide() const;
@@ -51,6 +50,8 @@ private:
     float sigma_distance;
     float sigma_angle;
 
+    float softmax_beta;
+
     bool has_touch;
 
     std::shared_ptr<ActionStats> action_stats;
@@ -58,6 +59,9 @@ private:
     static float compute_range_reward(float value, float min, float max);
     static float compute_full_range_reward(float value, float min, float max);
     float compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank);
+
+    float softmax_scores(const std::vector<float> &scores);
+    float quality_score(float distance, float angle) const;
 };
 
 #endif//ARENAI_TRAIN_HOST_ENEMY_TANK_FACTORY_H

@@ -66,7 +66,6 @@ void train_main(
     auto replay_buffer = std::make_unique<ReplayBuffer>(train_options.replay_buffer_size);
 
     Metric reward_metric("reward", train_options.metric_window_size);
-    Metric potential_metric("potential", train_options.metric_window_size, 3, true);
 
     auto sac_metrics = agent->get_metrics();
 
@@ -99,8 +98,6 @@ void train_main(
         auto last_state = env->reset_physics();
         env->reset_drawables(gl_context);
 
-        auto phi_vector = env->get_phi_vector();
-
         int episode_step_idx = 0;
         while (!is_done) {
 
@@ -127,7 +124,6 @@ void train_main(
 
             // step environment
             const auto steps = env->step(wanted_frequency, actions_future);
-            const auto next_phi_vector = env->get_phi_vector();
 
             last_state.clear();
             last_state.reserve(train_options.nb_tanks);
@@ -139,11 +135,7 @@ void train_main(
 
                 if (already_done[i]) continue;
 
-                const float potential_reward =
-                    model_options.gamma * next_phi_vector[i] - phi_vector[i];
-
                 reward_metric.add(reward);
-                potential_metric.add(potential_reward);
 
                 const auto [next_vision, next_proprioception] = state_to_tensor(next_state);
 
@@ -151,15 +143,12 @@ void train_main(
                     {{vision[i], proprioception[i]},
                      actions[i],
                      log_probas[i],
-                     torch::tensor(
-                         {reward + potential_reward}, torch::TensorOptions().dtype(torch::kFloat)),
+                     torch::tensor({reward}, torch::TensorOptions().dtype(torch::kFloat)),
                      torch::tensor({done}, torch::TensorOptions().dtype(torch::kBool)),
                      {next_vision, next_proprioception}});
 
                 if (done && !already_done[i]) already_done[i] = true;
             }
-
-            phi_vector = next_phi_vector;
 
             // check if it's time to train
             if (train_counter % train_options.train_every == train_options.train_every - 1
@@ -181,8 +170,7 @@ void train_main(
             // metric
             std::stringstream stream;
             stream << "Episode [" << episode_index << " / " << train_options.nb_episodes
-                   << "] : " << reward_metric.to_string() << ", " << potential_metric.to_string()
-                   << sac_metric_p_bar_description;
+                   << "] : " << reward_metric.to_string() << sac_metric_p_bar_description;
 
             p_bar.set_option(indicators::option::PrefixText{stream.str()});
             p_bar.print_progress();

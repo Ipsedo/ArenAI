@@ -48,8 +48,8 @@ private:
 
     float optimal_distance;
 
-    float softmax_beta;
-    float softmax_lambda;
+    float sigma_distance;
+    float sigma_angle;
 
     bool has_touch;
 

@@ -17,10 +17,10 @@ EnemyTankFactory::EnemyTankFactory(
       tank_prefix_name(tank_prefix_name), hit_reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), is_dead_already_triggered(false),
-      min_aim_angle(static_cast<float>(M_PI) / 12.f), max_aim_angle(static_cast<float>(M_PI) / 3.f),
+      min_aim_angle(static_cast<float>(M_PI) / 12.f), max_aim_angle(static_cast<float>(M_PI) / 4.f),
       min_distance(5.f), max_distance(30.f), optimal_distance(0.5f * (max_distance + min_distance)),
-      softmax_beta(3.f), softmax_lambda(0.5f * max_distance), has_touch(false),
-      action_stats(std::make_shared<ActionStats>()) {}
+      sigma_distance(0.25f * optimal_distance), sigma_angle(0.25 * (max_aim_angle + min_aim_angle)),
+      has_touch(false), action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
     const auto canon_tr = get_canon()->get_model_matrix();
@@ -71,14 +71,10 @@ float EnemyTankFactory::get_reward(
     // 3. shaped reward
     const bool has_shot = action_stats->has_fire();
 
-    const float band_div = std::pow(max_distance, 2.f);
-    const float angle_div = std::pow(max_aim_angle, 2.f);
-
     const auto chassis_pos =
         glm::vec3(chassis->get_model_matrix() * glm::vec4(glm::vec3(0.f), 1.f));
 
-    std::vector<float> scores;
-    std::vector<float> weights;
+    float max_shoot_reward = 0.f;
 
     for (const auto &other: tank_factories) {
         if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;
@@ -90,37 +86,22 @@ float EnemyTankFactory::get_reward(
 
         if (!std::isfinite(distance)) continue;
 
-        const auto clamped_distance = std::max(distance - optimal_distance, 0.f);
         const auto angle = compute_aim_angle(other);
+        const auto clamped_distance = std::max(distance - optimal_distance, 0.f);
 
-        scores.push_back(
-            std::exp(-std::pow(angle, 2.f) / angle_div)
-            * std::exp(-std::pow(clamped_distance, 2.f) / band_div));
-        weights.push_back(std::exp(-distance / softmax_lambda));
+        const float shoot_reward =
+            std::exp(-std::pow(angle, 2.f) / (2.f * std::pow(sigma_angle, 2.f)))
+            * std::exp(
+                -std::pow(-std::pow(clamped_distance, 2.f), 2.f)
+                / (2.f * std::pow(sigma_distance, 2.f)));
+
+        max_shoot_reward = std::max(shoot_reward, max_shoot_reward);
     }
 
-    float soft_score = 0.f;
-
-    if (!scores.empty()) {
-        float denom = 0.f;
-        std::vector<float> soft_weights(scores.size());
-
-        for (size_t i = 0; i < scores.size(); i++) {
-            soft_weights[i] = weights[i] * std::exp(softmax_beta * scores[i]);
-            denom += soft_weights[i];
-        }
-
-        if (denom > EPSILON) {
-            for (size_t i = 0; i < scores.size(); i++) {
-                soft_score += (soft_weights[i] / denom) * scores[i];
-            }
-        }
-    }
-
-    const float shoot_reward = has_shot ? soft_score - 0.1f : 0.f;
+    const float shoot_reward = has_shot ? max_shoot_reward - 0.1f : 0.f;
 
     // prepare next frame
-    const auto reward = 0.4f * hit_reward + 0.4f * dead_penalty + 0.2f * shoot_reward;
+    const auto reward = 0.5f * hit_reward + 0.3f * dead_penalty + 0.2f * shoot_reward;
     hit_reward = 0.f;
 
     // return reward
@@ -132,11 +113,7 @@ float EnemyTankFactory::get_phi(
     const glm::vec3 chassis_pos =
         get_chassis()->get_model_matrix() * glm::vec4(glm::vec3(0.f), 1.f);
 
-    const float band_div = std::pow(max_distance, 2.f);
-    const float angle_div = std::pow(max_aim_angle, 2.f);
-
-    std::vector<float> scores;
-    std::vector<float> weights;
+    float max_phi = 0.f;
 
     for (const auto &other: tank_factories) {
         if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;
@@ -149,32 +126,15 @@ float EnemyTankFactory::get_phi(
 
         const float angle = compute_aim_angle(other);
 
-        const float phi_dist = std::exp(-std::pow(distance, 2.f) / band_div);
-        const float phi_angle = std::exp(-std::pow(angle, 2.f) / angle_div);
+        const float phi_dist = std::exp(
+            -std::pow(distance - optimal_distance, 2.f) / (2.f * std::pow(sigma_distance, 2.f)));
+        const float phi_angle =
+            std::exp(-std::pow(angle, 2.f) / (2.f * std::pow(sigma_angle, 2.f)));
 
-        scores.push_back(0.2f * phi_dist + 0.3f * phi_angle + 0.5f * phi_angle * phi_dist);
-        weights.push_back(std::exp(-distance / softmax_lambda));
+        max_phi = std::max(0.45f * phi_dist + 0.55f * phi_angle, max_phi);
     }
 
-    float phi = 0.f;
-
-    if (!scores.empty()) {
-        float denom = 0.f;
-        std::vector<float> soft_weights(scores.size());
-
-        for (size_t i = 0; i < scores.size(); i++) {
-            soft_weights[i] = weights[i] * std::exp(softmax_beta * scores[i]);
-            denom += soft_weights[i];
-        }
-
-        if (denom > EPSILON) {
-            for (size_t i = 0; i < scores.size(); i++) {
-                phi += (soft_weights[i] / denom) * scores[i];
-            }
-        }
-    }
-
-    return phi;
+    return max_phi;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {
@@ -183,10 +143,10 @@ void EnemyTankFactory::on_fired_shell_contact(Item *item) {
 
     if (const auto &life_item = dynamic_cast<LifeItem *>(item); life_item) {
         if (life_item->is_dead() && !life_item->is_already_dead()) {
-            hit_reward += 2.0f;
+            hit_reward += 1.0f;
             has_touch = true;
         } else if (!life_item->is_dead()) {
-            hit_reward += 1.0f;
+            hit_reward += 0.5f;
             has_touch = true;
         }
     }

@@ -99,6 +99,8 @@ void train_main(
         auto last_state = env->reset_physics();
         env->reset_drawables(gl_context);
 
+        auto phi_vector = env->get_phi_vector();
+
         int episode_step_idx = 0;
         while (!is_done) {
 
@@ -124,7 +126,6 @@ void train_main(
             auto actions_future = std::async([&] { return actions_for_env; });
 
             // step environment
-            const auto phi_vector = env->get_phi_vector();
             const auto steps = env->step(wanted_frequency, actions_future);
             const auto next_phi_vector = env->get_phi_vector();
 
@@ -157,6 +158,8 @@ void train_main(
 
                 if (done && !already_done[i]) already_done[i] = true;
             }
+
+            phi_vector = next_phi_vector;
 
             // check if it's time to train
             if (train_counter % train_options.train_every == train_options.train_every - 1

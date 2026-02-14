@@ -25,7 +25,7 @@ int main(const int argc, char **argv) {
     // model
     parser.add_argument("--vision_channels")
         .default_value<vision_channels>(
-            {{{3, 8}, {8, 16}, {16, 32}, {32, 48}, {48, 64}, {64, 128}}})
+            {{{3, 8}, {8, 16}, {16, 32}, {32, 64}, {64, 128}, {128, 256}}})
         .action([](const std::string &value) -> vision_channels {
             const std::regex regex_match(
                 R"(^ *\[(?: *\( *\d+ *, *\d+ *\) *,)* *\( *\d+ *, *\d+ *\) *] *$)");
@@ -54,7 +54,7 @@ int main(const int argc, char **argv) {
             return vision_channels;
         });
     parser.add_argument("--group_norm_nums")
-        .default_value<group_norm_nums>({{2, 4, 8, 12, 16, 32}})
+        .default_value<group_norm_nums>({{2, 4, 8, 16, 32, 32}})
         .action([](const std::string &value) -> group_norm_nums {
             const std::regex regex_match(R"(^ *\[(?: *\d+ *,)* *\d+ *] *$)");
             const std::regex regex_groups(R"(\d+)");

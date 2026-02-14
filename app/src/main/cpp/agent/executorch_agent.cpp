@@ -52,8 +52,8 @@ ExecuTorchAgent::ExecuTorchAgent(android_app *app, const std::string &pte_asset_
 std::vector<Action> ExecuTorchAgent::act(const std::vector<State> &state) {
     const auto N = static_cast<int64_t>(state.size());
     const int64_t C = 3;
-    const int64_t H = ENEMY_VISION_SIZE;
-    const int64_t W = ENEMY_VISION_SIZE;
+    const int64_t H = ENEMY_VISION_HEIGHT;
+    const int64_t W = ENEMY_VISION_WIDTH;
 
     const auto vision_elems_per_sample = static_cast<size_t>(C * H * W);
     const auto proprio_elems_per_sample = static_cast<size_t>(ENEMY_PROPRIOCEPTION_SIZE);

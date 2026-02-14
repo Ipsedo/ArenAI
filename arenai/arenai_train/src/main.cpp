@@ -72,7 +72,7 @@ int main(const int argc, char **argv) {
             return group_nums;
         });
     parser.add_argument("--sensors_hidden_size").scan<'i', int>().default_value(256);
-    parser.add_argument("--actions_hidden_size").scan<'i', int>().default_value(64);
+    parser.add_argument("--actions_hidden_size").scan<'i', int>().default_value(16);
     parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(1024);
     parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(1024);
     parser.add_argument("--tau").scan<'g', float>().default_value(0.005f);

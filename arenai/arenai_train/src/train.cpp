@@ -40,7 +40,8 @@ std::string metrics_to_string(const std::vector<std::shared_ptr<Metric>> &metric
 void train_main(
     const float wanted_frequency, const ModelOptions &model_options,
     const TrainOptions &train_options) {
-    std::cout << "Vision size : " << ENEMY_VISION_SIZE << " * " << ENEMY_VISION_SIZE << std::endl;
+    std::cout << "Vision size : width=" << ENEMY_VISION_WIDTH << ", height=" << ENEMY_VISION_HEIGHT
+              << std::endl;
     std::cout << "Proprioception size : " << ENEMY_PROPRIOCEPTION_SIZE << std::endl;
     std::cout << "Action size : " << ENEMY_NB_ACTION << std::endl;
 

@@ -36,7 +36,7 @@ BaseTanksEnvironment::BaseTanksEnvironment(
       nb_reset_frames(static_cast<int>(4.f / wanted_frequency)), rng(dev()),
       file_reader(file_reader) {
 
-    for (auto &buffer: enemy_visions) buffer.init(rng, ENEMY_VISION_SIZE, ENEMY_VISION_SIZE);
+    for (auto &buffer: enemy_visions) buffer.init(rng, ENEMY_VISION_HEIGHT, ENEMY_VISION_WIDTH);
 }
 
 std::vector<std::tuple<State, Reward, IsDone>> BaseTanksEnvironment::step(
@@ -203,7 +203,7 @@ void BaseTanksEnvironment::worker_enemy_vision(
     uint64_t seen = model_matrices.frame_id.load(std::memory_order_acquire);
 
     auto renderer = std::make_unique<PBufferRenderer>(
-        gl_context, ENEMY_VISION_SIZE, ENEMY_VISION_SIZE, glm::vec3(200, 300, 200),
+        gl_context, ENEMY_VISION_WIDTH, ENEMY_VISION_HEIGHT, glm::vec3(200, 300, 200),
         tank_factory->get_camera());
 
     renderer->make_current();
@@ -266,7 +266,7 @@ void BaseTanksEnvironment::worker_enemy_vision(
 
 void BaseTanksEnvironment::start_threads() {
     enemy_visions = std::vector<VisionDoubleBuffer>(nb_tanks);
-    for (auto &buffer: enemy_visions) buffer.init(rng, ENEMY_VISION_SIZE, ENEMY_VISION_SIZE);
+    for (auto &buffer: enemy_visions) buffer.init(rng, ENEMY_VISION_HEIGHT, ENEMY_VISION_WIDTH);
 
     threads_running.store(true, std::memory_order_release);
     pool.clear();

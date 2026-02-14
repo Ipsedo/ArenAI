@@ -1,7 +1,7 @@
 import torch as th
 from torch import nn
 
-from .constants import ENEMY_VISION_SIZE
+from .constants import ENEMY_VISION_HEIGHT, ENEMY_VISION_WIDTH
 
 
 class ConvolutionNetwork(nn.Module):
@@ -16,8 +16,8 @@ class ConvolutionNetwork(nn.Module):
         stride = 2
         kernel = 3
 
-        w = ENEMY_VISION_SIZE
-        h = ENEMY_VISION_SIZE
+        w = ENEMY_VISION_WIDTH
+        h = ENEMY_VISION_HEIGHT
 
         for i, ((c_i, c_o), g) in enumerate(zip(channels, group_norm_nums)):
             self.cnn.append(nn.Conv2d(c_i, c_o, kernel, stride, padding))

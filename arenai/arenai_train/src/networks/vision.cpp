@@ -10,7 +10,7 @@ ConvolutionNetwork::ConvolutionNetwork(
     const std::vector<std::tuple<int, int>> &channels, const std::vector<int> &group_norm_nums)
     : cnn(register_module("cnn", torch::nn::Sequential())) {
 
-    int w = ENEMY_VISION_SIZE, h = ENEMY_VISION_SIZE;
+    int w = ENEMY_VISION_WIDTH, h = ENEMY_VISION_HEIGHT;
 
     for (int i = 0; i < channels.size(); i++) {
         const auto &[c_i, c_o] = channels[i];

@@ -33,8 +33,8 @@ std::vector<Action> tensor_to_actions(const torch::Tensor &actions_tensor) {
 std::tuple<torch::Tensor, torch::Tensor> states_to_tensor(const std::vector<State> &states) {
     const auto N = static_cast<int64_t>(states.size());
     constexpr int64_t C = 3;
-    constexpr int64_t H = ENEMY_VISION_SIZE;
-    constexpr int64_t W = ENEMY_VISION_SIZE;
+    constexpr int64_t H = ENEMY_VISION_HEIGHT;
+    constexpr int64_t W = ENEMY_VISION_WIDTH;
     constexpr int64_t P = ENEMY_PROPRIOCEPTION_SIZE;
 
     const torch::Tensor visions_u8 = torch::zeros(

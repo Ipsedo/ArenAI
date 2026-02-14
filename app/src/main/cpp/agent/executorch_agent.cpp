@@ -72,7 +72,7 @@ std::vector<Action> ExecuTorchAgent::act(const std::vector<State> &state) {
         float *dst = buffer_vision.data() + vision_off;
 
         for (size_t k = 0; k < vision_elems_per_sample; ++k)
-            dst[k] = 2.f * (static_cast<float>(src[k]) * (1.0f / 255.0f)) - 1.f;
+            dst[k] = 2.f * static_cast<float>(src[k]) / 255.0f - 1.f;
 
         vision_off += vision_elems_per_sample;
 

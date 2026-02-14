@@ -205,12 +205,9 @@ void BaseTanksEnvironment::worker_enemy_vision(
     }
 
     const auto frame_dt = std::chrono::milliseconds(static_cast<int>(wanted_frequency * 1000.f));
-    auto last_time = std::chrono::steady_clock::now();
 
     while (threads_running.load(std::memory_order_acquire)) {
-        auto now = std::chrono::steady_clock::now();
-        auto dt = now - last_time;
-        last_time = now;
+        auto last_time = std::chrono::steady_clock::now();
 
         model_matrices.frame_id.wait(seen, std::memory_order_acquire);
 
@@ -225,6 +222,9 @@ void BaseTanksEnvironment::worker_enemy_vision(
 
         buf[back] = renderer->draw_and_get_frame(matrices);
         front.store(back, std::memory_order_release);
+
+        auto now = std::chrono::steady_clock::now();
+        auto dt = now - last_time;
 
         if (thread_sleep) std::this_thread::sleep_for(frame_dt - dt);
     }

@@ -93,7 +93,7 @@ void PBufferRenderer::on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_
 
 void PBufferRenderer::on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_context) {}
 
-std::shared_ptr<image<uint8_t>> PBufferRenderer::draw_and_get(
+std::shared_ptr<image<uint8_t>> PBufferRenderer::draw_and_get_frame(
     const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
     draw(model_matrices);
 

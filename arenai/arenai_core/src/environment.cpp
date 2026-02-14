@@ -253,7 +253,7 @@ void BaseTanksEnvironment::worker_enemy_vision(
         auto &[buf, front] = enemy_visions[index];
         const int back = 1 - front.load(std::memory_order_relaxed);
 
-        buf[back] = renderer->draw_and_get(matrices);
+        buf[back] = renderer->draw_and_get_frame(matrices);
 
         front.store(back, std::memory_order_release);
 

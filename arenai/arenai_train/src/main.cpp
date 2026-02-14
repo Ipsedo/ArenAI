@@ -73,8 +73,8 @@ int main(const int argc, char **argv) {
         });
     parser.add_argument("--sensors_hidden_size").scan<'i', int>().default_value(256);
     parser.add_argument("--actions_hidden_size").scan<'i', int>().default_value(16);
-    parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(1024);
-    parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(1024);
+    parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(1536);
+    parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(1536);
     parser.add_argument("--tau").scan<'g', float>().default_value(0.005f);
     parser.add_argument("--gamma").scan<'g', float>().default_value(0.99f);
     parser.add_argument("--initial_alpha").scan<'g', float>().default_value(1.f);

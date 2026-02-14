@@ -9,13 +9,15 @@ void dump_module_tree(
     const std::string &name) {
     const std::string pad(indent, ' ');
 
-    out << pad << name << ": " << m->name();
+    out << pad << name << ": ";
 
     {
         std::ostringstream tmp;
         m->pretty_print(tmp);
         if (const auto repr = tmp.str(); !repr.empty() && repr != m->name()) {
-            out << "  " << repr;
+            out << repr;
+        } else {
+            out << m->name();
         }
     }
     out << "\n";

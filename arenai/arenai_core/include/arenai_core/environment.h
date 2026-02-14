@@ -55,7 +55,6 @@ private:
     float wanted_frequency;
     int nb_tanks;
 
-    bool thread_killed;
     bool thread_sleep;
     std::atomic<bool> threads_running;
     std::vector<std::thread> pool;
@@ -90,6 +89,8 @@ protected:
         std::function<T(const std::vector<std::unique_ptr<EnemyTankFactory>> &)> apply_function) {
         return apply_function(tank_factories);
     }
+
+    std::vector<std::tuple<std::string, glm::mat4>> publish_and_get_model_matrices();
 
     std::random_device dev;
     std::mt19937 rng;

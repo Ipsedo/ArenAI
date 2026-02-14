@@ -4,7 +4,10 @@
 
 #include "./sac.h"
 
+#include <fstream>
+
 #include "../distributions/truncated_normal.h"
+#include "../utils/print_module.h"
 #include "../utils/saver.h"
 #include "../utils/target_update.h"
 
@@ -174,6 +177,19 @@ void SacAgent::save(const std::filesystem::path &output_folder) {
     save_torch(output_folder, critic_2_optim, "critic_2_optim.pt");
 
     save_torch(output_folder, alpha_optim, "entropy_optim.pt");
+
+    // string repr
+    std::ostringstream actor_repr_oss;
+    dump_module_tree(actor, actor_repr_oss, 0, "actor");
+    std::ofstream actor_repr_file(output_folder / "actor_repr.txt");
+    actor_repr_file << actor_repr_oss.str();
+    actor_repr_file.close();
+
+    std::ostringstream critic_repr_oss;
+    dump_module_tree(critic_1, critic_repr_oss, 0, "critic");
+    std::ofstream critic_repr_file(output_folder / "critic_repr.txt");
+    critic_repr_file << critic_repr_oss.str();
+    critic_repr_file.close();
 }
 
 void SacAgent::set_train(const bool train) {

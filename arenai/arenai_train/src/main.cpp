@@ -25,7 +25,7 @@ int main(const int argc, char **argv) {
     // model
     parser.add_argument("--vision_channels")
         .default_value<vision_channels>(
-            {{{3, 8}, {8, 16}, {16, 32}, {32, 64}, {64, 128}, {128, 192}, {192, 256}}})
+            {{{3, 8}, {8, 16}, {16, 32}, {32, 48}, {48, 64}, {64, 128}}})
         .action([](const std::string &value) -> vision_channels {
             const std::regex regex_match(
                 R"(^ *\[(?: *\( *\d+ *, *\d+ *\) *,)* *\( *\d+ *, *\d+ *\) *] *$)");
@@ -54,7 +54,7 @@ int main(const int argc, char **argv) {
             return vision_channels;
         });
     parser.add_argument("--group_norm_nums")
-        .default_value<group_norm_nums>({{2, 4, 8, 16, 32, 48, 64}})
+        .default_value<group_norm_nums>({{2, 4, 8, 12, 16, 32}})
         .action([](const std::string &value) -> group_norm_nums {
             const std::regex regex_match(R"(^ *\[(?: *\d+ *,)* *\d+ *] *$)");
             const std::regex regex_groups(R"(\d+)");
@@ -73,8 +73,8 @@ int main(const int argc, char **argv) {
         });
     parser.add_argument("--sensors_hidden_size").scan<'i', int>().default_value(256);
     parser.add_argument("--actions_hidden_size").scan<'i', int>().default_value(64);
-    parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(2048);
-    parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(2048);
+    parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(1024);
+    parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(1024);
     parser.add_argument("--tau").scan<'g', float>().default_value(0.005f);
     parser.add_argument("--gamma").scan<'g', float>().default_value(0.99f);
     parser.add_argument("--initial_alpha").scan<'g', float>().default_value(1.f);

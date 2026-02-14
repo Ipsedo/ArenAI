@@ -18,9 +18,10 @@ EnemyTankFactory::EnemyTankFactory(
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), is_dead_already_triggered(false),
       min_aim_angle(static_cast<float>(M_PI) / 12.f), max_aim_angle(static_cast<float>(M_PI) / 4.f),
-      min_distance(5.f), max_distance(30.f), optimal_distance(0.5f * (max_distance + min_distance)),
-      sigma_distance(0.25f * optimal_distance), sigma_angle(0.25 * (max_aim_angle + min_aim_angle)),
-      has_touch(false), action_stats(std::make_shared<ActionStats>()) {}
+      min_distance(5.f), max_distance(100.f),
+      optimal_distance(0.5f * (max_distance + min_distance)), sigma_distance(0.25f * max_distance),
+      sigma_angle(0.25f * max_aim_angle), has_touch(false),
+      action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
     const auto canon_tr = get_canon()->get_model_matrix();
@@ -91,9 +92,7 @@ float EnemyTankFactory::get_reward(
 
         const float shoot_reward =
             std::exp(-std::pow(angle, 2.f) / (2.f * std::pow(sigma_angle, 2.f)))
-            * std::exp(
-                -std::pow(-std::pow(clamped_distance, 2.f), 2.f)
-                / (2.f * std::pow(sigma_distance, 2.f)));
+            * std::exp(-std::pow(clamped_distance, 2.f) / (2.f * std::pow(sigma_distance, 2.f)));
 
         max_shoot_reward = std::max(shoot_reward, max_shoot_reward);
     }

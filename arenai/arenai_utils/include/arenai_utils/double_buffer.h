@@ -39,8 +39,8 @@ public:
     }
 
 private:
-    std::array<T, 2> buf_{};
-    std::atomic<std::size_t> front_{0};
+    std::array<T, 2> buf_;
+    std::atomic<std::size_t> front_;
 
     void move_from(DoubleBuffer &other) noexcept {
         const std::size_t f = other.front_.load(std::memory_order_relaxed);

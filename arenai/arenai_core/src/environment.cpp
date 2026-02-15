@@ -198,7 +198,7 @@ void BaseTanksEnvironment::worker_enemy_vision(
                 color, color, color, 50.f, item->get_shape()->get_id()));
     }
 
-    for (const auto &[name, shape]: tank_factories[0]->load_shell_shapes()) {
+    for (const auto &[name, shape]: tank_factory->load_shell_shapes()) {
         glm::vec4 shell_color(u_dist(local_rng), u_dist(local_rng), u_dist(local_rng), 1.f);
 
         renderer->add_drawable(

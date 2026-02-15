@@ -75,7 +75,12 @@ private:
 
     int nb_reset_frames;
 
+    std::unique_ptr<std::barrier<>> loop_barrier;
+
     void worker_enemy_vision(int index, const std::unique_ptr<EnemyTankFactory> &tank_factory);
+
+    void start_threads();
+    void kill_threads();
 
 protected:
     virtual void on_draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) = 0;
@@ -84,9 +89,6 @@ protected:
     virtual void on_reset_drawables(
         const std::unique_ptr<PhysicEngine> &engine,
         const std::shared_ptr<AbstractGLContext> &gl_context) = 0;
-
-    void start_threads();
-    void kill_threads();
 
     template<typename T>
     T apply_on_factories(

@@ -29,8 +29,8 @@ public:
         const std::size_t f = front_.load(std::memory_order_relaxed);
         const std::size_t b = 1u - f;
 
-        buf_[b] = to_write;                        // write data
-        front_.store(b, std::memory_order_release);// publish
+        buf_[b] = to_write;
+        front_.store(b, std::memory_order_release);
     }
 
     T get() const {

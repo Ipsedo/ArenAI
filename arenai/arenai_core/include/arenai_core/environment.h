@@ -14,6 +14,7 @@
 #include <vector>
 
 #include <arenai_model/engine.h>
+#include <arenai_utils/double_buffer.h>
 #include <arenai_utils/file_reader.h>
 #include <arenai_view/pbuffer_renderer.h>
 
@@ -21,18 +22,18 @@
 #include "./enemy_tank_factory.h"
 #include "./types.h"
 
-struct VisionDoubleBuffer {
-    image<uint8_t> buf[2];
-    std::atomic<int> front{0};
+class VisionDoubleBuffer : public DoubleBuffer<image<uint8_t>> {
+public:
+    VisionDoubleBuffer(std::mt19937 &rng, int height, int width);
 
-    void init(std::mt19937 &rng, int height, int width);
+private:
+    static image<uint8_t> random_image(std::mt19937 &rng, int height, int width);
 };
 
-struct ModelMatricesDoubleBuffer {
-    std::vector<std::tuple<std::string, glm::mat4>> buf[2];
-
-    std::atomic<int> front_idx{0};
-    std::atomic<uint64_t> frame_id{0};
+class ModelMatricesDoubleBuffer
+    : public DoubleBuffer<std::vector<std::tuple<std::string, glm::mat4>>> {
+public:
+    ModelMatricesDoubleBuffer();
 };
 
 class BaseTanksEnvironment {
@@ -52,6 +53,9 @@ public:
     virtual ~BaseTanksEnvironment();
 
 private:
+    std::random_device dev;
+    std::mt19937 rng;
+
     float wanted_frequency;
     int nb_tanks;
 
@@ -91,9 +95,6 @@ protected:
     }
 
     std::vector<std::tuple<std::string, glm::mat4>> publish_and_get_model_matrices();
-
-    std::random_device dev;
-    std::mt19937 rng;
 
     std::shared_ptr<AbstractFileReader> file_reader;
 };

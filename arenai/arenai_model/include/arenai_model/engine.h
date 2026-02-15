@@ -5,6 +5,7 @@
 #ifndef ARENAI_ENGINE_H
 #define ARENAI_ENGINE_H
 
+#include <mutex>
 #include <tuple>
 #include <vector>
 
@@ -30,6 +31,8 @@ public:
     ~PhysicEngine();
 
 private:
+    std::mutex items_mutex;
+
     float wanted_frequency;
 
     btDefaultCollisionConfiguration *m_collision_configuration;
@@ -40,6 +43,8 @@ private:
 
     std::vector<std::shared_ptr<Item>> items;
     std::vector<std::shared_ptr<ItemProducer>> item_producers;
+
+    void remove_dead_items();
 };
 
 #endif// ARENAI_ENGINE_H

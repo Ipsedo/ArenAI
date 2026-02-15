@@ -22,7 +22,7 @@
 #include "./types.h"
 
 struct VisionDoubleBuffer {
-    std::shared_ptr<image<uint8_t>> buf[2];
+    image<uint8_t> buf[2];
     std::atomic<int> front{0};
 
     void init(std::mt19937 &rng, int height, int width);

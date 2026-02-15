@@ -20,9 +20,9 @@ void VisionDoubleBuffer::init(std::mt19937 &rng, const int height, const int wid
 
     for (int i = 0; i < 2; i++) {
         const auto size = 3 * height * width;
-        buf[i] = std::make_shared<image<uint8_t>>(std::vector<uint8_t>(size));
+        buf[i] = image(std::vector<uint8_t>(size));
 
-        for (int j = 0; j < size; j++) buf[i]->pixels[j] = u_dist(rng);
+        for (int j = 0; j < size; j++) buf[i].pixels[j] = u_dist(rng);
     }
 }
 
@@ -76,8 +76,6 @@ std::vector<std::tuple<State, Reward, IsDone>> BaseTanksEnvironment::step(
 }
 
 std::vector<State> BaseTanksEnvironment::reset_physics() {
-    if (threads_running.load(std::memory_order_acquire)) kill_threads();
-
     physic_engine->remove_bodies_and_constraints();
     tank_controller_handler.clear();
     tank_factories.clear();
@@ -154,8 +152,6 @@ std::vector<State> BaseTanksEnvironment::reset_physics() {
 
 void BaseTanksEnvironment::reset_drawables(
     const std::shared_ptr<AbstractGLContext> &new_gl_context) {
-    if (threads_running.load(std::memory_order_acquire)) kill_threads();
-
     gl_context = new_gl_context;
     gl_context->make_current();
 
@@ -174,6 +170,13 @@ void BaseTanksEnvironment::stop_drawing() {
 
 void BaseTanksEnvironment::worker_enemy_vision(
     const int index, const std::unique_ptr<EnemyTankFactory> &tank_factory) {
+    std::seed_seq seq{
+        dev(), static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this)),
+        static_cast<uint32_t>(index),
+        static_cast<uint32_t>(
+            std::chrono::high_resolution_clock::now().time_since_epoch().count())};
+    std::mt19937 local_rng(seq);
+
     uint64_t seen = model_matrices.frame_id.load(std::memory_order_acquire);
 
     auto renderer = std::make_unique<PBufferRenderer>(
@@ -187,7 +190,7 @@ void BaseTanksEnvironment::worker_enemy_vision(
     renderer->add_drawable("cubemap", std::make_unique<CubeMap>(file_reader, "cubemap/1"));
 
     for (const auto &item: physic_engine->get_items()) {
-        glm::vec4 color(u_dist(rng), u_dist(rng), u_dist(rng), 1.f);
+        glm::vec4 color(u_dist(local_rng), u_dist(local_rng), u_dist(local_rng), 1.f);
         renderer->add_drawable(
             item->get_name(),
             std::make_unique<Specular>(
@@ -196,7 +199,7 @@ void BaseTanksEnvironment::worker_enemy_vision(
     }
 
     for (const auto &[name, shape]: tank_factories[0]->load_shell_shapes()) {
-        glm::vec4 shell_color(u_dist(rng), u_dist(rng), u_dist(rng), 1.f);
+        glm::vec4 shell_color(u_dist(local_rng), u_dist(local_rng), u_dist(local_rng), 1.f);
 
         renderer->add_drawable(
             name, std::make_unique<Specular>(
@@ -226,7 +229,9 @@ void BaseTanksEnvironment::worker_enemy_vision(
         auto now = std::chrono::steady_clock::now();
         auto dt = now - last_time;
 
-        if (thread_sleep) std::this_thread::sleep_for(frame_dt - dt);
+        if (thread_sleep)
+            std::this_thread::sleep_for(
+                std::max(frame_dt - dt, std::chrono::steady_clock::duration::zero()));
     }
 
     renderer.reset();
@@ -277,7 +282,7 @@ BaseTanksEnvironment::publish_and_get_model_matrices() {
     model_matrices.frame_id.fetch_add(1, std::memory_order_release);
     model_matrices.frame_id.notify_all();
 
-    return dst;
+    return std::vector(dst);
 }
 
 BaseTanksEnvironment::~BaseTanksEnvironment() {

@@ -21,6 +21,8 @@ float theta_inv(float theta);
 float truncated_normal_sample(
     std::mt19937 &rng, float mu, float sigma, float min_value, float max_value);
 
+float gaussian_tanh_sample(std::mt19937 &rng, float mu, float sigma);
+
 class ExecuTorchAgent {
 public:
     ExecuTorchAgent(android_app *app, const std::string &pte_asset_path);

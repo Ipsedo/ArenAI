@@ -41,6 +41,20 @@ float truncated_normal_sample(
 }
 
 /*
+ * Gaussian tanh
+ */
+
+float gaussian_tanh_sample(std::mt19937 &rng, const float mu, const float sigma) {
+    const auto safe_sigma = std::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
+
+    std::uniform_real_distribution<float> u_dist(0.f, 1.f);
+    const auto noise = u_dist(rng);
+
+    const auto u = mu + safe_sigma * noise;
+    return std::tanh(u);
+}
+
+/*
  * ExecuTorch
  */
 

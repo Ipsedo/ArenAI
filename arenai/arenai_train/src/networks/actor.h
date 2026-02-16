@@ -9,7 +9,7 @@
 
 #include <torch/torch.h>
 
-#include "vision.h"
+#include "./vision.h"
 
 struct actor_response {
     torch::Tensor mu;

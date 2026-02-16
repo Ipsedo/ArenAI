@@ -69,9 +69,11 @@ float EnemyTankFactory::softmax_scores(const std::vector<float> &scores) const {
 }
 
 float EnemyTankFactory::quality_score(const float distance, const float angle) const {
-    return std::exp(
-        -0.5f * std::pow(angle / sigma_angle, 2.f)
-        - 0.5f * std::pow((distance - optimal_distance) / sigma_distance, 2.f));
+    const float angle_reward = std::clamp(1.f - (angle / max_aim_angle), 0.f, 1.f);
+    const float dist_reward =
+        std::exp(-0.5f * std::pow((distance - optimal_distance) / sigma_distance, 2.f));
+
+    return angle_reward * dist_reward;
 }
 
 float EnemyTankFactory::get_reward(
@@ -110,12 +112,14 @@ float EnemyTankFactory::get_reward(
         shaped_rewards.push_back(quality_score(distance, angle));
     }
 
+    constexpr float fire_gate = 0.2f;
+    constexpr float fire_cost = 0.01f;
     const float shaped_reward = softmax_scores(shaped_rewards);
-    const float shoot_reward = has_shot ? shaped_reward - 0.5f : 0.f;
+    const float shoot_reward =
+        has_shot ? (shaped_reward >= fire_gate ? shaped_reward : 0.f) - fire_cost : 0.f;
 
     // prepare next frame
-    const auto reward =
-        0.4f * hit_reward + 0.35f * dead_penalty + 0.15f * shoot_reward + 0.1f * shaped_reward;
+    const auto reward = hit_reward + dead_penalty + 0.6f * shoot_reward + 0.4f * shaped_reward;
     hit_reward = 0.f;
 
     // return reward

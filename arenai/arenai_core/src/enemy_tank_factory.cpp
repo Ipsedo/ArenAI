@@ -112,11 +112,9 @@ float EnemyTankFactory::get_reward(
         shaped_rewards.push_back(quality_score(distance, angle));
     }
 
-    constexpr float fire_gate = 0.2f;
     constexpr float fire_cost = 0.01f;
     const float shaped_reward = softmax_scores(shaped_rewards);
-    const float shoot_reward =
-        has_shot ? (shaped_reward >= fire_gate ? shaped_reward : 0.f) - fire_cost : 0.f;
+    const float shoot_reward = has_shot ? shaped_reward - fire_cost : 0.f;
 
     // prepare next frame
     const auto reward = hit_reward + dead_penalty + 0.6f * shoot_reward + 0.4f * shaped_reward;

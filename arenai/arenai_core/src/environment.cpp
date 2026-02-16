@@ -226,6 +226,8 @@ void BaseTanksEnvironment::worker_enemy_vision(
                 std::max(frame_dt - dt, std::chrono::steady_clock::duration::zero()));
     }
 
+    loop_barrier->arrive_and_drop();
+
     renderer.reset();
     eglReleaseThread();
 }

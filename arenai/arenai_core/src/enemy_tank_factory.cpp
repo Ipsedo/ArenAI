@@ -80,13 +80,11 @@ float EnemyTankFactory::get_reward(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
 
     // 1. flipped penalty
-    const auto chassis = get_chassis();
-    auto chassis_tr = chassis->get_body()->getWorldTransform();
-    const btVector3 up(0.f, 1.f, 0.f);
-    const btVector3 up_in_chassis = chassis_tr.getBasis() * up;
+    const auto chassis_model_mat = get_chassis()->get_model_matrix();
+    constexpr glm::vec4 up(0.f, 1.f, 0.f, 0.f);
+    const auto up_in_chassis = glm::normalize(glm::vec3(chassis_model_mat * up));
 
-    if (const btScalar dot = up_in_chassis.normalized().dot(up.normalized()); dot < 0)
-        curr_frame_upside_down++;
+    if (const float dot = glm::dot(up_in_chassis, glm::vec3(up)); dot < 0) curr_frame_upside_down++;
     else curr_frame_upside_down = 0;
 
     // 2. dead penalty
@@ -95,8 +93,7 @@ float EnemyTankFactory::get_reward(
     // 3. shaped reward
     const bool has_shot = action_stats->has_fire();
 
-    const auto chassis_pos =
-        glm::vec3(chassis->get_model_matrix() * glm::vec4(glm::vec3(0.f), 1.f));
+    const auto chassis_pos = glm::vec3(chassis_model_mat * glm::vec4(glm::vec3(0.f), 1.f));
 
     std::vector<float> shaped_rewards;
 

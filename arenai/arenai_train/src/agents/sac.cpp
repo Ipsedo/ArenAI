@@ -131,7 +131,7 @@ void SacAgent::train(
 
         // entropy
         const auto alpha_loss =
-            torch::mean(alpha->alpha() * (-curr_log_proba.detach() - target_entropy));
+            torch::mean(alpha->log_alpha() * (-curr_log_proba.detach() - target_entropy));
 
         alpha_optim->zero_grad();
         alpha_loss.backward();

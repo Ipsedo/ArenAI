@@ -44,9 +44,10 @@ SacAgent::SacAgent(
       actor_loss_metric(std::make_shared<Metric>("actor", metric_window_size)),
       critic_1_loss_metric(std::make_shared<Metric>("critic_1", metric_window_size)),
       critic_2_loss_metric(std::make_shared<Metric>("critic_2", metric_window_size)),
+      alpha_loss_metric(std::make_shared<Metric>("alpha_loss", metric_window_size, 2, true)),
       entropy_metric(std::make_shared<Metric>("entropy", metric_window_size)),
-      entropy_alpha_metric(std::make_shared<Metric>("alpha", metric_window_size)), tau(tau),
-      gamma(gamma), target_entropy(truncated_normal_target_entropy(nb_action, -1.f, 1.f, 1.f)) {
+      alpha_metric(std::make_shared<Metric>("alpha", metric_window_size)), tau(tau), gamma(gamma),
+      target_entropy(truncated_normal_target_entropy(nb_action, -1.f, 1.f, 1.f)) {
 
     hard_update(target_critic_1, critic_1);
     hard_update(target_critic_2, critic_2);
@@ -145,15 +146,15 @@ void SacAgent::train(
         critic_1_loss_metric->add(critic_1_loss.cpu().item<float>());
         critic_2_loss_metric->add(critic_2_loss.cpu().item<float>());
         actor_loss_metric->add(actor_loss.cpu().item<float>());
+        alpha_loss_metric->add(alpha_loss.cpu().item<float>());
         entropy_metric->add(-curr_log_proba.mean().cpu().item<float>());
-        entropy_alpha_metric->add(alpha->alpha().cpu().item<float>());
+        alpha_metric->add(alpha->alpha().cpu().item<float>());
     }
 }
 
 std::vector<std::shared_ptr<Metric>> SacAgent::get_metrics() {
-    return {
-        actor_loss_metric, critic_1_loss_metric, critic_2_loss_metric, entropy_metric,
-        entropy_alpha_metric};
+    return {actor_loss_metric, critic_1_loss_metric, critic_2_loss_metric,
+            alpha_loss_metric, entropy_metric,       alpha_metric};
 }
 
 void SacAgent::save(const std::filesystem::path &output_folder) {

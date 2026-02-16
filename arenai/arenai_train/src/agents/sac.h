@@ -52,8 +52,9 @@ private:
     std::shared_ptr<Metric> actor_loss_metric;
     std::shared_ptr<Metric> critic_1_loss_metric;
     std::shared_ptr<Metric> critic_2_loss_metric;
+    std::shared_ptr<Metric> alpha_loss_metric;
     std::shared_ptr<Metric> entropy_metric;
-    std::shared_ptr<Metric> entropy_alpha_metric;
+    std::shared_ptr<Metric> alpha_metric;
 
     float tau;
     float gamma;

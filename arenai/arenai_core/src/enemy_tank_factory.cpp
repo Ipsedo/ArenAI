@@ -17,7 +17,7 @@ EnemyTankFactory::EnemyTankFactory(
       tank_prefix_name(tank_prefix_name), hit_reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), is_dead_already_triggered(false),
-      min_aim_angle(static_cast<float>(M_PI) / 12.f), max_aim_angle(static_cast<float>(M_PI) / 4.f),
+      min_aim_angle(static_cast<float>(M_PI) / 12.f), max_aim_angle(static_cast<float>(M_PI) / 6.f),
       min_distance(5.f), max_distance(100.f),
       optimal_distance(0.25f * (max_distance + min_distance)), sigma_distance(0.25f * max_distance),
       sigma_angle(0.25f * max_aim_angle), softmax_beta(6.f), has_touch(false),
@@ -72,7 +72,7 @@ float EnemyTankFactory::quality_score(const float distance, const float angle) c
     const float angle_reward = compute_range_reward(angle, min_aim_angle, max_aim_angle);
     const float dist_reward = compute_range_reward(distance, optimal_distance, max_distance);
 
-    return angle_reward * dist_reward;
+    return angle_reward * dist_reward * 0.6f + 0.2f * angle_reward + 0.2f * dist_reward;
 }
 
 float EnemyTankFactory::get_reward(
@@ -108,7 +108,7 @@ float EnemyTankFactory::get_reward(
         shaped_rewards.push_back(quality_score(distance, angle));
     }
 
-    constexpr float fire_cost = 0.01f;
+    constexpr float fire_cost = 0.2f;
     const float shaped_reward = softmax_scores(shaped_rewards);
     const float shoot_reward = has_shot ? shaped_reward - fire_cost : 0.f;
 

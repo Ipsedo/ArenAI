@@ -82,7 +82,7 @@ std::vector<Action> ExecuTorchAgent::act(const std::vector<State> &state) {
     for (int64_t n = 0; n < N; ++n) {
         const auto &[img, proprioception] = state[static_cast<size_t>(n)];
 
-        const uint8_t *src = img->pixels.data();
+        const uint8_t *src = img.pixels.data();
         float *dst = buffer_vision.data() + vision_off;
 
         for (size_t k = 0; k < vision_elems_per_sample; ++k)

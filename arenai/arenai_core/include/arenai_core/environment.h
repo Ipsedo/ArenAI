@@ -53,9 +53,6 @@ public:
     virtual ~BaseTanksEnvironment();
 
 private:
-    std::random_device dev;
-    std::mt19937 rng;
-
     float wanted_frequency;
     int nb_tanks;
 
@@ -83,6 +80,10 @@ private:
     void kill_threads();
 
 protected:
+    std::random_device dev;
+    std::mt19937 rng;
+    std::shared_ptr<AbstractFileReader> file_reader;
+
     virtual void on_draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) = 0;
 
     virtual void on_reset_physics(const std::unique_ptr<PhysicEngine> &engine) = 0;
@@ -97,8 +98,6 @@ protected:
     }
 
     std::vector<std::tuple<std::string, glm::mat4>> publish_and_get_model_matrices();
-
-    std::shared_ptr<AbstractFileReader> file_reader;
 };
 
 #endif// ARENAI_ENVIRONMENT_H

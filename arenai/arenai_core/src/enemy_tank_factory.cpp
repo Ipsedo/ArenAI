@@ -70,8 +70,7 @@ float EnemyTankFactory::softmax_scores(const std::vector<float> &scores) const {
 
 float EnemyTankFactory::quality_score(const float distance, const float angle) const {
     const float angle_reward = compute_range_reward(angle, min_aim_angle, max_aim_angle);
-    const float dist_reward =
-        std::exp(-0.5f * std::pow((distance - optimal_distance) / sigma_distance, 2.f));
+    const float dist_reward = compute_range_reward(distance, optimal_distance, max_distance);
 
     return angle_reward * dist_reward;
 }

@@ -37,11 +37,11 @@ BaseTanksEnvironment::BaseTanksEnvironment(
     const std::shared_ptr<AbstractFileReader> &file_reader,
     const std::shared_ptr<AbstractGLContext> &gl_context, const int nb_tanks,
     float wanted_frequency, const bool thread_sleep)
-    : rng(dev()), wanted_frequency(wanted_frequency), nb_tanks(nb_tanks),
-      thread_sleep(thread_sleep), threads_running(false),
-      physic_engine(std::make_unique<PhysicEngine>(wanted_frequency)), gl_context(gl_context),
-      nb_reset_frames(static_cast<int>(4.f / wanted_frequency)), file_reader(file_reader),
-      loop_barrier(std::make_unique<std::barrier<>>(nb_tanks + 1)) {
+    : wanted_frequency(wanted_frequency), nb_tanks(nb_tanks), thread_sleep(thread_sleep),
+      threads_running(false), physic_engine(std::make_unique<PhysicEngine>(wanted_frequency)),
+      gl_context(gl_context), nb_reset_frames(static_cast<int>(4.f / wanted_frequency)),
+      loop_barrier(std::make_unique<std::barrier<>>(nb_tanks + 1)), rng(dev()),
+      file_reader(file_reader) {
 
     for (int i = 0; i < nb_tanks; i++)
         enemy_visions.emplace_back(rng, ENEMY_VISION_HEIGHT, ENEMY_VISION_WIDTH);

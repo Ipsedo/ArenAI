@@ -69,10 +69,10 @@ float EnemyTankFactory::softmax_scores(const std::vector<float> &scores) const {
 }
 
 float EnemyTankFactory::quality_score(const float distance, const float angle) const {
-    const float angle_reward = compute_range_reward(angle, min_aim_angle, max_aim_angle);
-    const float dist_reward = compute_range_reward(distance, optimal_distance, max_distance);
-
-    return angle_reward * dist_reward * 0.6f + 0.2f * angle_reward + 0.2f * dist_reward;
+    const float qa = std::exp(-0.5f * std::pow(angle / sigma_angle, 2.f));
+    const float qd =
+        std::exp(-0.5f * std::pow((distance - optimal_distance) / sigma_distance, 2.f));
+    return qa * qd;
 }
 
 float EnemyTankFactory::get_reward(
@@ -90,11 +90,9 @@ float EnemyTankFactory::get_reward(
     const auto dead_penalty = is_dead() ? (is_suicide() ? -0.1f : -1.f) : 0.f;
 
     // 3. shaped reward
-    const bool has_shot = action_stats->has_fire();
-
     const auto chassis_pos = glm::vec3(chassis_model_mat * glm::vec4(glm::vec3(0.f), 1.f));
 
-    std::vector<float> shaped_rewards;
+    float shaped_reward = 0.f;
 
     for (const auto &other: tank_factories) {
         if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;
@@ -105,15 +103,19 @@ float EnemyTankFactory::get_reward(
         const float distance = glm::length(chassis_pos - other_pos);
         const float angle = compute_aim_angle(other);
 
-        shaped_rewards.push_back(quality_score(distance, angle));
+        shaped_reward = std::max(shaped_reward, quality_score(distance, angle));
     }
 
-    constexpr float fire_cost = 0.2f;
-    const float shaped_reward = softmax_scores(shaped_rewards);
-    const float shoot_reward = has_shot ? shaped_reward - fire_cost : 0.f;
+    // 4. shoot reward
+    constexpr float shoot_cost = 0.1f;
+    constexpr float shoot_reward_quality_score_gate = 0.25f;
+    const float shoot_reward =
+        action_stats->has_fire()
+            ? (shaped_reward > shoot_reward_quality_score_gate ? 1.f : 0.f) - shoot_cost
+            : 0.f;
 
-    // prepare next frame
-    const auto reward = hit_reward + dead_penalty + 0.6f * shoot_reward + 0.4f * shaped_reward;
+    // 4. total reward
+    const float reward = hit_reward + dead_penalty + 0.5f * shaped_reward + 0.5f * shoot_reward;
     hit_reward = 0.f;
 
     // return reward

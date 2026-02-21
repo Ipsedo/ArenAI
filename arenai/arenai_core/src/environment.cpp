@@ -40,27 +40,36 @@ BaseTanksEnvironment::BaseTanksEnvironment(
     : wanted_frequency(wanted_frequency), nb_tanks(nb_tanks), thread_sleep(thread_sleep),
       threads_running(false), physic_engine(std::make_unique<PhysicEngine>(wanted_frequency)),
       gl_context(gl_context), nb_reset_frames(static_cast<int>(4.f / wanted_frequency)),
-      loop_barrier(std::make_unique<std::barrier<>>(nb_tanks + 1)), rng(dev()),
+      loop_start_barrier(std::make_unique<std::barrier<>>(nb_tanks + 1)),
+      loop_end_barrier(std::make_unique<std::barrier<>>(nb_tanks + 1)), rng(dev()),
       file_reader(file_reader) {
 
     for (int i = 0; i < nb_tanks; i++)
         enemy_visions.emplace_back(rng, ENEMY_VISION_HEIGHT, ENEMY_VISION_WIDTH);
 }
 
-std::vector<std::tuple<State, Reward, IsDone>> BaseTanksEnvironment::step(
-    const float time_delta, std::future<std::vector<Action>> &actions_future) {
+std::vector<std::tuple<State, Reward, IsDone>>
+BaseTanksEnvironment::step(const float time_delta, const std::vector<Action> &actions) {
 
-    // set model matrices double buffer
+    // 1. apply action
+    for (int i = 0; i < tank_factories.size(); i++) {
+        if (!tank_factories[i]->is_dead()) tank_controller_handler[i]->on_event(actions[i]);
+        else
+            for (const auto &item: tank_factories[i]->dead_and_get_items())
+                physic_engine->remove_item_constraints_from_world(item);
+    }
+
+    // 2. step physic
+    physic_engine->step(time_delta);
+
+    // 3. set model matrices double buffer and draw scene
     const auto curr_model_matrices = publish_and_get_model_matrices();
 
-    // step physics
-    physic_engine->step(time_delta);
+    loop_start_barrier->arrive_and_wait();
     on_draw(curr_model_matrices);
+    loop_end_barrier->arrive_and_wait();
 
-    // synchronize threads
-    loop_barrier->arrive_and_wait();
-
-    // build State
+    // 5. build State
     std::vector<std::tuple<State, Reward, IsDone>> result;
     result.reserve(tank_factories.size());
 
@@ -68,15 +77,6 @@ std::vector<std::tuple<State, Reward, IsDone>> BaseTanksEnvironment::step(
         result.emplace_back(
             State(enemy_visions[i].get(), tank_factories[i]->get_proprioception()),
             tank_factories[i]->get_reward(tank_factories), tank_factories[i]->is_dead());
-    }
-
-    // apply actions
-    const auto actions = actions_future.get();
-    for (int i = 0; i < tank_factories.size(); i++) {
-        if (!tank_factories[i]->is_dead()) tank_controller_handler[i]->on_event(actions[i]);
-        else
-            for (const auto &item: tank_factories[i]->dead_and_get_items())
-                physic_engine->remove_item_constraints_from_world(item);
     }
 
     return result;
@@ -210,8 +210,7 @@ void BaseTanksEnvironment::worker_enemy_vision(
     const auto frame_dt = std::chrono::milliseconds(static_cast<int>(wanted_frequency * 1000.f));
 
     while (threads_running.load(std::memory_order_acquire)) {
-        loop_barrier->arrive_and_wait();
-
+        loop_start_barrier->arrive_and_wait();
         auto last_time = std::chrono::steady_clock::now();
 
         const auto &matrices = model_matrices.get();
@@ -224,9 +223,12 @@ void BaseTanksEnvironment::worker_enemy_vision(
         if (thread_sleep)
             std::this_thread::sleep_for(
                 std::max(frame_dt - dt, std::chrono::steady_clock::duration::zero()));
+
+        loop_end_barrier->arrive_and_wait();
     }
 
-    loop_barrier->arrive_and_drop();
+    loop_start_barrier->arrive_and_drop();
+    loop_end_barrier->arrive_and_drop();
 
     renderer.reset();
     eglReleaseThread();
@@ -242,7 +244,8 @@ void BaseTanksEnvironment::start_threads() {
     pool.clear();
     pool.reserve(tank_factories.size());
 
-    loop_barrier = std::make_unique<std::barrier<>>(nb_tanks + 1);
+    loop_start_barrier = std::make_unique<std::barrier<>>(nb_tanks + 1);
+    loop_end_barrier = std::make_unique<std::barrier<>>(nb_tanks + 1);
 
     for (int i = 0; i < tank_factories.size(); ++i)
         pool.emplace_back([this, i] { worker_enemy_vision(i, tank_factories[i]); });
@@ -251,7 +254,8 @@ void BaseTanksEnvironment::start_threads() {
 void BaseTanksEnvironment::kill_threads() {
     if (pool.empty()) return;
 
-    loop_barrier->arrive_and_drop();
+    loop_start_barrier->arrive_and_drop();
+    loop_end_barrier->arrive_and_drop();
     threads_running.store(false, std::memory_order_release);
 
     for (auto &t: pool)

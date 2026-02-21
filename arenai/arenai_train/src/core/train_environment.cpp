@@ -23,10 +23,10 @@ TrainTankEnvironment::TrainTankEnvironment(
       remaining_frames(nb_tanks, max_frames_without_shoot),
       nb_frames_added_when_shoot(static_cast<int>(5.f / wanted_frequency)), nb_tanks(nb_tanks) {}
 
-std::vector<std::tuple<State, Reward, IsDone>> TrainTankEnvironment::step(
-    const float time_delta, std::future<std::vector<Action>> &actions_future) {
+std::vector<std::tuple<State, Reward, IsDone>>
+TrainTankEnvironment::step(const float time_delta, const std::vector<Action> &actions) {
 
-    auto step_result = BaseTanksEnvironment::step(time_delta, actions_future);
+    auto step_result = BaseTanksEnvironment::step(time_delta, actions);
 
     const auto has_shoot = apply_on_factories<std::vector<bool>>([&](const auto &factories) {
         std::vector<bool> has_shoot_result;

@@ -44,7 +44,7 @@ public:
         bool thread_sleep);
 
     virtual std::vector<std::tuple<State, Reward, IsDone>>
-    step(float time_delta, std::future<std::vector<Action>> &actions_future);
+    step(float time_delta, const std::vector<Action> &actions);
 
     std::vector<State> reset_physics();
     void reset_drawables(const std::shared_ptr<AbstractGLContext> &new_gl_context);
@@ -72,7 +72,8 @@ private:
 
     int nb_reset_frames;
 
-    std::unique_ptr<std::barrier<>> loop_barrier;
+    std::unique_ptr<std::barrier<>> loop_start_barrier;
+    std::unique_ptr<std::barrier<>> loop_end_barrier;
 
     void worker_enemy_vision(int index, const std::unique_ptr<EnemyTankFactory> &tank_factory);
 

@@ -124,10 +124,8 @@ void train_main(
                 actions_for_env = tensor_to_actions(actions);
             }
 
-            auto actions_future = std::async([&] { return actions_for_env; });
-
             // step environment
-            const auto steps = env->step(wanted_frequency, actions_future);
+            const auto steps = env->step(wanted_frequency, actions_for_env);
             const auto phi_vector = env->get_phi_vector();
 
             last_state.clear();

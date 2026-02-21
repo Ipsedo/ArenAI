@@ -49,6 +49,14 @@ std::vector<std::tuple<State, Reward, IsDone>> TrainTankEnvironment::step(
     return step_result;
 }
 
+std::vector<float> TrainTankEnvironment::get_phi_vector() {
+    return apply_on_factories<std::vector<float>>([](const auto &factories) {
+        std::vector<float> phi_vector;
+        for (const auto &factory: factories) phi_vector.push_back(factory->get_phi(factories));
+        return phi_vector;
+    });
+}
+
 void TrainTankEnvironment::on_draw(
     const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {}
 

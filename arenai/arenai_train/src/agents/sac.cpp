@@ -82,8 +82,8 @@ void SacAgent::train(
             const auto [next_mu, next_sigma] =
                 actor->act(next_state.vision, next_state.proprioception);
             const auto next_action = truncated_normal_sample(next_mu, next_sigma, -1.f, 1.f);
-            const auto next_log_proba =
-                truncated_normal_log_pdf(next_action, next_mu, next_sigma, -1.f, 1.f).sum(-1, true);
+            const auto next_entropy =
+                truncated_normal_entropy(next_mu, next_sigma, -1.f, 1.f).sum(-1, true);
 
             const auto next_target_q_value_1 =
                 target_critic_1->value(next_state.vision, next_state.proprioception, next_action);
@@ -93,7 +93,7 @@ void SacAgent::train(
             target_q_values = reward
                               + (1.f - done.to(torch::kFloat)) * gamma
                                     * (torch::min(next_target_q_value_1, next_target_q_value_2)
-                                       - alpha->alpha() * next_log_proba);
+                                       + alpha->alpha() * next_entropy);
         }
 
         // critic 1
@@ -115,8 +115,8 @@ void SacAgent::train(
         // policy
         const auto [curr_mu, curr_sigma] = actor->act(state.vision, state.proprioception);
         const auto curr_action = truncated_normal_sample(curr_mu, curr_sigma, -1.f, 1.f);
-        const auto curr_log_proba =
-            truncated_normal_log_pdf(curr_action, curr_mu, curr_sigma, -1.f, 1.f).sum(-1, true);
+        const auto curr_entropy =
+            truncated_normal_entropy(curr_mu, curr_sigma, -1.f, 1.f).sum(-1, true);
 
         const auto curr_q_value_1 =
             critic_1->value(state.vision, state.proprioception, curr_action);
@@ -124,7 +124,7 @@ void SacAgent::train(
             critic_2->value(state.vision, state.proprioception, curr_action);
         const auto q_value = torch::min(curr_q_value_1, curr_q_value_2);
 
-        const auto actor_loss = torch::mean(alpha->alpha().detach() * curr_log_proba - q_value);
+        const auto actor_loss = -torch::mean(alpha->alpha().detach() * curr_entropy + q_value);
 
         actor_optim->zero_grad();
         actor_loss.backward();
@@ -132,7 +132,7 @@ void SacAgent::train(
 
         // entropy
         const auto alpha_loss =
-            torch::mean(alpha->log_alpha() * (-curr_log_proba.detach() - target_entropy));
+            torch::mean(alpha->log_alpha() * (curr_entropy.detach() - target_entropy));
 
         alpha_optim->zero_grad();
         alpha_loss.backward();
@@ -147,7 +147,7 @@ void SacAgent::train(
         critic_2_loss_metric->add(critic_2_loss.cpu().item<float>());
         actor_loss_metric->add(actor_loss.cpu().item<float>());
         alpha_loss_metric->add(alpha_loss.cpu().item<float>());
-        entropy_metric->add(-curr_log_proba.mean().cpu().item<float>());
+        entropy_metric->add(curr_entropy.mean().cpu().item<float>());
         alpha_metric->add(alpha->alpha().cpu().item<float>());
     }
 }

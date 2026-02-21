@@ -54,7 +54,7 @@ void ReplayBuffer::add(const TorchStep &step) {
     if (size_ < memory_size_) size_++;
 }
 
-int ReplayBuffer::size() const { return memory.size(); }
+int ReplayBuffer::size() const { return size_; }
 
 TorchStep ReplayBuffer::clone_step(const TorchStep &to_clone) {
 

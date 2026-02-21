@@ -4,6 +4,8 @@
 
 #include "./canon.h"
 
+#include <algorithm>
+
 #include <glm/gtc/type_ptr.hpp>
 
 #include "./shell.h"
@@ -60,8 +62,7 @@ std::vector<std::shared_ptr<Item>> CanonItem::get_produced_items() {
 void CanonItem::on_input(const user_input &input) {
     angle += input.right_joystick.y * 2.f;
 
-    angle = angle > 1.f ? 1.f : angle;
-    angle = angle < -1.f ? -1.f : angle;
+    angle = std::clamp(angle, -1.f, 1.f);
 
     hinge->setLimit(
         angle * static_cast<float>(M_PI) * 0.2f, angle * static_cast<float>(M_PI) * 0.2f);

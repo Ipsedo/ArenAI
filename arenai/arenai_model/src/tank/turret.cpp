@@ -4,6 +4,7 @@
 
 #include "./turret.h"
 
+#include <algorithm>
 #include <memory>
 #include <utility>
 
@@ -29,8 +30,7 @@ TurretItem::TurretItem(
 void TurretItem::on_input(const user_input &input) {
     angle += -input.right_joystick.x * 2.f;
 
-    angle = angle > 1.f ? 1.f : angle;
-    angle = angle < -1.f ? -1.f : angle;
+    angle = std::clamp(angle, -1.f, 1.f);
 
     hinge->setLimit(
         angle * static_cast<float>(M_PI) * 0.6f, angle * static_cast<float>(M_PI) * 0.6f);

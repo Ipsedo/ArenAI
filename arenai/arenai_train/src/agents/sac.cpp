@@ -83,7 +83,8 @@ void SacAgent::train(
                 actor->act(next_state.vision, next_state.proprioception);
             const auto next_action = truncated_normal_sample(next_mu, next_sigma, -1.f, 1.f);
             const auto next_entropy =
-                truncated_normal_entropy(next_mu, next_sigma, -1.f, 1.f).sum(-1, true);
+                -truncated_normal_log_pdf(next_action, next_mu, next_sigma, -1.f, 1.f)
+                     .sum(-1, true);
 
             const auto next_target_q_value_1 =
                 target_critic_1->value(next_state.vision, next_state.proprioception, next_action);
@@ -116,7 +117,7 @@ void SacAgent::train(
         const auto [curr_mu, curr_sigma] = actor->act(state.vision, state.proprioception);
         const auto curr_action = truncated_normal_sample(curr_mu, curr_sigma, -1.f, 1.f);
         const auto curr_entropy =
-            truncated_normal_entropy(curr_mu, curr_sigma, -1.f, 1.f).sum(-1, true);
+            -truncated_normal_log_pdf(curr_action, curr_mu, curr_sigma, -1.f, 1.f).sum(-1, true);
 
         const auto curr_q_value_1 =
             critic_1->value(state.vision, state.proprioception, curr_action);

@@ -10,5 +10,6 @@
 torch::Tensor multinomial_sample(const torch::Tensor &probabilities);
 torch::Tensor
 multinomial_log_proba(const torch::Tensor &action, const torch::Tensor &probabilities);
+torch::Tensor multinomial_entropy(const torch::Tensor &probabilities);
 
 #endif//ARENAI_TRAIN_HOST_MULTINOMIAL_H

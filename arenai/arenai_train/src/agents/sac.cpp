@@ -102,8 +102,7 @@ void SacAgent::train(
                      .sum(-1, true);
 
             const auto next_discrete_action = multinomial_sample(next_discrete);
-            const auto next_discrete_entropy =
-                -multinomial_log_proba(next_discrete_action, next_discrete);
+            const auto next_discrete_entropy = multinomial_entropy(next_discrete);
 
             const auto next_action = torch::cat({next_continuous_action, next_discrete_action}, -1);
 
@@ -148,8 +147,7 @@ void SacAgent::train(
                  .sum(-1, true);
 
         const auto curr_discrete_action = multinomial_sample(curr_discrete);
-        const auto curr_discrete_entropy =
-            -multinomial_log_proba(curr_discrete_action, curr_discrete);
+        const auto curr_discrete_entropy = multinomial_entropy(curr_discrete);
 
         const auto curr_action = torch::cat({curr_continuous_action, curr_discrete_action}, -1);
 
@@ -161,7 +159,7 @@ void SacAgent::train(
 
         const auto actor_loss = -torch::mean(
             alpha_continuous->alpha().detach() * curr_continuous_entropy
-            + alpha_discrete->alpha() * curr_discrete_entropy + q_value);
+            + alpha_discrete->alpha().detach() * curr_discrete_entropy + q_value);
 
         actor_optim->zero_grad();
         actor_loss.backward();

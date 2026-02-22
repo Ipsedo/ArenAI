@@ -10,7 +10,6 @@
 
 #include <arenai_core/constants.h>
 
-#include "./agents/ppo.h"
 #include "./agents/sac.h"
 #include "./core/train_environment.h"
 #include "./core/train_gl_context.h"
@@ -43,7 +42,8 @@ void train_main(
     std::cout << "Vision size : width=" << ENEMY_VISION_WIDTH << ", height=" << ENEMY_VISION_HEIGHT
               << std::endl;
     std::cout << "Proprioception size : " << ENEMY_PROPRIOCEPTION_SIZE << std::endl;
-    std::cout << "Action size : " << ENEMY_NB_ACTION << std::endl;
+    std::cout << "Action size (continuous) : " << ENEMY_NB_CONTINUOUS_ACTION << std::endl;
+    std::cout << "Action size (discrete) : " << ENEMY_NB_DISCRETE_ACTION << std::endl;
 
     torch::Device torch_device =
         train_options.cuda ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU);
@@ -52,15 +52,14 @@ void train_main(
         train_options.nb_tanks, train_options.android_asset_folder, wanted_frequency);
 
     auto agent = std::make_shared<SacAgent>(
-        ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, train_options.learning_rate,
-        model_options.hidden_size_sensors, model_options.hidden_size_actions,
-        model_options.actor_hidden_size, model_options.critic_hidden_size,
-        model_options.vision_channels, model_options.group_norm_nums, torch_device,
-        train_options.metric_window_size, model_options.tau, model_options.gamma,
-        model_options.initial_alpha);
+        ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_CONTINUOUS_ACTION, ENEMY_NB_DISCRETE_ACTION,
+        train_options.learning_rate, model_options.hidden_size_sensors,
+        model_options.hidden_size_actions, model_options.actor_hidden_size,
+        model_options.critic_hidden_size, model_options.vision_channels,
+        model_options.group_norm_nums, torch_device, train_options.metric_window_size,
+        model_options.tau, model_options.gamma, model_options.initial_alpha);
 
     std::cout << "Parameters : " << agent->count_parameters() << std::endl;
-    std::cout << "Target entropy : " << agent->get_target_entropy() << std::endl;
 
     Saver saver(agent, train_options.output_folder, train_options.save_every);
 
@@ -105,8 +104,7 @@ void train_main(
         int episode_step_idx = 0;
         while (!is_done) {
 
-            torch::Tensor actions;
-            torch::Tensor log_probas;
+            TorchAction torch_action;
             std::vector<Action> actions_for_env;
 
             const auto [vision, proprioception] = states_to_tensor(last_state);
@@ -115,13 +113,14 @@ void train_main(
                 torch::NoGradGuard no_grad_guard;
                 agent->set_train(false);
 
-                const auto [action, log_proba] =
-                    agent->act(vision.to(torch_device), proprioception.to(torch_device));
+                const auto
+                    [continuous_action, continuous_log_proba, discrete_action, discrete_log_proba] =
+                        agent->act(vision.to(torch_device), proprioception.to(torch_device));
 
-                actions = action;
-                log_probas = log_proba;
+                torch_action = {
+                    continuous_action, continuous_log_proba, discrete_action, discrete_log_proba};
 
-                actions_for_env = tensor_to_actions(actions);
+                actions_for_env = tensor_to_actions(continuous_action, discrete_action);
             }
 
             // step environment
@@ -148,8 +147,8 @@ void train_main(
 
                 replay_buffer->add(
                     {{vision[i], proprioception[i]},
-                     actions[i],
-                     log_probas[i],
+                     {torch_action.continuous_action[i], torch_action.continuous_log_proba[i],
+                      torch_action.discrete_action[i], torch_action.discrete_log_proba[i]},
                      torch::tensor(
                          {reward + potential_reward}, torch::TensorOptions().dtype(torch::kFloat)),
                      torch::tensor({done}, torch::TensorOptions().dtype(torch::kBool)),

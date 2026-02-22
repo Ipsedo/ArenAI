@@ -14,10 +14,17 @@ struct TorchState {
     torch::Tensor proprioception;
 };
 
+struct TorchAction {
+    torch::Tensor continuous_action;
+    torch::Tensor continuous_log_proba;
+
+    torch::Tensor discrete_action;
+    torch::Tensor discrete_log_proba;
+};
+
 struct TorchStep {
     TorchState state;
-    torch::Tensor action;
-    torch::Tensor log_proba;
+    TorchAction action;
     torch::Tensor reward;
     torch::Tensor done;
     TorchState next_state;

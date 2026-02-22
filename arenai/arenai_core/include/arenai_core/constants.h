@@ -10,7 +10,8 @@
 
 // (position + velocity + forward + up + angle_velocity) * (6 * wheel + chassis + turret + canon) - chassis_pos
 #define ENEMY_PROPRIOCEPTION_SIZE ((3 + 3 + 3 + 3 + 3) * (6 + 3) - 3)
-#define ENEMY_NB_ACTION (2 + 2 + 1)
+#define ENEMY_NB_CONTINUOUS_ACTION (2 + 2)
+#define ENEMY_NB_DISCRETE_ACTION 2
 
 #define SIGMA_MIN 1e-5f
 #define SIGMA_MAX 5.f

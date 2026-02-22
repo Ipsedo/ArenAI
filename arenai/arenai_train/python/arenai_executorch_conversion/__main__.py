@@ -11,7 +11,8 @@ from executorch.exir import to_edge_transform_and_lower
 from torch.export import Dim, export
 
 from .constants import (
-    ENEMY_NB_ACTIONS,
+    ENEMY_NB_DISCRETE_ACTIONS,
+    ENEMY_NB_CONTINUOUS_ACTIONS,
     ENEMY_PROPRIOCEPTION_SIZE,
     ENEMY_VISION_HEIGHT,
     ENEMY_VISION_WIDTH,
@@ -90,7 +91,8 @@ def main() -> None:
 
         actor = SacActor(
             ENEMY_PROPRIOCEPTION_SIZE,
-            ENEMY_NB_ACTIONS,
+            ENEMY_NB_CONTINUOUS_ACTIONS,
+            ENEMY_NB_DISCRETE_ACTIONS,
             args.sensors_hidden_size,
             args.actor_hidden_size,
             args.vision_channels,

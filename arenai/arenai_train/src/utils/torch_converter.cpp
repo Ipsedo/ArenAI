@@ -22,7 +22,7 @@ std::vector<Action> tensor_to_actions(const torch::Tensor &actions_tensor) {
             actions_tensor[i][0].item<float>(), actions_tensor[i][1].item<float>()};
         const joystick joystick_canon{
             actions_tensor[i][2].item<float>(), actions_tensor[i][3].item<float>()};
-        const button fire_button(actions_tensor[i][4].item<float>() > 0);
+        const button fire_button(actions_tensor[i][4].item<float>() > 0.7f);
 
         actions.push_back({joystick_direction, joystick_canon, fire_button});
     }

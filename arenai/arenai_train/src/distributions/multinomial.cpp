@@ -25,3 +25,5 @@ torch::Tensor multinomial_entropy(const torch::Tensor &probabilities) {
     const auto clamped_proba = torch::clamp(probabilities, EPSILON, 1.0);
     return -torch::sum(clamped_proba * torch::log(clamped_proba), -1, true);
 }
+
+float multinomial_target_entropy() { return -(0.2f * std::log(0.2f) + 0.8f * std::log(0.8f)); }

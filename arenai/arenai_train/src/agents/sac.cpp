@@ -48,8 +48,10 @@ SacAgent::SacAgent(
       actor_loss_metric(std::make_shared<Metric>("actor", metric_window_size)),
       critic_1_loss_metric(std::make_shared<Metric>("critic_1", metric_window_size)),
       critic_2_loss_metric(std::make_shared<Metric>("critic_2", metric_window_size)),
-      alpha_continuous_metric(std::make_shared<Metric>("alpha_cont", metric_window_size)),
-      alpha_discrete_metric(std::make_shared<Metric>("alpha_disc", metric_window_size)), tau(tau),
+      continuous_entropy_metric(std::make_shared<Metric>("entropy_c", metric_window_size)),
+      discrete_entropy_metric(std::make_shared<Metric>("entropy_d", metric_window_size)),
+      alpha_continuous_metric(std::make_shared<Metric>("alpha_c", metric_window_size)),
+      alpha_discrete_metric(std::make_shared<Metric>("alpha_d", metric_window_size)), tau(tau),
       gamma(gamma), continous_target_entropy(
                         truncated_normal_target_entropy(nb_continuous_actions, -1.f, 1.f, 1.f)),
       discrete_target_entropy(0.98f * std::log(nb_discrete_actions)) {
@@ -193,15 +195,18 @@ void SacAgent::train(
 
         actor_loss_metric->add(actor_loss.cpu().item<float>());
 
+        continuous_entropy_metric->add(curr_continuous_entropy.mean().item<float>());
+        discrete_entropy_metric->add(curr_discrete_entropy.mean().item<float>());
+
         alpha_continuous_metric->add(alpha_continuous->alpha().item<float>());
         alpha_discrete_metric->add(alpha_discrete->alpha().item<float>());
     }
 }
 
 std::vector<std::shared_ptr<Metric>> SacAgent::get_metrics() {
-    return {
-        actor_loss_metric, critic_1_loss_metric, critic_2_loss_metric, alpha_continuous_metric,
-        alpha_discrete_metric};
+    return {actor_loss_metric,         critic_1_loss_metric,    critic_2_loss_metric,
+            continuous_entropy_metric, alpha_continuous_metric, discrete_entropy_metric,
+            alpha_discrete_metric};
 }
 
 void SacAgent::save(const std::filesystem::path &output_folder) {
@@ -269,3 +274,7 @@ int SacAgent::count_parameters() {
            + count_parameters_impl(alpha_continuous->parameters())
            + count_parameters_impl(alpha_discrete->parameters());
 }
+
+float SacAgent::get_continuous_target_entropy() const { return continous_target_entropy; }
+
+float SacAgent::get_discrete_target_entropy() const { return discrete_target_entropy; }

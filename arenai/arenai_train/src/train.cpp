@@ -60,12 +60,16 @@ void train_main(
         model_options.tau, model_options.gamma, model_options.initial_alpha);
 
     std::cout << "Parameters : " << agent->count_parameters() << std::endl;
+    std::cout << "Target entropy (continuous) : " << agent->get_continuous_target_entropy()
+              << std::endl;
+    std::cout << "Target entropy (discrete) : " << agent->get_discrete_target_entropy()
+              << std::endl;
 
     Saver saver(agent, train_options.output_folder, train_options.save_every);
 
     auto replay_buffer = std::make_unique<ReplayBuffer>(train_options.replay_buffer_size);
 
-    Metric reward_metric("reward", train_options.metric_window_size);
+    Metric reward_metric("reward", train_options.metric_window_size, 6);
     Metric potential_metric("potential", train_options.metric_window_size, 2, true);
 
     auto sac_metrics = agent->get_metrics();

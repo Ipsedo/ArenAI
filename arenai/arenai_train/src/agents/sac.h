@@ -31,6 +31,9 @@ public:
 
     int count_parameters() override;
 
+    float get_continuous_target_entropy() const;
+    float get_discrete_target_entropy() const;
+
 private:
     std::shared_ptr<Actor> actor;
 
@@ -53,6 +56,9 @@ private:
     std::shared_ptr<Metric> actor_loss_metric;
     std::shared_ptr<Metric> critic_1_loss_metric;
     std::shared_ptr<Metric> critic_2_loss_metric;
+
+    std::shared_ptr<Metric> continuous_entropy_metric;
+    std::shared_ptr<Metric> discrete_entropy_metric;
 
     std::shared_ptr<Metric> alpha_continuous_metric;
     std::shared_ptr<Metric> alpha_discrete_metric;

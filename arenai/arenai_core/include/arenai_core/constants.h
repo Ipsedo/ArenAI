@@ -16,4 +16,6 @@
 #define SIGMA_MAX 5.f
 #define EPSILON 1e-8f
 
+#define ENEMY_ACTION_THRESHOLD 0.7f
+
 #endif//ARENAI_TRAIN_HOST_CONSTANTS_H

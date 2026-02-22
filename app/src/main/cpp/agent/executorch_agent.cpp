@@ -123,7 +123,7 @@ std::vector<Action> ExecuTorchAgent::act(const std::vector<State> &state) {
 
         joystick joystick_direction{sampled_action[0], sampled_action[1]};
         joystick joystick_canon{sampled_action[2], sampled_action[3]};
-        button fire_button(sampled_action[4] > 0);
+        button fire_button(sampled_action[4] > ENEMY_ACTION_THRESHOLD);
 
         actions[i] = {joystick_direction, joystick_canon, fire_button};
     }

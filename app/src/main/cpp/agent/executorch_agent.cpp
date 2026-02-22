@@ -113,17 +113,23 @@ std::vector<Action> ExecuTorchAgent::act(const std::vector<State> &state) {
 
     auto mu = output->at(0).toTensor().const_data_ptr<float>();
     auto sigma = output->at(1).toTensor().const_data_ptr<float>();
+    auto discrete = output->at(2).toTensor().const_data_ptr<float>();
 
     std::vector<Action> actions(N);
     for (int i = 0; i < N; i++) {
-        std::vector<float> sampled_action(ENEMY_NB_ACTION);
-        for (int a = 0; a < ENEMY_NB_ACTION; a++)
-            sampled_action[a] = truncated_normal_sample(
-                rng, mu[i * ENEMY_NB_ACTION + a], sigma[i * ENEMY_NB_ACTION + a], -1.f, 1.f);
+        std::vector<float> continuous_action(ENEMY_NB_CONTINUOUS_ACTION);
+        for (int a = 0; a < ENEMY_NB_CONTINUOUS_ACTION; a++)
+            continuous_action[a] = truncated_normal_sample(
+                rng, mu[i * ENEMY_NB_CONTINUOUS_ACTION + a],
+                sigma[i * ENEMY_NB_CONTINUOUS_ACTION + a], -1.f, 1.f);
 
-        joystick joystick_direction{sampled_action[0], sampled_action[1]};
-        joystick joystick_canon{sampled_action[2], sampled_action[3]};
-        button fire_button(sampled_action[4] > ENEMY_ACTION_THRESHOLD);
+        std::vector<float> discrete_proba = {
+            discrete[i * ENEMY_NB_DISCRETE_ACTION], discrete[i * ENEMY_NB_DISCRETE_ACTION + 1]};
+        std::discrete_distribution<int> dist(discrete_proba.begin(), discrete_proba.end());
+
+        joystick joystick_direction{continuous_action[0], continuous_action[1]};
+        joystick joystick_canon{continuous_action[2], continuous_action[3]};
+        button fire_button(dist(rng) == 0);
 
         actions[i] = {joystick_direction, joystick_canon, fire_button};
     }

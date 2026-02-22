@@ -8,21 +8,20 @@
 
 #include <arenai_core/constants.h>
 
-std::vector<Action> tensor_to_actions(const torch::Tensor &actions_tensor) {
-    if (actions_tensor.sizes().size() != 2)
-        throw std::invalid_argument("actions_tensor.sizes().size() != 2");
-
-    const auto batch_size = actions_tensor.size(0);
+std::vector<Action>
+tensor_to_actions(const torch::Tensor &continuous_actions, const torch::Tensor &discrete_actions) {
+    const auto batch_size = continuous_actions.size(0);
 
     std::vector<Action> actions;
     actions.reserve(batch_size);
 
     for (int i = 0; i < batch_size; i++) {
         const joystick joystick_direction{
-            actions_tensor[i][0].item<float>(), actions_tensor[i][1].item<float>()};
+            continuous_actions[i][0].item<float>(), continuous_actions[i][1].item<float>()};
         const joystick joystick_canon{
-            actions_tensor[i][2].item<float>(), actions_tensor[i][3].item<float>()};
-        const button fire_button(actions_tensor[i][4].item<float>() > ENEMY_ACTION_THRESHOLD);
+            continuous_actions[i][2].item<float>(), continuous_actions[i][3].item<float>()};
+        const button fire_button(
+            discrete_actions[i][0].item<float>() > discrete_actions[i][1].item<float>());
 
         actions.push_back({joystick_direction, joystick_canon, fire_button});
     }

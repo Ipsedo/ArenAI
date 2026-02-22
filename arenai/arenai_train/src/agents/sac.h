@@ -13,9 +13,9 @@
 class SacAgent : public AbstractAgent {
 public:
     SacAgent(
-        int nb_sensors, int nb_action, float learning_rate, int hidden_size_sensors,
-        int hidden_size_actions, int actor_hidden_size, int critic_hidden_size,
-        const std::vector<std::tuple<int, int>> &vision_channels,
+        int nb_sensors, int nb_continuous_actions, int nb_discrete_actions, float learning_rate,
+        int hidden_size_sensors, int hidden_size_actions, int actor_hidden_size,
+        int critic_hidden_size, const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
         float tau, float gamma, float initial_alpha);
 
@@ -31,7 +31,8 @@ public:
 
     int count_parameters() override;
 
-    float get_target_entropy() const;
+    float get_continuous_target_entropy() const;
+    float get_discrete_target_entropy() const;
 
 private:
     std::shared_ptr<Actor> actor;
@@ -42,23 +43,30 @@ private:
     std::shared_ptr<QFunction> target_critic_1;
     std::shared_ptr<QFunction> target_critic_2;
 
-    std::shared_ptr<AlphaParameter> alpha;
+    std::shared_ptr<AlphaParameter> alpha_continuous;
+    std::shared_ptr<AlphaParameter> alpha_discrete;
 
     std::shared_ptr<torch::optim::Adam> actor_optim;
     std::shared_ptr<torch::optim::Adam> critic_1_optim;
     std::shared_ptr<torch::optim::Adam> critic_2_optim;
-    std::shared_ptr<torch::optim::Adam> alpha_optim;
+
+    std::shared_ptr<torch::optim::Adam> alpha_continuous_optim;
+    std::shared_ptr<torch::optim::Adam> alpha_discrete_optim;
 
     std::shared_ptr<Metric> actor_loss_metric;
     std::shared_ptr<Metric> critic_1_loss_metric;
     std::shared_ptr<Metric> critic_2_loss_metric;
-    std::shared_ptr<Metric> alpha_loss_metric;
-    std::shared_ptr<Metric> entropy_metric;
-    std::shared_ptr<Metric> alpha_metric;
+
+    std::shared_ptr<Metric> continuous_entropy_metric;
+    std::shared_ptr<Metric> discrete_entropy_metric;
+
+    std::shared_ptr<Metric> alpha_continuous_metric;
+    std::shared_ptr<Metric> alpha_discrete_metric;
 
     float tau;
     float gamma;
-    float target_entropy;
+    float continous_target_entropy;
+    float discrete_target_entropy;
 };
 
 #endif//ARENAI_TRAIN_HOST_SAC_H

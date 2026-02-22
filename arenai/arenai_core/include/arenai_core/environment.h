@@ -72,9 +72,6 @@ private:
 
     int nb_reset_frames;
 
-    std::unique_ptr<std::barrier<>> loop_start_barrier;
-    std::unique_ptr<std::barrier<>> loop_end_barrier;
-
     void worker_enemy_vision(int index, const std::unique_ptr<EnemyTankFactory> &tank_factory);
 
     void start_threads();

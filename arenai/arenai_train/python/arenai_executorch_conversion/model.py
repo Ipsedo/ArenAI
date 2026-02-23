@@ -51,7 +51,7 @@ class GumbelSoftmax(nn.Module):
         self.__epsilon = epsilon
 
     def forward(self, x: th.Tensor) -> th.Tensor:
-        u = th.clamp(th.rand_like(x, device=x.device), self.__epsilon, 1.0 - self.__epsilon)
+        u = th.clamp(th.rand(x.size(), device=x.device), self.__epsilon, 1.0 - self.__epsilon)
         gumbel_noise = -th.log(-th.log(u))
 
         y = (x + gumbel_noise) / self.__tau

@@ -1,3 +1,5 @@
+from sndhdr import test_aifc
+
 import torch as th
 from torch import nn
 
@@ -40,6 +42,22 @@ class ConvolutionNetwork(nn.Module):
         return self.__output_size
 
 
+class GumbelSoftmax(nn.Module):
+    def __init__(self, dim: int, tau: float = 1.0, epsilon: float = 1e-20) -> None:
+        super().__init__()
+
+        self.__dim = dim
+        self.__tau = tau
+        self.__epsilon = epsilon
+
+    def forward(self, x: th.Tensor) -> th.Tensor:
+        u = th.clamp(th.rand_like(x, device=x.device), self.__epsilon, 1.0 - self.__epsilon)
+        gumbel_noise = -th.log(-th.log(u))
+
+        y = (x + gumbel_noise) / self.__tau
+        return th.softmax(y, self.__dim)
+
+
 class SacActor(nn.Module):
     def __init__(
         self,
@@ -80,7 +98,7 @@ class SacActor(nn.Module):
         )
         self.discrete = nn.Sequential(
             nn.Linear(hidden_size, nb_discrete_actions),
-            nn.Softmax(-1),
+            GumbelSoftmax(-1),
         )
 
     def forward(

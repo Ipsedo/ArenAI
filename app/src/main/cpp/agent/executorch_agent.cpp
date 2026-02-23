@@ -123,13 +123,10 @@ std::vector<Action> ExecuTorchAgent::act(const std::vector<State> &state) {
                 rng, mu[i * ENEMY_NB_CONTINUOUS_ACTION + a],
                 sigma[i * ENEMY_NB_CONTINUOUS_ACTION + a], -1.f, 1.f);
 
-        std::vector<float> discrete_proba = {
-            discrete[i * ENEMY_NB_DISCRETE_ACTION], discrete[i * ENEMY_NB_DISCRETE_ACTION + 1]};
-        std::discrete_distribution<int> dist(discrete_proba.begin(), discrete_proba.end());
-
         joystick joystick_direction{continuous_action[0], continuous_action[1]};
         joystick joystick_canon{continuous_action[2], continuous_action[3]};
-        button fire_button(dist(rng) == 0);
+        button fire_button(
+            discrete[i * ENEMY_NB_DISCRETE_ACTION] > discrete[i * ENEMY_NB_DISCRETE_ACTION + 1]);
 
         actions[i] = {joystick_direction, joystick_canon, fire_button};
     }

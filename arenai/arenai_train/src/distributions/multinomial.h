@@ -12,6 +12,6 @@ torch::Tensor
 multinomial_log_proba(const torch::Tensor &action, const torch::Tensor &probabilities);
 torch::Tensor multinomial_entropy(const torch::Tensor &probabilities);
 
-float multinomial_target_entropy();
+float multinomial_target_entropy(const float &target_fire_probability);
 
 #endif//ARENAI_TRAIN_HOST_MULTINOMIAL_H

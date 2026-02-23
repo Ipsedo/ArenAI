@@ -39,7 +39,8 @@ BaseTanksEnvironment::BaseTanksEnvironment(
     float wanted_frequency, const bool thread_sleep)
     : wanted_frequency(wanted_frequency), nb_tanks(nb_tanks), thread_sleep(thread_sleep),
       threads_running(false), physic_engine(std::make_unique<PhysicEngine>(wanted_frequency)),
-      gl_context(gl_context), nb_reset_frames(static_cast<int>(4.f / wanted_frequency)), rng(dev()),
+      gl_context(gl_context), nb_reset_frames(static_cast<int>(4.f / wanted_frequency)),
+      reset_barrier(std::make_unique<std::barrier<>>(nb_tanks + 1)), rng(dev()),
       file_reader(file_reader) {
 
     for (int i = 0; i < nb_tanks; i++)
@@ -221,6 +222,8 @@ void BaseTanksEnvironment::worker_enemy_vision(
 
     renderer.reset();
     eglReleaseThread();
+
+    reset_barrier->arrive_and_drop();
 }
 
 void BaseTanksEnvironment::start_threads() {
@@ -233,6 +236,8 @@ void BaseTanksEnvironment::start_threads() {
     pool.clear();
     pool.reserve(tank_factories.size());
 
+    reset_barrier = std::make_unique<std::barrier<>>(nb_tanks + 1);
+
     for (int i = 0; i < tank_factories.size(); ++i)
         pool.emplace_back([this, i] { worker_enemy_vision(i, tank_factories[i]); });
 }
@@ -241,6 +246,8 @@ void BaseTanksEnvironment::kill_threads() {
     if (pool.empty()) return;
 
     threads_running.store(false, std::memory_order_release);
+
+    reset_barrier->arrive_and_drop();
 
     for (auto &t: pool)
         if (t.joinable()) t.join();

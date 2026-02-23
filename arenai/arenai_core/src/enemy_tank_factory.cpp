@@ -109,12 +109,9 @@ float EnemyTankFactory::get_reward(
     // 4. shoot reward
     constexpr float shoot_in_aim_reward = 0.2f;
     constexpr float shoot_cost = 0.1f;
-    constexpr float shoot_reward_quality_score_gate = 0.2f;
-    const float shoot_reward =
-        action_stats->has_fire()
-            ? (max_quality_score > shoot_reward_quality_score_gate ? shoot_in_aim_reward : 0.f)
-                  - shoot_cost
-            : 0.f;
+    const float shoot_reward = action_stats->has_fire()
+                                   ? std::min(max_quality_score, shoot_in_aim_reward) - shoot_cost
+                                   : 0.f;
 
     // 5. total reward
     const float reward = hit_reward + dead_penalty + shoot_reward;

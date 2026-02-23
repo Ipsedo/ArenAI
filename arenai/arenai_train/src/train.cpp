@@ -142,7 +142,8 @@ void train_main(
                 if (already_done[i]) continue;
 
                 const float potential_reward =
-                    model_options.gamma * phi_vector[i] - last_phi_vector[i];
+                    train_options.potential_reward_scale
+                    * (model_options.gamma * phi_vector[i] - last_phi_vector[i]);
 
                 reward_metric.add(reward);
                 potential_metric.add(potential_reward);

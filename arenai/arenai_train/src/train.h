@@ -27,6 +27,7 @@ struct TrainOptions {
     std::filesystem::path output_folder;
     std::filesystem::path android_asset_folder;
     float learning_rate;
+    float potential_reward_scale;
     int epochs;
     int batch_size;
     int max_episode_steps;

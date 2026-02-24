@@ -87,7 +87,7 @@ float EnemyTankFactory::get_reward(
     else curr_frame_upside_down = 0;
 
     // 2. dead penalty
-    const auto dead_penalty = is_dead() ? (is_suicide() ? -0.1f : -1.f) : 0.f;
+    const auto dead_penalty = is_dead() ? (is_suicide() ? -0.5f : -1.f) : 0.f;
 
     // 3. shaped reward
     const auto chassis_pos = glm::vec3(chassis_model_mat * glm::vec4(glm::vec3(0.f), 1.f));
@@ -107,8 +107,8 @@ float EnemyTankFactory::get_reward(
     }
 
     // 4. shoot reward
-    constexpr float shoot_in_aim_reward_scale = 0.2f;
-    constexpr float shoot_cost = 0.1f;
+    constexpr float shoot_in_aim_reward_scale = 0.1f;
+    constexpr float shoot_cost = 0.05f;
     const float shoot_reward =
         action_stats->has_fire() ? max_quality_score * shoot_in_aim_reward_scale - shoot_cost : 0.f;
 

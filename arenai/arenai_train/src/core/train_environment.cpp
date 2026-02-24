@@ -43,10 +43,17 @@ TrainTankEnvironment::step(const float time_delta, const std::vector<Action> &ac
 
         if (has_shoot[i]) remaining_frames[i] += nb_frames_added_when_shoot;
 
-        if (remaining_frames[i] <= 0) step_result[i] = {state, reward, true};
+        if (remaining_frames[i] <= 0) step_result[i] = {state, -0.5f, true};
     }
 
     return step_result;
+}
+
+std::vector<IsDone> TrainTankEnvironment::get_truncated_episodes() const {
+    std::vector<IsDone> result;
+    std::ranges::transform(
+        remaining_frames, std::back_inserter(result), [](const auto &frame) { return frame <= 0; });
+    return result;
 }
 
 std::vector<float> TrainTankEnvironment::get_phi_vector() {

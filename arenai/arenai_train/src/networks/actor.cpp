@@ -4,7 +4,6 @@
 
 #include "./actor.h"
 
-#include "./gumbel_softmax.h"
 #include "./init.h"
 
 Actor::Actor(
@@ -34,9 +33,9 @@ Actor::Actor(
           torch::nn::Sequential(
               torch::nn::Linear(hidden_size, nb_continuous_actions), torch::nn::Softplus()))),
       discrete(register_module(
-          "discrete", torch::nn::Sequential(
-                          torch::nn::Linear(hidden_size, nb_discrete_actions),
-                          std::make_shared<GumbelSoftmax>(-1)))) {
+          "discrete",
+          torch::nn::Sequential(
+              torch::nn::Linear(hidden_size, nb_discrete_actions), torch::nn::Softmax(-1)))) {
     apply(init_weights);
 }
 

@@ -54,7 +54,7 @@ SacAgent::SacAgent(
       alpha_discrete_metric(std::make_shared<Metric>("alpha_d", metric_window_size)), tau(tau),
       gamma(gamma), continous_target_entropy(
                         truncated_normal_target_entropy(nb_continuous_actions, -1.f, 1.f, 1.f)),
-      discrete_target_entropy(multinomial_target_entropy(0.2f)) {
+      discrete_target_entropy(multinomial_target_entropy(0.5f)) {
 
     hard_update(target_critic_1, critic_1);
     hard_update(target_critic_2, critic_2);
@@ -75,7 +75,7 @@ agent_response SacAgent::act(const torch::Tensor &vision, const torch::Tensor &s
     const auto continuous_log_proba =
         truncated_normal_log_pdf(continuous_action, mu, sigma, -1.f, 1.f).sum(-1, true);
 
-    const auto discrete_action = gumbel_hard(discrete);
+    const auto discrete_action = multinomial_sample(discrete);
     const auto discrete_log_proba = multinomial_log_proba(discrete_action, discrete);
 
     return {continuous_action, continuous_log_proba, discrete_action, discrete_log_proba};
@@ -103,7 +103,7 @@ void SacAgent::train(
                 -truncated_normal_log_pdf(next_continuous_action, next_mu, next_sigma, -1.f, 1.f)
                      .sum(-1, true);
 
-            const auto next_discrete_action = gumbel_hard(next_discrete);
+            const auto next_discrete_action = multinomial_sample(next_discrete);
             const auto next_discrete_entropy = multinomial_entropy(next_discrete);
 
             const auto next_action = torch::cat({next_continuous_action, next_discrete_action}, -1);
@@ -148,7 +148,7 @@ void SacAgent::train(
             -truncated_normal_log_pdf(curr_continuous_action, curr_mu, curr_sigma, -1.f, 1.f)
                  .sum(-1, true);
 
-        const auto curr_discrete_action = gumbel_hard(curr_discrete);
+        const auto curr_discrete_action = multinomial_sample(curr_discrete);
         const auto curr_discrete_entropy = multinomial_entropy(curr_discrete);
 
         const auto curr_action = torch::cat({curr_continuous_action, curr_discrete_action}, -1);

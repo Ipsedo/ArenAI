@@ -6,9 +6,9 @@
 
 #include "arenai_core/constants.h"
 
-torch::Tensor gumbel_hard(const torch::Tensor &probabilities) {
+torch::Tensor multinomial_sample(const torch::Tensor &probabilities) {
     const auto clamped_proba = torch::clamp(probabilities, EPSILON, 1.0);
-    const auto idx = torch::argmax(clamped_proba, -1, true);
+    const auto idx = torch::multinomial(clamped_proba, 1, false);
     const auto one_hot = torch::zeros_like(clamped_proba).scatter_(1, idx, 1.0);
     return (one_hot - clamped_proba).detach() + clamped_proba;
 }

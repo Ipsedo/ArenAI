@@ -160,7 +160,8 @@ void train_main(
                       torch_action.discrete_action[i], torch_action.discrete_log_proba[i]},
                      torch::tensor(
                          {reward + potential_reward}, torch::TensorOptions().dtype(torch::kFloat)),
-                     torch::tensor({done}, torch::TensorOptions().dtype(torch::kBool)),
+                     torch::tensor(
+                         {is_done_and_not_truncated}, torch::TensorOptions().dtype(torch::kBool)),
                      {next_vision, next_proprioception}});
 
                 if (done && !already_done[i]) already_done[i] = true;

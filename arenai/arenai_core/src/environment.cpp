@@ -187,11 +187,11 @@ void BaseTanksEnvironment::worker_enemy_vision(
 
     for (const auto &item: physic_engine->get_items()) {
         glm::vec4 color(u_dist(local_rng), u_dist(local_rng), u_dist(local_rng), 1.f);
+        const auto shape = item->get_shape();
         renderer->add_drawable(
-            item->get_name(),
-            std::make_unique<Specular>(
-                file_reader, item->get_shape()->get_vertices(), item->get_shape()->get_normals(),
-                color, color, color, 50.f, item->get_shape()->get_id()));
+            item->get_name(), std::make_unique<Specular>(
+                                  file_reader, shape->get_vertices(), shape->get_normals(), color,
+                                  color, color, 50.f, shape->get_id()));
     }
 
     for (const auto &[name, shape]: tank_factory->load_shell_shapes()) {

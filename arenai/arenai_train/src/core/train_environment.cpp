@@ -19,9 +19,9 @@ TrainTankEnvironment::TrainTankEnvironment(
     : BaseTanksEnvironment(
         std::make_shared<LinuxAndroidAssetFileReader>(android_assets_path), std::nullptr_t(),
         nb_tanks, wanted_frequency, false),
-      max_frames_without_shoot(static_cast<int>(90.f / wanted_frequency)),
+      max_frames_without_shoot(static_cast<int>(30.f / wanted_frequency)),
       remaining_frames(nb_tanks, max_frames_without_shoot),
-      nb_frames_added_when_shoot(static_cast<int>(5.f / wanted_frequency)), nb_tanks(nb_tanks) {}
+      nb_frames_added_when_shoot(static_cast<int>(10.f / wanted_frequency)), nb_tanks(nb_tanks) {}
 
 std::vector<std::tuple<State, Reward, IsDone>>
 TrainTankEnvironment::step(const float time_delta, const std::vector<Action> &actions) {
@@ -43,7 +43,7 @@ TrainTankEnvironment::step(const float time_delta, const std::vector<Action> &ac
 
         if (has_shoot[i]) remaining_frames[i] += nb_frames_added_when_shoot;
 
-        if (remaining_frames[i] <= 0) step_result[i] = {state, -0.5f, true};
+        if (remaining_frames[i] <= 0) step_result[i] = {state, 0.0f, true};
     }
 
     return step_result;

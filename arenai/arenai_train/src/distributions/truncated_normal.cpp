@@ -2,7 +2,7 @@
 // Created by samuel on 12/10/2025.
 //
 
-#include "./truncated_normal.h"
+#include "../distributions/truncated_normal.h"
 
 #include <arenai_core/constants.h>
 

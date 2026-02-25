@@ -13,9 +13,11 @@ public:
         int nb_tanks, const std::filesystem::path &android_assets_path, float wanted_frequency);
 
     std::vector<std::tuple<State, Reward, IsDone>>
-    step(float time_delta, std::future<std::vector<Action>> &actions_future) override;
+    step(float time_delta, const std::vector<Action> &actions) override;
 
-    std::vector<Reward> get_phi_vector();
+    std::vector<IsDone> get_truncated_episodes() const;
+
+    std::vector<float> get_phi_vector();
 
     static void reset_singleton();
 

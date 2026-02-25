@@ -13,7 +13,7 @@
 class Metric {
 public:
     explicit Metric(
-        const std::string &name, int window_size, int precision = 6, bool scientific = false);
+        const std::string &name, int window_size, int precision = 4, bool scientific = false);
 
     float last_value() const;
     float average_value();

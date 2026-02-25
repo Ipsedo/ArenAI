@@ -10,7 +10,6 @@
 
 #include <arenai_core/constants.h>
 
-#include "./agents/ppo.h"
 #include "./agents/sac.h"
 #include "./core/train_environment.h"
 #include "./core/train_gl_context.h"
@@ -40,9 +39,11 @@ std::string metrics_to_string(const std::vector<std::shared_ptr<Metric>> &metric
 void train_main(
     const float wanted_frequency, const ModelOptions &model_options,
     const TrainOptions &train_options) {
-    std::cout << "Vision size : " << ENEMY_VISION_SIZE << " * " << ENEMY_VISION_SIZE << std::endl;
+    std::cout << "Vision size : width=" << ENEMY_VISION_WIDTH << ", height=" << ENEMY_VISION_HEIGHT
+              << std::endl;
     std::cout << "Proprioception size : " << ENEMY_PROPRIOCEPTION_SIZE << std::endl;
-    std::cout << "Action size : " << ENEMY_NB_ACTION << std::endl;
+    std::cout << "Action size (continuous) : " << ENEMY_NB_CONTINUOUS_ACTION << std::endl;
+    std::cout << "Action size (discrete) : " << ENEMY_NB_DISCRETE_ACTION << std::endl;
 
     torch::Device torch_device =
         train_options.cuda ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU);
@@ -51,22 +52,25 @@ void train_main(
         train_options.nb_tanks, train_options.android_asset_folder, wanted_frequency);
 
     auto agent = std::make_shared<SacAgent>(
-        ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_ACTION, train_options.learning_rate,
-        model_options.hidden_size_sensors, model_options.hidden_size_actions,
-        model_options.actor_hidden_size, model_options.critic_hidden_size,
-        model_options.vision_channels, model_options.group_norm_nums, torch_device,
-        train_options.metric_window_size, model_options.tau, model_options.gamma,
-        model_options.initial_alpha);
+        ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_CONTINUOUS_ACTION, ENEMY_NB_DISCRETE_ACTION,
+        train_options.learning_rate, model_options.hidden_size_sensors,
+        model_options.hidden_size_actions, model_options.actor_hidden_size,
+        model_options.critic_hidden_size, model_options.vision_channels,
+        model_options.group_norm_nums, torch_device, train_options.metric_window_size,
+        model_options.tau, model_options.gamma, model_options.initial_alpha);
 
     std::cout << "Parameters : " << agent->count_parameters() << std::endl;
-    std::cout << "Target entropy : " << agent->get_target_entropy() << std::endl;
+    std::cout << "Target entropy (continuous) : " << agent->get_continuous_target_entropy()
+              << std::endl;
+    std::cout << "Target entropy (discrete) : " << agent->get_discrete_target_entropy()
+              << std::endl;
 
     Saver saver(agent, train_options.output_folder, train_options.save_every);
 
     auto replay_buffer = std::make_unique<ReplayBuffer>(train_options.replay_buffer_size);
 
-    Metric reward_metric("reward", train_options.metric_window_size);
-    Metric potential_metric("potential", train_options.metric_window_size, 3, true);
+    Metric reward_metric("reward", train_options.metric_window_size, 6);
+    Metric potential_metric("potential", train_options.metric_window_size, 2, true);
 
     auto sac_metrics = agent->get_metrics();
 
@@ -99,11 +103,12 @@ void train_main(
         auto last_state = env->reset_physics();
         env->reset_drawables(gl_context);
 
+        auto last_phi_vector = env->get_phi_vector();
+
         int episode_step_idx = 0;
         while (!is_done) {
 
-            torch::Tensor actions;
-            torch::Tensor log_probas;
+            TorchAction torch_action;
             std::vector<Action> actions_for_env;
 
             const auto [vision, proprioception] = states_to_tensor(last_state);
@@ -112,21 +117,20 @@ void train_main(
                 torch::NoGradGuard no_grad_guard;
                 agent->set_train(false);
 
-                const auto [action, log_proba] =
-                    agent->act(vision.to(torch_device), proprioception.to(torch_device));
+                const auto
+                    [continuous_action, continuous_log_proba, discrete_action, discrete_log_proba] =
+                        agent->act(vision.to(torch_device), proprioception.to(torch_device));
 
-                actions = action;
-                log_probas = log_proba;
+                torch_action = {
+                    continuous_action, continuous_log_proba, discrete_action, discrete_log_proba};
 
-                actions_for_env = tensor_to_actions(actions);
+                actions_for_env = tensor_to_actions(continuous_action, discrete_action);
             }
 
-            auto actions_future = std::async([&] { return actions_for_env; });
-
             // step environment
+            const auto steps = env->step(wanted_frequency, actions_for_env);
             const auto phi_vector = env->get_phi_vector();
-            const auto steps = env->step(wanted_frequency, actions_future);
-            const auto next_phi_vector = env->get_phi_vector();
+            const auto is_truncated_vector = env->get_truncated_episodes();
 
             last_state.clear();
             last_state.reserve(train_options.nb_tanks);
@@ -138,8 +142,12 @@ void train_main(
 
                 if (already_done[i]) continue;
 
+                const bool is_done_and_not_truncated = done && !is_truncated_vector[i];
+
                 const float potential_reward =
-                    model_options.gamma * next_phi_vector[i] - phi_vector[i];
+                    train_options.potential_reward_scale
+                    * ((is_done_and_not_truncated ? 0.f : 1.f) * model_options.gamma * phi_vector[i]
+                       - last_phi_vector[i]);
 
                 reward_metric.add(reward);
                 potential_metric.add(potential_reward);
@@ -148,11 +156,12 @@ void train_main(
 
                 replay_buffer->add(
                     {{vision[i], proprioception[i]},
-                     actions[i],
-                     log_probas[i],
+                     {torch_action.continuous_action[i], torch_action.continuous_log_proba[i],
+                      torch_action.discrete_action[i], torch_action.discrete_log_proba[i]},
                      torch::tensor(
                          {reward + potential_reward}, torch::TensorOptions().dtype(torch::kFloat)),
-                     torch::tensor({done}, torch::TensorOptions().dtype(torch::kBool)),
+                     torch::tensor(
+                         {is_done_and_not_truncated}, torch::TensorOptions().dtype(torch::kBool)),
                      {next_vision, next_proprioception}});
 
                 if (done && !already_done[i]) already_done[i] = true;

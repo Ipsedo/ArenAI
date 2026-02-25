@@ -19,14 +19,14 @@ TrainTankEnvironment::TrainTankEnvironment(
     : BaseTanksEnvironment(
         std::make_shared<LinuxAndroidAssetFileReader>(android_assets_path), std::nullptr_t(),
         nb_tanks, wanted_frequency, false),
-      max_frames_without_shoot(static_cast<int>(90.f / wanted_frequency)),
+      max_frames_without_shoot(static_cast<int>(30.f / wanted_frequency)),
       remaining_frames(nb_tanks, max_frames_without_shoot),
-      nb_frames_added_when_shoot(static_cast<int>(5.f / wanted_frequency)), nb_tanks(nb_tanks) {}
+      nb_frames_added_when_shoot(static_cast<int>(10.f / wanted_frequency)), nb_tanks(nb_tanks) {}
 
-std::vector<std::tuple<State, Reward, IsDone>> TrainTankEnvironment::step(
-    const float time_delta, std::future<std::vector<Action>> &actions_future) {
+std::vector<std::tuple<State, Reward, IsDone>>
+TrainTankEnvironment::step(const float time_delta, const std::vector<Action> &actions) {
 
-    auto step_result = BaseTanksEnvironment::step(time_delta, actions_future);
+    auto step_result = BaseTanksEnvironment::step(time_delta, actions);
 
     const auto has_shoot = apply_on_factories<std::vector<bool>>([&](const auto &factories) {
         std::vector<bool> has_shoot_result;
@@ -43,19 +43,23 @@ std::vector<std::tuple<State, Reward, IsDone>> TrainTankEnvironment::step(
 
         if (has_shoot[i]) remaining_frames[i] += nb_frames_added_when_shoot;
 
-        if (remaining_frames[i] <= 0) step_result[i] = {state, reward, true};
+        if (remaining_frames[i] <= 0) step_result[i] = {state, 0.0f, true};
     }
 
     return step_result;
 }
 
-std::vector<Reward> TrainTankEnvironment::get_phi_vector() {
-    return apply_on_factories<std::vector<Reward>>([&](const auto &factories) {
-        std::vector<Reward> phi_vector;
-        phi_vector.reserve(factories.size());
+std::vector<IsDone> TrainTankEnvironment::get_truncated_episodes() const {
+    std::vector<IsDone> result;
+    std::ranges::transform(
+        remaining_frames, std::back_inserter(result), [](const auto &frame) { return frame <= 0; });
+    return result;
+}
 
+std::vector<float> TrainTankEnvironment::get_phi_vector() {
+    return apply_on_factories<std::vector<float>>([](const auto &factories) {
+        std::vector<float> phi_vector;
         for (const auto &factory: factories) phi_vector.push_back(factory->get_phi(factories));
-
         return phi_vector;
     });
 }

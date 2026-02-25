@@ -1,7 +1,9 @@
+from sndhdr import test_aifc
+
 import torch as th
 from torch import nn
 
-from .constants import ENEMY_VISION_SIZE
+from .constants import ENEMY_VISION_HEIGHT, ENEMY_VISION_WIDTH
 
 
 class ConvolutionNetwork(nn.Module):
@@ -16,8 +18,8 @@ class ConvolutionNetwork(nn.Module):
         stride = 2
         kernel = 3
 
-        w = ENEMY_VISION_SIZE
-        h = ENEMY_VISION_SIZE
+        w = ENEMY_VISION_WIDTH
+        h = ENEMY_VISION_HEIGHT
 
         for i, ((c_i, c_o), g) in enumerate(zip(channels, group_norm_nums)):
             self.cnn.append(nn.Conv2d(c_i, c_o, kernel, stride, padding))
@@ -44,7 +46,8 @@ class SacActor(nn.Module):
     def __init__(
         self,
         nb_sensors: int,
-        nb_actions: int,
+        nb_continuous_actions: int,
+        nb_discrete_actions: int,
         hidden_size_sensors: int,
         hidden_size: int,
         channels: list[tuple[int, int]],
@@ -70,17 +73,21 @@ class SacActor(nn.Module):
         )
 
         self.mu = nn.Sequential(
-            nn.Linear(hidden_size, nb_actions),
+            nn.Linear(hidden_size, nb_continuous_actions),
             nn.Tanh(),
         )
         self.sigma = nn.Sequential(
-            nn.Linear(hidden_size, nb_actions),
+            nn.Linear(hidden_size, nb_continuous_actions),
             nn.Softplus(),
+        )
+        self.discrete = nn.Sequential(
+            nn.Linear(hidden_size, nb_discrete_actions),
+            nn.Softmax(-1),
         )
 
     def forward(
         self, vision: th.Tensor, sensors: th.Tensor
-    ) -> tuple[th.Tensor, th.Tensor]:
+    ) -> tuple[th.Tensor, th.Tensor, th.Tensor]:
         encoded_vision = self.vision_encoder(vision)
         encoded_sensors = self.sensors_encoder(sensors)
 
@@ -88,4 +95,4 @@ class SacActor(nn.Module):
             th.cat([encoded_vision, encoded_sensors], dim=1)
         )
 
-        return self.mu(encoded_latent), self.sigma(encoded_latent)
+        return self.mu(encoded_latent), self.sigma(encoded_latent), self.discrete(encoded_latent)

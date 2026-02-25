@@ -11,8 +11,8 @@ torch::Tensor truncated_normal_sample(
     const torch::Tensor &mu, const torch::Tensor &sigma, float min_value, float max_value);
 
 torch::Tensor truncated_normal_pdf(
-    const torch::Tensor &x, const torch::Tensor &mu, const torch::Tensor &sigma,
-    const float min_value, const float max_value);
+    const torch::Tensor &x, const torch::Tensor &mu, const torch::Tensor &sigma, float min_value,
+    float max_value);
 
 torch::Tensor truncated_normal_log_pdf(
     const torch::Tensor &x, const torch::Tensor &mu, const torch::Tensor &sigma, float min_value,

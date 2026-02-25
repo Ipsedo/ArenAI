@@ -5,13 +5,18 @@
 #ifndef ARENAI_TRAIN_HOST_CONSTANTS_H
 #define ARENAI_TRAIN_HOST_CONSTANTS_H
 
-#define ENEMY_VISION_SIZE 128
+#define ENEMY_VISION_HEIGHT 128
+#define ENEMY_VISION_WIDTH 256
+
 // (position + velocity + forward + up + angle_velocity) * (6 * wheel + chassis + turret + canon) - chassis_pos
 #define ENEMY_PROPRIOCEPTION_SIZE ((3 + 3 + 3 + 3 + 3) * (6 + 3) - 3)
-#define ENEMY_NB_ACTION (2 + 2 + 1)
+#define ENEMY_NB_CONTINUOUS_ACTION (2 + 2)
+#define ENEMY_NB_DISCRETE_ACTION 2
 
-#define SIGMA_MIN 1e-8f
-#define SIGMA_MAX 1e8f
+#define SIGMA_MIN 1e-5f
+#define SIGMA_MAX 5.f
 #define EPSILON 1e-8f
+
+#define ENEMY_ACTION_THRESHOLD 0.7f
 
 #endif//ARENAI_TRAIN_HOST_CONSTANTS_H

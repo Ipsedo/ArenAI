@@ -56,10 +56,6 @@ void android_main(struct android_app *app) {
 
     auto agents_state = env->reset_physics();
 
-    auto action_promise = std::promise<std::vector<Action>>();
-    action_promise.set_value(agent->act(agents_state));
-    auto action_future = action_promise.get_future();
-
     for (;;) {
         bool will_quit = false;
         int ident;
@@ -85,14 +81,13 @@ void android_main(struct android_app *app) {
 
         std::this_thread::sleep_for(frame_dt - elapsed_time);
 
-        auto step_result = env->step(frame_dt.count(), action_future);
+        const auto action = agent->act(agents_state);
+        auto step_result = env->step(frame_dt.count(), action);
 
         agents_state.clear();
         std::transform(
             step_result.begin(), step_result.end(), std::back_inserter(agents_state),
             [](auto t) { return std::get<0>(t); });
-
-        action_future = std::async([agents_state, &agent]() { return agent->act(agents_state); });
     }
 
     app->userData = nullptr;

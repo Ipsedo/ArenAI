@@ -59,6 +59,17 @@ void PhysicEngine::step(const float delta) {
         }
     }
 
+    remove_dead_items();
+}
+
+std::vector<std::shared_ptr<Item>> PhysicEngine::get_items() {
+    std::scoped_lock lock(items_mutex);
+    return items;
+}
+
+void PhysicEngine::remove_dead_items() {
+    std::scoped_lock lock(items_mutex);
+
     for (int i = static_cast<int>(items.size()) - 1; i >= 0; i--) {
         const auto item = items[i];
 
@@ -83,8 +94,6 @@ void PhysicEngine::step(const float delta) {
         }
     }
 }
-
-std::vector<std::shared_ptr<Item>> PhysicEngine::get_items() { return items; }
 
 void PhysicEngine::remove_bodies_and_constraints() {
     m_world->clearForces();

@@ -130,7 +130,7 @@ float EnemyTankFactory::get_phi(
     const auto chassis_pos =
         glm::vec3(get_chassis()->get_model_matrix() * glm::vec4(glm::vec3(0.f), 1.f));
 
-    float max_quality_score;
+    float max_quality_score = 0.f;
 
     for (const auto &other: tank_factories) {
         if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;

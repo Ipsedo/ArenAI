@@ -25,15 +25,16 @@ public:
     DoubleBuffer(const DoubleBuffer &) = delete;
     DoubleBuffer &operator=(const DoubleBuffer &) = delete;
 
-    void write(const T &to_write) {
-        const std::size_t f = front_.load(std::memory_order_relaxed);
-        const std::size_t b = 1u - f;
+    template<class U>
+    void write(U &&to_write) noexcept(std::is_nothrow_assignable_v<T &, U &&>) {
+        const auto f = front_.load(std::memory_order_relaxed);
+        const auto b = static_cast<std::uint8_t>(f ^ 1u);
 
-        buf_[b] = to_write;
+        buf_[b] = std::forward<U>(to_write);
         front_.store(b, std::memory_order_release);
     }
 
-    T get() const {
+    const T &get() const {
         const std::size_t f = front_.load(std::memory_order_acquire);
         return buf_[f];
     }

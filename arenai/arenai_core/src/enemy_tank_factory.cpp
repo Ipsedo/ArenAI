@@ -69,10 +69,9 @@ float EnemyTankFactory::softmax_scores(const std::vector<float> &scores) const {
 }
 
 float EnemyTankFactory::quality_score(const float distance, const float angle) const {
-    const float qa = std::exp(-0.5f * std::pow(angle / sigma_angle, 2.f));
-    const float qd =
-        std::exp(-0.5f * std::pow((distance - optimal_distance) / sigma_distance, 2.f));
-    return qa * qd;
+    const float angle_quality = std::exp(-0.5f * std::pow(angle / sigma_angle, 2.f));
+    const float distance_quality = compute_range_reward(distance, min_distance, max_distance);
+    return angle_quality * distance_quality;
 }
 
 float EnemyTankFactory::get_reward(
@@ -110,13 +109,12 @@ float EnemyTankFactory::get_reward(
     float shoot_reward = 0.f;
 
     if (action_stats->has_fire()) {
-        constexpr float minimum_quality_score = 0.6f;
-        constexpr float shoot_bad_penalty = 0.03f;
-        constexpr float shoot_bonus_scale = 0.15f;
+        constexpr float threshold = 0.6f;
+        constexpr float fire_cost = 0.02f;
+        constexpr float bonus_scale = 0.20f;
 
-        const float bad =
-            std::max(0.f, minimum_quality_score - max_quality_score) / minimum_quality_score;
-        shoot_reward = shoot_bonus_scale * max_quality_score - shoot_bad_penalty * bad;
+        const float bonus = std::max(0.f, max_quality_score - threshold) / (1.f - threshold);
+        shoot_reward = -fire_cost + bonus_scale * bonus;
     }
 
     // 5. total reward

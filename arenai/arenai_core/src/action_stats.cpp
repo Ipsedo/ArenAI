@@ -12,8 +12,7 @@ float ActionStats::energy_consumed() const { return energy_consumed_; }
 
 void ActionStats::process_input(const Action &action) {
     has_fire_ = action.fire_button.pressed;
-    energy_consumed_ = std::abs(
-                           action.left_joystick.x + action.left_joystick.y + action.right_joystick.x
-                           + action.right_joystick.y)
+    energy_consumed_ = (std::abs(action.left_joystick.x) + std::abs(action.left_joystick.y)
+                        + std::abs(action.right_joystick.x) + std::abs(action.right_joystick.y))
                        / 4.f;
 }

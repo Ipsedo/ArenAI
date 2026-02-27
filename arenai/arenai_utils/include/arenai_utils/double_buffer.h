@@ -34,7 +34,7 @@ public:
         front_.store(b, std::memory_order_release);
     }
 
-    const T &get() const {
+    T get() const {
         const std::size_t f = front_.load(std::memory_order_acquire);
         return buf_[f];
     }

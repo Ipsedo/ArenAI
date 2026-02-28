@@ -14,15 +14,15 @@
 #include <vector>
 
 #include <arenai_model/engine.h>
-#include <arenai_utils/double_buffer.h>
 #include <arenai_utils/file_reader.h>
+#include <arenai_utils/locked_buffer.h>
 #include <arenai_view/pbuffer_renderer.h>
 
 #include "./enemy_handler.h"
 #include "./enemy_tank_factory.h"
 #include "./types.h"
 
-class VisionDoubleBuffer : public DoubleBuffer<image<uint8_t>> {
+class VisionDoubleBuffer : public LockedBuffer<image<uint8_t>> {
 public:
     VisionDoubleBuffer(std::mt19937 &rng, int height, int width);
 
@@ -31,7 +31,7 @@ private:
 };
 
 class ModelMatricesDoubleBuffer
-    : public DoubleBuffer<std::vector<std::tuple<std::string, glm::mat4>>> {
+    : public LockedBuffer<std::vector<std::tuple<std::string, glm::mat4>>> {
 public:
     ModelMatricesDoubleBuffer();
 };
@@ -60,11 +60,11 @@ private:
     std::atomic<bool> threads_running;
     std::vector<std::thread> pool;
 
-    ModelMatricesDoubleBuffer model_matrices;
+    std::unique_ptr<ModelMatricesDoubleBuffer> model_matrices;
 
     std::vector<std::unique_ptr<EnemyTankFactory>> tank_factories;
     std::vector<std::unique_ptr<EnemyControllerHandler>> tank_controller_handler;
-    std::vector<VisionDoubleBuffer> enemy_visions;
+    std::vector<std::unique_ptr<VisionDoubleBuffer>> enemy_visions;
 
     std::unique_ptr<PhysicEngine> physic_engine;
 

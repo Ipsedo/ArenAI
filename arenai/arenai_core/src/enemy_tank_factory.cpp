@@ -69,16 +69,15 @@ float EnemyTankFactory::softmax_scores(const std::vector<float> &scores) const {
 }
 
 float EnemyTankFactory::quality_score(const float distance, const float angle) const {
-    const float qa = std::exp(-0.5f * std::pow(angle / sigma_angle, 2.f));
-    const float qd =
-        std::exp(-0.5f * std::pow((distance - optimal_distance) / sigma_distance, 2.f));
-    return qa * qd;
+    const float angle_quality = std::exp(-0.5f * std::pow(angle / sigma_angle, 2.f));
+    const float distance_quality = compute_range_reward(distance, min_distance, max_distance);
+    return angle_quality * distance_quality;
 }
 
 float EnemyTankFactory::get_reward(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
 
-    // 1. flipped penalty
+    // 1. flipped detection
     const auto chassis_model_mat = get_chassis()->get_model_matrix();
     constexpr glm::vec4 up(0.f, 1.f, 0.f, 0.f);
     const auto up_in_chassis = glm::normalize(glm::vec3(chassis_model_mat * up));
@@ -86,10 +85,10 @@ float EnemyTankFactory::get_reward(
     if (const float dot = glm::dot(up_in_chassis, glm::vec3(up)); dot < 0) curr_frame_upside_down++;
     else curr_frame_upside_down = 0;
 
-    // 2. dead penalty
+    // 2. dead / suicide penalty
     const auto dead_penalty = is_dead() ? (is_suicide() ? -0.5f : -1.f) : 0.f;
 
-    // 3. shaped reward
+    // 3. quality score
     const auto chassis_pos = glm::vec3(chassis_model_mat * glm::vec4(glm::vec3(0.f), 1.f));
 
     float max_quality_score = 0.f;
@@ -110,20 +109,18 @@ float EnemyTankFactory::get_reward(
     float shoot_reward = 0.f;
 
     if (action_stats->has_fire()) {
-        constexpr float minimum_quality_score = 0.6f;
-        constexpr float shoot_bad_penalty = 0.03f;
-        constexpr float shoot_bonus_scale = 0.15f;
+        constexpr float threshold = 0.6f;
+        constexpr float fire_cost = 0.02f;
+        constexpr float bonus_scale = 0.20f;
 
-        const float bad =
-            std::max(0.f, minimum_quality_score - max_quality_score) / minimum_quality_score;
-        shoot_reward = shoot_bonus_scale * max_quality_score - shoot_bad_penalty * bad;
+        const float bonus = std::max(0.f, max_quality_score - threshold) / (1.f - threshold);
+        shoot_reward = -fire_cost + bonus_scale * bonus;
     }
 
     // 5. total reward
     const float reward = hit_reward + dead_penalty + shoot_reward;
     hit_reward = 0.f;
 
-    // return reward
     return reward;
 }
 
@@ -133,7 +130,7 @@ float EnemyTankFactory::get_phi(
     const auto chassis_pos =
         glm::vec3(get_chassis()->get_model_matrix() * glm::vec4(glm::vec3(0.f), 1.f));
 
-    std::vector<float> shaped_rewards;
+    float max_quality_score = 0.f;
 
     for (const auto &other: tank_factories) {
         if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;
@@ -144,10 +141,10 @@ float EnemyTankFactory::get_phi(
         const float distance = glm::length(chassis_pos - other_pos);
         const float angle = compute_aim_angle(other);
 
-        shaped_rewards.push_back(quality_score(distance, angle));
+        max_quality_score = std::max(quality_score(distance, angle), max_quality_score);
     }
 
-    return softmax_scores(shaped_rewards);
+    return max_quality_score;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

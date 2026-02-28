@@ -21,6 +21,11 @@ PhysicEngine::PhysicEngine(const float wanted_frequency)
 }
 
 void PhysicEngine::add_item(const std::shared_ptr<Item> &item) {
+    std::scoped_lock lock(items_mutex);
+    add_item_no_lock(item);
+}
+
+void PhysicEngine::add_item_no_lock(const std::shared_ptr<Item> &item) {
     items.push_back(item);
 
     m_world->addRigidBody(item->get_body());
@@ -29,16 +34,21 @@ void PhysicEngine::add_item(const std::shared_ptr<Item> &item) {
 }
 
 void PhysicEngine::add_item_producer(const std::shared_ptr<ItemProducer> &item_producer) {
+    std::scoped_lock lock(items_mutex);
     item_producers.push_back(item_producer);
 }
 
-void PhysicEngine::remove_item_constraints_from_world(const std::shared_ptr<Item> &item) const {
+void PhysicEngine::remove_item_constraints_from_world(const std::shared_ptr<Item> &item) {
+    std::scoped_lock lock(items_mutex);
     for (auto *constraint: item->get_constraints()) m_world->removeConstraint(constraint);
 }
 
 void PhysicEngine::step(const float delta) {
-    for (const auto &item_producer: item_producers)
-        for (const auto &item: item_producer->get_produced_items()) add_item(item);
+    {
+        std::scoped_lock lock(items_mutex);
+        for (const auto &item_producer: item_producers)
+            for (const auto &item: item_producer->get_produced_items()) add_item_no_lock(item);
+    }
 
     m_world->stepSimulation(delta, 1, wanted_frequency);
 
@@ -96,6 +106,7 @@ void PhysicEngine::remove_dead_items() {
 }
 
 void PhysicEngine::remove_bodies_and_constraints() {
+    std::scoped_lock lock(items_mutex);
     m_world->clearForces();
 
     for (int i = m_world->getNumConstraints() - 1; i >= 0; --i) {

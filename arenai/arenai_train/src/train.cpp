@@ -145,9 +145,8 @@ void train_main(
                 const bool is_done_and_not_truncated = done && !is_truncated_vector[i];
 
                 const float potential_reward =
-                    train_options.potential_reward_scale
-                    * ((is_done_and_not_truncated ? 0.f : 1.f) * model_options.gamma * phi_vector[i]
-                       - last_phi_vector[i]);
+                    train_options.potential_reward_scale * (is_done_and_not_truncated ? 0.f : 1.f)
+                    * (model_options.gamma * phi_vector[i] - last_phi_vector[i]);
 
                 reward_metric.add(reward);
                 potential_metric.add(potential_reward);

@@ -117,12 +117,10 @@ void train_main(
                 torch::NoGradGuard no_grad_guard;
                 agent->set_train(false);
 
-                const auto
-                    [continuous_action, continuous_log_proba, discrete_action, discrete_log_proba] =
-                        agent->act(vision.to(torch_device), proprioception.to(torch_device));
+                const auto [continuous_action, discrete_action] =
+                    agent->act(vision.to(torch_device), proprioception.to(torch_device));
 
-                torch_action = {
-                    continuous_action, continuous_log_proba, discrete_action, discrete_log_proba};
+                torch_action = {continuous_action, discrete_action};
 
                 actions_for_env = tensor_to_actions(continuous_action, discrete_action);
             }
@@ -155,8 +153,7 @@ void train_main(
 
                 replay_buffer->add(
                     {{vision[i], proprioception[i]},
-                     {torch_action.continuous_action[i], torch_action.continuous_log_proba[i],
-                      torch_action.discrete_action[i], torch_action.discrete_log_proba[i]},
+                     {torch_action.continuous_action[i], torch_action.discrete_action[i]},
                      torch::tensor(
                          {reward + potential_reward}, torch::TensorOptions().dtype(torch::kFloat)),
                      torch::tensor(

@@ -8,8 +8,6 @@
 #include <torch/torch.h>
 
 torch::Tensor multinomial_sample(const torch::Tensor &probabilities);
-torch::Tensor
-multinomial_log_proba(const torch::Tensor &action, const torch::Tensor &probabilities);
 torch::Tensor multinomial_entropy(const torch::Tensor &probabilities);
 
 float multinomial_target_entropy(const float &target_fire_probability);

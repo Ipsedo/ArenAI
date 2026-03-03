@@ -16,10 +16,7 @@ struct TorchState {
 
 struct TorchAction {
     torch::Tensor continuous_action;
-    torch::Tensor continuous_log_proba;
-
     torch::Tensor discrete_action;
-    torch::Tensor discrete_log_proba;
 };
 
 struct TorchStep {

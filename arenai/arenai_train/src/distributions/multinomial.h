@@ -10,6 +10,6 @@
 torch::Tensor multinomial_sample(const torch::Tensor &probabilities);
 torch::Tensor multinomial_entropy(const torch::Tensor &probabilities);
 
-float multinomial_target_entropy(const float &target_fire_probability);
+float multinomial_target_entropy(const int &nb_actions, const float &factor = 0.98f);
 
 #endif//ARENAI_TRAIN_HOST_MULTINOMIAL_H

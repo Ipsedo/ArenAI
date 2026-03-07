@@ -19,8 +19,8 @@ EnemyTankFactory::EnemyTankFactory(
       curr_frame_upside_down(0), is_dead_already_triggered(false),
       min_aim_angle(static_cast<float>(M_PI) / 12.f), max_aim_angle(static_cast<float>(M_PI) / 6.f),
       min_distance(30.f), max_distance(300.f), optimal_distance(100.f),
-      sigma_distance(0.5f * max_distance), sigma_angle(0.5f * max_aim_angle), softmax_beta(6.f),
-      has_touch(false), action_stats(std::make_shared<ActionStats>()), prev_quality_score(0.f) {}
+      sigma_distance(0.75f * max_distance), sigma_angle(0.5f * max_aim_angle), softmax_beta(6.f),
+      has_touch(false), action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
     const auto canon_tr = get_canon()->get_model_matrix();

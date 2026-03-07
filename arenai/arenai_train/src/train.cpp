@@ -95,13 +95,14 @@ void train_main(
 
     auto gl_context = std::make_shared<TrainGlContext>();
 
+    env->reset_drawables(gl_context, false);
+
     for (int episode_index = 0; episode_index < train_options.nb_episodes; episode_index++) {
         // set variable for episode
         bool is_done = false;
         std::vector already_done(train_options.nb_tanks, false);
 
         auto last_state = env->reset_physics();
-        env->reset_drawables(gl_context);
 
         auto last_phi_vector = env->get_phi_vector();
 

@@ -47,7 +47,8 @@ public:
     step(float time_delta, const std::vector<Action> &actions);
 
     std::vector<State> reset_physics();
-    void reset_drawables(const std::shared_ptr<AbstractGLContext> &new_gl_context);
+    void reset_drawables(
+        const std::shared_ptr<AbstractGLContext> &new_gl_context, bool start_thread = true);
     void stop_drawing();
 
     virtual ~BaseTanksEnvironment();
@@ -73,6 +74,7 @@ private:
     int nb_reset_frames;
 
     std::unique_ptr<std::barrier<>> reset_barrier;
+    std::unique_ptr<std::barrier<>> loop_barrier;
 
     void worker_enemy_vision(int index, const std::unique_ptr<EnemyTankFactory> &tank_factory);
 

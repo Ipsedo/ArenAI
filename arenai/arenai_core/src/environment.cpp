@@ -38,8 +38,8 @@ BaseTanksEnvironment::BaseTanksEnvironment(
     const std::shared_ptr<AbstractGLContext> &gl_context, const int nb_tanks,
     float wanted_frequency, const bool thread_sleep)
     : wanted_frequency(wanted_frequency), nb_tanks(nb_tanks), thread_sleep(thread_sleep),
-      threads_running(false), physic_engine(std::make_unique<PhysicEngine>(wanted_frequency)),
-      model_matrices(std::make_unique<ModelMatricesDoubleBuffer>()), gl_context(gl_context),
+      threads_running(false), model_matrices(std::make_unique<ModelMatricesDoubleBuffer>()),
+      physic_engine(std::make_unique<PhysicEngine>(wanted_frequency)), gl_context(gl_context),
       nb_reset_frames(static_cast<int>(4.f / wanted_frequency)),
       reset_barrier(std::make_unique<std::barrier<>>(nb_tanks + 1)), rng(dev()),
       file_reader(file_reader) {

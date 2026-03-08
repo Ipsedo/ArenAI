@@ -103,7 +103,6 @@ void train_main(
         std::vector already_done(train_options.nb_tanks, false);
 
         auto last_state = env->reset_physics();
-
         auto last_phi_vector = env->get_phi_vector();
 
         int episode_step_idx = 0;

@@ -233,12 +233,10 @@ void BaseTanksEnvironment::worker_enemy_vision(
     renderer.reset();
     eglReleaseThread();
 
-    reset_barrier->arrive_and_drop();
+    reset_barrier->arrive_and_wait();
 }
 
 void BaseTanksEnvironment::start_threads() {
-    if (threads_running.load(std::memory_order_acquire)) return;
-
     enemy_visions.clear();
     enemy_visions.reserve(nb_tanks);
     for (int i = 0; i < nb_tanks; i++)
@@ -261,8 +259,8 @@ void BaseTanksEnvironment::kill_threads() {
 
     threads_running.store(false, std::memory_order_release);
 
-    loop_barrier->arrive_and_drop();
-    reset_barrier->arrive_and_drop();
+    loop_barrier->arrive_and_wait();
+    reset_barrier->arrive_and_wait();
 
     for (auto &t: pool)
         if (t.joinable()) t.join();

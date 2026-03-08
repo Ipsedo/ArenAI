@@ -91,8 +91,9 @@ float EnemyTankFactory::get_reward(
     // 3. shoot penalty
     const auto quality_score = get_phi(tank_factories);
     constexpr float fire_cost = 0.1f;
+    constexpr float good_fire_reward = 0.2f;
     const float shoot_reward =
-        action_stats->has_fire() ? fire_cost * (2.f * quality_score - 1.f) : 0.f;
+        action_stats->has_fire() ? quality_score * good_fire_reward - fire_cost : 0.f;
 
     // 4. total reward
     const float reward = hit_reward + dead_penalty + shoot_reward;

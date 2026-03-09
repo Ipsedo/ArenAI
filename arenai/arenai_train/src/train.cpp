@@ -49,6 +49,7 @@ void train_main(
         train_options.cuda ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU);
 
     auto gl_context = std::make_shared<TrainGlContext>();
+    gl_context->make_current();// only for glGetString(GL_RENDERER)
 
     const auto env = std::make_unique<TrainTankEnvironment>(
         gl_context, train_options.nb_tanks, train_options.android_asset_folder, wanted_frequency);
@@ -61,6 +62,7 @@ void train_main(
         model_options.group_norm_nums, torch_device, train_options.metric_window_size,
         model_options.tau, model_options.gamma, model_options.initial_alpha);
 
+    std::cout << "OpenGL used device : " << glGetString(GL_RENDERER) << std::endl;
     std::cout << "Parameters : " << agent->count_parameters() << std::endl;
     std::cout << "Target entropy (continuous) : " << agent->get_continuous_target_entropy()
               << std::endl;

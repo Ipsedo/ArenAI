@@ -15,23 +15,20 @@
 #include <arenai_view/cubemap.h>
 #include <arenai_view/specular.h>
 
-image<uint8_t>
-VisionDoubleBuffer::random_image(std::mt19937 &rng, const int height, const int width) {
-    std::uniform_int_distribution<u_int8_t> u_dist(0, 255);
-
+image<uint8_t> VisionDoubleBuffer::black_image(const int height, const int width) {
     const auto nb_pixels = 3 * height * width;
     image img(std::vector<uint8_t>(nb_pixels, 0));
 
-    for (int j = 0; j < nb_pixels; j++) img.pixels[j] = u_dist(rng);
+    for (int j = 0; j < nb_pixels; j++) img.pixels[j] = 0;
 
     return img;
 }
 
 VisionDoubleBuffer::VisionDoubleBuffer(std::mt19937 &rng, const int height, const int width)
-    : LockedBuffer(random_image(rng, height, width)) {}
+    : DoubleBuffer(black_image(height, width)) {}
 
 ModelMatricesDoubleBuffer::ModelMatricesDoubleBuffer()
-    : LockedBuffer(std::vector<std::tuple<std::string, glm::mat4>>()) {}
+    : DoubleBuffer(std::vector<std::tuple<std::string, glm::mat4>>()) {}
 
 BaseTanksEnvironment::BaseTanksEnvironment(
     const std::shared_ptr<AbstractFileReader> &file_reader,
@@ -145,15 +142,6 @@ std::vector<State> BaseTanksEnvironment::reset_physics() {
     for (int i = 0; i < nb_reset_frames; i++) physic_engine->step(wanted_frequency);
 
     publish_and_get_model_matrices();
-
-    for (int i = 0; i < tank_factories.size(); i++) {
-        auto renderer = construct_renderer(i, tank_factories[i]);
-        const auto &matrices = model_matrices->read_copy();
-        enemy_visions[i]->write(renderer->draw_and_get_frame(matrices));
-        renderer->release_current();
-    }
-
-    gl_context->make_current();
 
     std::vector<State> states;
     states.reserve(tank_factories.size());

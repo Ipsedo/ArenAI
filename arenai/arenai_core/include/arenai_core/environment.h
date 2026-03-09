@@ -14,24 +14,24 @@
 #include <vector>
 
 #include <arenai_model/engine.h>
+#include <arenai_utils/double_buffer.h>
 #include <arenai_utils/file_reader.h>
-#include <arenai_utils/locked_buffer.h>
 #include <arenai_view/pbuffer_renderer.h>
 
 #include "./enemy_handler.h"
 #include "./enemy_tank_factory.h"
 #include "./types.h"
 
-class VisionDoubleBuffer : public LockedBuffer<image<uint8_t>> {
+class VisionDoubleBuffer : public DoubleBuffer<image<uint8_t>> {
 public:
     VisionDoubleBuffer(std::mt19937 &rng, int height, int width);
 
 private:
-    static image<uint8_t> random_image(std::mt19937 &rng, int height, int width);
+    static image<uint8_t> black_image(int height, int width);
 };
 
 class ModelMatricesDoubleBuffer
-    : public LockedBuffer<std::vector<std::tuple<std::string, glm::mat4>>> {
+    : public DoubleBuffer<std::vector<std::tuple<std::string, glm::mat4>>> {
 public:
     ModelMatricesDoubleBuffer();
 };

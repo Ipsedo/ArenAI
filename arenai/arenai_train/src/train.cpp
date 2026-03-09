@@ -48,8 +48,10 @@ void train_main(
     torch::Device torch_device =
         train_options.cuda ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU);
 
+    auto gl_context = std::make_shared<TrainGlContext>();
+
     const auto env = std::make_unique<TrainTankEnvironment>(
-        train_options.nb_tanks, train_options.android_asset_folder, wanted_frequency);
+        gl_context, train_options.nb_tanks, train_options.android_asset_folder, wanted_frequency);
 
     auto agent = std::make_shared<SacAgent>(
         ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_CONTINUOUS_ACTION, ENEMY_NB_DISCRETE_ACTION,
@@ -92,8 +94,6 @@ void train_main(
         indicators::option::ShowRemainingTime{true}};
 
     std::string sac_metric_p_bar_description = metrics_to_string(sac_metrics);
-
-    auto gl_context = std::make_shared<TrainGlContext>();
 
     for (int episode_index = 0; episode_index < train_options.nb_episodes; episode_index++) {
         // set variable for episode

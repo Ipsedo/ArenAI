@@ -150,7 +150,10 @@ std::vector<State> BaseTanksEnvironment::reset_physics() {
         auto renderer = construct_renderer(i, tank_factories[i]);
         const auto &matrices = model_matrices->read_copy();
         enemy_visions[i]->write(renderer->draw_and_get_frame(matrices));
+        renderer->release_current();
     }
+
+    gl_context->make_current();
 
     std::vector<State> states;
     states.reserve(tank_factories.size());

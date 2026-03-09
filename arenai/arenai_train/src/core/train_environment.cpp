@@ -14,11 +14,11 @@
 #include "../utils/linux_file_reader.h"
 
 TrainTankEnvironment::TrainTankEnvironment(
-    const int nb_tanks, const std::filesystem::path &android_assets_path,
-    const float wanted_frequency)
+    const std::shared_ptr<AbstractGLContext> &gl_context, const int nb_tanks,
+    const std::filesystem::path &android_assets_path, const float wanted_frequency)
     : BaseTanksEnvironment(
-        std::make_shared<LinuxAndroidAssetFileReader>(android_assets_path), std::nullptr_t(),
-        nb_tanks, wanted_frequency, false),
+        std::make_shared<LinuxAndroidAssetFileReader>(android_assets_path), gl_context, nb_tanks,
+        wanted_frequency, false),
       max_frames_without_shoot(static_cast<int>(30.f / wanted_frequency)),
       remaining_frames(nb_tanks, max_frames_without_shoot),
       nb_frames_added_when_shoot(static_cast<int>(5.f / wanted_frequency)), nb_tanks(nb_tanks) {}

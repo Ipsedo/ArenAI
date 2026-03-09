@@ -47,8 +47,7 @@ public:
     step(float time_delta, const std::vector<Action> &actions);
 
     std::vector<State> reset_physics();
-    void reset_drawables(
-        const std::shared_ptr<AbstractGLContext> &new_gl_context, bool start_thread = true);
+    void reset_drawables(const std::shared_ptr<AbstractGLContext> &new_gl_context);
     void stop_drawing();
 
     virtual ~BaseTanksEnvironment();
@@ -80,6 +79,9 @@ private:
 
     void start_threads();
     void kill_threads();
+
+    std::unique_ptr<PBufferRenderer>
+    construct_renderer(int index, const std::unique_ptr<EnemyTankFactory> &tank_factory);
 
 protected:
     std::random_device dev;

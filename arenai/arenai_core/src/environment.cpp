@@ -146,10 +146,14 @@ std::vector<State> BaseTanksEnvironment::reset_physics() {
 
     publish_and_get_model_matrices();
 
-    start_threads();
-    loop_barrier->arrive_and_wait();
+    for (int i = 0; i < tank_factories.size(); i++) {
+        auto renderer = construct_renderer(i, tank_factories[i]);
+        const auto &matrices = model_matrices->read_copy();
+        enemy_visions[i]->write(renderer->draw_and_get_frame(matrices));
+    }
 
     std::vector<State> states;
+    states.reserve(tank_factories.size());
     for (int i = 0; i < tank_factories.size(); i++)
         states.emplace_back(enemy_visions[i]->read_copy(), tank_factories[i]->get_proprioception());
 
@@ -157,7 +161,7 @@ std::vector<State> BaseTanksEnvironment::reset_physics() {
 }
 
 void BaseTanksEnvironment::reset_drawables(
-    const std::shared_ptr<AbstractGLContext> &new_gl_context, const bool start_thread) {
+    const std::shared_ptr<AbstractGLContext> &new_gl_context) {
     gl_context = new_gl_context;
     gl_context->make_current();
 
@@ -165,7 +169,7 @@ void BaseTanksEnvironment::reset_drawables(
 
     gl_context->release_current();
 
-    if (start_thread) start_threads();
+    start_threads();
 
     gl_context->make_current();
 }
@@ -174,7 +178,7 @@ void BaseTanksEnvironment::stop_drawing() {
     if (threads_running.load(std::memory_order_acquire)) kill_threads();
 }
 
-void BaseTanksEnvironment::worker_enemy_vision(
+std::unique_ptr<PBufferRenderer> BaseTanksEnvironment::construct_renderer(
     const int index, const std::unique_ptr<EnemyTankFactory> &tank_factory) {
     std::seed_seq seq{
         dev(), static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this)),
@@ -210,6 +214,13 @@ void BaseTanksEnvironment::worker_enemy_vision(
                       file_reader, shape->get_vertices(), shape->get_normals(), shell_color,
                       shell_color, shell_color, 50.f, shape->get_id()));
     }
+
+    return renderer;
+}
+
+void BaseTanksEnvironment::worker_enemy_vision(
+    const int index, const std::unique_ptr<EnemyTankFactory> &tank_factory) {
+    auto renderer = construct_renderer(index, tank_factory);
 
     const auto frame_dt = std::chrono::milliseconds(static_cast<int>(wanted_frequency * 1000.f));
 
@@ -259,7 +270,7 @@ void BaseTanksEnvironment::kill_threads() {
 
     threads_running.store(false, std::memory_order_release);
 
-    loop_barrier->arrive_and_wait();
+    loop_barrier->arrive_and_drop();
     reset_barrier->arrive_and_wait();
 
     for (auto &t: pool)

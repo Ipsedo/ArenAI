@@ -39,17 +39,21 @@ std::string metrics_to_string(const std::vector<std::shared_ptr<Metric>> &metric
 void train_main(
     const float wanted_frequency, const ModelOptions &model_options,
     const TrainOptions &train_options) {
+
+    auto gl_context = std::make_shared<TrainGlContext>();
+    gl_context->make_current();// only for glGetString(GL_RENDERER)
+
+    torch::Device torch_device =
+        train_options.cuda ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU);
+
+    std::cout << "OpenGL device : " << glGetString(GL_RENDERER) << std::endl;
+    std::cout << "PyTorch device : " << torch_device.str() << std::endl;
+
     std::cout << "Vision size : width=" << ENEMY_VISION_WIDTH << ", height=" << ENEMY_VISION_HEIGHT
               << std::endl;
     std::cout << "Proprioception size : " << ENEMY_PROPRIOCEPTION_SIZE << std::endl;
     std::cout << "Action size (continuous) : " << ENEMY_NB_CONTINUOUS_ACTION << std::endl;
     std::cout << "Action size (discrete) : " << ENEMY_NB_DISCRETE_ACTION << std::endl;
-
-    torch::Device torch_device =
-        train_options.cuda ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU);
-
-    auto gl_context = std::make_shared<TrainGlContext>();
-    gl_context->make_current();// only for glGetString(GL_RENDERER)
 
     const auto env = std::make_unique<TrainTankEnvironment>(
         gl_context, train_options.nb_tanks, train_options.android_asset_folder, wanted_frequency);
@@ -62,7 +66,6 @@ void train_main(
         model_options.group_norm_nums, torch_device, train_options.metric_window_size,
         model_options.tau, model_options.gamma, model_options.initial_alpha);
 
-    std::cout << "OpenGL used device : " << glGetString(GL_RENDERER) << std::endl;
     std::cout << "Parameters : " << agent->count_parameters() << std::endl;
     std::cout << "Target entropy (continuous) : " << agent->get_continuous_target_entropy()
               << std::endl;
@@ -77,8 +80,6 @@ void train_main(
     Metric potential_metric("potential", train_options.metric_window_size, 2, true);
 
     auto sac_metrics = agent->get_metrics();
-
-    std::cout << "Start training on " << train_options.nb_episodes << " episodes" << std::endl;
 
     int train_counter = 0;
 
@@ -102,7 +103,7 @@ void train_main(
         bool is_done = false;
         std::vector already_done(train_options.nb_tanks, false);
 
-        auto last_state = env->reset_physics();
+        auto last_states = env->reset_physics();
         env->reset_drawables(gl_context);
         auto last_phi_vector = env->get_phi_vector();
 
@@ -112,7 +113,7 @@ void train_main(
             TorchAction torch_action;
             std::vector<Action> actions_for_env;
 
-            const auto [vision, proprioception] = states_to_tensor(last_state);
+            const auto [vision, proprioception] = states_to_tensor(last_states);
 
             {
                 torch::NoGradGuard no_grad_guard;
@@ -131,13 +132,13 @@ void train_main(
             const auto phi_vector = env->get_phi_vector();
             //const auto is_truncated_vector = env->get_truncated_episodes();
 
-            last_state.clear();
-            last_state.reserve(train_options.nb_tanks);
+            last_states.clear();
+            last_states.reserve(train_options.nb_tanks);
 
             // save to replay buffer
             for (int i = 0; i < train_options.nb_tanks; i++) {
                 const auto [next_state, reward, done] = steps[i];
-                last_state.push_back(next_state);
+                last_states.push_back(next_state);
 
                 if (already_done[i]) continue;
 
@@ -191,7 +192,7 @@ void train_main(
             p_bar.print_progress();
         }
 
-        last_state.clear();
+        last_states.clear();
         env->stop_drawing();
 
         p_bar.tick();

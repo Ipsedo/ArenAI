@@ -2,11 +2,11 @@
 // Created by samuel on 19/03/2023.
 //
 
-#include <algorithm>
+#include <mutex>
 
 #include <arenai_model/engine.h>
 
-#include "tank/shell.h"
+#include "./tank/shell.h"
 
 PhysicEngine::PhysicEngine(const float wanted_frequency)
     : wanted_frequency(wanted_frequency),
@@ -21,7 +21,7 @@ PhysicEngine::PhysicEngine(const float wanted_frequency)
 }
 
 void PhysicEngine::add_item(const std::shared_ptr<Item> &item) {
-    std::scoped_lock lock(items_mutex);
+    std::unique_lock lock(items_mutex);
     add_item_no_lock(item);
 }
 
@@ -34,18 +34,18 @@ void PhysicEngine::add_item_no_lock(const std::shared_ptr<Item> &item) {
 }
 
 void PhysicEngine::add_item_producer(const std::shared_ptr<ItemProducer> &item_producer) {
-    std::scoped_lock lock(items_mutex);
+    std::unique_lock lock(items_mutex);
     item_producers.push_back(item_producer);
 }
 
 void PhysicEngine::remove_item_constraints_from_world(const std::shared_ptr<Item> &item) {
-    std::scoped_lock lock(items_mutex);
+    std::unique_lock lock(items_mutex);
     for (auto *constraint: item->get_constraints()) m_world->removeConstraint(constraint);
 }
 
 void PhysicEngine::step(const float delta) {
     {
-        std::scoped_lock lock(items_mutex);
+        std::unique_lock lock(items_mutex);
         for (const auto &item_producer: item_producers)
             for (const auto &item: item_producer->get_produced_items()) add_item_no_lock(item);
     }
@@ -73,40 +73,39 @@ void PhysicEngine::step(const float delta) {
 }
 
 std::vector<std::shared_ptr<Item>> PhysicEngine::get_items() {
-    std::scoped_lock lock(items_mutex);
+    std::shared_lock lock(items_mutex);
     return items;
 }
 
 void PhysicEngine::remove_dead_items() {
 
+    std::unique_lock lock(items_mutex);
+
     for (const auto &item: items) item->tick();
 
-    {
-        std::scoped_lock lock(items_mutex);
-        for (int i = static_cast<int>(items.size()) - 1; i >= 0; i--) {
-            if (const auto item = items[i]; item->need_destroy()) {
-                auto *body = item->get_body();
+    for (int i = static_cast<int>(items.size()) - 1; i >= 0; i--) {
+        if (const auto item = items[i]; item->need_destroy()) {
+            auto *body = item->get_body();
 
-                m_world->removeRigidBody(body);
+            m_world->removeRigidBody(body);
 
-                for (int j = body->getNumConstraintRefs() - 1; j >= 0; j--) {
-                    auto *constraint = body->getConstraintRef(j);
-                    m_world->removeConstraint(constraint);
-                    delete constraint;
-                }
-
-                delete body->getMotionState();
-
-                delete body;
-
-                items.erase(items.begin() + i);
+            for (int j = body->getNumConstraintRefs() - 1; j >= 0; j--) {
+                auto *constraint = body->getConstraintRef(j);
+                m_world->removeConstraint(constraint);
+                delete constraint;
             }
+
+            delete body->getMotionState();
+
+            delete body;
+
+            items.erase(items.begin() + i);
         }
     }
 }
 
 void PhysicEngine::remove_bodies_and_constraints() {
-    std::scoped_lock lock(items_mutex);
+    std::unique_lock lock(items_mutex);
     m_world->clearForces();
 
     for (int i = m_world->getNumConstraints() - 1; i >= 0; --i) {

@@ -5,12 +5,10 @@
 #ifndef ARENAI_ENGINE_H
 #define ARENAI_ENGINE_H
 
-#include <mutex>
-#include <tuple>
+#include <shared_mutex>
 #include <vector>
 
 #include <btBulletDynamicsCommon.h>
-#include <glm/glm.hpp>
 
 #include "./item.h"
 
@@ -31,7 +29,7 @@ public:
     ~PhysicEngine();
 
 private:
-    std::mutex items_mutex;
+    std::shared_mutex items_mutex;
 
     float wanted_frequency;
 
@@ -44,8 +42,12 @@ private:
     std::vector<std::shared_ptr<Item>> items;
     std::vector<std::shared_ptr<ItemProducer>> item_producers;
 
+    std::vector<std::function<void()>> contact_callback_queue;
+
     void remove_dead_items();
     void add_item_no_lock(const std::shared_ptr<Item> &item);
+
+    void execute_contact_callback();
 };
 
 #endif// ARENAI_ENGINE_H

@@ -129,7 +129,7 @@ void train_main(
             // step environment
             const auto steps = env->step(wanted_frequency, actions_for_env);
             const auto phi_vector = env->get_phi_vector();
-            const auto is_truncated_vector = env->get_truncated_episodes();
+            //const auto is_truncated_vector = env->get_truncated_episodes();
 
             last_state.clear();
             last_state.reserve(train_options.nb_tanks);
@@ -141,11 +141,10 @@ void train_main(
 
                 if (already_done[i]) continue;
 
-                const bool is_done_and_not_truncated = done && !is_truncated_vector[i];
-
                 const float potential_reward =
-                    train_options.potential_reward_scale * (is_done_and_not_truncated ? 0.f : 1.f)
-                    * (model_options.gamma * phi_vector[i] - last_phi_vector[i]);
+                    train_options.potential_reward_scale
+                    * ((done ? 0.f : 1.f) * model_options.gamma * phi_vector[i]
+                       - last_phi_vector[i]);
 
                 reward_metric.add(reward);
                 potential_metric.add(potential_reward);
@@ -163,6 +162,8 @@ void train_main(
 
                 if (done && !already_done[i]) already_done[i] = true;
             }
+
+            last_phi_vector = phi_vector;
 
             // check if it's time to train
             if (train_counter % train_options.train_every == train_options.train_every - 1

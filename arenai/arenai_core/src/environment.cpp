@@ -262,7 +262,7 @@ void BaseTanksEnvironment::kill_threads() {
     threads_running.store(false, std::memory_order_release);
 
     loop_barrier->arrive_and_drop();
-    reset_barrier->arrive_and_drop();
+    reset_barrier->arrive_and_wait();
 
     for (auto &t: pool)
         if (t.joinable()) t.join();

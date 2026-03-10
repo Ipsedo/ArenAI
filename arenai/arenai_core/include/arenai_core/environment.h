@@ -101,7 +101,7 @@ protected:
         return apply_function(tank_factories);
     }
 
-    std::vector<std::tuple<std::string, glm::mat4>> publish_and_get_model_matrices();
+    std::vector<std::tuple<std::string, glm::mat4>> publish_and_get_model_matrices() const;
 };
 
 #endif// ARENAI_ENVIRONMENT_H

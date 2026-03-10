@@ -272,7 +272,7 @@ void BaseTanksEnvironment::kill_threads() {
 }
 
 std::vector<std::tuple<std::string, glm::mat4>>
-BaseTanksEnvironment::publish_and_get_model_matrices() {
+BaseTanksEnvironment::publish_and_get_model_matrices() const {
     std::vector<std::tuple<std::string, glm::mat4>> curr_model_matrices;
 
     const auto items = physic_engine->get_items();

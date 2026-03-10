@@ -24,7 +24,7 @@
 
 class VisionDoubleBuffer : public DoubleBuffer<image<uint8_t>> {
 public:
-    VisionDoubleBuffer(std::mt19937 &rng, int height, int width);
+    VisionDoubleBuffer(int height, int width);
 
 private:
     static image<uint8_t> black_image(int height, int width);
@@ -101,7 +101,7 @@ protected:
         return apply_function(tank_factories);
     }
 
-    std::vector<std::tuple<std::string, glm::mat4>> publish_and_get_model_matrices() const;
+    std::vector<std::tuple<std::string, glm::mat4>> get_model_matrices() const;
 };
 
 #endif// ARENAI_ENVIRONMENT_H

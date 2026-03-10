@@ -16,15 +16,10 @@
 #include <arenai_view/specular.h>
 
 image<uint8_t> VisionDoubleBuffer::black_image(const int height, const int width) {
-    const auto nb_pixels = 3 * height * width;
-    image img(std::vector<uint8_t>(nb_pixels, 0));
-
-    for (int j = 0; j < nb_pixels; j++) img.pixels[j] = 0;
-
-    return img;
+    return {std::vector<uint8_t>(3 * height * width, 0)};
 }
 
-VisionDoubleBuffer::VisionDoubleBuffer(std::mt19937 &rng, const int height, const int width)
+VisionDoubleBuffer::VisionDoubleBuffer(const int height, const int width)
     : DoubleBuffer(black_image(height, width)) {}
 
 ModelMatricesDoubleBuffer::ModelMatricesDoubleBuffer()
@@ -44,7 +39,7 @@ BaseTanksEnvironment::BaseTanksEnvironment(
 
     for (int i = 0; i < nb_tanks; i++)
         enemy_visions.push_back(
-            std::make_unique<VisionDoubleBuffer>(rng, ENEMY_VISION_HEIGHT, ENEMY_VISION_WIDTH));
+            std::make_unique<VisionDoubleBuffer>(ENEMY_VISION_HEIGHT, ENEMY_VISION_WIDTH));
 }
 
 std::vector<std::tuple<State, Reward, IsDone>>
@@ -62,12 +57,13 @@ BaseTanksEnvironment::step(const float time_delta, const std::vector<Action> &ac
     physic_engine->step(time_delta);
 
     // 3. set model matrices double buffer and draw scene
-    const auto curr_model_matrices = publish_and_get_model_matrices();
-    on_draw(curr_model_matrices);
+    const auto curr_model_matrices = get_model_matrices();
+    model_matrices->write(curr_model_matrices);
 
+    on_draw(curr_model_matrices);
     loop_barrier->arrive_and_wait();
 
-    // 5. build State
+    // 4. build State
     std::vector<std::tuple<State, Reward, IsDone>> result;
     result.reserve(tank_factories.size());
 
@@ -141,7 +137,7 @@ std::vector<State> BaseTanksEnvironment::reset_physics() {
 
     for (int i = 0; i < nb_reset_frames; i++) physic_engine->step(wanted_frequency);
 
-    publish_and_get_model_matrices();
+    model_matrices->write(get_model_matrices());
 
     std::vector<State> states;
     states.reserve(tank_factories.size());
@@ -244,7 +240,7 @@ void BaseTanksEnvironment::start_threads() {
     enemy_visions.reserve(nb_tanks);
     for (int i = 0; i < nb_tanks; i++)
         enemy_visions.push_back(
-            std::make_unique<VisionDoubleBuffer>(rng, ENEMY_VISION_HEIGHT, ENEMY_VISION_WIDTH));
+            std::make_unique<VisionDoubleBuffer>(ENEMY_VISION_HEIGHT, ENEMY_VISION_WIDTH));
 
     threads_running.store(true, std::memory_order_release);
     pool.clear();
@@ -271,8 +267,7 @@ void BaseTanksEnvironment::kill_threads() {
     pool.clear();
 }
 
-std::vector<std::tuple<std::string, glm::mat4>>
-BaseTanksEnvironment::publish_and_get_model_matrices() const {
+std::vector<std::tuple<std::string, glm::mat4>> BaseTanksEnvironment::get_model_matrices() const {
     std::vector<std::tuple<std::string, glm::mat4>> curr_model_matrices;
 
     const auto items = physic_engine->get_items();
@@ -281,8 +276,6 @@ BaseTanksEnvironment::publish_and_get_model_matrices() const {
         curr_model_matrices.emplace_back(item->get_name(), item->get_model_matrix());
 
     curr_model_matrices.emplace_back("cubemap", glm::scale(glm::mat4(1.f), glm::vec3(2000.f)));
-
-    model_matrices->write(curr_model_matrices);
 
     return curr_model_matrices;
 }

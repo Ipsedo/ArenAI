@@ -78,29 +78,29 @@ std::vector<std::shared_ptr<Item>> PhysicEngine::get_items() {
 }
 
 void PhysicEngine::remove_dead_items() {
-    std::scoped_lock lock(items_mutex);
 
-    for (int i = static_cast<int>(items.size()) - 1; i >= 0; i--) {
-        const auto item = items[i];
+    for (const auto &item: items) item->tick();
 
-        item->tick();
+    {
+        std::scoped_lock lock(items_mutex);
+        for (int i = static_cast<int>(items.size()) - 1; i >= 0; i--) {
+            if (const auto item = items[i]; item->need_destroy()) {
+                auto *body = item->get_body();
 
-        if (item->need_destroy()) {
-            auto *body = item->get_body();
+                m_world->removeRigidBody(body);
 
-            m_world->removeRigidBody(body);
+                for (int j = body->getNumConstraintRefs() - 1; j >= 0; j--) {
+                    auto *constraint = body->getConstraintRef(j);
+                    m_world->removeConstraint(constraint);
+                    delete constraint;
+                }
 
-            for (int j = body->getNumConstraintRefs() - 1; j >= 0; j--) {
-                auto *constraint = body->getConstraintRef(j);
-                m_world->removeConstraint(constraint);
-                delete constraint;
+                delete body->getMotionState();
+
+                delete body;
+
+                items.erase(items.begin() + i);
             }
-
-            delete body->getMotionState();
-
-            delete body;
-
-            items.erase(items.begin() + i);
         }
     }
 }

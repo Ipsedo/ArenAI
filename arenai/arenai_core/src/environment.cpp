@@ -235,6 +235,7 @@ void BaseTanksEnvironment::worker_enemy_vision(
     renderer.reset();
     eglReleaseThread();
 
+    loop_barrier->arrive_and_drop();
     reset_barrier->arrive_and_wait();
 }
 

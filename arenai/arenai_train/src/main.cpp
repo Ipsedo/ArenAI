@@ -7,14 +7,7 @@
 #include <argparse/argparse.hpp>
 
 #include "./train.h"
-
-struct vision_channels {
-    std::vector<std::tuple<int, int>> channels;
-};
-
-struct group_norm_nums {
-    std::vector<int> groups;
-};
+#include "./utils/cli_parser.h"
 
 int main(const int argc, char **argv) {
     argparse::ArgumentParser parser("arenai train");
@@ -26,51 +19,10 @@ int main(const int argc, char **argv) {
     parser.add_argument("--vision_channels")
         .default_value<vision_channels>(
             {{{3, 8}, {8, 16}, {16, 32}, {32, 64}, {64, 128}, {128, 256}}})
-        .action([](const std::string &value) -> vision_channels {
-            const std::regex regex_match(
-                R"(^ *\[(?: *\( *\d+ *, *\d+ *\) *,)* *\( *\d+ *, *\d+ *\) *] *$)");
-            const std::regex regex_layer(R"(\( *\d+ *, *\d+ *\))");
-            const std::regex regex_channel(R"(\d+)");
-
-            if (!std::regex_match(value.begin(), value.end(), regex_match))
-                throw std::invalid_argument(
-                    "invalid --vision_channels format, usage : [(10, 20), (20, 40), ...]");
-
-            vision_channels vision_channels;
-
-            std::sregex_iterator it_layer(value.begin(), value.end(), regex_layer);
-            for (const std::sregex_iterator end; it_layer != end; ++it_layer) {
-                const auto layer_str = it_layer->str();
-
-                const std::sregex_iterator it_channel(
-                    layer_str.begin(), layer_str.end(), regex_channel);
-
-                const int c_i = std::stoi(it_channel->str());
-                const int c_o = std::stoi(std::next(it_channel)->str());
-
-                vision_channels.channels.emplace_back(c_i, c_o);
-            }
-
-            return vision_channels;
-        });
+        .action(parse_cli_vision_channels);
     parser.add_argument("--group_norm_nums")
         .default_value<group_norm_nums>({{2, 4, 8, 16, 32, 64}})
-        .action([](const std::string &value) -> group_norm_nums {
-            const std::regex regex_match(R"(^ *\[(?: *\d+ *,)* *\d+ *] *$)");
-            const std::regex regex_groups(R"(\d+)");
-
-            if (!std::regex_match(value.begin(), value.end(), regex_match))
-                throw std::invalid_argument(
-                    "invalid --group_norm_nums format, usage : [4, 8, 16, ...]");
-
-            group_norm_nums group_nums;
-
-            std::sregex_iterator it_layer(value.begin(), value.end(), regex_groups);
-            for (const std::sregex_iterator end; it_layer != end; ++it_layer)
-                group_nums.groups.emplace_back(std::stoi(it_layer->str()));
-
-            return group_nums;
-        });
+        .action(parse_cli_group_norms);
     parser.add_argument("--sensors_hidden_size").scan<'i', int>().default_value(256);
     parser.add_argument("--actions_hidden_size").scan<'i', int>().default_value(16);
     parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(1536);

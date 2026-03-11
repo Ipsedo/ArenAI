@@ -19,7 +19,7 @@ public:
 
     std::shared_ptr<AbstractAgent> get_agent(
         const int &vision_height, const int &vision_width, const int &nb_sensors,
-        const int &nb_actions);
+        const int &nb_continuous_actions, const int &nb_discrete_actions);
 
 protected:
     template<typename T>
@@ -33,7 +33,7 @@ protected:
 
         if (ss.fail() || !ss.eof())
             throw std::runtime_error(std::format(
-                "Wrong value for \"{}\" : \"{}\", example : \"{}\"", argument_name, value_as_string,
+                R"(Wrong value for "{}" : "{}", example : "{}")", argument_name, value_as_string,
                 default_value));
 
         arguments.erase(arguments.find(argument_name));
@@ -41,24 +41,25 @@ protected:
         return value;
     }
 
+    template<typename T>
+    T get_value(
+        const std::string &argument_name, const std::function<T(std::string)> &parse_fn,
+        T default_value) {
+        if (!arguments.contains(argument_name)) return default_value;
+
+        const std::string value_as_string = arguments[argument_name];
+
+        arguments.erase(arguments.find(argument_name));
+
+        return parse_fn(value_as_string);
+    }
+
     virtual std::shared_ptr<AbstractAgent> get_agent_impl(
         const int &vision_height, const int &vision_width, const int &nb_sensors,
-        const int &nb_actions) = 0;
+        const int &nb_continuous_actions, const int &nb_discrete_action) = 0;
 
 private:
     std::map<std::string, std::string> arguments;
-};
-
-class CnnAgentFactory : public AgentFactory {
-protected:
-    std::shared_ptr<AbstractAgent> get_agent_impl(
-        const int &vision_height, const int &vision_width, const int &nb_sensors,
-        const int &nb_actions) override;
-
-    virtual std::shared_ptr<AbstractAgent> get_cnn_agent_impl(
-        const int &vision_height, const int &vision_width, const int &nb_sensors,
-        const int &nb_actions, const std::vector<std::tuple<int, int>> &vision_channels,
-        const std::vector<int> &group_norm_nums) = 0;
 };
 
 #endif//ARENAI_TRAIN_HOST_FACTORY_H

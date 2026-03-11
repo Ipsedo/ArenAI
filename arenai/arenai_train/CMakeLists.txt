@@ -53,14 +53,30 @@ include_directories(${ARENAI_VIEW_INCLUDE_DIRS})
 include_directories(${ARENAI_MODEL_INCLUDE_DIRS})
 include_directories(${ARENAI_CORE_INCLUDE_DIRS})
 
+set(ARENAI_TRAIN_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include" CACHE INTERNAL "")
+include_directories(${ARENAI_TRAIN_INCLUDE_DIRS})
+
 set(ARENAI_TRAIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 file(GLOB_RECURSE ARENAI_TRAIN_SRC "${ARENAI_TRAIN_PATH}/*.cpp")
 
-add_executable(arenai_train_host ${ARENAI_TRAIN_SRC})
-
+# Executable
+add_executable(arenai_train_exec ${ARENAI_TRAIN_SRC})
 target_link_libraries(
-        arenai_train_host
+        arenai_train_exec
+        arenai_model
+        arenai_view
+        arenai_utils
+        arenai_core
+        ${TORCH_LIBRARIES}
+        soil2
+        argparse
+)
+
+# Library
+add_library(arenai_train_lib SHARED ${ARENAI_TRAIN_SRC})
+target_link_libraries(
+        arenai_train_lib
         arenai_model
         arenai_view
         arenai_utils

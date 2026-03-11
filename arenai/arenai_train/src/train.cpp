@@ -9,13 +9,13 @@
 #include <indicators/progress_bar.hpp>
 
 #include <arenai_core/constants.h>
+#include <arenai_train/replay_buffer.h>
+#include <arenai_train/torch_converter.h>
 
 #include "./agents/sac.h"
 #include "./core/train_environment.h"
 #include "./core/train_gl_context.h"
-#include "./utils/replay_buffer.h"
 #include "./utils/saver.h"
-#include "./utils/torch_converter.h"
 
 bool is_episode_finish(const std::vector<bool> &already_done) {
     return std::accumulate(

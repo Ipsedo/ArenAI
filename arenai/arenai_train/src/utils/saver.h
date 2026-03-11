@@ -10,7 +10,7 @@
 
 #include <torch/torch.h>
 
-#include "../agents/agent.h"
+#include <arenai_train/agent.h>
 
 void export_state_dict_neutral(
     const std::shared_ptr<torch::nn::Module> &m, const std::filesystem::path &outdir);

@@ -2,7 +2,7 @@
 // Created by samuel on 03/10/2025.
 //
 
-#include "./replay_buffer.h"
+#include <arenai_train/replay_buffer.h>
 
 ReplayBuffer::ReplayBuffer(const int memory_size)
     : memory_size_(memory_size), write_idx_(0), size_(0) {

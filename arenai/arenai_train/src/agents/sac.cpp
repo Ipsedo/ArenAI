@@ -8,6 +8,7 @@
 
 #include "../distributions/multinomial.h"
 #include "../distributions/truncated_normal.h"
+#include "../utils/loader.h"
 #include "../utils/print_module.h"
 #include "../utils/saver.h"
 #include "../utils/target_update.h"
@@ -236,6 +237,29 @@ void SacAgent::save(const std::filesystem::path &output_folder) {
     std::ofstream critic_repr_file(output_folder / "critic_repr.txt");
     critic_repr_file << critic_repr_oss.str();
     critic_repr_file.close();
+}
+
+void SacAgent::load(const std::filesystem::path &input_folder) {
+    // Models
+    load_torch(input_folder, actor, "actor.pt");
+
+    load_torch(input_folder, critic_1, "critic_1.pt");
+    load_torch(input_folder, critic_2, "critic_2.pt");
+
+    load_torch(input_folder, target_critic_1, "target_critic_1.pt");
+    load_torch(input_folder, target_critic_2, "target_critic_2.pt");
+
+    load_torch(input_folder, alpha_continuous, "alpha_continuous.pt");
+    load_torch(input_folder, alpha_discrete, "alpha_discrete.pt");
+
+    // Optimizers
+    load_torch(input_folder, actor_optim, "actor_optim.pt");
+
+    load_torch(input_folder, critic_1_optim, "critic_1_optim.pt");
+    load_torch(input_folder, critic_2_optim, "critic_2_optim.pt");
+
+    load_torch(input_folder, alpha_continuous_optim, "alpha_continuous_optim.pt");
+    load_torch(input_folder, alpha_discrete_optim, "alpha_discrete_optim.pt");
 }
 
 void SacAgent::set_train(const bool train) {

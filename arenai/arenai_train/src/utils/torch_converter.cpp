@@ -2,11 +2,10 @@
 // Created by samuel on 12/10/2025.
 //
 
-#include "./torch_converter.h"
-
 #include <ATen/Parallel.h>
 
 #include <arenai_core/constants.h>
+#include <arenai_train/torch_converter.h>
 
 std::vector<Action>
 tensor_to_actions(const torch::Tensor &continuous_actions, const torch::Tensor &discrete_actions) {

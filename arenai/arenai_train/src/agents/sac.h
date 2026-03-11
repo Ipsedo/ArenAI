@@ -5,10 +5,10 @@
 #ifndef ARENAI_TRAIN_HOST_SAC_H
 #define ARENAI_TRAIN_HOST_SAC_H
 
+#include "../../include/arenai_train/agent.h"
 #include "../networks/actor.h"
 #include "../networks/entropy.h"
 #include "../networks/q_function.h"
-#include "./agent.h"
 
 class SacAgent : public AbstractAgent {
 public:
@@ -26,6 +26,8 @@ public:
     std::vector<std::shared_ptr<Metric>> get_metrics() override;
 
     void save(const std::filesystem::path &output_folder) override;
+    void load(const std::filesystem::path &input_folder) override;
+
     void set_train(bool train) override;
     void to(torch::Device device) override;
 

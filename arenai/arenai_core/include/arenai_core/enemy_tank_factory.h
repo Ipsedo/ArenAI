@@ -41,11 +41,6 @@ private:
 
     bool is_dead_already_triggered;
 
-    float min_aim_angle;
-    float max_aim_angle;
-    float min_distance;
-    float max_distance;
-
     float optimal_distance;
 
     float sigma_distance;

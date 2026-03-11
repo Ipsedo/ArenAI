@@ -16,11 +16,9 @@ EnemyTankFactory::EnemyTankFactory(
     : TankFactory(file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency),
       tank_prefix_name(tank_prefix_name), hit_reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-      curr_frame_upside_down(0), is_dead_already_triggered(false),
-      min_aim_angle(static_cast<float>(M_PI) / 12.f), max_aim_angle(static_cast<float>(M_PI) / 4.f),
-      min_distance(30.f), max_distance(300.f), optimal_distance(100.f), sigma_distance(80.f),
-      sigma_angle(static_cast<float>(M_PI) / 8.f), softmax_beta(4.f), has_touch(false),
-      action_stats(std::make_shared<ActionStats>()) {}
+      curr_frame_upside_down(0), is_dead_already_triggered(false), optimal_distance(100.f),
+      sigma_distance(200.f), sigma_angle(static_cast<float>(M_PI) / 4.f), softmax_beta(4.f),
+      has_touch(false), action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
     const auto canon_tr = get_canon()->get_model_matrix();
@@ -71,7 +69,9 @@ float EnemyTankFactory::quality_score(const float distance, const float angle) c
     const float angle_quality = std::exp(-0.5f * std::pow(angle / sigma_angle, 2.f));
     const float distance_quality =
         std::exp(-0.5f * std::pow((distance - optimal_distance) / sigma_distance, 2.f));
-    return 0.65f * angle_quality + 0.35f * distance_quality;
+
+    return 0.325f * angle_quality + 0.175f * distance_quality
+           + 0.5f * angle_quality * distance_quality;
 }
 
 float EnemyTankFactory::get_reward(

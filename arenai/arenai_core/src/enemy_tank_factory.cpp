@@ -35,21 +35,6 @@ float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory
     return std::acos(d);
 }
 
-float EnemyTankFactory::compute_range_reward(const float value, const float min, const float max) {
-    return std::clamp((max - value) / (max - min), 0.f, 1.f);
-}
-
-float EnemyTankFactory::compute_full_range_reward(
-    const float value, const float min, const float max) {
-
-    if (value <= min) return 1.0f;
-
-    if (value <= max) return (max - value) / (max - min);
-    if (value <= 2.0f * max) return -(value - max) / max;
-
-    return -1.0f;
-}
-
 float EnemyTankFactory::softmax_scores(const std::vector<float> &scores) const {
     float max_score = -std::numeric_limits<float>::infinity();
     for (const float score: scores) max_score = std::max(softmax_beta * score, max_score);

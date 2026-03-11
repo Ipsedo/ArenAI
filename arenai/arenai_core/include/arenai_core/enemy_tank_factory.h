@@ -52,10 +52,7 @@ private:
 
     std::shared_ptr<ActionStats> action_stats;
 
-    static float compute_range_reward(float value, float min, float max);
-    static float compute_full_range_reward(float value, float min, float max);
     float compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank);
-
     float softmax_scores(const std::vector<float> &scores) const;
     float quality_score(float distance, float angle) const;
 };

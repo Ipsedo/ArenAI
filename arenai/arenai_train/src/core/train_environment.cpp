@@ -6,18 +6,17 @@
 
 #include <algorithm>
 
+#include <arenai_train/file_reader.h>
 #include <arenai_utils/cache.h>
 #include <arenai_utils/singleton.h>
 #include <arenai_view/errors.h>
 #include <arenai_view/pbuffer_renderer.h>
 
-#include "../utils/linux_file_reader.h"
-
 TrainTankEnvironment::TrainTankEnvironment(
     const std::shared_ptr<AbstractGLContext> &gl_context, const int nb_tanks,
     const std::filesystem::path &android_assets_path, const float wanted_frequency)
     : BaseTanksEnvironment(
-        std::make_shared<LinuxAndroidAssetFileReader>(android_assets_path), gl_context, nb_tanks,
+        std::make_shared<DesktopAssetFileReader>(android_assets_path), gl_context, nb_tanks,
         wanted_frequency, false),
       max_frames_without_shoot(static_cast<int>(30.f / wanted_frequency)),
       remaining_frames(nb_tanks, max_frames_without_shoot),

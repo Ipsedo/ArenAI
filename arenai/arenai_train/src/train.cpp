@@ -14,14 +14,18 @@
 
 #include "./agents/sac.h"
 #include "./core/train_environment.h"
-#include "./core/train_gl_context.h"
 #include "./utils/saver.h"
+#include "./view/train_gl_context.h"
 
 bool is_episode_finish(const std::vector<bool> &already_done) {
-    return std::accumulate(
-               already_done.begin(), already_done.end(), 0,
-               [](const int nb_done, const bool done) { return done ? nb_done + 1 : nb_done; })
-           >= already_done.size() - 1;
+    if (already_done.empty()) return true;
+    if (already_done.size() == 1) return already_done[0];
+
+    const int nb_done = std::accumulate(
+        already_done.begin(), already_done.end(), 0,
+        [](const int acc, const bool done) { return acc + static_cast<int>(done); });
+
+    return nb_done >= static_cast<int>(already_done.size()) - 1;
 }
 
 std::string metrics_to_string(const std::vector<std::shared_ptr<Metric>> &metrics) {
@@ -130,21 +134,34 @@ void train_main(
             // step environment
             const auto steps = env->step(wanted_frequency, actions_for_env);
             const auto phi_vector = env->get_phi_vector();
-            //const auto is_truncated_vector = env->get_truncated_episodes();
+            const auto is_truncated_vector = env->get_truncated_episodes();
 
             last_states.clear();
             last_states.reserve(train_options.nb_tanks);
 
+            auto next_already_done = already_done;
+            for (int i = 0; i < steps.size(); i++)
+                if (const auto [state, reward, env_done] = steps[i];
+                    !next_already_done[i] && env_done)
+                    next_already_done[i] = true;
+
+            const bool episode_done_by_single_survivor = is_episode_finish(next_already_done);
+            const bool episode_done_by_timeout =
+                episode_step_idx + 1 >= train_options.max_episode_steps;
+
             // save to replay buffer
             for (int i = 0; i < train_options.nb_tanks; i++) {
-                const auto [next_state, reward, done] = steps[i];
+                const auto [next_state, reward, env_done] = steps[i];
                 last_states.push_back(next_state);
 
                 if (already_done[i]) continue;
 
+                const bool effective_done =
+                    env_done || episode_done_by_single_survivor || episode_done_by_timeout;
+
                 const float potential_reward =
                     train_options.potential_reward_scale
-                    * ((done ? 0.f : 1.f) * model_options.gamma * phi_vector[i]
+                    * ((effective_done ? 0.f : 1.f) * model_options.gamma * phi_vector[i]
                        - last_phi_vector[i]);
 
                 reward_metric.add(reward);
@@ -157,13 +174,11 @@ void train_main(
                      {torch_action.continuous_action[i], torch_action.discrete_action[i]},
                      torch::tensor(
                          {reward + potential_reward}, torch::TensorOptions().dtype(torch::kFloat)),
-                     torch::tensor({done}, torch::TensorOptions().dtype(torch::kBool)),
+                     torch::tensor({effective_done}, torch::TensorOptions().dtype(torch::kBool)),
                      {next_vision, next_proprioception}});
 
-                if (done && !already_done[i]) already_done[i] = true;
+                if (effective_done && !already_done[i]) already_done[i] = true;
             }
-
-            last_phi_vector = phi_vector;
 
             // check if it's time to train
             if (train_counter % train_options.train_every == train_options.train_every - 1
@@ -173,8 +188,8 @@ void train_main(
                 sac_metric_p_bar_description = metrics_to_string(sac_metrics);
             }
 
-            is_done = is_episode_finish(already_done)
-                      || episode_step_idx >= train_options.max_episode_steps;
+            last_phi_vector = phi_vector;
+            is_done = episode_done_by_single_survivor || episode_done_by_timeout;
 
             train_counter = (train_counter + 1) % train_options.train_every;
             episode_step_idx++;

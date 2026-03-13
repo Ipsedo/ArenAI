@@ -31,11 +31,11 @@ BaseTanksEnvironment::BaseTanksEnvironment(
     float wanted_frequency, const bool thread_sleep)
     : wanted_frequency(wanted_frequency), nb_tanks(nb_tanks), thread_sleep(thread_sleep),
       threads_running(false), model_matrices(std::make_unique<ModelMatricesDoubleBuffer>()),
-      physic_engine(std::make_unique<PhysicEngine>(wanted_frequency)), gl_context(gl_context),
+      physic_engine(std::make_unique<PhysicEngine>(wanted_frequency)),
       nb_reset_frames(static_cast<int>(4.f / wanted_frequency)),
       reset_barrier(std::make_unique<std::barrier<>>(nb_tanks + 1)),
       loop_barrier(std::make_unique<std::barrier<>>(nb_tanks + 1)), rng(dev()),
-      file_reader(file_reader) {
+      file_reader(file_reader), gl_context(gl_context) {
 
     for (int i = 0; i < nb_tanks; i++)
         enemy_visions.push_back(
@@ -165,7 +165,7 @@ void BaseTanksEnvironment::stop_drawing() {
     if (threads_running.load(std::memory_order_acquire)) kill_threads();
 }
 
-std::unique_ptr<PBufferRenderer> BaseTanksEnvironment::construct_renderer(
+std::unique_ptr<PBufferRenderer> BaseTanksEnvironment::construct_pbuffer_renderer(
     const int index, const std::unique_ptr<EnemyTankFactory> &tank_factory) {
     std::seed_seq seq{
         dev(), static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this)),
@@ -207,7 +207,7 @@ std::unique_ptr<PBufferRenderer> BaseTanksEnvironment::construct_renderer(
 
 void BaseTanksEnvironment::worker_enemy_vision(
     const int index, const std::unique_ptr<EnemyTankFactory> &tank_factory) {
-    auto renderer = construct_renderer(index, tank_factory);
+    auto renderer = construct_pbuffer_renderer(index, tank_factory);
 
     const auto frame_dt = std::chrono::milliseconds(static_cast<int>(wanted_frequency * 1000.f));
 

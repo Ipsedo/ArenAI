@@ -266,10 +266,12 @@ void SacAgent::set_train(const bool train) {
     actor->train(train);
     critic_1->train(train);
     critic_2->train(train);
-    target_critic_1->train(train);
-    target_critic_2->train(train);
     alpha_continuous->train(train);
     alpha_discrete->train(train);
+
+    // force eval for target critics
+    target_critic_1->train(false);
+    target_critic_2->train(false);
 }
 
 void SacAgent::to(const torch::Device device) {

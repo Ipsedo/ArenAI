@@ -71,9 +71,8 @@ EGLContext PBufferGLContext::get_context() { return context; }
 PBufferRenderer::PBufferRenderer(
     const std::shared_ptr<AbstractGLContext> &main_context, const int width, const int height,
     const glm::vec3 light_pos, const std::shared_ptr<Camera> &camera)
-    : Renderer(
-        std::make_shared<PBufferGLContext>(main_context, width, height), width, height, light_pos,
-        camera) {}
+    : Renderer(std::make_shared<PBufferGLContext>(main_context, width, height), light_pos, camera),
+      width(width), height(height) {}
 
 void PBufferRenderer::on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_context) {
     glViewport(0, 0, get_width(), get_height());
@@ -96,9 +95,6 @@ void PBufferRenderer::on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_
 image<uint8_t> PBufferRenderer::draw_and_get_frame(
     const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
     draw(model_matrices);
-
-    const int width = get_width();
-    const int height = get_height();
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
@@ -129,5 +125,9 @@ image<uint8_t> PBufferRenderer::draw_and_get_frame(
 
     return frame;
 }
+
+int PBufferRenderer::get_width() const { return width; }
+
+int PBufferRenderer::get_height() const { return height; }
 
 PBufferRenderer::~PBufferRenderer() = default;

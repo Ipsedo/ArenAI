@@ -58,7 +58,7 @@ def main() -> None:
     parser.add_argument("--sensors_hidden_size", type=int, default=128)
     parser.add_argument("--actor_hidden_size", type=int, default=768)
     parser.add_argument(
-        "--group_norm_nums", type=_groups, default=[2, 4, 8, 12, 16, 24, 32]
+        "--group_norm_nums", type=_groups, default=[2, 4, 8, 16, 32]
     )
     parser.add_argument(
         "--vision_channels",
@@ -67,10 +67,8 @@ def main() -> None:
             (3, 8),
             (8, 16),
             (16, 32),
-            (32, 48),
-            (48, 64),
-            (64, 96),
-            (96, 128),
+            (32, 64),
+            (64, 128),
         ],
     )
 

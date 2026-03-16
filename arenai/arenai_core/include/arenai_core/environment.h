@@ -73,6 +73,8 @@ private:
     std::unique_ptr<std::barrier<>> reset_barrier;
     std::unique_ptr<std::barrier<>> loop_barrier;
 
+    std::shared_ptr<AbstractGLContext> gl_context;
+
     void worker_enemy_vision(int index, const std::unique_ptr<EnemyTankFactory> &tank_factory);
 
     void start_threads();
@@ -85,7 +87,6 @@ protected:
     std::random_device dev;
     std::mt19937 rng;
     std::shared_ptr<AbstractFileReader> file_reader;
-    std::shared_ptr<AbstractGLContext> gl_context;
 
     virtual void on_draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) = 0;
 

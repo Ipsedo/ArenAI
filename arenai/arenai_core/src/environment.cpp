@@ -34,8 +34,8 @@ BaseTanksEnvironment::BaseTanksEnvironment(
       physic_engine(std::make_unique<PhysicEngine>(wanted_frequency)),
       nb_reset_frames(static_cast<int>(4.f / wanted_frequency)),
       reset_barrier(std::make_unique<std::barrier<>>(nb_tanks + 1)),
-      loop_barrier(std::make_unique<std::barrier<>>(nb_tanks + 1)), rng(dev()),
-      file_reader(file_reader), gl_context(gl_context) {
+      loop_barrier(std::make_unique<std::barrier<>>(nb_tanks + 1)), gl_context(gl_context),
+      rng(dev()), file_reader(file_reader) {
 
     for (int i = 0; i < nb_tanks; i++)
         enemy_visions.push_back(

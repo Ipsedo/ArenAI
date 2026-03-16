@@ -4,10 +4,18 @@
 
 #include "./glfw_gl_context.h"
 
-GlfwGlContext::GlfwGlContext(int window_width, int window_height) {}
+#include <csignal>
 
-EGLDisplay GlfwGlContext::get_display() {}
+#include <GLFW/glfw3native.h>
 
-EGLSurface GlfwGlContext::get_surface() {}
+GlfwGlContext::GlfwGlContext(GLFWwindow *window) : window(window) {
+    glfwMakeContextCurrent(window);
+}
 
-EGLContext GlfwGlContext::get_context() {}
+EGLDisplay GlfwGlContext::get_display() { return glfwGetEGLDisplay(); }
+
+EGLSurface GlfwGlContext::get_surface() { return glfwGetEGLSurface(window); }
+
+EGLContext GlfwGlContext::get_context() { return glfwGetEGLContext(window); }
+
+bool GlfwGlContext::should_close_window() const { return glfwWindowShouldClose(window); }

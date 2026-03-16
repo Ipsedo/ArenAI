@@ -24,10 +24,11 @@ std::string DesktopAssetFileReader::read_text(const std::string &file_name) {
 }
 
 ImageChannels DesktopAssetFileReader::read_png(const std::string &png_file_path) {
-    int w = 0, h = 0, channels = 0;
+    int w = 0, h = 0, source_channels = 0;
+    int out_channels = 4;
 
     unsigned char *data = SOIL_load_image(
-        (path_to_assets / png_file_path).c_str(), &w, &h, &channels, SOIL_LOAD_RGBA);
+        (path_to_assets / png_file_path).c_str(), &w, &h, &source_channels, SOIL_LOAD_RGBA);
 
     if (!data) {
         throw std::runtime_error(
@@ -38,10 +39,10 @@ ImageChannels DesktopAssetFileReader::read_png(const std::string &png_file_path)
     ImageChannels out{};
     out.width = w;
     out.height = h;
-    out.channels = channels;
-    out.pixels = std::vector<uint8_t>(w * h * channels);
+    out.channels = out_channels;
+    out.pixels = std::vector<uint8_t>(w * h * out_channels);
 
-    std::memcpy(out.pixels.data(), data, w * h * channels);
+    std::memcpy(out.pixels.data(), data, w * h * out_channels);
 
     SOIL_free_image_data(data);
 

@@ -16,6 +16,9 @@ include_directories(${ARENAI_MODEL_INCLUDE_DIRS})
 include_directories(${ARENAI_CORE_INCLUDE_DIRS})
 include_directories(${ARENAI_TRAIN_INCLUDE_DIRS})
 
+# dependencies
+find_package(glfw3 REQUIRED)
+
 # ArenAI Desktop
 set(ARENAI_DESKTOP_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
@@ -26,4 +29,5 @@ add_executable(arenai_desktop ${ARENAI_DESKTOP_SRC})
 target_link_libraries(
         arenai_desktop
         arenai_train_lib
+        glfw
 )

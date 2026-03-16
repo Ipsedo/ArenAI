@@ -55,8 +55,7 @@ float EnemyTankFactory::quality_score(const float distance, const float angle) c
     const float distance_quality =
         std::exp(-0.5f * std::pow((distance - optimal_distance) / sigma_distance, 2.f));
 
-    return 0.325f * angle_quality + 0.175f * distance_quality
-           + 0.5f * angle_quality * distance_quality;
+    return angle_quality * distance_quality;
 }
 
 float EnemyTankFactory::get_reward(
@@ -75,7 +74,7 @@ float EnemyTankFactory::get_reward(
 
     // 3. shoot penalty
     const auto quality_score = get_phi(tank_factories);
-    constexpr float fire_cost = 0.1f;
+    constexpr float fire_cost = 0.02f;
     constexpr float good_fire_reward = 0.2f;
     const float shoot_reward =
         action_stats->has_fire() ? quality_score * good_fire_reward - fire_cost : 0.f;

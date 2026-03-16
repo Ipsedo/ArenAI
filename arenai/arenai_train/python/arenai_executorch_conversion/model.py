@@ -1,5 +1,3 @@
-from sndhdr import test_aifc
-
 import torch as th
 from torch import nn
 

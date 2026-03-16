@@ -25,7 +25,7 @@ std::string DesktopAssetFileReader::read_text(const std::string &file_name) {
 
 ImageChannels DesktopAssetFileReader::read_png(const std::string &png_file_path) {
     int w = 0, h = 0, source_channels = 0;
-    int out_channels = 4;
+    constexpr int out_channels = 4;
 
     unsigned char *data = SOIL_load_image(
         (path_to_assets / png_file_path).c_str(), &w, &h, &source_channels, SOIL_LOAD_RGBA);

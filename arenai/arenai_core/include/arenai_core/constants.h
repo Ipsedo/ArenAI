@@ -16,7 +16,6 @@
 #define SIGMA_MIN 1e-5f
 #define SIGMA_MAX 5.f
 #define EPSILON 1e-8f
-#define ALPHA_BETA_BOUND 5.f
 
 #define ENEMY_ACTION_THRESHOLD 0.7f
 

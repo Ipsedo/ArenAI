@@ -16,8 +16,7 @@
 class DesktopGameEnvironment : public BaseTanksEnvironment {
 public:
     DesktopGameEnvironment(
-        const std::shared_ptr<AbstractFileReader> &asset_file_reader,
-        const std::shared_ptr<AbstractGLContext> &gl_context, int window_width, int window_height,
+        const std::shared_ptr<AbstractFileReader> &asset_file_reader, GLFWwindow *glfw_window,
         int nb_tanks, float wanted_frequency);
 
     void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) const;
@@ -34,10 +33,12 @@ protected:
         const std::shared_ptr<AbstractGLContext> &gl_context) override;
 
 private:
+    GLFWwindow *curr_window;
+
     std::shared_ptr<AbstractFileReader> asset_file_reader;
     std::unique_ptr<TankFactory> tank_factory;
     std::unique_ptr<PlayerRenderer> player_renderer;
-    std::unique_ptr<DesktopPlayerControllerHandler> player_controller_handler;
+    std::unique_ptr<MouseKeyboardPlayerControllerHandler> player_controller_handler;
 
     int window_width;
     int window_height;

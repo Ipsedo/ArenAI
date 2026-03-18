@@ -48,6 +48,7 @@ public:
 
     std::vector<State> reset_physics();
     void reset_drawables(const std::shared_ptr<AbstractGLContext> &new_gl_context);
+    void reset_drawables();
     void stop_drawing();
 
     virtual ~BaseTanksEnvironment();

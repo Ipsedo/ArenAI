@@ -161,6 +161,8 @@ void BaseTanksEnvironment::reset_drawables(
     gl_context->make_current();
 }
 
+void BaseTanksEnvironment::reset_drawables() { reset_drawables(gl_context); }
+
 void BaseTanksEnvironment::stop_drawing() {
     if (threads_running.load(std::memory_order_acquire)) kill_threads();
 }

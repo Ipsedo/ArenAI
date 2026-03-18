@@ -17,5 +17,3 @@ EGLDisplay GlfwGlContext::get_display() { return glfwGetEGLDisplay(); }
 EGLSurface GlfwGlContext::get_surface() { return glfwGetEGLSurface(window); }
 
 EGLContext GlfwGlContext::get_context() { return glfwGetEGLContext(window); }
-
-bool GlfwGlContext::should_close_window() const { return glfwWindowShouldClose(window); }

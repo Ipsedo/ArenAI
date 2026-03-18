@@ -36,45 +36,17 @@ int main(int argc, char **argv) {
 
     auto glfw_window = glfwCreateWindow(window_width, window_height, "ArenAI", nullptr, nullptr);
 
-    auto gl_context = std::make_shared<GlfwGlContext>(glfw_window);
-
     auto asset_file_reader = std::make_shared<DesktopAssetFileReader>(
         "/home/samuel/StudioProjects/PhyVR/app/src/main/assets");
     const auto env = std::make_shared<DesktopGameEnvironment>(
-        asset_file_reader, gl_context, window_width, window_height, 4, wanted_frequency);
-
-    glfwSetWindowUserPointer(glfw_window, env.get());
-
-    glfwSetKeyCallback(
-        glfw_window,
-        [](GLFWwindow *window, const int key, const int scancode, const int action,
-           const int mods) -> void {
-            const auto curr_env =
-                static_cast<DesktopGameEnvironment *>(glfwGetWindowUserPointer(window));
-            curr_env->key_callback(window, key, scancode, action, mods);
-        });
-
-    glfwSetCursorPosCallback(
-        glfw_window, [](GLFWwindow *window, const double xpos, const double ypos) -> void {
-            const auto curr_env =
-                static_cast<DesktopGameEnvironment *>(glfwGetWindowUserPointer(window));
-            curr_env->cursor_position_callback(window, xpos, ypos);
-        });
-
-    glfwSetMouseButtonCallback(
-        glfw_window,
-        [](GLFWwindow *window, const int button, const int action, const int mods) -> void {
-            const auto curr_env =
-                static_cast<DesktopGameEnvironment *>(glfwGetWindowUserPointer(window));
-            curr_env->mouse_button_callback(window, button, action, mods);
-        });
+        asset_file_reader, glfw_window, 32, wanted_frequency);
 
     auto states = env->reset_physics();
-    env->reset_drawables(gl_context);
+    env->reset_drawables();
 
     const auto frame_dt = std::chrono::milliseconds(static_cast<int>(wanted_frequency * 1000.f));
 
-    while (!gl_context->should_close_window()) {
+    while (!glfwWindowShouldClose(glfw_window)) {
         glfwPollEvents();
 
         auto last_time = std::chrono::steady_clock::now();

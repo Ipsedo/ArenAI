@@ -18,8 +18,6 @@ public:
     EGLSurface get_surface() override;
     EGLContext get_context() override;
 
-    bool should_close_window() const;
-
 private:
     GLFWwindow *window;
 };

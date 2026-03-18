@@ -12,13 +12,44 @@
 #include "../view/glfw_gl_context.h"
 
 DesktopGameEnvironment::DesktopGameEnvironment(
-    const std::shared_ptr<AbstractFileReader> &asset_file_reader,
-    const std::shared_ptr<AbstractGLContext> &gl_context, const int window_width,
-    const int window_height, const int nb_tanks, const float wanted_frequency)
-    : BaseTanksEnvironment(asset_file_reader, gl_context, nb_tanks, wanted_frequency, true),
-      asset_file_reader(asset_file_reader), tank_factory(std::nullptr_t()),
-      player_renderer(std::nullptr_t()), player_controller_handler(std::nullptr_t()),
-      window_width(window_width), window_height(window_height), wanted_frequency(wanted_frequency) {
+    const std::shared_ptr<AbstractFileReader> &asset_file_reader, GLFWwindow *glfw_window,
+    const int nb_tanks, const float wanted_frequency)
+    : BaseTanksEnvironment(
+        asset_file_reader, std::make_shared<GlfwGlContext>(glfw_window), nb_tanks, wanted_frequency,
+        true),
+      curr_window(glfw_window), asset_file_reader(asset_file_reader),
+      tank_factory(std::nullptr_t()), player_renderer(std::nullptr_t()),
+      player_controller_handler(std::nullptr_t()), window_width(0.f), window_height(0.f),
+      wanted_frequency(wanted_frequency) {
+
+    glfwGetWindowSize(glfw_window, &window_width, &window_height);
+
+    // callback
+    glfwSetWindowUserPointer(glfw_window, this);
+
+    glfwSetKeyCallback(
+        glfw_window,
+        [](GLFWwindow *window, const int key, const int scancode, const int action,
+           const int mods) -> void {
+            const auto curr_env =
+                static_cast<DesktopGameEnvironment *>(glfwGetWindowUserPointer(window));
+            curr_env->key_callback(window, key, scancode, action, mods);
+        });
+
+    glfwSetCursorPosCallback(
+        glfw_window, [](GLFWwindow *window, const double xpos, const double ypos) -> void {
+            const auto curr_env =
+                static_cast<DesktopGameEnvironment *>(glfwGetWindowUserPointer(window));
+            curr_env->cursor_position_callback(window, xpos, ypos);
+        });
+
+    glfwSetMouseButtonCallback(
+        glfw_window,
+        [](GLFWwindow *window, const int button, const int action, const int mods) -> void {
+            const auto curr_env =
+                static_cast<DesktopGameEnvironment *>(glfwGetWindowUserPointer(window));
+            curr_env->mouse_button_callback(window, button, action, mods);
+        });
 }
 
 void DesktopGameEnvironment::on_draw(
@@ -44,7 +75,7 @@ void DesktopGameEnvironment::on_reset_drawables(
         tank_factory->get_camera());
     player_renderer->make_current();
 
-    player_controller_handler = std::make_unique<DesktopPlayerControllerHandler>();
+    player_controller_handler = std::make_unique<MouseKeyboardPlayerControllerHandler>(curr_window);
 
     for (auto &ctrl: tank_factory->get_controllers())
         player_controller_handler->add_controller(ctrl);

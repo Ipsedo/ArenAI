@@ -16,8 +16,8 @@
 class DesktopGameEnvironment : public BaseTanksEnvironment {
 public:
     DesktopGameEnvironment(
-        const std::shared_ptr<AbstractFileReader> &asset_file_reader, GLFWwindow *glfw_window,
-        int nb_tanks, float wanted_frequency);
+        const std::string &asset_folder_path, GLFWwindow *glfw_window, int nb_tanks,
+        float wanted_frequency);
 
     void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) const;
     void mouse_button_callback(GLFWwindow *window, int button, int action, int mods) const;

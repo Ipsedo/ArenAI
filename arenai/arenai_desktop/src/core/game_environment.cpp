@@ -12,12 +12,13 @@
 #include "../view/glfw_gl_context.h"
 
 DesktopGameEnvironment::DesktopGameEnvironment(
-    const std::shared_ptr<AbstractFileReader> &asset_file_reader, GLFWwindow *glfw_window,
-    const int nb_tanks, const float wanted_frequency)
+    const std::string &asset_folder_path, GLFWwindow *glfw_window, const int nb_tanks,
+    const float wanted_frequency)
     : BaseTanksEnvironment(
-        asset_file_reader, std::make_shared<GlfwGlContext>(glfw_window), nb_tanks, wanted_frequency,
-        true),
-      curr_window(glfw_window), asset_file_reader(asset_file_reader),
+        std::make_shared<DesktopAssetFileReader>(asset_folder_path),
+        std::make_shared<GlfwGlContext>(glfw_window), nb_tanks, wanted_frequency, true),
+      curr_window(glfw_window),
+      asset_file_reader(std::make_shared<DesktopAssetFileReader>(asset_folder_path)),
       tank_factory(std::nullptr_t()), player_renderer(std::nullptr_t()),
       player_controller_handler(std::nullptr_t()), window_width(0.f), window_height(0.f),
       wanted_frequency(wanted_frequency) {

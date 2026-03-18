@@ -22,12 +22,16 @@ struct GlfwInput {
 
 class MouseKeyboardPlayerControllerHandler : public ControllerHandler<GlfwInput> {
 public:
-    MouseKeyboardPlayerControllerHandler(GLFWwindow *window);
+    explicit MouseKeyboardPlayerControllerHandler(GLFWwindow *window);
 
 protected:
     std::tuple<bool, user_input> to_output(GlfwInput event) override;
 
 private:
+    GLFWwindow *window;
+
+    bool first_use;
+
     float current_dir;
     float current_speed;
 

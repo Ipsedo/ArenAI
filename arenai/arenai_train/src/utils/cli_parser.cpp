@@ -14,7 +14,8 @@ vision_channels parse_cli_vision_channels(const std::string &value) {
 
     if (!std::regex_match(value.begin(), value.end(), regex_match))
         throw std::invalid_argument(
-            "invalid --vision_channels format, usage : [(10, 20), (20, 40), ...]");
+            "invalid --vision_channels format, usage : [(10, 20), (20, 40), ...], actual value = \""
+            + value + "\"");
 
     vision_channels vision_channels;
 
@@ -38,7 +39,9 @@ group_norm_nums parse_cli_group_norms(const std::string &value) {
     const std::regex regex_groups(R"(\d+)");
 
     if (!std::regex_match(value.begin(), value.end(), regex_match))
-        throw std::invalid_argument("invalid --group_norm_nums format, usage : [4, 8, 16, ...]");
+        throw std::invalid_argument(
+            "invalid --group_norm_nums format, usage : [4, 8, 16, ...], actual value = \"" + value
+            + "\"");
 
     group_norm_nums group_nums;
 

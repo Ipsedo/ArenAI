@@ -1,0 +1,369 @@
+{
+  "tensors": [
+    {
+      "dtype": "float32",
+      "file": "vision_encoder_cnn_0_weight.bin",
+      "is_buffer": false,
+      "name": "vision_encoder.cnn.0.weight",
+      "shape": [
+        8,
+        3,
+        3,
+        3
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "vision_encoder_cnn_0_bias.bin",
+      "is_buffer": false,
+      "name": "vision_encoder.cnn.0.bias",
+      "shape": [
+        8
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "vision_encoder_cnn_1_weight.bin",
+      "is_buffer": false,
+      "name": "vision_encoder.cnn.1.weight",
+      "shape": [
+        8
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "vision_encoder_cnn_1_bias.bin",
+      "is_buffer": false,
+      "name": "vision_encoder.cnn.1.bias",
+      "shape": [
+        8
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "vision_encoder_cnn_3_weight.bin",
+      "is_buffer": false,
+      "name": "vision_encoder.cnn.3.weight",
+      "shape": [
+        16,
+        8,
+        3,
+        3
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "vision_encoder_cnn_3_bias.bin",
+      "is_buffer": false,
+      "name": "vision_encoder.cnn.3.bias",
+      "shape": [
+        16
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "vision_encoder_cnn_4_weight.bin",
+      "is_buffer": false,
+      "name": "vision_encoder.cnn.4.weight",
+      "shape": [
+        16
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "vision_encoder_cnn_4_bias.bin",
+      "is_buffer": false,
+      "name": "vision_encoder.cnn.4.bias",
+      "shape": [
+        16
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "vision_encoder_cnn_6_weight.bin",
+      "is_buffer": false,
+      "name": "vision_encoder.cnn.6.weight",
+      "shape": [
+        24,
+        16,
+        3,
+        3
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "vision_encoder_cnn_6_bias.bin",
+      "is_buffer": false,
+      "name": "vision_encoder.cnn.6.bias",
+      "shape": [
+        24
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "vision_encoder_cnn_7_weight.bin",
+      "is_buffer": false,
+      "name": "vision_encoder.cnn.7.weight",
+      "shape": [
+        24
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "vision_encoder_cnn_7_bias.bin",
+      "is_buffer": false,
+      "name": "vision_encoder.cnn.7.bias",
+      "shape": [
+        24
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "vision_encoder_cnn_9_weight.bin",
+      "is_buffer": false,
+      "name": "vision_encoder.cnn.9.weight",
+      "shape": [
+        32,
+        24,
+        3,
+        3
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "vision_encoder_cnn_9_bias.bin",
+      "is_buffer": false,
+      "name": "vision_encoder.cnn.9.bias",
+      "shape": [
+        32
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "vision_encoder_cnn_10_weight.bin",
+      "is_buffer": false,
+      "name": "vision_encoder.cnn.10.weight",
+      "shape": [
+        32
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "vision_encoder_cnn_10_bias.bin",
+      "is_buffer": false,
+      "name": "vision_encoder.cnn.10.bias",
+      "shape": [
+        32
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "vision_encoder_cnn_12_weight.bin",
+      "is_buffer": false,
+      "name": "vision_encoder.cnn.12.weight",
+      "shape": [
+        48,
+        32,
+        3,
+        3
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "vision_encoder_cnn_12_bias.bin",
+      "is_buffer": false,
+      "name": "vision_encoder.cnn.12.bias",
+      "shape": [
+        48
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "vision_encoder_cnn_13_weight.bin",
+      "is_buffer": false,
+      "name": "vision_encoder.cnn.13.weight",
+      "shape": [
+        48
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "vision_encoder_cnn_13_bias.bin",
+      "is_buffer": false,
+      "name": "vision_encoder.cnn.13.bias",
+      "shape": [
+        48
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "vision_encoder_cnn_15_weight.bin",
+      "is_buffer": false,
+      "name": "vision_encoder.cnn.15.weight",
+      "shape": [
+        64,
+        48,
+        3,
+        3
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "vision_encoder_cnn_15_bias.bin",
+      "is_buffer": false,
+      "name": "vision_encoder.cnn.15.bias",
+      "shape": [
+        64
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "vision_encoder_cnn_16_weight.bin",
+      "is_buffer": false,
+      "name": "vision_encoder.cnn.16.weight",
+      "shape": [
+        64
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "vision_encoder_cnn_16_bias.bin",
+      "is_buffer": false,
+      "name": "vision_encoder.cnn.16.bias",
+      "shape": [
+        64
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "sensors_encoder_0_weight.bin",
+      "is_buffer": false,
+      "name": "sensors_encoder.0.weight",
+      "shape": [
+        64,
+        132
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "sensors_encoder_0_bias.bin",
+      "is_buffer": false,
+      "name": "sensors_encoder.0.bias",
+      "shape": [
+        64
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "sensors_encoder_1_weight.bin",
+      "is_buffer": false,
+      "name": "sensors_encoder.1.weight",
+      "shape": [
+        64
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "sensors_encoder_1_bias.bin",
+      "is_buffer": false,
+      "name": "sensors_encoder.1.bias",
+      "shape": [
+        64
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "head_0_weight.bin",
+      "is_buffer": false,
+      "name": "head.0.weight",
+      "shape": [
+        384,
+        192
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "head_0_bias.bin",
+      "is_buffer": false,
+      "name": "head.0.bias",
+      "shape": [
+        384
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "head_1_weight.bin",
+      "is_buffer": false,
+      "name": "head.1.weight",
+      "shape": [
+        384
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "head_1_bias.bin",
+      "is_buffer": false,
+      "name": "head.1.bias",
+      "shape": [
+        384
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "mu_0_weight.bin",
+      "is_buffer": false,
+      "name": "mu.0.weight",
+      "shape": [
+        4,
+        384
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "mu_0_bias.bin",
+      "is_buffer": false,
+      "name": "mu.0.bias",
+      "shape": [
+        4
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "sigma_0_weight.bin",
+      "is_buffer": false,
+      "name": "sigma.0.weight",
+      "shape": [
+        4,
+        384
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "sigma_0_bias.bin",
+      "is_buffer": false,
+      "name": "sigma.0.bias",
+      "shape": [
+        4
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "discrete_0_weight.bin",
+      "is_buffer": false,
+      "name": "discrete.0.weight",
+      "shape": [
+        2,
+        384
+      ]
+    },
+    {
+      "dtype": "float32",
+      "file": "discrete_0_bias.bin",
+      "is_buffer": false,
+      "name": "discrete.0.bias",
+      "shape": [
+        2
+      ]
+    }
+  ]
+}

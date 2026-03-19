@@ -14,24 +14,24 @@
 #include <vector>
 
 #include <arenai_model/engine.h>
+#include <arenai_utils/double_buffer.h>
 #include <arenai_utils/file_reader.h>
-#include <arenai_utils/locked_buffer.h>
 #include <arenai_view/pbuffer_renderer.h>
 
 #include "./enemy_handler.h"
 #include "./enemy_tank_factory.h"
 #include "./types.h"
 
-class VisionDoubleBuffer : public LockedBuffer<image<uint8_t>> {
+class VisionDoubleBuffer : public DoubleBuffer<image<uint8_t>> {
 public:
-    VisionDoubleBuffer(std::mt19937 &rng, int height, int width);
+    VisionDoubleBuffer(int height, int width);
 
 private:
-    static image<uint8_t> random_image(std::mt19937 &rng, int height, int width);
+    static image<uint8_t> black_image(int height, int width);
 };
 
 class ModelMatricesDoubleBuffer
-    : public LockedBuffer<std::vector<std::tuple<std::string, glm::mat4>>> {
+    : public DoubleBuffer<std::vector<std::tuple<std::string, glm::mat4>>> {
 public:
     ModelMatricesDoubleBuffer();
 };
@@ -48,6 +48,7 @@ public:
 
     std::vector<State> reset_physics();
     void reset_drawables(const std::shared_ptr<AbstractGLContext> &new_gl_context);
+    void reset_drawables();
     void stop_drawing();
 
     virtual ~BaseTanksEnvironment();
@@ -68,16 +69,20 @@ private:
 
     std::unique_ptr<PhysicEngine> physic_engine;
 
-    std::shared_ptr<AbstractGLContext> gl_context;
-
     int nb_reset_frames;
 
     std::unique_ptr<std::barrier<>> reset_barrier;
+    std::unique_ptr<std::barrier<>> loop_barrier;
+
+    std::shared_ptr<AbstractGLContext> gl_context;
 
     void worker_enemy_vision(int index, const std::unique_ptr<EnemyTankFactory> &tank_factory);
 
     void start_threads();
     void kill_threads();
+
+    std::unique_ptr<PBufferRenderer>
+    construct_pbuffer_renderer(int index, const std::unique_ptr<EnemyTankFactory> &tank_factory);
 
 protected:
     std::random_device dev;
@@ -97,7 +102,7 @@ protected:
         return apply_function(tank_factories);
     }
 
-    std::vector<std::tuple<std::string, glm::mat4>> publish_and_get_model_matrices();
+    std::vector<std::tuple<std::string, glm::mat4>> get_model_matrices() const;
 };
 
 #endif// ARENAI_ENVIRONMENT_H

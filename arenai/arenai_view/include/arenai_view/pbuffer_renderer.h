@@ -46,12 +46,18 @@ public:
     image<uint8_t>
     draw_and_get_frame(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices);
 
+    int get_width() const override;
+    int get_height() const override;
+
     ~PBufferRenderer() override;
 
 protected:
     void on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_context) override;
 
     void on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_context) override;
+
+private:
+    int width, height;
 };
 
 #endif// ARENAI_PBUFFER_RENDERER_H

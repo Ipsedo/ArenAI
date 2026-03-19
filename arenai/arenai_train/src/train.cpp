@@ -9,19 +9,23 @@
 #include <indicators/progress_bar.hpp>
 
 #include <arenai_core/constants.h>
+#include <arenai_train/replay_buffer.h>
+#include <arenai_train/torch_converter.h>
 
 #include "./agents/sac.h"
 #include "./core/train_environment.h"
-#include "./core/train_gl_context.h"
-#include "./utils/replay_buffer.h"
 #include "./utils/saver.h"
-#include "./utils/torch_converter.h"
+#include "./view/train_gl_context.h"
 
 bool is_episode_finish(const std::vector<bool> &already_done) {
-    return std::accumulate(
-               already_done.begin(), already_done.end(), 0,
-               [](const int nb_done, const bool done) { return done ? nb_done + 1 : nb_done; })
-           >= already_done.size() - 1;
+    if (already_done.empty()) return true;
+    if (already_done.size() == 1) return already_done[0];
+
+    const int nb_done = std::accumulate(
+        already_done.begin(), already_done.end(), 0,
+        [](const int acc, const bool done) { return acc + static_cast<int>(done); });
+
+    return nb_done >= static_cast<int>(already_done.size()) - 1;
 }
 
 std::string metrics_to_string(const std::vector<std::shared_ptr<Metric>> &metrics) {
@@ -39,17 +43,24 @@ std::string metrics_to_string(const std::vector<std::shared_ptr<Metric>> &metric
 void train_main(
     const float wanted_frequency, const ModelOptions &model_options,
     const TrainOptions &train_options) {
+
+    auto gl_context = std::make_shared<TrainGlContext>();
+    gl_context->make_current();// only for glGetString(GL_RENDERER)
+
+    torch::Device torch_device =
+        train_options.cuda ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU);
+
+    std::cout << "OpenGL device : " << glGetString(GL_RENDERER) << std::endl;
+    std::cout << "PyTorch device : " << torch_device.str() << std::endl;
+
     std::cout << "Vision size : width=" << ENEMY_VISION_WIDTH << ", height=" << ENEMY_VISION_HEIGHT
               << std::endl;
     std::cout << "Proprioception size : " << ENEMY_PROPRIOCEPTION_SIZE << std::endl;
     std::cout << "Action size (continuous) : " << ENEMY_NB_CONTINUOUS_ACTION << std::endl;
     std::cout << "Action size (discrete) : " << ENEMY_NB_DISCRETE_ACTION << std::endl;
 
-    torch::Device torch_device =
-        train_options.cuda ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU);
-
     const auto env = std::make_unique<TrainTankEnvironment>(
-        train_options.nb_tanks, train_options.android_asset_folder, wanted_frequency);
+        gl_context, train_options.nb_tanks, train_options.android_asset_folder, wanted_frequency);
 
     auto agent = std::make_shared<SacAgent>(
         ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_CONTINUOUS_ACTION, ENEMY_NB_DISCRETE_ACTION,
@@ -74,8 +85,6 @@ void train_main(
 
     auto sac_metrics = agent->get_metrics();
 
-    std::cout << "Start training on " << train_options.nb_episodes << " episodes" << std::endl;
-
     int train_counter = 0;
 
     indicators::ProgressBar p_bar{
@@ -93,16 +102,13 @@ void train_main(
 
     std::string sac_metric_p_bar_description = metrics_to_string(sac_metrics);
 
-    auto gl_context = std::make_shared<TrainGlContext>();
-
     for (int episode_index = 0; episode_index < train_options.nb_episodes; episode_index++) {
         // set variable for episode
         bool is_done = false;
         std::vector already_done(train_options.nb_tanks, false);
 
-        auto last_state = env->reset_physics();
+        auto last_states = env->reset_physics();
         env->reset_drawables(gl_context);
-
         auto last_phi_vector = env->get_phi_vector();
 
         int episode_step_idx = 0;
@@ -111,18 +117,16 @@ void train_main(
             TorchAction torch_action;
             std::vector<Action> actions_for_env;
 
-            const auto [vision, proprioception] = states_to_tensor(last_state);
+            const auto [vision, proprioception] = states_to_tensor(last_states);
 
             {
                 torch::NoGradGuard no_grad_guard;
                 agent->set_train(false);
 
-                const auto
-                    [continuous_action, continuous_log_proba, discrete_action, discrete_log_proba] =
-                        agent->act(vision.to(torch_device), proprioception.to(torch_device));
+                const auto [continuous_action, discrete_action] =
+                    agent->act(vision.to(torch_device), proprioception.to(torch_device));
 
-                torch_action = {
-                    continuous_action, continuous_log_proba, discrete_action, discrete_log_proba};
+                torch_action = {continuous_action, discrete_action};
 
                 actions_for_env = tensor_to_actions(continuous_action, discrete_action);
             }
@@ -132,21 +136,33 @@ void train_main(
             const auto phi_vector = env->get_phi_vector();
             const auto is_truncated_vector = env->get_truncated_episodes();
 
-            last_state.clear();
-            last_state.reserve(train_options.nb_tanks);
+            last_states.clear();
+            last_states.reserve(train_options.nb_tanks);
+
+            auto next_already_done = already_done;
+            for (int i = 0; i < steps.size(); i++)
+                if (const auto [state, reward, env_done] = steps[i];
+                    !next_already_done[i] && env_done)
+                    next_already_done[i] = true;
+
+            const bool episode_done_by_single_survivor = is_episode_finish(next_already_done);
+            const bool episode_done_by_timeout =
+                episode_step_idx + 1 >= train_options.max_episode_steps;
 
             // save to replay buffer
             for (int i = 0; i < train_options.nb_tanks; i++) {
-                const auto [next_state, reward, done] = steps[i];
-                last_state.push_back(next_state);
+                const auto [next_state, reward, env_done] = steps[i];
+                last_states.push_back(next_state);
 
                 if (already_done[i]) continue;
 
-                const bool is_done_and_not_truncated = done && !is_truncated_vector[i];
+                const bool effective_done =
+                    env_done || episode_done_by_single_survivor || episode_done_by_timeout;
 
                 const float potential_reward =
-                    train_options.potential_reward_scale * (is_done_and_not_truncated ? 0.f : 1.f)
-                    * (model_options.gamma * phi_vector[i] - last_phi_vector[i]);
+                    train_options.potential_reward_scale
+                    * ((effective_done ? 0.f : 1.f) * model_options.gamma * phi_vector[i]
+                       - last_phi_vector[i]);
 
                 reward_metric.add(reward);
                 potential_metric.add(potential_reward);
@@ -155,15 +171,13 @@ void train_main(
 
                 replay_buffer->add(
                     {{vision[i], proprioception[i]},
-                     {torch_action.continuous_action[i], torch_action.continuous_log_proba[i],
-                      torch_action.discrete_action[i], torch_action.discrete_log_proba[i]},
+                     {torch_action.continuous_action[i], torch_action.discrete_action[i]},
                      torch::tensor(
                          {reward + potential_reward}, torch::TensorOptions().dtype(torch::kFloat)),
-                     torch::tensor(
-                         {is_done_and_not_truncated}, torch::TensorOptions().dtype(torch::kBool)),
+                     torch::tensor({effective_done}, torch::TensorOptions().dtype(torch::kBool)),
                      {next_vision, next_proprioception}});
 
-                if (done && !already_done[i]) already_done[i] = true;
+                if (effective_done && !already_done[i]) already_done[i] = true;
             }
 
             // check if it's time to train
@@ -174,8 +188,8 @@ void train_main(
                 sac_metric_p_bar_description = metrics_to_string(sac_metrics);
             }
 
-            is_done = is_episode_finish(already_done)
-                      || episode_step_idx >= train_options.max_episode_steps;
+            last_phi_vector = phi_vector;
+            is_done = episode_done_by_single_survivor || episode_done_by_timeout;
 
             train_counter = (train_counter + 1) % train_options.train_every;
             episode_step_idx++;
@@ -193,7 +207,7 @@ void train_main(
             p_bar.print_progress();
         }
 
-        last_state.clear();
+        last_states.clear();
         env->stop_drawing();
 
         p_bar.tick();

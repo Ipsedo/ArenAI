@@ -41,11 +41,6 @@ private:
 
     bool is_dead_already_triggered;
 
-    float min_aim_angle;
-    float max_aim_angle;
-    float min_distance;
-    float max_distance;
-
     float optimal_distance;
 
     float sigma_distance;
@@ -57,12 +52,7 @@ private:
 
     std::shared_ptr<ActionStats> action_stats;
 
-    float prev_quality_score;
-
-    static float compute_range_reward(float value, float min, float max);
-    static float compute_full_range_reward(float value, float min, float max);
     float compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank);
-
     float softmax_scores(const std::vector<float> &scores) const;
     float quality_score(float distance, float angle) const;
 };

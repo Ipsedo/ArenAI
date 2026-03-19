@@ -1,0 +1,56 @@
+//
+// Created by samuel on 11/03/2026.
+//
+
+#include <regex>
+
+#include <argparse/argparse.hpp>
+#include <boost/algorithm/string.hpp>
+
+#include "./game.h"
+
+std::tuple<std::string, std::string> parse_key_value(const std::string &value) {
+    const std::regex regex_match(R"(^ *([^=]+)=\"?([^"]+)\"? *$)");
+
+    std::smatch match;
+
+    if (!std::regex_match(value, match, regex_match))
+        throw std::invalid_argument("invalid pairs format, usage : key=value");
+
+    return {match[1], boost::trim_copy(std::string(match[2]))};
+}
+
+typedef std::vector<std::tuple<std::string, std::string>> hyper_params_vector;
+
+int main(const int argc, char **argv) {
+    argparse::ArgumentParser parser("arenai game");
+
+    // Game options
+    parser.add_argument("--wanted_frequency").scan<'g', float>().default_value(1.f / 30.f);
+    parser.add_argument("--nb_tanks").scan<'i', int>().default_value(16);
+    parser.add_argument("--window_width").scan<'i', int>().default_value(1920);
+    parser.add_argument("--window_height").scan<'i', int>().default_value(1080);
+    parser.add_argument("--android_asset_folder").required();
+
+    // Model options
+    parser.add_argument("--hp", "--hyper_parameters")
+        .action(parse_key_value)
+        .append()
+        .default_value<hyper_params_vector>({});
+    parser.add_argument("--state_dict_folder").required();
+    parser.add_argument("--cuda").implicit_value(true).default_value(false);
+
+    parser.parse_args(argc, argv);
+
+    std::map<std::string, std::string> hyper_params;
+    for (const auto &[key, value]: parser.get<hyper_params_vector>("--hyper_parameters"))
+        hyper_params[key] = value;
+
+    game_loop(
+        {parser.get<float>("--wanted_frequency"), parser.get<int>("--nb_tanks"),
+         parser.get<int>("--window_width"), parser.get<int>("--window_height"),
+         parser.get<std::string>("--android_asset_folder")},
+        {hyper_params, parser.get<std::string>("--state_dict_folder"), parser.get<bool>("--cuda")});
+
+    return 0;
+}

@@ -9,9 +9,9 @@
 
 #include <arenai_utils/file_reader.h>
 
-class LinuxAndroidAssetFileReader final : public AbstractFileReader {
+class DesktopAssetFileReader final : public AbstractFileReader {
 public:
-    explicit LinuxAndroidAssetFileReader(const std::filesystem::path &path_to_assets);
+    explicit DesktopAssetFileReader(const std::filesystem::path &path_to_assets);
 
     std::string read_text(const std::string &file_name) override;
 

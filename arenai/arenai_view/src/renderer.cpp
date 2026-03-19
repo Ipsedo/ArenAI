@@ -8,7 +8,7 @@
 #include <arenai_view/errors.h>
 #include <arenai_view/renderer.h>
 
-AbstractGLContext::AbstractGLContext() {}
+AbstractGLContext::AbstractGLContext() = default;
 
 void AbstractGLContext::make_current() {
 
@@ -25,9 +25,9 @@ void AbstractGLContext::release_current() {
  */
 
 Renderer::Renderer(
-    const std::shared_ptr<AbstractGLContext> &gl_context, const int width, const int height,
-    const glm::vec3 light_pos, const std::shared_ptr<Camera> &camera)
-    : width(width), height(height), light_pos(light_pos), gl_context(gl_context), camera(camera) {}
+    const std::shared_ptr<AbstractGLContext> &gl_context, const glm::vec3 light_pos,
+    const std::shared_ptr<Camera> &camera)
+    : light_pos(light_pos), gl_context(gl_context), camera(camera) {}
 
 void Renderer::add_drawable(const std::string &name, std::unique_ptr<Drawable> drawable) {
     drawables.insert({name, std::move(drawable)});
@@ -43,7 +43,8 @@ void Renderer::draw(const std::vector<std::tuple<std::string, glm::mat4>> &model
     const glm::mat4 view_matrix = glm::lookAt(camera_pos, camera->look(), camera->up());
 
     const glm::mat4 proj_matrix = glm::perspective(
-        static_cast<float>(M_PI) / 4.f, static_cast<float>(width) / static_cast<float>(height), 1.f,
+        static_cast<float>(M_PI) / 4.f,
+        static_cast<float>(get_width()) / static_cast<float>(get_height()), 1.f,
         2000.f * std::sqrtf(3.f));
 
     for (const auto &[name, m_matrix]: model_matrices) {
@@ -55,10 +56,6 @@ void Renderer::draw(const std::vector<std::tuple<std::string, glm::mat4>> &model
 
     on_end_frame(gl_context);
 }
-
-int Renderer::get_width() const { return width; }
-
-int Renderer::get_height() const { return height; }
 
 void Renderer::make_current() const { gl_context->make_current(); }
 
@@ -87,7 +84,7 @@ Renderer::~Renderer() {
 PlayerRenderer::PlayerRenderer(
     const std::shared_ptr<AbstractGLContext> &gl_context, const int width, const int height,
     const glm::vec3 &lightPos, const std::shared_ptr<Camera> &camera)
-    : Renderer(gl_context, width, height, lightPos, camera), hud_drawables() {}
+    : Renderer(gl_context, lightPos, camera), width(width), height(height), hud_drawables() {}
 
 void PlayerRenderer::add_hud_drawable(std::unique_ptr<HUDDrawable> hud_drawable) {
     hud_drawables.push_back(std::move(hud_drawable));
@@ -120,3 +117,12 @@ void PlayerRenderer::on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_c
 }
 
 PlayerRenderer::~PlayerRenderer() { hud_drawables.clear(); }
+
+int PlayerRenderer::get_width() const { return width; }
+
+int PlayerRenderer::get_height() const { return height; }
+
+void PlayerRenderer::set_window_size(const int new_width, const int new_height) {
+    width = new_width;
+    height = new_height;
+}

@@ -8,7 +8,7 @@
 #include <filesystem>
 #include <vector>
 
-#include "./utils/metric.h"
+#include <arenai_train/metric.h>
 
 struct ModelOptions {
     std::vector<std::tuple<int, int>> vision_channels;

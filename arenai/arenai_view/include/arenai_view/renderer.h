@@ -38,15 +38,15 @@ public:
 class Renderer {
 public:
     Renderer(
-        const std::shared_ptr<AbstractGLContext> &gl_context, int width, int height,
-        glm::vec3 light_pos, const std::shared_ptr<Camera> &camera);
+        const std::shared_ptr<AbstractGLContext> &gl_context, glm::vec3 light_pos,
+        const std::shared_ptr<Camera> &camera);
     virtual void add_drawable(const std::string &name, std::unique_ptr<Drawable> drawable);
     virtual void remove_drawable(const std::string &name);
 
     void draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices);
 
-    virtual int get_width() const;
-    virtual int get_height() const;
+    virtual int get_width() const = 0;
+    virtual int get_height() const = 0;
 
     void make_current() const;
     void release_current() const;
@@ -59,9 +59,6 @@ protected:
     virtual void on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_context) = 0;
 
 private:
-    int width;
-    int height;
-
     glm::vec3 light_pos;
 
     std::map<std::string, std::unique_ptr<Drawable>> drawables;
@@ -79,6 +76,12 @@ public:
 
     void add_hud_drawable(std::unique_ptr<HUDDrawable> hud_drawable);
 
+    int get_width() const override;
+
+    int get_height() const override;
+
+    void set_window_size(int new_width, int new_height);
+
     ~PlayerRenderer() override;
 
 protected:
@@ -87,6 +90,9 @@ protected:
     void on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_context) override;
 
 private:
+    int width;
+    int height;
+
     std::vector<std::unique_ptr<HUDDrawable>> hud_drawables;
 };
 

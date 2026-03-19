@@ -7,14 +7,7 @@
 #include <argparse/argparse.hpp>
 
 #include "./train.h"
-
-struct vision_channels {
-    std::vector<std::tuple<int, int>> channels;
-};
-
-struct group_norm_nums {
-    std::vector<int> groups;
-};
+#include "./utils/cli_parser.h"
 
 int main(const int argc, char **argv) {
     argparse::ArgumentParser parser("arenai train");
@@ -25,68 +18,27 @@ int main(const int argc, char **argv) {
     // model
     parser.add_argument("--vision_channels")
         .default_value<vision_channels>(
-            {{{3, 8}, {8, 16}, {16, 32}, {32, 48}, {48, 64}, {64, 96}, {96, 128}}})
-        .action([](const std::string &value) -> vision_channels {
-            const std::regex regex_match(
-                R"(^ *\[(?: *\( *\d+ *, *\d+ *\) *,)* *\( *\d+ *, *\d+ *\) *] *$)");
-            const std::regex regex_layer(R"(\( *\d+ *, *\d+ *\))");
-            const std::regex regex_channel(R"(\d+)");
-
-            if (!std::regex_match(value.begin(), value.end(), regex_match))
-                throw std::invalid_argument(
-                    "invalid --vision_channels format, usage : [(10, 20), (20, 40), ...]");
-
-            vision_channels vision_channels;
-
-            std::sregex_iterator it_layer(value.begin(), value.end(), regex_layer);
-            for (const std::sregex_iterator end; it_layer != end; ++it_layer) {
-                const auto layer_str = it_layer->str();
-
-                const std::sregex_iterator it_channel(
-                    layer_str.begin(), layer_str.end(), regex_channel);
-
-                const int c_i = std::stoi(it_channel->str());
-                const int c_o = std::stoi(std::next(it_channel)->str());
-
-                vision_channels.channels.emplace_back(c_i, c_o);
-            }
-
-            return vision_channels;
-        });
+            {{{3, 8}, {8, 16}, {16, 32}, {32, 64}, {64, 128}, {128, 256}}})
+        .action(parse_cli_vision_channels);
     parser.add_argument("--group_norm_nums")
-        .default_value<group_norm_nums>({{2, 4, 8, 12, 16, 24, 32}})
-        .action([](const std::string &value) -> group_norm_nums {
-            const std::regex regex_match(R"(^ *\[(?: *\d+ *,)* *\d+ *] *$)");
-            const std::regex regex_groups(R"(\d+)");
-
-            if (!std::regex_match(value.begin(), value.end(), regex_match))
-                throw std::invalid_argument(
-                    "invalid --group_norm_nums format, usage : [4, 8, 16, ...]");
-
-            group_norm_nums group_nums;
-
-            std::sregex_iterator it_layer(value.begin(), value.end(), regex_groups);
-            for (const std::sregex_iterator end; it_layer != end; ++it_layer)
-                group_nums.groups.emplace_back(std::stoi(it_layer->str()));
-
-            return group_nums;
-        });
-    parser.add_argument("--sensors_hidden_size").scan<'i', int>().default_value(128);
+        .default_value<group_norm_nums>({{2, 4, 8, 16, 32, 64}})
+        .action(parse_cli_group_norms);
+    parser.add_argument("--sensors_hidden_size").scan<'i', int>().default_value(256);
     parser.add_argument("--actions_hidden_size").scan<'i', int>().default_value(16);
-    parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(768);
-    parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(768);
+    parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(1536);
+    parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(1536);
     parser.add_argument("--tau").scan<'g', float>().default_value(0.005f);
     parser.add_argument("--gamma").scan<'g', float>().default_value(0.99f);
     parser.add_argument("--initial_alpha").scan<'g', float>().default_value(1.f);
 
     // train
-    parser.add_argument("--nb_tanks").scan<'i', int>().default_value(8);
+    parser.add_argument("--nb_tanks").scan<'i', int>().default_value(16);
     parser.add_argument("--output_folder").required();
     parser.add_argument("--asset_folder").required();
     parser.add_argument("--learning_rate").scan<'g', float>().default_value(3e-4f);
     parser.add_argument("--potential_reward_scale").scan<'g', float>().default_value(1.f);
     parser.add_argument("--epochs").scan<'i', int>().default_value(16);
-    parser.add_argument("--batch_size").scan<'i', int>().default_value(256);
+    parser.add_argument("--batch_size").scan<'i', int>().default_value(512);
     parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60 * 3);
     parser.add_argument("--nb_episodes").scan<'i', int>().default_value(50000);
     parser.add_argument("--replay_buffer_size").scan<'i', int>().default_value(100000);

@@ -2,9 +2,9 @@
 // Created by samuel on 12/10/2025.
 //
 
-#include "./metric.h"
-
 #include <numeric>
+
+#include <arenai_train/metric.h>
 
 Metric::Metric(
     const std::string &name, const int window_size, const int precision, const bool scientific)

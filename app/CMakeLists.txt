@@ -14,7 +14,7 @@ include(FetchContent)
 set(ET_VENV "${CMAKE_CURRENT_BINARY_DIR}/.venv_et")
 execute_process(
         COMMAND bash -lc
-        "/usr/bin/python3.12 -m venv \"${ET_VENV}\" \
+        "/usr/bin/python3.13 -m venv \"${ET_VENV}\" \
         && ${ET_VENV}/bin/pip install --upgrade pip pyyaml \
         && ${ET_VENV}/bin/pip install torch --index-url https://download.pytorch.org/whl/cpu"
         COMMAND_ECHO STDOUT

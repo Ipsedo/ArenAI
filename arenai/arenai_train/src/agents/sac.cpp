@@ -8,6 +8,7 @@
 
 #include "../distributions/multinomial.h"
 #include "../distributions/truncated_normal.h"
+#include "../utils/loader.h"
 #include "../utils/print_module.h"
 #include "../utils/saver.h"
 #include "../utils/target_update.h"
@@ -22,16 +23,16 @@ SacAgent::SacAgent(
         nb_sensors, nb_continuous_actions, nb_discrete_actions, hidden_size_sensors,
         actor_hidden_size, vision_channels, group_norm_nums)),
       critic_1(std::make_shared<QFunction>(
-          nb_sensors, nb_continuous_actions + nb_discrete_actions, hidden_size_sensors,
+          nb_sensors, nb_continuous_actions, nb_discrete_actions, hidden_size_sensors,
           hidden_size_actions, critic_hidden_size, vision_channels, group_norm_nums)),
       critic_2(std::make_shared<QFunction>(
-          nb_sensors, nb_continuous_actions + nb_discrete_actions, hidden_size_sensors,
+          nb_sensors, nb_continuous_actions, nb_discrete_actions, hidden_size_sensors,
           hidden_size_actions, critic_hidden_size, vision_channels, group_norm_nums)),
       target_critic_1(std::make_shared<QFunction>(
-          nb_sensors, nb_continuous_actions + nb_discrete_actions, hidden_size_sensors,
+          nb_sensors, nb_continuous_actions, nb_discrete_actions, hidden_size_sensors,
           hidden_size_actions, critic_hidden_size, vision_channels, group_norm_nums)),
       target_critic_2(std::make_shared<QFunction>(
-          nb_sensors, nb_continuous_actions + nb_discrete_actions, hidden_size_sensors,
+          nb_sensors, nb_continuous_actions, nb_discrete_actions, hidden_size_sensors,
           hidden_size_actions, critic_hidden_size, vision_channels, group_norm_nums)),
       alpha_continuous(std::make_shared<AlphaParameter>(initial_alpha)),
       alpha_discrete(std::make_shared<AlphaParameter>(initial_alpha)),
@@ -53,8 +54,8 @@ SacAgent::SacAgent(
       alpha_continuous_metric(std::make_shared<Metric>("alpha_c", metric_window_size)),
       alpha_discrete_metric(std::make_shared<Metric>("alpha_d", metric_window_size)), tau(tau),
       gamma(gamma), continous_target_entropy(
-                        truncated_normal_target_entropy(nb_continuous_actions, -1.f, 1.f, 1.f)),
-      discrete_target_entropy(multinomial_target_entropy(0.4f)) {
+                        truncated_normal_target_entropy(nb_continuous_actions, -1.f, 1.f, 0.1f)),
+      discrete_target_entropy(multinomial_target_entropy(nb_discrete_actions, 0.1f)) {
 
     hard_update(target_critic_1, critic_1);
     hard_update(target_critic_2, critic_2);
@@ -69,16 +70,12 @@ SacAgent::SacAgent(
 }
 
 agent_response SacAgent::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
-    const auto &[mu, sigma, discrete] = actor->act(vision, sensors);
+    const auto &[mu, sigma, discrete_proba] = actor->act(vision, sensors);
 
     const auto continuous_action = truncated_normal_sample(mu, sigma, -1.f, 1.f);
-    const auto continuous_log_proba =
-        truncated_normal_log_pdf(continuous_action, mu, sigma, -1.f, 1.f).sum(-1, true);
+    const auto discrete_action = multinomial_sample(discrete_proba);
 
-    const auto discrete_action = multinomial_sample(discrete);
-    const auto discrete_log_proba = multinomial_log_proba(discrete_action, discrete);
-
-    return {continuous_action, continuous_log_proba, discrete_action, discrete_log_proba};
+    return {continuous_action, discrete_action};
 }
 
 void SacAgent::train(
@@ -94,7 +91,7 @@ void SacAgent::train(
         {
             torch::NoGradGuard no_grad;
 
-            const auto [next_mu, next_sigma, next_discrete] =
+            const auto [next_mu, next_sigma, next_discrete_proba] =
                 actor->act(next_state.vision, next_state.proprioception);
 
             const auto next_continuous_action =
@@ -103,15 +100,14 @@ void SacAgent::train(
                 -truncated_normal_log_pdf(next_continuous_action, next_mu, next_sigma, -1.f, 1.f)
                      .sum(-1, true);
 
-            const auto next_discrete_action = multinomial_sample(next_discrete);
-            const auto next_discrete_entropy = multinomial_entropy(next_discrete);
+            const auto next_discrete_entropy = multinomial_entropy(next_discrete_proba);
 
-            const auto next_action = torch::cat({next_continuous_action, next_discrete_action}, -1);
-
-            const auto next_target_q_value_1 =
-                target_critic_1->value(next_state.vision, next_state.proprioception, next_action);
-            const auto next_target_q_value_2 =
-                target_critic_2->value(next_state.vision, next_state.proprioception, next_action);
+            const auto next_target_q_value_1 = target_critic_1->value_expectation(
+                next_state.vision, next_state.proprioception, next_continuous_action,
+                next_discrete_proba);
+            const auto next_target_q_value_2 = target_critic_2->value_expectation(
+                next_state.vision, next_state.proprioception, next_continuous_action,
+                next_discrete_proba);
 
             target_q_values = reward
                               + (1.f - done.to(torch::kFloat)) * gamma
@@ -120,11 +116,9 @@ void SacAgent::train(
                                        + alpha_discrete->alpha() * next_discrete_entropy);
         }
 
-        const auto concat_action =
-            torch::cat({action.continuous_action, action.discrete_action}, -1);
-
         // critic 1
-        const auto q_value_1 = critic_1->value(state.vision, state.proprioception, concat_action);
+        const auto q_value_1 = critic_1->value_ohe(
+            state.vision, state.proprioception, action.continuous_action, action.discrete_action);
         const auto critic_1_loss = torch::mse_loss(q_value_1, target_q_values, at::Reduction::Mean);
 
         critic_1_optim->zero_grad();
@@ -132,7 +126,8 @@ void SacAgent::train(
         critic_1_optim->step();
 
         // critic 2
-        const auto q_value_2 = critic_2->value(state.vision, state.proprioception, concat_action);
+        const auto q_value_2 = critic_2->value_ohe(
+            state.vision, state.proprioception, action.continuous_action, action.discrete_action);
         const auto critic_2_loss = torch::mse_loss(q_value_2, target_q_values, at::Reduction::Mean);
 
         critic_2_optim->zero_grad();
@@ -140,7 +135,7 @@ void SacAgent::train(
         critic_2_optim->step();
 
         // policy
-        const auto [curr_mu, curr_sigma, curr_discrete] =
+        const auto [curr_mu, curr_sigma, curr_discrete_proba] =
             actor->act(state.vision, state.proprioception);
 
         const auto curr_continuous_action = truncated_normal_sample(curr_mu, curr_sigma, -1.f, 1.f);
@@ -148,15 +143,12 @@ void SacAgent::train(
             -truncated_normal_log_pdf(curr_continuous_action, curr_mu, curr_sigma, -1.f, 1.f)
                  .sum(-1, true);
 
-        const auto curr_discrete_action = multinomial_sample(curr_discrete);
-        const auto curr_discrete_entropy = multinomial_entropy(curr_discrete);
+        const auto curr_discrete_entropy = multinomial_entropy(curr_discrete_proba);
 
-        const auto curr_action = torch::cat({curr_continuous_action, curr_discrete_action}, -1);
-
-        const auto curr_q_value_1 =
-            critic_1->value(state.vision, state.proprioception, curr_action);
-        const auto curr_q_value_2 =
-            critic_2->value(state.vision, state.proprioception, curr_action);
+        const auto curr_q_value_1 = critic_1->value_expectation(
+            state.vision, state.proprioception, curr_continuous_action, curr_discrete_proba);
+        const auto curr_q_value_2 = critic_2->value_expectation(
+            state.vision, state.proprioception, curr_continuous_action, curr_discrete_proba);
         const auto q_value = torch::min(curr_q_value_1, curr_q_value_2);
 
         const auto actor_loss = -torch::mean(
@@ -247,14 +239,39 @@ void SacAgent::save(const std::filesystem::path &output_folder) {
     critic_repr_file.close();
 }
 
+void SacAgent::load(const std::filesystem::path &input_folder) {
+    // Models
+    load_torch(input_folder, actor, "actor.pt");
+
+    load_torch(input_folder, critic_1, "critic_1.pt");
+    load_torch(input_folder, critic_2, "critic_2.pt");
+
+    load_torch(input_folder, target_critic_1, "target_critic_1.pt");
+    load_torch(input_folder, target_critic_2, "target_critic_2.pt");
+
+    load_torch(input_folder, alpha_continuous, "alpha_continuous.pt");
+    load_torch(input_folder, alpha_discrete, "alpha_discrete.pt");
+
+    // Optimizers
+    load_torch(input_folder, actor_optim, "actor_optim.pt");
+
+    load_torch(input_folder, critic_1_optim, "critic_1_optim.pt");
+    load_torch(input_folder, critic_2_optim, "critic_2_optim.pt");
+
+    load_torch(input_folder, alpha_continuous_optim, "alpha_continuous_optim.pt");
+    load_torch(input_folder, alpha_discrete_optim, "alpha_discrete_optim.pt");
+}
+
 void SacAgent::set_train(const bool train) {
     actor->train(train);
     critic_1->train(train);
     critic_2->train(train);
-    target_critic_1->train(train);
-    target_critic_2->train(train);
     alpha_continuous->train(train);
     alpha_discrete->train(train);
+
+    // force eval for target critics
+    target_critic_1->train(false);
+    target_critic_2->train(false);
 }
 
 void SacAgent::to(const torch::Device device) {

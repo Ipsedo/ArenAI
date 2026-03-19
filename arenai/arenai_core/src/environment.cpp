@@ -15,38 +15,31 @@
 #include <arenai_view/cubemap.h>
 #include <arenai_view/specular.h>
 
-image<uint8_t>
-VisionDoubleBuffer::random_image(std::mt19937 &rng, const int height, const int width) {
-    std::uniform_int_distribution<u_int8_t> u_dist(0, 255);
-
-    const auto nb_pixels = 3 * height * width;
-    image img(std::vector<uint8_t>(nb_pixels, 0));
-
-    for (int j = 0; j < nb_pixels; j++) img.pixels[j] = u_dist(rng);
-
-    return img;
+image<uint8_t> VisionDoubleBuffer::black_image(const int height, const int width) {
+    return {std::vector<uint8_t>(3 * height * width, 0)};
 }
 
-VisionDoubleBuffer::VisionDoubleBuffer(std::mt19937 &rng, const int height, const int width)
-    : LockedBuffer(random_image(rng, height, width)) {}
+VisionDoubleBuffer::VisionDoubleBuffer(const int height, const int width)
+    : DoubleBuffer(black_image(height, width)) {}
 
 ModelMatricesDoubleBuffer::ModelMatricesDoubleBuffer()
-    : LockedBuffer(std::vector<std::tuple<std::string, glm::mat4>>()) {}
+    : DoubleBuffer(std::vector<std::tuple<std::string, glm::mat4>>()) {}
 
 BaseTanksEnvironment::BaseTanksEnvironment(
     const std::shared_ptr<AbstractFileReader> &file_reader,
     const std::shared_ptr<AbstractGLContext> &gl_context, const int nb_tanks,
     float wanted_frequency, const bool thread_sleep)
     : wanted_frequency(wanted_frequency), nb_tanks(nb_tanks), thread_sleep(thread_sleep),
-      threads_running(false), physic_engine(std::make_unique<PhysicEngine>(wanted_frequency)),
-      model_matrices(std::make_unique<ModelMatricesDoubleBuffer>()), gl_context(gl_context),
+      threads_running(false), model_matrices(std::make_unique<ModelMatricesDoubleBuffer>()),
+      physic_engine(std::make_unique<PhysicEngine>(wanted_frequency)),
       nb_reset_frames(static_cast<int>(4.f / wanted_frequency)),
-      reset_barrier(std::make_unique<std::barrier<>>(nb_tanks + 1)), rng(dev()),
-      file_reader(file_reader) {
+      reset_barrier(std::make_unique<std::barrier<>>(nb_tanks + 1)),
+      loop_barrier(std::make_unique<std::barrier<>>(nb_tanks + 1)), gl_context(gl_context),
+      rng(dev()), file_reader(file_reader) {
 
     for (int i = 0; i < nb_tanks; i++)
         enemy_visions.push_back(
-            std::make_unique<VisionDoubleBuffer>(rng, ENEMY_VISION_HEIGHT, ENEMY_VISION_WIDTH));
+            std::make_unique<VisionDoubleBuffer>(ENEMY_VISION_HEIGHT, ENEMY_VISION_WIDTH));
 }
 
 std::vector<std::tuple<State, Reward, IsDone>>
@@ -64,10 +57,13 @@ BaseTanksEnvironment::step(const float time_delta, const std::vector<Action> &ac
     physic_engine->step(time_delta);
 
     // 3. set model matrices double buffer and draw scene
-    const auto curr_model_matrices = publish_and_get_model_matrices();
-    on_draw(curr_model_matrices);
+    const auto curr_model_matrices = get_model_matrices();
+    model_matrices->write(curr_model_matrices);
 
-    // 5. build State
+    on_draw(curr_model_matrices);
+    loop_barrier->arrive_and_wait();
+
+    // 4. build State
     std::vector<std::tuple<State, Reward, IsDone>> result;
     result.reserve(tank_factories.size());
 
@@ -141,11 +137,12 @@ std::vector<State> BaseTanksEnvironment::reset_physics() {
 
     for (int i = 0; i < nb_reset_frames; i++) physic_engine->step(wanted_frequency);
 
+    model_matrices->write(get_model_matrices());
+
     std::vector<State> states;
+    states.reserve(tank_factories.size());
     for (int i = 0; i < tank_factories.size(); i++)
         states.emplace_back(enemy_visions[i]->read_copy(), tank_factories[i]->get_proprioception());
-
-    publish_and_get_model_matrices();
 
     return states;
 }
@@ -164,11 +161,13 @@ void BaseTanksEnvironment::reset_drawables(
     gl_context->make_current();
 }
 
+void BaseTanksEnvironment::reset_drawables() { reset_drawables(gl_context); }
+
 void BaseTanksEnvironment::stop_drawing() {
     if (threads_running.load(std::memory_order_acquire)) kill_threads();
 }
 
-void BaseTanksEnvironment::worker_enemy_vision(
+std::unique_ptr<PBufferRenderer> BaseTanksEnvironment::construct_pbuffer_renderer(
     const int index, const std::unique_ptr<EnemyTankFactory> &tank_factory) {
     std::seed_seq seq{
         dev(), static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this)),
@@ -205,6 +204,13 @@ void BaseTanksEnvironment::worker_enemy_vision(
                       shell_color, shell_color, 50.f, shape->get_id()));
     }
 
+    return renderer;
+}
+
+void BaseTanksEnvironment::worker_enemy_vision(
+    const int index, const std::unique_ptr<EnemyTankFactory> &tank_factory) {
+    auto renderer = construct_pbuffer_renderer(index, tank_factory);
+
     const auto frame_dt = std::chrono::milliseconds(static_cast<int>(wanted_frequency * 1000.f));
 
     while (threads_running.load(std::memory_order_acquire)) {
@@ -217,6 +223,8 @@ void BaseTanksEnvironment::worker_enemy_vision(
         auto now = std::chrono::steady_clock::now();
         auto dt = now - last_time;
 
+        loop_barrier->arrive_and_wait();
+
         if (thread_sleep)
             std::this_thread::sleep_for(
                 std::max(frame_dt - dt, std::chrono::steady_clock::duration::zero()));
@@ -225,7 +233,8 @@ void BaseTanksEnvironment::worker_enemy_vision(
     renderer.reset();
     eglReleaseThread();
 
-    reset_barrier->arrive_and_drop();
+    loop_barrier->arrive_and_drop();
+    reset_barrier->arrive_and_wait();
 }
 
 void BaseTanksEnvironment::start_threads() {
@@ -233,13 +242,14 @@ void BaseTanksEnvironment::start_threads() {
     enemy_visions.reserve(nb_tanks);
     for (int i = 0; i < nb_tanks; i++)
         enemy_visions.push_back(
-            std::make_unique<VisionDoubleBuffer>(rng, ENEMY_VISION_HEIGHT, ENEMY_VISION_WIDTH));
+            std::make_unique<VisionDoubleBuffer>(ENEMY_VISION_HEIGHT, ENEMY_VISION_WIDTH));
 
     threads_running.store(true, std::memory_order_release);
     pool.clear();
     pool.reserve(tank_factories.size());
 
     reset_barrier = std::make_unique<std::barrier<>>(nb_tanks + 1);
+    loop_barrier = std::make_unique<std::barrier<>>(nb_tanks + 1);
 
     for (int i = 0; i < tank_factories.size(); ++i)
         pool.emplace_back([this, i] { worker_enemy_vision(i, tank_factories[i]); });
@@ -250,7 +260,8 @@ void BaseTanksEnvironment::kill_threads() {
 
     threads_running.store(false, std::memory_order_release);
 
-    reset_barrier->arrive_and_drop();
+    loop_barrier->arrive_and_drop();
+    reset_barrier->arrive_and_wait();
 
     for (auto &t: pool)
         if (t.joinable()) t.join();
@@ -258,8 +269,7 @@ void BaseTanksEnvironment::kill_threads() {
     pool.clear();
 }
 
-std::vector<std::tuple<std::string, glm::mat4>>
-BaseTanksEnvironment::publish_and_get_model_matrices() {
+std::vector<std::tuple<std::string, glm::mat4>> BaseTanksEnvironment::get_model_matrices() const {
     std::vector<std::tuple<std::string, glm::mat4>> curr_model_matrices;
 
     const auto items = physic_engine->get_items();
@@ -268,8 +278,6 @@ BaseTanksEnvironment::publish_and_get_model_matrices() {
         curr_model_matrices.emplace_back(item->get_name(), item->get_model_matrix());
 
     curr_model_matrices.emplace_back("cubemap", glm::scale(glm::mat4(1.f), glm::vec3(2000.f)));
-
-    model_matrices->write(curr_model_matrices);
 
     return curr_model_matrices;
 }

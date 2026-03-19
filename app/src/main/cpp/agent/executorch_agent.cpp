@@ -29,8 +29,10 @@ float truncated_normal_sample(
 
     const auto safe_sigma = std::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
 
-    const auto alpha = (min_value - mu) / safe_sigma;
-    const auto beta = (max_value - mu) / safe_sigma;
+    const auto alpha =
+        std::clamp((min_value - mu) / safe_sigma, -ALPHA_BETA_BOUND, ALPHA_BETA_BOUND);
+    const auto beta =
+        std::clamp((max_value - mu) / safe_sigma, -ALPHA_BETA_BOUND, ALPHA_BETA_BOUND);
 
     const auto Z = std::max(theta(beta) - theta(alpha), EPSILON);
 

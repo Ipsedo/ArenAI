@@ -10,15 +10,12 @@
 
 #include <torch/torch.h>
 
-#include "../utils/metric.h"
-#include "../utils/replay_buffer.h"
+#include "./metric.h"
+#include "./replay_buffer.h"
 
 struct agent_response {
     torch::Tensor continuous_action;
-    torch::Tensor continuous_log_proba;
-
     torch::Tensor discrete_action;
-    torch::Tensor discrete_log_proba;
 };
 
 class AbstractAgent {
@@ -34,6 +31,8 @@ public:
     virtual std::vector<std::shared_ptr<Metric>> get_metrics() = 0;
 
     virtual void save(const std::filesystem::path &output_folder) = 0;
+    virtual void load(const std::filesystem::path &input_folder) = 0;
+
     virtual void to(torch::Device device) = 0;
 
     virtual int count_parameters() = 0;

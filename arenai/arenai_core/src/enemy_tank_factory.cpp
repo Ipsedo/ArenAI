@@ -35,27 +35,25 @@ float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory
     return std::acos(d);
 }
 
-float EnemyTankFactory::softmax_scores(const std::vector<float> &scores) const {
-    float max_score = -std::numeric_limits<float>::infinity();
-    for (const float score: scores) max_score = std::max(softmax_beta * score, max_score);
+float EnemyTankFactory::softmax_scores(
+    const std::vector<float> &distances, const std::vector<float> &scores) const {
+    float max_distance = 0;
+    for (const float distance: distances)
+        max_distance = std::max(softmax_beta * distance, max_distance);
 
     float numerator = 0.f, denominator = 0.f;
 
-    for (const float score: scores) {
-        const float weight = std::exp(softmax_beta * score - max_score);
+    for (int i = 0; i < scores.size(); i++) {
+        const float weight = std::exp(softmax_beta * distances[i] - max_distance);
 
-        numerator += score * weight;
+        numerator += scores[i] * weight;
         denominator += weight;
     }
     return denominator > 0.f ? numerator / denominator : 0.f;
 }
 
-float EnemyTankFactory::quality_score(const float distance, const float angle) const {
-    const float angle_quality = std::exp(-0.5f * std::pow(angle / sigma_angle, 2.f));
-    const float distance_quality =
-        std::exp(-0.5f * std::pow((distance - optimal_distance) / sigma_distance, 2.f));
-
-    return angle_quality * distance_quality;
+float EnemyTankFactory::quality_score(const float angle) const {
+    return std::exp(-0.5f * std::pow(angle / sigma_angle, 2.f));
 }
 
 float EnemyTankFactory::get_reward(
@@ -72,7 +70,7 @@ float EnemyTankFactory::get_reward(
     // 2. dead / suicide penalty
     const auto dead_penalty = is_dead() ? (is_suicide() ? -0.5f : -1.f) : 0.f;
 
-    // 3. shoot penalty
+    // 3. shoot penalty / reward
     const auto quality_score = get_phi(tank_factories);
     constexpr float fire_cost = 0.1f;
     constexpr float good_fire_reward = 0.2f;
@@ -94,6 +92,7 @@ float EnemyTankFactory::get_phi(
     const auto chassis_pos = glm::vec3(get_chassis()->get_model_matrix() * world_center);
 
     std::vector<float> quality_scores;
+    std::vector<float> distances;
 
     for (const auto &other: tank_factories) {
         if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;
@@ -103,10 +102,11 @@ float EnemyTankFactory::get_phi(
         const float distance = glm::length(chassis_pos - other_pos);
         const float angle = compute_aim_angle(other);
 
-        quality_scores.push_back(quality_score(distance, angle));
+        quality_scores.push_back(quality_score(angle));
+        distances.push_back(distance);
     }
 
-    return softmax_scores(quality_scores);
+    return softmax_scores(distances, quality_scores);
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

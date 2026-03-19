@@ -21,25 +21,19 @@ MouseKeyboardPlayerControllerHandler::to_output(const GlfwInput event) {
 
     bool need_fire = false;
 
-    constexpr float speed_factor = 0.01f;
-    constexpr float dir_factor = 0.05f;
-
-    if (event.key_action == GLFW_REPEAT || event.key_action == GLFW_PRESS) switch (event.key) {
-            case GLFW_KEY_W: current_speed += speed_factor; break;
-            case GLFW_KEY_S: current_speed -= speed_factor; break;
-            case GLFW_KEY_A: current_dir -= dir_factor; break;
-            case GLFW_KEY_D: current_dir += dir_factor; break;
+    if (event.key_action == GLFW_PRESS) switch (event.key) {
+            case GLFW_KEY_W: current_speed = 1.f; break;
+            case GLFW_KEY_S: current_speed = -1.f; break;
+            case GLFW_KEY_A: current_dir = -1.f; break;
+            case GLFW_KEY_D: current_dir = 1.f; break;
             case GLFW_KEY_SPACE: need_fire = true; break;
             default: break;
         }
 
     if (event.key_action == GLFW_RELEASE) {
         if (event.key == GLFW_KEY_W || event.key == GLFW_KEY_S) current_speed = 0.f;
-        if (event.key == GLFW_KEY_Z || event.key == GLFW_KEY_D) current_dir = 0.f;
+        if (event.key == GLFW_KEY_A || event.key == GLFW_KEY_D) current_dir = 0.f;
     }
-
-    current_speed = std::ranges::clamp(current_speed, -1.f, 1.f);
-    current_dir = std::clamp(current_dir, -1.f, 1.f);
 
     constexpr float factor = 0.001f;
 

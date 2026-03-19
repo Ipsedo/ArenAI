@@ -19,10 +19,6 @@ public:
         const std::string &asset_folder_path, GLFWwindow *glfw_window, int nb_tanks,
         float wanted_frequency);
 
-    void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) const;
-    void mouse_button_callback(GLFWwindow *window, int button, int action, int mods) const;
-    void cursor_position_callback(GLFWwindow *window, double xpos, double ypos) const;
-
 protected:
     void on_draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) override;
 
@@ -44,6 +40,10 @@ private:
     int window_height;
 
     float wanted_frequency;
+
+    void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) const;
+    void mouse_button_callback(GLFWwindow *window, int button, int action, int mods) const;
+    void cursor_position_callback(GLFWwindow *window, double xpos, double ypos) const;
 
     void global_glfw_callback(
         GLFWwindow *window, int key, int key_action, float mouse_x, float mouse_y, int mouse_button,

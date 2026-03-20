@@ -86,3 +86,4 @@ target_link_libraries(
         soil2
         argparse
 )
+target_include_directories(arenai_train_lib PUBLIC soil2)

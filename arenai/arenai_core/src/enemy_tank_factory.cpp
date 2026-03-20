@@ -9,6 +9,7 @@
 #include <arenai_core/enemy_tank_factory.h>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
+#include <torch/csrc/jit/ir/attributes.h>
 
 EnemyTankFactory::EnemyTankFactory(
     const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
@@ -35,25 +36,26 @@ float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory
     return std::acos(d);
 }
 
-float EnemyTankFactory::softmax_scores(
-    const std::vector<float> &distances, const std::vector<float> &scores) const {
-    float max_distance = 0;
-    for (const float distance: distances)
-        max_distance = std::max(softmax_beta * distance, max_distance);
+float EnemyTankFactory::softmax_scores(const std::vector<float> &scores) const {
+    float max_score = 0;
+    for (const float score: scores) max_score = std::max(softmax_beta * score, max_score);
 
     float numerator = 0.f, denominator = 0.f;
 
-    for (int i = 0; i < scores.size(); i++) {
-        const float weight = std::exp(softmax_beta * distances[i] - max_distance);
+    for (const float score: scores) {
+        const float weight = std::exp(softmax_beta * score - max_score);
 
-        numerator += scores[i] * weight;
+        numerator += score * weight;
         denominator += weight;
     }
     return denominator > 0.f ? numerator / denominator : 0.f;
 }
 
-float EnemyTankFactory::quality_score(const float angle) const {
-    return std::exp(-0.5f * std::pow(angle / sigma_angle, 2.f));
+float EnemyTankFactory::quality_score(const float distance, const float angle) const {
+    const float angle_quality = std::exp(-0.5f * std::pow(angle / sigma_angle, 2.f));
+    const float distance_quality =
+        std::exp(-0.5f * std::pow((distance - optimal_distance) / sigma_distance, 2.f));
+    return angle_quality * distance_quality;
 }
 
 float EnemyTankFactory::get_reward(
@@ -102,11 +104,11 @@ float EnemyTankFactory::get_phi(
         const float distance = glm::length(chassis_pos - other_pos);
         const float angle = compute_aim_angle(other);
 
-        quality_scores.push_back(quality_score(angle));
+        quality_scores.push_back(quality_score(distance, angle));
         distances.push_back(distance);
     }
 
-    return softmax_scores(distances, quality_scores);
+    return softmax_scores(quality_scores);
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

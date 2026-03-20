@@ -5,6 +5,7 @@
 #ifndef ARENAI_ENGINE_H
 #define ARENAI_ENGINE_H
 
+#include <functional>
 #include <shared_mutex>
 #include <vector>
 

@@ -77,7 +77,7 @@ target_link_libraries(
 add_library(arenai_train_lib SHARED ${ARENAI_TRAIN_SRC})
 target_link_libraries(
         arenai_train_lib
-        SHARED
+        PUBLIC
         arenai_model
         arenai_view
         arenai_utils

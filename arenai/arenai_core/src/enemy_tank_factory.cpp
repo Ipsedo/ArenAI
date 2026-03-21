@@ -38,14 +38,14 @@ float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory
 
 float EnemyTankFactory::softmax_scores(
     const std::vector<float> &distances, const std::vector<float> &scores) const {
-    float max_distance = 0;
+    float max_distance = -std::numeric_limits<float>::infinity();
     for (const float distance: distances)
-        max_distance = std::max(softmax_beta * distance, max_distance);
+        max_distance = std::max(-softmax_beta * distance, max_distance);
 
     float numerator = 0.f, denominator = 0.f;
 
     for (int i = 0; i < scores.size(); i++) {
-        const float weight = std::exp(softmax_beta * distances[i] - max_distance);
+        const float weight = std::exp(-softmax_beta * distances[i] - max_distance);
 
         numerator += scores[i] * weight;
         denominator += weight;

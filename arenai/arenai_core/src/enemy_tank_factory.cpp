@@ -9,7 +9,6 @@
 #include <arenai_core/enemy_tank_factory.h>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
-#include <torch/csrc/jit/ir/attributes.h>
 
 EnemyTankFactory::EnemyTankFactory(
     const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,

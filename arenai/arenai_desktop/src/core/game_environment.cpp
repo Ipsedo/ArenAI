@@ -133,9 +133,20 @@ void DesktopGameEnvironment::cursor_position_callback(
 }
 
 void DesktopGameEnvironment::global_glfw_callback(
-    GLFWwindow *window, const int key, const int key_action, const float mouse_x,
-    const float mouse_y, const int mouse_button, const int mouse_button_action) const {
+    GLFWwindow *window, const int key, const int key_action, const double mouse_x,
+    const double mouse_y, const int mouse_button, const int mouse_button_action) const {
 
     player_controller_handler->on_event(
-        {key, key_action, mouse_x, mouse_y, mouse_button, mouse_button_action});
+        {key, key_action, static_cast<float>(mouse_x), static_cast<float>(mouse_y), mouse_button,
+         mouse_button_action});
+}
+
+std::vector<std::tuple<State, Reward, IsDone>>
+DesktopGameEnvironment::step(const float time_delta, const std::vector<Action> &actions) {
+    double x_pos = 0, y_pos = 0;
+    glfwGetCursorPos(curr_window, &x_pos, &y_pos);
+
+    global_glfw_callback(curr_window, -1, -1, x_pos, y_pos, -1, -1);
+
+    return BaseTanksEnvironment::step(time_delta, actions);
 }

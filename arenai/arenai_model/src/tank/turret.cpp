@@ -24,16 +24,15 @@ TurretItem::TurretItem(
 
     hinge = new btHingeConstraint(
         *chassis, *ConvexItem::get_body(), chassis_pivot, turret_pivot, axis, axis, true);
-    hinge->setLimit(0, 0);
+    // hinge->setLimit(0, 0);
 }
 
 void TurretItem::on_input(const user_input &input) {
-    angle += -input.right_joystick.x * 2.f;
+    angle += -input.right_joystick.x;
 
-    angle = std::clamp(angle, -1.f, 1.f);
+    //angle = std::clamp(angle, -1.f, 1.f);
 
-    hinge->setLimit(
-        angle * static_cast<float>(M_PI) * 0.6f, angle * static_cast<float>(M_PI) * 0.6f);
+    hinge->setLimit(angle * static_cast<float>(M_PI), angle * static_cast<float>(M_PI));
 }
 
 std::vector<btTypedConstraint *> TurretItem::get_constraints() {

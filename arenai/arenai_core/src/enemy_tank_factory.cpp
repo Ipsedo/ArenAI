@@ -18,7 +18,7 @@ EnemyTankFactory::EnemyTankFactory(
       tank_prefix_name(tank_prefix_name), hit_reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), is_dead_already_triggered(false), optimal_distance(100.f),
-      sigma_distance(200.f), sigma_angle(static_cast<float>(M_PI) / 4.f), softmax_beta(4.f),
+      sigma_distance(200.f), sigma_angle(static_cast<float>(M_PI) / 4.f), softmax_beta(6.f),
       has_touch(false), action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
@@ -36,16 +36,18 @@ float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory
     return std::acos(d);
 }
 
-float EnemyTankFactory::softmax_scores(const std::vector<float> &scores) const {
-    float max_score = 0;
-    for (const float score: scores) max_score = std::max(softmax_beta * score, max_score);
+float EnemyTankFactory::softmax_scores(
+    const std::vector<float> &distances, const std::vector<float> &scores) const {
+    float max_distance = 0;
+    for (const float distance: distances)
+        max_distance = std::max(softmax_beta * distance, max_distance);
 
     float numerator = 0.f, denominator = 0.f;
 
-    for (const float score: scores) {
-        const float weight = std::exp(softmax_beta * score - max_score);
+    for (int i = 0; i < scores.size(); i++) {
+        const float weight = std::exp(softmax_beta * distances[i] - max_distance);
 
-        numerator += score * weight;
+        numerator += scores[i] * weight;
         denominator += weight;
     }
     return denominator > 0.f ? numerator / denominator : 0.f;
@@ -74,7 +76,7 @@ float EnemyTankFactory::get_reward(
 
     // 3. shoot penalty / reward
     const auto quality_score = get_phi(tank_factories);
-    constexpr float fire_cost = 0.1f;
+    constexpr float fire_cost = 0.05f;
     constexpr float good_fire_reward = 0.2f;
     const float shoot_reward =
         action_stats->has_fire() ? quality_score * good_fire_reward - fire_cost : 0.f;
@@ -108,7 +110,7 @@ float EnemyTankFactory::get_phi(
         distances.push_back(distance);
     }
 
-    return softmax_scores(quality_scores);
+    return softmax_scores(distances, quality_scores);
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

@@ -30,13 +30,11 @@ protected:
 private:
     GLFWwindow *window;
 
-    bool first_use;
-
     float current_dir;
     float current_speed;
 
-    double last_mouse_x;
-    double last_mouse_y;
+    float current_turret_rotation;
+    float current_canon_rotation;
 };
 
 #endif//ARENAI_DESKTOP_PLAYER_CONTROLLER_HANDLER_H

@@ -35,6 +35,8 @@ private:
 
     float current_turret_rotation;
     float current_canon_rotation;
+
+    bool cursor_captured;
 };
 
 #endif//ARENAI_DESKTOP_PLAYER_CONTROLLER_HANDLER_H

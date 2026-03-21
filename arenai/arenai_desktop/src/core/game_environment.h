@@ -8,7 +8,7 @@
 #include <GLFW/glfw3.h>
 
 #include <arenai_core/environment.h>
-#include <arenai_model/tank_factory.h>
+#include <arenai_core/player_tank_factory.h>
 #include <arenai_view/renderer.h>
 
 #include "../controller/player_controller_handler.h"
@@ -21,6 +21,8 @@ public:
 
     std::vector<std::tuple<State, Reward, IsDone>>
     step(float time_delta, const std::vector<Action> &actions) override;
+
+    ~DesktopGameEnvironment() override;
 
 protected:
     void on_draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) override;
@@ -35,7 +37,7 @@ private:
     GLFWwindow *curr_window;
 
     std::shared_ptr<AbstractFileReader> asset_file_reader;
-    std::unique_ptr<TankFactory> tank_factory;
+    std::unique_ptr<PlayerTankFactory> player_tank_factory;
     std::unique_ptr<PlayerRenderer> player_renderer;
     std::unique_ptr<MouseKeyboardPlayerControllerHandler> player_controller_handler;
 

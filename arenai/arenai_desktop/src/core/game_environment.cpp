@@ -4,11 +4,13 @@
 
 #include "./game_environment.h"
 
+#include <iostream>
+
+#include <arenai_core/player_tank_factory.h>
 #include <arenai_train/file_reader.h>
 #include <arenai_view/cubemap.h>
 #include <arenai_view/specular.h>
 
-#include "../model/player_tank_factory.h"
 #include "../view/glfw_gl_context.h"
 
 DesktopGameEnvironment::DesktopGameEnvironment(
@@ -19,7 +21,7 @@ DesktopGameEnvironment::DesktopGameEnvironment(
         std::make_shared<GlfwGlContext>(glfw_window), nb_tanks, wanted_frequency, true),
       curr_window(glfw_window),
       asset_file_reader(std::make_shared<DesktopAssetFileReader>(asset_folder_path)),
-      tank_factory(std::nullptr_t()), player_renderer(std::nullptr_t()),
+      player_tank_factory(std::nullptr_t()), player_renderer(std::nullptr_t()),
       player_controller_handler(std::nullptr_t()), window_width(0.f), window_height(0.f),
       wanted_frequency(wanted_frequency) {
 
@@ -59,12 +61,12 @@ void DesktopGameEnvironment::on_draw(
 }
 
 void DesktopGameEnvironment::on_reset_physics(const std::unique_ptr<PhysicEngine> &engine) {
-    tank_factory = std::make_unique<DesktopPlayerTankFactory>(
+    player_tank_factory = std::make_unique<PlayerTankFactory>(
         asset_file_reader, "player", glm::vec3(0., -40., 40), wanted_frequency);
 
-    for (auto &item: tank_factory->get_items()) { engine->add_item(item); }
+    for (auto &item: player_tank_factory->get_items()) { engine->add_item(item); }
 
-    for (auto &item_producer: tank_factory->get_item_producers())
+    for (auto &item_producer: player_tank_factory->get_item_producers())
         engine->add_item_producer(item_producer);
 }
 
@@ -73,19 +75,19 @@ void DesktopGameEnvironment::on_reset_drawables(
     const std::shared_ptr<AbstractGLContext> &gl_context) {
     player_renderer = std::make_unique<PlayerRenderer>(
         gl_context, window_width, window_height, glm::vec3(200, 300, 200),
-        tank_factory->get_camera());
+        player_tank_factory->get_camera());
     player_renderer->make_current();
 
     player_controller_handler = std::make_unique<MouseKeyboardPlayerControllerHandler>(curr_window);
 
-    for (auto &ctrl: tank_factory->get_controllers())
+    for (auto &ctrl: player_tank_factory->get_controllers())
         player_controller_handler->add_controller(ctrl);
 
     player_renderer->add_drawable("cubemap", std::make_unique<CubeMap>(file_reader, "cubemap/1"));
 
     std::uniform_real_distribution<float> u_dist(0.f, 1.f);
 
-    for (const auto &[name, shape]: tank_factory->load_shell_shapes()) {
+    for (const auto &[name, shape]: player_tank_factory->load_shell_shapes()) {
         glm::vec4 color(u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, 1.f);
 
         player_renderer->add_drawable(
@@ -149,4 +151,8 @@ DesktopGameEnvironment::step(const float time_delta, const std::vector<Action> &
     global_glfw_callback(curr_window, -1, -1, x_pos, y_pos, -1, -1);
 
     return BaseTanksEnvironment::step(time_delta, actions);
+}
+
+DesktopGameEnvironment::~DesktopGameEnvironment() {
+    std::cout << "Final score : " << player_tank_factory->get_score() << std::endl;
 }

@@ -143,16 +143,6 @@ void DesktopGameEnvironment::global_glfw_callback(
          mouse_button_action});
 }
 
-std::vector<std::tuple<State, Reward, IsDone>>
-DesktopGameEnvironment::step(const float time_delta, const std::vector<Action> &actions) {
-    double x_pos = 0, y_pos = 0;
-    glfwGetCursorPos(curr_window, &x_pos, &y_pos);
-
-    global_glfw_callback(curr_window, -1, -1, x_pos, y_pos, -1, -1);
-
-    return BaseTanksEnvironment::step(time_delta, actions);
-}
-
 DesktopGameEnvironment::~DesktopGameEnvironment() {
     std::cout << "Final score : " << player_tank_factory->get_score() << std::endl;
 }

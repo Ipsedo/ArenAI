@@ -19,9 +19,6 @@ public:
         const std::string &asset_folder_path, GLFWwindow *glfw_window, int nb_tanks,
         float wanted_frequency);
 
-    std::vector<std::tuple<State, Reward, IsDone>>
-    step(float time_delta, const std::vector<Action> &actions) override;
-
     ~DesktopGameEnvironment() override;
 
 protected:

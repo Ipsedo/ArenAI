@@ -12,7 +12,7 @@
 #include <arenai_model/shapes.h>
 #include <arenai_utils/file_reader.h>
 
-class HeightMapItem final : public Item, public btTriangleCallback {
+class HeightMapItem final : public Item {
 public:
     HeightMapItem(
         std::string name, const std::shared_ptr<AbstractFileReader> &img_reader,
@@ -21,8 +21,6 @@ public:
     std::shared_ptr<Shape> get_shape() override;
 
     btRigidBody *get_body() override;
-
-    void processTriangle(btVector3 *triangle, int partid, int triangleindex) override;
 
     ~HeightMapItem() override;
 
@@ -33,12 +31,20 @@ private:
     std::string shape_id;
     glm::vec3 scale;
 
+    int map_width;
+    int map_height;
+
     std::vector<std::tuple<float, float, float>> vertices;
     std::vector<std::tuple<float, float, float>> normals;
 
     std::vector<float> image_grey;
     btHeightfieldTerrainShape *map;
     btRigidBody *body;
+
+    float get_height(int x, int z) const;
+    glm::vec3 compute_vertex_normal(int x, int z) const;
+    void build_render_mesh(
+        const btVector3 &aabbMin, const btVector3 &aabbMax, float min_height, float max_height);
 };
 
 #endif// ARENAI_HEIGHT_MAP_H

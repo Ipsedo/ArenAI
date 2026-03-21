@@ -43,6 +43,8 @@ private:
 
     float get_height(int x, int z) const;
     glm::vec3 compute_vertex_normal(int x, int z) const;
+    glm::vec3 make_pos(int x, int z, int min_height, int max_height) const;
+
     void build_render_mesh(
         const btVector3 &aabbMin, const btVector3 &aabbMax, float min_height, float max_height);
 };

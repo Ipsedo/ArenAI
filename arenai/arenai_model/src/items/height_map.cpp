@@ -81,22 +81,22 @@ static bool triangle_intersects_aabb(
     return true;
 }
 
+glm::vec3 HeightMapItem::make_pos(
+    const int x, const int z, const int min_height, const int max_height) const {
+    const float half_width = static_cast<float>(map_width - 1) * 0.5f;
+    const float half_length = static_cast<float>(map_height - 1) * 0.5f;
+    const float center_y = 0.5f * (min_height + max_height);
+
+    return {
+        (static_cast<float>(x) - half_width) * scale.x, (get_height(x, z) - center_y) * scale.y,
+        (static_cast<float>(z) - half_length) * scale.z};
+}
+
 void HeightMapItem::build_render_mesh(
     const btVector3 &aabbMin, const btVector3 &aabbMax, const float min_height,
     const float max_height) {
     vertices.clear();
     normals.clear();
-
-    const float half_width = static_cast<float>(map_width - 1) * 0.5f;
-    const float half_length = static_cast<float>(map_height - 1) * 0.5f;
-    const float center_y = 0.5f * (min_height + max_height);
-
-    auto make_pos = [this, half_width, half_length,
-                     center_y](const int x, const int z) -> glm::vec3 {
-        return {
-            (static_cast<float>(x) - half_width) * scale.x, (get_height(x, z) - center_y) * scale.y,
-            (static_cast<float>(z) - half_length) * scale.z};
-    };
 
     auto append_triangle = [this, &aabbMin, &aabbMax](
                                const glm::vec3 &p1, const glm::vec3 &n1, const glm::vec3 &p2,
@@ -115,10 +115,10 @@ void HeightMapItem::build_render_mesh(
 
     for (int z = 0; z < map_height - 1; ++z) {
         for (int x = 0; x < map_width - 1; ++x) {
-            const glm::vec3 p00 = make_pos(x, z);
-            const glm::vec3 p10 = make_pos(x + 1, z);
-            const glm::vec3 p01 = make_pos(x, z + 1);
-            const glm::vec3 p11 = make_pos(x + 1, z + 1);
+            const glm::vec3 p00 = make_pos(x, z, min_height, max_height);
+            const glm::vec3 p10 = make_pos(x + 1, z, min_height, max_height);
+            const glm::vec3 p01 = make_pos(x, z + 1, min_height, max_height);
+            const glm::vec3 p11 = make_pos(x + 1, z + 1, min_height, max_height);
 
             const glm::vec3 n00 = compute_vertex_normal(x, z);
             const glm::vec3 n10 = compute_vertex_normal(x + 1, z);

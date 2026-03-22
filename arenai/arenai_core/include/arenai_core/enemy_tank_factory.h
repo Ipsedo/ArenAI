@@ -41,9 +41,6 @@ private:
 
     bool is_dead_already_triggered;
 
-    float optimal_distance;
-
-    float sigma_distance;
     float sigma_angle;
 
     float softmax_beta;

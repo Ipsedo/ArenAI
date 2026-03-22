@@ -42,6 +42,8 @@ private:
     bool is_dead_already_triggered;
 
     float sigma_angle;
+    float sigma_distance;
+    float optimal_distance;
 
     float softmax_beta;
 
@@ -50,9 +52,9 @@ private:
     std::shared_ptr<ActionStats> action_stats;
 
     float compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank);
-    float softmax_scores(
-        const std::vector<float> &distances, const std::vector<float> &angle_scores) const;
-    float quality_score(float angle) const;
+    float
+    softmax_scores(const std::vector<float> &distances, const std::vector<float> &scores) const;
+    float quality_score(float distance, float angle) const;
 };
 
 #endif//ARENAI_TRAIN_HOST_ENEMY_TANK_FACTORY_H

@@ -40,7 +40,7 @@ float EnemyTankFactory::softmax_scores(
     if (distances.empty()) return 0.f;
 
     float max_logit = -softmax_beta * distances[0];
-    for (size_t i = 1; i < distances.size(); i)
+    for (size_t i = 1; i < distances.size(); i++)
         max_logit = std::max(max_logit, -softmax_beta * distances[i]);
 
     float numerator = 0.f;

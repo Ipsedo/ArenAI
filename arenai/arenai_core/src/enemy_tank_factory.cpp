@@ -17,7 +17,7 @@ EnemyTankFactory::EnemyTankFactory(
       tank_prefix_name(tank_prefix_name), hit_reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), is_dead_already_triggered(false),
-      sigma_angle(static_cast<float>(M_PI) / 4.f), softmax_beta(1e-2f), has_touch(false),
+      sigma_angle(static_cast<float>(M_PI) / 4.f), softmax_beta(4.f), has_touch(false),
       action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {

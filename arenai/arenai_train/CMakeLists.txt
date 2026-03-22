@@ -10,7 +10,7 @@ include(FetchContent)
 FetchContent_Declare(
         stb
         GIT_REPOSITORY https://github.com/nothings/stb.git
-        GIT_TAG        master
+        GIT_TAG master
 )
 
 FetchContent_Populate(stb)
@@ -23,6 +23,13 @@ FetchContent_Declare(
         GIT_TAG v3.2
 )
 FetchContent_MakeAvailable(argparse)
+
+# json
+FetchContent_Declare(
+        json
+        URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz
+)
+FetchContent_MakeAvailable(json)
 
 # libtorch
 set(LIBTORCH_PATH "/opt/libtorch")
@@ -72,6 +79,7 @@ target_link_libraries(
         ${TORCH_LIBRARIES}
         soil2
         argparse
+        nlohmann_json::nlohmann_json
 )
 
 # Library
@@ -86,4 +94,5 @@ target_link_libraries(
         ${TORCH_LIBRARIES}
         soil2
         argparse
+        nlohmann_json::nlohmann_json
 )

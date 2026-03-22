@@ -45,7 +45,7 @@ void Renderer::draw(const std::vector<std::tuple<std::string, glm::mat4>> &model
     const glm::mat4 proj_matrix = glm::perspective(
         static_cast<float>(M_PI) / 4.f,
         static_cast<float>(get_width()) / static_cast<float>(get_height()), 1.f,
-        2000.f * std::sqrtf(3.f));
+        2000.f * std::sqrt(3.f));
 
     for (const auto &[name, m_matrix]: model_matrices) {
         auto mv_matrix = view_matrix * m_matrix;

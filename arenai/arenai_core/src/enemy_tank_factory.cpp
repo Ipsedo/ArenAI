@@ -17,7 +17,7 @@ EnemyTankFactory::EnemyTankFactory(
       tank_prefix_name(tank_prefix_name), hit_reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), is_dead_already_triggered(false), optimal_distance(100.f),
-      sigma_distance(200.f), sigma_angle(static_cast<float>(M_PI) / 4.f), softmax_beta(6.f),
+      sigma_distance(200.f), sigma_angle(static_cast<float>(M_PI) / 4.f), softmax_beta(1e-2f),
       has_touch(false), action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
@@ -36,27 +36,29 @@ float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory
 }
 
 float EnemyTankFactory::softmax_scores(
-    const std::vector<float> &distances, const std::vector<float> &scores) const {
-    float max_distance = -std::numeric_limits<float>::infinity();
-    for (const float distance: distances)
-        max_distance = std::max(-softmax_beta * distance, max_distance);
+    const std::vector<float> &distances, const std::vector<float> &angle_scores) const {
+    if (distances.empty()) return 0.f;
 
-    float numerator = 0.f, denominator = 0.f;
+    float max_logit = -softmax_beta * distances[0];
+    for (size_t i = 1; i < distances.size(); ++i)
+        max_logit = std::max(max_logit, -softmax_beta * distances[i]);
 
-    for (int i = 0; i < scores.size(); i++) {
-        const float weight = std::exp(-softmax_beta * distances[i] - max_distance);
+    float numerator = 0.f;
+    float denominator = 0.f;
 
-        numerator += scores[i] * weight;
+    for (size_t i = 0; i < distances.size(); ++i) {
+        const float logit = -softmax_beta * distances[i];
+        const float weight = std::exp(logit - max_logit);
+
+        numerator += angle_scores[i] * weight;
         denominator += weight;
     }
+
     return denominator > 0.f ? numerator / denominator : 0.f;
 }
 
-float EnemyTankFactory::quality_score(const float distance, const float angle) const {
-    const float angle_quality = std::exp(-0.5f * std::pow(angle / sigma_angle, 2.f));
-    const float distance_quality =
-        std::exp(-0.5f * std::pow((distance - optimal_distance) / sigma_distance, 2.f));
-    return angle_quality * distance_quality;
+float EnemyTankFactory::quality_score(const float angle) const {
+    return std::exp(-0.5f * std::pow(angle / sigma_angle, 2.f));
 }
 
 float EnemyTankFactory::get_reward(
@@ -105,7 +107,7 @@ float EnemyTankFactory::get_phi(
         const float distance = glm::length(chassis_pos - other_pos);
         const float angle = compute_aim_angle(other);
 
-        quality_scores.push_back(quality_score(distance, angle));
+        quality_scores.push_back(quality_score(angle));
         distances.push_back(distance);
     }
 

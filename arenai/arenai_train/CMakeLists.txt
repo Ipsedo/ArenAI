@@ -64,7 +64,7 @@ file(GLOB_RECURSE ARENAI_TRAIN_SRC "${ARENAI_TRAIN_PATH}/*.cpp")
 add_executable(arenai_train_exec ${ARENAI_TRAIN_SRC})
 target_link_libraries(
         arenai_train_exec
-        PRIVATE
+        PUBLIC
         arenai_model
         arenai_view
         arenai_utils
@@ -78,7 +78,7 @@ target_link_libraries(
 add_library(arenai_train_lib SHARED ${ARENAI_TRAIN_SRC})
 target_link_libraries(
         arenai_train_lib
-        PRIVATE
+        PUBLIC
         arenai_model
         arenai_view
         arenai_utils

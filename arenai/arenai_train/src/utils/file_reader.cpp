@@ -6,7 +6,7 @@
 #include <fstream>
 #include <iostream>
 
-#include <soil2/SOIL2.h>
+#include <SOIL2.h>
 
 #include <arenai_train/file_reader.h>
 

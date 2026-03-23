@@ -68,6 +68,11 @@ void DesktopGameEnvironment::on_reset_physics(const std::unique_ptr<PhysicEngine
 
     for (auto &item_producer: player_tank_factory->get_item_producers())
         engine->add_item_producer(item_producer);
+
+    player_controller_handler = std::make_unique<MouseKeyboardPlayerControllerHandler>(curr_window);
+
+    for (auto &ctrl: player_tank_factory->get_controllers())
+        player_controller_handler->add_controller(ctrl);
 }
 
 void DesktopGameEnvironment::on_reset_drawables(
@@ -76,12 +81,8 @@ void DesktopGameEnvironment::on_reset_drawables(
     player_renderer = std::make_unique<PlayerRenderer>(
         gl_context, window_width, window_height, glm::vec3(200, 300, 200),
         player_tank_factory->get_camera());
+
     player_renderer->make_current();
-
-    player_controller_handler = std::make_unique<MouseKeyboardPlayerControllerHandler>(curr_window);
-
-    for (auto &ctrl: player_tank_factory->get_controllers())
-        player_controller_handler->add_controller(ctrl);
 
     player_renderer->add_drawable("cubemap", std::make_unique<CubeMap>(file_reader, "cubemap/1"));
 

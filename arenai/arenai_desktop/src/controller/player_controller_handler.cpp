@@ -9,12 +9,20 @@
 MouseKeyboardPlayerControllerHandler::MouseKeyboardPlayerControllerHandler(GLFWwindow *window)
     : window(window), current_dir(0.f), current_speed(0.f), current_turret_rotation(0.f),
       current_canon_rotation(0.f), cursor_captured(true) {
+
+    int window_width = 0, window_height = 0;
+    glfwGetWindowSize(window, &window_width, &window_height);
+    const float center_x = static_cast<float>(window_width) / 2.f,
+                center_y = static_cast<float>(window_height) / 2.f;
+
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPos(window, center_x, center_y);
 }
 
 std::tuple<bool, user_input>
 MouseKeyboardPlayerControllerHandler::to_output(const GlfwInput event) {
 
+    // keys
     bool need_fire = false;
 
     if (event.key_action == GLFW_PRESS) switch (event.key) {
@@ -32,6 +40,7 @@ MouseKeyboardPlayerControllerHandler::to_output(const GlfwInput event) {
         if (event.key == GLFW_KEY_A || event.key == GLFW_KEY_D) current_dir = 0.f;
     }
 
+    // mouse
     int window_width = 0, window_height = 0;
     glfwGetWindowSize(window, &window_width, &window_height);
     const float center_x = static_cast<float>(window_width) / 2.f,
@@ -45,7 +54,7 @@ MouseKeyboardPlayerControllerHandler::to_output(const GlfwInput event) {
         current_turret_rotation = factor * (event.mouse_x - center_x) / center_x;
         current_canon_rotation = factor * (event.mouse_y - center_y) / center_y;
 
-        glfwSetCursorPos(window, static_cast<int>(center_x), static_cast<int>(center_y));
+        glfwSetCursorPos(window, center_x, center_y);
     } else {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
@@ -53,6 +62,7 @@ MouseKeyboardPlayerControllerHandler::to_output(const GlfwInput event) {
         current_canon_rotation = 0.f;
     }
 
+    // mouse buttons
     if (event.mouse_button == GLFW_MOUSE_BUTTON_LEFT && event.mouse_button_action == GLFW_PRESS) {
         need_fire = true;
         cursor_captured = true;

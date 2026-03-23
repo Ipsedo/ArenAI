@@ -18,7 +18,7 @@ EnemyTankFactory::EnemyTankFactory(
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), is_dead_already_triggered(false),
       sigma_angle(static_cast<float>(M_PI) / 4.f), sigma_distance(200.f), optimal_distance(100.f),
-      softmax_beta(4.f), has_touch(false), action_stats(std::make_shared<ActionStats>()) {}
+      has_touch(false), action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
     const auto canon_tr = get_canon()->get_model_matrix();
@@ -39,16 +39,11 @@ float EnemyTankFactory::softmax_scores(
     const std::vector<float> &distances, const std::vector<float> &scores) const {
     if (distances.empty()) return 0.f;
 
-    float max_logit = -softmax_beta * distances[0];
-    for (size_t i = 1; i < distances.size(); i++)
-        max_logit = std::max(max_logit, -softmax_beta * distances[i]);
-
     float numerator = 0.f;
     float denominator = 0.f;
 
     for (size_t i = 0; i < distances.size(); i++) {
-        const float logit = -softmax_beta * distances[i];
-        const float weight = std::exp(logit - max_logit);
+        const float weight = std::exp(-0.5f * std::pow(distances[i] / sigma_distance, 2.f));
 
         numerator += scores[i] * weight;
         denominator += weight;
@@ -57,10 +52,11 @@ float EnemyTankFactory::softmax_scores(
     return denominator > 0.f ? numerator / denominator : 0.f;
 }
 
-float EnemyTankFactory::quality_score(float distance, const float angle) const {
-    const auto angle_quality = std::exp(-0.5f * std::pow(angle / sigma_angle, 2.f));
+float EnemyTankFactory::quality_score(const float distance, const float angle) const {
     const auto distance_quality =
         std::exp(-0.5f * std::pow((distance - optimal_distance) / sigma_distance, 2.f));
+    const auto angle_quality = std::exp(-0.5f * std::pow(angle / sigma_angle, 2.f));
+
     return distance_quality * angle_quality;
 }
 

@@ -45,8 +45,6 @@ private:
     float sigma_distance;
     float optimal_distance;
 
-    float softmax_beta;
-
     bool has_touch;
 
     std::shared_ptr<ActionStats> action_stats;

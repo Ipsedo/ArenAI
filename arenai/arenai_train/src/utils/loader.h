@@ -20,7 +20,7 @@ void load_torch(
 
     const auto file = path / file_name;
     torch::serialize::InputArchive archive;
-    archive.load_from(file);
+    archive.load_from(file, torch::kCPU);
     to_load->load(archive);
 }
 

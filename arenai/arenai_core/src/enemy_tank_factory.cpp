@@ -73,11 +73,26 @@ float EnemyTankFactory::get_reward(
     const auto dead_penalty = is_dead() ? (is_suicide() ? -0.5f : -1.f) : 0.f;
 
     // 3. shoot penalty / reward
-    const auto quality_score = get_phi(tank_factories);
+    const auto chassis_pos = glm::vec3(chassis_model_mat * glm::vec4(glm::vec3(0.f), 1.f));
+    constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
+
+    float max_quality_score = 0.f;
+
+    for (const auto &other: tank_factories) {
+        if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;
+
+        const auto other_pos = glm::vec3(other->get_chassis()->get_model_matrix() * world_center);
+
+        const float distance = glm::length(chassis_pos - other_pos);
+        const float angle = compute_aim_angle(other);
+
+        max_quality_score = std::max(quality_score(distance, angle), max_quality_score);
+    }
+
     constexpr float fire_cost = 0.1f;
     constexpr float good_fire_reward = 0.2f;
     const float shoot_reward =
-        action_stats->has_fire() ? quality_score * good_fire_reward - fire_cost : 0.f;
+        action_stats->has_fire() ? max_quality_score * good_fire_reward - fire_cost : 0.f;
 
     // 4. total reward
     const float reward = hit_reward + dead_penalty + shoot_reward;

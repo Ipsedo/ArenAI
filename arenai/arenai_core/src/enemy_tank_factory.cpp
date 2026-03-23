@@ -37,8 +37,6 @@ float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory
 
 float EnemyTankFactory::softmax_scores(
     const std::vector<float> &distances, const std::vector<float> &scores) const {
-    if (distances.empty()) return 0.f;
-
     float numerator = 0.f;
     float denominator = 0.f;
 

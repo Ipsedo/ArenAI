@@ -104,8 +104,6 @@ void train_main(
         indicators::option::ShowElapsedTime{true},
         indicators::option::ShowRemainingTime{true}};
 
-    std::string metric_p_bar_description = metrics_to_string(metrics);
-
     for (int episode_index = 0; episode_index < train_options.nb_episodes; episode_index++) {
         // set variable for episode
         bool is_done = false;
@@ -185,12 +183,12 @@ void train_main(
 
             // check if it's time to train
             if (train_counter % train_options.train_every == train_options.train_every - 1
-                && replay_buffer->size() >= train_options.batch_size * train_options.epochs) {
+                && replay_buffer->size() >= train_options.batch_size * train_options.epochs)
                 agent->train(replay_buffer, train_options.epochs, train_options.batch_size);
 
-                metric_p_bar_description = metrics_to_string(metrics);
-            }
+            // metrics
 
+            // step ending stuff
             last_phi_vector = phi_vector;
             is_done = episode_done_by_single_survivor || episode_done_by_timeout;
 
@@ -203,7 +201,7 @@ void train_main(
             // metric
             std::stringstream stream;
             stream << "Episode [" << episode_index << " / " << train_options.nb_episodes
-                   << "] : " << reward_metric.to_string() << metric_p_bar_description;
+                   << "] : " << reward_metric.to_string() << metrics_to_string(metrics);
 
             p_bar.set_option(indicators::option::PrefixText{stream.str()});
             p_bar.print_progress();

@@ -8,7 +8,7 @@ void init_weights(torch::nn::Module &module) {
     if (typeid(module) == typeid(torch::nn::Linear)) {
         auto lin = *dynamic_cast<torch::nn::Linear *>(&module);
 
-        torch::nn::init::kaiming_uniform_(lin->weight, 0, torch::kFanIn, torch::kReLU);
+        torch::nn::init::kaiming_normal_(lin->weight);
         if (lin->options.bias()) torch::nn::init::zeros_(lin->bias);
     } else if (typeid(module) == typeid(torch::nn::LayerNorm)) {
         if (auto ln = *dynamic_cast<torch::nn::LayerNorm *>(&module);
@@ -24,7 +24,7 @@ void init_weights(torch::nn::Module &module) {
     } else if (typeid(module) == typeid(torch::nn::Conv2d)) {
         auto conv = *dynamic_cast<torch::nn::Conv2d *>(&module);
 
-        torch::nn::init::kaiming_uniform_(conv->weight, 0, torch::kFanIn, torch::kReLU);
+        torch::nn::init::kaiming_normal_(conv->weight);
         if (conv->options.bias()) torch::nn::init::zeros_(conv->bias);
     }
 }

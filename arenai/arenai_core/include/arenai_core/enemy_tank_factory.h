@@ -53,6 +53,7 @@ private:
     float
     softmax_scores(const std::vector<float> &distances, const std::vector<float> &scores) const;
     float quality_score(float distance, float angle) const;
+    float quality_score(float angle) const;
 };
 
 #endif//ARENAI_TRAIN_HOST_ENEMY_TANK_FACTORY_H

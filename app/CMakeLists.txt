@@ -74,15 +74,12 @@ include_directories(${ARENAI_CORE_INCLUDE_DIRS})
 
 # Boost
 FetchContent_Declare(
-        Boost
-        GIT_REPOSITORY "https://github.com/boostorg/boost.git"
-        GIT_TAG "boost-1.90.0"
-        GIT_SHALLOW TRUE
-        GIT_PROGRESS TRUE
-        GIT_SUBMODULES_RECURSE TRUE
+    boost_math
+    GIT_REPOSITORY https://github.com/boostorg/math.git
+    GIT_TAG boost-1.90.0
 )
 
-FetchContent_MakeAvailable(Boost)
+FetchContent_MakeAvailable(boost_math)
 
 # glob files
 
@@ -103,5 +100,9 @@ target_link_libraries(
         executorch::backends
         executorch::extensions
         executorch::kernels
-        Boost::math
+)
+
+target_include_directories(
+    arenai PRIVATE
+    ${boost_math_SOURCE_DIR}/include
 )

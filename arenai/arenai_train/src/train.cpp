@@ -81,9 +81,13 @@ void train_main(
     auto replay_buffer = std::make_unique<ReplayBuffer>(train_options.replay_buffer_size);
 
     Metric reward_metric("reward", train_options.metric_window_size, 6);
-    Metric potential_metric("potential", train_options.metric_window_size, 2, true);
 
-    auto sac_metrics = agent->get_metrics();
+    const auto sac_metrics = agent->get_metrics();
+    const auto env_metrics = env->get_metrics();
+
+    std::vector<std::shared_ptr<Metric>> metrics;
+    metrics.insert(metrics.end(), env_metrics.begin(), env_metrics.end());
+    metrics.insert(metrics.end(), sac_metrics.begin(), sac_metrics.end());
 
     int train_counter = 0;
 
@@ -100,7 +104,7 @@ void train_main(
         indicators::option::ShowElapsedTime{true},
         indicators::option::ShowRemainingTime{true}};
 
-    std::string sac_metric_p_bar_description = metrics_to_string(sac_metrics);
+    std::string metric_p_bar_description = metrics_to_string(metrics);
 
     for (int episode_index = 0; episode_index < train_options.nb_episodes; episode_index++) {
         // set variable for episode
@@ -165,7 +169,6 @@ void train_main(
                        - last_phi_vector[i]);
 
                 reward_metric.add(reward);
-                potential_metric.add(potential_reward);
 
                 const auto [next_vision, next_proprioception] = state_to_tensor(next_state);
 
@@ -185,7 +188,7 @@ void train_main(
                 && replay_buffer->size() >= train_options.batch_size * train_options.epochs) {
                 agent->train(replay_buffer, train_options.epochs, train_options.batch_size);
 
-                sac_metric_p_bar_description = metrics_to_string(sac_metrics);
+                metric_p_bar_description = metrics_to_string(metrics);
             }
 
             last_phi_vector = phi_vector;
@@ -200,8 +203,7 @@ void train_main(
             // metric
             std::stringstream stream;
             stream << "Episode [" << episode_index << " / " << train_options.nb_episodes
-                   << "] : " << reward_metric.to_string() << ", " << potential_metric.to_string()
-                   << sac_metric_p_bar_description;
+                   << "] : " << reward_metric.to_string() << metric_p_bar_description;
 
             p_bar.set_option(indicators::option::PrefixText{stream.str()});
             p_bar.print_progress();

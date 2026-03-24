@@ -6,6 +6,7 @@
 #define ARENAI_TRAIN_HOST_TRAIN_ENVIRONMENT_H
 
 #include <arenai_core/environment.h>
+#include <arenai_train/metric.h>
 
 class TrainTankEnvironment final : public BaseTanksEnvironment {
 public:
@@ -20,6 +21,8 @@ public:
 
     std::vector<float> get_phi_vector();
 
+    std::vector<std::shared_ptr<Metric>> get_metrics() const;
+
     static void reset_singleton();
 
 protected:
@@ -32,10 +35,15 @@ protected:
         const std::shared_ptr<AbstractGLContext> &gl_context) override;
 
 private:
+    float wanted_frequency;
     int max_frames_without_shoot;
     std::vector<int> remaining_frames;
     int nb_frames_added_when_shoot;
     int nb_tanks;
+
+    int nb_steps;
+
+    std::shared_ptr<Metric> episode_step_nb_metric;
 };
 
 #endif// ARENAI_TRAIN_HOST_TRAIN_ENVIRONMENT_H

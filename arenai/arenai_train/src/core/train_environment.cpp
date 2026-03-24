@@ -18,9 +18,11 @@ TrainTankEnvironment::TrainTankEnvironment(
     : BaseTanksEnvironment(
         std::make_shared<DesktopAssetFileReader>(android_assets_path), gl_context, nb_tanks,
         wanted_frequency, false),
+      wanted_frequency(wanted_frequency),
       max_frames_without_shoot(static_cast<int>(15.f / wanted_frequency)),
       remaining_frames(nb_tanks, max_frames_without_shoot),
-      nb_frames_added_when_shoot(static_cast<int>(3.f / wanted_frequency)), nb_tanks(nb_tanks) {}
+      nb_frames_added_when_shoot(static_cast<int>(3.f / wanted_frequency)), nb_tanks(nb_tanks),
+      nb_steps(0), episode_step_nb_metric(std::make_shared<Metric>("seconds", 8, 0)) {}
 
 std::vector<std::tuple<State, Reward, IsDone>>
 TrainTankEnvironment::step(const float time_delta, const std::vector<Action> &actions) {
@@ -45,6 +47,8 @@ TrainTankEnvironment::step(const float time_delta, const std::vector<Action> &ac
         if (remaining_frames[i] <= 0) step_result[i] = {state, reward - 1.f, true};
     }
 
+    nb_steps++;
+
     return step_result;
 }
 
@@ -68,6 +72,9 @@ void TrainTankEnvironment::on_draw(
 
 void TrainTankEnvironment::on_reset_physics(const std::unique_ptr<PhysicEngine> &engine) {
     remaining_frames = std::vector(nb_tanks, max_frames_without_shoot);
+
+    episode_step_nb_metric->add(static_cast<float>(nb_steps) * wanted_frequency);
+    nb_steps = 0;
 }
 
 void TrainTankEnvironment::on_reset_drawables(
@@ -88,4 +95,8 @@ void TrainTankEnvironment::reset_singleton() {
 
     Singleton<Cache<std::shared_ptr<Program>>>::get_singleton()->clear();
     Singleton<Cache<std::shared_ptr<Program>>>::reset_singleton();
+}
+
+std::vector<std::shared_ptr<Metric>> TrainTankEnvironment::get_metrics() const {
+    return {episode_step_nb_metric};
 }

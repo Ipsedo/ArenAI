@@ -87,8 +87,7 @@ std::vector<State> BaseTanksEnvironment::reset_physics() {
 
     physic_engine->add_item(map);
 
-    std::uniform_real_distribution<float> pos_u_dist(-1000, 1000);
-    std::uniform_real_distribution<float> scale_u_dist(2.5, 10);
+    std::uniform_real_distribution<float> pos_u_dist(-500, 500);
     std::uniform_real_distribution<float> mass_u_dist(3, 100);
 
     // add tanks
@@ -109,6 +108,7 @@ std::vector<State> BaseTanksEnvironment::reset_physics() {
     }
 
     // add basic shapes
+    std::uniform_real_distribution<float> scale_u_dist(2.5, 10);
     constexpr int nb_shapes = 5;
 
     for (int i = 0; i < nb_shapes; i++) {

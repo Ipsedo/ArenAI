@@ -15,14 +15,14 @@ std::shared_ptr<AbstractAgent> SacAgentFactory::get_agent_impl(
     const int &nb_continuous_actions, const int &nb_discrete_action) {
     return std::make_shared<SacAgent>(
         nb_sensors, nb_continuous_actions, nb_discrete_action, get_value("learning_rate", 1e-4f),
-        get_value("sensors_hidden_size", 256), get_value("actions_hidden_size", 16),
-        get_value("actor_hidden_size", 1536), get_value("critic_hidden_size", 1536),
+        get_value("sensors_hidden_size", 64), get_value("actions_hidden_size", 16),
+        get_value("actor_hidden_size", 384), get_value("critic_hidden_size", 384),
         get_value<vision_channels>(
             "vision_channels", parse_cli_vision_channels,
-            {{{3, 8}, {8, 16}, {16, 32}, {32, 64}, {64, 128}, {128, 256}}})
+            {{{3, 8}, {8, 16}, {16, 24}, {24, 32}, {32, 48}, {48, 64}}})
             .channels,
         get_value<group_norm_nums>(
-            "group_norm_nums", parse_cli_group_norms, {{{2, 4, 8, 16, 32, 64}}})
+            "group_norm_nums", parse_cli_group_norms, {{{2, 4, 6, 8, 12, 16}}})
             .groups,
         torch::Device(torch::kCPU), get_value("metric_window_size", 1024), get_value("tau", 0.005f),
         get_value("gamma", 0.99f), get_value("initial_alpha", 1.f));

@@ -10,6 +10,7 @@
 #include <arenai_model/convex.h>
 
 #define WHEEL_DIRECTION_MAX_RADIAN (static_cast<float>(M_PI) / 12.f)
+#define WHEEL_RADIAL_VELOCITY_FACTOR 10.f
 
 class WheelItem : public LifeItem, public ConvexItem, public Controller {
 public:

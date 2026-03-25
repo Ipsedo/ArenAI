@@ -35,7 +35,7 @@ WheelItem::WheelItem(
 
     constexpr int motor_axis = 3;
     hinge->enableMotor(motor_axis, true);
-    hinge->setMaxMotorForce(motor_axis, 4e3f);
+    hinge->setMaxMotorForce(motor_axis, 1e4f);
     hinge->setTargetVelocity(motor_axis, 0.f);
 
     constexpr int index = 1;
@@ -63,7 +63,8 @@ WheelItem::WheelItem(
 
 void WheelItem::on_input(const user_input &input) {
     constexpr int motor_axis = 3;
-    const auto radial_velocity = -input.left_joystick.y * static_cast<float>(M_PI) * 5.f;
+    const auto radial_velocity =
+        -input.left_joystick.y * static_cast<float>(M_PI) * WHEEL_RADIAL_VELOCITY_FACTOR;
 
     const float angle = input.left_joystick.x * WHEEL_DIRECTION_MAX_RADIAN;
 

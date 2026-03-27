@@ -43,7 +43,6 @@ private:
 
     float sigma_angle;
     float sigma_distance;
-    float optimal_distance;
 
     bool has_touch;
 

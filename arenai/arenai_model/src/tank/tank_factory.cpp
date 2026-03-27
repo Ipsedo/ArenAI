@@ -29,7 +29,7 @@ TankFactory::TankFactory(
     // wheels
     float front_axle_z = 3.f;
 
-    float wheel_mass = 10.f;
+    float wheel_mass = 40.f;
     glm::vec3 wheel_scale = scale * glm::vec3(1.3, 1.1, 1.1);
     std::vector<std::tuple<std::string, glm::vec3>> front_wheel_config{
         {"dir_wheel_right_1", {-2.7, -1., front_axle_z}},

@@ -42,7 +42,10 @@ private:
     bool is_dead_already_triggered;
 
     float sigma_angle;
-    float sigma_distance;
+    float sigma_distance_score;
+    float sigma_distance_weight;
+
+    float optimal_distance;
 
     bool has_touch;
 
@@ -52,7 +55,6 @@ private:
     float
     softmax_scores(const std::vector<float> &distances, const std::vector<float> &scores) const;
     float quality_score(float distance, float angle) const;
-    float quality_score(float angle) const;
 };
 
 #endif//ARENAI_TRAIN_HOST_ENEMY_TANK_FACTORY_H

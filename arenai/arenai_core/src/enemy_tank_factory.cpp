@@ -17,7 +17,8 @@ EnemyTankFactory::EnemyTankFactory(
       tank_prefix_name(tank_prefix_name), hit_reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), is_dead_already_triggered(false),
-      sigma_angle(static_cast<float>(M_PI) / 4.f), sigma_distance(400.f), has_touch(false),
+      sigma_angle(static_cast<float>(M_PI) / 8.f), sigma_distance_score(100.f),
+      sigma_distance_weight(400.f), optimal_distance(150.f), has_touch(false),
       action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
@@ -41,7 +42,7 @@ float EnemyTankFactory::softmax_scores(
     float denominator = 0.f;
 
     for (size_t i = 0; i < distances.size(); i++) {
-        const float weight = std::exp(-0.5f * std::pow(distances[i] / sigma_distance, 2.f));
+        const float weight = std::exp(-0.5f * std::pow(distances[i] / sigma_distance_weight, 2.f));
 
         numerator += scores[i] * weight;
         denominator += weight;
@@ -51,14 +52,11 @@ float EnemyTankFactory::softmax_scores(
 }
 
 float EnemyTankFactory::quality_score(const float distance, const float angle) const {
-    const auto distance_quality = std::exp(-0.5f * std::pow(distance / sigma_distance, 2.f));
-    const auto angle_quality = quality_score(angle);
+    const auto distance_quality =
+        std::exp(-0.5f * std::pow((distance - optimal_distance) / sigma_distance_score, 2.f));
+    const auto angle_quality = std::exp(-0.5f * std::pow(angle / sigma_angle, 2.f));
 
     return distance_quality * angle_quality;
-}
-
-float EnemyTankFactory::quality_score(const float angle) const {
-    return std::exp(-0.5f * std::pow(angle / sigma_angle, 2.f));
 }
 
 float EnemyTankFactory::get_reward(
@@ -92,7 +90,7 @@ float EnemyTankFactory::get_reward(
         max_quality_score = std::max(quality_score(distance, angle), max_quality_score);
     }
 
-    constexpr float fire_cost = 0.1f;
+    constexpr float fire_cost = 0.03f;
     constexpr float good_fire_reward = 0.2f;
     const float shoot_reward =
         action_stats->has_fire() ? max_quality_score * good_fire_reward - fire_cost : 0.f;
@@ -122,7 +120,7 @@ float EnemyTankFactory::get_phi(
         const float distance = glm::length(chassis_pos - other_pos);
         const float angle = compute_aim_angle(other);
 
-        quality_scores.push_back(quality_score(angle));
+        quality_scores.push_back(quality_score(distance, angle));
         distances.push_back(distance);
     }
 

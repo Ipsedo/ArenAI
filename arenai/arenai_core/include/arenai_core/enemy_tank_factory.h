@@ -42,10 +42,6 @@ private:
     bool is_dead_already_triggered;
 
     float sigma_angle;
-    float sigma_distance_score;
-    float sigma_distance_weight;
-
-    float optimal_distance;
 
     bool has_touch;
 
@@ -53,7 +49,7 @@ private:
 
     float compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank);
 
-    static float angle_quality(float angle);
+    float angle_quality(float angle) const;
 
     static float distance_quality(float distance);
 };

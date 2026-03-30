@@ -36,28 +36,9 @@ float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory
     return std::acos(d);
 }
 
-float EnemyTankFactory::softmax_scores(
-    const std::vector<float> &distances, const std::vector<float> &scores) const {
-    float numerator = 0.f;
-    float denominator = 0.f;
+float EnemyTankFactory::angle_quality(const float angle) { return 0.5f * (std::cos(angle) + 1.f); }
 
-    for (size_t i = 0; i < distances.size(); i++) {
-        const float weight = std::exp(-0.5f * std::pow(distances[i] / sigma_distance_weight, 2.f));
-
-        numerator += scores[i] * weight;
-        denominator += weight;
-    }
-
-    return denominator > 0.f ? numerator / denominator : 0.f;
-}
-
-float EnemyTankFactory::quality_score(const float distance, const float angle) const {
-    const auto distance_quality =
-        std::exp(-0.5f * std::pow((distance - optimal_distance) / sigma_distance_score, 2.f));
-    const auto angle_quality = std::exp(-0.5f * std::pow(angle / sigma_angle, 2.f));
-
-    return distance_quality * angle_quality;
-}
+float EnemyTankFactory::distance_quality(const float distance) { return 1.f / (1.f + distance); }
 
 float EnemyTankFactory::get_reward(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
@@ -79,7 +60,10 @@ float EnemyTankFactory::get_reward(
     for (const auto &other: tank_factories) {
         if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;
 
-        max_quality_score = std::max(1.f - std::cos(compute_aim_angle(other)), max_quality_score);
+        const float angle = compute_aim_angle(other);
+        const float quality_score = angle_quality(angle);
+
+        max_quality_score = std::max(quality_score, max_quality_score);
     }
 
     constexpr float fire_cost = 0.1f;
@@ -111,7 +95,7 @@ float EnemyTankFactory::get_phi(
         const float distance = glm::length(chassis_pos - other_pos);
         const float angle = compute_aim_angle(other);
 
-        const float quality_score = 1.f / (1.f + distance) * (1.f - std::cos(angle));
+        const float quality_score = distance_quality(distance) * angle_quality(angle);
 
         max_quality_score = std::max(quality_score, max_quality_score);
     }

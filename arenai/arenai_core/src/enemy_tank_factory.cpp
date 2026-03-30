@@ -74,20 +74,12 @@ float EnemyTankFactory::get_reward(
     const auto dead_penalty = is_dead() ? (is_suicide() ? -0.5f : -1.f) : 0.f;
 
     // 3. shoot penalty / reward
-    const auto chassis_pos = glm::vec3(chassis_model_mat * glm::vec4(glm::vec3(0.f), 1.f));
-    constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
-
     float max_quality_score = 0.f;
 
     for (const auto &other: tank_factories) {
         if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;
 
-        const auto other_pos = glm::vec3(other->get_chassis()->get_model_matrix() * world_center);
-
-        const float distance = glm::length(chassis_pos - other_pos);
-        const float angle = compute_aim_angle(other);
-
-        max_quality_score = std::max(quality_score(distance, angle), max_quality_score);
+        max_quality_score = std::max(1.f - std::cos(compute_aim_angle(other)), max_quality_score);
     }
 
     constexpr float fire_cost = 0.1f;
@@ -109,8 +101,7 @@ float EnemyTankFactory::get_phi(
 
     const auto chassis_pos = glm::vec3(get_chassis()->get_model_matrix() * world_center);
 
-    std::vector<float> quality_scores;
-    std::vector<float> distances;
+    float max_quality_score = 0.f;
 
     for (const auto &other: tank_factories) {
         if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;
@@ -120,11 +111,12 @@ float EnemyTankFactory::get_phi(
         const float distance = glm::length(chassis_pos - other_pos);
         const float angle = compute_aim_angle(other);
 
-        quality_scores.push_back(quality_score(distance, angle));
-        distances.push_back(distance);
+        const float quality_score = 1.f / (1.f + distance) * (1.f - std::cos(angle));
+
+        max_quality_score = std::max(quality_score, max_quality_score);
     }
 
-    return softmax_scores(distances, quality_scores);
+    return max_quality_score;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

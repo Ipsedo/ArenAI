@@ -31,7 +31,7 @@ class ReplayBuffer {
 public:
     explicit ReplayBuffer(int memory_size);
 
-    TorchStep sample(int batch_size, torch::Device device);
+    TorchStep sample(int batch_size, torch::Device device) const;
 
     void add(const TorchStep &step);
 
@@ -41,9 +41,19 @@ private:
     size_t memory_size_;
     size_t write_idx_;
     size_t size_;
-    std::vector<TorchStep> memory;
 
-    static TorchStep clone_step(const TorchStep &to_clone);
+    bool initialized_;
+
+    torch::Tensor store_state_vision_;
+    torch::Tensor store_state_proprioception_;
+    torch::Tensor store_cont_action_;
+    torch::Tensor store_disc_action_;
+    torch::Tensor store_reward_;
+    torch::Tensor store_done_;
+    torch::Tensor store_next_vision_;
+    torch::Tensor store_next_proprioception_;
+
+    void initialize(const TorchStep &first_step);
 };
 
 #endif// ARENAI_TRAIN_HOST_REPLAY_BUFFER_H

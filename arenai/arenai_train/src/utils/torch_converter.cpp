@@ -14,13 +14,15 @@ tensor_to_actions(const torch::Tensor &continuous_actions, const torch::Tensor &
     std::vector<Action> actions;
     actions.reserve(batch_size);
 
+    const auto cont_cpu = continuous_actions.cpu();
+    const auto disc_cpu = discrete_actions.cpu();
+    auto cont_acc = cont_cpu.accessor<float, 2>();
+    auto disc_acc = disc_cpu.accessor<float, 2>();
+
     for (int i = 0; i < batch_size; i++) {
-        const joystick joystick_direction{
-            continuous_actions[i][0].item<float>(), continuous_actions[i][1].item<float>()};
-        const joystick joystick_canon{
-            continuous_actions[i][2].item<float>(), continuous_actions[i][3].item<float>()};
-        const button fire_button(
-            discrete_actions[i][0].item<float>() > discrete_actions[i][1].item<float>());
+        const joystick joystick_direction{cont_acc[i][0], cont_acc[i][1]};
+        const joystick joystick_canon{cont_acc[i][2], cont_acc[i][3]};
+        const button fire_button(disc_acc[i][0] > disc_acc[i][1]);
 
         actions.push_back({joystick_direction, joystick_canon, fire_button});
     }

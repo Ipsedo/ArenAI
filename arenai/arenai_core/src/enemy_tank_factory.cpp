@@ -17,7 +17,8 @@ EnemyTankFactory::EnemyTankFactory(
       tank_prefix_name(tank_prefix_name), hit_reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), is_dead_already_triggered(false), distance_scale(150.f),
-      has_touch(false), action_stats(std::make_shared<ActionStats>()) {}
+      angle_scale(static_cast<float>(M_PI) / 8.f), has_touch(false),
+      action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
     const auto canon_tr = get_canon()->get_model_matrix();
@@ -34,9 +35,8 @@ float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory
     return std::acos(d);
 }
 
-float EnemyTankFactory::angle_quality(const float angle) {
-    const float normalized_angle = 1.0f - angle / static_cast<float>(M_PI);
-    return std::pow(normalized_angle, 4.f);
+float EnemyTankFactory::angle_quality(const float angle) const {
+    return -std::tanh(angle / angle_scale - static_cast<float>(M_PI));
 }
 
 float EnemyTankFactory::distance_quality(const float distance) const {
@@ -58,7 +58,7 @@ float EnemyTankFactory::get_reward(
     const auto dead_penalty = is_dead() ? (is_suicide() ? -0.5f : -1.f) : 0.f;
 
     // 3. shoot penalty / reward
-    float max_quality_score = -std::numeric_limits<float>::infinity();
+    float max_quality_score = -1.f;
 
     for (const auto &other: tank_factories) {
         if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;
@@ -69,10 +69,9 @@ float EnemyTankFactory::get_reward(
         max_quality_score = std::max(quality_score, max_quality_score);
     }
 
-    constexpr float fire_cost = 0.05f;
     constexpr float good_fire_reward = 0.2f;
     const float shoot_reward =
-        action_stats->has_fire() ? max_quality_score * good_fire_reward - fire_cost : 0.f;
+        action_stats->has_fire() ? max_quality_score * good_fire_reward : 0.f;
 
     // 4. total reward
     const float reward = hit_reward + dead_penalty + shoot_reward;

@@ -35,13 +35,13 @@ WheelItem::WheelItem(
 
     constexpr int motor_axis = 3;
     hinge->enableMotor(motor_axis, true);
-    hinge->setMaxMotorForce(motor_axis, 1e4f);
+    hinge->setMaxMotorForce(motor_axis, 2e4f);
     hinge->setTargetVelocity(motor_axis, 0.f);
 
     constexpr int index = 1;
     hinge->enableSpring(index, true);
     hinge->setDamping(index, 30.f, true);
-    hinge->setStiffness(index, 100.f, true);
+    hinge->setStiffness(index, 2e5f, true);
     hinge->setBounce(index, 1e-2f);
     hinge->setEquilibriumPoint(index, -0.2f);
 
@@ -54,7 +54,7 @@ WheelItem::WheelItem(
         hinge->enableSpring(axis, false);
     }
 
-    ConvexItem::get_body()->setFriction(500.f);
+    ConvexItem::get_body()->setFriction(0.8f);
 
     // for differential
     wheel_center_pos_rel_to_chassis = rel_pos;

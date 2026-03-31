@@ -21,15 +21,16 @@ TankFactory::TankFactory(
     glm::vec3 scale(0.5);
 
     // chassis
-    chassis =
-        std::make_shared<ChassisItem>(tank_prefix_name, file_reader, chassis_pos, scale, 2000.f);
+    constexpr float chassis_mass = 1e4f;
+    chassis = std::make_shared<ChassisItem>(
+        tank_prefix_name, file_reader, chassis_pos, scale, chassis_mass);
 
     items.push_back(chassis);
 
     // wheels
-    float front_axle_z = 3.f;
+    constexpr float front_axle_z = 3.f;
 
-    float wheel_mass = 40.f;
+    constexpr float wheel_mass = 150.f;
     glm::vec3 wheel_scale = scale * glm::vec3(1.3, 1.1, 1.1);
     std::vector<std::tuple<std::string, glm::vec3>> front_wheel_config{
         {"dir_wheel_right_1", {-2.7, -1., front_axle_z}},
@@ -64,7 +65,7 @@ TankFactory::TankFactory(
     glm::vec3 turret_scale(1.2f);
     auto turret = std::make_shared<TurretItem>(
         tank_prefix_name, file_reader, chassis_pos + turret_pos, turret_pos, scale * turret_scale,
-        200, chassis->get_body());
+        300, chassis->get_body());
     items.push_back(turret), controllers.push_back(turret);
 
     // canon
@@ -72,7 +73,7 @@ TankFactory::TankFactory(
     glm::vec3 canon_scale = turret_scale;
     const auto canon_item = std::make_shared<CanonItem>(
         tank_prefix_name, file_reader, chassis_pos + turret_pos + canon_pos, canon_pos,
-        scale * canon_scale, 50, turret->get_body(), wanted_frame_frequency,
+        scale * canon_scale, 100, turret->get_body(), wanted_frame_frequency,
         [this](Item *i) { on_fired_shell_contact(i); });
 
     item_producers.push_back(canon_item);

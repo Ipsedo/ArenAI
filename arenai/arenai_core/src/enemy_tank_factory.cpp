@@ -17,7 +17,7 @@ EnemyTankFactory::EnemyTankFactory(
       tank_prefix_name(tank_prefix_name), hit_reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), is_dead_already_triggered(false), distance_scale(150.f),
-      angle_scale(static_cast<float>(M_PI) / 8.f), has_touch(false),
+      angle_scale(static_cast<float>(M_PI) / 4.f), has_touch(false),
       action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
@@ -36,7 +36,7 @@ float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory
 }
 
 float EnemyTankFactory::angle_quality(const float angle) const {
-    return -std::tanh(angle / angle_scale - static_cast<float>(M_PI));
+    return 2.f * std::exp(-0.5f * std::pow(angle / angle_scale, 2.f)) - 1.f;
 }
 
 float EnemyTankFactory::distance_quality(const float distance) const {

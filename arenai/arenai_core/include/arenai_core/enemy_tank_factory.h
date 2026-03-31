@@ -41,7 +41,7 @@ private:
 
     bool is_dead_already_triggered;
 
-    float sigma_angle;
+    float distance_scale;
 
     bool has_touch;
 
@@ -49,9 +49,9 @@ private:
 
     float compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank);
 
-    float angle_quality(float angle) const;
+    static float angle_quality(float angle);
 
-    static float distance_quality(float distance);
+    float distance_quality(float distance) const;
 };
 
 #endif//ARENAI_TRAIN_HOST_ENEMY_TANK_FACTORY_H

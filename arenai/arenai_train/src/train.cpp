@@ -162,9 +162,8 @@ void train_main(
                     env_done || episode_done_by_single_survivor || episode_done_by_timeout;
 
                 const float potential_reward =
-                    train_options.potential_reward_scale
-                    * ((effective_done ? 0.f : 1.f) * model_options.gamma * phi_vector[i]
-                       - last_phi_vector[i]);
+                    (effective_done ? 0.f : 1.f) * train_options.potential_reward_scale
+                    * (model_options.gamma * phi_vector[i] - last_phi_vector[i]);
 
                 reward_metric.add(reward);
 

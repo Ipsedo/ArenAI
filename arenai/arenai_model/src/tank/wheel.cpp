@@ -54,7 +54,7 @@ WheelItem::WheelItem(
         hinge->enableSpring(axis, false);
     }
 
-    ConvexItem::get_body()->setFriction(0.8f);
+    ConvexItem::get_body()->setFriction(1.f);
 
     // for differential
     wheel_center_pos_rel_to_chassis = rel_pos;
@@ -84,25 +84,20 @@ float WheelItem::adjust_rotation_velocity_differential(
     const float delta = front_wheel_orientation_radian;
 
     constexpr float eps = 1e-6f;
-    if (std::fabs(delta) < 1e-6f || std::fabs(std::tan(delta)) < eps) {
+    if (std::fabs(delta) < eps || std::fabs(std::tan(delta)) < eps) {
         return original_rotation_velocity;
     }
 
-    const float Rc = -front_axle_z / std::tan(delta);
+    const float Rc = -2.f * front_axle_z / std::tan(delta);
 
     const auto xw = wheel_center_pos_rel_to_chassis.x;
     const auto zw = wheel_center_pos_rel_to_chassis.z;
 
-    const float rw = std::sqrt((xw - Rc) * (xw - Rc) + zw * zw);
-    const float rc = std::fabs(Rc);
+    const float rw = std::sqrt((xw - Rc) * (xw - Rc) + (zw + front_axle_z) * (zw + front_axle_z));
 
-    if (rc < eps) {
-        const float ratio = rw / eps;
-        return original_rotation_velocity * ratio;
-    }
+    const float rc = std::sqrt(Rc * Rc + front_axle_z * front_axle_z);
 
-    const float ratio = rw / rc;
-    return original_rotation_velocity * ratio;
+    return original_rotation_velocity * rw / rc;
 }
 
 /*
@@ -113,7 +108,7 @@ void DirectionalWheelItem::on_input(const user_input &input) {
     WheelItem::on_input(input);
 
     constexpr int motor_axis = 4;
-    const float angle = input.left_joystick.x * WHEEL_DIRECTION_MAX_RADIAN;
+    const float angle = input.left_joystick.x * WHEEL_DIRECTION_MAX_RADIAN * angle_factor;
 
     hinge->setLimit(motor_axis, angle, angle);
 }
@@ -121,5 +116,6 @@ void DirectionalWheelItem::on_input(const user_input &input) {
 DirectionalWheelItem::DirectionalWheelItem(
     const std::string &name, const std::shared_ptr<AbstractFileReader> &file_reader,
     const glm::vec3 pos, const glm::vec3 rel_pos, const glm::vec3 scale, const float mass,
-    btRigidBody *chassis, float front_axle_z)
-    : WheelItem(name, file_reader, pos, rel_pos, scale, mass, chassis, front_axle_z) {}
+    btRigidBody *chassis, float front_axle_z, const float angle_factor)
+    : WheelItem(name, file_reader, pos, rel_pos, scale, mass, chassis, front_axle_z),
+      angle_factor(angle_factor) {}

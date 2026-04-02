@@ -9,7 +9,7 @@
 #include <arenai_controller/inputs.h>
 #include <arenai_model/convex.h>
 
-#define WHEEL_DIRECTION_MAX_RADIAN (static_cast<float>(M_PI) / 12.f)
+#define WHEEL_DIRECTION_MAX_RADIAN (static_cast<float>(M_PI) / 6.f)
 #define WHEEL_RADIAL_VELOCITY_FACTOR 5.f
 
 class WheelItem : public LifeItem, public ConvexItem, public Controller {
@@ -38,8 +38,11 @@ public:
     DirectionalWheelItem(
         const std::string &name, const std::shared_ptr<AbstractFileReader> &file_reader,
         glm::vec3 pos, glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *chassis,
-        float front_axle_z);
+        float front_axle_z, float angle_factor);
     void on_input(const user_input &input) override;
+
+private:
+    float angle_factor;
 };
 
 #endif// ARENAI_WHEEL_H

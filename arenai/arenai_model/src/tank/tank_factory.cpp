@@ -35,7 +35,6 @@ TankFactory::TankFactory(
     std::vector<std::tuple<std::string, glm::vec3, float>> front_wheel_config{
         {"wheel_right_1", {-2.7, -1., front_axle_z}, 1.f},
         {"wheel_left_1", {2.7, -1., front_axle_z}, 1.f},
-
         {"wheel_right_2", {-2.7, -1., 0.}, 0.5f},
         {"wheel_left_2", {2.7, -1., 0.}, 0.5f}};
 

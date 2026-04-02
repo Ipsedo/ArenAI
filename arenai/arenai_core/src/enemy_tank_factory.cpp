@@ -43,6 +43,10 @@ float EnemyTankFactory::distance_quality(const float distance) const {
     return std::exp(-0.5f * std::pow((distance - optimal_distance) / distance_scale, 2.f));
 }
 
+float EnemyTankFactory::thresholded_distance_quality(const float distance) const {
+    return distance_quality(std::max(distance, optimal_distance));
+}
+
 float EnemyTankFactory::get_reward(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
 
@@ -58,7 +62,22 @@ float EnemyTankFactory::get_reward(
     const auto dead_penalty = is_dead() ? (is_suicide() ? -0.5f : -1.f) : 0.f;
 
     // 3. shoot penalty / reward
-    const float max_quality_score = get_phi(tank_factories);
+    constexpr auto world_center = glm::vec4(0.f, 0.f, 0.f, 1.f);
+    const auto chassis_pos = glm::vec3(chassis_model_mat * world_center);
+    float max_quality_score = 0.f;
+
+    for (const auto &other: tank_factories) {
+        if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;
+
+        const auto other_pos = glm::vec3(other->get_chassis()->get_model_matrix() * world_center);
+
+        const float distance = glm::length(chassis_pos - other_pos);
+        const float angle = compute_aim_angle(other);
+
+        const float quality_score = angle_quality(angle) * thresholded_distance_quality(distance);
+
+        max_quality_score = std::max(quality_score, max_quality_score);
+    }
 
     constexpr float good_fire_reward = 0.2f;
     constexpr float fire_cost = 0.1f;
@@ -79,7 +98,7 @@ float EnemyTankFactory::get_phi(
 
     const auto chassis_pos = glm::vec3(get_chassis()->get_model_matrix() * world_center);
 
-    float max_quality_score = -1.f;
+    float max_quality_score = 0.f;
 
     for (const auto &other: tank_factories) {
         if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;
@@ -89,7 +108,11 @@ float EnemyTankFactory::get_phi(
         const float distance = glm::length(chassis_pos - other_pos);
         const float angle = compute_aim_angle(other);
 
-        const float quality_score = distance_quality(distance) * angle_quality(angle);
+        const float angle_score = angle_quality(angle);
+        const float distance_score = distance_quality(distance);
+
+        const float quality_score =
+            0.5f * angle_score * distance_score + 0.3f * angle_score + 0.2f * distance_score;
 
         max_quality_score = std::max(quality_score, max_quality_score);
     }

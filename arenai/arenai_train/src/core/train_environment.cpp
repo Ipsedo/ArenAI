@@ -44,7 +44,7 @@ TrainTankEnvironment::step(const float time_delta, const std::vector<Action> &ac
 
         if (has_shoot[i]) remaining_frames[i] += nb_frames_added_when_shoot;
 
-        if (remaining_frames[i] <= 0) step_result[i] = {state, reward - 1.f, true};
+        if (remaining_frames[i] <= 0) step_result[i] = {state, reward - 1.f, done};
     }
 
     nb_steps++;

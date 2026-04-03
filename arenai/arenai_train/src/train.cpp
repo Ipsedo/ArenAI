@@ -158,8 +158,9 @@ void train_main(
 
                 if (already_done[i]) continue;
 
-                const bool effective_done =
-                    env_done || episode_done_by_single_survivor || episode_done_by_timeout;
+                const bool effective_done = env_done || episode_done_by_single_survivor;
+                const bool need_terminate =
+                    effective_done || episode_done_by_timeout || is_truncated_vector[i];
 
                 const float potential_reward =
                     (effective_done ? 0.f : 1.f) * train_options.potential_reward_scale
@@ -177,7 +178,7 @@ void train_main(
                      torch::tensor({effective_done}, torch::TensorOptions().dtype(torch::kBool)),
                      {next_vision, next_proprioception}});
 
-                if (effective_done && !already_done[i]) already_done[i] = true;
+                if (need_terminate && !already_done[i]) already_done[i] = true;
             }
 
             // check if it's time to train

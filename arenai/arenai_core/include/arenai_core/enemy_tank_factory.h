@@ -42,7 +42,7 @@ private:
     bool is_dead_already_triggered;
 
     float distance_scale;
-    float optimal_distance;
+    float optimal_shoot_distance;
     float angle_scale;
 
     bool has_touch;

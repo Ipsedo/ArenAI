@@ -21,7 +21,7 @@ public:
     bool is_dead() override;
     bool is_suicide() const;
 
-    bool has_shoot_other_tank();
+    bool has_hit_other_tank();
 
     std::vector<std::shared_ptr<Item>> dead_and_get_items();
 

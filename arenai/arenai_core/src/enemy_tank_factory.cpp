@@ -132,7 +132,7 @@ void EnemyTankFactory::on_fired_shell_contact(Item *item) {
     }
 }
 
-bool EnemyTankFactory::has_shoot_other_tank() {
+bool EnemyTankFactory::has_hit_other_tank() {
     if (has_touch) {
         has_touch = false;
         return true;

@@ -36,9 +36,9 @@ protected:
 
 private:
     float wanted_frequency;
-    int max_frames_without_shoot;
+    int max_frames_without_hit;
     std::vector<int> remaining_frames;
-    int nb_frames_added_when_shoot;
+    int nb_frames_added_when_hit;
     int nb_tanks;
 
     int nb_steps;

@@ -64,11 +64,12 @@ void train_main(
 
     auto agent = std::make_shared<SacAgent>(
         ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_CONTINUOUS_ACTION, ENEMY_NB_DISCRETE_ACTION,
-        train_options.learning_rate, model_options.hidden_size_sensors,
-        model_options.hidden_size_actions, model_options.actor_hidden_size,
-        model_options.critic_hidden_size, model_options.vision_channels,
-        model_options.group_norm_nums, torch_device, train_options.metric_window_size,
-        model_options.tau, model_options.gamma, model_options.initial_alpha);
+        train_options.learning_rate, train_options.alpha_learning_rate,
+        model_options.hidden_size_sensors, model_options.hidden_size_actions,
+        model_options.actor_hidden_size, model_options.critic_hidden_size,
+        model_options.vision_channels, model_options.group_norm_nums, torch_device,
+        train_options.metric_window_size, model_options.tau, model_options.gamma,
+        model_options.initial_alpha);
 
     std::cout << "Parameters : " << agent->count_parameters() << std::endl;
     std::cout << "Target entropy (continuous) : " << agent->get_continuous_target_entropy()

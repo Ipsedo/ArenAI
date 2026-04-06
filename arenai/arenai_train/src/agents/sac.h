@@ -14,8 +14,9 @@ class SacAgent : public AbstractAgent {
 public:
     SacAgent(
         int nb_sensors, int nb_continuous_actions, int nb_discrete_actions, float learning_rate,
-        int hidden_size_sensors, int hidden_size_actions, int actor_hidden_size,
-        int critic_hidden_size, const std::vector<std::tuple<int, int>> &vision_channels,
+        float alpha_learning_rate, int hidden_size_sensors, int hidden_size_actions,
+        int actor_hidden_size, int critic_hidden_size,
+        const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
         float tau, float gamma, float initial_alpha);
 
@@ -54,6 +55,8 @@ private:
 
     std::shared_ptr<torch::optim::Adam> alpha_continuous_optim;
     std::shared_ptr<torch::optim::Adam> alpha_discrete_optim;
+
+    float grad_norm_clip;
 
     std::shared_ptr<Metric> actor_loss_metric;
     std::shared_ptr<Metric> critic_1_loss_metric;

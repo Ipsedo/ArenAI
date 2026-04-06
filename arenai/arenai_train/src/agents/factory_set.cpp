@@ -14,9 +14,10 @@ std::shared_ptr<AbstractAgent> SacAgentFactory::get_agent_impl(
     const int &vision_height, const int &vision_width, const int &nb_sensors,
     const int &nb_continuous_actions, const int &nb_discrete_action) {
     return std::make_shared<SacAgent>(
-        nb_sensors, nb_continuous_actions, nb_discrete_action, get_value("learning_rate", 1e-4f),
-        get_value("sensors_hidden_size", 64), get_value("actions_hidden_size", 16),
-        get_value("actor_hidden_size", 384), get_value("critic_hidden_size", 384),
+        nb_sensors, nb_continuous_actions, nb_discrete_action, get_value("learning_rate", 3e-4f),
+        get_value("alpha_learning_rate", 1e-5f), get_value("sensors_hidden_size", 64),
+        get_value("actions_hidden_size", 16), get_value("actor_hidden_size", 384),
+        get_value("critic_hidden_size", 384),
         get_value<vision_channels>(
             "vision_channels", parse_cli_vision_channels,
             {{{3, 8}, {8, 16}, {16, 24}, {24, 32}, {32, 48}, {48, 64}}})

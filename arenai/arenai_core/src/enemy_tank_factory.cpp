@@ -80,7 +80,7 @@ float EnemyTankFactory::get_reward(
     }
 
     constexpr float good_fire_reward = 0.2f;
-    constexpr float fire_cost = 0.1f;
+    constexpr float fire_cost = 0.02f;
     const float shoot_reward =
         action_stats->has_fire() ? max_quality_score * good_fire_reward - fire_cost : 0.f;
 

@@ -19,7 +19,7 @@ TrainTankEnvironment::TrainTankEnvironment(
         std::make_shared<DesktopAssetFileReader>(android_assets_path), gl_context, nb_tanks,
         wanted_frequency, false),
       wanted_frequency(wanted_frequency),
-      max_frames_without_shoot(static_cast<int>(30.f / wanted_frequency)),
+      max_frames_without_shoot(static_cast<int>(5.f / wanted_frequency)),
       remaining_frames(nb_tanks, max_frames_without_shoot),
       nb_frames_added_when_shoot(static_cast<int>(5.f / wanted_frequency)), nb_tanks(nb_tanks),
       nb_steps(0), episode_step_nb_metric(std::make_shared<Metric>("seconds", 32, 1)) {}

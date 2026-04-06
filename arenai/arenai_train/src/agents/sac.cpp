@@ -15,7 +15,8 @@
 
 SacAgent::SacAgent(
     int nb_sensors, int nb_continuous_actions, int nb_discrete_actions, const float learning_rate,
-    int hidden_size_sensors, int hidden_size_actions, int actor_hidden_size, int critic_hidden_size,
+    const float alpha_learning_rate, int hidden_size_sensors, int hidden_size_actions,
+    int actor_hidden_size, int critic_hidden_size,
     const std::vector<std::tuple<int, int>> &vision_channels,
     const std::vector<int> &group_norm_nums, const torch::Device device, int metric_window_size,
     const float tau, const float gamma, const float initial_alpha)
@@ -43,10 +44,10 @@ SacAgent::SacAgent(
       critic_2_optim(std::make_unique<torch::optim::Adam>(
           critic_2->parameters(), torch::optim::AdamOptions(learning_rate))),
       alpha_continuous_optim(std::make_unique<torch::optim::Adam>(
-          alpha_continuous->parameters(), torch::optim::AdamOptions(learning_rate))),
+          alpha_continuous->parameters(), torch::optim::AdamOptions(alpha_learning_rate))),
       alpha_discrete_optim(std::make_unique<torch::optim::Adam>(
-          alpha_discrete->parameters(), torch::optim::AdamOptions(learning_rate))),
-      actor_loss_metric(std::make_shared<Metric>("actor", metric_window_size)),
+          alpha_discrete->parameters(), torch::optim::AdamOptions(alpha_learning_rate))),
+      grad_norm_clip(1.f), actor_loss_metric(std::make_shared<Metric>("actor", metric_window_size)),
       critic_1_loss_metric(std::make_shared<Metric>("critic_1", metric_window_size)),
       critic_2_loss_metric(std::make_shared<Metric>("critic_2", metric_window_size)),
       continuous_entropy_metric(std::make_shared<Metric>("entropy_c", metric_window_size)),
@@ -54,8 +55,8 @@ SacAgent::SacAgent(
       alpha_continuous_metric(std::make_shared<Metric>("alpha_c", metric_window_size)),
       alpha_discrete_metric(std::make_shared<Metric>("alpha_d", metric_window_size)), tau(tau),
       gamma(gamma), continous_target_entropy(
-                        truncated_normal_target_entropy(nb_continuous_actions, -1.f, 1.f, 0.1f)),
-      discrete_target_entropy(multinomial_target_entropy(nb_discrete_actions, 0.1f)) {
+                        truncated_normal_target_entropy(nb_continuous_actions, -1.f, 1.f, 0.3f)),
+      discrete_target_entropy(multinomial_target_entropy(nb_discrete_actions, 0.4f)) {
 
     hard_update(target_critic_1, critic_1);
     hard_update(target_critic_2, critic_2);
@@ -122,6 +123,7 @@ void SacAgent::train(
         const auto critic_1_loss = torch::mse_loss(q_value_1, target_q_values, at::Reduction::Mean);
 
         critic_1_optim->zero_grad();
+        torch::nn::utils::clip_grad_norm_(critic_1->parameters(), grad_norm_clip);
         critic_1_loss.backward();
         critic_1_optim->step();
 
@@ -131,6 +133,7 @@ void SacAgent::train(
         const auto critic_2_loss = torch::mse_loss(q_value_2, target_q_values, at::Reduction::Mean);
 
         critic_2_optim->zero_grad();
+        torch::nn::utils::clip_grad_norm_(critic_2->parameters(), grad_norm_clip);
         critic_2_loss.backward();
         critic_2_optim->step();
 
@@ -156,6 +159,7 @@ void SacAgent::train(
             + alpha_discrete->alpha().detach() * curr_discrete_entropy + q_value);
 
         actor_optim->zero_grad();
+        torch::nn::utils::clip_grad_norm_(actor->parameters(), grad_norm_clip);
         actor_loss.backward();
         actor_optim->step();
 
@@ -165,6 +169,7 @@ void SacAgent::train(
             * (curr_continuous_entropy.detach() - continous_target_entropy));
 
         alpha_continuous_optim->zero_grad();
+        torch::nn::utils::clip_grad_norm_(alpha_continuous->parameters(), grad_norm_clip);
         alpha_continuous_loss.backward();
         alpha_continuous_optim->step();
 
@@ -174,6 +179,7 @@ void SacAgent::train(
             * (curr_discrete_entropy.detach() - discrete_target_entropy));
 
         alpha_discrete_optim->zero_grad();
+        torch::nn::utils::clip_grad_norm_(alpha_discrete->parameters(), grad_norm_clip);
         alpha_discrete_loss.backward();
         alpha_discrete_optim->step();
 

@@ -28,7 +28,7 @@ int main(const int argc, char **argv) {
     parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(384);
     parser.add_argument("--tau").scan<'g', float>().default_value(0.005f);
     parser.add_argument("--gamma").scan<'g', float>().default_value(0.99f);
-    parser.add_argument("--initial_alpha_continuous").scan<'g', float>().default_value(1e-4f);
+    parser.add_argument("--initial_alpha_continuous").scan<'g', float>().default_value(1e-3f);
     parser.add_argument("--initial_alpha_discrete").scan<'g', float>().default_value(1e-2f);
 
     // train

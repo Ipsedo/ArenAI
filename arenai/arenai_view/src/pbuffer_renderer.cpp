@@ -99,28 +99,18 @@ image<uint8_t> PBufferRenderer::draw_and_get_frame(
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
-    constexpr int in_channels = 4;
+    constexpr int in_channels = 3;
     std::vector<unsigned char> linear(
         static_cast<size_t>(width) * static_cast<size_t>(height) * in_channels);
-    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, linear.data());
+    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, linear.data());
 
+    // HWC -> CHW
     const int hw = width * height;
-
     auto frame = image(std::vector<uint8_t>(hw * 3));
-
-    for (int y = 0; y < height; ++y) {
-        const int src_y = y;
-        const int dst_y = height - 1 - y;
-
-        const uint8_t *src = linear.data() + src_y * width * in_channels;
-
-        for (int x = 0; x < width; ++x) {
-            const int dst = dst_y * width + x;
-
-            frame.pixels[0 * hw + dst] = src[in_channels * x + 0];
-            frame.pixels[1 * hw + dst] = src[in_channels * x + 1];
-            frame.pixels[2 * hw + dst] = src[in_channels * x + 2];
-        }
+    for (int i = 0; i < hw; ++i) {
+        frame.pixels[0 * hw + i] = linear[i * 3 + 0];
+        frame.pixels[1 * hw + i] = linear[i * 3 + 1];
+        frame.pixels[2 * hw + i] = linear[i * 3 + 2];
     }
 
     return frame;

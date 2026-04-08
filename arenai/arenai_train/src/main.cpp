@@ -28,7 +28,8 @@ int main(const int argc, char **argv) {
     parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(384);
     parser.add_argument("--tau").scan<'g', float>().default_value(0.005f);
     parser.add_argument("--gamma").scan<'g', float>().default_value(0.99f);
-    parser.add_argument("--initial_alpha").scan<'g', float>().default_value(0.01f);
+    parser.add_argument("--initial_alpha_continuous").scan<'g', float>().default_value(1e-4f);
+    parser.add_argument("--initial_alpha_discrete").scan<'g', float>().default_value(1e-3f);
 
     // train
     parser.add_argument("--nb_tanks").scan<'i', int>().default_value(16);
@@ -56,7 +57,8 @@ int main(const int argc, char **argv) {
          parser.get<int>("--sensors_hidden_size"), parser.get<int>("--actions_hidden_size"),
          parser.get<int>("--actor_hidden_size"), parser.get<int>("--critic_hidden_size"),
          parser.get<float>("--tau"), parser.get<float>("--gamma"),
-         parser.get<float>("--initial_alpha")},
+         parser.get<float>("--initial_alpha_continuous"),
+         parser.get<float>("--initial_alpha_discrete")},
         {parser.get<int>("--nb_tanks"),
          std::filesystem::path(parser.get<std::string>("--output_folder")),
          std::filesystem::path(parser.get<std::string>("--asset_folder")),

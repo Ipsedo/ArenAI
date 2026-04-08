@@ -19,7 +19,8 @@ struct ModelOptions {
     int critic_hidden_size;
     float tau;
     float gamma;
-    float initial_alpha;
+    float initial_alpha_continuous;
+    float initial_alpha_discrete;
 };
 
 struct TrainOptions {

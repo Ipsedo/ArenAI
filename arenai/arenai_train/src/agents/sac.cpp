@@ -19,7 +19,8 @@ SacAgent::SacAgent(
     int actor_hidden_size, int critic_hidden_size,
     const std::vector<std::tuple<int, int>> &vision_channels,
     const std::vector<int> &group_norm_nums, const torch::Device device, int metric_window_size,
-    const float tau, const float gamma, const float initial_alpha)
+    const float tau, const float gamma, const float initial_alpha_continuous,
+    const float initial_alpha_discrete)
     : actor(std::make_shared<Actor>(
         nb_sensors, nb_continuous_actions, nb_discrete_actions, hidden_size_sensors,
         actor_hidden_size, vision_channels, group_norm_nums)),
@@ -35,8 +36,8 @@ SacAgent::SacAgent(
       target_critic_2(std::make_shared<QFunction>(
           nb_sensors, nb_continuous_actions, nb_discrete_actions, hidden_size_sensors,
           hidden_size_actions, critic_hidden_size, vision_channels, group_norm_nums)),
-      alpha_continuous(std::make_shared<AlphaParameter>(initial_alpha)),
-      alpha_discrete(std::make_shared<AlphaParameter>(initial_alpha)),
+      alpha_continuous(std::make_shared<AlphaParameter>(initial_alpha_continuous)),
+      alpha_discrete(std::make_shared<AlphaParameter>(initial_alpha_discrete)),
       actor_optim(std::make_unique<torch::optim::Adam>(
           actor->parameters(), torch::optim::AdamOptions(learning_rate))),
       critic_1_optim(std::make_unique<torch::optim::Adam>(
@@ -55,7 +56,7 @@ SacAgent::SacAgent(
       alpha_continuous_metric(std::make_shared<Metric>("alpha_c", metric_window_size)),
       alpha_discrete_metric(std::make_shared<Metric>("alpha_d", metric_window_size)), tau(tau),
       gamma(gamma), continous_target_entropy(-static_cast<float>(nb_continuous_actions)),
-      discrete_target_entropy(multinomial_target_entropy(nb_discrete_actions, 0.4f)) {
+      discrete_target_entropy(multinomial_target_entropy(nb_discrete_actions, 0.3f)) {
 
     hard_update(target_critic_1, critic_1);
     hard_update(target_critic_2, critic_2);
@@ -110,11 +111,11 @@ void SacAgent::train(
                 next_state.vision, next_state.proprioception, next_continuous_action,
                 next_discrete_proba);
 
-            target_q_values = reward
-                              + (1.f - done.to(torch::kFloat)) * gamma
-                                    * (torch::min(next_target_q_value_1, next_target_q_value_2)
-                                       + alpha_continuous->alpha() * next_continuous_entropy
-                                       + alpha_discrete->alpha() * next_discrete_entropy);
+            const auto target_v_value = torch::min(next_target_q_value_1, next_target_q_value_2)
+                                        + alpha_continuous->alpha() * next_continuous_entropy
+                                        + alpha_discrete->alpha() * next_discrete_entropy;
+
+            target_q_values = reward + (1.f - done.to(torch::kFloat)) * gamma * target_v_value;
         }
 
         // critic 1

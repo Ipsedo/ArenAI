@@ -187,8 +187,6 @@ void train_main(
                 && replay_buffer->size() >= train_options.batch_size * train_options.epochs)
                 agent->train(replay_buffer, train_options.epochs, train_options.batch_size);
 
-            // metrics
-
             // step ending stuff
             last_phi_vector = phi_vector;
             is_done = episode_done_by_single_survivor || episode_done_by_timeout;

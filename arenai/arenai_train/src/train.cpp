@@ -69,7 +69,7 @@ void train_main(
         model_options.actor_hidden_size, model_options.critic_hidden_size,
         model_options.vision_channels, model_options.group_norm_nums, torch_device,
         train_options.metric_window_size, model_options.tau, model_options.gamma,
-        model_options.initial_alpha);
+        model_options.initial_alpha_continuous, model_options.initial_alpha_discrete);
 
     std::cout << "Parameters : " << agent->count_parameters() << std::endl;
     std::cout << "Target entropy (continuous) : " << agent->get_continuous_target_entropy()

@@ -29,7 +29,7 @@ int main(const int argc, char **argv) {
     parser.add_argument("--tau").scan<'g', float>().default_value(0.005f);
     parser.add_argument("--gamma").scan<'g', float>().default_value(0.99f);
     parser.add_argument("--initial_alpha_continuous").scan<'g', float>().default_value(1e-4f);
-    parser.add_argument("--initial_alpha_discrete").scan<'g', float>().default_value(1e-3f);
+    parser.add_argument("--initial_alpha_discrete").scan<'g', float>().default_value(1e-2f);
 
     // train
     parser.add_argument("--nb_tanks").scan<'i', int>().default_value(16);

@@ -72,7 +72,6 @@ class SacActor(nn.Module):
 
         self.mu = nn.Sequential(
             nn.Linear(hidden_size, nb_continuous_actions),
-            nn.Tanh(),
         )
         self.sigma = nn.Sequential(
             nn.Linear(hidden_size, nb_continuous_actions),

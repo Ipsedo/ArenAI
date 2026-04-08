@@ -42,7 +42,6 @@ private:
     bool is_dead_already_triggered;
 
     float distance_scale;
-    float optimal_shoot_distance;
     float angle_scale;
 
     bool has_touch;
@@ -53,7 +52,6 @@ private:
 
     float angle_quality(float angle) const;
     float distance_quality(float distance) const;
-    float thresholded_distance_quality(float distance) const;
 };
 
 #endif//ARENAI_TRAIN_HOST_ENEMY_TANK_FACTORY_H

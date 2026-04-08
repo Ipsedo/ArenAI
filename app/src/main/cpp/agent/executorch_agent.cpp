@@ -121,9 +121,9 @@ std::vector<Action> ExecuTorchAgent::act(const std::vector<State> &state) {
     for (int i = 0; i < N; i++) {
         std::vector<float> continuous_action(ENEMY_NB_CONTINUOUS_ACTION);
         for (int a = 0; a < ENEMY_NB_CONTINUOUS_ACTION; a++)
-            continuous_action[a] = truncated_normal_sample(
+            continuous_action[a] = gaussian_tanh_sample(
                 rng, mu[i * ENEMY_NB_CONTINUOUS_ACTION + a],
-                sigma[i * ENEMY_NB_CONTINUOUS_ACTION + a], -1.f, 1.f);
+                sigma[i * ENEMY_NB_CONTINUOUS_ACTION + a]);
 
         std::discrete_distribution<int> discrete_dist(
             {discrete[i * ENEMY_NB_DISCRETE_ACTION], discrete[i * ENEMY_NB_DISCRETE_ACTION + 1]});

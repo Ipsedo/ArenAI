@@ -100,7 +100,6 @@ float EnemyTankFactory::get_phi(
     constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
     const auto chassis_pos = glm::vec3(get_chassis()->get_model_matrix() * world_center);
 
-    // Collect quality scores for all alive enemies
     std::vector<float> scores;
 
     for (const auto &other: tank_factories) {

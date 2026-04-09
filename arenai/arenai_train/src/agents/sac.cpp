@@ -56,7 +56,7 @@ SacAgent::SacAgent(
       alpha_continuous_metric(std::make_shared<Metric>("alpha_c", metric_window_size)),
       alpha_discrete_metric(std::make_shared<Metric>("alpha_d", metric_window_size)), tau(tau),
       gamma(gamma), continous_target_entropy(-static_cast<float>(nb_continuous_actions)),
-      discrete_target_entropy(multinomial_target_entropy(nb_discrete_actions, 0.3f)) {
+      discrete_target_entropy(multinomial_target_entropy(nb_discrete_actions, 0.2f)) {
 
     hard_update(target_critic_1, critic_1);
     hard_update(target_critic_2, critic_2);

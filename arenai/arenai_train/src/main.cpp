@@ -29,7 +29,7 @@ int main(const int argc, char **argv) {
     parser.add_argument("--tau").scan<'g', float>().default_value(0.005f);
     parser.add_argument("--gamma").scan<'g', float>().default_value(0.99f);
     parser.add_argument("--initial_alpha_continuous").scan<'g', float>().default_value(1e-3f);
-    parser.add_argument("--initial_alpha_discrete").scan<'g', float>().default_value(1e-2f);
+    parser.add_argument("--initial_alpha_discrete").scan<'g', float>().default_value(2e-2f);
 
     // train
     parser.add_argument("--nb_tanks").scan<'i', int>().default_value(16);
@@ -41,7 +41,7 @@ int main(const int argc, char **argv) {
     parser.add_argument("--epochs").scan<'i', int>().default_value(32);
     parser.add_argument("--batch_size").scan<'i', int>().default_value(512);
     parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60 * 3);
-    parser.add_argument("--nb_episodes").scan<'i', int>().default_value(10000);
+    parser.add_argument("--nb_episodes").scan<'i', int>().default_value(50000);
     parser.add_argument("--replay_buffer_size").scan<'i', int>().default_value(100000);
     parser.add_argument("--train_every").scan<'i', int>().default_value(256);
     parser.add_argument("--save_every").scan<'i', int>().default_value(30 * 60 * 25);

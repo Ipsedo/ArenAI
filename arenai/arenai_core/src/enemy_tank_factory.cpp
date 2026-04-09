@@ -16,8 +16,8 @@ EnemyTankFactory::EnemyTankFactory(
     : TankFactory(file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency),
       tank_prefix_name(tank_prefix_name), hit_reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-      curr_frame_upside_down(0), is_dead_already_triggered(false), distance_scale(150.f),
-      angle_scale(static_cast<float>(M_PI) / 6.f), shoot_in_aim_optimal_distance(100.f),
+      curr_frame_upside_down(0), is_dead_already_triggered(false), distance_scale(300.f),
+      angle_scale(static_cast<float>(M_PI) / 6.f), shoot_in_aim_optimal_distance(75.f),
       has_touch(false), action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
@@ -44,8 +44,7 @@ float EnemyTankFactory::distance_quality(const float distance) const {
 }
 
 float EnemyTankFactory::thresholded_distance_quality(const float distance) const {
-    return distance_quality(
-        std::max(distance - shoot_in_aim_optimal_distance, shoot_in_aim_optimal_distance));
+    return distance_quality(std::max(distance - shoot_in_aim_optimal_distance, 0.f));
 }
 
 float EnemyTankFactory::get_reward(
@@ -82,7 +81,7 @@ float EnemyTankFactory::get_reward(
     }
 
     constexpr float good_fire_reward = 0.2f;
-    constexpr float fire_cost = 0.1f;
+    constexpr float fire_cost = 0.02f;
     const float shoot_reward =
         action_stats->has_fire() ? max_quality_score * good_fire_reward - fire_cost : 0.f;
 

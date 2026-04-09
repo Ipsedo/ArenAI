@@ -3,7 +3,9 @@
 //
 
 #include <algorithm>
+#include <cmath>
 #include <iostream>
+#include <vector>
 
 #include <arenai_core/constants.h>
 #include <arenai_core/enemy_tank_factory.h>
@@ -98,7 +100,8 @@ float EnemyTankFactory::get_phi(
     constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
     const auto chassis_pos = glm::vec3(get_chassis()->get_model_matrix() * world_center);
 
-    float max_quality_score = 0.f;
+    // Collect quality scores for all alive enemies
+    std::vector<float> scores;
 
     for (const auto &other: tank_factories) {
         if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;
@@ -108,14 +111,19 @@ float EnemyTankFactory::get_phi(
         const float distance = glm::length(chassis_pos - other_pos);
         const float angle = compute_aim_angle(other);
 
-        const float quality_score =
-            0.5f * angle_quality(angle) * thresholded_distance_quality(distance)
-            + 0.3f * angle_quality(angle) + 0.2f * distance_quality(distance);
-
-        max_quality_score = std::max(quality_score, max_quality_score);
+        scores.push_back(angle_quality(angle) * thresholded_distance_quality(distance));
     }
 
-    return max_quality_score;
+    if (scores.empty()) return 0.f;
+
+    constexpr float temperature = 0.2f;
+
+    const float max_s = *std::ranges::max_element(scores);
+
+    float sum_exp = 0.f;
+    for (const float s: scores) sum_exp += std::exp((s - max_s) / temperature);
+
+    return temperature * (std::log(sum_exp) + max_s / temperature);
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

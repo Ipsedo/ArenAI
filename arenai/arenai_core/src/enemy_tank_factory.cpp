@@ -18,7 +18,7 @@ EnemyTankFactory::EnemyTankFactory(
     : TankFactory(file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency),
       tank_prefix_name(tank_prefix_name), hit_reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-      curr_frame_upside_down(0), is_dead_already_triggered(false), distance_scale(300.f),
+      curr_frame_upside_down(0), is_dead_already_triggered(false), distance_scale(150.f),
       angle_scale(static_cast<float>(M_PI) / 6.f), shoot_in_aim_optimal_distance(75.f),
       has_touch(false), action_stats(std::make_shared<ActionStats>()) {}
 
@@ -67,7 +67,7 @@ float EnemyTankFactory::get_reward(
     constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
     const auto chassis_pos = glm::vec3(get_chassis()->get_model_matrix() * world_center);
 
-    float max_quality_score = 0.f;
+    float max_quality_score = -1.f;
 
     for (const auto &other: tank_factories) {
         if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;
@@ -77,15 +77,15 @@ float EnemyTankFactory::get_reward(
         const float distance = glm::length(chassis_pos - other_pos);
         const float angle = compute_aim_angle(other);
 
-        const float quality_score = angle_quality(angle) * thresholded_distance_quality(distance);
+        const float quality_score =
+            (2.f * angle_quality(angle) - 1.f) * thresholded_distance_quality(distance);
 
         max_quality_score = std::max(quality_score, max_quality_score);
     }
 
-    constexpr float good_fire_reward = 0.2f;
-    constexpr float fire_cost = 0.02f;
+    constexpr float good_fire_reward = 0.25f;
     const float shoot_reward =
-        action_stats->has_fire() ? max_quality_score * good_fire_reward - fire_cost : 0.f;
+        action_stats->has_fire() ? max_quality_score * good_fire_reward : 0.f;
 
     // 4. total reward
     const float reward = hit_reward + dead_penalty + shoot_reward;
@@ -101,6 +101,7 @@ float EnemyTankFactory::get_phi(
     const auto chassis_pos = glm::vec3(get_chassis()->get_model_matrix() * world_center);
 
     std::vector<float> scores;
+    std::vector<float> distances;
 
     for (const auto &other: tank_factories) {
         if (other->tank_prefix_name == tank_prefix_name || other->is_dead()) continue;
@@ -110,19 +111,24 @@ float EnemyTankFactory::get_phi(
         const float distance = glm::length(chassis_pos - other_pos);
         const float angle = compute_aim_angle(other);
 
-        scores.push_back(angle_quality(angle) * thresholded_distance_quality(distance));
+        distances.push_back(distance);
+        scores.push_back(angle_quality(angle));
     }
 
     if (scores.empty()) return 0.f;
 
-    constexpr float temperature = 0.2f;
-
-    const float max_s = *std::ranges::max_element(scores);
+    const float min_d = *std::ranges::min_element(distances);
 
     float sum_exp = 0.f;
-    for (const float s: scores) sum_exp += std::exp((s - max_s) / temperature);
+    float sum_weight = 0.f;
+    for (int i = 0; i < scores.size(); i++) {
+        const float weight = std::exp(-(distances[i] - min_d) / distance_scale);
 
-    return temperature * (std::log(sum_exp) + max_s / temperature);
+        sum_exp += weight * scores[i];
+        sum_weight += weight;
+    }
+
+    return sum_weight > 0.f ? sum_exp / sum_weight : 0.f;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

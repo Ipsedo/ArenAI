@@ -13,6 +13,12 @@ Actor::Actor(
     const std::vector<int> &group_norm_nums)
     : vision_encoder(register_module(
         "vision_encoder", std::make_shared<ConvolutionNetwork>(vision_channels, group_norm_nums))),
+      vision_decoder(register_module(
+          "vision_decoder",
+          std::make_shared<TransposedConvolutionNetwork>(
+              vision_channels, group_norm_nums, vision_encoder->get_output_height(),
+              vision_encoder->get_output_width()))),
+
       sensors_encoder(register_module(
           "sensors_encoder",
           torch::nn::Sequential(
@@ -38,9 +44,22 @@ Actor::Actor(
     apply(init_weights);
 }
 
-actor_response Actor::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
-    auto vision_encoded = vision_encoder->forward(vision);
+actor_response_with_encoding
+Actor::act_with_encoding(const torch::Tensor &vision, const torch::Tensor &sensors) {
+    const auto vision_encoded = vision_encoder->forward(vision);
     auto sensors_encoded = sensors_encoder->forward(sensors);
-    auto encoded = head->forward(torch::cat({vision_encoded, sensors_encoded}, 1));
+    auto encoded = head->forward(torch::cat({vision_encoded.flatten(1, -1), sensors_encoded}, 1));
+
+    const auto loss_encoding = vision_decoder->forward_to_loss(vision_encoded, vision);
+
+    return {
+        mu->forward(encoded), sigma->forward(encoded), discrete->forward(encoded), loss_encoding};
+}
+
+actor_response Actor::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
+    const auto vision_encoded = vision_encoder->forward(vision);
+    auto sensors_encoded = sensors_encoder->forward(sensors);
+    auto encoded = head->forward(torch::cat({vision_encoded.flatten(1, -1), sensors_encoded}, 1));
+
     return {mu->forward(encoded), sigma->forward(encoded), discrete->forward(encoded)};
 }

@@ -56,7 +56,8 @@ SacAgent::SacAgent(
       alpha_continuous_metric(std::make_shared<Metric>("alpha_c", metric_window_size)),
       alpha_discrete_metric(std::make_shared<Metric>("alpha_d", metric_window_size)), tau(tau),
       gamma(gamma), continous_target_entropy(-static_cast<float>(nb_continuous_actions)),
-      discrete_target_entropy(multinomial_target_entropy(nb_discrete_actions, 0.2f)) {
+      discrete_target_entropy(multinomial_target_entropy(nb_discrete_actions, 0.2f)),
+      decoding_loss_factor(0.5f) {
 
     hard_update(target_critic_1, critic_1);
     hard_update(target_critic_2, critic_2);
@@ -104,10 +105,10 @@ void SacAgent::train(
 
             const auto next_discrete_entropy = multinomial_entropy(next_discrete_proba);
 
-            const auto next_target_q_value_1 = target_critic_1->value_expectation(
+            const auto [next_target_q_value_1] = target_critic_1->value_expectation(
                 next_state.vision, next_state.proprioception, next_continuous_action,
                 next_discrete_proba);
-            const auto next_target_q_value_2 = target_critic_2->value_expectation(
+            const auto [next_target_q_value_2] = target_critic_2->value_expectation(
                 next_state.vision, next_state.proprioception, next_continuous_action,
                 next_discrete_proba);
 
@@ -119,9 +120,10 @@ void SacAgent::train(
         }
 
         // critic 1
-        const auto q_value_1 = critic_1->value_ohe(
+        const auto [q_value_1, critic_1_enc_loss] = critic_1->value_ohe(
             state.vision, state.proprioception, action.continuous_action, action.discrete_action);
-        const auto critic_1_loss = torch::mse_loss(q_value_1, target_q_values, at::Reduction::Mean);
+        const auto critic_1_loss = torch::mse_loss(q_value_1, target_q_values, at::Reduction::Mean)
+                                   + decoding_loss_factor * critic_1_enc_loss;
 
         critic_1_optim->zero_grad();
         critic_1_loss.backward();
@@ -129,9 +131,10 @@ void SacAgent::train(
         critic_1_optim->step();
 
         // critic 2
-        const auto q_value_2 = critic_2->value_ohe(
+        const auto [q_value_2, critic_2_enc_loss] = critic_2->value_ohe(
             state.vision, state.proprioception, action.continuous_action, action.discrete_action);
-        const auto critic_2_loss = torch::mse_loss(q_value_2, target_q_values, at::Reduction::Mean);
+        const auto critic_2_loss = torch::mse_loss(q_value_2, target_q_values, at::Reduction::Mean)
+                                   + decoding_loss_factor * critic_2_enc_loss;
 
         critic_2_optim->zero_grad();
         critic_2_loss.backward();
@@ -139,8 +142,8 @@ void SacAgent::train(
         critic_2_optim->step();
 
         // policy
-        const auto [curr_mu, curr_sigma, curr_discrete_proba] =
-            actor->act(state.vision, state.proprioception);
+        const auto [curr_mu, curr_sigma, curr_discrete_proba, actor_enc_loss] =
+            actor->act_with_encoding(state.vision, state.proprioception);
 
         const auto [curr_continuous_action, curr_continuous_u] =
             gaussian_tanh_sample(curr_mu, curr_sigma);
@@ -150,15 +153,17 @@ void SacAgent::train(
 
         const auto curr_discrete_entropy = multinomial_entropy(curr_discrete_proba);
 
-        const auto curr_q_value_1 = critic_1->value_expectation(
+        const auto [curr_q_value_1] = critic_1->value_expectation(
             state.vision, state.proprioception, curr_continuous_action, curr_discrete_proba);
-        const auto curr_q_value_2 = critic_2->value_expectation(
+        const auto [curr_q_value_2] = critic_2->value_expectation(
             state.vision, state.proprioception, curr_continuous_action, curr_discrete_proba);
         const auto q_value = torch::min(curr_q_value_1, curr_q_value_2);
 
-        const auto actor_loss = -torch::mean(
-            alpha_continuous->alpha().detach() * curr_continuous_entropy
-            + alpha_discrete->alpha().detach() * curr_discrete_entropy + q_value);
+        const auto actor_loss =
+            -torch::mean(
+                alpha_continuous->alpha().detach() * curr_continuous_entropy
+                + alpha_discrete->alpha().detach() * curr_discrete_entropy + q_value)
+            + decoding_loss_factor * actor_enc_loss;
 
         actor_optim->zero_grad();
         actor_loss.backward();

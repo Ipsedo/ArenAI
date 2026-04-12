@@ -72,6 +72,8 @@ private:
     float gamma;
     float continous_target_entropy;
     float discrete_target_entropy;
+
+    float decoding_loss_factor;
 };
 
 #endif//ARENAI_TRAIN_HOST_SAC_H

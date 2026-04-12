@@ -4,7 +4,7 @@
 
 #include "./vision.h"
 
-#include "arenai_core/constants.h"
+#include <arenai_core/constants.h>
 
 ConvolutionNetwork::ConvolutionNetwork(
     const std::vector<std::tuple<int, int>> &channels, const std::vector<int> &group_norm_nums)
@@ -29,7 +29,8 @@ ConvolutionNetwork::ConvolutionNetwork(
 
     output_size = w * h * std::get<1>(channels.back());
 
-    cnn->push_back(torch::nn::Flatten(torch::nn::FlattenOptions().start_dim(1).end_dim(-1)));
+    output_height = h;
+    output_width = w;
 }
 
 torch::Tensor ConvolutionNetwork::forward(const torch::Tensor &input) {
@@ -40,13 +41,56 @@ torch::Tensor ConvolutionNetwork::forward(const torch::Tensor &input) {
 
 int ConvolutionNetwork::get_output_size() const { return output_size; }
 
+int ConvolutionNetwork::get_output_width() const { return output_width; }
+
+int ConvolutionNetwork::get_output_height() const { return output_height; }
+
 /*
  * Conv Transpose
  */
 TransposedConvolutionNetwork::TransposedConvolutionNetwork(
-    const std::vector<std::tuple<int, int>> &channels, const std::vector<int> &group_norm_nums,
-    int encoded_image_height, int encoded_image_width) {}
+    const std::vector<std::tuple<int, int>> &encode_channels,
+    const std::vector<int> &encode_group_norm_nums, const int encoded_image_height,
+    const int encoded_image_width)
+    : cnn(register_module("cnn", torch::nn::Sequential())) {
 
-torch::Tensor TransposedConvolutionNetwork::forward(const torch::Tensor &input) {}
+    std::vector channels(encode_channels);
+    std::ranges::reverse(channels);
 
-int TransposedConvolutionNetwork::get_output_size() const {}
+    for (auto &[a, b]: channels) { std::swap(a, b); }
+
+    std::vector group_norm_nums(encode_group_norm_nums);
+    group_norm_nums.erase(group_norm_nums.end());
+    std::ranges::reverse(group_norm_nums);
+
+    int w = encoded_image_width, h = encoded_image_height;
+
+    for (int i = 0; i < channels.size(); i++) {
+        const auto &[c_i, c_o] = channels[i];
+
+        constexpr int padding = 1, stride = 2, kernel = 3, output_padding = 1;
+
+        w = (w - 1) * stride - 2 * padding + kernel + output_padding;
+        h = (h - 1) * stride - 2 * padding + kernel + output_padding;
+
+        cnn->push_back(
+            torch::nn::ConvTranspose2d(torch::nn::ConvTranspose2dOptions(c_i, c_o, kernel)
+                                           .stride(stride)
+                                           .padding(padding)
+                                           .output_padding(output_padding)));
+
+        if (i < channels.size() - 1) {
+            cnn->push_back(
+                torch::nn::GroupNorm(torch::nn::GroupNormOptions(group_norm_nums[i], c_o)));
+            cnn->push_back(torch::nn::SiLU());
+        } else cnn->push_back(torch::nn::Tanh());
+    }
+}
+
+torch::Tensor TransposedConvolutionNetwork::forward_to_loss(
+    const torch::Tensor &encoded_image, const torch::Tensor &vision_uint8) {
+    const auto decoded_image = cnn->forward(encoded_image);
+    const auto vision_float = vision_uint8.to(torch::kFloat).mul_(2.0f / 255.0f).add_(-1.0f);
+
+    return torch::mse_loss(decoded_image, vision_float);
+}

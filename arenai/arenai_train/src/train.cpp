@@ -165,8 +165,9 @@ void train_main(
                                             || episode_done_by_single_survivor;
 
                 const float potential_reward =
-                    (env_done ? 0.f : 1.f) * train_options.potential_reward_scale
-                    * (model_options.gamma * phi_vector[i] - last_phi_vector[i]);
+                    train_options.potential_reward_scale
+                    * ((env_done ? 0.f : 1.f) * model_options.gamma * phi_vector[i]
+                       - last_phi_vector[i]);
 
                 reward_metric.add(reward);
                 potential_metric.add(potential_reward);

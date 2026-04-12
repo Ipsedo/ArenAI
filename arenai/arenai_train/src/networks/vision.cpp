@@ -60,7 +60,7 @@ TransposedConvolutionNetwork::TransposedConvolutionNetwork(
     for (auto &[a, b]: channels) { std::swap(a, b); }
 
     std::vector group_norm_nums(encode_group_norm_nums);
-    group_norm_nums.erase(group_norm_nums.end());
+    group_norm_nums.pop_back();
     std::ranges::reverse(group_norm_nums);
 
     int w = encoded_image_width, h = encoded_image_height;

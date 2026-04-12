@@ -81,8 +81,8 @@ q_function_response QFunction::value_expectation(
         const auto discrete_encoded =
             discrete_action_encoder->forward(one_hots[a].unsqueeze(0).expand({batch_size, -1}));
 
-        values.select(1, a) =
-            head->forward(torch::cat({common_encoded, discrete_encoded}, 1)).squeeze(1);
+        values.select(1, a).copy_(
+            head->forward(torch::cat({common_encoded, discrete_encoded}, 1)).squeeze(1));
     }
 
     return {(values * discrete_actions_proba).sum(1, true)};

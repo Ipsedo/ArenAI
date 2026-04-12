@@ -39,14 +39,3 @@ torch::Tensor ConvolutionNetwork::forward(const torch::Tensor &input) {
 }
 
 int ConvolutionNetwork::get_output_size() const { return output_size; }
-
-/*
- * Conv Transpose
- */
-TransposedConvolutionNetwork::TransposedConvolutionNetwork(
-    const std::vector<std::tuple<int, int>> &channels, const std::vector<int> &group_norm_nums,
-    int encoded_image_height, int encoded_image_width) {}
-
-torch::Tensor TransposedConvolutionNetwork::forward(const torch::Tensor &input) {}
-
-int TransposedConvolutionNetwork::get_output_size() const {}

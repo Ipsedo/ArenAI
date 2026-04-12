@@ -21,19 +21,4 @@ private:
     int output_size;
 };
 
-class TransposedConvolutionNetwork final : public torch::nn::Module {
-public:
-    explicit TransposedConvolutionNetwork(
-        const std::vector<std::tuple<int, int>> &channels, const std::vector<int> &group_norm_nums,
-        int encoded_image_height, int encoded_image_width);
-
-    torch::Tensor forward(const torch::Tensor &input);
-
-    int get_output_size() const;
-
-private:
-    torch::nn::Sequential cnn{nullptr};
-    int output_size;
-};
-
 #endif// ARENAI_TRAIN_HOST_VISION_H

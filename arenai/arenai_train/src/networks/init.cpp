@@ -21,5 +21,8 @@ void init_weights(torch::nn::Module &module) {
     } else if (auto *conv = dynamic_cast<torch::nn::Conv2dImpl *>(&module)) {
         torch::nn::init::kaiming_normal_(conv->weight, 0.0, torch::kFanIn, torch::kReLU);
         if (conv->options.bias()) torch::nn::init::zeros_(conv->bias);
+    } else if (auto *tr_conv = dynamic_cast<torch::nn::ConvTranspose2dImpl *>(&module)) {
+        torch::nn::init::kaiming_normal_(tr_conv->weight, 0.0, torch::kFanIn, torch::kReLU);
+        if (tr_conv->options.bias()) torch::nn::init::zeros_(conv->bias);
     }
 }

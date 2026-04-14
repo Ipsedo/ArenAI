@@ -19,7 +19,7 @@ TrainTankEnvironment::TrainTankEnvironment(
         std::make_shared<DesktopAssetFileReader>(android_assets_path), gl_context, nb_tanks,
         wanted_frequency, false),
       wanted_frequency(wanted_frequency),
-      max_frames_without_hit(static_cast<int>(15.f / wanted_frequency)),
+      max_frames_without_hit(static_cast<int>(5.f / wanted_frequency)),
       remaining_frames(nb_tanks, max_frames_without_hit),
       nb_frames_added_when_hit(static_cast<int>(5.f / wanted_frequency)), nb_tanks(nb_tanks),
       nb_steps(0), episode_step_nb_metric(std::make_shared<Metric>("seconds", 32, 1)) {}
@@ -53,14 +53,6 @@ std::vector<IsDone> TrainTankEnvironment::get_truncated_episodes() const {
     std::ranges::transform(
         remaining_frames, std::back_inserter(result), [](const auto &frame) { return frame <= 0; });
     return result;
-}
-
-std::vector<float> TrainTankEnvironment::get_phi_vector() {
-    return apply_on_factories<std::vector<float>>([](const auto &factories) {
-        std::vector<float> phi_vector;
-        for (const auto &factory: factories) phi_vector.push_back(factory->get_phi(factories));
-        return phi_vector;
-    });
 }
 
 void TrainTankEnvironment::on_draw(

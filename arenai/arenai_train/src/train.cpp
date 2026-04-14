@@ -82,7 +82,6 @@ void train_main(
     auto replay_buffer = std::make_unique<ReplayBuffer>(train_options.replay_buffer_size);
 
     Metric reward_metric("reward", train_options.metric_window_size, 6);
-    Metric potential_metric("potential", train_options.metric_window_size, 6);
 
     const auto sac_metrics = agent->get_metrics();
     const auto env_metrics = env->get_metrics();
@@ -113,7 +112,6 @@ void train_main(
 
         auto last_states = env->reset_physics();
         env->reset_drawables(gl_context);
-        auto last_phi_vector = env->get_phi_vector();
 
         int episode_step_idx = 0;
         while (!is_done) {
@@ -137,7 +135,6 @@ void train_main(
 
             // step environment
             const auto steps = env->step(wanted_frequency, actions_for_env);
-            const auto phi_vector = env->get_phi_vector();
             const auto is_truncated_vector = env->get_truncated_episodes();
 
             last_states.clear();
@@ -164,21 +161,14 @@ void train_main(
                                             || is_truncated_vector[i]
                                             || episode_done_by_single_survivor;
 
-                const float potential_reward =
-                    train_options.potential_reward_scale
-                    * ((env_done ? 0.f : 1.f) * model_options.gamma * phi_vector[i]
-                       - last_phi_vector[i]);
-
                 reward_metric.add(reward);
-                potential_metric.add(potential_reward);
 
                 const auto [next_vision, next_proprioception] = state_to_tensor(next_state);
 
                 replay_buffer->add(
                     {{vision[i], proprioception[i]},
                      {torch_action.continuous_action[i], torch_action.discrete_action[i]},
-                     torch::tensor(
-                         {reward + potential_reward}, torch::TensorOptions().dtype(torch::kFloat)),
+                     torch::tensor({reward}, torch::TensorOptions().dtype(torch::kFloat)),
                      torch::tensor({env_done}, torch::TensorOptions().dtype(torch::kBool)),
                      {next_vision, next_proprioception}});
 
@@ -191,7 +181,6 @@ void train_main(
                 agent->train(replay_buffer, train_options.epochs, train_options.batch_size);
 
             // step ending stuff
-            last_phi_vector = phi_vector;
             is_done = episode_done_by_single_survivor || episode_done_by_timeout;
 
             train_counter = (train_counter + 1) % train_options.train_every;
@@ -203,8 +192,7 @@ void train_main(
             // metric
             std::stringstream stream;
             stream << "Episode [" << episode_index << " / " << train_options.nb_episodes
-                   << "] : " << reward_metric.to_string() << ", " << potential_metric.to_string()
-                   << metrics_to_string(metrics);
+                   << "] : " << reward_metric.to_string() << metrics_to_string(metrics);
 
             p_bar.set_option(indicators::option::PrefixText{stream.str()});
             p_bar.print_progress();

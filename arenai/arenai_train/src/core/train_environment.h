@@ -19,8 +19,6 @@ public:
 
     std::vector<IsDone> get_truncated_episodes() const;
 
-    std::vector<float> get_phi_vector();
-
     std::vector<std::shared_ptr<Metric>> get_metrics() const;
 
     static void reset_singleton();

@@ -79,7 +79,8 @@ TransposedConvolutionNetwork::TransposedConvolutionNetwork(
             torch::nn::ConvTranspose2d(torch::nn::ConvTranspose2dOptions(c_i, c_o, kernel)
                                            .stride(stride)
                                            .padding(padding)
-                                           .output_padding(output_padding)));
+                                           .output_padding(output_padding)
+                                           .bias(i >= channels.size() - 1)));
 
         if (i < channels.size() - 1) {
             cnn->push_back(

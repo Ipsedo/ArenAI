@@ -18,7 +18,6 @@ QFunction::QFunction(
           std::make_shared<TransposedConvolutionNetwork>(
               vision_channels, group_norm_nums, vision_encoder->get_output_height(),
               vision_encoder->get_output_width()))),
-
       sensors_encoder(register_module(
           "sensors_encoder",
           torch::nn::Sequential(

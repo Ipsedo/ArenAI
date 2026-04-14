@@ -48,15 +48,15 @@ SacAgent::SacAgent(
           alpha_continuous->parameters(), torch::optim::AdamOptions(alpha_learning_rate))),
       alpha_discrete_optim(std::make_unique<torch::optim::Adam>(
           alpha_discrete->parameters(), torch::optim::AdamOptions(alpha_learning_rate))),
-      grad_norm_clip(1.f), actor_loss_metric(std::make_shared<Metric>("actor", metric_window_size)),
+      actor_loss_metric(std::make_shared<Metric>("actor", metric_window_size)),
       critic_1_loss_metric(std::make_shared<Metric>("critic_1", metric_window_size)),
       critic_2_loss_metric(std::make_shared<Metric>("critic_2", metric_window_size)),
       continuous_entropy_metric(std::make_shared<Metric>("entropy_c", metric_window_size)),
       discrete_entropy_metric(std::make_shared<Metric>("entropy_d", metric_window_size)),
       alpha_continuous_metric(std::make_shared<Metric>("alpha_c", metric_window_size)),
       alpha_discrete_metric(std::make_shared<Metric>("alpha_d", metric_window_size)), tau(tau),
-      gamma(gamma), continous_target_entropy(-static_cast<float>(nb_continuous_actions)),
-      discrete_target_entropy(multinomial_target_entropy(nb_discrete_actions, 0.2f)),
+      gamma(gamma), continous_target_entropy(-0.5f * static_cast<float>(nb_continuous_actions)),
+      discrete_target_entropy(multinomial_target_entropy(nb_discrete_actions, 0.5f)),
       decoding_loss_factor(0.5f) {
 
     hard_update(target_critic_1, critic_1);
@@ -127,7 +127,6 @@ void SacAgent::train(
 
         critic_1_optim->zero_grad();
         critic_1_loss.backward();
-        torch::nn::utils::clip_grad_norm_(critic_1->parameters(), grad_norm_clip);
         critic_1_optim->step();
 
         // critic 2
@@ -138,7 +137,6 @@ void SacAgent::train(
 
         critic_2_optim->zero_grad();
         critic_2_loss.backward();
-        torch::nn::utils::clip_grad_norm_(critic_2->parameters(), grad_norm_clip);
         critic_2_optim->step();
 
         // policy
@@ -167,7 +165,6 @@ void SacAgent::train(
 
         actor_optim->zero_grad();
         actor_loss.backward();
-        torch::nn::utils::clip_grad_norm_(actor->parameters(), grad_norm_clip);
         actor_optim->step();
 
         // continuous entropy
@@ -177,7 +174,6 @@ void SacAgent::train(
 
         alpha_continuous_optim->zero_grad();
         alpha_continuous_loss.backward();
-        torch::nn::utils::clip_grad_norm_(alpha_continuous->parameters(), grad_norm_clip);
         alpha_continuous_optim->step();
 
         // discrete entropy
@@ -187,7 +183,6 @@ void SacAgent::train(
 
         alpha_discrete_optim->zero_grad();
         alpha_discrete_loss.backward();
-        torch::nn::utils::clip_grad_norm_(alpha_discrete->parameters(), grad_norm_clip);
         alpha_discrete_optim->step();
 
         // target value soft update

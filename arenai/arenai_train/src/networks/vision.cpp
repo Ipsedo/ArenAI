@@ -21,8 +21,10 @@ ConvolutionNetwork::ConvolutionNetwork(
         w = (w - kernel + 2 * padding) / stride + 1;
         h = (h - kernel + 2 * padding) / stride + 1;
 
-        cnn->push_back(torch::nn::Conv2d(
-            torch::nn::Conv2dOptions(c_i, c_o, kernel).stride(stride).padding(padding)));
+        cnn->push_back(torch::nn::Conv2d(torch::nn::Conv2dOptions(c_i, c_o, kernel)
+                                             .stride(stride)
+                                             .padding(padding)
+                                             .bias(false)));
         cnn->push_back(torch::nn::GroupNorm(torch::nn::GroupNormOptions(groups, c_o)));
         cnn->push_back(torch::nn::SiLU());
     }

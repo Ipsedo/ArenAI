@@ -56,8 +56,6 @@ private:
     std::shared_ptr<torch::optim::Adam> alpha_continuous_optim;
     std::shared_ptr<torch::optim::Adam> alpha_discrete_optim;
 
-    float grad_norm_clip;
-
     std::shared_ptr<Metric> actor_loss_metric;
     std::shared_ptr<Metric> critic_1_loss_metric;
     std::shared_ptr<Metric> critic_2_loss_metric;

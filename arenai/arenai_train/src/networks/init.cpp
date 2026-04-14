@@ -23,6 +23,6 @@ void init_weights(torch::nn::Module &module) {
         if (conv->options.bias()) torch::nn::init::zeros_(conv->bias);
     } else if (auto *tr_conv = dynamic_cast<torch::nn::ConvTranspose2dImpl *>(&module)) {
         torch::nn::init::kaiming_normal_(tr_conv->weight, 0.0, torch::kFanIn, torch::kReLU);
-        if (tr_conv->options.bias()) torch::nn::init::zeros_(conv->bias);
+        if (tr_conv->options.bias()) torch::nn::init::zeros_(tr_conv->bias);
     }
 }

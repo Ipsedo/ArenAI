@@ -58,7 +58,7 @@ SacAgent::SacAgent(
       gamma(gamma),
       continous_target_entropy(truncated_normal_target_entropy(nb_continuous_actions, 0.2f)),
       discrete_target_entropy(multinomial_target_entropy(nb_discrete_actions, 0.98f)),
-      decoding_loss_factor(0.5f) {
+      decoding_loss_factor(0.25f) {
 
     hard_update(target_critic_1, critic_1);
     hard_update(target_critic_2, critic_2);

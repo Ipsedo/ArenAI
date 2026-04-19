@@ -50,7 +50,7 @@ float EnemyTankFactory::get_reward(
     // 2. dead / suicide penalty
     const auto dead_penalty = is_dead() ? (is_suicide() ? -0.5f : -1.f) : 0.f;
 
-    // 4. total reward
+    // 3. total reward
     const float reward = hit_reward + dead_penalty;
     hit_reward = 0.f;
 
@@ -69,6 +69,8 @@ void EnemyTankFactory::on_fired_shell_contact(Item *item) {
             hit_reward += 0.5f;
             has_touch = true;
         }
+    } else {
+        hit_reward -= 0.1f;
     }
 }
 

@@ -50,12 +50,8 @@ float EnemyTankFactory::get_reward(
     // 2. dead / suicide penalty
     const auto dead_penalty = is_dead() ? (is_suicide() ? -0.5f : -1.f) : 0.f;
 
-    // 3. fire penalty
-    constexpr float fire_cost = -0.01f;
-    const float shoot_penalty = action_stats->has_fire() ? fire_cost : 0.f;
-
     // 4. total reward
-    const float reward = hit_reward + dead_penalty + shoot_penalty;
+    const float reward = hit_reward + dead_penalty;
     hit_reward = 0.f;
 
     return reward;

@@ -17,18 +17,6 @@
 #include "./utils/saver.h"
 #include "./view/train_gl_context.h"
 
-std::string metrics_to_string(const std::vector<std::shared_ptr<Metric>> &metrics) {
-    std::stringstream stream;
-
-    stream << std::accumulate(
-        metrics.begin(), metrics.end(), std::string(),
-        [](std::string acc, const std::shared_ptr<Metric> &m) {
-            return acc.append(", ").append(m->to_string());
-        }) << " ";
-
-    return stream.str();
-}
-
 void train_main(
     const float wanted_frequency, const ModelOptions &model_options,
     const TrainOptions &train_options) {
@@ -71,17 +59,19 @@ void train_main(
 
     auto replay_buffer = std::make_unique<ReplayBuffer>(train_options.replay_buffer_size);
 
-    Metric reward_metric("reward", train_options.metric_window_size, 6);
-
+    // metrics
+    auto reward_metric = std::make_shared<Metric>("reward", train_options.metric_window_size, 6);
     const auto sac_metrics = agent->get_metrics();
     const auto env_metrics = env->get_metrics();
 
-    std::vector<std::shared_ptr<Metric>> metrics;
+    std::vector metrics = {reward_metric};
     metrics.insert(metrics.end(), env_metrics.begin(), env_metrics.end());
     metrics.insert(metrics.end(), sac_metrics.begin(), sac_metrics.end());
 
+    // to detect when need train
     int train_counter = 0;
 
+    // progress bar
     indicators::ProgressBar p_bar{
         indicators::option::MinProgress{0},
         indicators::option::MaxProgress{train_options.nb_episodes},
@@ -110,6 +100,7 @@ void train_main(
             const auto [vision, proprioception] = states_to_tensor(last_states);
 
             {
+                // action
                 torch::NoGradGuard no_grad_guard;
                 agent->set_train(false);
 
@@ -134,7 +125,7 @@ void train_main(
 
                 if (env->is_tank_factory_already_done(i)) continue;
 
-                reward_metric.add(reward);
+                reward_metric->add(reward);
 
                 const auto [next_vision, next_proprioception] = state_to_tensor(next_state);
 
@@ -158,10 +149,10 @@ void train_main(
             // attempt to save
             saver.attempt_save();
 
-            // metric
+            // progress bar metrics display
             std::stringstream stream;
             stream << "Episode [" << episode_index << " / " << train_options.nb_episodes
-                   << "] : " << reward_metric.to_string() << metrics_to_string(metrics);
+                   << "] : " << Metric::metrics_to_string(metrics);
 
             p_bar.set_option(indicators::option::PrefixText{stream.str()});
             p_bar.print_progress();

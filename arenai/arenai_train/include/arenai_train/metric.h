@@ -22,6 +22,8 @@ public:
 
     std::string to_string();
 
+    static std::string metrics_to_string(const std::vector<std::shared_ptr<Metric>> &metrics);
+
 private:
     std::string name;
     int window_size;

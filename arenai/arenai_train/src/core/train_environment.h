@@ -12,12 +12,16 @@ class TrainTankEnvironment final : public BaseTanksEnvironment {
 public:
     TrainTankEnvironment(
         const std::shared_ptr<AbstractGLContext> &gl_context, int nb_tanks,
-        const std::filesystem::path &android_assets_path, float wanted_frequency);
+        const std::filesystem::path &android_assets_path, float wanted_frequency,
+        int max_episode_steps);
 
     std::vector<std::tuple<State, Reward, IsDone>>
     step(float time_delta, const std::vector<Action> &actions) override;
 
     std::vector<std::shared_ptr<Metric>> get_metrics() const;
+
+    bool is_episode_terminated();
+    bool is_tank_factory_done(int tank_factory_index);
 
     static void reset_singleton();
 
@@ -39,7 +43,14 @@ private:
 
     int nb_steps;
 
+    std::vector<bool> done;
+    std::vector<bool> already_done;
+
+    int max_episode_steps;
+
     std::shared_ptr<Metric> episode_step_nb_metric;
+
+    bool is_there_a_single_survivor();
 };
 
 #endif// ARENAI_TRAIN_HOST_TRAIN_ENVIRONMENT_H

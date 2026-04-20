@@ -135,7 +135,6 @@ void train_main(
 
             // step environment
             const auto steps = env->step(wanted_frequency, actions_for_env);
-            const auto is_truncated_vector = env->get_truncated_episodes();
 
             last_states.clear();
             last_states.reserve(train_options.nb_tanks);
@@ -157,9 +156,8 @@ void train_main(
 
                 if (already_done[i]) continue;
 
-                const bool need_terminate = env_done || episode_done_by_timeout
-                                            || is_truncated_vector[i]
-                                            || episode_done_by_single_survivor;
+                const bool need_terminate =
+                    env_done || episode_done_by_timeout || episode_done_by_single_survivor;
 
                 reward_metric.add(reward);
 

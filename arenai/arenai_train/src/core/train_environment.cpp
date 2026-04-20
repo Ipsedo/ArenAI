@@ -41,18 +41,16 @@ TrainTankEnvironment::step(const float time_delta, const std::vector<Action> &ac
         remaining_frames[i]--;
 
         if (has_hit[i]) remaining_frames[i] += nb_frames_added_when_hit;
+
+        if (remaining_frames[i] <= 0) {
+            const auto [state, reward, is_done] = step_result[i];
+            step_result[i] = {state, reward, true};
+        }
     }
 
     nb_steps++;
 
     return step_result;
-}
-
-std::vector<IsDone> TrainTankEnvironment::get_truncated_episodes() const {
-    std::vector<IsDone> result;
-    std::ranges::transform(
-        remaining_frames, std::back_inserter(result), [](const auto &frame) { return frame <= 0; });
-    return result;
 }
 
 void TrainTankEnvironment::on_draw(

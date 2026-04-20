@@ -17,8 +17,6 @@ public:
     std::vector<std::tuple<State, Reward, IsDone>>
     step(float time_delta, const std::vector<Action> &actions) override;
 
-    std::vector<IsDone> get_truncated_episodes() const;
-
     std::vector<std::shared_ptr<Metric>> get_metrics() const;
 
     static void reset_singleton();

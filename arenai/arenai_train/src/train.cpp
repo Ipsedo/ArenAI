@@ -132,7 +132,7 @@ void train_main(
                 const auto [next_state, reward, env_done] = steps[i];
                 last_states.push_back(next_state);
 
-                if (env->is_tank_factory_done(i)) continue;
+                if (env->is_tank_factory_already_done(i)) continue;
 
                 reward_metric.add(reward);
 

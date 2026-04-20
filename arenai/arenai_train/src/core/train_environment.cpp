@@ -81,7 +81,7 @@ bool TrainTankEnvironment::is_there_a_single_survivor() {
     return nb_done >= static_cast<int>(already_done.size()) - 1;
 }
 
-bool TrainTankEnvironment::is_tank_factory_done(const int tank_factory_index) {
+bool TrainTankEnvironment::is_tank_factory_already_done(const int tank_factory_index) {
     return already_done[tank_factory_index];
 }
 

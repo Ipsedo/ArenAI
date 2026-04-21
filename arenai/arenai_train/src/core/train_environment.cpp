@@ -23,7 +23,7 @@ TrainTankEnvironment::TrainTankEnvironment(
       max_frames_without_hit(static_cast<int>(30.f / wanted_frequency)),
       remaining_frames(nb_tanks, max_frames_without_hit),
       nb_frames_added_when_hit(static_cast<int>(10.f / wanted_frequency)), nb_tanks(nb_tanks),
-      nb_steps(0), already_done(nb_tanks, false), done(nb_tanks, false),
+      nb_steps(0), done(nb_tanks, false), already_done(nb_tanks, false),
       max_episode_steps(max_episode_steps),
       episode_step_nb_metric(std::make_shared<Metric>("seconds", 32, 1)) {}
 
@@ -46,9 +46,8 @@ TrainTankEnvironment::step(const float time_delta, const std::vector<Action> &ac
         remaining_frames[i]--;
         if (has_hit[i]) remaining_frames[i] += nb_frames_added_when_hit;
 
-        const auto &[state, reward, is_done] = step_result[i];
-
-        if (remaining_frames[i] <= 0 || is_there_a_single_survivor()) {
+        if (const auto &[state, reward, is_done] = step_result[i];
+            remaining_frames[i] <= 0 || is_there_a_single_survivor() || is_done) {
             step_result[i] = {state, reward, true};
 
             done[i] = true;
@@ -58,6 +57,14 @@ TrainTankEnvironment::step(const float time_delta, const std::vector<Action> &ac
     nb_steps++;
 
     return step_result;
+}
+
+std::vector<float> TrainTankEnvironment::get_phi_vector() {
+    return apply_on_factories<std::vector<float>>([](const auto &factories) {
+        std::vector<float> phi_vector;
+        for (const auto &factory: factories) phi_vector.push_back(factory->get_phi(factories));
+        return phi_vector;
+    });
 }
 
 void TrainTankEnvironment::on_draw(
@@ -81,7 +88,7 @@ bool TrainTankEnvironment::is_there_a_single_survivor() {
     return nb_done >= static_cast<int>(already_done.size()) - 1;
 }
 
-bool TrainTankEnvironment::is_tank_factory_done(const int tank_factory_index) {
+bool TrainTankEnvironment::is_tank_factory_already_done(const int tank_factory_index) {
     return already_done[tank_factory_index];
 }
 

@@ -18,7 +18,8 @@ EnemyTankFactory::EnemyTankFactory(
     : TankFactory(file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency),
       tank_prefix_name(tank_prefix_name), hit_reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-      curr_frame_upside_down(0), is_dead_already_triggered(false), has_touch(false),
+      curr_frame_upside_down(0), optimal_distance(75.f), minimal_distance(25.f),
+      is_dead_already_triggered(false), has_touch(false),
       action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
@@ -55,6 +56,47 @@ float EnemyTankFactory::get_reward(
     hit_reward = 0.f;
 
     return reward;
+}
+
+float EnemyTankFactory::get_phi(
+    const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
+    float phi_distance = 0.f;
+
+    float min_distance = std::numeric_limits<float>::infinity();
+    int argmin_distance = -1;
+
+    constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
+    const auto chassis_model_matrix = get_chassis()->get_model_matrix();
+    const auto chassis_pos = glm::vec3(chassis_model_matrix * world_center);
+
+    for (int i = 0; i < tank_factories.size(); i++) {
+        if (tank_factories[i]->tank_prefix_name == tank_prefix_name || tank_factories[i]->is_dead())
+            continue;
+
+        const auto other_pos =
+            glm::vec3(tank_factories[i]->get_chassis()->get_model_matrix() * world_center);
+
+        const float distance = glm::length(chassis_pos - other_pos);
+
+        phi_distance +=
+            std::exp(-distance / optimal_distance) - std::exp(-distance / minimal_distance);
+
+        // for angle phi
+        if (distance < min_distance) {
+            min_distance = distance;
+            argmin_distance = i;
+        }
+    }
+
+    phi_distance = std::tanh(phi_distance);
+
+    float phi_angle = 0.f;
+    if (argmin_distance != -1) {
+        const float angle = compute_aim_angle(tank_factories[argmin_distance]);
+        phi_angle = std::cos(angle);
+    }
+
+    return 0.6f * phi_angle + 0.4f * phi_distance;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

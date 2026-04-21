@@ -46,10 +46,15 @@ TrainTankEnvironment::step(const float time_delta, const std::vector<Action> &ac
         remaining_frames[i]--;
         if (has_hit[i]) remaining_frames[i] += nb_frames_added_when_hit;
 
-        if (const auto &[state, reward, is_done] = step_result[i];
-            remaining_frames[i] <= 0 || is_there_a_single_survivor() || is_done) {
-            step_result[i] = {state, reward, true};
+        const auto &[state, reward, is_done] = step_result[i];
 
+        if (remaining_frames[i] <= 0 || is_done) {
+            step_result[i] = {state, reward, true};
+            done[i] = true;
+        }
+
+        if (!is_done && is_there_a_single_survivor()) {
+            step_result[i] = {state, reward + 10.f, true};
             done[i] = true;
         }
     }

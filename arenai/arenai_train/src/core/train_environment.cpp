@@ -48,7 +48,7 @@ TrainTankEnvironment::step(const float time_delta, const std::vector<Action> &ac
 
         const auto &[state, reward, is_done] = step_result[i];
 
-        if (remaining_frames[i] <= 0 || are_all_already_done() || is_done) {
+        if (remaining_frames[i] <= 0 || only_one_tank_not_done() || is_done) {
 
             step_result[i] = {state, reward, true};
             done[i] = true;
@@ -87,27 +87,25 @@ void TrainTankEnvironment::on_reset_physics(const std::unique_ptr<PhysicEngine> 
 }
 
 bool TrainTankEnvironment::only_one_tank_alive() {
-    const auto is_dead_vector = apply_on_factories<std::vector<bool>>([](const auto &factories) {
-        std::vector<bool> result;
-        result.reserve(factories.size());
+    return apply_on_factories<bool>([](const auto &factories) {
+        int nb_alive = 0;
+        for (const auto &factory: factories) nb_alive += static_cast<int>(!factory->is_dead());
 
-        for (const auto &factory: factories) result.push_back(factory->is_dead());
-
-        return result;
+        return nb_alive == 1;
     });
+}
 
+bool TrainTankEnvironment::only_one_tank_not_done() {
     return std::accumulate(
-               is_dead_vector.begin(), is_dead_vector.end(), 0,
-               [](const int acc, const bool is_dead) { return acc + static_cast<int>(is_dead); })
-           == nb_tanks - 1;
+               already_done.begin(), already_done.end(), 0,
+               [](const int acc, const bool done) { return acc + static_cast<int>(!done); })
+           == 1;
 }
 
 bool TrainTankEnvironment::are_all_already_done() {
-    const int nb_done = std::accumulate(
-        already_done.begin(), already_done.end(), 0,
-        [](const int acc, const bool done) { return acc + static_cast<int>(done); });
-
-    return nb_done == static_cast<int>(already_done.size());
+    return std::accumulate(
+        already_done.begin(), already_done.end(), true,
+        [](const int acc, const bool curr_done) { return acc && curr_done; });
 }
 
 bool TrainTankEnvironment::is_tank_factory_already_done(const int tank_factory_index) {
@@ -115,10 +113,7 @@ bool TrainTankEnvironment::is_tank_factory_already_done(const int tank_factory_i
 }
 
 bool TrainTankEnvironment::is_episode_terminated() {
-    return std::accumulate(
-               already_done.begin(), already_done.end(), true,
-               [](const int acc, const bool curr_done) { return acc && curr_done; })
-           || nb_steps > max_episode_steps;
+    return are_all_already_done() || only_one_tank_not_done() || nb_steps > max_episode_steps;
 }
 
 void TrainTankEnvironment::on_reset_drawables(

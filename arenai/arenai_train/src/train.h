@@ -29,7 +29,6 @@ struct TrainOptions {
     std::filesystem::path android_asset_folder;
     float learning_rate;
     float alpha_learning_rate;
-    float potential_reward_scale;
     int epochs;
     int batch_size;
     int max_episode_steps;
@@ -40,10 +39,6 @@ struct TrainOptions {
     bool cuda;
     int metric_window_size;
 };
-
-bool is_episode_finish(const std::vector<bool> &already_done);
-
-std::string metrics_to_string(const std::vector<std::shared_ptr<Metric>> &metrics);
 
 void train_main(
     float wanted_frequency, const ModelOptions &model_options, const TrainOptions &train_options);

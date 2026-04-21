@@ -14,7 +14,8 @@
 
 TrainTankEnvironment::TrainTankEnvironment(
     const std::shared_ptr<AbstractGLContext> &gl_context, const int nb_tanks,
-    const std::filesystem::path &android_assets_path, const float wanted_frequency)
+    const std::filesystem::path &android_assets_path, const float wanted_frequency,
+    const int max_episode_steps)
     : BaseTanksEnvironment(
         std::make_shared<DesktopAssetFileReader>(android_assets_path), gl_context, nb_tanks,
         wanted_frequency, false),
@@ -22,7 +23,9 @@ TrainTankEnvironment::TrainTankEnvironment(
       max_frames_without_hit(static_cast<int>(30.f / wanted_frequency)),
       remaining_frames(nb_tanks, max_frames_without_hit),
       nb_frames_added_when_hit(static_cast<int>(10.f / wanted_frequency)), nb_tanks(nb_tanks),
-      nb_steps(0), episode_step_nb_metric(std::make_shared<Metric>("seconds", 32, 1)) {}
+      nb_steps(0), done(nb_tanks, false), already_done(nb_tanks, false),
+      max_episode_steps(max_episode_steps),
+      episode_step_nb_metric(std::make_shared<Metric>("seconds", 32, 1)) {}
 
 std::vector<std::tuple<State, Reward, IsDone>>
 TrainTankEnvironment::step(const float time_delta, const std::vector<Action> &actions) {
@@ -38,21 +41,22 @@ TrainTankEnvironment::step(const float time_delta, const std::vector<Action> &ac
     });
 
     for (int i = 0; i < step_result.size(); i++) {
-        remaining_frames[i]--;
+        if (done[i] && !already_done[i]) already_done[i] = true;
 
+        remaining_frames[i]--;
         if (has_hit[i]) remaining_frames[i] += nb_frames_added_when_hit;
+
+        if (const auto &[state, reward, is_done] = step_result[i];
+            remaining_frames[i] <= 0 || is_there_a_single_survivor() || is_done) {
+            step_result[i] = {state, reward, true};
+
+            done[i] = true;
+        }
     }
 
     nb_steps++;
 
     return step_result;
-}
-
-std::vector<IsDone> TrainTankEnvironment::get_truncated_episodes() const {
-    std::vector<IsDone> result;
-    std::ranges::transform(
-        remaining_frames, std::back_inserter(result), [](const auto &frame) { return frame <= 0; });
-    return result;
 }
 
 std::vector<float> TrainTankEnvironment::get_phi_vector() {
@@ -71,6 +75,28 @@ void TrainTankEnvironment::on_reset_physics(const std::unique_ptr<PhysicEngine> 
 
     episode_step_nb_metric->add(static_cast<float>(nb_steps) * wanted_frequency);
     nb_steps = 0;
+
+    already_done = std::vector(nb_tanks, false);
+    done = std::vector(nb_tanks, false);
+}
+
+bool TrainTankEnvironment::is_there_a_single_survivor() {
+    const int nb_done = std::accumulate(
+        already_done.begin(), already_done.end(), 0,
+        [](const int acc, const bool done) { return acc + static_cast<int>(done); });
+
+    return nb_done >= static_cast<int>(already_done.size()) - 1;
+}
+
+bool TrainTankEnvironment::is_tank_factory_already_done(const int tank_factory_index) {
+    return already_done[tank_factory_index];
+}
+
+bool TrainTankEnvironment::is_episode_terminated() {
+    return std::accumulate(
+               already_done.begin(), already_done.end(), true,
+               [](const int acc, const bool curr_done) { return acc && curr_done; })
+           || nb_steps > max_episode_steps;
 }
 
 void TrainTankEnvironment::on_reset_drawables(

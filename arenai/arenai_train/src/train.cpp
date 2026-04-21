@@ -17,29 +17,6 @@
 #include "./utils/saver.h"
 #include "./view/train_gl_context.h"
 
-bool is_episode_finish(const std::vector<bool> &already_done) {
-    if (already_done.empty()) return true;
-    if (already_done.size() == 1) return already_done[0];
-
-    const int nb_done = std::accumulate(
-        already_done.begin(), already_done.end(), 0,
-        [](const int acc, const bool done) { return acc + static_cast<int>(done); });
-
-    return nb_done >= static_cast<int>(already_done.size()) - 1;
-}
-
-std::string metrics_to_string(const std::vector<std::shared_ptr<Metric>> &metrics) {
-    std::stringstream stream;
-
-    stream << std::accumulate(
-        metrics.begin(), metrics.end(), std::string(),
-        [](std::string acc, const std::shared_ptr<Metric> &m) {
-            return acc.append(", ").append(m->to_string());
-        }) << " ";
-
-    return stream.str();
-}
-
 void train_main(
     const float wanted_frequency, const ModelOptions &model_options,
     const TrainOptions &train_options) {
@@ -60,7 +37,8 @@ void train_main(
     std::cout << "Action size (discrete) : " << ENEMY_NB_DISCRETE_ACTION << std::endl;
 
     const auto env = std::make_unique<TrainTankEnvironment>(
-        gl_context, train_options.nb_tanks, train_options.android_asset_folder, wanted_frequency);
+        gl_context, train_options.nb_tanks, train_options.android_asset_folder, wanted_frequency,
+        train_options.max_episode_steps);
 
     auto agent = std::make_shared<SacAgent>(
         ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_CONTINUOUS_ACTION, ENEMY_NB_DISCRETE_ACTION,
@@ -81,18 +59,21 @@ void train_main(
 
     auto replay_buffer = std::make_unique<ReplayBuffer>(train_options.replay_buffer_size);
 
-    Metric reward_metric("reward", train_options.metric_window_size, 6);
-    Metric potential_metric("potential", train_options.metric_window_size, 6);
-
+    // metrics
+    auto reward_metric = std::make_shared<Metric>("reward", train_options.metric_window_size, 6);
+    auto potential_metric =
+        std::make_shared<Metric>("potential", train_options.metric_window_size, 4);
     const auto sac_metrics = agent->get_metrics();
     const auto env_metrics = env->get_metrics();
 
-    std::vector<std::shared_ptr<Metric>> metrics;
+    std::vector metrics = {reward_metric, potential_metric};
     metrics.insert(metrics.end(), env_metrics.begin(), env_metrics.end());
     metrics.insert(metrics.end(), sac_metrics.begin(), sac_metrics.end());
 
+    // to detect when need train
     int train_counter = 0;
 
+    // progress bar
     indicators::ProgressBar p_bar{
         indicators::option::MinProgress{0},
         indicators::option::MaxProgress{train_options.nb_episodes},
@@ -109,13 +90,12 @@ void train_main(
     for (int episode_index = 0; episode_index < train_options.nb_episodes; episode_index++) {
         // set variable for episode
         bool is_done = false;
-        std::vector already_done(train_options.nb_tanks, false);
 
         auto last_states = env->reset_physics();
         env->reset_drawables(gl_context);
+
         auto last_phi_vector = env->get_phi_vector();
 
-        int episode_step_idx = 0;
         while (!is_done) {
 
             TorchAction torch_action;
@@ -124,6 +104,7 @@ void train_main(
             const auto [vision, proprioception] = states_to_tensor(last_states);
 
             {
+                // action
                 torch::NoGradGuard no_grad_guard;
                 agent->set_train(false);
 
@@ -138,39 +119,23 @@ void train_main(
             // step environment
             const auto steps = env->step(wanted_frequency, actions_for_env);
             const auto phi_vector = env->get_phi_vector();
-            const auto is_truncated_vector = env->get_truncated_episodes();
 
             last_states.clear();
             last_states.reserve(train_options.nb_tanks);
-
-            auto next_already_done = already_done;
-            for (int i = 0; i < steps.size(); i++)
-                if (const auto [state, reward, env_done] = steps[i];
-                    !next_already_done[i] && env_done)
-                    next_already_done[i] = true;
-
-            const bool episode_done_by_single_survivor = is_episode_finish(next_already_done);
-            const bool episode_done_by_timeout =
-                episode_step_idx + 1 >= train_options.max_episode_steps;
 
             // save to replay buffer
             for (int i = 0; i < train_options.nb_tanks; i++) {
                 const auto [next_state, reward, env_done] = steps[i];
                 last_states.push_back(next_state);
 
-                if (already_done[i]) continue;
-
-                const bool need_terminate = env_done || episode_done_by_timeout
-                                            || is_truncated_vector[i]
-                                            || episode_done_by_single_survivor;
+                if (env->is_tank_factory_already_done(i)) continue;
 
                 const float potential_reward =
-                    train_options.potential_reward_scale
-                    * ((env_done ? 0.f : 1.f) * model_options.gamma * phi_vector[i]
-                       - last_phi_vector[i]);
+                    (env_done ? 0.f : 1.f) * model_options.gamma * phi_vector[i]
+                    - last_phi_vector[i];
 
-                reward_metric.add(reward);
-                potential_metric.add(potential_reward);
+                reward_metric->add(reward);
+                potential_metric->add(potential_reward);
 
                 const auto [next_vision, next_proprioception] = state_to_tensor(next_state);
 
@@ -181,8 +146,6 @@ void train_main(
                          {reward + potential_reward}, torch::TensorOptions().dtype(torch::kFloat)),
                      torch::tensor({env_done}, torch::TensorOptions().dtype(torch::kBool)),
                      {next_vision, next_proprioception}});
-
-                if (need_terminate && !already_done[i]) already_done[i] = true;
             }
 
             // check if it's time to train
@@ -192,19 +155,17 @@ void train_main(
 
             // step ending stuff
             last_phi_vector = phi_vector;
-            is_done = episode_done_by_single_survivor || episode_done_by_timeout;
+            is_done = env->is_episode_terminated();
 
             train_counter = (train_counter + 1) % train_options.train_every;
-            episode_step_idx++;
 
             // attempt to save
             saver.attempt_save();
 
-            // metric
+            // progress bar metrics display
             std::stringstream stream;
             stream << "Episode [" << episode_index << " / " << train_options.nb_episodes
-                   << "] : " << reward_metric.to_string() << ", " << potential_metric.to_string()
-                   << metrics_to_string(metrics);
+                   << "] : " << Metric::metrics_to_string(metrics);
 
             p_bar.set_option(indicators::option::PrefixText{stream.str()});
             p_bar.print_progress();

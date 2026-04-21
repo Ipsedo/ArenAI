@@ -32,3 +32,15 @@ std::string Metric::to_string() {
 
     return stream.str();
 }
+
+std::string Metric::metrics_to_string(const std::vector<std::shared_ptr<Metric>> &metrics) {
+    std::stringstream stream;
+
+    stream << std::accumulate(
+        metrics.begin(), metrics.end(), std::string(),
+        [](std::string acc, const std::shared_ptr<Metric> &m) {
+            return acc.append(", ").append(m->to_string());
+        }) << " ";
+
+    return stream.str();
+}

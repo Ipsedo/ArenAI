@@ -160,7 +160,7 @@ void SacAgent::train(
 
         // continuous entropy
         const auto alpha_continuous_loss = torch::mean(
-            alpha_continuous->log_alpha()
+            alpha_continuous->alpha()
             * (curr_continuous_entropy.detach() - continous_target_entropy));
 
         alpha_continuous_optim->zero_grad();
@@ -169,8 +169,7 @@ void SacAgent::train(
 
         // discrete entropy
         const auto alpha_discrete_loss = torch::mean(
-            alpha_discrete->log_alpha()
-            * (curr_discrete_entropy.detach() - discrete_target_entropy));
+            alpha_discrete->alpha() * (curr_discrete_entropy.detach() - discrete_target_entropy));
 
         alpha_discrete_optim->zero_grad();
         alpha_discrete_loss.backward();

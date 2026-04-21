@@ -16,6 +16,7 @@ public:
         glm::vec3 chassis_pos, float wanted_frame_frequency);
 
     float get_reward(const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories);
+    float get_phi(const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories);
 
     bool is_dead() override;
     bool is_suicide() const;
@@ -37,6 +38,9 @@ private:
     float hit_reward;
     int max_frames_upside_down;
     int curr_frame_upside_down;
+
+    float optimal_distance;
+    float minimal_distance;
 
     bool is_dead_already_triggered;
 

@@ -18,6 +18,8 @@ public:
     std::vector<std::tuple<State, Reward, IsDone>>
     step(float time_delta, const std::vector<Action> &actions) override;
 
+    std::vector<float> get_phi_vector();
+
     std::vector<std::shared_ptr<Metric>> get_metrics() const;
 
     bool is_episode_terminated();

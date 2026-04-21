@@ -48,12 +48,13 @@ TrainTankEnvironment::step(const float time_delta, const std::vector<Action> &ac
 
         const auto &[state, reward, is_done] = step_result[i];
 
-        if (remaining_frames[i] <= 0 || is_done) {
+        if (remaining_frames[i] <= 0 || are_all_already_done() || is_done) {
+
             step_result[i] = {state, reward, true};
             done[i] = true;
         }
 
-        if (!is_done && is_there_a_single_survivor()) {
+        if (only_one_tank_alive()) {
             step_result[i] = {state, reward + 10.f, true};
             done[i] = true;
         }
@@ -85,12 +86,28 @@ void TrainTankEnvironment::on_reset_physics(const std::unique_ptr<PhysicEngine> 
     done = std::vector(nb_tanks, false);
 }
 
-bool TrainTankEnvironment::is_there_a_single_survivor() {
+bool TrainTankEnvironment::only_one_tank_alive() {
+    const auto is_dead_vector = apply_on_factories<std::vector<bool>>([](const auto &factories) {
+        std::vector<bool> result;
+        result.reserve(factories.size());
+
+        for (const auto &factory: factories) result.push_back(factory->is_dead());
+
+        return result;
+    });
+
+    return std::accumulate(
+               is_dead_vector.begin(), is_dead_vector.end(), 0,
+               [](const int acc, const bool is_dead) { return acc + static_cast<int>(is_dead); })
+           == nb_tanks - 1;
+}
+
+bool TrainTankEnvironment::are_all_already_done() {
     const int nb_done = std::accumulate(
         already_done.begin(), already_done.end(), 0,
         [](const int acc, const bool done) { return acc + static_cast<int>(done); });
 
-    return nb_done >= static_cast<int>(already_done.size()) - 1;
+    return nb_done == static_cast<int>(already_done.size());
 }
 
 bool TrainTankEnvironment::is_tank_factory_already_done(const int tank_factory_index) {

@@ -52,7 +52,8 @@ private:
 
     std::shared_ptr<Metric> episode_step_nb_metric;
 
-    bool is_there_a_single_survivor();
+    bool only_one_tank_alive();
+    bool are_all_already_done();
 };
 
 #endif// ARENAI_TRAIN_HOST_TRAIN_ENVIRONMENT_H

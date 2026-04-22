@@ -93,12 +93,12 @@ float EnemyTankFactory::get_shaped_reward(
 
     phi_distance = std::tanh(phi_distance);
 
-    const float angle = compute_aim_angle(tank_factories[argmin_distance]);
-
     float phi_angle = 0.f;
     float shoot_in_aim_reward = 0.f;
 
     if (argmin_distance != -1) {
+        const float angle = compute_aim_angle(tank_factories[argmin_distance]);
+
         phi_angle = std::cos(angle);
         shoot_in_aim_reward = action_stats->has_fire() ? std::exp(-angle / angle_scale) : 0.f;
     }

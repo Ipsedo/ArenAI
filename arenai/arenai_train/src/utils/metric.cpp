@@ -41,5 +41,7 @@ std::string Metric::metrics_to_string(const std::vector<std::shared_ptr<Metric>>
         stream << metrics[i]->to_string();
     }
 
+    stream << " ";
+
     return stream.str();
 }

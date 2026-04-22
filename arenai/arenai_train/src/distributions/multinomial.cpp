@@ -23,3 +23,8 @@ float multinomial_target_entropy(const int &nb_actions, const float &factor) {
            * multinomial_entropy(torch::ones({nb_actions}) / static_cast<float>(nb_actions))
                  .item<float>();
 }
+
+float multinomial_target_entropy(const float &shoot_probability) {
+    return multinomial_entropy(torch::tensor({shoot_probability, 1.f - shoot_probability}))
+        .item<float>();
+}

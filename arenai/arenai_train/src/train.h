@@ -31,6 +31,7 @@ struct TrainOptions {
     float alpha_learning_rate;
     int epochs;
     int batch_size;
+    int train_actor_each_epoch;
     int max_episode_steps;
     int nb_episodes;
     int replay_buffer_size;

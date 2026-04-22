@@ -18,8 +18,24 @@ EnemyTankFactory::EnemyTankFactory(
     : TankFactory(file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency),
       tank_prefix_name(tank_prefix_name), hit_reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-      curr_frame_upside_down(0), is_dead_already_triggered(false), has_touch(false),
-      action_stats(std::make_shared<ActionStats>()) {}
+      curr_frame_upside_down(0), optimal_distance(75.f), minimal_distance(25.f),
+      angle_scale(static_cast<float>(M_PI) / 6.f), is_dead_already_triggered(false),
+      has_touch(false), action_stats(std::make_shared<ActionStats>()) {}
+
+float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
+    const auto canon_tr = get_canon()->get_model_matrix();
+    const auto other_tr = other_tank->get_chassis()->get_model_matrix();
+
+    const auto canon_muzzle_pos = glm::vec3(canon_tr * glm::vec4(0.f, 0.f, 10.f, 1.f));
+    const auto other_pos = glm::vec3(other_tr * glm::vec4(0.f, 0.f, 0.f, 1.f));
+
+    const glm::vec3 to_other = glm::normalize(other_pos - canon_muzzle_pos);
+    const auto forward = glm::normalize(glm::vec3(canon_tr * glm::vec4(0.f, 0.f, 1.f, 0.f)));
+
+    const float d = std::clamp(glm::dot(forward, to_other), -1.f, 1.f);
+
+    return std::acos(d);
+}
 
 float EnemyTankFactory::get_reward(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
@@ -35,11 +51,59 @@ float EnemyTankFactory::get_reward(
     // 2. dead / suicide penalty
     const auto dead_penalty = is_dead() ? (is_suicide() ? -0.5f : -1.f) : 0.f;
 
-    // 3. total reward
-    const float reward = hit_reward + dead_penalty;
+    // 3. shaped reward
+    const float shaped_reward = get_shaped_reward(tank_factories);
+
+    // 4. total reward
+    const float reward = hit_reward + dead_penalty + shaped_reward;
     hit_reward = 0.f;
 
     return reward;
+}
+
+float EnemyTankFactory::get_shaped_reward(
+    const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
+    float phi_distance = 0.f;
+
+    float min_distance = std::numeric_limits<float>::infinity();
+    int argmin_distance = -1;
+
+    constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
+    const auto chassis_model_matrix = get_chassis()->get_model_matrix();
+    const auto chassis_pos = glm::vec3(chassis_model_matrix * world_center);
+
+    for (int i = 0; i < tank_factories.size(); i++) {
+        if (tank_factories[i]->tank_prefix_name == tank_prefix_name || tank_factories[i]->is_dead())
+            continue;
+
+        const auto other_pos =
+            glm::vec3(tank_factories[i]->get_chassis()->get_model_matrix() * world_center);
+
+        const float distance = glm::length(chassis_pos - other_pos);
+
+        phi_distance +=
+            std::exp(-distance / optimal_distance) - std::exp(-distance / minimal_distance);
+
+        // for angle phi
+        if (distance < min_distance) {
+            min_distance = distance;
+            argmin_distance = i;
+        }
+    }
+
+    phi_distance = std::tanh(phi_distance);
+
+    const float angle = compute_aim_angle(tank_factories[argmin_distance]);
+
+    float phi_angle = 0.f;
+    float shoot_in_aim_reward = 0.f;
+
+    if (argmin_distance != -1) {
+        phi_angle = std::cos(angle);
+        shoot_in_aim_reward = action_stats->has_fire() ? std::exp(-angle / angle_scale) : 0.f;
+    }
+
+    return 0.5f * shoot_in_aim_reward + 0.3f * phi_angle + 0.2f * phi_distance;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

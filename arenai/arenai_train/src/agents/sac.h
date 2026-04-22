@@ -18,7 +18,8 @@ public:
         int actor_hidden_size, int critic_hidden_size,
         const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
-        float tau, float gamma, float initial_alpha_continuous, float initial_alpha_discrete);
+        float tau, float gamma, float initial_alpha_continuous, float initial_alpha_discrete,
+        int train_actor_each_epoch);
 
     void
     train(const std::unique_ptr<ReplayBuffer> &replay_buffer, int epochs, int batch_size) override;
@@ -70,6 +71,8 @@ private:
     float gamma;
     float continous_target_entropy;
     float discrete_target_entropy;
+
+    int train_actor_each_epoch;
 };
 
 #endif//ARENAI_TRAIN_HOST_SAC_H

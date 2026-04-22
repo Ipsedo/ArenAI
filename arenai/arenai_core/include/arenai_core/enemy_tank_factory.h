@@ -38,11 +38,19 @@ private:
     int max_frames_upside_down;
     int curr_frame_upside_down;
 
+    float optimal_distance;
+    float minimal_distance;
+
+    float angle_scale;
+
     bool is_dead_already_triggered;
 
     bool has_touch;
 
     std::shared_ptr<ActionStats> action_stats;
+
+    float compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank);
+    float get_shaped_reward(const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories);
 };
 
 #endif//ARENAI_TRAIN_HOST_ENEMY_TANK_FACTORY_H

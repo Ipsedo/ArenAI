@@ -27,11 +27,11 @@ struct TrainOptions {
     int nb_tanks;
     std::filesystem::path output_folder;
     std::filesystem::path android_asset_folder;
-    float learning_rate;
+    float actor_learning_rate;
+    float critic_learning_rate;
     float alpha_learning_rate;
     int epochs;
     int batch_size;
-    int train_actor_each_epoch;
     int max_episode_steps;
     int nb_episodes;
     int replay_buffer_size;

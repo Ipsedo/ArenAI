@@ -13,13 +13,12 @@
 class SacAgent : public AbstractAgent {
 public:
     SacAgent(
-        int nb_sensors, int nb_continuous_actions, int nb_discrete_actions, float learning_rate,
-        float alpha_learning_rate, int hidden_size_sensors, int hidden_size_actions,
-        int actor_hidden_size, int critic_hidden_size,
-        const std::vector<std::tuple<int, int>> &vision_channels,
+        int nb_sensors, int nb_continuous_actions, int nb_discrete_actions,
+        float actor_learning_rate, float critic_learning_rate, float alpha_learning_rate,
+        int hidden_size_sensors, int hidden_size_actions, int actor_hidden_size,
+        int critic_hidden_size, const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
-        float tau, float gamma, float initial_alpha_continuous, float initial_alpha_discrete,
-        int train_actor_each_epoch);
+        float tau, float gamma, float initial_alpha_continuous, float initial_alpha_discrete);
 
     void
     train(const std::unique_ptr<ReplayBuffer> &replay_buffer, int epochs, int batch_size) override;
@@ -69,10 +68,8 @@ private:
 
     float tau;
     float gamma;
-    float continous_target_entropy;
+    float continuous_target_entropy;
     float discrete_target_entropy;
-
-    int train_actor_each_epoch;
 };
 
 #endif//ARENAI_TRAIN_HOST_SAC_H

@@ -14,13 +14,14 @@
 #include "../utils/target_update.h"
 
 SacAgent::SacAgent(
-    int nb_sensors, int nb_continuous_actions, int nb_discrete_actions, const float learning_rate,
+    int nb_sensors, int nb_continuous_actions, int nb_discrete_actions,
+    const float actor_learning_rate, const float critic_learning_rate,
     const float alpha_learning_rate, int hidden_size_sensors, int hidden_size_actions,
     int actor_hidden_size, int critic_hidden_size,
     const std::vector<std::tuple<int, int>> &vision_channels,
     const std::vector<int> &group_norm_nums, const torch::Device device, int metric_window_size,
     const float tau, const float gamma, const float initial_alpha_continuous,
-    const float initial_alpha_discrete, const int train_actor_each_epoch)
+    const float initial_alpha_discrete)
     : actor(std::make_shared<Actor>(
         nb_sensors, nb_continuous_actions, nb_discrete_actions, hidden_size_sensors,
         actor_hidden_size, vision_channels, group_norm_nums)),
@@ -39,11 +40,11 @@ SacAgent::SacAgent(
       alpha_continuous(std::make_shared<AlphaParameter>(initial_alpha_continuous)),
       alpha_discrete(std::make_shared<AlphaParameter>(initial_alpha_discrete)),
       actor_optim(std::make_unique<torch::optim::Adam>(
-          actor->parameters(), torch::optim::AdamOptions(learning_rate))),
+          actor->parameters(), torch::optim::AdamOptions(actor_learning_rate))),
       critic_1_optim(std::make_unique<torch::optim::Adam>(
-          critic_1->parameters(), torch::optim::AdamOptions(learning_rate))),
+          critic_1->parameters(), torch::optim::AdamOptions(critic_learning_rate))),
       critic_2_optim(std::make_unique<torch::optim::Adam>(
-          critic_2->parameters(), torch::optim::AdamOptions(learning_rate))),
+          critic_2->parameters(), torch::optim::AdamOptions(critic_learning_rate))),
       alpha_continuous_optim(std::make_unique<torch::optim::Adam>(
           alpha_continuous->parameters(), torch::optim::AdamOptions(alpha_learning_rate))),
       alpha_discrete_optim(std::make_unique<torch::optim::Adam>(
@@ -56,9 +57,8 @@ SacAgent::SacAgent(
       alpha_continuous_metric(std::make_shared<Metric>("alpha_c", metric_window_size)),
       alpha_discrete_metric(std::make_shared<Metric>("alpha_d", metric_window_size)), tau(tau),
       gamma(gamma),
-      continous_target_entropy(truncated_normal_target_entropy(nb_continuous_actions, 0.1f)),
-      discrete_target_entropy(multinomial_target_entropy(0.1f)),
-      train_actor_each_epoch(train_actor_each_epoch) {
+      continuous_target_entropy(truncated_normal_target_entropy(nb_continuous_actions, 0.1f)),
+      discrete_target_entropy(multinomial_target_entropy(0.1f)) {
 
     hard_update(target_critic_1, critic_1);
     hard_update(target_critic_2, critic_2);
@@ -139,59 +139,54 @@ void SacAgent::train(
         soft_update(target_critic_1, critic_1, tau);
         soft_update(target_critic_2, critic_2, tau);
 
-        if (e % train_actor_each_epoch == train_actor_each_epoch - 1) {
-            // policy
+        // policy
+        const auto [curr_mu, curr_sigma, curr_discrete_proba] =
+            actor->act(state.vision, state.proprioception);
 
-            const auto [curr_mu, curr_sigma, curr_discrete_proba] =
-                actor->act(state.vision, state.proprioception);
+        const auto curr_continuous_action = truncated_normal_sample(curr_mu, curr_sigma);
+        const auto curr_continuous_entropy =
+            truncated_normal_entropy(curr_mu, curr_sigma).sum(-1, true);
 
-            const auto curr_continuous_action = truncated_normal_sample(curr_mu, curr_sigma);
-            const auto curr_continuous_entropy =
-                truncated_normal_entropy(curr_mu, curr_sigma).sum(-1, true);
+        const auto curr_discrete_entropy = multinomial_entropy(curr_discrete_proba);
 
-            const auto curr_discrete_entropy = multinomial_entropy(curr_discrete_proba);
+        const auto curr_q_value_1 = critic_1->value_expectation(
+            state.vision, state.proprioception, curr_continuous_action, curr_discrete_proba);
+        const auto curr_q_value_2 = critic_2->value_expectation(
+            state.vision, state.proprioception, curr_continuous_action, curr_discrete_proba);
+        const auto q_value = torch::min(curr_q_value_1, curr_q_value_2);
 
-            const auto curr_q_value_1 = critic_1->value_expectation(
-                state.vision, state.proprioception, curr_continuous_action, curr_discrete_proba);
-            const auto curr_q_value_2 = critic_2->value_expectation(
-                state.vision, state.proprioception, curr_continuous_action, curr_discrete_proba);
-            const auto q_value = torch::min(curr_q_value_1, curr_q_value_2);
+        const auto actor_loss = -torch::mean(
+            alpha_continuous->alpha().detach() * curr_continuous_entropy
+            + alpha_discrete->alpha().detach() * curr_discrete_entropy + q_value);
 
-            const auto actor_loss = -torch::mean(
-                alpha_continuous->alpha().detach() * curr_continuous_entropy
-                + alpha_discrete->alpha().detach() * curr_discrete_entropy + q_value);
+        actor_optim->zero_grad();
+        actor_loss.backward();
+        actor_optim->step();
 
-            actor_optim->zero_grad();
-            actor_loss.backward();
-            actor_optim->step();
+        // continuous entropy
+        const auto alpha_continuous_loss = torch::mean(
+            alpha_continuous->log_alpha()
+            * (curr_continuous_entropy.detach() - continuous_target_entropy));
 
-            // continuous entropy
-            const auto alpha_continuous_loss = torch::mean(
-                alpha_continuous->log_alpha()
-                * (curr_continuous_entropy.detach() - continous_target_entropy));
+        alpha_continuous_optim->zero_grad();
+        alpha_continuous_loss.backward();
+        alpha_continuous_optim->step();
 
-            alpha_continuous_optim->zero_grad();
-            alpha_continuous_loss.backward();
-            alpha_continuous_optim->step();
+        // discrete entropy
+        const auto alpha_discrete_loss = torch::mean(
+            alpha_discrete->log_alpha()
+            * (curr_discrete_entropy.detach() - discrete_target_entropy));
 
-            // discrete entropy
-            const auto alpha_discrete_loss = torch::mean(
-                alpha_discrete->log_alpha()
-                * (curr_discrete_entropy.detach() - discrete_target_entropy));
-
-            alpha_discrete_optim->zero_grad();
-            alpha_discrete_loss.backward();
-            alpha_discrete_optim->step();
-
-            // metrics
-
-            actor_loss_metric->add(actor_loss.cpu().item<float>());
-
-            continuous_entropy_metric->add(curr_continuous_entropy.mean().item<float>());
-            discrete_entropy_metric->add(curr_discrete_entropy.mean().item<float>());
-        }
+        alpha_discrete_optim->zero_grad();
+        alpha_discrete_loss.backward();
+        alpha_discrete_optim->step();
 
         // metrics
+        actor_loss_metric->add(actor_loss.cpu().item<float>());
+
+        continuous_entropy_metric->add(curr_continuous_entropy.mean().item<float>());
+        discrete_entropy_metric->add(curr_discrete_entropy.mean().item<float>());
+
         critic_1_loss_metric->add(critic_1_loss.cpu().item<float>());
         critic_2_loss_metric->add(critic_2_loss.cpu().item<float>());
 
@@ -297,6 +292,6 @@ int SacAgent::count_parameters() {
            + count_parameters_impl(alpha_discrete->parameters());
 }
 
-float SacAgent::get_continuous_target_entropy() const { return continous_target_entropy; }
+float SacAgent::get_continuous_target_entropy() const { return continuous_target_entropy; }
 
 float SacAgent::get_discrete_target_entropy() const { return discrete_target_entropy; }

@@ -95,7 +95,6 @@ float EnemyTankFactory::get_shaped_reward(
 
     float phi_distance = 0.f;
     float phi_angle = 0.f;
-    float shoot_in_aim_reward = 0.f;
 
     if (best_i != -1) {
         const auto other_pos =
@@ -106,13 +105,12 @@ float EnemyTankFactory::get_shaped_reward(
 
         const float d_offset = distance - optimal_distance;
         const float sigma = optimal_distance - minimal_distance;
-        phi_distance = std::exp(-0.5f * d_offset * d_offset / (sigma * sigma));
 
+        phi_distance = std::exp(-0.5f * d_offset * d_offset / (sigma * sigma));
         phi_angle = std::cos(angle);
-        shoot_in_aim_reward = action_stats->has_fire() ? std::exp(-angle / angle_scale) : 0.f;
     }
 
-    return 0.5f * shoot_in_aim_reward + 0.3f * phi_angle + 0.2f * phi_distance;
+    return 0.6f * phi_angle + 0.4f * phi_distance;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

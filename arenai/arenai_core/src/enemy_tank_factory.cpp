@@ -126,6 +126,8 @@ void EnemyTankFactory::on_fired_shell_contact(Item *item) {
         } else if (!life_item->is_dead()) {
             hit_reward += 0.5f;
             has_touch = true;
+        } else {
+            hit_reward -= 0.1f;
         }
     } else {
         hit_reward -= 0.1f;

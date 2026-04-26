@@ -2,6 +2,7 @@
 // Created by samuel on 03/10/2025.
 //
 
+#include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -44,7 +45,7 @@ ImageChannels DesktopAssetFileReader::read_png(const std::string &png_file_path)
 
     std::memcpy(out.pixels.data(), data, w * h * out_channels);
 
-    SOIL_free_image_data(data);
+    free(data);
 
     return out;
 }

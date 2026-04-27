@@ -31,5 +31,5 @@ gaussian_tanh_log_pdf(const torch::Tensor &u, const torch::Tensor &mu, const tor
 }
 
 float gaussian_tanh_target_entropy(const int nb_actions, const float target_sigma) {
-    return nb_actions * std::log(target_sigma * std::sqrt(2.0 * M_PI * std::exp(1.0)));
+    return nb_actions * std::log(target_sigma * std::sqrt(2.0 * M_PI * M_E));
 }

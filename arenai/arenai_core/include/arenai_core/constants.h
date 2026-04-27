@@ -5,8 +5,8 @@
 #ifndef ARENAI_TRAIN_HOST_CONSTANTS_H
 #define ARENAI_TRAIN_HOST_CONSTANTS_H
 
-#define ENEMY_VISION_HEIGHT 64
-#define ENEMY_VISION_WIDTH 128
+#define ENEMY_VISION_HEIGHT 128
+#define ENEMY_VISION_WIDTH 256
 
 // (position + velocity + forward + up + angle_velocity) * (6 * wheel + chassis + turret + canon) - chassis_pos
 #define ENEMY_PROPRIOCEPTION_SIZE ((3 + 3 + 3 + 3 + 3) * (6 + 3) - 3)
@@ -15,9 +15,6 @@
 
 #define SIGMA_MIN 1e-5f
 #define SIGMA_MAX 5.f
-#define ALPHA_BETA_BOUND 5.f
 #define EPSILON 1e-8f
-
-#define ENEMY_ACTION_THRESHOLD 0.7f
 
 #endif//ARENAI_TRAIN_HOST_CONSTANTS_H

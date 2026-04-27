@@ -10,8 +10,9 @@
 std::pair<torch::Tensor, torch::Tensor>
 gaussian_tanh_sample(const torch::Tensor &mu, const torch::Tensor &sigma);
 
-torch::Tensor gaussian_tanh_log_pdf(
-    const torch::Tensor &x, const torch::Tensor &u, const torch::Tensor &mu,
-    const torch::Tensor &sigma);
+torch::Tensor
+gaussian_tanh_log_pdf(const torch::Tensor &u, const torch::Tensor &mu, const torch::Tensor &sigma);
+
+float gaussian_tanh_target_entropy(int nb_actions, float target_sigma);
 
 #endif//ARENAI_TRAIN_HOST_GAUSSIAN_TANH_H

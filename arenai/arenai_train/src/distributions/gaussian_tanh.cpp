@@ -16,9 +16,8 @@ gaussian_tanh_sample(const torch::Tensor &mu, const torch::Tensor &sigma) {
     return {torch::tanh(u), u};
 }
 
-torch::Tensor gaussian_tanh_log_pdf(
-    const torch::Tensor &x, const torch::Tensor &u, const torch::Tensor &mu,
-    const torch::Tensor &sigma) {
+torch::Tensor
+gaussian_tanh_log_pdf(const torch::Tensor &u, const torch::Tensor &mu, const torch::Tensor &sigma) {
     const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
 
     const auto log_unnormalized = -0.5 * torch::pow((u - mu) / safe_sigma, 2);
@@ -29,4 +28,8 @@ torch::Tensor gaussian_tanh_log_pdf(
     const auto log_det = 2.0 * (std::log(2.0) - u - torch::softplus(-2.0 * u));
 
     return log_gauss - log_det;
+}
+
+float gaussian_tanh_target_entropy(const int nb_actions, const float target_sigma) {
+    return nb_actions * std::log(target_sigma * std::sqrt(2.0 * M_PI * std::exp(1.0)));
 }

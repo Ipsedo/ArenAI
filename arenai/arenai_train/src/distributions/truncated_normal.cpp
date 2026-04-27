@@ -54,7 +54,7 @@ torch::Tensor truncated_normal_sample(
 
     const auto Z = torch::clamp_min(theta(beta) - theta(alpha), EPSILON);
 
-    const auto cdf = theta(alpha) + torch::rand_like(mu) * Z;
+    const auto cdf = torch::clamp(theta(alpha) + torch::rand_like(mu) * Z, EPSILON, 1.f - EPSILON);
 
     return theta_inv(cdf) * safe_sigma + mu;
 }

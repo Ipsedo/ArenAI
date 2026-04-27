@@ -6,8 +6,8 @@
 
 #include <fstream>
 
+#include "../distributions/gaussian_tanh.h"
 #include "../distributions/multinomial.h"
-#include "../distributions/truncated_normal.h"
 #include "../utils/loader.h"
 #include "../utils/print_module.h"
 #include "../utils/saver.h"
@@ -56,8 +56,7 @@ SacAgent::SacAgent(
       discrete_entropy_metric(std::make_shared<Metric>("entropy_d", metric_window_size)),
       alpha_continuous_metric(std::make_shared<Metric>("alpha_c", metric_window_size)),
       alpha_discrete_metric(std::make_shared<Metric>("alpha_d", metric_window_size)), tau(tau),
-      gamma(gamma),
-      continuous_target_entropy(truncated_normal_target_entropy(nb_continuous_actions, 0.1f)),
+      gamma(gamma), continuous_target_entropy(-0.5f * static_cast<float>(nb_continuous_actions)),
       discrete_target_entropy(multinomial_target_entropy(0.1f)) {
 
     hard_update(target_critic_1, critic_1);
@@ -75,7 +74,7 @@ SacAgent::SacAgent(
 agent_response SacAgent::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
     const auto &[mu, sigma, discrete_proba] = actor->act(vision, sensors);
 
-    const auto continuous_action = truncated_normal_sample(mu, sigma);
+    const auto [continuous_action, _] = gaussian_tanh_sample(mu, sigma);
     const auto discrete_action = multinomial_sample(discrete_proba);
 
     return {continuous_action, discrete_action};
@@ -97,9 +96,12 @@ void SacAgent::train(
             const auto [next_mu, next_sigma, next_discrete_proba] =
                 actor->act(next_state.vision, next_state.proprioception);
 
-            const auto next_continuous_action = truncated_normal_sample(next_mu, next_sigma);
+            const auto [next_continuous_action, next_continuous_u] =
+                gaussian_tanh_sample(next_mu, next_sigma);
             const auto next_continuous_entropy =
-                truncated_normal_entropy(next_mu, next_sigma).sum(-1, true);
+                -gaussian_tanh_log_pdf(
+                     next_continuous_action, next_continuous_u, next_mu, next_sigma)
+                     .sum(-1, true);
 
             const auto next_discrete_entropy = multinomial_entropy(next_discrete_proba);
 
@@ -143,9 +145,11 @@ void SacAgent::train(
         const auto [curr_mu, curr_sigma, curr_discrete_proba] =
             actor->act(state.vision, state.proprioception);
 
-        const auto curr_continuous_action = truncated_normal_sample(curr_mu, curr_sigma);
+        const auto [curr_continuous_action, curr_continuous_u] =
+            gaussian_tanh_sample(curr_mu, curr_sigma);
         const auto curr_continuous_entropy =
-            truncated_normal_entropy(curr_mu, curr_sigma).sum(-1, true);
+            -gaussian_tanh_log_pdf(curr_continuous_action, curr_continuous_u, curr_mu, curr_sigma)
+                 .sum(-1, true);
 
         const auto curr_discrete_entropy = multinomial_entropy(curr_discrete_proba);
 

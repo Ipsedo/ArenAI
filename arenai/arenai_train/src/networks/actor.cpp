@@ -26,8 +26,7 @@ Actor::Actor(
                       torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})),
                       torch::nn::SiLU()))),
       mu(register_module(
-          "mu", torch::nn::Sequential(
-                    torch::nn::Linear(hidden_size, nb_continuous_actions), torch::nn::Tanh()))),
+          "mu", torch::nn::Sequential(torch::nn::Linear(hidden_size, nb_continuous_actions)))),
       sigma(register_module(
           "sigma",
           torch::nn::Sequential(

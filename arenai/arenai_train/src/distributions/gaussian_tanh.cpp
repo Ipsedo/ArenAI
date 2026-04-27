@@ -23,9 +23,10 @@ torch::Tensor gaussian_tanh_log_pdf(
 
     const auto log_unnormalized = -0.5 * torch::pow((u - mu) / safe_sigma, 2);
     const auto log_normalization = torch::log(safe_sigma) + 0.5 * std::log(2.0 * M_PI);
+
     const auto log_gauss = log_unnormalized - log_normalization;
 
-    const auto log_det = torch::log(1.0 - x.pow(2) + EPSILON);
+    const auto log_det = 2.0 * (std::log(2.0) - u - torch::softplus(-2.0 * u));
 
     return log_gauss - log_det;
 }

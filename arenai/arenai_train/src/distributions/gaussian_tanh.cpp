@@ -30,6 +30,14 @@ gaussian_tanh_log_pdf(const torch::Tensor &u, const torch::Tensor &mu, const tor
     return log_gauss - log_det;
 }
 
-float gaussian_tanh_target_entropy(const int nb_actions, const float target_sigma) {
-    return nb_actions * std::log(target_sigma * std::sqrt(2.0 * M_PI * M_E));
+float gaussian_tanh_target_entropy(
+    const int nb_actions, const float target_sigma, const int nb_samples) {
+    const auto log_gauss = 0.5 * std::log(2.0 * M_PI * M_E * target_sigma * target_sigma);
+
+    const auto u = torch::randn({nb_samples}) * target_sigma;
+    const auto log_det = 2.0 * (std::log(2.0) - u - torch::softplus(-2.0 * u));
+    const auto mean_log_det = log_det.mean().item<float>();
+
+    const auto h_per_dim = log_gauss + mean_log_det;
+    return static_cast<float>(nb_actions * h_per_dim);
 }

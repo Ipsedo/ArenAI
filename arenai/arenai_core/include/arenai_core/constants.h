@@ -14,7 +14,7 @@
 #define ENEMY_NB_DISCRETE_ACTION 2
 
 #define SIGMA_MIN 1e-5f
-#define SIGMA_MAX 5.f
+#define SIGMA_MAX 1.f
 #define EPSILON 1e-8f
 
 #endif//ARENAI_TRAIN_HOST_CONSTANTS_H

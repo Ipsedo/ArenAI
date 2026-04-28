@@ -23,7 +23,7 @@ int main(const int argc, char **argv) {
         .default_value<group_norm_nums>({{2, 4, 6, 8, 12, 16}})
         .action(parse_cli_group_norms);
     parser.add_argument("--sensors_hidden_size").scan<'i', int>().default_value(64);
-    parser.add_argument("--actions_hidden_size").scan<'i', int>().default_value(16);
+    parser.add_argument("--actions_hidden_size").scan<'i', int>().default_value(32);
     parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(384);
     parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(384);
     parser.add_argument("--tau").scan<'g', float>().default_value(0.005f);

@@ -4,12 +4,9 @@
 
 #include "./train_environment.h"
 
-#include <algorithm>
-
 #include <arenai_train/file_reader.h>
 #include <arenai_utils/cache.h>
 #include <arenai_utils/singleton.h>
-#include <arenai_view/errors.h>
 #include <arenai_view/pbuffer_renderer.h>
 
 TrainTankEnvironment::TrainTankEnvironment(
@@ -48,13 +45,20 @@ TrainTankEnvironment::step(const float time_delta, const std::vector<Action> &ac
 
         const auto &[state, reward, is_done] = step_result[i];
 
-        if (remaining_frames[i] <= 0 || only_one_tank_not_done() || is_done) {
-
+        if (remaining_frames[i] <= 0 || is_done) {
+            // timeout or done
             step_result[i] = {state, reward, true};
             done[i] = true;
         }
 
-        if (only_one_tank_alive()) {
+        if (!done[i] && only_one_tank_not_already_done()) {
+            // timeout winner
+            step_result[i] = {state, reward + 2.f, true};
+            done[i] = true;
+        }
+
+        if (!done[i] && only_one_tank_alive()) {
+            // winner
             step_result[i] = {state, reward + 10.f, true};
             done[i] = true;
         }
@@ -87,17 +91,17 @@ bool TrainTankEnvironment::only_one_tank_alive() {
     });
 }
 
-bool TrainTankEnvironment::only_one_tank_not_done() {
+bool TrainTankEnvironment::only_one_tank_not_already_done() {
     return std::accumulate(
                already_done.begin(), already_done.end(), 0,
                [](const int acc, const bool done) { return acc + static_cast<int>(!done); })
            == 1;
 }
 
-bool TrainTankEnvironment::are_all_already_done() {
-    return std::accumulate(
-        already_done.begin(), already_done.end(), true,
-        [](const int acc, const bool curr_done) { return acc && curr_done; });
+bool TrainTankEnvironment::are_all_done() {
+    return std::accumulate(done.begin(), done.end(), true, [](const int acc, const bool curr_done) {
+        return acc && curr_done;
+    });
 }
 
 bool TrainTankEnvironment::is_tank_factory_already_done(const int tank_factory_index) {
@@ -105,7 +109,7 @@ bool TrainTankEnvironment::is_tank_factory_already_done(const int tank_factory_i
 }
 
 bool TrainTankEnvironment::is_episode_terminated() {
-    return are_all_already_done() || only_one_tank_not_done() || nb_steps > max_episode_steps;
+    return are_all_done() || nb_steps > max_episode_steps;
 }
 
 void TrainTankEnvironment::on_reset_drawables(

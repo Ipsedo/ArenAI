@@ -60,10 +60,9 @@ torch::Tensor QFunction::value_expectation(
     const auto nb_discrete_actions = discrete_actions_proba.size(1);
 
     const auto common_encoded = encode_common(vision, sensors, continuous_actions);
-    const auto one_hots =
-        torch::eye(nb_discrete_actions, discrete_actions_proba.options().requires_grad(false));
+    const auto one_hots = torch::eye(nb_discrete_actions, discrete_actions_proba.options());
 
-    auto result = torch::zeros({batch_size, 1}, common_encoded.options().requires_grad(false));
+    auto result = torch::zeros({batch_size, 1}, common_encoded.options());
 
     for (int a = 0; a < nb_discrete_actions; a++) {
         const auto discrete_encoded =

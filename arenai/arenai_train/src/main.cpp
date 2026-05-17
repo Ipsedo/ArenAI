@@ -17,15 +17,16 @@ int main(const int argc, char **argv) {
 
     // model
     parser.add_argument("--vision_channels")
-        .default_value<vision_channels>({{{3, 8}, {8, 16}, {16, 24}, {24, 32}, {32, 48}, {48, 64}}})
+        .default_value<vision_channels>(
+            {{{3, 8}, {8, 16}, {16, 32}, {32, 64}, {64, 128}, {128, 256}}})
         .action(parse_cli_vision_channels);
     parser.add_argument("--group_norm_nums")
-        .default_value<group_norm_nums>({{2, 4, 6, 8, 12, 16}})
+        .default_value<group_norm_nums>({{2, 4, 8, 16, 32, 64}})
         .action(parse_cli_group_norms);
-    parser.add_argument("--sensors_hidden_size").scan<'i', int>().default_value(64);
-    parser.add_argument("--actions_hidden_size").scan<'i', int>().default_value(32);
-    parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(384);
-    parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(384);
+    parser.add_argument("--sensors_hidden_size").scan<'i', int>().default_value(256);
+    parser.add_argument("--actions_hidden_size").scan<'i', int>().default_value(128);
+    parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(1536);
+    parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(1792);
     parser.add_argument("--tau").scan<'g', float>().default_value(0.005f);
     parser.add_argument("--gamma").scan<'g', float>().default_value(0.99f);
     parser.add_argument("--initial_alpha_continuous").scan<'g', float>().default_value(1.f);

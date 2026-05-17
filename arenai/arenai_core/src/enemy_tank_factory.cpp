@@ -52,7 +52,7 @@ float EnemyTankFactory::get_reward(
     const auto dead_penalty = is_dead() ? (is_suicide() ? -0.5f : -1.f) : 0.f;
 
     // 3. shaped reward
-    const float shaped_reward = 0.1f * get_shoot_in_aim_reward(tank_factories);
+    const float shaped_reward = 0.25f * get_shoot_in_aim_reward(tank_factories);
 
     // 4. total reward
     const float reward = hit_reward + dead_penalty + shaped_reward;
@@ -82,12 +82,12 @@ float EnemyTankFactory::get_shoot_in_aim_reward(
 
         const float d_offset = distance - optimal_distance;
         const float sigma = optimal_distance - minimal_distance;
-        const float pd = std::exp(-0.5f * std::pow(d_offset / sigma, 2.f));
+        const float distance_score = std::exp(-0.5f * std::pow(d_offset / sigma, 2.f));
 
         const float angle = compute_aim_angle(tank_factories[i]);
-        const float pa = (std::cos(angle) + 1.f) / 2.f;
+        const float angle_score = (std::cos(angle) + 1.f) / 2.f;
 
-        if (const float score = pd * pa; score > best_score) {
+        if (const float score = distance_score * angle_score; score > best_score) {
             best_score = score;
             best_i = i;
         }

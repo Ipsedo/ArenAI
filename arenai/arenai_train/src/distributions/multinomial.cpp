@@ -7,14 +7,14 @@
 #include "arenai_core/constants.h"
 
 torch::Tensor multinomial_sample(const torch::Tensor &probabilities) {
-    const auto clamped_proba = torch::clamp(probabilities, EPSILON, 1.0);
+    const auto clamped_proba = torch::clamp(probabilities, EPSILON, 1.0 - EPSILON);
     const auto idx = torch::multinomial(clamped_proba, 1, false);
     const auto one_hot = torch::zeros_like(clamped_proba).scatter_(1, idx, 1.0);
     return one_hot;
 }
 
 torch::Tensor multinomial_entropy(const torch::Tensor &probabilities) {
-    const auto clamped_proba = torch::clamp(probabilities, EPSILON, 1.0);
+    const auto clamped_proba = torch::clamp(probabilities, EPSILON, 1.0 - EPSILON);
     return -torch::sum(clamped_proba * torch::log(clamped_proba), -1, true);
 }
 

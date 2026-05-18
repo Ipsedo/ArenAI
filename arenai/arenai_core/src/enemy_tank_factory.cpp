@@ -61,9 +61,8 @@ float EnemyTankFactory::get_reward(
     return reward;
 }
 
-float EnemyTankFactory::get_shoot_in_aim_reward(
+std::tuple<int, float> EnemyTankFactory::get_best_phi(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
-
     constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
     const auto chassis_model_matrix = get_chassis()->get_model_matrix();
     const auto chassis_pos = glm::vec3(chassis_model_matrix * world_center);
@@ -93,6 +92,14 @@ float EnemyTankFactory::get_shoot_in_aim_reward(
         }
     }
 
+    return {best_i, best_score};
+}
+
+float EnemyTankFactory::get_shoot_in_aim_reward(
+    const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
+
+    const auto [best_i, best_score] = get_best_phi(tank_factories);
+
     float shoot_in_aim_reward = 0.f;
 
     if (best_i != -1) {
@@ -103,6 +110,14 @@ float EnemyTankFactory::get_shoot_in_aim_reward(
     }
 
     return shoot_in_aim_reward;
+}
+
+float EnemyTankFactory::get_phi(
+    const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
+
+    const auto [best_i, best_score] = get_best_phi(tank_factories);
+
+    return best_score;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

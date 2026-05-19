@@ -4,7 +4,10 @@
 
 #include "./actor.h"
 
+#include <arenai_core/constants.h>
+
 #include "./init.h"
+#include "./misc.h"
 
 Actor::Actor(
     const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_actions,
@@ -29,9 +32,10 @@ Actor::Actor(
           "mu", torch::nn::Sequential(
                     torch::nn::Linear(hidden_size, nb_continuous_actions), torch::nn::Tanh()))),
       sigma(register_module(
-          "sigma",
-          torch::nn::Sequential(
-              torch::nn::Linear(hidden_size, nb_continuous_actions), torch::nn::Softplus()))),
+          "sigma", torch::nn::Sequential(
+                       torch::nn::Linear(hidden_size, nb_continuous_actions),
+                       std::make_shared<Clamp>(std::log(SIGMA_MIN), std::log(SIGMA_MAX)),
+                       std::make_shared<Exp>()))),
       discrete(register_module(
           "discrete",
           torch::nn::Sequential(

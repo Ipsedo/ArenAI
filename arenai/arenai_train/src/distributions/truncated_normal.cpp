@@ -35,42 +35,36 @@ torch::Tensor truncated_normal_pdf(
     const torch::Tensor &x, const torch::Tensor &mu, const torch::Tensor &sigma,
     const float min_value, const float max_value) {
 
-    const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
+    const auto alpha = (min_value - mu) / sigma;
+    const auto beta = (max_value - mu) / sigma;
 
-    const auto alpha = (min_value - mu) / safe_sigma;
-    const auto beta = (max_value - mu) / safe_sigma;
-
-    return phi((x - mu) / safe_sigma) / ((theta(beta) - theta(alpha)) * safe_sigma);
+    return phi((x - mu) / sigma) / ((theta(beta) - theta(alpha)) * sigma);
 }
 
 torch::Tensor truncated_normal_sample(
     const torch::Tensor &mu, const torch::Tensor &sigma, const float min_value,
     const float max_value) {
 
-    const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
-
-    const auto alpha = (min_value - mu) / safe_sigma;
-    const auto beta = (max_value - mu) / safe_sigma;
+    const auto alpha = (min_value - mu) / sigma;
+    const auto beta = (max_value - mu) / sigma;
 
     const auto Z = torch::clamp_min(theta(beta) - theta(alpha), EPSILON);
 
     const auto cdf = torch::clamp(theta(alpha) + torch::rand_like(mu) * Z, EPSILON, 1.f - EPSILON);
 
-    return theta_inv(cdf) * safe_sigma + mu;
+    return theta_inv(cdf) * sigma + mu;
 }
 
 torch::Tensor truncated_normal_entropy(
     const torch::Tensor &mu, const torch::Tensor &sigma, const float min_value,
     const float max_value) {
 
-    const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
-
-    const auto alpha = (min_value - mu) / safe_sigma;
-    const auto beta = (max_value - mu) / safe_sigma;
+    const auto alpha = (min_value - mu) / sigma;
+    const auto beta = (max_value - mu) / sigma;
 
     const auto Z = torch::clamp_min(theta(beta) - theta(alpha), EPSILON);
 
-    return 0.5 * torch::log(2.0 * M_PI * M_E * torch::pow(safe_sigma, 2.0)) + torch::log(Z)
+    return 0.5 * torch::log(2.0 * M_PI * M_E * torch::pow(sigma, 2.0)) + torch::log(Z)
            + (alpha * phi(alpha) - beta * phi(beta)) / (2.0 * Z);
 }
 

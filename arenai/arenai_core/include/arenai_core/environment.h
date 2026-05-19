@@ -46,7 +46,7 @@ public:
     virtual std::vector<std::tuple<State, Reward, IsDone>>
     step(float time_delta, const std::vector<Action> &actions);
 
-    std::vector<State> reset_physics();
+    std::vector<State> reset_physics(float spawn_width, float spawn_height);
     void reset_drawables(const std::shared_ptr<AbstractGLContext> &new_gl_context);
     void reset_drawables();
     void stop_drawing();

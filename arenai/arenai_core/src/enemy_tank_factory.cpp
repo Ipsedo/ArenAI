@@ -52,10 +52,10 @@ float EnemyTankFactory::get_reward(
     const auto dead_penalty = is_dead() ? (is_suicide() ? -0.5f : -1.f) : 0.f;
 
     // 3. shaped reward
-    const float shaped_reward = 0.25f * get_shoot_in_aim_reward(tank_factories);
+    //const float shaped_reward = 0.25f * get_shoot_in_aim_reward(tank_factories);
 
     // 4. total reward
-    const float reward = hit_reward + dead_penalty + shaped_reward;
+    const float reward = hit_reward + dead_penalty;// + shaped_reward;
     hit_reward = 0.f;
 
     return reward;

@@ -33,7 +33,6 @@ int main(const int argc, char **argv) {
     parser.add_argument("--initial_alpha_discrete").scan<'g', float>().default_value(1.f);
 
     // train
-    parser.add_argument("--nb_tanks").scan<'i', int>().default_value(8);
     parser.add_argument("--output_folder").required();
     parser.add_argument("--asset_folder").required();
     parser.add_argument("--actor_learning_rate").scan<'g', float>().default_value(1e-4f);
@@ -42,17 +41,27 @@ int main(const int argc, char **argv) {
     parser.add_argument("--epochs").scan<'i', int>().default_value(16);
     parser.add_argument("--batch_size").scan<'i', int>().default_value(512);
     parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60 * 3);
-    parser.add_argument("--nb_episodes").scan<'i', int>().default_value(50000);
+    parser.add_argument("--nb_episodes").scan<'i', int>().default_value(20000);
     parser.add_argument("--replay_buffer_size").scan<'i', int>().default_value(1000000);
     parser.add_argument("--train_every").scan<'i', int>().default_value(256);
     parser.add_argument("--save_every").scan<'i', int>().default_value(30 * 60 * 25);
     parser.add_argument("--cuda").default_value(false).implicit_value(true);
     parser.add_argument("--metric_window_size").scan<'i', int>().default_value(256);
 
+    // env
+    parser.add_argument("--nb_tanks").scan<'i', int>().default_value(8);
+    parser.add_argument("--initial_spawn_width").scan<'g', float>().default_value(300.f);
+    parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(300.f);
+    parser.add_argument("--final_spawn_width").scan<'g', float>().default_value(1000.f);
+    parser.add_argument("--final_spawn_height").scan<'g', float>().default_value(1000.f);
+
     parser.parse_args(argc, argv);
 
     train_main(
         parser.get<float>("--wanted_frequency"),
+        {parser.get<int>("--nb_tanks"), parser.get<float>("--initial_spawn_width"),
+         parser.get<float>("--initial_spawn_height"), parser.get<float>("--final_spawn_width"),
+         parser.get<float>("--final_spawn_height")},
         {parser.get<vision_channels>("--vision_channels").channels,
          parser.get<group_norm_nums>("--group_norm_nums").groups,
          parser.get<int>("--sensors_hidden_size"), parser.get<int>("--actions_hidden_size"),
@@ -60,8 +69,7 @@ int main(const int argc, char **argv) {
          parser.get<float>("--tau"), parser.get<float>("--gamma"),
          parser.get<float>("--initial_alpha_continuous"),
          parser.get<float>("--initial_alpha_discrete")},
-        {parser.get<int>("--nb_tanks"),
-         std::filesystem::path(parser.get<std::string>("--output_folder")),
+        {std::filesystem::path(parser.get<std::string>("--output_folder")),
          std::filesystem::path(parser.get<std::string>("--asset_folder")),
          parser.get<float>("--actor_learning_rate"), parser.get<float>("--critic_learning_rate"),
          parser.get<float>("--alpha_learning_rate"), parser.get<int>("--epochs"),

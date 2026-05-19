@@ -76,7 +76,8 @@ BaseTanksEnvironment::step(const float time_delta, const std::vector<Action> &ac
     return result;
 }
 
-std::vector<State> BaseTanksEnvironment::reset_physics() {
+std::vector<State>
+BaseTanksEnvironment::reset_physics(const float spawn_width, const float spawn_height) {
     physic_engine->remove_bodies_and_constraints();
     tank_controller_handler.clear();
     tank_factories.clear();
@@ -87,14 +88,16 @@ std::vector<State> BaseTanksEnvironment::reset_physics() {
 
     physic_engine->add_item(map);
 
-    std::uniform_real_distribution<float> pos_u_dist(-250, 250);
+    std::uniform_real_distribution<float> x_pos_u_dist(-spawn_width / 2, spawn_width / 2);
+    std::uniform_real_distribution<float> y_pos_u_dist(-spawn_height / 2, spawn_height / 2);
+
     std::uniform_real_distribution<float> mass_u_dist(3, 100);
 
     // add tanks
     for (int i = 0; i < nb_tanks; i++) {
         tank_factories.push_back(std::make_unique<EnemyTankFactory>(
             file_reader, "enemy_" + std::to_string(i),
-            glm::vec3(pos_u_dist(rng), 0.f, pos_u_dist(rng)), wanted_frequency));
+            glm::vec3(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng)), wanted_frequency));
 
         for (const auto &item: tank_factories.back()->get_items()) physic_engine->add_item(item);
         for (const auto &item_producer: tank_factories.back()->get_item_producers())
@@ -112,22 +115,22 @@ std::vector<State> BaseTanksEnvironment::reset_physics() {
     constexpr int nb_shapes = 5;
 
     for (int i = 0; i < nb_shapes; i++) {
-        glm::vec3 pos(pos_u_dist(rng), 0.f, pos_u_dist(rng));
+        glm::vec3 pos(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng));
         glm::vec3 scale(scale_u_dist(rng));
         physic_engine->add_item(std::make_shared<SphereItem>(
             "sphere_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng)));
 
-        pos = glm::vec3(pos_u_dist(rng), 0.f, pos_u_dist(rng));
+        pos = glm::vec3(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng));
         scale = glm::vec3(scale_u_dist(rng));
         physic_engine->add_item(std::make_shared<CubeItem>(
             "cube_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng)));
 
-        pos = glm::vec3(pos_u_dist(rng), 0.f, pos_u_dist(rng));
+        pos = glm::vec3(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng));
         scale = glm::vec3(scale_u_dist(rng));
         physic_engine->add_item(std::make_shared<TetraItem>(
             "tetra_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng)));
 
-        pos = glm::vec3(pos_u_dist(rng), 0.f, pos_u_dist(rng));
+        pos = glm::vec3(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng));
         scale = glm::vec3(scale_u_dist(rng));
         physic_engine->add_item(std::make_shared<CylinderItem>(
             "cylinder_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng)));

@@ -24,7 +24,6 @@ struct ModelOptions {
 };
 
 struct TrainOptions {
-    int nb_tanks;
     std::filesystem::path output_folder;
     std::filesystem::path android_asset_folder;
     float actor_learning_rate;
@@ -41,7 +40,16 @@ struct TrainOptions {
     int metric_window_size;
 };
 
+struct EnvironmentOptions {
+    int nb_tanks;
+    float initial_spawn_width;
+    float initial_spawn_height;
+    float final_spawn_width;
+    float final_spawn_height;
+};
+
 void train_main(
-    float wanted_frequency, const ModelOptions &model_options, const TrainOptions &train_options);
+    float wanted_frequency, const EnvironmentOptions &environment_options,
+    const ModelOptions &model_options, const TrainOptions &train_options);
 
 #endif// ARENAI_TRAIN_HOST_TRAIN_H

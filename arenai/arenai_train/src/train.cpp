@@ -18,8 +18,8 @@
 #include "./view/train_gl_context.h"
 
 void train_main(
-    const float wanted_frequency, const ModelOptions &model_options,
-    const TrainOptions &train_options) {
+    const float wanted_frequency, const EnvironmentOptions &environment_options,
+    const ModelOptions &model_options, const TrainOptions &train_options) {
 
     auto gl_context = std::make_shared<TrainGlContext>();
     gl_context->make_current();// only for glGetString(GL_RENDERER)
@@ -37,8 +37,18 @@ void train_main(
     std::cout << "Action size (discrete) : " << ENEMY_NB_DISCRETE_ACTION << std::endl;
 
     const auto env = std::make_unique<TrainTankEnvironment>(
-        gl_context, train_options.nb_tanks, train_options.android_asset_folder, wanted_frequency,
-        train_options.max_episode_steps);
+        gl_context, environment_options.nb_tanks, train_options.android_asset_folder,
+        wanted_frequency, train_options.max_episode_steps);
+
+    const float spawn_width_increase =
+        (environment_options.final_spawn_width - environment_options.initial_spawn_width)
+        / train_options.nb_episodes;
+    const float spawn_height_increase =
+        (environment_options.final_spawn_height - environment_options.initial_spawn_height)
+        / train_options.nb_episodes;
+
+    float spawn_width = environment_options.initial_spawn_width;
+    float spawn_height = environment_options.initial_spawn_height;
 
     auto agent = std::make_shared<SacAgent>(
         ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_CONTINUOUS_ACTION, ENEMY_NB_DISCRETE_ACTION,
@@ -89,10 +99,12 @@ void train_main(
         indicators::option::ShowRemainingTime{true}};
 
     for (int episode_index = 0; episode_index < train_options.nb_episodes; episode_index++) {
+        const float spawn_side = std::sqrt(spawn_width * spawn_height);
+
         // set variable for episode
         bool is_done = false;
 
-        auto last_states = env->reset_physics();
+        auto last_states = env->reset_physics(spawn_width, spawn_height);
         env->reset_drawables(gl_context);
 
         auto phi_vector = env->get_phi_vector();
@@ -122,10 +134,10 @@ void train_main(
             const auto next_phi_vector = env->get_phi_vector();
 
             last_states.clear();
-            last_states.reserve(train_options.nb_tanks);
+            last_states.reserve(environment_options.nb_tanks);
 
             // save to replay buffer
-            for (int i = 0; i < train_options.nb_tanks; i++) {
+            for (int i = 0; i < environment_options.nb_tanks; i++) {
                 const auto [next_state, reward, env_done] = steps[i];
                 last_states.push_back(next_state);
 
@@ -165,8 +177,8 @@ void train_main(
 
             // progress bar metrics display
             std::stringstream stream;
-            stream << "Episode [" << episode_index << " / " << train_options.nb_episodes
-                   << "] : " << Metric::metrics_to_string(metrics);
+            stream << "Episode [" << episode_index << " / " << train_options.nb_episodes << "] ("
+                   << static_cast<int>(spawn_side) << "²) : " << Metric::metrics_to_string(metrics);
 
             p_bar.set_option(indicators::option::PrefixText{stream.str()});
             p_bar.print_progress();
@@ -174,6 +186,9 @@ void train_main(
 
         last_states.clear();
         env->stop_drawing();
+
+        spawn_width += spawn_width_increase;
+        spawn_height += spawn_height_increase;
 
         p_bar.tick();
     }

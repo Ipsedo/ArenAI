@@ -144,8 +144,9 @@ void train_main(
                 if (env->is_tank_factory_already_done(i)) continue;
 
                 const float potential_reward =
-                    (env_done ? 0.f : 1.f) * model_options.gamma * next_phi_vector[i]
-                    - phi_vector[i];
+                    train_options.potential_reward_scale
+                    * ((env_done ? 0.f : 1.f) * model_options.gamma * next_phi_vector[i]
+                       - phi_vector[i]);
 
                 reward_metric->add(reward);
                 potential_metric->add(potential_reward);
@@ -156,8 +157,7 @@ void train_main(
                     {{vision[i], proprioception[i]},
                      {torch_action.continuous_action[i], torch_action.discrete_action[i]},
                      torch::tensor(
-                         {reward + train_options.potential_reward_scale * potential_reward},
-                         torch::TensorOptions().dtype(torch::kFloat)),
+                         {reward + potential_reward}, torch::TensorOptions().dtype(torch::kFloat)),
                      torch::tensor({env_done}, torch::TensorOptions().dtype(torch::kBool)),
                      {next_vision, next_proprioception}});
             }

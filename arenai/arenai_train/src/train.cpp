@@ -156,7 +156,8 @@ void train_main(
                     {{vision[i], proprioception[i]},
                      {torch_action.continuous_action[i], torch_action.discrete_action[i]},
                      torch::tensor(
-                         {reward + potential_reward}, torch::TensorOptions().dtype(torch::kFloat)),
+                         {reward + train_options.potential_reward_scale * potential_reward},
+                         torch::TensorOptions().dtype(torch::kFloat)),
                      torch::tensor({env_done}, torch::TensorOptions().dtype(torch::kBool)),
                      {next_vision, next_proprioception}});
             }

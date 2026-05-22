@@ -179,8 +179,8 @@ void train_main(
             // progress bar metrics display
             std::stringstream stream;
             stream << "Episode [" << episode_index << " / " << train_options.nb_episodes
-                   << "] (area=" << static_cast<int>(spawn_side)
-                   << "m²) : " << Metric::metrics_to_string(metrics);
+                   << "] (area = " << static_cast<int>(spawn_side)
+                   << " m²) : " << Metric::metrics_to_string(metrics);
 
             p_bar.set_option(indicators::option::PrefixText{stream.str()});
             p_bar.print_progress();

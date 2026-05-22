@@ -73,7 +73,7 @@ int main(const int argc, char **argv) {
         {std::filesystem::path(parser.get<std::string>("--output_folder")),
          std::filesystem::path(parser.get<std::string>("--asset_folder")),
          parser.get<float>("--actor_learning_rate"), parser.get<float>("--critic_learning_rate"),
-         parser.get<float>("--potential_reward_scale"), parser.get<float>("--alpha_learning_rate"),
+         parser.get<float>("--alpha_learning_rate"), parser.get<float>("--potential_reward_scale"),
          parser.get<int>("--epochs"), parser.get<int>("--batch_size"),
          parser.get<int>("--max_episode_steps"), parser.get<int>("--nb_episodes"),
          parser.get<int>("--replay_buffer_size"), parser.get<int>("--train_every"),

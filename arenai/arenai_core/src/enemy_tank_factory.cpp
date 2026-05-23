@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <iostream>
 #include <vector>
 
 #include <arenai_core/constants.h>
@@ -18,9 +17,10 @@ EnemyTankFactory::EnemyTankFactory(
     : TankFactory(file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency),
       tank_prefix_name(tank_prefix_name), hit_reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-      curr_frame_upside_down(0), optimal_distance(100.f), minimal_distance(50.f),
-      angle_scale(static_cast<float>(M_PI) / 6.f), is_dead_already_triggered(false),
-      has_touch(false), action_stats(std::make_shared<ActionStats>()) {}
+      curr_frame_upside_down(0), minimal_distance(20.f),
+      angle_scale(static_cast<float>(M_PI) / 3.f), distance_scale(200.f),
+      is_dead_already_triggered(false), has_touch(false),
+      action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
     const auto canon_tr = get_canon()->get_model_matrix();
@@ -61,7 +61,7 @@ float EnemyTankFactory::get_reward(
     return reward;
 }
 
-std::tuple<int, float> EnemyTankFactory::get_best_phi(
+std::tuple<int, float> EnemyTankFactory::get_best_score(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
     constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
     const auto chassis_model_matrix = get_chassis()->get_model_matrix();
@@ -79,9 +79,8 @@ std::tuple<int, float> EnemyTankFactory::get_best_phi(
 
         const float distance = glm::length(chassis_pos - other_pos);
 
-        const float d_offset = distance - optimal_distance;
-        const float sigma = optimal_distance - minimal_distance;
-        const float distance_score = std::exp(-0.5f * std::pow(d_offset / sigma, 2.f));
+        const float sigma = distance_scale - minimal_distance;
+        const float distance_score = std::exp(-0.5f * std::pow(distance / sigma, 2.f));
 
         const float angle = compute_aim_angle(tank_factories[i]);
         const float angle_score = (std::cos(angle) + 1.f) / 2.f;
@@ -98,7 +97,7 @@ std::tuple<int, float> EnemyTankFactory::get_best_phi(
 float EnemyTankFactory::get_shoot_in_aim_reward(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
 
-    const auto [best_i, best_score] = get_best_phi(tank_factories);
+    const auto [best_i, best_score] = get_best_score(tank_factories);
 
     float shoot_in_aim_reward = 0.f;
 
@@ -115,9 +114,29 @@ float EnemyTankFactory::get_shoot_in_aim_reward(
 float EnemyTankFactory::get_phi(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
 
-    const auto [best_i, best_score] = get_best_phi(tank_factories);
+    const auto [best_i, best_score] = get_best_score(tank_factories);
 
-    return best_score;
+    float phi = 0.f;
+
+    if (best_i != -1) {
+        constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
+
+        const auto chassis_pos = glm::vec3(get_chassis()->get_model_matrix() * world_center);
+        const auto other_pos =
+            glm::vec3(tank_factories[best_i]->get_chassis()->get_model_matrix() * world_center);
+
+        const float distance = glm::length(chassis_pos - other_pos);
+
+        const float sigma = distance_scale - minimal_distance;
+        const float distance_score = std::exp(-0.5f * std::pow(distance / sigma, 2.f));
+
+        const float angle = compute_aim_angle(tank_factories[best_i]);
+        const float angle_score = std::exp(-0.5f * std::pow(angle / angle_scale, 2.f));
+
+        phi = 0.5f * angle_score * distance_score + 0.3f * angle_score + 0.2f * distance_score;
+    }
+
+    return phi;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(Item *item) {

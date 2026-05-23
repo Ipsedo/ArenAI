@@ -25,8 +25,8 @@ int main(const int argc, char **argv) {
         .action(parse_cli_group_norms);
     parser.add_argument("--sensors_hidden_size").scan<'i', int>().default_value(256);
     parser.add_argument("--actions_hidden_size").scan<'i', int>().default_value(128);
-    parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(1536);
-    parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(1792);
+    parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(512);
+    parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(512);
     parser.add_argument("--tau").scan<'g', float>().default_value(0.005f);
     parser.add_argument("--gamma").scan<'g', float>().default_value(0.99f);
     parser.add_argument("--initial_alpha_continuous").scan<'g', float>().default_value(1.f);
@@ -51,10 +51,10 @@ int main(const int argc, char **argv) {
 
     // env
     parser.add_argument("--nb_tanks").scan<'i', int>().default_value(8);
-    parser.add_argument("--initial_spawn_width").scan<'g', float>().default_value(300.f);
-    parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(300.f);
-    parser.add_argument("--final_spawn_width").scan<'g', float>().default_value(600.f);
-    parser.add_argument("--final_spawn_height").scan<'g', float>().default_value(600.f);
+    parser.add_argument("--initial_spawn_width").scan<'g', float>().default_value(200.f);
+    parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(200.f);
+    parser.add_argument("--final_spawn_width").scan<'g', float>().default_value(1000.f);
+    parser.add_argument("--final_spawn_height").scan<'g', float>().default_value(1000.f);
 
     parser.parse_args(argc, argv);
 

@@ -39,10 +39,10 @@ private:
     int max_frames_upside_down;
     int curr_frame_upside_down;
 
-    float optimal_distance;
     float minimal_distance;
 
     float angle_scale;
+    float distance_scale;
 
     bool is_dead_already_triggered;
 
@@ -55,7 +55,7 @@ private:
     get_shoot_in_aim_reward(const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories);
 
     std::tuple<int, float>
-    get_best_phi(const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories);
+    get_best_score(const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories);
 };
 
 #endif//ARENAI_TRAIN_HOST_ENEMY_TANK_FACTORY_H

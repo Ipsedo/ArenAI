@@ -38,6 +38,8 @@ QFunction::QFunction(
                   2 * hidden_size_actions + hidden_size_sensors + vision_encoder->get_output_size(),
                   hidden_size),
               torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})), torch::nn::SiLU(),
+              torch::nn::Linear(hidden_size, hidden_size),
+              torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})), torch::nn::SiLU(),
               torch::nn::Linear(hidden_size, 1)))) {
     apply(init_weights);
 }

@@ -27,6 +27,8 @@ Actor::Actor(
                       torch::nn::Linear(
                           hidden_size_sensors + vision_encoder->get_output_size(), hidden_size),
                       torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})),
+                      torch::nn::SiLU(), torch::nn::Linear(hidden_size, hidden_size),
+                      torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})),
                       torch::nn::SiLU()))),
       mu(register_module(
           "mu", torch::nn::Sequential(

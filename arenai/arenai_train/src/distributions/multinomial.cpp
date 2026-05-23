@@ -18,10 +18,9 @@ torch::Tensor multinomial_entropy(const torch::Tensor &probabilities) {
     return -torch::sum(clamped_proba * torch::log(clamped_proba), -1, true);
 }
 
-float multinomial_target_entropy(const int &nb_actions, const float &factor) {
-    return factor
-           * multinomial_entropy(torch::ones({nb_actions}) / static_cast<float>(nb_actions))
-                 .item<float>();
+float multinomial_maximum_entropy(const int &nb_actions) {
+    return multinomial_entropy(torch::ones({nb_actions}) / static_cast<float>(nb_actions))
+        .item<float>();
 }
 
 float multinomial_target_entropy(const float &shoot_probability) {

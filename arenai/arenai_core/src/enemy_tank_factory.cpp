@@ -51,11 +51,11 @@ float EnemyTankFactory::get_reward(
     // 2. dead / suicide penalty
     const auto dead_penalty = is_dead() ? (is_suicide() ? -0.5f : -1.f) : 0.f;
 
-    // 3. shaped reward
-    //const float shaped_reward = 0.25f * get_shoot_in_aim_reward(tank_factories);
+    // 3. shoot in aim reward
+    const float shoot_in_aim_reward = 0.1f * get_shoot_in_aim_reward(tank_factories);
 
     // 4. total reward
-    const float reward = hit_reward + dead_penalty;// + shaped_reward;
+    const float reward = hit_reward + dead_penalty + shoot_in_aim_reward;
     hit_reward = 0.f;
 
     return reward;
@@ -96,16 +96,18 @@ std::tuple<int, float> EnemyTankFactory::get_best_score(
 
 float EnemyTankFactory::get_shoot_in_aim_reward(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
-
     const auto [best_i, best_score] = get_best_score(tank_factories);
 
-    float shoot_in_aim_reward = 0.f;
+    constexpr float shoot_penalty = 0.5f;
+
+    float shoot_in_aim_reward = action_stats->has_fire() ? -shoot_penalty : 0.f;
 
     if (best_i != -1) {
+
         const float angle = compute_aim_angle(tank_factories[best_i]);
         const float angle_score = std::exp(-0.5f * std::pow(angle / angle_scale, 2.f));
 
-        shoot_in_aim_reward = action_stats->has_fire() ? angle_score : 0.f;
+        shoot_in_aim_reward += action_stats->has_fire() ? angle_score : 0.f;
     }
 
     return shoot_in_aim_reward;

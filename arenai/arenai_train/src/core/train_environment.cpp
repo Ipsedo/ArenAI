@@ -19,7 +19,7 @@ TrainTankEnvironment::TrainTankEnvironment(
       wanted_frequency(wanted_frequency),
       max_frames_without_hit(static_cast<int>(30.f / wanted_frequency)),
       remaining_frames(nb_tanks, max_frames_without_hit),
-      nb_frames_added_when_hit(static_cast<int>(10.f / wanted_frequency)), nb_tanks(nb_tanks),
+      nb_frames_added_when_hit(static_cast<int>(5.f / wanted_frequency)), nb_tanks(nb_tanks),
       nb_steps(0), done(nb_tanks, false), already_done(nb_tanks, false),
       max_episode_steps(max_episode_steps),
       episode_step_nb_metric(std::make_shared<Metric>("seconds", 32, 1)) {}
@@ -45,9 +45,12 @@ TrainTankEnvironment::step(const float time_delta, const std::vector<Action> &ac
 
         const auto &[state, reward, is_done] = step_result[i];
 
+        // timeout or done
         if (remaining_frames[i] <= 0 || is_done) {
-            // timeout or done
-            step_result[i] = {state, reward, true};
+            const float timeout_penalty = remaining_frames[i] <= 0 ? 0.5f : 0.f;
+
+            step_result[i] = {state, reward - timeout_penalty, true};
+
             done[i] = true;
         }
 

@@ -12,19 +12,15 @@
 int main(const int argc, char **argv) {
     argparse::ArgumentParser parser("arenai train");
 
-    // physic simulation
-    parser.add_argument("--wanted_frequency").scan<'g', float>().default_value(1.f / 30.f);
-
     // model
     parser.add_argument("--vision_channels")
-        .default_value<vision_channels>(
-            {{{3, 8}, {8, 16}, {16, 32}, {32, 64}, {64, 128}, {128, 256}}})
+        .default_value<vision_channels>({{{3, 16}, {16, 32}, {32, 48}, {48, 64}, {64, 64}}})
         .action(parse_cli_vision_channels);
     parser.add_argument("--group_norm_nums")
-        .default_value<group_norm_nums>({{2, 4, 8, 16, 32, 64}})
+        .default_value<group_norm_nums>({{4, 8, 12, 16, 16}})
         .action(parse_cli_group_norms);
-    parser.add_argument("--sensors_hidden_size").scan<'i', int>().default_value(256);
-    parser.add_argument("--actions_hidden_size").scan<'i', int>().default_value(128);
+    parser.add_argument("--sensors_hidden_size").scan<'i', int>().default_value(128);
+    parser.add_argument("--actions_hidden_size").scan<'i', int>().default_value(64);
     parser.add_argument("--actor_hidden_size").scan<'i', int>().default_value(512);
     parser.add_argument("--critic_hidden_size").scan<'i', int>().default_value(512);
     parser.add_argument("--tau").scan<'g', float>().default_value(0.005f);
@@ -39,7 +35,7 @@ int main(const int argc, char **argv) {
     parser.add_argument("--critic_learning_rate").scan<'g', float>().default_value(3e-4f);
     parser.add_argument("--alpha_learning_rate").scan<'g', float>().default_value(1e-4f);
     parser.add_argument("--potential_reward_scale").scan<'g', float>().default_value(1.f);
-    parser.add_argument("--epochs").scan<'i', int>().default_value(16);
+    parser.add_argument("--epochs").scan<'i', int>().default_value(4);
     parser.add_argument("--batch_size").scan<'i', int>().default_value(512);
     parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60 * 3);
     parser.add_argument("--nb_episodes").scan<'i', int>().default_value(20000);
@@ -50,11 +46,12 @@ int main(const int argc, char **argv) {
     parser.add_argument("--metric_window_size").scan<'i', int>().default_value(256);
 
     // env
+    parser.add_argument("--wanted_frequency").scan<'g', float>().default_value(1.f / 30.f);
     parser.add_argument("--nb_tanks").scan<'i', int>().default_value(8);
-    parser.add_argument("--initial_spawn_width").scan<'g', float>().default_value(200.f);
-    parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(200.f);
-    parser.add_argument("--final_spawn_width").scan<'g', float>().default_value(1000.f);
-    parser.add_argument("--final_spawn_height").scan<'g', float>().default_value(1000.f);
+    parser.add_argument("--initial_spawn_width").scan<'g', float>().default_value(100.f);
+    parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(100.f);
+    parser.add_argument("--final_spawn_width").scan<'g', float>().default_value(500.f);
+    parser.add_argument("--final_spawn_height").scan<'g', float>().default_value(500.f);
 
     parser.parse_args(argc, argv);
 

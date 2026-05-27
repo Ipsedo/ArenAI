@@ -42,10 +42,10 @@ void train_main(
 
     const float spawn_width_increase =
         (environment_options.final_spawn_width - environment_options.initial_spawn_width)
-        / train_options.nb_episodes;
+        / static_cast<float>(train_options.nb_episodes);
     const float spawn_height_increase =
         (environment_options.final_spawn_height - environment_options.initial_spawn_height)
-        / train_options.nb_episodes;
+        / static_cast<float>(train_options.nb_episodes);
 
     float spawn_width = environment_options.initial_spawn_width;
     float spawn_height = environment_options.initial_spawn_height;

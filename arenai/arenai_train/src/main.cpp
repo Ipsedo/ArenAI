@@ -14,10 +14,10 @@ int main(const int argc, char **argv) {
 
     // model
     parser.add_argument("--vision_channels")
-        .default_value<vision_channels>({{{3, 16}, {16, 24}, {24, 32}, {32, 48}, {48, 64}}})
+        .default_value<vision_channels>({{{3, 8}, {8, 16}, {16, 32}, {32, 64}, {64, 128}}})
         .action(parse_cli_vision_channels);
     parser.add_argument("--group_norm_nums")
-        .default_value<group_norm_nums>({{4, 6, 8, 12, 16}})
+        .default_value<group_norm_nums>({{2, 4, 8, 16, 32}})
         .action(parse_cli_group_norms);
     parser.add_argument("--sensors_hidden_size").scan<'i', int>().default_value(128);
     parser.add_argument("--actions_hidden_size").scan<'i', int>().default_value(64);

@@ -18,7 +18,7 @@ EnemyTankFactory::EnemyTankFactory(
       tank_prefix_name(tank_prefix_name), hit_reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), minimal_distance(20.f),
-      angle_scale(static_cast<float>(M_PI) / 6.f), distance_scale(100.f),
+      angle_scale(static_cast<float>(M_PI) / 3.f), distance_scale(150.f),
       is_dead_already_triggered(false), has_touch(false),
       action_stats(std::make_shared<ActionStats>()) {}
 

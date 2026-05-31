@@ -25,7 +25,8 @@ torch::Tensor truncated_normal_log_pdf(
     const auto alpha = (min_value - mu) / safe_sigma;
     const auto beta = (max_value - mu) / safe_sigma;
 
-    const auto Z = torch::clamp_min(theta(beta) - theta(alpha), EPSILON);
+    constexpr float z_eps = 1e-4f;
+    const auto Z = torch::clamp_min(theta(beta) - theta(alpha), z_eps);
 
     return -0.5 * torch::pow((x - mu) / safe_sigma, 2.0) - torch::log(safe_sigma)
            - 0.5 * std::log(2.0 * M_PI) - torch::log(Z);
@@ -48,11 +49,13 @@ torch::Tensor truncated_normal_sample(
     const auto alpha = (min_value - mu) / sigma;
     const auto beta = (max_value - mu) / sigma;
 
-    const auto Z = torch::clamp_min(theta(beta) - theta(alpha), EPSILON);
+    constexpr float z_eps = 1e-4f;
+    const auto Z = torch::clamp_min(theta(beta) - theta(alpha), z_eps);
 
-    const auto cdf = torch::clamp(theta(alpha) + torch::rand_like(mu) * Z, EPSILON, 1.f - EPSILON);
+    constexpr float cdf_eps = 1e-4f;
+    const auto cdf = torch::clamp(theta(alpha) + torch::rand_like(mu) * Z, cdf_eps, 1.f - cdf_eps);
 
-    return theta_inv(cdf) * sigma + mu;
+    return torch::clamp(theta_inv(cdf) * sigma + mu, min_value, max_value);
 }
 
 torch::Tensor truncated_normal_entropy(
@@ -62,7 +65,8 @@ torch::Tensor truncated_normal_entropy(
     const auto alpha = (min_value - mu) / sigma;
     const auto beta = (max_value - mu) / sigma;
 
-    const auto Z = torch::clamp_min(theta(beta) - theta(alpha), EPSILON);
+    constexpr float z_eps = 1e-4f;
+    const auto Z = torch::clamp_min(theta(beta) - theta(alpha), z_eps);
 
     return 0.5 * torch::log(2.0 * M_PI * M_E * torch::pow(sigma, 2.0)) + torch::log(Z)
            + (alpha * phi(alpha) - beta * phi(beta)) / (2.0 * Z);

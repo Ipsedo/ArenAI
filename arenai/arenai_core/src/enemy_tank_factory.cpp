@@ -17,8 +17,7 @@ EnemyTankFactory::EnemyTankFactory(
     : TankFactory(file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency),
       tank_prefix_name(tank_prefix_name), hit_reward(0.f),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-      curr_frame_upside_down(0), minimal_distance(20.f),
-      angle_scale(static_cast<float>(M_PI) / 3.f), distance_scale(150.f),
+      curr_frame_upside_down(0), angle_scale(static_cast<float>(M_PI) / 3.f), distance_scale(150.f),
       is_dead_already_triggered(false), has_touch(false),
       action_stats(std::make_shared<ActionStats>()) {}
 
@@ -52,7 +51,7 @@ float EnemyTankFactory::get_reward(
     const auto dead_penalty = is_dead() ? (is_suicide() ? -0.5f : -1.f) : 0.f;
 
     // 3. shoot in aim reward
-    const float shoot_in_aim_reward = 0.1f * get_shoot_in_aim_reward(tank_factories);
+    const float shoot_in_aim_reward = 0.25f * get_shoot_in_aim_reward(tank_factories);
 
     // 4. total reward
     const float reward = hit_reward + dead_penalty + shoot_in_aim_reward;
@@ -79,7 +78,7 @@ std::tuple<int, float> EnemyTankFactory::get_best_score(
 
         const float distance = glm::length(chassis_pos - other_pos);
 
-        const float sigma = distance_scale - minimal_distance;
+        const float sigma = distance_scale;
         const float distance_score = std::exp(-0.5f * std::pow(distance / sigma, 2.f));
 
         const float angle = compute_aim_angle(tank_factories[i]);
@@ -129,8 +128,7 @@ float EnemyTankFactory::get_phi(
 
         const float distance = glm::length(chassis_pos - other_pos);
 
-        const float sigma = distance_scale - minimal_distance;
-        const float distance_score = std::exp(-0.5f * std::pow(distance / sigma, 2.f));
+        const float distance_score = std::exp(-0.5f * std::pow(distance / distance_scale, 2.f));
 
         const float angle = compute_aim_angle(tank_factories[best_i]);
         const float angle_score = std::exp(-0.5f * std::pow(angle / angle_scale, 2.f));
@@ -153,10 +151,10 @@ void EnemyTankFactory::on_fired_shell_contact(Item *item) {
             hit_reward += 0.5f;
             has_touch = true;
         } else {
-            hit_reward -= 0.1f;
+            hit_reward -= 0.025f;
         }
     } else {
-        hit_reward -= 0.1f;
+        hit_reward -= 0.05f;
     }
 }
 

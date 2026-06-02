@@ -39,8 +39,6 @@ private:
     int max_frames_upside_down;
     int curr_frame_upside_down;
 
-    float minimal_distance;
-
     float angle_scale;
     float distance_scale;
 

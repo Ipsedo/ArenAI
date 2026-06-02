@@ -144,9 +144,9 @@ void train_main(
                 if (env->is_tank_factory_already_done(i)) continue;
 
                 const float potential_reward =
-                    train_options.potential_reward_scale
-                    * ((env_done ? 0.f : 1.f) * model_options.gamma * next_phi_vector[i]
-                       - phi_vector[i]);
+                    env_done ? 0.f
+                             : train_options.potential_reward_scale
+                                   * (model_options.gamma * next_phi_vector[i] - phi_vector[i]);
 
                 reward_metric->add(reward);
                 potential_metric->add(potential_reward);

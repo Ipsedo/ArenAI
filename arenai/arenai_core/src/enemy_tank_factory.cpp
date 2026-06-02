@@ -97,7 +97,7 @@ float EnemyTankFactory::get_shoot_in_aim_reward(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
     const auto [best_i, best_score] = get_best_score(tank_factories);
 
-    constexpr float shoot_penalty = 0.5f;
+    constexpr float shoot_penalty = 0.05f;
 
     float shoot_in_aim_reward = action_stats->has_fire() ? -shoot_penalty : 0.f;
 

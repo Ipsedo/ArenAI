@@ -48,8 +48,8 @@ int main(const int argc, char **argv) {
     // env
     parser.add_argument("--wanted_frequency").scan<'g', float>().default_value(1.f / 30.f);
     parser.add_argument("--nb_tanks").scan<'i', int>().default_value(8);
-    parser.add_argument("--initial_spawn_width").scan<'g', float>().default_value(250.f);
-    parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(250.f);
+    parser.add_argument("--initial_spawn_width").scan<'g', float>().default_value(140.f);
+    parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(140.f);
     parser.add_argument("--final_spawn_width").scan<'g', float>().default_value(1000.f);
     parser.add_argument("--final_spawn_height").scan<'g', float>().default_value(1000.f);
 

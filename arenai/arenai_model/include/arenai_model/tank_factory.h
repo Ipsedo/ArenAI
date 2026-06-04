@@ -13,6 +13,7 @@
 #include <arenai_view/camera.h>
 
 #include "./item.h"
+#include "./shell.h"
 
 class TankFactory {
 public:
@@ -32,7 +33,7 @@ public:
     virtual ~TankFactory();
 
 protected:
-    virtual void on_fired_shell_contact(Item *item) = 0;
+    virtual void on_fired_shell_contact(ShellItem *shell, Item *item) = 0;
 
     std::shared_ptr<Item> get_chassis();
     std::shared_ptr<Item> get_canon();

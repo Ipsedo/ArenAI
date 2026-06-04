@@ -10,7 +10,7 @@ PlayerTankFactory::PlayerTankFactory(
     : TankFactory(file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency), killed_nb(0),
       hit_nb(0) {}
 
-void PlayerTankFactory::on_fired_shell_contact(Item *item) {
+void PlayerTankFactory::on_fired_shell_contact(ShellItem *shell, Item *item) {
     for (const auto &i: get_items())
         if (i->get_name() == item->get_name()) return;// self shoot
 

@@ -6,8 +6,6 @@
 
 #include <arenai_model/engine.h>
 
-#include "./tank/shell.h"
-
 PhysicEngine::PhysicEngine(const float wanted_frequency)
     : wanted_frequency(wanted_frequency),
       m_collision_configuration(new btDefaultCollisionConfiguration()),

@@ -72,12 +72,10 @@ void train_main(
 
     // metrics
     auto reward_metric = std::make_shared<Metric>("reward", train_options.metric_window_size, 6);
-    auto potential_metric =
-        std::make_shared<Metric>("potential", train_options.metric_window_size, 2, true);
     const auto sac_metrics = agent->get_metrics();
     const auto env_metrics = env->get_metrics();
 
-    std::vector metrics = {reward_metric, potential_metric};
+    std::vector metrics = {reward_metric};
     metrics.insert(metrics.end(), env_metrics.begin(), env_metrics.end());
     metrics.insert(metrics.end(), sac_metrics.begin(), sac_metrics.end());
 
@@ -107,8 +105,6 @@ void train_main(
         auto last_states = env->reset_physics(spawn_width, spawn_height);
         env->reset_drawables(gl_context);
 
-        auto phi_vector = env->get_phi_vector();
-
         while (!is_done) {
 
             TorchAction torch_action;
@@ -131,7 +127,6 @@ void train_main(
 
             // step environment
             const auto steps = env->step(wanted_frequency, actions_for_env);
-            const auto next_phi_vector = env->get_phi_vector();
 
             last_states.clear();
             last_states.reserve(environment_options.nb_tanks);
@@ -143,21 +138,14 @@ void train_main(
 
                 if (env->is_tank_factory_already_done(i)) continue;
 
-                const float potential_reward =
-                    env_done ? 0.f
-                             : train_options.potential_reward_scale
-                                   * (model_options.gamma * next_phi_vector[i] - phi_vector[i]);
-
                 reward_metric->add(reward);
-                potential_metric->add(potential_reward);
 
                 const auto [next_vision, next_proprioception] = state_to_tensor(next_state);
 
                 replay_buffer->add(
                     {{vision[i], proprioception[i]},
                      {torch_action.continuous_action[i], torch_action.discrete_action[i]},
-                     torch::tensor(
-                         {reward + potential_reward}, torch::TensorOptions().dtype(torch::kFloat)),
+                     torch::tensor({reward}, torch::TensorOptions().dtype(torch::kFloat)),
                      torch::tensor({env_done}, torch::TensorOptions().dtype(torch::kBool)),
                      {next_vision, next_proprioception}});
             }
@@ -169,7 +157,6 @@ void train_main(
 
             // step ending stuff
             is_done = env->is_episode_terminated();
-            phi_vector = next_phi_vector;
 
             train_counter = (train_counter + 1) % train_options.train_every;
 

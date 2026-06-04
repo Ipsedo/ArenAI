@@ -10,6 +10,7 @@
 #include <arenai_controller/controller.h>
 #include <arenai_controller/inputs.h>
 #include <arenai_model/convex.h>
+#include <arenai_model/shell.h>
 #include <arenai_utils/file_reader.h>
 #include <arenai_view/camera.h>
 
@@ -22,7 +23,7 @@ public:
     CanonItem(
         const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,
         glm::vec3 pos, glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *turret,
-        float wanted_frame_frequency, const std::function<void(Item *)> &on_contact);
+        float wanted_frame_frequency, const std::function<void(ShellItem *, Item *)> &on_contact);
 
     void on_input(const user_input &input) override;
 
@@ -39,7 +40,7 @@ private:
     btHingeConstraint *hinge;
     std::shared_ptr<AbstractFileReader> file_reader;
     bool will_fire;
-    std::function<void(Item *)> on_contact;
+    std::function<void(ShellItem *, Item *)> on_contact;
     float wanted_frame_frequency;
 };
 

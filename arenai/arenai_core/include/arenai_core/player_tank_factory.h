@@ -16,7 +16,7 @@ public:
     int get_score() const;
 
 protected:
-    void on_fired_shell_contact(Item *item) override;
+    void on_fired_shell_contact(ShellItem *shell, Item *item) override;
 
 private:
     int killed_nb;

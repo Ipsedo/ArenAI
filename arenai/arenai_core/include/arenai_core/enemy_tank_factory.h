@@ -5,9 +5,16 @@
 #ifndef ARENAI_TRAIN_HOST_ENEMY_TANK_FACTORY_H
 #define ARENAI_TRAIN_HOST_ENEMY_TANK_FACTORY_H
 
+#include <optional>
+
 #include <arenai_model/tank_factory.h>
 
-#include "./action_stats.h"
+struct shoot_info {
+    glm::vec3 start_pos;
+    glm::vec3 hit_pos;
+    bool has_touch_enemy;
+    bool enemy_killed;
+};
 
 class EnemyTankFactory final : public TankFactory {
 public:
@@ -16,7 +23,6 @@ public:
         glm::vec3 chassis_pos, float wanted_frame_frequency);
 
     float get_reward(const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories);
-    float get_phi(const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories);
 
     bool is_dead() override;
     bool is_suicide() const;
@@ -27,15 +33,12 @@ public:
 
     std::vector<float> get_proprioception();
 
-    std::shared_ptr<ActionStats> get_action_stats();
-
 protected:
-    void on_fired_shell_contact(Item *item) override;
+    void on_fired_shell_contact(ShellItem *shell, Item *item) override;
 
 private:
     std::string tank_prefix_name;
 
-    float hit_reward;
     int max_frames_upside_down;
     int curr_frame_upside_down;
 
@@ -46,14 +49,15 @@ private:
 
     bool has_touch;
 
-    std::shared_ptr<ActionStats> action_stats;
+    std::optional<shoot_info> last_shoot_info;
 
     float compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank);
-    float
-    get_shoot_in_aim_reward(const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories);
 
     std::tuple<int, float>
     get_best_score(const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories);
+
+    static float compute_shoot_reward(
+        const glm::vec3 &fire_pos, const glm::vec3 &best_enemy_pos, const glm::vec3 &hit_pos);
 };
 
 #endif//ARENAI_TRAIN_HOST_ENEMY_TANK_FACTORY_H

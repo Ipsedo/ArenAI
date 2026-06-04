@@ -9,7 +9,6 @@
 
 #include "./canon.h"
 #include "./chassis.h"
-#include "./shell.h"
 #include "./turret.h"
 #include "./wheel.h"
 
@@ -73,7 +72,7 @@ TankFactory::TankFactory(
     const auto canon_item = std::make_shared<CanonItem>(
         tank_prefix_name, file_reader, chassis_pos + turret_pos + canon_pos, canon_pos,
         scale * canon_scale, 100, turret->get_body(), wanted_frame_frequency,
-        [this](Item *i) { on_fired_shell_contact(i); });
+        [this](ShellItem *s, Item *i) { on_fired_shell_contact(s, i); });
 
     item_producers.push_back(canon_item);
     items.push_back(canon_item), controllers.push_back(canon_item);

@@ -21,7 +21,8 @@ public:
     ShellItem(
         const std::shared_ptr<AbstractFileReader> &file_reader, glm::vec3 pos, glm::quat rot,
         glm::vec3 scale, float mass, float wanted_frame_frequency,
-        const std::function<void(Item *)> &contact_callback = [](Item *_) {});
+        const std::function<void(ShellItem *, Item *)> &contact_callback = [](ShellItem *_s,
+                                                                              Item *_i) {});
 
     void on_contact(Item *other) override;
 
@@ -29,9 +30,14 @@ public:
 
     void tick() override;
 
+    glm::vec3 get_fire_position() const;
+    glm::vec3 get_current_position();
+
 private:
-    std::function<void(Item *)> contact_callback;
+    std::function<void(ShellItem *, Item *)> contact_callback;
     int nb_frames_alive;
+
+    glm::vec3 start_pos;
 };
 
 #endif// ARENAI_SHELL_H

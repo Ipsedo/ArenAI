@@ -8,12 +8,10 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include "./shell.h"
-
 CanonItem::CanonItem(
     const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,
     glm::vec3 pos, glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *turret,
-    const float wanted_frame_frequency, const std::function<void(Item *)> &on_contact)
+    const float wanted_frame_frequency, const std::function<void(ShellItem *, Item *)> &on_contact)
     : LifeItem(5),
       ConvexItem(
           prefix_name + "_canon", std::make_shared<ObjShape>(file_reader, "obj/anubis_canon.obj"),

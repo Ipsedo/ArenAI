@@ -45,10 +45,10 @@ float EnemyTankFactory::compute_shoot_reward(
 
     const float t =
         enemy_len2 > 0.0f ? glm::dot(hit_pos - fire_pos, enemy_vector) / enemy_len2 : 0.0f;
-    const glm::vec3 D = fire_pos + t * enemy_vector;
+    const glm::vec3 proj_hit_pos = fire_pos + t * enemy_vector;
 
-    const glm::vec3 proj_hit_vector = D - fire_pos;
-    const glm::vec3 dc = hit_pos - D;
+    const glm::vec3 proj_hit_vector = proj_hit_pos - fire_pos;
+    const glm::vec3 proj_hit_pos_to_hit_pos = hit_pos - proj_hit_pos;
 
     const float hit_vector_length = glm::length(proj_hit_vector);
     const float enemy_vector_length = glm::length(enemy_vector);
@@ -58,7 +58,8 @@ float EnemyTankFactory::compute_shoot_reward(
         min_length > 0.0f ? glm::dot(enemy_vector, proj_hit_vector) / (min_length * min_length)
                           : 0.0f;
 
-    const float angle_dispersion = std::atan2(glm::length(dc), hit_vector_length);
+    const float angle_dispersion =
+        std::atan2(glm::length(proj_hit_pos_to_hit_pos), hit_vector_length);
     const float angle_reward = 1.0f - 2.0f * angle_dispersion / glm::pi<float>();
 
     return distance_reward * angle_reward;

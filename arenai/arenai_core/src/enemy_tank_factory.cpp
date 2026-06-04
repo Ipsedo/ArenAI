@@ -148,8 +148,12 @@ void EnemyTankFactory::on_fired_shell_contact(ShellItem *shell, Item *item) {
         if (life_item->is_dead() && !life_item->is_already_dead()) {
             hit = true;
             killed = true;
+
+            has_touch = true;
         } else if (!life_item->is_dead()) {
             hit = true;
+
+            has_touch = true;
         }
     }
 

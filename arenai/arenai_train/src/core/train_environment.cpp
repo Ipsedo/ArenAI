@@ -56,13 +56,13 @@ TrainTankEnvironment::step(const float time_delta, const std::vector<Action> &ac
 
         if (!done[i] && only_one_tank_not_already_done()) {
             // timeout winner
-            step_result[i] = {state, reward + 2.f, true};
+            step_result[i] = {state, reward + 1.f, true};
             done[i] = true;
         }
 
         if (!done[i] && only_one_tank_alive()) {
             // winner
-            step_result[i] = {state, reward + 10.f, true};
+            step_result[i] = {state, reward + 2.f, true};
             done[i] = true;
         }
     }

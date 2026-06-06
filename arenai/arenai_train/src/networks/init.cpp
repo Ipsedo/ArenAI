@@ -26,7 +26,7 @@ void init_hidden_weights(torch::nn::Module &module) {
 
 void init_mu_output_weights(torch::nn::Module &module) {
     if (auto *lin = dynamic_cast<torch::nn::LinearImpl *>(&module)) {
-        torch::nn::init::uniform_(lin->weight, -1e-3f, 1e-3f);
+        torch::nn::init::uniform_(lin->weight, -0.1f, 0.1f);
         if (lin->options.bias()) torch::nn::init::zeros_(lin->bias);
     }
 }
@@ -47,7 +47,7 @@ void init_discrete_output_weights(torch::nn::Module &module) {
 
 void init_value_output_weights(torch::nn::Module &module) {
     if (auto *lin = dynamic_cast<torch::nn::LinearImpl *>(&module)) {
-        torch::nn::init::uniform_(lin->weight, -0.2f, 0.2f);
+        torch::nn::init::uniform_(lin->weight, -0.1f, 0.1f);
         if (lin->options.bias()) torch::nn::init::zeros_(lin->bias);
     }
 }

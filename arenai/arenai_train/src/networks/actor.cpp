@@ -42,7 +42,15 @@ Actor::Actor(
           "discrete",
           torch::nn::Sequential(
               torch::nn::Linear(hidden_size, nb_discrete_actions), torch::nn::Softmax(-1)))) {
-    apply(init_weights);
+
+    vision_encoder->apply(init_hidden_weights);
+    sensors_encoder->apply(init_hidden_weights);
+    head->apply(init_hidden_weights);
+
+    mu->apply(init_output_weights);
+    sigma->apply(init_sigma_output_weights);
+
+    discrete->apply(init_output_weights);
 }
 
 actor_response Actor::act(const torch::Tensor &vision, const torch::Tensor &sensors) {

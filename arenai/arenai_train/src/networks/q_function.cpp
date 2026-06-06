@@ -39,9 +39,17 @@ QFunction::QFunction(
                   hidden_size),
               torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})), torch::nn::SiLU(),
               torch::nn::Linear(hidden_size, hidden_size),
-              torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})), torch::nn::SiLU(),
-              torch::nn::Linear(hidden_size, 1)))) {
-    apply(init_weights);
+              torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})),
+              torch::nn::SiLU()))),
+      to_value(torch::nn::Linear(hidden_size, 1)) {
+
+    vision_encoder->apply(init_hidden_weights);
+    sensors_encoder->apply(init_hidden_weights);
+    continuous_action_encoder->apply(init_hidden_weights);
+    discrete_action_encoder->apply(init_hidden_weights);
+    head->apply(init_hidden_weights);
+
+    to_value->apply(init_output_weights);
 }
 
 torch::Tensor QFunction::value_ohe(

@@ -44,7 +44,7 @@ void game_loop(const GameOptions &game_options, const ModelOptions &model_option
         game_options.android_asset_folder, glfw_window, game_options.nb_tanks,
         game_options.wanted_frequency);
 
-    auto states = env->reset_physics();
+    auto states = env->reset_physics(250, 250);
     env->reset_drawables();
 
     const auto frame_dt =

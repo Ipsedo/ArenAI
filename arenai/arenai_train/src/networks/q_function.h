@@ -32,6 +32,7 @@ private:
     torch::nn::Sequential continuous_action_encoder;
     torch::nn::Sequential discrete_action_encoder;
     torch::nn::Sequential head;
+    torch::nn::Linear to_value;
 
     torch::Tensor encode_common(
         const torch::Tensor &vision, const torch::Tensor &sensors,

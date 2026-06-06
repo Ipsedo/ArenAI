@@ -7,6 +7,9 @@
 
 #include <torch/torch.h>
 
-void init_weights(torch::nn::Module &module);
+void init_hidden_weights(torch::nn::Module &module);
+
+void init_output_weights(torch::nn::Module &module);
+void init_sigma_output_weights(torch::nn::Module &module);
 
 #endif//ARENAI_TRAIN_HOST_INIT_H

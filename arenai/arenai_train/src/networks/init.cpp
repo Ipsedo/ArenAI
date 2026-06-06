@@ -4,9 +4,9 @@
 
 #include "./init.h"
 
-void init_weights(torch::nn::Module &module) {
+void init_hidden_weights(torch::nn::Module &module) {
     if (auto *lin = dynamic_cast<torch::nn::LinearImpl *>(&module)) {
-        torch::nn::init::kaiming_normal_(lin->weight, 0.0, torch::kFanIn, torch::kReLU);
+        torch::nn::init::xavier_normal_(lin->weight);
         if (lin->options.bias()) torch::nn::init::zeros_(lin->bias);
     } else if (auto *ln = dynamic_cast<torch::nn::LayerNormImpl *>(&module)) {
         if (ln->options.elementwise_affine()) {
@@ -19,7 +19,21 @@ void init_weights(torch::nn::Module &module) {
             torch::nn::init::zeros_(gn->bias);
         }
     } else if (auto *conv = dynamic_cast<torch::nn::Conv2dImpl *>(&module)) {
-        torch::nn::init::kaiming_normal_(conv->weight, 0.0, torch::kFanIn, torch::kReLU);
+        torch::nn::init::xavier_normal_(conv->weight);
         if (conv->options.bias()) torch::nn::init::zeros_(conv->bias);
+    }
+}
+
+void init_output_weights(torch::nn::Module &module) {
+    if (auto *lin = dynamic_cast<torch::nn::LinearImpl *>(&module)) {
+        torch::nn::init::uniform_(lin->weight, 1e-3f, 1e-3f);
+        if (lin->options.bias()) torch::nn::init::zeros_(lin->bias);
+    }
+}
+
+void init_sigma_output_weights(torch::nn::Module &module) {
+    if (auto *lin = dynamic_cast<torch::nn::LinearImpl *>(&module)) {
+        torch::nn::init::uniform_(lin->weight, 1e-3f, 1e-3f);
+        if (lin->options.bias()) torch::nn::init::constant_(lin->bias, std::log(1e-1f));
     }
 }

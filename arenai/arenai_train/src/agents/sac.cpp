@@ -116,7 +116,10 @@ void SacAgent::train(
                                         + alpha_continuous->alpha() * next_continuous_entropy
                                         + alpha_discrete->alpha() * next_discrete_entropy;
 
-            target_q_values = reward + (1.f - done.to(torch::kFloat)) * gamma * target_v_value;
+            const auto normalized_reward = (reward - reward.mean()) / (reward.std() + 1e-8);
+
+            target_q_values =
+                normalized_reward + (1.f - done.to(torch::kFloat)) * gamma * target_v_value;
         }
 
         // critic 1
@@ -126,7 +129,6 @@ void SacAgent::train(
 
         critic_1_optim->zero_grad();
         critic_1_loss.backward();
-        torch::nn::utils::clip_grad_norm_(critic_1->parameters(), 1.0);
         critic_1_optim->step();
 
         // critic 2
@@ -136,7 +138,6 @@ void SacAgent::train(
 
         critic_2_optim->zero_grad();
         critic_2_loss.backward();
-        torch::nn::utils::clip_grad_norm_(critic_2->parameters(), 1.0);
         critic_2_optim->step();
 
         // target value soft update
@@ -165,7 +166,6 @@ void SacAgent::train(
 
         actor_optim->zero_grad();
         actor_loss.backward();
-        torch::nn::utils::clip_grad_norm_(actor->parameters(), 1.0);
         actor_optim->step();
 
         // continuous entropy

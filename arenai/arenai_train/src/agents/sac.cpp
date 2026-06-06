@@ -50,8 +50,10 @@ SacAgent::SacAgent(
       alpha_discrete_optim(std::make_unique<torch::optim::Adam>(
           alpha_discrete->parameters(), torch::optim::AdamOptions(alpha_learning_rate))),
       actor_loss_metric(std::make_shared<Metric>("actor", metric_window_size)),
-      critic_1_loss_metric(std::make_shared<Metric>("critic_1", metric_window_size)),
-      critic_2_loss_metric(std::make_shared<Metric>("critic_2", metric_window_size)),
+      critic_1_loss_metric(
+          std::make_shared<Metric>("critic_1", metric_window_size, 4, false, true)),
+      critic_2_loss_metric(
+          std::make_shared<Metric>("critic_2", metric_window_size, 4, false, true)),
       continuous_entropy_metric(std::make_shared<Metric>("entropy_c", metric_window_size)),
       discrete_entropy_metric(std::make_shared<Metric>("entropy_d", metric_window_size)),
       alpha_continuous_metric(std::make_shared<Metric>("alpha_c", metric_window_size)),

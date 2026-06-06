@@ -7,15 +7,26 @@
 #include <arenai_train/metric.h>
 
 Metric::Metric(
-    const std::string &name, const int window_size, const int precision, const bool scientific)
+    const std::string &name, const int window_size, const int precision, const bool scientific,
+    const bool print_std)
     : name(name), window_size(window_size), float_display_scientific(scientific),
-      float_display_precision(precision) {}
+      float_display_precision(precision), print_std(print_std) {}
 
 float Metric::last_value() const { return values.back(); }
 
-float Metric::average_value() {
+float Metric::mean() {
     return std::reduce(values.begin(), values.end(), 0.0f, std::plus())
            / std::max(static_cast<float>(values.size()), 1.f);
+}
+
+float Metric::std() {
+    const float curr_mean = mean();
+
+    return std::sqrt(
+        std::accumulate(
+            values.begin(), values.end(), 0.0f,
+            [curr_mean](const float a, const float b) { return a + std::pow(b - curr_mean, 2.0); })
+        / std::max(static_cast<float>(values.size()), 1.f));
 }
 
 void Metric::add(const float value) {
@@ -28,7 +39,9 @@ std::string Metric::to_string() {
     const auto float_display_format = float_display_scientific ? std::scientific : std::fixed;
     std::stringstream stream;
     stream << name << " = " << std::setprecision(float_display_precision) << float_display_format
-           << average_value();
+           << mean();
+
+    if (print_std) stream << " ±" << std::setprecision(1) << std::scientific << std();
 
     return stream.str();
 }

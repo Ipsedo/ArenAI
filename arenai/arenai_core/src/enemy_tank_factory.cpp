@@ -84,6 +84,8 @@ float EnemyTankFactory::get_reward(
     if (const auto [best_tank_index, _] = get_best_score(tank_factories);
         last_shoot_info.has_value() && best_tank_index != -1) {
 
+        constexpr float shoot_penalty = 0.25f;
+
         const auto [fire_pos, hit_pos, has_hit, has_killed] = last_shoot_info.value();
 
         const auto best_tank_model_matrix =
@@ -93,7 +95,7 @@ float EnemyTankFactory::get_reward(
 
         // shoot reward
         shoot_reward = compute_shoot_reward(fire_pos, best_tank_pos, hit_pos)
-                       + (has_hit ? 0.5f : 0.f) + (has_killed ? 1.f : 0.f);
+                       + (has_hit ? 0.5f : 0.f) + (has_killed ? 1.f : 0.f) - shoot_penalty;
 
         last_shoot_info = std::nullopt;
     }

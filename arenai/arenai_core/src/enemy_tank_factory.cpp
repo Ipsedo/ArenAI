@@ -20,8 +20,8 @@ EnemyTankFactory::EnemyTankFactory(
     : TankFactory(file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency),
       tank_prefix_name(tank_prefix_name),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-      curr_frame_upside_down(0), angle_scale(static_cast<float>(M_PI) / 3.f), distance_scale(150.f),
-      is_dead_already_triggered(false), has_touch(false), last_shoot_info(std::nullopt) {}
+      curr_frame_upside_down(0), distance_scale(150.f), is_dead_already_triggered(false),
+      has_touch(false), last_shoot_info(std::nullopt) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
     const auto canon_tr = get_canon()->get_model_matrix();
@@ -121,9 +121,7 @@ std::tuple<int, float> EnemyTankFactory::get_best_score(
             glm::vec3(tank_factories[i]->get_chassis()->get_model_matrix() * world_center);
 
         const float distance = glm::length(chassis_pos - other_pos);
-
-        const float sigma = distance_scale;
-        const float distance_score = std::exp(-0.5f * std::pow(distance / sigma, 2.f));
+        const float distance_score = std::exp(-0.5f * std::pow(distance / distance_scale, 2.f));
 
         const float angle = compute_aim_angle(tank_factories[i]);
         const float angle_score = (std::cos(angle) + 1.f) / 2.f;

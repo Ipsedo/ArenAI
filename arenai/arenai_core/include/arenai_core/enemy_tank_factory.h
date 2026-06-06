@@ -42,7 +42,6 @@ private:
     int max_frames_upside_down;
     int curr_frame_upside_down;
 
-    float angle_scale;
     float distance_scale;
 
     bool is_dead_already_triggered;

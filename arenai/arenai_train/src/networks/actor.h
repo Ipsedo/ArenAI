@@ -15,6 +15,8 @@ struct actor_response {
     torch::Tensor mu;
     torch::Tensor sigma;
     torch::Tensor discrete;
+
+    torch::Tensor mse_decoder;
 };
 
 class Actor final : public torch::nn::Module {
@@ -27,7 +29,7 @@ public:
     actor_response act(const torch::Tensor &vision, const torch::Tensor &sensors);
 
 private:
-    std::shared_ptr<ConvolutionNetwork> vision_encoder;
+    std::shared_ptr<VisionAutoEncoder> vision_auto_encoder;
     torch::nn::Sequential sensors_encoder;
 
     torch::nn::Sequential head;

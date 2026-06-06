@@ -12,7 +12,7 @@ QFunction::QFunction(
     const std::vector<std::tuple<int, int>> &vision_channels,
     const std::vector<int> &group_norm_nums)
     : vision_encoder(register_module(
-        "vision_encoder", std::make_shared<ConvolutionNetwork>(vision_channels, group_norm_nums))),
+        "vision_encoder", std::make_shared<VisionAutoEncoder>(vision_channels, group_norm_nums))),
       sensors_encoder(register_module(
           "sensors_encoder",
           torch::nn::Sequential(
@@ -52,15 +52,15 @@ QFunction::QFunction(
     to_value->apply(init_value_output_weights);
 }
 
-torch::Tensor QFunction::value_ohe(
+q_function_response QFunction::value_ohe(
     const torch::Tensor &vision, const torch::Tensor &sensors,
     const torch::Tensor &continuous_actions, const torch::Tensor &discrete_action_ohe) {
-    const auto common_encoded = encode_common(vision, sensors, continuous_actions);
+    const auto [common_encoded, mse_decoder] = encode_common(vision, sensors, continuous_actions);
     const auto discrete_action_encoded = discrete_action_encoder->forward(discrete_action_ohe);
 
     const auto encoded_hidden = torch::cat({common_encoded, discrete_action_encoded}, 1);
 
-    return to_value->forward(head->forward(encoded_hidden));
+    return {to_value->forward(head->forward(encoded_hidden)), mse_decoder};
 }
 
 torch::Tensor QFunction::value_expectation(
@@ -69,7 +69,7 @@ torch::Tensor QFunction::value_expectation(
     const auto batch_size = vision.size(0);
     const auto nb_discrete_actions = discrete_actions_proba.size(1);
 
-    const auto common_encoded = encode_common(vision, sensors, continuous_actions);
+    const auto [common_encoded, _] = encode_common(vision, sensors, continuous_actions);
     const auto one_hots = torch::eye(nb_discrete_actions, discrete_actions_proba.options());
 
     auto result = torch::zeros({batch_size, 1}, common_encoded.options());
@@ -87,12 +87,12 @@ torch::Tensor QFunction::value_expectation(
     return result;
 }
 
-torch::Tensor QFunction::encode_common(
+std::tuple<torch::Tensor, torch::Tensor> QFunction::encode_common(
     const torch::Tensor &vision, const torch::Tensor &sensors,
     const torch::Tensor &continuous_actions) {
-    const auto vision_encoded = vision_encoder->forward(vision);
+    const auto [vision_encoded, mse_decoder] = vision_encoder->forward(vision);
     const auto sensors_encoded = sensors_encoder->forward(sensors);
     const auto action_encoded = continuous_action_encoder->forward(continuous_actions);
 
-    return torch::cat({vision_encoded, sensors_encoded, action_encoded}, 1);
+    return {torch::cat({vision_encoded, sensors_encoded, action_encoded}, 1), mse_decoder};
 }

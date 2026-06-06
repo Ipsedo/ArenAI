@@ -75,7 +75,7 @@ SacAgent::SacAgent(
 }
 
 agent_response SacAgent::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
-    const auto &[mu, sigma, discrete_proba] = actor->act(vision, sensors);
+    const auto &[mu, sigma, discrete_proba, _] = actor->act(vision, sensors);
 
     const auto continuous_action = truncated_normal_sample(mu, sigma);
     const auto discrete_action = multinomial_sample(discrete_proba);
@@ -96,7 +96,7 @@ void SacAgent::train(
         {
             torch::NoGradGuard no_grad;
 
-            const auto [next_mu, next_sigma, next_discrete_proba] =
+            const auto [next_mu, next_sigma, next_discrete_proba, _] =
                 actor->act(next_state.vision, next_state.proprioception);
 
             const auto next_continuous_action = truncated_normal_sample(next_mu, next_sigma);
@@ -123,18 +123,20 @@ void SacAgent::train(
         }
 
         // critic 1
-        const auto q_value_1 = critic_1->value_ohe(
+        const auto [q_value_1, q_fn_1_mse_decoder] = critic_1->value_ohe(
             state.vision, state.proprioception, action.continuous_action, action.discrete_action);
-        const auto critic_1_loss = torch::mse_loss(q_value_1, target_q_values, at::Reduction::Mean);
+        const auto critic_1_loss = torch::mse_loss(q_value_1, target_q_values, at::Reduction::Mean)
+                                   + 0.1f * torch::mean(q_fn_1_mse_decoder);
 
         critic_1_optim->zero_grad();
         critic_1_loss.backward();
         critic_1_optim->step();
 
         // critic 2
-        const auto q_value_2 = critic_2->value_ohe(
+        const auto [q_value_2, q_fn_2_mse_decoder] = critic_2->value_ohe(
             state.vision, state.proprioception, action.continuous_action, action.discrete_action);
-        const auto critic_2_loss = torch::mse_loss(q_value_2, target_q_values, at::Reduction::Mean);
+        const auto critic_2_loss = torch::mse_loss(q_value_2, target_q_values, at::Reduction::Mean)
+                                   + 0.1f * torch::mean(q_fn_2_mse_decoder);
 
         critic_2_optim->zero_grad();
         critic_2_loss.backward();
@@ -145,7 +147,7 @@ void SacAgent::train(
         soft_update(target_critic_2, critic_2, tau);
 
         // policy
-        const auto [curr_mu, curr_sigma, curr_discrete_proba] =
+        const auto [curr_mu, curr_sigma, curr_discrete_proba, curr_actor_mse_decoder] =
             actor->act(state.vision, state.proprioception);
 
         const auto curr_continuous_action = truncated_normal_sample(curr_mu, curr_sigma);
@@ -160,9 +162,11 @@ void SacAgent::train(
             state.vision, state.proprioception, curr_continuous_action, curr_discrete_proba);
         const auto q_value = torch::min(curr_q_value_1, curr_q_value_2);
 
-        const auto actor_loss = -torch::mean(
-            alpha_continuous->alpha().detach() * curr_continuous_entropy
-            + alpha_discrete->alpha().detach() * curr_discrete_entropy + q_value);
+        const auto actor_loss =
+            -torch::mean(
+                alpha_continuous->alpha().detach() * curr_continuous_entropy
+                + alpha_discrete->alpha().detach() * curr_discrete_entropy + q_value)
+            + 0.1f * torch::mean(curr_actor_mse_decoder);
 
         actor_optim->zero_grad();
         actor_loss.backward();

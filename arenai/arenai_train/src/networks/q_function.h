@@ -11,6 +11,12 @@
 
 #include "./vision.h"
 
+struct q_function_response {
+    torch::Tensor value;
+
+    torch::Tensor mse_decoder;
+};
+
 class QFunction final : public torch::nn::Module {
 public:
     QFunction(
@@ -18,7 +24,7 @@ public:
         const int &hidden_size_sensors, const int &hidden_size_actions, const int &hidden_size,
         const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums);
-    torch::Tensor value_ohe(
+    q_function_response value_ohe(
         const torch::Tensor &vision, const torch::Tensor &sensors,
         const torch::Tensor &continuous_actions, const torch::Tensor &discrete_action_ohe);
 
@@ -27,14 +33,14 @@ public:
         const torch::Tensor &continuous_actions, const torch::Tensor &discrete_actions_proba);
 
 private:
-    std::shared_ptr<ConvolutionNetwork> vision_encoder;
+    std::shared_ptr<VisionAutoEncoder> vision_encoder;
     torch::nn::Sequential sensors_encoder;
     torch::nn::Sequential continuous_action_encoder;
     torch::nn::Sequential discrete_action_encoder;
     torch::nn::Sequential head;
     torch::nn::Linear to_value;
 
-    torch::Tensor encode_common(
+    std::tuple<torch::Tensor, torch::Tensor> encode_common(
         const torch::Tensor &vision, const torch::Tensor &sensors,
         const torch::Tensor &continuous_actions);
 };

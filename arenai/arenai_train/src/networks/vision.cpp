@@ -30,14 +30,59 @@ ConvolutionNetwork::ConvolutionNetwork(
     }
 
     output_size = w * h * std::get<1>(channels.back());
-
-    cnn->push_back(torch::nn::Flatten(torch::nn::FlattenOptions().start_dim(1).end_dim(-1)));
 }
 
 torch::Tensor ConvolutionNetwork::forward(const torch::Tensor &input) {
-    if (input.dtype() != torch::kUInt8) throw std::runtime_error("Input must be UInt8");
-
-    return cnn->forward(input.to(torch::kFloat).mul_(2.0f / 255.0f).add_(-1.0f));
+    return cnn->forward(input);
 }
 
 int ConvolutionNetwork::get_output_size() const { return output_size; }
+
+// Decoder
+TransposedConvolutionNetwork::TransposedConvolutionNetwork(
+    const std::vector<std::tuple<int, int>> &channels, const std::vector<int> &group_norm_nums)
+    : tr_cnn(register_module("tr_cnn", torch::nn::Sequential())) {
+
+    for (int i = channels.size() - 1; i >= 0; i--) {
+        const auto &[c_o, c_i] = channels[i];
+
+        tr_cnn->push_back(torch::nn::ConvTranspose2d(
+            torch::nn::ConvTranspose2dOptions(c_i, c_o, 3).stride(2).padding(1).output_padding(1)));
+
+        if (i != 0) {
+            const auto groups = group_norm_nums[i - 1];
+
+            tr_cnn->push_back(torch::nn::GroupNorm(torch::nn::GroupNormOptions(groups, c_o)));
+            tr_cnn->push_back(torch::nn::GELU());
+        } else {
+            tr_cnn->push_back(torch::nn::Tanh());
+        }
+    }
+}
+
+torch::Tensor TransposedConvolutionNetwork::forward(const torch::Tensor &input) {
+    return tr_cnn->forward(input);
+}
+
+// Auto encoder
+
+VisionAutoEncoder::VisionAutoEncoder(
+    const std::vector<std::tuple<int, int>> &channels, const std::vector<int> &group_norm_nums)
+    : encoder(register_module(
+        "encoder", std::make_shared<ConvolutionNetwork>(channels, group_norm_nums))),
+      decoder(register_module(
+          "decoder", std::make_shared<TransposedConvolutionNetwork>(channels, group_norm_nums))) {}
+
+vision_output VisionAutoEncoder::forward(const torch::Tensor &input) const {
+    if (input.dtype() != torch::kUInt8) throw std::runtime_error("Input must be UInt8");
+    const auto input_float = input.to(torch::kFloat).mul_(2.0f / 255.0f).add_(-1.0f);
+
+    const auto encoded_image = encoder->forward(input_float);
+    const auto decoded_image = decoder->forward(encoded_image);
+
+    return {
+        encoded_image.flatten(1, -1),
+        torch::mse_loss(input_float, decoded_image, at::Reduction::None)};
+}
+
+int VisionAutoEncoder::get_output_size() const { return encoder->get_output_size(); }

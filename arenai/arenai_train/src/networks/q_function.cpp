@@ -18,30 +18,30 @@ QFunction::QFunction(
           torch::nn::Sequential(
               torch::nn::Linear(nb_sensors, hidden_size_sensors),
               torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_sensors})),
-              torch::nn::SiLU()))),
+              torch::nn::GELU()))),
       continuous_action_encoder(register_module(
           "continuous_action_encoder",
           torch::nn::Sequential(
               torch::nn::Linear(nb_continuous_actions, hidden_size_actions),
               torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_actions})),
-              torch::nn::SiLU()))),
+              torch::nn::GELU()))),
       discrete_action_encoder(register_module(
           "discrete_action_encoder",
           torch::nn::Sequential(
               torch::nn::Linear(nb_discrete_actions, hidden_size_actions),
               torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_actions})),
-              torch::nn::SiLU()))),
+              torch::nn::GELU()))),
       head(register_module(
           "head",
           torch::nn::Sequential(
               torch::nn::Linear(
                   2 * hidden_size_actions + hidden_size_sensors + vision_encoder->get_output_size(),
                   hidden_size),
-              torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})), torch::nn::SiLU(),
+              torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})), torch::nn::GELU(),
               torch::nn::Linear(hidden_size, hidden_size),
               torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})),
-              torch::nn::SiLU()))),
-      to_value(torch::nn::Linear(hidden_size, 1)) {
+              torch::nn::GELU()))),
+      to_value(register_module("to_value", torch::nn::Linear(hidden_size, 1))) {
 
     vision_encoder->apply(init_hidden_weights);
     sensors_encoder->apply(init_hidden_weights);
@@ -49,7 +49,7 @@ QFunction::QFunction(
     discrete_action_encoder->apply(init_hidden_weights);
     head->apply(init_hidden_weights);
 
-    to_value->apply(init_output_weights);
+    to_value->apply(init_value_output_weights);
 }
 
 torch::Tensor QFunction::value_ohe(
@@ -60,7 +60,7 @@ torch::Tensor QFunction::value_ohe(
 
     const auto encoded_hidden = torch::cat({common_encoded, discrete_action_encoded}, 1);
 
-    return head->forward(encoded_hidden);
+    return to_value->forward(head->forward(encoded_hidden));
 }
 
 torch::Tensor QFunction::value_expectation(
@@ -78,7 +78,8 @@ torch::Tensor QFunction::value_expectation(
         const auto discrete_encoded =
             discrete_action_encoder->forward(one_hots[a].unsqueeze(0).expand({batch_size, -1}));
 
-        const auto q_a = head->forward(torch::cat({common_encoded, discrete_encoded}, 1));
+        const auto q_a =
+            to_value->forward(head->forward(torch::cat({common_encoded, discrete_encoded}, 1)));
 
         result = result + discrete_actions_proba.select(1, a).unsqueeze(1) * q_a;
     }

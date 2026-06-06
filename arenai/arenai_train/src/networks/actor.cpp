@@ -21,15 +21,15 @@ Actor::Actor(
           torch::nn::Sequential(
               torch::nn::Linear(nb_sensors, hidden_size_sensors),
               torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_sensors})),
-              torch::nn::SiLU()))),
+              torch::nn::GELU()))),
       head(register_module(
           "head", torch::nn::Sequential(
                       torch::nn::Linear(
                           hidden_size_sensors + vision_encoder->get_output_size(), hidden_size),
                       torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})),
-                      torch::nn::SiLU(), torch::nn::Linear(hidden_size, hidden_size),
+                      torch::nn::GELU(), torch::nn::Linear(hidden_size, hidden_size),
                       torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})),
-                      torch::nn::SiLU()))),
+                      torch::nn::GELU()))),
       mu(register_module(
           "mu", torch::nn::Sequential(
                     torch::nn::Linear(hidden_size, nb_continuous_actions), torch::nn::Tanh()))),
@@ -47,10 +47,10 @@ Actor::Actor(
     sensors_encoder->apply(init_hidden_weights);
     head->apply(init_hidden_weights);
 
-    mu->apply(init_output_weights);
+    mu->apply(init_mu_output_weights);
     sigma->apply(init_sigma_output_weights);
 
-    discrete->apply(init_output_weights);
+    discrete->apply(init_discrete_output_weights);
 }
 
 actor_response Actor::act(const torch::Tensor &vision, const torch::Tensor &sensors) {

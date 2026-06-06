@@ -57,7 +57,7 @@ SacAgent::SacAgent(
       alpha_continuous_metric(std::make_shared<Metric>("alpha_c", metric_window_size)),
       alpha_discrete_metric(std::make_shared<Metric>("alpha_d", metric_window_size)), tau(tau),
       gamma(gamma),
-      continuous_target_entropy(truncated_normal_target_entropy(nb_continuous_actions, 0.5f)),
+      continuous_target_entropy(truncated_normal_target_entropy(nb_continuous_actions, 0.1f)),
       discrete_target_entropy(0.7f * multinomial_maximum_entropy(nb_discrete_actions)) {
 
     hard_update(target_critic_1, critic_1);
@@ -168,7 +168,7 @@ void SacAgent::train(
 
         // continuous entropy
         const auto alpha_continuous_loss = torch::mean(
-            alpha_continuous->log_alpha()
+            alpha_continuous->alpha()
             * (curr_continuous_entropy.detach() - continuous_target_entropy));
 
         alpha_continuous_optim->zero_grad();
@@ -177,8 +177,7 @@ void SacAgent::train(
 
         // discrete entropy
         const auto alpha_discrete_loss = torch::mean(
-            alpha_discrete->log_alpha()
-            * (curr_discrete_entropy.detach() - discrete_target_entropy));
+            alpha_discrete->alpha() * (curr_discrete_entropy.detach() - discrete_target_entropy));
 
         alpha_discrete_optim->zero_grad();
         alpha_discrete_loss.backward();

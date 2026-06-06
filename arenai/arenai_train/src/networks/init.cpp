@@ -26,7 +26,7 @@ void init_hidden_weights(torch::nn::Module &module) {
 
 void init_mu_output_weights(torch::nn::Module &module) {
     if (auto *lin = dynamic_cast<torch::nn::LinearImpl *>(&module)) {
-        torch::nn::init::uniform_(lin->weight, -0.1f, 0.1f);
+        torch::nn::init::uniform_(lin->weight, -0.5f, 0.5f);
         if (lin->options.bias()) torch::nn::init::zeros_(lin->bias);
     }
 }
@@ -34,13 +34,13 @@ void init_mu_output_weights(torch::nn::Module &module) {
 void init_sigma_output_weights(torch::nn::Module &module) {
     if (auto *lin = dynamic_cast<torch::nn::LinearImpl *>(&module)) {
         torch::nn::init::uniform_(lin->weight, -1e-3f, 1e-3f);
-        if (lin->options.bias()) torch::nn::init::constant_(lin->bias, std::log(0.5f));
+        if (lin->options.bias()) torch::nn::init::constant_(lin->bias, std::log(0.1f));
     }
 }
 
 void init_discrete_output_weights(torch::nn::Module &module) {
     if (auto *lin = dynamic_cast<torch::nn::LinearImpl *>(&module)) {
-        torch::nn::init::uniform_(lin->weight, -0.1f, 0.1f);
+        torch::nn::init::uniform_(lin->weight, -0.5f, 0.5f);
         if (lin->options.bias()) torch::nn::init::zeros_(lin->bias);
     }
 }

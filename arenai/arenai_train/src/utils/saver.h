@@ -17,13 +17,13 @@ void export_state_dict_neutral(
 
 template<typename T>
 void save_torch(
-    const std::string &output_folder_path, const T &to_save, const std::string &file_name) {
-    const std::filesystem::path path(output_folder_path);
+    const std::filesystem::path &output_folder_path, const T &to_save,
+    const std::filesystem::path &file_name) {
 
-    if (!std::filesystem::exists(path))
-        throw std::runtime_error("Could not find " + output_folder_path);
+    if (!std::filesystem::exists(output_folder_path))
+        throw std::runtime_error("Could not find " + output_folder_path.string());
 
-    const auto file = path / file_name;
+    const auto file = output_folder_path / file_name;
     torch::serialize::OutputArchive archive;
     to_save->save(archive);
     archive.save_to(file);
@@ -32,13 +32,13 @@ void save_torch(
 class MetricCsvSaver {
 public:
     MetricCsvSaver(
-        const std::string &output_folder, const std::vector<std::shared_ptr<Metric>> &metrics,
-        int save_every);
+        const std::filesystem::path &output_folder,
+        const std::vector<std::shared_ptr<Metric>> &metrics, int save_every);
 
     void attempt_append_to_csv();
 
 private:
-    std::string csv_file_path;
+    std::filesystem::path csv_file_path;
     std::vector<std::shared_ptr<Metric>> metrics;
 
     std::string sep;

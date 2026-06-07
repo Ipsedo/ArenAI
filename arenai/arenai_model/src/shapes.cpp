@@ -14,18 +14,19 @@
  */
 
 ObjShape::ObjShape(
-    const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &obj_file_path) {
+    const std::shared_ptr<AbstractFileReader> &file_reader,
+    const std::filesystem::path &obj_file_path) {
 
     const auto cache = Singleton<Cache<std::shared_ptr<Shape>>>::get_singleton();
-    if (cache->exists(obj_file_path)) {
-        const auto shape = cache->get(obj_file_path);
+    if (cache->exists(obj_file_path.string())) {
+        const auto shape = cache->get(obj_file_path.string());
         shape_id = shape->get_id();
         vertices = shape->get_vertices();
         normals = shape->get_normals();
         return;
     }
 
-    shape_id = obj_file_path;
+    shape_id = obj_file_path.string();
 
     std::vector<std::tuple<float, float, float>> vertices_ref;
     std::vector<std::tuple<float, float, float>> normals_ref;

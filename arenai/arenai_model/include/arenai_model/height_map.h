@@ -16,7 +16,7 @@ class HeightMapItem final : public Item {
 public:
     HeightMapItem(
         std::string name, const std::shared_ptr<AbstractFileReader> &img_reader,
-        const std::string &height_map_file, glm::vec3 pos, glm::vec3 scale);
+        const std::filesystem::path &height_map_file, glm::vec3 pos, glm::vec3 scale);
 
     std::shared_ptr<Shape> get_shape() override;
 

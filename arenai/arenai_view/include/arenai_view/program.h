@@ -21,34 +21,36 @@ public:
     class Builder {
     public:
         Builder(
-            const std::shared_ptr<AbstractFileReader> &text_reader, std::string vertex_shader_path,
-            std::string fragment_shader_path);
+            const std::shared_ptr<AbstractFileReader> &text_reader,
+            const std::filesystem::path &vertex_shader_path,
+            const std::filesystem::path &fragment_shader_path);
 
-        Program::Builder add_uniform(const std::string &name);
+        Builder add_uniform(const std::string &name);
 
-        Program::Builder add_attribute(const std::string &name);
+        Builder add_attribute(const std::string &name);
 
-        Program::Builder add_buffer(const std::string &name, const std::vector<float> &data);
+        Builder add_buffer(const std::string &name, const std::vector<float> &data);
 
-        Program::Builder
-        add_cube_texture(const std::string &name, const std::string &cube_textures_root_path);
+        Builder add_cube_texture(
+            const std::string &name, const std::filesystem::path &cube_textures_root_path);
 
-        Program::Builder add_texture(const std::string &name, const std::string &texture_path);
+        Builder add_texture(const std::string &name, const std::filesystem::path &texture_path);
 
         std::unique_ptr<Program> build();
 
     private:
         Builder(
-            const std::shared_ptr<AbstractFileReader> &text_reader, std::string vertex_shader_path,
-            std::string fragment_shader_path, std::vector<std::string> uniforms,
-            std::vector<std::string> attributes, std::map<std::string, std::vector<float>> buffers,
+            const std::shared_ptr<AbstractFileReader> &text_reader,
+            std::filesystem::path vertex_shader_path, std::filesystem::path fragment_shader_path,
+            std::vector<std::string> uniforms, std::vector<std::string> attributes,
+            std::map<std::string, std::vector<float>> buffers,
             std::map<std::string, std::vector<std::filesystem::path>> cube_textures,
             std::map<std::string, std::filesystem::path> textures);
 
         std::shared_ptr<AbstractFileReader> file_reader;
 
-        std::string vertex_shader_path;
-        std::string fragment_shader_path;
+        std::filesystem::path vertex_shader_path;
+        std::filesystem::path fragment_shader_path;
 
         std::vector<std::string> uniforms;
         std::vector<std::string> attributes;
@@ -58,6 +60,8 @@ public:
         std::map<std::string, std::vector<std::filesystem::path>> cube_textures;
         std::map<std::string, std::filesystem::path> textures;
     };
+
+    explicit Program();
 
 private:
     GLuint program_id;
@@ -80,7 +84,6 @@ private:
 
     static void disable_texture_(GLenum texture_target);
 
-protected:
 public:
     void use() const;
 

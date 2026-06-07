@@ -12,10 +12,11 @@ CanonItem::CanonItem(
     const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,
     glm::vec3 pos, glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *turret,
     const float wanted_frame_frequency, const std::function<void(ShellItem *, Item *)> &on_contact)
-    : LifeItem(5),
-      ConvexItem(
-          prefix_name + "_canon", std::make_shared<ObjShape>(file_reader, "obj/anubis_canon.obj"),
-          pos, scale, mass),
+    : LifeItem(5), ConvexItem(
+                       prefix_name + "_canon",
+                       std::make_shared<ObjShape>(
+                           file_reader, std::filesystem::path("obj") / "anubis_canon.obj"),
+                       pos, scale, mass),
       angle(0.f), file_reader(file_reader), will_fire(false), on_contact(on_contact),
       wanted_frame_frequency(wanted_frame_frequency) {
 

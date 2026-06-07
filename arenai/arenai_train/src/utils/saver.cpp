@@ -87,10 +87,10 @@ void export_state_dict_neutral(
  */
 
 MetricCsvSaver::MetricCsvSaver(
-    const std::string &output_folder, const std::vector<std::shared_ptr<Metric>> &metrics,
+    const std::filesystem::path &output_folder, const std::vector<std::shared_ptr<Metric>> &metrics,
     int save_every)
-    : csv_file_path(std::filesystem::path(output_folder) / "metrics.csv"), metrics(metrics),
-      sep(";"), save_every(save_every), index(0L) {
+    : csv_file_path(output_folder / "metrics.csv"), metrics(metrics), sep(";"),
+      save_every(save_every), index(0L) {
 
     std::ofstream file(csv_file_path, std::ios::trunc);
     std::string header;

@@ -195,7 +195,7 @@ std::unique_ptr<PBufferRenderer> BaseTanksEnvironment::construct_pbuffer_rendere
         renderer->add_drawable(
             item->get_name(), std::make_unique<Specular>(
                                   file_reader, shape->get_vertices(), shape->get_normals(), color,
-                                  color, color, 50.f, shape->get_id()));
+                                  color, color, 50.f));
     }
 
     for (const auto &[name, shape]: tank_factory->load_shell_shapes()) {
@@ -204,7 +204,7 @@ std::unique_ptr<PBufferRenderer> BaseTanksEnvironment::construct_pbuffer_rendere
         renderer->add_drawable(
             name, std::make_unique<Specular>(
                       file_reader, shape->get_vertices(), shape->get_normals(), shell_color,
-                      shell_color, shell_color, 50.f, shape->get_id()));
+                      shell_color, shell_color, 50.f));
     }
 
     return renderer;

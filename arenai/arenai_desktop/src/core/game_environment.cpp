@@ -14,7 +14,7 @@
 #include "../view/glfw_gl_context.h"
 
 DesktopGameEnvironment::DesktopGameEnvironment(
-    const std::string &asset_folder_path, GLFWwindow *glfw_window, const int nb_tanks,
+    const std::filesystem::path &asset_folder_path, GLFWwindow *glfw_window, const int nb_tanks,
     const float wanted_frequency)
     : BaseTanksEnvironment(
         std::make_shared<DesktopAssetFileReader>(asset_folder_path),
@@ -94,17 +94,16 @@ void DesktopGameEnvironment::on_reset_drawables(
         player_renderer->add_drawable(
             name, std::make_unique<Specular>(
                       file_reader, shape->get_vertices(), shape->get_normals(), color, color, color,
-                      50.f, shape->get_id()));
+                      50.f));
     }
 
     for (const auto &item: engine->get_items()) {
         glm::vec4 color(u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, 1.f);
 
         player_renderer->add_drawable(
-            item->get_name(),
-            std::make_unique<Specular>(
-                file_reader, item->get_shape()->get_vertices(), item->get_shape()->get_normals(),
-                color, color, color, 50.f, item->get_shape()->get_id()));
+            item->get_name(), std::make_unique<Specular>(
+                                  file_reader, item->get_shape()->get_vertices(),
+                                  item->get_shape()->get_normals(), color, color, color, 50.f));
     }
 
     /*for (auto &hud_drawable: player_controller_handler->get_hud_drawables(file_reader))

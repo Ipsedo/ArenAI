@@ -14,9 +14,9 @@
 DesktopAssetFileReader::DesktopAssetFileReader(const std::filesystem::path &path_to_assets)
     : path_to_assets(path_to_assets) {}
 
-std::string DesktopAssetFileReader::read_text(const std::string &file_name) {
-    std::ifstream file(path_to_assets / file_name);
-    if (!file) throw std::runtime_error("Could not open " + file_name);
+std::string DesktopAssetFileReader::read_text(const std::filesystem::path &file_path) {
+    std::ifstream file(path_to_assets / file_path);
+    if (!file) throw std::runtime_error("Could not open " + file_path.string());
 
     std::stringstream buffer;
     buffer << file.rdbuf();
@@ -24,7 +24,7 @@ std::string DesktopAssetFileReader::read_text(const std::string &file_name) {
     return buffer.str();
 }
 
-ImageChannels DesktopAssetFileReader::read_png(const std::string &png_file_path) {
+ImageChannels DesktopAssetFileReader::read_png(const std::filesystem::path &png_file_path) {
     int w = 0, h = 0, source_channels = 0;
     constexpr int out_channels = 4;
 
@@ -33,7 +33,7 @@ ImageChannels DesktopAssetFileReader::read_png(const std::string &png_file_path)
 
     if (!data) {
         throw std::runtime_error(
-            std::string("SOIL2: impossible de lire l'image: ") + png_file_path + " — "
+            std::string("SOIL2: impossible de lire l'image: ") + png_file_path.c_str() + " — "
             + SOIL_last_result());
     }
 

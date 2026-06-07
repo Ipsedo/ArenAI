@@ -12,10 +12,11 @@ TurretItem::TurretItem(
     const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,
     const glm::vec3 pos, const glm::vec3 rel_pos, const glm::vec3 scale, const float mass,
     btRigidBody *chassis)
-    : LifeItem(5),
-      ConvexItem(
-          prefix_name + "_turret", std::make_shared<ObjShape>(file_reader, "obj/anubis_turret.obj"),
-          pos, scale, mass),
+    : LifeItem(5), ConvexItem(
+                       prefix_name + "_turret",
+                       std::make_shared<ObjShape>(
+                           file_reader, std::filesystem::path("obj") / "anubis_turret.obj"),
+                       pos, scale, mass),
       angle(0.f) {
 
     const auto chassis_pivot = btVector3(rel_pos.x, rel_pos.y, rel_pos.z);

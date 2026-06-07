@@ -14,6 +14,6 @@
 
 GLuint load_shader(
     const std::shared_ptr<AbstractFileReader> &text_reader, GLenum type,
-    const std::string &file_name);
+    const std::filesystem::path &file_name);
 
 #endif// ARENAI_SHADER_H

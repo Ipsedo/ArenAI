@@ -11,14 +11,13 @@
 
 template<typename T>
 void load_torch(
-    const std::string &input_folder_path, const T &to_load, const std::string &file_name) {
+    const std::filesystem::path &input_folder_path, const T &to_load,
+    const std::filesystem::path &file_name) {
 
-    const std::filesystem::path path(input_folder_path);
+    if (!std::filesystem::exists(input_folder_path))
+        throw std::runtime_error("Could not find " + input_folder_path.string());
 
-    if (!std::filesystem::exists(path))
-        throw std::runtime_error("Could not find " + input_folder_path);
-
-    const auto file = path / file_name;
+    const auto file = input_folder_path / file_name;
     torch::serialize::InputArchive archive;
     archive.load_from(file, torch::kCPU);
     to_load->load(archive);

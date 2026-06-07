@@ -8,8 +8,8 @@
 
 HeightMapItem::HeightMapItem(
     std::string name, const std::shared_ptr<AbstractFileReader> &img_reader,
-    const std::string &height_map_file, glm::vec3 pos, glm::vec3 scale)
-    : Item(std::move(name)), shape_id(height_map_file), scale(scale) {
+    const std::filesystem::path &height_map_file, glm::vec3 pos, glm::vec3 scale)
+    : Item(std::move(name)), shape_id(height_map_file.string()), scale(scale) {
     ImageChannels tmp = img_reader->read_png(height_map_file);
     auto [width, height, pixels] = AbstractFileReader::to_img_grey(tmp);
 

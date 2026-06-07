@@ -8,7 +8,7 @@
 
 std::shared_ptr<Shape>
 ShellItem::load_shape(const std::shared_ptr<AbstractFileReader> &file_reader) {
-    return std::make_shared<ObjShape>(file_reader, "obj/cone.obj");
+    return std::make_shared<ObjShape>(file_reader, std::filesystem::path("obj") / "cone.obj");
 }
 
 ShellItem::ShellItem(

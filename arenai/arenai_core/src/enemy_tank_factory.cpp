@@ -119,7 +119,7 @@ float EnemyTankFactory::get_reward(
     }
 
     // 5. total reward
-    const float reward = dead_penalty + hit_reward + 0.1f * shoot_reward;
+    const float reward = dead_penalty + hit_reward + shoot_reward;
 
     return reward;
 }

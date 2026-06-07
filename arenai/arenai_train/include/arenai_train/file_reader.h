@@ -13,9 +13,9 @@ class DesktopAssetFileReader final : public AbstractFileReader {
 public:
     explicit DesktopAssetFileReader(const std::filesystem::path &path_to_assets);
 
-    std::string read_text(const std::string &file_name) override;
+    std::string read_text(const std::filesystem::path &file_path) override;
 
-    ImageChannels read_png(const std::string &png_file_path) override;
+    ImageChannels read_png(const std::filesystem::path &png_file_path) override;
 
 private:
     std::filesystem::path path_to_assets;

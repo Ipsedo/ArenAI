@@ -15,7 +15,7 @@ Specular::Specular(
     const std::shared_ptr<AbstractFileReader> &file_reader,
     const std::vector<std::tuple<float, float, float>> &vertices,
     const std::vector<std::tuple<float, float, float>> &normals, glm::vec4 ambient_color,
-    glm::vec4 diffuse_color, glm::vec4 specular_color, float shininess, const std::string &shape_id)
+    glm::vec4 diffuse_color, glm::vec4 specular_color, float shininess)
     : ambient_color(ambient_color), diffuse_color(diffuse_color), specular_color(specular_color),
       shininess(shininess), nb_vertices(static_cast<int>(vertices.size())) {
 
@@ -32,7 +32,9 @@ Specular::Specular(
         vbo_data.push_back(n_z);
     }
 
-    program = Program::Builder(file_reader, "shaders/specular_vs.glsl", "shaders/specular_fs.glsl")
+    program = Program::Builder(
+                  file_reader, std::filesystem::path("shaders") / "specular_vs.glsl",
+                  std::filesystem::path("shaders") / "specular_fs.glsl")
                   .add_uniform("u_mvp_matrix")
                   .add_uniform("u_mv_matrix")
                   .add_uniform("u_ambient_color")

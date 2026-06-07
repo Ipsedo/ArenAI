@@ -58,8 +58,9 @@ int main(const int argc, char **argv) {
     game_loop(
         {parser.get<float>("--wanted_frequency"), parser.get<int>("--nb_tanks"),
          parser.get<int>("--window_width"), parser.get<int>("--window_height"),
-         parser.get<std::string>("--android_asset_folder")},
-        {hyper_params, parser.get<std::string>("--state_dict_folder"), parser.get<bool>("--cuda")});
+         std::filesystem::path(parser.get<std::string>("--android_asset_folder"))},
+        {hyper_params, std::filesystem::path(parser.get<std::string>("--state_dict_folder")),
+         parser.get<bool>("--cuda")});
 
     return 0;
 }

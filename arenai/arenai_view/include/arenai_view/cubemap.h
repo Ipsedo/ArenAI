@@ -24,7 +24,8 @@ private:
 
 public:
     CubeMap(
-        const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &pngs_root_path);
+        const std::shared_ptr<AbstractFileReader> &file_reader,
+        const std::filesystem::path &pngs_root_path);
 
     void draw(
         glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos_from_camera,

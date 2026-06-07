@@ -9,10 +9,8 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <arenai_utils/file_reader.h>
-#include <arenai_utils/logging.h>
 #include <arenai_utils/string_utils.h>
 #include <arenai_view/constants.h>
-#include <arenai_view/errors.h>
 #include <arenai_view/program.h>
 
 #include "./shader.h"
@@ -22,15 +20,17 @@
  */
 
 Program::Builder::Builder(
-    const std::shared_ptr<AbstractFileReader> &text_reader, std::string vertex_shader_path,
-    std::string fragment_shader_path)
-    : file_reader(text_reader), vertex_shader_path(std::move(vertex_shader_path)),
-      fragment_shader_path(std::move(fragment_shader_path)) {}
+    const std::shared_ptr<AbstractFileReader> &text_reader,
+    const std::filesystem::path &vertex_shader_path,
+    const std::filesystem::path &fragment_shader_path)
+    : file_reader(text_reader), vertex_shader_path(vertex_shader_path),
+      fragment_shader_path(fragment_shader_path) {}
 
 Program::Builder::Builder(
-    const std::shared_ptr<AbstractFileReader> &text_reader, std::string vertex_shader_path,
-    std::string fragment_shader_path, std::vector<std::string> uniforms,
-    std::vector<std::string> attributes, std::map<std::string, std::vector<float>> buffers,
+    const std::shared_ptr<AbstractFileReader> &text_reader,
+    std::filesystem::path vertex_shader_path, std::filesystem::path fragment_shader_path,
+    std::vector<std::string> uniforms, std::vector<std::string> attributes,
+    std::map<std::string, std::vector<float>> buffers,
     std::map<std::string, std::vector<std::filesystem::path>> cube_textures,
     std::map<std::string, std::filesystem::path> textures)
     : file_reader(text_reader), vertex_shader_path(std::move(vertex_shader_path)),
@@ -64,13 +64,11 @@ Program::Builder::add_buffer(const std::string &name, const std::vector<float> &
 }
 
 Program::Builder Program::Builder::add_cube_texture(
-    const std::string &name, const std::string &cube_textures_root_path) {
-
-    const std::filesystem::path root_path(cube_textures_root_path);
+    const std::string &name, const std::filesystem::path &cube_textures_root_path) {
 
     std::vector<std::filesystem::path> full_paths;
     for (const auto &[png_file, _]: Program::get_file_to_texture_id())
-        full_paths.push_back(root_path / png_file);
+        full_paths.push_back(cube_textures_root_path / png_file);
 
     cube_textures.insert({name, full_paths});
 
@@ -81,8 +79,8 @@ Program::Builder Program::Builder::add_cube_texture(
 }
 
 Program::Builder
-Program::Builder::add_texture(const std::string &name, const std::string &texture_path) {
-    textures.insert({name, std::filesystem::path(texture_path)});
+Program::Builder::add_texture(const std::string &name, const std::filesystem::path &texture_path) {
+    textures.insert({name, texture_path});
     return {file_reader,          vertex_shader_path,
             fragment_shader_path, uniforms,
             attributes,           buffers,
@@ -151,7 +149,7 @@ std::unique_ptr<Program> Program::Builder::build() {
 
             const auto format = channels == 4 ? GL_RGBA : GL_RGB;
 
-            std::string file_name = split_string(file, '/').back();
+            std::string file_name = split_string(file.string(), '/').back();
             glTexImage2D(
                 file_to_tex_id[file_name], 0, GL_RGBA, width, height, 0, format, GL_UNSIGNED_BYTE,
                 pixels.data());
@@ -180,6 +178,8 @@ std::map<std::string, GLenum> Program::get_file_to_texture_id() {
         {"posz.png", GL_TEXTURE_CUBE_MAP_POSITIVE_Z}, {"negx.png", GL_TEXTURE_CUBE_MAP_NEGATIVE_X},
         {"negy.png", GL_TEXTURE_CUBE_MAP_NEGATIVE_Y}, {"negz.png", GL_TEXTURE_CUBE_MAP_NEGATIVE_Z}};
 }
+
+Program::Program() : program_id(0), vertex_shader_id(0), fragment_shader_id(0) {}
 
 Program::~Program() {
     glDeleteShader(vertex_shader_id);

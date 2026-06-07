@@ -4,9 +4,11 @@
 
 #include "./shader.h"
 
+#include <filesystem>
+
 GLuint load_shader(
     const std::shared_ptr<AbstractFileReader> &text_reader, const GLenum type,
-    const std::string &file_name) {
+    const std::filesystem::path &file_name) {
     const GLuint shader = glCreateShader(type);
 
     const std::string shader_source = text_reader->read_text(file_name);

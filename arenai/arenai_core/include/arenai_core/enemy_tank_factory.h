@@ -61,6 +61,8 @@ private:
 
     static float compute_hit_reward(
         const glm::vec3 &fire_pos, const glm::vec3 &best_enemy_pos, const glm::vec3 &hit_pos);
+
+    float compute_shoot_in_aim_reward(const std::unique_ptr<EnemyTankFactory> &best_enemy);
 };
 
 #endif//ARENAI_TRAIN_HOST_ENEMY_TANK_FACTORY_H

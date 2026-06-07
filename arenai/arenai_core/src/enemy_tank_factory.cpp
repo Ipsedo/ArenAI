@@ -66,6 +66,14 @@ float EnemyTankFactory::compute_hit_reward(
     return distance_reward * angle_reward;
 }
 
+float EnemyTankFactory::compute_shoot_in_aim_reward(
+    const std::unique_ptr<EnemyTankFactory> &best_enemy) {
+    const float angle = compute_aim_angle(best_enemy);
+    constexpr float angle_scale = static_cast<float>(M_PI) / 3.f;
+
+    return std::exp(-0.5f * std::pow(angle / angle_scale, 2.f));
+}
+
 float EnemyTankFactory::get_reward(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
 
@@ -100,10 +108,21 @@ float EnemyTankFactory::get_reward(
     }
 
     // 4. shoot penalty
-    const float shoot_penalty = action_stats->has_fire() ? -1e-3f : 0.f;
+    float shoot_reward = 0.f;
+    if (action_stats->has_fire()) {
+        constexpr float shoot_penalty = 0.25f;
+
+        const auto [best_enemy_index, _] = get_best_score(tank_factories);
+
+        const float shoot_in_aim_reward =
+            best_enemy_index != -1 ? compute_shoot_in_aim_reward(tank_factories[best_enemy_index])
+                                   : 0.f;
+
+        shoot_reward = shoot_in_aim_reward - shoot_penalty;
+    }
 
     // 5. total reward
-    const float reward = dead_penalty + hit_reward + shoot_penalty;
+    const float reward = dead_penalty + hit_reward + 0.1f * shoot_reward;
 
     return reward;
 }

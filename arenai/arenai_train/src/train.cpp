@@ -80,7 +80,7 @@ void train_main(
     metrics.insert(metrics.end(), sac_metrics.begin(), sac_metrics.end());
 
     MetricCsvSaver metric_csv_saver(
-        train_options.output_folder, metrics, static_cast<int>(15.f / wanted_frequency));
+        train_options.output_folder, metrics, static_cast<int>(30.f / wanted_frequency));
 
     // to detect when need train
     int train_counter = 0;

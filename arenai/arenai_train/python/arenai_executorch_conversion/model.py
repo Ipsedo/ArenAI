@@ -92,4 +92,8 @@ class SacActor(nn.Module):
             th.cat([encoded_vision, encoded_sensors], dim=1)
         )
 
-        return self.mu(encoded_latent), self.sigma(encoded_latent), self.discrete(encoded_latent)
+        return (
+            self.mu(encoded_latent),
+            self.sigma(encoded_latent),
+            self.discrete(encoded_latent),
+        )

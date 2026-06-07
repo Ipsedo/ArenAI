@@ -106,7 +106,7 @@ if (-not (Test-Path "$LibtorchPath\share\cmake\Torch\TorchConfig.cmake")) {
     Remove-Item $zipPath
 
     if (-not (Test-Path "$LibtorchPath\share\cmake\Torch\TorchConfig.cmake")) {
-        Write-Error "LibTorch extraction failed — TorchConfig.cmake not found in $LibtorchPath"
+        Write-Error "LibTorch extraction failed - TorchConfig.cmake not found in $LibtorchPath"
         exit 1
     }
 } else {
@@ -153,4 +153,4 @@ Write-Host "  Executable: $exePath" -ForegroundColor Green
 Write-Host ""
 Write-Host "  To run:"
 Write-Host "    cd $buildDir\$Config"
-Write-Host "    .\arenai_desktop.exe"
+Write-Host '    .\arenai_desktop.exe'

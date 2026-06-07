@@ -23,6 +23,7 @@ public:
     void add(float value);
 
     std::string to_string();
+    std::string get_name() const;
 
     static std::string metrics_to_string(const std::vector<std::shared_ptr<Metric>> &metrics);
 

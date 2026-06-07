@@ -83,6 +83,40 @@ void export_state_dict_neutral(
 }
 
 /*
+ * Metric Saver
+ */
+
+MetricCsvSaver::MetricCsvSaver(
+    const std::string &output_folder, const std::vector<std::shared_ptr<Metric>> &metrics,
+    int save_every)
+    : csv_file_path(std::filesystem::path(output_folder) / "metrics.csv"), metrics(metrics),
+      sep(";"), save_every(save_every), index(0L) {
+
+    std::ofstream file(csv_file_path, std::ios::trunc);
+    std::string header;
+
+    for (const auto &m: metrics)
+        header += m->get_name() + "_mean" + sep + m->get_name() + "_std" + sep;
+
+    header += "index\n";
+
+    file << header;
+}
+
+void MetricCsvSaver::attempt_append_to_csv() {
+    if (index % save_every == 0) {
+        std::ofstream file(csv_file_path, std::ios::app);
+
+        for (const auto &m: metrics)
+            file << std::to_string(m->mean()) + sep + std::to_string(m->std()) + sep;
+
+        file << std::to_string(index) + "\n";
+    }
+
+    index++;
+}
+
+/*
  * Agent Saver
  */
 

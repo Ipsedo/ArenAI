@@ -79,6 +79,9 @@ void train_main(
     metrics.insert(metrics.end(), env_metrics.begin(), env_metrics.end());
     metrics.insert(metrics.end(), sac_metrics.begin(), sac_metrics.end());
 
+    MetricCsvSaver metric_csv_saver(
+        train_options.output_folder, metrics, static_cast<int>(15.f / wanted_frequency));
+
     // to detect when need train
     int train_counter = 0;
 
@@ -162,6 +165,7 @@ void train_main(
 
             // attempt to save
             saver.attempt_save();
+            metric_csv_saver.attempt_append_to_csv();
 
             // progress bar metrics display
             std::stringstream stream;

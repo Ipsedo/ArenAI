@@ -29,6 +29,24 @@ void save_torch(
     archive.save_to(file);
 }
 
+class MetricCsvSaver {
+public:
+    MetricCsvSaver(
+        const std::string &output_folder, const std::vector<std::shared_ptr<Metric>> &metrics,
+        int save_every);
+
+    void attempt_append_to_csv();
+
+private:
+    std::string csv_file_path;
+    std::vector<std::shared_ptr<Metric>> metrics;
+
+    std::string sep;
+
+    int save_every;
+    long index;
+};
+
 class Saver {
 public:
     Saver(

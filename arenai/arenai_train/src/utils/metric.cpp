@@ -46,6 +46,8 @@ std::string Metric::to_string() {
     return stream.str();
 }
 
+std::string Metric::get_name() const { return name; }
+
 std::string Metric::metrics_to_string(const std::vector<std::shared_ptr<Metric>> &metrics) {
     std::stringstream stream;
 

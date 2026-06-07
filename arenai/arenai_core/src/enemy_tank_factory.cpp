@@ -21,7 +21,8 @@ EnemyTankFactory::EnemyTankFactory(
       tank_prefix_name(tank_prefix_name),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), distance_scale(150.f), is_dead_already_triggered(false),
-      has_touch(false), last_shoot_info(std::nullopt) {}
+      has_touch(false), last_shoot_info(std::nullopt),
+      action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
     const auto canon_tr = get_canon()->get_model_matrix();
@@ -38,7 +39,7 @@ float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory
     return std::acos(d);
 }
 
-float EnemyTankFactory::compute_shoot_reward(
+float EnemyTankFactory::compute_hit_reward(
     const glm::vec3 &fire_pos, const glm::vec3 &best_enemy_pos, const glm::vec3 &hit_pos) {
     const glm::vec3 enemy_vector = best_enemy_pos - fire_pos;
     const float enemy_len2 = glm::dot(enemy_vector, enemy_vector);
@@ -79,12 +80,10 @@ float EnemyTankFactory::get_reward(
     // 2. dead / suicide penalty
     const auto dead_penalty = is_dead() ? (is_suicide() ? -0.5f : -1.f) : 0.f;
 
-    // 3. shoot reward
-    float shoot_reward = 0.f;
+    // 3. hit reward
+    float hit_reward = 0.f;
     if (const auto [best_tank_index, _] = get_best_score(tank_factories);
         last_shoot_info.has_value() && best_tank_index != -1) {
-
-        constexpr float shoot_penalty = 0.25f;
 
         const auto [fire_pos, hit_pos, has_hit, has_killed] = last_shoot_info.value();
 
@@ -94,14 +93,17 @@ float EnemyTankFactory::get_reward(
             glm::vec3(best_tank_model_matrix * glm::vec4(glm::vec3(0.f), 1.f));
 
         // shoot reward
-        shoot_reward = compute_shoot_reward(fire_pos, best_tank_pos, hit_pos)
-                       + (has_hit ? 0.5f : 0.f) + (has_killed ? 1.f : 0.f) - shoot_penalty;
+        hit_reward = compute_hit_reward(fire_pos, best_tank_pos, hit_pos) + (has_hit ? 0.5f : 0.f)
+                     + (has_killed ? 1.f : 0.f);
 
         last_shoot_info = std::nullopt;
     }
 
-    // 4. total reward
-    const float reward = dead_penalty + shoot_reward;
+    // 4. shoot penalty
+    const float shoot_penalty = action_stats->has_fire() ? -1e-3f : 0.f;
+
+    // 5. total reward
+    const float reward = dead_penalty + hit_reward + shoot_penalty;
 
     return reward;
 }
@@ -224,3 +226,5 @@ std::vector<float> EnemyTankFactory::get_proprioception() {
     }
     return result;
 }
+
+std::shared_ptr<ActionStats> EnemyTankFactory::get_action_stats() { return action_stats; }

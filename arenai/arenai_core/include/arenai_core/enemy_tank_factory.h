@@ -9,6 +9,8 @@
 
 #include <arenai_model/tank_factory.h>
 
+#include "action_stats.h"
+
 struct shoot_info {
     glm::vec3 start_pos;
     glm::vec3 hit_pos;
@@ -33,6 +35,8 @@ public:
 
     std::vector<float> get_proprioception();
 
+    std::shared_ptr<ActionStats> get_action_stats();
+
 protected:
     void on_fired_shell_contact(ShellItem *shell, Item *item) override;
 
@@ -47,15 +51,15 @@ private:
     bool is_dead_already_triggered;
 
     bool has_touch;
-
     std::optional<shoot_info> last_shoot_info;
+    std::shared_ptr<ActionStats> action_stats;
 
     float compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank);
 
     std::tuple<int, float>
     get_best_score(const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories);
 
-    static float compute_shoot_reward(
+    static float compute_hit_reward(
         const glm::vec3 &fire_pos, const glm::vec3 &best_enemy_pos, const glm::vec3 &hit_pos);
 };
 

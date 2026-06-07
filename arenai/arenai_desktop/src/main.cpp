@@ -5,9 +5,14 @@
 #include <regex>
 
 #include <argparse/argparse.hpp>
-#include <boost/algorithm/string.hpp>
 
 #include "./game.h"
+
+void trim_inplace(std::string &s) {
+    auto not_space = [](const unsigned char c) { return !std::isspace(c); };
+    s.erase(s.begin(), std::ranges::find_if(s, not_space));
+    s.erase(std::find_if(s.rbegin(), s.rend(), not_space).base(), s.end());
+}
 
 std::tuple<std::string, std::string> parse_key_value(const std::string &value) {
     const std::regex regex_match(R"(^ *([^=]+)=\"?([^"]+)\"? *$)");
@@ -17,7 +22,11 @@ std::tuple<std::string, std::string> parse_key_value(const std::string &value) {
     if (!std::regex_match(value, match, regex_match))
         throw std::invalid_argument("invalid pairs format, usage : key=value");
 
-    return {match[1], boost::trim_copy(std::string(match[2]))};
+    std::string s1 = match[1].str();
+    std::string s2 = match[2].str();
+    trim_inplace(s2);
+
+    return {s1, s2};
 }
 
 typedef std::vector<std::tuple<std::string, std::string>> hyper_params_vector;

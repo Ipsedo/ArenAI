@@ -18,7 +18,6 @@ include_directories(${ARENAI_TRAIN_INCLUDE_DIRS})
 
 # dependencies
 find_package(glfw3 REQUIRED)
-find_package(Boost REQUIRED)
 
 # ArenAI Desktop
 set(ARENAI_DESKTOP_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -31,5 +30,4 @@ target_link_libraries(
         arenai_desktop
         arenai_train_lib
         glfw
-        ${Boost_LIBRARIES}
 )

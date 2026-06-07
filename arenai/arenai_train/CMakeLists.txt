@@ -36,7 +36,6 @@ set(LIBTORCH_PATH "/opt/libtorch")
 list(APPEND CMAKE_PREFIX_PATH "${LIBTORCH_PATH}/share/cmake")
 find_package(Torch REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
-include_directories(${TORCH_INCLUDE_DIRS})
 
 # SOIL
 FetchContent_Declare(

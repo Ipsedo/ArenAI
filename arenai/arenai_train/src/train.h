@@ -8,8 +8,6 @@
 #include <filesystem>
 #include <vector>
 
-#include <arenai_train/metric.h>
-
 struct ModelOptions {
     std::vector<std::tuple<int, int>> vision_channels;
     std::vector<int> group_norm_nums;

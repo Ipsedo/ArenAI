@@ -109,16 +109,13 @@ float EnemyTankFactory::get_reward(
 
     // 4. shoot penalty
     float shoot_reward = 0.f;
-    if (action_stats->has_fire()) {
-        constexpr float shoot_penalty = 0.25f;
-
-        const auto [best_enemy_index, _] = get_best_score(tank_factories);
+    if (const auto [best_enemy_index, _] = get_best_score(tank_factories);
+        action_stats->has_fire() && best_enemy_index != -1) {
 
         const float shoot_in_aim_reward =
-            best_enemy_index != -1 ? compute_shoot_in_aim_reward(tank_factories[best_enemy_index])
-                                   : 0.f;
+            compute_shoot_in_aim_reward(tank_factories[best_enemy_index]);
 
-        shoot_reward = shoot_in_aim_reward - shoot_penalty;
+        shoot_reward = 2.f * shoot_in_aim_reward - 1.f;
     }
 
     // 5. total reward

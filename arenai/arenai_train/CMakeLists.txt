@@ -32,7 +32,9 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(json)
 
 # libtorch
-set(LIBTORCH_PATH "/opt/libtorch")
+if(NOT DEFINED LIBTORCH_PATH)
+    set(LIBTORCH_PATH "/opt/libtorch")
+endif()
 list(APPEND CMAKE_PREFIX_PATH "${LIBTORCH_PATH}/share/cmake")
 find_package(Torch REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")

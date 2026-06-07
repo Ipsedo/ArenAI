@@ -31,3 +31,12 @@ target_link_libraries(
         arenai_train_lib
         glfw
 )
+
+if(WIN32)
+    add_custom_command(TARGET arenai_desktop POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_RUNTIME_DLLS:arenai_desktop>
+            $<TARGET_FILE_DIR:arenai_desktop>
+        COMMAND_EXPAND_LISTS
+    )
+endif()

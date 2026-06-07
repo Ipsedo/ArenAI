@@ -75,7 +75,7 @@ Write-Host "  vcpkg: $vcpkgExe"
 # ---------------------------------------------------------------------------
 Write-Step "Installing glfw3 and boost via vcpkg"
 
-& $vcpkgExe install glfw3:x64-windows boost:x64-windows
+& $vcpkgExe install glfw3:x64-windows
 if ($LASTEXITCODE -ne 0) { Write-Error "vcpkg install failed"; exit 1 }
 
 # ---------------------------------------------------------------------------

@@ -13,6 +13,7 @@
 #include <ostream>
 
 #include <glm/gtx/norm.hpp>
+#include <glm/gtx/vector_angle.hpp>
 
 EnemyTankFactory::EnemyTankFactory(
     const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
@@ -41,29 +42,37 @@ float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory
 
 float EnemyTankFactory::compute_hit_reward(
     const glm::vec3 &fire_pos, const glm::vec3 &best_enemy_pos, const glm::vec3 &hit_pos) {
-    const glm::vec3 enemy_vector = best_enemy_pos - fire_pos;
-    const float enemy_len2 = glm::dot(enemy_vector, enemy_vector);
 
-    const float t =
-        enemy_len2 > 0.0f ? glm::dot(hit_pos - fire_pos, enemy_vector) / enemy_len2 : 0.0f;
-    const glm::vec3 proj_hit_pos = fire_pos + t * enemy_vector;
+    const glm::vec3 fire_to_enemy = best_enemy_pos - fire_pos;
 
+    const float enemy_len2 = glm::dot(fire_to_enemy, fire_to_enemy);
+
+    // distance
+    float t = 0.f;
+    if (enemy_len2 > 0.f) t = glm::dot(hit_pos - fire_pos, fire_to_enemy) / enemy_len2;
+
+    const glm::vec3 proj_hit_pos = fire_pos + t * fire_to_enemy;
     const glm::vec3 proj_hit_vector = proj_hit_pos - fire_pos;
-    const glm::vec3 proj_hit_pos_to_hit_pos = hit_pos - proj_hit_pos;
 
     const float hit_vector_length = glm::length(proj_hit_vector);
-    const float enemy_vector_length = glm::length(enemy_vector);
+    const float enemy_vector_length = glm::length(fire_to_enemy);
     const float min_length = std::max(hit_vector_length, enemy_vector_length);
 
-    const float distance_reward =
-        min_length > 0.0f ? glm::dot(enemy_vector, proj_hit_vector) / (min_length * min_length)
-                          : 0.0f;
+    float distance_reward = 0.f;
+    if (min_length > 0.f)
+        distance_reward = glm::dot(fire_to_enemy, proj_hit_vector) / (min_length * min_length);
 
-    const float angle_dispersion =
-        std::atan2(glm::length(proj_hit_pos_to_hit_pos), hit_vector_length);
-    const float angle_reward = 2.f * (1.0f - 2.0f * angle_dispersion / glm::pi<float>()) - 1.f;
+    // angle
+    const glm::vec3 fire_to_hit = hit_pos - fire_pos;
 
-    return 0.5f * distance_reward + 0.5f * angle_reward;
+    float angle_dispersion = glm::pi<float>() / 2.f;
+    if (glm::length(fire_to_hit) > 0.f && glm::length(fire_to_enemy) > 0.f)
+        angle_dispersion = glm::angle(glm::normalize(fire_to_hit), glm::normalize(fire_to_enemy));
+
+    const float angle_reward = 2.f * (1.f - angle_dispersion / glm::pi<float>()) - 1.f;
+
+    return std::abs(distance_reward) * std::abs(angle_reward)
+           * (std::min(angle_reward, distance_reward) < 0 ? -1.f : 1.f);
 }
 
 float EnemyTankFactory::compute_shoot_in_aim_reward(

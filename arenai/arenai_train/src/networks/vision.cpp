@@ -4,7 +4,7 @@
 
 #include "./vision.h"
 
-#include "arenai_core/constants.h"
+#include <arenai_core/constants.h>
 
 ConvolutionNetwork::ConvolutionNetwork(
     const std::vector<std::tuple<int, int>> &channels, const std::vector<int> &group_norm_nums)

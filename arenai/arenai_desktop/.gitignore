@@ -1,3 +1,5 @@
 cmake-build-*/
 .venv/
 vcpkg/
+build-windows/
+libtorch/

@@ -29,7 +29,8 @@ ImageChannels DesktopAssetFileReader::read_png(const std::filesystem::path &png_
     constexpr int out_channels = 4;
 
     unsigned char *data = SOIL_load_image(
-        (path_to_assets / png_file_path).string().c_str(), &w, &h, &source_channels, SOIL_LOAD_RGBA);
+        (path_to_assets / png_file_path).string().c_str(), &w, &h, &source_channels,
+        SOIL_LOAD_RGBA);
 
     if (!data) {
         throw std::runtime_error(

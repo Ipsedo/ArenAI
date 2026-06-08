@@ -60,7 +60,7 @@ SacAgent::SacAgent(
       alpha_discrete_metric(std::make_shared<Metric>("alpha_d", metric_window_size)), tau(tau),
       gamma(gamma),
       continuous_target_entropy(truncated_normal_target_entropy(nb_continuous_actions, 0.1f)),
-      discrete_target_entropy(0.3f * multinomial_maximum_entropy(nb_discrete_actions)) {
+      discrete_target_entropy(0.5f * multinomial_maximum_entropy(nb_discrete_actions)) {
 
     hard_update(target_critic_1, critic_1);
     hard_update(target_critic_2, critic_2);
@@ -116,10 +116,9 @@ void SacAgent::train(
                                         + alpha_continuous->alpha() * next_continuous_entropy
                                         + alpha_discrete->alpha() * next_discrete_entropy;
 
-            const auto normalized_reward = (reward - reward.mean()) / (reward.std() + 1e-8);
+            //const auto normalized_reward = (reward - reward.mean()) / (reward.std() + 1e-8);
 
-            target_q_values =
-                normalized_reward + (1.f - done.to(torch::kFloat)) * gamma * target_v_value;
+            target_q_values = reward + (1.f - done.to(torch::kFloat)) * gamma * target_v_value;
         }
 
         // critic 1

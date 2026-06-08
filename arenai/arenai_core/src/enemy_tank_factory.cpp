@@ -21,9 +21,9 @@ EnemyTankFactory::EnemyTankFactory(
     : TankFactory(file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency),
       tank_prefix_name(tank_prefix_name),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-      curr_frame_upside_down(0), distance_scale(150.f), is_dead_already_triggered(false),
-      has_touch(false), last_shoot_info(std::nullopt),
-      action_stats(std::make_shared<ActionStats>()) {}
+      curr_frame_upside_down(0), distance_scale(300.f), impact_distance_scale(30.f),
+      angle_scale(glm::pi<float>() / 3.f), is_dead_already_triggered(false), has_touch(false),
+      last_shoot_info(std::nullopt), action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
     const auto canon_tr = get_canon()->get_model_matrix();
@@ -41,46 +41,19 @@ float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory
 }
 
 float EnemyTankFactory::compute_hit_reward(
-    const glm::vec3 &fire_pos, const glm::vec3 &best_enemy_pos, const glm::vec3 &hit_pos) {
+    const glm::vec3 &fire_pos, const glm::vec3 &best_enemy_pos, const glm::vec3 &hit_pos) const {
+    const float distance_impact = glm::length(hit_pos - best_enemy_pos);
 
     const glm::vec3 fire_to_enemy = best_enemy_pos - fire_pos;
-
-    const float enemy_len2 = glm::dot(fire_to_enemy, fire_to_enemy);
-
-    // distance
-    float t = 0.f;
-    if (enemy_len2 > 0.f) t = glm::dot(hit_pos - fire_pos, fire_to_enemy) / enemy_len2;
-
-    const glm::vec3 proj_hit_pos = fire_pos + t * fire_to_enemy;
-    const glm::vec3 proj_hit_vector = proj_hit_pos - fire_pos;
-
-    const float hit_vector_length = glm::length(proj_hit_vector);
-    const float enemy_vector_length = glm::length(fire_to_enemy);
-    const float min_length = std::max(hit_vector_length, enemy_vector_length);
-
-    float distance_reward = 0.f;
-    if (min_length > 0.f)
-        distance_reward = glm::dot(fire_to_enemy, proj_hit_vector) / (min_length * min_length);
-
-    // angle
     const glm::vec3 fire_to_hit = hit_pos - fire_pos;
 
-    float angle_dispersion = glm::pi<float>() / 2.f;
-    if (glm::length(fire_to_hit) > 0.f && glm::length(fire_to_enemy) > 0.f)
-        angle_dispersion = glm::angle(glm::normalize(fire_to_hit), glm::normalize(fire_to_enemy));
+    const float angle = std::atan2(
+        glm::length(glm::cross(fire_to_enemy, fire_to_hit)), glm::dot(fire_to_enemy, fire_to_hit));
 
-    const float angle_reward = 2.f * (1.f - angle_dispersion / glm::pi<float>()) - 1.f;
+    const float distance_reward = std::exp(-std::pow(distance_impact / impact_distance_scale, 2.f));
+    const float angle_reward = 2.0f * std::exp(-std::pow(angle / angle_scale, 2.f)) - 1.0f;
 
-    return std::abs(distance_reward) * std::abs(angle_reward)
-           * (std::min(angle_reward, distance_reward) < 0 ? -1.f : 1.f);
-}
-
-float EnemyTankFactory::compute_shoot_in_aim_reward(
-    const std::unique_ptr<EnemyTankFactory> &best_enemy) {
-    const float angle = compute_aim_angle(best_enemy);
-    constexpr float angle_scale = static_cast<float>(M_PI) / 3.f;
-
-    return 2.f * std::exp(-0.5f * std::pow(angle / angle_scale, 2.f)) - 1.f;
+    return std::min(distance_reward * angle_reward, angle_reward);
 }
 
 float EnemyTankFactory::get_reward(
@@ -99,47 +72,62 @@ float EnemyTankFactory::get_reward(
 
     // 3. hit reward
     float hit_reward = 0.f;
-    if (const auto [best_tank_index, _] = get_best_score(tank_factories);
-        last_shoot_info.has_value() && best_tank_index != -1) {
-
+    if (last_shoot_info.has_value()) {
         const auto [fire_pos, hit_pos, has_hit, has_killed] = last_shoot_info.value();
 
-        const auto best_tank_model_matrix =
-            tank_factories[best_tank_index]->get_chassis()->get_model_matrix();
-        const auto best_tank_pos =
-            glm::vec3(best_tank_model_matrix * glm::vec4(glm::vec3(0.f), 1.f));
+        if (const auto best_tank_index = get_nearest_enemy_index(tank_factories, hit_pos);
+            best_tank_index != -1) {
+            const auto best_tank_model_matrix =
+                tank_factories[best_tank_index]->get_chassis()->get_model_matrix();
+            const auto best_tank_pos =
+                glm::vec3(best_tank_model_matrix * glm::vec4(glm::vec3(0.f), 1.f));
 
-        // shoot reward
-        hit_reward = compute_hit_reward(fire_pos, best_tank_pos, hit_pos) + (has_hit ? 0.5f : 0.f)
-                     + (has_killed ? 1.f : 0.f);
+            // shoot reward
+            hit_reward = compute_hit_reward(fire_pos, best_tank_pos, hit_pos)
+                         * (has_hit ? 1.5f : 1.f) * (has_killed ? 2.f : 1.f);
+        }
 
         last_shoot_info = std::nullopt;
     }
 
-    // 4. shoot penalty
-    float shoot_reward = 0.f;
-    if (const auto [best_enemy_index, _] = get_best_score(tank_factories);
-        action_stats->has_fire() && best_enemy_index != -1) {
-
-        const float shoot_in_aim_reward =
-            compute_shoot_in_aim_reward(tank_factories[best_enemy_index]);
-
-        shoot_reward = shoot_in_aim_reward;
-    }
-
-    // 5. total reward
-    const float reward = dead_penalty + hit_reward + shoot_reward;
+    // 4. total reward
+    const float reward = dead_penalty + hit_reward;
 
     return reward;
 }
 
-std::tuple<int, float> EnemyTankFactory::get_best_score(
+float EnemyTankFactory::get_phi(
     const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
-    constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
-    const auto chassis_model_matrix = get_chassis()->get_model_matrix();
-    const auto chassis_pos = glm::vec3(chassis_model_matrix * world_center);
-
     float best_score = -1.f;
+
+    constexpr glm::vec4 world_center(0.f, 0.f, 0.f, 1.f);
+    const glm::vec3 chassis_pos = get_chassis()->get_model_matrix() * world_center;
+
+    for (int i = 0; i < tank_factories.size(); i++) {
+        if (tank_factories[i]->tank_prefix_name == tank_prefix_name || tank_factories[i]->is_dead())
+            continue;
+
+        const glm::vec3 other_pos =
+            tank_factories[i]->get_chassis()->get_model_matrix() * world_center;
+        const float distance = glm::length(other_pos - chassis_pos);
+        const float distance_score = std::exp(-0.5f * std::pow(distance / distance_scale, 2.f));
+
+        const float angle = compute_aim_angle(tank_factories[i]);
+        const float angle_score = (std::cos(angle) + 1.f) / 2.f;
+
+        if (const float score = angle_score * distance_score; score > best_score)
+            best_score = score;
+    }
+
+    return best_score;
+}
+
+int EnemyTankFactory::get_nearest_enemy_index(
+    const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories,
+    const glm::vec3 &pos) const {
+    constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
+
+    float min_distance = std::numeric_limits<float>::infinity();
     int best_i = -1;
 
     for (int i = 0; i < tank_factories.size(); i++) {
@@ -149,19 +137,13 @@ std::tuple<int, float> EnemyTankFactory::get_best_score(
         const auto other_pos =
             glm::vec3(tank_factories[i]->get_chassis()->get_model_matrix() * world_center);
 
-        const float distance = glm::length(chassis_pos - other_pos);
-        const float distance_score = std::exp(-0.5f * std::pow(distance / distance_scale, 2.f));
-
-        const float angle = compute_aim_angle(tank_factories[i]);
-        const float angle_score = (std::cos(angle) + 1.f) / 2.f;
-
-        if (const float score = distance_score * angle_score; score > best_score) {
-            best_score = score;
+        if (const float distance = glm::length(pos - other_pos); distance < min_distance) {
+            min_distance = distance;
             best_i = i;
         }
     }
 
-    return {best_i, best_score};
+    return best_i;
 }
 
 void EnemyTankFactory::on_fired_shell_contact(ShellItem *shell, Item *item) {

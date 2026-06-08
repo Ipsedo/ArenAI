@@ -25,6 +25,7 @@ public:
         glm::vec3 chassis_pos, float wanted_frame_frequency);
 
     float get_reward(const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories);
+    float get_phi(const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories);
 
     bool is_dead() override;
     bool is_suicide() const;
@@ -47,6 +48,8 @@ private:
     int curr_frame_upside_down;
 
     float distance_scale;
+    float impact_distance_scale;
+    float angle_scale;
 
     bool is_dead_already_triggered;
 
@@ -56,13 +59,12 @@ private:
 
     float compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank);
 
-    std::tuple<int, float>
-    get_best_score(const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories);
+    int get_nearest_enemy_index(
+        const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories,
+        const glm::vec3 &pos) const;
 
-    static float compute_hit_reward(
-        const glm::vec3 &fire_pos, const glm::vec3 &best_enemy_pos, const glm::vec3 &hit_pos);
-
-    float compute_shoot_in_aim_reward(const std::unique_ptr<EnemyTankFactory> &best_enemy);
+    float compute_hit_reward(
+        const glm::vec3 &fire_pos, const glm::vec3 &best_enemy_pos, const glm::vec3 &hit_pos) const;
 };
 
 #endif//ARENAI_TRAIN_HOST_ENEMY_TANK_FACTORY_H

@@ -26,7 +26,7 @@ void save_torch(
     const auto file = output_folder_path / file_name;
     torch::serialize::OutputArchive archive;
     to_save->save(archive);
-    archive.save_to(file);
+    archive.save_to(file.string());
 }
 
 class MetricCsvSaver {

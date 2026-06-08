@@ -61,7 +61,7 @@ ObjShape::ObjShape(
         normals.push_back(normals_ref[normals_order[i] - 1]);
     }
 
-    cache->add(obj_file_path, std::make_shared<FromMeshShape>(shape_id, vertices, normals));
+    cache->add(shape_id, std::make_shared<FromMeshShape>(shape_id, vertices, normals));
 }
 
 std::vector<std::tuple<float, float, float>> ObjShape::get_vertices() { return vertices; }

@@ -61,9 +61,9 @@ float EnemyTankFactory::compute_hit_reward(
 
     const float angle_dispersion =
         std::atan2(glm::length(proj_hit_pos_to_hit_pos), hit_vector_length);
-    const float angle_reward = 1.0f - 2.0f * angle_dispersion / glm::pi<float>();
+    const float angle_reward = 2.f * (1.0f - 2.0f * angle_dispersion / glm::pi<float>()) - 1.f;
 
-    return distance_reward * angle_reward;
+    return 0.5f * distance_reward + 0.5f * angle_reward;
 }
 
 float EnemyTankFactory::compute_shoot_in_aim_reward(
@@ -71,7 +71,7 @@ float EnemyTankFactory::compute_shoot_in_aim_reward(
     const float angle = compute_aim_angle(best_enemy);
     constexpr float angle_scale = static_cast<float>(M_PI) / 3.f;
 
-    return std::exp(-0.5f * std::pow(angle / angle_scale, 2.f));
+    return 2.f * std::exp(-0.5f * std::pow(angle / angle_scale, 2.f)) - 1.f;
 }
 
 float EnemyTankFactory::get_reward(
@@ -115,7 +115,7 @@ float EnemyTankFactory::get_reward(
         const float shoot_in_aim_reward =
             compute_shoot_in_aim_reward(tank_factories[best_enemy_index]);
 
-        shoot_reward = 2.f * shoot_in_aim_reward - 1.f;
+        shoot_reward = shoot_in_aim_reward;
     }
 
     // 5. total reward

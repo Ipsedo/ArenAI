@@ -18,8 +18,8 @@
 #include "./view/train_gl_context.h"
 
 void train_main(
-    const float wanted_frequency, const EnvironmentOptions &environment_options,
-    const ModelOptions &model_options, const TrainOptions &train_options) {
+    const EnvironmentOptions &environment_options, const ModelOptions &model_options,
+    const TrainOptions &train_options) {
 
     auto gl_context = std::make_shared<TrainGlContext>();
     gl_context->make_current();// only for glGetString(GL_RENDERER)
@@ -38,7 +38,7 @@ void train_main(
 
     const auto env = std::make_unique<TrainTankEnvironment>(
         gl_context, environment_options.nb_tanks, train_options.android_asset_folder,
-        wanted_frequency, train_options.max_episode_steps);
+        environment_options.wanted_frequency, train_options.max_episode_steps);
 
     const float spawn_width_increase =
         (environment_options.final_spawn_width - environment_options.initial_spawn_width)
@@ -80,7 +80,8 @@ void train_main(
     metrics.insert(metrics.end(), sac_metrics.begin(), sac_metrics.end());
 
     MetricCsvSaver metric_csv_saver(
-        train_options.output_folder, metrics, static_cast<int>(30.f / wanted_frequency));
+        train_options.output_folder, metrics,
+        static_cast<int>(30.f / environment_options.wanted_frequency));
 
     // to detect when need train
     int train_counter = 0;
@@ -129,7 +130,7 @@ void train_main(
             }
 
             // step environment
-            const auto steps = env->step(wanted_frequency, actions_for_env);
+            const auto steps = env->step(environment_options.wanted_frequency, actions_for_env);
 
             last_states.clear();
             last_states.reserve(environment_options.nb_tanks);

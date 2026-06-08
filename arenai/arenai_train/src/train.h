@@ -39,6 +39,7 @@ struct TrainOptions {
 };
 
 struct EnvironmentOptions {
+    float wanted_frequency;
     int nb_tanks;
     float initial_spawn_width;
     float initial_spawn_height;
@@ -47,7 +48,7 @@ struct EnvironmentOptions {
 };
 
 void train_main(
-    float wanted_frequency, const EnvironmentOptions &environment_options,
-    const ModelOptions &model_options, const TrainOptions &train_options);
+    const EnvironmentOptions &environment_options, const ModelOptions &model_options,
+    const TrainOptions &train_options);
 
 #endif// ARENAI_TRAIN_HOST_TRAIN_H

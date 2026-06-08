@@ -55,10 +55,9 @@ int main(const int argc, char **argv) {
     parser.parse_args(argc, argv);
 
     train_main(
-        parser.get<float>("--wanted_frequency"),
-        {parser.get<int>("--nb_tanks"), parser.get<float>("--initial_spawn_width"),
-         parser.get<float>("--initial_spawn_height"), parser.get<float>("--final_spawn_width"),
-         parser.get<float>("--final_spawn_height")},
+        {parser.get<float>("--wanted_frequency"), parser.get<int>("--nb_tanks"),
+         parser.get<float>("--initial_spawn_width"), parser.get<float>("--initial_spawn_height"),
+         parser.get<float>("--final_spawn_width"), parser.get<float>("--final_spawn_height")},
         {parser.get<vision_channels>("--vision_channels").channels,
          parser.get<group_norm_nums>("--group_norm_nums").groups,
          parser.get<int>("--sensors_hidden_size"), parser.get<int>("--actions_hidden_size"),

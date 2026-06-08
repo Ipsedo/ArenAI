@@ -87,32 +87,10 @@ Write-Host "  vcpkg: $vcpkgExe"
 # ---------------------------------------------------------------------------
 # Install vcpkg packages (glfw3, boost)
 # ---------------------------------------------------------------------------
-Write-Step "Installing glfw3 via vcpkg"
+Write-Step "Installing glfw3 bullet glm angle via vcpkg"
 
 & $vcpkgExe install glfw3:x64-windows glm:x64-windows bullet3:x64-windows angle:x64-windows
 if ($LASTEXITCODE -ne 0) { Write-Error "vcpkg install failed"; exit 1 }
-
-# ---------------------------------------------------------------------------
-# Khronos GLES3 / EGL headers (headers only, no compilation)
-# ---------------------------------------------------------------------------
-Write-Step "Setting up GLES3/EGL headers"
-
-$khronosInclude = "$PSScriptRoot\khronos-headers"
-if (-not (Test-Path "$khronosInclude\GLES3\gl3.h")) {
-    $null = New-Item -ItemType Directory -Force "$khronosInclude\GLES3"
-    $null = New-Item -ItemType Directory -Force "$khronosInclude\EGL"
-    $base = "https://raw.githubusercontent.com/KhronosGroup/OpenGL-Registry/main/api/GLES3"
-    Invoke-WebRequest "$base/gl3.h"   -OutFile "$khronosInclude\GLES3\gl3.h"   -UseBasicParsing
-    Invoke-WebRequest "$base/gl31.h"  -OutFile "$khronosInclude\GLES3\gl31.h"  -UseBasicParsing
-    Invoke-WebRequest "$base/gl32.h"  -OutFile "$khronosInclude\GLES3\gl32.h"  -UseBasicParsing
-    $eglBase = "https://raw.githubusercontent.com/KhronosGroup/EGL-Registry/main/api/EGL"
-    Invoke-WebRequest "$eglBase/egl.h"      -OutFile "$khronosInclude\EGL\egl.h"      -UseBasicParsing
-    Invoke-WebRequest "$eglBase/eglext.h"   -OutFile "$khronosInclude\EGL\eglext.h"   -UseBasicParsing
-    Invoke-WebRequest "$eglBase/eglplatform.h" -OutFile "$khronosInclude\EGL\eglplatform.h" -UseBasicParsing
-    Write-Host "  Headers downloaded to $khronosInclude"
-} else {
-    Write-Host "  Using existing GLES3/EGL headers at $khronosInclude"
-}
 
 # ---------------------------------------------------------------------------
 # LibTorch

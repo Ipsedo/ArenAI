@@ -25,19 +25,22 @@ include_directories(${ARENAI_VIEW_INCLUDE_DIRS})
 
 file(GLOB_RECURSE ARENAI_VIEW_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 add_library(arenai_view SHARED ${ARENAI_VIEW_SRC})
+set_target_properties(arenai_view PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 target_link_libraries(
         arenai_view
-        EGL
-        dl
         arenai_utils
         glm::glm
 )
 
 if (ANDROID)
-    target_link_libraries(arenai_view GLESv3)
+    target_link_libraries(arenai_view EGL GLESv3)
     target_include_directories(arenai_view PUBLIC "${glm_SOURCE_DIR}")
+elseif (WIN32)
+    find_package(unofficial-angle REQUIRED)
+    target_link_libraries(arenai_view unofficial::angle::libEGL unofficial::angle::libGLESv2)
+    target_include_directories(arenai_view PUBLIC "${GLM_INCLUDE_DIRS}")
 else ()
-    target_link_libraries(arenai_view GLESv2)
+    target_link_libraries(arenai_view EGL GLESv2 dl)
     target_include_directories(arenai_view PUBLIC "${GLM_INCLUDE_DIRS}")
 endif ()

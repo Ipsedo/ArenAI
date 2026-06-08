@@ -13,3 +13,4 @@ include_directories(${ARENAI_CONTROLLER_INCLUDE_DIRS})
 file(GLOB_RECURSE ARENAI_CONTROLLER_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
 add_library(arenai_controller SHARED ${ARENAI_CONTROLLER_SRC})
+set_target_properties(arenai_controller PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)

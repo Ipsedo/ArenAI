@@ -85,6 +85,7 @@ target_link_libraries(
 
 # Library
 add_library(arenai_train_lib SHARED ${ARENAI_TRAIN_SRC})
+set_target_properties(arenai_train_lib PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 target_link_libraries(
         arenai_train_lib
         PUBLIC

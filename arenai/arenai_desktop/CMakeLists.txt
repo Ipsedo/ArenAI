@@ -39,4 +39,16 @@ if(WIN32)
             $<TARGET_FILE_DIR:arenai_desktop>
         COMMAND_EXPAND_LISTS
     )
+    # Copy all LibTorch DLLs (includes transitive deps like fbgemm, uv, libiomp5md)
+    add_custom_command(TARGET arenai_desktop POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${LIBTORCH_PATH}/lib"
+            $<TARGET_FILE_DIR:arenai_desktop>
+    )
+    # Copy vcpkg DLLs (zlib, bullet, angle, glfw, glm, etc.)
+    add_custom_command(TARGET arenai_desktop POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${VCPKG_INSTALLED_DIR}/x64-windows/bin"
+            $<TARGET_FILE_DIR:arenai_desktop>
+    )
 endif()

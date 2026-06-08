@@ -25,6 +25,7 @@ include_directories(${ARENAI_CORE_INCLUDE_DIRS})
 file(GLOB_RECURSE ARENAI_CORE_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
 add_library(arenai_core SHARED ${ARENAI_CORE_SRC})
+set_target_properties(arenai_core PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 target_link_libraries(
         arenai_core

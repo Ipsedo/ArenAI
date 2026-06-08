@@ -92,7 +92,7 @@ MetricCsvSaver::MetricCsvSaver(
     : csv_file_path(output_folder / "metrics.csv"), metrics(metrics), sep(";"),
       save_every(save_every), index(0L) {
 
-    std::ofstream file(csv_file_path, std::ios::trunc);
+    std::ofstream file(csv_file_path, std::ios::out);
     std::string header;
 
     for (const auto &m: metrics)

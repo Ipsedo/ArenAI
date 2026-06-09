@@ -27,6 +27,7 @@ struct TrainOptions {
     float actor_learning_rate;
     float critic_learning_rate;
     float alpha_learning_rate;
+    float potential_reward_scale;
     int epochs;
     int batch_size;
     int max_episode_steps;

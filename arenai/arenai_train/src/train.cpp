@@ -149,9 +149,11 @@ void train_main(
                 const float potential_reward =
                     (env_done ? 0.f : 1.f) * model_options.gamma * phi_vector[i]
                     - last_phi_vector[i];
+                const float scaled_potential_reward =
+                    train_options.potential_reward_scale * potential_reward;
 
                 reward_metric->add(reward);
-                potential_metric->add(potential_reward);
+                potential_metric->add(scaled_potential_reward);
 
                 const auto [next_vision, next_proprioception] = state_to_tensor(next_state);
 
@@ -159,7 +161,8 @@ void train_main(
                     {{vision[i], proprioception[i]},
                      {torch_action.continuous_action[i], torch_action.discrete_action[i]},
                      torch::tensor(
-                         {reward + potential_reward}, torch::TensorOptions().dtype(torch::kFloat)),
+                         {reward + scaled_potential_reward},
+                         torch::TensorOptions().dtype(torch::kFloat)),
                      torch::tensor({env_done}, torch::TensorOptions().dtype(torch::kBool)),
                      {next_vision, next_proprioception}});
             }

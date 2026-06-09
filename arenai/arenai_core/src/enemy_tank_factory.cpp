@@ -21,7 +21,7 @@ EnemyTankFactory::EnemyTankFactory(
     : TankFactory(file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency),
       tank_prefix_name(tank_prefix_name),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-      curr_frame_upside_down(0), distance_scale(300.f), impact_distance_scale(100.f),
+      curr_frame_upside_down(0), distance_scale(1000.f), impact_distance_scale(100.f),
       angle_scale(glm::pi<float>() / 3.f), is_dead_already_triggered(false), has_touch(false),
       last_shoot_info(std::nullopt), action_stats(std::make_shared<ActionStats>()) {}
 
@@ -110,7 +110,7 @@ float EnemyTankFactory::get_phi(
         const glm::vec3 other_pos =
             tank_factories[i]->get_chassis()->get_model_matrix() * world_center;
         const float distance = glm::length(other_pos - chassis_pos);
-        const float distance_score = std::exp(-0.5f * std::pow(distance / distance_scale, 2.f));
+        const float distance_score = std::exp(-std::pow(distance / distance_scale, 2.f));
 
         const float angle = compute_aim_angle(tank_factories[i]);
         const float angle_score = (std::cos(angle) + 1.f) / 2.f;

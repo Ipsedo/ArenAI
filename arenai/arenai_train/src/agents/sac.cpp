@@ -17,26 +17,26 @@ SacAgent::SacAgent(
     int nb_sensors, int nb_continuous_actions, int nb_discrete_actions,
     const float actor_learning_rate, const float critic_learning_rate,
     const float alpha_learning_rate, int hidden_size_sensors, int hidden_size_actions,
-    int actor_hidden_size, int critic_hidden_size,
+    std::vector<int> actor_hidden_sizes, std::vector<int> critic_hidden_sizes,
     const std::vector<std::tuple<int, int>> &vision_channels,
     const std::vector<int> &group_norm_nums, const torch::Device device, int metric_window_size,
     const float tau, const float gamma, const float initial_alpha_continuous,
     const float initial_alpha_discrete)
     : actor(std::make_shared<Actor>(
         nb_sensors, nb_continuous_actions, nb_discrete_actions, hidden_size_sensors,
-        actor_hidden_size, vision_channels, group_norm_nums)),
+        actor_hidden_sizes, vision_channels, group_norm_nums)),
       critic_1(std::make_shared<QFunction>(
           nb_sensors, nb_continuous_actions, nb_discrete_actions, hidden_size_sensors,
-          hidden_size_actions, critic_hidden_size, vision_channels, group_norm_nums)),
+          hidden_size_actions, critic_hidden_sizes, vision_channels, group_norm_nums)),
       critic_2(std::make_shared<QFunction>(
           nb_sensors, nb_continuous_actions, nb_discrete_actions, hidden_size_sensors,
-          hidden_size_actions, critic_hidden_size, vision_channels, group_norm_nums)),
+          hidden_size_actions, critic_hidden_sizes, vision_channels, group_norm_nums)),
       target_critic_1(std::make_shared<QFunction>(
           nb_sensors, nb_continuous_actions, nb_discrete_actions, hidden_size_sensors,
-          hidden_size_actions, critic_hidden_size, vision_channels, group_norm_nums)),
+          hidden_size_actions, critic_hidden_sizes, vision_channels, group_norm_nums)),
       target_critic_2(std::make_shared<QFunction>(
           nb_sensors, nb_continuous_actions, nb_discrete_actions, hidden_size_sensors,
-          hidden_size_actions, critic_hidden_size, vision_channels, group_norm_nums)),
+          hidden_size_actions, critic_hidden_sizes, vision_channels, group_norm_nums)),
       alpha_continuous(std::make_shared<AlphaParameter>(initial_alpha_continuous)),
       alpha_discrete(std::make_shared<AlphaParameter>(initial_alpha_discrete)),
       actor_optim(std::make_unique<torch::optim::Adam>(
@@ -59,7 +59,7 @@ SacAgent::SacAgent(
       alpha_continuous_metric(std::make_shared<Metric>("alpha_c", metric_window_size)),
       alpha_discrete_metric(std::make_shared<Metric>("alpha_d", metric_window_size)), tau(tau),
       gamma(gamma),
-      continuous_target_entropy(truncated_normal_target_entropy(nb_continuous_actions, 0.1f)),
+      continuous_target_entropy(truncated_normal_target_entropy(nb_continuous_actions, 0.5f)),
       discrete_target_entropy(0.5f * multinomial_maximum_entropy(nb_discrete_actions)) {
 
     hard_update(target_critic_1, critic_1);
@@ -115,8 +115,6 @@ void SacAgent::train(
             const auto target_v_value = torch::min(next_target_q_value_1, next_target_q_value_2)
                                         + alpha_continuous->alpha() * next_continuous_entropy
                                         + alpha_discrete->alpha() * next_discrete_entropy;
-
-            //const auto normalized_reward = (reward - reward.mean()) / (reward.std() + 1e-8);
 
             target_q_values = reward + (1.f - done.to(torch::kFloat)) * gamma * target_v_value;
         }

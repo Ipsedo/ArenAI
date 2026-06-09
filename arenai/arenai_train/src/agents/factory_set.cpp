@@ -17,10 +17,13 @@ std::shared_ptr<AbstractAgent> SacAgentFactory::get_agent_impl(
         nb_sensors, nb_continuous_actions, nb_discrete_action,
         get_value("actor_learning_rate", 1e-4f), get_value("critic_learning_rate", 3e-4f),
         get_value("alpha_learning_rate", 1e-4f), get_value("sensors_hidden_size", 64),
-        get_value("actions_hidden_size", 32), get_value("actor_hidden_size", 512),
-        get_value("critic_hidden_size", 512),
+        get_value("actions_hidden_size", 32),
+        get_value<hidden_layers>("actor_hidden_size", parse_cli_hidden_layer, {{1024, 512}}).layers,
+        get_value<hidden_layers>("critic_hidden_size", parse_cli_hidden_layer, {{1024, 512}})
+            .layers,
         get_value<vision_channels>(
-            "vision_channels", parse_cli_vision_channels, {{{3, 8}, {8, 16}, {16, 32}, {32, 64}}})
+            "vision_channels", parse_cli_vision_channels,
+            {{{3, 8}, {8, 16}, {16, 32}, {32, 64}, {64, 128}}})
             .channels,
         get_value<group_norm_nums>("group_norm_nums", parse_cli_group_norms, {{{2, 4, 8, 16}}})
             .groups,

@@ -34,20 +34,30 @@ vision_channels parse_cli_vision_channels(const std::string &value) {
     return vision_channels;
 }
 
-group_norm_nums parse_cli_group_norms(const std::string &value) {
+std::vector<int> parse_int_vector(
+    const std::string &value, const std::string &cli_arg_name,
+    const std::string &cli_arg_value_suggestion) {
     const std::regex regex_match(R"(^ *\[(?: *\d+ *,)* *\d+ *] *$)");
     const std::regex regex_groups(R"(\d+)");
 
     if (!std::regex_match(value.begin(), value.end(), regex_match))
         throw std::invalid_argument(
-            "invalid --group_norm_nums format, usage : [4, 8, 16, ...], actual value = \"" + value
-            + "\"");
+            "invalid " + cli_arg_name + " format, usage : " + cli_arg_value_suggestion
+            + ", actual value = \"" + value + "\"");
 
-    group_norm_nums group_nums;
+    std::vector<int> int_vector;
 
     std::sregex_iterator it_layer(value.begin(), value.end(), regex_groups);
     for (const std::sregex_iterator end; it_layer != end; ++it_layer)
-        group_nums.groups.emplace_back(std::stoi(it_layer->str()));
+        int_vector.emplace_back(std::stoi(it_layer->str()));
 
-    return group_nums;
+    return int_vector;
+}
+
+group_norm_nums parse_cli_group_norms(const std::string &value) {
+    return {parse_int_vector(value, "group_norm_nums", "[4, 8, 16, ...]")};
+}
+
+hidden_layers parse_cli_hidden_layer(const std::string &value) {
+    return {parse_int_vector(value, "hidden_layers", "[256, 128, ..., 64]")};
 }

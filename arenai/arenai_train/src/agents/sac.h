@@ -15,8 +15,9 @@ public:
     SacAgent(
         int nb_sensors, int nb_continuous_actions, int nb_discrete_actions,
         float actor_learning_rate, float critic_learning_rate, float alpha_learning_rate,
-        int hidden_size_sensors, int hidden_size_actions, int actor_hidden_size,
-        int critic_hidden_size, const std::vector<std::tuple<int, int>> &vision_channels,
+        int hidden_size_sensors, int hidden_size_actions, std::vector<int> actor_hidden_sizes,
+        std::vector<int> critic_hidden_sizes,
+        const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
         float tau, float gamma, float initial_alpha_continuous, float initial_alpha_discrete);
 

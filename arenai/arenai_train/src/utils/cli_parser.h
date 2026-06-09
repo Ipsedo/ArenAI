@@ -16,7 +16,13 @@ struct group_norm_nums {
     std::vector<int> groups;
 };
 
+struct hidden_layers {
+    std::vector<int> layers;
+};
+
 vision_channels parse_cli_vision_channels(const std::string &value);
+
 group_norm_nums parse_cli_group_norms(const std::string &value);
+hidden_layers parse_cli_hidden_layer(const std::string &value);
 
 #endif//ARENAI_TRAIN_HOST_CLI_PARSER_H

@@ -11,7 +11,7 @@
 
 Actor::Actor(
     const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_actions,
-    const int &hidden_size_sensors, const int &hidden_size,
+    const int &hidden_size_sensors, const std::vector<int> &hidden_sizes,
     const std::vector<std::tuple<int, int>> &vision_channels,
     const std::vector<int> &group_norm_nums)
     : vision_encoder(register_module(
@@ -22,26 +22,33 @@ Actor::Actor(
               torch::nn::Linear(nb_sensors, hidden_size_sensors),
               torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_sensors})),
               torch::nn::GELU()))),
-      head(register_module(
-          "head", torch::nn::Sequential(
-                      torch::nn::Linear(
-                          hidden_size_sensors + vision_encoder->get_output_size(), hidden_size),
-                      torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})),
-                      torch::nn::GELU(), torch::nn::Linear(hidden_size, hidden_size),
-                      torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})),
-                      torch::nn::GELU()))),
+      head(register_module("head", torch::nn::Sequential())),
       mu(register_module(
-          "mu", torch::nn::Sequential(
-                    torch::nn::Linear(hidden_size, nb_continuous_actions), torch::nn::Tanh()))),
+          "mu",
+          torch::nn::Sequential(
+              torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions), torch::nn::Tanh()))),
       sigma(register_module(
           "sigma", torch::nn::Sequential(
-                       torch::nn::Linear(hidden_size, nb_continuous_actions),
+                       torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
                        std::make_shared<Clamp>(std::log(SIGMA_MIN), std::log(SIGMA_MAX)),
                        std::make_shared<Exp>()))),
       discrete(register_module(
-          "discrete",
-          torch::nn::Sequential(
-              torch::nn::Linear(hidden_size, nb_discrete_actions), torch::nn::Softmax(-1)))) {
+          "discrete", torch::nn::Sequential(
+                          torch::nn::Linear(hidden_sizes.back(), nb_discrete_actions),
+                          torch::nn::Softmax(-1)))) {
+
+    head->push_back(torch::nn::Linear(
+        hidden_size_sensors + vision_encoder->get_output_size(), hidden_sizes.front()));
+    head->push_back(torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_sizes.front()})));
+    head->push_back(torch::nn::GELU());
+
+    for (int i = 1; i < hidden_sizes.size(); i++) {
+        const auto curr_size = hidden_sizes[i - 1];
+        const auto next_size = hidden_sizes[i];
+        head->push_back(torch::nn::Linear(curr_size, next_size));
+        head->push_back(torch::nn::LayerNorm(torch::nn::LayerNormOptions({next_size})));
+        head->push_back(torch::nn::GELU());
+    }
 
     vision_encoder->apply(init_hidden_weights);
     sensors_encoder->apply(init_hidden_weights);

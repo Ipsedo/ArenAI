@@ -13,8 +13,8 @@ struct ModelOptions {
     std::vector<int> group_norm_nums;
     int hidden_size_sensors;
     int hidden_size_actions;
-    int actor_hidden_size;
-    int critic_hidden_size;
+    std::vector<int> actor_hidden_size;
+    std::vector<int> critic_hidden_size;
     float tau;
     float gamma;
     float initial_alpha_continuous;

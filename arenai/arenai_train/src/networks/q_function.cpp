@@ -8,8 +8,8 @@
 
 QFunction::QFunction(
     const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_actions,
-    const int &hidden_size_sensors, const int &hidden_size_actions, const int &hidden_size,
-    const std::vector<std::tuple<int, int>> &vision_channels,
+    const int &hidden_size_sensors, const int &hidden_size_actions,
+    const std::vector<int> &hidden_sizes, const std::vector<std::tuple<int, int>> &vision_channels,
     const std::vector<int> &group_norm_nums)
     : vision_encoder(register_module(
         "vision_encoder", std::make_shared<ConvolutionNetwork>(vision_channels, group_norm_nums))),
@@ -31,17 +31,22 @@ QFunction::QFunction(
               torch::nn::Linear(nb_discrete_actions, hidden_size_actions),
               torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_actions})),
               torch::nn::GELU()))),
-      head(register_module(
-          "head",
-          torch::nn::Sequential(
-              torch::nn::Linear(
-                  2 * hidden_size_actions + hidden_size_sensors + vision_encoder->get_output_size(),
-                  hidden_size),
-              torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})), torch::nn::GELU(),
-              torch::nn::Linear(hidden_size, hidden_size),
-              torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})),
-              torch::nn::GELU()))),
-      to_value(register_module("to_value", torch::nn::Linear(hidden_size, 1))) {
+      head(register_module("head", torch::nn::Sequential())),
+      to_value(register_module("to_value", torch::nn::Linear(hidden_sizes.back(), 1))) {
+
+    head->push_back(torch::nn::Linear(
+        2 * hidden_size_actions + hidden_size_sensors + vision_encoder->get_output_size(),
+        hidden_sizes.front()));
+    head->push_back(torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_sizes.front()})));
+    head->push_back(torch::nn::GELU());
+
+    for (int i = 1; i < hidden_sizes.size(); i++) {
+        const auto curr_size = hidden_sizes[i - 1];
+        const auto next_size = hidden_sizes[i];
+        head->push_back(torch::nn::Linear(curr_size, next_size));
+        head->push_back(torch::nn::LayerNorm(torch::nn::LayerNormOptions({next_size})));
+        head->push_back(torch::nn::GELU());
+    }
 
     vision_encoder->apply(init_hidden_weights);
     sensors_encoder->apply(init_hidden_weights);

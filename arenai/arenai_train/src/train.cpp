@@ -9,6 +9,7 @@
 #include <indicators/progress_bar.hpp>
 
 #include <arenai_core/constants.h>
+#include <arenai_model/constants.h>
 #include <arenai_train/replay_buffer.h>
 #include <arenai_train/torch_converter.h>
 
@@ -16,6 +17,21 @@
 #include "./core/train_environment.h"
 #include "./utils/saver.h"
 #include "./view/train_gl_context.h"
+
+float compute_potential_reward_scale(
+    const float wanted_frequency, const float distance_scale, const float target_reward,
+    const float typical_fraction) {
+    const float max_grad_distance = std::sqrt(2.f / std::exp(1.f)) / distance_scale;
+
+    const float max_delta_distance_score =
+        max_grad_distance * WHEEL_RADIAL_VELOCITY * wanted_frequency;
+    const float max_delta_angle_score = 0.5f * ENEMY_TURRET_RADIAL_VELOCITY * wanted_frequency;
+
+    const float max_delta_phi = max_delta_distance_score + max_delta_angle_score;
+    const float typical_delta_phi = typical_fraction * max_delta_phi;
+
+    return target_reward / typical_delta_phi;
+}
 
 void train_main(
     const EnvironmentOptions &environment_options, const ModelOptions &model_options,
@@ -69,6 +85,10 @@ void train_main(
     Saver saver(agent, train_options.output_folder, train_options.save_every);
 
     auto replay_buffer = std::make_unique<ReplayBuffer>(train_options.replay_buffer_size);
+    const float potential_reward_scale =
+        compute_potential_reward_scale(environment_options.wanted_frequency, 500.f);
+
+    std::cout << "Potential reward scale " << potential_reward_scale << std::endl;
 
     // metrics
     auto reward_metric = std::make_shared<Metric>("reward", train_options.metric_window_size, 6);
@@ -149,8 +169,7 @@ void train_main(
                 const float potential_reward =
                     (env_done ? 0.f : 1.f) * model_options.gamma * phi_vector[i]
                     - last_phi_vector[i];
-                const float scaled_potential_reward =
-                    train_options.potential_reward_scale * potential_reward;
+                const float scaled_potential_reward = potential_reward_scale * potential_reward;
 
                 reward_metric->add(reward);
                 potential_metric->add(scaled_potential_reward);

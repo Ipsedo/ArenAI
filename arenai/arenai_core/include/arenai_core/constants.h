@@ -13,6 +13,8 @@
 #define ENEMY_NB_CONTINUOUS_ACTION (2 + 2)
 #define ENEMY_NB_DISCRETE_ACTION 2
 
+#define ENEMY_TURRET_RADIAL_VELOCITY (static_cast<float>(M_PI) * 1.f)
+
 #define SIGMA_MIN 1e-3f
 #define SIGMA_MAX 1.f
 #define EPSILON 1e-8f

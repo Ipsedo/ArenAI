@@ -6,6 +6,8 @@
 
 #include <utility>
 
+#include <arenai_model/constants.h>
+
 WheelItem::WheelItem(
     const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,
     const glm::vec3 pos, const glm::vec3 rel_pos, const glm::vec3 scale, const float mass,
@@ -64,8 +66,7 @@ WheelItem::WheelItem(
 
 void WheelItem::on_input(const user_input &input) {
     constexpr int motor_axis = 3;
-    const auto radial_velocity =
-        -input.left_joystick.y * static_cast<float>(M_PI) * WHEEL_RADIAL_VELOCITY_FACTOR;
+    const auto radial_velocity = -input.left_joystick.y * WHEEL_RADIAL_VELOCITY;
 
     const float angle = input.left_joystick.x * WHEEL_DIRECTION_MAX_RADIAN;
 

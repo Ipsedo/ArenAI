@@ -16,7 +16,7 @@ class EnemyControllerHandler final : public ControllerHandler<Action> {
 public:
     explicit EnemyControllerHandler(
         float refresh_frequency, float wanted_fire_frequency,
-        const std::shared_ptr<ActionStats> &action_stats);
+        const std::shared_ptr<ActionStats> &action_stats, float turret_rad_per_second);
 
 protected:
     std::tuple<bool, user_input> to_output(Action event) override;
@@ -26,6 +26,8 @@ private:
     int curr_frame;
 
     std::shared_ptr<ActionStats> action_stats;
+
+    float turret_scale_per_frame;
 };
 
 #endif//ARENAI_ENEMY_HANDLER_H

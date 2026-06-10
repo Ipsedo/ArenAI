@@ -27,6 +27,7 @@ struct TrainOptions {
     float actor_learning_rate;
     float critic_learning_rate;
     float alpha_learning_rate;
+    float potential_reward_scale;
     int epochs;
     int batch_size;
     int max_episode_steps;
@@ -46,10 +47,6 @@ struct EnvironmentOptions {
     float final_spawn_width;
     float final_spawn_height;
 };
-
-float compute_potential_reward_scale(
-    float wanted_frequency, float distance_scale, float target_reward = 0.25f,
-    float typical_fraction = 0.1f);
 
 void train_main(
     const EnvironmentOptions &environment_options, const ModelOptions &model_options,

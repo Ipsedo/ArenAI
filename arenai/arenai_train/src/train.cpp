@@ -18,21 +18,6 @@
 #include "./utils/saver.h"
 #include "./view/train_gl_context.h"
 
-float compute_potential_reward_scale(
-    const float wanted_frequency, const float distance_scale, const float target_reward,
-    const float typical_fraction) {
-    const float max_grad_distance = std::sqrt(2.f / std::exp(1.f)) / distance_scale;
-
-    const float max_delta_distance_score =
-        max_grad_distance * WHEEL_RADIAL_VELOCITY * wanted_frequency;
-    const float max_delta_angle_score = 0.5f * ENEMY_TURRET_RADIAL_VELOCITY * wanted_frequency;
-
-    const float max_delta_phi = max_delta_distance_score + max_delta_angle_score;
-    const float typical_delta_phi = typical_fraction * max_delta_phi;
-
-    return target_reward / typical_delta_phi;
-}
-
 void train_main(
     const EnvironmentOptions &environment_options, const ModelOptions &model_options,
     const TrainOptions &train_options) {
@@ -84,11 +69,12 @@ void train_main(
 
     Saver saver(agent, train_options.output_folder, train_options.save_every);
 
-    auto replay_buffer = std::make_unique<ReplayBuffer>(train_options.replay_buffer_size);
-    const float potential_reward_scale =
+    auto replay_buffer = std::make_unique<ReplayBuffer>(
+        train_options.replay_buffer_size, train_options.potential_reward_scale);
+    /*const float potential_reward_scale =
         compute_potential_reward_scale(environment_options.wanted_frequency, 500.f);
 
-    std::cout << "Potential reward scale " << potential_reward_scale << std::endl;
+    std::cout << "Potential reward scale : " << potential_reward_scale << std::endl;*/
 
     // metrics
     auto reward_metric = std::make_shared<Metric>("reward", train_options.metric_window_size, 6);
@@ -169,19 +155,17 @@ void train_main(
                 const float potential_reward =
                     (env_done ? 0.f : 1.f) * model_options.gamma * phi_vector[i]
                     - last_phi_vector[i];
-                const float scaled_potential_reward = potential_reward_scale * potential_reward;
 
                 reward_metric->add(reward);
-                potential_metric->add(scaled_potential_reward);
+                potential_metric->add(potential_reward);
 
                 const auto [next_vision, next_proprioception] = state_to_tensor(next_state);
 
                 replay_buffer->add(
                     {{vision[i], proprioception[i]},
                      {torch_action.continuous_action[i], torch_action.discrete_action[i]},
-                     torch::tensor(
-                         {reward + scaled_potential_reward},
-                         torch::TensorOptions().dtype(torch::kFloat)),
+                     torch::tensor({reward}, torch::TensorOptions().dtype(torch::kFloat)),
+                     torch::tensor({potential_reward}, torch::TensorOptions().dtype(torch::kFloat)),
                      torch::tensor({env_done}, torch::TensorOptions().dtype(torch::kBool)),
                      {next_vision, next_proprioception}});
             }
@@ -203,7 +187,7 @@ void train_main(
 
             // progress bar metrics display
             std::stringstream stream;
-            stream << "Episode [" << episode_index << " / " << train_options.nb_episodes
+            stream << "\rEpisode [" << episode_index << " / " << train_options.nb_episodes
                    << "] (area = " << static_cast<int>(spawn_side)
                    << " m) : " << Metric::metrics_to_string(metrics);
 

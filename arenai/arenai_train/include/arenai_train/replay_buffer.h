@@ -19,7 +19,16 @@ struct TorchAction {
     torch::Tensor discrete_action;
 };
 
-struct TorchStep {
+struct TorchInputStep {
+    TorchState state;
+    TorchAction action;
+    torch::Tensor main_reward;
+    torch::Tensor potential_reward;
+    torch::Tensor done;
+    TorchState next_state;
+};
+
+struct TorchOutputStep {
     TorchState state;
     TorchAction action;
     torch::Tensor reward;
@@ -29,11 +38,11 @@ struct TorchStep {
 
 class ReplayBuffer {
 public:
-    explicit ReplayBuffer(int memory_size);
+    explicit ReplayBuffer(int memory_size, float potential_reward_scale, float ema_decay = 0.999f);
 
-    TorchStep sample(int batch_size, torch::Device device) const;
+    TorchOutputStep sample(int batch_size, torch::Device device) const;
 
-    void add(const TorchStep &step);
+    void add(const TorchInputStep &step);
 
     int size() const;
 
@@ -44,16 +53,24 @@ private:
 
     bool initialized_;
 
+    float potential_reward_ema_decay_;
+    float potential_reward_ema_mean_;
+    float potential_reward_ema_var_;
+    bool ema_initialized_;
+
+    float potential_reward_scale;
+
     torch::Tensor store_state_vision_;
     torch::Tensor store_state_proprioception_;
     torch::Tensor store_cont_action_;
     torch::Tensor store_disc_action_;
-    torch::Tensor store_reward_;
+    torch::Tensor store_main_reward_;
+    torch::Tensor store_potential_reward_;
     torch::Tensor store_done_;
     torch::Tensor store_next_vision_;
     torch::Tensor store_next_proprioception_;
 
-    void initialize(const TorchStep &first_step);
+    void initialize(const TorchInputStep &first_step);
 };
 
 #endif// ARENAI_TRAIN_HOST_REPLAY_BUFFER_H

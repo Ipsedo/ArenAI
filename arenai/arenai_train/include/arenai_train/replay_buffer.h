@@ -38,27 +38,24 @@ struct TorchOutputStep {
 
 class ReplayBuffer {
 public:
-    explicit ReplayBuffer(int memory_size, float potential_reward_scale, float ema_decay = 0.999f);
+    explicit ReplayBuffer(int memory_size);
 
-    TorchOutputStep sample(int batch_size, torch::Device device) const;
+    TorchOutputStep sample(int batch_size, torch::Device device);
 
     void add(const TorchInputStep &step);
 
     int size() const;
 
+protected:
+    virtual void on_add_step(const TorchInputStep &step) = 0;
+    virtual TorchOutputStep to_output_step(const TorchInputStep &batch_steps) = 0;
+
 private:
+    bool initialized_;
+
     size_t memory_size_;
     size_t write_idx_;
     size_t size_;
-
-    bool initialized_;
-
-    float potential_reward_ema_decay_;
-    float potential_reward_ema_mean_;
-    float potential_reward_ema_var_;
-    bool ema_initialized_;
-
-    float potential_reward_scale;
 
     torch::Tensor store_state_vision_;
     torch::Tensor store_state_proprioception_;

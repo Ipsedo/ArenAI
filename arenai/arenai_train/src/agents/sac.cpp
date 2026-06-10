@@ -8,10 +8,10 @@
 
 #include "../distributions/multinomial.h"
 #include "../distributions/truncated_normal.h"
-#include "../utils/loader.h"
-#include "../utils/print_module.h"
-#include "../utils/saver.h"
-#include "../utils/target_update.h"
+#include "../networks_io/loader.h"
+#include "../networks_io/saver.h"
+#include "../networks_utils/print_module.h"
+#include "../networks_utils/target_update.h"
 
 SacAgent::SacAgent(
     int nb_sensors, int nb_continuous_actions, int nb_discrete_actions,

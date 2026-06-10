@@ -4,7 +4,7 @@
 
 #include "./q_function.h"
 
-#include "./init.h"
+#include "../networks_utils/init.h"
 
 QFunction::QFunction(
     const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_actions,

@@ -6,7 +6,7 @@
 
 #include <arenai_core/constants.h>
 
-#include "./init.h"
+#include "../networks_utils/init.h"
 #include "./misc.h"
 
 Actor::Actor(

@@ -9,13 +9,13 @@
 #include <indicators/progress_bar.hpp>
 
 #include <arenai_core/constants.h>
-#include <arenai_model/constants.h>
 #include <arenai_train/replay_buffer.h>
 #include <arenai_train/torch_converter.h>
 
 #include "./agents/sac.h"
 #include "./core/train_environment.h"
-#include "./utils/saver.h"
+#include "./networks_io/saver.h"
+#include "./replay_buffer/potential_reward_replay_buffer.h"
 #include "./view/train_gl_context.h"
 
 void train_main(
@@ -69,12 +69,8 @@ void train_main(
 
     Saver saver(agent, train_options.output_folder, train_options.save_every);
 
-    auto replay_buffer = std::make_unique<ReplayBuffer>(
+    std::unique_ptr<ReplayBuffer> replay_buffer = std::make_unique<PotentialRewardEmaReplayBuffer>(
         train_options.replay_buffer_size, train_options.potential_reward_scale);
-    /*const float potential_reward_scale =
-        compute_potential_reward_scale(environment_options.wanted_frequency, 500.f);
-
-    std::cout << "Potential reward scale : " << potential_reward_scale << std::endl;*/
 
     // metrics
     auto reward_metric = std::make_shared<Metric>("reward", train_options.metric_window_size, 6);

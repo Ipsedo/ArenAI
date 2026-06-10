@@ -38,6 +38,8 @@ struct TorchOutputStep {
 
 class ReplayBuffer {
 public:
+    virtual ~ReplayBuffer() = default;
+
     explicit ReplayBuffer(int memory_size);
 
     TorchOutputStep sample(int batch_size, torch::Device device);
@@ -47,8 +49,10 @@ public:
     int size() const;
 
 protected:
-    virtual void on_add_step(const TorchInputStep &step) = 0;
+    virtual void on_add_step(int write_idx, const TorchInputStep &step) = 0;
     virtual TorchOutputStep to_output_step(const TorchInputStep &batch_steps) = 0;
+
+    bool is_full() const;
 
 private:
     bool initialized_;

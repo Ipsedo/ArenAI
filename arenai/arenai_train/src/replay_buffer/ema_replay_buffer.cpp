@@ -2,7 +2,7 @@
 // Created by samuel on 10/06/2026.
 //
 
-#include "./potential_reward_replay_buffer.h"
+#include "./ema_replay_buffer.h"
 
 PotentialRewardEmaReplayBuffer::PotentialRewardEmaReplayBuffer(
     const int memory_size, const float potential_reward_scale, const float ema_decay)
@@ -10,8 +10,8 @@ PotentialRewardEmaReplayBuffer::PotentialRewardEmaReplayBuffer(
       potential_reward_ema_mean_(0.f), potential_reward_ema_var_(1.f), ema_initialized_(false),
       potential_reward_scale(potential_reward_scale) {}
 
-void PotentialRewardEmaReplayBuffer::on_add_step(const TorchInputStep &step) {
-    const float potential_r = step.potential_reward.item<float>();
+void PotentialRewardEmaReplayBuffer::on_add_step(const int write_idx, const TorchInputStep &step) {
+    const auto potential_r = step.potential_reward.item<float>();
 
     if (!ema_initialized_) {
         potential_reward_ema_mean_ = potential_r;

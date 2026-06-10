@@ -15,7 +15,7 @@
 #include "./agents/sac.h"
 #include "./core/train_environment.h"
 #include "./networks_io/saver.h"
-#include "./replay_buffer/potential_reward_replay_buffer.h"
+#include "./replay_buffer/running_norm_replay_buffer.h"
 #include "./view/train_gl_context.h"
 
 void train_main(
@@ -69,8 +69,9 @@ void train_main(
 
     Saver saver(agent, train_options.output_folder, train_options.save_every);
 
-    std::unique_ptr<ReplayBuffer> replay_buffer = std::make_unique<PotentialRewardEmaReplayBuffer>(
-        train_options.replay_buffer_size, train_options.potential_reward_scale);
+    std::unique_ptr<ReplayBuffer> replay_buffer =
+        std::make_unique<NormalizedPotentialRewardReplayBuffer>(
+            train_options.replay_buffer_size, train_options.potential_reward_scale);
 
     // metrics
     auto reward_metric = std::make_shared<Metric>("reward", train_options.metric_window_size, 6);
@@ -183,7 +184,7 @@ void train_main(
 
             // progress bar metrics display
             std::stringstream stream;
-            stream << "\rEpisode [" << episode_index << " / " << train_options.nb_episodes
+            stream << "Episode [" << episode_index << " / " << train_options.nb_episodes
                    << "] (area = " << static_cast<int>(spawn_side)
                    << " m) : " << Metric::metrics_to_string(metrics);
 

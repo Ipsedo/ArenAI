@@ -35,7 +35,7 @@ void ReplayBuffer::initialize(const TorchInputStep &first_step) {
 void ReplayBuffer::add(const TorchInputStep &step) {
     if (!initialized_) initialize(step);
 
-    on_add_step(step);
+    on_add_step(write_idx_, step);
 
     const auto idx = static_cast<int64_t>(write_idx_);
 
@@ -73,3 +73,5 @@ TorchOutputStep ReplayBuffer::sample(int batch_size, torch::Device device) {
 }
 
 int ReplayBuffer::size() const { return size_; }
+
+bool ReplayBuffer::is_full() const { return size_ >= memory_size_; }

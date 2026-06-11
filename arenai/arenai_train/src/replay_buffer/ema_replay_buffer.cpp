@@ -10,7 +10,8 @@ PotentialRewardEmaReplayBuffer::PotentialRewardEmaReplayBuffer(
       potential_reward_ema_mean_(0.f), potential_reward_ema_var_(1.f), ema_initialized_(false),
       potential_reward_scale(potential_reward_scale) {}
 
-void PotentialRewardEmaReplayBuffer::on_add_step(const int write_idx, const TorchInputStep &step) {
+TorchInputStep
+PotentialRewardEmaReplayBuffer::on_add_step(const int write_idx, const TorchInputStep &step) {
     const auto potential_r = step.potential_reward.item<float>();
 
     if (!ema_initialized_) {
@@ -24,6 +25,8 @@ void PotentialRewardEmaReplayBuffer::on_add_step(const int write_idx, const Torc
         potential_reward_ema_var_ = potential_reward_ema_decay_ * potential_reward_ema_var_
                                     + (1.f - potential_reward_ema_decay_) * delta * delta;
     }
+
+    return step;
 }
 
 TorchOutputStep PotentialRewardEmaReplayBuffer::to_output_step(const TorchInputStep &batch_steps) {

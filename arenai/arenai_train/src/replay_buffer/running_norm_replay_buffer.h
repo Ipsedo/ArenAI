@@ -12,7 +12,7 @@ public:
     NormalizedPotentialRewardReplayBuffer(int memory_size, float potential_reward_scale);
 
 protected:
-    void on_add_step(int write_idx, const TorchInputStep &step) override;
+    TorchInputStep on_add_step(int write_idx, const TorchInputStep &step) override;
     TorchOutputStep to_output_step(const TorchInputStep &batch_steps) override;
 
 private:

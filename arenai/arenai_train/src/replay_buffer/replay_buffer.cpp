@@ -35,19 +35,20 @@ void ReplayBuffer::initialize(const TorchInputStep &first_step) {
 void ReplayBuffer::add(const TorchInputStep &step) {
     if (!initialized_) initialize(step);
 
-    on_add_step(write_idx_, step);
+    const auto [state, action, main_reward, potential_reward, done, next_state] =
+        on_add_step(write_idx_, step);
 
     const auto idx = static_cast<int64_t>(write_idx_);
 
-    store_state_vision_[idx].copy_(step.state.vision);
-    store_state_proprioception_[idx].copy_(step.state.proprioception);
-    store_cont_action_[idx].copy_(step.action.continuous_action.detach());
-    store_disc_action_[idx].copy_(step.action.discrete_action.detach());
-    store_main_reward_[idx].copy_(step.main_reward);
-    store_potential_reward_[idx].copy_(step.potential_reward);
-    store_done_[idx].copy_(step.done);
-    store_next_vision_[idx].copy_(step.next_state.vision);
-    store_next_proprioception_[idx].copy_(step.next_state.proprioception);
+    store_state_vision_[idx].copy_(state.vision);
+    store_state_proprioception_[idx].copy_(state.proprioception);
+    store_cont_action_[idx].copy_(action.continuous_action.detach());
+    store_disc_action_[idx].copy_(action.discrete_action.detach());
+    store_main_reward_[idx].copy_(main_reward);
+    store_potential_reward_[idx].copy_(potential_reward);
+    store_done_[idx].copy_(done);
+    store_next_vision_[idx].copy_(next_state.vision);
+    store_next_proprioception_[idx].copy_(next_state.proprioception);
 
     write_idx_ = (write_idx_ + 1) % memory_size_;
     if (size_ < memory_size_) size_++;

@@ -183,13 +183,15 @@ void train_main(
             metric_csv_saver.attempt_append_to_csv();
 
             // progress bar metrics display
-            std::stringstream stream;
-            stream << "Episode [" << episode_index << " / " << train_options.nb_episodes
-                   << "] (area = " << static_cast<int>(spawn_side)
-                   << " m) : " << Metric::metrics_to_string(metrics);
+            if (train_counter % train_options.train_every == train_options.train_every - 1) {
+                std::stringstream stream;
+                stream << "Episode [" << episode_index << " / " << train_options.nb_episodes
+                       << "] (area = " << static_cast<int>(spawn_side)
+                       << " m) : " << Metric::metrics_to_string(metrics);
 
-            p_bar.set_option(indicators::option::PrefixText{stream.str()});
-            p_bar.print_progress();
+                p_bar.set_option(indicators::option::PrefixText{stream.str()});
+                p_bar.print_progress();
+            }
         }
 
         last_states.clear();

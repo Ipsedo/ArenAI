@@ -33,7 +33,7 @@ TorchInputStep NormalizedPotentialRewardReplayBuffer::on_add_step(
     potential_running_sum_ += potential_reward_double;
     potential_running_sum_sq_ += potential_reward_double * potential_reward_double;
 
-    main_reward_history_[write_idx] = main_running_sum_;
+    main_reward_history_[write_idx] = main_reward_double;
     main_running_sum_ += main_reward_double;
     main_running_sum_sq_ += main_reward_double * main_reward_double;
 

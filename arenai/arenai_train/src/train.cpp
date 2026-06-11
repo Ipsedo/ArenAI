@@ -6,6 +6,7 @@
 
 #include <future>
 
+#include <indicators/cursor_control.hpp>
 #include <indicators/progress_bar.hpp>
 
 #include <arenai_core/constants.h>
@@ -108,6 +109,8 @@ void train_main(
         indicators::option::ShowElapsedTime{true},
         indicators::option::ShowRemainingTime{true}};
 
+    indicators::show_console_cursor(false);
+
     for (int episode_index = 0; episode_index < train_options.nb_episodes; episode_index++) {
         const float spawn_side = std::sqrt(spawn_width * spawn_height);
 
@@ -188,7 +191,7 @@ void train_main(
             // progress bar metrics display
             if (train_counter % train_options.train_every == train_options.train_every - 1) {
                 std::stringstream stream;
-                stream << "[" << episode_index << " / " << train_options.nb_episodes << "] ("
+                stream << "\r[" << episode_index << " / " << train_options.nb_episodes << "] ("
                        << static_cast<int>(spawn_side)
                        << "m) : " << AbstractMetric::metrics_to_string(metrics);
 

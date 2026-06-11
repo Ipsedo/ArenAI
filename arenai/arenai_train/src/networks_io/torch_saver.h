@@ -29,27 +29,9 @@ void save_torch(
     archive.save_to(file.string());
 }
 
-class MetricCsvSaver {
+class AgentSaver {
 public:
-    MetricCsvSaver(
-        const std::filesystem::path &output_folder,
-        const std::vector<std::shared_ptr<Metric>> &metrics, int save_every);
-
-    void attempt_append_to_csv();
-
-private:
-    std::filesystem::path csv_file_path;
-    std::vector<std::shared_ptr<Metric>> metrics;
-
-    std::string sep;
-
-    int save_every;
-    long index;
-};
-
-class Saver {
-public:
-    Saver(
+    AgentSaver(
         const std::shared_ptr<AbstractAgent> &agent, const std::filesystem::path &output_path,
         int save_every);
 

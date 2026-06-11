@@ -9,6 +9,8 @@
 #include <arenai_utils/singleton.h>
 #include <arenai_view/pbuffer_renderer.h>
 
+#include "../metrics/mean_metric.h"
+
 TrainTankEnvironment::TrainTankEnvironment(
     const std::shared_ptr<AbstractGLContext> &gl_context, const int nb_tanks,
     const std::filesystem::path &android_assets_path, const float wanted_frequency,
@@ -22,7 +24,7 @@ TrainTankEnvironment::TrainTankEnvironment(
       nb_frames_added_when_hit(static_cast<int>(5.f / wanted_frequency)), nb_tanks(nb_tanks),
       nb_steps(0), done(nb_tanks, false), already_done(nb_tanks, false),
       max_episode_steps(max_episode_steps),
-      episode_step_nb_metric(std::make_shared<Metric>("seconds", 32, 1)) {}
+      episode_step_nb_metric(std::make_shared<MeanMetric>("s", 32, 1)) {}
 
 std::vector<std::tuple<State, Reward, IsDone>>
 TrainTankEnvironment::step(const float time_delta, const std::vector<Action> &actions) {
@@ -143,6 +145,6 @@ void TrainTankEnvironment::reset_singleton() {
     Singleton<Cache<std::shared_ptr<Program>>>::reset_singleton();
 }
 
-std::vector<std::shared_ptr<Metric>> TrainTankEnvironment::get_metrics() const {
+std::vector<std::shared_ptr<AbstractMetric>> TrainTankEnvironment::get_metrics() const {
     return {episode_step_nb_metric};
 }

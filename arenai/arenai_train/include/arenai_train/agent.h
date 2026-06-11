@@ -28,7 +28,7 @@ public:
 
     virtual void set_train(bool train) = 0;
 
-    virtual std::vector<std::shared_ptr<Metric>> get_metrics() = 0;
+    virtual std::vector<std::shared_ptr<AbstractMetric>> get_metrics() = 0;
 
     virtual void save(const std::filesystem::path &output_folder) = 0;
     virtual void load(const std::filesystem::path &input_folder) = 0;

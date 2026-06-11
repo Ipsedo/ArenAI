@@ -8,8 +8,10 @@
 
 #include "../distributions/multinomial.h"
 #include "../distributions/truncated_normal.h"
-#include "../networks_io/loader.h"
-#include "../networks_io/saver.h"
+#include "../metrics/mean_metric.h"
+#include "../metrics/std_metric.h"
+#include "../networks_io/torch_loader.h"
+#include "../networks_io/torch_saver.h"
 #include "../networks_utils/print_module.h"
 #include "../networks_utils/target_update.h"
 
@@ -49,15 +51,15 @@ SacAgent::SacAgent(
           alpha_continuous->parameters(), torch::optim::AdamOptions(alpha_learning_rate))),
       alpha_discrete_optim(std::make_unique<torch::optim::Adam>(
           alpha_discrete->parameters(), torch::optim::AdamOptions(alpha_learning_rate))),
-      actor_loss_metric(std::make_shared<Metric>("actor", metric_window_size)),
-      critic_1_loss_metric(
-          std::make_shared<Metric>("critic_1", metric_window_size, 4, false, true)),
-      critic_2_loss_metric(
-          std::make_shared<Metric>("critic_2", metric_window_size, 4, false, true)),
-      continuous_entropy_metric(std::make_shared<Metric>("entropy_c", metric_window_size)),
-      discrete_entropy_metric(std::make_shared<Metric>("entropy_d", metric_window_size)),
-      alpha_continuous_metric(std::make_shared<Metric>("alpha_c", metric_window_size)),
-      alpha_discrete_metric(std::make_shared<Metric>("alpha_d", metric_window_size)), tau(tau),
+      actor_loss_metric(std::make_shared<MeanMetric>("π", metric_window_size)),
+      critic_1_mean_loss_metric(std::make_shared<MeanMetric>("q1_μ", metric_window_size)),
+      critic_1_std_loss_metric(std::make_shared<StdMetric>("q1_σ", metric_window_size)),
+      critic_2_mean_loss_metric(std::make_shared<MeanMetric>("q2_μ", metric_window_size)),
+      critic_2_std_loss_metric(std::make_shared<StdMetric>("q2_σ", metric_window_size)),
+      continuous_entropy_metric(std::make_shared<MeanMetric>("Hc", metric_window_size)),
+      discrete_entropy_metric(std::make_shared<MeanMetric>("Hd", metric_window_size)),
+      alpha_continuous_metric(std::make_shared<MeanMetric>("α_d", metric_window_size)),
+      alpha_discrete_metric(std::make_shared<MeanMetric>("α_c", metric_window_size)), tau(tau),
       gamma(gamma),
       continuous_target_entropy(truncated_normal_target_entropy(nb_continuous_actions, 0.5f)),
       discrete_target_entropy(0.5f * multinomial_maximum_entropy(nb_discrete_actions)) {
@@ -189,18 +191,20 @@ void SacAgent::train(
         continuous_entropy_metric->add(curr_continuous_entropy.mean().item<float>());
         discrete_entropy_metric->add(curr_discrete_entropy.mean().item<float>());
 
-        critic_1_loss_metric->add(critic_1_loss.cpu().item<float>());
-        critic_2_loss_metric->add(critic_2_loss.cpu().item<float>());
+        critic_1_mean_loss_metric->add(critic_1_loss.cpu().item<float>());
+        critic_1_std_loss_metric->add(critic_1_loss.cpu().item<float>());
+        critic_2_mean_loss_metric->add(critic_2_loss.cpu().item<float>());
+        critic_2_std_loss_metric->add(critic_2_loss.cpu().item<float>());
 
         alpha_continuous_metric->add(alpha_continuous->alpha().item<float>());
         alpha_discrete_metric->add(alpha_discrete->alpha().item<float>());
     }
 }
 
-std::vector<std::shared_ptr<Metric>> SacAgent::get_metrics() {
-    return {actor_loss_metric,         critic_1_loss_metric,    critic_2_loss_metric,
-            continuous_entropy_metric, alpha_continuous_metric, discrete_entropy_metric,
-            alpha_discrete_metric};
+std::vector<std::shared_ptr<AbstractMetric>> SacAgent::get_metrics() {
+    return {actor_loss_metric,         critic_1_mean_loss_metric, critic_1_std_loss_metric,
+            critic_2_mean_loss_metric, critic_2_std_loss_metric,  continuous_entropy_metric,
+            alpha_continuous_metric,   discrete_entropy_metric,   alpha_discrete_metric};
 }
 
 void SacAgent::save(const std::filesystem::path &output_folder) {

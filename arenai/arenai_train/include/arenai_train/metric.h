@@ -10,22 +10,28 @@
 
 #include <torch/torch.h>
 
-class Metric {
+class AbstractMetric {
 public:
-    explicit Metric(
-        const std::string &name, int window_size, int precision = 4, bool scientific = false,
-        bool print_std = false);
+    virtual ~AbstractMetric() = default;
 
-    float last_value() const;
-    float mean();
-    float std();
+    explicit AbstractMetric(
+        const std::string &name, int window_size, int precision = 4, bool scientific = false);
 
     void add(float value);
+    float last_value() const;
 
-    std::string to_string();
+    float compute_metric();
+
     std::string get_name() const;
+    std::string to_string();
 
-    static std::string metrics_to_string(const std::vector<std::shared_ptr<Metric>> &metrics);
+    static std::string
+    metrics_to_string(const std::vector<std::shared_ptr<AbstractMetric>> &metrics);
+
+protected:
+    virtual float to_stored_value(float value);
+
+    virtual float compute_metric_impl(const std::vector<float> &curr_values) = 0;
 
 private:
     std::string name;
@@ -34,8 +40,6 @@ private:
 
     bool float_display_scientific;
     int float_display_precision;
-
-    bool print_std;
 };
 
 #endif//ARENAI_TRAIN_HOST_METRIC_H

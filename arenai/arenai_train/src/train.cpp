@@ -14,7 +14,9 @@
 
 #include "./agents/sac.h"
 #include "./core/train_environment.h"
-#include "./networks_io/saver.h"
+#include "./metrics/mean_metric.h"
+#include "./metrics/metric_saver.h"
+#include "./networks_io/torch_saver.h"
 #include "./replay_buffer/running_norm_replay_buffer.h"
 #include "./view/train_gl_context.h"
 
@@ -67,20 +69,21 @@ void train_main(
     std::cout << "Target entropy (discrete) : " << agent->get_discrete_target_entropy()
               << std::endl;
 
-    Saver saver(agent, train_options.output_folder, train_options.save_every);
+    AgentSaver saver(agent, train_options.output_folder, train_options.save_every);
 
     std::unique_ptr<ReplayBuffer> replay_buffer =
         std::make_unique<NormalizedPotentialRewardReplayBuffer>(
             train_options.replay_buffer_size, train_options.potential_reward_scale);
 
     // metrics
-    auto reward_metric = std::make_shared<Metric>("reward", train_options.metric_window_size, 6);
+    auto reward_metric =
+        std::make_shared<MeanMetric>("r", train_options.metric_window_size, 3, true);
     auto potential_metric =
-        std::make_shared<Metric>("potential", train_options.metric_window_size, 6);
+        std::make_shared<MeanMetric>("p_r", train_options.metric_window_size, 3, true);
     const auto sac_metrics = agent->get_metrics();
     const auto env_metrics = env->get_metrics();
 
-    std::vector metrics = {reward_metric, potential_metric};
+    std::vector<std::shared_ptr<AbstractMetric>> metrics = {reward_metric, potential_metric};
     metrics.insert(metrics.end(), env_metrics.begin(), env_metrics.end());
     metrics.insert(metrics.end(), sac_metrics.begin(), sac_metrics.end());
 
@@ -185,9 +188,9 @@ void train_main(
             // progress bar metrics display
             if (train_counter % train_options.train_every == train_options.train_every - 1) {
                 std::stringstream stream;
-                stream << "Episode [" << episode_index << " / " << train_options.nb_episodes
-                       << "] (area = " << static_cast<int>(spawn_side)
-                       << " m) : " << Metric::metrics_to_string(metrics);
+                stream << "[" << episode_index << " / " << train_options.nb_episodes << "] ("
+                       << static_cast<int>(spawn_side)
+                       << "m) : " << AbstractMetric::metrics_to_string(metrics);
 
                 p_bar.set_option(indicators::option::PrefixText{stream.str()});
                 p_bar.print_progress();

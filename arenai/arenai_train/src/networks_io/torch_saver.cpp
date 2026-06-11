@@ -2,7 +2,7 @@
 // Created by samuel on 03/10/2025.
 //
 
-#include "./saver.h"
+#include "./torch_saver.h"
 
 #include <fstream>
 
@@ -83,49 +83,15 @@ void export_state_dict_neutral(
 }
 
 /*
- * Metric Saver
- */
-
-MetricCsvSaver::MetricCsvSaver(
-    const std::filesystem::path &output_folder, const std::vector<std::shared_ptr<Metric>> &metrics,
-    int save_every)
-    : csv_file_path(output_folder / "metrics.csv"), metrics(metrics), sep(";"),
-      save_every(save_every), index(0L) {
-
-    std::ofstream file(csv_file_path, std::ios::out);
-    std::string header;
-
-    for (const auto &m: metrics)
-        header += m->get_name() + "_mean" + sep + m->get_name() + "_std" + sep;
-
-    header += "index\n";
-
-    file << header;
-}
-
-void MetricCsvSaver::attempt_append_to_csv() {
-    if (index % save_every == 0) {
-        std::ofstream file(csv_file_path, std::ios::app);
-
-        for (const auto &m: metrics)
-            file << std::to_string(m->mean()) + sep + std::to_string(m->std()) + sep;
-
-        file << std::to_string(index) + "\n";
-    }
-
-    index++;
-}
-
-/*
  * Agent Saver
  */
 
-Saver::Saver(
+AgentSaver::AgentSaver(
     const std::shared_ptr<AbstractAgent> &agent, const std::filesystem::path &output_path,
     const int save_every)
     : agent(agent), curr_step(0), save_every(save_every), output_path(output_path) {}
 
-void Saver::attempt_save() {
+void AgentSaver::attempt_save() {
     if (curr_step % save_every == 0) {
         const auto output_folder = output_path / ("save_" + std::to_string(curr_step / save_every));
         if (!std::filesystem::exists(output_folder))

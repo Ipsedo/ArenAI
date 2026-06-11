@@ -25,7 +25,7 @@ public:
     train(const std::unique_ptr<ReplayBuffer> &replay_buffer, int epochs, int batch_size) override;
     agent_response act(const torch::Tensor &vision, const torch::Tensor &sensors) override;
 
-    std::vector<std::shared_ptr<Metric>> get_metrics() override;
+    std::vector<std::shared_ptr<AbstractMetric>> get_metrics() override;
 
     void save(const std::filesystem::path &output_folder) override;
     void load(const std::filesystem::path &input_folder) override;
@@ -57,15 +57,19 @@ private:
     std::shared_ptr<torch::optim::Adam> alpha_continuous_optim;
     std::shared_ptr<torch::optim::Adam> alpha_discrete_optim;
 
-    std::shared_ptr<Metric> actor_loss_metric;
-    std::shared_ptr<Metric> critic_1_loss_metric;
-    std::shared_ptr<Metric> critic_2_loss_metric;
+    std::shared_ptr<AbstractMetric> actor_loss_metric;
 
-    std::shared_ptr<Metric> continuous_entropy_metric;
-    std::shared_ptr<Metric> discrete_entropy_metric;
+    std::shared_ptr<AbstractMetric> critic_1_mean_loss_metric;
+    std::shared_ptr<AbstractMetric> critic_1_std_loss_metric;
 
-    std::shared_ptr<Metric> alpha_continuous_metric;
-    std::shared_ptr<Metric> alpha_discrete_metric;
+    std::shared_ptr<AbstractMetric> critic_2_mean_loss_metric;
+    std::shared_ptr<AbstractMetric> critic_2_std_loss_metric;
+
+    std::shared_ptr<AbstractMetric> continuous_entropy_metric;
+    std::shared_ptr<AbstractMetric> discrete_entropy_metric;
+
+    std::shared_ptr<AbstractMetric> alpha_continuous_metric;
+    std::shared_ptr<AbstractMetric> alpha_discrete_metric;
 
     float tau;
     float gamma;

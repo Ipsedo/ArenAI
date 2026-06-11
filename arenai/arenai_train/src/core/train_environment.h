@@ -20,7 +20,7 @@ public:
 
     std::vector<float> get_phi_vector();
 
-    std::vector<std::shared_ptr<Metric>> get_metrics() const;
+    std::vector<std::shared_ptr<AbstractMetric>> get_metrics() const;
 
     bool is_episode_terminated();
     bool is_tank_factory_already_done(int tank_factory_index);
@@ -50,7 +50,7 @@ private:
 
     int max_episode_steps;
 
-    std::shared_ptr<Metric> episode_step_nb_metric;
+    std::shared_ptr<AbstractMetric> episode_step_nb_metric;
 
     bool only_one_tank_alive();
     bool only_one_tank_not_already_done();

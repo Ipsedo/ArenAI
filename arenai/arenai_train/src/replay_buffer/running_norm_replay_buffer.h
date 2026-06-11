@@ -18,10 +18,14 @@ protected:
 private:
     float potential_reward_scale_;
 
-    double running_sum_;
-    double running_sum_sq_;
+    double potential_running_sum_;
+    double potential_running_sum_sq_;
 
-    std::vector<double> reward_history_;
+    double main_running_sum_;
+    double main_running_sum_sq_;
+
+    std::vector<double> potential_reward_history_;
+    std::vector<double> main_reward_history_;
 };
 
 #endif//ARENAI_TRAIN_HOST_POTENTIAL_REWARD_EMA_REPLAY_BUFFER_H

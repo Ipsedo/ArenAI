@@ -126,7 +126,6 @@ void SacAgent::train(
 
         critic_1_optim->zero_grad();
         critic_1_loss.backward();
-        torch::nn::utils::clip_grad_norm_(critic_1->parameters(), 1.0);
         critic_1_optim->step();
 
         // critic 2
@@ -136,7 +135,6 @@ void SacAgent::train(
 
         critic_2_optim->zero_grad();
         critic_2_loss.backward();
-        torch::nn::utils::clip_grad_norm_(critic_2->parameters(), 1.0);
         critic_2_optim->step();
 
         // target value soft update

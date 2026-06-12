@@ -1,0 +1,41 @@
+//
+// Created by samuel on 12/06/2026.
+//
+
+#include "./delta_scale_replay_buffer.h"
+
+#include <arenai_core/constants.h>
+#include <arenai_model/constants.h>
+
+DeltaScalePotentialRewardReplayBuffer::DeltaScalePotentialRewardReplayBuffer(
+    const int memory_size, const float wanted_frequency, const float target_potential_reward)
+    : ReplayBuffer(memory_size), potential_reward_scale_(compute_potential_reward_scale(
+                                     wanted_frequency, 500.f, target_potential_reward, 0.1f)) {}
+
+TorchInputStep
+DeltaScalePotentialRewardReplayBuffer::on_add_step(int write_idx, const TorchInputStep &step) {
+    return step;
+}
+
+TorchOutputStep
+DeltaScalePotentialRewardReplayBuffer::to_output_step(const TorchInputStep &batch_steps) {
+    return {
+        batch_steps.state, batch_steps.action,
+        potential_reward_scale_ * batch_steps.potential_reward + batch_steps.main_reward,
+        batch_steps.done, batch_steps.next_state};
+}
+
+float DeltaScalePotentialRewardReplayBuffer::compute_potential_reward_scale(
+    const float wanted_frequency, const float distance_scale, const float target_reward,
+    const float typical_fraction) {
+    const float max_grad_distance = std::sqrt(2.f / std::exp(1.f)) / distance_scale;
+
+    const float max_delta_distance_score =
+        max_grad_distance * WHEEL_RADIAL_VELOCITY * wanted_frequency;
+    const float max_delta_angle_score = 0.5f * ENEMY_TURRET_RADIAL_VELOCITY * wanted_frequency;
+
+    const float max_delta_phi = max_delta_distance_score + max_delta_angle_score;
+    const float typical_delta_phi = typical_fraction * max_delta_phi;
+
+    return target_reward / typical_delta_phi;
+}

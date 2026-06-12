@@ -18,7 +18,7 @@
 #include "./metrics/mean_metric.h"
 #include "./metrics/metric_saver.h"
 #include "./networks_io/torch_saver.h"
-#include "./replay_buffer/scale_replay_buffer.h"
+#include "./replay_buffer/delta_scale_replay_buffer.h"
 #include "./view/train_gl_context.h"
 
 void train_main(
@@ -73,8 +73,9 @@ void train_main(
     AgentSaver saver(agent, train_options.output_folder, train_options.save_every);
 
     std::unique_ptr<ReplayBuffer> replay_buffer =
-        std::make_unique<ScalePotentialRewardReplayBuffer>(
-            train_options.replay_buffer_size, train_options.potential_reward_scale);
+        std::make_unique<DeltaScalePotentialRewardReplayBuffer>(
+            train_options.replay_buffer_size, environment_options.wanted_frequency,
+            train_options.potential_reward_scale);
 
     // metrics
     auto reward_metric =

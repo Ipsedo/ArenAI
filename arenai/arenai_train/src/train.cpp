@@ -17,6 +17,7 @@
 #include "./core/train_environment.h"
 #include "./metrics/mean_metric.h"
 #include "./metrics/metric_saver.h"
+#include "./metrics/std_metric.h"
 #include "./networks_io/torch_saver.h"
 #include "./replay_buffer/delta_scale_replay_buffer.h"
 #include "./view/train_gl_context.h"
@@ -78,14 +79,20 @@ void train_main(
             train_options.potential_reward_scale);
 
     // metrics
-    auto reward_metric =
-        std::make_shared<MeanMetric>("r", train_options.metric_window_size, 3, true);
-    auto potential_metric =
-        std::make_shared<MeanMetric>("p_r", train_options.metric_window_size, 3, true);
+    auto reward_mean_metric =
+        std::make_shared<MeanMetric>("r_μ", train_options.metric_window_size, 3, true);
+    auto reward_std_metric = std::make_shared<StdMetric>("r_σ", train_options.metric_window_size);
+
+    auto potential_mean_metric =
+        std::make_shared<MeanMetric>("pr_μ", train_options.metric_window_size, 3, true);
+    auto potential_std_metric =
+        std::make_shared<StdMetric>("pr_σ", train_options.metric_window_size);
+
     const auto sac_metrics = agent->get_metrics();
     const auto env_metrics = env->get_metrics();
 
-    std::vector<std::shared_ptr<AbstractMetric>> metrics = {reward_metric, potential_metric};
+    std::vector<std::shared_ptr<AbstractMetric>> metrics = {
+        reward_mean_metric, reward_std_metric, potential_mean_metric, potential_std_metric};
     metrics.insert(metrics.end(), env_metrics.begin(), env_metrics.end());
     metrics.insert(metrics.end(), sac_metrics.begin(), sac_metrics.end());
 
@@ -160,8 +167,10 @@ void train_main(
                     (env_done ? 0.f : 1.f) * model_options.gamma * phi_vector[i]
                     - last_phi_vector[i];
 
-                reward_metric->add(reward);
-                potential_metric->add(potential_reward);
+                reward_mean_metric->add(reward);
+                reward_std_metric->add(reward);
+                potential_mean_metric->add(potential_reward);
+                potential_std_metric->add(potential_reward);
 
                 const auto [next_vision, next_proprioception] = state_to_tensor(next_state);
 

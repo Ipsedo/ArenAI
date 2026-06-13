@@ -79,10 +79,10 @@ void train_main(
 
     // metrics
     auto reward_mean_metric =
-        std::make_shared<MeanMetric>("r_μ", train_options.metric_window_size, 2, true);
+        std::make_shared<MeanMetric>("r", train_options.metric_window_size, 2, true);
 
     auto potential_mean_metric =
-        std::make_shared<MeanMetric>("pr_μ", train_options.metric_window_size, 2, true);
+        std::make_shared<MeanMetric>("pr", train_options.metric_window_size, 2, true);
 
     const auto sac_metrics = agent->get_metrics();
     const auto env_metrics = env->get_metrics();

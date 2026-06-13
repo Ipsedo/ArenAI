@@ -10,7 +10,7 @@
 class MeanMetric : public AbstractMetric {
 public:
     MeanMetric(
-        const std::string &name, int window_size, int precision = 4, bool scientific = false);
+        const std::string &name, int window_size, int precision = 3, bool scientific = false);
 
 protected:
     float compute_metric_impl(const std::vector<float> &curr_values) override;

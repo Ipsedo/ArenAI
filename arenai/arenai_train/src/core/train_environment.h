@@ -50,7 +50,8 @@ private:
 
     int max_episode_steps;
 
-    std::shared_ptr<AbstractMetric> episode_step_nb_metric;
+    std::shared_ptr<AbstractMetric> episode_step_mean_nb_metric;
+    std::shared_ptr<AbstractMetric> episode_step_std_nb_metric;
 
     bool only_one_tank_alive();
     bool only_one_tank_not_already_done();

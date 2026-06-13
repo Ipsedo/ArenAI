@@ -5,7 +5,7 @@
 #include "./std_metric.h"
 
 StdMetric::StdMetric(const std::string &name, const int window_size)
-    : AbstractMetric(name, window_size, 3, true), mean_metric(name + "_mean", window_size) {}
+    : AbstractMetric(name, window_size, 2, true), mean_metric(name + "_mean", window_size) {}
 
 float StdMetric::compute_metric_impl(const std::vector<float> &curr_values) {
     const auto curr_mean = mean_metric.compute_metric();

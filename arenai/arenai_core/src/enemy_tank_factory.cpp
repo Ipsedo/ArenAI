@@ -50,8 +50,9 @@ float EnemyTankFactory::compute_hit_reward(
     const float angle = std::atan2(
         glm::length(glm::cross(fire_to_enemy, fire_to_hit)), glm::dot(fire_to_enemy, fire_to_hit));
 
-    const float distance_reward = std::exp(-std::pow(distance_impact / impact_distance_scale, 2.f));
-    const float angle_reward = 2.0f * std::exp(-std::pow(angle / angle_scale, 2.f)) - 1.0f;
+    const float distance_reward =
+        std::exp(-0.5f * std::pow(distance_impact / impact_distance_scale, 2.f));
+    const float angle_reward = 2.0f * std::exp(-0.5f * std::pow(angle / angle_scale, 2.f)) - 1.0f;
 
     return std::min(distance_reward * angle_reward, angle_reward);
 }
@@ -110,7 +111,7 @@ float EnemyTankFactory::get_phi(
         const glm::vec3 other_pos =
             tank_factories[i]->get_chassis()->get_model_matrix() * world_center;
         const float distance = glm::length(other_pos - chassis_pos);
-        const float distance_score = std::exp(-std::pow(distance / distance_scale, 2.f));
+        const float distance_score = std::exp(-0.5f * std::pow(distance / distance_scale, 2.f));
 
         const float angle = compute_aim_angle(tank_factories[i]);
         const float angle_score = (std::cos(angle) + 1.f) / 2.f;

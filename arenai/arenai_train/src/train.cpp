@@ -106,6 +106,7 @@ void train_main(
         indicators::option::MaxProgress{train_options.nb_episodes},
         indicators::option::BarWidth{0},
         indicators::option::Start{"\r"},
+        indicators::option::PrefixText{"\r"},
         indicators::option::Fill{""},
         indicators::option::Lead{""},
         indicators::option::Remainder{""},

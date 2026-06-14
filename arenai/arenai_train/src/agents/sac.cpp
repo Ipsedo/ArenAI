@@ -58,8 +58,8 @@ SacAgent::SacAgent(
       critic_2_std_loss_metric(std::make_shared<StdMetric>("q2_σ", metric_window_size)),
       continuous_entropy_metric(std::make_shared<MeanMetric>("Hc", metric_window_size)),
       discrete_entropy_metric(std::make_shared<MeanMetric>("Hd", metric_window_size)),
-      alpha_continuous_metric(std::make_shared<MeanMetric>("α_d", metric_window_size, 2, true)),
-      alpha_discrete_metric(std::make_shared<MeanMetric>("α_c", metric_window_size, 2, true)),
+      alpha_continuous_metric(std::make_shared<MeanMetric>("α_c", metric_window_size, 2, true)),
+      alpha_discrete_metric(std::make_shared<MeanMetric>("α_d", metric_window_size, 2, true)),
       tau(tau), gamma(gamma),
       continuous_target_entropy(truncated_normal_target_entropy(nb_continuous_actions, 0.1f)),
       discrete_target_entropy(0.9f * multinomial_maximum_entropy(nb_discrete_actions)) {

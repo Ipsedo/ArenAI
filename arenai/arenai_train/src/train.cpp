@@ -197,7 +197,7 @@ void train_main(
             // progress bar metrics display
             if (train_counter % train_options.train_every == train_options.train_every - 1) {
                 std::stringstream stream;
-                stream << episode_index << " (" << static_cast<int>(spawn_side)
+                stream << "- " << episode_index << " (" << static_cast<int>(spawn_side)
                        << "m) : " << AbstractMetric::metrics_to_string(metrics);
 
                 p_bar.set_option(indicators::option::PostfixText{stream.str()});

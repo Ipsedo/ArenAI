@@ -15,8 +15,7 @@ MetricCsvSaver::MetricCsvSaver(
     std::ofstream file(csv_file_path, std::ios::out);
     std::string header;
 
-    for (const auto &m: metrics)
-        header += m->get_name() + "_mean" + sep + m->get_name() + "_std" + sep;
+    for (const auto &m: metrics) header += m->get_name() + sep;
 
     header += "index\n";
 

@@ -14,16 +14,19 @@ def metrics_csv_to_plot(
 
     columns = metrics_df.columns
 
-    regex_metric_name = re.compile(r"^(.+)_[^_]+$")
+    regex_metric_name = re.compile(r"^(.+)_([μσ])$")
 
-    metric_names = []
+    metric_names = {}
 
     for col in columns:
         match = regex_metric_name.match(col)
         if match is not None:
             name = match.group(1)
-            if name not in metric_names:
-                metric_names.append(name)
+            metric_names.setdefault(name, [])
+
+            metric_names[name].append(col)
+        else:
+            metric_names[col] = [col]
 
     fig, axes = plt.subplots(
         len(metric_names),
@@ -32,14 +35,13 @@ def metrics_csv_to_plot(
         constrained_layout=True,
     )
 
-    for i, m in enumerate(metric_names):
+    for i, (metric_group, metrics) in enumerate(metric_names.items()):
         ax = axes[i]
-        sub_columns = [f"{m}_mean", f"{m}_std"]
 
-        ax.plot(metrics_df[sub_columns])
+        ax.plot(metrics_df[metrics])
 
-        ax.legend(sub_columns)
-        ax.set_title(m)
+        ax.legend(metrics)
+        ax.set_title(metric_group)
 
     fig.savefig(output_png_file_path)
 

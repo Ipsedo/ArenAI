@@ -42,7 +42,8 @@ void train_main(
 
     const auto env = std::make_unique<TrainTankEnvironment>(
         gl_context, environment_options.nb_tanks, train_options.android_asset_folder,
-        environment_options.wanted_frequency, train_options.max_episode_steps);
+        environment_options.wanted_frequency, train_options.max_episode_steps,
+        environment_options.num_threads);
 
     const float spawn_width_increase =
         (environment_options.final_spawn_width - environment_options.initial_spawn_width)

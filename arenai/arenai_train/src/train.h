@@ -46,6 +46,7 @@ struct EnvironmentOptions {
     float initial_spawn_height;
     float final_spawn_width;
     float final_spawn_height;
+    int num_threads;
 };
 
 void train_main(

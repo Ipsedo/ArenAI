@@ -2,8 +2,30 @@
 // Created by samuel on 10/06/2026.
 //
 
+#include <chrono>
+
 #include <arenai_core/constants.h>
 #include <arenai_core/thread_pool.h>
+#include <arenai_view/cubemap.h>
+#include <arenai_view/specular.h>
+
+/*
+ * VisionDoubleBuffer / ModelMatricesDoubleBuffer
+ */
+
+image<uint8_t> VisionDoubleBuffer::black_image(const int height, const int width) {
+    return {std::vector<uint8_t>(3 * height * width, 0)};
+}
+
+VisionDoubleBuffer::VisionDoubleBuffer(const int height, const int width)
+    : DoubleBuffer(black_image(height, width)) {}
+
+ModelMatricesDoubleBuffer::ModelMatricesDoubleBuffer()
+    : DoubleBuffer(std::vector<std::tuple<std::string, glm::mat4>>()) {}
+
+/*
+ * ThreadLimiter
+ */
 
 ThreadLimiter::ThreadLimiter(const unsigned int k) : k_threads(k) {}
 
@@ -22,30 +44,107 @@ void ThreadLimiter::release() {
 }
 
 /*
- * Pool
+ * EnemyVisionThreadPool
  */
 
 EnemyVisionThreadPool::EnemyVisionThreadPool(
-    const int num_threads,
-    const std::vector<std::shared_ptr<EnemyTankFactory>> &enemy_tank_factories,
-    const bool thread_sleep)
-    : num_threads_(num_threads), thread_sleep_(thread_sleep), threads_running_(false),
-      enemy_tank_factories_(enemy_tank_factories),
+    const int max_concurrent_renders,
+    const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories,
+    const std::shared_ptr<AbstractGLContext> &gl_context,
+    const std::shared_ptr<AbstractFileReader> &file_reader,
+    const std::vector<std::shared_ptr<Item>> &scene_items,
+    const std::vector<std::tuple<std::string, glm::mat4>> &initial_model_matrices,
+    const float wanted_frequency, const bool thread_sleep)
+    : num_tanks_(static_cast<int>(tank_factories.size())), wanted_frequency_(wanted_frequency),
+      thread_sleep_(thread_sleep), threads_running_(true), limiter_(max_concurrent_renders),
       model_matrices_(std::make_unique<ModelMatricesDoubleBuffer>()),
-      reset_barrier_(std::make_unique<std::barrier<>>(num_threads_ + 1)),
-      loop_barrier_(std::make_unique<std::barrier<>>(num_threads_ + 1)) {
+      reset_barrier_(std::make_unique<std::barrier<>>(num_tanks_ + 1)),
+      loop_barrier_(std::make_unique<std::barrier<>>(num_tanks_ + 1)),
+      tank_factories_(&tank_factories), gl_context_(gl_context), file_reader_(file_reader),
+      scene_items_(scene_items) {
 
-    enemy_visions_.clear();
-    enemy_visions_.reserve(enemy_tank_factories_.size());
-    for (int i = 0; i < enemy_tank_factories_.size(); i++)
+    model_matrices_->write(initial_model_matrices);
+
+    enemy_visions_.reserve(num_tanks_);
+    for (int i = 0; i < num_tanks_; i++)
         enemy_visions_.push_back(
             std::make_unique<VisionDoubleBuffer>(ENEMY_VISION_HEIGHT, ENEMY_VISION_WIDTH));
 
-    threads_running_.store(true, std::memory_order_release);
-    pool_.clear();
-    pool_.reserve(enemy_tank_factories_.size());
+    pool_.reserve(num_tanks_);
+    for (int i = 0; i < num_tanks_; i++) pool_.emplace_back([this, i] { worker_loop(i); });
+}
 
-    for (int i = 0; i < enemy_tank_factories_.size(); ++i) pool_.emplace_back([this, i] {});
+std::unique_ptr<PBufferRenderer> EnemyVisionThreadPool::construct_renderer(const int index) {
+    const auto &tank_factory = (*tank_factories_)[index];
+
+    std::seed_seq seq{
+        dev_(), static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this)),
+        static_cast<uint32_t>(index),
+        static_cast<uint32_t>(
+            std::chrono::high_resolution_clock::now().time_since_epoch().count())};
+    std::mt19937 local_rng(seq);
+
+    auto renderer = std::make_unique<PBufferRenderer>(
+        gl_context_, ENEMY_VISION_WIDTH, ENEMY_VISION_HEIGHT, glm::vec3(200, 300, 200),
+        tank_factory->get_camera());
+
+    renderer->make_current();
+
+    std::uniform_real_distribution u_dist(0.f, 1.f);
+
+    renderer->add_drawable("cubemap", std::make_unique<CubeMap>(file_reader_, "cubemap/1"));
+
+    for (const auto &item: scene_items_) {
+        glm::vec4 color(u_dist(local_rng), u_dist(local_rng), u_dist(local_rng), 1.f);
+        const auto shape = item->get_shape();
+        renderer->add_drawable(
+            item->get_name(), std::make_unique<Specular>(
+                                  file_reader_, shape->get_vertices(), shape->get_normals(), color,
+                                  color, color, 50.f));
+    }
+
+    for (const auto &[name, shape]: tank_factory->load_shell_shapes()) {
+        glm::vec4 shell_color(u_dist(local_rng), u_dist(local_rng), u_dist(local_rng), 1.f);
+
+        renderer->add_drawable(
+            name, std::make_unique<Specular>(
+                      file_reader_, shape->get_vertices(), shape->get_normals(), shell_color,
+                      shell_color, shell_color, 50.f));
+    }
+
+    return renderer;
+}
+
+void EnemyVisionThreadPool::worker_loop(const int index) {
+    auto renderer = construct_renderer(index);
+
+    const auto frame_dt = std::chrono::milliseconds(static_cast<int>(wanted_frequency_ * 1000.f));
+
+    while (threads_running_.load(std::memory_order_acquire)) {
+        auto last_time = std::chrono::steady_clock::now();
+
+        limiter_.acquire();
+
+        const auto matrices = model_matrices_->read_copy();
+        enemy_visions_[index]->write(renderer->draw_and_get_frame(matrices));
+
+        limiter_.release();
+
+        auto now = std::chrono::steady_clock::now();
+        auto dt = now - last_time;
+
+        loop_barrier_->arrive_and_wait();
+
+        if (thread_sleep_)
+            std::this_thread::sleep_for(
+                std::max(frame_dt - dt, std::chrono::steady_clock::duration::zero()));
+    }
+
+    renderer.reset();
+    eglReleaseThread();
+
+    loop_barrier_->arrive_and_drop();
+    reset_barrier_->arrive_and_wait();
 }
 
 void EnemyVisionThreadPool::set_model_matrices(
@@ -53,14 +152,8 @@ void EnemyVisionThreadPool::set_model_matrices(
     model_matrices_->write(model_matrices);
 }
 
-std::vector<image<uint8_t>> EnemyVisionThreadPool::get_enemy_visions() const {
-    std::vector<image<uint8_t>> result;
-    result.reserve(enemy_tank_factories_.size());
-
-    for (int i = 0; i < enemy_tank_factories_.size(); i++)
-        result.push_back(enemy_visions_[i]->read_copy());
-
-    return result;
+image<uint8_t> EnemyVisionThreadPool::read_vision(const int index) const {
+    return enemy_visions_[index]->read_copy();
 }
 
 void EnemyVisionThreadPool::loop_wait() const { loop_barrier_->arrive_and_wait(); }
@@ -78,3 +171,5 @@ void EnemyVisionThreadPool::kill_threads() {
 
     pool_.clear();
 }
+
+EnemyVisionThreadPool::~EnemyVisionThreadPool() { kill_threads(); }

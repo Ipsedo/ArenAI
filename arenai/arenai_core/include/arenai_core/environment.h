@@ -5,8 +5,6 @@
 #ifndef ARENAI_ENVIRONMENT_H
 #define ARENAI_ENVIRONMENT_H
 
-#include <barrier>
-#include <future>
 #include <memory>
 #include <random>
 #include <thread>
@@ -14,34 +12,20 @@
 #include <vector>
 
 #include <arenai_model/engine.h>
-#include <arenai_utils/double_buffer.h>
 #include <arenai_utils/file_reader.h>
 #include <arenai_view/pbuffer_renderer.h>
 
 #include "./enemy_handler.h"
 #include "./enemy_tank_factory.h"
+#include "./thread_pool.h"
 #include "./types.h"
-
-class VisionDoubleBuffer : public DoubleBuffer<image<uint8_t>> {
-public:
-    VisionDoubleBuffer(int height, int width);
-
-private:
-    static image<uint8_t> black_image(int height, int width);
-};
-
-class ModelMatricesDoubleBuffer
-    : public DoubleBuffer<std::vector<std::tuple<std::string, glm::mat4>>> {
-public:
-    ModelMatricesDoubleBuffer();
-};
 
 class BaseTanksEnvironment {
 public:
     BaseTanksEnvironment(
         const std::shared_ptr<AbstractFileReader> &file_reader,
         const std::shared_ptr<AbstractGLContext> &gl_context, int nb_tanks, float wanted_frequency,
-        bool thread_sleep);
+        int vision_num_threads, bool vision_thread_sleep);
 
     virtual std::vector<std::tuple<State, Reward, IsDone>>
     step(float time_delta, const std::vector<Action> &actions);
@@ -57,32 +41,19 @@ private:
     float wanted_frequency;
     int nb_tanks;
 
-    bool thread_sleep;
-    std::atomic<bool> threads_running;
-    std::vector<std::thread> pool;
+    int vision_num_threads;
+    bool vision_thread_sleep;
 
-    std::unique_ptr<ModelMatricesDoubleBuffer> model_matrices;
+    std::unique_ptr<EnemyVisionThreadPool> vision_pool_;
 
     std::vector<std::unique_ptr<EnemyTankFactory>> tank_factories;
     std::vector<std::unique_ptr<EnemyControllerHandler>> tank_controller_handler;
-    std::vector<std::unique_ptr<VisionDoubleBuffer>> enemy_visions;
 
     std::unique_ptr<PhysicEngine> physic_engine;
 
     int nb_reset_frames;
 
-    std::unique_ptr<std::barrier<>> reset_barrier;
-    std::unique_ptr<std::barrier<>> loop_barrier;
-
     std::shared_ptr<AbstractGLContext> gl_context;
-
-    void worker_enemy_vision(int index, const std::unique_ptr<EnemyTankFactory> &tank_factory);
-
-    void start_threads();
-    void kill_threads();
-
-    std::unique_ptr<PBufferRenderer>
-    construct_pbuffer_renderer(int index, const std::unique_ptr<EnemyTankFactory> &tank_factory);
 
 protected:
     std::random_device dev;

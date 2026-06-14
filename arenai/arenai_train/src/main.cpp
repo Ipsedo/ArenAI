@@ -3,6 +3,7 @@
 //
 
 #include <regex>
+#include <thread>
 
 #include <argparse/argparse.hpp>
 
@@ -56,13 +57,17 @@ int main(const int argc, char **argv) {
     parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(500.f);
     parser.add_argument("--final_spawn_width").scan<'g', float>().default_value(2000.f);
     parser.add_argument("--final_spawn_height").scan<'g', float>().default_value(2000.f);
+    parser.add_argument("--vision_num_threads")
+        .scan<'i', int>()
+        .default_value(static_cast<int>(std::thread::hardware_concurrency()));
 
     parser.parse_args(argc, argv);
 
     train_main(
         {parser.get<float>("--wanted_frequency"), parser.get<int>("--nb_tanks"),
          parser.get<float>("--initial_spawn_width"), parser.get<float>("--initial_spawn_height"),
-         parser.get<float>("--final_spawn_width"), parser.get<float>("--final_spawn_height")},
+         parser.get<float>("--final_spawn_width"), parser.get<float>("--final_spawn_height"),
+         parser.get<int>("--vision_num_threads")},
         {parser.get<vision_channels>("--vision_channels").channels,
          parser.get<group_norm_nums>("--group_norm_nums").groups,
          parser.get<int>("--sensors_hidden_size"), parser.get<int>("--actions_hidden_size"),

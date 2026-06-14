@@ -7,9 +7,13 @@
 #include <barrier>
 #include <condition_variable>
 #include <memory>
+#include <random>
 #include <vector>
 
+#include <arenai_model/engine.h>
 #include <arenai_utils/double_buffer.h>
+#include <arenai_utils/file_reader.h>
+#include <arenai_view/pbuffer_renderer.h>
 
 #include "./enemy_tank_factory.h"
 
@@ -50,30 +54,50 @@ private:
 class EnemyVisionThreadPool {
 public:
     EnemyVisionThreadPool(
-        int num_threads, const std::vector<std::shared_ptr<EnemyTankFactory>> &enemy_tank_factories,
-        bool thread_sleep);
+        int max_concurrent_renders,
+        const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories,
+        const std::shared_ptr<AbstractGLContext> &gl_context,
+        const std::shared_ptr<AbstractFileReader> &file_reader,
+        const std::vector<std::shared_ptr<Item>> &scene_items,
+        const std::vector<std::tuple<std::string, glm::mat4>> &initial_model_matrices,
+        float wanted_frequency, bool thread_sleep);
 
     void
     set_model_matrices(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) const;
-    std::vector<image<uint8_t>> get_enemy_visions() const;
+
+    image<uint8_t> read_vision(int index) const;
 
     void loop_wait() const;
     void kill_threads();
 
-private:
-    int num_threads_;
+    ~EnemyVisionThreadPool();
 
+private:
+    int num_tanks_;
+
+    float wanted_frequency_;
     bool thread_sleep_;
     std::atomic<bool> threads_running_;
     std::vector<std::thread> pool_;
 
-    std::vector<std::shared_ptr<EnemyTankFactory>> enemy_tank_factories_;
+    ThreadLimiter limiter_;
 
     std::unique_ptr<ModelMatricesDoubleBuffer> model_matrices_;
     std::vector<std::unique_ptr<VisionDoubleBuffer>> enemy_visions_;
 
     std::unique_ptr<std::barrier<>> reset_barrier_;
     std::unique_ptr<std::barrier<>> loop_barrier_;
+
+    // Stored for renderer construction by worker threads
+    const std::vector<std::unique_ptr<EnemyTankFactory>> *tank_factories_;
+    std::shared_ptr<AbstractGLContext> gl_context_;
+    std::shared_ptr<AbstractFileReader> file_reader_;
+    std::vector<std::shared_ptr<Item>> scene_items_;
+    std::random_device dev_;
+
+    std::unique_ptr<PBufferRenderer> construct_renderer(int index);
+
+    void worker_loop(int index);
 };
 
 #endif//ARENAI_TRAIN_HOST_THREAD_POOL_H

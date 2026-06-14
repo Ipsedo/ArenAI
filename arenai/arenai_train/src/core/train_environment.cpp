@@ -15,10 +15,10 @@
 TrainTankEnvironment::TrainTankEnvironment(
     const std::shared_ptr<AbstractGLContext> &gl_context, const int nb_tanks,
     const std::filesystem::path &android_assets_path, const float wanted_frequency,
-    const int max_episode_steps)
+    const int max_episode_steps, const int vision_num_threads)
     : BaseTanksEnvironment(
         std::make_shared<DesktopAssetFileReader>(android_assets_path), gl_context, nb_tanks,
-        wanted_frequency, false),
+        wanted_frequency, vision_num_threads, false),
       wanted_frequency(wanted_frequency),
       max_frames_without_hit(static_cast<int>(30.f / wanted_frequency)),
       remaining_frames(nb_tanks, max_frames_without_hit),

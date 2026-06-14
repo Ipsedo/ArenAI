@@ -103,15 +103,15 @@ void train_main(
     indicators::ProgressBar p_bar{
         indicators::option::MinProgress{0},
         indicators::option::MaxProgress{train_options.nb_episodes},
-        indicators::option::BarWidth{10},
-        indicators::option::Start{"["},
-        indicators::option::Fill{"="},
-        indicators::option::Lead{">"},
-        indicators::option::Remainder{" "},
-        indicators::option::End{"]"},
+        indicators::option::BarWidth{0},
+        indicators::option::Start{"\r"},
+        indicators::option::Fill{""},
+        indicators::option::Lead{""},
+        indicators::option::Remainder{""},
+        indicators::option::End{""},
         indicators::option::ShowPercentage{true},
         indicators::option::ShowElapsedTime{true},
-        indicators::option::ShowRemainingTime{true}};
+        indicators::option::ShowRemainingTime{false}};
 
     indicators::show_console_cursor(false);
 
@@ -195,11 +195,10 @@ void train_main(
             // progress bar metrics display
             if (train_counter % train_options.train_every == train_options.train_every - 1) {
                 std::stringstream stream;
-                stream << "\r[" << episode_index << " / " << train_options.nb_episodes << "] ("
-                       << static_cast<int>(spawn_side)
+                stream << episode_index << " (" << static_cast<int>(spawn_side)
                        << "m) : " << AbstractMetric::metrics_to_string(metrics);
 
-                p_bar.set_option(indicators::option::PrefixText{stream.str()});
+                p_bar.set_option(indicators::option::PostfixText{stream.str()});
                 p_bar.print_progress();
             }
         }

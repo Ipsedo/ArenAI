@@ -5,6 +5,8 @@
 #include <cstring>
 #include <vector>
 
+#include <GLES3/gl3.h>
+
 #include <arenai_view/pbuffer_renderer.h>
 
 #include "arenai_view/errors.h"
@@ -92,6 +94,18 @@ void PBufferRenderer::on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_
 
 void PBufferRenderer::on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_context) {}
 
+void PBufferRenderer::init_pbos() {
+    pbo_size_ = static_cast<size_t>(width) * static_cast<size_t>(height) * 3;
+    glGenBuffers(NUM_PBOS, pbos_);
+    for (int i = 0; i < NUM_PBOS; i++) {
+        glBindBuffer(GL_PIXEL_PACK_BUFFER, pbos_[i]);
+        glBufferData(
+            GL_PIXEL_PACK_BUFFER, static_cast<GLsizeiptr>(pbo_size_), nullptr, GL_STREAM_READ);
+    }
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+    pbo_initialized_ = true;
+}
+
 image<uint8_t> PBufferRenderer::draw_and_get_frame(
     const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
     draw(model_matrices);
@@ -99,19 +113,47 @@ image<uint8_t> PBufferRenderer::draw_and_get_frame(
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
-    constexpr int in_channels = 3;
-    std::vector<unsigned char> linear(
-        static_cast<size_t>(width) * static_cast<size_t>(height) * in_channels);
-    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, linear.data());
+    if (!pbo_initialized_) {
+        init_pbos();
 
-    // HWC -> CHW
+        // First frame: kick off async read into PBO 0, return a black frame
+        glBindBuffer(GL_PIXEL_PACK_BUFFER, pbos_[0]);
+        glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+        glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+        pbo_index_ = 1;
+
+        const int hw = width * height;
+        return image(std::vector<uint8_t>(hw * 3, 0));
+    }
+
+    const int read_pbo = pbo_index_;
+    const int map_pbo = 1 - pbo_index_;
+
+    // Start async read of current frame into read_pbo
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, pbos_[read_pbo]);
+    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+
+    // Map the previous frame's PBO (should be ready by now)
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, pbos_[map_pbo]);
+    const auto *src = static_cast<const uint8_t *>(glMapBufferRange(
+        GL_PIXEL_PACK_BUFFER, 0, static_cast<GLsizeiptr>(pbo_size_), GL_MAP_READ_BIT));
+
     const int hw = width * height;
     auto frame = image(std::vector<uint8_t>(hw * 3));
-    for (int i = 0; i < hw; ++i) {
-        frame.pixels[0 * hw + i] = linear[i * 3 + 0];
-        frame.pixels[1 * hw + i] = linear[i * 3 + 1];
-        frame.pixels[2 * hw + i] = linear[i * 3 + 2];
+
+    if (src) {
+        // HWC -> CHW
+        auto *dst = frame.pixels.data();
+        for (int i = 0; i < hw; ++i) {
+            dst[0 * hw + i] = src[i * 3 + 0];
+            dst[1 * hw + i] = src[i * 3 + 1];
+            dst[2 * hw + i] = src[i * 3 + 2];
+        }
+        glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
     }
+
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+    pbo_index_ = read_pbo;
 
     return frame;
 }
@@ -120,4 +162,6 @@ int PBufferRenderer::get_width() const { return width; }
 
 int PBufferRenderer::get_height() const { return height; }
 
-PBufferRenderer::~PBufferRenderer() = default;
+PBufferRenderer::~PBufferRenderer() {
+    if (pbo_initialized_) glDeleteBuffers(NUM_PBOS, pbos_);
+}

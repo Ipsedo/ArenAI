@@ -9,6 +9,7 @@
 #include <vector>
 
 #include <EGL/egl.h>
+#include <GLES3/gl3.h>
 #include <glm/glm.hpp>
 
 #include "./renderer.h"
@@ -58,6 +59,14 @@ protected:
 
 private:
     int width, height;
+
+    static constexpr int NUM_PBOS = 2;
+    GLuint pbos_[NUM_PBOS]{};
+    int pbo_index_{0};
+    bool pbo_initialized_{false};
+    size_t pbo_size_{0};
+
+    void init_pbos();
 };
 
 #endif// ARENAI_PBUFFER_RENDERER_H

@@ -111,7 +111,7 @@ void train_main(
         indicators::option::End{""},
         indicators::option::ShowPercentage{true},
         indicators::option::ShowElapsedTime{true},
-        indicators::option::ShowRemainingTime{false}};
+        indicators::option::ShowRemainingTime{true}};
 
     indicators::show_console_cursor(false);
 

@@ -104,16 +104,14 @@ float EnemyTankFactory::get_phi(
     constexpr glm::vec4 world_center(0.f, 0.f, 0.f, 1.f);
     const glm::vec3 chassis_pos = get_chassis()->get_model_matrix() * world_center;
 
-    for (int i = 0; i < tank_factories.size(); i++) {
-        if (tank_factories[i]->tank_prefix_name == tank_prefix_name || tank_factories[i]->is_dead())
-            continue;
+    for (const auto &tank_factory: tank_factories) {
+        if (tank_factory->tank_prefix_name == tank_prefix_name || tank_factory->is_dead()) continue;
 
-        const glm::vec3 other_pos =
-            tank_factories[i]->get_chassis()->get_model_matrix() * world_center;
+        const glm::vec3 other_pos = tank_factory->get_chassis()->get_model_matrix() * world_center;
         const float distance = glm::length(other_pos - chassis_pos);
         const float distance_score = std::exp(-0.5f * std::pow(distance / distance_scale, 2.f));
 
-        const float angle = compute_aim_angle(tank_factories[i]);
+        const float angle = compute_aim_angle(tank_factory);
         const float angle_score = (std::cos(angle) + 1.f) / 2.f;
 
         if (const float score = angle_score * distance_score; score > best_score)

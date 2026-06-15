@@ -85,7 +85,7 @@ float EnemyTankFactory::get_reward(
 
             // shoot reward
             hit_reward = compute_hit_reward(fire_pos, best_tank_pos, hit_pos)
-                         * (has_hit ? 1.5f : 1.f) * (has_killed ? 2.f : 1.f);
+                         + (has_hit ? 1.f : 0.f) + (has_killed ? 2.f : 0.f);
         }
 
         last_shoot_info = std::nullopt;

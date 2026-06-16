@@ -19,11 +19,12 @@ SacAgent::SacAgent(
     const int vision_height, const int vision_width, int nb_sensors, int nb_continuous_actions,
     int nb_discrete_actions, const float actor_learning_rate, const float critic_learning_rate,
     const float alpha_learning_rate, int hidden_size_sensors, int hidden_size_actions,
-    std::vector<int> actor_hidden_sizes, std::vector<int> critic_hidden_sizes,
+    const std::vector<int> &actor_hidden_sizes, const std::vector<int> &critic_hidden_sizes,
     const std::vector<std::tuple<int, int>> &vision_channels,
     const std::vector<int> &group_norm_nums, const torch::Device device, int metric_window_size,
     const float tau, const float gamma, const float initial_alpha_continuous,
-    const float initial_alpha_discrete)
+    const float initial_alpha_discrete, const float target_continuous_sigma,
+    const float discrete_entropy_factor)
     : actor(std::make_shared<Actor>(
         vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_actions,
         hidden_size_sensors, actor_hidden_sizes, vision_channels, group_norm_nums)),
@@ -64,9 +65,10 @@ SacAgent::SacAgent(
       discrete_entropy_metric(std::make_shared<MeanMetric>("Hd", metric_window_size)),
       alpha_continuous_metric(std::make_shared<MeanMetric>("α_c", metric_window_size, 2, true)),
       alpha_discrete_metric(std::make_shared<MeanMetric>("α_d", metric_window_size, 2, true)),
-      tau(tau), gamma(gamma),
-      continuous_target_entropy(truncated_normal_target_entropy(nb_continuous_actions, 0.1f)),
-      discrete_target_entropy(0.9f * multinomial_maximum_entropy(nb_discrete_actions)) {
+      tau(tau), gamma(gamma), continuous_target_entropy(truncated_normal_target_entropy(
+                                  nb_continuous_actions, target_continuous_sigma)),
+      discrete_target_entropy(
+          discrete_entropy_factor * multinomial_maximum_entropy(nb_discrete_actions)) {
 
     hard_update(target_critic_1, critic_1);
     hard_update(target_critic_2, critic_2);

@@ -29,5 +29,6 @@ std::shared_ptr<AbstractAgent> SacAgentFactory::get_agent_impl(
             .groups,
         torch::Device(torch::kCPU), get_value("metric_window_size", 1024), get_value("tau", 0.005f),
         get_value("gamma", 0.995f), get_value("initial_alpha_continuous", 1.f),
-        get_value("initial_alpha_discrete", 1.f));
+        get_value("initial_alpha_discrete", 1.f), get_value("target_continuous_sigma", 0.1f),
+        get_value("discrete_entropy_factor", 0.9f));
 }

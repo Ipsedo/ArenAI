@@ -25,7 +25,7 @@ EnemyTankFactory::EnemyTankFactory(
       angle_scale(glm::pi<float>() / 3.f), is_dead_already_triggered(false), has_touch(false),
       last_shoot_info(std::nullopt), action_stats(std::make_shared<ActionStats>()) {}
 
-float EnemyTankFactory::compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank) {
+float EnemyTankFactory::compute_aim_angle(const std::shared_ptr<EnemyTankFactory> &other_tank) {
     const auto canon_tr = get_canon()->get_model_matrix();
     const auto other_tr = other_tank->get_chassis()->get_model_matrix();
 
@@ -58,7 +58,7 @@ float EnemyTankFactory::compute_hit_reward(
 }
 
 float EnemyTankFactory::get_reward(
-    const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
+    const std::vector<std::shared_ptr<EnemyTankFactory>> &tank_factories) {
 
     // 1. flipped detection
     const auto chassis_model_mat = get_chassis()->get_model_matrix();
@@ -83,9 +83,12 @@ float EnemyTankFactory::get_reward(
             const auto best_tank_pos =
                 glm::vec3(best_tank_model_matrix * glm::vec4(glm::vec3(0.f), 1.f));
 
+            // shoot cost
+            constexpr float shoot_cost = 0.01f;
+
             // shoot reward
             hit_reward = compute_hit_reward(fire_pos, best_tank_pos, hit_pos)
-                         + (has_hit ? 1.f : 0.f) + (has_killed ? 2.f : 0.f);
+                         + (has_hit ? 1.f : 0.f) + (has_killed ? 2.f : 0.f) - shoot_cost;
         }
 
         last_shoot_info = std::nullopt;
@@ -98,7 +101,7 @@ float EnemyTankFactory::get_reward(
 }
 
 float EnemyTankFactory::get_phi(
-    const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories) {
+    const std::vector<std::shared_ptr<EnemyTankFactory>> &tank_factories) {
     float best_score = -1.f;
 
     constexpr glm::vec4 world_center(0.f, 0.f, 0.f, 1.f);
@@ -122,7 +125,7 @@ float EnemyTankFactory::get_phi(
 }
 
 int EnemyTankFactory::get_nearest_enemy_index(
-    const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories,
+    const std::vector<std::shared_ptr<EnemyTankFactory>> &tank_factories,
     const glm::vec3 &pos) const {
     constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
 

@@ -24,8 +24,8 @@ public:
         const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
         glm::vec3 chassis_pos, float wanted_frame_frequency);
 
-    float get_reward(const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories);
-    float get_phi(const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories);
+    float get_reward(const std::vector<std::shared_ptr<EnemyTankFactory>> &tank_factories);
+    float get_phi(const std::vector<std::shared_ptr<EnemyTankFactory>> &tank_factories);
 
     bool is_dead() override;
     bool is_suicide() const;
@@ -57,10 +57,10 @@ private:
     std::optional<shoot_info> last_shoot_info;
     std::shared_ptr<ActionStats> action_stats;
 
-    float compute_aim_angle(const std::unique_ptr<EnemyTankFactory> &other_tank);
+    float compute_aim_angle(const std::shared_ptr<EnemyTankFactory> &other_tank);
 
     int get_nearest_enemy_index(
-        const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories,
+        const std::vector<std::shared_ptr<EnemyTankFactory>> &tank_factories,
         const glm::vec3 &pos) const;
 
     float compute_hit_reward(

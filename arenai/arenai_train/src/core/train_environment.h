@@ -13,7 +13,7 @@ public:
     TrainTankEnvironment(
         const std::shared_ptr<AbstractGLContext> &gl_context, int nb_tanks,
         const std::filesystem::path &android_assets_path, float wanted_frequency,
-        int max_episode_steps, int vision_num_threads);
+        int max_episode_steps, int vision_height, int vision_width, int vision_num_threads);
 
     std::vector<std::tuple<State, Reward, IsDone>>
     step(float time_delta, const std::vector<Action> &actions) override;

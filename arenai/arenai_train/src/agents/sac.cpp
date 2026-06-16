@@ -16,8 +16,8 @@
 #include "../networks_utils/target_update.h"
 
 SacAgent::SacAgent(
-    int nb_sensors, int nb_continuous_actions, int nb_discrete_actions,
-    const float actor_learning_rate, const float critic_learning_rate,
+    const int vision_height, const int vision_width, int nb_sensors, int nb_continuous_actions,
+    int nb_discrete_actions, const float actor_learning_rate, const float critic_learning_rate,
     const float alpha_learning_rate, int hidden_size_sensors, int hidden_size_actions,
     std::vector<int> actor_hidden_sizes, std::vector<int> critic_hidden_sizes,
     const std::vector<std::tuple<int, int>> &vision_channels,
@@ -25,20 +25,24 @@ SacAgent::SacAgent(
     const float tau, const float gamma, const float initial_alpha_continuous,
     const float initial_alpha_discrete)
     : actor(std::make_shared<Actor>(
-        nb_sensors, nb_continuous_actions, nb_discrete_actions, hidden_size_sensors,
-        actor_hidden_sizes, vision_channels, group_norm_nums)),
+        vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_actions,
+        hidden_size_sensors, actor_hidden_sizes, vision_channels, group_norm_nums)),
       critic_1(std::make_shared<QFunction>(
-          nb_sensors, nb_continuous_actions, nb_discrete_actions, hidden_size_sensors,
-          hidden_size_actions, critic_hidden_sizes, vision_channels, group_norm_nums)),
+          vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_actions,
+          hidden_size_sensors, hidden_size_actions, critic_hidden_sizes, vision_channels,
+          group_norm_nums)),
       critic_2(std::make_shared<QFunction>(
-          nb_sensors, nb_continuous_actions, nb_discrete_actions, hidden_size_sensors,
-          hidden_size_actions, critic_hidden_sizes, vision_channels, group_norm_nums)),
+          vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_actions,
+          hidden_size_sensors, hidden_size_actions, critic_hidden_sizes, vision_channels,
+          group_norm_nums)),
       target_critic_1(std::make_shared<QFunction>(
-          nb_sensors, nb_continuous_actions, nb_discrete_actions, hidden_size_sensors,
-          hidden_size_actions, critic_hidden_sizes, vision_channels, group_norm_nums)),
+          vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_actions,
+          hidden_size_sensors, hidden_size_actions, critic_hidden_sizes, vision_channels,
+          group_norm_nums)),
       target_critic_2(std::make_shared<QFunction>(
-          nb_sensors, nb_continuous_actions, nb_discrete_actions, hidden_size_sensors,
-          hidden_size_actions, critic_hidden_sizes, vision_channels, group_norm_nums)),
+          vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_actions,
+          hidden_size_sensors, hidden_size_actions, critic_hidden_sizes, vision_channels,
+          group_norm_nums)),
       alpha_continuous(std::make_shared<AlphaParameter>(initial_alpha_continuous)),
       alpha_discrete(std::make_shared<AlphaParameter>(initial_alpha_discrete)),
       actor_optim(std::make_unique<torch::optim::Adam>(

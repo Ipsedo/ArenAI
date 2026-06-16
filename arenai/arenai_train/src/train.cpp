@@ -34,8 +34,8 @@ void train_main(
     std::cout << "OpenGL device : " << glGetString(GL_RENDERER) << std::endl;
     std::cout << "PyTorch device : " << torch_device.str() << std::endl;
 
-    std::cout << "Vision size : width=" << ENEMY_VISION_WIDTH << ", height=" << ENEMY_VISION_HEIGHT
-              << std::endl;
+    std::cout << "Vision size : width=" << environment_options.vision_width
+              << ", height=" << environment_options.vision_height << std::endl;
     std::cout << "Proprioception size : " << ENEMY_PROPRIOCEPTION_SIZE << std::endl;
     std::cout << "Action size (continuous) : " << ENEMY_NB_CONTINUOUS_ACTION << std::endl;
     std::cout << "Action size (discrete) : " << ENEMY_NB_DISCRETE_ACTION << std::endl;
@@ -43,6 +43,7 @@ void train_main(
     const auto env = std::make_unique<TrainTankEnvironment>(
         gl_context, environment_options.nb_tanks, train_options.android_asset_folder,
         environment_options.wanted_frequency, train_options.max_episode_steps,
+        environment_options.vision_height, environment_options.vision_width,
         environment_options.num_threads);
 
     const float spawn_width_increase =
@@ -56,6 +57,7 @@ void train_main(
     float spawn_height = environment_options.initial_spawn_height;
 
     auto agent = std::make_shared<SacAgent>(
+        environment_options.vision_height, environment_options.vision_width,
         ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_CONTINUOUS_ACTION, ENEMY_NB_DISCRETE_ACTION,
         train_options.actor_learning_rate, train_options.critic_learning_rate,
         train_options.alpha_learning_rate, model_options.hidden_size_sensors,
@@ -132,7 +134,8 @@ void train_main(
             TorchAction torch_action;
             std::vector<Action> actions_for_env;
 
-            const auto [vision, proprioception] = states_to_tensor(last_states);
+            const auto [vision, proprioception] = states_to_tensor(
+                last_states, environment_options.vision_height, environment_options.vision_width);
 
             {
                 // action
@@ -168,7 +171,9 @@ void train_main(
                 reward_mean_metric->add(reward);
                 potential_mean_metric->add(potential_reward);
 
-                const auto [next_vision, next_proprioception] = state_to_tensor(next_state);
+                const auto [next_vision, next_proprioception] = state_to_tensor(
+                    next_state, environment_options.vision_height,
+                    environment_options.vision_width);
 
                 replay_buffer->add(
                     {{vision[i], proprioception[i]},

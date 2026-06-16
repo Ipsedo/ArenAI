@@ -9,7 +9,7 @@ def metrics_csv_to_plot(
 ) -> None:
     print(f'Will load "{csv_path}"')
 
-    metrics_df = pd.read_csv(csv_path, sep=sep)
+    metrics_df = pd.read_csv(csv_path, sep=sep, header=0)
     metrics_df.set_index("index", inplace=True)
 
     columns = metrics_df.columns

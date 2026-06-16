@@ -53,6 +53,8 @@ int main(const int argc, char **argv) {
     // env
     parser.add_argument("--wanted_frequency").scan<'g', float>().default_value(1.f / 30.f);
     parser.add_argument("--nb_tanks").scan<'i', int>().default_value(16);
+    parser.add_argument("--vision_height").scan<'i', int>().default_value(64);
+    parser.add_argument("--vision_width").scan<'i', int>().default_value(128);
     parser.add_argument("--initial_spawn_width").scan<'g', float>().default_value(500.f);
     parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(500.f);
     parser.add_argument("--final_spawn_width").scan<'g', float>().default_value(2000.f);
@@ -65,6 +67,7 @@ int main(const int argc, char **argv) {
 
     train_main(
         {parser.get<float>("--wanted_frequency"), parser.get<int>("--nb_tanks"),
+         parser.get<int>("--vision_height"), parser.get<int>("--vision_width"),
          parser.get<float>("--initial_spawn_width"), parser.get<float>("--initial_spawn_height"),
          parser.get<float>("--final_spawn_width"), parser.get<float>("--final_spawn_height"),
          parser.get<int>("--vision_num_threads")},

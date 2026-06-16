@@ -54,18 +54,20 @@ private:
 class EnemyVisionThreadPool {
 public:
     EnemyVisionThreadPool(
-        int max_concurrent_renders,
-        const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories,
-        const std::shared_ptr<AbstractGLContext> &gl_context,
-        const std::shared_ptr<AbstractFileReader> &file_reader,
-        const std::vector<std::shared_ptr<Item>> &scene_items,
-        const std::vector<std::tuple<std::string, glm::mat4>> &initial_model_matrices,
+        int num_tanks, int max_concurrent_renders, int vision_height, int vision_width,
         float wanted_frequency, bool thread_sleep);
 
     void
     set_model_matrices(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) const;
 
     image<uint8_t> read_vision(int index) const;
+
+    void start_thread(
+        const std::vector<std::shared_ptr<EnemyTankFactory>> &tank_factories,
+        const std::shared_ptr<AbstractGLContext> &gl_context,
+        const std::shared_ptr<AbstractFileReader> &file_reader,
+        const std::vector<std::tuple<std::string, glm::mat4>> &initial_model_matrices,
+        const std::vector<std::shared_ptr<Item>> &scene_items);
 
     void loop_wait() const;
     void kill_threads();
@@ -74,6 +76,9 @@ public:
 
 private:
     int num_tanks_;
+
+    int vision_height_;
+    int vision_width_;
 
     float wanted_frequency_;
     bool thread_sleep_;
@@ -89,15 +94,13 @@ private:
     std::unique_ptr<std::barrier<>> loop_barrier_;
 
     // Stored for renderer construction by worker threads
-    const std::vector<std::unique_ptr<EnemyTankFactory>> *tank_factories_;
-    std::shared_ptr<AbstractGLContext> gl_context_;
-    std::shared_ptr<AbstractFileReader> file_reader_;
-    std::vector<std::shared_ptr<Item>> scene_items_;
     std::random_device dev_;
 
-    std::unique_ptr<PBufferRenderer> construct_renderer(int index);
-
-    void worker_loop(int index);
+    void worker_loop(
+        const std::shared_ptr<EnemyTankFactory> &tank_factory,
+        const std::shared_ptr<AbstractGLContext> &gl_context,
+        const std::shared_ptr<AbstractFileReader> &file_reader,
+        const std::vector<std::shared_ptr<Item>> &scene_items, int index);
 };
 
 #endif//ARENAI_TRAIN_HOST_THREAD_POOL_H

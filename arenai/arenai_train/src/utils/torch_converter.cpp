@@ -30,11 +30,12 @@ tensor_to_actions(const torch::Tensor &continuous_actions, const torch::Tensor &
     return actions;
 }
 
-std::tuple<torch::Tensor, torch::Tensor> states_to_tensor(const std::vector<State> &states) {
+std::tuple<torch::Tensor, torch::Tensor> states_to_tensor(
+    const std::vector<State> &states, const int vision_height, const int vision_width) {
     const auto N = static_cast<int64_t>(states.size());
     constexpr int64_t C = 3;
-    constexpr int64_t H = ENEMY_VISION_HEIGHT;
-    constexpr int64_t W = ENEMY_VISION_WIDTH;
+    const int64_t H = vision_height;
+    const int64_t W = vision_width;
     constexpr int64_t P = ENEMY_PROPRIOCEPTION_SIZE;
 
     const torch::Tensor visions_u8 = torch::zeros(
@@ -46,7 +47,7 @@ std::tuple<torch::Tensor, torch::Tensor> states_to_tensor(const std::vector<Stat
     auto *vision_ptr = visions_u8.data_ptr<uint8_t>();
     auto *proprioception_ptr = proprioceptions.data_ptr<float>();
 
-    constexpr size_t vision_bytes = static_cast<size_t>(C * H * W) * sizeof(uint8_t);
+    const size_t vision_bytes = static_cast<size_t>(C * H * W) * sizeof(uint8_t);
     constexpr size_t proprioception_bytes = static_cast<size_t>(P) * sizeof(float);
 
     at::parallel_for(0, N, 1, [&](const int64_t begin, const int64_t end) {
@@ -61,7 +62,8 @@ std::tuple<torch::Tensor, torch::Tensor> states_to_tensor(const std::vector<Stat
     return {visions_u8, proprioceptions};
 }
 
-std::tuple<torch::Tensor, torch::Tensor> state_to_tensor(const State &state) {
-    const auto [vision, proprioception] = states_to_tensor({state});
+std::tuple<torch::Tensor, torch::Tensor>
+state_to_tensor(const State &state, const int vision_height, const int vision_width) {
+    const auto [vision, proprioception] = states_to_tensor({state}, vision_height, vision_width);
     return {vision[0], proprioception[0]};
 }

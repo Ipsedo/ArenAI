@@ -48,58 +48,69 @@ void ThreadLimiter::release() {
  */
 
 EnemyVisionThreadPool::EnemyVisionThreadPool(
-    const int max_concurrent_renders,
-    const std::vector<std::unique_ptr<EnemyTankFactory>> &tank_factories,
+    const int num_tanks, const int max_concurrent_renders, const int vision_height,
+    const int vision_width, const float wanted_frequency, const bool thread_sleep)
+    : num_tanks_(num_tanks), vision_height_(vision_height), vision_width_(vision_width),
+      wanted_frequency_(wanted_frequency), thread_sleep_(thread_sleep), threads_running_(true),
+      limiter_(max_concurrent_renders),
+      model_matrices_(std::make_unique<ModelMatricesDoubleBuffer>()),
+      reset_barrier_(std::nullptr_t()), loop_barrier_(std::nullptr_t()) {}
+
+void EnemyVisionThreadPool::start_thread(
+    const std::vector<std::shared_ptr<EnemyTankFactory>> &tank_factories,
     const std::shared_ptr<AbstractGLContext> &gl_context,
     const std::shared_ptr<AbstractFileReader> &file_reader,
-    const std::vector<std::shared_ptr<Item>> &scene_items,
     const std::vector<std::tuple<std::string, glm::mat4>> &initial_model_matrices,
-    const float wanted_frequency, const bool thread_sleep)
-    : num_tanks_(static_cast<int>(tank_factories.size())), wanted_frequency_(wanted_frequency),
-      thread_sleep_(thread_sleep), threads_running_(true), limiter_(max_concurrent_renders),
-      model_matrices_(std::make_unique<ModelMatricesDoubleBuffer>()),
-      reset_barrier_(std::make_unique<std::barrier<>>(num_tanks_ + 1)),
-      loop_barrier_(std::make_unique<std::barrier<>>(num_tanks_ + 1)),
-      tank_factories_(&tank_factories), gl_context_(gl_context), file_reader_(file_reader),
-      scene_items_(scene_items) {
+    const std::vector<std::shared_ptr<Item>> &scene_items) {
+    num_tanks_ = static_cast<int>(tank_factories.size());
+
+    reset_barrier_ = std::make_unique<std::barrier<>>(num_tanks_ + 1);
+    loop_barrier_ = std::make_unique<std::barrier<>>(num_tanks_ + 1);
 
     model_matrices_->write(initial_model_matrices);
 
     enemy_visions_.reserve(num_tanks_);
     for (int i = 0; i < num_tanks_; i++)
         enemy_visions_.push_back(
-            std::make_unique<VisionDoubleBuffer>(ENEMY_VISION_HEIGHT, ENEMY_VISION_WIDTH));
+            std::make_unique<VisionDoubleBuffer>(vision_height_, vision_width_));
 
     pool_.reserve(num_tanks_);
-    for (int i = 0; i < num_tanks_; i++) pool_.emplace_back([this, i] { worker_loop(i); });
+    for (int i = 0; i < num_tanks_; i++)
+        pool_.emplace_back([this, i, &tank_factories, gl_context, file_reader, scene_items] {
+            worker_loop(tank_factories[i], gl_context, file_reader, scene_items, i);
+        });
 }
 
-std::unique_ptr<PBufferRenderer> EnemyVisionThreadPool::construct_renderer(const int index) {
-    const auto &tank_factory = (*tank_factories_)[index];
+void EnemyVisionThreadPool::worker_loop(
+    const std::shared_ptr<EnemyTankFactory> &tank_factory,
+    const std::shared_ptr<AbstractGLContext> &gl_context,
+    const std::shared_ptr<AbstractFileReader> &file_reader,
+    const std::vector<std::shared_ptr<Item>> &scene_items, const int index) {
 
     std::seed_seq seq{
         dev_(), static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this)),
+        static_cast<uint32_t>(reinterpret_cast<uintptr_t>(tank_factory.get())),
         static_cast<uint32_t>(index),
         static_cast<uint32_t>(
             std::chrono::high_resolution_clock::now().time_since_epoch().count())};
     std::mt19937 local_rng(seq);
 
     auto renderer = std::make_unique<PBufferRenderer>(
-        gl_context_, ENEMY_VISION_WIDTH, ENEMY_VISION_HEIGHT, glm::vec3(200, 300, 200),
+        gl_context, vision_width_, vision_height_, glm::vec3(200, 300, 200),
         tank_factory->get_camera());
 
     renderer->make_current();
 
     std::uniform_real_distribution u_dist(0.f, 1.f);
 
-    renderer->add_drawable("cubemap", std::make_unique<CubeMap>(file_reader_, "cubemap/1"));
+    renderer->add_drawable("cubemap", std::make_unique<CubeMap>(file_reader, "cubemap/1"));
 
-    for (const auto &item: scene_items_) {
+    for (const auto &item: scene_items) {
         glm::vec4 color(u_dist(local_rng), u_dist(local_rng), u_dist(local_rng), 1.f);
         const auto shape = item->get_shape();
         renderer->add_drawable(
             item->get_name(), std::make_unique<Specular>(
-                                  file_reader_, shape->get_vertices(), shape->get_normals(), color,
+                                  file_reader, shape->get_vertices(), shape->get_normals(), color,
                                   color, color, 50.f));
     }
 
@@ -108,16 +119,9 @@ std::unique_ptr<PBufferRenderer> EnemyVisionThreadPool::construct_renderer(const
 
         renderer->add_drawable(
             name, std::make_unique<Specular>(
-                      file_reader_, shape->get_vertices(), shape->get_normals(), shell_color,
+                      file_reader, shape->get_vertices(), shape->get_normals(), shell_color,
                       shell_color, shell_color, 50.f));
     }
-
-    return renderer;
-}
-
-void EnemyVisionThreadPool::worker_loop(const int index) {
-    auto renderer = construct_renderer(index);
-
     const auto frame_dt = std::chrono::milliseconds(static_cast<int>(wanted_frequency_ * 1000.f));
 
     while (threads_running_.load(std::memory_order_acquire)) {

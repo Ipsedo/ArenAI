@@ -42,6 +42,8 @@ struct TrainOptions {
 struct EnvironmentOptions {
     float wanted_frequency;
     int nb_tanks;
+    int vision_height;
+    int vision_width;
     float initial_spawn_width;
     float initial_spawn_height;
     float final_spawn_width;

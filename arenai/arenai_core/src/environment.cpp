@@ -14,12 +14,16 @@
 BaseTanksEnvironment::BaseTanksEnvironment(
     const std::shared_ptr<AbstractFileReader> &file_reader,
     const std::shared_ptr<AbstractGLContext> &gl_context, const int nb_tanks,
-    float wanted_frequency, const int vision_num_threads, const bool vision_thread_sleep)
-    : wanted_frequency(wanted_frequency), nb_tanks(nb_tanks),
-      vision_num_threads(vision_num_threads), vision_thread_sleep(vision_thread_sleep),
+    float wanted_frequency, const int vision_height, const int vision_width,
+    const int vision_num_threads, const bool vision_thread_sleep)
+    : wanted_frequency(wanted_frequency), nb_tanks(nb_tanks), vision_height(vision_height),
+      vision_width(vision_width), vision_num_threads(vision_num_threads),
+      vision_thread_sleep(vision_thread_sleep),
       physic_engine(std::make_unique<PhysicEngine>(wanted_frequency)),
       nb_reset_frames(static_cast<int>(4.f / wanted_frequency)), gl_context(gl_context), rng(dev()),
-      file_reader(file_reader) {}
+      file_reader(file_reader), vision_pool_(std::make_unique<EnemyVisionThreadPool>(
+                                    nb_tanks, vision_num_threads, vision_height, vision_width,
+                                    wanted_frequency, vision_thread_sleep)) {}
 
 std::vector<std::tuple<State, Reward, IsDone>>
 BaseTanksEnvironment::step(const float time_delta, const std::vector<Action> &actions) {
@@ -125,7 +129,7 @@ BaseTanksEnvironment::reset_physics(const float spawn_width, const float spawn_h
     states.reserve(tank_factories.size());
     for (const auto &tank_factory: tank_factories)
         states.emplace_back(
-            image<uint8_t>{std::vector<uint8_t>(3 * ENEMY_VISION_HEIGHT * ENEMY_VISION_WIDTH, 0)},
+            image<uint8_t>{std::vector<uint8_t>(3 * vision_height * vision_width, 0)},
             tank_factory->get_proprioception());
 
     return states;
@@ -140,16 +144,15 @@ void BaseTanksEnvironment::reset_drawables(
 
     gl_context->release_current();
 
-    vision_pool_ = std::make_unique<EnemyVisionThreadPool>(
-        vision_num_threads, tank_factories, gl_context, file_reader, physic_engine->get_items(),
-        get_model_matrices(), wanted_frequency, vision_thread_sleep);
+    vision_pool_->start_thread(
+        tank_factories, gl_context, file_reader, get_model_matrices(), physic_engine->get_items());
 
     gl_context->make_current();
 }
 
 void BaseTanksEnvironment::reset_drawables() { reset_drawables(gl_context); }
 
-void BaseTanksEnvironment::stop_drawing() { vision_pool_.reset(); }
+void BaseTanksEnvironment::stop_drawing() const { vision_pool_->kill_threads(); }
 
 std::vector<std::tuple<std::string, glm::mat4>> BaseTanksEnvironment::get_model_matrices() const {
     std::vector<std::tuple<std::string, glm::mat4>> curr_model_matrices;

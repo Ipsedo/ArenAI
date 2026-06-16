@@ -7,12 +7,14 @@
 #include "../networks_utils/init.h"
 
 QFunction::QFunction(
-    const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_actions,
+    const int &vision_height, const int &vision_width, const int &nb_sensors,
+    const int &nb_continuous_actions, const int &nb_discrete_actions,
     const int &hidden_size_sensors, const int &hidden_size_actions,
     const std::vector<int> &hidden_sizes, const std::vector<std::tuple<int, int>> &vision_channels,
     const std::vector<int> &group_norm_nums)
     : vision_encoder(register_module(
-        "vision_encoder", std::make_shared<ConvolutionNetwork>(vision_channels, group_norm_nums))),
+        "vision_encoder", std::make_shared<ConvolutionNetwork>(
+                              vision_height, vision_width, vision_channels, group_norm_nums))),
       sensors_encoder(register_module(
           "sensors_encoder",
           torch::nn::Sequential(

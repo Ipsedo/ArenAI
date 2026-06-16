@@ -25,7 +25,7 @@ public:
     BaseTanksEnvironment(
         const std::shared_ptr<AbstractFileReader> &file_reader,
         const std::shared_ptr<AbstractGLContext> &gl_context, int nb_tanks, float wanted_frequency,
-        int vision_num_threads, bool vision_thread_sleep);
+        int vision_height, int vision_width, int vision_num_threads, bool vision_thread_sleep);
 
     virtual std::vector<std::tuple<State, Reward, IsDone>>
     step(float time_delta, const std::vector<Action> &actions);
@@ -33,7 +33,7 @@ public:
     std::vector<State> reset_physics(float spawn_width, float spawn_height);
     void reset_drawables(const std::shared_ptr<AbstractGLContext> &new_gl_context);
     void reset_drawables();
-    void stop_drawing();
+    void stop_drawing() const;
 
     virtual ~BaseTanksEnvironment();
 
@@ -41,12 +41,15 @@ private:
     float wanted_frequency;
     int nb_tanks;
 
+    int vision_height;
+    int vision_width;
+
     int vision_num_threads;
     bool vision_thread_sleep;
 
     std::unique_ptr<EnemyVisionThreadPool> vision_pool_;
 
-    std::vector<std::unique_ptr<EnemyTankFactory>> tank_factories;
+    std::vector<std::shared_ptr<EnemyTankFactory>> tank_factories;
     std::vector<std::unique_ptr<EnemyControllerHandler>> tank_controller_handler;
 
     std::unique_ptr<PhysicEngine> physic_engine;
@@ -69,7 +72,7 @@ protected:
 
     template<typename T>
     T apply_on_factories(
-        std::function<T(const std::vector<std::unique_ptr<EnemyTankFactory>> &)> apply_function) {
+        std::function<T(const std::vector<std::shared_ptr<EnemyTankFactory>> &)> apply_function) {
         return apply_function(tank_factories);
     }
 

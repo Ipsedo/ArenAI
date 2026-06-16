@@ -18,7 +18,7 @@ DesktopGameEnvironment::DesktopGameEnvironment(
     const float wanted_frequency)
     : BaseTanksEnvironment(
         std::make_shared<DesktopAssetFileReader>(asset_folder_path),
-        std::make_shared<GlfwGlContext>(glfw_window), nb_tanks, wanted_frequency, true),
+        std::make_shared<GlfwGlContext>(glfw_window), nb_tanks, wanted_frequency, 8, true),
       curr_window(glfw_window),
       asset_file_reader(std::make_shared<DesktopAssetFileReader>(asset_folder_path)),
       player_tank_factory(std::nullptr_t()), player_renderer(std::nullptr_t()),

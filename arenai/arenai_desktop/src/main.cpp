@@ -37,6 +37,8 @@ int main(const int argc, char **argv) {
     // Game options
     parser.add_argument("--wanted_frequency").scan<'g', float>().default_value(1.f / 30.f);
     parser.add_argument("--nb_tanks").scan<'i', int>().default_value(16);
+    parser.add_argument("--vision_height").scan<'i', int>().default_value(64);
+    parser.add_argument("--vision_width").scan<'i', int>().default_value(128);
     parser.add_argument("--window_width").scan<'i', int>().default_value(1920);
     parser.add_argument("--window_height").scan<'i', int>().default_value(1080);
     parser.add_argument("--android_asset_folder").required();
@@ -59,7 +61,8 @@ int main(const int argc, char **argv) {
         {parser.get<float>("--wanted_frequency"), parser.get<int>("--nb_tanks"),
          parser.get<int>("--window_width"), parser.get<int>("--window_height"),
          std::filesystem::path(parser.get<std::string>("--android_asset_folder"))},
-        {hyper_params, std::filesystem::path(parser.get<std::string>("--state_dict_folder")),
+        {parser.get<int>("--vision_height"), parser.get<int>("--vision_width"), hyper_params,
+         std::filesystem::path(parser.get<std::string>("--state_dict_folder")),
          parser.get<bool>("--cuda")});
 
     return 0;

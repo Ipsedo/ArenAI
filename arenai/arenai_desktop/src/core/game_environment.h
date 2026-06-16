@@ -17,7 +17,7 @@ class DesktopGameEnvironment : public BaseTanksEnvironment {
 public:
     DesktopGameEnvironment(
         const std::filesystem::path &asset_folder_path, GLFWwindow *glfw_window, int nb_tanks,
-        float wanted_frequency);
+        int vision_height, int vision_width, float wanted_frequency);
 
     ~DesktopGameEnvironment() override;
 

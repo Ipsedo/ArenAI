@@ -15,10 +15,11 @@
 
 DesktopGameEnvironment::DesktopGameEnvironment(
     const std::filesystem::path &asset_folder_path, GLFWwindow *glfw_window, const int nb_tanks,
-    const float wanted_frequency)
+    const int vision_height, const int vision_width, const float wanted_frequency)
     : BaseTanksEnvironment(
         std::make_shared<DesktopAssetFileReader>(asset_folder_path),
-        std::make_shared<GlfwGlContext>(glfw_window), nb_tanks, wanted_frequency, 8, true),
+        std::make_shared<GlfwGlContext>(glfw_window), nb_tanks, wanted_frequency, vision_height,
+        vision_width, 8, true),
       curr_window(glfw_window),
       asset_file_reader(std::make_shared<DesktopAssetFileReader>(asset_folder_path)),
       player_tank_factory(std::nullptr_t()), player_renderer(std::nullptr_t()),

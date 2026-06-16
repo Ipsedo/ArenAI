@@ -21,7 +21,7 @@ void game_loop(const GameOptions &game_options, const ModelOptions &model_option
     const auto sac_agent =
         SacAgentFactory(model_options.hyper_parameters)
             .get_agent(
-                ENEMY_VISION_HEIGHT, ENEMY_VISION_WIDTH, ENEMY_PROPRIOCEPTION_SIZE,
+                model_options.vision_height, model_options.vision_height, ENEMY_PROPRIOCEPTION_SIZE,
                 ENEMY_NB_CONTINUOUS_ACTION, ENEMY_NB_DISCRETE_ACTION);
     sac_agent->set_train(false);
 
@@ -42,7 +42,7 @@ void game_loop(const GameOptions &game_options, const ModelOptions &model_option
 
     const auto env = std::make_shared<DesktopGameEnvironment>(
         game_options.android_asset_folder, glfw_window, game_options.nb_tanks,
-        game_options.wanted_frequency);
+        model_options.vision_height, model_options.vision_width, game_options.wanted_frequency);
 
     auto states = env->reset_physics(500, 500);
     env->reset_drawables();
@@ -55,7 +55,8 @@ void game_loop(const GameOptions &game_options, const ModelOptions &model_option
 
         auto last_time = std::chrono::steady_clock::now();
 
-        const auto [vision, proprioception] = states_to_tensor(states);
+        const auto [vision, proprioception] =
+            states_to_tensor(states, model_options.vision_height, model_options.vision_width);
 
         const auto [continuous_action, discrete_action] =
             sac_agent->act(vision.to(device), proprioception.to(device));

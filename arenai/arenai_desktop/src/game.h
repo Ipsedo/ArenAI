@@ -9,6 +9,8 @@
 #include <string>
 
 struct ModelOptions {
+    int vision_height;
+    int vision_width;
     std::map<std::string, std::string> hyper_parameters;
     std::filesystem::path state_dict_folder;
     bool cuda;

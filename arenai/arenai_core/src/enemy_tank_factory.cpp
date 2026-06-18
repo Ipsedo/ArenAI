@@ -83,12 +83,9 @@ float EnemyTankFactory::get_reward(
             const auto best_tank_pos =
                 glm::vec3(best_tank_model_matrix * glm::vec4(glm::vec3(0.f), 1.f));
 
-            // shoot cost
-            constexpr float shoot_cost = 0.1f;
-
             // shoot reward
             hit_reward = compute_hit_reward(fire_pos, best_tank_pos, hit_pos)
-                         + (has_hit ? 1.f : 0.f) + (has_killed ? 2.f : 0.f) - shoot_cost;
+                         + (has_hit ? 1.f : 0.f) + (has_killed ? 2.f : 0.f);
         }
 
         last_shoot_info = std::nullopt;

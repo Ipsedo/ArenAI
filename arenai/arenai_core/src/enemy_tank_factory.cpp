@@ -21,7 +21,7 @@ EnemyTankFactory::EnemyTankFactory(
     : TankFactory(file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency),
       tank_prefix_name(tank_prefix_name),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-      curr_frame_upside_down(0), distance_scale(300.f), impact_distance_scale(50.f),
+      curr_frame_upside_down(0), distance_scale(150.f), impact_distance_scale(10.f),
       angle_scale(glm::pi<float>() / 3.f), is_dead_already_triggered(false), has_touch(false),
       last_shoot_info(std::nullopt), action_stats(std::make_shared<ActionStats>()) {}
 
@@ -84,7 +84,7 @@ float EnemyTankFactory::get_reward(
                 glm::vec3(best_tank_model_matrix * glm::vec4(glm::vec3(0.f), 1.f));
 
             // shoot cost
-            constexpr float shoot_cost = 0.01f;
+            constexpr float shoot_cost = 0.1f;
 
             // shoot reward
             hit_reward = compute_hit_reward(fire_pos, best_tank_pos, hit_pos)

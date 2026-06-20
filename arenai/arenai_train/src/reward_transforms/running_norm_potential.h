@@ -5,23 +5,27 @@
 #ifndef ARENAI_TRAIN_HOST_POTENTIAL_REWARD_EMA_REPLAY_BUFFER_H
 #define ARENAI_TRAIN_HOST_POTENTIAL_REWARD_EMA_REPLAY_BUFFER_H
 
-#include <arenai_train/replay_buffer.h>
+#include <arenai_train/reward_transform.h>
 
-class NormalizedPotentialRewardReplayBuffer : public ReplayBuffer {
+class NormalizedPotentialTransform : public AbstractRewardsTransform {
 public:
-    NormalizedPotentialRewardReplayBuffer(int memory_size, float potential_reward_scale);
+    NormalizedPotentialTransform(int memory_size, float potential_reward_scale);
 
-protected:
-    TorchInputStep on_add_step(int write_idx, const TorchInputStep &step) override;
-    TorchOutputStep to_output_step(const TorchInputStep &batch_steps) override;
+    InputRewards transform(const InputRewards &single_step_rewards) override;
 
 private:
+    size_t memory_size_;
+    size_t write_idx_;
+    size_t size_;
+
     float potential_reward_scale_;
 
     double potential_running_sum_;
     double potential_running_sum_sq_;
 
     std::vector<double> potential_reward_history_;
+
+    bool is_full() const;
 };
 
 #endif//ARENAI_TRAIN_HOST_POTENTIAL_REWARD_EMA_REPLAY_BUFFER_H

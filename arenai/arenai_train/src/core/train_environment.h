@@ -54,7 +54,6 @@ private:
     std::shared_ptr<AbstractMetric> episode_step_std_nb_metric;
 
     bool only_one_tank_alive();
-    bool only_one_tank_not_already_done();
 
     bool are_all_done();
 };

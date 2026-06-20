@@ -22,10 +22,10 @@ int main(const int argc, char **argv) {
         .action(parse_cli_group_norms);
     parser.add_argument("--sensors_hidden_size").scan<'i', int>().default_value(256);
     parser.add_argument("--actions_hidden_size").scan<'i', int>().default_value(64);
-    parser.add_argument("--actor_hidden_size")
+    parser.add_argument("--actor_hidden_sizes")
         .default_value<hidden_layers>({{1024, 512}})
         .action(parse_cli_hidden_layer);
-    parser.add_argument("--critic_hidden_size")
+    parser.add_argument("--critic_hidden_sizes")
         .default_value<hidden_layers>({{1024, 512}})
         .action(parse_cli_hidden_layer);
     parser.add_argument("--tau").scan<'g', float>().default_value(0.005f);
@@ -76,8 +76,8 @@ int main(const int argc, char **argv) {
         {parser.get<vision_channels>("--vision_channels").channels,
          parser.get<group_norm_nums>("--group_norm_nums").groups,
          parser.get<int>("--sensors_hidden_size"), parser.get<int>("--actions_hidden_size"),
-         parser.get<hidden_layers>("--actor_hidden_size").layers,
-         parser.get<hidden_layers>("--critic_hidden_size").layers, parser.get<float>("--tau"),
+         parser.get<hidden_layers>("--actor_hidden_sizes").layers,
+         parser.get<hidden_layers>("--critic_hidden_sizes").layers, parser.get<float>("--tau"),
          parser.get<float>("--gamma"), parser.get<float>("--initial_alpha_continuous"),
          parser.get<float>("--initial_alpha_discrete")},
         {std::filesystem::path(parser.get<std::string>("--output_folder")),

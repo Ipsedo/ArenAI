@@ -42,32 +42,29 @@ TrainTankEnvironment::step(const float time_delta, const std::vector<Action> &ac
         return has_hit_result;
     });
 
-    for (int i = 0; i < step_result.size(); i++) {
-        if (done[i] && !already_done[i]) already_done[i] = true;
+    already_done = done;
 
+    // natural ending (timeout, death)
+    for (int i = 0; i < step_result.size(); i++) {
         remaining_frames[i]--;
         if (has_hit[i]) remaining_frames[i] += nb_frames_added_when_hit;
 
-        const auto &[state, reward, is_done] = step_result[i];
-
-        // timeout or done
-        if (remaining_frames[i] <= 0 || is_done) {
+        if (const auto &[state, reward, is_done] = step_result[i];
+            remaining_frames[i] <= 0 || is_done) {
             const float timeout_penalty = remaining_frames[i] <= 0 ? 0.5f : 0.f;
-
             step_result[i] = {state, reward - timeout_penalty, true};
-
             done[i] = true;
         }
+    }
 
-        if (!done[i] && only_one_tank_not_already_done()) {
-            // timeout winner
-            step_result[i] = {state, reward + 1.f, true};
-            done[i] = true;
-        }
+    // detect winner
+    for (int i = 0; i < step_result.size(); i++) {
+        if (done[i]) continue;
 
-        if (!done[i] && only_one_tank_alive()) {
-            // winner
-            step_result[i] = {state, reward + 2.f, true};
+        if (const long nb_not_done = std::ranges::count(done, false); nb_not_done == 1) {
+            const auto &[state, reward, is_done] = step_result[i];
+            if (only_one_tank_alive()) step_result[i] = {state, reward + 2.f, true};// winner réel
+            else step_result[i] = {state, reward + 1.f, true};// timeout winner
             done[i] = true;
         }
     }
@@ -108,13 +105,6 @@ bool TrainTankEnvironment::only_one_tank_alive() {
 
         return nb_alive == 1;
     });
-}
-
-bool TrainTankEnvironment::only_one_tank_not_already_done() {
-    return std::accumulate(
-               already_done.begin(), already_done.end(), 0,
-               [](const int acc, const bool done) { return acc + static_cast<int>(!done); })
-           == 1;
 }
 
 bool TrainTankEnvironment::are_all_done() {

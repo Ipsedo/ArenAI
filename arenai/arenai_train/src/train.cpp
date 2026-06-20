@@ -18,7 +18,8 @@
 #include "./metrics/mean_metric.h"
 #include "./metrics/metric_saver.h"
 #include "./networks_io/torch_saver.h"
-#include "./replay_buffer/delta_scale_replay_buffer.h"
+#include "./reward_transforms/add_combiner.h"
+#include "./reward_transforms/delta_scale_potential.h"
 #include "./view/train_gl_context.h"
 
 void train_main(
@@ -61,8 +62,8 @@ void train_main(
         ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_CONTINUOUS_ACTION, ENEMY_NB_DISCRETE_ACTION,
         train_options.actor_learning_rate, train_options.critic_learning_rate,
         train_options.alpha_learning_rate, model_options.hidden_size_sensors,
-        model_options.hidden_size_actions, model_options.actor_hidden_size,
-        model_options.critic_hidden_size, model_options.vision_channels,
+        model_options.hidden_size_actions, model_options.actor_hidden_sizes,
+        model_options.critic_hidden_sizes, model_options.vision_channels,
         model_options.group_norm_nums, torch_device, train_options.metric_window_size,
         model_options.tau, model_options.gamma, model_options.initial_alpha_continuous,
         model_options.initial_alpha_discrete, train_options.target_continuous_sigma,
@@ -76,10 +77,12 @@ void train_main(
 
     AgentSaver saver(agent, train_options.output_folder, train_options.save_every);
 
-    std::unique_ptr<ReplayBuffer> replay_buffer =
-        std::make_unique<DeltaScalePotentialRewardReplayBuffer>(
-            train_options.replay_buffer_size, environment_options.wanted_frequency,
-            train_options.potential_reward_scale);
+    const std::vector<std::shared_ptr<AbstractRewardsTransform>> rewards_transforms(
+        {std::make_shared<DeltaScalePotentialRewardTransform>(
+            environment_options.wanted_frequency, train_options.potential_reward_scale)});
+
+    auto replay_buffer = std::make_unique<ReplayBuffer>(
+        train_options.replay_buffer_size, rewards_transforms, std::make_shared<AddCombiner>());
 
     // metrics
     auto reward_mean_metric =

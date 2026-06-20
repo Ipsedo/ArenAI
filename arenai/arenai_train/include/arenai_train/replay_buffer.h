@@ -9,6 +9,8 @@
 
 #include <torch/torch.h>
 
+#include "reward_transform.h"
+
 struct TorchState {
     torch::Tensor vision;
     torch::Tensor proprioception;
@@ -40,19 +42,16 @@ class ReplayBuffer {
 public:
     virtual ~ReplayBuffer() = default;
 
-    explicit ReplayBuffer(int memory_size);
+    explicit ReplayBuffer(
+        int memory_size,
+        const std::vector<std::shared_ptr<AbstractRewardsTransform>> &rewards_transforms,
+        const std::shared_ptr<AbstractRewardsCombiner> &rewards_combiner);
 
-    TorchOutputStep sample(int batch_size, torch::Device device);
+    TorchOutputStep sample(int batch_size, torch::Device device) const;
 
     void add(const TorchInputStep &step);
 
     int size() const;
-
-protected:
-    virtual TorchInputStep on_add_step(int write_idx, const TorchInputStep &step) = 0;
-    virtual TorchOutputStep to_output_step(const TorchInputStep &batch_steps) = 0;
-
-    bool is_full() const;
 
 private:
     bool initialized_;
@@ -71,7 +70,12 @@ private:
     torch::Tensor store_next_vision_;
     torch::Tensor store_next_proprioception_;
 
+    std::vector<std::shared_ptr<AbstractRewardsTransform>> rewards_transforms_;
+    std::shared_ptr<AbstractRewardsCombiner> rewards_combiner_;
+
     void initialize(const TorchInputStep &first_step);
+
+    bool is_full() const;
 };
 
 #endif// ARENAI_TRAIN_HOST_REPLAY_BUFFER_H

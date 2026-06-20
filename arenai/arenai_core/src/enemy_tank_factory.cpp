@@ -99,7 +99,7 @@ float EnemyTankFactory::get_reward(
 
 float EnemyTankFactory::get_phi(
     const std::vector<std::shared_ptr<EnemyTankFactory>> &tank_factories) {
-    float best_score = -1.f;
+    float best_score = 0.f;
 
     constexpr glm::vec4 world_center(0.f, 0.f, 0.f, 1.f);
     const glm::vec3 chassis_pos = get_chassis()->get_model_matrix() * world_center;

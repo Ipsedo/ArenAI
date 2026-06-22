@@ -4,6 +4,9 @@
 
 #include "./game.h"
 
+#include <iostream>
+
+#include <GLES3/gl3.h>
 #include <GLFW/glfw3.h>
 #include <torch/torch.h>
 
@@ -30,15 +33,24 @@ void game_loop(const GameOptions &game_options, const ModelOptions &model_option
 
     std::cout << "Parameters : " << sac_agent->count_parameters() << std::endl;
 
+    glfwSetErrorCallback([](const int error, const char *description) -> void {
+        std::cerr << "GLFW error " << error << ": " << description << std::endl;
+    });
+
     if (!glfwInit()) throw std::runtime_error("glfwInit() failed");
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
     glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
     auto glfw_window = glfwCreateWindow(
         game_options.window_width, game_options.window_height, "ArenAI", nullptr, nullptr);
+
+    if (!glfw_window) {
+        glfwTerminate();
+        throw std::runtime_error("glfwCreateWindow() failed");
+    }
 
     const auto env = std::make_shared<DesktopGameEnvironment>(
         game_options.android_asset_folder, glfw_window, game_options.nb_tanks,
@@ -46,6 +58,11 @@ void game_loop(const GameOptions &game_options, const ModelOptions &model_option
 
     auto states = env->reset_physics(500, 500);
     env->reset_drawables();
+
+    // GL context is current here: report which GPU/driver is actually used
+    std::cout << "OpenGL vendor   : " << glGetString(GL_VENDOR) << std::endl;
+    std::cout << "OpenGL renderer : " << glGetString(GL_RENDERER) << std::endl;
+    std::cout << "OpenGL version  : " << glGetString(GL_VERSION) << std::endl;
 
     const auto frame_dt =
         std::chrono::milliseconds(static_cast<int>(game_options.wanted_frequency * 1000.f));

@@ -1,130 +1,58 @@
 <#
 .SYNOPSIS
     Build arenai_desktop on Windows.
-    Installs vcpkg + dependencies (glfw3, boost, libtorch) then runs CMake.
+    Assumes dependencies are already installed (run install_dependencies.ps1 first).
 
 .USAGE
-    # CPU build (default)
+    # Release build (default)
     .\build_windows.ps1
 
-    # CUDA build
-    .\build_windows.ps1 -Cuda
+    # Debug build
+    .\build_windows.ps1 -Config Debug
 
-    # Custom libtorch path (skip download)
+    # Custom libtorch path
     .\build_windows.ps1 -LibtorchPath "C:\libtorch"
-
-    # Release build
-    .\build_windows.ps1 -Config Release
 #>
 
 param(
-    [switch]$Cuda,
-    [string]$LibtorchPath = "",
+    [string]$LibtorchPath = "$PSScriptRoot\libs\libtorch",
     [string]$Config = "Release",
-    [string]$VcpkgRoot = "$PSScriptRoot\vcpkg"
+    [string]$VcpkgRoot = "$PSScriptRoot\libs\vcpkg"
 )
 
 $ErrorActionPreference = "Stop"
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 function Write-Step($msg) { Write-Host "`n==> $msg" -ForegroundColor Cyan }
 function Assert-Command($cmd) {
     if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) {
-        Write-Error "$cmd is not installed or not in PATH."
-        exit 1
+        Write-Error "$cmd is not installed or not in PATH."; exit 1
     }
 }
 
-# ---------------------------------------------------------------------------
-# Prerequisites
-# ---------------------------------------------------------------------------
-Write-Step "Checking prerequisites"
-
-Assert-Command "git"
-Assert-Command "cmake"
-
-# Visual Studio / MSVC check
+# Use CMake and Ninja bundled with Visual Studio
 $vsWhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
-if (-not (Test-Path $vsWhere)) {
-    Write-Error "Visual Studio not found. Install VS 2022 with the 'Desktop development with C++' workload."
-    exit 1
-}
+if (-not (Test-Path $vsWhere)) { Write-Error "Visual Studio not found"; exit 1 }
 $vsPath = & $vsWhere -latest -prerelease -property installationPath
-$vsVersion = & $vsWhere -latest -prerelease -property installationVersion
-Write-Host "  Visual Studio: $vsPath ($vsVersion)"
+$cmake  = "$vsPath\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe"
+$ninja  = "$vsPath\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja\ninja.exe"
+if (-not (Test-Path $cmake)) { Write-Error "cmake.exe not found at $cmake"; exit 1 }
+if (-not (Test-Path $ninja)) { Write-Error "ninja.exe not found at $ninja"; exit 1 }
 
-# Initialize MSVC environment from vcvarsall.bat
-$vcvarsall = "$vsPath\VC\Auxiliary\Build\vcvarsall.bat"
-if (-not (Test-Path $vcvarsall)) {
-    Write-Error "vcvarsall.bat not found at $vcvarsall. Make sure the 'Desktop development with C++' workload is installed."
-    exit 1
-}
-Write-Host "  Initializing MSVC environment (x64)..."
-cmd /c "`"$vcvarsall`" x64 > nul 2>&1 && set" | ForEach-Object {
-    if ($_ -match "^([^=]+)=(.*)$") {
-        [System.Environment]::SetEnvironmentVariable($Matches[1], $Matches[2], "Process")
-    }
-}
-
-# ---------------------------------------------------------------------------
-# vcpkg
-# ---------------------------------------------------------------------------
-Write-Step "Setting up vcpkg"
-
-if (-not (Test-Path "$VcpkgRoot\vcpkg.exe")) {
-    if (-not (Test-Path $VcpkgRoot)) {
-        git clone https://github.com/microsoft/vcpkg.git $VcpkgRoot
-    }
-    & "$VcpkgRoot\bootstrap-vcpkg.bat" -disableMetrics
-}
-
-$vcpkgExe = "$VcpkgRoot\vcpkg.exe"
 $vcpkgToolchain = "$VcpkgRoot\scripts\buildsystems\vcpkg.cmake"
-Write-Host "  vcpkg: $vcpkgExe"
 
 # ---------------------------------------------------------------------------
-# Install vcpkg packages (glfw3, boost)
+# Initialize Visual Studio environment (equivalent to vcvarsall.bat x64)
+# Without this, CMake+Ninja cannot find the MSVC compiler.
 # ---------------------------------------------------------------------------
-Write-Step "Installing glfw3 bullet glm angle via vcpkg"
+Write-Step "Initializing Visual Studio environment"
+$vcvarsall = "$vsPath\VC\Auxiliary\Build\vcvarsall.bat"
+if (-not (Test-Path $vcvarsall)) { Write-Error "vcvarsall.bat not found at $vcvarsall"; exit 1 }
 
-& $vcpkgExe install glfw3:x64-windows glm:x64-windows bullet3:x64-windows angle:x64-windows
-if ($LASTEXITCODE -ne 0) { Write-Error "vcpkg install failed"; exit 1 }
-
-# ---------------------------------------------------------------------------
-# LibTorch
-# ---------------------------------------------------------------------------
-Write-Step "Setting up LibTorch"
-
-if ($LibtorchPath -eq "") {
-    $LibtorchPath = "$PSScriptRoot\libtorch"
-}
-
-if (-not (Test-Path "$LibtorchPath\share\cmake\Torch\TorchConfig.cmake")) {
-    Write-Host "  Downloading LibTorch..."
-
-    if ($Cuda) {
-        $torchUrl = "https://download.pytorch.org/libtorch/cu124/libtorch-win-shared-with-deps-2.6.0%2Bcu124.zip"
-    } else {
-        $torchUrl = "https://download.pytorch.org/libtorch/cpu/libtorch-win-shared-with-deps-2.6.0%2Bcpu.zip"
+$envOutput = cmd /c "`"$vcvarsall`" x64 && set"
+foreach ($line in $envOutput) {
+    if ($line -match "^([^=]+)=(.*)$") {
+        [System.Environment]::SetEnvironmentVariable($matches[1], $matches[2], "Process")
     }
-
-    $zipPath = "$PSScriptRoot\libtorch.zip"
-
-    Write-Host "  URL: $torchUrl"
-    Invoke-WebRequest -Uri $torchUrl -OutFile $zipPath -UseBasicParsing
-
-    Write-Host "  Extracting..."
-    Expand-Archive -Path $zipPath -DestinationPath $PSScriptRoot -Force
-    Remove-Item $zipPath
-
-    if (-not (Test-Path "$LibtorchPath\share\cmake\Torch\TorchConfig.cmake")) {
-        Write-Error "LibTorch extraction failed - TorchConfig.cmake not found in $LibtorchPath"
-        exit 1
-    }
-} else {
-    Write-Host "  Using existing LibTorch at $LibtorchPath"
 }
 
 # ---------------------------------------------------------------------------
@@ -132,13 +60,13 @@ if (-not (Test-Path "$LibtorchPath\share\cmake\Torch\TorchConfig.cmake")) {
 # ---------------------------------------------------------------------------
 Write-Step "Configuring CMake ($Config)"
 
-$buildDir = "$PSScriptRoot\build-windows"
+$buildDir = "$PSScriptRoot\build"
 
 $cacheFile = "$buildDir\CMakeCache.txt"
 if (Test-Path $cacheFile) {
     $cachedGenerator = (Select-String -Path $cacheFile -Pattern "CMAKE_GENERATOR:INTERNAL=(.+)").Matches.Groups[1].Value
-    if ($cachedGenerator -and $cachedGenerator -ne $vsGenerator) {
-        Write-Host "  Generator changed ($cachedGenerator -> $vsGenerator), clearing CMake cache..."
+    if ($cachedGenerator -and $cachedGenerator -ne "Ninja") {
+        Write-Host "  Generator changed ($cachedGenerator -> Ninja), clearing CMake cache..."
         Remove-Item -Recurse -Force $buildDir
     }
 }
@@ -147,16 +75,16 @@ $cmakeArgs = @(
     "-B", $buildDir
     "-S", $PSScriptRoot
     "-G", "Ninja"
-"-DCMAKE_TOOLCHAIN_FILE=$vcpkgToolchain"
+    "-DCMAKE_MAKE_PROGRAM=$ninja"
+    "-DCMAKE_TOOLCHAIN_FILE=$vcpkgToolchain"
     "-DCMAKE_PREFIX_PATH=$LibtorchPath\share\cmake"
     "-DCMAKE_BUILD_TYPE=$Config"
     "-DLIBTORCH_PATH=$LibtorchPath"
     "-DVCPKG_INSTALLED_DIR=$VcpkgRoot\installed"
-    "-DGLES3_INCLUDE_DIR=$khronosInclude"
-    "-DCMAKE_CXX_FLAGS=/EHsc -D_USE_MATH_DEFINES -DNOMINMAX"
+    "-DCMAKE_CXX_FLAGS=/EHsc /D_USE_MATH_DEFINES /DNOMINMAX /O2"
 )
 
-cmake @cmakeArgs
+& $cmake @cmakeArgs
 if ($LASTEXITCODE -ne 0) { Write-Error "CMake configure failed"; exit 1 }
 
 # ---------------------------------------------------------------------------
@@ -164,20 +92,32 @@ if ($LASTEXITCODE -ne 0) { Write-Error "CMake configure failed"; exit 1 }
 # ---------------------------------------------------------------------------
 Write-Step "Building arenai_desktop ($Config)"
 
-cmake --build $buildDir --config $Config --parallel 4
+& $cmake --build $buildDir --config $Config --parallel 4
 if ($LASTEXITCODE -ne 0) { Write-Error "Build failed"; exit 1 }
 
 # ---------------------------------------------------------------------------
 # Done
 # ---------------------------------------------------------------------------
-$exePath = "$buildDir\$Config\arenai_desktop.exe"
+$exePath = "$buildDir\arenai_desktop.exe"
 if (-not (Test-Path $exePath)) {
     $exePath = Get-ChildItem -Path $buildDir -Recurse -Filter "arenai_desktop.exe" | Select-Object -First 1 -ExpandProperty FullName
 }
 
+# ---------------------------------------------------------------------------
+# Generate launcher: forces the NVIDIA GPU (UserGpuPreferences) then runs the exe
+# ---------------------------------------------------------------------------
+Write-Step "Generating arenai_desktop.bat launcher"
+
+$batPath = "$PSScriptRoot\arenai_desktop.bat"
+$batContent = @"
+@echo off
+powershell -NoProfile -ExecutionPolicy Bypass -Command "`$exe='$exePath'; `$key='HKCU:\SOFTWARE\Microsoft\DirectX\UserGpuPreferences'; if (-not (Test-Path `$key)) { New-Item -Path `$key -Force | Out-Null }; New-ItemProperty -Path `$key -Name `$exe -Value 'GpuPreference=2;' -PropertyType String -Force | Out-Null; & `$exe --state_dict_folder C:\Users\sambe\Downloads\save_4\save_4 --android_asset_folder C:\Users\sambe\CLionProjects\ArenAI\app\src\main\assets --cuda"
+"@
+Set-Content -Path $batPath -Value $batContent -Encoding ascii
+Write-Host "  Launcher: $batPath" -ForegroundColor Green
+
 Write-Step "Build complete!"
 Write-Host "  Executable: $exePath" -ForegroundColor Green
 Write-Host ""
-Write-Host "  To run:"
-Write-Host "    cd $buildDir\$Config"
-Write-Host '    .\arenai_desktop.exe'
+Write-Host "  To run (forces NVIDIA GPU):"
+Write-Host "    .\arenai_desktop.bat"

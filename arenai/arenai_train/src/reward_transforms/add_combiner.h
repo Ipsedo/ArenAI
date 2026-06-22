@@ -5,7 +5,7 @@
 #ifndef ARENAI_TRAIN_HOST_ADD_COMBINER_H
 #define ARENAI_TRAIN_HOST_ADD_COMBINER_H
 
-#include <arenai_train/reward_transform.h>
+#include "./reward_transform.h"
 
 class AddCombiner : public AbstractRewardsCombiner {
 public:

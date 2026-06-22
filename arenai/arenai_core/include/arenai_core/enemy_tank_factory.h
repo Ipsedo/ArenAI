@@ -22,7 +22,7 @@ class EnemyTankFactory final : public TankFactory {
 public:
     EnemyTankFactory(
         const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
-        glm::vec3 chassis_pos, float wanted_frame_frequency);
+        glm::vec3 chassis_pos, float wanted_frame_frequency, float distance_scale);
 
     float get_reward(const std::vector<std::shared_ptr<EnemyTankFactory>> &tank_factories);
     float get_phi(const std::vector<std::shared_ptr<EnemyTankFactory>> &tank_factories);

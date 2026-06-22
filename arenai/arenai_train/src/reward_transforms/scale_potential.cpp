@@ -7,8 +7,6 @@
 ScalePotentialTransform::ScalePotentialTransform(const float potential_reward_scale)
     : potential_reward_scale_(potential_reward_scale) {}
 
-InputRewards ScalePotentialTransform::transform(const InputRewards &single_step_rewards) {
-    return {
-        single_step_rewards.main_reward,
-        single_step_rewards.potential_reward * potential_reward_scale_};
+torch::Tensor ScalePotentialTransform::transform(const torch::Tensor &single_step_reward) {
+    return single_step_reward * potential_reward_scale_;
 }

@@ -10,8 +10,8 @@ EmaPotentialTransform::EmaPotentialTransform(
       potential_reward_ema_var_(1.f), ema_initialized_(false),
       potential_reward_scale(potential_reward_scale) {}
 
-InputRewards EmaPotentialTransform::transform(const InputRewards &single_step_rewards) {
-    const auto potential_r = single_step_rewards.potential_reward.item<float>();
+torch::Tensor EmaPotentialTransform::transform(const torch::Tensor &single_step_reward) {
+    const auto potential_r = single_step_reward.item<float>();
 
     if (!ema_initialized_) {
         potential_reward_ema_mean_ = potential_r;
@@ -27,7 +27,7 @@ InputRewards EmaPotentialTransform::transform(const InputRewards &single_step_re
 
     const float potential_std = std::sqrt(potential_reward_ema_var_ + 1e-8f);
     const auto norm_potential_reward =
-        (single_step_rewards.potential_reward - potential_reward_ema_mean_) / potential_std;
+        (single_step_reward - potential_reward_ema_mean_) / potential_std;
 
-    return {single_step_rewards.main_reward, potential_reward_scale * norm_potential_reward};
+    return potential_reward_scale * norm_potential_reward;
 }

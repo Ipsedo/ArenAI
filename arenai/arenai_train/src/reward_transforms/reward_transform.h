@@ -12,11 +12,11 @@ struct InputRewards {
     torch::Tensor potential_reward;
 };
 
-class AbstractRewardsTransform {
+class AbstractRewardTransform {
 public:
-    virtual ~AbstractRewardsTransform() = default;
+    virtual ~AbstractRewardTransform() = default;
 
-    virtual InputRewards transform(const InputRewards &single_step_rewards) = 0;
+    virtual torch::Tensor transform(const torch::Tensor &single_step_reward) = 0;
 };
 
 class AbstractRewardsCombiner {

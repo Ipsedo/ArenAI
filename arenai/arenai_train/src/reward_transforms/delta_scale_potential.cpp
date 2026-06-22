@@ -9,7 +9,7 @@
 
 DeltaScalePotentialRewardTransform::DeltaScalePotentialRewardTransform(
     const float wanted_frequency, const float target_potential_reward)
-    : potential_reward_scale_(
+    : ScalePotentialTransform(
         compute_potential_reward_scale(wanted_frequency, 500.f, target_potential_reward, 0.1f)) {}
 
 float DeltaScalePotentialRewardTransform::compute_potential_reward_scale(
@@ -25,11 +25,4 @@ float DeltaScalePotentialRewardTransform::compute_potential_reward_scale(
     const float typical_delta_phi = typical_fraction * max_delta_phi;
 
     return target_reward / typical_delta_phi;
-}
-
-InputRewards
-DeltaScalePotentialRewardTransform::transform(const InputRewards &single_step_rewards) {
-    return {
-        single_step_rewards.main_reward,
-        potential_reward_scale_ * single_step_rewards.potential_reward};
 }

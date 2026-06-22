@@ -5,13 +5,13 @@
 #ifndef ARENAI_TRAIN_HOST_SCALE_REPLAY_BUFFER_H
 #define ARENAI_TRAIN_HOST_SCALE_REPLAY_BUFFER_H
 
-#include <arenai_train/reward_transform.h>
+#include "./reward_transform.h"
 
-class ScalePotentialTransform : public AbstractRewardsTransform {
+class ScalePotentialTransform : public AbstractRewardTransform {
 public:
     explicit ScalePotentialTransform(float potential_reward_scale);
 
-    InputRewards transform(const InputRewards &single_step_rewards) override;
+    torch::Tensor transform(const torch::Tensor &single_step_reward) override;
 
 private:
     float potential_reward_scale_;

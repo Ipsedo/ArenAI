@@ -5,13 +5,13 @@
 #ifndef ARENAI_TRAIN_HOST_EMA_REPLAY_BUFFER_H
 #define ARENAI_TRAIN_HOST_EMA_REPLAY_BUFFER_H
 
-#include <arenai_train/reward_transform.h>
+#include "./reward_transform.h"
 
-class EmaPotentialTransform : public AbstractRewardsTransform {
+class EmaPotentialTransform : public AbstractRewardTransform {
 public:
-    EmaPotentialTransform(float potential_reward_scale, float ema_decay = 0.999f);
+    explicit EmaPotentialTransform(float potential_reward_scale, float ema_decay = 0.999f);
 
-    InputRewards transform(const InputRewards &single_step_rewards) override;
+    torch::Tensor transform(const torch::Tensor &single_step_reward) override;
 
 private:
     float potential_reward_ema_decay_;

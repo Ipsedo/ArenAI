@@ -1,8 +1,0 @@
-//
-// Created by samuel on 20/06/2026.
-//
-
-#ifndef ARENAI_TRAIN_HOST_RUNNING_MIN_MAX_H
-#define ARENAI_TRAIN_HOST_RUNNING_MIN_MAX_H
-
-#endif//ARENAI_TRAIN_HOST_RUNNING_MIN_MAX_H

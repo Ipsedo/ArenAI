@@ -17,11 +17,11 @@
 
 EnemyTankFactory::EnemyTankFactory(
     const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
-    const glm::vec3 chassis_pos, const float wanted_frame_frequency)
+    const glm::vec3 chassis_pos, const float wanted_frame_frequency, const float distance_scale)
     : TankFactory(file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency),
       tank_prefix_name(tank_prefix_name),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-      curr_frame_upside_down(0), distance_scale(150.f), impact_distance_scale(10.f),
+      curr_frame_upside_down(0), distance_scale(distance_scale), impact_distance_scale(50.f),
       angle_scale(glm::pi<float>() / 3.f), is_dead_already_triggered(false), has_touch(false),
       last_shoot_info(std::nullopt), action_stats(std::make_shared<ActionStats>()) {}
 

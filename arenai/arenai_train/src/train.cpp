@@ -10,7 +10,6 @@
 #include <indicators/progress_bar.hpp>
 
 #include <arenai_core/constants.h>
-#include <arenai_train/replay_buffer.h>
 #include <arenai_train/torch_converter.h>
 
 #include "./agents/sac.h"
@@ -18,9 +17,11 @@
 #include "./metrics/mean_metric.h"
 #include "./metrics/metric_saver.h"
 #include "./networks_io/torch_saver.h"
+#include "./replay_buffer/reward_replay_buffer.h"
 #include "./reward_transforms/add_combiner.h"
 #include "./reward_transforms/delta_scale_potential.h"
 #include "./view/train_gl_context.h"
+#include "reward_transforms/running_norm.h"
 
 void train_main(
     const EnvironmentOptions &environment_options, const ModelOptions &model_options,
@@ -77,12 +78,12 @@ void train_main(
 
     AgentSaver saver(agent, train_options.output_folder, train_options.save_every);
 
-    const std::vector<std::shared_ptr<AbstractRewardsTransform>> rewards_transforms(
-        {std::make_shared<DeltaScalePotentialRewardTransform>(
-            environment_options.wanted_frequency, train_options.potential_reward_scale)});
-
-    auto replay_buffer = std::make_unique<ReplayBuffer>(
-        train_options.replay_buffer_size, rewards_transforms, std::make_shared<AddCombiner>());
+    std::unique_ptr<ReplayBuffer> replay_buffer = std::make_unique<RewardTransformReplayBuffer>(
+        train_options.replay_buffer_size,
+        std::make_shared<NormalizedNonZeroTransform>(train_options.replay_buffer_size),
+        std::make_shared<DeltaScalePotentialRewardTransform>(
+            environment_options.wanted_frequency, train_options.potential_reward_scale),
+        std::make_shared<AddCombiner>());
 
     // metrics
     auto reward_mean_metric =

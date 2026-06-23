@@ -9,7 +9,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <arenai_utils/file_reader.h>
-#include <arenai_utils/string_utils.h>
 #include <arenai_view/constants.h>
 #include <arenai_view/program.h>
 
@@ -149,7 +148,7 @@ std::unique_ptr<Program> Program::Builder::build() {
 
             const auto format = channels == 4 ? GL_RGBA : GL_RGB;
 
-            std::string file_name = split_string(file.string(), '/').back();
+            std::string file_name = file.filename().string();
             glTexImage2D(
                 file_to_tex_id[file_name], 0, GL_RGBA, width, height, 0, format, GL_UNSIGNED_BYTE,
                 pixels.data());

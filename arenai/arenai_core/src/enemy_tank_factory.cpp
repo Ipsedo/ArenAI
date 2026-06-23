@@ -21,8 +21,8 @@ EnemyTankFactory::EnemyTankFactory(
     : TankFactory(file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency),
       tank_prefix_name(tank_prefix_name),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-      curr_frame_upside_down(0), distance_scale(distance_scale), impact_distance_scale(50.f),
-      angle_scale(glm::pi<float>() / 3.f), is_dead_already_triggered(false), has_touch(false),
+      curr_frame_upside_down(0), distance_scale(distance_scale), impact_distance_scale(25.f),
+      angle_scale(glm::pi<float>() / 4.f), is_dead_already_triggered(false), has_touch(false),
       last_shoot_info(std::nullopt), action_stats(std::make_shared<ActionStats>()) {}
 
 float EnemyTankFactory::compute_aim_angle(const std::shared_ptr<EnemyTankFactory> &other_tank) {

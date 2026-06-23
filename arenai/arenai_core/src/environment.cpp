@@ -79,7 +79,7 @@ BaseTanksEnvironment::reset_physics(const float spawn_width, const float spawn_h
 
     // distance scale tracks the current spawn area so the potential shaping keeps a
     // crisp gradient on the nearest enemy at every curriculum stage (~spawn_side / 4).
-    constexpr float distance_scale_ratio = 0.3f;
+    constexpr float distance_scale_ratio = 0.5f;
     const float distance_scale = std::sqrt(spawn_width * spawn_height) * distance_scale_ratio;
 
     // add tanks

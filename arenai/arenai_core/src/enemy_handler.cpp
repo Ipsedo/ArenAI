@@ -25,6 +25,7 @@ std::tuple<bool, user_input> EnemyControllerHandler::to_output(const Action even
         {event.right_joystick.x * turret_scale_per_frame,
          event.right_joystick.y * turret_scale_per_frame},
         {has_fire}};
+
     action_stats->process_input(action);
 
     return {true, action};

@@ -4,3 +4,4 @@ vcpkg/
 build-windows/
 libtorch/
 libs/
+build/

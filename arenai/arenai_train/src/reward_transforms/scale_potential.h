@@ -11,7 +11,9 @@ class ScalePotentialTransform : public AbstractRewardTransform {
 public:
     explicit ScalePotentialTransform(float potential_reward_scale);
 
-    torch::Tensor transform(const torch::Tensor &single_step_reward) override;
+    void on_add(const torch::Tensor &single_step_reward) override;
+
+    torch::Tensor transform(const torch::Tensor &batch_step_reward) override;
 
 private:
     float potential_reward_scale_;

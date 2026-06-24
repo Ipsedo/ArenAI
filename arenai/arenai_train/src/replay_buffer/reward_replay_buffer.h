@@ -17,7 +17,7 @@ public:
         const std::shared_ptr<AbstractRewardsCombiner> &combiner);
 
 protected:
-    TorchInputStep on_add_step(const TorchInputStep &single_step) const override;
+    void on_add_step(const TorchInputStep &single_step) const override;
 
     TorchOutputStep to_output(const TorchInputStep &batch_steps) const override;
 

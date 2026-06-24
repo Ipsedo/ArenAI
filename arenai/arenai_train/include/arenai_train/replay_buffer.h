@@ -49,7 +49,7 @@ public:
     int size() const;
 
 protected:
-    virtual TorchInputStep on_add_step(const TorchInputStep &single_step) const;
+    virtual void on_add_step(const TorchInputStep &single_step) const;
     virtual TorchOutputStep to_output(const TorchInputStep &batch_steps) const;
 
 private:

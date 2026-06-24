@@ -11,7 +11,9 @@ class EmaPotentialTransform : public AbstractRewardTransform {
 public:
     explicit EmaPotentialTransform(float potential_reward_scale, float ema_decay = 0.999f);
 
-    torch::Tensor transform(const torch::Tensor &single_step_reward) override;
+    void on_add(const torch::Tensor &single_step_reward) override;
+
+    torch::Tensor transform(const torch::Tensor &batch_step_reward) override;
 
 private:
     float potential_reward_ema_decay_;

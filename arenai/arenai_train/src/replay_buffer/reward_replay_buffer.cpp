@@ -11,19 +11,16 @@ RewardTransformReplayBuffer::RewardTransformReplayBuffer(
     : ReplayBuffer(memory_size), main_reward_transform_(main_reward_transform),
       potential_reward_transform_(potential_reward_transform), combiner_(combiner) {}
 
-TorchInputStep RewardTransformReplayBuffer::on_add_step(const TorchInputStep &single_step) const {
-    return {
-        single_step.state,
-        single_step.action,
-        main_reward_transform_->transform(single_step.main_reward),
-        potential_reward_transform_->transform(single_step.potential_reward),
-        single_step.done,
-        single_step.next_state};
+void RewardTransformReplayBuffer::on_add_step(const TorchInputStep &single_step) const {
+    main_reward_transform_->on_add(single_step.main_reward);
+    potential_reward_transform_->on_add(single_step.potential_reward);
 }
 
 TorchOutputStep RewardTransformReplayBuffer::to_output(const TorchInputStep &batch_steps) const {
     return {
         batch_steps.state, batch_steps.action,
-        combiner_->to_reward({batch_steps.main_reward, batch_steps.potential_reward}),
+        combiner_->to_reward(
+            {main_reward_transform_->transform(batch_steps.main_reward),
+             potential_reward_transform_->transform(batch_steps.potential_reward)}),
         batch_steps.done, batch_steps.next_state};
 }

@@ -16,7 +16,8 @@ class AbstractRewardTransform {
 public:
     virtual ~AbstractRewardTransform() = default;
 
-    virtual torch::Tensor transform(const torch::Tensor &single_step_reward) = 0;
+    virtual torch::Tensor transform(const torch::Tensor &batch_step_reward) = 0;
+    virtual void on_add(const torch::Tensor &single_step_reward) = 0;
 };
 
 class AbstractRewardsCombiner {

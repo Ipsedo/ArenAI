@@ -91,28 +91,8 @@ float EnemyTankFactory::get_reward(
         last_shoot_info = std::nullopt;
     }
 
-    // 4. shoot in aim reward
-    float shoot_in_aim_reward = 0.f;
-    if (action_stats->has_fire()) {
-        float best_score = -1.f;
-
-        for (const auto &tank_factory: tank_factories) {
-            if (tank_factory->tank_prefix_name == tank_prefix_name || tank_factory->is_dead())
-                continue;
-
-            const auto angle = compute_aim_angle(tank_factory);
-
-            if (const auto aim_reward =
-                    2.f * std::exp(-0.5f * std::pow(angle / angle_scale, 2.f)) - 1.f;
-                aim_reward > best_score)
-                best_score = aim_reward;
-        }
-
-        shoot_in_aim_reward = best_score;
-    }
-
-    // 5. total reward
-    const float reward = dead_penalty + hit_reward + shoot_in_aim_reward;
+    // 4. total reward
+    const float reward = dead_penalty + hit_reward;
 
     return reward;
 }

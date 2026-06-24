@@ -81,8 +81,8 @@ void train_main(
     std::unique_ptr<ReplayBuffer> replay_buffer = std::make_unique<RewardTransformReplayBuffer>(
         train_options.replay_buffer_size,
         std::make_shared<NormalizedNonZeroTransform>(train_options.replay_buffer_size),
-        std::make_shared<DeltaScalePotentialRewardTransform>(
-            environment_options.wanted_frequency, train_options.potential_reward_scale),
+        std::make_shared<NormalizedRewardTransform>(
+            train_options.replay_buffer_size, train_options.potential_reward_scale),
         std::make_shared<AddCombiner>());
 
     // metrics

@@ -52,9 +52,9 @@ float EnemyTankFactory::compute_hit_reward(
 
     const float distance_reward =
         std::exp(-0.5f * std::pow(distance_impact / impact_distance_scale, 2.f));
-    const float angle_reward = 2.0f * std::exp(-0.5f * std::pow(angle / angle_scale, 2.f)) - 1.0f;
+    const float angle_reward = std::exp(-0.5f * std::pow(angle / angle_scale, 2.f));
 
-    return std::min(distance_reward * angle_reward, angle_reward);
+    return 2.f * distance_reward * angle_reward - 1.f;
 }
 
 float EnemyTankFactory::get_reward(

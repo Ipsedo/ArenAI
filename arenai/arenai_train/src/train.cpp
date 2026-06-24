@@ -170,8 +170,7 @@ void train_main(
                 if (env->is_tank_factory_already_done(i)) continue;
 
                 const float potential_reward =
-                    (env_done ? 0.f : 1.f) * model_options.gamma * phi_vector[i]
-                    - last_phi_vector[i];
+                    env_done ? 0.f : model_options.gamma * phi_vector[i] - last_phi_vector[i];
 
                 reward_mean_metric->add(reward);
                 potential_mean_metric->add(potential_reward);

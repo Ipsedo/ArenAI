@@ -54,7 +54,7 @@ float EnemyTankFactory::compute_hit_reward(
         std::exp(-0.5f * std::pow(distance_impact / impact_distance_scale, 2.f));
     const float angle_reward = std::exp(-0.5f * std::pow(angle / angle_scale, 2.f));
 
-    return 2.f * distance_reward * angle_reward - 1.f;
+    return distance_reward * angle_reward;
 }
 
 float EnemyTankFactory::get_reward(
@@ -91,8 +91,11 @@ float EnemyTankFactory::get_reward(
         last_shoot_info = std::nullopt;
     }
 
-    // 4. total reward
-    const float reward = dead_penalty + hit_reward;
+    // 4. shoot cost
+    const float shoot_cost = action_stats->has_fire() ? -5e-2f : 0.f;
+
+    // 5. total reward
+    const float reward = dead_penalty + hit_reward + shoot_cost;
 
     return reward;
 }

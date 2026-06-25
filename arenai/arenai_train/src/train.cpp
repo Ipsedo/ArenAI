@@ -20,8 +20,9 @@
 #include "./replay_buffer/reward_replay_buffer.h"
 #include "./reward_transforms/add_combiner.h"
 #include "./reward_transforms/delta_scale_potential.h"
+#include "./reward_transforms/identity_transform.h"
+#include "./reward_transforms/running_norm.h"
 #include "./view/train_gl_context.h"
-#include "reward_transforms/running_norm.h"
 
 void train_main(
     const EnvironmentOptions &environment_options, const ModelOptions &model_options,
@@ -79,8 +80,7 @@ void train_main(
     AgentSaver saver(agent, train_options.output_folder, train_options.save_every);
 
     std::unique_ptr<ReplayBuffer> replay_buffer = std::make_unique<RewardTransformReplayBuffer>(
-        train_options.replay_buffer_size,
-        std::make_shared<NormalizedNonZeroTransform>(train_options.replay_buffer_size),
+        train_options.replay_buffer_size, std::make_shared<IdentityTransform>(),
         std::make_shared<NormalizedRewardTransform>(
             train_options.replay_buffer_size, train_options.potential_reward_scale),
         std::make_shared<AddCombiner>());

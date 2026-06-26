@@ -79,15 +79,12 @@ BaseTanksEnvironment::reset_physics(const float spawn_width, const float spawn_h
 
     // distance scale tracks the current spawn area so the potential shaping keeps a
     // crisp gradient on the nearest enemy at every curriculum stage (~spawn_side / 4).
-    constexpr float distance_scale_ratio = 0.5f;
-    const float distance_scale = std::sqrt(spawn_width * spawn_height) * distance_scale_ratio;
 
     // add tanks
     for (int i = 0; i < nb_tanks; i++) {
         tank_factories.push_back(std::make_unique<EnemyTankFactory>(
             file_reader, "enemy_" + std::to_string(i),
-            glm::vec3(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng)), wanted_frequency,
-            distance_scale));
+            glm::vec3(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng)), wanted_frequency));
 
         for (const auto &item: tank_factories.back()->get_items()) physic_engine->add_item(item);
         for (const auto &item_producer: tank_factories.back()->get_item_producers())

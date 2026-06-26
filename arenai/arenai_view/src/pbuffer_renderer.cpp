@@ -95,7 +95,7 @@ void PBufferRenderer::on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_
 void PBufferRenderer::on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_context) {}
 
 void PBufferRenderer::init_pbos() {
-    pbo_size_ = static_cast<size_t>(width) * static_cast<size_t>(height) * 3;
+    pbo_size_ = static_cast<size_t>(width) * static_cast<size_t>(height) * 4;
     glGenBuffers(NUM_PBOS, pbos_);
     for (int i = 0; i < NUM_PBOS; i++) {
         glBindBuffer(GL_PIXEL_PACK_BUFFER, pbos_[i]);
@@ -111,14 +111,15 @@ image<uint8_t> PBufferRenderer::draw_and_get_frame(
     draw(model_matrices);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glPixelStorei(GL_PACK_ALIGNMENT, 4);
 
     if (!pbo_initialized_) {
         init_pbos();
 
         // First frame: kick off async read into PBO 0, return a black frame
         glBindBuffer(GL_PIXEL_PACK_BUFFER, pbos_[0]);
-        glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+        glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        glFlush();
         glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
         pbo_index_ = 1;
 
@@ -131,7 +132,8 @@ image<uint8_t> PBufferRenderer::draw_and_get_frame(
 
     // Start async read of current frame into read_pbo
     glBindBuffer(GL_PIXEL_PACK_BUFFER, pbos_[read_pbo]);
-    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glFlush();
 
     // Map the previous frame's PBO (should be ready by now)
     glBindBuffer(GL_PIXEL_PACK_BUFFER, pbos_[map_pbo]);
@@ -142,18 +144,18 @@ image<uint8_t> PBufferRenderer::draw_and_get_frame(
     auto frame = image(std::vector<uint8_t>(hw * 3));
 
     if (src) {
-        // HWC -> CHW
+        // RGBA HWC -> RGB CHW (drop alpha, separate channels)
         auto *dst = frame.pixels.data();
         for (int i = 0; i < hw; ++i) {
-            dst[0 * hw + i] = src[i * 3 + 0];
-            dst[1 * hw + i] = src[i * 3 + 1];
-            dst[2 * hw + i] = src[i * 3 + 2];
+            dst[0 * hw + i] = src[i * 4 + 0];
+            dst[1 * hw + i] = src[i * 4 + 1];
+            dst[2 * hw + i] = src[i * 4 + 2];
         }
         glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
     }
 
     glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-    pbo_index_ = read_pbo;
+    pbo_index_ = 1 - pbo_index_;
 
     return frame;
 }

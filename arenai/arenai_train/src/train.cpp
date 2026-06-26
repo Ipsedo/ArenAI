@@ -22,6 +22,7 @@
 #include "./reward_transforms/delta_scale_potential.h"
 #include "./reward_transforms/identity_transform.h"
 #include "./reward_transforms/running_norm.h"
+#include "./utils/image_writer.h"
 #include "./view/train_gl_context.h"
 
 void train_main(
@@ -178,6 +179,8 @@ void train_main(
                 const auto [next_vision, next_proprioception] = state_to_tensor(
                     next_state, environment_options.vision_height,
                     environment_options.vision_width);
+
+                //save_tensor_png(next_vision, "/home/samuel/Documents/ArenAI/out_png/visions_png_" + std::to_string(i) + ".png");
 
                 replay_buffer->add(
                     {{vision[i], proprioception[i]},

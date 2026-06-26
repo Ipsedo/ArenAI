@@ -10,10 +10,6 @@ project(arenai_desktop)
 set(CMAKE_CXX_STANDARD 20)
 
 # ArenAI modules
-set(ARENAI_CPP_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/..")
-
-add_subdirectory("${ARENAI_CPP_FOLDER}/arenai_train" "${CMAKE_CURRENT_BINARY_DIR}/arenai_train")
-
 include_directories(${ARENAI_CONTROLLER_INCLUDE_DIRS})
 include_directories(${ARENAI_UTILS_INCLUDE_DIRS})
 include_directories(${ARENAI_VIEW_INCLUDE_DIRS})

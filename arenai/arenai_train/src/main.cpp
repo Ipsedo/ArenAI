@@ -42,7 +42,7 @@ int main(const int argc, char **argv) {
     parser.add_argument("--potential_reward_scale").scan<'g', float>().default_value(1.f);
     parser.add_argument("--target_continuous_sigma").scan<'g', float>().default_value(0.1f);
     parser.add_argument("--discrete_entropy_factor").scan<'g', float>().default_value(0.5f);
-    parser.add_argument("--epochs").scan<'i', int>().default_value(4);
+    parser.add_argument("--epochs").scan<'i', int>().default_value(8);
     parser.add_argument("--batch_size").scan<'i', int>().default_value(256);
     parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60 * 3);
     parser.add_argument("--nb_episodes").scan<'i', int>().default_value(20000);

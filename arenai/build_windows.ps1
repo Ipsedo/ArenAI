@@ -103,21 +103,5 @@ if (-not (Test-Path $exePath)) {
     $exePath = Get-ChildItem -Path $buildDir -Recurse -Filter "arenai_desktop.exe" | Select-Object -First 1 -ExpandProperty FullName
 }
 
-# ---------------------------------------------------------------------------
-# Generate launcher: forces the NVIDIA GPU (UserGpuPreferences) then runs the exe
-# ---------------------------------------------------------------------------
-Write-Step "Generating arenai_desktop.bat launcher"
-
-$batPath = "$PSScriptRoot\arenai_desktop.bat"
-$batContent = @"
-@echo off
-powershell -NoProfile -ExecutionPolicy Bypass -Command "`$exe='$exePath'; `$key='HKCU:\SOFTWARE\Microsoft\DirectX\UserGpuPreferences'; if (-not (Test-Path `$key)) { New-Item -Path `$key -Force | Out-Null }; New-ItemProperty -Path `$key -Name `$exe -Value 'GpuPreference=2;' -PropertyType String -Force | Out-Null; & `$exe --state_dict_folder C:\Users\sambe\Downloads\save_4\save_4 --android_asset_folder C:\Users\sambe\CLionProjects\ArenAI\app\src\main\assets --cuda"
-"@
-Set-Content -Path $batPath -Value $batContent -Encoding ascii
-Write-Host "  Launcher: $batPath" -ForegroundColor Green
-
 Write-Step "Build complete!"
 Write-Host "  Executable: $exePath" -ForegroundColor Green
-Write-Host ""
-Write-Host "  To run (forces NVIDIA GPU):"
-Write-Host "    .\arenai_desktop.bat"

@@ -2,6 +2,8 @@
 // Created by samuel on 26/06/2026.
 //
 
+#include <EGL/egl.h>
+
 #include "./local_gl_context.h"
 
 LocalGlContext::LocalGlContext() {
@@ -30,10 +32,25 @@ LocalGlContext::LocalGlContext() {
         EGL_SAMPLES,
         0,
         EGL_NONE};
-    EGLConfig config;
+
+    EGLConfig configs[64];
     EGLint ncfg = 0;
-    if (!eglChooseConfig(display, cfgAttribs, &config, 1, &ncfg) || ncfg < 1)
+    if (!eglChooseConfig(display, cfgAttribs, configs, 64, &ncfg) || ncfg < 1)
         throw std::runtime_error("eglChooseConfig() failed");
+
+    EGLConfig config = nullptr;
+    for (EGLint i = 0; i < ncfg; ++i) {
+        EGLint r = 0, g = 0, b = 0, a = 0;
+        eglGetConfigAttrib(display, configs[i], EGL_RED_SIZE, &r);
+        eglGetConfigAttrib(display, configs[i], EGL_GREEN_SIZE, &g);
+        eglGetConfigAttrib(display, configs[i], EGL_BLUE_SIZE, &b);
+        eglGetConfigAttrib(display, configs[i], EGL_ALPHA_SIZE, &a);
+        if (r == 8 && g == 8 && b == 8 && a == 8) {
+            config = configs[i];
+            break;
+        }
+    }
+    if (config == nullptr) throw std::runtime_error("No 8-bit RGBA EGLConfig available");
 
     eglBindAPI(EGL_OPENGL_ES_API);
     constexpr EGLint ctxAttribs[] = {EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE};

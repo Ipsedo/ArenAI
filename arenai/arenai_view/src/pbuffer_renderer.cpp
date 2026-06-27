@@ -5,6 +5,7 @@
 #include <cstring>
 #include <vector>
 
+#include <EGL/egl.h>
 #include <GLES3/gl3.h>
 
 #include <arenai_view/pbuffer_renderer.h>
@@ -39,11 +40,26 @@ PBufferGLContext::PBufferGLContext(
         0,
         EGL_NONE};
     constexpr EGLint context_attrib[] = {EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE};
-    EGLint num_config = 0;
-    EGLConfig config;
 
-    if (eglChooseConfig(display, config_attrib, &config, 1, &num_config) != EGL_TRUE)
+    EGLConfig configs[64];
+    EGLint num_config = 0;
+    if (eglChooseConfig(display, config_attrib, configs, 64, &num_config) != EGL_TRUE
+        || num_config < 1)
         throw std::runtime_error("Can't get EGLConfig");
+
+    EGLConfig config = nullptr;
+    for (EGLint i = 0; i < num_config; ++i) {
+        EGLint r = 0, g = 0, b = 0, a = 0;
+        eglGetConfigAttrib(display, configs[i], EGL_RED_SIZE, &r);
+        eglGetConfigAttrib(display, configs[i], EGL_GREEN_SIZE, &g);
+        eglGetConfigAttrib(display, configs[i], EGL_BLUE_SIZE, &b);
+        eglGetConfigAttrib(display, configs[i], EGL_ALPHA_SIZE, &a);
+        if (r == 8 && g == 8 && b == 8 && a == 8) {
+            config = configs[i];
+            break;
+        }
+    }
+    if (config == nullptr) throw std::runtime_error("No 8-bit RGBA EGLConfig available");
 
     context = eglCreateContext(display, config, main_context->get_context(), context_attrib);
     if (context == EGL_NO_CONTEXT) throw std::runtime_error("eglCreateContext failed");

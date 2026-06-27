@@ -40,7 +40,7 @@ elseif (WIN32)
     # Mesa3D SDK (headers + import libs) from mesa-dist-win "devel" package,
     # fetched by arenai_desktop/install_dependencies.ps1 into libs/mesa-devel.
     if (NOT MESA_SDK_DIR)
-        set(MESA_SDK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../arenai_desktop/libs/mesa-devel")
+        set(MESA_SDK_DIR "${CMAKE_SOURCE_DIR}/libs/mesa-devel")
     endif ()
     find_path(MESA_INCLUDE_DIR GLES3/gl3.h HINTS "${MESA_SDK_DIR}/include" REQUIRED)
     find_library(MESA_EGL_LIB libEGL HINTS "${MESA_SDK_DIR}/lib/x64" REQUIRED)

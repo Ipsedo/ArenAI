@@ -88,7 +88,7 @@ Write-Host "  vcpkg: $VcpkgRoot\vcpkg.exe"
 # ---------------------------------------------------------------------------
 Write-Step "Installing glfw3 glm bullet3 via vcpkg"
 
-& "$VcpkgRoot\vcpkg.exe" install glfw3:x64-windows glm:x64-windows bullet3:x64-windows
+& "$VcpkgRoot\vcpkg.exe" install glfw3:x64-windows glm:x64-windows bullet3:x64-windows gtest:x64-windows
 if ($LASTEXITCODE -ne 0) { Write-Error "vcpkg install failed"; exit 1 }
 
 # ---------------------------------------------------------------------------

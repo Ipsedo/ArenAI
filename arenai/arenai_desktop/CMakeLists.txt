@@ -27,6 +27,11 @@ file(GLOB_RECURSE ARENAI_DESKTOP_SRC "${ARENAI_DESKTOP_PATH}/*.cpp")
 
 add_executable(arenai_desktop ${ARENAI_DESKTOP_SRC})
 
+# Stop <GLFW/glfw3.h> from pulling in desktop <GL/gl.h>: the code uses the
+# GLES3 headers (<GLES3/gl3.h>) and the two redeclare gl* with different
+# linkage, causing C2375. GLFW_INCLUDE_NONE lets our own GLES3 include win.
+target_compile_definitions(arenai_desktop PRIVATE GLFW_INCLUDE_NONE)
+
 target_link_libraries(
         arenai_desktop
         arenai_train_lib

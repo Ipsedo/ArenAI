@@ -15,6 +15,8 @@ add_executable(arenai_view_tests "${SRC}")
 target_link_libraries(arenai_view_tests GTest::gtest GTest::gtest_main soil2 arenai_view)
 target_include_directories(arenai_view_tests PRIVATE "${ARENAI_VIEW_INCLUDE_DIRS}" "${ARENAI_UTILS_INCLUDE_DIRS}" "${ARENAI_CONTROLLER_INCLUDE_DIRS}")
 
+arenai_copy_runtime_dlls(arenai_view_tests)
+
 add_test(
         NAME arenai_view_tests
         COMMAND arenai_view_tests

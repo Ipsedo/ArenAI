@@ -82,6 +82,7 @@ target_link_libraries(
         argparse
         nlohmann_json::nlohmann_json
 )
+arenai_copy_runtime_dlls(arenai_train_exec TORCH)
 
 # Library
 add_library(arenai_train_lib SHARED ${ARENAI_TRAIN_SRC})

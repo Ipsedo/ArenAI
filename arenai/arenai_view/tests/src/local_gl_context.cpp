@@ -2,9 +2,9 @@
 // Created by samuel on 26/06/2026.
 //
 
-#include <EGL/egl.h>
-
 #include "./local_gl_context.h"
+
+#include <EGL/egl.h>
 
 LocalGlContext::LocalGlContext() {
     display = eglGetDisplay(EGL_DEFAULT_DISPLAY);

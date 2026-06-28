@@ -34,15 +34,14 @@ torch::Tensor NormalizedRewardTransform::transform(const torch::Tensor &batch_st
     // transform
     const auto current_size = static_cast<float>(std::max(static_cast<int>(size_), 1));
 
-    const auto potential_reward_mean = static_cast<float>(running_sum_ / current_size);
-    const auto potential_reward_var = static_cast<float>(
-        running_sum_sq_ / current_size - potential_reward_mean * potential_reward_mean);
-    const auto potential_reward_std = std::sqrt(std::max(potential_reward_var, 0.f) + 1e-8f);
+    const auto reward_mean = static_cast<float>(running_sum_ / current_size);
+    const auto reward_var =
+        static_cast<float>(running_sum_sq_ / current_size - reward_mean * reward_mean);
+    const auto reward_std = std::sqrt(std::max(reward_var, 0.f) + 1e-8f);
 
-    const auto normalized_potential_reward =
-        (batch_step_reward - potential_reward_mean) / potential_reward_std;
+    const auto normalized_reward = (batch_step_reward - reward_mean) / reward_std;
 
-    return reward_scale_ * normalized_potential_reward;
+    return reward_scale_ * normalized_reward;
 }
 
 bool NormalizedRewardTransform::is_full() const { return size_ >= memory_size_; }

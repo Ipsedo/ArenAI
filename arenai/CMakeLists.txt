@@ -1,12 +1,9 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.29)
 
 project(arenai)
 
 set(CMAKE_CXX_STANDARD 20)
 
-# Runtime-DLL copy helper: defines arenai_copy_runtime_dlls(<target>), called
-# from each subdirectory after its executable is defined (POST_BUILD must live
-# in the target's own directory). Included here so all subdirs can use it.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(ArenaiRuntimeDlls)
 

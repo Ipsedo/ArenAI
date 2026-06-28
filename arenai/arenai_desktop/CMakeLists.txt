@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.29)
 
 # Must be set before project() so CMake picks it up at configure time
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)

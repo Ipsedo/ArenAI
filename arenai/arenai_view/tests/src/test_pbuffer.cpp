@@ -2,19 +2,20 @@
 // Created by samuel on 26/06/2026.
 //
 
+#include <fstream>
 #include <numeric>
 #include <unordered_set>
 
 #include <glm/ext/matrix_transform.hpp>
+#include <nlohmann/json.hpp>
 
 #include <arenai_view/camera.h>
 #include <arenai_view/cubemap.h>
 #include <arenai_view/pbuffer_renderer.h>
 #include <arenai_view_tests/test_pbuffer.h>
 
-#include "./local_file_reader.h"
-#include "./local_gl_context.h"
-#include "./make_shapes.h"
+#include "./utils/local_file_reader.h"
+#include "./utils/local_gl_context.h"
 
 TEST_P(PBufferParam, TestPBuffer) {
     const auto [width, height] = GetParam();
@@ -37,8 +38,19 @@ TEST_P(PBufferParam, TestPBuffer) {
     const auto model_matrices = std::vector<std::tuple<std::string, glm::mat4>>{
         {"test", glm::scale(glm::mat4(1.f), glm::vec3(2000.f))}};
 
-    // First call initializes PBOs and returns a black warmup frame
-    const auto _ = buffer_renderer.draw_and_get_frame(model_matrices);
+    // 1. First call initializes PBOs and returns a black warmup frame
+    const auto [black_pixels] = buffer_renderer.draw_and_get_frame(model_matrices);
+
+    ASSERT_EQ(black_pixels.size(), 3 * width * height);
+
+    // detect if black image
+    ASSERT_EQ(
+        std::accumulate(
+            black_pixels.begin(), black_pixels.end(), 0,
+            [](const int acc, const uint8_t p) { return static_cast<int>(p) + acc; }),
+        0);
+
+    // 2. First frame
     const auto [pixels] = buffer_renderer.draw_and_get_frame(model_matrices);
 
     ASSERT_EQ(pixels.size(), 3 * width * height);
@@ -50,11 +62,21 @@ TEST_P(PBufferParam, TestPBuffer) {
             [](const int acc, const uint8_t p) { return static_cast<int>(p) + acc; }),
         0);
 
-    std::unordered_set<uint8_t> pixels_set;
+    // Golden image tests
+    const auto golden_image_path =
+        std::filesystem::path(__FILE__).parent_path().parent_path() / "resources" / "golden_images"
+        / ("golden_cubemap_" + std::to_string(width) + "_" + std::to_string(height) + ".json");
+    std::ifstream input_file(golden_image_path);
 
-    for (const auto &p: pixels) pixels_set.emplace(p);
+    nlohmann::json golden_image_json;
+    input_file >> golden_image_json;
 
-    ASSERT_GT(pixels_set.size(), 3);// detect if uniform image, 3 different color at minimum
+    const auto golden_pixels = golden_image_json.get<std::vector<uint8_t>>();
+
+    for (size_t i = 0; i < golden_pixels.size(); ++i) {
+        constexpr int tolerance = 2;
+        ASSERT_LE(std::abs(golden_pixels[i] - pixels[i]), tolerance);
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(

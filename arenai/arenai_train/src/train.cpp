@@ -81,10 +81,9 @@ void train_main(
     AgentSaver saver(agent, train_options.output_folder, train_options.save_every);
 
     std::unique_ptr<ReplayBuffer> replay_buffer = std::make_unique<RewardTransformReplayBuffer>(
-        train_options.replay_buffer_size,
-        std::make_shared<NormalizedNonZeroTransform>(train_options.replay_buffer_size),
-        std::make_shared<NormalizedRewardTransform>(
-            train_options.replay_buffer_size, train_options.potential_reward_scale),
+        train_options.replay_buffer_size, std::make_shared<IdentityTransform>(),
+        std::make_shared<DeltaScalePotentialRewardTransform>(
+            environment_options.wanted_frequency, train_options.potential_reward_scale),
         std::make_shared<AddCombiner>());
 
     // metrics

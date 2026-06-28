@@ -7,6 +7,11 @@ set(CMAKE_CXX_STANDARD 20)
 enable_testing()
 find_package(GTest REQUIRED)
 
+include(FetchContent)
+
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz)
+FetchContent_MakeAvailable(json)
+
 set(ARENAI_VIEW_TESTS_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include" CACHE INTERNAL "")
 include_directories("${ARENAI_VIEW_TESTS_INCLUDE_DIRS}")
 
@@ -15,7 +20,7 @@ file(GLOB_RECURSE SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
 add_executable(arenai_view_tests "${SRC}")
 
-target_link_libraries(arenai_view_tests GTest::gtest GTest::gtest_main soil2 arenai_view)
+target_link_libraries(arenai_view_tests GTest::gtest GTest::gtest_main nlohmann_json::nlohmann_json soil2 arenai_view)
 target_include_directories(arenai_view_tests PRIVATE "${ARENAI_VIEW_INCLUDE_DIRS}" "${ARENAI_UTILS_INCLUDE_DIRS}" "${ARENAI_CONTROLLER_INCLUDE_DIRS}")
 
 arenai_copy_runtime_dlls(arenai_view_tests)

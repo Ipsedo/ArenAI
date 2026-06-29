@@ -4,33 +4,27 @@ project(arenai_core)
 
 include(FetchContent)
 
+set(CMAKE_CXX_STANDARD 20)
+
 # indicators
 FetchContent_Declare(
         indicators
         GIT_REPOSITORY https://github.com/p-ranav/indicators.git
+        GIT_TAG 3872f37abd90d7557bac5f834bfb45bd6c75259a # v2.3 + fixes
 )
 FetchContent_MakeAvailable(indicators)
 
 ##### PhyVR #####
-set(CMAKE_CXX_STANDARD 20)
-
-include_directories(${ARENAI_UTILS_INCLUDE_DIRS})
-include_directories(${ARENAI_CONTROLLER_INCLUDE_DIRS})
-include_directories(${ARENAI_VIEW_INCLUDE_DIRS})
-include_directories(${ARENAI_MODEL_INCLUDE_DIRS})
-
-set(ARENAI_CORE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include" CACHE INTERNAL "")
-include_directories(${ARENAI_CORE_INCLUDE_DIRS})
-
 file(GLOB_RECURSE ARENAI_CORE_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
-
 add_library(arenai_core SHARED ${ARENAI_CORE_SRC})
-set_target_properties(arenai_core PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+target_include_directories(arenai_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 target_link_libraries(
         arenai_core
+        PUBLIC
         arenai_utils
         arenai_view
         arenai_model
+        arenai_controller
         indicators
 )

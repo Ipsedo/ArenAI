@@ -9,14 +9,6 @@ project(arenai_desktop)
 
 set(CMAKE_CXX_STANDARD 20)
 
-# ArenAI modules
-include_directories(${ARENAI_CONTROLLER_INCLUDE_DIRS})
-include_directories(${ARENAI_UTILS_INCLUDE_DIRS})
-include_directories(${ARENAI_VIEW_INCLUDE_DIRS})
-include_directories(${ARENAI_MODEL_INCLUDE_DIRS})
-include_directories(${ARENAI_CORE_INCLUDE_DIRS})
-include_directories(${ARENAI_TRAIN_INCLUDE_DIRS})
-
 # dependencies
 find_package(glfw3 REQUIRED)
 
@@ -27,10 +19,16 @@ file(GLOB_RECURSE ARENAI_DESKTOP_SRC "${ARENAI_DESKTOP_PATH}/*.cpp")
 
 add_executable(arenai_desktop ${ARENAI_DESKTOP_SRC})
 
+# ArenAI module headers propagate through arenai_train_lib's PUBLIC interface.
 target_link_libraries(
         arenai_desktop
         arenai_train_lib
         glfw
 )
+
+# fix opengl header with glfw on windows
+if (WIN32)
+    target_compile_definitions(arenai_desktop PRIVATE GLFW_INCLUDE_NONE)
+endif ()
 
 arenai_copy_runtime_dlls(arenai_desktop TORCH)

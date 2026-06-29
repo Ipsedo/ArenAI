@@ -57,6 +57,10 @@ FetchContent_MakeAvailable(executorch)
 
 set(CMAKE_CXX_STANDARD 20)
 
+# Auto-export all symbols from our shared libraries on Windows (replaces the
+# per-target WINDOWS_EXPORT_ALL_SYMBOLS property in each module).
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
 set(ARENAI_FOLDER "${PROJECT_ROOT}/arenai")
 set(ARENAI_BINARY_ROOT_PATH "${CMAKE_CURRENT_BINARY_DIR}/arenai")
 
@@ -66,11 +70,7 @@ add_subdirectory("${ARENAI_FOLDER}/arenai_view" "${ARENAI_BINARY_ROOT_PATH}/aren
 add_subdirectory("${ARENAI_FOLDER}/arenai_model" "${ARENAI_BINARY_ROOT_PATH}/arenai_model")
 add_subdirectory("${ARENAI_FOLDER}/arenai_core" "${ARENAI_BINARY_ROOT_PATH}/arenai_core")
 
-include_directories(${ARENAI_UTILS_INCLUDE_DIRS})
-include_directories(${ARENAI_CONTROLLER_INCLUDE_DIRS})
-include_directories(${ARENAI_VIEW_INCLUDE_DIRS})
-include_directories(${ARENAI_MODEL_INCLUDE_DIRS})
-include_directories(${ARENAI_CORE_INCLUDE_DIRS})
+# ArenAI module headers propagate through each library's PUBLIC interface.
 
 # Boost
 FetchContent_Declare(

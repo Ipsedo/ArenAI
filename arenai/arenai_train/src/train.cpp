@@ -18,10 +18,7 @@
 #include "./metrics/metric_saver.h"
 #include "./networks_io/torch_saver.h"
 #include "./replay_buffer/reward_replay_buffer.h"
-#include "./reward_transforms/add_combiner.h"
-#include "./reward_transforms/delta_scale_potential.h"
 #include "./reward_transforms/identity_transform.h"
-#include "./reward_transforms/running_norm.h"
 #include "./utils/image_writer.h"
 #include "./view/train_gl_context.h"
 

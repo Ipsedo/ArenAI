@@ -19,16 +19,7 @@ struct TorchAction {
     torch::Tensor discrete_action;
 };
 
-struct TorchInputStep {
-    TorchState state;
-    TorchAction action;
-    torch::Tensor main_reward;
-    torch::Tensor potential_reward;
-    torch::Tensor done;
-    TorchState next_state;
-};
-
-struct TorchOutputStep {
+struct TorchStep {
     TorchState state;
     TorchAction action;
     torch::Tensor reward;
@@ -42,15 +33,15 @@ public:
 
     explicit ReplayBuffer(int memory_size);
 
-    TorchOutputStep sample(int batch_size, torch::Device device) const;
+    TorchStep sample(int batch_size, torch::Device device) const;
 
-    void add(const TorchInputStep &step);
+    void add(const TorchStep &step);
 
-    int size() const;
+    size_t size() const;
 
 protected:
-    virtual void on_add_step(const TorchInputStep &single_step) const;
-    virtual TorchOutputStep to_output(const TorchInputStep &batch_steps) const;
+    virtual void on_add_step(const TorchStep &single_step) const;
+    virtual TorchStep transform_at_sample(const TorchStep &batch_steps) const;
 
 private:
     bool initialized_;
@@ -63,13 +54,12 @@ private:
     torch::Tensor store_state_proprioception_;
     torch::Tensor store_cont_action_;
     torch::Tensor store_disc_action_;
-    torch::Tensor store_main_reward_;
-    torch::Tensor store_potential_reward_;
+    torch::Tensor store_reward_;
     torch::Tensor store_done_;
     torch::Tensor store_next_vision_;
     torch::Tensor store_next_proprioception_;
 
-    void initialize(const TorchInputStep &first_step);
+    void initialize(const TorchStep &first_step);
 
     bool is_full() const;
 };

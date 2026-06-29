@@ -81,23 +81,16 @@ void train_main(
     AgentSaver saver(agent, train_options.output_folder, train_options.save_every);
 
     std::unique_ptr<ReplayBuffer> replay_buffer = std::make_unique<RewardTransformReplayBuffer>(
-        train_options.replay_buffer_size, std::make_shared<IdentityTransform>(),
-        std::make_shared<DeltaScalePotentialRewardTransform>(
-            environment_options.wanted_frequency, 0.f),
-        std::make_shared<AddCombiner>());
+        train_options.replay_buffer_size, std::make_shared<IdentityTransform>());
 
     // metrics
     auto reward_mean_metric =
         std::make_shared<MeanMetric>("r", train_options.metric_window_size, 2, true);
 
-    auto potential_mean_metric =
-        std::make_shared<MeanMetric>("pr", train_options.metric_window_size, 2, true);
-
     const auto sac_metrics = agent->get_metrics();
     const auto env_metrics = env->get_metrics();
 
-    std::vector<std::shared_ptr<AbstractMetric>> metrics = {
-        reward_mean_metric, potential_mean_metric};
+    std::vector<std::shared_ptr<AbstractMetric>> metrics = {reward_mean_metric};
     metrics.insert(metrics.end(), env_metrics.begin(), env_metrics.end());
     metrics.insert(metrics.end(), sac_metrics.begin(), sac_metrics.end());
 
@@ -133,7 +126,6 @@ void train_main(
 
         auto last_states = env->reset_physics(spawn_width, spawn_height);
         env->reset_drawables(gl_context);
-        auto last_phi_vector = env->get_phi_vector();
 
         while (!is_done) {
 
@@ -158,7 +150,6 @@ void train_main(
 
             // step environment
             const auto steps = env->step(environment_options.wanted_frequency, actions_for_env);
-            const auto phi_vector = env->get_phi_vector();
 
             last_states.clear();
             last_states.reserve(environment_options.nb_tanks);
@@ -170,11 +161,7 @@ void train_main(
 
                 if (env->is_tank_factory_already_done(i)) continue;
 
-                const float potential_reward =
-                    env_done ? 0.f : model_options.gamma * phi_vector[i] - last_phi_vector[i];
-
                 reward_mean_metric->add(reward);
-                potential_mean_metric->add(potential_reward);
 
                 const auto [next_vision, next_proprioception] = state_to_tensor(
                     next_state, environment_options.vision_height,
@@ -188,7 +175,6 @@ void train_main(
                     {{vision[i], proprioception[i]},
                      {torch_action.continuous_action[i], torch_action.discrete_action[i]},
                      torch::tensor({reward}, torch::TensorOptions().dtype(torch::kFloat)),
-                     torch::tensor({potential_reward}, torch::TensorOptions().dtype(torch::kFloat)),
                      torch::tensor({env_done}, torch::TensorOptions().dtype(torch::kBool)),
                      {next_vision, next_proprioception}});
             }
@@ -200,7 +186,6 @@ void train_main(
 
             // step ending stuff
             is_done = env->is_episode_terminated();
-            last_phi_vector = phi_vector;
 
             train_counter = (train_counter + 1) % train_options.train_every;
 

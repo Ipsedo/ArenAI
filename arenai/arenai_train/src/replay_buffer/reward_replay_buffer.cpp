@@ -5,22 +5,15 @@
 #include "./reward_replay_buffer.h"
 
 RewardTransformReplayBuffer::RewardTransformReplayBuffer(
-    const int memory_size, const std::shared_ptr<AbstractRewardTransform> &main_reward_transform,
-    const std::shared_ptr<AbstractRewardTransform> &potential_reward_transform,
-    const std::shared_ptr<AbstractRewardsCombiner> &combiner)
-    : ReplayBuffer(memory_size), main_reward_transform_(main_reward_transform),
-      potential_reward_transform_(potential_reward_transform), combiner_(combiner) {}
+    const int memory_size, const std::shared_ptr<AbstractRewardTransform> &reward_transform)
+    : ReplayBuffer(memory_size), reward_transform_(reward_transform) {}
 
-void RewardTransformReplayBuffer::on_add_step(const TorchInputStep &single_step) const {
-    main_reward_transform_->on_add(single_step.main_reward);
-    potential_reward_transform_->on_add(single_step.potential_reward);
+void RewardTransformReplayBuffer::on_add_step(const TorchStep &single_step) const {
+    reward_transform_->on_add(single_step.reward);
 }
 
-TorchOutputStep RewardTransformReplayBuffer::to_output(const TorchInputStep &batch_steps) const {
+TorchStep RewardTransformReplayBuffer::transform_at_sample(const TorchStep &batch_steps) const {
     return {
-        batch_steps.state, batch_steps.action,
-        combiner_->to_reward(
-            {main_reward_transform_->transform(batch_steps.main_reward),
-             potential_reward_transform_->transform(batch_steps.potential_reward)}),
+        batch_steps.state, batch_steps.action, reward_transform_->transform(batch_steps.reward),
         batch_steps.done, batch_steps.next_state};
 }

@@ -83,7 +83,7 @@ void train_main(
     std::unique_ptr<ReplayBuffer> replay_buffer = std::make_unique<RewardTransformReplayBuffer>(
         train_options.replay_buffer_size, std::make_shared<IdentityTransform>(),
         std::make_shared<DeltaScalePotentialRewardTransform>(
-            environment_options.wanted_frequency, train_options.potential_reward_scale),
+            environment_options.wanted_frequency, 0.f),
         std::make_shared<AddCombiner>());
 
     // metrics
@@ -180,7 +180,9 @@ void train_main(
                     next_state, environment_options.vision_height,
                     environment_options.vision_width);
 
-                //save_tensor_png(next_vision, "/home/samuel/Documents/ArenAI/out_png/visions_png_" + std::to_string(i) + ".png");
+                save_tensor_png(
+                    next_vision, "/home/samuel/Documents/ArenAI/out_png/visions_png_"
+                                     + std::to_string(i) + ".png");
 
                 replay_buffer->add(
                     {{vision[i], proprioception[i]},

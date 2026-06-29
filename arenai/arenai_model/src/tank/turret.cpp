@@ -29,13 +29,15 @@ TurretItem::TurretItem(
 }
 
 void TurretItem::on_input(const user_input &input) {
+    // angle is the hinge target in radians; input.right_joystick.x is a per-frame
+    // delta already expressed in rad/frame by the controller handler.
     angle += -input.right_joystick.x;
 
-    if (angle < -1.f) angle += 2.f;
-    else if (angle > 1.f) angle -= 2.f;
-    angle = std::clamp(angle, -1.f, 1.f);
+    if (angle < -static_cast<float>(M_PI)) angle += 2.f * static_cast<float>(M_PI);
+    else if (angle > static_cast<float>(M_PI)) angle -= 2.f * static_cast<float>(M_PI);
+    angle = std::clamp(angle, -static_cast<float>(M_PI), static_cast<float>(M_PI));
 
-    hinge->setLimit(angle * static_cast<float>(M_PI), angle * static_cast<float>(M_PI));
+    hinge->setLimit(angle, angle);
 }
 
 std::vector<btTypedConstraint *> TurretItem::get_constraints() {

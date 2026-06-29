@@ -59,12 +59,13 @@ std::vector<std::shared_ptr<Item>> CanonItem::get_produced_items() {
 }
 
 void CanonItem::on_input(const user_input &input) {
-    angle += input.right_joystick.y * 2.f;
+    // angle is the hinge target in radians; input.right_joystick.y is a per-frame
+    // delta in rad/frame. Elevation is limited to +/- 0.2 * pi.
+    angle += input.right_joystick.y * 0.4f;
 
-    angle = std::clamp(angle, -1.f, 1.f);
+    angle = std::clamp(angle, -0.2f * static_cast<float>(M_PI), 0.2f * static_cast<float>(M_PI));
 
-    hinge->setLimit(
-        angle * static_cast<float>(M_PI) * 0.2f, angle * static_cast<float>(M_PI) * 0.2f);
+    hinge->setLimit(angle, angle);
 
     if (input.fire_button.pressed) will_fire = true;
 }

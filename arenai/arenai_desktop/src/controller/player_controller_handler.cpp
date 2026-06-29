@@ -5,6 +5,7 @@
 #include "./player_controller_handler.h"
 
 #include <algorithm>
+#include <cmath>
 
 MouseKeyboardPlayerControllerHandler::MouseKeyboardPlayerControllerHandler(GLFWwindow *window)
     : window(window), current_dir(0.f), current_speed(0.f), current_turret_rotation(0.f),
@@ -49,7 +50,9 @@ MouseKeyboardPlayerControllerHandler::to_output(const GlfwInput event) {
     if (cursor_captured) {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-        constexpr float factor = 0.4f;
+        // controllers consume rad/frame deltas, so the normalized mouse
+        // displacement is scaled into radians here.
+        constexpr float factor = 0.4f * static_cast<float>(M_PI);
 
         current_turret_rotation = factor * (event.mouse_x - center_x) / center_x;
         current_canon_rotation = factor * (event.mouse_y - center_y) / center_y;

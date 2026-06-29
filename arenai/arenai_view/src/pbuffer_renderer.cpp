@@ -161,11 +161,19 @@ image<uint8_t> PBufferRenderer::draw_and_get_frame(
 
     if (src) {
         // RGBA HWC -> RGB CHW (drop alpha, separate channels)
+        // glReadPixels returns rows bottom-to-top (OpenGL origin = bottom-left),
+        // so flip vertically to get top-to-bottom image rows.
         auto *dst = frame.pixels.data();
-        for (int i = 0; i < hw; ++i) {
-            dst[0 * hw + i] = src[i * 4 + 0];
-            dst[1 * hw + i] = src[i * 4 + 1];
-            dst[2 * hw + i] = src[i * 4 + 2];
+        for (int y = 0; y < height; ++y) {
+            const int src_row = (height - 1 - y) * width;
+            const int dst_row = y * width;
+            for (int x = 0; x < width; ++x) {
+                const int s = (src_row + x) * 4;
+                const int d = dst_row + x;
+                dst[0 * hw + d] = src[s + 0];
+                dst[1 * hw + d] = src[s + 1];
+                dst[2 * hw + d] = src[s + 2];
+            }
         }
         glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
     }

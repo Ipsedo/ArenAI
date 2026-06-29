@@ -180,9 +180,9 @@ void train_main(
                     next_state, environment_options.vision_height,
                     environment_options.vision_width);
 
-                save_tensor_png(
+                /*save_tensor_png(
                     next_vision, "/home/samuel/Documents/ArenAI/out_png/visions_png_"
-                                     + std::to_string(i) + ".png");
+                                     + std::to_string(i) + ".png");*/
 
                 replay_buffer->add(
                     {{vision[i], proprioception[i]},

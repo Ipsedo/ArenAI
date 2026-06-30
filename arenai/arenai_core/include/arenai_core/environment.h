@@ -12,11 +12,11 @@
 #include <vector>
 
 #include <arenai_model/engine.h>
+#include <arenai_model/tank.h>
 #include <arenai_utils/file_reader.h>
 #include <arenai_view/pbuffer_renderer.h>
 
 #include "./enemy_handler.h"
-#include "./enemy_tank_factory.h"
 #include "./thread_pool.h"
 #include "./types.h"
 
@@ -49,7 +49,7 @@ private:
 
     std::unique_ptr<EnemyVisionThreadPool> vision_pool_;
 
-    std::vector<std::shared_ptr<EnemyTankFactory>> tank_factories;
+    std::vector<std::shared_ptr<EnemyTank>> tank_factories;
     std::vector<std::unique_ptr<EnemyControllerHandler>> tank_controller_handler;
 
     std::unique_ptr<AbstractPhysicEngine> physic_engine;
@@ -72,7 +72,7 @@ protected:
 
     template<typename T>
     T apply_on_factories(
-        std::function<T(const std::vector<std::shared_ptr<EnemyTankFactory>> &)> apply_function) {
+        std::function<T(const std::vector<std::shared_ptr<EnemyTank>> &)> apply_function) {
         return apply_function(tank_factories);
     }
 

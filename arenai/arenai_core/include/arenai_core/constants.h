@@ -5,12 +5,7 @@
 #ifndef ARENAI_TRAIN_HOST_CONSTANTS_H
 #define ARENAI_TRAIN_HOST_CONSTANTS_H
 
-// (position + velocity + forward + up + angle_velocity) * (6 * wheel + chassis + turret + canon) - chassis_pos
-#define ENEMY_PROPRIOCEPTION_SIZE ((3 + 3 + 3 + 3 + 3) * (6 + 3) - 3)
-#define ENEMY_NB_CONTINUOUS_ACTION (2 + 2)
-#define ENEMY_NB_DISCRETE_ACTION 2
-
-#define ENEMY_TURRET_RADIAL_VELOCITY (static_cast<float>(M_PI) * 1.f)
+#include <arenai_model/constants.h>
 
 #define SIGMA_MIN 1e-3f
 #define SIGMA_MAX 1.f

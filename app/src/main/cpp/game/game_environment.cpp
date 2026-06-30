@@ -8,6 +8,7 @@
 
 #include <arenai_model/engine.h>
 #include <arenai_model/shapes.h>
+#include <arenai_model/tank.h>
 #include <arenai_model/tank_factory.h>
 #include <arenai_utils/cache.h>
 #include <arenai_utils/logging.h>
@@ -79,13 +80,8 @@ bool UserGameTanksEnvironment::is_running() const { return !is_paused; }
 
 void UserGameTanksEnvironment::on_reset_physics(
     const std::unique_ptr<AbstractPhysicEngine> &engine) {
-    tank_factory = std::make_unique<PlayerTankFactory>(
-        file_reader, "player", glm::vec3(0., -40., 40), wanted_frequency);
-
-    for (auto &item: tank_factory->get_items()) { engine->add_item(item); }
-
-    for (auto &item_producer: tank_factory->get_item_producers())
-        engine->add_item_producer(item_producer);
+    auto tf = make_tank_factory(*engine, file_reader, wanted_frequency);
+    tank_factory = tf->make_player_tank("player", glm::vec3(0., -40., 40));
 }
 
 void UserGameTanksEnvironment::on_reset_drawables(

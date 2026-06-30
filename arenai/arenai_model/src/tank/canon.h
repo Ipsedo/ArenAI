@@ -12,8 +12,8 @@
 #include <arenai_utils/file_reader.h>
 #include <arenai_view/camera.h>
 
-#include "items/convex.h"
-#include "shell.h"
+#include "./items/convex.h"
+#include "./shell.h"
 
 class CanonItem final : public LifeItem,
                         public ConvexItem,
@@ -36,6 +36,7 @@ public:
     std::vector<btTypedConstraint *> get_constraints() override;
 
     std::vector<std::shared_ptr<Item>> get_produced_items() override;
+    std::vector<std::shared_ptr<BulletItem>> produce_bullet_items();
 
 private:
     float angle;

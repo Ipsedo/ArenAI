@@ -8,8 +8,8 @@
 #include <chrono>
 
 #include <arenai_controller/handler.h>
+#include <arenai_model/action_stats.h>
 
-#include "./action_stats.h"
 #include "./types.h"
 
 class EnemyControllerHandler final : public ControllerHandler<Action> {

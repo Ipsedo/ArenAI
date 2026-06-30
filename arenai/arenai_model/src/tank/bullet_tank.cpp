@@ -2,22 +2,22 @@
 // Created by samuel on 02/04/2023.
 //
 
+#include "./bullet_tank.h"
+
 #include <algorithm>
-#include <numeric>
 
-#include <arenai_model/tank_factory.h>
+#include "../bullet_engine.h"
+#include "./canon.h"
+#include "./chassis.h"
+#include "./shell.h"
+#include "./turret.h"
+#include "./wheel.h"
 
-#include "bullet_item.h"
-#include "canon.h"
-#include "chassis.h"
-#include "shell.h"
-#include "turret.h"
-#include "wheel.h"
-
-TankFactory::TankFactory(
-    const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
-    glm::vec3 chassis_pos, float wanted_frame_frequency)
-    : name(tank_prefix_name), camera(std::nullptr_t()), file_reader(file_reader) {
+BulletTank::BulletTank(
+    BulletPhysicEngine &engine, const std::shared_ptr<AbstractFileReader> &file_reader,
+    const std::string &tank_prefix_name, glm::vec3 chassis_pos, const float wanted_frame_frequency,
+    std::function<void(const ShellContactInfo &, Item *)> on_contact_callback)
+    : engine(engine), name(tank_prefix_name), camera(std::nullptr_t()), file_reader(file_reader) {
 
     glm::vec3 scale(0.5);
 
@@ -28,15 +28,14 @@ TankFactory::TankFactory(
 
     chassis = chassis_item;
     items.push_back(chassis);
+    bullet_items.push_back(chassis_item);
+    life_items.push_back(chassis_item.get());
 
     // wheels
     constexpr float front_axle_z = 3.f;
 
     constexpr float wheel_mass = 150.f;
     glm::vec3 wheel_scale = scale * glm::vec3(1.3, 1.1, 1.1);
-
-    std::vector<std::shared_ptr<BulletItem>> bullet_items;
-    bullet_items.push_back(chassis_item);
 
     std::vector<std::tuple<std::string, glm::vec3, float>> front_wheel_config{
         {"wheel_right_1", {-2.7, -1., front_axle_z}, 1.f},
@@ -52,6 +51,7 @@ TankFactory::TankFactory(
         bullet_items.push_back(wheel);
         items.push_back(wheel);
         controllers.push_back(wheel);
+        life_items.push_back(wheel.get());
     }
 
     std::vector<std::tuple<std::string, glm::vec3>> wheel_config{
@@ -65,6 +65,7 @@ TankFactory::TankFactory(
         bullet_items.push_back(wheel);
         items.push_back(wheel);
         controllers.push_back(wheel);
+        life_items.push_back(wheel.get());
     }
 
     // turret
@@ -74,21 +75,24 @@ TankFactory::TankFactory(
         tank_prefix_name, file_reader, chassis_pos + turret_pos, turret_pos, scale * turret_scale,
         300, chassis_item->get_body());
     bullet_items.push_back(turret);
-    items.push_back(turret), controllers.push_back(turret);
+    items.push_back(turret);
+    controllers.push_back(turret);
+    life_items.push_back(turret.get());
 
     // canon
     glm::vec3 canon_pos(0.f, 0.5f, 1.7f);
     glm::vec3 canon_scale = turret_scale;
-    const auto canon_item = std::make_shared<CanonItem>(
+    auto canon_item = std::make_shared<CanonItem>(
         tank_prefix_name, file_reader, chassis_pos + turret_pos + canon_pos, canon_pos,
         scale * canon_scale, 100, turret->get_body(), wanted_frame_frequency,
-        [this](glm::vec3 fire_pos, glm::vec3 current_pos, Item *i) {
-            on_fired_shell_contact({fire_pos, current_pos}, i);
+        [&on_contact_callback](const glm::vec3 fire_pos, const glm::vec3 hit_pos, Item *item) {
+            on_contact_callback({fire_pos, hit_pos}, item);
         });
 
     bullet_items.push_back(canon_item);
-    item_producers.push_back(canon_item);
-    items.push_back(canon_item), controllers.push_back(canon_item);
+    items.push_back(canon_item);
+    controllers.push_back(canon_item);
+    life_items.push_back(canon_item.get());
 
     camera = canon_item;
     canon = canon_item;
@@ -98,36 +102,38 @@ TankFactory::TankFactory(
             bullet_items[i]->get_body()->setIgnoreCollisionCheck(bullet_items[j]->get_body(), true);
 
     for (auto &item: bullet_items) item->get_body()->setActivationState(DISABLE_DEACTIVATION);
+
+    // register with engine
+    for (const auto &item: bullet_items) engine.add_bullet_item(item);
+
+    engine.add_bullet_item_producer([c = canon_item]() { return c->produce_bullet_items(); });
 }
 
-std::shared_ptr<Camera> TankFactory::get_camera() { return camera; }
+std::shared_ptr<Camera> BulletTank::get_camera() { return camera; }
 
-std::vector<std::shared_ptr<Item>> TankFactory::get_items() { return items; }
+std::vector<std::shared_ptr<Item>> BulletTank::get_items() { return items; }
 
-std::vector<std::shared_ptr<Controller>> TankFactory::get_controllers() { return controllers; }
+std::vector<std::shared_ptr<Controller>> BulletTank::get_controllers() { return controllers; }
 
-std::map<std::string, std::shared_ptr<Shape>> TankFactory::load_shell_shapes() const {
+std::map<std::string, std::shared_ptr<Shape>> BulletTank::load_shell_shapes() const {
     return {{ShellItem::NAME, ShellItem::load_shape(file_reader)}};
 }
 
-std::vector<std::shared_ptr<ItemProducer>> TankFactory::get_item_producers() {
-    return item_producers;
+bool BulletTank::is_dead() {
+    return std::ranges::any_of(life_items, [](const LifeItem *li) { return li->is_dead(); });
 }
 
-bool TankFactory::is_dead() {
-    return std::ranges::any_of(items, [](const std::shared_ptr<Item> &item) {
-        if (const auto life_item = dynamic_cast<LifeItem *>(item.get()))
-            return life_item->is_dead();
-        return false;
-    });
+std::shared_ptr<Item> BulletTank::get_chassis() { return chassis; }
+
+std::shared_ptr<Item> BulletTank::get_canon() { return canon; }
+
+void BulletTank::remove_constraints_from_engine() {
+    for (const auto &item: bullet_items) engine.remove_bullet_item_constraints(item);
 }
 
-std::shared_ptr<Item> TankFactory::get_chassis() { return chassis; }
-
-std::shared_ptr<Item> TankFactory::get_canon() { return canon; }
-
-TankFactory::~TankFactory() {
-    item_producers.clear();
+BulletTank::~BulletTank() {
     controllers.clear();
     items.clear();
+    bullet_items.clear();
+    life_items.clear();
 }

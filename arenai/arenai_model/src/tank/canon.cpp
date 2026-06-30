@@ -30,8 +30,7 @@ CanonItem::CanonItem(
     hinge->setLimit(angle, angle);
 }
 
-std::vector<std::shared_ptr<Item>> CanonItem::get_produced_items() {
-
+std::vector<std::shared_ptr<BulletItem>> CanonItem::produce_bullet_items() {
     if (will_fire) {
         const btTransform canon_tr = ConvexItem::get_body()->getWorldTransform();
         float tmp[16];
@@ -57,6 +56,11 @@ std::vector<std::shared_ptr<Item>> CanonItem::get_produced_items() {
     }
 
     return {};
+}
+
+std::vector<std::shared_ptr<Item>> CanonItem::get_produced_items() {
+    auto bullet_items = produce_bullet_items();
+    return {bullet_items.begin(), bullet_items.end()};
 }
 
 void CanonItem::on_input(const user_input &input) {

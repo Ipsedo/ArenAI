@@ -8,7 +8,7 @@
 #include <GLFW/glfw3.h>
 
 #include <arenai_core/environment.h>
-#include <arenai_core/player_tank_factory.h>
+#include <arenai_model/tank.h>
 #include <arenai_view/renderer.h>
 
 #include "../controller/player_controller_handler.h"
@@ -34,7 +34,7 @@ private:
     GLFWwindow *curr_window;
 
     std::shared_ptr<AbstractFileReader> asset_file_reader;
-    std::unique_ptr<PlayerTankFactory> player_tank_factory;
+    std::unique_ptr<PlayerTank> player_tank_factory;
     std::unique_ptr<PlayerRenderer> player_renderer;
     std::unique_ptr<MouseKeyboardPlayerControllerHandler> player_controller_handler;
 

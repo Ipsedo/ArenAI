@@ -2,7 +2,9 @@
 // Created by claude on 30/06/2026.
 //
 
-#include "bullet_engine.h"
+#include "./bullet_engine.h"
+
+#include "./items/bullet_item_factory.h"
 
 BulletPhysicEngine::BulletPhysicEngine(const float wanted_frequency)
     : wanted_frequency(wanted_frequency) {
@@ -14,9 +16,12 @@ BulletPhysicEngine::BulletPhysicEngine(const float wanted_frequency)
         m_dispatcher, m_broad_phase, m_constraint_solver, m_collision_configuration);
 
     m_world->setGravity(btVector3(0, -9.8f, 0));
+
+    item_factory = std::make_shared<BulletItemFactory>(*this);
 }
 
 void BulletPhysicEngine::add_bullet_item(const std::shared_ptr<BulletItem> &item) {
+    std::unique_lock lock(items_mutex);
     items.push_back(item);
 
     m_world->addRigidBody(item->get_body());
@@ -24,20 +29,15 @@ void BulletPhysicEngine::add_bullet_item(const std::shared_ptr<BulletItem> &item
     for (const auto &constraint: item->get_constraints()) m_world->addConstraint(constraint, true);
 }
 
-void BulletPhysicEngine::add_item(const std::shared_ptr<Item> &item) {
+void BulletPhysicEngine::add_bullet_item_producer(
+    std::function<std::vector<std::shared_ptr<BulletItem>>()> producer) {
     std::unique_lock lock(items_mutex);
-    add_bullet_item(std::static_pointer_cast<BulletItem>(item));
+    bullet_item_producers.push_back(std::move(producer));
 }
 
-void BulletPhysicEngine::add_item_producer(const std::shared_ptr<ItemProducer> &item_producer) {
+void BulletPhysicEngine::remove_bullet_item_constraints(const std::shared_ptr<BulletItem> &item) {
     std::unique_lock lock(items_mutex);
-    item_producers.push_back(item_producer);
-}
-
-void BulletPhysicEngine::remove_item_constraints_from_world(const std::shared_ptr<Item> &item) {
-    std::unique_lock lock(items_mutex);
-    const auto bullet_item = std::static_pointer_cast<BulletItem>(item);
-    for (auto *constraint: bullet_item->get_constraints()) m_world->removeConstraint(constraint);
+    for (auto *constraint: item->get_constraints()) m_world->removeConstraint(constraint);
 }
 
 void BulletPhysicEngine::remove_dead_items() {
@@ -69,9 +69,13 @@ void BulletPhysicEngine::remove_dead_items() {
 void BulletPhysicEngine::step(const float delta) {
     {
         std::unique_lock lock(items_mutex);
-        for (const auto &item_producer: item_producers)
-            for (const auto &item: item_producer->get_produced_items())
-                add_bullet_item(std::static_pointer_cast<BulletItem>(item));
+        for (const auto &producer: bullet_item_producers)
+            for (const auto &item: producer()) {
+                items.push_back(item);
+                m_world->addRigidBody(item->get_body());
+                for (const auto &constraint: item->get_constraints())
+                    m_world->addConstraint(constraint, true);
+            }
     }
 
     m_world->stepSimulation(delta, 1, wanted_frequency);
@@ -101,6 +105,8 @@ std::vector<std::shared_ptr<Item>> BulletPhysicEngine::get_items() {
     return {items.begin(), items.end()};
 }
 
+std::shared_ptr<ItemFactory> BulletPhysicEngine::get_item_factory() { return item_factory; }
+
 void BulletPhysicEngine::remove_bodies_and_constraints() {
     std::unique_lock lock(items_mutex);
     m_world->clearForces();
@@ -123,7 +129,7 @@ void BulletPhysicEngine::remove_bodies_and_constraints() {
         delete body;
     }
 
-    item_producers.clear();
+    bullet_item_producers.clear();
     items.clear();
 }
 

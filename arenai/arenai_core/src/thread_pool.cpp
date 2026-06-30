@@ -57,7 +57,7 @@ EnemyVisionThreadPool::EnemyVisionThreadPool(
       reset_barrier_(std::nullptr_t()), loop_barrier_(std::nullptr_t()) {}
 
 void EnemyVisionThreadPool::start_thread(
-    const std::vector<std::shared_ptr<EnemyTankFactory>> &tank_factories,
+    const std::vector<std::shared_ptr<EnemyTank>> &tank_factories,
     const std::shared_ptr<AbstractGLContext> &gl_context,
     const std::shared_ptr<AbstractFileReader> &file_reader,
     const std::vector<std::tuple<std::string, glm::mat4>> &initial_model_matrices,
@@ -82,7 +82,7 @@ void EnemyVisionThreadPool::start_thread(
 }
 
 void EnemyVisionThreadPool::worker_loop(
-    const std::shared_ptr<EnemyTankFactory> &tank_factory,
+    const std::shared_ptr<EnemyTank> &tank_factory,
     const std::shared_ptr<AbstractGLContext> &gl_context,
     const std::shared_ptr<AbstractFileReader> &file_reader,
     const std::vector<std::shared_ptr<Item>> &scene_items, const int index) {

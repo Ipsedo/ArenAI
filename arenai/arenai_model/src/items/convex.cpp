@@ -2,7 +2,7 @@
 // Created by samuel on 23/03/2023.
 //
 
-#include "convex.h"
+#include "./convex.h"
 
 #include <utility>
 

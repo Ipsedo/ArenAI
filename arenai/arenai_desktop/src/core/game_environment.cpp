@@ -6,7 +6,9 @@
 
 #include <iostream>
 
-#include <arenai_core/player_tank_factory.h>
+#include <arenai_model/engine.h>
+#include <arenai_model/tank.h>
+#include <arenai_model/tank_factory.h>
 #include <arenai_train/file_reader.h>
 #include <arenai_view/cubemap.h>
 #include <arenai_view/specular.h>
@@ -62,13 +64,8 @@ void DesktopGameEnvironment::on_draw(
 }
 
 void DesktopGameEnvironment::on_reset_physics(const std::unique_ptr<AbstractPhysicEngine> &engine) {
-    player_tank_factory = std::make_unique<PlayerTankFactory>(
-        asset_file_reader, "player", glm::vec3(0., -40., 40), wanted_frequency);
-
-    for (auto &item: player_tank_factory->get_items()) { engine->add_item(item); }
-
-    for (auto &item_producer: player_tank_factory->get_item_producers())
-        engine->add_item_producer(item_producer);
+    auto tank_factory = make_tank_factory(*engine, asset_file_reader, wanted_frequency);
+    player_tank_factory = tank_factory->make_player_tank("player", glm::vec3(0., -40., 40));
 
     player_controller_handler = std::make_unique<MouseKeyboardPlayerControllerHandler>(curr_window);
 

@@ -1,59 +1,28 @@
 //
-// Created by samuel on 28/09/2025.
+// Created by samuel on 01/07/2026.
 //
 
 #ifndef ARENAI_TANK_FACTORY_H
 #define ARENAI_TANK_FACTORY_H
 
-#include <map>
 #include <memory>
+#include <string>
 
-#include <arenai_controller/controller.h>
+#include <glm/glm.hpp>
+
 #include <arenai_utils/file_reader.h>
-#include <arenai_view/camera.h>
 
-#include "./item.h"
-
-struct ShellContactInfo {
-    glm::vec3 fire_position;
-    glm::vec3 current_position;
-};
+#include "./tank.h"
 
 class TankFactory {
 public:
-    TankFactory(
-        const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
-        glm::vec3 chassis_pos, float wanted_frame_frequency);
+    virtual ~TankFactory() = default;
 
-    std::shared_ptr<Camera> get_camera();
-    std::vector<std::shared_ptr<Item>> get_items();
-    std::vector<std::shared_ptr<ItemProducer>> get_item_producers();
-    std::vector<std::shared_ptr<Controller>> get_controllers();
+    virtual std::unique_ptr<EnemyTank>
+    make_enemy_tank(const std::string &tank_prefix_name, glm::vec3 chassis_pos) = 0;
 
-    std::map<std::string, std::shared_ptr<Shape>> load_shell_shapes() const;
-
-    virtual bool is_dead();
-
-    virtual ~TankFactory();
-
-protected:
-    virtual void on_fired_shell_contact(const ShellContactInfo &shell_info, Item *item) = 0;
-
-    std::shared_ptr<Item> get_chassis();
-    std::shared_ptr<Item> get_canon();
-
-private:
-    std::string name;
-
-    std::shared_ptr<Camera> camera;
-    std::vector<std::shared_ptr<Item>> items;
-    std::vector<std::shared_ptr<ItemProducer>> item_producers;
-    std::vector<std::shared_ptr<Controller>> controllers;
-
-    std::shared_ptr<Item> chassis;
-    std::shared_ptr<Item> canon;
-
-    std::shared_ptr<AbstractFileReader> file_reader;
+    virtual std::unique_ptr<PlayerTank>
+    make_player_tank(const std::string &tank_prefix_name, glm::vec3 chassis_pos) = 0;
 };
 
 #endif// ARENAI_TANK_FACTORY_H

@@ -12,7 +12,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
-#include "items/convex.h"
+#include "../items/convex.h"
 
 class ShellItem final : public LifeItem, public ConvexItem {
 public:

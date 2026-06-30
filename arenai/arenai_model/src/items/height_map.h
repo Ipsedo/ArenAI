@@ -12,7 +12,7 @@
 #include <arenai_model/shapes.h>
 #include <arenai_utils/file_reader.h>
 
-#include "bullet_item.h"
+#include "./bullet_item.h"
 
 class HeightMapItem final : public BulletItem {
 public:

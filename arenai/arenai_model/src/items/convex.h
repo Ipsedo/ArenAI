@@ -10,7 +10,7 @@
 #include <arenai_model/item.h>
 #include <arenai_utils/file_reader.h>
 
-#include "bullet_item.h"
+#include "./bullet_item.h"
 
 class ConvexItem : public BulletItem {
 public:

@@ -2,7 +2,7 @@
 // Created by samuel on 23/03/2023.
 //
 
-#include "height_map.h"
+#include "./height_map.h"
 
 #include <algorithm>
 

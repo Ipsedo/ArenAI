@@ -11,11 +11,10 @@
 #include <vector>
 
 #include <arenai_model/engine.h>
+#include <arenai_model/tank.h>
 #include <arenai_utils/double_buffer.h>
 #include <arenai_utils/file_reader.h>
 #include <arenai_view/pbuffer_renderer.h>
-
-#include "./enemy_tank_factory.h"
 
 class VisionDoubleBuffer : public DoubleBuffer<image<uint8_t>> {
 public:
@@ -63,7 +62,7 @@ public:
     image<uint8_t> read_vision(int index) const;
 
     void start_thread(
-        const std::vector<std::shared_ptr<EnemyTankFactory>> &tank_factories,
+        const std::vector<std::shared_ptr<EnemyTank>> &tank_factories,
         const std::shared_ptr<AbstractGLContext> &gl_context,
         const std::shared_ptr<AbstractFileReader> &file_reader,
         const std::vector<std::tuple<std::string, glm::mat4>> &initial_model_matrices,
@@ -97,7 +96,7 @@ private:
     std::random_device dev_;
 
     void worker_loop(
-        const std::shared_ptr<EnemyTankFactory> &tank_factory,
+        const std::shared_ptr<EnemyTank> &tank_factory,
         const std::shared_ptr<AbstractGLContext> &gl_context,
         const std::shared_ptr<AbstractFileReader> &file_reader,
         const std::vector<std::shared_ptr<Item>> &scene_items, int index);

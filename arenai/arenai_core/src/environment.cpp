@@ -10,6 +10,7 @@
 #include <arenai_core/constants.h>
 #include <arenai_core/environment.h>
 #include <arenai_model/item_factory.h>
+#include <arenai_model/tank_factory.h>
 
 BaseTanksEnvironment::BaseTanksEnvironment(
     const std::shared_ptr<AbstractFileReader> &file_reader,
@@ -30,9 +31,7 @@ BaseTanksEnvironment::step(const float time_delta, const std::vector<Action> &ac
     // 1. apply action
     for (int i = 0; i < tank_factories.size(); i++) {
         if (!tank_factories[i]->is_dead()) tank_controller_handler[i]->on_event(actions[i]);
-        else
-            for (const auto &item: tank_factories[i]->dead_and_get_items())
-                physic_engine->remove_item_constraints_from_world(item);
+        else tank_factories[i]->on_death();
     }
 
     // 2. step physic
@@ -64,29 +63,22 @@ BaseTanksEnvironment::reset_physics(const float spawn_width, const float spawn_h
     tank_controller_handler.clear();
     tank_factories.clear();
 
-    const auto map = make_height_map_item(
+    auto item_factory = physic_engine->get_item_factory();
+    auto tank_factory = make_tank_factory(*physic_engine, file_reader, wanted_frequency);
+
+    item_factory->make_height_map_item(
         "height_map", file_reader, "heightmap/heightmap6.png", glm::vec3(0., 40., 0.),
         glm::vec3(10., 200., 10.));
-
-    physic_engine->add_item(map);
 
     std::uniform_real_distribution<float> x_pos_u_dist(-spawn_width / 2, spawn_width / 2);
     std::uniform_real_distribution<float> y_pos_u_dist(-spawn_height / 2, spawn_height / 2);
 
     std::uniform_real_distribution<float> mass_u_dist(3, 100);
 
-    // distance scale tracks the current spawn area so the potential shaping keeps a
-    // crisp gradient on the nearest enemy at every curriculum stage (~spawn_side / 4).
-
     // add tanks
     for (int i = 0; i < nb_tanks; i++) {
-        tank_factories.push_back(std::make_unique<EnemyTankFactory>(
-            file_reader, "enemy_" + std::to_string(i),
-            glm::vec3(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng)), wanted_frequency));
-
-        for (const auto &item: tank_factories.back()->get_items()) physic_engine->add_item(item);
-        for (const auto &item_producer: tank_factories.back()->get_item_producers())
-            physic_engine->add_item_producer(item_producer);
+        tank_factories.push_back(tank_factory->make_enemy_tank(
+            "enemy_" + std::to_string(i), glm::vec3(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng))));
 
         tank_controller_handler.push_back(std::make_unique<EnemyControllerHandler>(
             wanted_frequency, 1.f / 6.f, tank_factories.back()->get_action_stats(),
@@ -103,23 +95,23 @@ BaseTanksEnvironment::reset_physics(const float spawn_width, const float spawn_h
     for (int i = 0; i < nb_shapes; i++) {
         glm::vec3 pos(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng));
         glm::vec3 scale(scale_u_dist(rng));
-        physic_engine->add_item(make_sphere_item(
-            "sphere_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng)));
+        item_factory->make_sphere_item(
+            "sphere_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng));
 
         pos = glm::vec3(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng));
         scale = glm::vec3(scale_u_dist(rng));
-        physic_engine->add_item(
-            make_cube_item("cube_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng)));
+        item_factory->make_cube_item(
+            "cube_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng));
 
         pos = glm::vec3(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng));
         scale = glm::vec3(scale_u_dist(rng));
-        physic_engine->add_item(make_tetra_item(
-            "tetra_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng)));
+        item_factory->make_tetra_item(
+            "tetra_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng));
 
         pos = glm::vec3(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng));
         scale = glm::vec3(scale_u_dist(rng));
-        physic_engine->add_item(make_cylinder_item(
-            "cylinder_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng)));
+        item_factory->make_cylinder_item(
+            "cylinder_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng));
     }
 
     on_reset_physics(physic_engine);

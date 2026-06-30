@@ -12,12 +12,12 @@
 #include <arenai_controller/controller.h>
 #include <arenai_core/environment.h>
 #include <arenai_model/engine.h>
+#include <arenai_model/tank.h>
 #include <arenai_utils/file_reader.h>
 #include <arenai_view/renderer.h>
 
 #include "../controller/player_handler.h"
 #include "./android_gl_context.h"
-#include "./player_tank_factory.h"
 
 class UserGameTanksEnvironment : public BaseTanksEnvironment {
 public:
@@ -47,7 +47,7 @@ private:
     android_app *app;
     EGLDisplay display;
 
-    std::unique_ptr<TankFactory> tank_factory;
+    std::unique_ptr<PlayerTank> tank_factory;
 
     std::unique_ptr<PlayerRenderer> player_renderer;
     std::unique_ptr<PlayerControllerHandler> player_controller_handler;

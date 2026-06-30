@@ -5,22 +5,20 @@
 #ifndef ARENAI_BULLET_ENGINE_H
 #define ARENAI_BULLET_ENGINE_H
 
+#include <functional>
 #include <mutex>
 #include <shared_mutex>
 
 #include <btBulletDynamicsCommon.h>
 
 #include <arenai_model/engine.h>
+#include <arenai_model/item_factory.h>
 
-#include "bullet_item.h"
+#include "./bullet_item.h"
 
 class BulletPhysicEngine final : public AbstractPhysicEngine {
 public:
     explicit BulletPhysicEngine(float wanted_frequency);
-
-    void add_item(const std::shared_ptr<Item> &item) override;
-    void add_item_producer(const std::shared_ptr<ItemProducer> &item_producer) override;
-    void remove_item_constraints_from_world(const std::shared_ptr<Item> &item) override;
 
     void step(float delta) override;
 
@@ -28,7 +26,14 @@ public:
 
     void remove_bodies_and_constraints() override;
 
+    std::shared_ptr<ItemFactory> get_item_factory() override;
+
     ~BulletPhysicEngine() override;
+
+    void add_bullet_item(const std::shared_ptr<BulletItem> &item);
+    void
+    add_bullet_item_producer(std::function<std::vector<std::shared_ptr<BulletItem>>()> producer);
+    void remove_bullet_item_constraints(const std::shared_ptr<BulletItem> &item);
 
 private:
     std::shared_mutex items_mutex;
@@ -42,9 +47,10 @@ private:
     btDiscreteDynamicsWorld *m_world;
 
     std::vector<std::shared_ptr<BulletItem>> items;
-    std::vector<std::shared_ptr<ItemProducer>> item_producers;
+    std::vector<std::function<std::vector<std::shared_ptr<BulletItem>>()>> bullet_item_producers;
 
-    void add_bullet_item(const std::shared_ptr<BulletItem> &item);
+    std::shared_ptr<ItemFactory> item_factory;
+
     void remove_dead_items();
 };
 

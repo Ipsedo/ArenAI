@@ -5,7 +5,7 @@
 #ifndef ARENAI_CHASSIS_H
 #define ARENAI_CHASSIS_H
 
-#include "items/convex.h"
+#include "../items/convex.h"
 
 class ChassisItem final : public LifeItem, public ConvexItem {
 public:

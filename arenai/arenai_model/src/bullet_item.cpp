@@ -2,7 +2,7 @@
 // Created by claude on 30/06/2026.
 //
 
-#include "bullet_item.h"
+#include "./bullet_item.h"
 
 #include <glm/gtc/type_ptr.hpp>
 

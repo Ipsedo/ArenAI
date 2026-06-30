@@ -2,30 +2,34 @@
 // Created by samuel on 20/10/2025.
 //
 
+#include "./enemy_tank.h"
+
 #include <algorithm>
 #include <cmath>
 #include <vector>
 
-#include <arenai_core/constants.h>
-#include <arenai_core/enemy_tank_factory.h>
-#define GLM_ENABLE_EXPERIMENTAL
-#include <iostream>
-#include <ostream>
+#include <arenai_model/constants.h>
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
 #include <glm/gtx/vector_angle.hpp>
 
-EnemyTankFactory::EnemyTankFactory(
-    const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &tank_prefix_name,
-    const glm::vec3 chassis_pos, const float wanted_frame_frequency)
-    : TankFactory(file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency),
+#include "../bullet_engine.h"
+
+BulletEnemyTank::BulletEnemyTank(
+    BulletPhysicEngine &engine, const std::shared_ptr<AbstractFileReader> &file_reader,
+    const std::string &tank_prefix_name, const glm::vec3 chassis_pos,
+    const float wanted_frame_frequency)
+    : BulletTank(
+        engine, file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency,
+        [this](const ShellContactInfo &info, Item *item) { on_fired_shell_contact(info, item); }),
       tank_prefix_name(tank_prefix_name),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
       curr_frame_upside_down(0), distance_scale(250.f), impact_distance_scale(50.f),
       angle_scale(glm::pi<float>() / 3.f), is_dead_already_triggered(false), has_touch(false),
       last_shoot_info(std::nullopt), action_stats(std::make_shared<ActionStats>()) {}
 
-float EnemyTankFactory::compute_aim_angle(const std::shared_ptr<EnemyTankFactory> &other_tank) {
+float BulletEnemyTank::compute_aim_angle(const std::shared_ptr<EnemyTank> &other_tank) {
     const auto canon_tr = get_canon()->get_model_matrix();
     const auto other_tr = other_tank->get_chassis()->get_model_matrix();
 
@@ -40,7 +44,7 @@ float EnemyTankFactory::compute_aim_angle(const std::shared_ptr<EnemyTankFactory
     return std::acos(d);
 }
 
-float EnemyTankFactory::compute_hit_reward(
+float BulletEnemyTank::compute_hit_reward(
     const glm::vec3 &fire_pos, const glm::vec3 &best_enemy_pos, const glm::vec3 &hit_pos) const {
     const float distance_impact = glm::length(hit_pos - best_enemy_pos);
 
@@ -57,8 +61,7 @@ float EnemyTankFactory::compute_hit_reward(
     return distance_reward * angle_reward;
 }
 
-float EnemyTankFactory::get_reward(
-    const std::vector<std::shared_ptr<EnemyTankFactory>> &tank_factories) {
+float BulletEnemyTank::get_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
 
     // 1. flipped detection
     const auto chassis_model_mat = get_chassis()->get_model_matrix();
@@ -76,14 +79,13 @@ float EnemyTankFactory::get_reward(
     if (last_shoot_info.has_value()) {
         const auto [fire_pos, hit_pos, has_hit, has_killed] = last_shoot_info.value();
 
-        if (const auto best_tank_index = get_nearest_enemy_index(tank_factories, hit_pos);
+        if (const auto best_tank_index = get_nearest_enemy_index(tanks, hit_pos);
             best_tank_index != -1) {
             const auto best_tank_model_matrix =
-                tank_factories[best_tank_index]->get_chassis()->get_model_matrix();
+                tanks[best_tank_index]->get_chassis()->get_model_matrix();
             const auto best_tank_pos =
                 glm::vec3(best_tank_model_matrix * glm::vec4(glm::vec3(0.f), 1.f));
 
-            // shoot reward
             hit_reward = compute_hit_reward(fire_pos, best_tank_pos, hit_pos) * 2.f - 1.f
                          + (has_hit ? 1.f : 0.f) + (has_killed ? 2.f : 0.f);
         }
@@ -97,21 +99,20 @@ float EnemyTankFactory::get_reward(
     return reward;
 }
 
-float EnemyTankFactory::get_phi(
-    const std::vector<std::shared_ptr<EnemyTankFactory>> &tank_factories) {
+float BulletEnemyTank::get_phi(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
     float best_score = 0.f;
 
     constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
     const glm::vec3 chassis_pos = get_chassis()->get_model_matrix() * world_center;
 
-    for (const auto &tank_factory: tank_factories) {
-        if (tank_factory->tank_prefix_name == tank_prefix_name || tank_factory->is_dead()) continue;
+    for (const auto &tank: tanks) {
+        if (tank.get() == this || tank->is_dead()) continue;
 
-        const glm::vec3 other_pos = tank_factory->get_chassis()->get_model_matrix() * world_center;
+        const glm::vec3 other_pos = tank->get_chassis()->get_model_matrix() * world_center;
         const float distance = glm::length(other_pos - chassis_pos);
         const float distance_score = std::exp(-0.5f * std::pow(distance / distance_scale, 2.f));
 
-        const float angle = compute_aim_angle(tank_factory);
+        const float angle = compute_aim_angle(tank);
         const float angle_score = (std::cos(angle) + 1.f) / 2.f;
 
         if (const float score = angle_score * distance_score; score > best_score)
@@ -121,20 +122,18 @@ float EnemyTankFactory::get_phi(
     return best_score;
 }
 
-int EnemyTankFactory::get_nearest_enemy_index(
-    const std::vector<std::shared_ptr<EnemyTankFactory>> &tank_factories,
-    const glm::vec3 &pos) const {
+int BulletEnemyTank::get_nearest_enemy_index(
+    const std::vector<std::shared_ptr<EnemyTank>> &tanks, const glm::vec3 &pos) const {
     constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
 
     float min_distance = std::numeric_limits<float>::infinity();
     int best_i = -1;
 
-    for (int i = 0; i < tank_factories.size(); i++) {
-        if (tank_factories[i]->tank_prefix_name == tank_prefix_name || tank_factories[i]->is_dead())
-            continue;
+    for (int i = 0; i < tanks.size(); i++) {
+        if (tanks[i].get() == this || tanks[i]->is_dead()) continue;
 
         const auto other_pos =
-            glm::vec3(tank_factories[i]->get_chassis()->get_model_matrix() * world_center);
+            glm::vec3(tanks[i]->get_chassis()->get_model_matrix() * world_center);
 
         if (const float distance = glm::length(pos - other_pos); distance < min_distance) {
             min_distance = distance;
@@ -145,7 +144,7 @@ int EnemyTankFactory::get_nearest_enemy_index(
     return best_i;
 }
 
-void EnemyTankFactory::on_fired_shell_contact(const ShellContactInfo &shell_info, Item *item) {
+void BulletEnemyTank::on_fired_shell_contact(const ShellContactInfo &shell_info, Item *item) {
     for (const auto &i: get_items())
         if (i->get_name() == item->get_name()) return;
 
@@ -156,11 +155,9 @@ void EnemyTankFactory::on_fired_shell_contact(const ShellContactInfo &shell_info
         if (life_item->is_dead() && !life_item->is_already_dead()) {
             hit = true;
             killed = true;
-
             has_touch = true;
         } else if (!life_item->is_dead()) {
             hit = true;
-
             has_touch = true;
         }
     }
@@ -168,7 +165,7 @@ void EnemyTankFactory::on_fired_shell_contact(const ShellContactInfo &shell_info
     last_shoot_info = {shell_info.fire_position, shell_info.current_position, hit, killed};
 }
 
-bool EnemyTankFactory::has_hit_other_tank() {
+bool BulletEnemyTank::has_hit_other_tank() {
     if (has_touch) {
         has_touch = false;
         return true;
@@ -176,22 +173,18 @@ bool EnemyTankFactory::has_hit_other_tank() {
     return false;
 }
 
-bool EnemyTankFactory::is_dead() { return TankFactory::is_dead() || is_suicide(); }
+bool BulletEnemyTank::is_dead() { return BulletTank::is_dead() || is_suicide(); }
 
-bool EnemyTankFactory::is_suicide() const {
-    return curr_frame_upside_down > max_frames_upside_down;
-}
+bool BulletEnemyTank::is_suicide() const { return curr_frame_upside_down > max_frames_upside_down; }
 
-std::vector<std::shared_ptr<Item>> EnemyTankFactory::dead_and_get_items() {
+void BulletEnemyTank::on_death() {
     if (is_dead() && !is_dead_already_triggered) {
         is_dead_already_triggered = true;
-        return get_items();
+        remove_constraints_from_engine();
     }
-
-    return {};
 }
 
-std::vector<float> EnemyTankFactory::get_proprioception() {
+std::vector<float> BulletEnemyTank::get_proprioception() {
     const auto items = get_items();
 
     const auto &chassis = get_chassis();
@@ -231,4 +224,4 @@ std::vector<float> EnemyTankFactory::get_proprioception() {
     return result;
 }
 
-std::shared_ptr<ActionStats> EnemyTankFactory::get_action_stats() { return action_stats; }
+std::shared_ptr<ActionStats> BulletEnemyTank::get_action_stats() { return action_stats; }

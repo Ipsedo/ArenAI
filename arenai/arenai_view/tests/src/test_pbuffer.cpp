@@ -43,7 +43,7 @@ TEST_P(PBufferParam, TestPBuffer) {
 
     ASSERT_EQ(black_pixels.size(), 3 * width * height);
 
-    // detect if black image
+    // attempt black image
     ASSERT_EQ(
         std::accumulate(
             black_pixels.begin(), black_pixels.end(), 0,

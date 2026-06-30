@@ -12,15 +12,17 @@
 class RewardTransformReplayBuffer : public ReplayBuffer {
 public:
     RewardTransformReplayBuffer(
-        int memory_size, const std::shared_ptr<AbstractRewardTransform> &reward_transform);
+        int memory_size, const std::shared_ptr<AbstractRewardTransform> &reward_transform,
+        const std::shared_ptr<AbstractRewardTransform> &potential_transform);
 
 protected:
-    void on_add_step(const TorchStep &single_step) const override;
+    void on_add_step(const TorchInputStep &single_step) const override;
 
-    TorchStep transform_at_sample(const TorchStep &batch_steps) const override;
+    TorchOutputStep transform_at_sample(const TorchInputStep &batch_steps) const override;
 
 private:
     std::shared_ptr<AbstractRewardTransform> reward_transform_;
+    std::shared_ptr<AbstractRewardTransform> potential_transform_;
 };
 
 #endif//ARENAI_TRAIN_HOST_REWARD_REPLAY_BUFFER_H

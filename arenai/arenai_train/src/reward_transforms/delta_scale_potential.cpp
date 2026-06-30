@@ -10,7 +10,7 @@
 DeltaScalePotentialRewardTransform::DeltaScalePotentialRewardTransform(
     const float wanted_frequency, const float target_potential_reward)
     : ScalePotentialTransform(
-        compute_potential_reward_scale(wanted_frequency, 500.f, target_potential_reward, 0.1f)) {}
+        compute_potential_reward_scale(wanted_frequency, 250.f, target_potential_reward, 0.1f)) {}
 
 float DeltaScalePotentialRewardTransform::compute_potential_reward_scale(
     const float wanted_frequency, const float distance_scale, const float target_reward,

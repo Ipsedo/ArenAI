@@ -13,7 +13,9 @@ public:
 
 private:
     static float compute_potential_reward_scale(
-        float wanted_frequency, float distance_scale, float target_reward, float typical_fraction);
+        float wheel_radial_velocity, float wheel_radius, float turret_angular_velocity,
+        float canon_angular_velocity, float distance_scale, float dt,
+        float target_mean_potential_reward);
 };
 
 #endif//ARENAI_TRAIN_HOST_DELTA_SCALE_REPLAY_BUFFER_H

@@ -4,6 +4,7 @@
 
 #include "./metric_saver.h"
 
+#include <filesystem>
 #include <fstream>
 
 MetricCsvSaver::MetricCsvSaver(
@@ -11,6 +12,9 @@ MetricCsvSaver::MetricCsvSaver(
     const std::vector<std::shared_ptr<AbstractMetric>> &metrics, const int save_every)
     : csv_file_path(output_folder / "metrics.csv"), metrics(metrics), sep(";"),
       save_every(save_every), index(0L) {
+
+    if (!std::filesystem::exists(csv_file_path.parent_path()))
+        std::filesystem::create_directories(csv_file_path.parent_path());
 
     std::ofstream file(csv_file_path, std::ios::out | std::ios::trunc);
 

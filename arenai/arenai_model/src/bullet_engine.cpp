@@ -36,7 +36,7 @@ void BulletPhysicEngine::add_item_producer(const std::shared_ptr<ItemProducer> &
 
 void BulletPhysicEngine::remove_item_constraints_from_world(const std::shared_ptr<Item> &item) {
     std::unique_lock lock(items_mutex);
-    auto bullet_item = std::static_pointer_cast<BulletItem>(item);
+    const auto bullet_item = std::static_pointer_cast<BulletItem>(item);
     for (auto *constraint: bullet_item->get_constraints()) m_world->removeConstraint(constraint);
 }
 

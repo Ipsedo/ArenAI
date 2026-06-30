@@ -14,21 +14,24 @@ MetricCsvSaver::MetricCsvSaver(
 
     std::ofstream file(csv_file_path, std::ios::out | std::ios::trunc);
 
-    std::string header;
-    for (const auto &m: metrics) header += m->get_name() + sep;
+    for (const auto &m: metrics) {
+        file << m->get_name();
+        file << sep;
+    }
 
-    header += "index\n";
-
-    file << header;
+    file << "index\n";
 
     file.close();
 }
 
 void MetricCsvSaver::attempt_append_to_csv() {
     if (index % save_every == 0) {
-        std::ofstream file(csv_file_path, std::ios::app);
+        std::ofstream file(csv_file_path, std::ios::out | std::ios::app);
 
-        for (const auto &m: metrics) file << std::to_string(m->compute_metric()) + sep;
+        for (const auto &m: metrics) {
+            file << std::to_string(m->compute_metric());
+            file << sep;
+        }
 
         file << std::to_string(index) + "\n";
 

@@ -2,9 +2,9 @@
 // Created by samuel on 13/04/2023.
 //
 
-#include <utility>
+#include "shell.h"
 
-#include <arenai_model/shell.h>
+#include <utility>
 
 std::shared_ptr<Shape>
 ShellItem::load_shape(const std::shared_ptr<AbstractFileReader> &file_reader) {
@@ -15,7 +15,7 @@ ShellItem::ShellItem(
     const std::shared_ptr<AbstractFileReader> &file_reader, const glm::vec3 pos,
     const glm::quat rot, const glm::vec3 scale, const float mass,
     const float wanted_frame_frequency,
-    const std::function<void(ShellItem *, Item *)> &contact_callback)
+    const std::function<void(glm::vec3, glm::vec3, Item *)> &contact_callback)
     : LifeItem(1), ConvexItem(NAME, load_shape(file_reader), pos, scale, mass),
       contact_callback(contact_callback),
       nb_frames_alive(static_cast<int>(20.f / wanted_frame_frequency)), start_pos(pos) {
@@ -33,7 +33,7 @@ void ShellItem::on_contact(Item *other) {
     receive_damages(1);
 
     Item::on_contact(other);
-    contact_callback(this, other);
+    contact_callback(get_fire_position(), get_current_position(), other);
 
     if (is_dead()) destroy();
 }

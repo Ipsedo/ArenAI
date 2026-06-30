@@ -9,8 +9,7 @@
 
 #include <arenai_core/constants.h>
 #include <arenai_core/environment.h>
-#include <arenai_model/convex.h>
-#include <arenai_model/height_map.h>
+#include <arenai_model/item_factory.h>
 
 BaseTanksEnvironment::BaseTanksEnvironment(
     const std::shared_ptr<AbstractFileReader> &file_reader,
@@ -19,8 +18,7 @@ BaseTanksEnvironment::BaseTanksEnvironment(
     const int vision_num_threads, const bool vision_thread_sleep)
     : wanted_frequency(wanted_frequency), nb_tanks(nb_tanks), vision_height(vision_height),
       vision_width(vision_width), vision_num_threads(vision_num_threads),
-      vision_thread_sleep(vision_thread_sleep),
-      physic_engine(std::make_unique<PhysicEngine>(wanted_frequency)),
+      vision_thread_sleep(vision_thread_sleep), physic_engine(make_physic_engine(wanted_frequency)),
       nb_reset_frames(static_cast<int>(4.f / wanted_frequency)), gl_context(gl_context), rng(dev()),
       file_reader(file_reader), vision_pool_(std::make_unique<EnemyVisionThreadPool>(
                                     nb_tanks, vision_num_threads, vision_height, vision_width,
@@ -66,7 +64,7 @@ BaseTanksEnvironment::reset_physics(const float spawn_width, const float spawn_h
     tank_controller_handler.clear();
     tank_factories.clear();
 
-    const auto map = std::make_shared<HeightMapItem>(
+    const auto map = make_height_map_item(
         "height_map", file_reader, "heightmap/heightmap6.png", glm::vec3(0., 40., 0.),
         glm::vec3(10., 200., 10.));
 
@@ -105,22 +103,22 @@ BaseTanksEnvironment::reset_physics(const float spawn_width, const float spawn_h
     for (int i = 0; i < nb_shapes; i++) {
         glm::vec3 pos(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng));
         glm::vec3 scale(scale_u_dist(rng));
-        physic_engine->add_item(std::make_shared<SphereItem>(
+        physic_engine->add_item(make_sphere_item(
             "sphere_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng)));
 
         pos = glm::vec3(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng));
         scale = glm::vec3(scale_u_dist(rng));
-        physic_engine->add_item(std::make_shared<CubeItem>(
-            "cube_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng)));
+        physic_engine->add_item(
+            make_cube_item("cube_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng)));
 
         pos = glm::vec3(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng));
         scale = glm::vec3(scale_u_dist(rng));
-        physic_engine->add_item(std::make_shared<TetraItem>(
+        physic_engine->add_item(make_tetra_item(
             "tetra_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng)));
 
         pos = glm::vec3(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng));
         scale = glm::vec3(scale_u_dist(rng));
-        physic_engine->add_item(std::make_shared<CylinderItem>(
+        physic_engine->add_item(make_cylinder_item(
             "cylinder_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng)));
     }
 

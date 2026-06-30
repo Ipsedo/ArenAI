@@ -14,7 +14,7 @@ public:
         const glm::vec3 &chassis_pos, float wanted_frame_frequency);
 
 protected:
-    void on_fired_shell_contact(Item *item) override;
+    void on_fired_shell_contact(const ShellContactInfo &shell_info, Item *item) override;
 };
 
 #endif//PHYVR_PLAYER_TANK_FACTORY_H

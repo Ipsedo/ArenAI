@@ -61,7 +61,7 @@ void DesktopGameEnvironment::on_draw(
     player_renderer->draw(model_matrices);
 }
 
-void DesktopGameEnvironment::on_reset_physics(const std::unique_ptr<PhysicEngine> &engine) {
+void DesktopGameEnvironment::on_reset_physics(const std::unique_ptr<AbstractPhysicEngine> &engine) {
     player_tank_factory = std::make_unique<PlayerTankFactory>(
         asset_file_reader, "player", glm::vec3(0., -40., 40), wanted_frequency);
 
@@ -77,7 +77,7 @@ void DesktopGameEnvironment::on_reset_physics(const std::unique_ptr<PhysicEngine
 }
 
 void DesktopGameEnvironment::on_reset_drawables(
-    const std::unique_ptr<PhysicEngine> &engine,
+    const std::unique_ptr<AbstractPhysicEngine> &engine,
     const std::shared_ptr<AbstractGLContext> &gl_context) {
     player_renderer = std::make_unique<PlayerRenderer>(
         gl_context, window_width, window_height, glm::vec3(200, 300, 200),

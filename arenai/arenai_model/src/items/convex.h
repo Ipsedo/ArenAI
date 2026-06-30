@@ -5,10 +5,14 @@
 #ifndef ARENAI_CONVEX_H
 #define ARENAI_CONVEX_H
 
+#include <btBulletDynamicsCommon.h>
+
 #include <arenai_model/item.h>
 #include <arenai_utils/file_reader.h>
 
-class ConvexItem : public Item {
+#include "bullet_item.h"
+
+class ConvexItem : public BulletItem {
 public:
     ConvexItem(
         std::string name, const std::shared_ptr<Shape> &shape, glm::vec3 position, glm::vec3 scale,
@@ -24,13 +28,10 @@ protected:
     glm::vec3 _get_scale() override;
 
 private:
-    std::string name;
-
-    std::shared_ptr<Shape> shape;
-
     btRigidBody *body;
     btConvexHullShape *collision_shape;
 
+    std::shared_ptr<Shape> shape;
     glm::vec3 scale;
 };
 

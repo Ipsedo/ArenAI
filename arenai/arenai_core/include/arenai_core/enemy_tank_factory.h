@@ -39,7 +39,7 @@ public:
     std::shared_ptr<ActionStats> get_action_stats();
 
 protected:
-    void on_fired_shell_contact(ShellItem *shell, Item *item) override;
+    void on_fired_shell_contact(const ShellContactInfo &shell_info, Item *item) override;
 
 private:
     std::string tank_prefix_name;

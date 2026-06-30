@@ -52,7 +52,7 @@ private:
     std::vector<std::shared_ptr<EnemyTankFactory>> tank_factories;
     std::vector<std::unique_ptr<EnemyControllerHandler>> tank_controller_handler;
 
-    std::unique_ptr<PhysicEngine> physic_engine;
+    std::unique_ptr<AbstractPhysicEngine> physic_engine;
 
     int nb_reset_frames;
 
@@ -65,9 +65,9 @@ protected:
 
     virtual void on_draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) = 0;
 
-    virtual void on_reset_physics(const std::unique_ptr<PhysicEngine> &engine) = 0;
+    virtual void on_reset_physics(const std::unique_ptr<AbstractPhysicEngine> &engine) = 0;
     virtual void on_reset_drawables(
-        const std::unique_ptr<PhysicEngine> &engine,
+        const std::unique_ptr<AbstractPhysicEngine> &engine,
         const std::shared_ptr<AbstractGLContext> &gl_context) = 0;
 
     template<typename T>

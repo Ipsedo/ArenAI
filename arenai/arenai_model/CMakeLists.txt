@@ -41,20 +41,21 @@ endif ()
 file(GLOB_RECURSE ARENAI_MODEL_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 add_library(arenai_model SHARED ${ARENAI_MODEL_SRC})
 target_include_directories(arenai_model PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_include_directories(arenai_model PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
-# glm::glm carries its own include directories.
 target_link_libraries(
         arenai_model
         PUBLIC
-        ${BULLET_LIBRARIES}
         arenai_utils
         arenai_view
         arenai_controller
         glm::glm
+        PRIVATE
+        ${BULLET_LIBRARIES}
 )
 
 if (ANDROID)
-    target_include_directories(arenai_model PUBLIC "${bullet3_SOURCE_DIR}/src")
+    target_include_directories(arenai_model PRIVATE "${bullet3_SOURCE_DIR}/src")
 else ()
-    target_include_directories(arenai_model PUBLIC "${BULLET_INCLUDE_DIR}")
+    target_include_directories(arenai_model PRIVATE "${BULLET_INCLUDE_DIR}")
 endif ()

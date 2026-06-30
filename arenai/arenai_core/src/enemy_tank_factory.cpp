@@ -145,7 +145,7 @@ int EnemyTankFactory::get_nearest_enemy_index(
     return best_i;
 }
 
-void EnemyTankFactory::on_fired_shell_contact(ShellItem *shell, Item *item) {
+void EnemyTankFactory::on_fired_shell_contact(const ShellContactInfo &shell_info, Item *item) {
     for (const auto &i: get_items())
         if (i->get_name() == item->get_name()) return;
 
@@ -165,7 +165,7 @@ void EnemyTankFactory::on_fired_shell_contact(ShellItem *shell, Item *item) {
         }
     }
 
-    last_shoot_info = {shell->get_fire_position(), shell->get_current_position(), hit, killed};
+    last_shoot_info = {shell_info.fire_position, shell_info.current_position, hit, killed};
 }
 
 bool EnemyTankFactory::has_hit_other_tank() {
@@ -197,38 +197,36 @@ std::vector<float> EnemyTankFactory::get_proprioception() {
     const auto &chassis = get_chassis();
     const auto chassis_model_matrix = chassis->get_model_matrix();
 
-    const auto chassis_vel = chassis->get_body()->getLinearVelocity();
+    const auto chassis_vel = chassis->get_linear_velocity();
 
     const auto chassis_forward = chassis_model_matrix * glm::vec4(0.f, 0.f, 1.f, 0.f);
     const auto chassis_up = chassis_model_matrix * glm::vec4(0.f, 1.f, 0.f, 0.f);
 
-    const auto chassis_ang_vel = chassis->get_body()->getAngularVelocity();
+    const auto chassis_ang_vel = chassis->get_angular_velocity();
 
-    std::vector result{chassis_vel.x(),     chassis_vel.y(),     chassis_vel.z(),
-                       chassis_forward.x,   chassis_forward.y,   chassis_forward.z,
-                       chassis_up.x,        chassis_up.y,        chassis_up.z,
-                       chassis_ang_vel.x(), chassis_ang_vel.y(), chassis_ang_vel.z()};
+    std::vector result{chassis_vel.x,     chassis_vel.y,     chassis_vel.z,     chassis_forward.x,
+                       chassis_forward.y, chassis_forward.z, chassis_up.x,      chassis_up.y,
+                       chassis_up.z,      chassis_ang_vel.x, chassis_ang_vel.y, chassis_ang_vel.z};
 
     result.reserve(ENEMY_PROPRIOCEPTION_SIZE);
 
     for (int i = 1; i < items.size(); i++) {
-        const auto body = items[i]->get_body();
         const auto item_model_matrix = items[i]->get_model_matrix();
 
         auto relative_model_matrix = glm::inverse(chassis_model_matrix) * item_model_matrix;
 
         auto pos = relative_model_matrix * glm::vec4(glm::vec3(0.f), 1.f);
-        auto vel = body->getLinearVelocity() - chassis_vel;
+        auto vel = items[i]->get_linear_velocity() - chassis_vel;
 
         auto item_forward = relative_model_matrix * glm::vec4(0.f, 0.f, 1.f, 0.f);
         auto item_up = relative_model_matrix * glm::vec4(0.f, 1.f, 0.f, 0.f);
 
-        auto ang_vel = body->getAngularVelocity() - chassis_ang_vel;
+        auto ang_vel = items[i]->get_angular_velocity() - chassis_ang_vel;
 
         result.insert(
-            result.end(), {pos.x, pos.y, pos.z, vel.x(), vel.y(), vel.z(), item_forward.x,
-                           item_forward.y, item_forward.z, item_up.x, item_up.y, item_up.z,
-                           ang_vel.x(), ang_vel.y(), ang_vel.z()});
+            result.end(),
+            {pos.x, pos.y, pos.z, vel.x, vel.y, vel.z, item_forward.x, item_forward.y,
+             item_forward.z, item_up.x, item_up.y, item_up.z, ang_vel.x, ang_vel.y, ang_vel.z});
     }
     return result;
 }

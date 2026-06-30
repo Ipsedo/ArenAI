@@ -2,16 +2,17 @@
 // Created by samuel on 23/03/2023.
 //
 
+#include "convex.h"
+
 #include <utility>
 
-#include <arenai_model/convex.h>
-#include <arenai_utils/cache.h>
-#include <arenai_utils/singleton.h>
+#include <btBulletDynamicsCommon.h>
+#include <glm/gtc/type_ptr.hpp>
 
 ConvexItem::ConvexItem(
     std::string name, const std::shared_ptr<Shape> &shape, glm::vec3 position, glm::vec3 scale,
     float mass)
-    : Item(std::move(name)), shape(shape), scale(scale) {
+    : BulletItem(std::move(name)), shape(shape), scale(scale) {
 
     collision_shape = new btConvexHullShape();
     for (auto [x, y, z]: shape->get_vertices()) collision_shape->addPoint(btVector3(x, y, z));

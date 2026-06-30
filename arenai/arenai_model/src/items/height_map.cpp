@@ -2,14 +2,18 @@
 // Created by samuel on 23/03/2023.
 //
 
+#include "height_map.h"
+
 #include <algorithm>
 
-#include <arenai_model/height_map.h>
+#include <btBulletDynamicsCommon.h>
+#include <BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
+#include <glm/gtc/type_ptr.hpp>
 
 HeightMapItem::HeightMapItem(
     std::string name, const std::shared_ptr<AbstractFileReader> &img_reader,
     const std::filesystem::path &height_map_file, glm::vec3 pos, glm::vec3 scale)
-    : Item(std::move(name)), shape_id(height_map_file.string()), scale(scale) {
+    : BulletItem(std::move(name)), shape_id(height_map_file.string()), scale(scale) {
     ImageChannels tmp = img_reader->read_png(height_map_file);
     auto [width, height, pixels] = AbstractFileReader::to_img_grey(tmp);
 
@@ -31,7 +35,8 @@ HeightMapItem::HeightMapItem(
     map->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
 
     build_render_mesh(
-        btVector3(-2000., -2000., -2000.), btVector3(2000., 2000., 2000.), min_height, max_height);
+        glm::vec3(-2000.f, -2000.f, -2000.f), glm::vec3(2000.f, 2000.f, 2000.f), min_height,
+        max_height);
 
     map->setUseDiamondSubdivision(true);
 
@@ -64,8 +69,8 @@ glm::vec3 HeightMapItem::compute_vertex_normal(const int x, const int z) const {
 }
 
 static bool triangle_intersects_aabb(
-    const glm::vec3 &p1, const glm::vec3 &p2, const glm::vec3 &p3, const btVector3 &aabbMin,
-    const btVector3 &aabbMax) {
+    const glm::vec3 &p1, const glm::vec3 &p2, const glm::vec3 &p3, const glm::vec3 &aabb_min,
+    const glm::vec3 &aabb_max) {
     const float triMinX = std::min({p1.x, p2.x, p3.x});
     const float triMinY = std::min({p1.y, p2.y, p3.y});
     const float triMinZ = std::min({p1.z, p2.z, p3.z});
@@ -74,9 +79,9 @@ static bool triangle_intersects_aabb(
     const float triMaxY = std::max({p1.y, p2.y, p3.y});
     const float triMaxZ = std::max({p1.z, p2.z, p3.z});
 
-    if (triMaxX < aabbMin.x() || triMinX > aabbMax.x()) return false;
-    if (triMaxY < aabbMin.y() || triMinY > aabbMax.y()) return false;
-    if (triMaxZ < aabbMin.z() || triMinZ > aabbMax.z()) return false;
+    if (triMaxX < aabb_min.x || triMinX > aabb_max.x) return false;
+    if (triMaxY < aabb_min.y || triMinY > aabb_max.y) return false;
+    if (triMaxZ < aabb_min.z || triMinZ > aabb_max.z) return false;
 
     return true;
 }
@@ -93,15 +98,15 @@ glm::vec3 HeightMapItem::make_pos(
 }
 
 void HeightMapItem::build_render_mesh(
-    const btVector3 &aabbMin, const btVector3 &aabbMax, const float min_height,
+    const glm::vec3 aabb_min, const glm::vec3 aabb_max, const float min_height,
     const float max_height) {
     vertices.clear();
     normals.clear();
 
-    auto append_triangle = [this, &aabbMin, &aabbMax](
+    auto append_triangle = [this, &aabb_min, &aabb_max](
                                const glm::vec3 &p1, const glm::vec3 &n1, const glm::vec3 &p2,
                                const glm::vec3 &n2, const glm::vec3 &p3, const glm::vec3 &n3) {
-        if (!triangle_intersects_aabb(p1, p2, p3, aabbMin, aabbMax)) return;
+        if (!triangle_intersects_aabb(p1, p2, p3, aabb_min, aabb_max)) return;
 
         vertices.emplace_back(p1.x, p1.y, p1.z);
         normals.emplace_back(n1.x, n1.y, n1.z);

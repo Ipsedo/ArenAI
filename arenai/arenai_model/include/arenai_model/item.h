@@ -8,7 +8,6 @@
 #include <memory>
 #include <string>
 
-#include <btBulletDynamicsCommon.h>
 #include <glm/glm.hpp>
 
 #include "./shapes.h"
@@ -23,12 +22,12 @@ public:
 
     std::string get_name();
 
-    glm::mat4 get_model_matrix();
+    virtual glm::mat4 get_model_matrix() = 0;
+
+    virtual glm::vec3 get_linear_velocity() = 0;
+    virtual glm::vec3 get_angular_velocity() = 0;
 
     virtual void tick();
-
-    virtual btRigidBody *get_body() = 0;
-    virtual std::vector<btTypedConstraint *> get_constraints();
 
     virtual void on_contact(Item *other);
     virtual bool need_destroy();

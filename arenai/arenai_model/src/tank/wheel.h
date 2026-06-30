@@ -7,7 +7,8 @@
 
 #include <arenai_controller/controller.h>
 #include <arenai_controller/inputs.h>
-#include <arenai_model/convex.h>
+
+#include "items/convex.h"
 
 #define WHEEL_DIRECTION_MAX_RADIAN (static_cast<float>(M_PI) / 6.f)
 

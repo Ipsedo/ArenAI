@@ -6,9 +6,7 @@
 
 #include <glm/gtx/transform.hpp>
 
-#include <arenai_model/convex.h>
 #include <arenai_model/engine.h>
-#include <arenai_model/height_map.h>
 #include <arenai_model/shapes.h>
 #include <arenai_model/tank_factory.h>
 #include <arenai_utils/cache.h>
@@ -79,7 +77,8 @@ void UserGameTanksEnvironment::on_cmd(struct android_app *app, int32_t cmd) {
 
 bool UserGameTanksEnvironment::is_running() const { return !is_paused; }
 
-void UserGameTanksEnvironment::on_reset_physics(const std::unique_ptr<PhysicEngine> &engine) {
+void UserGameTanksEnvironment::on_reset_physics(
+    const std::unique_ptr<AbstractPhysicEngine> &engine) {
     tank_factory = std::make_unique<PlayerTankFactory>(
         file_reader, "player", glm::vec3(0., -40., 40), wanted_frequency);
 
@@ -90,7 +89,7 @@ void UserGameTanksEnvironment::on_reset_physics(const std::unique_ptr<PhysicEngi
 }
 
 void UserGameTanksEnvironment::on_reset_drawables(
-    const std::unique_ptr<PhysicEngine> &engine,
+    const std::unique_ptr<AbstractPhysicEngine> &engine,
     const std::shared_ptr<AbstractGLContext> &gl_context) {
     player_renderer = std::make_unique<PlayerRenderer>(
         gl_context, ANativeWindow_getWidth(app->window), ANativeWindow_getHeight(app->window),
@@ -140,14 +139,6 @@ void UserGameTanksEnvironment::pause() {
 void UserGameTanksEnvironment::reset_singleton() {
     Singleton<Cache<std::shared_ptr<Shape>>>::get_singleton()->clear();
     Singleton<Cache<std::shared_ptr<Shape>>>::reset_singleton();
-
-    Singleton<Cache<btVector3>>::get_singleton()->clear();
-    Singleton<Cache<btVector3>>::reset_singleton();
-
-    auto cache_collision_shape = Singleton<Cache<btCollisionShape *>>::get_singleton();
-    //cache_collision_shape->apply_on_items([](auto s) { delete s; });
-    cache_collision_shape->clear();
-    Singleton<Cache<btCollisionShape *>>::reset_singleton();
 
     Singleton<Cache<std::shared_ptr<Program>>>::get_singleton()->clear();
     Singleton<Cache<std::shared_ptr<Program>>>::reset_singleton();

@@ -41,7 +41,7 @@ void TurretItem::on_input(const user_input &input) {
 }
 
 std::vector<btTypedConstraint *> TurretItem::get_constraints() {
-    auto constraints = Item::get_constraints();
+    auto constraints = BulletItem::get_constraints();
     constraints.push_back(hinge);
     return constraints;
 }

@@ -7,7 +7,8 @@
 
 #include <arenai_controller/controller.h>
 #include <arenai_controller/inputs.h>
-#include <arenai_model/convex.h>
+
+#include "items/convex.h"
 
 class TurretItem final : public LifeItem, public ConvexItem, public Controller {
 public:

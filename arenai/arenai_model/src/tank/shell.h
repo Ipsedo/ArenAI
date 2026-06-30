@@ -7,11 +7,12 @@
 
 #include <functional>
 
-#include <arenai_model/convex.h>
 #include <arenai_utils/file_reader.h>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
+
+#include "items/convex.h"
 
 class ShellItem final : public LifeItem, public ConvexItem {
 public:
@@ -21,8 +22,8 @@ public:
     ShellItem(
         const std::shared_ptr<AbstractFileReader> &file_reader, glm::vec3 pos, glm::quat rot,
         glm::vec3 scale, float mass, float wanted_frame_frequency,
-        const std::function<void(ShellItem *, Item *)> &contact_callback = [](ShellItem *_s,
-                                                                              Item *_i) {});
+        const std::function<void(glm::vec3, glm::vec3, Item *)> &contact_callback =
+            [](glm::vec3, glm::vec3, Item *) {});
 
     void on_contact(Item *other) override;
 
@@ -34,7 +35,7 @@ public:
     glm::vec3 get_current_position();
 
 private:
-    std::function<void(ShellItem *, Item *)> contact_callback;
+    std::function<void(glm::vec3, glm::vec3, Item *)> contact_callback;
     int nb_frames_alive;
 
     glm::vec3 start_pos;

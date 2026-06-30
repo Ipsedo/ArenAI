@@ -11,7 +11,8 @@
 CanonItem::CanonItem(
     const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,
     glm::vec3 pos, glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *turret,
-    const float wanted_frame_frequency, const std::function<void(ShellItem *, Item *)> &on_contact)
+    const float wanted_frame_frequency,
+    const std::function<void(glm::vec3, glm::vec3, Item *)> &on_contact)
     : LifeItem(5), ConvexItem(
                        prefix_name + "_canon",
                        std::make_shared<ObjShape>(
@@ -59,8 +60,6 @@ std::vector<std::shared_ptr<Item>> CanonItem::get_produced_items() {
 }
 
 void CanonItem::on_input(const user_input &input) {
-    // angle is the hinge target in radians; input.right_joystick.y is a per-frame
-    // delta in rad/frame. Elevation is limited to +/- 0.2 * pi.
     angle += input.right_joystick.y * 0.4f;
 
     angle = std::clamp(angle, -0.2f * static_cast<float>(M_PI), 0.2f * static_cast<float>(M_PI));
@@ -98,7 +97,7 @@ glm::vec3 CanonItem::up() {
 }
 
 std::vector<btTypedConstraint *> CanonItem::get_constraints() {
-    auto constraints = Item::get_constraints();
+    auto constraints = BulletItem::get_constraints();
     constraints.push_back(hinge);
     return constraints;
 }

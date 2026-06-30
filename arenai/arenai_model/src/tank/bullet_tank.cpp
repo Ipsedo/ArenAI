@@ -16,7 +16,7 @@
 BulletTank::BulletTank(
     BulletPhysicEngine &engine, const std::shared_ptr<AbstractFileReader> &file_reader,
     const std::string &tank_prefix_name, glm::vec3 chassis_pos, const float wanted_frame_frequency,
-    std::function<void(const ShellContactInfo &, Item *)> on_contact_callback)
+    const std::function<void(const ShellContactInfo &, Item *)> &on_contact_callback)
     : engine(engine), name(tank_prefix_name), camera(std::nullptr_t()), file_reader(file_reader) {
 
     glm::vec3 scale(0.5);
@@ -85,7 +85,7 @@ BulletTank::BulletTank(
     auto canon_item = std::make_shared<CanonItem>(
         tank_prefix_name, file_reader, chassis_pos + turret_pos + canon_pos, canon_pos,
         scale * canon_scale, 100, turret->get_body(), wanted_frame_frequency,
-        [&on_contact_callback](const glm::vec3 fire_pos, const glm::vec3 hit_pos, Item *item) {
+        [on_contact_callback](const glm::vec3 fire_pos, const glm::vec3 hit_pos, Item *item) {
             on_contact_callback({fire_pos, hit_pos}, item);
         });
 

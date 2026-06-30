@@ -19,7 +19,7 @@ public:
     BulletTank(
         BulletPhysicEngine &engine, const std::shared_ptr<AbstractFileReader> &file_reader,
         const std::string &tank_prefix_name, glm::vec3 chassis_pos, float wanted_frame_frequency,
-        std::function<void(const ShellContactInfo &, Item *)> on_contact_callback);
+        const std::function<void(const ShellContactInfo &, Item *)> &on_contact_callback);
 
     std::shared_ptr<Camera> get_camera() override;
     std::vector<std::shared_ptr<Item>> get_items() override;

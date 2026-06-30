@@ -18,9 +18,9 @@
 #include "./metrics/metric_saver.h"
 #include "./networks_io/torch_saver.h"
 #include "./replay_buffer/reward_replay_buffer.h"
+#include "./reward_transforms/delta_scale_potential.h"
 #include "./reward_transforms/identity_transform.h"
 #include "./view/train_gl_context.h"
-#include "reward_transforms/delta_scale_potential.h"
 
 void train_main(
     const EnvironmentOptions &environment_options, const ModelOptions &model_options,

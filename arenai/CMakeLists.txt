@@ -19,3 +19,4 @@ add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/arenai_desktop")
 
 # Tests
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/arenai_view/tests")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/arenai_train/tests")

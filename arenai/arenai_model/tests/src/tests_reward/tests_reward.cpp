@@ -21,7 +21,7 @@ TEST_F(RewardTest, RewardZeroWhenAliveNoShot) {
 
     engine->step(1.f / 60.f);
 
-    std::vector<std::shared_ptr<EnemyTank>> tanks{
+    const std::vector<std::shared_ptr<EnemyTank>> tanks{
         std::shared_ptr<EnemyTank>(tank_a.release()), std::shared_ptr<EnemyTank>(tank_b.release())};
 
     const float reward = tanks[0]->get_reward(tanks);
@@ -40,8 +40,7 @@ TEST_F(RewardTest, RewardNegativeWhenDead) {
         std::shared_ptr<EnemyTank>(tank_a.release()), std::shared_ptr<EnemyTank>(tank_b.release())};
 
     // damage chassis enough to kill it
-    auto chassis_items = tanks[0]->get_items();
-    for (const auto &item: chassis_items) {
+    for (const auto chassis_items = tanks[0]->get_items(); const auto &item: chassis_items) {
         if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
             life->receive_damages(1e6f);
             break;
@@ -66,8 +65,7 @@ TEST_F(RewardTest, SuicidePenaltyLessThanDeathPenalty) {
         std::shared_ptr<EnemyTank>(tank_a.release()), std::shared_ptr<EnemyTank>(tank_b.release())};
 
     // kill by damage → normal death penalty
-    auto chassis_items_b = tanks[1]->get_items();
-    for (const auto &item: chassis_items_b) {
+    for (const auto chassis_items_b = tanks[1]->get_items(); const auto &item: chassis_items_b) {
         if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
             life->receive_damages(1e6f);
             break;
@@ -93,16 +91,16 @@ TEST_F(RewardTest, RewardPositiveOnHit) {
     // settle on ground (300 frames = 5s at 60fps)
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
-    std::shared_ptr<EnemyTank> shared_a(tank_a.release());
-    std::shared_ptr<EnemyTank> shared_b(tank_b.release());
+    const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
+    const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
     // fire from tank_a toward tank_b (canon points +Z by default)
-    const user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
     for (const auto &ctrl: shared_a->get_controllers()) ctrl->on_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
-    std::vector<std::shared_ptr<EnemyTank>> tanks{shared_a, shared_b};
+    const std::vector<std::shared_ptr<EnemyTank>> tanks{shared_a, shared_b};
 
     ASSERT_TRUE(shared_a->has_hit_other_tank()) << "shell should have hit the enemy tank";
 
@@ -121,7 +119,7 @@ TEST_F(RewardTest, ShootInfoResetAfterGetReward) {
 
     engine->step(1.f / 60.f);
 
-    std::vector<std::shared_ptr<EnemyTank>> tanks{
+    const std::vector<std::shared_ptr<EnemyTank>> tanks{
         std::shared_ptr<EnemyTank>(tank_a.release()), std::shared_ptr<EnemyTank>(tank_b.release())};
 
     tanks[0]->get_reward(tanks);
@@ -143,7 +141,7 @@ TEST_F(RewardTest, RewardNoNaNAfterMultipleSteps) {
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
-    std::vector<std::shared_ptr<EnemyTank>> tanks{
+    const std::vector<std::shared_ptr<EnemyTank>> tanks{
         std::shared_ptr<EnemyTank>(tank_a.release()), std::shared_ptr<EnemyTank>(tank_b.release())};
 
     // fire and let the shell travel
@@ -164,7 +162,7 @@ TEST_F(RewardTest, RewardWithEmptyTankList) {
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
-    std::shared_ptr<EnemyTank> shared_tank(tank.release());
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
 
     constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
     for (const auto &ctrl: shared_tank->get_controllers()) ctrl->on_input(fire_input);
@@ -172,7 +170,7 @@ TEST_F(RewardTest, RewardWithEmptyTankList) {
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
     // pass an empty tank list — get_nearest_enemy_index returns -1
-    std::vector<std::shared_ptr<EnemyTank>> empty_tanks;
+    const std::vector<std::shared_ptr<EnemyTank>> empty_tanks;
     const float reward = shared_tank->get_reward(empty_tanks);
 
     ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN with empty tank list";
@@ -190,9 +188,9 @@ TEST_F(RewardTest, RewardAccumulatesOverMultipleHits) {
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
-    std::shared_ptr<EnemyTank> shared_a(tank_a.release());
-    std::shared_ptr<EnemyTank> shared_b(tank_b.release());
-    std::vector<std::shared_ptr<EnemyTank>> tanks{shared_a, shared_b};
+    const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
+    const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
+    const std::vector<std::shared_ptr<EnemyTank>> tanks{shared_a, shared_b};
 
     // first shot
     constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};

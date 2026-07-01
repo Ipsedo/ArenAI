@@ -14,7 +14,7 @@
 
 TEST_F(PlayerTankTest, ScoreZeroAtCreation) {
     add_ground();
-    auto tank = tank_factory->make_player_tank("player", {0.f, 0.f, 0.f});
+    const auto tank = tank_factory->make_player_tank("player", {0.f, 0.f, 0.f});
 
     engine->step(1.f / 60.f);
 
@@ -23,7 +23,7 @@ TEST_F(PlayerTankTest, ScoreZeroAtCreation) {
 
 TEST_F(PlayerTankTest, ScoreIncreasesOnHit) {
     add_ground();
-    auto player = tank_factory->make_player_tank("player", {0.f, 5.f, 0.f});
+    const auto player = tank_factory->make_player_tank("player", {0.f, 5.f, 0.f});
     auto enemy = tank_factory->make_enemy_tank("enemy", {0.f, 5.f, 30.f});
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
@@ -38,8 +38,8 @@ TEST_F(PlayerTankTest, ScoreIncreasesOnHit) {
 
 TEST_F(PlayerTankTest, ScoreHigherOnKillThanHit) {
     add_ground();
-    auto player = tank_factory->make_player_tank("player", {0.f, 5.f, 0.f});
-    auto enemy = tank_factory->make_enemy_tank("enemy", {0.f, 5.f, 30.f});
+    const auto player = tank_factory->make_player_tank("player", {0.f, 5.f, 0.f});
+    const auto enemy = tank_factory->make_enemy_tank("enemy", {0.f, 5.f, 30.f});
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -60,7 +60,7 @@ TEST_F(PlayerTankTest, ScoreHigherOnKillThanHit) {
 
 TEST_F(PlayerTankTest, ScoreDoesNotIncreaseOnSelfHit) {
     add_ground();
-    auto player = tank_factory->make_player_tank("player", {0.f, 5.f, 0.f});
+    const auto player = tank_factory->make_player_tank("player", {0.f, 5.f, 0.f});
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -75,7 +75,7 @@ TEST_F(PlayerTankTest, ScoreDoesNotIncreaseOnSelfHit) {
 
 TEST_F(PlayerTankTest, PlayerTankIsDead) {
     add_ground();
-    auto player = tank_factory->make_player_tank("player", {0.f, 0.f, 0.f});
+    const auto player = tank_factory->make_player_tank("player", {0.f, 0.f, 0.f});
 
     engine->step(1.f / 60.f);
 

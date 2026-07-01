@@ -10,7 +10,7 @@
 // ========================================================================
 
 TEST_F(LifeItemTest, AliveAtCreation) {
-    LifeItem item(100.f);
+    const LifeItem item(100.f);
 
     ASSERT_FALSE(item.is_dead());
 }
@@ -79,7 +79,7 @@ TEST_F(LifeItemTest, MultipleDamagesAccumulate) {
 }
 
 TEST_F(LifeItemTest, ZeroHpAtCreationIsDead) {
-    LifeItem item(0.f);
+    const LifeItem item(0.f);
 
     ASSERT_TRUE(item.is_dead());
 }
@@ -174,7 +174,7 @@ TEST_F(ItemBaseTest, TickDoesNotCrash) {
 // ========================================================================
 
 TEST_F(LifeItemTest, NegativeHpAtCreationIsDead) {
-    LifeItem item(-5.f);
+    const LifeItem item(-5.f);
 
     ASSERT_TRUE(item.is_dead()) << "item with negative HP should be dead at creation";
 }

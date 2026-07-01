@@ -16,7 +16,7 @@
 
 TEST_F(EnemyTankTest, DeadWhenSingleWheelDestroyed) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank("tank_a", {0.f, 0.f, 0.f});
+    const auto tank = tank_factory->make_enemy_tank("tank_a", {0.f, 0.f, 0.f});
 
     engine->step(1.f / 60.f);
 
@@ -48,7 +48,7 @@ TEST_F(EnemyTankTest, OnDeathMultipleCallsDoNotCrash) {
 
     engine->step(1.f / 60.f);
 
-    std::shared_ptr<EnemyTank> shared_tank(tank.release());
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
 
     // kill the tank
     for (const auto &item: shared_tank->get_items()) {
@@ -72,7 +72,7 @@ TEST_F(EnemyTankTest, OnDeathBeforeDeathDoesNothing) {
 
     engine->step(1.f / 60.f);
 
-    std::shared_ptr<EnemyTank> shared_tank(tank.release());
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
 
     ASSERT_FALSE(shared_tank->is_dead());
     ASSERT_NO_THROW(shared_tank->on_death());
@@ -89,8 +89,8 @@ TEST_F(EnemyTankTest, RewardWhenAllEnemiesDeadAndShellFired) {
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
-    std::shared_ptr<EnemyTank> shared_a(tank_a.release());
-    std::shared_ptr<EnemyTank> shared_b(tank_b.release());
+    const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
+    const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
     // kill tank_b before firing
     for (const auto &item: shared_b->get_items()) {
@@ -104,7 +104,7 @@ TEST_F(EnemyTankTest, RewardWhenAllEnemiesDeadAndShellFired) {
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
-    std::vector<std::shared_ptr<EnemyTank>> tanks{shared_a, shared_b};
+    const std::vector<std::shared_ptr<EnemyTank>> tanks{shared_a, shared_b};
 
     // get_nearest_enemy_index should return -1 (all dead)
     // reward should not crash and should be 0 (no valid target)
@@ -119,7 +119,7 @@ TEST_F(EnemyTankTest, RewardNoNaNWhenAloneInTankList) {
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
-    std::shared_ptr<EnemyTank> shared_tank(tank.release());
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
 
     // fire a shell that will hit the ground
     constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
@@ -127,7 +127,7 @@ TEST_F(EnemyTankTest, RewardNoNaNWhenAloneInTankList) {
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
-    std::vector<std::shared_ptr<EnemyTank>> tanks{shared_tank};
+    const std::vector<std::shared_ptr<EnemyTank>> tanks{shared_tank};
 
     const float reward = shared_tank->get_reward(tanks);
     ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN when alone";
@@ -145,7 +145,7 @@ TEST_F(EnemyTankTest, ShellHitsGroundNoRewardNoCrash) {
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
-    std::shared_ptr<EnemyTank> shared_tank(tank.release());
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
 
     // tilt canon downward to ensure it hits the ground
     constexpr user_input aim_down{{0.f, 0.f}, {0.f, 1.f}, {false}};
@@ -178,7 +178,7 @@ TEST_F(EnemyTankTest, SuicideDetectionWhenFlipped) {
 
     engine->step(1.f / 60.f);
 
-    std::shared_ptr<EnemyTank> shared_tank(tank.release());
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
 
     ASSERT_FALSE(shared_tank->is_suicide()) << "tank should not be suicidal initially";
 
@@ -199,7 +199,7 @@ TEST_F(EnemyTankTest, HasHitOtherTankResetsAfterCall) {
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
-    std::shared_ptr<EnemyTank> shared_a(tank_a.release());
+    const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
     std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
     constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};

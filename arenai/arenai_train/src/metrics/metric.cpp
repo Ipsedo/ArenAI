@@ -3,6 +3,7 @@
 //
 
 #include <numeric>
+#include <stdexcept>
 
 #include <arenai_train/metric.h>
 
@@ -20,7 +21,10 @@ float AbstractMetric::compute_metric() { return compute_metric_impl(values); }
 
 float AbstractMetric::to_stored_value(const float value) { return value; }
 
-float AbstractMetric::last_value() const { return values.back(); }
+float AbstractMetric::last_value() const {
+    if (values.empty()) throw std::runtime_error("last_value() called on empty metric");
+    return values.back();
+}
 
 std::string AbstractMetric::get_name() const { return name; }
 

@@ -2,6 +2,8 @@
 // Created by claude on 01/07/2026.
 //
 
+#include <stdexcept>
+
 #include <metrics/mean_metric.h>
 #include <metrics/std_metric.h>
 
@@ -19,8 +21,7 @@ TEST_F(MetricsEdgeTest, MeanMetricComputeOnEmpty) {
 TEST_F(MetricsEdgeTest, MeanMetricLastValueOnEmpty) {
     const MeanMetric metric("test_mean", 10);
 
-    ASSERT_DEATH(metric.last_value(), "")
-        << "last_value on empty metric triggers UB (vector.back() on empty)";
+    ASSERT_THROW(metric.last_value(), std::runtime_error);
 }
 
 TEST_F(MetricsEdgeTest, StdMetricComputeOnEmpty) {
@@ -35,8 +36,7 @@ TEST_F(MetricsEdgeTest, StdMetricComputeOnEmpty) {
 TEST_F(MetricsEdgeTest, StdMetricLastValueOnEmpty) {
     const StdMetric metric("test_std", 10);
 
-    ASSERT_DEATH(metric.last_value(), "")
-        << "last_value on empty StdMetric triggers UB (vector.back() on empty)";
+    ASSERT_THROW(metric.last_value(), std::runtime_error);
 }
 
 TEST_F(MetricsEdgeTest, MeanMetricSingleValue) {

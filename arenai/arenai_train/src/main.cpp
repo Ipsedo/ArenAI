@@ -39,7 +39,7 @@ int main(const int argc, char **argv) {
     parser.add_argument("--actor_learning_rate").scan<'g', float>().default_value(1e-4f);
     parser.add_argument("--critic_learning_rate").scan<'g', float>().default_value(3e-4f);
     parser.add_argument("--alpha_learning_rate").scan<'g', float>().default_value(1e-4f);
-    parser.add_argument("--potential_reward_scale").scan<'g', float>().default_value(0.2f);
+    parser.add_argument("--potential_reward_scale").scan<'g', float>().default_value(0.f);
     parser.add_argument("--target_continuous_sigma").scan<'g', float>().default_value(0.3f);
     parser.add_argument("--discrete_entropy_factor").scan<'g', float>().default_value(0.9f);
     parser.add_argument("--epochs").scan<'i', int>().default_value(8);
@@ -57,10 +57,10 @@ int main(const int argc, char **argv) {
     parser.add_argument("--nb_tanks").scan<'i', int>().default_value(16);
     parser.add_argument("--vision_height").scan<'i', int>().default_value(64);
     parser.add_argument("--vision_width").scan<'i', int>().default_value(128);
-    parser.add_argument("--initial_spawn_width").scan<'g', float>().default_value(500.f);
-    parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(500.f);
-    parser.add_argument("--final_spawn_width").scan<'g', float>().default_value(2000.f);
-    parser.add_argument("--final_spawn_height").scan<'g', float>().default_value(2000.f);
+    parser.add_argument("--initial_spawn_width").scan<'g', float>().default_value(250.f);
+    parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(250.f);
+    parser.add_argument("--final_spawn_width").scan<'g', float>().default_value(1000.f);
+    parser.add_argument("--final_spawn_height").scan<'g', float>().default_value(1000.f);
     parser.add_argument("--vision_num_threads")
         .scan<'i', int>()
         .default_value(static_cast<int>(std::thread::hardware_concurrency()));

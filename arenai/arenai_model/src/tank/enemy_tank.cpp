@@ -25,7 +25,7 @@ BulletEnemyTank::BulletEnemyTank(
         [this](const ShellContactInfo &info, Item *item) { on_fired_shell_contact(info, item); }),
       tank_prefix_name(tank_prefix_name),
       max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-      curr_frame_upside_down(0), distance_scale(250.f), impact_distance_scale(50.f),
+      curr_frame_upside_down(0), distance_scale(250.f), impact_distance_scale(100.f),
       angle_scale(glm::pi<float>() / 3.f), is_dead_already_triggered(false), has_touch(false),
       last_shoot_info(std::nullopt), action_stats(std::make_shared<ActionStats>()) {}
 

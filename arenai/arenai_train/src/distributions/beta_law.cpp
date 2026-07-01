@@ -30,8 +30,9 @@ beta_law_log_proba(const torch::Tensor &x, const torch::Tensor &alpha, const tor
     const auto clamped_alpha = torch::clamp_min(alpha, EPSILON);
     const auto clamped_beta = torch::clamp_min(beta, EPSILON);
 
-    const auto y = torch::clamp((x + 1.f) / 2.f, EPSILON, 1.f - EPSILON);
-    const auto ya = torch::clamp(torch::pow(y, clamped_alpha), EPSILON, 1.f - EPSILON);
+    constexpr float eps = 1e-6f;
+    const auto y = torch::clamp((x + 1.f) / 2.f, eps, 1.f - eps);
+    const auto ya = torch::clamp(torch::pow(y, clamped_alpha), eps, 1.f - eps);
 
     const auto logp = torch::log(clamped_alpha) + torch::log(clamped_beta)
                       + (clamped_alpha - 1.0) * torch::log(y)

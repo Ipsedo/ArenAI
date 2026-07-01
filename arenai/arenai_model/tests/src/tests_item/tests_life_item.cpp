@@ -168,3 +168,53 @@ TEST_F(ItemBaseTest, TickDoesNotCrash) {
 
     ASSERT_NO_THROW(item.tick());
 }
+
+// ========================================================================
+// LifeItem — negative HP edge cases
+// ========================================================================
+
+TEST_F(LifeItemTest, NegativeHpAtCreationIsDead) {
+    LifeItem item(-5.f);
+
+    ASSERT_TRUE(item.is_dead()) << "item with negative HP should be dead at creation";
+}
+
+TEST_F(LifeItemTest, NegativeHpReceiveDamagesReturnsZero) {
+    LifeItem item(-5.f);
+
+    const float received = item.receive_damages(10.f);
+
+    ASSERT_FLOAT_EQ(received, 0.f)
+        << "receiving damages on a negative-HP item should return 0 (already dead)";
+}
+
+TEST_F(LifeItemTest, NegativeHpIsAlreadyDeadFirstCallReturnsFalse) {
+    LifeItem item(-5.f);
+
+    // item is dead from creation, but is_already_dead should return false
+    // the first time it's called (triggering the death event)
+    ASSERT_TRUE(item.is_dead());
+    ASSERT_FALSE(item.is_already_dead())
+        << "first is_already_dead call on a dead item should return false (death event trigger)";
+}
+
+TEST_F(LifeItemTest, NegativeHpIsAlreadyDeadSecondCallReturnsTrue) {
+    LifeItem item(-5.f);
+
+    item.is_already_dead();
+    ASSERT_TRUE(item.is_already_dead()) << "second is_already_dead call should return true";
+}
+
+// ========================================================================
+// Item — double destroy
+// ========================================================================
+
+TEST_F(ItemBaseTest, DoubleDestroyDoesNotCrash) {
+    DummyItem item("item");
+
+    item.destroy();
+    ASSERT_TRUE(item.need_destroy());
+
+    ASSERT_NO_THROW(item.destroy());
+    ASSERT_TRUE(item.need_destroy());
+}

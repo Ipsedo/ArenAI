@@ -131,3 +131,89 @@ TEST_F(RewardTest, ShootInfoResetAfterGetReward) {
 
     ASSERT_FLOAT_EQ(reward_second, 0.f);
 }
+
+// ========================================================================
+// get_reward — NaN / Inf stability
+// ========================================================================
+
+TEST_F(RewardTest, RewardNoNaNAfterMultipleSteps) {
+    add_ground();
+    auto tank_a = tank_factory->make_enemy_tank("tank_a", {0.f, 5.f, 0.f});
+    auto tank_b = tank_factory->make_enemy_tank("tank_b", {0.f, 5.f, 30.f});
+
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+
+    std::vector<std::shared_ptr<EnemyTank>> tanks{
+        std::shared_ptr<EnemyTank>(tank_a.release()), std::shared_ptr<EnemyTank>(tank_b.release())};
+
+    // fire and let the shell travel
+    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    for (const auto &ctrl: tanks[0]->get_controllers()) ctrl->on_input(fire_input);
+
+    for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
+
+    const float reward = tanks[0]->get_reward(tanks);
+
+    ASSERT_FALSE(std::isnan(reward)) << "reward should never be NaN";
+    ASSERT_FALSE(std::isinf(reward)) << "reward should never be Inf";
+}
+
+TEST_F(RewardTest, RewardWithEmptyTankList) {
+    add_ground();
+    auto tank = tank_factory->make_enemy_tank("tank_a", {0.f, 5.f, 0.f});
+
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+
+    std::shared_ptr<EnemyTank> shared_tank(tank.release());
+
+    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->on_input(fire_input);
+
+    for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
+
+    // pass an empty tank list — get_nearest_enemy_index returns -1
+    std::vector<std::shared_ptr<EnemyTank>> empty_tanks;
+    const float reward = shared_tank->get_reward(empty_tanks);
+
+    ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN with empty tank list";
+    ASSERT_FALSE(std::isinf(reward)) << "reward should not be Inf with empty tank list";
+}
+
+// ========================================================================
+// Reward — accumulation over multiple kills
+// ========================================================================
+
+TEST_F(RewardTest, RewardAccumulatesOverMultipleHits) {
+    add_ground();
+    auto tank_a = tank_factory->make_enemy_tank("tank_a", {0.f, 5.f, 0.f});
+    auto tank_b = tank_factory->make_enemy_tank("tank_b", {0.f, 5.f, 30.f});
+
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+
+    std::shared_ptr<EnemyTank> shared_a(tank_a.release());
+    std::shared_ptr<EnemyTank> shared_b(tank_b.release());
+    std::vector<std::shared_ptr<EnemyTank>> tanks{shared_a, shared_b};
+
+    // first shot
+    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    for (const auto &ctrl: shared_a->get_controllers()) ctrl->on_input(fire_input);
+
+    for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
+
+    const float reward_1 = shared_a->get_reward(tanks);
+
+    // second shot
+    constexpr user_input no_fire{{0.f, 0.f}, {0.f, 0.f}, {false}};
+    for (const auto &ctrl: shared_a->get_controllers()) ctrl->on_input(no_fire);
+    engine->step(1.f / 60.f);
+
+    for (const auto &ctrl: shared_a->get_controllers()) ctrl->on_input(fire_input);
+
+    for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
+
+    const float reward_2 = shared_a->get_reward(tanks);
+
+    // both rewards should be individually valid
+    ASSERT_FALSE(std::isnan(reward_1));
+    ASSERT_FALSE(std::isnan(reward_2));
+}

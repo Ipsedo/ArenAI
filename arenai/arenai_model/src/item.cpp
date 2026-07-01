@@ -24,7 +24,8 @@ void Item::tick() {}
  * Life Item
  */
 
-LifeItem::LifeItem(const float health_points) : health_points(health_points), already_dead(false) {}
+LifeItem::LifeItem(const float health_points)
+    : health_points(std::max(health_points, 0.f)), already_dead(false) {}
 
 bool LifeItem::is_dead() const { return health_points <= 0.f; }
 

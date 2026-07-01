@@ -14,4 +14,10 @@ struct image_size {
 
 class PBufferParam : public testing::TestWithParam<image_size> {};
 
+class PBufferSpecularParam : public testing::TestWithParam<image_size> {};
+
+class PBufferClearColorParam : public testing::TestWithParam<image_size> {};
+
+class PBufferMultiFrameParam : public testing::TestWithParam<image_size> {};
+
 #endif//ARENAI_TRAIN_HOST_TEST_PBUFFER_H

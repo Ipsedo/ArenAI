@@ -15,7 +15,7 @@
 #endif
 
 void EngineTestFixture::SetUp() {
-    constexpr float frequency = 60.f;
+    constexpr float frequency = 1.f / 60.f;
     engine = make_physic_engine(frequency);
 
     file_reader = std::make_shared<LocalAssetFileReader>(std::filesystem::path(ARENAI_ASSETS_DIR));

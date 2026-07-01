@@ -86,25 +86,28 @@ TEST_F(RewardTest, SuicidePenaltyLessThanDeathPenalty) {
 
 TEST_F(RewardTest, RewardPositiveOnHit) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank("tank_a", {0.f, 0.f, 0.f});
-    auto tank_b = tank_factory->make_enemy_tank("tank_b", {0.f, 0.f, 10.f});
+    // spawn tanks high enough so all parts start above ground and settle cleanly
+    auto tank_a = tank_factory->make_enemy_tank("tank_a", {0.f, 5.f, 0.f});
+    auto tank_b = tank_factory->make_enemy_tank("tank_b", {0.f, 5.f, 30.f});
 
-    engine->step(1.f / 60.f);
+    // settle on ground (300 frames = 5s at 60fps)
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
-    std::vector<std::shared_ptr<EnemyTank>> tanks{
-        std::shared_ptr<EnemyTank>(tank_a.release()), std::shared_ptr<EnemyTank>(tank_b.release())};
+    std::shared_ptr<EnemyTank> shared_a(tank_a.release());
+    std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
-    // fire from tank_a
-    const user_input fire_input{{0.f, 1.f}, {0.f, 0.f}, {true}};
-    for (const auto &ctrl: tanks[0]->get_controllers()) ctrl->on_input(fire_input);
+    // fire from tank_a toward tank_b (canon points +Z by default)
+    const user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    for (const auto &ctrl: shared_a->get_controllers()) ctrl->on_input(fire_input);
 
-    // step so shell can travel and hit
-    for (int i = 0; i < 30; i++) engine->step(1.f / 60.f);
+    for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
-    const float reward = tanks[0]->get_reward(tanks);
+    std::vector<std::shared_ptr<EnemyTank>> tanks{shared_a, shared_b};
 
-    // if the shell hit, reward should be positive due to hit bonus
-    if (tanks[0]->has_hit_other_tank()) { ASSERT_GT(reward, 0.f); }
+    ASSERT_TRUE(shared_a->has_hit_other_tank()) << "shell should have hit the enemy tank";
+
+    const float reward = shared_a->get_reward(tanks);
+    ASSERT_GT(reward, 0.f) << "reward should be positive after hitting an enemy";
 }
 
 // ========================================================================

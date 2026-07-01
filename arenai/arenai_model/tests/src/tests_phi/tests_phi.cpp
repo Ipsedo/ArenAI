@@ -98,8 +98,8 @@ TEST_F(PhiTest, PhiHigherWhenEnemyCloser) {
 
     // clean up and recreate with far enemy along same axis
     engine->remove_bodies_and_constraints();
-    engine = make_physic_engine(60.f);
-    tank_factory = make_tank_factory(*engine, file_reader, 60.f);
+    engine = make_physic_engine(1.f / 60.f);
+    tank_factory = make_tank_factory(*engine, file_reader, 1.f / 60.f);
 
     add_ground();
     auto tank_far = tank_factory->make_enemy_tank("tank_far", {0.f, 0.f, 0.f});
@@ -128,6 +128,40 @@ TEST_F(PhiTest, PhiIgnoresSelf) {
     const float phi = tanks[0]->get_phi(tanks);
 
     ASSERT_FLOAT_EQ(phi, 0.f);
+}
+
+TEST_F(PhiTest, PhiHigherWhenEnemyInFront) {
+    add_ground();
+    auto tank_front = tank_factory->make_enemy_tank("tank_front", {0.f, 0.f, 0.f});
+    auto enemy_front = tank_factory->make_enemy_tank("enemy_front", {0.f, 0.f, 30.f});
+
+    engine->step(1.f / 60.f);
+
+    std::vector<std::shared_ptr<EnemyTank>> tanks_front;
+    tanks_front.emplace_back(tank_front.release());
+    tanks_front.emplace_back(enemy_front.release());
+
+    const float phi_front = tanks_front[0]->get_phi(tanks_front);
+
+    // clean up and recreate with enemy on the side at same distance
+    engine->remove_bodies_and_constraints();
+    engine = make_physic_engine(1.f / 60.f);
+    tank_factory = make_tank_factory(*engine, file_reader, 1.f / 60.f);
+
+    add_ground();
+    auto tank_side = tank_factory->make_enemy_tank("tank_side", {0.f, 0.f, 0.f});
+    auto enemy_side = tank_factory->make_enemy_tank("enemy_side", {30.f, 0.f, 0.f});
+
+    engine->step(1.f / 60.f);
+
+    std::vector<std::shared_ptr<EnemyTank>> tanks_side;
+    tanks_side.emplace_back(tank_side.release());
+    tanks_side.emplace_back(enemy_side.release());
+
+    const float phi_side = tanks_side[0]->get_phi(tanks_side);
+
+    ASSERT_GT(phi_front, phi_side)
+        << "phi should be higher when enemy is in front (angle_score higher)";
 }
 
 TEST_F(PhiTest, PhiNoNaN) {

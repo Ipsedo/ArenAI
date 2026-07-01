@@ -126,8 +126,7 @@ void train_main(
         // set variable for episode
         bool is_done = false;
 
-        auto last_states = env->reset_physics(spawn_width, spawn_height);
-        env->reset_drawables(gl_context);
+        auto last_states = env->reset(spawn_width, spawn_height);
         auto last_phi_vector = env->get_phi_vector();
 
         while (!is_done) {

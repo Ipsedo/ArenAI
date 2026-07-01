@@ -30,9 +30,9 @@ public:
     virtual std::vector<std::tuple<State, Reward, IsDone>>
     step(float time_delta, const std::vector<Action> &actions);
 
-    std::vector<State> reset_physics(float spawn_width, float spawn_height);
-    void reset_drawables(const std::shared_ptr<AbstractGLContext> &new_gl_context);
-    void reset_drawables();
+    std::vector<State> reset(float spawn_width, float spawn_height);
+
+    void seed(unsigned int seed);
     void stop_drawing() const;
 
     virtual ~BaseTanksEnvironment();
@@ -56,7 +56,13 @@ private:
 
     int nb_reset_frames;
 
+    bool drawing_started_;
+
     std::shared_ptr<AbstractGLContext> gl_context;
+
+    void reset_physics(float spawn_width, float spawn_height);
+    void reset_drawables(const std::shared_ptr<AbstractGLContext> &new_gl_context);
+    void reset_drawables();
 
 protected:
     std::random_device dev;

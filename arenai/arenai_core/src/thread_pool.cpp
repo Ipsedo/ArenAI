@@ -56,6 +56,8 @@ EnemyVisionThreadPool::EnemyVisionThreadPool(
       model_matrices_(std::make_unique<ModelMatricesDoubleBuffer>()),
       reset_barrier_(std::nullptr_t()), loop_barrier_(std::nullptr_t()) {}
 
+void EnemyVisionThreadPool::set_seed(const unsigned int seed) { seed_ = seed; }
+
 void EnemyVisionThreadPool::start_thread(
     const std::vector<std::shared_ptr<EnemyTank>> &tank_factories,
     const std::shared_ptr<AbstractGLContext> &gl_context,
@@ -64,11 +66,14 @@ void EnemyVisionThreadPool::start_thread(
     const std::vector<std::shared_ptr<Item>> &scene_items) {
     num_tanks_ = static_cast<int>(tank_factories.size());
 
+    threads_running_.store(true, std::memory_order_release);
+
     reset_barrier_ = std::make_unique<std::barrier<>>(num_tanks_ + 1);
     loop_barrier_ = std::make_unique<std::barrier<>>(num_tanks_ + 1);
 
     model_matrices_->write(initial_model_matrices);
 
+    enemy_visions_.clear();
     enemy_visions_.reserve(num_tanks_);
     for (int i = 0; i < num_tanks_; i++)
         enemy_visions_.push_back(
@@ -87,13 +92,19 @@ void EnemyVisionThreadPool::worker_loop(
     const std::shared_ptr<AbstractFileReader> &file_reader,
     const std::vector<std::shared_ptr<Item>> &scene_items, const int index) {
 
-    std::seed_seq seq{
-        dev_(), static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this)),
-        static_cast<uint32_t>(reinterpret_cast<uintptr_t>(tank_factory.get())),
-        static_cast<uint32_t>(index),
-        static_cast<uint32_t>(
-            std::chrono::high_resolution_clock::now().time_since_epoch().count())};
-    std::mt19937 local_rng(seq);
+    std::mt19937 local_rng;
+    if (seed_.has_value()) {
+        std::seed_seq seq{seed_.value(), static_cast<uint32_t>(index)};
+        local_rng.seed(seq);
+    } else {
+        std::seed_seq seq{
+            dev_(), static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this)),
+            static_cast<uint32_t>(reinterpret_cast<uintptr_t>(tank_factory.get())),
+            static_cast<uint32_t>(index),
+            static_cast<uint32_t>(
+                std::chrono::high_resolution_clock::now().time_since_epoch().count())};
+        local_rng.seed(seq);
+    }
 
     auto renderer = std::make_unique<PBufferRenderer>(
         gl_context, vision_width_, vision_height_, glm::vec3(200, 300, 200),

@@ -20,10 +20,11 @@ BaseTanksEnvironment::BaseTanksEnvironment(
     : wanted_frequency(wanted_frequency), nb_tanks(nb_tanks), vision_height(vision_height),
       vision_width(vision_width), vision_num_threads(vision_num_threads),
       vision_thread_sleep(vision_thread_sleep), physic_engine(make_physic_engine(wanted_frequency)),
-      nb_reset_frames(static_cast<int>(4.f / wanted_frequency)), gl_context(gl_context), rng(dev()),
-      file_reader(file_reader), vision_pool_(std::make_unique<EnemyVisionThreadPool>(
-                                    nb_tanks, vision_num_threads, vision_height, vision_width,
-                                    wanted_frequency, vision_thread_sleep)) {}
+      nb_reset_frames(static_cast<int>(4.f / wanted_frequency)), drawing_started_(false),
+      gl_context(gl_context), rng(dev()), file_reader(file_reader),
+      vision_pool_(std::make_unique<EnemyVisionThreadPool>(
+          nb_tanks, vision_num_threads, vision_height, vision_width, wanted_frequency,
+          vision_thread_sleep)) {}
 
 std::vector<std::tuple<State, Reward, IsDone>>
 BaseTanksEnvironment::step(const float time_delta, const std::vector<Action> &actions) {
@@ -57,8 +58,7 @@ BaseTanksEnvironment::step(const float time_delta, const std::vector<Action> &ac
     return result;
 }
 
-std::vector<State>
-BaseTanksEnvironment::reset_physics(const float spawn_width, const float spawn_height) {
+void BaseTanksEnvironment::reset_physics(const float spawn_width, const float spawn_height) {
     physic_engine->remove_bodies_and_constraints();
     tank_controller_handler.clear();
     tank_factories.clear();
@@ -117,14 +117,27 @@ BaseTanksEnvironment::reset_physics(const float spawn_width, const float spawn_h
     on_reset_physics(physic_engine);
 
     for (int i = 0; i < nb_reset_frames; i++) physic_engine->step(wanted_frequency);
+}
 
-    // return initial states with black visions (pool not started yet)
+std::vector<State> BaseTanksEnvironment::reset(const float spawn_width, const float spawn_height) {
+    if (drawing_started_) stop_drawing();
+
+    reset_physics(spawn_width, spawn_height);
+    reset_drawables();
+    drawing_started_ = true;
+
+    // warm-up: 2 render loops to prime PBO double-buffering
+    const auto model_matrices = get_model_matrices();
+    for (int i = 0; i < 2; i++) {
+        vision_pool_->set_model_matrices(model_matrices);
+        on_draw(model_matrices);
+        vision_pool_->loop_wait();
+    }
+
     std::vector<State> states;
     states.reserve(tank_factories.size());
-    for (const auto &tank_factory: tank_factories)
-        states.emplace_back(
-            image<uint8_t>{std::vector<uint8_t>(3 * vision_height * vision_width, 0)},
-            tank_factory->get_proprioception());
+    for (int i = 0; i < static_cast<int>(tank_factories.size()); i++)
+        states.emplace_back(vision_pool_->read_vision(i), tank_factories[i]->get_proprioception());
 
     return states;
 }
@@ -145,6 +158,11 @@ void BaseTanksEnvironment::reset_drawables(
 }
 
 void BaseTanksEnvironment::reset_drawables() { reset_drawables(gl_context); }
+
+void BaseTanksEnvironment::seed(const unsigned int seed) {
+    rng.seed(seed);
+    vision_pool_->set_seed(seed);
+}
 
 void BaseTanksEnvironment::stop_drawing() const { vision_pool_->kill_threads(); }
 

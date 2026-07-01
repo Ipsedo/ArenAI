@@ -7,6 +7,7 @@
 #include <barrier>
 #include <condition_variable>
 #include <memory>
+#include <optional>
 #include <random>
 #include <vector>
 
@@ -61,6 +62,8 @@ public:
 
     image<uint8_t> read_vision(int index) const;
 
+    void set_seed(unsigned int seed);
+
     void start_thread(
         const std::vector<std::shared_ptr<EnemyTank>> &tank_factories,
         const std::shared_ptr<AbstractGLContext> &gl_context,
@@ -92,7 +95,8 @@ private:
     std::unique_ptr<std::barrier<>> reset_barrier_;
     std::unique_ptr<std::barrier<>> loop_barrier_;
 
-    // Stored for renderer construction by worker threads
+    std::optional<unsigned int> seed_;
+
     std::random_device dev_;
 
     void worker_loop(

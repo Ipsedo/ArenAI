@@ -56,8 +56,7 @@ void game_loop(const GameOptions &game_options, const ModelOptions &model_option
         game_options.android_asset_folder, glfw_window, game_options.nb_tanks,
         model_options.vision_height, model_options.vision_width, game_options.wanted_frequency);
 
-    auto states = env->reset_physics(500, 500);
-    env->reset_drawables();
+    auto states = env->reset(500, 500);
 
     // GL context is current here: report which GPU/driver is actually used
     std::cout << "OpenGL vendor   : " << glGetString(GL_VENDOR) << std::endl;

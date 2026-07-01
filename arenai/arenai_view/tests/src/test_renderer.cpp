@@ -131,7 +131,7 @@ TEST_F(RendererTest, MixedDrawablesCubeMapAndSpecular) {
 TEST_F(RendererTest, GetWidthHeight) {
     constexpr int w = 24, h = 48;
 
-    PBufferRenderer renderer(
+    const PBufferRenderer renderer(
         gl_context, w, h, {0.f, 10.f, -2.f},
         std::make_shared<StaticCamera>(
             glm::vec3{0.f, 0.f, -10.f}, glm::vec3{0.f, 0.f, 0.f}, glm::vec3{0.f, 1.f, 0.f}));

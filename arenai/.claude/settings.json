@@ -14,8 +14,9 @@
       "Bash(ls:*)",
       "Bash(find:*)",
       "Bash(clang-format:*)",
+      "Bash(cmake:*)",
+      "Bash(make:*)",
       "Bash(mkdir -p build)",
-      "Bash(cmake ..)",
       "Bash(./arenai_core/tests/arenai_core_tests)",
       "Bash(./arenai_view/tests/arenai_view_tests)"
     ]

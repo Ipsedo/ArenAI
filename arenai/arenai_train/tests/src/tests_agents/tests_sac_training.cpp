@@ -35,18 +35,18 @@ SacTrainingTest::make_filled_buffer(const SacTrainingTestConfig &cfg, const int 
 }
 
 TEST_F(SacTrainingTest, TrainStepDoesNotCrash) {
-    const SacTrainingTestConfig cfg{8, 8, 3, 2, 3};
-    auto agent = make_agent(cfg);
-    auto buffer = make_filled_buffer(cfg, 32);
+    constexpr SacTrainingTestConfig cfg{8, 8, 3, 2, 3};
+    const auto agent = make_agent(cfg);
+    const auto buffer = make_filled_buffer(cfg, 32);
 
     ASSERT_NO_THROW(agent->train(buffer, /*epochs=*/1, /*batch_size=*/8))
         << "Single training step should not crash";
 }
 
 TEST_F(SacTrainingTest, MultipleTrainStepsDoNotCrash) {
-    const SacTrainingTestConfig cfg{8, 8, 3, 2, 3};
-    auto agent = make_agent(cfg);
-    auto buffer = make_filled_buffer(cfg, 64);
+    constexpr SacTrainingTestConfig cfg{8, 8, 3, 2, 3};
+    const auto agent = make_agent(cfg);
+    const auto buffer = make_filled_buffer(cfg, 64);
 
     ASSERT_NO_THROW({
         agent->train(buffer, /*epochs=*/3, /*batch_size=*/16);
@@ -55,9 +55,9 @@ TEST_F(SacTrainingTest, MultipleTrainStepsDoNotCrash) {
 }
 
 TEST_F(SacTrainingTest, MetricsReturnedNonEmpty) {
-    const SacTrainingTestConfig cfg{8, 8, 3, 2, 3};
-    auto agent = make_agent(cfg);
-    auto buffer = make_filled_buffer(cfg, 32);
+    constexpr SacTrainingTestConfig cfg{8, 8, 3, 2, 3};
+    const auto agent = make_agent(cfg);
+    const auto buffer = make_filled_buffer(cfg, 32);
 
     agent->train(buffer, /*epochs=*/2, /*batch_size=*/8);
 
@@ -72,33 +72,32 @@ TEST_F(SacTrainingTest, MetricsReturnedNonEmpty) {
 }
 
 TEST_F(SacTrainingTest, ActProducesValidOutput) {
-    const SacTrainingTestConfig cfg{8, 8, 3, 2, 3};
-    auto agent = make_agent(cfg);
+    constexpr SacTrainingTestConfig cfg{8, 8, 3, 2, 3};
+    const auto agent = make_agent(cfg);
 
     const auto vision = torch::randint(0, 255, {1, 3, 8, 8}, torch::kUInt8);
     const auto sensors = torch::randn({1, 3});
 
     agent->set_train(false);
-    const auto response = agent->act(vision, sensors);
+    const auto [continuous_action, discrete_action] = agent->act(vision, sensors);
 
-    ASSERT_EQ(response.continuous_action.size(0), 1);
-    ASSERT_EQ(response.continuous_action.size(1), 2);
-    ASSERT_EQ(response.discrete_action.size(0), 1);
-    ASSERT_EQ(response.discrete_action.size(1), 3);
+    ASSERT_EQ(continuous_action.size(0), 1);
+    ASSERT_EQ(continuous_action.size(1), 2);
+    ASSERT_EQ(discrete_action.size(0), 1);
+    ASSERT_EQ(discrete_action.size(1), 3);
 
-    ASSERT_TRUE(torch::all(torch::isfinite(response.continuous_action)).item<bool>());
-    ASSERT_TRUE(torch::all(torch::isfinite(response.discrete_action)).item<bool>());
+    ASSERT_TRUE(torch::all(torch::isfinite(continuous_action)).item<bool>());
+    ASSERT_TRUE(torch::all(torch::isfinite(discrete_action)).item<bool>());
 }
 
 TEST_F(SacTrainingTest, MetricsHaveValuesAfterTraining) {
-    const SacTrainingTestConfig cfg{8, 8, 3, 2, 3};
-    auto agent = make_agent(cfg);
-    auto buffer = make_filled_buffer(cfg, 32);
+    constexpr SacTrainingTestConfig cfg{8, 8, 3, 2, 3};
+    const auto agent = make_agent(cfg);
+    const auto buffer = make_filled_buffer(cfg, 32);
 
     agent->train(buffer, /*epochs=*/3, /*batch_size=*/8);
 
-    const auto metrics = agent->get_metrics();
-    for (const auto &m: metrics) {
+    for (const auto metrics = agent->get_metrics(); const auto &m: metrics) {
         const auto val = m->compute_metric();
         ASSERT_TRUE(std::isfinite(val))
             << "Metric '" << m->get_name() << "' should be finite after training";
@@ -106,8 +105,8 @@ TEST_F(SacTrainingTest, MetricsHaveValuesAfterTraining) {
 }
 
 TEST_F(SacTrainingTest, TargetEntropiesAreFinite) {
-    const SacTrainingTestConfig cfg{8, 8, 3, 2, 3};
-    auto agent = make_agent(cfg);
+    constexpr SacTrainingTestConfig cfg{8, 8, 3, 2, 3};
+    const auto agent = make_agent(cfg);
 
     ASSERT_TRUE(std::isfinite(agent->get_continuous_target_entropy()))
         << "Continuous target entropy should be finite";
@@ -116,8 +115,8 @@ TEST_F(SacTrainingTest, TargetEntropiesAreFinite) {
 }
 
 TEST_F(SacTrainingTest, CountParametersPositive) {
-    const SacTrainingTestConfig cfg{8, 8, 3, 2, 3};
-    auto agent = make_agent(cfg);
+    constexpr SacTrainingTestConfig cfg{8, 8, 3, 2, 3};
+    const auto agent = make_agent(cfg);
 
     ASSERT_GT(agent->count_parameters(), 0) << "Agent should have a positive number of parameters";
 }

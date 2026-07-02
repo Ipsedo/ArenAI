@@ -1,0 +1,25 @@
+{
+  "model": "opus",
+  "askBeforeRunningTool": false,
+  "permissions": {
+    "allow": [
+      "Read(*)",
+      "Search(*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh .claude/scripts/run_pre_commit.sh",
+            "statusMessage": "Running pre-commit format hooks...",
+            "timeout": 180
+          }
+        ]
+      }
+    ]
+  }
+}

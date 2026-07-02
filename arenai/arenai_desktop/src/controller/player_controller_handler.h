@@ -9,34 +9,38 @@
 
 #include <arenai_controller/handler.h>
 
-struct GlfwInput {
-    int key;
-    int key_action;
+namespace arenai::desktop {
 
-    float mouse_x;
-    float mouse_y;
+    struct GlfwInput {
+        int key;
+        int key_action;
 
-    int mouse_button;
-    int mouse_button_action;
-};
+        float mouse_x;
+        float mouse_y;
 
-class MouseKeyboardPlayerControllerHandler : public ControllerHandler<GlfwInput> {
-public:
-    explicit MouseKeyboardPlayerControllerHandler(GLFWwindow *window);
+        int mouse_button;
+        int mouse_button_action;
+    };
 
-protected:
-    std::tuple<bool, user_input> to_output(GlfwInput event) override;
+    class MouseKeyboardPlayerControllerHandler : public controller::EventHandler<GlfwInput> {
+    public:
+        explicit MouseKeyboardPlayerControllerHandler(GLFWwindow *window);
 
-private:
-    GLFWwindow *window;
+    protected:
+        std::tuple<bool, controller::user_input> to_output(GlfwInput event) override;
 
-    bool first_use;
+    private:
+        GLFWwindow *window;
 
-    float current_dir;
-    float current_speed;
+        float current_dir;
+        float current_speed;
 
-    double last_mouse_x;
-    double last_mouse_y;
-};
+        float current_turret_rotation;
+        float current_canon_rotation;
+
+        bool cursor_captured;
+    };
+
+}// namespace arenai::desktop
 
 #endif//ARENAI_DESKTOP_PLAYER_CONTROLLER_HANDLER_H

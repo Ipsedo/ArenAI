@@ -5,24 +5,28 @@
 #ifndef ARENAI_INPUTS_H
 #define ARENAI_INPUTS_H
 
-struct joystick {
-    float x;
-    float y;
-};
+namespace arenai::controller {
 
-struct slider {
-    float level;
-};
+    struct joystick {
+        float x;
+        float y;
+    };
 
-struct button {
-    bool pressed;
-};
+    struct slider {
+        float level;
+    };
 
-struct user_input {
-    joystick left_joystick;
-    joystick right_joystick;
+    struct button {
+        bool pressed;
+    };
 
-    button fire_button;
-};
+    struct user_input {
+        joystick left_joystick;
+        joystick right_joystick;
+
+        button fire_button;
+    };
+
+}// namespace arenai::controller
 
 #endif// ARENAI_INPUTS_H

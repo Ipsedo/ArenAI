@@ -1,6 +1,8 @@
 torch
 numpy
 executorch
+pandas
+matplotlib
 
 pre-commit
 black

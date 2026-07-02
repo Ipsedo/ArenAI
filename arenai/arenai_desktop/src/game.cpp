@@ -4,6 +4,9 @@
 
 #include "./game.h"
 
+#include <iostream>
+
+#include <GLES3/gl3.h>
 #include <GLFW/glfw3.h>
 #include <torch/torch.h>
 
@@ -13,65 +16,86 @@
 
 #include "./core/game_environment.h"
 
-void game_loop(const GameOptions &game_options, const ModelOptions &model_options) {
-    torch::NoGradGuard no_grad;
+using namespace arenai;
 
-    torch::Device device = model_options.cuda ? torch::kCUDA : torch::kCPU;
+namespace arenai::desktop {
 
-    const auto sac_agent =
-        SacAgentFactory(model_options.hyper_parameters)
-            .get_agent(
-                ENEMY_VISION_HEIGHT, ENEMY_VISION_WIDTH, ENEMY_PROPRIOCEPTION_SIZE,
-                ENEMY_NB_CONTINUOUS_ACTION, ENEMY_NB_DISCRETE_ACTION);
-    sac_agent->set_train(false);
+    void game_loop(const GameOptions &game_options, const ModelOptions &model_options) {
+        torch::NoGradGuard no_grad;
 
-    sac_agent->load(std::filesystem::path(model_options.state_dict_folder));
-    sac_agent->to(device);
+        torch::Device device = model_options.cuda ? torch::kCUDA : torch::kCPU;
 
-    std::cout << "Parameters : " << sac_agent->count_parameters() << std::endl;
+        const auto sac_agent =
+            train::SacAgentFactory(model_options.hyper_parameters)
+                .get_agent(
+                    model_options.vision_height, model_options.vision_height,
+                    model::ENEMY_PROPRIOCEPTION_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
+                    model::ENEMY_NB_DISCRETE_ACTION);
+        sac_agent->set_train(false);
 
-    if (!glfwInit()) throw std::runtime_error("glfwInit() failed");
+        sac_agent->load(std::filesystem::path(model_options.state_dict_folder));
+        sac_agent->to(device);
 
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
-    glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+        std::cout << "Parameters : " << sac_agent->count_parameters() << std::endl;
 
-    auto glfw_window = glfwCreateWindow(
-        game_options.window_width, game_options.window_height, "ArenAI", nullptr, nullptr);
+        glfwSetErrorCallback([](const int error, const char *description) -> void {
+            std::cerr << "GLFW error " << error << ": " << description << std::endl;
+        });
 
-    const auto env = std::make_shared<DesktopGameEnvironment>(
-        game_options.android_asset_folder, glfw_window, game_options.nb_tanks,
-        game_options.wanted_frequency);
+        if (!glfwInit()) throw std::runtime_error("glfwInit() failed");
 
-    auto states = env->reset_physics();
-    env->reset_drawables();
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+        glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-    const auto frame_dt =
-        std::chrono::milliseconds(static_cast<int>(game_options.wanted_frequency * 1000.f));
+        auto glfw_window = glfwCreateWindow(
+            game_options.window_width, game_options.window_height, "ArenAI", nullptr, nullptr);
 
-    while (!glfwWindowShouldClose(glfw_window)) {
-        glfwPollEvents();
+        if (!glfw_window) {
+            glfwTerminate();
+            throw std::runtime_error("glfwCreateWindow() failed");
+        }
 
-        auto last_time = std::chrono::steady_clock::now();
+        const auto env = std::make_shared<DesktopGameEnvironment>(
+            game_options.android_asset_folder, glfw_window, game_options.nb_tanks,
+            model_options.vision_height, model_options.vision_width, game_options.wanted_frequency);
 
-        const auto [vision, proprioception] = states_to_tensor(states);
+        auto states = env->reset(500, 500);
 
-        const auto [continuous_action, discrete_action] =
-            sac_agent->act(vision.to(device), proprioception.to(device));
-        const auto actions_for_env =
-            tensor_to_actions(continuous_action.cpu(), discrete_action.cpu());
+        // GL context is current here: report which GPU/driver is actually used
+        std::cout << "OpenGL vendor   : " << glGetString(GL_VENDOR) << std::endl;
+        std::cout << "OpenGL renderer : " << glGetString(GL_RENDERER) << std::endl;
+        std::cout << "OpenGL version  : " << glGetString(GL_VERSION) << std::endl;
 
-        const auto steps = env->step(game_options.wanted_frequency, actions_for_env);
+        const auto frame_dt =
+            std::chrono::milliseconds(static_cast<int>(game_options.wanted_frequency * 1000.f));
 
-        states.clear();
+        while (!glfwWindowShouldClose(glfw_window)) {
+            glfwPollEvents();
 
-        for (const auto &[state, reward, done]: steps) states.push_back(state);
+            auto last_time = std::chrono::steady_clock::now();
 
-        auto now = std::chrono::steady_clock::now();
-        auto dt = now - last_time;
+            const auto [vision, proprioception] = train::states_to_tensor(
+                states, model_options.vision_height, model_options.vision_width);
 
-        std::this_thread::sleep_for(
-            std::max(frame_dt - dt, std::chrono::steady_clock::duration::zero()));
+            const auto [continuous_action, discrete_action] =
+                sac_agent->act(vision.to(device), proprioception.to(device));
+            const auto actions_for_env =
+                train::tensor_to_actions(continuous_action.cpu(), discrete_action.cpu());
+
+            const auto steps = env->step(game_options.wanted_frequency, actions_for_env);
+
+            states.clear();
+
+            for (const auto &[state, reward, done]: steps) states.push_back(state);
+
+            auto now = std::chrono::steady_clock::now();
+            auto dt = now - last_time;
+
+            std::this_thread::sleep_for(
+                std::max(frame_dt - dt, std::chrono::steady_clock::duration::zero()));
+        }
     }
-}
+
+}// namespace arenai::desktop

@@ -5,9 +5,17 @@
 #include <regex>
 
 #include <argparse/argparse.hpp>
-#include <boost/algorithm/string.hpp>
 
 #include "./game.h"
+
+using namespace arenai;
+using namespace arenai::desktop;
+
+void trim_inplace(std::string &s) {
+    auto not_space = [](const unsigned char c) { return !std::isspace(c); };
+    s.erase(s.begin(), std::ranges::find_if(s, not_space));
+    s.erase(std::find_if(s.rbegin(), s.rend(), not_space).base(), s.end());
+}
 
 std::tuple<std::string, std::string> parse_key_value(const std::string &value) {
     const std::regex regex_match(R"(^ *([^=]+)=\"?([^"]+)\"? *$)");
@@ -17,7 +25,11 @@ std::tuple<std::string, std::string> parse_key_value(const std::string &value) {
     if (!std::regex_match(value, match, regex_match))
         throw std::invalid_argument("invalid pairs format, usage : key=value");
 
-    return {match[1], boost::trim_copy(std::string(match[2]))};
+    std::string s1 = match[1].str();
+    std::string s2 = match[2].str();
+    trim_inplace(s2);
+
+    return {s1, s2};
 }
 
 typedef std::vector<std::tuple<std::string, std::string>> hyper_params_vector;
@@ -28,6 +40,8 @@ int main(const int argc, char **argv) {
     // Game options
     parser.add_argument("--wanted_frequency").scan<'g', float>().default_value(1.f / 30.f);
     parser.add_argument("--nb_tanks").scan<'i', int>().default_value(16);
+    parser.add_argument("--vision_height").scan<'i', int>().default_value(64);
+    parser.add_argument("--vision_width").scan<'i', int>().default_value(128);
     parser.add_argument("--window_width").scan<'i', int>().default_value(1920);
     parser.add_argument("--window_height").scan<'i', int>().default_value(1080);
     parser.add_argument("--android_asset_folder").required();
@@ -49,8 +63,10 @@ int main(const int argc, char **argv) {
     game_loop(
         {parser.get<float>("--wanted_frequency"), parser.get<int>("--nb_tanks"),
          parser.get<int>("--window_width"), parser.get<int>("--window_height"),
-         parser.get<std::string>("--android_asset_folder")},
-        {hyper_params, parser.get<std::string>("--state_dict_folder"), parser.get<bool>("--cuda")});
+         std::filesystem::path(parser.get<std::string>("--android_asset_folder"))},
+        {parser.get<int>("--vision_height"), parser.get<int>("--vision_width"), hyper_params,
+         std::filesystem::path(parser.get<std::string>("--state_dict_folder")),
+         parser.get<bool>("--cuda")});
 
     return 0;
 }

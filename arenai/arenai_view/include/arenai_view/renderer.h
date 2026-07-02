@@ -22,78 +22,82 @@
 #include "./drawable.h"
 #include "./hud.h"
 
-class AbstractGLContext {
-public:
-    virtual ~AbstractGLContext() = default;
+namespace arenai::view {
 
-    AbstractGLContext();
-    virtual EGLDisplay get_display() = 0;
-    virtual EGLSurface get_surface() = 0;
-    virtual EGLContext get_context() = 0;
+    class AbstractGLContext {
+    public:
+        virtual ~AbstractGLContext() = default;
 
-    void make_current();
-    void release_current();
-};
+        AbstractGLContext();
+        virtual EGLDisplay get_display() = 0;
+        virtual EGLSurface get_surface() = 0;
+        virtual EGLContext get_context() = 0;
 
-class Renderer {
-public:
-    Renderer(
-        const std::shared_ptr<AbstractGLContext> &gl_context, glm::vec3 light_pos,
-        const std::shared_ptr<Camera> &camera);
-    virtual void add_drawable(const std::string &name, std::unique_ptr<Drawable> drawable);
-    virtual void remove_drawable(const std::string &name);
+        void make_current();
+        void release_current();
+    };
 
-    void draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices);
+    class Renderer {
+    public:
+        Renderer(
+            const std::shared_ptr<AbstractGLContext> &gl_context, glm::vec3 light_pos,
+            const std::shared_ptr<Camera> &camera);
+        virtual void add_drawable(const std::string &name, std::unique_ptr<Drawable> drawable);
+        virtual void remove_drawable(const std::string &name);
 
-    virtual int get_width() const = 0;
-    virtual int get_height() const = 0;
+        void draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices);
 
-    void make_current() const;
-    void release_current() const;
+        virtual int get_width() const = 0;
+        virtual int get_height() const = 0;
 
-    virtual ~Renderer();
+        void make_current() const;
+        void release_current() const;
 
-protected:
-    virtual void on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_context) = 0;
+        virtual ~Renderer();
 
-    virtual void on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_context) = 0;
+    protected:
+        virtual void on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_context) = 0;
 
-private:
-    glm::vec3 light_pos;
+        virtual void on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_context) = 0;
 
-    std::map<std::string, std::unique_ptr<Drawable>> drawables;
+    private:
+        glm::vec3 light_pos;
 
-    std::shared_ptr<AbstractGLContext> gl_context;
+        std::map<std::string, std::unique_ptr<Drawable>> drawables;
 
-    std::shared_ptr<Camera> camera;
-};
+        std::shared_ptr<AbstractGLContext> gl_context;
 
-class PlayerRenderer final : public Renderer {
-public:
-    PlayerRenderer(
-        const std::shared_ptr<AbstractGLContext> &gl_context, int width, int height,
-        const glm::vec3 &lightPos, const std::shared_ptr<Camera> &camera);
+        std::shared_ptr<Camera> camera;
+    };
 
-    void add_hud_drawable(std::unique_ptr<HUDDrawable> hud_drawable);
+    class PlayerRenderer final : public Renderer {
+    public:
+        PlayerRenderer(
+            const std::shared_ptr<AbstractGLContext> &gl_context, int width, int height,
+            const glm::vec3 &lightPos, const std::shared_ptr<Camera> &camera);
 
-    int get_width() const override;
+        void add_hud_drawable(std::unique_ptr<HUDDrawable> hud_drawable);
 
-    int get_height() const override;
+        int get_width() const override;
 
-    void set_window_size(int new_width, int new_height);
+        int get_height() const override;
 
-    ~PlayerRenderer() override;
+        void set_window_size(int new_width, int new_height);
 
-protected:
-    void on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_context) override;
+        ~PlayerRenderer() override;
 
-    void on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_context) override;
+    protected:
+        void on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_context) override;
 
-private:
-    int width;
-    int height;
+        void on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_context) override;
 
-    std::vector<std::unique_ptr<HUDDrawable>> hud_drawables;
-};
+    private:
+        int width;
+        int height;
+
+        std::vector<std::unique_ptr<HUDDrawable>> hud_drawables;
+    };
+
+}// namespace arenai::view
 
 #endif// ARENAI_RENDERER_H

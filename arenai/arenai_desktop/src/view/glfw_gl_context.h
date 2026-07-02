@@ -10,16 +10,20 @@
 
 #include <arenai_view/renderer.h>
 
-class GlfwGlContext : public AbstractGLContext {
-public:
-    explicit GlfwGlContext(GLFWwindow *window);
+namespace arenai::desktop {
 
-    EGLDisplay get_display() override;
-    EGLSurface get_surface() override;
-    EGLContext get_context() override;
+    class GlfwGlContext : public view::AbstractGLContext {
+    public:
+        explicit GlfwGlContext(GLFWwindow *window);
 
-private:
-    GLFWwindow *window;
-};
+        EGLDisplay get_display() override;
+        EGLSurface get_surface() override;
+        EGLContext get_context() override;
+
+    private:
+        GLFWwindow *window;
+    };
+
+}// namespace arenai::desktop
 
 #endif//ARENAI_DESKTOP_GLFW_GL_CONTEXT_H

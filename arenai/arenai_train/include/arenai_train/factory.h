@@ -11,55 +11,59 @@
 
 #include "./agent.h"
 
-class AgentFactory {
-public:
-    virtual ~AgentFactory() = default;
+namespace arenai::train {
 
-    explicit AgentFactory(const std::map<std::string, std::string> &arguments);
+    class AgentFactory {
+    public:
+        virtual ~AgentFactory() = default;
 
-    std::shared_ptr<AbstractAgent> get_agent(
-        const int &vision_height, const int &vision_width, const int &nb_sensors,
-        const int &nb_continuous_actions, const int &nb_discrete_actions);
+        explicit AgentFactory(const std::map<std::string, std::string> &arguments);
 
-protected:
-    template<typename T>
-    T get_value(const std::string &argument_name, T default_value) {
-        if (!arguments.contains(argument_name)) return default_value;
+        std::shared_ptr<AbstractAgent> get_agent(
+            const int &vision_height, const int &vision_width, const int &nb_sensors,
+            const int &nb_continuous_actions, const int &nb_discrete_actions);
 
-        const std::string value_as_string = arguments[argument_name];
-        std::stringstream ss(value_as_string);
-        T value;
-        ss >> value;
+    protected:
+        template<typename T>
+        T get_value(const std::string &argument_name, T default_value) {
+            if (!arguments.contains(argument_name)) return default_value;
 
-        if (ss.fail() || !ss.eof())
-            throw std::runtime_error(std::format(
-                R"(Wrong value for "{}" : "{}", example : "{}")", argument_name, value_as_string,
-                default_value));
+            const std::string value_as_string = arguments[argument_name];
+            std::stringstream ss(value_as_string);
+            T value;
+            ss >> value;
 
-        arguments.erase(arguments.find(argument_name));
+            if (ss.fail() || !ss.eof())
+                throw std::runtime_error(std::format(
+                    R"(Wrong value for "{}" : "{}", example : "{}")", argument_name,
+                    value_as_string, default_value));
 
-        return value;
-    }
+            arguments.erase(arguments.find(argument_name));
 
-    template<typename T>
-    T get_value(
-        const std::string &argument_name, const std::function<T(std::string)> &parse_fn,
-        T default_value) {
-        if (!arguments.contains(argument_name)) return default_value;
+            return value;
+        }
 
-        const std::string value_as_string = arguments[argument_name];
+        template<typename T>
+        T get_value(
+            const std::string &argument_name, const std::function<T(std::string)> &parse_fn,
+            T default_value) {
+            if (!arguments.contains(argument_name)) return default_value;
 
-        arguments.erase(arguments.find(argument_name));
+            const std::string value_as_string = arguments[argument_name];
 
-        return parse_fn(value_as_string);
-    }
+            arguments.erase(arguments.find(argument_name));
 
-    virtual std::shared_ptr<AbstractAgent> get_agent_impl(
-        const int &vision_height, const int &vision_width, const int &nb_sensors,
-        const int &nb_continuous_actions, const int &nb_discrete_action) = 0;
+            return parse_fn(value_as_string);
+        }
 
-private:
-    std::map<std::string, std::string> arguments;
-};
+        virtual std::shared_ptr<AbstractAgent> get_agent_impl(
+            const int &vision_height, const int &vision_width, const int &nb_sensors,
+            const int &nb_continuous_actions, const int &nb_discrete_action) = 0;
+
+    private:
+        std::map<std::string, std::string> arguments;
+    };
+
+}// namespace arenai::train
 
 #endif//ARENAI_TRAIN_HOST_FACTORY_H

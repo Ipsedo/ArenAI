@@ -11,8 +11,8 @@ from executorch.exir import to_edge_transform_and_lower
 from torch.export import Dim, export
 
 from .constants import (
-    ENEMY_NB_DISCRETE_ACTIONS,
     ENEMY_NB_CONTINUOUS_ACTIONS,
+    ENEMY_NB_DISCRETE_ACTIONS,
     ENEMY_PROPRIOCEPTION_SIZE,
     ENEMY_VISION_HEIGHT,
     ENEMY_VISION_WIDTH,
@@ -55,10 +55,10 @@ def main() -> None:
         "-i", "--input_state_dict_folder", type=str, required=True
     )
 
-    parser.add_argument("--sensors_hidden_size", type=int, default=256)
-    parser.add_argument("--actor_hidden_size", type=int, default=1536)
+    parser.add_argument("--sensors_hidden_size", type=int, default=64)
+    parser.add_argument("--actor_hidden_size", type=int, default=384)
     parser.add_argument(
-        "--group_norm_nums", type=_groups, default=[2, 4, 8, 16, 32, 64]
+        "--group_norm_nums", type=_groups, default=[2, 4, 6, 8, 12, 16]
     )
     parser.add_argument(
         "--vision_channels",
@@ -66,10 +66,10 @@ def main() -> None:
         default=[
             (3, 8),
             (8, 16),
-            (16, 32),
-            (32, 64),
-            (64, 128),
-            (128, 256),
+            (16, 24),
+            (24, 32),
+            (32, 48),
+            (48, 64),
         ],
     )
 

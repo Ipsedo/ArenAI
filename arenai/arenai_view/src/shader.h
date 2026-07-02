@@ -12,8 +12,12 @@
 
 #include <arenai_utils/file_reader.h>
 
-GLuint load_shader(
-    const std::shared_ptr<AbstractFileReader> &text_reader, GLenum type,
-    const std::string &file_name);
+namespace arenai::view {
+
+    GLuint load_shader(
+        const std::shared_ptr<utils::AbstractFileReader> &text_reader, GLenum type,
+        const std::filesystem::path &file_name);
+
+}// namespace arenai::view
 
 #endif// ARENAI_SHADER_H

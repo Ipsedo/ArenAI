@@ -9,55 +9,68 @@
 #include <vector>
 
 #include <EGL/egl.h>
+#include <GLES3/gl3.h>
 #include <glm/glm.hpp>
 
 #include "./renderer.h"
 
-// Indexing :
-// Channels x Height x Width
-template<typename T>
-struct image {
-    std::vector<T> pixels;
-};
+namespace arenai::view {
 
-class PBufferGLContext final : public AbstractGLContext {
-public:
-    explicit PBufferGLContext(
-        const std::shared_ptr<AbstractGLContext> &main_context, int width, int height);
+    // Indexing :
+    // Channels x Height x Width
+    template<typename T>
+    struct image {
+        std::vector<T> pixels;
+    };
 
-    EGLDisplay get_display() override;
+    class PBufferGLContext final : public AbstractGLContext {
+    public:
+        explicit PBufferGLContext(
+            const std::shared_ptr<AbstractGLContext> &main_context, int width, int height);
 
-    EGLSurface get_surface() override;
+        EGLDisplay get_display() override;
 
-    EGLContext get_context() override;
+        EGLSurface get_surface() override;
 
-private:
-    EGLDisplay display;
-    EGLSurface surface;
-    EGLContext context;
-};
+        EGLContext get_context() override;
 
-class PBufferRenderer final : public Renderer {
-public:
-    PBufferRenderer(
-        const std::shared_ptr<AbstractGLContext> &main_context, int width, int height,
-        glm::vec3 light_pos, const std::shared_ptr<Camera> &camera);
+    private:
+        EGLDisplay display;
+        EGLSurface surface;
+        EGLContext context;
+    };
 
-    image<uint8_t>
-    draw_and_get_frame(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices);
+    class PBufferRenderer final : public Renderer {
+    public:
+        PBufferRenderer(
+            const std::shared_ptr<AbstractGLContext> &main_context, int width, int height,
+            glm::vec3 light_pos, const std::shared_ptr<Camera> &camera);
 
-    int get_width() const override;
-    int get_height() const override;
+        image<uint8_t>
+        draw_and_get_frame(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices);
 
-    ~PBufferRenderer() override;
+        int get_width() const override;
+        int get_height() const override;
 
-protected:
-    void on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_context) override;
+        ~PBufferRenderer() override;
 
-    void on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_context) override;
+    protected:
+        void on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_context) override;
 
-private:
-    int width, height;
-};
+        void on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_context) override;
+
+    private:
+        int width, height;
+
+        static constexpr int NUM_PBOS = 2;
+        GLuint pbos_[NUM_PBOS]{};
+        int pbo_index_{0};
+        bool pbo_initialized_{false};
+        size_t pbo_size_{0};
+
+        void init_pbos();
+    };
+
+}// namespace arenai::view
 
 #endif// ARENAI_PBUFFER_RENDERER_H

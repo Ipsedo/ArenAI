@@ -1,3 +1,7 @@
-# ArenAI host training
+# ArenAI training
 
-full C++ program to train agent with LibTorch and export state dict for loading it into python and then export pte for executorch
+Full C++ program to train ArenAI agent with LibTorch.
+
+## Usage
+
+TODO

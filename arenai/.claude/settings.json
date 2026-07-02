@@ -1,0 +1,39 @@
+{
+  "model": "opus",
+  "askBeforeRunningTool": false,
+  "permissions": {
+    "allow": [
+      "Read(*)",
+      "Search(*)",
+      "Grep",
+      "Glob",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(cd:*)",
+      "Bash(echo:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(clang-format:*)",
+      "Bash(cmake:*)",
+      "Bash(make:*)",
+      "Bash(mkdir -p build)",
+      "Bash(./arenai_core/tests/arenai_core_tests)",
+      "Bash(./arenai_view/tests/arenai_view_tests)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh .claude/scripts/run_pre_commit.sh",
+            "statusMessage": "Running pre-commit format hooks...",
+            "timeout": 180
+          }
+        ]
+      }
+    ]
+  }
+}

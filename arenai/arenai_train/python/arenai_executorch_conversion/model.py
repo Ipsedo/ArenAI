@@ -72,7 +72,6 @@ class SacActor(nn.Module):
 
         self.mu = nn.Sequential(
             nn.Linear(hidden_size, nb_continuous_actions),
-            nn.Tanh(),
         )
         self.sigma = nn.Sequential(
             nn.Linear(hidden_size, nb_continuous_actions),
@@ -93,4 +92,8 @@ class SacActor(nn.Module):
             th.cat([encoded_vision, encoded_sensors], dim=1)
         )
 
-        return self.mu(encoded_latent), self.sigma(encoded_latent), self.discrete(encoded_latent)
+        return (
+            self.mu(encoded_latent),
+            self.sigma(encoded_latent),
+            self.discrete(encoded_latent),
+        )

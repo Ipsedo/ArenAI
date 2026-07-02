@@ -7,19 +7,23 @@
 
 #include <arenai_view/renderer.h>
 
-class TrainGlContext final : public AbstractGLContext {
-public:
-    TrainGlContext();
+namespace arenai::train {
 
-    EGLDisplay get_display() override;
+    class TrainGlContext final : public view::AbstractGLContext {
+    public:
+        TrainGlContext();
 
-    EGLSurface get_surface() override;
+        EGLDisplay get_display() override;
 
-    EGLContext get_context() override;
+        EGLSurface get_surface() override;
 
-private:
-    EGLDisplay display;
-    EGLContext context;
-};
+        EGLContext get_context() override;
+
+    private:
+        EGLDisplay display;
+        EGLContext context;
+    };
+
+}// namespace arenai::train
 
 #endif//ARENAI_TRAIN_HOST_TRAIN_GL_CONTEXT_H

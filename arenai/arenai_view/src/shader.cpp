@@ -4,16 +4,24 @@
 
 #include "./shader.h"
 
-GLuint load_shader(
-    const std::shared_ptr<AbstractFileReader> &text_reader, const GLenum type,
-    const std::string &file_name) {
-    const GLuint shader = glCreateShader(type);
+#include <filesystem>
 
-    const std::string shader_source = text_reader->read_text(file_name);
-    const char *c_str = shader_source.c_str();
+using namespace arenai;
 
-    glShaderSource(shader, 1, &c_str, nullptr);
-    glCompileShader(shader);
+namespace arenai::view {
 
-    return shader;
-}
+    GLuint load_shader(
+        const std::shared_ptr<utils::AbstractFileReader> &text_reader, const GLenum type,
+        const std::filesystem::path &file_name) {
+        const GLuint shader = glCreateShader(type);
+
+        const std::string shader_source = text_reader->read_text(file_name);
+        const char *c_str = shader_source.c_str();
+
+        glShaderSource(shader, 1, &c_str, nullptr);
+        glCompileShader(shader);
+
+        return shader;
+    }
+
+}// namespace arenai::view

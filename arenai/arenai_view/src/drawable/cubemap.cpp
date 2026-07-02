@@ -5,48 +5,57 @@
 #include <arenai_view/cubemap.h>
 #include <arenai_view/program.h>
 
-CubeMap::CubeMap(
-    const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &pngs_root_path) {
+using namespace arenai;
 
-    const std::vector<float> vertices{-1.f, 1.f,  -1.f, -1.f, -1.f, -1.f, 1.f,  -1.f, -1.f,
-                                      1.f,  -1.f, -1.f, 1.f,  1.f,  -1.f, -1.f, 1.f,  -1.f,
+namespace arenai::view {
 
-                                      -1.f, -1.f, 1.f,  -1.f, -1.f, -1.f, -1.f, 1.f,  -1.f,
-                                      -1.f, 1.f,  -1.f, -1.f, 1.f,  1.f,  -1.f, -1.f, 1.f,
+    CubeMap::CubeMap(
+        const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        const std::filesystem::path &pngs_root_path) {
 
-                                      1.f,  -1.f, -1.f, 1.f,  -1.f, 1.f,  1.f,  1.f,  1.f,
-                                      1.f,  1.f,  1.f,  1.f,  1.f,  -1.f, 1.f,  -1.f, -1.f,
+        const std::vector<float> vertices{-1.f, 1.f,  -1.f, -1.f, -1.f, -1.f, 1.f,  -1.f, -1.f,
+                                          1.f,  -1.f, -1.f, 1.f,  1.f,  -1.f, -1.f, 1.f,  -1.f,
 
-                                      -1.f, -1.f, 1.f,  -1.f, 1.f,  1.f,  1.f,  1.f,  1.f,
-                                      1.f,  1.f,  1.f,  1.f,  -1.f, 1.f,  -1.f, -1.f, 1.f,
+                                          -1.f, -1.f, 1.f,  -1.f, -1.f, -1.f, -1.f, 1.f,  -1.f,
+                                          -1.f, 1.f,  -1.f, -1.f, 1.f,  1.f,  -1.f, -1.f, 1.f,
 
-                                      -1.f, 1.f,  -1.f, 1.f,  1.f,  -1.f, 1.f,  1.f,  1.f,
-                                      1.f,  1.f,  1.f,  -1.f, 1.f,  1.f,  -1.f, 1.f,  -1.f,
+                                          1.f,  -1.f, -1.f, 1.f,  -1.f, 1.f,  1.f,  1.f,  1.f,
+                                          1.f,  1.f,  1.f,  1.f,  1.f,  -1.f, 1.f,  -1.f, -1.f,
 
-                                      -1.f, -1.f, -1.f, -1.f, -1.f, 1.f,  1.f,  -1.f, -1.f,
-                                      1.f,  -1.f, -1.f, -1.f, -1.f, 1.f,  1.f,  -1.f, 1.f};
+                                          -1.f, -1.f, 1.f,  -1.f, 1.f,  1.f,  1.f,  1.f,  1.f,
+                                          1.f,  1.f,  1.f,  1.f,  -1.f, 1.f,  -1.f, -1.f, 1.f,
 
-    nb_vertices = static_cast<int>(vertices.size() / 3);
+                                          -1.f, 1.f,  -1.f, 1.f,  1.f,  -1.f, 1.f,  1.f,  1.f,
+                                          1.f,  1.f,  1.f,  -1.f, 1.f,  1.f,  -1.f, 1.f,  -1.f,
 
-    program = Program::Builder(file_reader, "shaders/cube_vs.glsl", "shaders/cube_fs.glsl")
-                  .add_cube_texture("u_cube_map", pngs_root_path)
-                  .add_uniform("u_mvp_matrix")
-                  .add_attribute("a_vp")
-                  .add_buffer("cube", vertices)
-                  .build();
-}
+                                          -1.f, -1.f, -1.f, -1.f, -1.f, 1.f,  1.f,  -1.f, -1.f,
+                                          1.f,  -1.f, -1.f, -1.f, -1.f, 1.f,  1.f,  -1.f, 1.f};
 
-void CubeMap::draw(
-    const glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos_from_camera,
-    glm::vec3 camera_pos) {
-    program->use();
+        nb_vertices = static_cast<int>(vertices.size() / 3);
 
-    program->uniform_mat4("u_mvp_matrix", mvp_matrix);
-    program->cube_texture("u_cube_map");
-    program->attrib("a_vp", "cube", POSITION_SIZE, STRIDE, 0);
+        program = Program::Builder(
+                      file_reader, std::filesystem::path("shaders") / "cube_vs.glsl",
+                      std::filesystem::path("shaders") / "cube_fs.glsl")
+                      .add_cube_texture("u_cube_map", pngs_root_path)
+                      .add_uniform("u_mvp_matrix")
+                      .add_attribute("a_vp")
+                      .add_buffer("cube", vertices)
+                      .build();
+    }
 
-    Program::draw_arrays(GL_TRIANGLES, 0, nb_vertices);
+    void CubeMap::draw(
+        const glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos_from_camera,
+        glm::vec3 camera_pos) {
+        program->use();
 
-    program->disable_attrib_array();
-    Program::disable_cube_texture();
-}
+        program->uniform_mat4("u_mvp_matrix", mvp_matrix);
+        program->cube_texture("u_cube_map");
+        program->attrib("a_vp", "cube", POSITION_SIZE, STRIDE, 0);
+
+        Program::draw_arrays(GL_TRIANGLES, 0, nb_vertices);
+
+        program->disable_attrib_array();
+        Program::disable_cube_texture();
+    }
+
+}// namespace arenai::view

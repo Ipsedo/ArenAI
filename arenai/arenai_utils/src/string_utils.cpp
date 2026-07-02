@@ -6,12 +6,16 @@
 
 #include <arenai_utils/string_utils.h>
 
-std::vector<std::string> split_string(const std::string &input, const char delimiter) {
-    std::stringstream ss(input);
-    std::string item;
-    std::vector<std::string> elements;
+namespace arenai::utils {
 
-    while (std::getline(ss, item, delimiter)) { elements.push_back(item); }
+    std::vector<std::string> split_string(const std::string &input, const char delimiter) {
+        std::stringstream ss(input);
+        std::string item;
+        std::vector<std::string> elements;
 
-    return elements;
-}
+        while (std::getline(ss, item, delimiter)) { elements.push_back(item); }
+
+        return elements;
+    }
+
+}// namespace arenai::utils

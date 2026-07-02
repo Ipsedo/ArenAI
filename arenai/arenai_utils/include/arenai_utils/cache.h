@@ -10,39 +10,43 @@
 #include <mutex>
 #include <string>
 
-template<class T>
-class Cache {
-public:
-    bool exists(const std::string &name) const {
-        std::scoped_lock lock(mutex);
-        return cache.contains(name);
-    }
+namespace arenai::utils {
 
-    void add(const std::string &name, const T &obj) {
-        std::scoped_lock lock(mutex);
-        cache[name] = obj;
-    }
+    template<class T>
+    class Cache {
+    public:
+        bool exists(const std::string &name) const {
+            std::scoped_lock lock(mutex);
+            return cache.contains(name);
+        }
 
-    T get(const std::string &name) const {
-        std::scoped_lock lock(mutex);
-        auto it = cache.find(name);
-        if (it == cache.end()) { throw std::out_of_range("Cache::get missing key: " + name); }
-        return it->second;
-    }
+        void add(const std::string &name, const T &obj) {
+            std::scoped_lock lock(mutex);
+            cache[name] = obj;
+        }
 
-    void apply_on_items(const std::function<void(T)> &apply_fn) const {
-        std::scoped_lock lock(mutex);
-        for (const auto &[_, t]: cache) apply_fn(t);
-    }
+        T get(const std::string &name) const {
+            std::scoped_lock lock(mutex);
+            auto it = cache.find(name);
+            if (it == cache.end()) { throw std::out_of_range("Cache::get missing key: " + name); }
+            return it->second;
+        }
 
-    void clear() {
-        std::scoped_lock lock(mutex);
-        cache.clear();
-    }
+        void apply_on_items(const std::function<void(T)> &apply_fn) const {
+            std::scoped_lock lock(mutex);
+            for (const auto &[_, t]: cache) apply_fn(t);
+        }
 
-private:
-    mutable std::mutex mutex;
-    std::map<std::string, T> cache;
-};
+        void clear() {
+            std::scoped_lock lock(mutex);
+            cache.clear();
+        }
+
+    private:
+        mutable std::mutex mutex;
+        std::map<std::string, T> cache;
+    };
+
+}// namespace arenai::utils
 
 #endif

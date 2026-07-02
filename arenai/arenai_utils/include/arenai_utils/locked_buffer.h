@@ -8,30 +8,34 @@
 #include <atomic>
 #include <memory>
 
-template<class T>
-class LockedBuffer {
-public:
-    explicit LockedBuffer(T initial) : value_(std::move(initial)) {}
+namespace arenai::utils {
 
-    void write(T v) {
-        std::lock_guard lock(m_);
-        value_ = std::move(v);
-    }
+    template<class T>
+    class LockedBuffer {
+    public:
+        explicit LockedBuffer(T initial) : value_(std::move(initial)) {}
 
-    T read_copy() const {
-        std::lock_guard lock(m_);
-        return value_;
-    }
+        void write(T v) {
+            std::lock_guard lock(m_);
+            value_ = std::move(v);
+        }
 
-    template<class F>
-    auto with_read(F &&f) const -> decltype(f(std::declval<const T &>())) {
-        std::lock_guard lock(m_);
-        return std::forward<F>(f)(value_);
-    }
+        T read_copy() const {
+            std::lock_guard lock(m_);
+            return value_;
+        }
 
-private:
-    mutable std::mutex m_;
-    T value_;
-};
+        template<class F>
+        auto with_read(F &&f) const -> decltype(f(std::declval<const T &>())) {
+            std::lock_guard lock(m_);
+            return std::forward<F>(f)(value_);
+        }
+
+    private:
+        mutable std::mutex m_;
+        T value_;
+    };
+
+}// namespace arenai::utils
 
 #endif//ARENAI_TRAIN_HOST_ATOMIC_SNAPSHOT_H

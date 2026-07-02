@@ -8,12 +8,16 @@
 
 #include <GLFW/glfw3native.h>
 
-GlfwGlContext::GlfwGlContext(GLFWwindow *window) : window(window) {
-    glfwMakeContextCurrent(window);
-}
+namespace arenai::desktop {
 
-EGLDisplay GlfwGlContext::get_display() { return glfwGetEGLDisplay(); }
+    GlfwGlContext::GlfwGlContext(GLFWwindow *window) : window(window) {
+        glfwMakeContextCurrent(window);
+    }
 
-EGLSurface GlfwGlContext::get_surface() { return glfwGetEGLSurface(window); }
+    EGLDisplay GlfwGlContext::get_display() { return glfwGetEGLDisplay(); }
 
-EGLContext GlfwGlContext::get_context() { return glfwGetEGLContext(window); }
+    EGLSurface GlfwGlContext::get_surface() { return glfwGetEGLSurface(window); }
+
+    EGLContext GlfwGlContext::get_context() { return glfwGetEGLContext(window); }
+
+}// namespace arenai::desktop

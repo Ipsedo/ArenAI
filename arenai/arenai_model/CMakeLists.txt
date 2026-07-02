@@ -4,11 +4,12 @@ project(arenai_model)
 
 include(FetchContent)
 
+set(CMAKE_CXX_STANDARD 20)
+
 ##### GLM #####
 if (ANDROID)
     FetchContent_Declare(glm URL https://github.com/g-truc/glm/releases/download/0.9.9.8/glm-0.9.9.8.zip)
     FetchContent_MakeAvailable(glm)
-    include_directories("${glm_SOURCE_DIR}")
 else ()
     find_package(glm REQUIRED)
 endif ()
@@ -32,41 +33,29 @@ if (ANDROID)
             GIT_TAG        3.25 # release 3.25
     )
     FetchContent_MakeAvailable(bullet3)
-    include_directories("${bullet3_SOURCE_DIR}/src")
 else ()
     find_package(Bullet REQUIRED)
-    include_directories("${BULLET_INCLUDE_DIR}")
 endif ()
 
 ##### PhyVR #####
-set(CMAKE_CXX_STANDARD 20)
-
-set(ARENAI_MODEL_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include" CACHE INTERNAL "")
-
-include_directories(${ARENAI_CONTROLLER_INCLUDE_DIRS})
-include_directories(${ARENAI_UTILS_INCLUDE_DIRS})
-include_directories(${ARENAI_VIEW_INCLUDE_DIRS})
-
-include_directories(${ARENAI_MODEL_INCLUDE_DIRS})
-
 file(GLOB_RECURSE ARENAI_MODEL_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 add_library(arenai_model SHARED ${ARENAI_MODEL_SRC})
+target_include_directories(arenai_model PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_include_directories(arenai_model PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 target_link_libraries(
         arenai_model
-        BulletDynamics BulletCollision LinearMath
+        PUBLIC
         arenai_utils
         arenai_view
+        arenai_controller
         glm::glm
+        PRIVATE
+        ${BULLET_LIBRARIES}
 )
 
 if (ANDROID)
-    target_include_directories(arenai_model PUBLIC "${bullet3_SOURCE_DIR}/src")
-    target_include_directories(arenai_model PUBLIC "${glm_SOURCE_DIR}")
+    target_include_directories(arenai_model PRIVATE "${bullet3_SOURCE_DIR}/src")
 else ()
-    target_include_directories(arenai_model PUBLIC "${BULLET_INCLUDE_DIR}")
-    target_include_directories(arenai_model PUBLIC "${GLM_INCLUDE_DIR}")
+    target_include_directories(arenai_model PRIVATE "${BULLET_INCLUDE_DIR}")
 endif ()
-
-target_include_directories(arenai_model PUBLIC "${ARENAI_UTILS_INCLUDE_DIRS}")
-target_include_directories(arenai_model PUBLIC "${ARENAI_VIEW_INCLUDE_DIRS}")

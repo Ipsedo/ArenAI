@@ -10,15 +10,19 @@
 #include <arenai_utils/logging.h>
 #include <arenai_view/errors.h>
 
-void check_gl_error(const std::string &message) {
-    GLenum error_code;
+namespace arenai::view {
 
-    bool has_error = false;
+    void check_gl_error(const std::string &message) {
+        GLenum error_code;
 
-    while ((error_code = glGetError()) != GL_NO_ERROR) {
-        LOG_ERROR("GL_ERROR \"%s\": %d", message.c_str(), error_code);
-        has_error = true;
+        bool has_error = false;
+
+        while ((error_code = glGetError()) != GL_NO_ERROR) {
+            LOG_ERROR("GL_ERROR \"%s\": %d", message.c_str(), error_code);
+            has_error = true;
+        }
+
+        if (has_error) throw std::runtime_error(message);
     }
 
-    if (has_error) throw std::runtime_error(message);
-}
+}// namespace arenai::view

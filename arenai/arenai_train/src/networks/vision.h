@@ -7,18 +7,23 @@
 
 #include <torch/torch.h>
 
-class ConvolutionNetwork final : public torch::nn::Module {
-public:
-    explicit ConvolutionNetwork(
-        const std::vector<std::tuple<int, int>> &channels, const std::vector<int> &group_norm_nums);
+namespace arenai::train {
 
-    torch::Tensor forward(const torch::Tensor &input);
+    class ConvolutionNetwork final : public torch::nn::Module {
+    public:
+        explicit ConvolutionNetwork(
+            int vision_height, int vision_width, const std::vector<std::tuple<int, int>> &channels,
+            const std::vector<int> &group_norm_nums);
 
-    int get_output_size() const;
+        torch::Tensor forward(const torch::Tensor &input);
 
-private:
-    torch::nn::Sequential cnn{nullptr};
-    int output_size;
-};
+        int get_output_size() const;
+
+    private:
+        torch::nn::Sequential cnn{nullptr};
+        int output_size;
+    };
+
+}// namespace arenai::train
 
 #endif// ARENAI_TRAIN_HOST_VISION_H

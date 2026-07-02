@@ -1,26 +1,20 @@
 # ArenAI
 
-An Android game with AI
+A battle-royal game with trained agent which controls tanks in realistic physic world.
 
-## Requirements
+## Description
 
-### Android game
+Each agent receives the OpenGL frame of its camera as input, and it is trained to fire and hit enemies.
 
-You must have `python3.12` in your `PATH` and have CMake version equal to `3.30.3`.
+When agent is trained (with SAC algorithm) you can fight against other tanks.
 
-ExecuTorch requires a specific version of buck2 :
-```shell
-cargo +nightly-2025-02-16 install --git https://github.com/facebook/buck2.git --tag 2025-05-06 buck2
+## Installation
+
+First you need to clone the repo :
+```bash
+$ git clone https://github.com/Ipsedo/ArenAI.git -b develop
 ```
 
-Then export cargo binaries to `PATH` (like in your `.bashrc`) :
-```shell
-# inside .bashrc
-export PATH="$PATH:$HOME/.cargo/bin"
-```
-
-You are now ready to build with gradle !
-
-### Training agent
-
-TODO
+Then you can see the guides for :
+* Main C++ modules (MVC arch, train program and desktop game) : [README.md](arenai/README.md)
+* Android application (android game) : [README.md](android/README.md)

@@ -7,28 +7,33 @@
 
 #include "./controller.h"
 
-template<typename Input>
-class ControllerHandler {
-public:
-    virtual ~ControllerHandler() = default;
+namespace arenai::controller {
 
-    ControllerHandler() = default;
+    template<typename Input>
+    class EventHandler {
+    public:
+        virtual ~EventHandler() = default;
 
-    void add_controller(const std::shared_ptr<Controller> &controller) {
-        controllers.push_back(controller);
-    }
+        EventHandler() = default;
 
-    bool on_event(Input event) {
-        auto [used, input] = to_output(event);
-        if (used)
-            for (auto &ctrl: controllers) ctrl->on_input(input);
-        return used;
-    }
+        void add_controller(const std::shared_ptr<Controller> &controller) {
+            controllers.push_back(controller);
+        }
 
-protected:
-    virtual std::tuple<bool, user_input> to_output(Input event) = 0;
+        bool on_event(Input event) {
+            auto [used, input] = to_output(event);
+            if (used)
+                for (auto &ctrl: controllers) ctrl->on_input(input);
+            return used;
+        }
 
-private:
-    std::vector<std::shared_ptr<Controller>> controllers;
-};
+    protected:
+        virtual std::tuple<bool, user_input> to_output(Input event) = 0;
+
+    private:
+        std::vector<std::shared_ptr<Controller>> controllers;
+    };
+
+}// namespace arenai::controller
+
 #endif//ARENAI_HANDLER_H

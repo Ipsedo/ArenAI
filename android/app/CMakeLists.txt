@@ -1,0 +1,108 @@
+cmake_minimum_required(VERSION 3.29)
+
+project(arenai)
+
+include(AndroidNdkModules)
+android_ndk_import_module_native_app_glue()
+
+include(FetchContent)
+
+##############
+# ExecuTorch #
+##############
+
+set(ET_VENV "${CMAKE_CURRENT_BINARY_DIR}/.venv_et")
+execute_process(
+        COMMAND bash -lc
+        "/usr/bin/python3.13 -m venv \"${ET_VENV}\" \
+        && ${ET_VENV}/bin/pip install --upgrade pip pyyaml \
+        && ${ET_VENV}/bin/pip install torch --index-url https://download.pytorch.org/whl/cpu"
+        COMMAND_ECHO STDOUT
+        RESULT_VARIABLE _venv_rc
+)
+if (NOT _venv_rc EQUAL 0)
+    message(FATAL_ERROR "Error when creating ExecuTorch python venv")
+endif ()
+
+set(PYTHON_EXECUTABLE "${ET_VENV}/bin/python" CACHE FILEPATH "")
+
+FetchContent_Declare(
+        executorch
+        GIT_REPOSITORY https://github.com/pytorch/executorch.git
+        GIT_TAG "v1.0.1"
+        GIT_SHALLOW TRUE
+        GIT_PROGRESS TRUE
+        GIT_SUBMODULES_RECURSE TRUE
+        SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/_deps/executorch"
+)
+
+set(EXECUTORCH_ENABLE_LOGGING ON CACHE BOOL "")
+set(EXECUTORCH_BUILD_EXTENSION_DATA_LOADER ON CACHE BOOL "")
+set(EXECUTORCH_BUILD_EXTENSION_FLAT_TENSOR ON CACHE BOOL "")
+set(EXECUTORCH_BUILD_TESTS OFF CACHE BOOL "")
+set(EXECUTORCH_BUILD_EXTENSION_MODULE ON CACHE BOOL "")
+set(EXECUTORCH_BUILD_EXTENSION_NAMED_DATA_MAP ON CACHE BOOL "")
+set(EXECUTORCH_BUILD_EXTENSION_RUNNER_UTIL ON CACHE BOOL "")
+set(EXECUTORCH_BUILD_PYBIND OFF CACHE BOOL "")
+set(EXECUTORCH_BUILD_EXTENSION_TENSOR ON CACHE BOOL "")
+set(EXECUTORCH_BUILD_KERNELS_OPTIMIZED ON CACHE BOOL "")
+set(EXECUTORCH_BUILD_XNNPACK ON CACHE BOOL "")
+set(EXECUTORCH_BUILD_VULKAN OFF CACHE BOOL "")
+
+FetchContent_MakeAvailable(executorch)
+
+#########
+# PhyVR #
+#########
+
+set(CMAKE_CXX_STANDARD 20)
+
+# Auto-export all symbols from our shared libraries on Windows (replaces the
+# per-target WINDOWS_EXPORT_ALL_SYMBOLS property in each module).
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
+set(ARENAI_FOLDER "${PROJECT_ROOT}/arenai")
+set(ARENAI_BINARY_ROOT_PATH "${CMAKE_CURRENT_BINARY_DIR}/arenai")
+
+add_subdirectory("${ARENAI_FOLDER}/arenai_utils" "${ARENAI_BINARY_ROOT_PATH}/arenai_utils")
+add_subdirectory("${ARENAI_FOLDER}/arenai_controller" "${ARENAI_BINARY_ROOT_PATH}/arenai_controller")
+add_subdirectory("${ARENAI_FOLDER}/arenai_view" "${ARENAI_BINARY_ROOT_PATH}/arenai_view")
+add_subdirectory("${ARENAI_FOLDER}/arenai_model" "${ARENAI_BINARY_ROOT_PATH}/arenai_model")
+add_subdirectory("${ARENAI_FOLDER}/arenai_core" "${ARENAI_BINARY_ROOT_PATH}/arenai_core")
+
+# ArenAI module headers propagate through each library's PUBLIC interface.
+
+# Boost
+FetchContent_Declare(
+    boost_math
+    GIT_REPOSITORY https://github.com/boostorg/math.git
+    GIT_TAG boost-1.90.0
+)
+
+FetchContent_MakeAvailable(boost_math)
+
+# glob files
+
+file(GLOB_RECURSE ARENAI_ANDROID_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/*.cpp")
+
+add_library(arenai SHARED ${ARENAI_ANDROID_SRC})
+
+target_link_libraries(
+        arenai
+        -Wl,--whole-archive native_app_glue -Wl,--no-whole-archive
+        android
+        jnigraphics
+        arenai_utils
+        arenai_view
+        arenai_model
+        arenai_core
+        executorch
+        executorch::backends
+        executorch::extensions
+        executorch::kernels
+)
+
+target_include_directories(
+    arenai PRIVATE
+    ${boost_math_SOURCE_DIR}/include
+)

@@ -8,6 +8,10 @@
 #include <string>
 #include <vector>
 
-std::vector<std::string> split_string(const std::string &input, char delimiter);
+namespace arenai::utils {
+
+    std::vector<std::string> split_string(const std::string &input, char delimiter);
+
+}// namespace arenai::utils
 
 #endif// ARENAI_STRING_UTILS_H

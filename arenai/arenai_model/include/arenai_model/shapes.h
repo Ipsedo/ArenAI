@@ -13,50 +13,55 @@
 
 #include <arenai_utils/file_reader.h>
 
-class Shape {
-public:
-    virtual ~Shape() = default;
+namespace arenai::model {
 
-    virtual std::vector<std::tuple<float, float, float>> get_vertices() = 0;
+    class Shape {
+    public:
+        virtual ~Shape() = default;
 
-    virtual std::vector<std::tuple<float, float, float>> get_normals() = 0;
+        virtual std::vector<std::tuple<float, float, float>> get_vertices() = 0;
 
-    virtual std::string get_id() = 0;
-};
+        virtual std::vector<std::tuple<float, float, float>> get_normals() = 0;
 
-class ObjShape final : public Shape {
-public:
-    explicit ObjShape(
-        const std::shared_ptr<AbstractFileReader> &file_reader, const std::string &obj_file_path);
+        virtual std::string get_id() = 0;
+    };
 
-    std::vector<std::tuple<float, float, float>> get_vertices() override;
+    class ObjShape final : public Shape {
+    public:
+        explicit ObjShape(
+            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            const std::filesystem::path &obj_file_path);
 
-    std::vector<std::tuple<float, float, float>> get_normals() override;
+        std::vector<std::tuple<float, float, float>> get_vertices() override;
 
-    std::string get_id() override;
+        std::vector<std::tuple<float, float, float>> get_normals() override;
 
-private:
-    std::string shape_id;
-    std::vector<std::tuple<float, float, float>> vertices;
-    std::vector<std::tuple<float, float, float>> normals;
-};
+        std::string get_id() override;
 
-class FromMeshShape final : public Shape {
-public:
-    FromMeshShape(
-        const std::string &shape_id, std::vector<std::tuple<float, float, float>> vertices,
-        std::vector<std::tuple<float, float, float>> normals);
+    private:
+        std::string shape_id;
+        std::vector<std::tuple<float, float, float>> vertices;
+        std::vector<std::tuple<float, float, float>> normals;
+    };
 
-    std::vector<std::tuple<float, float, float>> get_vertices() override;
+    class FromMeshShape final : public Shape {
+    public:
+        FromMeshShape(
+            const std::string &shape_id, std::vector<std::tuple<float, float, float>> vertices,
+            std::vector<std::tuple<float, float, float>> normals);
 
-    std::vector<std::tuple<float, float, float>> get_normals() override;
+        std::vector<std::tuple<float, float, float>> get_vertices() override;
 
-    std::string get_id() override;
+        std::vector<std::tuple<float, float, float>> get_normals() override;
 
-private:
-    std::string shape_id;
-    std::vector<std::tuple<float, float, float>> vertices;
-    std::vector<std::tuple<float, float, float>> normals;
-};
+        std::string get_id() override;
+
+    private:
+        std::string shape_id;
+        std::vector<std::tuple<float, float, float>> vertices;
+        std::vector<std::tuple<float, float, float>> normals;
+    };
+
+}// namespace arenai::model
 
 #endif// ARENAI_SHAPES_H

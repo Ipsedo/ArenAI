@@ -1,6 +1,6 @@
 ---
 name: build
-description: Build the ArenAI C++ project with CMake + make. Use whenever the user wants to build, compile, or rebuild the project (e.g. "build it", "compile", "run a build", "rebuild").
+description: Build the ArenAI C++ project with CMake + make. Use whenever it needs to build, compile, or rebuild the project (e.g. "build it", "compile", "run a build", "rebuild").
 ---
 
 # Build

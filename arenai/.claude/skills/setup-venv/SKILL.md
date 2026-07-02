@@ -1,6 +1,6 @@
 ---
 name: setup-venv
-description: Create a Python virtualenv (.venv) and install pre-commit if it doesn't already exist. Use when the user wants to bootstrap the Python environment, set up pre-commit, or asks to create the venv.
+description: Create a Python virtualenv (.venv) and install pre-commit if it doesn't already exist. It needs to be run at each context to be sure venv exists
 ---
 
 # Setup venv + pre-commit

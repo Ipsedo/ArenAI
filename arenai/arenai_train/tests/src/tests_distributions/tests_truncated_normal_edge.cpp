@@ -7,6 +7,9 @@
 #include <arenai_core/constants.h>
 #include <arenai_train_tests/tests_distributions/tests_truncated_normal_edge.h>
 
+using namespace arenai;
+using namespace arenai::train;
+
 TEST_F(TruncatedNormalEdgeTest, SampleWithVerySigmaSmallProducesFinite) {
     const auto mu = torch::zeros({100});
     const auto sigma = torch::ones({100}) * 1e-10f;

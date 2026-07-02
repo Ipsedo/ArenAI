@@ -14,42 +14,46 @@
 
 #include "./bullet_item.h"
 
-class HeightMapItem final : public BulletItem {
-public:
-    HeightMapItem(
-        std::string name, const std::shared_ptr<AbstractFileReader> &img_reader,
-        const std::filesystem::path &height_map_file, glm::vec3 pos, glm::vec3 scale);
+namespace arenai::model {
 
-    std::shared_ptr<Shape> get_shape() override;
+    class HeightMapItem final : public BulletItem {
+    public:
+        HeightMapItem(
+            std::string name, const std::shared_ptr<utils::AbstractFileReader> &img_reader,
+            const std::filesystem::path &height_map_file, glm::vec3 pos, glm::vec3 scale);
 
-    btRigidBody *get_body() override;
+        std::shared_ptr<Shape> get_shape() override;
 
-    ~HeightMapItem() override;
+        btRigidBody *get_body() override;
 
-protected:
-    glm::vec3 _get_scale() override;
+        ~HeightMapItem() override;
 
-private:
-    btHeightfieldTerrainShape *map;
-    btRigidBody *body;
+    protected:
+        glm::vec3 _get_scale() override;
 
-    std::string shape_id;
-    glm::vec3 scale;
+    private:
+        btHeightfieldTerrainShape *map;
+        btRigidBody *body;
 
-    int map_width;
-    int map_height;
+        std::string shape_id;
+        glm::vec3 scale;
 
-    std::vector<std::tuple<float, float, float>> vertices;
-    std::vector<std::tuple<float, float, float>> normals;
+        int map_width;
+        int map_height;
 
-    std::vector<float> image_grey;
+        std::vector<std::tuple<float, float, float>> vertices;
+        std::vector<std::tuple<float, float, float>> normals;
 
-    float get_height(int x, int z) const;
-    glm::vec3 compute_vertex_normal(int x, int z) const;
-    glm::vec3 make_pos(int x, int z, int min_height, int max_height) const;
+        std::vector<float> image_grey;
 
-    void
-    build_render_mesh(glm::vec3 aabb_min, glm::vec3 aabb_max, float min_height, float max_height);
-};
+        float get_height(int x, int z) const;
+        glm::vec3 compute_vertex_normal(int x, int z) const;
+        glm::vec3 make_pos(int x, int z, int min_height, int max_height) const;
+
+        void build_render_mesh(
+            glm::vec3 aabb_min, glm::vec3 aabb_max, float min_height, float max_height);
+    };
+
+}// namespace arenai::model
 
 #endif// ARENAI_HEIGHT_MAP_H

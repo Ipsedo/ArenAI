@@ -12,66 +12,73 @@
 
 #include "./bullet_tank.h"
 
-struct shoot_info {
-    glm::vec3 start_pos;
-    glm::vec3 hit_pos;
-    bool has_touch_enemy;
-    bool enemy_killed;
-};
+namespace arenai::model {
 
-class BulletEnemyTank final : public BulletTank, public EnemyTank {
-public:
-    BulletEnemyTank(
-        BulletPhysicEngine &engine, const std::shared_ptr<AbstractFileReader> &file_reader,
-        const std::string &tank_prefix_name, glm::vec3 chassis_pos, float wanted_frame_frequency);
+    struct shoot_info {
+        glm::vec3 start_pos;
+        glm::vec3 hit_pos;
+        bool has_touch_enemy;
+        bool enemy_killed;
+    };
 
-    float get_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
-    float get_phi(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
+    class BulletEnemyTank final : public BulletTank, public EnemyTank {
+    public:
+        BulletEnemyTank(
+            BulletPhysicEngine &engine,
+            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            const std::string &tank_prefix_name, glm::vec3 chassis_pos,
+            float wanted_frame_frequency);
 
-    bool is_dead() override;
-    bool is_suicide() const override;
+        float get_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
+        float get_phi(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
 
-    bool has_hit_other_tank() override;
+        bool is_dead() override;
+        bool is_suicide() const override;
 
-    void on_death() override;
+        bool has_hit_other_tank() override;
 
-    std::vector<float> get_proprioception() override;
+        void on_death() override;
 
-    std::shared_ptr<ActionStats> get_action_stats() override;
+        std::vector<float> get_proprioception() override;
 
-    // Tank methods resolved via BulletTank
-    using BulletTank::get_camera;
-    using BulletTank::get_canon;
-    using BulletTank::get_chassis;
-    using BulletTank::get_controllers;
-    using BulletTank::get_items;
-    using BulletTank::load_shell_shapes;
+        std::shared_ptr<ActionStats> get_action_stats() override;
 
-private:
-    std::string tank_prefix_name;
+        // Tank methods resolved via BulletTank
+        using BulletTank::get_camera;
+        using BulletTank::get_canon;
+        using BulletTank::get_chassis;
+        using BulletTank::get_controllers;
+        using BulletTank::get_items;
+        using BulletTank::load_shell_shapes;
 
-    int max_frames_upside_down;
-    int curr_frame_upside_down;
+    private:
+        std::string tank_prefix_name;
 
-    float distance_scale;
-    float impact_distance_scale;
-    float angle_scale;
+        int max_frames_upside_down;
+        int curr_frame_upside_down;
 
-    bool is_dead_already_triggered;
+        float distance_scale;
+        float impact_distance_scale;
+        float angle_scale;
 
-    bool has_touch;
-    std::optional<shoot_info> last_shoot_info;
-    std::shared_ptr<ActionStats> action_stats;
+        bool is_dead_already_triggered;
 
-    void on_fired_shell_contact(const ShellContactInfo &shell_info, Item *item);
+        bool has_touch;
+        std::optional<shoot_info> last_shoot_info;
+        std::shared_ptr<ActionStats> action_stats;
 
-    float compute_aim_angle(const std::shared_ptr<EnemyTank> &other_tank);
+        void on_fired_shell_contact(const ShellContactInfo &shell_info, Item *item);
 
-    int get_nearest_enemy_index(
-        const std::vector<std::shared_ptr<EnemyTank>> &tanks, const glm::vec3 &pos) const;
+        float compute_aim_angle(const std::shared_ptr<EnemyTank> &other_tank);
 
-    float compute_hit_reward(
-        const glm::vec3 &fire_pos, const glm::vec3 &best_enemy_pos, const glm::vec3 &hit_pos) const;
-};
+        int get_nearest_enemy_index(
+            const std::vector<std::shared_ptr<EnemyTank>> &tanks, const glm::vec3 &pos) const;
+
+        float compute_hit_reward(
+            const glm::vec3 &fire_pos, const glm::vec3 &best_enemy_pos,
+            const glm::vec3 &hit_pos) const;
+    };
+
+}// namespace arenai::model
 
 #endif//ARENAI_BULLET_ENEMY_TANK_H

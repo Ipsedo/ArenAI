@@ -8,6 +8,9 @@
 
 #include "./game.h"
 
+using namespace arenai;
+using namespace arenai::desktop;
+
 void trim_inplace(std::string &s) {
     auto not_space = [](const unsigned char c) { return !std::isspace(c); };
     s.erase(s.begin(), std::ranges::find_if(s, not_space));

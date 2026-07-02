@@ -16,13 +16,15 @@
 #include "./utils/local_gl_context.h"
 #include "./utils/make_shapes.h"
 
+using namespace arenai;
+using namespace arenai::view;
+
 class RendererTest : public testing::Test {
 protected:
     void SetUp() override {
         gl_context = std::make_shared<LocalGlContext>();
-        file_reader = std::make_shared<LocalAssetFileReader>(
-            std::filesystem::path(__FILE__).parent_path() / ".." / ".." / ".." / ".." / "app"
-            / "src" / "main" / "assets");
+        file_reader =
+            std::make_shared<LocalAssetFileReader>(std::filesystem::path(ARENAI_ASSETS_DIR));
     }
 
     std::shared_ptr<LocalGlContext> gl_context;

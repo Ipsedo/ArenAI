@@ -6,6 +6,9 @@
 
 #include <arenai_train_tests/tests_metrics/tests_metrics.h>
 
+using namespace arenai;
+using namespace arenai::train;
+
 // ========================================================================
 // Fixed tests
 // ========================================================================

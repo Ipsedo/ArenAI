@@ -7,16 +7,20 @@
 
 #include "./reward_transform.h"
 
-class ScalePotentialTransform : public AbstractRewardTransform {
-public:
-    explicit ScalePotentialTransform(float potential_reward_scale);
+namespace arenai::train {
 
-    void on_add(const torch::Tensor &single_step_reward) override;
+    class ScalePotentialTransform : public AbstractRewardTransform {
+    public:
+        explicit ScalePotentialTransform(float potential_reward_scale);
 
-    torch::Tensor transform(const torch::Tensor &batch_step_reward) override;
+        void on_add(const torch::Tensor &single_step_reward) override;
 
-private:
-    float potential_reward_scale_;
-};
+        torch::Tensor transform(const torch::Tensor &batch_step_reward) override;
+
+    private:
+        float potential_reward_scale_;
+    };
+
+}// namespace arenai::train
 
 #endif//ARENAI_TRAIN_HOST_SCALE_REPLAY_BUFFER_H

@@ -7,24 +7,28 @@
 
 #include <torch/torch.h>
 
-struct InputRewards {
-    torch::Tensor main_reward;
-    torch::Tensor potential_reward;
-};
+namespace arenai::train {
 
-class AbstractRewardTransform {
-public:
-    virtual ~AbstractRewardTransform() = default;
+    struct InputRewards {
+        torch::Tensor main_reward;
+        torch::Tensor potential_reward;
+    };
 
-    virtual torch::Tensor transform(const torch::Tensor &batch_step_reward) = 0;
-    virtual void on_add(const torch::Tensor &single_step_reward) = 0;
-};
+    class AbstractRewardTransform {
+    public:
+        virtual ~AbstractRewardTransform() = default;
 
-class AbstractRewardsCombiner {
-public:
-    virtual ~AbstractRewardsCombiner() = default;
+        virtual torch::Tensor transform(const torch::Tensor &batch_step_reward) = 0;
+        virtual void on_add(const torch::Tensor &single_step_reward) = 0;
+    };
 
-    virtual torch::Tensor to_reward(const InputRewards &batch_rewards) = 0;
-};
+    class AbstractRewardsCombiner {
+    public:
+        virtual ~AbstractRewardsCombiner() = default;
+
+        virtual torch::Tensor to_reward(const InputRewards &batch_rewards) = 0;
+    };
+
+}// namespace arenai::train
 
 #endif//ARENAI_TRAIN_HOST_REWARD_TRANSFORM_H

@@ -11,6 +11,8 @@
 
 #include <SOIL2.h>
 
+using namespace arenai;
+
 LocalAssetFileReader::LocalAssetFileReader(const std::filesystem::path &path_to_assets)
     : path_to_assets(path_to_assets) {}
 
@@ -24,7 +26,7 @@ std::string LocalAssetFileReader::read_text(const std::filesystem::path &file_pa
     return buffer.str();
 }
 
-ImageChannels LocalAssetFileReader::read_png(const std::filesystem::path &png_file_path) {
+utils::ImageChannels LocalAssetFileReader::read_png(const std::filesystem::path &png_file_path) {
     int w = 0, h = 0, source_channels = 0;
     constexpr int out_channels = 4;
 
@@ -38,7 +40,7 @@ ImageChannels LocalAssetFileReader::read_png(const std::filesystem::path &png_fi
             + SOIL_last_result());
     }
 
-    ImageChannels out{};
+    utils::ImageChannels out{};
     out.width = w;
     out.height = h;
     out.channels = out_channels;

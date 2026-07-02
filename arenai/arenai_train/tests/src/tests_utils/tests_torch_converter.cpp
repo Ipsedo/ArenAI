@@ -6,6 +6,10 @@
 #include <arenai_train/torch_converter.h>
 #include <arenai_train_tests/tests_utils/tests_torch_converter.h>
 
+using namespace arenai;
+using namespace arenai::core;
+using namespace arenai::train;
+
 // ========================================================================
 // Fixed tests
 // ========================================================================

@@ -14,31 +14,35 @@
 #include <arenai_view/drawable.h>
 #include <arenai_view/program.h>
 
-class Specular final : public Drawable {
-private:
-    static const int POSITION_SIZE = 3;
-    static const int NORMAL_SIZE = 3;
-    static const int STRIDE = (POSITION_SIZE + NORMAL_SIZE) * BYTES_PER_FLOAT;
+namespace arenai::view {
 
-    std::unique_ptr<Program> program;
+    class Specular final : public Drawable {
+    private:
+        static const int POSITION_SIZE = 3;
+        static const int NORMAL_SIZE = 3;
+        static const int STRIDE = (POSITION_SIZE + NORMAL_SIZE) * BYTES_PER_FLOAT;
 
-    glm::vec4 ambient_color;
-    glm::vec4 diffuse_color;
-    glm::vec4 specular_color;
-    float shininess;
+        std::unique_ptr<Program> program;
 
-    int nb_vertices;
+        glm::vec4 ambient_color;
+        glm::vec4 diffuse_color;
+        glm::vec4 specular_color;
+        float shininess;
 
-public:
-    Specular(
-        const std::shared_ptr<AbstractFileReader> &file_reader,
-        const std::vector<std::tuple<float, float, float>> &vertices,
-        const std::vector<std::tuple<float, float, float>> &normals, glm::vec4 ambient_color,
-        glm::vec4 diffuse_color, glm::vec4 specular_color, float shininess);
+        int nb_vertices;
 
-    void draw(
-        glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos_from_camera,
-        glm::vec3 camera_pos) override;
-};
+    public:
+        Specular(
+            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            const std::vector<std::tuple<float, float, float>> &vertices,
+            const std::vector<std::tuple<float, float, float>> &normals, glm::vec4 ambient_color,
+            glm::vec4 diffuse_color, glm::vec4 specular_color, float shininess);
+
+        void draw(
+            glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos_from_camera,
+            glm::vec3 camera_pos) override;
+    };
+
+}// namespace arenai::view
 
 #endif// ARENAI_SPECULAR_H

@@ -5,6 +5,9 @@
 #include <arenai_core/thread_pool.h>
 #include <arenai_core_tests/tests_vision_double_buffer/tests_vision_double_buffer.h>
 
+using namespace arenai;
+using namespace arenai::core;
+
 // ========================================================================
 // Construction — initial black image
 // ========================================================================
@@ -44,7 +47,7 @@ TEST_F(VisionDoubleBufferTest, WriteAndReadBack) {
 
     VisionDoubleBuffer buffer(height, width);
 
-    image<uint8_t> written{};
+    view::image<uint8_t> written{};
     written.pixels.resize(total);
     for (int i = 0; i < total; i++) written.pixels[i] = static_cast<uint8_t>(i % 256);
 
@@ -65,10 +68,10 @@ TEST_F(VisionDoubleBufferTest, SecondWriteOverwritesFirst) {
 
     VisionDoubleBuffer buffer(height, width);
 
-    image<uint8_t> first{std::vector<uint8_t>(total, 100)};
+    view::image<uint8_t> first{std::vector<uint8_t>(total, 100)};
     buffer.write(first);
 
-    image<uint8_t> second{std::vector<uint8_t>(total, 200)};
+    view::image<uint8_t> second{std::vector<uint8_t>(total, 200)};
     buffer.write(second);
 
     const auto [pixels] = buffer.read_copy();

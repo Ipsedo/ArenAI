@@ -9,6 +9,9 @@
 
 #include <arenai_train_tests/tests_metrics/tests_metrics_edge.h>
 
+using namespace arenai;
+using namespace arenai::train;
+
 TEST_F(MetricsEdgeTest, MeanMetricComputeOnEmpty) {
     MeanMetric metric("test_mean", 10);
 

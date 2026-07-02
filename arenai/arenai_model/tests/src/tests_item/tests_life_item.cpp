@@ -5,6 +5,10 @@
 #include <arenai_model/item.h>
 #include <arenai_model_tests/tests_item/tests_life_item.h>
 
+using namespace arenai;
+using namespace arenai::model;
+using namespace arenai::utils;
+
 // ========================================================================
 // LifeItem
 // ========================================================================

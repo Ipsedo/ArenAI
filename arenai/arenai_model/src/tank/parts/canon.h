@@ -15,36 +15,41 @@
 #include "./items/convex.h"
 #include "shell.h"
 
-class CanonItem final : public LifeItem,
-                        public ConvexItem,
-                        public ItemProducer,
-                        public Controller,
-                        public Camera {
-public:
-    CanonItem(
-        const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,
-        glm::vec3 pos, glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *turret,
-        float wanted_frame_frequency,
-        const std::function<void(glm::vec3, glm::vec3, Item *)> &on_contact);
+namespace arenai::model {
 
-    void on_input(const user_input &input) override;
+    class CanonItem final : public LifeItem,
+                            public ConvexItem,
+                            public ItemProducer,
+                            public controller::Controller,
+                            public view::Camera {
+    public:
+        CanonItem(
+            const std::string &prefix_name,
+            const std::shared_ptr<utils::AbstractFileReader> &file_reader, glm::vec3 pos,
+            glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *turret,
+            float wanted_frame_frequency,
+            const std::function<void(glm::vec3, glm::vec3, Item *)> &on_contact);
 
-    glm::vec3 pos() override;
-    glm::vec3 look() override;
-    glm::vec3 up() override;
+        void on_input(const controller::user_input &input) override;
 
-    std::vector<btTypedConstraint *> get_constraints() override;
+        glm::vec3 pos() override;
+        glm::vec3 look() override;
+        glm::vec3 up() override;
 
-    std::vector<std::shared_ptr<Item>> get_produced_items() override;
-    std::vector<std::shared_ptr<BulletItem>> produce_bullet_items();
+        std::vector<btTypedConstraint *> get_constraints() override;
 
-private:
-    float angle;
-    btHingeConstraint *hinge;
-    std::shared_ptr<AbstractFileReader> file_reader;
-    bool will_fire;
-    std::function<void(glm::vec3, glm::vec3, Item *)> on_contact;
-    float wanted_frame_frequency;
-};
+        std::vector<std::shared_ptr<Item>> get_produced_items() override;
+        std::vector<std::shared_ptr<BulletItem>> produce_bullet_items();
+
+    private:
+        float angle;
+        btHingeConstraint *hinge;
+        std::shared_ptr<utils::AbstractFileReader> file_reader;
+        bool will_fire;
+        std::function<void(glm::vec3, glm::vec3, Item *)> on_contact;
+        float wanted_frame_frequency;
+    };
+
+}// namespace arenai::model
 
 #endif// ARENAI_CANON_H

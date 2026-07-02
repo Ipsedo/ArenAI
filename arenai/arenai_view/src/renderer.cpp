@@ -8,121 +8,127 @@
 #include <arenai_view/errors.h>
 #include <arenai_view/renderer.h>
 
-AbstractGLContext::AbstractGLContext() = default;
+using namespace arenai;
 
-void AbstractGLContext::make_current() {
+namespace arenai::view {
 
-    if (eglMakeCurrent(get_display(), get_surface(), get_surface(), get_context()) != EGL_TRUE)
-        throw std::runtime_error("Can't make context");
-}
+    AbstractGLContext::AbstractGLContext() = default;
 
-void AbstractGLContext::release_current() {
-    eglMakeCurrent(get_display(), EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-}
+    void AbstractGLContext::make_current() {
 
-/*
+        if (eglMakeCurrent(get_display(), get_surface(), get_surface(), get_context()) != EGL_TRUE)
+            throw std::runtime_error("Can't make context");
+    }
+
+    void AbstractGLContext::release_current() {
+        eglMakeCurrent(get_display(), EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    }
+
+    /*
  * Renderer
  */
 
-Renderer::Renderer(
-    const std::shared_ptr<AbstractGLContext> &gl_context, const glm::vec3 light_pos,
-    const std::shared_ptr<Camera> &camera)
-    : light_pos(light_pos), gl_context(gl_context), camera(camera) {}
+    Renderer::Renderer(
+        const std::shared_ptr<AbstractGLContext> &gl_context, const glm::vec3 light_pos,
+        const std::shared_ptr<Camera> &camera)
+        : light_pos(light_pos), gl_context(gl_context), camera(camera) {}
 
-void Renderer::add_drawable(const std::string &name, std::unique_ptr<Drawable> drawable) {
-    drawables.insert({name, std::move(drawable)});
-}
-
-void Renderer::remove_drawable(const std::string &name) { drawables.erase(name); }
-
-void Renderer::draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
-    on_new_frame(gl_context);
-
-    // on_draw
-    const auto camera_pos = camera->pos();
-    const glm::mat4 view_matrix = glm::lookAt(camera_pos, camera->look(), camera->up());
-
-    const glm::mat4 proj_matrix = glm::perspective(
-        static_cast<float>(M_PI) / 4.f,
-        static_cast<float>(get_width()) / static_cast<float>(get_height()), 1.f,
-        2000.f * std::sqrt(3.f));
-
-    for (const auto &[name, m_matrix]: model_matrices) {
-        auto mv_matrix = view_matrix * m_matrix;
-        const auto mvp_matrix = proj_matrix * mv_matrix;
-
-        drawables[name]->draw(mvp_matrix, mv_matrix, light_pos, camera_pos);
+    void Renderer::add_drawable(const std::string &name, std::unique_ptr<Drawable> drawable) {
+        drawables.insert({name, std::move(drawable)});
     }
 
-    on_end_frame(gl_context);
-}
+    void Renderer::remove_drawable(const std::string &name) { drawables.erase(name); }
 
-void Renderer::make_current() const { gl_context->make_current(); }
+    void Renderer::draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
+        on_new_frame(gl_context);
 
-void Renderer::release_current() const { gl_context->release_current(); }
+        // on_draw
+        const auto camera_pos = camera->pos();
+        const glm::mat4 view_matrix = glm::lookAt(camera_pos, camera->look(), camera->up());
 
-Renderer::~Renderer() {
-    drawables.clear();
+        const glm::mat4 proj_matrix = glm::perspective(
+            static_cast<float>(M_PI) / 4.f,
+            static_cast<float>(get_width()) / static_cast<float>(get_height()), 1.f,
+            2000.f * std::sqrt(3.f));
 
-    const auto display = gl_context->get_display();
-    const auto surface = gl_context->get_surface();
-    const auto context = gl_context->get_context();
+        for (const auto &[name, m_matrix]: model_matrices) {
+            auto mv_matrix = view_matrix * m_matrix;
+            const auto mvp_matrix = proj_matrix * mv_matrix;
 
-    if (display != EGL_NO_DISPLAY) {
-        eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+            drawables[name]->draw(mvp_matrix, mv_matrix, light_pos, camera_pos);
+        }
 
-        if (context != EGL_NO_CONTEXT) eglDestroyContext(display, context);
-
-        if (surface != EGL_NO_SURFACE) eglDestroySurface(display, surface);
+        on_end_frame(gl_context);
     }
-}
 
-/*
+    void Renderer::make_current() const { gl_context->make_current(); }
+
+    void Renderer::release_current() const { gl_context->release_current(); }
+
+    Renderer::~Renderer() {
+        drawables.clear();
+
+        const auto display = gl_context->get_display();
+        const auto surface = gl_context->get_surface();
+        const auto context = gl_context->get_context();
+
+        if (display != EGL_NO_DISPLAY) {
+            eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+
+            if (context != EGL_NO_CONTEXT) eglDestroyContext(display, context);
+
+            if (surface != EGL_NO_SURFACE) eglDestroySurface(display, surface);
+        }
+    }
+
+    /*
  * UI Renderer
  */
 
-PlayerRenderer::PlayerRenderer(
-    const std::shared_ptr<AbstractGLContext> &gl_context, const int width, const int height,
-    const glm::vec3 &lightPos, const std::shared_ptr<Camera> &camera)
-    : Renderer(gl_context, lightPos, camera), width(width), height(height), hud_drawables() {}
+    PlayerRenderer::PlayerRenderer(
+        const std::shared_ptr<AbstractGLContext> &gl_context, const int width, const int height,
+        const glm::vec3 &lightPos, const std::shared_ptr<Camera> &camera)
+        : Renderer(gl_context, lightPos, camera), width(width), height(height), hud_drawables() {}
 
-void PlayerRenderer::add_hud_drawable(std::unique_ptr<HUDDrawable> hud_drawable) {
-    hud_drawables.push_back(std::move(hud_drawable));
-}
+    void PlayerRenderer::add_hud_drawable(std::unique_ptr<HUDDrawable> hud_drawable) {
+        hud_drawables.push_back(std::move(hud_drawable));
+    }
 
-void PlayerRenderer::on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_context) {
+    void PlayerRenderer::on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_context) {
 
-    glDisable(GL_DEPTH_TEST);
+        glDisable(GL_DEPTH_TEST);
 
-    for (const auto &hud_drawable: hud_drawables) hud_drawable->draw(get_width(), get_height());
-    eglSwapBuffers(gl_context->get_display(), gl_context->get_surface());
+        for (const auto &hud_drawable: hud_drawables) hud_drawable->draw(get_width(), get_height());
+        eglSwapBuffers(gl_context->get_display(), gl_context->get_surface());
 
-    glEnable(GL_DEPTH_TEST);
-}
+        glEnable(GL_DEPTH_TEST);
+    }
 
-void PlayerRenderer::on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_context) {
-    glViewport(0, 0, get_width(), get_height());
+    void PlayerRenderer::on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_context) {
+        glViewport(0, 0, get_width(), get_height());
 
-    glClearColor(1., 0., 0., 0.);
+        glClearColor(1., 0., 0., 0.);
 
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
 
-    glDepthFunc(GL_LEQUAL);
-    glDepthMask(GL_TRUE);
+        glDepthFunc(GL_LEQUAL);
+        glDepthMask(GL_TRUE);
 
-    glDisable(GL_BLEND);
+        glDisable(GL_BLEND);
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-}
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
 
-PlayerRenderer::~PlayerRenderer() { hud_drawables.clear(); }
+    PlayerRenderer::~PlayerRenderer() { hud_drawables.clear(); }
 
-int PlayerRenderer::get_width() const { return width; }
+    int PlayerRenderer::get_width() const { return width; }
 
-int PlayerRenderer::get_height() const { return height; }
+    int PlayerRenderer::get_height() const { return height; }
 
-void PlayerRenderer::set_window_size(const int new_width, const int new_height) {
-    width = new_width;
-    height = new_height;
-}
+    void PlayerRenderer::set_window_size(const int new_width, const int new_height) {
+        width = new_width;
+        height = new_height;
+    }
+
+}// namespace arenai::view

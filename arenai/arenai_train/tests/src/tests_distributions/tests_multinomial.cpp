@@ -6,6 +6,9 @@
 
 #include <arenai_train_tests/tests_distributions/tests_multinomial.h>
 
+using namespace arenai;
+using namespace arenai::train;
+
 // ========================================================================
 // Fixed tests
 // ========================================================================

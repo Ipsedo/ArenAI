@@ -13,49 +13,53 @@
 
 #include "./program.h"
 
-class HUDDrawable {
-public:
-    virtual void draw(int width, int height) = 0;
-    virtual ~HUDDrawable();
-};
+namespace arenai::view {
 
-class ButtonDrawable final : public HUDDrawable {
-public:
-    ButtonDrawable(
-        const std::shared_ptr<AbstractFileReader> &file_reader,
-        std::function<button(void)> get_input, glm::vec2 center_px, float size_px);
+    class HUDDrawable {
+    public:
+        virtual void draw(int width, int height) = 0;
+        virtual ~HUDDrawable();
+    };
 
-    void draw(int width, int height) override;
+    class ButtonDrawable final : public HUDDrawable {
+    public:
+        ButtonDrawable(
+            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            std::function<controller::button(void)> get_input, glm::vec2 center_px, float size_px);
 
-private:
-    std::function<button(void)> get_input;
+        void draw(int width, int height) override;
 
-    std::unique_ptr<Program> program;
+    private:
+        std::function<controller::button(void)> get_input;
 
-    float center_x, center_y;
-    float size;
+        std::unique_ptr<Program> program;
 
-    int nb_points;
-};
+        float center_x, center_y;
+        float size;
 
-class JoyStickDrawable final : public HUDDrawable {
-public:
-    JoyStickDrawable(
-        const std::shared_ptr<AbstractFileReader> &file_reader,
-        std::function<joystick(void)> get_input_px, glm::vec2 center_px, float size_px,
-        float stick_size_px);
+        int nb_points;
+    };
 
-    void draw(int width, int height) override;
+    class JoyStickDrawable final : public HUDDrawable {
+    public:
+        JoyStickDrawable(
+            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            std::function<controller::joystick(void)> get_input_px, glm::vec2 center_px,
+            float size_px, float stick_size_px);
 
-private:
-    std::function<joystick(void)> get_input;
+        void draw(int width, int height) override;
 
-    std::unique_ptr<Program> program;
+    private:
+        std::function<controller::joystick(void)> get_input;
 
-    float center_x, center_y;
-    float size, stick_size;
+        std::unique_ptr<Program> program;
 
-    int nb_point_bound, nb_point_stick;
-};
+        float center_x, center_y;
+        float size, stick_size;
+
+        int nb_point_bound, nb_point_stick;
+    };
+
+}// namespace arenai::view
 
 #endif// ARENAI_HUD_H

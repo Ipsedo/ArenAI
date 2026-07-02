@@ -14,15 +14,19 @@
 
 #include "./tank.h"
 
-class TankFactory {
-public:
-    virtual ~TankFactory() = default;
+namespace arenai::model {
 
-    virtual std::unique_ptr<EnemyTank>
-    make_enemy_tank(const std::string &tank_prefix_name, glm::vec3 chassis_pos) = 0;
+    class TankFactory {
+    public:
+        virtual ~TankFactory() = default;
 
-    virtual std::unique_ptr<PlayerTank>
-    make_player_tank(const std::string &tank_prefix_name, glm::vec3 chassis_pos) = 0;
-};
+        virtual std::unique_ptr<EnemyTank>
+        make_enemy_tank(const std::string &tank_prefix_name, glm::vec3 chassis_pos) = 0;
+
+        virtual std::unique_ptr<PlayerTank>
+        make_player_tank(const std::string &tank_prefix_name, glm::vec3 chassis_pos) = 0;
+    };
+
+}// namespace arenai::model
 
 #endif// ARENAI_TANK_FACTORY_H

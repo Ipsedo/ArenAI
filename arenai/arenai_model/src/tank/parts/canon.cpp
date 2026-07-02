@@ -8,100 +8,110 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-CanonItem::CanonItem(
-    const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,
-    glm::vec3 pos, glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *turret,
-    const float wanted_frame_frequency,
-    const std::function<void(glm::vec3, glm::vec3, Item *)> &on_contact)
-    : LifeItem(5), ConvexItem(
-                       prefix_name + "_canon",
-                       std::make_shared<ObjShape>(
-                           file_reader, std::filesystem::path("obj") / "anubis_canon.obj"),
-                       pos, scale, mass),
-      angle(0.f), file_reader(file_reader), will_fire(false), on_contact(on_contact),
-      wanted_frame_frequency(wanted_frame_frequency) {
+using namespace arenai;
+using namespace arenai::model;
+using namespace arenai::controller;
 
-    auto turret_pivot = btVector3(rel_pos.x, rel_pos.y, rel_pos.z);
-    auto canon_pivot = btVector3(0.f, 0.f, 0);
-    auto axis = btVector3(1, 0, 0);
-    hinge = new btHingeConstraint(
-        *turret, *ConvexItem::get_body(), turret_pivot, canon_pivot, axis, axis, true);
+namespace arenai::model {
 
-    hinge->setLimit(angle, angle);
-}
+    CanonItem::CanonItem(
+        const std::string &prefix_name,
+        const std::shared_ptr<utils::AbstractFileReader> &file_reader, glm::vec3 pos,
+        glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *turret,
+        const float wanted_frame_frequency,
+        const std::function<void(glm::vec3, glm::vec3, Item *)> &on_contact)
+        : LifeItem(5), ConvexItem(
+                           prefix_name + "_canon",
+                           std::make_shared<ObjShape>(
+                               file_reader, std::filesystem::path("obj") / "anubis_canon.obj"),
+                           pos, scale, mass),
+          angle(0.f), file_reader(file_reader), will_fire(false), on_contact(on_contact),
+          wanted_frame_frequency(wanted_frame_frequency) {
 
-std::vector<std::shared_ptr<BulletItem>> CanonItem::produce_bullet_items() {
-    if (will_fire) {
-        const btTransform canon_tr = ConvexItem::get_body()->getWorldTransform();
-        float tmp[16];
-        canon_tr.getOpenGLMatrix(tmp);
-        const glm::mat4 m_matrix = glm::make_mat4(tmp);
+        auto turret_pivot = btVector3(rel_pos.x, rel_pos.y, rel_pos.z);
+        auto canon_pivot = btVector3(0.f, 0.f, 0);
+        auto axis = btVector3(1, 0, 0);
+        hinge = new btHingeConstraint(
+            *turret, *ConvexItem::get_body(), turret_pivot, canon_pivot, axis, axis, true);
 
-        glm::vec4 shell_pos(0.f, 0.f, 10.f, 1.f);
-        shell_pos = m_matrix * shell_pos;
-
-        will_fire = false;
-
-        auto shell_item = std::make_shared<ShellItem>(
-            file_reader, glm::vec3(shell_pos), glm::toQuat(m_matrix), glm::vec3(0.2f), 20.f,
-            wanted_frame_frequency, on_contact);
-
-        glm::vec4 force_vec(0.f, 0.f, 1.f, 0.f);
-        force_vec = m_matrix * force_vec;
-
-        shell_item->get_body()->applyCentralForce(
-            btVector3(force_vec.x, force_vec.y, force_vec.z) * 1.5e5f);
-
-        return {shell_item};
+        hinge->setLimit(angle, angle);
     }
 
-    return {};
-}
+    std::vector<std::shared_ptr<BulletItem>> CanonItem::produce_bullet_items() {
+        if (will_fire) {
+            const btTransform canon_tr = ConvexItem::get_body()->getWorldTransform();
+            float tmp[16];
+            canon_tr.getOpenGLMatrix(tmp);
+            const glm::mat4 m_matrix = glm::make_mat4(tmp);
 
-std::vector<std::shared_ptr<Item>> CanonItem::get_produced_items() {
-    auto bullet_items = produce_bullet_items();
-    return {bullet_items.begin(), bullet_items.end()};
-}
+            glm::vec4 shell_pos(0.f, 0.f, 10.f, 1.f);
+            shell_pos = m_matrix * shell_pos;
 
-void CanonItem::on_input(const user_input &input) {
-    angle += input.right_joystick.y * 0.4f;
+            will_fire = false;
 
-    angle = std::clamp(angle, -0.2f * static_cast<float>(M_PI), 0.2f * static_cast<float>(M_PI));
+            auto shell_item = std::make_shared<ShellItem>(
+                file_reader, glm::vec3(shell_pos), glm::toQuat(m_matrix), glm::vec3(0.2f), 20.f,
+                wanted_frame_frequency, on_contact);
 
-    hinge->setLimit(angle, angle);
+            glm::vec4 force_vec(0.f, 0.f, 1.f, 0.f);
+            force_vec = m_matrix * force_vec;
 
-    if (input.fire_button.pressed) will_fire = true;
-}
+            shell_item->get_body()->applyCentralForce(
+                btVector3(force_vec.x, force_vec.y, force_vec.z) * 1.5e5f);
 
-glm::vec3 CanonItem::pos() {
-    const btTransform tr = ConvexItem::get_body()->getWorldTransform();
-    float tmp[16];
-    tr.getOpenGLMatrix(tmp);
-    const glm::mat4 model_mat = glm::make_mat4(tmp);
+            return {shell_item};
+        }
 
-    return model_mat * glm::vec4(0, 4, -20, 1);
-}
+        return {};
+    }
 
-glm::vec3 CanonItem::look() {
-    const btTransform tr = ConvexItem::get_body()->getWorldTransform();
-    float tmp[16];
-    tr.getOpenGLMatrix(tmp);
-    const glm::mat4 model_mat = glm::make_mat4(tmp);
+    std::vector<std::shared_ptr<Item>> CanonItem::get_produced_items() {
+        auto bullet_items = produce_bullet_items();
+        return {bullet_items.begin(), bullet_items.end()};
+    }
 
-    return model_mat * glm::vec4(0, 0, 1, 1);
-}
+    void CanonItem::on_input(const user_input &input) {
+        angle += input.right_joystick.y * 0.4f;
 
-glm::vec3 CanonItem::up() {
-    const btTransform tr = ConvexItem::get_body()->getWorldTransform();
-    float tmp[16];
-    tr.getOpenGLMatrix(tmp);
-    const glm::mat4 model_mat = glm::make_mat4(tmp);
+        angle =
+            std::clamp(angle, -0.2f * static_cast<float>(M_PI), 0.2f * static_cast<float>(M_PI));
 
-    return model_mat * glm::vec4(0, 1, 0, 0);
-}
+        hinge->setLimit(angle, angle);
 
-std::vector<btTypedConstraint *> CanonItem::get_constraints() {
-    auto constraints = BulletItem::get_constraints();
-    constraints.push_back(hinge);
-    return constraints;
-}
+        if (input.fire_button.pressed) will_fire = true;
+    }
+
+    glm::vec3 CanonItem::pos() {
+        const btTransform tr = ConvexItem::get_body()->getWorldTransform();
+        float tmp[16];
+        tr.getOpenGLMatrix(tmp);
+        const glm::mat4 model_mat = glm::make_mat4(tmp);
+
+        return model_mat * glm::vec4(0, 4, -20, 1);
+    }
+
+    glm::vec3 CanonItem::look() {
+        const btTransform tr = ConvexItem::get_body()->getWorldTransform();
+        float tmp[16];
+        tr.getOpenGLMatrix(tmp);
+        const glm::mat4 model_mat = glm::make_mat4(tmp);
+
+        return model_mat * glm::vec4(0, 0, 1, 1);
+    }
+
+    glm::vec3 CanonItem::up() {
+        const btTransform tr = ConvexItem::get_body()->getWorldTransform();
+        float tmp[16];
+        tr.getOpenGLMatrix(tmp);
+        const glm::mat4 model_mat = glm::make_mat4(tmp);
+
+        return model_mat * glm::vec4(0, 1, 0, 0);
+    }
+
+    std::vector<btTypedConstraint *> CanonItem::get_constraints() {
+        auto constraints = BulletItem::get_constraints();
+        constraints.push_back(hinge);
+        return constraints;
+    }
+
+}// namespace arenai::model

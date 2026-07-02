@@ -10,6 +10,11 @@
 #include <arenai_model/constants.h>
 #include <arenai_model_tests/tests_shell/tests_shell.h>
 
+using namespace arenai;
+using namespace arenai::model;
+using namespace arenai::utils;
+using namespace arenai::controller;
+
 // ========================================================================
 // ShellItem — via canon fire
 // ========================================================================

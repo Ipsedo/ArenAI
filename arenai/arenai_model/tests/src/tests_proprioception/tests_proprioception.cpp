@@ -8,6 +8,10 @@
 #include <arenai_model/constants.h>
 #include <arenai_model_tests/tests_proprioception/tests_proprioception.h>
 
+using namespace arenai;
+using namespace arenai::model;
+using namespace arenai::utils;
+
 // ========================================================================
 // Proprioception
 // ========================================================================

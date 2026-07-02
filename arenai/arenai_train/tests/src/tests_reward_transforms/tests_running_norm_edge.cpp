@@ -6,6 +6,9 @@
 
 #include <arenai_train_tests/tests_reward_transforms/tests_running_norm_edge.h>
 
+using namespace arenai;
+using namespace arenai::train;
+
 TEST_F(RunningNormEdgeTest, TransformBeforeAnyOnAdd) {
     NormalizedRewardTransform norm(10, 1.0f);
 

@@ -9,16 +9,20 @@
 
 #include <arenai_utils/file_reader.h>
 
-class DesktopAssetFileReader final : public AbstractFileReader {
-public:
-    explicit DesktopAssetFileReader(const std::filesystem::path &path_to_assets);
+namespace arenai::train {
 
-    std::string read_text(const std::filesystem::path &file_path) override;
+    class DesktopAssetFileReader final : public utils::AbstractFileReader {
+    public:
+        explicit DesktopAssetFileReader(const std::filesystem::path &path_to_assets);
 
-    ImageChannels read_png(const std::filesystem::path &png_file_path) override;
+        std::string read_text(const std::filesystem::path &file_path) override;
 
-private:
-    std::filesystem::path path_to_assets;
-};
+        utils::ImageChannels read_png(const std::filesystem::path &png_file_path) override;
+
+    private:
+        std::filesystem::path path_to_assets;
+    };
+
+}// namespace arenai::train
 
 #endif// ARENAI_TRAIN_HOST_LINUX_FILE_READER_H

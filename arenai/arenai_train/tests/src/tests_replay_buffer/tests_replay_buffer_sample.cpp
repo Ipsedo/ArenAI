@@ -7,12 +7,15 @@
 
 #include "./create_random_step.h"
 
+using namespace arenai;
+using namespace arenai::train;
+
 namespace {
     constexpr int WIDTH = 16, HEIGHT = 8;
     constexpr int CONT_ACTIONS_NB = 3, DISCRETE_ACTIONS_NB = 4;
     constexpr int SENSORS_NB = 5;
 
-    void assert_sample_shapes(const TorchOutputStep &output, const int expected_batch_size) {
+    void assert_sample_shapes(const TorchStep &output, const int expected_batch_size) {
         const auto &[state, action, reward, done, next_state] = output;
 
         ASSERT_EQ(state.vision.ndimension(), 4);

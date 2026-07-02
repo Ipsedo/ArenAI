@@ -7,6 +7,9 @@
 
 #include <arenai_train_tests/tests_networks/tests_q_function_consistency.h>
 
+using namespace arenai;
+using namespace arenai::train;
+
 // ========================================================================
 // value_expectation must equal the weighted sum of value_ohe
 // ========================================================================

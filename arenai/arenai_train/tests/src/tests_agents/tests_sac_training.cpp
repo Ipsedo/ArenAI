@@ -8,6 +8,9 @@
 
 #include "../tests_replay_buffer/create_random_step.h"
 
+using namespace arenai;
+using namespace arenai::train;
+
 std::unique_ptr<SacAgent> SacTrainingTest::make_agent(const SacTrainingTestConfig &cfg) const {
     return std::make_unique<SacAgent>(
         cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,

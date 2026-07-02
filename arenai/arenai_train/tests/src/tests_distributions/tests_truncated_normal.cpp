@@ -6,6 +6,9 @@
 
 #include <arenai_train_tests/tests_distributions/tests_truncated_normal.h>
 
+using namespace arenai;
+using namespace arenai::train;
+
 TEST_P(TruncatedNormalTestParam, TruncatedNormalSample) {
     const auto [lower_bound, upper_bound, shape] = GetParam();
 

@@ -7,6 +7,10 @@
 #include <arenai_model/action_stats.h>
 #include <arenai_model_tests/tests_action_stats/tests_action_stats.h>
 
+using namespace arenai;
+using namespace arenai::model;
+using namespace arenai::controller;
+
 // ========================================================================
 // ActionStats
 // ========================================================================

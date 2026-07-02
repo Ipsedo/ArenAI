@@ -17,6 +17,9 @@
 #include "./utils/local_file_reader.h"
 #include "./utils/local_gl_context.h"
 
+using namespace arenai;
+using namespace arenai::view;
+
 TEST_P(PBufferParam, TestPBuffer) {
     const auto [width, height] = GetParam();
 
@@ -27,9 +30,8 @@ TEST_P(PBufferParam, TestPBuffer) {
         std::make_shared<StaticCamera>(
             glm::vec3{0.f, 0.f, -10.f}, glm::vec3{0.f, 0.f, 0.f}, glm::vec3{0.f, 1.f, 0.f}));
 
-    const auto file_reader = std::make_shared<LocalAssetFileReader>(
-        std::filesystem::path(__FILE__).parent_path() / ".." / ".." / ".." / ".." / "app" / "src"
-        / "main" / "assets");
+    const auto file_reader =
+        std::make_shared<LocalAssetFileReader>(std::filesystem::path(ARENAI_ASSETS_DIR));
 
     buffer_renderer.make_current();
 

@@ -4,9 +4,17 @@
 
 #include "./entropy.h"
 
-AlphaParameter::AlphaParameter(const float initial_alpha)
-    : log_alpha_tensor(register_parameter("log_alpha", torch::tensor({std::log(initial_alpha)}))) {}
+using namespace arenai;
+using namespace arenai::train;
 
-torch::Tensor AlphaParameter::log_alpha() { return log_alpha_tensor; }
+namespace arenai::train {
 
-torch::Tensor AlphaParameter::alpha() { return log_alpha().exp(); }
+    AlphaParameter::AlphaParameter(const float initial_alpha)
+        : log_alpha_tensor(
+            register_parameter("log_alpha", torch::tensor({std::log(initial_alpha)}))) {}
+
+    torch::Tensor AlphaParameter::log_alpha() { return log_alpha_tensor; }
+
+    torch::Tensor AlphaParameter::alpha() { return log_alpha().exp(); }
+
+}// namespace arenai::train

@@ -9,6 +9,9 @@
 #include <arenai_core/thread_pool.h>
 #include <arenai_core_tests/tests_thread_limiter/tests_thread_limiter.h>
 
+using namespace arenai;
+using namespace arenai::core;
+
 // ========================================================================
 // Acquire / Release — basic behavior
 // ========================================================================

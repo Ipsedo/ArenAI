@@ -10,6 +10,9 @@
 
 #include "./utils/local_gl_context.h"
 
+using namespace arenai;
+using namespace arenai::view;
+
 TEST_P(PBufferClearColorParam, ClearColorNoDrawable) {
     const auto [width, height] = GetParam();
 

@@ -12,11 +12,15 @@
 
 #include "./inputs.h"
 
-class Controller {
-public:
-    virtual ~Controller() = default;
+namespace arenai::controller {
 
-    virtual void on_input(const user_input &input) = 0;
-};
+    class Controller {
+    public:
+        virtual ~Controller() = default;
+
+        virtual void on_input(const user_input &input) = 0;
+    };
+
+}// namespace arenai::controller
 
 #endif// ARENAI_CONTROLLER_H

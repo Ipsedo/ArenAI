@@ -9,59 +9,63 @@
 
 #include <torch/torch.h>
 
-struct TorchState {
-    torch::Tensor vision;
-    torch::Tensor proprioception;
-};
+namespace arenai::train {
 
-struct TorchAction {
-    torch::Tensor continuous_action;
-    torch::Tensor discrete_action;
-};
+    struct TorchState {
+        torch::Tensor vision;
+        torch::Tensor proprioception;
+    };
 
-struct TorchStep {
-    TorchState state;
-    TorchAction action;
-    torch::Tensor reward;
-    torch::Tensor done;
-    TorchState next_state;
-};
+    struct TorchAction {
+        torch::Tensor continuous_action;
+        torch::Tensor discrete_action;
+    };
 
-class ReplayBuffer {
-public:
-    virtual ~ReplayBuffer() = default;
+    struct TorchStep {
+        TorchState state;
+        TorchAction action;
+        torch::Tensor reward;
+        torch::Tensor done;
+        TorchState next_state;
+    };
 
-    explicit ReplayBuffer(int memory_size);
+    class ReplayBuffer {
+    public:
+        virtual ~ReplayBuffer() = default;
 
-    TorchStep sample(int batch_size, torch::Device device) const;
+        explicit ReplayBuffer(int memory_size);
 
-    void add(const TorchStep &step);
+        TorchStep sample(int batch_size, torch::Device device) const;
 
-    size_t size() const;
+        void add(const TorchStep &step);
 
-protected:
-    virtual void on_add_step(const TorchStep &single_step) const;
-    virtual TorchStep transform_at_sample(const TorchStep &batch_steps) const;
+        size_t size() const;
 
-private:
-    bool initialized_;
+    protected:
+        virtual void on_add_step(const TorchStep &single_step) const;
+        virtual TorchStep transform_at_sample(const TorchStep &batch_steps) const;
 
-    size_t memory_size_;
-    size_t write_idx_;
-    size_t size_;
+    private:
+        bool initialized_;
 
-    torch::Tensor store_state_vision_;
-    torch::Tensor store_state_proprioception_;
-    torch::Tensor store_cont_action_;
-    torch::Tensor store_disc_action_;
-    torch::Tensor store_reward_;
-    torch::Tensor store_done_;
-    torch::Tensor store_next_vision_;
-    torch::Tensor store_next_proprioception_;
+        size_t memory_size_;
+        size_t write_idx_;
+        size_t size_;
 
-    void initialize(const TorchStep &first_step);
+        torch::Tensor store_state_vision_;
+        torch::Tensor store_state_proprioception_;
+        torch::Tensor store_cont_action_;
+        torch::Tensor store_disc_action_;
+        torch::Tensor store_reward_;
+        torch::Tensor store_done_;
+        torch::Tensor store_next_vision_;
+        torch::Tensor store_next_proprioception_;
 
-    bool is_full() const;
-};
+        void initialize(const TorchStep &first_step);
+
+        bool is_full() const;
+    };
+
+}// namespace arenai::train
 
 #endif// ARENAI_TRAIN_HOST_REPLAY_BUFFER_H

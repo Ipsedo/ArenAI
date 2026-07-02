@@ -23,8 +23,8 @@ class SacTrainingTest : public testing::Test {
 protected:
     torch::Device device{torch::kCPU};
 
-    std::unique_ptr<SacAgent> make_agent(const SacTrainingTestConfig &cfg) const;
-    static std::unique_ptr<ReplayBuffer>
+    std::unique_ptr<arenai::train::SacAgent> make_agent(const SacTrainingTestConfig &cfg) const;
+    static std::unique_ptr<arenai::train::ReplayBuffer>
     make_filled_buffer(const SacTrainingTestConfig &cfg, int n_steps);
 };
 

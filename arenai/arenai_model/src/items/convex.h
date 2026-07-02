@@ -12,55 +12,59 @@
 
 #include "./bullet_item.h"
 
-class ConvexItem : public BulletItem {
-public:
-    ConvexItem(
-        std::string name, const std::shared_ptr<Shape> &shape, glm::vec3 position, glm::vec3 scale,
-        float mass);
+namespace arenai::model {
 
-    std::shared_ptr<Shape> get_shape() override;
+    class ConvexItem : public BulletItem {
+    public:
+        ConvexItem(
+            std::string name, const std::shared_ptr<Shape> &shape, glm::vec3 position,
+            glm::vec3 scale, float mass);
 
-    btRigidBody *get_body() override;
+        std::shared_ptr<Shape> get_shape() override;
 
-    ~ConvexItem() override;
+        btRigidBody *get_body() override;
 
-protected:
-    glm::vec3 _get_scale() override;
+        ~ConvexItem() override;
 
-private:
-    btRigidBody *body;
-    btConvexHullShape *collision_shape;
+    protected:
+        glm::vec3 _get_scale() override;
 
-    std::shared_ptr<Shape> shape;
-    glm::vec3 scale;
-};
+    private:
+        btRigidBody *body;
+        btConvexHullShape *collision_shape;
 
-class SphereItem final : public ConvexItem {
-public:
-    SphereItem(
-        std::string name, const std::shared_ptr<AbstractFileReader> &file_reader,
-        glm::vec3 position, glm::vec3 scale, float mass);
-};
+        std::shared_ptr<Shape> shape;
+        glm::vec3 scale;
+    };
 
-class CubeItem final : public ConvexItem {
-public:
-    CubeItem(
-        std::string name, const std::shared_ptr<AbstractFileReader> &file_reader,
-        glm::vec3 position, glm::vec3 scale, float mass);
-};
+    class SphereItem final : public ConvexItem {
+    public:
+        SphereItem(
+            std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            glm::vec3 position, glm::vec3 scale, float mass);
+    };
 
-class CylinderItem final : public ConvexItem {
-public:
-    CylinderItem(
-        std::string name, const std::shared_ptr<AbstractFileReader> &file_reader,
-        glm::vec3 position, glm::vec3 scale, float mass);
-};
+    class CubeItem final : public ConvexItem {
+    public:
+        CubeItem(
+            std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            glm::vec3 position, glm::vec3 scale, float mass);
+    };
 
-class TetraItem final : public ConvexItem {
-public:
-    TetraItem(
-        std::string name, const std::shared_ptr<AbstractFileReader> &file_reader,
-        glm::vec3 position, glm::vec3 scale, float mass);
-};
+    class CylinderItem final : public ConvexItem {
+    public:
+        CylinderItem(
+            std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            glm::vec3 position, glm::vec3 scale, float mass);
+    };
+
+    class TetraItem final : public ConvexItem {
+    public:
+        TetraItem(
+            std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            glm::vec3 position, glm::vec3 scale, float mass);
+    };
+
+}// namespace arenai::model
 
 #endif// ARENAI_CONVEX_H

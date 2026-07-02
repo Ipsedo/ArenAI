@@ -9,29 +9,34 @@
 
 #include "./bullet_tank.h"
 
-class BulletPlayerTank final : public BulletTank, public PlayerTank {
-public:
-    BulletPlayerTank(
-        BulletPhysicEngine &engine, const std::shared_ptr<AbstractFileReader> &file_reader,
-        const std::string &tank_prefix_name, const glm::vec3 &chassis_pos,
-        float wanted_frame_frequency);
+namespace arenai::model {
 
-    int get_score() const override;
+    class BulletPlayerTank final : public BulletTank, public PlayerTank {
+    public:
+        BulletPlayerTank(
+            BulletPhysicEngine &engine,
+            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            const std::string &tank_prefix_name, const glm::vec3 &chassis_pos,
+            float wanted_frame_frequency);
 
-    // Tank methods resolved via BulletTank
-    using BulletTank::get_camera;
-    using BulletTank::get_canon;
-    using BulletTank::get_chassis;
-    using BulletTank::get_controllers;
-    using BulletTank::get_items;
-    using BulletTank::is_dead;
-    using BulletTank::load_shell_shapes;
+        int get_score() const override;
 
-private:
-    void on_fired_shell_contact(const ShellContactInfo &shell_info, Item *item);
+        // Tank methods resolved via BulletTank
+        using BulletTank::get_camera;
+        using BulletTank::get_canon;
+        using BulletTank::get_chassis;
+        using BulletTank::get_controllers;
+        using BulletTank::get_items;
+        using BulletTank::is_dead;
+        using BulletTank::load_shell_shapes;
 
-    int killed_nb;
-    int hit_nb;
-};
+    private:
+        void on_fired_shell_contact(const ShellContactInfo &shell_info, Item *item);
+
+        int killed_nb;
+        int hit_nb;
+    };
+
+}// namespace arenai::model
 
 #endif//ARENAI_BULLET_PLAYER_TANK_H

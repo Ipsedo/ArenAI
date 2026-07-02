@@ -10,6 +10,11 @@
 #include <arenai_model/item.h>
 #include <arenai_model_tests/tests_enemy_tank/tests_enemy_tank.h>
 
+using namespace arenai;
+using namespace arenai::model;
+using namespace arenai::utils;
+using namespace arenai::controller;
+
 // ========================================================================
 // is_dead — death by individual part destruction
 // ========================================================================

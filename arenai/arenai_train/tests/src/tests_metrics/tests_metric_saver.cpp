@@ -10,6 +10,9 @@
 
 #include <arenai_train_tests/tests_metrics/tests_metrics.h>
 
+using namespace arenai;
+using namespace arenai::train;
+
 namespace {
     std::filesystem::path make_temp_dir() {
         const auto dir =

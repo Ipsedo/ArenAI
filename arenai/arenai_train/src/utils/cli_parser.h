@@ -8,21 +8,25 @@
 #include <string>
 #include <vector>
 
-struct vision_channels {
-    std::vector<std::tuple<int, int>> channels;
-};
+namespace arenai::train {
 
-struct group_norm_nums {
-    std::vector<int> groups;
-};
+    struct vision_channels {
+        std::vector<std::tuple<int, int>> channels;
+    };
 
-struct hidden_layers {
-    std::vector<int> layers;
-};
+    struct group_norm_nums {
+        std::vector<int> groups;
+    };
 
-vision_channels parse_cli_vision_channels(const std::string &value);
+    struct hidden_layers {
+        std::vector<int> layers;
+    };
 
-group_norm_nums parse_cli_group_norms(const std::string &value);
-hidden_layers parse_cli_hidden_layer(const std::string &value);
+    vision_channels parse_cli_vision_channels(const std::string &value);
+
+    group_norm_nums parse_cli_group_norms(const std::string &value);
+    hidden_layers parse_cli_hidden_layer(const std::string &value);
+
+}// namespace arenai::train
 
 #endif//ARENAI_TRAIN_HOST_CLI_PARSER_H

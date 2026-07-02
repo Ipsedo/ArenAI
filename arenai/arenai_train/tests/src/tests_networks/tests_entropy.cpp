@@ -6,6 +6,9 @@
 
 #include <arenai_train_tests/tests_networks/tests_entropy.h>
 
+using namespace arenai;
+using namespace arenai::train;
+
 TEST_F(AlphaParameterTest, AlphaAlwaysPositive) {
     for (const float init: {0.01f, 0.1f, 1.0f, 10.0f}) {
         AlphaParameter param(init);

@@ -6,6 +6,9 @@
 
 #include <arenai_train_tests/tests_reward_transforms/tests_running_norm.h>
 
+using namespace arenai;
+using namespace arenai::train;
+
 // ========================================================================
 // NormalizedRewardTransform
 // ========================================================================

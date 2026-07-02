@@ -11,6 +11,9 @@
 #include <arenai_controller/inputs.h>
 #include <arenai_core_tests/tests_environment/tests_environment.h>
 
+using namespace arenai;
+using namespace arenai::core;
+
 // ========================================================================
 // reset — returns correct number of states
 // ========================================================================
@@ -156,7 +159,7 @@ TEST_F(EnvironmentTest, StepReturnsCorrectNumberOfTuples) {
 
     env.reset(100.f, 100.f);
 
-    const std::vector<user_input> actions(nb_tanks, {{0.f, 0.f}, {0.f, 0.f}, {false}});
+    const std::vector<controller::user_input> actions(nb_tanks, {{0.f, 0.f}, {0.f, 0.f}, {false}});
 
     const auto results = env.step(frequency, actions);
 
@@ -177,7 +180,7 @@ TEST_F(EnvironmentTest, StepRewardAndDoneAreValid) {
 
     env.reset(100.f, 100.f);
 
-    const std::vector<user_input> actions(nb_tanks, {{0.f, 0.f}, {0.f, 0.f}, {false}});
+    const std::vector<controller::user_input> actions(nb_tanks, {{0.f, 0.f}, {0.f, 0.f}, {false}});
 
     for (const auto results = env.step(frequency, actions);
          const auto &[state, reward, is_done]: results) {
@@ -200,7 +203,7 @@ TEST_F(EnvironmentTest, StepCallsOnDraw) {
 
     env.reset(100.f, 100.f);
 
-    const std::vector<user_input> actions(nb_tanks, {{0.f, 0.f}, {0.f, 0.f}, {false}});
+    const std::vector<controller::user_input> actions(nb_tanks, {{0.f, 0.f}, {0.f, 0.f}, {false}});
 
     const int draw_count_after_reset = env.draw_call_count;
 
@@ -225,7 +228,8 @@ TEST_F(EnvironmentTest, MultipleStepsDoNotCrash) {
 
     env.reset(100.f, 100.f);
 
-    const std::vector<user_input> actions(nb_tanks, {{0.5f, -0.5f}, {0.3f, -0.2f}, {false}});
+    const std::vector<controller::user_input> actions(
+        nb_tanks, {{0.5f, -0.5f}, {0.3f, -0.2f}, {false}});
 
     for (int i = 0; i < 30; i++) {
         const auto results = env.step(frequency, actions);
@@ -266,7 +270,7 @@ TEST_F(EnvironmentTest, FullLifecycle) {
     const auto initial_states = env.reset(100.f, 100.f);
     ASSERT_EQ(static_cast<int>(initial_states.size()), nb_tanks);
 
-    const std::vector<user_input> actions(nb_tanks, {{0.f, 0.f}, {0.f, 0.f}, {false}});
+    const std::vector<controller::user_input> actions(nb_tanks, {{0.f, 0.f}, {0.f, 0.f}, {false}});
     for (int i = 0; i < 10; i++) env.step(frequency, actions);
 
     // Second episode (reset handles stop_drawing internally)

@@ -6,6 +6,8 @@
 
 #include <arenai_core_tests/utils/local_gl_context.h>
 
+using namespace arenai;
+
 LocalGlContext::LocalGlContext() {
     display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     if (display == EGL_NO_DISPLAY) throw std::runtime_error("eglGetDisplay() failed");

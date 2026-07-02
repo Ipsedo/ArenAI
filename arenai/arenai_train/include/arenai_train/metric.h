@@ -10,36 +10,40 @@
 
 #include <torch/torch.h>
 
-class AbstractMetric {
-public:
-    virtual ~AbstractMetric() = default;
+namespace arenai::train {
 
-    explicit AbstractMetric(
-        const std::string &name, int window_size, int precision = 4, bool scientific = false);
+    class AbstractMetric {
+    public:
+        virtual ~AbstractMetric() = default;
 
-    void add(float value);
-    float last_value() const;
+        explicit AbstractMetric(
+            const std::string &name, int window_size, int precision = 4, bool scientific = false);
 
-    float compute_metric();
+        void add(float value);
+        float last_value() const;
 
-    std::string get_name() const;
-    std::string to_string();
+        float compute_metric();
 
-    static std::string
-    metrics_to_string(const std::vector<std::shared_ptr<AbstractMetric>> &metrics);
+        std::string get_name() const;
+        std::string to_string();
 
-protected:
-    virtual float to_stored_value(float value);
+        static std::string
+        metrics_to_string(const std::vector<std::shared_ptr<AbstractMetric>> &metrics);
 
-    virtual float compute_metric_impl(const std::vector<float> &curr_values) = 0;
+    protected:
+        virtual float to_stored_value(float value);
 
-private:
-    std::string name;
-    int window_size;
-    std::vector<float> values;
+        virtual float compute_metric_impl(const std::vector<float> &curr_values) = 0;
 
-    bool float_display_scientific;
-    int float_display_precision;
-};
+    private:
+        std::string name;
+        int window_size;
+        std::vector<float> values;
+
+        bool float_display_scientific;
+        int float_display_precision;
+    };
+
+}// namespace arenai::train
 
 #endif//ARENAI_TRAIN_HOST_METRIC_H

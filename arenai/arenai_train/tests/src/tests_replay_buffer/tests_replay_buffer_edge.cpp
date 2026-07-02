@@ -7,6 +7,9 @@
 
 #include "./create_random_step.h"
 
+using namespace arenai;
+using namespace arenai::train;
+
 TEST_F(ReplayBufferEdgeTest, SampleFromEmptyBufferDoesNotCrash) {
     ReplayBuffer buffer(10);
 
@@ -41,7 +44,7 @@ TEST_F(ReplayBufferEdgeTest, SampleBatchLargerThanSingleElement) {
     ASSERT_EQ(output.state.vision.size(0), 1) << "Batch size should be clamped to buffer size (1)";
 }
 
-TEST_F(ReplayBufferEdgeTest, RewardCombinesPotentialAtSample) {
+TEST_F(ReplayBufferEdgeTest, RewardUnchangedAtSample) {
     ReplayBuffer buffer(10);
 
     TorchStep step;
@@ -51,7 +54,6 @@ TEST_F(ReplayBufferEdgeTest, RewardCombinesPotentialAtSample) {
     step.action.discrete_action = torch::zeros({2});
     step.action.discrete_action[0] = 1.0f;
     step.reward = torch::tensor({2.0f});
-    step.potential = torch::tensor({3.0f});
     step.done = torch::tensor({0.0f});
     step.next_state.vision = torch::randint(255, {3, 8, 8}, torch::kUInt8);
     step.next_state.proprioception = torch::randn({5});
@@ -60,8 +62,8 @@ TEST_F(ReplayBufferEdgeTest, RewardCombinesPotentialAtSample) {
 
     const auto output = buffer.sample(1, torch::kCPU);
 
-    ASSERT_NEAR(output.reward.item<float>(), 5.0f, 1e-5f)
-        << "Base ReplayBuffer should combine reward + potential at sample time";
+    ASSERT_NEAR(output.reward.item<float>(), 2.0f, 1e-5f)
+        << "Base ReplayBuffer should return the stored reward unchanged at sample time";
 }
 
 TEST_F(ReplayBufferEdgeTest, SampleWithZeroBatchSize) {

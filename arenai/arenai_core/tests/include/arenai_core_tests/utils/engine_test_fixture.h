@@ -20,10 +20,10 @@ class EngineTestFixture : public testing::Test {
 protected:
     void SetUp() override;
 
-    std::unique_ptr<AbstractPhysicEngine> engine;
-    std::shared_ptr<AbstractFileReader> file_reader;
-    std::shared_ptr<AbstractGLContext> gl_context;
-    std::shared_ptr<TankFactory> tank_factory;
+    std::unique_ptr<arenai::model::AbstractPhysicEngine> engine;
+    std::shared_ptr<arenai::utils::AbstractFileReader> file_reader;
+    std::shared_ptr<arenai::view::AbstractGLContext> gl_context;
+    std::shared_ptr<arenai::model::TankFactory> tank_factory;
 };
 
 #endif// ARENAI_CORE_TESTS_ENGINE_TEST_FIXTURE_H

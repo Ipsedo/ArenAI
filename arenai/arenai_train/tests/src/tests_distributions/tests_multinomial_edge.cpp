@@ -6,6 +6,9 @@
 
 #include <arenai_train_tests/tests_distributions/tests_multinomial_edge.h>
 
+using namespace arenai;
+using namespace arenai::train;
+
 TEST_F(MultinomialEdgeTest, EntropyWithNearZeroProbabilities) {
     auto proba = torch::zeros({1, 5});
     proba[0][0] = 1e-10f;

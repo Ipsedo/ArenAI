@@ -9,17 +9,21 @@
 
 #include <arenai_model/item.h>
 
-class BulletItem : public Item {
-public:
-    using Item::Item;
+namespace arenai::model {
 
-    glm::mat4 get_model_matrix() override;
+    class BulletItem : public Item {
+    public:
+        using Item::Item;
 
-    glm::vec3 get_linear_velocity() override;
-    glm::vec3 get_angular_velocity() override;
+        glm::mat4 get_model_matrix() override;
 
-    virtual btRigidBody *get_body() = 0;
-    virtual std::vector<btTypedConstraint *> get_constraints();
-};
+        glm::vec3 get_linear_velocity() override;
+        glm::vec3 get_angular_velocity() override;
+
+        virtual btRigidBody *get_body() = 0;
+        virtual std::vector<btTypedConstraint *> get_constraints();
+    };
+
+}// namespace arenai::model
 
 #endif// ARENAI_BULLET_ITEM_H

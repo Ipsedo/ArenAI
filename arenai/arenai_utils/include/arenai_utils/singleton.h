@@ -5,29 +5,33 @@
 #ifndef ARENAI_SINGLETON_H
 #define ARENAI_SINGLETON_H
 
-template<typename T, typename... Args>
-class Singleton {
-public:
-    static std::shared_ptr<T> get_singleton(Args... args) {
-        if (!instance) instance = std::make_shared<T>(args...);
-        return instance;
-    }
+namespace arenai::utils {
 
-    static void reset_singleton() {
-        if (instance) instance = nullptr;
-    }
+    template<typename T, typename... Args>
+    class Singleton {
+    public:
+        static std::shared_ptr<T> get_singleton(Args... args) {
+            if (!instance) instance = std::make_shared<T>(args...);
+            return instance;
+        }
 
-    Singleton(const Singleton &) = delete;
-    Singleton &operator=(const Singleton &) = delete;
+        static void reset_singleton() {
+            if (instance) instance = nullptr;
+        }
 
-private:
-    static std::shared_ptr<T> instance;
+        Singleton(const Singleton &) = delete;
+        Singleton &operator=(const Singleton &) = delete;
 
-    Singleton() = default;
-    ~Singleton() = default;
-};
+    private:
+        static std::shared_ptr<T> instance;
 
-template<typename T, typename... Args>
-std::shared_ptr<T> Singleton<T, Args...>::instance = nullptr;
+        Singleton() = default;
+        ~Singleton() = default;
+    };
+
+    template<typename T, typename... Args>
+    std::shared_ptr<T> Singleton<T, Args...>::instance = nullptr;
+
+}// namespace arenai::utils
 
 #endif// ARENAI_SINGLETON_H

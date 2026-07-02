@@ -7,15 +7,19 @@
 
 #include <torch/torch.h>
 
-class AlphaParameter final : public torch::nn::Module {
-public:
-    explicit AlphaParameter(float initial_alpha);
+namespace arenai::train {
 
-    torch::Tensor log_alpha();
-    torch::Tensor alpha();
+    class AlphaParameter final : public torch::nn::Module {
+    public:
+        explicit AlphaParameter(float initial_alpha);
 
-private:
-    torch::Tensor log_alpha_tensor;
-};
+        torch::Tensor log_alpha();
+        torch::Tensor alpha();
+
+    private:
+        torch::Tensor log_alpha_tensor;
+    };
+
+}// namespace arenai::train
 
 #endif//ARENAI_TRAIN_HOST_ENTROPY_H

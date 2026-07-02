@@ -11,12 +11,16 @@
 
 #include <arenai_core/types.h>
 
-std::vector<Action>
-tensor_to_actions(const torch::Tensor &continuous_actions, const torch::Tensor &discrete_actions);
+namespace arenai::train {
 
-std::tuple<torch::Tensor, torch::Tensor>
-states_to_tensor(const std::vector<State> &states, int vision_height, int vision_width);
-std::tuple<torch::Tensor, torch::Tensor>
-state_to_tensor(const State &state, int vision_height, int vision_width);
+    std::vector<core::Action> tensor_to_actions(
+        const torch::Tensor &continuous_actions, const torch::Tensor &discrete_actions);
+
+    std::tuple<torch::Tensor, torch::Tensor>
+    states_to_tensor(const std::vector<core::State> &states, int vision_height, int vision_width);
+    std::tuple<torch::Tensor, torch::Tensor>
+    state_to_tensor(const core::State &state, int vision_height, int vision_width);
+
+}// namespace arenai::train
 
 #endif//ARENAI_TRAIN_HOST_TORCH_CONVERTER_H

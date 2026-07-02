@@ -10,6 +10,10 @@
 #include <arenai_model_tests/utils/engine_test_fixture.h>
 #include <arenai_model_tests/utils/local_file_reader.h>
 
+using namespace arenai;
+using namespace arenai::model;
+using namespace arenai::utils;
+
 #ifndef ARENAI_ASSETS_DIR
 #error "ARENAI_ASSETS_DIR must be defined"
 #endif

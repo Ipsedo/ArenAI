@@ -6,6 +6,9 @@
 
 #include <arenai_train_tests/tests_distributions/tests_beta_law_edge.h>
 
+using namespace arenai;
+using namespace arenai::train;
+
 // ========================================================================
 // Asymmetric parameter edge cases
 // ========================================================================

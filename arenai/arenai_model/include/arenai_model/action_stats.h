@@ -7,17 +7,21 @@
 
 #include <arenai_controller/inputs.h>
 
-class ActionStats {
-public:
-    ActionStats();
+namespace arenai::model {
 
-    bool has_fire() const;
-    float energy_consumed() const;
-    void process_input(const user_input &action);
+    class ActionStats {
+    public:
+        ActionStats();
 
-private:
-    bool has_fire_;
-    float energy_consumed_;
-};
+        bool has_fire() const;
+        float energy_consumed() const;
+        void process_input(const controller::user_input &action);
+
+    private:
+        bool has_fire_;
+        float energy_consumed_;
+    };
+
+}// namespace arenai::model
 
 #endif//ARENAI_ACTION_STATS_H

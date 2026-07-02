@@ -9,18 +9,22 @@
 
 #include "../reward_transforms/reward_transform.h"
 
-class RewardTransformReplayBuffer : public ReplayBuffer {
-public:
-    RewardTransformReplayBuffer(
-        int memory_size, const std::shared_ptr<AbstractRewardTransform> &reward_transform);
+namespace arenai::train {
 
-protected:
-    void on_add_step(const TorchStep &single_step) const override;
+    class RewardTransformReplayBuffer : public ReplayBuffer {
+    public:
+        RewardTransformReplayBuffer(
+            int memory_size, const std::shared_ptr<AbstractRewardTransform> &reward_transform);
 
-    TorchStep transform_at_sample(const TorchStep &batch_steps) const override;
+    protected:
+        void on_add_step(const TorchStep &single_step) const override;
 
-private:
-    std::shared_ptr<AbstractRewardTransform> reward_transform_;
-};
+        TorchStep transform_at_sample(const TorchStep &batch_steps) const override;
+
+    private:
+        std::shared_ptr<AbstractRewardTransform> reward_transform_;
+    };
+
+}// namespace arenai::train
 
 #endif//ARENAI_TRAIN_HOST_REWARD_REPLAY_BUFFER_H

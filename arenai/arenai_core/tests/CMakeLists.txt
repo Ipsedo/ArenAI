@@ -22,7 +22,7 @@ target_include_directories(arenai_core_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR
 target_include_directories(arenai_core_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../src")
 
 target_compile_definitions(arenai_core_tests PRIVATE
-        ARENAI_ASSETS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../../../app/src/main/assets")
+        ARENAI_ASSETS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../../../android/app/src/main/assets")
 
 # fix opengl header with glfw on windows
 if (WIN32)

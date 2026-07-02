@@ -6,6 +6,9 @@
 
 #include <arenai_train_tests/tests_distributions/tests_gaussian_tanh_edge.h>
 
+using namespace arenai;
+using namespace arenai::train;
+
 // ========================================================================
 // Edge cases: extreme values
 // ========================================================================

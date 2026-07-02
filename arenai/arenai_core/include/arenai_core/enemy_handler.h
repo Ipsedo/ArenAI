@@ -12,22 +12,24 @@
 
 #include "./types.h"
 
-class EnemyControllerHandler final : public ControllerHandler<Action> {
-public:
-    explicit EnemyControllerHandler(
-        float refresh_frequency, float wanted_fire_frequency,
-        const std::shared_ptr<ActionStats> &action_stats, float turret_rad_per_second);
+namespace arenai::core {
+    class EnemyControllerHandler final : public controller::ControllerHandler<Action> {
+    public:
+        explicit EnemyControllerHandler(
+            float refresh_frequency, float wanted_fire_frequency,
+            const std::shared_ptr<model::ActionStats> &action_stats, float turret_rad_per_second);
 
-protected:
-    std::tuple<bool, user_input> to_output(Action event) override;
+    protected:
+        std::tuple<bool, controller::user_input> to_output(Action event) override;
 
-private:
-    int nb_frames_to_fire;
-    int curr_frame;
+    private:
+        int nb_frames_to_fire;
+        int curr_frame;
 
-    std::shared_ptr<ActionStats> action_stats;
+        std::shared_ptr<model::ActionStats> action_stats;
 
-    float turret_scale_per_frame;
-};
+        float turret_scale_per_frame;
+    };
+}// namespace arenai::core
 
 #endif//ARENAI_ENEMY_HANDLER_H

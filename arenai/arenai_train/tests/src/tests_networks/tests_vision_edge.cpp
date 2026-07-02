@@ -6,6 +6,9 @@
 
 #include <arenai_train_tests/tests_networks/tests_vision_edge.h>
 
+using namespace arenai;
+using namespace arenai::train;
+
 TEST_F(VisionEdgeTest, RejectsNonUint8Input) {
     ConvolutionNetwork conv(8, 8, {{3, 4}}, {2});
 

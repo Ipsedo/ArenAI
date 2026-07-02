@@ -14,11 +14,13 @@
 #include "./utils/local_file_reader.h"
 #include "./utils/local_gl_context.h"
 
+using namespace arenai;
+using namespace arenai::view;
+
 TEST(GLContextTest, MultipleRenderersSameContext) {
     const auto gl_context = std::make_shared<LocalGlContext>();
-    const auto file_reader = std::make_shared<LocalAssetFileReader>(
-        std::filesystem::path(__FILE__).parent_path() / ".." / ".." / ".." / ".." / "app" / "src"
-        / "main" / "assets");
+    const auto file_reader =
+        std::make_shared<LocalAssetFileReader>(std::filesystem::path(ARENAI_ASSETS_DIR));
 
     constexpr int w = 16, h = 16;
 
@@ -90,9 +92,8 @@ TEST(GLContextTest, MakeCurrentReleaseCurrent) {
 
 TEST(GLContextTest, AlternateContexts) {
     const auto gl_context = std::make_shared<LocalGlContext>();
-    const auto file_reader = std::make_shared<LocalAssetFileReader>(
-        std::filesystem::path(__FILE__).parent_path() / ".." / ".." / ".." / ".." / "app" / "src"
-        / "main" / "assets");
+    const auto file_reader =
+        std::make_shared<LocalAssetFileReader>(std::filesystem::path(ARENAI_ASSETS_DIR));
 
     constexpr int w = 16, h = 16;
 

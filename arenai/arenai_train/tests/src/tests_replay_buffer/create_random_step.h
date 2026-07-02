@@ -7,7 +7,7 @@
 
 #include <arenai_train/replay_buffer.h>
 
-TorchStep create_random_step(
+arenai::train::TorchStep create_random_step(
     int width, int height, int nb_cont_actions, int nb_discrete_actions, int nb_sensors, bool done);
 
 #endif//ARENAI_ADD_RANDOM_STEP_H

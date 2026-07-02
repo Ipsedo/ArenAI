@@ -10,6 +10,9 @@
 #include <arenai_train/file_reader.h>
 #include <arenai_train_tests/tests_utils/tests_file_reader.h>
 
+using namespace arenai;
+using namespace arenai::train;
+
 void DesktopAssetFileReaderTest::SetUp() {
     tmp_dir = std::filesystem::temp_directory_path() / "arenai_test_file_reader";
     std::filesystem::create_directories(tmp_dir);

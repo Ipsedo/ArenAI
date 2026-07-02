@@ -11,6 +11,9 @@
 #include <arenai_model/action_stats.h>
 #include <arenai_model/constants.h>
 
+using namespace arenai;
+using namespace arenai::core;
+
 // ========================================================================
 // Helper: create a handler with given parameters
 // ========================================================================
@@ -22,9 +25,9 @@ namespace {
         float turret_rad_per_second = ENEMY_TURRET_RADIAL_VELOCITY;
     };
 
-    std::pair<std::unique_ptr<EnemyControllerHandler>, std::shared_ptr<ActionStats>>
+    std::pair<std::unique_ptr<EnemyControllerHandler>, std::shared_ptr<model::ActionStats>>
     make_handler(const HandlerParams &params = {}) {
-        auto stats = std::make_shared<ActionStats>();
+        auto stats = std::make_shared<model::ActionStats>();
         auto handler = std::make_unique<EnemyControllerHandler>(
             params.refresh_frequency, params.wanted_fire_frequency, stats,
             params.turret_rad_per_second);
@@ -39,7 +42,7 @@ namespace {
 TEST_F(EnemyControllerHandlerTest, FirstFireIsAllowed) {
     auto [handler, stats] = make_handler();
 
-    constexpr user_input fire_action{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr controller::user_input fire_action{{0.f, 0.f}, {0.f, 0.f}, {true}};
     handler->on_event(fire_action);
 
     ASSERT_TRUE(stats->has_fire());
@@ -52,7 +55,7 @@ TEST_F(EnemyControllerHandlerTest, FirstFireIsAllowed) {
 TEST_F(EnemyControllerHandlerTest, SecondConsecutiveFireIsBlocked) {
     auto [handler, stats] = make_handler();
 
-    constexpr user_input fire_action{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr controller::user_input fire_action{{0.f, 0.f}, {0.f, 0.f}, {true}};
     handler->on_event(fire_action);
     ASSERT_TRUE(stats->has_fire());
 
@@ -71,8 +74,8 @@ TEST_F(EnemyControllerHandlerTest, FireAllowedAfterCooldown) {
 
     auto [handler, stats] = make_handler({refresh_freq, fire_freq});
 
-    constexpr user_input fire_action{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    constexpr user_input idle_action{{0.f, 0.f}, {0.f, 0.f}, {false}};
+    constexpr controller::user_input fire_action{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr controller::user_input idle_action{{0.f, 0.f}, {0.f, 0.f}, {false}};
 
     // First fire
     handler->on_event(fire_action);
@@ -93,7 +96,7 @@ TEST_F(EnemyControllerHandlerTest, FireAllowedAfterCooldown) {
 TEST_F(EnemyControllerHandlerTest, NoFireWhenNotPressed) {
     auto [handler, stats] = make_handler();
 
-    constexpr user_input idle_action{{1.f, 1.f}, {1.f, 1.f}, {false}};
+    constexpr controller::user_input idle_action{{1.f, 1.f}, {1.f, 1.f}, {false}};
     handler->on_event(idle_action);
 
     ASSERT_FALSE(stats->has_fire());
@@ -110,8 +113,8 @@ TEST_F(EnemyControllerHandlerTest, FireBeforeCooldownIsBlocked) {
 
     auto [handler, stats] = make_handler({refresh_freq, fire_freq});
 
-    constexpr user_input fire_action{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    constexpr user_input idle_action{{0.f, 0.f}, {0.f, 0.f}, {false}};
+    constexpr controller::user_input fire_action{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr controller::user_input idle_action{{0.f, 0.f}, {0.f, 0.f}, {false}};
 
     handler->on_event(fire_action);
     ASSERT_TRUE(stats->has_fire());
@@ -132,11 +135,11 @@ TEST_F(EnemyControllerHandlerTest, TurretScaling) {
     constexpr float turret_rad_per_sec = 2.f;
     constexpr float expected_scale = turret_rad_per_sec * refresh_freq;
 
-    auto stats = std::make_shared<ActionStats>();
+    auto stats = std::make_shared<model::ActionStats>();
     const auto handler = std::make_unique<EnemyControllerHandler>(
         refresh_freq, 1.f / 6.f, stats, turret_rad_per_sec);
 
-    constexpr user_input action{{0.f, 0.f}, {1.f, 1.f}, {false}};
+    constexpr controller::user_input action{{0.f, 0.f}, {1.f, 1.f}, {false}};
     handler->on_event(action);
 
     const float energy = stats->energy_consumed();
@@ -155,7 +158,7 @@ TEST_F(EnemyControllerHandlerTest, ActionStatsReceivesInput) {
 
     ASSERT_FLOAT_EQ(stats->energy_consumed(), 0.f);
 
-    constexpr user_input action{{1.f, 0.f}, {0.f, 0.f}, {false}};
+    constexpr controller::user_input action{{1.f, 0.f}, {0.f, 0.f}, {false}};
     handler->on_event(action);
 
     ASSERT_GT(stats->energy_consumed(), 0.f);
@@ -172,7 +175,7 @@ TEST_F(EnemyControllerHandlerTest, CooldownFrameCount) {
 
     auto [handler, stats] = make_handler({refresh_freq, fire_freq});
 
-    constexpr user_input fire_action{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr controller::user_input fire_action{{0.f, 0.f}, {0.f, 0.f}, {true}};
 
     // First fire
     handler->on_event(fire_action);
@@ -196,13 +199,13 @@ TEST_F(EnemyControllerHandlerTest, CooldownFrameCount) {
 TEST_F(EnemyControllerHandlerTest, CounterSaturation) {
     auto [handler, stats] = make_handler();
 
-    constexpr user_input idle_action{{0.f, 0.f}, {0.f, 0.f}, {false}};
+    constexpr controller::user_input idle_action{{0.f, 0.f}, {0.f, 0.f}, {false}};
 
     // Run many idle frames — way beyond cooldown
     for (int i = 0; i < 10000; i++) handler->on_event(idle_action);
 
     // Fire should still work after many idle frames
-    constexpr user_input fire_action{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr controller::user_input fire_action{{0.f, 0.f}, {0.f, 0.f}, {true}};
     handler->on_event(fire_action);
     ASSERT_TRUE(stats->has_fire());
 }

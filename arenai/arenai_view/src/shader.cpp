@@ -6,16 +6,22 @@
 
 #include <filesystem>
 
-GLuint load_shader(
-    const std::shared_ptr<AbstractFileReader> &text_reader, const GLenum type,
-    const std::filesystem::path &file_name) {
-    const GLuint shader = glCreateShader(type);
+using namespace arenai;
 
-    const std::string shader_source = text_reader->read_text(file_name);
-    const char *c_str = shader_source.c_str();
+namespace arenai::view {
 
-    glShaderSource(shader, 1, &c_str, nullptr);
-    glCompileShader(shader);
+    GLuint load_shader(
+        const std::shared_ptr<utils::AbstractFileReader> &text_reader, const GLenum type,
+        const std::filesystem::path &file_name) {
+        const GLuint shader = glCreateShader(type);
 
-    return shader;
-}
+        const std::string shader_source = text_reader->read_text(file_name);
+        const char *c_str = shader_source.c_str();
+
+        glShaderSource(shader, 1, &c_str, nullptr);
+        glCompileShader(shader);
+
+        return shader;
+    }
+
+}// namespace arenai::view

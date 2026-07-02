@@ -14,31 +14,35 @@
 
 #include "../../items/convex.h"
 
-class ShellItem final : public LifeItem, public ConvexItem {
-public:
-    static std::shared_ptr<Shape>
-    load_shape(const std::shared_ptr<AbstractFileReader> &file_reader);
+namespace arenai::model {
 
-    ShellItem(
-        const std::shared_ptr<AbstractFileReader> &file_reader, glm::vec3 pos, glm::quat rot,
-        glm::vec3 scale, float mass, float wanted_frame_frequency,
-        const std::function<void(glm::vec3, glm::vec3, Item *)> &contact_callback =
-            [](glm::vec3, glm::vec3, Item *) {});
+    class ShellItem final : public LifeItem, public ConvexItem {
+    public:
+        static std::shared_ptr<Shape>
+        load_shape(const std::shared_ptr<utils::AbstractFileReader> &file_reader);
 
-    void on_contact(Item *other) override;
+        ShellItem(
+            const std::shared_ptr<utils::AbstractFileReader> &file_reader, glm::vec3 pos,
+            glm::quat rot, glm::vec3 scale, float mass, float wanted_frame_frequency,
+            const std::function<void(glm::vec3, glm::vec3, Item *)> &contact_callback =
+                [](glm::vec3, glm::vec3, Item *) {});
 
-    inline const static std::string NAME = "shell_item";
+        void on_contact(Item *other) override;
 
-    void tick() override;
+        inline const static std::string NAME = "shell_item";
 
-    glm::vec3 get_fire_position() const;
-    glm::vec3 get_current_position();
+        void tick() override;
 
-private:
-    std::function<void(glm::vec3, glm::vec3, Item *)> contact_callback;
-    int nb_frames_alive;
+        glm::vec3 get_fire_position() const;
+        glm::vec3 get_current_position();
 
-    glm::vec3 start_pos;
-};
+    private:
+        std::function<void(glm::vec3, glm::vec3, Item *)> contact_callback;
+        int nb_frames_alive;
+
+        glm::vec3 start_pos;
+    };
+
+}// namespace arenai::model
 
 #endif// ARENAI_SHELL_H

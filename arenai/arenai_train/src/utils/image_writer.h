@@ -11,6 +11,10 @@
 #include <stb_image_write.h>
 #include <torch/torch.h>
 
-void save_tensor_png(const torch::Tensor &image, const std::string &path);
+namespace arenai::train {
+
+    void save_tensor_png(const torch::Tensor &image, const std::string &path);
+
+}// namespace arenai::train
 
 #endif//ARENAI_TRAIN_HOST_IMAGE_WRITER_H

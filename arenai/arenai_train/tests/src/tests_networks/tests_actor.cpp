@@ -6,6 +6,9 @@
 
 #include <arenai_train_tests/tests_networks/tests_actor.h>
 
+using namespace arenai;
+using namespace arenai::train;
+
 TEST_P(ActorTestParam, TestActorAct) {
     const auto
         [layers, cont_actions_nb, discrete_actions_nb, sensors_nb, sensors_hidden_size,

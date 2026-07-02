@@ -7,31 +7,35 @@
 
 #include <glm/glm.hpp>
 
-class Camera {
-public:
-    virtual ~Camera() = default;
+namespace arenai::view {
 
-    virtual glm::vec3 pos() = 0;
+    class Camera {
+    public:
+        virtual ~Camera() = default;
 
-    virtual glm::vec3 look() = 0;
+        virtual glm::vec3 pos() = 0;
 
-    virtual glm::vec3 up() = 0;
-};
+        virtual glm::vec3 look() = 0;
 
-class StaticCamera final : public Camera {
-public:
-    StaticCamera(glm::vec3 pos, glm::vec3 look, glm::vec3 up);
+        virtual glm::vec3 up() = 0;
+    };
 
-    glm::vec3 pos() override;
+    class StaticCamera final : public Camera {
+    public:
+        StaticCamera(glm::vec3 pos, glm::vec3 look, glm::vec3 up);
 
-    glm::vec3 look() override;
+        glm::vec3 pos() override;
 
-    glm::vec3 up() override;
+        glm::vec3 look() override;
 
-private:
-    glm::vec3 pos_vec;
-    glm::vec3 look_vec;
-    glm::vec3 up_vec;
-};
+        glm::vec3 up() override;
+
+    private:
+        glm::vec3 pos_vec;
+        glm::vec3 look_vec;
+        glm::vec3 up_vec;
+    };
+
+}// namespace arenai::view
 
 #endif// ARENAI_CAMERA_H

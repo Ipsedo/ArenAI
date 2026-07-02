@@ -11,10 +11,12 @@
 
 #include "./create_random_step.h"
 
+using namespace arenai;
+using namespace arenai::train;
+
 namespace {
-    void fill_buffer_with_known_rewards(
-        RewardTransformReplayBuffer &buffer, const int n, const float reward_val,
-        const float potential_val) {
+    void fill_buffer_with_known_reward(
+        RewardTransformReplayBuffer &buffer, const int n, const float reward_val) {
 
         for (int i = 0; i < n; i++) {
             TorchStep step;
@@ -24,7 +26,6 @@ namespace {
             step.action.discrete_action = torch::zeros({2});
             step.action.discrete_action[0] = 1.0f;
             step.reward = torch::tensor({reward_val});
-            step.potential = torch::tensor({potential_val});
             step.done = torch::tensor({0.0f});
             step.next_state.vision = torch::randint(255, {3, 8, 8}, torch::kUInt8);
             step.next_state.proprioception = torch::randn({5});
@@ -34,65 +35,45 @@ namespace {
     }
 }// namespace
 
-TEST_F(RewardReplayBufferTest, IdentityTransformsSumRewardAndPotential) {
+TEST_F(RewardReplayBufferTest, IdentityTransformLeavesRewardUnchanged) {
     auto reward_transform = std::make_shared<IdentityTransform>();
-    auto potential_transform = std::make_shared<IdentityTransform>();
 
-    RewardTransformReplayBuffer buffer(20, reward_transform, potential_transform);
+    RewardTransformReplayBuffer buffer(20, reward_transform);
 
-    fill_buffer_with_known_rewards(buffer, 10, 2.0f, 3.0f);
+    fill_buffer_with_known_reward(buffer, 10, 2.0f);
 
     const auto output = buffer.sample(5, torch::kCPU);
 
     for (int i = 0; i < 5; i++) {
-        ASSERT_NEAR(output.reward[i].item<float>(), 5.0f, 1e-4f)
-            << "With identity transforms, output reward should be reward + potential = 5.0";
+        ASSERT_NEAR(output.reward[i].item<float>(), 2.0f, 1e-4f)
+            << "Identity transform should leave the reward unchanged";
     }
 }
 
 TEST_F(RewardReplayBufferTest, ScaleTransformAppliedToReward) {
     constexpr float scale = 2.0f;
     auto reward_transform = std::make_shared<ScalePotentialTransform>(scale);
-    auto potential_transform = std::make_shared<IdentityTransform>();
 
-    RewardTransformReplayBuffer buffer(20, reward_transform, potential_transform);
+    RewardTransformReplayBuffer buffer(20, reward_transform);
 
-    fill_buffer_with_known_rewards(buffer, 10, 3.0f, 1.0f);
-
-    const auto output = buffer.sample(5, torch::kCPU);
-
-    for (int i = 0; i < 5; i++) {
-        ASSERT_NEAR(output.reward[i].item<float>(), 7.0f, 1e-4f)
-            << "Output should be scale*reward + potential = 2*3 + 1 = 7";
-    }
-}
-
-TEST_F(RewardReplayBufferTest, ScaleTransformAppliedToPotential) {
-    constexpr float scale = 0.5f;
-    auto reward_transform = std::make_shared<IdentityTransform>();
-    auto potential_transform = std::make_shared<ScalePotentialTransform>(scale);
-
-    RewardTransformReplayBuffer buffer(20, reward_transform, potential_transform);
-
-    fill_buffer_with_known_rewards(buffer, 10, 1.0f, 4.0f);
+    fill_buffer_with_known_reward(buffer, 10, 3.0f);
 
     const auto output = buffer.sample(5, torch::kCPU);
 
     for (int i = 0; i < 5; i++) {
-        ASSERT_NEAR(output.reward[i].item<float>(), 3.0f, 1e-4f)
-            << "Output should be reward + scale*potential = 1 + 0.5*4 = 3";
+        ASSERT_NEAR(output.reward[i].item<float>(), 6.0f, 1e-4f)
+            << "Output should be scale*reward = 2*3 = 6";
     }
 }
 
-TEST_F(RewardReplayBufferTest, NormTransformUpdatedOnAdd) {
+TEST_F(RewardReplayBufferTest, NormTransformProducesFiniteRewards) {
     auto reward_transform = std::make_shared<NormalizedRewardTransform>(10, 1.0f);
-    auto potential_transform = std::make_shared<IdentityTransform>();
 
-    RewardTransformReplayBuffer buffer(20, reward_transform, potential_transform);
+    RewardTransformReplayBuffer buffer(20, reward_transform);
 
     for (int i = 0; i < 10; i++) {
         const auto reward_val = static_cast<float>(i);
-        fill_buffer_with_known_rewards(buffer, 1, reward_val, 0.0f);
+        fill_buffer_with_known_reward(buffer, 1, reward_val);
     }
 
     const auto output = buffer.sample(5, torch::kCPU);
@@ -103,11 +84,10 @@ TEST_F(RewardReplayBufferTest, NormTransformUpdatedOnAdd) {
 
 TEST_F(RewardReplayBufferTest, OutputHasCorrectShapes) {
     auto reward_transform = std::make_shared<IdentityTransform>();
-    auto potential_transform = std::make_shared<IdentityTransform>();
 
-    RewardTransformReplayBuffer buffer(20, reward_transform, potential_transform);
+    RewardTransformReplayBuffer buffer(20, reward_transform);
 
-    fill_buffer_with_known_rewards(buffer, 10, 1.0f, 1.0f);
+    fill_buffer_with_known_reward(buffer, 10, 1.0f);
 
     const auto output = buffer.sample(4, torch::kCPU);
 

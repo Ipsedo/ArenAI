@@ -9,20 +9,24 @@
 
 #include "../networks/actor.h"
 
-class TorchDistribution {
-public:
-    virtual ~TorchDistribution() = default;
+namespace arenai::train {
 
-    virtual torch::Tensor sample() = 0;
-    virtual torch::Tensor log_proba(const torch::Tensor &x) = 0;
-};
+    class TorchDistribution {
+    public:
+        virtual ~TorchDistribution() = default;
 
-class TorchDistributionFactory {
-public:
-    virtual ~TorchDistributionFactory() = default;
+        virtual torch::Tensor sample() = 0;
+        virtual torch::Tensor log_proba(const torch::Tensor &x) = 0;
+    };
 
-    virtual std::shared_ptr<TorchDistribution> get_distribution(actor_response input) = 0;
-    virtual float get_target_entropy() = 0;
-};
+    class TorchDistributionFactory {
+    public:
+        virtual ~TorchDistributionFactory() = default;
+
+        virtual std::shared_ptr<TorchDistribution> get_distribution(actor_response input) = 0;
+        virtual float get_target_entropy() = 0;
+    };
+
+}// namespace arenai::train
 
 #endif//ARENAI_TRAIN_HOST_DISTRIBUTION_H

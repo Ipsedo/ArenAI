@@ -9,22 +9,26 @@
 
 #include <arenai_train/metric.h>
 
-class MetricCsvSaver {
-public:
-    MetricCsvSaver(
-        const std::filesystem::path &output_folder,
-        const std::vector<std::shared_ptr<AbstractMetric>> &metrics, int save_every);
+namespace arenai::train {
 
-    void attempt_append_to_csv();
+    class MetricCsvSaver {
+    public:
+        MetricCsvSaver(
+            const std::filesystem::path &output_folder,
+            const std::vector<std::shared_ptr<AbstractMetric>> &metrics, int save_every);
 
-private:
-    std::filesystem::path csv_file_path;
-    std::vector<std::shared_ptr<AbstractMetric>> metrics;
+        void attempt_append_to_csv();
 
-    std::string sep;
+    private:
+        std::filesystem::path csv_file_path;
+        std::vector<std::shared_ptr<AbstractMetric>> metrics;
 
-    int save_every;
-    long index;
-};
+        std::string sep;
+
+        int save_every;
+        long index;
+    };
+
+}// namespace arenai::train
 
 #endif//ARENAI_TRAIN_HOST_METRIC_SAVER_H

@@ -6,25 +6,32 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-glm::mat4 BulletItem::get_model_matrix() {
-    btScalar tmp[16];
-    btTransform tr;
+using namespace arenai;
+using namespace arenai::model;
 
-    get_body()->getMotionState()->getWorldTransform(tr);
+namespace arenai::model {
 
-    tr.getOpenGLMatrix(tmp);
+    glm::mat4 BulletItem::get_model_matrix() {
+        btScalar tmp[16];
+        btTransform tr;
 
-    return glm::make_mat4(tmp) * glm::scale(glm::mat4(1.f), _get_scale());
-}
+        get_body()->getMotionState()->getWorldTransform(tr);
 
-glm::vec3 BulletItem::get_linear_velocity() {
-    const auto vel = get_body()->getLinearVelocity();
-    return {vel.x(), vel.y(), vel.z()};
-}
+        tr.getOpenGLMatrix(tmp);
 
-glm::vec3 BulletItem::get_angular_velocity() {
-    const auto vel = get_body()->getAngularVelocity();
-    return {vel.x(), vel.y(), vel.z()};
-}
+        return glm::make_mat4(tmp) * glm::scale(glm::mat4(1.f), _get_scale());
+    }
 
-std::vector<btTypedConstraint *> BulletItem::get_constraints() { return {}; }
+    glm::vec3 BulletItem::get_linear_velocity() {
+        const auto vel = get_body()->getLinearVelocity();
+        return {vel.x(), vel.y(), vel.z()};
+    }
+
+    glm::vec3 BulletItem::get_angular_velocity() {
+        const auto vel = get_body()->getAngularVelocity();
+        return {vel.x(), vel.y(), vel.z()};
+    }
+
+    std::vector<btTypedConstraint *> BulletItem::get_constraints() { return {}; }
+
+}// namespace arenai::model

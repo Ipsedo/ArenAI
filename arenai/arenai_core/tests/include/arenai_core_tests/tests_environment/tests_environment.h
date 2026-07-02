@@ -11,9 +11,9 @@
 
 #include "../utils/engine_test_fixture.h"
 
-class TestTanksEnvironment final : public BaseTanksEnvironment {
+class TestTanksEnvironment final : public arenai::core::BaseTanksEnvironment {
 public:
-    using BaseTanksEnvironment::BaseTanksEnvironment;
+    using arenai::core::BaseTanksEnvironment::BaseTanksEnvironment;
 
     int draw_call_count = 0;
     int reset_physics_call_count = 0;
@@ -24,13 +24,14 @@ protected:
         draw_call_count++;
     }
 
-    void on_reset_physics(const std::unique_ptr<AbstractPhysicEngine> &engine) override {
+    void
+    on_reset_physics(const std::unique_ptr<arenai::model::AbstractPhysicEngine> &engine) override {
         reset_physics_call_count++;
     }
 
     void on_reset_drawables(
-        const std::unique_ptr<AbstractPhysicEngine> &engine,
-        const std::shared_ptr<AbstractGLContext> &gl_context) override {
+        const std::unique_ptr<arenai::model::AbstractPhysicEngine> &engine,
+        const std::shared_ptr<arenai::view::AbstractGLContext> &gl_context) override {
         reset_drawables_call_count++;
     }
 };

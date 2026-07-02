@@ -7,46 +7,50 @@
 
 #include "./reward_transform.h"
 
-class NormalizedRewardTransform : public AbstractRewardTransform {
-public:
-    NormalizedRewardTransform(int memory_size, float reward_scale);
+namespace arenai::train {
 
-    void on_add(const torch::Tensor &single_step_reward) override;
-    torch::Tensor transform(const torch::Tensor &batch_step_reward) override;
+    class NormalizedRewardTransform : public AbstractRewardTransform {
+    public:
+        NormalizedRewardTransform(int memory_size, float reward_scale);
 
-private:
-    size_t memory_size_;
-    size_t write_idx_;
-    size_t size_;
+        void on_add(const torch::Tensor &single_step_reward) override;
+        torch::Tensor transform(const torch::Tensor &batch_step_reward) override;
 
-    float reward_scale_;
+    private:
+        size_t memory_size_;
+        size_t write_idx_;
+        size_t size_;
 
-    double running_sum_;
-    double running_sum_sq_;
+        float reward_scale_;
 
-    std::vector<double> reward_history_;
+        double running_sum_;
+        double running_sum_sq_;
 
-    bool is_full() const;
-};
+        std::vector<double> reward_history_;
 
-class NormalizedNonZeroTransform : public AbstractRewardTransform {
-public:
-    explicit NormalizedNonZeroTransform(int memory_size);
+        bool is_full() const;
+    };
 
-    void on_add(const torch::Tensor &single_step_reward) override;
-    torch::Tensor transform(const torch::Tensor &batch_step_reward) override;
+    class NormalizedNonZeroTransform : public AbstractRewardTransform {
+    public:
+        explicit NormalizedNonZeroTransform(int memory_size);
 
-private:
-    size_t memory_size_;
-    size_t write_idx_;
-    size_t size_;
-    size_t non_zero_nb_;
+        void on_add(const torch::Tensor &single_step_reward) override;
+        torch::Tensor transform(const torch::Tensor &batch_step_reward) override;
 
-    double non_zero_running_sum_sq_;
+    private:
+        size_t memory_size_;
+        size_t write_idx_;
+        size_t size_;
+        size_t non_zero_nb_;
 
-    std::vector<double> reward_history_;
+        double non_zero_running_sum_sq_;
 
-    bool is_full() const;
-};
+        std::vector<double> reward_history_;
+
+        bool is_full() const;
+    };
+
+}// namespace arenai::train
 
 #endif//ARENAI_TRAIN_HOST_POTENTIAL_REWARD_EMA_REPLAY_BUFFER_H

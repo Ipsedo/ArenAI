@@ -8,6 +8,9 @@
 
 #include <arenai_model_tests/utils/local_file_reader.h>
 
+using namespace arenai;
+using namespace arenai::utils;
+
 LocalAssetFileReader::LocalAssetFileReader(const std::filesystem::path &path_to_assets)
     : path_to_assets(path_to_assets) {}
 

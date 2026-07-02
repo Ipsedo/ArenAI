@@ -7,15 +7,19 @@
 
 #include "./scale_potential.h"
 
-class DeltaScalePotentialRewardTransform : public ScalePotentialTransform {
-public:
-    DeltaScalePotentialRewardTransform(float wanted_frequency, float target_potential_reward);
+namespace arenai::train {
 
-private:
-    static float compute_potential_reward_scale(
-        float wheel_radial_velocity, float wheel_radius, float turret_angular_velocity,
-        float canon_angular_velocity, float distance_scale, float dt,
-        float target_mean_potential_reward);
-};
+    class DeltaScalePotentialRewardTransform : public ScalePotentialTransform {
+    public:
+        DeltaScalePotentialRewardTransform(float wanted_frequency, float target_potential_reward);
+
+    private:
+        static float compute_potential_reward_scale(
+            float wheel_radial_velocity, float wheel_radius, float turret_angular_velocity,
+            float canon_angular_velocity, float distance_scale, float dt,
+            float target_mean_potential_reward);
+    };
+
+}// namespace arenai::train
 
 #endif//ARENAI_TRAIN_HOST_DELTA_SCALE_REPLAY_BUFFER_H

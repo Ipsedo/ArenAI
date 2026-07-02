@@ -16,42 +16,47 @@
 
 #include "./bullet_item.h"
 
-class BulletPhysicEngine final : public AbstractPhysicEngine {
-public:
-    explicit BulletPhysicEngine(float wanted_frequency);
+namespace arenai::model {
 
-    void step(float delta) override;
+    class BulletPhysicEngine final : public AbstractPhysicEngine {
+    public:
+        explicit BulletPhysicEngine(float wanted_frequency);
 
-    std::vector<std::shared_ptr<Item>> get_items() override;
+        void step(float delta) override;
 
-    void remove_bodies_and_constraints() override;
+        std::vector<std::shared_ptr<Item>> get_items() override;
 
-    std::shared_ptr<ItemFactory> get_item_factory() override;
+        void remove_bodies_and_constraints() override;
 
-    ~BulletPhysicEngine() override;
+        std::shared_ptr<ItemFactory> get_item_factory() override;
 
-    void add_bullet_item(const std::shared_ptr<BulletItem> &item);
-    void
-    add_bullet_item_producer(std::function<std::vector<std::shared_ptr<BulletItem>>()> producer);
-    void remove_bullet_item_constraints(const std::shared_ptr<BulletItem> &item);
+        ~BulletPhysicEngine() override;
 
-private:
-    std::shared_mutex items_mutex;
+        void add_bullet_item(const std::shared_ptr<BulletItem> &item);
+        void add_bullet_item_producer(
+            std::function<std::vector<std::shared_ptr<BulletItem>>()> producer);
+        void remove_bullet_item_constraints(const std::shared_ptr<BulletItem> &item);
 
-    float wanted_frequency;
+    private:
+        std::shared_mutex items_mutex;
 
-    btDefaultCollisionConfiguration *m_collision_configuration;
-    btCollisionDispatcher *m_dispatcher;
-    btBroadphaseInterface *m_broad_phase;
-    btSequentialImpulseConstraintSolver *m_constraint_solver;
-    btDiscreteDynamicsWorld *m_world;
+        float wanted_frequency;
 
-    std::vector<std::shared_ptr<BulletItem>> items;
-    std::vector<std::function<std::vector<std::shared_ptr<BulletItem>>()>> bullet_item_producers;
+        btDefaultCollisionConfiguration *m_collision_configuration;
+        btCollisionDispatcher *m_dispatcher;
+        btBroadphaseInterface *m_broad_phase;
+        btSequentialImpulseConstraintSolver *m_constraint_solver;
+        btDiscreteDynamicsWorld *m_world;
 
-    std::shared_ptr<ItemFactory> item_factory;
+        std::vector<std::shared_ptr<BulletItem>> items;
+        std::vector<std::function<std::vector<std::shared_ptr<BulletItem>>()>>
+            bullet_item_producers;
 
-    void remove_dead_items();
-};
+        std::shared_ptr<ItemFactory> item_factory;
+
+        void remove_dead_items();
+    };
+
+}// namespace arenai::model
 
 #endif// ARENAI_BULLET_ENGINE_H

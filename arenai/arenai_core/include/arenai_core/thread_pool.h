@@ -17,93 +17,95 @@
 #include <arenai_utils/file_reader.h>
 #include <arenai_view/pbuffer_renderer.h>
 
-class VisionDoubleBuffer : public DoubleBuffer<image<uint8_t>> {
-public:
-    VisionDoubleBuffer(int height, int width);
+namespace arenai::core {
+    class VisionDoubleBuffer : public utils::DoubleBuffer<view::image<uint8_t>> {
+    public:
+        VisionDoubleBuffer(int height, int width);
 
-private:
-    static image<uint8_t> black_image(int height, int width);
-};
+    private:
+        static view::image<uint8_t> black_image(int height, int width);
+    };
 
-class ModelMatricesDoubleBuffer
-    : public DoubleBuffer<std::vector<std::tuple<std::string, glm::mat4>>> {
-public:
-    ModelMatricesDoubleBuffer();
-};
+    class ModelMatricesDoubleBuffer
+        : public utils::DoubleBuffer<std::vector<std::tuple<std::string, glm::mat4>>> {
+    public:
+        ModelMatricesDoubleBuffer();
+    };
 
-/*
- * Threads
- */
+    /*
+     * Threads
+     */
 
-class ThreadLimiter {
-public:
-    explicit ThreadLimiter(unsigned int k);
+    class ThreadLimiter {
+    public:
+        explicit ThreadLimiter(unsigned int k);
 
-    uint64_t acquire();
+        uint64_t acquire();
 
-    void release();
+        void release();
 
-private:
-    const unsigned int k_threads;
-    std::mutex mutex;
-    std::condition_variable condition_variable;
-    uint64_t next_ticket = 0;
-    uint64_t serving_ticket = 0;
-};
+    private:
+        const unsigned int k_threads;
+        std::mutex mutex;
+        std::condition_variable condition_variable;
+        uint64_t next_ticket = 0;
+        uint64_t serving_ticket = 0;
+    };
 
-class EnemyVisionThreadPool {
-public:
-    EnemyVisionThreadPool(
-        int num_tanks, int max_concurrent_renders, int vision_height, int vision_width,
-        float wanted_frequency, bool thread_sleep);
+    class EnemyVisionThreadPool {
+    public:
+        EnemyVisionThreadPool(
+            int num_tanks, int max_concurrent_renders, int vision_height, int vision_width,
+            float wanted_frequency, bool thread_sleep);
 
-    void
-    set_model_matrices(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) const;
+        void set_model_matrices(
+            const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) const;
 
-    image<uint8_t> read_vision(int index) const;
+        view::image<uint8_t> read_vision(int index) const;
 
-    void set_seed(unsigned int seed);
+        void set_seed(unsigned int seed);
 
-    void start_thread(
-        const std::vector<std::shared_ptr<EnemyTank>> &tank_factories,
-        const std::shared_ptr<AbstractGLContext> &gl_context,
-        const std::shared_ptr<AbstractFileReader> &file_reader,
-        const std::vector<std::tuple<std::string, glm::mat4>> &initial_model_matrices,
-        const std::vector<std::shared_ptr<Item>> &scene_items);
+        void start_thread(
+            const std::vector<std::shared_ptr<model::EnemyTank>> &tank_factories,
+            const std::shared_ptr<view::AbstractGLContext> &gl_context,
+            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            const std::vector<std::tuple<std::string, glm::mat4>> &initial_model_matrices,
+            const std::vector<std::shared_ptr<model::Item>> &scene_items);
 
-    void loop_wait() const;
-    void kill_threads();
+        void loop_wait() const;
+        void kill_threads();
 
-    ~EnemyVisionThreadPool();
+        ~EnemyVisionThreadPool();
 
-private:
-    int num_tanks_;
+    private:
+        int num_tanks_;
 
-    int vision_height_;
-    int vision_width_;
+        int vision_height_;
+        int vision_width_;
 
-    float wanted_frequency_;
-    bool thread_sleep_;
-    std::atomic<bool> threads_running_;
-    std::vector<std::thread> pool_;
+        float wanted_frequency_;
+        bool thread_sleep_;
+        std::atomic<bool> threads_running_;
+        std::vector<std::thread> pool_;
 
-    ThreadLimiter limiter_;
+        ThreadLimiter limiter_;
 
-    std::unique_ptr<ModelMatricesDoubleBuffer> model_matrices_;
-    std::vector<std::unique_ptr<VisionDoubleBuffer>> enemy_visions_;
+        std::unique_ptr<ModelMatricesDoubleBuffer> model_matrices_;
+        std::vector<std::unique_ptr<VisionDoubleBuffer>> enemy_visions_;
 
-    std::unique_ptr<std::barrier<>> reset_barrier_;
-    std::unique_ptr<std::barrier<>> loop_barrier_;
+        std::unique_ptr<std::barrier<>> reset_barrier_;
+        std::unique_ptr<std::barrier<>> loop_barrier_;
 
-    std::optional<unsigned int> seed_;
+        std::optional<unsigned int> seed_;
 
-    std::random_device dev_;
+        std::random_device dev_;
 
-    void worker_loop(
-        const std::shared_ptr<EnemyTank> &tank_factory,
-        const std::shared_ptr<AbstractGLContext> &gl_context,
-        const std::shared_ptr<AbstractFileReader> &file_reader,
-        const std::vector<std::shared_ptr<Item>> &scene_items, int index);
-};
+        void worker_loop(
+            const std::shared_ptr<model::EnemyTank> &tank_factory,
+            const std::shared_ptr<view::AbstractGLContext> &gl_context,
+            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            const std::vector<std::shared_ptr<model::Item>> &scene_items, int index);
+    };
+}// namespace arenai::core
 
 #endif//ARENAI_TRAIN_HOST_THREAD_POOL_H

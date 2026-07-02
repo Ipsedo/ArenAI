@@ -12,56 +12,60 @@
 
 #include "./shapes.h"
 
-class Item {
-public:
-    virtual ~Item() = default;
+namespace arenai::model {
 
-    explicit Item(std::string name);
+    class Item {
+    public:
+        virtual ~Item() = default;
 
-    virtual std::shared_ptr<Shape> get_shape() = 0;
+        explicit Item(std::string name);
 
-    std::string get_name();
+        virtual std::shared_ptr<Shape> get_shape() = 0;
 
-    virtual glm::mat4 get_model_matrix() = 0;
+        std::string get_name();
 
-    virtual glm::vec3 get_linear_velocity() = 0;
-    virtual glm::vec3 get_angular_velocity() = 0;
+        virtual glm::mat4 get_model_matrix() = 0;
 
-    virtual void tick();
+        virtual glm::vec3 get_linear_velocity() = 0;
+        virtual glm::vec3 get_angular_velocity() = 0;
 
-    virtual void on_contact(Item *other);
-    virtual bool need_destroy();
-    virtual void destroy();
+        virtual void tick();
 
-private:
-    std::string name;
-    bool will_destroy;
+        virtual void on_contact(Item *other);
+        virtual bool need_destroy();
+        virtual void destroy();
 
-protected:
-    virtual glm::vec3 _get_scale() = 0;
-};
+    private:
+        std::string name;
+        bool will_destroy;
 
-class ItemProducer {
-public:
-    virtual ~ItemProducer() = default;
+    protected:
+        virtual glm::vec3 _get_scale() = 0;
+    };
 
-    virtual std::vector<std::shared_ptr<Item>> get_produced_items() = 0;
-};
+    class ItemProducer {
+    public:
+        virtual ~ItemProducer() = default;
 
-class LifeItem {
-public:
-    virtual ~LifeItem() = default;
+        virtual std::vector<std::shared_ptr<Item>> get_produced_items() = 0;
+    };
 
-    explicit LifeItem(float health_points);
+    class LifeItem {
+    public:
+        virtual ~LifeItem() = default;
 
-    bool is_dead() const;
-    bool is_already_dead();
+        explicit LifeItem(float health_points);
 
-    float receive_damages(float damages);
+        bool is_dead() const;
+        bool is_already_dead();
 
-private:
-    float health_points;
-    bool already_dead;
-};
+        float receive_damages(float damages);
+
+    private:
+        float health_points;
+        bool already_dead;
+    };
+
+}// namespace arenai::model
 
 #endif// ARENAI_ITEM_H

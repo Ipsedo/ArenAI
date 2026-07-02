@@ -7,6 +7,9 @@
 
 #include "./create_random_step.h"
 
+using namespace arenai;
+using namespace arenai::train;
+
 // ========================================================================
 // Normal: steps_to_add <= memory_size
 // ========================================================================

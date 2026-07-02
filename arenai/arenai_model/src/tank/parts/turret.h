@@ -10,19 +10,24 @@
 
 #include "../../items/convex.h"
 
-class TurretItem final : public LifeItem, public ConvexItem, public Controller {
-public:
-    TurretItem(
-        const std::string &prefix_name, const std::shared_ptr<AbstractFileReader> &file_reader,
-        glm::vec3 pos, glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *chassis);
+namespace arenai::model {
 
-    void on_input(const user_input &input) override;
+    class TurretItem final : public LifeItem, public ConvexItem, public controller::Controller {
+    public:
+        TurretItem(
+            const std::string &prefix_name,
+            const std::shared_ptr<utils::AbstractFileReader> &file_reader, glm::vec3 pos,
+            glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *chassis);
 
-    std::vector<btTypedConstraint *> get_constraints() override;
+        void on_input(const controller::user_input &input) override;
 
-private:
-    float angle;
-    btHingeConstraint *hinge;
-};
+        std::vector<btTypedConstraint *> get_constraints() override;
+
+    private:
+        float angle;
+        btHingeConstraint *hinge;
+    };
+
+}// namespace arenai::model
 
 #endif// ARENAI_TURRET_H

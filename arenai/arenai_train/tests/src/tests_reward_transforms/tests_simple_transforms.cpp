@@ -8,6 +8,9 @@
 
 #include <arenai_train_tests/tests_reward_transforms/tests_simple_transforms.h>
 
+using namespace arenai;
+using namespace arenai::train;
+
 // ========================================================================
 // IdentityTransform
 // ========================================================================

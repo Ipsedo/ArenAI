@@ -7,7 +7,7 @@
 
 #include <arenai_view/renderer.h>
 
-class LocalGlContext final : public AbstractGLContext {
+class LocalGlContext final : public arenai::view::AbstractGLContext {
 public:
     LocalGlContext();
 

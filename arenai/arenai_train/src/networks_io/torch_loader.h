@@ -9,18 +9,22 @@
 
 #include <torch/torch.h>
 
-template<typename T>
-void load_torch(
-    const std::filesystem::path &input_folder_path, const T &to_load,
-    const std::filesystem::path &file_name) {
+namespace arenai::train {
 
-    if (!std::filesystem::exists(input_folder_path))
-        throw std::runtime_error("Could not find " + input_folder_path.string());
+    template<typename T>
+    void load_torch(
+        const std::filesystem::path &input_folder_path, const T &to_load,
+        const std::filesystem::path &file_name) {
 
-    const auto file = input_folder_path / file_name;
-    torch::serialize::InputArchive archive;
-    archive.load_from(file.string(), torch::kCPU);
-    to_load->load(archive);
-}
+        if (!std::filesystem::exists(input_folder_path))
+            throw std::runtime_error("Could not find " + input_folder_path.string());
+
+        const auto file = input_folder_path / file_name;
+        torch::serialize::InputArchive archive;
+        archive.load_from(file.string(), torch::kCPU);
+        to_load->load(archive);
+    }
+
+}// namespace arenai::train
 
 #endif//ARENAI_TRAIN_HOST_LOADER_H

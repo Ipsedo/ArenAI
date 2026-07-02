@@ -10,6 +10,9 @@
 #include "./train.h"
 #include "./utils/cli_parser.h"
 
+using namespace arenai;
+using namespace arenai::train;
+
 int main(const int argc, char **argv) {
     argparse::ArgumentParser parser("arenai train");
 

@@ -21,10 +21,10 @@ protected:
 
     void add_ground();
 
-    std::unique_ptr<AbstractPhysicEngine> engine;
-    std::shared_ptr<AbstractFileReader> file_reader;
-    std::shared_ptr<TankFactory> tank_factory;
-    std::shared_ptr<Item> ground;
+    std::unique_ptr<arenai::model::AbstractPhysicEngine> engine;
+    std::shared_ptr<arenai::utils::AbstractFileReader> file_reader;
+    std::shared_ptr<arenai::model::TankFactory> tank_factory;
+    std::shared_ptr<arenai::model::Item> ground;
 };
 
 #endif// ARENAI_MODEL_TESTS_ENGINE_TEST_FIXTURE_H

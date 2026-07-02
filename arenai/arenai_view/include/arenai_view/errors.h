@@ -7,6 +7,10 @@
 
 #include <string>
 
-void check_gl_error(const std::string &message);
+namespace arenai::view {
+
+    void check_gl_error(const std::string &message);
+
+}// namespace arenai::view
 
 #endif// ARENAI_ERRORS_H

@@ -4,11 +4,18 @@
 
 #include "./misc.h"
 
-torch::Tensor Exp::forward(const torch::Tensor &x) { return torch::exp(x); }
+using namespace arenai;
+using namespace arenai::train;
 
-Clamp::Clamp(const float lower_bound, const float upper_bound)
-    : lower_bound(lower_bound), upper_bound(upper_bound) {}
+namespace arenai::train {
 
-torch::Tensor Clamp::forward(const torch::Tensor &x) {
-    return torch::clamp(x, lower_bound, upper_bound);
-}
+    torch::Tensor Exp::forward(const torch::Tensor &x) { return torch::exp(x); }
+
+    Clamp::Clamp(const float lower_bound, const float upper_bound)
+        : lower_bound(lower_bound), upper_bound(upper_bound) {}
+
+    torch::Tensor Clamp::forward(const torch::Tensor &x) {
+        return torch::clamp(x, lower_bound, upper_bound);
+    }
+
+}// namespace arenai::train

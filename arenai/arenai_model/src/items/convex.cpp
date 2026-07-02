@@ -9,71 +9,78 @@
 #include <btBulletDynamicsCommon.h>
 #include <glm/gtc/type_ptr.hpp>
 
-ConvexItem::ConvexItem(
-    std::string name, const std::shared_ptr<Shape> &shape, glm::vec3 position, glm::vec3 scale,
-    float mass)
-    : BulletItem(std::move(name)), shape(shape), scale(scale) {
+using namespace arenai;
+using namespace arenai::model;
 
-    collision_shape = new btConvexHullShape();
-    for (auto [x, y, z]: shape->get_vertices()) collision_shape->addPoint(btVector3(x, y, z));
-    collision_shape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
+namespace arenai::model {
 
-    btVector3 local_inertia(0, 0, 0);
-    if (mass != 0.f) { collision_shape->calculateLocalInertia(mass, local_inertia); }
+    ConvexItem::ConvexItem(
+        std::string name, const std::shared_ptr<Shape> &shape, glm::vec3 position, glm::vec3 scale,
+        float mass)
+        : BulletItem(std::move(name)), shape(shape), scale(scale) {
 
-    btTransform original_tr;
-    original_tr.setIdentity();
-    original_tr.setOrigin(btVector3(position.x, position.y, position.z));
+        collision_shape = new btConvexHullShape();
+        for (auto [x, y, z]: shape->get_vertices()) collision_shape->addPoint(btVector3(x, y, z));
+        collision_shape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
 
-    auto *motion_state = new btDefaultMotionState(original_tr);
+        btVector3 local_inertia(0, 0, 0);
+        if (mass != 0.f) { collision_shape->calculateLocalInertia(mass, local_inertia); }
 
-    btRigidBody::btRigidBodyConstructionInfo body_info(
-        mass, motion_state, collision_shape, local_inertia);
+        btTransform original_tr;
+        original_tr.setIdentity();
+        original_tr.setOrigin(btVector3(position.x, position.y, position.z));
 
-    body = new btRigidBody(body_info);
-    body->setUserPointer(this);
-}
+        auto *motion_state = new btDefaultMotionState(original_tr);
 
-std::shared_ptr<Shape> ConvexItem::get_shape() { return shape; }
+        btRigidBody::btRigidBodyConstructionInfo body_info(
+            mass, motion_state, collision_shape, local_inertia);
 
-btRigidBody *ConvexItem::get_body() { return body; }
+        body = new btRigidBody(body_info);
+        body->setUserPointer(this);
+    }
 
-glm::vec3 ConvexItem::_get_scale() { return scale; }
+    std::shared_ptr<Shape> ConvexItem::get_shape() { return shape; }
 
-ConvexItem::~ConvexItem() { delete collision_shape; }
+    btRigidBody *ConvexItem::get_body() { return body; }
 
-/*
+    glm::vec3 ConvexItem::_get_scale() { return scale; }
+
+    ConvexItem::~ConvexItem() { delete collision_shape; }
+
+    /*
  * Basic shapes
  */
 
-CubeItem::CubeItem(
-    std::string name, const std::shared_ptr<AbstractFileReader> &file_reader,
-    const glm::vec3 position, const glm::vec3 scale, const float mass)
-    : ConvexItem(
-        std::move(name),
-        std::make_shared<ObjShape>(file_reader, std::filesystem::path("obj") / "cube.obj"),
-        position, scale, mass) {}
+    CubeItem::CubeItem(
+        std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        const glm::vec3 position, const glm::vec3 scale, const float mass)
+        : ConvexItem(
+            std::move(name),
+            std::make_shared<ObjShape>(file_reader, std::filesystem::path("obj") / "cube.obj"),
+            position, scale, mass) {}
 
-SphereItem::SphereItem(
-    std::string name, const std::shared_ptr<AbstractFileReader> &file_reader,
-    const glm::vec3 position, const glm::vec3 scale, const float mass)
-    : ConvexItem(
-        std::move(name),
-        std::make_shared<ObjShape>(file_reader, std::filesystem::path("obj") / "sphere.obj"),
-        position, scale, mass) {}
+    SphereItem::SphereItem(
+        std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        const glm::vec3 position, const glm::vec3 scale, const float mass)
+        : ConvexItem(
+            std::move(name),
+            std::make_shared<ObjShape>(file_reader, std::filesystem::path("obj") / "sphere.obj"),
+            position, scale, mass) {}
 
-CylinderItem::CylinderItem(
-    std::string name, const std::shared_ptr<AbstractFileReader> &file_reader,
-    const glm::vec3 position, const glm::vec3 scale, const float mass)
-    : ConvexItem(
-        std::move(name),
-        std::make_shared<ObjShape>(file_reader, std::filesystem::path("obj") / "cylinder.obj"),
-        position, scale, mass) {}
+    CylinderItem::CylinderItem(
+        std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        const glm::vec3 position, const glm::vec3 scale, const float mass)
+        : ConvexItem(
+            std::move(name),
+            std::make_shared<ObjShape>(file_reader, std::filesystem::path("obj") / "cylinder.obj"),
+            position, scale, mass) {}
 
-TetraItem::TetraItem(
-    std::string name, const std::shared_ptr<AbstractFileReader> &file_reader,
-    const glm::vec3 position, const glm::vec3 scale, const float mass)
-    : ConvexItem(
-        std::move(name),
-        std::make_shared<ObjShape>(file_reader, std::filesystem::path("obj") / "tetra.obj"),
-        position, scale, mass) {}
+    TetraItem::TetraItem(
+        std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        const glm::vec3 position, const glm::vec3 scale, const float mass)
+        : ConvexItem(
+            std::move(name),
+            std::make_shared<ObjShape>(file_reader, std::filesystem::path("obj") / "tetra.obj"),
+            position, scale, mass) {}
+
+}// namespace arenai::model

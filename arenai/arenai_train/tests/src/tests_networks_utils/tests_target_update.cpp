@@ -6,6 +6,9 @@
 
 #include <arenai_train_tests/tests_networks_utils/tests_target_update.h>
 
+using namespace arenai;
+using namespace arenai::train;
+
 namespace {
     std::shared_ptr<torch::nn::LinearImpl> make_linear(int in, int out) {
         return std::make_shared<torch::nn::LinearImpl>(in, out);

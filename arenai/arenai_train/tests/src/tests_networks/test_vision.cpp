@@ -6,6 +6,9 @@
 
 #include <arenai_train_tests/tests_networks/tests_vision.h>
 
+using namespace arenai;
+using namespace arenai::train;
+
 TEST_P(VisionTestParam, TestVisionForward) {
     const auto [width, height, channels, output_conv_channels, group_norm_nums, batch_size] =
         GetParam();

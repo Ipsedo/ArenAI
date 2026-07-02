@@ -7,21 +7,25 @@
 
 #include "./reward_transform.h"
 
-class EmaPotentialTransform : public AbstractRewardTransform {
-public:
-    explicit EmaPotentialTransform(float potential_reward_scale, float ema_decay = 0.999f);
+namespace arenai::train {
 
-    void on_add(const torch::Tensor &single_step_reward) override;
+    class EmaPotentialTransform : public AbstractRewardTransform {
+    public:
+        explicit EmaPotentialTransform(float potential_reward_scale, float ema_decay = 0.999f);
 
-    torch::Tensor transform(const torch::Tensor &batch_step_reward) override;
+        void on_add(const torch::Tensor &single_step_reward) override;
 
-private:
-    float potential_reward_ema_decay_;
-    float potential_reward_ema_mean_;
-    float potential_reward_ema_var_;
-    bool ema_initialized_;
+        torch::Tensor transform(const torch::Tensor &batch_step_reward) override;
 
-    float potential_reward_scale;
-};
+    private:
+        float potential_reward_ema_decay_;
+        float potential_reward_ema_mean_;
+        float potential_reward_ema_var_;
+        bool ema_initialized_;
+
+        float potential_reward_scale;
+    };
+
+}// namespace arenai::train
 
 #endif//ARENAI_TRAIN_HOST_EMA_REPLAY_BUFFER_H

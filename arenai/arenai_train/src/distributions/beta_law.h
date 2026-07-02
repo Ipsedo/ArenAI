@@ -7,11 +7,15 @@
 
 #include <torch/torch.h>
 
-torch::Tensor beta_law_sample(const torch::Tensor &alpha, const torch::Tensor &beta);
-torch::Tensor
-beta_law_log_proba(const torch::Tensor &x, const torch::Tensor &alpha, const torch::Tensor &beta);
-torch::Tensor beta_law_entropy(const torch::Tensor &alpha, const torch::Tensor &beta);
+namespace arenai::train {
 
-float beta_law_target_entropy(const int &nb_actions);
+    torch::Tensor beta_law_sample(const torch::Tensor &alpha, const torch::Tensor &beta);
+    torch::Tensor beta_law_log_proba(
+        const torch::Tensor &x, const torch::Tensor &alpha, const torch::Tensor &beta);
+    torch::Tensor beta_law_entropy(const torch::Tensor &alpha, const torch::Tensor &beta);
+
+    float beta_law_target_entropy(const int &nb_actions);
+
+}// namespace arenai::train
 
 #endif//ARENAI_TRAIN_HOST_BETA_LAW_H

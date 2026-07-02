@@ -24,9 +24,10 @@ protected:
     void SetUp() override;
     void TearDown() override;
 
-    std::unique_ptr<SacAgent> make_agent(const SacTestConfig &cfg) const;
+    std::unique_ptr<arenai::train::SacAgent> make_agent(const SacTestConfig &cfg) const;
 
-    static std::unique_ptr<ReplayBuffer> make_filled_buffer(const SacTestConfig &cfg, int n_steps);
+    static std::unique_ptr<arenai::train::ReplayBuffer>
+    make_filled_buffer(const SacTestConfig &cfg, int n_steps);
 
     std::filesystem::path tmp_dir;
     torch::Device device{torch::kCPU};

@@ -10,15 +10,17 @@
 #include <arenai_controller/inputs.h>
 #include <arenai_view/pbuffer_renderer.h>
 
-struct State {
-    image<uint8_t> vision;
-    std::vector<float> proprioception;
-};
+namespace arenai::core {
+    struct State {
+        view::image<uint8_t> vision;
+        std::vector<float> proprioception;
+    };
 
-typedef float Reward;
+    typedef float Reward;
 
-typedef bool IsDone;
+    typedef bool IsDone;
 
-typedef user_input Action;
+    typedef controller::user_input Action;
+}// namespace arenai::core
 
 #endif//ARENAI_TYPES_H

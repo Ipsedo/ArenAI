@@ -7,6 +7,10 @@
 
 #include <arenai_model_tests/tests_phi/tests_phi.h>
 
+using namespace arenai;
+using namespace arenai::model;
+using namespace arenai::utils;
+
 // ========================================================================
 // get_phi (engagement/opportunity score)
 // ========================================================================

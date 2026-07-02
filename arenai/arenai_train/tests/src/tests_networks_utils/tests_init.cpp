@@ -6,6 +6,9 @@
 
 #include <arenai_train_tests/tests_networks_utils/tests_init.h>
 
+using namespace arenai;
+using namespace arenai::train;
+
 TEST_F(InitWeightsTest, HiddenLinearWeightsBounded) {
     torch::nn::Linear linear(32, 16);
     init_hidden_weights(*linear);

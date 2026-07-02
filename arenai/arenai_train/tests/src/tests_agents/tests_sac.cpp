@@ -4,6 +4,9 @@
 
 #include <arenai_train_tests/tests_agents/tests_sac.h>
 
+using namespace arenai;
+using namespace arenai::train;
+
 // ========================================================================
 // Fixture helpers
 // ========================================================================
@@ -43,7 +46,6 @@ SacAgentTest::make_filled_buffer(const SacTestConfig &cfg, const int n_steps) {
         step.action.discrete_action = disc;
 
         step.reward = torch::randn({1});
-        step.potential = torch::zeros({1});
         step.done = torch::zeros({1});
         step.next_state.vision =
             torch::randint(0, 255, {3, cfg.vision_height, cfg.vision_width}, torch::kUInt8);

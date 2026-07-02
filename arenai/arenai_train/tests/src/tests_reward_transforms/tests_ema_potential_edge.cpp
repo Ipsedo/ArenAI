@@ -6,6 +6,9 @@
 
 #include <arenai_train_tests/tests_reward_transforms/tests_ema_potential_edge.h>
 
+using namespace arenai;
+using namespace arenai::train;
+
 TEST_F(EmaPotentialEdgeTest, TransformBeforeAnyOnAdd) {
     EmaPotentialTransform ema(1.0f, 0.999f);
 

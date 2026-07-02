@@ -12,36 +12,40 @@
 
 #include <arenai_train/agent.h>
 
-void export_state_dict_neutral(
-    const std::shared_ptr<torch::nn::Module> &m, const std::filesystem::path &outdir);
+namespace arenai::train {
 
-template<typename T>
-void save_torch(
-    const std::filesystem::path &output_folder_path, const T &to_save,
-    const std::filesystem::path &file_name) {
+    void export_state_dict_neutral(
+        const std::shared_ptr<torch::nn::Module> &m, const std::filesystem::path &outdir);
 
-    if (!std::filesystem::exists(output_folder_path))
-        throw std::runtime_error("Could not find " + output_folder_path.string());
+    template<typename T>
+    void save_torch(
+        const std::filesystem::path &output_folder_path, const T &to_save,
+        const std::filesystem::path &file_name) {
 
-    const auto file = output_folder_path / file_name;
-    torch::serialize::OutputArchive archive;
-    to_save->save(archive);
-    archive.save_to(file.string());
-}
+        if (!std::filesystem::exists(output_folder_path))
+            throw std::runtime_error("Could not find " + output_folder_path.string());
 
-class AgentSaver {
-public:
-    AgentSaver(
-        const std::shared_ptr<AbstractAgent> &agent, const std::filesystem::path &output_path,
-        int save_every);
+        const auto file = output_folder_path / file_name;
+        torch::serialize::OutputArchive archive;
+        to_save->save(archive);
+        archive.save_to(file.string());
+    }
 
-    void attempt_save();
+    class AgentSaver {
+    public:
+        AgentSaver(
+            const std::shared_ptr<AbstractAgent> &agent, const std::filesystem::path &output_path,
+            int save_every);
 
-private:
-    std::shared_ptr<AbstractAgent> agent;
-    long curr_step;
-    int save_every;
-    std::filesystem::path output_path;
-};
+        void attempt_save();
+
+    private:
+        std::shared_ptr<AbstractAgent> agent;
+        long curr_step;
+        int save_every;
+        std::filesystem::path output_path;
+    };
+
+}// namespace arenai::train
 
 #endif// ARENAI_TRAIN_HOST_SAVER_H

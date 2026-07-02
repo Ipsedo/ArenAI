@@ -7,28 +7,37 @@
 #include "../utils/cli_parser.h"
 #include "./sac.h"
 
-SacAgentFactory::SacAgentFactory(const std::map<std::string, std::string> &arguments)
-    : AgentFactory(arguments) {}
+using namespace arenai;
+using namespace arenai::train;
 
-std::shared_ptr<AbstractAgent> SacAgentFactory::get_agent_impl(
-    const int &vision_height, const int &vision_width, const int &nb_sensors,
-    const int &nb_continuous_actions, const int &nb_discrete_action) {
-    return std::make_shared<SacAgent>(
-        vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_action,
-        get_value("actor_learning_rate", 1e-4f), get_value("critic_learning_rate", 3e-4f),
-        get_value("alpha_learning_rate", 1e-4f), get_value("sensors_hidden_size", 256),
-        get_value("actions_hidden_size", 64),
-        get_value<hidden_layers>("actor_hidden_size", parse_cli_hidden_layer, {{1024, 512}}).layers,
-        get_value<hidden_layers>("critic_hidden_size", parse_cli_hidden_layer, {{1024, 512}})
-            .layers,
-        get_value<vision_channels>(
-            "vision_channels", parse_cli_vision_channels,
-            {{{3, 8}, {8, 16}, {16, 32}, {32, 64}, {64, 128}}})
-            .channels,
-        get_value<group_norm_nums>("group_norm_nums", parse_cli_group_norms, {{{2, 4, 8, 16, 32}}})
-            .groups,
-        torch::Device(torch::kCPU), get_value("metric_window_size", 1024), get_value("tau", 0.005f),
-        get_value("gamma", 0.995f), get_value("initial_alpha_continuous", 1.f),
-        get_value("initial_alpha_discrete", 1.f), get_value("target_continuous_sigma", 0.1f),
-        get_value("discrete_entropy_factor", 0.9f));
-}
+namespace arenai::train {
+
+    SacAgentFactory::SacAgentFactory(const std::map<std::string, std::string> &arguments)
+        : AgentFactory(arguments) {}
+
+    std::shared_ptr<AbstractAgent> SacAgentFactory::get_agent_impl(
+        const int &vision_height, const int &vision_width, const int &nb_sensors,
+        const int &nb_continuous_actions, const int &nb_discrete_action) {
+        return std::make_shared<SacAgent>(
+            vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_action,
+            get_value("actor_learning_rate", 1e-4f), get_value("critic_learning_rate", 3e-4f),
+            get_value("alpha_learning_rate", 1e-4f), get_value("sensors_hidden_size", 256),
+            get_value("actions_hidden_size", 64),
+            get_value<hidden_layers>("actor_hidden_size", parse_cli_hidden_layer, {{1024, 512}})
+                .layers,
+            get_value<hidden_layers>("critic_hidden_size", parse_cli_hidden_layer, {{1024, 512}})
+                .layers,
+            get_value<vision_channels>(
+                "vision_channels", parse_cli_vision_channels,
+                {{{3, 8}, {8, 16}, {16, 32}, {32, 64}, {64, 128}}})
+                .channels,
+            get_value<group_norm_nums>(
+                "group_norm_nums", parse_cli_group_norms, {{{2, 4, 8, 16, 32}}})
+                .groups,
+            torch::Device(torch::kCPU), get_value("metric_window_size", 1024),
+            get_value("tau", 0.005f), get_value("gamma", 0.995f),
+            get_value("initial_alpha_continuous", 1.f), get_value("initial_alpha_discrete", 1.f),
+            get_value("target_continuous_sigma", 0.1f), get_value("discrete_entropy_factor", 0.9f));
+    }
+
+}// namespace arenai::train

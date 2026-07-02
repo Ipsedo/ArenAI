@@ -7,12 +7,16 @@
 
 #include <torch/torch.h>
 
-void init_hidden_weights(torch::nn::Module &module);
+namespace arenai::train {
 
-void init_mu_output_weights(torch::nn::Module &module);
-void init_sigma_output_weights(torch::nn::Module &module);
-void init_discrete_output_weights(torch::nn::Module &module);
+    void init_hidden_weights(torch::nn::Module &module);
 
-void init_value_output_weights(torch::nn::Module &module);
+    void init_mu_output_weights(torch::nn::Module &module);
+    void init_sigma_output_weights(torch::nn::Module &module);
+    void init_discrete_output_weights(torch::nn::Module &module);
+
+    void init_value_output_weights(torch::nn::Module &module);
+
+}// namespace arenai::train
 
 #endif//ARENAI_TRAIN_HOST_INIT_H

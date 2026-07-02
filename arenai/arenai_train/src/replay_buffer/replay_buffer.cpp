@@ -9,7 +9,7 @@
 ReplayBuffer::ReplayBuffer(const int memory_size)
     : initialized_(false), memory_size_(memory_size), write_idx_(0), size_(0) {}
 
-void ReplayBuffer::initialize(const TorchInputStep &first_step) {
+void ReplayBuffer::initialize(const TorchStep &first_step) {
     const auto mem = static_cast<int64_t>(memory_size_);
     constexpr auto cpu = torch::kCPU;
 
@@ -24,7 +24,6 @@ void ReplayBuffer::initialize(const TorchInputStep &first_step) {
     store_cont_action_ = make_storage(first_step.action.continuous_action);
     store_disc_action_ = make_storage(first_step.action.discrete_action);
     store_reward_ = make_storage(first_step.reward);
-    store_potential_ = make_storage(first_step.potential);
     store_done_ = make_storage(first_step.done);
     store_next_vision_ = make_storage(first_step.next_state.vision);
     store_next_proprioception_ = make_storage(first_step.next_state.proprioception);
@@ -32,12 +31,12 @@ void ReplayBuffer::initialize(const TorchInputStep &first_step) {
     initialized_ = true;
 }
 
-void ReplayBuffer::add(const TorchInputStep &step) {
+void ReplayBuffer::add(const TorchStep &step) {
     if (!initialized_) initialize(step);
 
     on_add_step(step);
 
-    const auto [state, action, reward, potential, done, next_state] = step;
+    const auto [state, action, reward, done, next_state] = step;
 
     const auto idx = static_cast<int64_t>(write_idx_);
 
@@ -46,7 +45,6 @@ void ReplayBuffer::add(const TorchInputStep &step) {
     store_cont_action_[idx].copy_(action.continuous_action.detach());
     store_disc_action_[idx].copy_(action.discrete_action.detach());
     store_reward_[idx].copy_(reward);
-    store_potential_[idx].copy_(potential);
     store_done_[idx].copy_(done);
     store_next_vision_[idx].copy_(next_state.vision);
     store_next_proprioception_[idx].copy_(next_state.proprioception);
@@ -55,7 +53,7 @@ void ReplayBuffer::add(const TorchInputStep &step) {
     if (size_ < memory_size_) size_++;
 }
 
-TorchOutputStep ReplayBuffer::sample(int batch_size, torch::Device device) const {
+TorchStep ReplayBuffer::sample(int batch_size, torch::Device device) const {
     batch_size = std::max(1, std::min(batch_size, static_cast<int>(size_)));
 
     const auto idx = torch::randint(
@@ -68,7 +66,6 @@ TorchOutputStep ReplayBuffer::sample(int batch_size, torch::Device device) const
          {store_cont_action_.index_select(0, idx).to(device),
           store_disc_action_.index_select(0, idx).to(device)},
          store_reward_.index_select(0, idx).to(device),
-         store_potential_.index_select(0, idx).to(device),
          store_done_.index_select(0, idx).to(device),
          {store_next_vision_.index_select(0, idx).to(device),
           store_next_proprioception_.index_select(0, idx).to(device)}});
@@ -78,10 +75,10 @@ size_t ReplayBuffer::size() const { return size_; }
 
 bool ReplayBuffer::is_full() const { return size_ >= memory_size_; }
 
-void ReplayBuffer::on_add_step(const TorchInputStep &single_step) const {}
+void ReplayBuffer::on_add_step(const TorchStep &single_step) const {}
 
-TorchOutputStep ReplayBuffer::transform_at_sample(const TorchInputStep &batch_steps) const {
+TorchStep ReplayBuffer::transform_at_sample(const TorchStep &batch_steps) const {
     return {
-        batch_steps.state, batch_steps.action, batch_steps.reward + batch_steps.potential,
-        batch_steps.done, batch_steps.next_state};
+        batch_steps.state, batch_steps.action, batch_steps.reward, batch_steps.done,
+        batch_steps.next_state};
 }

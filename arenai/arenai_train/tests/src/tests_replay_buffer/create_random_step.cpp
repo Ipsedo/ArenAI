@@ -4,7 +4,7 @@
 
 #include "./create_random_step.h"
 
-TorchInputStep create_random_step(
+TorchStep create_random_step(
     int width, int height, int nb_cont_actions, int nb_discrete_actions, int nb_sensors,
     bool done) {
     return {

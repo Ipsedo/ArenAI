@@ -39,7 +39,6 @@ int main(const int argc, char **argv) {
     parser.add_argument("--actor_learning_rate").scan<'g', float>().default_value(1e-4f);
     parser.add_argument("--critic_learning_rate").scan<'g', float>().default_value(3e-4f);
     parser.add_argument("--alpha_learning_rate").scan<'g', float>().default_value(1e-4f);
-    parser.add_argument("--potential_reward_scale").scan<'g', float>().default_value(0.0f);
     parser.add_argument("--target_continuous_sigma").scan<'g', float>().default_value(0.3f);
     parser.add_argument("--discrete_entropy_factor").scan<'g', float>().default_value(0.9f);
     parser.add_argument("--epochs").scan<'i', int>().default_value(8);
@@ -83,8 +82,7 @@ int main(const int argc, char **argv) {
         {std::filesystem::path(parser.get<std::string>("--output_folder")),
          std::filesystem::path(parser.get<std::string>("--asset_folder")),
          parser.get<float>("--actor_learning_rate"), parser.get<float>("--critic_learning_rate"),
-         parser.get<float>("--alpha_learning_rate"), parser.get<float>("--potential_reward_scale"),
-         parser.get<float>("--target_continuous_sigma"),
+         parser.get<float>("--alpha_learning_rate"), parser.get<float>("--target_continuous_sigma"),
          parser.get<float>("--discrete_entropy_factor"), parser.get<int>("--epochs"),
          parser.get<int>("--batch_size"), parser.get<int>("--max_episode_steps"),
          parser.get<int>("--nb_episodes"), parser.get<int>("--replay_buffer_size"),

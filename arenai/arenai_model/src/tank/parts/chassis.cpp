@@ -2,7 +2,7 @@
 // Created by samuel on 02/04/2023.
 //
 
-#include "../chassis.h"
+#include "./chassis.h"
 
 #include <glm/gtc/type_ptr.hpp>
 

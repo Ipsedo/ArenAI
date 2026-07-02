@@ -32,7 +32,7 @@ SacAgentTest::make_filled_buffer(const SacTestConfig &cfg, const int n_steps) {
     auto buffer = std::make_unique<ReplayBuffer>(n_steps * 2);
 
     for (int i = 0; i < n_steps; ++i) {
-        TorchInputStep step;
+        TorchStep step;
         step.state.vision =
             torch::randint(0, 255, {3, cfg.vision_height, cfg.vision_width}, torch::kUInt8);
         step.state.proprioception = torch::randn({cfg.nb_sensors});

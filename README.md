@@ -10,6 +10,11 @@ When agent is trained (with SAC algorithm) you can fight against other tanks.
 
 ## Installation
 
-You can see the guides for :
+First you need to clone the repo :
+```bash
+$ git clone https://github.com/Ipsedo/ArenAI.git -b develop
+```
+
+Then you can see the guides for :
 * Main C++ modules (MVC arch, train program and desktop game) : [README.md](arenai/README.md)
 * Android application (android game) : [README.md](android/README.md)

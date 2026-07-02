@@ -13,7 +13,7 @@
 #include <arenai_view/camera.h>
 
 #include "./items/convex.h"
-#include "./shell.h"
+#include "shell.h"
 
 class CanonItem final : public LifeItem,
                         public ConvexItem,

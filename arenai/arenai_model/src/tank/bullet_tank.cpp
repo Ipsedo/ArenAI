@@ -7,11 +7,11 @@
 #include <algorithm>
 
 #include "../bullet_engine.h"
-#include "./canon.h"
-#include "./chassis.h"
-#include "./shell.h"
-#include "./turret.h"
-#include "./wheel.h"
+#include "./parts/canon.h"
+#include "./parts/chassis.h"
+#include "./parts/shell.h"
+#include "./parts/turret.h"
+#include "./parts/wheel.h"
 
 BulletTank::BulletTank(
     BulletPhysicEngine &engine, const std::shared_ptr<AbstractFileReader> &file_reader,

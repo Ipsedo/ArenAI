@@ -10,11 +10,11 @@
 namespace arenai::controller {
 
     template<typename Input>
-    class ControllerHandler {
+    class EventHandler {
     public:
-        virtual ~ControllerHandler() = default;
+        virtual ~EventHandler() = default;
 
-        ControllerHandler() = default;
+        EventHandler() = default;
 
         void add_controller(const std::shared_ptr<Controller> &controller) {
             controllers.push_back(controller);

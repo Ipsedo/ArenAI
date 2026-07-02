@@ -13,7 +13,7 @@
 #include "./types.h"
 
 namespace arenai::core {
-    class EnemyControllerHandler final : public controller::ControllerHandler<Action> {
+    class EnemyControllerHandler final : public controller::EventHandler<Action> {
     public:
         explicit EnemyControllerHandler(
             float refresh_frequency, float wanted_fire_frequency,

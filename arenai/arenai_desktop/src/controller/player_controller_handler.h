@@ -22,7 +22,7 @@ namespace arenai::desktop {
         int mouse_button_action;
     };
 
-    class MouseKeyboardPlayerControllerHandler : public controller::ControllerHandler<GlfwInput> {
+    class MouseKeyboardPlayerControllerHandler : public controller::EventHandler<GlfwInput> {
     public:
         explicit MouseKeyboardPlayerControllerHandler(GLFWwindow *window);
 

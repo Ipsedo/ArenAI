@@ -30,7 +30,6 @@ namespace arenai::model {
             float wanted_frame_frequency);
 
         float get_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
-        float get_phi(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
 
         bool is_dead() override;
         bool is_suicide() const override;

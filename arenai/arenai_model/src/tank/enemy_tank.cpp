@@ -113,29 +113,6 @@ namespace arenai::model {
         return reward;
     }
 
-    float BulletEnemyTank::get_phi(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
-        float best_score = 0.f;
-
-        constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
-        const glm::vec3 chassis_pos = get_chassis()->get_model_matrix() * world_center;
-
-        for (const auto &tank: tanks) {
-            if (tank.get() == this || tank->is_dead()) continue;
-
-            const glm::vec3 other_pos = tank->get_chassis()->get_model_matrix() * world_center;
-            const float distance = glm::length(other_pos - chassis_pos);
-            const float distance_score = std::exp(-0.5f * std::pow(distance / distance_scale, 2.f));
-
-            const float angle = compute_aim_angle(tank);
-            const float angle_score = (std::cos(angle) + 1.f) / 2.f;
-
-            if (const float score = angle_score * distance_score; score > best_score)
-                best_score = score;
-        }
-
-        return best_score;
-    }
-
     int BulletEnemyTank::get_nearest_enemy_index(
         const std::vector<std::shared_ptr<EnemyTank>> &tanks, const glm::vec3 &pos) const {
         constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);

@@ -86,8 +86,12 @@ float BulletEnemyTank::get_reward(const std::vector<std::shared_ptr<EnemyTank>> 
             const auto best_tank_pos =
                 glm::vec3(best_tank_model_matrix * glm::vec4(glm::vec3(0.f), 1.f));
 
-            hit_reward = compute_hit_reward(fire_pos, best_tank_pos, hit_pos) * 2.f - 1.f
-                         + (has_hit ? 1.f : 0.f) + (has_killed ? 2.f : 0.f);
+            constexpr float w_aim = 1.0f;
+            constexpr float c_miss = 0.1f;
+
+            hit_reward = w_aim * compute_hit_reward(fire_pos, best_tank_pos, hit_pos)
+                         - (has_hit ? 0.f : c_miss) + (has_hit ? 1.f : 0.f)
+                         + (has_killed ? 2.f : 0.f);
         }
 
         last_shoot_info = std::nullopt;

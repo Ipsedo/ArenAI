@@ -12,7 +12,7 @@ When agent is trained (with SAC algorithm) you can fight against other tanks.
 
 First you need to clone the repo :
 ```bash
-$ git clone https://github.com/Ipsedo/ArenAI.git -b develop
+$ git clone https://github.com/Ipsedo/ArenAI.git
 ```
 
 Then you can see the guides for :

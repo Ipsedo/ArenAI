@@ -152,7 +152,6 @@ namespace arenai::train {
 
                 // step environment
                 const auto steps = env->step(environment_options.wanted_frequency, actions_for_env);
-                const auto curr_phi_vector = env->get_phi_vector();
 
                 last_states.clear();
                 last_states.reserve(environment_options.nb_tanks);

@@ -51,7 +51,7 @@ TEST_F(TorchConverterTest, SingleStateToTensor) {
 
     State state;
     state.vision.pixels.resize(3 * H * W, 128);
-    state.proprioception.resize(ENEMY_PROPRIOCEPTION_SIZE, 1.0f);
+    state.proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE, 1.0f);
 
     const auto [vision, proprioception] = state_to_tensor(state, H, W);
 
@@ -62,7 +62,7 @@ TEST_F(TorchConverterTest, SingleStateToTensor) {
     ASSERT_EQ(vision.dtype(), torch::kUInt8);
 
     ASSERT_EQ(proprioception.dim(), 1);
-    ASSERT_EQ(proprioception.size(0), ENEMY_PROPRIOCEPTION_SIZE);
+    ASSERT_EQ(proprioception.size(0), model::ENEMY_PROPRIOCEPTION_SIZE);
     ASSERT_EQ(proprioception.dtype(), torch::kFloat);
 }
 
@@ -75,7 +75,7 @@ TEST_F(TorchConverterTest, StateVisionPixelsPreserved) {
         50, 60,  70,  80,// C=1
         90, 100, 110, 120// C=2
     };
-    state.proprioception.resize(ENEMY_PROPRIOCEPTION_SIZE, 0.0f);
+    state.proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE, 0.0f);
 
     const auto [vision, proprioception] = state_to_tensor(state, H, W);
 
@@ -93,14 +93,14 @@ TEST_F(TorchConverterTest, StateProprioceptionPreserved) {
 
     State state;
     state.vision.pixels.resize(3 * H * W, 0);
-    state.proprioception.resize(ENEMY_PROPRIOCEPTION_SIZE);
-    for (int i = 0; i < ENEMY_PROPRIOCEPTION_SIZE; ++i)
+    state.proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE);
+    for (int i = 0; i < model::ENEMY_PROPRIOCEPTION_SIZE; ++i)
         state.proprioception[i] = static_cast<float>(i) * 0.1f;
 
     const auto [vision, proprioception] = state_to_tensor(state, H, W);
 
     auto acc = proprioception.accessor<float, 1>();
-    for (int i = 0; i < ENEMY_PROPRIOCEPTION_SIZE; ++i)
+    for (int i = 0; i < model::ENEMY_PROPRIOCEPTION_SIZE; ++i)
         ASSERT_FLOAT_EQ(acc[i], static_cast<float>(i) * 0.1f);
 }
 
@@ -179,7 +179,7 @@ TEST_P(StatesToTensorParamTest, OutputShapeCorrect) {
     std::vector<State> states(batch);
     for (auto &s: states) {
         s.vision.pixels.resize(3 * height * width, 0);
-        s.proprioception.resize(ENEMY_PROPRIOCEPTION_SIZE, 0.0f);
+        s.proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE, 0.0f);
     }
 
     const auto [vision, proprioception] = states_to_tensor(states, height, width);
@@ -191,7 +191,7 @@ TEST_P(StatesToTensorParamTest, OutputShapeCorrect) {
     ASSERT_EQ(vision.dtype(), torch::kUInt8);
 
     ASSERT_EQ(proprioception.size(0), batch);
-    ASSERT_EQ(proprioception.size(1), ENEMY_PROPRIOCEPTION_SIZE);
+    ASSERT_EQ(proprioception.size(1), model::ENEMY_PROPRIOCEPTION_SIZE);
     ASSERT_EQ(proprioception.dtype(), torch::kFloat);
 }
 
@@ -201,7 +201,7 @@ TEST_P(StatesToTensorParamTest, NoGradient) {
     std::vector<State> states(batch);
     for (auto &s: states) {
         s.vision.pixels.resize(3 * height * width, 0);
-        s.proprioception.resize(ENEMY_PROPRIOCEPTION_SIZE, 0.0f);
+        s.proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE, 0.0f);
     }
 
     const auto [vision, proprioception] = states_to_tensor(states, height, width);
@@ -218,7 +218,7 @@ TEST_P(StatesToTensorParamTest, PixelDataPreserved) {
         states[b].vision.pixels.resize(3 * height * width);
         for (int i = 0; i < 3 * height * width; ++i)
             states[b].vision.pixels[i] = static_cast<uint8_t>((b + i) % 256);
-        states[b].proprioception.resize(ENEMY_PROPRIOCEPTION_SIZE, 0.0f);
+        states[b].proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE, 0.0f);
     }
 
     const auto [vision, proprioception] = states_to_tensor(states, height, width);

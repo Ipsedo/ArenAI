@@ -25,11 +25,12 @@ namespace arenai::desktop {
 
         torch::Device device = model_options.cuda ? torch::kCUDA : torch::kCPU;
 
-        const auto sac_agent = train::SacAgentFactory(model_options.hyper_parameters)
-                                   .get_agent(
-                                       model_options.vision_height, model_options.vision_height,
-                                       ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_CONTINUOUS_ACTION,
-                                       ENEMY_NB_DISCRETE_ACTION);
+        const auto sac_agent =
+            train::SacAgentFactory(model_options.hyper_parameters)
+                .get_agent(
+                    model_options.vision_height, model_options.vision_height,
+                    model::ENEMY_PROPRIOCEPTION_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
+                    model::ENEMY_NB_DISCRETE_ACTION);
         sac_agent->set_train(false);
 
         sac_agent->load(std::filesystem::path(model_options.state_dict_folder));

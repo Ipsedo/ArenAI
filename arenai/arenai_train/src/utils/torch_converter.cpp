@@ -41,7 +41,7 @@ namespace arenai::train {
         constexpr int64_t C = 3;
         const int64_t H = vision_height;
         const int64_t W = vision_width;
-        constexpr int64_t P = ENEMY_PROPRIOCEPTION_SIZE;
+        constexpr int64_t P = model::ENEMY_PROPRIOCEPTION_SIZE;
 
         const torch::Tensor visions_u8 = torch::zeros(
             {N, C, H, W}, torch::TensorOptions().dtype(torch::kUInt8).requires_grad(false));

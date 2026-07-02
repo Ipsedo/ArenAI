@@ -4,7 +4,17 @@
   "permissions": {
     "allow": [
       "Read(*)",
-      "Search(*)"
+      "Search(*)",
+      "Grep",
+      "Glob",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(cd:*)",
+      "Bash(echo:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(clang-format:*)",
+      "Bash(mkdir -p build)"
     ]
   },
   "hooks": {

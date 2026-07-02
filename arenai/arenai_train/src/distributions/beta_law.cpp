@@ -13,28 +13,30 @@ namespace arenai::train {
 
     // Kumaraswamy
 
-    inline torch::Tensor clamp_pos(const torch::Tensor &t) { return torch::clamp(t, EPSILON); }
+    inline torch::Tensor clamp_pos(const torch::Tensor &t) {
+        return torch::clamp(t, core::EPSILON);
+    }
 
     inline torch::Tensor clamp_unit_open(const torch::Tensor &x) {
-        return torch::clamp(x, EPSILON, 1.0 - EPSILON);
+        return torch::clamp(x, core::EPSILON, 1.0 - core::EPSILON);
     }
 
     torch::Tensor beta_law_sample(const torch::Tensor &alpha, const torch::Tensor &beta) {
         const auto clamped_alpha = clamp_pos(alpha);
         const auto clamped_beta = clamp_pos(beta);
 
-        const auto u =
-            torch::clamp(torch::rand_like(clamped_alpha + clamped_beta), EPSILON, 1.0 - EPSILON);
+        const auto u = torch::clamp(
+            torch::rand_like(clamped_alpha + clamped_beta), core::EPSILON, 1.0 - core::EPSILON);
         const auto inner =
-            torch::clamp(1.0 - torch::pow(1.0 - u, 1.0 / clamped_beta), EPSILON, 1.0);
+            torch::clamp(1.0 - torch::pow(1.0 - u, 1.0 / clamped_beta), core::EPSILON, 1.0);
 
         return clamp_unit_open(torch::pow(inner, 1.0 / clamped_alpha)) * 2.f - 1.f;
     }
 
     torch::Tensor beta_law_log_proba(
         const torch::Tensor &x, const torch::Tensor &alpha, const torch::Tensor &beta) {
-        const auto clamped_alpha = torch::clamp_min(alpha, EPSILON);
-        const auto clamped_beta = torch::clamp_min(beta, EPSILON);
+        const auto clamped_alpha = torch::clamp_min(alpha, core::EPSILON);
+        const auto clamped_beta = torch::clamp_min(beta, core::EPSILON);
 
         constexpr float eps = 1e-6f;
         const auto y = torch::clamp((x + 1.f) / 2.f, eps, 1.f - eps);

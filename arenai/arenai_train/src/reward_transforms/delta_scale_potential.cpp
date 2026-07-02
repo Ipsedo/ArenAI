@@ -15,8 +15,8 @@ namespace arenai::train {
     DeltaScalePotentialRewardTransform::DeltaScalePotentialRewardTransform(
         const float wanted_frequency, const float target_potential_reward)
         : ScalePotentialTransform(compute_potential_reward_scale(
-            WHEEL_RADIAL_VELOCITY, 1.f, ENEMY_TURRET_RADIAL_VELOCITY,
-            ENEMY_TURRET_RADIAL_VELOCITY * 0.4f, 250.f, wanted_frequency,
+            model::WHEEL_RADIAL_VELOCITY, 1.f, model::ENEMY_TURRET_RADIAL_VELOCITY,
+            model::ENEMY_TURRET_RADIAL_VELOCITY * 0.4f, 250.f, wanted_frequency,
             target_potential_reward)) {}
 
     float DeltaScalePotentialRewardTransform::compute_potential_reward_scale(

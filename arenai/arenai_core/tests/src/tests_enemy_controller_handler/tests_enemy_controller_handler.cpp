@@ -22,7 +22,7 @@ namespace {
     struct HandlerParams {
         float refresh_frequency = 1.f / 60.f;
         float wanted_fire_frequency = 1.f / 6.f;
-        float turret_rad_per_second = ENEMY_TURRET_RADIAL_VELOCITY;
+        float turret_rad_per_second = model::ENEMY_TURRET_RADIAL_VELOCITY;
     };
 
     std::pair<std::unique_ptr<EnemyControllerHandler>, std::shared_ptr<model::ActionStats>>

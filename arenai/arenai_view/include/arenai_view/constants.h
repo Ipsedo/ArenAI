@@ -5,9 +5,10 @@
 #ifndef ARENAI_CONSTANTS_H
 #define ARENAI_CONSTANTS_H
 
-#define BYTES_PER_FLOAT 4
+namespace arenai::view {
 
-// This module has no non-macro symbols to wrap; the BYTES_PER_FLOAT macro stays
-// global (macros are never namespaced).
+    constexpr int BYTES_PER_FLOAT = 4;
+
+}// namespace arenai::view
 
 #endif// ARENAI_CONSTANTS_H

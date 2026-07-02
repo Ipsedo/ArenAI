@@ -7,10 +7,10 @@
 
 #include <torch/torch.h>
 
-#define MIN_VALUE -1.f
-#define MAX_VALUE 1.f
-
 namespace arenai::train {
+
+    constexpr float MIN_VALUE = -1.f;
+    constexpr float MAX_VALUE = 1.f;
 
     torch::Tensor truncated_normal_sample(
         const torch::Tensor &mu, const torch::Tensor &sigma, float min_value = MIN_VALUE,

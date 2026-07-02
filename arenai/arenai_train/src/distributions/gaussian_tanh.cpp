@@ -13,7 +13,7 @@ namespace arenai::train {
 
     std::pair<torch::Tensor, torch::Tensor>
     gaussian_tanh_sample(const torch::Tensor &mu, const torch::Tensor &sigma) {
-        const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
+        const auto safe_sigma = torch::clamp(sigma, core::SIGMA_MIN, core::SIGMA_MAX);
 
         const auto noise = torch::randn_like(mu);
 
@@ -23,7 +23,7 @@ namespace arenai::train {
 
     torch::Tensor gaussian_tanh_log_pdf(
         const torch::Tensor &u, const torch::Tensor &mu, const torch::Tensor &sigma) {
-        const auto safe_sigma = torch::clamp(sigma, SIGMA_MIN, SIGMA_MAX);
+        const auto safe_sigma = torch::clamp(sigma, core::SIGMA_MIN, core::SIGMA_MAX);
 
         const auto log_unnormalized = -0.5 * torch::pow((u - mu) / safe_sigma, 2);
         const auto log_normalization = torch::log(safe_sigma) + 0.5 * std::log(2.0 * M_PI);

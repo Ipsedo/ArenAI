@@ -41,9 +41,10 @@ namespace arenai::train {
 
         std::cout << "Vision size : width=" << environment_options.vision_width
                   << ", height=" << environment_options.vision_height << std::endl;
-        std::cout << "Proprioception size : " << ENEMY_PROPRIOCEPTION_SIZE << std::endl;
-        std::cout << "Action size (continuous) : " << ENEMY_NB_CONTINUOUS_ACTION << std::endl;
-        std::cout << "Action size (discrete) : " << ENEMY_NB_DISCRETE_ACTION << std::endl;
+        std::cout << "Proprioception size : " << model::ENEMY_PROPRIOCEPTION_SIZE << std::endl;
+        std::cout << "Action size (continuous) : " << model::ENEMY_NB_CONTINUOUS_ACTION
+                  << std::endl;
+        std::cout << "Action size (discrete) : " << model::ENEMY_NB_DISCRETE_ACTION << std::endl;
 
         const auto env = std::make_unique<TrainTankEnvironment>(
             gl_context, environment_options.nb_tanks, train_options.android_asset_folder,
@@ -63,15 +64,15 @@ namespace arenai::train {
 
         auto agent = std::make_shared<SacAgent>(
             environment_options.vision_height, environment_options.vision_width,
-            ENEMY_PROPRIOCEPTION_SIZE, ENEMY_NB_CONTINUOUS_ACTION, ENEMY_NB_DISCRETE_ACTION,
-            train_options.actor_learning_rate, train_options.critic_learning_rate,
-            train_options.alpha_learning_rate, model_options.hidden_size_sensors,
-            model_options.hidden_size_actions, model_options.actor_hidden_sizes,
-            model_options.critic_hidden_sizes, model_options.vision_channels,
-            model_options.group_norm_nums, torch_device, train_options.metric_window_size,
-            model_options.tau, model_options.gamma, model_options.initial_alpha_continuous,
-            model_options.initial_alpha_discrete, train_options.target_continuous_sigma,
-            train_options.discrete_entropy_factor);
+            model::ENEMY_PROPRIOCEPTION_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
+            model::ENEMY_NB_DISCRETE_ACTION, train_options.actor_learning_rate,
+            train_options.critic_learning_rate, train_options.alpha_learning_rate,
+            model_options.hidden_size_sensors, model_options.hidden_size_actions,
+            model_options.actor_hidden_sizes, model_options.critic_hidden_sizes,
+            model_options.vision_channels, model_options.group_norm_nums, torch_device,
+            train_options.metric_window_size, model_options.tau, model_options.gamma,
+            model_options.initial_alpha_continuous, model_options.initial_alpha_discrete,
+            train_options.target_continuous_sigma, train_options.discrete_entropy_factor);
 
         std::cout << "Parameters : " << agent->count_parameters() << std::endl;
         std::cout << "Target entropy (continuous) : " << agent->get_continuous_target_entropy()

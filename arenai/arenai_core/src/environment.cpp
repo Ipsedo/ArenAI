@@ -89,7 +89,7 @@ namespace arenai::core {
 
             tank_controller_handler.push_back(std::make_unique<EnemyControllerHandler>(
                 wanted_frequency, 1.f / 6.f, tank_factories.back()->get_action_stats(),
-                ENEMY_TURRET_RADIAL_VELOCITY));
+                model::ENEMY_TURRET_RADIAL_VELOCITY));
 
             for (const auto &controller: tank_factories.back()->get_controllers())
                 tank_controller_handler.back()->add_controller(controller);

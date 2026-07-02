@@ -5,14 +5,16 @@
 #ifndef ARENAI_WHEEL_H
 #define ARENAI_WHEEL_H
 
+#include <cmath>
+
 #include <arenai_controller/controller.h>
 #include <arenai_controller/inputs.h>
 
 #include "../../items/convex.h"
 
-#define WHEEL_DIRECTION_MAX_RADIAN (static_cast<float>(M_PI) / 6.f)
-
 namespace arenai::model {
+
+    constexpr float WHEEL_DIRECTION_MAX_RADIAN = static_cast<float>(M_PI) / 6.f;
 
     class WheelItem : public LifeItem, public ConvexItem, public controller::Controller {
     public:

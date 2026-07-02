@@ -35,10 +35,11 @@ namespace arenai::train {
                         torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
                         torch::nn::Tanh()))),
           sigma(register_module(
-              "sigma", torch::nn::Sequential(
-                           torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
-                           std::make_shared<Clamp>(std::log(SIGMA_MIN), std::log(SIGMA_MAX)),
-                           std::make_shared<Exp>()))),
+              "sigma",
+              torch::nn::Sequential(
+                  torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
+                  std::make_shared<Clamp>(std::log(core::SIGMA_MIN), std::log(core::SIGMA_MAX)),
+                  std::make_shared<Exp>()))),
           discrete(register_module(
               "discrete", torch::nn::Sequential(
                               torch::nn::Linear(hidden_sizes.back(), nb_discrete_actions),

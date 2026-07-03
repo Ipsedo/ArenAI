@@ -2,7 +2,7 @@
 // Created by samuel on 11/06/2026.
 //
 
-#include "./scale_potential.h"
+#include "./scale_transform.h"
 
 using namespace arenai;
 using namespace arenai::train;

@@ -4,8 +4,8 @@
 
 #include <replay_buffer/reward_replay_buffer.h>
 #include <reward_transforms/identity_transform.h>
-#include <reward_transforms/running_norm.h>
-#include <reward_transforms/scale_potential.h>
+#include <reward_transforms/running_norm_transform.h>
+#include <reward_transforms/scale_transform.h>
 
 #include <arenai_train_tests/tests_replay_buffer/tests_reward_replay_buffer.h>
 

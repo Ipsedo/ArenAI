@@ -2,7 +2,7 @@
 // Created by samuel on 10/06/2026.
 //
 
-#include "./ema_potential.h"
+#include "./ema_transform.h"
 
 using namespace arenai;
 using namespace arenai::train;

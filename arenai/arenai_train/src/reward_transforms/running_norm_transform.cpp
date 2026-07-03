@@ -2,7 +2,7 @@
 // Created by samuel on 10/06/2026.
 //
 
-#include "./running_norm.h"
+#include "./running_norm_transform.h"
 
 using namespace arenai;
 using namespace arenai::train;

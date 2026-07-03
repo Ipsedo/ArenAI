@@ -2,7 +2,7 @@
 // Created by claude on 01/07/2026.
 //
 
-#include <reward_transforms/ema_potential.h>
+#include <reward_transforms/ema_transform.h>
 
 #include <arenai_train_tests/tests_reward_transforms/tests_ema_potential_edge.h>
 

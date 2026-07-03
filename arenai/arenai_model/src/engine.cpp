@@ -17,12 +17,4 @@ namespace arenai::model {
         return std::make_unique<BulletPhysicEngine>(wanted_frequency);
     }
 
-    std::shared_ptr<TankFactory> make_tank_factory(
-        AbstractPhysicEngine &engine, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
-        const float wanted_frame_frequency) {
-        auto &bullet_engine = static_cast<BulletPhysicEngine &>(engine);
-        return std::make_shared<BulletTankFactory>(
-            bullet_engine, file_reader, wanted_frame_frequency);
-    }
-
 }// namespace arenai::model

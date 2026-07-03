@@ -51,7 +51,7 @@ namespace arenai::core {
 
         std::unique_ptr<EnemyVisionThreadPool> vision_pool_;
 
-        std::vector<std::shared_ptr<model::EnemyTank>> tank_factories;
+        std::vector<std::shared_ptr<model::EnemyTank>> tanks;
         std::vector<std::unique_ptr<EnemyControllerHandler>> tank_controller_handler;
 
         std::unique_ptr<model::AbstractPhysicEngine> physic_engine;
@@ -84,7 +84,7 @@ namespace arenai::core {
         T
         apply_on_factories(std::function<T(const std::vector<std::shared_ptr<model::EnemyTank>> &)>
                                apply_function) {
-            return apply_function(tank_factories);
+            return apply_function(tanks);
         }
 
         std::vector<std::tuple<std::string, glm::mat4>> get_model_matrices() const;

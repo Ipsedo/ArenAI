@@ -37,7 +37,7 @@ namespace arenai::desktop {
         GLFWwindow *curr_window;
 
         std::shared_ptr<utils::AbstractFileReader> asset_file_reader;
-        std::unique_ptr<model::PlayerTank> player_tank_factory;
+        std::unique_ptr<model::PlayerTank> player_tank;
         std::unique_ptr<view::PlayerRenderer> player_renderer;
         std::unique_ptr<MouseKeyboardPlayerControllerHandler> player_controller_handler;
 

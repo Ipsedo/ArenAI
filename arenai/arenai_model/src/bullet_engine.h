@@ -29,6 +29,7 @@ namespace arenai::model {
         void remove_bodies_and_constraints() override;
 
         std::shared_ptr<ItemFactory> get_item_factory() override;
+        std::shared_ptr<TankFactory> get_tank_factory() override;
 
         ~BulletPhysicEngine() override;
 
@@ -53,6 +54,7 @@ namespace arenai::model {
             bullet_item_producers;
 
         std::shared_ptr<ItemFactory> item_factory;
+        std::shared_ptr<TankFactory> tank_factory;
 
         void remove_dead_items();
     };

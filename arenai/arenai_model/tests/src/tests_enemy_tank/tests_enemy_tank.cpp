@@ -21,7 +21,7 @@ using namespace arenai::controller;
 
 TEST_F(EnemyTankTest, DeadWhenSingleWheelDestroyed) {
     add_ground();
-    const auto tank = tank_factory->make_enemy_tank("tank_a", {0.f, 0.f, 0.f});
+    const auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f});
 
     engine->step(1.f / 60.f);
 
@@ -49,7 +49,7 @@ TEST_F(EnemyTankTest, DeadWhenSingleWheelDestroyed) {
 
 TEST_F(EnemyTankTest, OnDeathMultipleCallsDoNotCrash) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank("tank_a", {0.f, 0.f, 0.f});
+    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f});
 
     engine->step(1.f / 60.f);
 
@@ -73,7 +73,7 @@ TEST_F(EnemyTankTest, OnDeathMultipleCallsDoNotCrash) {
 
 TEST_F(EnemyTankTest, OnDeathBeforeDeathDoesNothing) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank("tank_a", {0.f, 0.f, 0.f});
+    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f});
 
     engine->step(1.f / 60.f);
 
@@ -89,8 +89,8 @@ TEST_F(EnemyTankTest, OnDeathBeforeDeathDoesNothing) {
 
 TEST_F(EnemyTankTest, RewardWhenAllEnemiesDeadAndShellFired) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank("tank_a", {0.f, 5.f, 0.f});
-    auto tank_b = tank_factory->make_enemy_tank("tank_b", {0.f, 5.f, 30.f});
+    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
+    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f});
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -120,7 +120,7 @@ TEST_F(EnemyTankTest, RewardWhenAllEnemiesDeadAndShellFired) {
 
 TEST_F(EnemyTankTest, RewardNoNaNWhenAloneInTankList) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank("tank_a", {0.f, 5.f, 0.f});
+    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -146,7 +146,7 @@ TEST_F(EnemyTankTest, RewardNoNaNWhenAloneInTankList) {
 TEST_F(EnemyTankTest, ShellHitsGroundNoRewardNoCrash) {
     add_ground();
     // point the tank away from any enemy so the shell hits the ground
-    auto tank = tank_factory->make_enemy_tank("tank_a", {0.f, 5.f, 0.f});
+    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -179,7 +179,7 @@ TEST_F(EnemyTankTest, ShellHitsGroundNoRewardNoCrash) {
 
 TEST_F(EnemyTankTest, SuicideDetectionWhenFlipped) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank("tank_a", {0.f, 0.f, 0.f});
+    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f});
 
     engine->step(1.f / 60.f);
 
@@ -199,8 +199,8 @@ TEST_F(EnemyTankTest, SuicideDetectionWhenFlipped) {
 
 TEST_F(EnemyTankTest, HasHitOtherTankResetsAfterCall) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank("tank_a", {0.f, 5.f, 0.f});
-    auto tank_b = tank_factory->make_enemy_tank("tank_b", {0.f, 5.f, 30.f});
+    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
+    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f});
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 

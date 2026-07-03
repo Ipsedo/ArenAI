@@ -28,13 +28,10 @@ namespace arenai::model {
         virtual void remove_bodies_and_constraints() = 0;
 
         virtual std::shared_ptr<ItemFactory> get_item_factory() = 0;
+        virtual std::shared_ptr<TankFactory> get_tank_factory() = 0;
     };
 
     std::unique_ptr<AbstractPhysicEngine> make_physic_engine(float wanted_frequency);
-
-    std::shared_ptr<TankFactory> make_tank_factory(
-        AbstractPhysicEngine &engine, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
-        float wanted_frame_frequency);
 
 }// namespace arenai::model
 

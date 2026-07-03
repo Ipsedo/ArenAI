@@ -22,5 +22,5 @@ void EngineTestFixture::SetUp() {
 
     gl_context = std::make_shared<LocalGlContext>();
 
-    tank_factory = model::make_tank_factory(*engine, file_reader, frequency);
+    tank_factory = engine->get_tank_factory();
 }

@@ -28,7 +28,7 @@ namespace arenai::desktop {
             vision_width, 8, true),
           curr_window(glfw_window),
           asset_file_reader(std::make_shared<train::DesktopAssetFileReader>(asset_folder_path)),
-          player_tank_factory(std::nullptr_t()), player_renderer(std::nullptr_t()),
+          player_tank(std::nullptr_t()), player_renderer(std::nullptr_t()),
           player_controller_handler(std::nullptr_t()), window_width(0.f), window_height(0.f),
           wanted_frequency(wanted_frequency) {
 
@@ -69,13 +69,13 @@ namespace arenai::desktop {
 
     void DesktopGameEnvironment::on_reset_physics(
         const std::unique_ptr<model::AbstractPhysicEngine> &engine) {
-        auto tank_factory = model::make_tank_factory(*engine, asset_file_reader, wanted_frequency);
-        player_tank_factory = tank_factory->make_player_tank("player", glm::vec3(0., -40., 40));
+        player_tank = engine->get_tank_factory()->make_player_tank(
+            file_reader, "player", glm::vec3(0., -40., 40));
 
         player_controller_handler =
             std::make_unique<MouseKeyboardPlayerControllerHandler>(curr_window);
 
-        for (auto &ctrl: player_tank_factory->get_controllers())
+        for (auto &ctrl: player_tank->get_controllers())
             player_controller_handler->add_controller(ctrl);
     }
 
@@ -84,7 +84,7 @@ namespace arenai::desktop {
         const std::shared_ptr<view::AbstractGLContext> &gl_context) {
         player_renderer = std::make_unique<view::PlayerRenderer>(
             gl_context, window_width, window_height, glm::vec3(200, 300, 200),
-            player_tank_factory->get_camera());
+            player_tank->get_camera());
 
         player_renderer->make_current();
 
@@ -93,7 +93,7 @@ namespace arenai::desktop {
 
         std::uniform_real_distribution<float> u_dist(0.f, 1.f);
 
-        for (const auto &[name, shape]: player_tank_factory->load_shell_shapes()) {
+        for (const auto &[name, shape]: player_tank->load_shell_shapes()) {
             glm::vec4 color(u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, 1.f);
 
             player_renderer->add_drawable(
@@ -149,7 +149,7 @@ namespace arenai::desktop {
     }
 
     DesktopGameEnvironment::~DesktopGameEnvironment() {
-        std::cout << "Final score : " << player_tank_factory->get_score() << std::endl;
+        std::cout << "Final score : " << player_tank->get_score() << std::endl;
     }
 
 }// namespace arenai::desktop

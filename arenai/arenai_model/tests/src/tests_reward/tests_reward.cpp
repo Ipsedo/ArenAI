@@ -21,8 +21,8 @@ using namespace arenai::controller;
 
 TEST_F(RewardTest, RewardZeroWhenAliveNoShot) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank("tank_a", {0.f, 0.f, 0.f});
-    auto tank_b = tank_factory->make_enemy_tank("tank_b", {20.f, 0.f, 0.f});
+    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f});
+    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {20.f, 0.f, 0.f});
 
     engine->step(1.f / 60.f);
 
@@ -36,8 +36,8 @@ TEST_F(RewardTest, RewardZeroWhenAliveNoShot) {
 
 TEST_F(RewardTest, RewardNegativeWhenDead) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank("tank_a", {0.f, 0.f, 0.f});
-    auto tank_b = tank_factory->make_enemy_tank("tank_b", {20.f, 0.f, 0.f});
+    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f});
+    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {20.f, 0.f, 0.f});
 
     engine->step(1.f / 60.f);
 
@@ -61,8 +61,8 @@ TEST_F(RewardTest, RewardNegativeWhenDead) {
 
 TEST_F(RewardTest, SuicidePenaltyLessThanDeathPenalty) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank("tank_a", {0.f, 0.f, 0.f});
-    auto tank_b = tank_factory->make_enemy_tank("tank_b", {20.f, 0.f, 0.f});
+    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f});
+    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {20.f, 0.f, 0.f});
 
     engine->step(1.f / 60.f);
 
@@ -90,8 +90,8 @@ TEST_F(RewardTest, SuicidePenaltyLessThanDeathPenalty) {
 TEST_F(RewardTest, RewardPositiveOnHit) {
     add_ground();
     // spawn tanks high enough so all parts start above ground and settle cleanly
-    auto tank_a = tank_factory->make_enemy_tank("tank_a", {0.f, 5.f, 0.f});
-    auto tank_b = tank_factory->make_enemy_tank("tank_b", {0.f, 5.f, 30.f});
+    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
+    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f});
 
     // settle on ground (300 frames = 5s at 60fps)
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
@@ -119,8 +119,8 @@ TEST_F(RewardTest, RewardPositiveOnHit) {
 
 TEST_F(RewardTest, ShootInfoResetAfterGetReward) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank("tank_a", {0.f, 0.f, 0.f});
-    auto tank_b = tank_factory->make_enemy_tank("tank_b", {20.f, 0.f, 0.f});
+    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f});
+    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {20.f, 0.f, 0.f});
 
     engine->step(1.f / 60.f);
 
@@ -141,8 +141,8 @@ TEST_F(RewardTest, ShootInfoResetAfterGetReward) {
 
 TEST_F(RewardTest, RewardNoNaNAfterMultipleSteps) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank("tank_a", {0.f, 5.f, 0.f});
-    auto tank_b = tank_factory->make_enemy_tank("tank_b", {0.f, 5.f, 30.f});
+    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
+    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f});
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -163,7 +163,7 @@ TEST_F(RewardTest, RewardNoNaNAfterMultipleSteps) {
 
 TEST_F(RewardTest, RewardWithEmptyTankList) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank("tank_a", {0.f, 5.f, 0.f});
+    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -188,8 +188,8 @@ TEST_F(RewardTest, RewardWithEmptyTankList) {
 
 TEST_F(RewardTest, RewardAccumulatesOverMultipleHits) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank("tank_a", {0.f, 5.f, 0.f});
-    auto tank_b = tank_factory->make_enemy_tank("tank_b", {0.f, 5.f, 30.f});
+    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
+    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f});
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 

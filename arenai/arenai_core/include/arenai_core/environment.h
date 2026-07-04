@@ -29,7 +29,7 @@ namespace arenai::core {
             float wanted_frequency, int vision_height, int vision_width, int vision_num_threads,
             bool vision_thread_sleep);
 
-        virtual std::vector<std::tuple<State, Reward, IsDone>>
+        virtual std::vector<std::tuple<State, Reward, IsDone, IsTruncated>>
         step(float time_delta, const std::vector<Action> &actions);
 
         std::vector<State> reset(float spawn_width, float spawn_height);

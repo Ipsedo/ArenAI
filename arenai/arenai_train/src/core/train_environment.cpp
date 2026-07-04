@@ -34,7 +34,7 @@ namespace arenai::train {
           episode_step_mean_nb_metric(std::make_shared<MeanMetric>("s_μ", 32, 1)),
           episode_step_std_nb_metric(std::make_shared<StdMetric>("s_σ", 32)) {}
 
-    std::vector<std::tuple<core::State, core::Reward, core::IsDone>>
+    std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
     TrainTankEnvironment::step(const float time_delta, const std::vector<core::Action> &actions) {
 
         auto step_result = core::BaseTanksEnvironment::step(time_delta, actions);
@@ -47,17 +47,24 @@ namespace arenai::train {
             return has_hit_result;
         });
 
-        already_done = done;
-
         // natural ending (timeout, death)
         for (int i = 0; i < step_result.size(); i++) {
             remaining_frames[i]--;
             if (has_hit[i]) remaining_frames[i] += nb_frames_added_when_hit;
 
-            if (const auto &[state, reward, is_done] = step_result[i];
-                remaining_frames[i] <= 0 || is_done) {
+            const auto &[state, reward, is_done, is_truncated] = step_result[i];
+
+            if (is_done) {
+                step_result[i] = {state, reward, true, false};
+                done[i] = true;
+
+                continue;
+            }
+
+            if (remaining_frames[i] <= 0) {
                 const float timeout_penalty = remaining_frames[i] <= 0 ? 0.5f : 0.f;
-                step_result[i] = {state, reward - timeout_penalty, true};
+                step_result[i] = {state, reward - timeout_penalty, true, true};
+
                 done[i] = true;
             }
         }
@@ -67,10 +74,11 @@ namespace arenai::train {
             if (done[i]) continue;
 
             if (const long nb_not_done = std::ranges::count(done, false); nb_not_done == 1) {
-                const auto &[state, reward, is_done] = step_result[i];
+                const auto &[state, reward, is_done, is_truncated] = step_result[i];
                 if (only_one_tank_alive())
-                    step_result[i] = {state, reward + 2.f, true}; // winner réel
-                else step_result[i] = {state, reward + 1.f, true};// timeout winner
+                    step_result[i] = {state, reward + 2.f, true, is_truncated}; // winner réel
+                else step_result[i] = {state, reward + 1.f, true, is_truncated};// timeout winner
+
                 done[i] = true;
             }
         }

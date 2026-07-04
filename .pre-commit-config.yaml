@@ -9,4 +9,42 @@ repos:
     rev: v16.0.0
     hooks:
       - id: clang-format
-        types_or: [c++, c, cuda]
+        types_or: [ c++, c ]
+  - repo: local
+    hooks:
+      - id: build
+        name: build
+        language: system
+        entry: sh
+        args: [ ./arenai/build_linux.sh ]
+        types: [ c++, c ]
+        pass_filenames: false
+        require_serial: true
+      - id: test_view
+        name: test_view
+        language: system
+        entry: ./arenai/build/arenai_view/tests/arenai_view_tests
+        types: [ c++, c ]
+        pass_filenames: false
+        require_serial: true
+      - id: test_model
+        name: test_model
+        language: system
+        entry: ./arenai/build/arenai_model/tests/arenai_model_tests
+        types: [ c++, c ]
+        pass_filenames: false
+        require_serial: true
+      - id: test_core
+        name: test_core
+        language: system
+        entry: ./arenai/build/arenai_core/tests/arenai_core_tests
+        types: [ c++, c ]
+        pass_filenames: false
+        require_serial: true
+      - id: test_train
+        name: test_train
+        language: system
+        entry: ./arenai/build/arenai_train/tests/arenai_train_tests
+        types: [ c++, c ]
+        pass_filenames: false
+        require_serial: true

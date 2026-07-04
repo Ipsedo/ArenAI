@@ -13,13 +13,13 @@
 #include <arenai_train/torch_converter.h>
 
 #include "./agents/sac.h"
-#include "./core/train_environment.h"
 #include "./metrics/mean_metric.h"
 #include "./metrics/metric_saver.h"
 #include "./networks_io/torch_saver.h"
 #include "./replay_buffer/reward_replay_buffer.h"
 #include "./reward_transforms/identity_transform.h"
 #include "./view/train_gl_context.h"
+#include "core/train_environment.h"
 
 using namespace arenai;
 using namespace arenai::train;
@@ -158,10 +158,10 @@ namespace arenai::train {
 
                 // save to replay buffer
                 for (int i = 0; i < environment_options.nb_tanks; i++) {
-                    const auto [next_state, reward, env_done] = steps[i];
+                    const auto [next_state, reward, env_done, is_truncated] = steps[i];
                     last_states.push_back(next_state);
 
-                    if (env->is_tank_factory_already_done(i)) continue;
+                    if (is_truncated || env->is_tank_factory_already_done(i)) continue;
 
                     reward_mean_metric->add(reward);
 

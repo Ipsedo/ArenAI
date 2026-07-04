@@ -88,7 +88,7 @@ namespace arenai::desktop {
 
             states.clear();
 
-            for (const auto &[state, reward, done]: steps) states.push_back(state);
+            for (const auto &[state, reward, done, is_truncated]: steps) states.push_back(state);
 
             auto now = std::chrono::steady_clock::now();
             auto dt = now - last_time;

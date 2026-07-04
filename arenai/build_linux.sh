@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+set -ex
 
-if ! [ -d "${SCRIPT_DIR}/build"]; then
-  mkdir build
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+BUILD_DIR="${SCRIPT_DIR}/build"
+
+if [ ! -d "${BUILD_DIR}" ]; then
+  mkdir "${BUILD_DIR}"
 fi
 
-cd "${SCRIPT_DIR}/build"
-cmake ${SCRIPT_DIR}
+cd "${BUILD_DIR}"
+cmake "${SCRIPT_DIR}"
 make -j $(nproc)

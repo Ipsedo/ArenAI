@@ -32,7 +32,7 @@ namespace arenai::model {
             }),
           tank_prefix_name(tank_prefix_name),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-          curr_frame_upside_down(0), distance_scale(250.f), impact_distance_scale(20.f),
+          curr_frame_upside_down(0), distance_scale(250.f), impact_distance_scale(10.f),
           angle_scale(glm::pi<float>() / 3.f), is_dead_already_triggered(false), has_touch(false),
           last_shoot_info(std::nullopt), action_stats(std::make_shared<ActionStats>()) {}
 
@@ -97,7 +97,7 @@ namespace arenai::model {
                     glm::vec3(best_tank_model_matrix * glm::vec4(glm::vec3(0.f), 1.f));
 
                 constexpr float w_aim = 1.0f;
-                constexpr float c_miss = 0.4f;
+                constexpr float c_miss = 0.1f;
 
                 hit_reward = w_aim * compute_hit_reward(fire_pos, best_tank_pos, hit_pos)
                              - (has_hit ? 0.f : c_miss) + (has_hit ? 1.f : 0.f)

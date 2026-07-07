@@ -99,7 +99,7 @@ namespace arenai::model {
                 constexpr float w_aim = 1.0f;
                 constexpr float c_miss = 0.1f;
 
-                hit_reward = w_aim * compute_hit_reward(fire_pos, best_tank_pos, hit_pos)
+                hit_reward = (w_aim + c_miss) * compute_hit_reward(fire_pos, best_tank_pos, hit_pos)
                              - (has_hit ? 0.f : c_miss) + (has_hit ? 1.f : 0.f)
                              + (has_killed ? 2.f : 0.f);
             }

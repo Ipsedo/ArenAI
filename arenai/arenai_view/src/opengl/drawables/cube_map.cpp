@@ -2,8 +2,9 @@
 // Created by samuel on 19/03/2023.
 //
 
-#include <arenai_view/cubemap.h>
-#include <arenai_view/program.h>
+#include "./cube_map.h"
+
+#include "../program.h"
 
 using namespace arenai;
 

@@ -13,9 +13,12 @@
       "Bash(echo:*)",
       "Bash(ls:*)",
       "Bash(find:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
       "Bash(clang-format:*)",
       "Bash(cmake:*)",
       "Bash(make:*)",
+      "Bash(ctest:*)",
       "Bash(mkdir -p build)",
       "Bash(./arenai_core/tests/arenai_core_tests)",
       "Bash(./arenai_view/tests/arenai_view_tests)"

@@ -2,6 +2,8 @@
 // Created by samuel on 18/03/2023.
 //
 
+#include "./program.h"
+
 #include <filesystem>
 #include <ranges>
 #include <utility>
@@ -9,9 +11,8 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <arenai_utils/file_reader.h>
-#include <arenai_view/constants.h>
-#include <arenai_view/program.h>
 
+#include "./constants.h"
 #include "./shader.h"
 
 using namespace arenai;

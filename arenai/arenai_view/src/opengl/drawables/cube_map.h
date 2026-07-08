@@ -9,21 +9,14 @@
 #include <string>
 
 #include <arenai_utils/file_reader.h>
-#include <arenai_view/constants.h>
 #include <arenai_view/drawable.h>
-#include <arenai_view/program.h>
+
+#include "../constants.h"
+#include "../program.h"
 
 namespace arenai::view {
 
-    class CubeMap final : public Drawable {
-    private:
-        static const int POSITION_SIZE = 3;
-        static const int STRIDE = POSITION_SIZE * BYTES_PER_FLOAT;
-
-        std::unique_ptr<Program> program;
-
-        int nb_vertices;
-
+    class CubeMap final : public AbstractDrawable {
     public:
         CubeMap(
             const std::shared_ptr<utils::AbstractFileReader> &file_reader,
@@ -32,6 +25,14 @@ namespace arenai::view {
         void draw(
             glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos_from_camera,
             glm::vec3 camera_pos) override;
+
+    private:
+        static constexpr int POSITION_SIZE = 3;
+        static constexpr int STRIDE = POSITION_SIZE * BYTES_PER_FLOAT;
+
+        std::unique_ptr<Program> program;
+
+        int nb_vertices;
     };
 
 }// namespace arenai::view

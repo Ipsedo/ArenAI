@@ -2,18 +2,19 @@
 // Created by samuel on 18/03/2023.
 //
 
+#include "./specular.h"
+
 #include <iostream>
 
-#include <arenai_view/errors.h>
-#include <arenai_view/specular.h>
+#include "../errors.h"
 
 using namespace arenai;
 
 namespace arenai::view {
 
     /*
- * Specular
- */
+     * Specular
+     */
 
     Specular::Specular(
         const std::shared_ptr<utils::AbstractFileReader> &file_reader,

@@ -18,7 +18,6 @@
 #include "./networks_io/torch_saver.h"
 #include "./replay_buffer/reward_replay_buffer.h"
 #include "./reward_transforms/identity_transform.h"
-#include "./view/train_gl_context.h"
 #include "core/train_environment.h"
 
 using namespace arenai;
@@ -30,13 +29,12 @@ namespace arenai::train {
         const EnvironmentOptions &environment_options, const ModelOptions &model_options,
         const TrainOptions &train_options) {
 
-        auto gl_context = std::make_shared<TrainGlContext>();
-        gl_context->make_current();// only for glGetString(GL_RENDERER)
+        auto graphics_backend = view::make_opengl_view_factory()->make_headless_backend();
 
         torch::Device torch_device =
             train_options.cuda ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU);
 
-        std::cout << "OpenGL device : " << glGetString(GL_RENDERER) << std::endl;
+        std::cout << "OpenGL device : " << graphics_backend->renderer_info() << std::endl;
         std::cout << "PyTorch device : " << torch_device.str() << std::endl;
 
         std::cout << "Vision size : width=" << environment_options.vision_width
@@ -47,10 +45,10 @@ namespace arenai::train {
         std::cout << "Action size (discrete) : " << model::ENEMY_NB_DISCRETE_ACTION << std::endl;
 
         const auto env = std::make_unique<TrainTankEnvironment>(
-            gl_context, environment_options.nb_tanks, train_options.android_asset_folder,
-            environment_options.wanted_frequency, train_options.max_episode_steps,
-            environment_options.vision_height, environment_options.vision_width,
-            environment_options.num_threads);
+            std::move(graphics_backend), environment_options.nb_tanks,
+            train_options.android_asset_folder, environment_options.wanted_frequency,
+            train_options.max_episode_steps, environment_options.vision_height,
+            environment_options.vision_width, environment_options.num_threads);
 
         const float spawn_width_increase =
             (environment_options.final_spawn_width - environment_options.initial_spawn_width)

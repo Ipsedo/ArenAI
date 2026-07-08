@@ -6,6 +6,10 @@
 #define ARENAI_DRAWABLE_FACTORY_H
 #include <filesystem>
 #include <memory>
+#include <tuple>
+#include <vector>
+
+#include <glm/glm.hpp>
 
 #include <arenai_utils/file_reader.h>
 
@@ -15,15 +19,15 @@ using namespace arenai;
 
 namespace arenai::view {
 
-    class DrawableFactory {
+    class AbstractDrawableFactory {
     public:
-        virtual ~DrawableFactory() = default;
+        virtual ~AbstractDrawableFactory() = default;
 
-        virtual std::shared_ptr<Drawable> make_cube_map(
+        virtual std::unique_ptr<AbstractDrawable> make_cube_map(
             const std::shared_ptr<utils::AbstractFileReader> &file_reader,
             const std::filesystem::path &pngs_root_path) = 0;
 
-        virtual std::shared_ptr<Drawable> make_specular(
+        virtual std::unique_ptr<AbstractDrawable> make_specular(
             const std::shared_ptr<utils::AbstractFileReader> &file_reader,
             const std::vector<std::tuple<float, float, float>> &vertices,
             const std::vector<std::tuple<float, float, float>> &normals, glm::vec4 ambient_color,

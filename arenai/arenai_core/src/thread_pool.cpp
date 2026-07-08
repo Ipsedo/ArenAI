@@ -4,10 +4,7 @@
 
 #include <chrono>
 
-#include <arenai_core/constants.h>
 #include <arenai_core/thread_pool.h>
-#include <arenai_view/cubemap.h>
-#include <arenai_view/specular.h>
 
 using namespace arenai;
 using namespace arenai::core;
@@ -15,8 +12,8 @@ using namespace arenai::core;
 namespace arenai::core {
 
     /*
- * VisionDoubleBuffer / ModelMatricesDoubleBuffer
- */
+     * VisionDoubleBuffer / ModelMatricesDoubleBuffer
+     */
 
     view::image<uint8_t> VisionDoubleBuffer::black_image(const int height, const int width) {
         return {std::vector<uint8_t>(3 * height * width, 0)};
@@ -29,8 +26,8 @@ namespace arenai::core {
         : DoubleBuffer(std::vector<std::tuple<std::string, glm::mat4>>()) {}
 
     /*
- * ThreadLimiter
- */
+     * ThreadLimiter
+     */
 
     ThreadLimiter::ThreadLimiter(const unsigned int k) : k_threads(k) {}
 
@@ -65,7 +62,7 @@ namespace arenai::core {
 
     void EnemyVisionThreadPool::start_thread(
         const std::vector<std::shared_ptr<model::EnemyTank>> &tank_factories,
-        const std::shared_ptr<view::AbstractGLContext> &gl_context,
+        const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend,
         const std::shared_ptr<utils::AbstractFileReader> &file_reader,
         const std::vector<std::tuple<std::string, glm::mat4>> &initial_model_matrices,
         const std::vector<std::shared_ptr<model::Item>> &scene_items) {
@@ -86,14 +83,15 @@ namespace arenai::core {
 
         pool_.reserve(num_tanks_);
         for (int i = 0; i < num_tanks_; i++)
-            pool_.emplace_back([this, i, &tank_factories, gl_context, file_reader, scene_items] {
-                worker_loop(tank_factories[i], gl_context, file_reader, scene_items, i);
-            });
+            pool_.emplace_back(
+                [this, i, &tank_factories, graphics_backend, file_reader, scene_items] {
+                    worker_loop(tank_factories[i], graphics_backend, file_reader, scene_items, i);
+                });
     }
 
     void EnemyVisionThreadPool::worker_loop(
         const std::shared_ptr<model::EnemyTank> &tank_factory,
-        const std::shared_ptr<view::AbstractGLContext> &gl_context,
+        const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend,
         const std::shared_ptr<utils::AbstractFileReader> &file_reader,
         const std::vector<std::shared_ptr<model::Item>> &scene_items, const int index) {
 
@@ -111,22 +109,23 @@ namespace arenai::core {
             local_rng.seed(seq);
         }
 
-        auto renderer = std::make_unique<view::PBufferRenderer>(
-            gl_context, vision_width_, vision_height_, glm::vec3(200, 300, 200),
-            tank_factory->get_camera());
+        auto renderer = graphics_backend->make_offscreen_renderer(
+            vision_width_, vision_height_, glm::vec3(200, 300, 200), tank_factory->get_camera());
 
         renderer->make_current();
+
+        const auto drawable_factory = graphics_backend->drawable_factory();
 
         std::uniform_real_distribution u_dist(0.f, 1.f);
 
         renderer->add_drawable(
-            "cubemap", std::make_unique<view::CubeMap>(file_reader, "cubemap/1"));
+            "cubemap", drawable_factory->make_cube_map(file_reader, "cubemap/1"));
 
         for (const auto &item: scene_items) {
             glm::vec4 color(u_dist(local_rng), u_dist(local_rng), u_dist(local_rng), 1.f);
             const auto shape = item->get_shape();
             renderer->add_drawable(
-                item->get_name(), std::make_unique<view::Specular>(
+                item->get_name(), drawable_factory->make_specular(
                                       file_reader, shape->get_vertices(), shape->get_normals(),
                                       color, color, color, 50.f));
         }
@@ -135,7 +134,7 @@ namespace arenai::core {
             glm::vec4 shell_color(u_dist(local_rng), u_dist(local_rng), u_dist(local_rng), 1.f);
 
             renderer->add_drawable(
-                name, std::make_unique<view::Specular>(
+                name, drawable_factory->make_specular(
                           file_reader, shape->get_vertices(), shape->get_normals(), shell_color,
                           shell_color, shell_color, 50.f));
         }
@@ -163,7 +162,7 @@ namespace arenai::core {
         }
 
         renderer.reset();
-        eglReleaseThread();
+        graphics_backend->release_thread();
 
         loop_barrier_->arrive_and_drop();
         reset_barrier_->arrive_and_wait();

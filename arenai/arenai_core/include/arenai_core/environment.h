@@ -7,14 +7,14 @@
 
 #include <memory>
 #include <random>
-#include <thread>
 #include <tuple>
 #include <vector>
 
 #include <arenai_model/engine.h>
 #include <arenai_model/tank.h>
 #include <arenai_utils/file_reader.h>
-#include <arenai_view/pbuffer_renderer.h>
+#include <arenai_view/factory.h>
+#include <arenai_view/render_context.h>
 
 #include "./enemy_handler.h"
 #include "./thread_pool.h"
@@ -25,7 +25,7 @@ namespace arenai::core {
     public:
         BaseTanksEnvironment(
             const std::shared_ptr<utils::AbstractFileReader> &file_reader,
-            const std::shared_ptr<view::AbstractGLContext> &gl_context, int nb_tanks,
+            const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, int nb_tanks,
             float wanted_frequency, int vision_height, int vision_width, int vision_num_threads,
             bool vision_thread_sleep);
 
@@ -60,10 +60,10 @@ namespace arenai::core {
 
         bool drawing_started_;
 
-        std::shared_ptr<view::AbstractGLContext> gl_context;
+        std::shared_ptr<view::AbstractGraphicBackend> graphics_backend;
+        std::shared_ptr<view::AbstractRenderContext> gl_context;
 
         void reset_physics(float spawn_width, float spawn_height);
-        void reset_drawables(const std::shared_ptr<view::AbstractGLContext> &new_gl_context);
         void reset_drawables();
 
     protected:
@@ -76,9 +76,12 @@ namespace arenai::core {
 
         virtual void
         on_reset_physics(const std::unique_ptr<model::AbstractPhysicEngine> &engine) = 0;
-        virtual void on_reset_drawables(
-            const std::unique_ptr<model::AbstractPhysicEngine> &engine,
-            const std::shared_ptr<view::AbstractGLContext> &gl_context) = 0;
+        virtual void
+        on_reset_drawables(const std::unique_ptr<model::AbstractPhysicEngine> &engine) = 0;
+
+        const std::shared_ptr<view::AbstractGraphicBackend> &get_graphics_backend() const {
+            return graphics_backend;
+        }
 
         template<typename T>
         T

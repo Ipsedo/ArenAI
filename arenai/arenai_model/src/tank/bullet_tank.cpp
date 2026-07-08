@@ -121,7 +121,7 @@ namespace arenai::model {
         engine.add_bullet_item_producer([c = canon_item]() { return c->produce_bullet_items(); });
     }
 
-    std::shared_ptr<Camera> BulletTank::get_camera() { return camera; }
+    std::shared_ptr<AbstractCamera> BulletTank::get_camera() { return camera; }
 
     std::vector<std::shared_ptr<Item>> BulletTank::get_items() { return items; }
 

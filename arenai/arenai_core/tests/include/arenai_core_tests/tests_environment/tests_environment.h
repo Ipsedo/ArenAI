@@ -30,8 +30,7 @@ protected:
     }
 
     void on_reset_drawables(
-        const std::unique_ptr<arenai::model::AbstractPhysicEngine> &engine,
-        const std::shared_ptr<arenai::view::AbstractGLContext> &gl_context) override {
+        const std::unique_ptr<arenai::model::AbstractPhysicEngine> &engine) override {
         reset_drawables_call_count++;
     }
 };

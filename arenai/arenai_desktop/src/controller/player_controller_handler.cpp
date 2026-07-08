@@ -4,74 +4,101 @@
 
 #include "./player_controller_handler.h"
 
-#include <algorithm>
 #include <cmath>
+#include <utility>
 
 namespace arenai::desktop {
 
-    MouseKeyboardPlayerControllerHandler::MouseKeyboardPlayerControllerHandler(GLFWwindow *window)
-        : window(window), current_dir(0.f), current_speed(0.f), current_turret_rotation(0.f),
-          current_canon_rotation(0.f), cursor_captured(true) {
+    MouseKeyboardPlayerControllerHandler::MouseKeyboardPlayerControllerHandler(
+        std::shared_ptr<view::AbstractWindow> window)
+        : window(std::move(window)), last_mouse_x(0.), last_mouse_y(0.), current_dir(0.f),
+          current_speed(0.f), current_turret_rotation(0.f), current_canon_rotation(0.f),
+          cursor_captured(true) {
 
-        int window_width = 0, window_height = 0;
-        glfwGetWindowSize(window, &window_width, &window_height);
-        const float center_x = static_cast<float>(window_width) / 2.f,
-                    center_y = static_cast<float>(window_height) / 2.f;
+        const auto [window_width, window_height] = this->window->size();
+        const auto center_x = static_cast<double>(window_width) / 2.,
+                   center_y = static_cast<double>(window_height) / 2.;
 
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        glfwSetCursorPos(window, center_x, center_y);
+        last_mouse_x = center_x;
+        last_mouse_y = center_y;
+
+        this->window->set_cursor_mode(view::CursorMode::Disabled);
+        this->window->set_cursor_position(center_x, center_y);
+    }
+
+    void MouseKeyboardPlayerControllerHandler::on_key(
+        const view::Key key, const view::InputAction action) {
+        on_event({std::make_pair(key, action), std::nullopt, last_mouse_x, last_mouse_y});
+    }
+
+    void MouseKeyboardPlayerControllerHandler::on_mouse_move(const double x, const double y) {
+        last_mouse_x = x;
+        last_mouse_y = y;
+        on_event({std::nullopt, std::nullopt, x, y});
+    }
+
+    void MouseKeyboardPlayerControllerHandler::on_mouse_button(
+        const view::MouseButton button, const view::InputAction action) {
+        on_event({std::nullopt, std::make_pair(button, action), last_mouse_x, last_mouse_y});
     }
 
     std::tuple<bool, controller::user_input>
-    MouseKeyboardPlayerControllerHandler::to_output(const GlfwInput event) {
+    MouseKeyboardPlayerControllerHandler::to_output(const PlayerRawInput event) {
 
-        // keys
         bool need_fire = false;
 
-        if (event.key_action == GLFW_PRESS) switch (event.key) {
-                case GLFW_KEY_W: current_speed = 1.f; break;
-                case GLFW_KEY_S: current_speed = -1.f; break;
-                case GLFW_KEY_A: current_dir = -1.f; break;
-                case GLFW_KEY_D: current_dir = 1.f; break;
-                case GLFW_KEY_SPACE: need_fire = true; break;
-                case GLFW_KEY_ESCAPE: cursor_captured = false; break;
-                default: break;
-            }
+        // keys
+        if (event.key) {
+            const auto [key, action] = *event.key;
 
-        if (event.key_action == GLFW_RELEASE) {
-            if (event.key == GLFW_KEY_W || event.key == GLFW_KEY_S) current_speed = 0.f;
-            if (event.key == GLFW_KEY_A || event.key == GLFW_KEY_D) current_dir = 0.f;
+            if (action == view::InputAction::Press) switch (key) {
+                    case view::Key::W: current_speed = 1.f; break;
+                    case view::Key::S: current_speed = -1.f; break;
+                    case view::Key::A: current_dir = -1.f; break;
+                    case view::Key::D: current_dir = 1.f; break;
+                    case view::Key::Space: need_fire = true; break;
+                    case view::Key::Escape: cursor_captured = false; break;
+                    default: break;
+                }
+
+            if (action == view::InputAction::Release) {
+                if (key == view::Key::W || key == view::Key::S) current_speed = 0.f;
+                if (key == view::Key::A || key == view::Key::D) current_dir = 0.f;
+            }
         }
 
         // mouse
-        int window_width = 0, window_height = 0;
-        glfwGetWindowSize(window, &window_width, &window_height);
-        const float center_x = static_cast<float>(window_width) / 2.f,
-                    center_y = static_cast<float>(window_height) / 2.f;
+        const auto [window_width, window_height] = window->size();
+        const auto center_x = static_cast<double>(window_width) / 2.,
+                   center_y = static_cast<double>(window_height) / 2.;
 
         if (cursor_captured) {
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            window->set_cursor_mode(view::CursorMode::Disabled);
 
             // controllers consume rad/frame deltas, so the normalized mouse
             // displacement is scaled into radians here.
             constexpr float factor = 0.4f * static_cast<float>(M_PI);
 
-            current_turret_rotation = factor * (event.mouse_x - center_x) / center_x;
-            current_canon_rotation = factor * (event.mouse_y - center_y) / center_y;
+            current_turret_rotation =
+                factor * static_cast<float>((event.mouse_x - center_x) / center_x);
+            current_canon_rotation =
+                factor * static_cast<float>((event.mouse_y - center_y) / center_y);
 
-            glfwSetCursorPos(window, center_x, center_y);
+            window->set_cursor_position(center_x, center_y);
         } else {
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            window->set_cursor_mode(view::CursorMode::Normal);
 
             current_turret_rotation = 0.f;
             current_canon_rotation = 0.f;
         }
 
         // mouse buttons
-        if (event.mouse_button == GLFW_MOUSE_BUTTON_LEFT
-            && event.mouse_button_action == GLFW_PRESS) {
-            need_fire = true;
-            cursor_captured = true;
+        if (event.button) {
+            const auto [button, action] = *event.button;
+            if (button == view::MouseButton::Left && action == view::InputAction::Press) {
+                need_fire = true;
+                cursor_captured = true;
+            }
         }
 
         return {

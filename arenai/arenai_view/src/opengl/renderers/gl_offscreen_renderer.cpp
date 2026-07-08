@@ -2,27 +2,27 @@
 // Created by samuel on 29/09/2025.
 //
 
+#include "./gl_offscreen_renderer.h"
+
 #include <cstring>
 #include <vector>
 
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
 
-#include <arenai_view/pbuffer_renderer.h>
-
-#include "arenai_view/errors.h"
+#include "../errors.h"
 
 using namespace arenai;
 
 namespace arenai::view {
 
     /*
- * Context
- */
+     * Context
+     */
 
-    PBufferGLContext::PBufferGLContext(
-        const std::shared_ptr<AbstractGLContext> &main_context, int width, int height)
-        : AbstractGLContext(), display(main_context->get_display()) {
+    PBufferContext::PBufferContext(
+        const std::shared_ptr<EglRenderContext> &main_context, int width, int height)
+        : display(main_context->get_display()) {
         const EGLint config_attrib[] = {
             EGL_RENDERABLE_TYPE,
             EGL_OPENGL_ES3_BIT,
@@ -80,24 +80,34 @@ namespace arenai::view {
         eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     }
 
-    EGLDisplay PBufferGLContext::get_display() { return display; }
+    EGLDisplay PBufferContext::get_display() { return display; }
 
-    EGLSurface PBufferGLContext::get_surface() { return surface; }
+    EGLSurface PBufferContext::get_surface() { return surface; }
 
-    EGLContext PBufferGLContext::get_context() { return context; }
+    EGLContext PBufferContext::get_context() { return context; }
+
+    PBufferContext::~PBufferContext() {
+        if (display != EGL_NO_DISPLAY) {
+            eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+
+            if (context != EGL_NO_CONTEXT) eglDestroyContext(display, context);
+
+            if (surface != EGL_NO_SURFACE) eglDestroySurface(display, surface);
+        }
+    }
 
     /*
- * Frame Buffer
- */
+     * Frame Buffer
+     */
 
-    PBufferRenderer::PBufferRenderer(
-        const std::shared_ptr<AbstractGLContext> &main_context, const int width, const int height,
-        const glm::vec3 light_pos, const std::shared_ptr<Camera> &camera)
-        : Renderer(
-            std::make_shared<PBufferGLContext>(main_context, width, height), light_pos, camera),
+    GlOffscreenRenderer::GlOffscreenRenderer(
+        const std::shared_ptr<EglRenderContext> &main_context, const int width, const int height,
+        const glm::vec3 light_pos, const std::shared_ptr<AbstractCamera> &camera)
+        : GlRenderer(
+            std::make_shared<PBufferContext>(main_context, width, height), light_pos, camera),
           width(width), height(height) {}
 
-    void PBufferRenderer::on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_context) {
+    void GlOffscreenRenderer::on_new_frame() {
         glViewport(0, 0, get_width(), get_height());
 
         glClearColor(1., 0., 0., 0.);
@@ -113,13 +123,13 @@ namespace arenai::view {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    void PBufferRenderer::on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_context) {}
+    void GlOffscreenRenderer::on_end_frame() {}
 
-    void PBufferRenderer::init_pbos() {
+    void GlOffscreenRenderer::init_pbos() {
         pbo_size_ = static_cast<size_t>(width) * static_cast<size_t>(height) * 4;
         glGenBuffers(NUM_PBOS, pbos_);
-        for (int i = 0; i < NUM_PBOS; i++) {
-            glBindBuffer(GL_PIXEL_PACK_BUFFER, pbos_[i]);
+        for (const unsigned int pbo: pbos_) {
+            glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo);
             glBufferData(
                 GL_PIXEL_PACK_BUFFER, static_cast<GLsizeiptr>(pbo_size_), nullptr, GL_STREAM_READ);
         }
@@ -127,7 +137,7 @@ namespace arenai::view {
         pbo_initialized_ = true;
     }
 
-    image<uint8_t> PBufferRenderer::draw_and_get_frame(
+    image<uint8_t> GlOffscreenRenderer::draw_and_get_frame(
         const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
         draw(model_matrices);
 
@@ -189,11 +199,11 @@ namespace arenai::view {
         return frame;
     }
 
-    int PBufferRenderer::get_width() const { return width; }
+    int GlOffscreenRenderer::get_width() const { return width; }
 
-    int PBufferRenderer::get_height() const { return height; }
+    int GlOffscreenRenderer::get_height() const { return height; }
 
-    PBufferRenderer::~PBufferRenderer() {
+    GlOffscreenRenderer::~GlOffscreenRenderer() {
         if (pbo_initialized_) glDeleteBuffers(NUM_PBOS, pbos_);
     }
 

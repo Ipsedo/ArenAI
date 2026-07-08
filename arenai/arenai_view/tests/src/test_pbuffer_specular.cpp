@@ -9,12 +9,10 @@
 #include <nlohmann/json.hpp>
 
 #include <arenai_view/camera.h>
-#include <arenai_view/pbuffer_renderer.h>
-#include <arenai_view/specular.h>
+#include <arenai_view/factory.h>
 #include <arenai_view_tests/test_pbuffer.h>
 
 #include "./utils/local_file_reader.h"
-#include "./utils/local_gl_context.h"
 #include "./utils/make_shapes.h"
 
 using namespace arenai;
@@ -23,22 +21,22 @@ using namespace arenai::view;
 TEST_P(PBufferSpecularParam, TestSpecularRendering) {
     const auto [width, height] = GetParam();
 
-    const auto local_gl_context = std::make_shared<LocalGlContext>();
+    const auto backend = view::make_opengl_view_factory()->make_headless_backend();
 
-    PBufferRenderer buffer_renderer(
-        local_gl_context, width, height, {0.f, 10.f, -2.f},
+    const auto buffer_renderer = backend->make_offscreen_renderer(
+        width, height, {0.f, 10.f, -2.f},
         std::make_shared<StaticCamera>(
             glm::vec3{0.f, 0.f, -10.f}, glm::vec3{0.f, 0.f, 0.f}, glm::vec3{0.f, 1.f, 0.f}));
 
     const auto file_reader =
         std::make_shared<LocalAssetFileReader>(std::filesystem::path(ARENAI_ASSETS_DIR));
 
-    buffer_renderer.make_current();
+    buffer_renderer->make_current();
 
     auto [vertices, normals] = make_cube(2.f);
 
-    buffer_renderer.add_drawable(
-        "cube", std::make_unique<Specular>(
+    buffer_renderer->add_drawable(
+        "cube", backend->drawable_factory()->make_specular(
                     file_reader, vertices, normals, glm::vec4(0.2f, 0.2f, 0.2f, 1.f),
                     glm::vec4(0.f, 0.f, 1.f, 1.f), glm::vec4(1.f, 1.f, 1.f, 1.f), 32.f));
 
@@ -46,7 +44,7 @@ TEST_P(PBufferSpecularParam, TestSpecularRendering) {
         std::vector<std::tuple<std::string, glm::mat4>>{{"cube", glm::mat4(1.f)}};
 
     // warmup
-    const auto [black_pixels] = buffer_renderer.draw_and_get_frame(model_matrices);
+    const auto [black_pixels] = buffer_renderer->draw_and_get_frame(model_matrices);
     ASSERT_EQ(black_pixels.size(), 3 * width * height);
     ASSERT_EQ(
         std::accumulate(
@@ -55,7 +53,7 @@ TEST_P(PBufferSpecularParam, TestSpecularRendering) {
         0);
 
     // actual frame
-    const auto [pixels] = buffer_renderer.draw_and_get_frame(model_matrices);
+    const auto [pixels] = buffer_renderer->draw_and_get_frame(model_matrices);
     ASSERT_EQ(pixels.size(), 3 * width * height);
 
     ASSERT_GT(

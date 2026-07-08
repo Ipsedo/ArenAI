@@ -9,9 +9,9 @@
 
 namespace arenai::view {
 
-    class Camera {
+    class AbstractCamera {
     public:
-        virtual ~Camera() = default;
+        virtual ~AbstractCamera() = default;
 
         virtual glm::vec3 pos() = 0;
 
@@ -20,7 +20,7 @@ namespace arenai::view {
         virtual glm::vec3 up() = 0;
     };
 
-    class StaticCamera final : public Camera {
+    class StaticCamera final : public AbstractCamera {
     public:
         StaticCamera(glm::vec3 pos, glm::vec3 look, glm::vec3 up);
 

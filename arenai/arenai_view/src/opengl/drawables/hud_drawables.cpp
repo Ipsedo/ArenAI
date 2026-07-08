@@ -2,7 +2,7 @@
 // Created by samuel on 26/03/2023.
 //
 
-#include <arenai_view/hud.h>
+#include "./hud_drawables.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <utility>
@@ -12,8 +12,6 @@
 using namespace arenai;
 
 namespace arenai::view {
-
-    HUDDrawable::~HUDDrawable() = default;
 
     std::vector<float> get_circle_points_(const int nb_points) {
         std::vector<float> circle_points{};

@@ -1,9 +1,6 @@
 //
 // Created by samuel on 29/09/2025.
 //
-#include <cmath>
-#include <iostream>
-#include <thread>
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -19,18 +16,19 @@ namespace arenai::core {
 
     BaseTanksEnvironment::BaseTanksEnvironment(
         const std::shared_ptr<utils::AbstractFileReader> &file_reader,
-        const std::shared_ptr<view::AbstractGLContext> &gl_context, const int nb_tanks,
+        const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, const int nb_tanks,
         float wanted_frequency, const int vision_height, const int vision_width,
         const int vision_num_threads, const bool vision_thread_sleep)
         : wanted_frequency(wanted_frequency), nb_tanks(nb_tanks), vision_height(vision_height),
           vision_width(vision_width), vision_num_threads(vision_num_threads),
           vision_thread_sleep(vision_thread_sleep),
-          physic_engine(model::make_physic_engine(wanted_frequency)),
-          nb_reset_frames(static_cast<int>(4.f / wanted_frequency)), drawing_started_(false),
-          gl_context(gl_context), rng(dev()), file_reader(file_reader),
           vision_pool_(std::make_unique<EnemyVisionThreadPool>(
               nb_tanks, vision_num_threads, vision_height, vision_width, wanted_frequency,
-              vision_thread_sleep)) {}
+              vision_thread_sleep)),
+          physic_engine(model::make_physic_engine(wanted_frequency)),
+          nb_reset_frames(static_cast<int>(4.f / wanted_frequency)), drawing_started_(false),
+          graphics_backend(graphics_backend), gl_context(graphics_backend->render_context()),
+          rng(dev()), file_reader(file_reader) {}
 
     std::vector<std::tuple<State, Reward, IsDone, IsTruncated>>
     BaseTanksEnvironment::step(const float time_delta, const std::vector<Action> &actions) {
@@ -150,22 +148,18 @@ namespace arenai::core {
         return states;
     }
 
-    void BaseTanksEnvironment::reset_drawables(
-        const std::shared_ptr<view::AbstractGLContext> &new_gl_context) {
-        gl_context = new_gl_context;
+    void BaseTanksEnvironment::reset_drawables() {
         gl_context->make_current();
 
-        on_reset_drawables(physic_engine, gl_context);
+        on_reset_drawables(physic_engine);
 
         gl_context->release_current();
 
         vision_pool_->start_thread(
-            tanks, gl_context, file_reader, get_model_matrices(), physic_engine->get_items());
+            tanks, graphics_backend, file_reader, get_model_matrices(), physic_engine->get_items());
 
         gl_context->make_current();
     }
-
-    void BaseTanksEnvironment::reset_drawables() { reset_drawables(gl_context); }
 
     void BaseTanksEnvironment::seed(const unsigned int seed) {
         rng.seed(seed);

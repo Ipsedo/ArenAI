@@ -30,7 +30,7 @@ namespace arenai::model {
     public:
         virtual ~Tank() = default;
 
-        virtual std::shared_ptr<view::Camera> get_camera() = 0;
+        virtual std::shared_ptr<view::AbstractCamera> get_camera() = 0;
         virtual std::vector<std::shared_ptr<Item>> get_items() = 0;
         virtual std::vector<std::shared_ptr<controller::Controller>> get_controllers() = 0;
         virtual std::map<std::string, std::shared_ptr<Shape>> load_shell_shapes() const = 0;

@@ -8,12 +8,9 @@
 #include <gtest/gtest.h>
 
 #include <arenai_view/camera.h>
-#include <arenai_view/cubemap.h>
-#include <arenai_view/pbuffer_renderer.h>
-#include <arenai_view/specular.h>
+#include <arenai_view/factory.h>
 
 #include "./utils/local_file_reader.h"
-#include "./utils/local_gl_context.h"
 #include "./utils/make_shapes.h"
 
 using namespace arenai;
@@ -22,33 +19,34 @@ using namespace arenai::view;
 class RendererTest : public testing::Test {
 protected:
     void SetUp() override {
-        gl_context = std::make_shared<LocalGlContext>();
+        backend = view::make_opengl_view_factory()->make_headless_backend();
         file_reader =
             std::make_shared<LocalAssetFileReader>(std::filesystem::path(ARENAI_ASSETS_DIR));
     }
 
-    std::shared_ptr<LocalGlContext> gl_context;
+    std::shared_ptr<AbstractGraphicBackend> backend;
     std::shared_ptr<LocalAssetFileReader> file_reader;
 };
 
 TEST_F(RendererTest, RemoveDrawableThenDrawClearColor) {
     constexpr int w = 16, h = 16;
 
-    PBufferRenderer renderer(
-        gl_context, w, h, {0.f, 10.f, -2.f},
+    const auto renderer = backend->make_offscreen_renderer(
+        w, h, {0.f, 10.f, -2.f},
         std::make_shared<StaticCamera>(
             glm::vec3{0.f, 0.f, -10.f}, glm::vec3{0.f, 0.f, 0.f}, glm::vec3{0.f, 1.f, 0.f}));
 
-    renderer.make_current();
+    renderer->make_current();
 
-    renderer.add_drawable("sky", std::make_unique<CubeMap>(file_reader, "cubemap/1"));
+    renderer->add_drawable(
+        "sky", backend->drawable_factory()->make_cube_map(file_reader, "cubemap/1"));
 
     const auto with_drawable = std::vector<std::tuple<std::string, glm::mat4>>{
         {"sky", glm::scale(glm::mat4(1.f), glm::vec3(2000.f))}};
 
     // warmup + one real frame with the drawable
-    renderer.draw_and_get_frame(with_drawable);
-    const auto [with_pixels] = renderer.draw_and_get_frame(with_drawable);
+    renderer->draw_and_get_frame(with_drawable);
+    const auto [with_pixels] = renderer->draw_and_get_frame(with_drawable);
 
     ASSERT_GT(
         std::accumulate(
@@ -57,13 +55,13 @@ TEST_F(RendererTest, RemoveDrawableThenDrawClearColor) {
         0);
 
     // remove the drawable
-    renderer.remove_drawable("sky");
+    renderer->remove_drawable("sky");
 
     const auto empty = std::vector<std::tuple<std::string, glm::mat4>>{};
 
     // draw two more frames (PBO double-buffering: need 2 to flush)
-    renderer.draw_and_get_frame(empty);
-    const auto [after_pixels] = renderer.draw_and_get_frame(empty);
+    renderer->draw_and_get_frame(empty);
+    const auto [after_pixels] = renderer->draw_and_get_frame(empty);
 
     // should be clear color (red)
     const int hw = w * h;
@@ -77,47 +75,48 @@ TEST_F(RendererTest, RemoveDrawableThenDrawClearColor) {
 TEST_F(RendererTest, RemoveNonExistentDrawable) {
     constexpr int w = 16, h = 16;
 
-    PBufferRenderer renderer(
-        gl_context, w, h, {0.f, 10.f, -2.f},
+    const auto renderer = backend->make_offscreen_renderer(
+        w, h, {0.f, 10.f, -2.f},
         std::make_shared<StaticCamera>(
             glm::vec3{0.f, 0.f, -10.f}, glm::vec3{0.f, 0.f, 0.f}, glm::vec3{0.f, 1.f, 0.f}));
 
-    renderer.make_current();
+    renderer->make_current();
 
-    ASSERT_NO_THROW(renderer.remove_drawable("does_not_exist"));
+    ASSERT_NO_THROW(renderer->remove_drawable("does_not_exist"));
 }
 
 TEST_F(RendererTest, MixedDrawablesCubeMapAndSpecular) {
     constexpr int w = 32, h = 32;
 
-    PBufferRenderer renderer(
-        gl_context, w, h, {0.f, 10.f, -2.f},
+    const auto renderer = backend->make_offscreen_renderer(
+        w, h, {0.f, 10.f, -2.f},
         std::make_shared<StaticCamera>(
             glm::vec3{0.f, 0.f, -10.f}, glm::vec3{0.f, 0.f, 0.f}, glm::vec3{0.f, 1.f, 0.f}));
 
-    renderer.make_current();
+    renderer->make_current();
 
     // add cubemap alone, render
-    renderer.add_drawable("sky", std::make_unique<CubeMap>(file_reader, "cubemap/1"));
+    renderer->add_drawable(
+        "sky", backend->drawable_factory()->make_cube_map(file_reader, "cubemap/1"));
 
     const auto sky_only_matrices = std::vector<std::tuple<std::string, glm::mat4>>{
         {"sky", glm::scale(glm::mat4(1.f), glm::vec3(2000.f))}};
 
-    renderer.draw_and_get_frame(sky_only_matrices);
-    const auto [sky_pixels] = renderer.draw_and_get_frame(sky_only_matrices);
+    renderer->draw_and_get_frame(sky_only_matrices);
+    const auto [sky_pixels] = renderer->draw_and_get_frame(sky_only_matrices);
 
     // add specular cube on top
     auto [vertices, normals] = make_cube(2.f);
-    renderer.add_drawable(
-        "cube", std::make_unique<Specular>(
+    renderer->add_drawable(
+        "cube", backend->drawable_factory()->make_specular(
                     file_reader, vertices, normals, glm::vec4(0.2f, 0.2f, 0.2f, 1.f),
                     glm::vec4(0.f, 0.f, 1.f, 1.f), glm::vec4(1.f, 1.f, 1.f, 1.f), 32.f));
 
     const auto mixed_matrices = std::vector<std::tuple<std::string, glm::mat4>>{
         {"sky", glm::scale(glm::mat4(1.f), glm::vec3(2000.f))}, {"cube", glm::mat4(1.f)}};
 
-    renderer.draw_and_get_frame(mixed_matrices);
-    const auto [mixed_pixels] = renderer.draw_and_get_frame(mixed_matrices);
+    renderer->draw_and_get_frame(mixed_matrices);
+    const auto [mixed_pixels] = renderer->draw_and_get_frame(mixed_matrices);
 
     // mixed scene must differ from sky-only scene
     bool differs = false;
@@ -133,11 +132,11 @@ TEST_F(RendererTest, MixedDrawablesCubeMapAndSpecular) {
 TEST_F(RendererTest, GetWidthHeight) {
     constexpr int w = 24, h = 48;
 
-    const PBufferRenderer renderer(
-        gl_context, w, h, {0.f, 10.f, -2.f},
+    const auto renderer = backend->make_offscreen_renderer(
+        w, h, {0.f, 10.f, -2.f},
         std::make_shared<StaticCamera>(
             glm::vec3{0.f, 0.f, -10.f}, glm::vec3{0.f, 0.f, 0.f}, glm::vec3{0.f, 1.f, 0.f}));
 
-    ASSERT_EQ(renderer.get_width(), w);
-    ASSERT_EQ(renderer.get_height(), h);
+    ASSERT_EQ(renderer->get_width(), w);
+    ASSERT_EQ(renderer->get_height(), h);
 }

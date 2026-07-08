@@ -7,12 +7,7 @@ include(FetchContent)
 set(CMAKE_CXX_STANDARD 20)
 
 ##### GLM #####
-if (ANDROID)
-    FetchContent_Declare(glm URL https://github.com/g-truc/glm/releases/download/0.9.9.8/glm-0.9.9.8.zip)
-    FetchContent_MakeAvailable(glm)
-else ()
-    find_package(glm REQUIRED)
-endif ()
+find_package(glm REQUIRED)
 
 # ARENAI VIEW
 file(GLOB_RECURSE ARENAI_VIEW_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
@@ -28,9 +23,10 @@ target_link_libraries(
         glm::glm
 )
 
-if (ANDROID)
-    target_link_libraries(arenai_view PUBLIC EGL GLESv3)
-elseif (WIN32)
+find_package(glfw3 REQUIRED)
+target_link_libraries(arenai_view PRIVATE glfw)
+
+if (WIN32)
     # Mesa3D SDK (headers + import libs) from mesa-dist-win "devel" package,
     # fetched by arenai_desktop/install_dependencies.ps1 into libs/mesa-devel.
     if (NOT MESA_SDK_DIR)

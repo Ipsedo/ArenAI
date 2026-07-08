@@ -21,7 +21,7 @@ namespace arenai::model {
                             public ConvexItem,
                             public ItemProducer,
                             public controller::Controller,
-                            public view::Camera {
+                            public view::AbstractCamera {
     public:
         CanonItem(
             const std::string &prefix_name,

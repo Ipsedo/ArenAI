@@ -7,7 +7,7 @@
 #include <arenai_train/file_reader.h>
 #include <arenai_utils/cache.h>
 #include <arenai_utils/singleton.h>
-#include <arenai_view/pbuffer_renderer.h>
+#include <arenai_view/factory.h>
 
 #include "../metrics/mean_metric.h"
 #include "../metrics/std_metric.h"
@@ -18,13 +18,13 @@ using namespace arenai::train;
 namespace arenai::train {
 
     TrainTankEnvironment::TrainTankEnvironment(
-        const std::shared_ptr<view::AbstractGLContext> &gl_context, const int nb_tanks,
+        const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, const int nb_tanks,
         const std::filesystem::path &android_assets_path, const float wanted_frequency,
         const int max_episode_steps, const int vision_height, const int vision_width,
         const int vision_num_threads)
         : core::BaseTanksEnvironment(
-            std::make_shared<DesktopAssetFileReader>(android_assets_path), gl_context, nb_tanks,
-            wanted_frequency, vision_height, vision_width, vision_num_threads, false),
+            std::make_shared<DesktopAssetFileReader>(android_assets_path), graphics_backend,
+            nb_tanks, wanted_frequency, vision_height, vision_width, vision_num_threads, false),
           wanted_frequency(wanted_frequency),
           max_frames_without_hit(static_cast<int>(30.f / wanted_frequency)),
           remaining_frames(nb_tanks, max_frames_without_hit),
@@ -129,15 +129,11 @@ namespace arenai::train {
     }
 
     void TrainTankEnvironment::on_reset_drawables(
-        const std::unique_ptr<model::AbstractPhysicEngine> &engine,
-        const std::shared_ptr<view::AbstractGLContext> &gl_context) {}
+        const std::unique_ptr<model::AbstractPhysicEngine> &engine) {}
 
     void TrainTankEnvironment::reset_singleton() {
         utils::Singleton<utils::Cache<std::shared_ptr<model::Shape>>>::get_singleton()->clear();
         utils::Singleton<utils::Cache<std::shared_ptr<model::Shape>>>::reset_singleton();
-
-        utils::Singleton<utils::Cache<std::shared_ptr<view::Program>>>::get_singleton()->clear();
-        utils::Singleton<utils::Cache<std::shared_ptr<view::Program>>>::reset_singleton();
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> TrainTankEnvironment::get_metrics() const {

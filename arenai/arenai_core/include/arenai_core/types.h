@@ -8,7 +8,7 @@
 #include <vector>
 
 #include <arenai_controller/inputs.h>
-#include <arenai_view/pbuffer_renderer.h>
+#include <arenai_view/renderer.h>
 
 namespace arenai::core {
     struct State {

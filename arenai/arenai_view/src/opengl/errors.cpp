@@ -2,13 +2,14 @@
 // Created by samuel on 19/03/2023.
 //
 
+#include "./errors.h"
+
 #include <iostream>
 #include <stdexcept>
 
 #include <GLES3/gl3.h>
 
 #include <arenai_utils/logging.h>
-#include <arenai_view/errors.h>
 
 namespace arenai::view {
 

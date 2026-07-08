@@ -5,32 +5,42 @@
 #ifndef ARENAI_DESKTOP_PLAYER_CONTROLLER_HANDLER_H
 #define ARENAI_DESKTOP_PLAYER_CONTROLLER_HANDLER_H
 
-#include <GLFW/glfw3.h>
+#include <memory>
+#include <optional>
+#include <utility>
 
 #include <arenai_controller/handler.h>
+#include <arenai_view/input.h>
+#include <arenai_view/window.h>
 
 namespace arenai::desktop {
 
-    struct GlfwInput {
-        int key;
-        int key_action;
-
-        float mouse_x;
-        float mouse_y;
-
-        int mouse_button;
-        int mouse_button_action;
+    // One raw input event, in the platform-agnostic view vocabulary. Mouse
+    // position always carries the last known cursor position.
+    struct PlayerRawInput {
+        std::optional<std::pair<view::Key, view::InputAction>> key;
+        std::optional<std::pair<view::MouseButton, view::InputAction>> button;
+        double mouse_x;
+        double mouse_y;
     };
 
-    class MouseKeyboardPlayerControllerHandler : public controller::EventHandler<GlfwInput> {
+    class MouseKeyboardPlayerControllerHandler : public controller::EventHandler<PlayerRawInput>,
+                                                 public view::AbstractWindowCallback {
     public:
-        explicit MouseKeyboardPlayerControllerHandler(GLFWwindow *window);
+        explicit MouseKeyboardPlayerControllerHandler(std::shared_ptr<view::AbstractWindow> window);
+
+        void on_key(view::Key key, view::InputAction action) override;
+        void on_mouse_move(double x, double y) override;
+        void on_mouse_button(view::MouseButton button, view::InputAction action) override;
 
     protected:
-        std::tuple<bool, controller::user_input> to_output(GlfwInput event) override;
+        std::tuple<bool, controller::user_input> to_output(PlayerRawInput event) override;
 
     private:
-        GLFWwindow *window;
+        std::shared_ptr<view::AbstractWindow> window;
+
+        double last_mouse_x;
+        double last_mouse_y;
 
         float current_dir;
         float current_speed;

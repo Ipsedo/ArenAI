@@ -13,7 +13,7 @@
 #include <arenai_model/engine.h>
 #include <arenai_model/tank.h>
 #include <arenai_utils/file_reader.h>
-#include <arenai_view/factory.h>
+#include <arenai_view/backend.h>
 #include <arenai_view/render_context.h>
 
 #include "./enemy_handler.h"

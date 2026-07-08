@@ -20,9 +20,6 @@
 
 namespace arenai::view {
 
-    // Shared OpenGL renderer: owns the drawables, camera and EGL context, and
-    // implements the view/projection draw loop. Leaves provide the per-frame GL
-    // setup/teardown and the surface dimensions.
     class GlRenderer : public virtual AbstractRenderer {
     public:
         GlRenderer(

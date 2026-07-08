@@ -12,8 +12,6 @@
 
 namespace arenai::view {
 
-    // Observer the application implements to receive raw window/input events.
-    // The window (owned by the view backend) drives these callbacks.
     class AbstractWindowCallback {
     public:
         virtual ~AbstractWindowCallback() = default;
@@ -22,9 +20,6 @@ namespace arenai::view {
         virtual void on_mouse_move(double x, double y) = 0;
         virtual void on_mouse_button(MouseButton button, InputAction action) = 0;
     };
-
-    // On-screen window abstraction: main-loop driving, cursor control and sizing.
-    // Presentation (buffer swap) is handled by the PlayerRenderer, not here.
 
     struct window_sizes {
         int width, height;

@@ -7,7 +7,7 @@
 
 #include <arenai_core/environment.h>
 #include <arenai_model/tank.h>
-#include <arenai_view/factory.h>
+#include <arenai_view/backend.h>
 #include <arenai_view/renderer.h>
 
 #include "../controller/player_controller_handler.h"

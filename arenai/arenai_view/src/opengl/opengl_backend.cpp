@@ -2,7 +2,7 @@
 // Created by samuel on 08/07/2026.
 //
 
-#include "./opengl_factory.h"
+#include "./opengl_backend.h"
 
 #include <string>
 #include <utility>

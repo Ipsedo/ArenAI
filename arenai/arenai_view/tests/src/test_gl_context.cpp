@@ -7,8 +7,8 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <gtest/gtest.h>
 
+#include <arenai_view/backend.h>
 #include <arenai_view/camera.h>
-#include <arenai_view/factory.h>
 
 #include "./utils/local_file_reader.h"
 

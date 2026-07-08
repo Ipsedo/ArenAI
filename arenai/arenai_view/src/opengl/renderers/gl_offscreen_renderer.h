@@ -14,8 +14,6 @@
 
 namespace arenai::view {
 
-    // Offscreen EGL context, sharing the main context's objects. Owns the context
-    // and pbuffer surface it creates, so it destroys them on destruction.
     class PBufferContext final : public EglRenderContext {
     public:
         PBufferContext(

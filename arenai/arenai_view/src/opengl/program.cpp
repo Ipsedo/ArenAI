@@ -20,8 +20,8 @@ using namespace arenai;
 namespace arenai::view {
 
     /*
- * Buffer builder
- */
+     * Buffer builder
+     */
 
     Program::Builder::Builder(
         const std::shared_ptr<utils::AbstractFileReader> &text_reader,
@@ -173,8 +173,8 @@ namespace arenai::view {
     }
 
     /*
- * Program
- */
+     * Program
+     */
 
     std::map<std::string, GLenum> Program::get_file_to_texture_id() {
         return {{"posx.png", GL_TEXTURE_CUBE_MAP_POSITIVE_X},

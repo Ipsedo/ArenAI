@@ -17,9 +17,6 @@
 
 namespace arenai::view {
 
-    // GLFW-backed on-screen window. Owns the GLFW window and its GL context, and
-    // translates GLFW input codes into the platform-agnostic view vocabulary.
-    // Internal to arenai_view — GLFW never appears in a public header.
     class GlfwWindow final : public AbstractGlWindow {
     public:
         GlfwWindow(int width, int height, const std::string &title);
@@ -34,7 +31,6 @@ namespace arenai::view {
         void set_cursor_mode(CursorMode mode) override;
         void set_cursor_position(double x, double y) override;
 
-        // Native GL handles, consumed by the OpenGL backend to build its context.
         EGLDisplay egl_display() const override;
         EGLSurface egl_surface() const override;
         EGLContext egl_context() const override;

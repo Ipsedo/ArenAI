@@ -14,7 +14,7 @@
 #include <arenai_model/tank.h>
 #include <arenai_model/tank_factory.h>
 #include <arenai_utils/file_reader.h>
-#include <arenai_view/factory.h>
+#include <arenai_view/backend.h>
 
 class EngineTestFixture : public testing::Test {
 protected:

@@ -11,7 +11,7 @@
 #include <arenai_core/constants.h>
 #include <arenai_train/factory_set.h>
 #include <arenai_train/torch_converter.h>
-#include <arenai_view/factory.h>
+#include <arenai_view/backend.h>
 
 #include "./core/game_environment.h"
 

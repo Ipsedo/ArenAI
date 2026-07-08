@@ -10,8 +10,8 @@
 namespace arenai::view {
 
     /*
- * EglRenderContext
- */
+     * EglRenderContext
+     */
 
     void EglRenderContext::make_current() {
         if (eglMakeCurrent(get_display(), get_surface(), get_surface(), get_context()) != EGL_TRUE)
@@ -23,8 +23,8 @@ namespace arenai::view {
     }
 
     /*
- * HeadlessEglContext
- */
+     * HeadlessEglContext
+     */
 
     HeadlessEglContext::HeadlessEglContext() {
         display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -87,8 +87,8 @@ namespace arenai::view {
     EGLContext HeadlessEglContext::get_context() { return context; }
 
     /*
- * NativeEglContext
- */
+     * NativeEglContext
+     */
 
     NativeEglContext::NativeEglContext(
         const EGLDisplay &display, const EGLSurface &surface, const EGLContext &context)

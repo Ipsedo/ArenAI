@@ -2,11 +2,11 @@
 // Created by samuel on 08/07/2026.
 //
 
-#include "./glfw_opengl_factory.h"
+#include "./glfw_opengl_backend.h"
 
 #include <utility>
 
-#include <arenai_view/factory.h>
+#include <arenai_view/backend.h>
 
 #include "../opengl/renderers/gl_renderer.h"
 #include "./glfw_window.h"

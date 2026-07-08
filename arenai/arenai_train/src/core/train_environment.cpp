@@ -7,7 +7,7 @@
 #include <arenai_train/file_reader.h>
 #include <arenai_utils/cache.h>
 #include <arenai_utils/singleton.h>
-#include <arenai_view/factory.h>
+#include <arenai_view/backend.h>
 
 #include "../metrics/mean_metric.h"
 #include "../metrics/std_metric.h"

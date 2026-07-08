@@ -56,12 +56,7 @@ namespace arenai::view {
 
     void GlRenderer::release_current() const { gl_context->release_current(); }
 
-    GlRenderer::~GlRenderer() {
-        // Delete the GL programs while the context is still alive and current.
-        // Destroying the context itself is the context's own responsibility (see
-        // PBufferContext) — a renderer never owns the context it was handed.
-        drawables.clear();
-    }
+    GlRenderer::~GlRenderer() { drawables.clear(); }
 
     /*
      * GlPlayerRenderer

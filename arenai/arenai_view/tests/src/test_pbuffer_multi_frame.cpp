@@ -4,8 +4,8 @@
 
 #include <glm/ext/matrix_transform.hpp>
 
+#include <arenai_view/backend.h>
 #include <arenai_view/camera.h>
-#include <arenai_view/factory.h>
 #include <arenai_view_tests/test_pbuffer.h>
 
 #include "./utils/local_file_reader.h"

@@ -8,7 +8,7 @@
 #include <memory>
 #include <string>
 
-#include <arenai_view/factory.h>
+#include <arenai_view/backend.h>
 
 #include "./drawables/gl_drawable_factory.h"
 #include "./egl_render_context.h"
@@ -16,8 +16,6 @@
 
 namespace arenai::view {
 
-    // Headless OpenGL backend: owns an EGL context, produces offscreen renderers.
-    // Also the base for the windowed backend (see src/glfw/glfw_opengl_factory.h).
     class OpenGlBackend : public virtual AbstractGraphicBackend {
     public:
         explicit OpenGlBackend(std::shared_ptr<EglRenderContext> context);
@@ -36,8 +34,6 @@ namespace arenai::view {
         void release_thread() override;
 
     protected:
-        // The backend owns the render context; renderers share it (window) or
-        // derive from it (offscreen pbuffers). No downcast is ever needed.
         std::shared_ptr<EglRenderContext> context_;
 
     private:

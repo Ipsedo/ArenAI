@@ -19,9 +19,6 @@
 
 namespace arenai::view {
 
-    // A configured graphics backend: owns its render context and produces
-    // offscreen renderers and drawables. Switching graphics engine = another
-    // implementation. No GL/EGL/windowing type ever crosses this API.
     class AbstractGraphicBackend {
     public:
         virtual ~AbstractGraphicBackend() = default;
@@ -35,14 +32,11 @@ namespace arenai::view {
         virtual std::shared_ptr<AbstractDrawableFactory> drawable_factory() = 0;
         virtual std::shared_ptr<AbstractHudFactory> hud_factory() = 0;
 
-        // Human-readable description of the underlying GPU / driver.
         virtual std::string renderer_info() = 0;
 
-        // Release any thread-local backend state before a worker thread exits.
         virtual void release_thread() = 0;
     };
 
-    // A graphic backend that owns an on-screen window and can render to it.
     class AbstractWindowedGraphicBackend : public virtual AbstractGraphicBackend {
     public:
         virtual std::shared_ptr<AbstractWindow> get_window() = 0;

@@ -4,8 +4,8 @@
 
 #include <numeric>
 
+#include <arenai_view/backend.h>
 #include <arenai_view/camera.h>
-#include <arenai_view/factory.h>
 #include <arenai_view_tests/test_pbuffer.h>
 
 using namespace arenai;

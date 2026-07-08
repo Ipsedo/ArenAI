@@ -11,9 +11,6 @@
 
 namespace arenai::view {
 
-    // Internal base of every EGL-backed context. Never exposed by the public API:
-    // the OpenGL factory owns a concrete instance and hands out only the abstract
-    // AbstractRenderContext / renderers.
     class EglRenderContext : public AbstractRenderContext {
     public:
         void make_current() override;
@@ -24,8 +21,6 @@ namespace arenai::view {
         virtual EGLContext get_context() = 0;
     };
 
-    // Headless context: creates its own GL context on the default display, with no
-    // window surface (rendering happens into offscreen pbuffers). For training/tests.
     class HeadlessEglContext final : public EglRenderContext {
     public:
         HeadlessEglContext();
@@ -39,9 +34,6 @@ namespace arenai::view {
         EGLContext context;
     };
 
-    // Context wrapping native GL handles created by the platform (e.g. a GLFW
-    // window). The handles are borrowed: their lifetime belongs to the platform,
-    // so this context does not destroy them.
     class NativeEglContext final : public EglRenderContext {
     public:
         NativeEglContext(

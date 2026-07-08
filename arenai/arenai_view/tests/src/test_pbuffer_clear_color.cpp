@@ -14,7 +14,7 @@ using namespace arenai::view;
 TEST_P(PBufferClearColorParam, ClearColorNoDrawable) {
     const auto [width, height] = GetParam();
 
-    const auto backend = view::make_opengl_view_factory()->make_headless_backend();
+    const auto backend = view::make_opengl_view_factory()->make_backend();
 
     const auto buffer_renderer = backend->make_offscreen_renderer(
         width, height, {0.f, 10.f, -2.f},
@@ -46,7 +46,7 @@ TEST_P(PBufferClearColorParam, ClearColorNoDrawable) {
 TEST_P(PBufferClearColorParam, PixelLayoutCHW) {
     const auto [width, height] = GetParam();
 
-    const auto backend = view::make_opengl_view_factory()->make_headless_backend();
+    const auto backend = view::make_opengl_view_factory()->make_backend();
 
     const auto buffer_renderer = backend->make_offscreen_renderer(
         width, height, {0.f, 10.f, -2.f},

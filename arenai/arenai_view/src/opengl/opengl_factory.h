@@ -49,12 +49,9 @@ namespace arenai::view {
     // Entry point for the OpenGL stack. make_headless_backend() is defined here;
     // make_windowed_backend() is GLFW-specific and lives in src/glfw so that this
     // OpenGL translation unit stays free of any windowing dependency.
-    class OpenGlViewFactory final : public AbstractViewFactory {
+    class OpenGlViewFactory final : public AbstractHeadlessViewFactory {
     public:
-        std::unique_ptr<AbstractGraphicBackend> make_headless_backend() override;
-
-        std::unique_ptr<AbstractWindowedGraphicBackend> make_windowed_backend(
-            int window_width, int window_height, const std::string &title) override;
+        std::unique_ptr<AbstractGraphicBackend> make_backend() override;
     };
 
 }// namespace arenai::view

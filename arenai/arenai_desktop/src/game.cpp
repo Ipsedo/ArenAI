@@ -39,9 +39,9 @@ namespace arenai::desktop {
 
         // The view owns the window + GL context; the app only speaks the abstract
         // window/backend interface.
-        const auto view_factory = view::make_opengl_view_factory();
+        const auto view_factory = view::make_glfw_opengl_view_factory();
         const std::shared_ptr<view::AbstractWindowedGraphicBackend> graphics_backend =
-            view_factory->make_windowed_backend(
+            view_factory->make_backend(
                 game_options.window_width, game_options.window_height, "ArenAI");
         const auto window = graphics_backend->get_window();
 

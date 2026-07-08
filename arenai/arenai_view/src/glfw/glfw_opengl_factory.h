@@ -18,10 +18,9 @@ namespace arenai::view {
     // Windowed OpenGL backend: an OpenGL backend that also owns an on-screen window
     // and renders to it. Lives in src/glfw because it is created from a concrete
     // GLFW window; it only depends on the abstract AbstractGlWindow itself.
-    class OpenGlWindowedBackend final : public OpenGlBackend,
-                                        public AbstractWindowedGraphicBackend {
+    class GlfwWindowedBackend final : public OpenGlBackend, public AbstractWindowedGraphicBackend {
     public:
-        OpenGlWindowedBackend(
+        GlfwWindowedBackend(
             std::shared_ptr<EglRenderContext> context, std::shared_ptr<AbstractGlWindow> window);
 
         std::shared_ptr<AbstractWindow> get_window() override;
@@ -32,6 +31,12 @@ namespace arenai::view {
 
     private:
         std::shared_ptr<AbstractGlWindow> window_;
+    };
+
+    class GlfwViewFactory final : public AbstractWindowedViewFactory {
+    public:
+        std::unique_ptr<AbstractWindowedGraphicBackend>
+        make_backend(int window_width, int window_height, const std::string &title) override;
     };
 
 }// namespace arenai::view

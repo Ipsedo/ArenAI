@@ -29,7 +29,7 @@ namespace arenai::train {
         const EnvironmentOptions &environment_options, const ModelOptions &model_options,
         const TrainOptions &train_options) {
 
-        auto graphics_backend = view::make_opengl_view_factory()->make_headless_backend();
+        auto graphics_backend = view::make_opengl_view_factory()->make_backend();
 
         torch::Device torch_device =
             train_options.cuda ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU);

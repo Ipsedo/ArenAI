@@ -52,11 +52,11 @@ namespace arenai::view {
      * OpenGlViewFactory (headless part; windowed part in src/glfw)
      */
 
-    std::unique_ptr<AbstractGraphicBackend> OpenGlViewFactory::make_headless_backend() {
+    std::unique_ptr<AbstractGraphicBackend> OpenGlViewFactory::make_backend() {
         return std::make_unique<OpenGlBackend>(std::make_shared<HeadlessEglContext>());
     }
 
-    std::unique_ptr<AbstractViewFactory> make_opengl_view_factory() {
+    std::unique_ptr<AbstractHeadlessViewFactory> make_opengl_view_factory() {
         return std::make_unique<OpenGlViewFactory>();
     }
 

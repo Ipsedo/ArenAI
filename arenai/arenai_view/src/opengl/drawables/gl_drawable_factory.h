@@ -5,7 +5,7 @@
 #ifndef ARENAI_GL_DRAWABLE_FACTORY_H
 #define ARENAI_GL_DRAWABLE_FACTORY_H
 
-#include <arenai_view/drawable_factory.h>
+#include <arenai_view/drawable.h>
 
 namespace arenai::view {
 

@@ -4,7 +4,7 @@
 
 #include "./gl_hud_factory.h"
 
-#include "./drawables/hud_drawables.h"
+#include "./hud_drawables.h"
 
 namespace arenai::view {
 

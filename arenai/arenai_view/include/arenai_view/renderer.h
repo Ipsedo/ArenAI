@@ -18,6 +18,14 @@
 
 namespace arenai::view {
 
+    class AbstractRenderContext {
+    public:
+        virtual ~AbstractRenderContext() = default;
+
+        virtual void make_current() = 0;
+        virtual void release_current() = 0;
+    };
+
     template<typename T>
     struct image {
         std::vector<T> pixels;

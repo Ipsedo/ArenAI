@@ -4,8 +4,14 @@
 
 #ifndef ARENAI_DRAWABLE_H
 #define ARENAI_DRAWABLE_H
+#include <filesystem>
+#include <memory>
+#include <tuple>
+#include <vector>
 
 #include <glm/glm.hpp>
+
+#include <arenai_utils/file_reader.h>
 
 namespace arenai::view {
 
@@ -15,6 +21,21 @@ namespace arenai::view {
             glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos_from_camera,
             glm::vec3 camera_pos) = 0;
         virtual ~AbstractDrawable() = default;
+    };
+
+    class AbstractDrawableFactory {
+    public:
+        virtual ~AbstractDrawableFactory() = default;
+
+        virtual std::unique_ptr<AbstractDrawable> make_cube_map(
+            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            const std::filesystem::path &pngs_root_path) = 0;
+
+        virtual std::unique_ptr<AbstractDrawable> make_specular(
+            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            const std::vector<std::tuple<float, float, float>> &vertices,
+            const std::vector<std::tuple<float, float, float>> &normals, glm::vec4 ambient_color,
+            glm::vec4 diffuse_color, glm::vec4 specular_color, float shininess) = 0;
     };
 
 }// namespace arenai::view

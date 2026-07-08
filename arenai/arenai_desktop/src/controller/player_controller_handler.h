@@ -10,18 +10,15 @@
 #include <utility>
 
 #include <arenai_controller/handler.h>
-#include <arenai_view/input.h>
 #include <arenai_view/window.h>
 
 namespace arenai::desktop {
 
-    // One raw input event, in the platform-agnostic view vocabulary. Mouse
-    // position always carries the last known cursor position.
     struct PlayerRawInput {
         std::optional<std::pair<view::Key, view::InputAction>> key;
         std::optional<std::pair<view::MouseButton, view::InputAction>> button;
-        double mouse_x;
-        double mouse_y;
+        double mouse_x{};
+        double mouse_y{};
     };
 
     class MouseKeyboardPlayerControllerHandler : public controller::EventHandler<PlayerRawInput>,

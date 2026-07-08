@@ -5,7 +5,7 @@
 #ifndef ARENAI_GL_HUD_FACTORY_H
 #define ARENAI_GL_HUD_FACTORY_H
 
-#include <arenai_view/hud_factory.h>
+#include <arenai_view/hud.h>
 
 namespace arenai::view {
 

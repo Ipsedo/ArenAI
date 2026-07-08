@@ -11,9 +11,8 @@
 #include <glm/glm.hpp>
 
 #include "./camera.h"
-#include "./drawable_factory.h"
-#include "./hud_factory.h"
-#include "./render_context.h"
+#include "./drawable.h"
+#include "./hud.h"
 #include "./renderer.h"
 #include "./window.h"
 

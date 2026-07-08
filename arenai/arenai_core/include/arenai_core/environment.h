@@ -14,7 +14,7 @@
 #include <arenai_model/tank.h>
 #include <arenai_utils/file_reader.h>
 #include <arenai_view/backend.h>
-#include <arenai_view/render_context.h>
+#include <arenai_view/renderer.h>
 
 #include "./enemy_handler.h"
 #include "./thread_pool.h"

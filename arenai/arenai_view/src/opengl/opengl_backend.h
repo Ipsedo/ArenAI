@@ -11,8 +11,8 @@
 #include <arenai_view/backend.h>
 
 #include "./drawables/gl_drawable_factory.h"
+#include "./drawables/gl_hud_factory.h"
 #include "./egl_render_context.h"
-#include "./gl_hud_factory.h"
 
 namespace arenai::view {
 

@@ -8,9 +8,12 @@
 #include <memory>
 #include <utility>
 
-#include "./input.h"
-
 namespace arenai::view {
+
+    enum class Key { Unknown, W, A, S, D, Space, Escape };
+    enum class MouseButton { Left, Right, Middle };
+    enum class InputAction { Press, Release, Repeat };
+    enum class CursorMode { Normal, Disabled };
 
     class AbstractWindowCallback {
     public:

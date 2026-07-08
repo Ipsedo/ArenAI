@@ -7,7 +7,7 @@
 
 #include <EGL/egl.h>
 
-#include <arenai_view/render_context.h>
+#include <arenai_view/renderer.h>
 
 namespace arenai::view {
 

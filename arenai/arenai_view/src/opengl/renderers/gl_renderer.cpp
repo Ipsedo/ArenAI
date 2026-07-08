@@ -107,6 +107,8 @@ namespace arenai::view {
     void GlPlayerRenderer::set_window_size(const int new_width, const int new_height) {
         width = new_width;
         height = new_height;
+
+        glViewport(0, 0, width, height);
     }
 
 }// namespace arenai::view

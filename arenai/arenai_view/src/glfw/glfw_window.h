@@ -5,6 +5,7 @@
 #ifndef ARENAI_GLFW_WINDOW_H
 #define ARENAI_GLFW_WINDOW_H
 
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -26,6 +27,7 @@ namespace arenai::view {
         void poll_events() override;
 
         void set_callback(const std::shared_ptr<AbstractWindowCallback> &callback) override;
+        void set_resize_callback(std::function<void(int width, int height)> callback) override;
 
         window_sizes size() const override;
         void set_cursor_mode(CursorMode mode) override;
@@ -38,10 +40,12 @@ namespace arenai::view {
     private:
         GLFWwindow *window_;
         std::shared_ptr<AbstractWindowCallback> callback_;
+        std::function<void(int width, int height)> resize_callback_;
 
         void on_key(int key, int action) const;
         void on_cursor(double x, double y) const;
         void on_mouse_button(int button, int action) const;
+        void on_resize(int width, int height) const;
     };
 
 }// namespace arenai::view

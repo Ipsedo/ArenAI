@@ -58,6 +58,13 @@ namespace arenai::desktop {
         player_renderer = windowed_backend->make_player_renderer(
             window_width, window_height, glm::vec3(200, 300, 200), player_tank->get_camera());
 
+        windowed_backend->get_window()->set_resize_callback(
+            [this](const int width, const int height) -> void {
+                window_width = width;
+                window_height = height;
+                player_renderer->set_window_size(width, height);
+            });
+
         player_renderer->make_current();
 
         const auto drawable_factory = windowed_backend->drawable_factory();

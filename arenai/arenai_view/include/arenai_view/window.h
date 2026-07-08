@@ -5,6 +5,7 @@
 #ifndef ARENAI_WINDOW_H
 #define ARENAI_WINDOW_H
 
+#include <functional>
 #include <memory>
 #include <utility>
 
@@ -36,6 +37,7 @@ namespace arenai::view {
         virtual void poll_events() = 0;
 
         virtual void set_callback(const std::shared_ptr<AbstractWindowCallback> &callback) = 0;
+        virtual void set_resize_callback(std::function<void(int width, int height)> callback) = 0;
 
         virtual window_sizes size() const = 0;
         virtual void set_cursor_mode(CursorMode mode) = 0;

@@ -76,6 +76,12 @@ namespace arenai::view {
                 static_cast<GlfwWindow *>(glfwGetWindowUserPointer(w))
                     ->on_mouse_button(button, action);
             });
+
+        glfwSetFramebufferSizeCallback(
+            window_, [](GLFWwindow *w, const int new_width, const int new_height) -> void {
+                static_cast<GlfwWindow *>(glfwGetWindowUserPointer(w))
+                    ->on_resize(new_width, new_height);
+            });
     }
 
     GlfwWindow::~GlfwWindow() {
@@ -95,12 +101,20 @@ namespace arenai::view {
         if (callback_) callback_->on_mouse_button(to_mouse_button(button), to_action(action));
     }
 
+    void GlfwWindow::on_resize(const int width, const int height) const {
+        if (resize_callback_) resize_callback_(width, height);
+    }
+
     bool GlfwWindow::should_close() { return glfwWindowShouldClose(window_); }
 
     void GlfwWindow::poll_events() { glfwPollEvents(); }
 
     void GlfwWindow::set_callback(const std::shared_ptr<AbstractWindowCallback> &callback) {
         callback_ = callback;
+    }
+
+    void GlfwWindow::set_resize_callback(std::function<void(int width, int height)> callback) {
+        resize_callback_ = std::move(callback);
     }
 
     window_sizes GlfwWindow::size() const {

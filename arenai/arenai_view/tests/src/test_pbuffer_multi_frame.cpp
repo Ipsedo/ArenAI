@@ -16,7 +16,7 @@ using namespace arenai::view;
 TEST_P(PBufferMultiFrameParam, StabilityMultiFrame) {
     const auto [width, height] = GetParam();
 
-    const auto backend = view::make_opengl_view_factory()->make_backend();
+    const auto backend = view::make_opengl_backend();
 
     const auto buffer_renderer = backend->make_offscreen_renderer(
         width, height, {0.f, 10.f, -2.f},

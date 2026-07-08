@@ -33,12 +33,6 @@ namespace arenai::view {
         std::shared_ptr<AbstractGlWindow> window_;
     };
 
-    class GlfwViewFactory final : public AbstractWindowedViewFactory {
-    public:
-        std::unique_ptr<AbstractWindowedGraphicBackend>
-        make_backend(int window_width, int window_height, const std::string &title) override;
-    };
-
 }// namespace arenai::view
 
 #endif// ARENAI_GLFW_OPENGL_FACTORY_H

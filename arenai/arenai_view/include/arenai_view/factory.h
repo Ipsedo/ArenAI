@@ -52,26 +52,10 @@ namespace arenai::view {
             const std::shared_ptr<AbstractCamera> &camera) = 0;
     };
 
-    // Entry point for a graphics API: builds either a headless backend (offscreen
-    // only, e.g. training) or a windowed backend (creates and owns the window).
-    class AbstractHeadlessViewFactory {
-    public:
-        virtual ~AbstractHeadlessViewFactory() = default;
-
-        virtual std::unique_ptr<AbstractGraphicBackend> make_backend() = 0;
-    };
-
-    class AbstractWindowedViewFactory {
-    public:
-        virtual ~AbstractWindowedViewFactory() = default;
-
-        virtual std::unique_ptr<AbstractWindowedGraphicBackend>
-        make_backend(int window_width, int window_height, const std::string &title) = 0;
-    };
-
     // The single symbol that "names" the OpenGL/GLFW stack on the application side.
-    std::unique_ptr<AbstractHeadlessViewFactory> make_opengl_view_factory();
-    std::unique_ptr<AbstractWindowedViewFactory> make_glfw_opengl_view_factory();
+    std::unique_ptr<AbstractGraphicBackend> make_opengl_backend();
+    std::unique_ptr<AbstractWindowedGraphicBackend>
+    make_glfw_backend(int window_width, int window_height, const std::string &title);
 
 }// namespace arenai::view
 

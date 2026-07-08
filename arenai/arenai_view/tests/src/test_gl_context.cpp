@@ -16,7 +16,7 @@ using namespace arenai;
 using namespace arenai::view;
 
 TEST(GLContextTest, MultipleRenderersSameContext) {
-    const auto backend = view::make_opengl_view_factory()->make_backend();
+    const auto backend = view::make_opengl_backend();
     const auto file_reader =
         std::make_shared<LocalAssetFileReader>(std::filesystem::path(ARENAI_ASSETS_DIR));
 
@@ -75,7 +75,7 @@ TEST(GLContextTest, MultipleRenderersSameContext) {
 }
 
 TEST(GLContextTest, MakeCurrentReleaseCurrent) {
-    const auto backend = view::make_opengl_view_factory()->make_backend();
+    const auto backend = view::make_opengl_backend();
 
     constexpr int w = 16, h = 16;
     const auto renderer = backend->make_offscreen_renderer(
@@ -90,7 +90,7 @@ TEST(GLContextTest, MakeCurrentReleaseCurrent) {
 }
 
 TEST(GLContextTest, AlternateContexts) {
-    const auto backend = view::make_opengl_view_factory()->make_backend();
+    const auto backend = view::make_opengl_backend();
     const auto file_reader =
         std::make_shared<LocalAssetFileReader>(std::filesystem::path(ARENAI_ASSETS_DIR));
 

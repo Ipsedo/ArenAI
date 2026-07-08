@@ -46,14 +46,6 @@ namespace arenai::view {
         std::shared_ptr<GlHudFactory> hud_factory_ = std::make_shared<GlHudFactory>();
     };
 
-    // Entry point for the OpenGL stack. make_headless_backend() is defined here;
-    // make_windowed_backend() is GLFW-specific and lives in src/glfw so that this
-    // OpenGL translation unit stays free of any windowing dependency.
-    class OpenGlViewFactory final : public AbstractHeadlessViewFactory {
-    public:
-        std::unique_ptr<AbstractGraphicBackend> make_backend() override;
-    };
-
 }// namespace arenai::view
 
 #endif// ARENAI_OPENGL_FACTORY_H

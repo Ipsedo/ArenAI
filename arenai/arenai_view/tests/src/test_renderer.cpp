@@ -19,7 +19,7 @@ using namespace arenai::view;
 class RendererTest : public testing::Test {
 protected:
     void SetUp() override {
-        backend = view::make_opengl_view_factory()->make_backend();
+        backend = view::make_opengl_backend();
         file_reader =
             std::make_shared<LocalAssetFileReader>(std::filesystem::path(ARENAI_ASSETS_DIR));
     }

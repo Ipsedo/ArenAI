@@ -33,16 +33,12 @@ namespace arenai::view {
      * OpenGlViewFactory: windowed backend construction (GLFW-specific).
      */
 
-    std::unique_ptr<AbstractWindowedGraphicBackend> GlfwViewFactory::make_backend(
-        const int window_width, const int window_height, const std::string &title) {
+    std::unique_ptr<AbstractWindowedGraphicBackend>
+    make_glfw_backend(const int window_width, const int window_height, const std::string &title) {
         auto window = std::make_shared<GlfwWindow>(window_width, window_height, title);
         auto context = std::make_shared<NativeEglContext>(
             window->egl_display(), window->egl_surface(), window->egl_context());
         return std::make_unique<GlfwWindowedBackend>(std::move(context), std::move(window));
-    }
-
-    std::unique_ptr<AbstractWindowedViewFactory> make_glfw_opengl_view_factory() {
-        return std::make_unique<GlfwViewFactory>();
     }
 
 }// namespace arenai::view

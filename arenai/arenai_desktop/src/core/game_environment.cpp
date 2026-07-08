@@ -68,7 +68,7 @@ namespace arenai::desktop {
         std::uniform_real_distribution<float> u_dist(0.f, 1.f);
 
         for (const auto &[name, shape]: player_tank->load_shell_shapes()) {
-            glm::vec4 color(u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, 1.f);
+            const glm::vec4 color(u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, 1.f);
 
             player_renderer->add_drawable(
                 name, drawable_factory->make_specular(
@@ -77,7 +77,7 @@ namespace arenai::desktop {
         }
 
         for (const auto &item: engine->get_items()) {
-            glm::vec4 color(u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, 1.f);
+            const glm::vec4 color(u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, 1.f);
 
             player_renderer->add_drawable(
                 item->get_name(), drawable_factory->make_specular(

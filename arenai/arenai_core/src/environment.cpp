@@ -182,6 +182,11 @@ namespace arenai::core {
         return curr_model_matrices;
     }
 
+    const std::shared_ptr<view::AbstractGraphicBackend> &
+    BaseTanksEnvironment::get_graphics_backend() const {
+        return graphics_backend;
+    }
+
     BaseTanksEnvironment::~BaseTanksEnvironment() {
         stop_drawing();
         tanks.clear();

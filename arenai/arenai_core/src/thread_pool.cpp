@@ -122,7 +122,7 @@ namespace arenai::core {
             "cubemap", drawable_factory->make_cube_map(file_reader, "cubemap/1"));
 
         for (const auto &item: scene_items) {
-            glm::vec4 color(u_dist(local_rng), u_dist(local_rng), u_dist(local_rng), 1.f);
+            const glm::vec4 color(u_dist(local_rng), u_dist(local_rng), u_dist(local_rng), 1.f);
             const auto shape = item->get_shape();
             renderer->add_drawable(
                 item->get_name(), drawable_factory->make_specular(
@@ -131,7 +131,8 @@ namespace arenai::core {
         }
 
         for (const auto &[name, shape]: tank_factory->load_shell_shapes()) {
-            glm::vec4 shell_color(u_dist(local_rng), u_dist(local_rng), u_dist(local_rng), 1.f);
+            const glm::vec4 shell_color(
+                u_dist(local_rng), u_dist(local_rng), u_dist(local_rng), 1.f);
 
             renderer->add_drawable(
                 name, drawable_factory->make_specular(

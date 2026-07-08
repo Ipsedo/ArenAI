@@ -79,9 +79,7 @@ namespace arenai::core {
         virtual void
         on_reset_drawables(const std::unique_ptr<model::AbstractPhysicEngine> &engine) = 0;
 
-        const std::shared_ptr<view::AbstractGraphicBackend> &get_graphics_backend() const {
-            return graphics_backend;
-        }
+        const std::shared_ptr<view::AbstractGraphicBackend> &get_graphics_backend() const;
 
         template<typename T>
         T

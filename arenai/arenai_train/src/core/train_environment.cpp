@@ -37,6 +37,10 @@ namespace arenai::train {
     std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
     TrainTankEnvironment::step(const float time_delta, const std::vector<core::Action> &actions) {
 
+        // tanks flagged done on a previous step already emitted their terminal transition:
+        // mark them so the caller can skip their post-mortem steps
+        already_done = done;
+
         auto step_result = core::BaseTanksEnvironment::step(time_delta, actions);
 
         const auto has_hit = apply_on_factories<std::vector<bool>>([&](const auto &factories) {
@@ -62,7 +66,7 @@ namespace arenai::train {
             }
 
             if (remaining_frames[i] <= 0) {
-                const float timeout_penalty = remaining_frames[i] <= 0 ? 0.5f : 0.f;
+                constexpr float timeout_penalty = 0.5f;
                 step_result[i] = {state, reward - timeout_penalty, true, true};
 
                 done[i] = true;

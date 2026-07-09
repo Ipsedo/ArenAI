@@ -159,7 +159,7 @@ namespace arenai::train {
                     const auto [next_state, reward, env_done, is_truncated] = steps[i];
                     last_states.push_back(next_state);
 
-                    if (is_truncated || env->is_tank_factory_already_done(i)) continue;
+                    if (env->is_tank_factory_already_done(i)) continue;
 
                     reward_mean_metric->add(reward);
 
@@ -167,11 +167,15 @@ namespace arenai::train {
                         next_state, environment_options.vision_height,
                         environment_options.vision_width);
 
+                    // truncated endings (timeout) are stored as non-terminal so the
+                    // critic target keeps bootstrapping on the next state value
+                    const bool is_terminal = env_done && !is_truncated;
+
                     replay_buffer->add(
                         {{vision[i], proprioception[i]},
                          {torch_action.continuous_action[i], torch_action.discrete_action[i]},
                          torch::tensor({reward}, torch::TensorOptions().dtype(torch::kFloat)),
-                         torch::tensor({env_done}, torch::TensorOptions().dtype(torch::kBool)),
+                         torch::tensor({is_terminal}, torch::TensorOptions().dtype(torch::kBool)),
                          {next_vision, next_proprioception}});
                 }
 

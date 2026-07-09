@@ -93,7 +93,7 @@ namespace arenai::model {
     }
 
     glm::vec3 HeightMapItem::make_pos(
-        const int x, const int z, const int min_height, const int max_height) const {
+        const int x, const int z, const float min_height, const float max_height) const {
         const float half_width = static_cast<float>(map_width - 1) * 0.5f;
         const float half_length = static_cast<float>(map_height - 1) * 0.5f;
         const float center_y = 0.5f * (min_height + max_height);

@@ -32,6 +32,7 @@ namespace arenai::model {
         float get_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
 
         bool is_dead() override;
+        bool is_first_frame_dead() override;
         bool is_suicide() const override;
 
         bool has_hit_other_tank() override;

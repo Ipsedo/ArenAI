@@ -46,6 +46,7 @@ namespace arenai::model {
         virtual std::shared_ptr<ActionStats> get_action_stats() = 0;
         virtual bool has_hit_other_tank() = 0;
         virtual bool is_suicide() const = 0;
+        virtual bool is_first_frame_dead() = 0;
         virtual void on_death() = 0;
     };
 

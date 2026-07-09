@@ -48,7 +48,7 @@ namespace arenai::model {
 
         float get_height(int x, int z) const;
         glm::vec3 compute_vertex_normal(int x, int z) const;
-        glm::vec3 make_pos(int x, int z, int min_height, int max_height) const;
+        glm::vec3 make_pos(int x, int z, float min_height, float max_height) const;
 
         void build_render_mesh(
             glm::vec3 aabb_min, glm::vec3 aabb_max, float min_height, float max_height);

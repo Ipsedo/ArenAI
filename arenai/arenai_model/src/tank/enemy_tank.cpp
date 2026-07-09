@@ -164,7 +164,8 @@ namespace arenai::model {
         int best_i = -1;
 
         for (int i = 0; i < tanks.size(); i++) {
-            if (tanks[i].get() == this || tanks[i]->is_dead()) continue;
+            if (tanks[i].get() == this) continue;
+            if (tanks[i]->is_dead() && !tanks[i]->is_first_frame_dead()) continue;
 
             const auto other_pos =
                 glm::vec3(tanks[i]->get_chassis()->get_model_matrix() * world_center);
@@ -208,6 +209,8 @@ namespace arenai::model {
     }
 
     bool BulletEnemyTank::is_dead() { return BulletTank::is_dead() || is_suicide(); }
+
+    bool BulletEnemyTank::is_first_frame_dead() { return is_dead() && !is_dead_already_triggered; }
 
     bool BulletEnemyTank::is_suicide() const {
         return curr_frame_upside_down > max_frames_upside_down;

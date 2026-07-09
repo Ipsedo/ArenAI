@@ -27,7 +27,7 @@ namespace arenai::desktop {
         const auto sac_agent =
             train::SacAgentFactory(model_options.hyper_parameters)
                 .get_agent(
-                    model_options.vision_height, model_options.vision_height,
+                    model_options.vision_height, model_options.vision_width,
                     model::ENEMY_PROPRIOCEPTION_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
                     model::ENEMY_NB_DISCRETE_ACTION);
         sac_agent->set_train(false);

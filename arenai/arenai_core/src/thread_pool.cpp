@@ -56,7 +56,8 @@ namespace arenai::core {
           wanted_frequency_(wanted_frequency), thread_sleep_(thread_sleep), threads_running_(true),
           limiter_(max_concurrent_renders),
           model_matrices_(std::make_unique<ModelMatricesDoubleBuffer>()),
-          reset_barrier_(std::nullptr_t()), loop_barrier_(std::nullptr_t()) {}
+          reset_barrier_(std::nullptr_t()), start_barrier_(std::nullptr_t()),
+          loop_barrier_(std::nullptr_t()) {}
 
     void EnemyVisionThreadPool::set_seed(const unsigned int seed) { seed_ = seed; }
 
@@ -71,6 +72,7 @@ namespace arenai::core {
         threads_running_.store(true, std::memory_order_release);
 
         reset_barrier_ = std::make_unique<std::barrier<>>(num_tanks_ + 1);
+        start_barrier_ = std::make_unique<std::barrier<>>(num_tanks_ + 1);
         loop_barrier_ = std::make_unique<std::barrier<>>(num_tanks_ + 1);
 
         model_matrices_->write(initial_model_matrices);
@@ -143,6 +145,12 @@ namespace arenai::core {
             std::chrono::milliseconds(static_cast<int>(wanted_frequency_ * 1000.f));
 
         while (threads_running_.load(std::memory_order_acquire)) {
+            // wait until the main thread has published this frame's model matrices,
+            // otherwise the render may use the previous frame's scene
+            start_barrier_->arrive_and_wait();
+
+            if (!threads_running_.load(std::memory_order_acquire)) break;
+
             auto last_time = std::chrono::steady_clock::now();
 
             limiter_.acquire();
@@ -165,6 +173,7 @@ namespace arenai::core {
         renderer.reset();
         graphics_backend->release_thread();
 
+        start_barrier_->arrive_and_drop();
         loop_barrier_->arrive_and_drop();
         reset_barrier_->arrive_and_wait();
     }
@@ -178,6 +187,12 @@ namespace arenai::core {
         return enemy_visions_[index]->read_copy();
     }
 
+    void EnemyVisionThreadPool::begin_frame() const {
+        // release the workers now that the current model matrices are published;
+        // arrive() does not block, so the caller can keep rendering its own view
+        (void) start_barrier_->arrive();
+    }
+
     void EnemyVisionThreadPool::loop_wait() const { loop_barrier_->arrive_and_wait(); }
 
     void EnemyVisionThreadPool::kill_threads() {
@@ -185,6 +200,7 @@ namespace arenai::core {
 
         threads_running_.store(false, std::memory_order_release);
 
+        start_barrier_->arrive_and_drop();
         loop_barrier_->arrive_and_drop();
         reset_barrier_->arrive_and_wait();
 

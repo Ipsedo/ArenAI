@@ -45,6 +45,7 @@ namespace arenai::core {
         // 3. set model matrices double buffer and draw scene
         const auto curr_model_matrices = get_model_matrices();
         vision_pool_->set_model_matrices(curr_model_matrices);
+        vision_pool_->begin_frame();
 
         on_draw(curr_model_matrices);
         vision_pool_->loop_wait();
@@ -136,6 +137,7 @@ namespace arenai::core {
         const auto model_matrices = get_model_matrices();
         for (int i = 0; i < 2; i++) {
             vision_pool_->set_model_matrices(model_matrices);
+            vision_pool_->begin_frame();
             on_draw(model_matrices);
             vision_pool_->loop_wait();
         }

@@ -74,6 +74,7 @@ namespace arenai::core {
             const std::vector<std::tuple<std::string, glm::mat4>> &initial_model_matrices,
             const std::vector<std::shared_ptr<model::Item>> &scene_items);
 
+        void begin_frame() const;
         void loop_wait() const;
         void kill_threads();
 
@@ -96,6 +97,7 @@ namespace arenai::core {
         std::vector<std::unique_ptr<VisionDoubleBuffer>> enemy_visions_;
 
         std::unique_ptr<std::barrier<>> reset_barrier_;
+        std::unique_ptr<std::barrier<>> start_barrier_;
         std::unique_ptr<std::barrier<>> loop_barrier_;
 
         std::optional<unsigned int> seed_;

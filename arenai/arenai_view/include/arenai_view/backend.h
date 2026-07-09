@@ -41,8 +41,7 @@ namespace arenai::view {
         virtual std::shared_ptr<AbstractWindow> get_window() = 0;
 
         virtual std::unique_ptr<AbstractPlayerRenderer> make_player_renderer(
-            int width, int height, glm::vec3 light_pos,
-            const std::shared_ptr<AbstractCamera> &camera) = 0;
+            glm::vec3 light_pos, const std::shared_ptr<AbstractCamera> &camera) = 0;
     };
 
     // The single symbol that "names" the OpenGL/GLFW stack on the application side.

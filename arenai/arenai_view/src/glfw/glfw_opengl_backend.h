@@ -18,16 +18,19 @@ namespace arenai::view {
     class GlfwWindowedBackend final : public OpenGlBackend, public AbstractWindowedGraphicBackend {
     public:
         GlfwWindowedBackend(
-            std::shared_ptr<EglRenderContext> context, std::shared_ptr<AbstractGlWindow> window);
+            std::shared_ptr<EglRenderContext> context, std::shared_ptr<AbstractGlWindow> window,
+            int window_width, int window_height);
 
         std::shared_ptr<AbstractWindow> get_window() override;
 
         std::unique_ptr<AbstractPlayerRenderer> make_player_renderer(
-            int width, int height, glm::vec3 light_pos,
-            const std::shared_ptr<AbstractCamera> &camera) override;
+            glm::vec3 light_pos, const std::shared_ptr<AbstractCamera> &camera) override;
 
     private:
         std::shared_ptr<AbstractGlWindow> window_;
+
+        int window_width_;
+        int window_height_;
     };
 
 }// namespace arenai::view

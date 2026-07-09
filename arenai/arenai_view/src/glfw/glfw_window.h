@@ -29,7 +29,6 @@ namespace arenai::view {
         void set_callback(const std::shared_ptr<AbstractWindowCallback> &callback) override;
         void set_resize_callback(std::function<void(int width, int height)> callback) override;
 
-        window_sizes size() const override;
         void set_cursor_mode(CursorMode mode) override;
         void set_cursor_position(double x, double y) override;
 

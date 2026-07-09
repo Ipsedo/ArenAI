@@ -10,6 +10,7 @@
 #include <utility>
 
 #include <arenai_controller/handler.h>
+#include <arenai_view/renderer.h>
 #include <arenai_view/window.h>
 
 namespace arenai::desktop {
@@ -24,7 +25,8 @@ namespace arenai::desktop {
     class MouseKeyboardPlayerControllerHandler : public controller::EventHandler<PlayerRawInput>,
                                                  public view::AbstractWindowCallback {
     public:
-        explicit MouseKeyboardPlayerControllerHandler(std::shared_ptr<view::AbstractWindow> window);
+        MouseKeyboardPlayerControllerHandler(
+            std::shared_ptr<view::AbstractWindow> window, const view::AbstractRenderer &renderer);
 
         void on_key(view::Key key, view::InputAction action) override;
         void on_mouse_move(double x, double y) override;
@@ -35,6 +37,8 @@ namespace arenai::desktop {
 
     private:
         std::shared_ptr<view::AbstractWindow> window;
+
+        const view::AbstractRenderer &renderer;
 
         double last_mouse_x;
         double last_mouse_y;

@@ -117,12 +117,6 @@ namespace arenai::view {
         resize_callback_ = std::move(callback);
     }
 
-    window_sizes GlfwWindow::size() const {
-        int width = 0, height = 0;
-        glfwGetWindowSize(window_, &width, &height);
-        return {width, height};
-    }
-
     void GlfwWindow::set_cursor_mode(const CursorMode mode) {
         glfwSetInputMode(
             window_, GLFW_CURSOR,

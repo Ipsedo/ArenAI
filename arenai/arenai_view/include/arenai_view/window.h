@@ -25,10 +25,6 @@ namespace arenai::view {
         virtual void on_mouse_button(MouseButton button, InputAction action) = 0;
     };
 
-    struct window_sizes {
-        int width, height;
-    };
-
     class AbstractWindow {
     public:
         virtual ~AbstractWindow() = default;
@@ -39,7 +35,6 @@ namespace arenai::view {
         virtual void set_callback(const std::shared_ptr<AbstractWindowCallback> &callback) = 0;
         virtual void set_resize_callback(std::function<void(int width, int height)> callback) = 0;
 
-        virtual window_sizes size() const = 0;
         virtual void set_cursor_mode(CursorMode mode) = 0;
         virtual void set_cursor_position(double x, double y) = 0;
     };

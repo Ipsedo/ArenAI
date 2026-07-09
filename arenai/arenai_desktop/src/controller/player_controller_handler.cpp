@@ -10,14 +10,13 @@
 namespace arenai::desktop {
 
     MouseKeyboardPlayerControllerHandler::MouseKeyboardPlayerControllerHandler(
-        std::shared_ptr<view::AbstractWindow> window)
-        : window(std::move(window)), last_mouse_x(0.), last_mouse_y(0.), current_dir(0.f),
-          current_speed(0.f), current_turret_rotation(0.f), current_canon_rotation(0.f),
-          cursor_captured(true) {
+        std::shared_ptr<view::AbstractWindow> window, const view::AbstractRenderer &renderer)
+        : window(std::move(window)), renderer(renderer), last_mouse_x(0.), last_mouse_y(0.),
+          current_dir(0.f), current_speed(0.f), current_turret_rotation(0.f),
+          current_canon_rotation(0.f), cursor_captured(true) {
 
-        const auto [window_width, window_height] = this->window->size();
-        const auto center_x = static_cast<double>(window_width) / 2.,
-                   center_y = static_cast<double>(window_height) / 2.;
+        const auto center_x = static_cast<double>(renderer.get_width()) / 2.,
+                   center_y = static_cast<double>(renderer.get_height()) / 2.;
 
         last_mouse_x = center_x;
         last_mouse_y = center_y;
@@ -68,9 +67,8 @@ namespace arenai::desktop {
         }
 
         // mouse
-        const auto [window_width, window_height] = window->size();
-        const auto center_x = static_cast<double>(window_width) / 2.,
-                   center_y = static_cast<double>(window_height) / 2.;
+        const auto center_x = static_cast<double>(renderer.get_width()) / 2.,
+                   center_y = static_cast<double>(renderer.get_height()) / 2.;
 
         if (cursor_captured) {
             window->set_cursor_mode(view::CursorMode::Disabled);

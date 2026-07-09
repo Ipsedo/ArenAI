@@ -40,9 +40,6 @@ namespace arenai::desktop {
         std::unique_ptr<view::AbstractPlayerRenderer> player_renderer;
         std::shared_ptr<MouseKeyboardPlayerControllerHandler> player_controller_handler;
 
-        int window_width;
-        int window_height;
-
         float wanted_frequency;
     };
 

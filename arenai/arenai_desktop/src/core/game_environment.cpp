@@ -26,13 +26,7 @@ namespace arenai::desktop {
           windowed_backend(graphics_backend),
           asset_file_reader(std::make_shared<train::DesktopAssetFileReader>(asset_folder_path)),
           player_tank(std::nullptr_t()), player_renderer(std::nullptr_t()),
-          player_controller_handler(std::nullptr_t()), window_width(0), window_height(0),
-          wanted_frequency(wanted_frequency) {
-
-        const auto [width, height] = windowed_backend->get_window()->size();
-        window_width = width;
-        window_height = height;
-    }
+          player_controller_handler(std::nullptr_t()), wanted_frequency(wanted_frequency) {}
 
     void DesktopGameEnvironment::on_draw(
         const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
@@ -43,25 +37,23 @@ namespace arenai::desktop {
         const std::unique_ptr<model::AbstractPhysicEngine> &engine) {
         player_tank = engine->get_tank_factory()->make_player_tank(
             file_reader, "player", glm::vec3(0., -40., 40));
-
-        player_controller_handler =
-            std::make_shared<MouseKeyboardPlayerControllerHandler>(windowed_backend->get_window());
-
-        for (auto &ctrl: player_tank->get_controllers())
-            player_controller_handler->add_controller(ctrl);
-
-        windowed_backend->get_window()->set_callback(player_controller_handler);
     }
 
     void DesktopGameEnvironment::on_reset_drawables(
         const std::unique_ptr<model::AbstractPhysicEngine> &engine) {
         player_renderer = windowed_backend->make_player_renderer(
-            window_width, window_height, glm::vec3(200, 300, 200), player_tank->get_camera());
+            glm::vec3(200, 300, 200), player_tank->get_camera());
+
+        player_controller_handler = std::make_shared<MouseKeyboardPlayerControllerHandler>(
+            windowed_backend->get_window(), *player_renderer);
+
+        for (auto &ctrl: player_tank->get_controllers())
+            player_controller_handler->add_controller(ctrl);
+
+        windowed_backend->get_window()->set_callback(player_controller_handler);
 
         windowed_backend->get_window()->set_resize_callback(
             [this](const int width, const int height) -> void {
-                window_width = width;
-                window_height = height;
                 player_renderer->set_window_size(width, height);
             });
 

@@ -13,6 +13,7 @@
       "Bash(echo:*)",
       "Bash(ls:*)",
       "Bash(find:*)",
+      "Bash(wc:*)",
       "Bash(head:*)",
       "Bash(tail:*)",
       "Bash(clang-format:*)",

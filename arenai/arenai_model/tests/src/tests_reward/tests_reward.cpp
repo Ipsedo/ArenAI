@@ -19,7 +19,7 @@ using namespace arenai::controller;
 // get_reward — base scenarios
 // ========================================================================
 
-TEST_F(RewardTest, RewardPositiveWhenAliveNoShot) {
+TEST_F(RewardTest, RewardZeroWhenAliveNoShot) {
     add_ground();
     auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f});
     auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {20.f, 0.f, 0.f});
@@ -32,8 +32,8 @@ TEST_F(RewardTest, RewardPositiveWhenAliveNoShot) {
     const float reward_a = tanks[0]->get_reward(tanks);
     const float reward_b = tanks[1]->get_reward(tanks);
 
-    ASSERT_GT(reward_a, 0.f);
-    ASSERT_GT(reward_b, 0.f);
+    ASSERT_EQ(reward_a, 0.f);
+    ASSERT_EQ(reward_b, 0.f);
 }
 
 TEST_F(RewardTest, RewardNegativeWhenDead) {

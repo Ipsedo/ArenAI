@@ -109,17 +109,13 @@ namespace arenai::model {
             last_shoot_info = std::nullopt;
         }
 
-        // 4. shaped reward
-        constexpr float shaped_reward_scale = 0.1f;
-        const float shaped_reward = shaped_reward_scale * get_shaped_reward(tanks);
-
-        // 5. total reward
-        const float reward = dead_penalty + hit_reward + shaped_reward;
+        // 4. total reward
+        const float reward = dead_penalty + hit_reward;
 
         return reward;
     }
 
-    float BulletEnemyTank::get_shaped_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
+    float BulletEnemyTank::get_phi(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
         constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
         const glm::vec3 chassis_pos = get_chassis()->get_model_matrix() * world_center;
 

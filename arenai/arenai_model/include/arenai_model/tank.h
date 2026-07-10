@@ -42,6 +42,7 @@ namespace arenai::model {
     class EnemyTank : virtual public Tank {
     public:
         virtual float get_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) = 0;
+        virtual float get_phi(const std::vector<std::shared_ptr<EnemyTank>> &tanks) = 0;
         virtual std::vector<float> get_proprioception() = 0;
         virtual std::shared_ptr<ActionStats> get_action_stats() = 0;
         virtual bool has_hit_other_tank() = 0;

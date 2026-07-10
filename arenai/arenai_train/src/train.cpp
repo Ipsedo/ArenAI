@@ -86,11 +86,14 @@ namespace arenai::train {
         // metrics
         auto reward_mean_metric =
             std::make_shared<MeanMetric>("r", train_options.metric_window_size, 2, true);
+        auto potential_mean_metric =
+            std::make_shared<MeanMetric>("pr", train_options.metric_window_size, 2, true);
 
         const auto sac_metrics = agent->get_metrics();
         const auto env_metrics = env->get_metrics();
 
-        std::vector<std::shared_ptr<AbstractMetric>> metrics = {reward_mean_metric};
+        std::vector<std::shared_ptr<AbstractMetric>> metrics = {
+            reward_mean_metric, potential_mean_metric};
         metrics.insert(metrics.end(), env_metrics.begin(), env_metrics.end());
         metrics.insert(metrics.end(), sac_metrics.begin(), sac_metrics.end());
 
@@ -125,6 +128,7 @@ namespace arenai::train {
             bool is_done = false;
 
             auto last_states = env->reset(spawn_width, spawn_height);
+            auto last_phi_vector = env->get_phi_vector();
 
             while (!is_done) {
 
@@ -150,6 +154,7 @@ namespace arenai::train {
 
                 // step environment
                 const auto steps = env->step(environment_options.wanted_frequency, actions_for_env);
+                const auto phi_vector = env->get_phi_vector();
 
                 last_states.clear();
                 last_states.reserve(environment_options.nb_tanks);
@@ -161,7 +166,13 @@ namespace arenai::train {
 
                     if (env->is_tank_factory_already_done(i)) continue;
 
+                    const auto potential_reward =
+                        env_done
+                            ? 0.f
+                            : 10.f * (model_options.gamma * phi_vector[i] - last_phi_vector[i]);
+
                     reward_mean_metric->add(reward);
+                    potential_mean_metric->add(potential_reward);
 
                     const auto [next_vision, next_proprioception] = state_to_tensor(
                         next_state, environment_options.vision_height,
@@ -174,7 +185,9 @@ namespace arenai::train {
                     replay_buffer->add(
                         {{vision[i], proprioception[i]},
                          {torch_action.continuous_action[i], torch_action.discrete_action[i]},
-                         torch::tensor({reward}, torch::TensorOptions().dtype(torch::kFloat)),
+                         torch::tensor(
+                             {reward + potential_reward},
+                             torch::TensorOptions().dtype(torch::kFloat)),
                          torch::tensor({is_terminal}, torch::TensorOptions().dtype(torch::kBool)),
                          {next_vision, next_proprioception}});
                 }
@@ -186,6 +199,7 @@ namespace arenai::train {
 
                 // step ending stuff
                 is_done = env->is_episode_terminated();
+                last_phi_vector = phi_vector;
 
                 train_counter = (train_counter + 1) % train_options.train_every;
 

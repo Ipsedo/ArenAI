@@ -92,6 +92,16 @@ namespace arenai::train {
         return step_result;
     }
 
+    std::vector<float> TrainTankEnvironment::get_phi_vector() {
+        return apply_on_factories<std::vector<float>>(
+            [](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
+                std::vector<float> phi_vector;
+                phi_vector.reserve(tanks.size());
+                for (const auto &tank: tanks) phi_vector.emplace_back(tank->get_phi(tanks));
+                return phi_vector;
+            });
+    }
+
     void TrainTankEnvironment::on_draw(
         const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {}
 

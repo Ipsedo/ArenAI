@@ -30,6 +30,7 @@ namespace arenai::model {
             float wanted_frame_frequency);
 
         float get_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
+        float get_phi(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
 
         bool is_dead() override;
         bool is_first_frame_dead() override;
@@ -77,8 +78,6 @@ namespace arenai::model {
         float compute_hit_reward(
             const glm::vec3 &fire_pos, const glm::vec3 &best_enemy_pos,
             const glm::vec3 &hit_pos) const;
-
-        float get_shaped_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks);
     };
 
 }// namespace arenai::model

@@ -11,6 +11,8 @@ concurrency:
 
 env:
   LIBTORCH_VERSION: 2.12.0
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
+  CCACHE_MAXSIZE: 500M
 
 jobs:
   build-and-test:
@@ -23,6 +25,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
+            ccache \
             libbullet-dev \
             libglm-dev \
             libglfw3-dev \
@@ -46,6 +49,16 @@ jobs:
           unzip -q /tmp/libtorch.zip -d "$HOME"
           rm /tmp/libtorch.zip
 
+      # Compilation cache: content-based, so unchanged files are cache hits
+      # even on a fresh runner. The key is unique per run so the updated
+      # cache is saved every time; restore-keys picks the most recent one.
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-${{ github.sha }}
+          restore-keys: ccache-
+
       # FetchContent downloads (argparse, json, stb, soil2...): the key hashes
       # every CMakeLists.txt, so bumping a dependency version invalidates it
       - name: Cache FetchContent dependencies
@@ -60,9 +73,14 @@ jobs:
           cmake -S arenai -B arenai/build
           -DCMAKE_BUILD_TYPE=Release
           -DLIBTORCH_PATH="$HOME/libtorch"
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Build
         run: cmake --build arenai/build -j"$(nproc)"
+
+      - name: ccache statistics
+        run: ccache -s
 
       - name: Run tests
         env:

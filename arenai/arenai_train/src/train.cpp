@@ -68,15 +68,9 @@ namespace arenai::train {
             model_options.hidden_size_sensors, model_options.hidden_size_actions,
             model_options.actor_hidden_sizes, model_options.critic_hidden_sizes,
             model_options.vision_channels, model_options.group_norm_nums, torch_device,
-            train_options.metric_window_size, model_options.tau, model_options.gamma,
-            model_options.initial_alpha_continuous, model_options.initial_alpha_discrete,
-            train_options.target_continuous_sigma, train_options.discrete_entropy_factor);
+            train_options.metric_window_size, model_options.tau, model_options.gamma);
 
         std::cout << "Parameters : " << agent->count_parameters() << std::endl;
-        std::cout << "Target entropy (continuous) : " << agent->get_continuous_target_entropy()
-                  << std::endl;
-        std::cout << "Target entropy (discrete) : " << agent->get_discrete_target_entropy()
-                  << std::endl;
 
         AgentSaver saver(agent, train_options.output_folder, train_options.save_every);
 

@@ -27,7 +27,7 @@ std::unique_ptr<SacAgent> SacAgentTest::make_agent(const SacTestConfig &cfg) con
     return std::make_unique<SacAgent>(
         cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
         cfg.nb_discrete_actions, 1e-3f, 1e-3f, 1e-3f, 16, 16, actor_hidden, critic_hidden,
-        vision_channels, group_norm_nums, device, 10, 0.005f, 0.99f, 0.2f, 0.2f, 0.5f, 0.8f);
+        vision_channels, group_norm_nums, device, 10, 0.005f, 0.99f);
 }
 
 std::unique_ptr<ReplayBuffer>
@@ -74,15 +74,7 @@ TEST_F(SacAgentTest, MetricsNotEmpty) {
 
     const auto metrics = agent->get_metrics();
 
-    ASSERT_EQ(metrics.size(), 9);
-}
-
-TEST_F(SacAgentTest, TargetEntropiesFinite) {
-    constexpr SacTestConfig cfg{8, 8, 10, 4, 2};
-    const auto agent = make_agent(cfg);
-
-    ASSERT_TRUE(std::isfinite(agent->get_continuous_target_entropy()));
-    ASSERT_TRUE(std::isfinite(agent->get_discrete_target_entropy()));
+    ASSERT_EQ(metrics.size(), 11);
 }
 
 // ========================================================================

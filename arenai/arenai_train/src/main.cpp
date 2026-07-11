@@ -33,8 +33,6 @@ int main(const int argc, char **argv) {
         .action(parse_cli_hidden_layer);
     parser.add_argument("--tau").scan<'g', float>().default_value(0.005f);
     parser.add_argument("--gamma").scan<'g', float>().default_value(0.99f);
-    parser.add_argument("--initial_alpha_continuous").scan<'g', float>().default_value(1e-3f);
-    parser.add_argument("--initial_alpha_discrete").scan<'g', float>().default_value(1e-3f);
 
     // train
     parser.add_argument("--output_folder").required();
@@ -42,12 +40,10 @@ int main(const int argc, char **argv) {
     parser.add_argument("--actor_learning_rate").scan<'g', float>().default_value(1e-4f);
     parser.add_argument("--critic_learning_rate").scan<'g', float>().default_value(3e-4f);
     parser.add_argument("--alpha_learning_rate").scan<'g', float>().default_value(1e-4f);
-    parser.add_argument("--target_continuous_sigma").scan<'g', float>().default_value(0.3f);
-    parser.add_argument("--discrete_entropy_factor").scan<'g', float>().default_value(0.9f);
     parser.add_argument("--epochs").scan<'i', int>().default_value(8);
     parser.add_argument("--batch_size").scan<'i', int>().default_value(256);
     parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60 * 3);
-    parser.add_argument("--nb_episodes").scan<'i', int>().default_value(20000);
+    parser.add_argument("--nb_episodes").scan<'i', int>().default_value(5000);
     parser.add_argument("--replay_buffer_size").scan<'i', int>().default_value(500000);
     parser.add_argument("--train_every").scan<'i', int>().default_value(64);
     parser.add_argument("--save_every").scan<'i', int>().default_value(30 * 60 * 3 * 25);
@@ -80,13 +76,11 @@ int main(const int argc, char **argv) {
          parser.get<int>("--sensors_hidden_size"), parser.get<int>("--actions_hidden_size"),
          parser.get<hidden_layers>("--actor_hidden_sizes").layers,
          parser.get<hidden_layers>("--critic_hidden_sizes").layers, parser.get<float>("--tau"),
-         parser.get<float>("--gamma"), parser.get<float>("--initial_alpha_continuous"),
-         parser.get<float>("--initial_alpha_discrete")},
+         parser.get<float>("--gamma")},
         {std::filesystem::path(parser.get<std::string>("--output_folder")),
          std::filesystem::path(parser.get<std::string>("--asset_folder")),
          parser.get<float>("--actor_learning_rate"), parser.get<float>("--critic_learning_rate"),
-         parser.get<float>("--alpha_learning_rate"), parser.get<float>("--target_continuous_sigma"),
-         parser.get<float>("--discrete_entropy_factor"), parser.get<int>("--epochs"),
+         parser.get<float>("--alpha_learning_rate"), parser.get<int>("--epochs"),
          parser.get<int>("--batch_size"), parser.get<int>("--max_episode_steps"),
          parser.get<int>("--nb_episodes"), parser.get<int>("--replay_buffer_size"),
          parser.get<int>("--train_every"), parser.get<int>("--save_every"),

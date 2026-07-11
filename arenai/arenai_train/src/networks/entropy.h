@@ -20,6 +20,22 @@ namespace arenai::train {
         torch::Tensor log_alpha_tensor;
     };
 
+    class TargetEntropyWarmup final : public torch::nn::Module {
+    public:
+        TargetEntropyWarmup(
+            float initial_target_entropy, float final_target_entropy, int warmup_step);
+
+        void step();
+        torch::Tensor target_entropy() const;
+
+    private:
+        float initial;
+        float final;
+        int warmup_step;
+
+        torch::Tensor current_step;
+    };
+
 }// namespace arenai::train
 
 #endif//ARENAI_TRAIN_HOST_ENTROPY_H

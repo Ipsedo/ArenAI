@@ -19,8 +19,6 @@ namespace arenai::train {
         std::vector<int> critic_hidden_sizes;
         float tau;
         float gamma;
-        float initial_alpha_continuous;
-        float initial_alpha_discrete;
     };
 
     struct TrainOptions {
@@ -29,8 +27,6 @@ namespace arenai::train {
         float actor_learning_rate;
         float critic_learning_rate;
         float alpha_learning_rate;
-        float target_continuous_sigma;
-        float discrete_entropy_factor;
         int epochs;
         int batch_size;
         int max_episode_steps;

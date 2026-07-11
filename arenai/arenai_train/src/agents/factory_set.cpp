@@ -35,9 +35,7 @@ namespace arenai::train {
                 "group_norm_nums", parse_cli_group_norms, {{{2, 4, 8, 16, 32}}})
                 .groups,
             torch::Device(torch::kCPU), get_value("metric_window_size", 1024),
-            get_value("tau", 0.005f), get_value("gamma", 0.995f),
-            get_value("initial_alpha_continuous", 1.f), get_value("initial_alpha_discrete", 1.f),
-            get_value("target_continuous_sigma", 0.3f), get_value("discrete_entropy_factor", 0.9f));
+            get_value("tau", 0.005f), get_value("gamma", 0.995f));
     }
 
 }// namespace arenai::train

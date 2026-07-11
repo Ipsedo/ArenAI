@@ -4,6 +4,8 @@ project(arenai)
 
 set(CMAKE_CXX_STANDARD 20)
 
+enable_testing()
+
 # Auto-export all symbols from our shared libraries on Windows (replaces the
 # per-target WINDOWS_EXPORT_ALL_SYMBOLS property in each module).
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)

@@ -1,0 +1,72 @@
+name: ArenAI CI
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  LIBTORCH_VERSION: 2.12.0
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libbullet-dev \
+            libglm-dev \
+            libglfw3-dev \
+            libgtest-dev \
+            libegl-dev \
+            libgles-dev \
+            libgl1-mesa-dri
+
+      - name: Cache LibTorch
+        id: cache-libtorch
+        uses: actions/cache@v4
+        with:
+          path: ~/libtorch
+          key: libtorch-cpu-${{ env.LIBTORCH_VERSION }}
+
+      - name: Download LibTorch (CPU)
+        if: steps.cache-libtorch.outputs.cache-hit != 'true'
+        run: |
+          curl -fL -o /tmp/libtorch.zip \
+            "https://download.pytorch.org/libtorch/cpu/libtorch-shared-with-deps-${LIBTORCH_VERSION}%2Bcpu.zip"
+          unzip -q /tmp/libtorch.zip -d "$HOME"
+          rm /tmp/libtorch.zip
+
+      # FetchContent downloads (argparse, json, stb, soil2...): the key hashes
+      # every CMakeLists.txt, so bumping a dependency version invalidates it
+      - name: Cache FetchContent dependencies
+        uses: actions/cache@v4
+        with:
+          path: arenai/build/_deps
+          key: fetchcontent-${{ hashFiles('arenai/**/CMakeLists.txt') }}
+          restore-keys: fetchcontent-
+
+      - name: Configure
+        run: >
+          cmake -S arenai -B arenai/build
+          -DCMAKE_BUILD_TYPE=Release
+          -DLIBTORCH_PATH="$HOME/libtorch"
+
+      - name: Build
+        run: cmake --build arenai/build -j"$(nproc)"
+
+      - name: Run tests
+        env:
+          # Headless software rendering for the EGL pbuffer tests (agent vision)
+          EGL_PLATFORM: surfaceless
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: ctest --test-dir arenai/build --output-on-failure

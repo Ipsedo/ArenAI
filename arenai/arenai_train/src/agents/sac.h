@@ -38,7 +38,7 @@ namespace arenai::train {
         int count_parameters() override;
 
     private:
-        static constexpr int WARMUP_STEP = 30000;
+        static constexpr int WARMUP_STEP = 10000;
 
         std::shared_ptr<Actor> actor;
 

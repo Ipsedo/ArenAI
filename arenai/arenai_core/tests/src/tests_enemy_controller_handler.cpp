@@ -7,10 +7,9 @@
 
 #include <arenai_controller/inputs.h>
 #include <arenai_core/enemy_handler.h>
+#include <arenai_core_tests/tests_enemy_controller_handler.h>
 #include <arenai_model/action_stats.h>
 #include <arenai_model/constants.h>
-
-#include <../include/arenai_core_tests/tests_enemy_controller_handler.h>
 
 using namespace arenai;
 using namespace arenai::core;

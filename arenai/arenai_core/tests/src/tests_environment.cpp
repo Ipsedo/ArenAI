@@ -9,8 +9,7 @@
 #include <nlohmann/json.hpp>
 
 #include <arenai_controller/inputs.h>
-
-#include <../include/arenai_core_tests/tests_environment.h>
+#include <arenai_core_tests/tests_environment.h>
 
 using namespace arenai;
 using namespace arenai::core;

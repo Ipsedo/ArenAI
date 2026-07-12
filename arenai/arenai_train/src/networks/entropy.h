@@ -20,13 +20,15 @@ namespace arenai::train {
         torch::Tensor log_alpha_tensor;
     };
 
-    class TargetEntropyWarmup final : public torch::nn::Module {
+    class AbstractTargetEntropyWarmup : public torch::nn::Module {
     public:
-        TargetEntropyWarmup(
-            float initial_target_entropy, float final_target_entropy, int warmup_step);
+        AbstractTargetEntropyWarmup(float initial_value, float final_value, int warmup_step);
 
         void step();
-        torch::Tensor target_entropy() const;
+        torch::Tensor target_entropy();
+
+    protected:
+        virtual float to_target_entropy(float value) = 0;
 
     private:
         float initial;
@@ -34,6 +36,30 @@ namespace arenai::train {
         int warmup_step;
 
         torch::Tensor current_step;
+    };
+
+    class DiscreteTargetEntropyWarmup : public AbstractTargetEntropyWarmup {
+    public:
+        DiscreteTargetEntropyWarmup(
+            int nb_actions, float initial_factor, float final_factor, int warmup_step);
+
+    protected:
+        float to_target_entropy(float value) override;
+
+    private:
+        int nb_actions;
+    };
+
+    class ContinuousTargetEntropyWarmup : public AbstractTargetEntropyWarmup {
+    public:
+        ContinuousTargetEntropyWarmup(
+            int nb_actions, float initial_sigma, float final_sigma, int warmup_step);
+
+    protected:
+        float to_target_entropy(float value) override;
+
+    private:
+        int nb_actions;
     };
 
 }// namespace arenai::train

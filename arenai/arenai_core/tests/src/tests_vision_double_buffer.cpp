@@ -3,7 +3,8 @@
 //
 
 #include <arenai_core/thread_pool.h>
-#include <arenai_core_tests/tests_vision_double_buffer/tests_vision_double_buffer.h>
+
+#include <../include/arenai_core_tests/tests_vision_double_buffer.h>
 
 using namespace arenai;
 using namespace arenai::core;

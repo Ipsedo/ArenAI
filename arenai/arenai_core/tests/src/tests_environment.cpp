@@ -9,7 +9,8 @@
 #include <nlohmann/json.hpp>
 
 #include <arenai_controller/inputs.h>
-#include <arenai_core_tests/tests_environment/tests_environment.h>
+
+#include <../include/arenai_core_tests/tests_environment.h>
 
 using namespace arenai;
 using namespace arenai::core;
@@ -81,7 +82,7 @@ TEST_F(EnvironmentTest, ResetGoldenImage) {
         const auto &[vision, proprioception] = states[tank_idx];
 
         const auto golden_image_path =
-            std::filesystem::path(__FILE__).parent_path().parent_path().parent_path() / "resources"
+            std::filesystem::path(__FILE__).parent_path().parent_path() / "resources"
             / "golden_images" / ("golden_env_reset_tank_" + std::to_string(tank_idx) + ".json");
 
         if (std::filesystem::exists(golden_image_path)) {

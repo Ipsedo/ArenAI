@@ -9,7 +9,7 @@
 
 #include <arenai_core/environment.h>
 
-#include "../utils/engine_test_fixture.h"
+#include "utils/engine_test_fixture.h"
 
 class TestTanksEnvironment final : public arenai::core::BaseTanksEnvironment {
 public:

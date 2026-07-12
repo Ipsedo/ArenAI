@@ -263,6 +263,14 @@ namespace arenai::view {
         texture_(GL_TEXTURE_2D, texture_name);
     }
 
+    void Program::bind_external_texture(
+        const std::string &name, const GLuint texture_id, const int texture_unit) {
+        glActiveTexture(GL_TEXTURE0 + texture_unit);
+        glBindTexture(GL_TEXTURE_2D, texture_id);
+
+        uniform_(glUniform1i, name, texture_unit);
+    }
+
     void Program::disable_texture_(const GLenum texture_target) {
         glBindTexture(texture_target, 0);
     }

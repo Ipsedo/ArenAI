@@ -17,6 +17,7 @@
 #include <arenai_view/renderer.h>
 
 #include "../egl_render_context.h"
+#include "../shadow_map.h"
 
 namespace arenai::view {
 
@@ -24,7 +25,7 @@ namespace arenai::view {
     public:
         GlRenderer(
             std::shared_ptr<EglRenderContext> gl_context, glm::vec3 light_pos,
-            std::shared_ptr<AbstractCamera> camera);
+            std::shared_ptr<AbstractCamera> camera, bool with_shadows);
         ~GlRenderer() override;
 
         void
@@ -43,7 +44,19 @@ namespace arenai::view {
         const std::shared_ptr<EglRenderContext> &context() const { return gl_context; }
 
     private:
+        static constexpr int SHADOW_MAP_SIZE = 4096;
+        // ortho frustum half extent, centered on the camera (the arena is far
+        // too large to be covered by a single shadow map at a usable resolution)
+        static constexpr float SHADOW_HALF_EXTENT = 120.f;
+        static constexpr float SHADOW_DISTANCE = 1000.f;
+        static constexpr float SHADOW_DEPTH_RANGE = 400.f;
+
+        glm::mat4 light_view_projection() const;
+
         glm::vec3 light_pos;
+
+        bool with_shadows;
+        std::unique_ptr<ShadowMap> shadow_map;
 
         std::map<std::string, std::unique_ptr<AbstractDrawable>> drawables;
 

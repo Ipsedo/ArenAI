@@ -102,9 +102,11 @@ namespace arenai::view {
 
     GlOffscreenRenderer::GlOffscreenRenderer(
         const std::shared_ptr<EglRenderContext> &main_context, const int width, const int height,
-        const glm::vec3 light_pos, const std::shared_ptr<AbstractCamera> &camera)
+        const glm::vec3 light_pos, const std::shared_ptr<AbstractCamera> &camera,
+        const bool with_shadows)
         : GlRenderer(
-            std::make_shared<PBufferContext>(main_context, width, height), light_pos, camera),
+            std::make_shared<PBufferContext>(main_context, width, height), light_pos, camera,
+            with_shadows),
           width(width), height(height) {}
 
     void GlOffscreenRenderer::on_new_frame() {

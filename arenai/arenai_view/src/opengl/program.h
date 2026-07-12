@@ -108,6 +108,8 @@ namespace arenai::view {
 
         void texture(const std::string &texture_name);
 
+        void bind_external_texture(const std::string &name, GLuint texture_id, int texture_unit);
+
         static void disable_cube_texture();
 
         static void disable_texture();

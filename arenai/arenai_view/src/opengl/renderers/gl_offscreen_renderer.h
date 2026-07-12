@@ -35,7 +35,8 @@ namespace arenai::view {
     public:
         GlOffscreenRenderer(
             const std::shared_ptr<EglRenderContext> &main_context, int width, int height,
-            glm::vec3 light_pos, const std::shared_ptr<AbstractCamera> &camera);
+            glm::vec3 light_pos, const std::shared_ptr<AbstractCamera> &camera,
+            bool with_shadows = false);
 
         image<uint8_t> draw_and_get_frame(
             const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) override;

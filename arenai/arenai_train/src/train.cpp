@@ -160,10 +160,14 @@ namespace arenai::train {
 
                     if (env->is_tank_factory_already_done(i)) continue;
 
-                    const auto potential_reward =
-                        env_done
-                            ? 0.f
-                            : 10.f * (model_options.gamma * phi_vector[i] - last_phi_vector[i]);
+                    // truncated endings (timeout) are stored as non-terminal so the
+                    // critic target keeps bootstrapping on the next state value
+                    const bool is_terminal = env_done && !is_truncated;
+
+                    auto potential_reward =
+                        (is_terminal ? 0.f : model_options.gamma * phi_vector[i])
+                        - last_phi_vector[i];
+                    potential_reward = potential_reward * 10.f;
 
                     reward_mean_metric->add(reward);
                     potential_mean_metric->add(potential_reward);
@@ -171,10 +175,6 @@ namespace arenai::train {
                     const auto [next_vision, next_proprioception] = state_to_tensor(
                         next_state, environment_options.vision_height,
                         environment_options.vision_width);
-
-                    // truncated endings (timeout) are stored as non-terminal so the
-                    // critic target keeps bootstrapping on the next state value
-                    const bool is_terminal = env_done && !is_truncated;
 
                     replay_buffer->add(
                         {{vision[i], proprioception[i]},

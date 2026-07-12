@@ -48,12 +48,12 @@ namespace arenai::train {
               vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_actions,
               hidden_size_sensors, hidden_size_actions, critic_hidden_sizes, vision_channels,
               group_norm_nums)),
-          alpha_continuous(std::make_shared<AlphaParameter>(2.5e-3f)),
-          alpha_discrete(std::make_shared<AlphaParameter>(2.5e-2f)),
+          alpha_continuous(std::make_shared<AlphaParameter>(5e-2f)),
+          alpha_discrete(std::make_shared<AlphaParameter>(5e-2f)),
           continuous_target_entropy(std::make_shared<ContinuousTargetEntropyWarmup>(
               nb_continuous_actions, 0.5f, 0.1f, WARMUP_STEP)),
           discrete_target_entropy(std::make_shared<DiscreteTargetEntropyWarmup>(
-              nb_discrete_actions, 0.98f, 0.7f, WARMUP_STEP)),
+              nb_discrete_actions, 0.5f, 0.3f, WARMUP_STEP)),
           actor_optim(std::make_unique<torch::optim::Adam>(
               actor->parameters(), torch::optim::AdamOptions(actor_learning_rate))),
           critic_1_optim(std::make_unique<torch::optim::Adam>(
@@ -150,6 +150,7 @@ namespace arenai::train {
 
             critic_1_optim->zero_grad();
             critic_1_loss.backward();
+            torch::nn::utils::clip_grad_norm_(critic_1->parameters(), GRAD_NORM_MAX);
             critic_1_optim->step();
 
             // critic 2
@@ -161,6 +162,7 @@ namespace arenai::train {
 
             critic_2_optim->zero_grad();
             critic_2_loss.backward();
+            torch::nn::utils::clip_grad_norm_(critic_2->parameters(), GRAD_NORM_MAX);
             critic_2_optim->step();
 
             // target value soft update
@@ -189,6 +191,7 @@ namespace arenai::train {
 
             actor_optim->zero_grad();
             actor_loss.backward();
+            torch::nn::utils::clip_grad_norm_(actor->parameters(), GRAD_NORM_MAX);
             actor_optim->step();
 
             // continuous entropy
@@ -199,6 +202,7 @@ namespace arenai::train {
             alpha_continuous_optim->zero_grad();
             alpha_continuous_loss.backward();
             alpha_continuous_optim->step();
+            alpha_continuous->clamp_log_alpha(LOG_ALPHA_MIN, LOG_ALPHA_MAX);
 
             // discrete entropy
             const auto alpha_discrete_loss = torch::mean(
@@ -208,6 +212,7 @@ namespace arenai::train {
             alpha_discrete_optim->zero_grad();
             alpha_discrete_loss.backward();
             alpha_discrete_optim->step();
+            alpha_discrete->clamp_log_alpha(LOG_ALPHA_MIN, LOG_ALPHA_MAX);
 
             // metrics
             actor_loss_metric->add(actor_loss.cpu().item<float>());

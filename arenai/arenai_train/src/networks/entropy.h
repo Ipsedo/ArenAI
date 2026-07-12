@@ -16,6 +16,8 @@ namespace arenai::train {
         torch::Tensor log_alpha();
         torch::Tensor alpha();
 
+        void clamp_log_alpha(float min_log_alpha, float max_log_alpha);
+
     private:
         torch::Tensor log_alpha_tensor;
     };

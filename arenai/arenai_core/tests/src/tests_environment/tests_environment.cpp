@@ -93,13 +93,24 @@ TEST_F(EnvironmentTest, ResetGoldenImage) {
 
             ASSERT_EQ(golden_pixels.size(), vision.pixels.size()) << "tank " << tank_idx;
 
+            // rasterization differs between GPU drivers and llvmpipe versions
+            // (headless CI): edge pixels can shift by a full color step, so
+            // check mean error and count outliers instead of per-pixel bounds
+            constexpr int outlier_threshold = 16;
+            double absolute_error_sum = 0.0;
+            int nb_outliers = 0;
+
             for (size_t i = 0; i < golden_pixels.size(); ++i) {
-                // rasterization differs slightly between GPU drivers and
-                // llvmpipe (headless CI): observed per-pixel diffs up to 16
-                constexpr int tolerance = 32;
-                ASSERT_LE(std::abs(golden_pixels[i] - vision.pixels[i]), tolerance)
-                    << "tank " << tank_idx << " pixel diff at index " << i;
+                const int diff = std::abs(golden_pixels[i] - vision.pixels[i]);
+                absolute_error_sum += diff;
+                if (diff > outlier_threshold) nb_outliers++;
             }
+
+            EXPECT_LE(absolute_error_sum / static_cast<double>(golden_pixels.size()), 2.0)
+                << "tank " << tank_idx << " mean absolute error too high";
+            EXPECT_LE(nb_outliers, static_cast<int>(golden_pixels.size() / 100))
+                << "tank " << tank_idx << " too many pixels differing by more than "
+                << outlier_threshold;
         } else {
             std::filesystem::create_directories(golden_image_path.parent_path());
             nlohmann::json output_json(vision.pixels);

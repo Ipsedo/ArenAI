@@ -67,16 +67,23 @@ TEST_P(PBufferParam, TestPBuffer) {
     const auto golden_image_path =
         std::filesystem::path(__FILE__).parent_path().parent_path() / "resources" / "golden_images"
         / ("golden_cubemap_" + std::to_string(width) + "_" + std::to_string(height) + ".json");
-    std::ifstream input_file(golden_image_path);
 
-    nlohmann::json golden_image_json;
-    input_file >> golden_image_json;
+    if (std::filesystem::exists(golden_image_path)) {
+        std::ifstream input_file(golden_image_path);
+        nlohmann::json golden_image_json;
+        input_file >> golden_image_json;
 
-    const auto golden_pixels = golden_image_json.get<std::vector<uint8_t>>();
+        const auto golden_pixels = golden_image_json.get<std::vector<uint8_t>>();
 
-    for (size_t i = 0; i < golden_pixels.size(); ++i) {
-        constexpr int tolerance = 2;
-        ASSERT_LE(std::abs(golden_pixels[i] - pixels[i]), tolerance);
+        for (size_t i = 0; i < golden_pixels.size(); ++i) {
+            constexpr int tolerance = 2;
+            ASSERT_LE(std::abs(golden_pixels[i] - pixels[i]), tolerance);
+        }
+    } else {
+        // generate golden image for first run
+        nlohmann::json output_json(pixels);
+        std::ofstream output_file(golden_image_path);
+        output_file << output_json;
     }
 }
 

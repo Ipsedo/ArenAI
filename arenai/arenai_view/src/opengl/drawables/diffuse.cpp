@@ -45,8 +45,8 @@ namespace arenai::view {
     }
 
     void Diffuse::bind_diffuse_pass(
-        Program &curr_program, const glm::mat4 mvp_matrix, const glm::mat4 mv_matrix,
-        const glm::vec3 light_pos_from_camera) {
+        Program &curr_program, const glm::mat4 &mvp_matrix, const glm::mat4 &mv_matrix,
+        const glm::vec3 light_pos_from_camera) const {
         curr_program.use();
 
         curr_program.attrib("a_position", "vertices_buffer", POSITION_SIZE, STRIDE, 0);

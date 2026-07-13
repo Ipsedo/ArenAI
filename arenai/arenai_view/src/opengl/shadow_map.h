@@ -20,7 +20,8 @@ namespace arenai::view {
         ShadowMap &operator=(const ShadowMap &) = delete;
 
         void begin_depth_pass() const;
-        void end_depth_pass() const;
+
+        static void end_depth_pass();
 
         GLuint depth_texture() const;
 

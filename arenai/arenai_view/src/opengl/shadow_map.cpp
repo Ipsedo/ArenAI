@@ -50,7 +50,7 @@ namespace arenai::view {
         glPolygonOffset(2.f, 4.f);
     }
 
-    void ShadowMap::end_depth_pass() const {
+    void ShadowMap::end_depth_pass() {
         glDisable(GL_POLYGON_OFFSET_FILL);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }

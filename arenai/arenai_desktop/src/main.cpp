@@ -40,8 +40,8 @@ int main(const int argc, char **argv) {
     // Game options
     parser.add_argument("--wanted_frequency").scan<'g', float>().default_value(1.f / 30.f);
     parser.add_argument("--nb_tanks").scan<'i', int>().default_value(16);
-    parser.add_argument("--vision_height").scan<'i', int>().default_value(64);
-    parser.add_argument("--vision_width").scan<'i', int>().default_value(128);
+    parser.add_argument("--vision_height").scan<'i', int>().default_value(128);
+    parser.add_argument("--vision_width").scan<'i', int>().default_value(256);
     parser.add_argument("--window_width").scan<'i', int>().default_value(1920);
     parser.add_argument("--window_height").scan<'i', int>().default_value(1080);
     parser.add_argument("--android_asset_folder").required();

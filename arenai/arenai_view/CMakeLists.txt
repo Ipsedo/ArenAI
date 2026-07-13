@@ -9,6 +9,18 @@ set(CMAKE_CXX_STANDARD 20)
 ##### GLM #####
 find_package(glm REQUIRED)
 
+# arenai_copy_shaders(<target>)
+# Copies the GLSL sources next to <target>'s executable, where load_shader()
+# resolves them at runtime ("<exe dir>/shaders"). Call it on every executable
+# that renders (game, training, tests).
+set(ARENAI_VIEW_SHADERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shaders" CACHE INTERNAL "")
+function(arenai_copy_shaders target)
+    add_custom_command(TARGET ${target} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${ARENAI_VIEW_SHADERS_DIR}" "$<TARGET_FILE_DIR:${target}>/shaders"
+    )
+endfunction()
+
 # ARENAI VIEW
 file(GLOB_RECURSE ARENAI_VIEW_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 add_library(arenai_view SHARED ${ARENAI_VIEW_SRC})

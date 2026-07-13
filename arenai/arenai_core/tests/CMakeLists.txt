@@ -30,6 +30,7 @@ if (WIN32)
 endif ()
 
 arenai_copy_runtime_dlls(arenai_core_tests)
+arenai_copy_shaders(arenai_core_tests)
 
 add_test(
         NAME arenai_core_tests

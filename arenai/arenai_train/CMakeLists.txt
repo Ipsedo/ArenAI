@@ -74,6 +74,7 @@ add_executable(arenai_train_exec ${ARENAI_TRAIN_SRC})
 target_link_libraries(arenai_train_exec PUBLIC ${ARENAI_TRAIN_LINK_LIBS})
 target_include_directories(arenai_train_exec PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include" "${stb_SOURCE_DIR}")
 arenai_copy_runtime_dlls(arenai_train_exec TORCH)
+arenai_copy_shaders(arenai_train_exec)
 
 # Library
 add_library(arenai_train_lib SHARED ${ARENAI_TRAIN_SRC})

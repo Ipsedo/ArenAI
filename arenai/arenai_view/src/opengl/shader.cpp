@@ -8,15 +8,34 @@
 #include <fstream>
 #include <sstream>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 using namespace arenai;
+
+namespace {
+
+    // Directory containing the running executable — the "shaders" folder is
+    // deployed next to it by arenai_copy_shaders() (arenai_view/CMakeLists.txt).
+    std::filesystem::path executable_directory() {
+#ifdef _WIN32
+        wchar_t buffer[MAX_PATH];
+        GetModuleFileNameW(nullptr, buffer, MAX_PATH);
+        return std::filesystem::path(buffer).parent_path();
+#else
+        return std::filesystem::canonical("/proc/self/exe").parent_path();
+#endif
+    }
+
+}// namespace
 
 namespace arenai::view {
 
     GLuint load_shader(const GLenum type, const std::filesystem::path &glsl_relative_path) {
         const GLuint shader = glCreateShader(type);
 
-        const auto shaders_path =
-            std::filesystem::path(__FILE__).parent_path().parent_path().parent_path() / "shaders";
+        const auto shaders_path = executable_directory() / "shaders";
 
         std::ifstream ifs(shaders_path / glsl_relative_path, std::ios::in);
 

@@ -24,4 +24,3 @@ target_link_libraries(
 )
 
 arenai_copy_runtime_dlls(arenai_desktop TORCH)
-arenai_copy_shaders(arenai_desktop)

@@ -9,22 +9,28 @@ set(CMAKE_CXX_STANDARD 20)
 ##### GLM #####
 find_package(glm REQUIRED)
 
-# arenai_copy_shaders(<target>)
-# Copies the GLSL sources next to <target>'s executable, where load_shader()
-# resolves them at runtime ("<exe dir>/shaders"). Call it on every executable
-# that renders (game, training, tests).
-set(ARENAI_VIEW_SHADERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shaders" CACHE INTERNAL "")
-function(arenai_copy_shaders target)
-    add_custom_command(TARGET ${target} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${ARENAI_VIEW_SHADERS_DIR}" "$<TARGET_FILE_DIR:${target}>/shaders"
-    )
-endfunction()
+# Embed the GLSL sources into the library: cmake/ArenaiEmbedShaders.cmake turns
+# shaders/*.glsl into a generated header (EMBEDDED_SHADERS map) consumed by
+# load_shader(). The built executables need no shader file at runtime.
+file(GLOB ARENAI_VIEW_SHADER_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.glsl")
+set(ARENAI_VIEW_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+set(ARENAI_VIEW_EMBEDDED_SHADERS_H "${ARENAI_VIEW_GENERATED_DIR}/shaders_embedded.h")
+
+add_custom_command(
+        OUTPUT "${ARENAI_VIEW_EMBEDDED_SHADERS_H}"
+        COMMAND ${CMAKE_COMMAND}
+        -DSHADERS_DIR=${CMAKE_CURRENT_SOURCE_DIR}/shaders
+        -DOUTPUT_FILE=${ARENAI_VIEW_EMBEDDED_SHADERS_H}
+        -P ${CMAKE_SOURCE_DIR}/cmake/ArenaiEmbedShaders.cmake
+        DEPENDS ${ARENAI_VIEW_SHADER_FILES} "${CMAKE_SOURCE_DIR}/cmake/ArenaiEmbedShaders.cmake"
+        COMMENT "Embedding GLSL shaders into shaders_embedded.h"
+)
 
 # ARENAI VIEW
 file(GLOB_RECURSE ARENAI_VIEW_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
-add_library(arenai_view SHARED ${ARENAI_VIEW_SRC})
+add_library(arenai_view SHARED ${ARENAI_VIEW_SRC} "${ARENAI_VIEW_EMBEDDED_SHADERS_H}")
 target_include_directories(arenai_view PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_include_directories(arenai_view PRIVATE "${ARENAI_VIEW_GENERATED_DIR}")
 
 # glm::glm carries its own include directories, so no manual include path is needed.
 target_link_libraries(

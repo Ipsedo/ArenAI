@@ -22,7 +22,6 @@ if (WIN32)
 endif ()
 
 arenai_copy_runtime_dlls(arenai_train_tests)
-arenai_copy_shaders(arenai_train_tests)
 
 add_test(
         NAME arenai_train_tests

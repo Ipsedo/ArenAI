@@ -31,7 +31,6 @@ if (WIN32)
 endif ()
 
 arenai_copy_runtime_dlls(arenai_view_tests)
-arenai_copy_shaders(arenai_view_tests)
 
 add_test(
         NAME arenai_view_tests

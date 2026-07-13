@@ -22,7 +22,8 @@ using namespace arenai::model;
 namespace arenai::model {
 
     BulletEnemyTank::BulletEnemyTank(
-        BulletPhysicEngine &engine, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        BulletPhysicEngine &engine,
+        const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::string &tank_prefix_name, const glm::vec3 chassis_pos,
         const float wanted_frame_frequency)
         : BulletTank(

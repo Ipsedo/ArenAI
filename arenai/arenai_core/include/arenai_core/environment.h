@@ -24,7 +24,7 @@ namespace arenai::core {
     class BaseTanksEnvironment {
     public:
         BaseTanksEnvironment(
-            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, int nb_tanks,
             float wanted_frequency, int vision_height, int vision_width, int vision_num_threads,
             bool vision_thread_sleep);
@@ -69,7 +69,7 @@ namespace arenai::core {
     protected:
         std::random_device dev;
         std::mt19937 rng;
-        std::shared_ptr<utils::AbstractFileReader> file_reader;
+        std::shared_ptr<utils::AbstractResourceFileReader> file_reader;
 
         virtual void
         on_draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) = 0;

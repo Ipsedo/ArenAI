@@ -16,7 +16,7 @@ namespace arenai::model {
 
     CanonItem::CanonItem(
         const std::string &prefix_name,
-        const std::shared_ptr<utils::AbstractFileReader> &file_reader, glm::vec3 pos,
+        const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, glm::vec3 pos,
         glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *turret,
         const float wanted_frame_frequency,
         const std::function<void(glm::vec3, glm::vec3, Item *)> &on_contact)

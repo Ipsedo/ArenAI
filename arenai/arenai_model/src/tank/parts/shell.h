@@ -19,10 +19,10 @@ namespace arenai::model {
     class ShellItem final : public LifeItem, public ConvexItem {
     public:
         static std::shared_ptr<Shape>
-        load_shape(const std::shared_ptr<utils::AbstractFileReader> &file_reader);
+        load_shape(const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader);
 
         ShellItem(
-            const std::shared_ptr<utils::AbstractFileReader> &file_reader, glm::vec3 pos,
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, glm::vec3 pos,
             glm::quat rot, glm::vec3 scale, float mass, float wanted_frame_frequency,
             const std::function<void(glm::vec3, glm::vec3, Item *)> &contact_callback =
                 [](glm::vec3, glm::vec3, Item *) {});

@@ -16,7 +16,7 @@ namespace arenai::model {
 
     TurretItem::TurretItem(
         const std::string &prefix_name,
-        const std::shared_ptr<utils::AbstractFileReader> &file_reader, const glm::vec3 pos,
+        const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, const glm::vec3 pos,
         const glm::vec3 rel_pos, const glm::vec3 scale, const float mass, btRigidBody *chassis)
         : LifeItem(5), ConvexItem(
                            prefix_name + "_turret",

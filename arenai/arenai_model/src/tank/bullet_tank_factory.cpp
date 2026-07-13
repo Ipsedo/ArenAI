@@ -17,14 +17,14 @@ namespace arenai::model {
         : engine(engine), wanted_frame_frequency(wanted_frame_frequency) {}
 
     std::unique_ptr<EnemyTank> BulletTankFactory::make_enemy_tank(
-        const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::string &tank_prefix_name, glm::vec3 chassis_pos) {
         return std::make_unique<BulletEnemyTank>(
             engine, file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency);
     }
 
     std::unique_ptr<PlayerTank> BulletTankFactory::make_player_tank(
-        const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::string &tank_prefix_name, glm::vec3 chassis_pos) {
         return std::make_unique<BulletPlayerTank>(
             engine, file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency);

@@ -25,7 +25,7 @@ namespace arenai::model {
     public:
         BulletEnemyTank(
             BulletPhysicEngine &engine,
-            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::string &tank_prefix_name, glm::vec3 chassis_pos,
             float wanted_frame_frequency);
 

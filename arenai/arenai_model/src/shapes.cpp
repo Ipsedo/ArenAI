@@ -20,7 +20,7 @@ namespace arenai::model {
  */
 
     ObjShape::ObjShape(
-        const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::filesystem::path &obj_file_path) {
 
         const auto cache = utils::Singleton<utils::Cache<std::shared_ptr<Shape>>>::get_singleton();

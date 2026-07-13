@@ -15,7 +15,7 @@ using namespace arenai::core;
 namespace arenai::core {
 
     BaseTanksEnvironment::BaseTanksEnvironment(
-        const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, const int nb_tanks,
         float wanted_frequency, const int vision_height, const int vision_width,
         const int vision_num_threads, const bool vision_thread_sleep)

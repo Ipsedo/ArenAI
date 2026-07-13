@@ -32,7 +32,7 @@ namespace arenai::view {
  */
 
     ButtonDrawable::ButtonDrawable(
-        const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         std::function<controller::button(void)> get_input, const glm::vec2 center_px,
         const float size_px)
         : get_input(std::move(get_input)), center_x(center_px.x), center_y(center_px.y),
@@ -84,7 +84,7 @@ namespace arenai::view {
  */
 
     JoyStickDrawable::JoyStickDrawable(
-        const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         std::function<controller::joystick(void)> get_input_px, const glm::vec2 center_px,
         const float size_px, const float stick_size_px)
         : get_input(std::move(get_input_px)), center_x(center_px.x), center_y(center_px.y),

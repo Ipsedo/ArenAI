@@ -29,7 +29,7 @@ namespace arenai::model {
     class ObjShape final : public Shape {
     public:
         explicit ObjShape(
-            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::filesystem::path &obj_file_path);
 
         std::vector<std::tuple<float, float, float>> get_vertices() override;

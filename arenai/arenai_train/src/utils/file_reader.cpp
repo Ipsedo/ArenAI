@@ -16,11 +16,11 @@ using namespace arenai::train;
 
 namespace arenai::train {
 
-    DesktopAssetFileReader::DesktopAssetFileReader(const std::filesystem::path &path_to_assets)
-        : path_to_assets(path_to_assets) {}
+    DesktopAssetFileReader::DesktopAssetFileReader(const std::filesystem::path &path_to_resources)
+        : path_to_resources(path_to_resources) {}
 
     std::string DesktopAssetFileReader::read_text(const std::filesystem::path &file_path) {
-        std::ifstream file(path_to_assets / file_path);
+        std::ifstream file(path_to_resources / file_path);
         if (!file) throw std::runtime_error("Could not open " + file_path.string());
 
         std::stringstream buffer;
@@ -35,7 +35,7 @@ namespace arenai::train {
         constexpr int out_channels = 4;
 
         unsigned char *data = SOIL_load_image(
-            (path_to_assets / png_file_path).string().c_str(), &w, &h, &source_channels,
+            (path_to_resources / png_file_path).string().c_str(), &w, &h, &source_channels,
             SOIL_LOAD_RGBA);
 
         if (!data) {

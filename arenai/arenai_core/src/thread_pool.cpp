@@ -64,7 +64,7 @@ namespace arenai::core {
     void EnemyVisionThreadPool::start_thread(
         const std::vector<std::shared_ptr<model::EnemyTank>> &tank_factories,
         const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend,
-        const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::vector<std::tuple<std::string, glm::mat4>> &initial_model_matrices,
         const std::vector<std::shared_ptr<model::Item>> &scene_items) {
         num_tanks_ = static_cast<int>(tank_factories.size());
@@ -94,7 +94,7 @@ namespace arenai::core {
     void EnemyVisionThreadPool::worker_loop(
         const std::shared_ptr<model::EnemyTank> &tank_factory,
         const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend,
-        const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::vector<std::shared_ptr<model::Item>> &scene_items, const int index) {
 
         std::mt19937 local_rng;

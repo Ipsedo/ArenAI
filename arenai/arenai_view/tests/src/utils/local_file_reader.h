@@ -9,7 +9,7 @@
 
 #include <arenai_utils/file_reader.h>
 
-class LocalAssetFileReader final : public arenai::utils::AbstractFileReader {
+class LocalAssetFileReader final : public arenai::utils::AbstractResourceFileReader {
 public:
     explicit LocalAssetFileReader(const std::filesystem::path &path_to_assets);
 

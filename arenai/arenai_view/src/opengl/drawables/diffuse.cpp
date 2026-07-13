@@ -21,7 +21,7 @@ namespace arenai::view {
     constexpr glm::vec3 FOG_COLOR(0.53f, 0.57f, 0.65f);
 
     Diffuse::Diffuse(
-        const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::vector<std::tuple<float, float, float>> &vertices, const glm::vec4 color)
         : file_reader(file_reader), color(color), nb_vertices(static_cast<int>(vertices.size())) {
 
@@ -32,8 +32,8 @@ namespace arenai::view {
         }
 
         program = Program::Builder(
-                      file_reader, std::filesystem::path("shaders") / "diffuse_vs.glsl",
-                      std::filesystem::path("shaders") / "diffuse_fs.glsl")
+                      file_reader, std::filesystem::path("diffuse_vs.glsl"),
+                      std::filesystem::path("diffuse_fs.glsl"))
                       .add_uniform("u_mvp_matrix")
                       .add_uniform("u_mv_matrix")
                       .add_uniform("u_color")
@@ -72,14 +72,13 @@ namespace arenai::view {
 
     void Diffuse::draw_depth(const glm::mat4 &light_mvp_matrix) {
         if (!depth_program)
-            depth_program =
-                Program::Builder(
-                    file_reader, std::filesystem::path("shaders") / "shadow_depth_vs.glsl",
-                    std::filesystem::path("shaders") / "shadow_depth_fs.glsl")
-                    .add_uniform("u_light_mvp_matrix")
-                    .add_buffer("vertices_buffer", vbo_data)
-                    .add_attribute("a_position")
-                    .build();
+            depth_program = Program::Builder(
+                                file_reader, std::filesystem::path("shadow_depth_vs.glsl"),
+                                std::filesystem::path("shadow_depth_fs.glsl"))
+                                .add_uniform("u_light_mvp_matrix")
+                                .add_buffer("vertices_buffer", vbo_data)
+                                .add_attribute("a_position")
+                                .build();
 
         depth_program->use();
 
@@ -96,20 +95,19 @@ namespace arenai::view {
         const glm::vec3 light_pos_from_camera, const glm::vec3 camera_pos,
         const glm::mat4 &shadow_mvp_matrix, const GLuint shadow_map_texture) {
         if (!shadow_program)
-            shadow_program =
-                Program::Builder(
-                    file_reader, std::filesystem::path("shaders") / "diffuse_shadow_vs.glsl",
-                    std::filesystem::path("shaders") / "diffuse_shadow_fs.glsl")
-                    .add_uniform("u_mvp_matrix")
-                    .add_uniform("u_mv_matrix")
-                    .add_uniform("u_shadow_mvp_matrix")
-                    .add_uniform("u_color")
-                    .add_uniform("u_fog_color")
-                    .add_uniform("u_light_pos")
-                    .add_uniform("u_shadow_map")
-                    .add_buffer("vertices_buffer", vbo_data)
-                    .add_attribute("a_position")
-                    .build();
+            shadow_program = Program::Builder(
+                                 file_reader, std::filesystem::path("diffuse_shadow_vs.glsl"),
+                                 std::filesystem::path("diffuse_shadow_fs.glsl"))
+                                 .add_uniform("u_mvp_matrix")
+                                 .add_uniform("u_mv_matrix")
+                                 .add_uniform("u_shadow_mvp_matrix")
+                                 .add_uniform("u_color")
+                                 .add_uniform("u_fog_color")
+                                 .add_uniform("u_light_pos")
+                                 .add_uniform("u_shadow_map")
+                                 .add_buffer("vertices_buffer", vbo_data)
+                                 .add_attribute("a_position")
+                                 .build();
 
         bind_diffuse_pass(*shadow_program, mvp_matrix, mv_matrix, light_pos_from_camera);
 

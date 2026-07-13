@@ -11,7 +11,7 @@ using namespace arenai;
 namespace arenai::view {
 
     CubeMap::CubeMap(
-        const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::filesystem::path &pngs_root_path) {
 
         const std::vector<float> vertices{-1.f, 1.f,  -1.f, -1.f, -1.f, -1.f, 1.f,  -1.f, -1.f,
@@ -35,8 +35,8 @@ namespace arenai::view {
         nb_vertices = static_cast<int>(vertices.size() / 3);
 
         program = Program::Builder(
-                      file_reader, std::filesystem::path("shaders") / "cube_vs.glsl",
-                      std::filesystem::path("shaders") / "cube_fs.glsl")
+                      file_reader, std::filesystem::path("cube_vs.glsl"),
+                      std::filesystem::path("cube_fs.glsl"))
                       .add_cube_texture("u_cube_map", pngs_root_path)
                       .add_uniform("u_mvp_matrix")
                       .add_attribute("a_vp")

@@ -12,11 +12,11 @@ namespace arenai::view {
     class GlDrawableFactory final : public AbstractDrawableFactory {
     public:
         std::unique_ptr<AbstractDrawable> make_cube_map(
-            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::filesystem::path &pngs_root_path) override;
 
         std::unique_ptr<AbstractDrawable> make_diffuse(
-            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::vector<std::tuple<float, float, float>> &vertices, glm::vec4 color) override;
     };
 

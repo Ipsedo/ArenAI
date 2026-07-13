@@ -35,7 +35,7 @@ namespace arenai::desktop {
     private:
         std::shared_ptr<view::AbstractWindowedGraphicBackend> windowed_backend;
 
-        std::shared_ptr<utils::AbstractFileReader> asset_file_reader;
+        std::shared_ptr<utils::AbstractResourceFileReader> asset_file_reader;
         std::unique_ptr<model::PlayerTank> player_tank;
         std::unique_ptr<view::AbstractPlayerRenderer> player_renderer;
         std::shared_ptr<MouseKeyboardPlayerControllerHandler> player_controller_handler;

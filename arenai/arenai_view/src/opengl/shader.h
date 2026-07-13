@@ -14,9 +14,7 @@
 
 namespace arenai::view {
 
-    GLuint load_shader(
-        const std::shared_ptr<utils::AbstractFileReader> &text_reader, GLenum type,
-        const std::filesystem::path &file_name);
+    GLuint load_shader(GLenum type, const std::filesystem::path &glsl_relative_path);
 
 }// namespace arenai::view
 

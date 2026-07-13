@@ -23,7 +23,7 @@ namespace arenai::view {
     class Diffuse final : public GlShadowDrawable {
     public:
         Diffuse(
-            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::vector<std::tuple<float, float, float>> &vertices, glm::vec4 color);
 
         void draw(
@@ -45,7 +45,7 @@ namespace arenai::view {
             Program &curr_program, const glm::mat4 &mvp_matrix, const glm::mat4 &mv_matrix,
             glm::vec3 light_pos_from_camera) const;
 
-        std::shared_ptr<utils::AbstractFileReader> file_reader;
+        std::shared_ptr<utils::AbstractResourceFileReader> file_reader;
         std::vector<float> vbo_data;
 
         std::unique_ptr<Program> program;

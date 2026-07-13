@@ -70,7 +70,7 @@ namespace arenai::core {
         void start_thread(
             const std::vector<std::shared_ptr<model::EnemyTank>> &tank_factories,
             const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend,
-            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::vector<std::tuple<std::string, glm::mat4>> &initial_model_matrices,
             const std::vector<std::shared_ptr<model::Item>> &scene_items);
 
@@ -107,7 +107,7 @@ namespace arenai::core {
         void worker_loop(
             const std::shared_ptr<model::EnemyTank> &tank_factory,
             const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend,
-            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::vector<std::shared_ptr<model::Item>> &scene_items, int index);
     };
 }// namespace arenai::core

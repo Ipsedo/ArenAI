@@ -46,7 +46,7 @@ namespace arenai::train {
 
         const auto env = std::make_unique<TrainTankEnvironment>(
             std::move(graphics_backend), environment_options.nb_tanks,
-            train_options.android_asset_folder, environment_options.wanted_frequency,
+            train_options.resources_folder_path, environment_options.wanted_frequency,
             train_options.max_episode_steps, environment_options.vision_height,
             environment_options.vision_width, environment_options.num_threads);
 

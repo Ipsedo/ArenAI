@@ -13,8 +13,8 @@ namespace arenai::model {
 
     ChassisItem::ChassisItem(
         const std::string &prefix_name,
-        const std::shared_ptr<utils::AbstractFileReader> &file_reader, const glm::vec3 position,
-        const glm::vec3 scale, const float mass)
+        const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
+        const glm::vec3 position, const glm::vec3 scale, const float mass)
         : LifeItem(10), ConvexItem(
                             prefix_name + "_chassis",
                             std::make_shared<ObjShape>(

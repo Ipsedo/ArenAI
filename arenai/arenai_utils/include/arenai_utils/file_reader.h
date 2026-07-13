@@ -25,9 +25,9 @@ namespace arenai::utils {
         std::vector<float> pixels;
     };
 
-    class AbstractFileReader {
+    class AbstractResourceFileReader {
     public:
-        virtual ~AbstractFileReader() = default;
+        virtual ~AbstractResourceFileReader() = default;
 
         virtual std::string read_text(const std::filesystem::path &file_path) = 0;
         virtual ImageChannels read_png(const std::filesystem::path &png_file_path) = 0;

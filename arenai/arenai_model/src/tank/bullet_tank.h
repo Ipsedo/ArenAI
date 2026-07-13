@@ -20,7 +20,7 @@ namespace arenai::model {
     public:
         BulletTank(
             BulletPhysicEngine &engine,
-            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::string &tank_prefix_name, glm::vec3 chassis_pos,
             float wanted_frame_frequency,
             const std::function<void(const ShellContactInfo &, Item *)> &on_contact_callback);
@@ -48,7 +48,7 @@ namespace arenai::model {
         std::vector<LifeItem *> life_items;
         std::shared_ptr<Item> chassis;
         std::shared_ptr<Item> canon;
-        std::shared_ptr<utils::AbstractFileReader> file_reader;
+        std::shared_ptr<utils::AbstractResourceFileReader> file_reader;
     };
 
 }// namespace arenai::model

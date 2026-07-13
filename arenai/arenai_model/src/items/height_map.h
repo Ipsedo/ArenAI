@@ -19,7 +19,7 @@ namespace arenai::model {
     class HeightMapItem final : public BulletItem {
     public:
         HeightMapItem(
-            std::string name, const std::shared_ptr<utils::AbstractFileReader> &img_reader,
+            std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &img_reader,
             const std::filesystem::path &height_map_file, glm::vec3 pos, glm::vec3 scale);
 
         std::shared_ptr<Shape> get_shape() override;

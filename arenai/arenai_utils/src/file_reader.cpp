@@ -10,7 +10,7 @@ namespace arenai::utils {
  * Common
  */
 
-    ImageGrey AbstractFileReader::to_img_grey(const ImageChannels &image) {
+    ImageGrey AbstractResourceFileReader::to_img_grey(const ImageChannels &image) {
         ImageGrey res{};
 
         res.pixels = std::vector<float>(image.width * image.height);

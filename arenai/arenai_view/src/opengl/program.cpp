@@ -24,14 +24,14 @@ namespace arenai::view {
      */
 
     Program::Builder::Builder(
-        const std::shared_ptr<utils::AbstractFileReader> &text_reader,
+        const std::shared_ptr<utils::AbstractResourceFileReader> &text_reader,
         const std::filesystem::path &vertex_shader_path,
         const std::filesystem::path &fragment_shader_path)
         : file_reader(text_reader), vertex_shader_path(vertex_shader_path),
           fragment_shader_path(fragment_shader_path) {}
 
     Program::Builder::Builder(
-        const std::shared_ptr<utils::AbstractFileReader> &text_reader,
+        const std::shared_ptr<utils::AbstractResourceFileReader> &text_reader,
         std::filesystem::path vertex_shader_path, std::filesystem::path fragment_shader_path,
         std::vector<std::string> uniforms, std::vector<std::string> attributes,
         std::map<std::string, std::vector<float>> buffers,
@@ -96,9 +96,8 @@ namespace arenai::view {
 
         program->program_id = glCreateProgram();
 
-        program->vertex_shader_id = load_shader(file_reader, GL_VERTEX_SHADER, vertex_shader_path);
-        program->fragment_shader_id =
-            load_shader(file_reader, GL_FRAGMENT_SHADER, fragment_shader_path);
+        program->vertex_shader_id = load_shader(GL_VERTEX_SHADER, vertex_shader_path);
+        program->fragment_shader_id = load_shader(GL_FRAGMENT_SHADER, fragment_shader_path);
 
         glAttachShader(program->program_id, program->vertex_shader_id);
         glAttachShader(program->program_id, program->fragment_shader_id);

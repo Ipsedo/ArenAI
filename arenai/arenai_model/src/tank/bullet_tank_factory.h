@@ -16,11 +16,11 @@ namespace arenai::model {
         BulletTankFactory(BulletPhysicEngine &engine, float wanted_frame_frequency);
 
         std::unique_ptr<EnemyTank> make_enemy_tank(
-            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::string &tank_prefix_name, glm::vec3 chassis_pos) override;
 
         std::unique_ptr<PlayerTank> make_player_tank(
-            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::string &tank_prefix_name, glm::vec3 chassis_pos) override;
 
     private:

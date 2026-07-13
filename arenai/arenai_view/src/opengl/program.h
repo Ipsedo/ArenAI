@@ -23,7 +23,7 @@ namespace arenai::view {
         class Builder {
         public:
             Builder(
-                const std::shared_ptr<utils::AbstractFileReader> &text_reader,
+                const std::shared_ptr<utils::AbstractResourceFileReader> &text_reader,
                 const std::filesystem::path &vertex_shader_path,
                 const std::filesystem::path &fragment_shader_path);
 
@@ -42,7 +42,7 @@ namespace arenai::view {
 
         private:
             Builder(
-                const std::shared_ptr<utils::AbstractFileReader> &text_reader,
+                const std::shared_ptr<utils::AbstractResourceFileReader> &text_reader,
                 std::filesystem::path vertex_shader_path,
                 std::filesystem::path fragment_shader_path, std::vector<std::string> uniforms,
                 std::vector<std::string> attributes,
@@ -50,7 +50,7 @@ namespace arenai::view {
                 std::map<std::string, std::vector<std::filesystem::path>> cube_textures,
                 std::map<std::string, std::filesystem::path> textures);
 
-            std::shared_ptr<utils::AbstractFileReader> file_reader;
+            std::shared_ptr<utils::AbstractResourceFileReader> file_reader;
 
             std::filesystem::path vertex_shader_path;
             std::filesystem::path fragment_shader_path;

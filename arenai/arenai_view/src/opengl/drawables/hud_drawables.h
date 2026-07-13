@@ -19,7 +19,7 @@ namespace arenai::view {
     class ButtonDrawable final : public AbstractHudDrawable {
     public:
         ButtonDrawable(
-            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             std::function<controller::button(void)> get_input, glm::vec2 center_px, float size_px);
 
         void draw(int width, int height) override;
@@ -38,7 +38,7 @@ namespace arenai::view {
     class JoyStickDrawable final : public AbstractHudDrawable {
     public:
         JoyStickDrawable(
-            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             std::function<controller::joystick(void)> get_input_px, glm::vec2 center_px,
             float size_px, float stick_size_px);
 

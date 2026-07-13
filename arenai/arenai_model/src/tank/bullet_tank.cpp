@@ -21,7 +21,8 @@ using namespace arenai::controller;
 namespace arenai::model {
 
     BulletTank::BulletTank(
-        BulletPhysicEngine &engine, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        BulletPhysicEngine &engine,
+        const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::string &tank_prefix_name, glm::vec3 chassis_pos,
         const float wanted_frame_frequency,
         const std::function<void(const ShellContactInfo &, Item *)> &on_contact_callback)

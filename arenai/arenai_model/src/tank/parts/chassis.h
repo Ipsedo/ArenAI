@@ -13,8 +13,8 @@ namespace arenai::model {
     public:
         ChassisItem(
             const std::string &prefix_name,
-            const std::shared_ptr<utils::AbstractFileReader> &file_reader, glm::vec3 position,
-            glm::vec3 scale, float mass);
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
+            glm::vec3 position, glm::vec3 scale, float mass);
     };
 
 }// namespace arenai::model

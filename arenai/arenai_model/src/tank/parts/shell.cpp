@@ -12,12 +12,12 @@ using namespace arenai::model;
 namespace arenai::model {
 
     std::shared_ptr<Shape>
-    ShellItem::load_shape(const std::shared_ptr<utils::AbstractFileReader> &file_reader) {
+    ShellItem::load_shape(const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader) {
         return std::make_shared<ObjShape>(file_reader, std::filesystem::path("obj") / "cone.obj");
     }
 
     ShellItem::ShellItem(
-        const std::shared_ptr<utils::AbstractFileReader> &file_reader, const glm::vec3 pos,
+        const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, const glm::vec3 pos,
         const glm::quat rot, const glm::vec3 scale, const float mass,
         const float wanted_frame_frequency,
         const std::function<void(glm::vec3, glm::vec3, Item *)> &contact_callback)

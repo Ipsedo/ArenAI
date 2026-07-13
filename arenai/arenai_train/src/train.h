@@ -23,7 +23,7 @@ namespace arenai::train {
 
     struct TrainOptions {
         std::filesystem::path output_folder;
-        std::filesystem::path android_asset_folder;
+        std::filesystem::path resources_folder_path;
         float actor_learning_rate;
         float critic_learning_rate;
         float alpha_learning_rate;

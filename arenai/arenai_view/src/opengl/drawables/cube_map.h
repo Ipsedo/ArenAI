@@ -19,7 +19,7 @@ namespace arenai::view {
     class CubeMap final : public AbstractDrawable {
     public:
         CubeMap(
-            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::filesystem::path &pngs_root_path);
 
         void draw(

@@ -31,11 +31,9 @@ namespace arenai::view {
             const std::shared_ptr<utils::AbstractFileReader> &file_reader,
             const std::filesystem::path &pngs_root_path) = 0;
 
-        virtual std::unique_ptr<AbstractDrawable> make_specular(
+        virtual std::unique_ptr<AbstractDrawable> make_diffuse(
             const std::shared_ptr<utils::AbstractFileReader> &file_reader,
-            const std::vector<std::tuple<float, float, float>> &vertices,
-            const std::vector<std::tuple<float, float, float>> &normals, glm::vec4 ambient_color,
-            glm::vec4 diffuse_color, glm::vec4 specular_color, float shininess) = 0;
+            const std::vector<std::tuple<float, float, float>> &vertices, glm::vec4 color) = 0;
     };
 
 }// namespace arenai::view

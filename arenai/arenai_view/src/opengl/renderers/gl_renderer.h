@@ -44,12 +44,14 @@ namespace arenai::view {
         const std::shared_ptr<EglRenderContext> &context() const { return gl_context; }
 
     private:
-        static constexpr int SHADOW_MAP_SIZE = 4096;
+        static constexpr int SHADOW_MAP_SIZE = 8192;
         // ortho frustum half extent, centered on the camera (the arena is far
         // too large to be covered by a single shadow map at a usable resolution)
-        static constexpr float SHADOW_HALF_EXTENT = 120.f;
+        static constexpr float SHADOW_HALF_EXTENT = 500.f;
         static constexpr float SHADOW_DISTANCE = 1000.f;
-        static constexpr float SHADOW_DEPTH_RANGE = 400.f;
+        // must cover the light-space depth spread of the whole frustum: with a
+        // ~47° light elevation, ground at the frustum corners reaches ~±500
+        static constexpr float SHADOW_DEPTH_RANGE = 900.f;
 
         glm::mat4 light_view_projection() const;
 

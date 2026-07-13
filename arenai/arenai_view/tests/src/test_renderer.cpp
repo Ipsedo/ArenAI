@@ -85,7 +85,7 @@ TEST_F(RendererTest, RemoveNonExistentDrawable) {
     ASSERT_NO_THROW(renderer->remove_drawable("does_not_exist"));
 }
 
-TEST_F(RendererTest, MixedDrawablesCubeMapAndSpecular) {
+TEST_F(RendererTest, MixedDrawablesCubeMapAndDiffuse) {
     constexpr int w = 32, h = 32;
 
     const auto renderer = backend->make_offscreen_renderer(
@@ -105,12 +105,11 @@ TEST_F(RendererTest, MixedDrawablesCubeMapAndSpecular) {
     renderer->draw_and_get_frame(sky_only_matrices);
     const auto [sky_pixels] = renderer->draw_and_get_frame(sky_only_matrices);
 
-    // add specular cube on top
+    // add diffuse cube on top
     auto [vertices, normals] = make_cube(2.f);
     renderer->add_drawable(
-        "cube", backend->drawable_factory()->make_specular(
-                    file_reader, vertices, normals, glm::vec4(0.2f, 0.2f, 0.2f, 1.f),
-                    glm::vec4(0.f, 0.f, 1.f, 1.f), glm::vec4(1.f, 1.f, 1.f, 1.f), 32.f));
+        "cube", backend->drawable_factory()->make_diffuse(
+                    file_reader, vertices, glm::vec4(0.f, 0.f, 1.f, 1.f)));
 
     const auto mixed_matrices = std::vector<std::tuple<std::string, glm::mat4>>{
         {"sky", glm::scale(glm::mat4(1.f), glm::vec3(2000.f))}, {"cube", glm::mat4(1.f)}};

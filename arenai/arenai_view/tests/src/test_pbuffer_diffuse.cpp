@@ -18,7 +18,7 @@
 using namespace arenai;
 using namespace arenai::view;
 
-TEST_P(PBufferSpecularParam, TestSpecularRendering) {
+TEST_P(PBufferDiffuseParam, TestDiffuseRendering) {
     const auto [width, height] = GetParam();
 
     const auto backend = view::make_opengl_backend();
@@ -36,9 +36,8 @@ TEST_P(PBufferSpecularParam, TestSpecularRendering) {
     auto [vertices, normals] = make_cube(2.f);
 
     buffer_renderer->add_drawable(
-        "cube", backend->drawable_factory()->make_specular(
-                    file_reader, vertices, normals, glm::vec4(0.2f, 0.2f, 0.2f, 1.f),
-                    glm::vec4(0.f, 0.f, 1.f, 1.f), glm::vec4(1.f, 1.f, 1.f, 1.f), 32.f));
+        "cube", backend->drawable_factory()->make_diffuse(
+                    file_reader, vertices, glm::vec4(0.f, 0.f, 1.f, 1.f)));
 
     const auto model_matrices =
         std::vector<std::tuple<std::string, glm::mat4>>{{"cube", glm::mat4(1.f)}};
@@ -65,7 +64,7 @@ TEST_P(PBufferSpecularParam, TestSpecularRendering) {
     // golden image
     const auto golden_image_path =
         std::filesystem::path(__FILE__).parent_path().parent_path() / "resources" / "golden_images"
-        / ("golden_specular_" + std::to_string(width) + "_" + std::to_string(height) + ".json");
+        / ("golden_diffuse_" + std::to_string(width) + "_" + std::to_string(height) + ".json");
 
     if (std::filesystem::exists(golden_image_path)) {
         std::ifstream input_file(golden_image_path);
@@ -87,5 +86,5 @@ TEST_P(PBufferSpecularParam, TestSpecularRendering) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    TestPBufferSpecular, PBufferSpecularParam,
+    TestPBufferDiffuse, PBufferDiffuseParam,
     testing::Values(image_size(16, 16), image_size(16, 32), image_size(32, 32)));

@@ -11,7 +11,7 @@
 
 #include "./utils/local_file_reader.h"
 #include "./utils/make_shapes.h"
-#include "opengl/drawables/specular.h"
+#include "opengl/drawables/diffuse.h"
 #include "opengl/renderers/gl_offscreen_renderer.h"
 
 using namespace arenai;
@@ -50,9 +50,8 @@ namespace {
 
         auto [vertices, normals] = make_cube(1.f);
         const auto make_drawable = [&] {
-            return std::make_unique<Specular>(
-                file_reader, vertices, normals, glm::vec4(0.5f, 0.5f, 0.5f, 1.f),
-                glm::vec4(0.8f, 0.8f, 0.8f, 1.f), glm::vec4(1.f, 1.f, 1.f, 1.f), 32.f);
+            return std::make_unique<Diffuse>(
+                file_reader, vertices, glm::vec4(0.8f, 0.8f, 0.8f, 1.f));
         };
         renderer->add_drawable("floor", make_drawable());
         renderer->add_drawable("occluder", make_drawable());

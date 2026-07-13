@@ -2,8 +2,8 @@
 // Created by samuel on 18/03/2023.
 //
 
-#ifndef ARENAI_SPECULAR_H
-#define ARENAI_SPECULAR_H
+#ifndef ARENAI_DIFFUSE_H
+#define ARENAI_DIFFUSE_H
 
 #include <memory>
 #include <vector>
@@ -18,13 +18,13 @@
 
 namespace arenai::view {
 
-    class Specular final : public GlShadowDrawable {
+    // Flat-shaded matte drawable: the fragment shader derives per-face normals
+    // from screen-space derivatives, so only vertex positions are uploaded.
+    class Diffuse final : public GlShadowDrawable {
     public:
-        Specular(
+        Diffuse(
             const std::shared_ptr<utils::AbstractFileReader> &file_reader,
-            const std::vector<std::tuple<float, float, float>> &vertices,
-            const std::vector<std::tuple<float, float, float>> &normals, glm::vec4 ambient_color,
-            glm::vec4 diffuse_color, glm::vec4 specular_color, float shininess);
+            const std::vector<std::tuple<float, float, float>> &vertices, glm::vec4 color);
 
         void draw(
             glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos_from_camera,
@@ -39,12 +39,11 @@ namespace arenai::view {
 
     private:
         static constexpr int POSITION_SIZE = 3;
-        static constexpr int NORMAL_SIZE = 3;
-        static constexpr int STRIDE = (POSITION_SIZE + NORMAL_SIZE) * BYTES_PER_FLOAT;
+        static constexpr int STRIDE = POSITION_SIZE * BYTES_PER_FLOAT;
 
-        void bind_specular_pass(
+        void bind_diffuse_pass(
             Program &curr_program, glm::mat4 mvp_matrix, glm::mat4 mv_matrix,
-            glm::vec3 light_pos_from_camera, glm::vec3 camera_pos);
+            glm::vec3 light_pos_from_camera);
 
         std::shared_ptr<utils::AbstractFileReader> file_reader;
         std::vector<float> vbo_data;
@@ -55,14 +54,11 @@ namespace arenai::view {
         std::unique_ptr<Program> depth_program;
         std::unique_ptr<Program> shadow_program;
 
-        glm::vec4 ambient_color;
-        glm::vec4 diffuse_color;
-        glm::vec4 specular_color;
-        float shininess;
+        glm::vec4 color;
 
         int nb_vertices;
     };
 
 }// namespace arenai::view
 
-#endif// ARENAI_SPECULAR_H
+#endif// ARENAI_DIFFUSE_H

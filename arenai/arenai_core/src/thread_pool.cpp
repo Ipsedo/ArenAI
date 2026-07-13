@@ -127,9 +127,8 @@ namespace arenai::core {
             const glm::vec4 color(u_dist(local_rng), u_dist(local_rng), u_dist(local_rng), 1.f);
             const auto shape = item->get_shape();
             renderer->add_drawable(
-                item->get_name(), drawable_factory->make_specular(
-                                      file_reader, shape->get_vertices(), shape->get_normals(),
-                                      color, color, color, 50.f));
+                item->get_name(),
+                drawable_factory->make_diffuse(file_reader, shape->get_vertices(), color));
         }
 
         for (const auto &[name, shape]: tank_factory->load_shell_shapes()) {
@@ -137,9 +136,8 @@ namespace arenai::core {
                 u_dist(local_rng), u_dist(local_rng), u_dist(local_rng), 1.f);
 
             renderer->add_drawable(
-                name, drawable_factory->make_specular(
-                          file_reader, shape->get_vertices(), shape->get_normals(), shell_color,
-                          shell_color, shell_color, 50.f));
+                name,
+                drawable_factory->make_diffuse(file_reader, shape->get_vertices(), shell_color));
         }
         const auto frame_dt =
             std::chrono::milliseconds(static_cast<int>(wanted_frequency_ * 1000.f));

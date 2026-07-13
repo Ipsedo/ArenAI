@@ -14,7 +14,7 @@ struct image_size {
 
 class PBufferParam : public testing::TestWithParam<image_size> {};
 
-class PBufferSpecularParam : public testing::TestWithParam<image_size> {};
+class PBufferDiffuseParam : public testing::TestWithParam<image_size> {};
 
 class PBufferClearColorParam : public testing::TestWithParam<image_size> {};
 

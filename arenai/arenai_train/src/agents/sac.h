@@ -38,12 +38,9 @@ namespace arenai::train {
         int count_parameters() override;
 
     private:
-        static constexpr int WARMUP_STEP = 30000;
+        static constexpr int WARMUP_STEP = 100000;
 
         static constexpr double GRAD_NORM_MAX = 1.0;
-
-        static constexpr float LOG_ALPHA_MIN = -9.2103f;// alpha = 1e-4
-        static constexpr float LOG_ALPHA_MAX = 0.6931f; // alpha = 2
 
         std::shared_ptr<Actor> actor;
 

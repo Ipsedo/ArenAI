@@ -24,11 +24,6 @@ namespace arenai::train {
 
     torch::Tensor AlphaParameter::alpha() { return log_alpha().exp(); }
 
-    void AlphaParameter::clamp_log_alpha(const float min_log_alpha, const float max_log_alpha) {
-        torch::NoGradGuard no_grad;
-        log_alpha_tensor.clamp_(min_log_alpha, max_log_alpha);
-    }
-
     /*
      * Target entropy
      */

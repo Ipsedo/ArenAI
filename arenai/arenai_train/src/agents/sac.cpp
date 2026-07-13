@@ -202,7 +202,6 @@ namespace arenai::train {
             alpha_continuous_optim->zero_grad();
             alpha_continuous_loss.backward();
             alpha_continuous_optim->step();
-            alpha_continuous->clamp_log_alpha(LOG_ALPHA_MIN, LOG_ALPHA_MAX);
 
             // discrete entropy
             const auto alpha_discrete_loss = torch::mean(
@@ -212,7 +211,6 @@ namespace arenai::train {
             alpha_discrete_optim->zero_grad();
             alpha_discrete_loss.backward();
             alpha_discrete_optim->step();
-            alpha_discrete->clamp_log_alpha(LOG_ALPHA_MIN, LOG_ALPHA_MAX);
 
             // metrics
             actor_loss_metric->add(actor_loss.cpu().item<float>());

@@ -31,7 +31,7 @@ namespace arenai::train {
     AbstractTargetEntropyWarmup::AbstractTargetEntropyWarmup(
         const float initial_value, const float final_value, const int warmup_step)
         : initial(initial_value), final(final_value), warmup_step(warmup_step),
-          current_step(register_buffer("current_step", torch::tensor({0L}))) {}
+          current_step(register_buffer("current_step", torch::zeros({1}, torch::TensorOptions().dtype(torch::kLong)))) {}
 
     void AbstractTargetEntropyWarmup::step() { current_step += 1; }
 

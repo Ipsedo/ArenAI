@@ -112,6 +112,8 @@ namespace arenai::view {
 
     void GlRenderer::release_current() const { gl_context->release_current(); }
 
+    const std::shared_ptr<EglRenderContext> &GlRenderer::context() const { return gl_context; }
+
     GlRenderer::~GlRenderer() { drawables.clear(); }
 
     /*

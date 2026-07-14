@@ -41,7 +41,7 @@ namespace arenai::view {
         virtual void on_new_frame() = 0;
         virtual void on_end_frame() = 0;
 
-        const std::shared_ptr<EglRenderContext> &context() const { return gl_context; }
+        const std::shared_ptr<EglRenderContext> &context() const;
 
     private:
         static constexpr int SHADOW_MAP_SIZE = 16384;

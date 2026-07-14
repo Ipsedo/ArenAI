@@ -44,7 +44,7 @@ namespace arenai::view {
         const std::shared_ptr<EglRenderContext> &context() const { return gl_context; }
 
     private:
-        static constexpr int SHADOW_MAP_SIZE = 8192;
+        static constexpr int SHADOW_MAP_SIZE = 16384;
         // ortho frustum half extent, centered on the camera (the arena is far
         // too large to be covered by a single shadow map at a usable resolution)
         static constexpr float SHADOW_HALF_EXTENT = 500.f;

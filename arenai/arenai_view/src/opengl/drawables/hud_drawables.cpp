@@ -38,7 +38,7 @@ namespace arenai::view {
         : get_input(std::move(get_input)), center_x(center_px.x), center_y(center_px.y),
           size(size_px), nb_points(128) {
 
-        program = Program::Builder(file_reader, "shaders/simple_vs.glsl", "shaders/simple_fs.glsl")
+        program = Program::Builder(file_reader, "simple_vs.glsl", "simple_fs.glsl")
                       .add_uniform("u_color")
                       .add_uniform("u_mvp_matrix")
                       .add_attribute("a_position")

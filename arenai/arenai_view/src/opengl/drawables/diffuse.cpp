@@ -32,8 +32,8 @@ namespace arenai::view {
         }
 
         program = Program::Builder(
-                      file_reader, std::filesystem::path("diffuse_vs.glsl"),
-                      std::filesystem::path("diffuse_fs.glsl"))
+                      file_reader, "diffuse_vs.glsl",
+                      "diffuse_fs.glsl")
                       .add_uniform("u_mvp_matrix")
                       .add_uniform("u_mv_matrix")
                       .add_uniform("u_color")
@@ -73,8 +73,8 @@ namespace arenai::view {
     void Diffuse::draw_depth(const glm::mat4 &light_mvp_matrix) {
         if (!depth_program)
             depth_program = Program::Builder(
-                                file_reader, std::filesystem::path("shadow_depth_vs.glsl"),
-                                std::filesystem::path("shadow_depth_fs.glsl"))
+                                file_reader, "shadow_depth_vs.glsl",
+                                "shadow_depth_fs.glsl")
                                 .add_uniform("u_light_mvp_matrix")
                                 .add_buffer("vertices_buffer", vbo_data)
                                 .add_attribute("a_position")
@@ -96,8 +96,8 @@ namespace arenai::view {
         const glm::mat4 &shadow_mvp_matrix, const GLuint shadow_map_texture) {
         if (!shadow_program)
             shadow_program = Program::Builder(
-                                 file_reader, std::filesystem::path("diffuse_shadow_vs.glsl"),
-                                 std::filesystem::path("diffuse_shadow_fs.glsl"))
+                                 file_reader, "diffuse_shadow_vs.glsl",
+                                 "diffuse_shadow_fs.glsl")
                                  .add_uniform("u_mvp_matrix")
                                  .add_uniform("u_mv_matrix")
                                  .add_uniform("u_shadow_mvp_matrix")

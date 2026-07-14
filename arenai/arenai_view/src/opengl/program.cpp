@@ -25,35 +25,35 @@ namespace arenai::view {
 
     Program::Builder::Builder(
         const std::shared_ptr<utils::AbstractResourceFileReader> &text_reader,
-        const std::filesystem::path &vertex_shader_path,
-        const std::filesystem::path &fragment_shader_path)
-        : file_reader(text_reader), vertex_shader_path(vertex_shader_path),
-          fragment_shader_path(fragment_shader_path) {}
+        const std::string &vertex_shader_name,
+        const std::string &fragment_shader_name)
+        : file_reader(text_reader), vertex_shader_name(vertex_shader_name),
+          fragment_shader_name(fragment_shader_name) {}
 
     Program::Builder::Builder(
         const std::shared_ptr<utils::AbstractResourceFileReader> &text_reader,
-        std::filesystem::path vertex_shader_path, std::filesystem::path fragment_shader_path,
+        std::string vertex_shader_name, std::string fragment_shader_name,
         std::vector<std::string> uniforms, std::vector<std::string> attributes,
         std::map<std::string, std::vector<float>> buffers,
         std::map<std::string, std::vector<std::filesystem::path>> cube_textures,
         std::map<std::string, std::filesystem::path> textures)
-        : file_reader(text_reader), vertex_shader_path(std::move(vertex_shader_path)),
-          fragment_shader_path(std::move(fragment_shader_path)), uniforms(std::move(uniforms)),
+        : file_reader(text_reader), vertex_shader_name(std::move(vertex_shader_name)),
+          fragment_shader_name(std::move(fragment_shader_name)), uniforms(std::move(uniforms)),
           attributes(std::move(attributes)), buffers(std::move(buffers)),
           cube_textures(std::move(cube_textures)), textures(std::move(textures)) {}
 
     Program::Builder Program::Builder::add_uniform(const std::string &name) {
         uniforms.push_back(name);
-        return {file_reader,          vertex_shader_path,
-                fragment_shader_path, uniforms,
+        return {file_reader,          vertex_shader_name,
+                fragment_shader_name, uniforms,
                 attributes,           buffers,
                 cube_textures,        textures};
     }
 
     Program::Builder Program::Builder::add_attribute(const std::string &name) {
         attributes.push_back(name);
-        return {file_reader,          vertex_shader_path,
-                fragment_shader_path, uniforms,
+        return {file_reader,          vertex_shader_name,
+                fragment_shader_name, uniforms,
                 attributes,           buffers,
                 cube_textures,        textures};
     }
@@ -61,8 +61,8 @@ namespace arenai::view {
     Program::Builder
     Program::Builder::add_buffer(const std::string &name, const std::vector<float> &data) {
         buffers.insert({name, data});
-        return {file_reader,          vertex_shader_path,
-                fragment_shader_path, uniforms,
+        return {file_reader,          vertex_shader_name,
+                fragment_shader_name, uniforms,
                 attributes,           buffers,
                 cube_textures,        textures};
     }
@@ -76,8 +76,8 @@ namespace arenai::view {
 
         cube_textures.insert({name, full_paths});
 
-        return {file_reader,          vertex_shader_path,
-                fragment_shader_path, uniforms,
+        return {file_reader,          vertex_shader_name,
+                fragment_shader_name, uniforms,
                 attributes,           buffers,
                 cube_textures,        textures};
     }
@@ -85,8 +85,8 @@ namespace arenai::view {
     Program::Builder Program::Builder::add_texture(
         const std::string &name, const std::filesystem::path &texture_path) {
         textures.insert({name, texture_path});
-        return {file_reader,          vertex_shader_path,
-                fragment_shader_path, uniforms,
+        return {file_reader,          vertex_shader_name,
+                fragment_shader_name, uniforms,
                 attributes,           buffers,
                 cube_textures,        textures};
     }
@@ -96,8 +96,8 @@ namespace arenai::view {
 
         program->program_id = glCreateProgram();
 
-        program->vertex_shader_id = load_shader(GL_VERTEX_SHADER, vertex_shader_path);
-        program->fragment_shader_id = load_shader(GL_FRAGMENT_SHADER, fragment_shader_path);
+        program->vertex_shader_id = load_shader(GL_VERTEX_SHADER, vertex_shader_name);
+        program->fragment_shader_id = load_shader(GL_FRAGMENT_SHADER, fragment_shader_name);
 
         glAttachShader(program->program_id, program->vertex_shader_id);
         glAttachShader(program->program_id, program->fragment_shader_id);

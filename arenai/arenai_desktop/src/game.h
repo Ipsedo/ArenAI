@@ -23,7 +23,7 @@ namespace arenai::desktop {
         int nb_tanks;
         int window_width;
         int window_height;
-        std::filesystem::path android_asset_folder;
+        std::filesystem::path resources_folder;
     };
 
     void game_loop(const GameOptions &game_options, const ModelOptions &model_options);

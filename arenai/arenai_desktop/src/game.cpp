@@ -45,7 +45,7 @@ namespace arenai::desktop {
         const auto window = graphics_backend->get_window();
 
         const auto env = std::make_shared<DesktopGameEnvironment>(
-            game_options.android_asset_folder, graphics_backend, game_options.nb_tanks,
+            game_options.resources_folder, graphics_backend, game_options.nb_tanks,
             model_options.vision_height, model_options.vision_width, game_options.wanted_frequency);
 
         auto states = env->reset(500, 500);

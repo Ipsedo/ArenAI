@@ -37,7 +37,7 @@ int main(const int argc, char **argv) {
 
     // train
     parser.add_argument("--output_folder").required();
-    parser.add_argument("--resources_folder_path").required();
+    parser.add_argument("--resources_folder").required();
     parser.add_argument("--actor_learning_rate").scan<'g', float>().default_value(1e-4f);
     parser.add_argument("--critic_learning_rate").scan<'g', float>().default_value(3e-4f);
     parser.add_argument("--alpha_learning_rate").scan<'g', float>().default_value(3e-4f);
@@ -79,7 +79,7 @@ int main(const int argc, char **argv) {
          parser.get<hidden_layers>("--critic_hidden_sizes").layers, parser.get<float>("--tau"),
          parser.get<float>("--gamma")},
         {std::filesystem::path(parser.get<std::string>("--output_folder")),
-         std::filesystem::path(parser.get<std::string>("--resources_folder_path")),
+         std::filesystem::path(parser.get<std::string>("--resources_folder")),
          parser.get<float>("--actor_learning_rate"), parser.get<float>("--critic_learning_rate"),
          parser.get<float>("--alpha_learning_rate"), parser.get<int>("--epochs"),
          parser.get<int>("--batch_size"), parser.get<int>("--max_episode_steps"),

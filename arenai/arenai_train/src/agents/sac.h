@@ -38,7 +38,8 @@ namespace arenai::train {
         int count_parameters() override;
 
     private:
-        static constexpr int WARMUP_STEP = 25000;
+        // FPS * sec * warmup_episodes / train_every
+        static constexpr int WARMUP_STEP = 30 * 30 * 500 / 64;
 
         static constexpr double GRAD_NORM_MAX = 1.0;
 

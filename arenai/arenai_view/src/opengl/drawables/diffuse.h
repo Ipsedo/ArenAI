@@ -34,7 +34,7 @@ namespace arenai::view {
 
         void draw_with_shadow(
             glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos_from_camera,
-            glm::vec3 camera_pos, const glm::mat4 &shadow_mvp_matrix,
+            glm::vec3 camera_pos, glm::vec4 world_up, const glm::mat4 &shadow_mvp_matrix,
             GLuint shadow_map_texture) override;
 
     private:

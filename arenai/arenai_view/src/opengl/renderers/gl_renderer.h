@@ -17,6 +17,7 @@
 #include <arenai_view/renderer.h>
 
 #include "../egl_render_context.h"
+#include "../post_processing/post_process.h"
 #include "../shadow_map.h"
 
 namespace arenai::view {
@@ -39,9 +40,11 @@ namespace arenai::view {
 
     protected:
         virtual void on_new_frame() = 0;
-        virtual void on_end_frame() = 0;
+        virtual void on_end_frame(const glm::mat4 &view_matrix, const glm::mat4 &proj_matrix) = 0;
 
         const std::shared_ptr<EglRenderContext> &context() const;
+
+        const glm::vec3 &light_position() const;
 
     private:
         static constexpr int SHADOW_MAP_SIZE = 16384;
@@ -84,11 +87,15 @@ namespace arenai::view {
 
     protected:
         void on_new_frame() override;
-        void on_end_frame() override;
+        void on_end_frame(const glm::mat4 &view_matrix, const glm::mat4 &proj_matrix) override;
 
     private:
         int width;
         int height;
+
+        // MSAA + tonemapping/grading pipeline, built lazily so that the GL
+        // context is current on first use
+        std::unique_ptr<PostProcess> post_process;
 
         std::vector<std::unique_ptr<AbstractHudDrawable>> hud_drawables;
     };

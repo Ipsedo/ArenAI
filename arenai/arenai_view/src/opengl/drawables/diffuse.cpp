@@ -92,7 +92,7 @@ namespace arenai::view {
 
     void Diffuse::draw_with_shadow(
         const glm::mat4 mvp_matrix, const glm::mat4 mv_matrix,
-        const glm::vec3 light_pos_from_camera, const glm::vec3 camera_pos,
+        const glm::vec3 light_pos_from_camera, const glm::vec3 camera_pos, const glm::vec4 world_up,
         const glm::mat4 &shadow_mvp_matrix, const GLuint shadow_map_texture) {
         if (!shadow_program)
             shadow_program = Program::Builder(
@@ -104,6 +104,7 @@ namespace arenai::view {
                                  .add_uniform("u_color")
                                  .add_uniform("u_fog_color")
                                  .add_uniform("u_light_pos")
+                                 .add_uniform("u_world_up")
                                  .add_uniform("u_shadow_map")
                                  .add_buffer("vertices_buffer", vbo_data)
                                  .add_attribute("a_position")
@@ -111,6 +112,7 @@ namespace arenai::view {
 
         bind_diffuse_pass(*shadow_program, mvp_matrix, mv_matrix, light_pos_from_camera);
 
+        shadow_program->uniform_vec4("u_world_up", world_up);
         shadow_program->uniform_mat4("u_shadow_mvp_matrix", shadow_mvp_matrix);
         shadow_program->bind_external_texture("u_shadow_map", shadow_map_texture, 0);
 

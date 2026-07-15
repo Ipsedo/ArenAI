@@ -125,7 +125,7 @@ namespace arenai::view {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    void GlOffscreenRenderer::on_end_frame() {}
+    void GlOffscreenRenderer::on_end_frame(const glm::mat4 &, const glm::mat4 &) {}
 
     void GlOffscreenRenderer::init_pbos() {
         pbo_size_ = static_cast<size_t>(width) * static_cast<size_t>(height) * 4;

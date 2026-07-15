@@ -48,7 +48,7 @@ namespace arenai::view {
 
     protected:
         void on_new_frame() override;
-        void on_end_frame() override;
+        void on_end_frame(const glm::mat4 &view_matrix, const glm::mat4 &proj_matrix) override;
 
     private:
         int width, height;

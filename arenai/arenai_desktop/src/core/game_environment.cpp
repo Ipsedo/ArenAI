@@ -20,9 +20,13 @@ namespace arenai::desktop {
         const std::shared_ptr<view::AbstractWindowedGraphicBackend> &graphics_backend,
         const int nb_tanks, const int vision_height, const int vision_width,
         const float wanted_frequency)
+        // The tank visions get their own headless backend (integrated GPU): their
+        // synchronous readbacks are latency-bound on a discrete GPU, and this keeps
+        // them off the window's GPU when the player view is offloaded (prime-run).
         : core::BaseTanksEnvironment(
-            std::make_shared<train::DesktopAssetFileReader>(asset_folder_path), graphics_backend,
-            nb_tanks, wanted_frequency, vision_height, vision_width, 8, true),
+            std::make_shared<train::DesktopAssetFileReader>(asset_folder_path),
+            view::make_opengl_backend(), nb_tanks, wanted_frequency, vision_height, vision_width, 8,
+            true),
           windowed_backend(graphics_backend),
           asset_file_reader(std::make_shared<train::DesktopAssetFileReader>(asset_folder_path)),
           player_tank(std::nullptr_t()), player_renderer(std::nullptr_t()),
@@ -30,6 +34,9 @@ namespace arenai::desktop {
 
     void DesktopGameEnvironment::on_draw(
         const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
+        // the base environment leaves its own (headless) context current on this
+        // thread, so bind the window's context before drawing the player view
+        player_renderer->make_current();
         player_renderer->draw(model_matrices);
     }
 

@@ -219,6 +219,10 @@ namespace arenai::view {
         uniform_(glUniform3fv, name, 1, glm::value_ptr(vec3));
     }
 
+    void Program::uniform_vec2(const std::string &name, glm::vec2 vec2) {
+        uniform_(glUniform2fv, name, 1, glm::value_ptr(vec2));
+    }
+
     void Program::uniform_float(const std::string &name, const float f) {
         uniform_(glUniform1f, name, f);
     }

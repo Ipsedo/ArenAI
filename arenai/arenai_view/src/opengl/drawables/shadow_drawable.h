@@ -21,10 +21,12 @@ namespace arenai::view {
         virtual void draw_depth(const glm::mat4 &light_mvp_matrix) = 0;
 
         // main pass with shadow sampling; shadow_mvp_matrix maps model space
-        // to [0, 1] shadow-map coordinates (bias * light_proj * light_view * model)
+        // to [0, 1] shadow-map coordinates (bias * light_proj * light_view * model);
+        // world_up carries the world up axis in view space (xyz) and the camera
+        // world height (w), for hemisphere ambient and height fog
         virtual void draw_with_shadow(
             glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos_from_camera,
-            glm::vec3 camera_pos, const glm::mat4 &shadow_mvp_matrix,
+            glm::vec3 camera_pos, glm::vec4 world_up, const glm::mat4 &shadow_mvp_matrix,
             GLuint shadow_map_texture) = 0;
     };
 

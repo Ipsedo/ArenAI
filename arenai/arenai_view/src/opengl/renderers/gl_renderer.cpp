@@ -90,6 +90,11 @@ namespace arenai::view {
 
         const glm::mat4 biased_light_vp_matrix = SHADOW_BIAS_MATRIX * light_vp_matrix;
 
+        // world up axis in view space (xyz) + camera world height (w): enough
+        // for the shadow shader to do hemisphere ambient and height fog
+        // without a full inverse view matrix
+        const glm::vec4 world_up(glm::mat3(view_matrix) * glm::vec3(0.f, 1.f, 0.f), camera_pos.y);
+
         for (const auto &[name, m_matrix]: model_matrices) {
             auto mv_matrix = view_matrix * m_matrix;
             const auto mvp_matrix = proj_matrix * mv_matrix;
@@ -100,12 +105,12 @@ namespace arenai::view {
 
             if (shadow_drawable)
                 shadow_drawable->draw_with_shadow(
-                    mvp_matrix, mv_matrix, light_pos, camera_pos, biased_light_vp_matrix * m_matrix,
-                    shadow_map->depth_texture());
+                    mvp_matrix, mv_matrix, light_pos, camera_pos, world_up,
+                    biased_light_vp_matrix * m_matrix, shadow_map->depth_texture());
             else drawables[name]->draw(mvp_matrix, mv_matrix, light_pos, camera_pos);
         }
 
-        on_end_frame();
+        on_end_frame(view_matrix, proj_matrix);
     }
 
     void GlRenderer::make_current() const { gl_context->make_current(); }
@@ -113,6 +118,8 @@ namespace arenai::view {
     void GlRenderer::release_current() const { gl_context->release_current(); }
 
     const std::shared_ptr<EglRenderContext> &GlRenderer::context() const { return gl_context; }
+
+    const glm::vec3 &GlRenderer::light_position() const { return light_pos; }
 
     GlRenderer::~GlRenderer() { drawables.clear(); }
 
@@ -130,7 +137,13 @@ namespace arenai::view {
         hud_drawables.push_back(std::move(hud_drawable));
     }
 
-    void GlPlayerRenderer::on_end_frame() {
+    void
+    GlPlayerRenderer::on_end_frame(const glm::mat4 &view_matrix, const glm::mat4 &proj_matrix) {
+        // post-processing pass onto the default framebuffer, then the HUD on
+        // top so that it stays untouched by the effects
+        const glm::vec3 sun_dir_view =
+            glm::normalize(glm::mat3(view_matrix) * glm::normalize(light_position()));
+        post_process->draw_to_screen(proj_matrix, sun_dir_view);
 
         glDisable(GL_DEPTH_TEST);
 
@@ -141,6 +154,12 @@ namespace arenai::view {
     }
 
     void GlPlayerRenderer::on_new_frame() {
+        if (!post_process)
+            post_process = std::make_unique<PostProcess>(
+                get_width(), get_height(),
+                make_default_post_processing_effects(get_width(), get_height()));
+        post_process->begin_scene_pass();
+
         glViewport(0, 0, get_width(), get_height());
 
         glClearColor(1., 0., 0., 0.);
@@ -167,6 +186,8 @@ namespace arenai::view {
         height = new_height;
 
         glViewport(0, 0, width, height);
+
+        if (post_process) post_process->resize(width, height);
     }
 
 }// namespace arenai::view

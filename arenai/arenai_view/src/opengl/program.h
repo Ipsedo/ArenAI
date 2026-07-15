@@ -96,6 +96,8 @@ namespace arenai::view {
 
         void uniform_vec3(const std::string &name, glm::vec3 vec3);
 
+        void uniform_vec2(const std::string &name, glm::vec2 vec2);
+
         void uniform_float(const std::string &name, float f);
 
         void attrib(

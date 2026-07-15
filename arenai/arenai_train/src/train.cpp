@@ -166,10 +166,9 @@ namespace arenai::train {
                     // critic target keeps bootstrapping on the next state value
                     const bool is_terminal = env_done && !is_truncated;
 
-                    auto potential_reward =
+                    const auto potential_reward =
                         (is_terminal ? 0.f : model_options.gamma * phi_vector[i])
                         - last_phi_vector[i];
-                    potential_reward = potential_reward * 10.f;
 
                     reward_mean_metric->add(reward);
                     potential_mean_metric->add(potential_reward);

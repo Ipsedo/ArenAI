@@ -74,7 +74,7 @@ TEST_F(SacAgentTest, MetricsNotEmpty) {
 
     const auto metrics = agent->get_metrics();
 
-    ASSERT_EQ(metrics.size(), 11);
+    ASSERT_EQ(metrics.size(), 12);
 }
 
 // ========================================================================

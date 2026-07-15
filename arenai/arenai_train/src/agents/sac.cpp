@@ -64,7 +64,8 @@ namespace arenai::train {
               alpha_continuous->parameters(), torch::optim::AdamOptions(alpha_learning_rate))),
           alpha_discrete_optim(std::make_unique<torch::optim::Adam>(
               alpha_discrete->parameters(), torch::optim::AdamOptions(alpha_learning_rate))),
-          actor_loss_metric(std::make_shared<MeanMetric>("π", metric_window_size)),
+          actor_mean_loss_metric(std::make_shared<MeanMetric>("π_μ", metric_window_size)),
+          actor_std_loss_metric(std::make_shared<StdMetric>("π_σ", metric_window_size)),
           critic_1_mean_loss_metric(std::make_shared<MeanMetric>("q1_μ", metric_window_size)),
           critic_1_std_loss_metric(std::make_shared<StdMetric>("q1_σ", metric_window_size)),
           critic_2_mean_loss_metric(std::make_shared<MeanMetric>("q2_μ", metric_window_size)),
@@ -213,7 +214,8 @@ namespace arenai::train {
             alpha_discrete_optim->step();
 
             // metrics
-            actor_loss_metric->add(actor_loss.cpu().item<float>());
+            actor_mean_loss_metric->add(actor_loss.cpu().item<float>());
+            actor_std_loss_metric->add(actor_loss.cpu().item<float>());
 
             continuous_entropy_metric->add(curr_continuous_entropy.mean().item<float>());
             discrete_entropy_metric->add(curr_discrete_entropy.mean().item<float>());
@@ -238,10 +240,10 @@ namespace arenai::train {
 
     std::vector<std::shared_ptr<AbstractMetric>> SacAgent::get_metrics() {
         return {
-            actor_loss_metric,         critic_1_mean_loss_metric, critic_1_std_loss_metric,
-            critic_2_mean_loss_metric, critic_2_std_loss_metric,  continuous_target_entropy_metric,
-            continuous_entropy_metric, alpha_continuous_metric,   discrete_target_entropy_metric,
-            discrete_entropy_metric,   alpha_discrete_metric};
+            actor_mean_loss_metric,           actor_std_loss_metric,     critic_1_mean_loss_metric,
+            critic_1_std_loss_metric,         critic_2_mean_loss_metric, critic_2_std_loss_metric,
+            continuous_target_entropy_metric, continuous_entropy_metric, alpha_continuous_metric,
+            discrete_target_entropy_metric,   discrete_entropy_metric,   alpha_discrete_metric};
     }
 
     void SacAgent::save(const std::filesystem::path &output_folder) {

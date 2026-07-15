@@ -13,12 +13,13 @@
 #include <arenai_train/torch_converter.h>
 
 #include "./agents/sac.h"
+#include "./core/train_environment.h"
 #include "./metrics/mean_metric.h"
 #include "./metrics/metric_saver.h"
 #include "./networks_io/torch_saver.h"
 #include "./replay_buffer/reward_replay_buffer.h"
 #include "./reward_transforms/identity_transform.h"
-#include "core/train_environment.h"
+#include "./reward_transforms/running_norm_transform.h"
 
 using namespace arenai;
 using namespace arenai::train;
@@ -75,7 +76,8 @@ namespace arenai::train {
         AgentSaver saver(agent, train_options.output_folder, train_options.save_every);
 
         std::unique_ptr<ReplayBuffer> replay_buffer = std::make_unique<RewardTransformReplayBuffer>(
-            train_options.replay_buffer_size, std::make_shared<IdentityTransform>());
+            train_options.replay_buffer_size,
+            std::make_shared<NormalizedRewardTransform>(train_options.replay_buffer_size, 1.f));
 
         // metrics
         auto reward_mean_metric =

@@ -18,15 +18,18 @@ def metrics_csv_to_plot(
 
     metric_names = {}
 
+    raw_col_identifier = "raw"
+
     for col in columns:
         match = regex_metric_name.match(col)
         if match is not None:
             name = match.group(1)
-            metric_names.setdefault(name, [])
+            kind = match.group(2)
+            metric_names.setdefault(name, {})
 
-            metric_names[name].append(col)
+            metric_names[name][kind] = col
         else:
-            metric_names[col] = [col]
+            metric_names[col] = {raw_col_identifier: col}
 
     fig, axes = plt.subplots(
         len(metric_names),
@@ -35,12 +38,30 @@ def metrics_csv_to_plot(
         constrained_layout=True,
     )
 
-    for i, (metric_group, metrics) in enumerate(metric_names.items()):
+    ticks = list(range(len(metrics_df)))
+
+    for i, (metric_group, metrics_dict) in enumerate(metric_names.items()):
         ax = axes[i]
 
-        ax.plot(metrics_df[metrics])
+        if len(metrics_dict) == 1 and raw_col_identifier in metrics_dict:
+            raw_col = metrics_dict[raw_col_identifier]
+            ax.plot(metrics_df[raw_col])
 
-        ax.legend(metrics)
+            ax.legend(raw_col)
+        else:
+            mean_col = metrics_dict["μ"]
+            std_col = metrics_dict["σ"]
+
+            mean = metrics_df[mean_col]
+
+            lower_bound = mean - metrics_df[std_col]
+            upper_bound = mean + metrics_df[std_col]
+
+            ax.plot(ticks, mean)
+            ax.fill_between(ticks, lower_bound, upper_bound, alpha=0.2)
+
+            ax.legend(["mean", "std"])
+
         ax.set_title(metric_group)
 
     fig.savefig(output_png_file_path)

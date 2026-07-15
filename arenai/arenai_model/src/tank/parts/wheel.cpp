@@ -71,7 +71,7 @@ namespace arenai::model {
         this->front_axle_z = front_axle_z;
     }
 
-    void WheelItem::on_input(const user_input &input) {
+    void WheelItem::apply_input(const user_input &input) {
         constexpr int motor_axis = 3;
         const auto radial_velocity = -input.left_joystick.y * WHEEL_RADIAL_VELOCITY;
 
@@ -114,8 +114,8 @@ namespace arenai::model {
  * DirectionalWheelItem
  */
 
-    void DirectionalWheelItem::on_input(const user_input &input) {
-        WheelItem::on_input(input);
+    void DirectionalWheelItem::apply_input(const user_input &input) {
+        WheelItem::apply_input(input);
 
         constexpr int motor_axis = 4;
         const float angle = input.left_joystick.x * WHEEL_DIRECTION_MAX_RADIAN * angle_factor;

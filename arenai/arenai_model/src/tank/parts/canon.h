@@ -30,7 +30,7 @@ namespace arenai::model {
             float wanted_frame_frequency,
             const std::function<void(glm::vec3, glm::vec3, Item *)> &on_contact);
 
-        void on_input(const controller::user_input &input) override;
+        void apply_input(const controller::user_input &input) override;
 
         glm::vec3 pos() override;
         glm::vec3 look() override;

@@ -34,7 +34,7 @@ namespace arenai::model {
         // hinge->setLimit(0, 0);
     }
 
-    void TurretItem::on_input(const user_input &input) {
+    void TurretItem::apply_input(const user_input &input) {
         // angle is the hinge target in radians; input.right_joystick.x is a per-frame
         // delta already expressed in rad/frame by the controller handler.
         angle += -input.right_joystick.x;

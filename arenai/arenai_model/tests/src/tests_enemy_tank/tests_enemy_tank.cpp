@@ -105,7 +105,7 @@ TEST_F(EnemyTankTest, RewardWhenAllEnemiesDeadAndShellFired) {
 
     // fire from tank_a — shell will hit the dead tank or ground
     constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    for (const auto &ctrl: shared_a->get_controllers()) ctrl->on_input(fire_input);
+    for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
@@ -128,7 +128,7 @@ TEST_F(EnemyTankTest, RewardNoNaNWhenAloneInTankList) {
 
     // fire a shell that will hit the ground
     constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->on_input(fire_input);
+    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
@@ -154,12 +154,12 @@ TEST_F(EnemyTankTest, ShellHitsGroundNoRewardNoCrash) {
 
     // tilt canon downward to ensure it hits the ground
     constexpr user_input aim_down{{0.f, 0.f}, {0.f, 1.f}, {false}};
-    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->on_input(aim_down);
-    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->on_input(aim_down);
-    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->on_input(aim_down);
+    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(aim_down);
+    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(aim_down);
+    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(aim_down);
 
     constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->on_input(fire_input);
+    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
@@ -208,7 +208,7 @@ TEST_F(EnemyTankTest, HasHitOtherTankResetsAfterCall) {
     std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
     constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    for (const auto &ctrl: shared_a->get_controllers()) ctrl->on_input(fire_input);
+    for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 

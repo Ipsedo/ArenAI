@@ -103,7 +103,7 @@ TEST_F(RewardTest, RewardPositiveOnHit) {
 
     // fire from tank_a toward tank_b (canon points +Z by default)
     constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    for (const auto &ctrl: shared_a->get_controllers()) ctrl->on_input(fire_input);
+    for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
@@ -134,7 +134,7 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
 
     // fire from tank_a toward tank_b (canon points +Z by default)
     constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    for (const auto &ctrl: shared_a->get_controllers()) ctrl->on_input(fire_input);
+    for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
@@ -152,7 +152,7 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
 
     // no fire, reward under 1.0
     constexpr user_input no_fire_input{{0.f, 0.f}, {0.f, 0.f}, {false}};
-    for (const auto &ctrl: shared_a->get_controllers()) ctrl->on_input(no_fire_input);
+    for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(no_fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
@@ -179,7 +179,7 @@ TEST_F(RewardTest, ZeroRewardWithEmptyTankList) {
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
 
     constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->on_input(fire_input);
+    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 

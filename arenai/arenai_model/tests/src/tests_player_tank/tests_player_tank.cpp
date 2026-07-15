@@ -34,7 +34,7 @@ TEST_F(PlayerTankTest, ScoreIncreasesOnHit) {
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
     constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    for (const auto &ctrl: player->get_controllers()) ctrl->on_input(fire_input);
+    for (const auto &ctrl: player->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
@@ -54,7 +54,7 @@ TEST_F(PlayerTankTest, ScoreHigherOnKillThanHit) {
     }
 
     constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    for (const auto &ctrl: player->get_controllers()) ctrl->on_input(fire_input);
+    for (const auto &ctrl: player->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
@@ -71,7 +71,7 @@ TEST_F(PlayerTankTest, ScoreDoesNotIncreaseOnSelfHit) {
 
     // fire without any enemy — shell should hit the ground or expire
     constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    for (const auto &ctrl: player->get_controllers()) ctrl->on_input(fire_input);
+    for (const auto &ctrl: player->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 1300; i++) engine->step(1.f / 60.f);
 

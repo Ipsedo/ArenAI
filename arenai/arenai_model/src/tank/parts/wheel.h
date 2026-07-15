@@ -23,7 +23,7 @@ namespace arenai::model {
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, glm::vec3 pos,
             glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *chassis,
             float front_axle_z);
-        void on_input(const controller::user_input &input) override;
+        void apply_input(const controller::user_input &input) override;
 
         std::vector<btTypedConstraint *> get_constraints() override;
 
@@ -45,7 +45,7 @@ namespace arenai::model {
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, glm::vec3 pos,
             glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *chassis,
             float front_axle_z, float angle_factor);
-        void on_input(const controller::user_input &input) override;
+        void apply_input(const controller::user_input &input) override;
 
     private:
         float angle_factor;

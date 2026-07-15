@@ -51,13 +51,14 @@ namespace arenai::desktop {
         player_renderer = windowed_backend->make_player_renderer(
             glm::vec3(200, 300, 200), player_tank->get_camera());
 
-        player_controller_handler = std::make_shared<MouseKeyboardPlayerControllerHandler>(
-            windowed_backend->get_window(), *player_renderer);
+        /*player_controller_handler = std::make_shared<PlayerMouseKeyboardHandler>(
+            windowed_backend->get_window(), *player_renderer);*/
+        player_controller_handler = std::make_shared<PlayerGamepadHandler>();
 
         for (auto &ctrl: player_tank->get_controllers())
             player_controller_handler->add_controller(ctrl);
 
-        windowed_backend->get_window()->set_callback(player_controller_handler);
+        windowed_backend->get_window()->set_gamepad_callback(player_controller_handler);
 
         windowed_backend->get_window()->set_resize_callback(
             [this](const int width, const int height) -> void {

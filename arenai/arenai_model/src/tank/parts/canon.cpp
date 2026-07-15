@@ -70,7 +70,7 @@ namespace arenai::model {
         return {bullet_items.begin(), bullet_items.end()};
     }
 
-    void CanonItem::on_input(const user_input &input) {
+    void CanonItem::apply_input(const user_input &input) {
         angle += input.right_joystick.y * 0.4f;
 
         angle =

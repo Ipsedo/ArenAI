@@ -28,7 +28,7 @@ TEST_F(ShellTest, FireCreatesShellItem) {
     const int count_before = static_cast<int>(engine->get_items().size());
 
     constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    for (const auto &ctrl: tank->get_controllers()) ctrl->on_input(fire_input);
+    for (const auto &ctrl: tank->get_controllers()) ctrl->apply_input(fire_input);
 
     engine->step(1.f / 60.f);
 
@@ -46,7 +46,7 @@ TEST_F(ShellTest, ShellDestroyedAfterLifetime) {
     const int count_before_fire = static_cast<int>(engine->get_items().size());
 
     constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    for (const auto &ctrl: tank->get_controllers()) ctrl->on_input(fire_input);
+    for (const auto &ctrl: tank->get_controllers()) ctrl->apply_input(fire_input);
 
     engine->step(1.f / 60.f);
 
@@ -73,7 +73,7 @@ TEST_F(ShellTest, ShellHitsEnemyTank) {
     std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
     constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    for (const auto &ctrl: shared_a->get_controllers()) ctrl->on_input(fire_input);
+    for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
@@ -93,7 +93,7 @@ TEST_F(ShellTest, ShellDestroyedOnContact) {
     std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
     constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    for (const auto &ctrl: shared_a->get_controllers()) ctrl->on_input(fire_input);
+    for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
     engine->step(1.f / 60.f);
     ASSERT_GT(static_cast<int>(engine->get_items().size()), count_before_fire)
@@ -116,7 +116,7 @@ TEST_F(ShellTest, NoFireNoNewItems) {
     const int count_before = static_cast<int>(engine->get_items().size());
 
     constexpr user_input no_fire{{0.f, 1.f}, {0.f, 0.f}, {false}};
-    for (const auto &ctrl: tank->get_controllers()) ctrl->on_input(no_fire);
+    for (const auto &ctrl: tank->get_controllers()) ctrl->apply_input(no_fire);
 
     engine->step(1.f / 60.f);
 
@@ -136,7 +136,7 @@ TEST_F(ShellTest, ShellContactCallbackSetsReward) {
     const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
     constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    for (const auto &ctrl: shared_a->get_controllers()) ctrl->on_input(fire_input);
+    for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 

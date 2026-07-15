@@ -10,7 +10,8 @@
 #include <arenai_view/backend.h>
 #include <arenai_view/renderer.h>
 
-#include "../controller/player_controller_handler.h"
+#include "../controller/gamepad.h"
+#include "../controller/mouse_keyboard.h"
 
 namespace arenai::desktop {
 
@@ -38,7 +39,7 @@ namespace arenai::desktop {
         std::shared_ptr<utils::AbstractResourceFileReader> asset_file_reader;
         std::unique_ptr<model::PlayerTank> player_tank;
         std::unique_ptr<view::AbstractPlayerRenderer> player_renderer;
-        std::shared_ptr<MouseKeyboardPlayerControllerHandler> player_controller_handler;
+        std::shared_ptr<PlayerGamepadHandler> player_controller_handler;
 
         float wanted_frequency;
     };

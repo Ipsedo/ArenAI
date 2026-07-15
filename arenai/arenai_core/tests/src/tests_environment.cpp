@@ -84,7 +84,12 @@ TEST_F(EnvironmentTest, ResetGoldenImage) {
             std::filesystem::path(__FILE__).parent_path().parent_path() / "resources"
             / "golden_images" / ("golden_env_reset_tank_" + std::to_string(tank_idx) + ".json");
 
+#ifdef ARENAI_REGENERATE_GOLDEN_IMAGES
+        // rebuild mode: always overwrite the golden below (see ARENAI_REGENERATE_GOLDEN_IMAGES)
+        if (false) {
+#else
         if (std::filesystem::exists(golden_image_path)) {
+#endif
             std::ifstream input_file(golden_image_path);
             nlohmann::json golden_image_json;
             input_file >> golden_image_json;

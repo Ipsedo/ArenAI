@@ -25,6 +25,10 @@ target_include_directories(arenai_view_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR
 target_compile_definitions(arenai_view_tests PRIVATE
         ARENAI_ASSETS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../../../android/app/src/main/assets")
 
+if (ARENAI_REGENERATE_GOLDEN_IMAGES)
+    target_compile_definitions(arenai_view_tests PRIVATE ARENAI_REGENERATE_GOLDEN_IMAGES)
+endif ()
+
 # fix opengl header with glfw on windows
 if (WIN32)
     target_compile_definitions(arenai_view_tests PRIVATE GLFW_INCLUDE_NONE)

@@ -13,6 +13,13 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(ArenaiRuntimeDlls)
 
+# Force golden-image tests to overwrite their reference files instead of
+# comparing against them. Turn this ON to rebuild the goldens (e.g. after the
+# dynamic shadows / low-poly changes broke the CI baselines), run the tests
+# once to regenerate + commit the new .json goldens, then set it back to OFF.
+option(ARENAI_REGENERATE_GOLDEN_IMAGES
+        "Rebuild golden reference images instead of comparing against them" ON)
+
 # Train main & lib
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/arenai_train")
 

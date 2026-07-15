@@ -61,6 +61,7 @@ namespace arenai::model {
         float distance_scale;
         float impact_distance_scale;
         float angle_scale;
+        float optimal_distance;
 
         bool is_dead_already_triggered;
 

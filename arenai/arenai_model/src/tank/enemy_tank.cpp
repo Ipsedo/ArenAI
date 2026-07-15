@@ -34,8 +34,9 @@ namespace arenai::model {
           tank_prefix_name(tank_prefix_name),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), distance_scale(500.f), impact_distance_scale(25.f),
-          angle_scale(glm::pi<float>() / 3.f), is_dead_already_triggered(false), has_touch(false),
-          last_shoot_info(std::nullopt), action_stats(std::make_shared<ActionStats>()) {}
+          angle_scale(glm::pi<float>() / 3.f), optimal_distance(75.f),
+          is_dead_already_triggered(false), has_touch(false), last_shoot_info(std::nullopt),
+          action_stats(std::make_shared<ActionStats>()) {}
 
     float BulletEnemyTank::compute_aim_angle(const std::shared_ptr<EnemyTank> &other_tank) {
         const auto canon_tr = get_canon()->get_model_matrix();
@@ -131,7 +132,8 @@ namespace arenai::model {
             const float distance = glm::length(enemy_pos - chassis_pos);
             const float angle = compute_aim_angle(enemy);
 
-            const float distance_score = std::exp(-0.5f * std::pow(distance / distance_scale, 2.f));
+            const float distance_score =
+                std::exp(-0.5f * std::pow((distance - optimal_distance) / distance_scale, 2.f));
             const float angle_score = (std::cos(angle) + 1.f) / 2.f;
 
             scores.push_back(distance_score * angle_score);

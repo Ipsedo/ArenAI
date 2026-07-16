@@ -34,9 +34,7 @@ namespace arenai::view {
 
         nb_vertices = static_cast<int>(vertices.size() / 3);
 
-        program = Program::Builder(
-                      file_reader, "cube_vs.glsl",
-                      "cube_fs.glsl")
+        program = Program::Builder(file_reader, "cube_vs.glsl", "cube_fs.glsl")
                       .add_cube_texture("u_cube_map", pngs_root_path)
                       .add_uniform("u_mvp_matrix")
                       .add_attribute("a_vp")

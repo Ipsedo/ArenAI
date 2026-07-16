@@ -19,9 +19,7 @@ namespace arenai::view {
     // shaders are embedded, so no file reader is needed (only textures loaded
     // from disk would use it)
     Program::Builder AbstractPostProcessingEffect::effect_builder(const char *fragment_shader) {
-        return Program::Builder(
-                   std::nullptr_t(), "post_vs.glsl",
-                   fragment_shader)
+        return Program::Builder(std::nullptr_t(), "post_vs.glsl", fragment_shader)
             .add_buffer("vertices_buffer", FULLSCREEN_TRIANGLE)
             .add_attribute("a_position");
     }

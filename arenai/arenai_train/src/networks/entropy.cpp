@@ -25,15 +25,21 @@ namespace arenai::train {
     torch::Tensor AlphaParameter::alpha() { return log_alpha().exp(); }
 
     /*
-     * Target entropy
+     * Constant target entropy
      */
 
     ConstantTargetEntropy::ConstantTargetEntropy(const float initial_target)
         : initial_target(register_buffer("initial_target", torch::tensor(initial_target))) {}
 
-    void ConstantTargetEntropy::step() {}
-
     torch::Tensor ConstantTargetEntropy::target_entropy() { return initial_target; }
+
+    ConstantDiscreteTargetEntropy::ConstantDiscreteTargetEntropy(const float fire_probability)
+        : ConstantTargetEntropy(multinomial_target_entropy(fire_probability)) {}
+
+    ConstantContinuousTargetEntropy::ConstantContinuousTargetEntropy(
+        const int nb_continuous_action, const float target_sigma)
+        : ConstantTargetEntropy(
+            truncated_normal_target_entropy(nb_continuous_action, target_sigma)) {}
 
     /*
      * Target entropy warmup
@@ -45,13 +51,13 @@ namespace arenai::train {
           current_step(register_buffer(
               "current_step", torch::zeros({1}, torch::TensorOptions().dtype(torch::kLong)))) {}
 
-    void AbstractTargetEntropyWarmup::step() { current_step += 1; }
-
     torch::Tensor AbstractTargetEntropyWarmup::target_entropy() {
         const float progress = std::min(
             1.f,
             static_cast<float>(current_step.item<int64_t>()) / static_cast<float>(warmup_step));
         const float cosine = 0.5f * (1.f - std::cos(std::numbers::pi_v<float> * progress));
+
+        current_step += 1;
 
         return torch::tensor(
             {to_target_entropy(initial + (final - initial) * cosine)},

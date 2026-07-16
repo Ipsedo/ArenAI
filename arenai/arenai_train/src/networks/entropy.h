@@ -22,15 +22,16 @@ namespace arenai::train {
 
     class AbstractTargetEntropy : public torch::nn::Module {
     public:
-        virtual void step() = 0;
         virtual torch::Tensor target_entropy() = 0;
     };
+
+    /*
+     * Constants
+     */
 
     class ConstantTargetEntropy : public AbstractTargetEntropy {
     public:
         explicit ConstantTargetEntropy(float initial_target);
-
-        void step() override;
 
         torch::Tensor target_entropy() override;
 
@@ -38,11 +39,23 @@ namespace arenai::train {
         torch::Tensor initial_target;
     };
 
+    class ConstantDiscreteTargetEntropy : public ConstantTargetEntropy {
+    public:
+        explicit ConstantDiscreteTargetEntropy(float fire_probability);
+    };
+
+    class ConstantContinuousTargetEntropy : public ConstantTargetEntropy {
+    public:
+        explicit ConstantContinuousTargetEntropy(int nb_continuous_action, float target_sigma);
+    };
+
+    /*
+     * Warmup
+     */
+
     class AbstractTargetEntropyWarmup : public AbstractTargetEntropy {
     public:
         AbstractTargetEntropyWarmup(float initial_value, float final_value, int warmup_step);
-
-        void step() override;
         torch::Tensor target_entropy() override;
 
     protected:

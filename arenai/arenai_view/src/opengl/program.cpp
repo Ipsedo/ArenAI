@@ -25,8 +25,7 @@ namespace arenai::view {
 
     Program::Builder::Builder(
         const std::shared_ptr<utils::AbstractResourceFileReader> &text_reader,
-        const std::string &vertex_shader_name,
-        const std::string &fragment_shader_name)
+        const std::string &vertex_shader_name, const std::string &fragment_shader_name)
         : file_reader(text_reader), vertex_shader_name(vertex_shader_name),
           fragment_shader_name(fragment_shader_name) {}
 

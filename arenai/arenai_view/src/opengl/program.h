@@ -24,8 +24,7 @@ namespace arenai::view {
         public:
             Builder(
                 const std::shared_ptr<utils::AbstractResourceFileReader> &text_reader,
-                const std::string &vertex_shader_name,
-                const std::string &fragment_shader_name);
+                const std::string &vertex_shader_name, const std::string &fragment_shader_name);
 
             Builder add_uniform(const std::string &name);
 
@@ -43,9 +42,8 @@ namespace arenai::view {
         private:
             Builder(
                 const std::shared_ptr<utils::AbstractResourceFileReader> &text_reader,
-                std::string vertex_shader_name,
-                std::string fragment_shader_name, std::vector<std::string> uniforms,
-                std::vector<std::string> attributes,
+                std::string vertex_shader_name, std::string fragment_shader_name,
+                std::vector<std::string> uniforms, std::vector<std::string> attributes,
                 std::map<std::string, std::vector<float>> buffers,
                 std::map<std::string, std::vector<std::filesystem::path>> cube_textures,
                 std::map<std::string, std::filesystem::path> textures);

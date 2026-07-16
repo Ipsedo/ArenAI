@@ -1,0 +1,29 @@
+//
+// Created by samuel on 19/03/2023.
+//
+
+#include "./errors.h"
+
+#include <iostream>
+#include <stdexcept>
+
+#include <arenai_utils/logging.h>
+
+#include "./gl.h"
+
+namespace arenai::view {
+
+    void check_gl_error(const std::string &message) {
+        GLenum error_code;
+
+        bool has_error = false;
+
+        while ((error_code = glGetError()) != GL_NO_ERROR) {
+            LOG_ERROR("GL_ERROR \"%s\": %d", message.c_str(), error_code);
+            has_error = true;
+        }
+
+        if (has_error) throw std::runtime_error(message);
+    }
+
+}// namespace arenai::view

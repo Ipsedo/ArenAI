@@ -77,7 +77,7 @@ namespace arenai::train {
 
         std::unique_ptr<ReplayBuffer> replay_buffer = std::make_unique<RewardTransformReplayBuffer>(
             train_options.replay_buffer_size, std::make_shared<IdentityTransform>(),
-            std::make_shared<NormalizedRewardTransform>(train_options.replay_buffer_size, 1.f));
+            std::make_shared<NormalizedRewardTransform>(train_options.replay_buffer_size, 0.1f));
 
         // metrics
         auto reward_mean_metric =

@@ -34,7 +34,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh .claude/scripts/run_pre_commit.sh",
+            "command": "sh .claude/scripts/run_format.sh",
             "statusMessage": "Running pre-commit format hooks...",
             "timeout": 180
           }

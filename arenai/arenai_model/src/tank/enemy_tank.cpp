@@ -33,7 +33,7 @@ namespace arenai::model {
             }),
           tank_prefix_name(tank_prefix_name),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-          curr_frame_upside_down(0), distance_scale(500.f), impact_distance_scale(25.f),
+          curr_frame_upside_down(0), distance_scale(250.f), impact_distance_scale(10.f),
           angle_scale(glm::pi<float>() / 3.f), optimal_distance(75.f),
           is_dead_already_triggered(false), has_touch(false), last_shoot_info(std::nullopt),
           action_stats(std::make_shared<ActionStats>()) {}
@@ -105,7 +105,7 @@ namespace arenai::model {
                     (w_aim + c_miss) * compute_hit_reward(fire_pos, best_tank_pos, hit_pos)
                     - c_miss;
 
-                hit_reward = impact_reward + (has_hit ? 1.f : 0.f) + (has_killed ? 2.f : 0.f);
+                hit_reward = impact_reward + (has_hit ? (has_killed ? 2.f : 1.f) : 0.f);
             }
 
             last_shoot_info = std::nullopt;

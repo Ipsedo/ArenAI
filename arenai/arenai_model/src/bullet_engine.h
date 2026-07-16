@@ -7,9 +7,12 @@
 
 #include <functional>
 #include <mutex>
+#include <optional>
 #include <shared_mutex>
+#include <vector>
 
 #include <btBulletDynamicsCommon.h>
+#include <glm/glm.hpp>
 
 #include <arenai_model/engine.h>
 #include <arenai_model/item_factory.h>
@@ -37,6 +40,13 @@ namespace arenai::model {
         void add_bullet_item_producer(
             std::function<std::vector<std::shared_ptr<BulletItem>>()> producer);
         void remove_bullet_item_constraints(const std::shared_ptr<BulletItem> &item);
+
+        // Fraction of the [from -> to] segment at which the closest non-excluded
+        // body is hit, std::nullopt when the path is free. Read-only query: safe
+        // to call concurrently as long as the world is not stepping.
+        std::optional<float> ray_test(
+            glm::vec3 from, glm::vec3 to,
+            const std::vector<const btCollisionObject *> &excluded) const;
 
     private:
         std::shared_mutex items_mutex;

@@ -4,6 +4,8 @@
 
 #include "./bullet_engine.h"
 
+#include <algorithm>
+
 #include "./items/bullet_item_factory.h"
 #include "./tank/bullet_tank_factory.h"
 
@@ -108,6 +110,38 @@ namespace arenai::model {
         }
 
         remove_dead_items();
+    }
+
+    std::optional<float> BulletPhysicEngine::ray_test(
+        const glm::vec3 from, const glm::vec3 to,
+        const std::vector<const btCollisionObject *> &excluded) const {
+
+        class ExcludingRayCallback final : public btCollisionWorld::ClosestRayResultCallback {
+        public:
+            ExcludingRayCallback(
+                const btVector3 &from, const btVector3 &to,
+                const std::vector<const btCollisionObject *> &excluded)
+                : ClosestRayResultCallback(from, to), excluded(excluded) {}
+
+            bool needsCollision(btBroadphaseProxy *proxy) const override {
+                if (!ClosestRayResultCallback::needsCollision(proxy)) return false;
+
+                const auto *object = static_cast<const btCollisionObject *>(proxy->m_clientObject);
+                return std::ranges::find(excluded, object) == excluded.end();
+            }
+
+        private:
+            const std::vector<const btCollisionObject *> &excluded;
+        };
+
+        const btVector3 bt_from(from.x, from.y, from.z);
+        const btVector3 bt_to(to.x, to.y, to.z);
+
+        ExcludingRayCallback callback(bt_from, bt_to, excluded);
+        m_world->rayTest(bt_from, bt_to, callback);
+
+        if (callback.hasHit()) return callback.m_closestHitFraction;
+        return std::nullopt;
     }
 
     std::vector<std::shared_ptr<Item>> BulletPhysicEngine::get_items() {

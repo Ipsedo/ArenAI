@@ -106,8 +106,22 @@ namespace arenai::model {
         controllers.push_back(canon_item);
         life_items.push_back(canon_item.get());
 
-        camera = canon_item;
         canon = canon_item;
+
+        // spring-arm camera: pull the canon camera in front of any world geometry
+        // (terrain, obstacles) blocking the [aim point -> camera] segment. The
+        // tank's own bodies are excluded, the ray starts inside them.
+        std::vector<const btCollisionObject *> own_bodies;
+        own_bodies.reserve(bullet_items.size());
+        for (const auto &item: bullet_items) own_bodies.push_back(item->get_body());
+
+        camera = std::make_shared<view::CollisionCamera>(
+            canon_item,
+            [&engine,
+             own_bodies = std::move(own_bodies)](const glm::vec3 from, const glm::vec3 to) {
+                return engine.ray_test(from, to, own_bodies);
+            },
+            wanted_frame_frequency);
 
         for (int i = 0; i < bullet_items.size() - 1; i++)
             for (int j = i + 1; j < bullet_items.size(); j++)

@@ -8,9 +8,9 @@
 #include <memory>
 #include <vector>
 
-#include <GLES3/gl3.h>
 #include <glm/glm.hpp>
 
+#include "../gl.h"
 #include "./effect.h"
 
 namespace arenai::view {

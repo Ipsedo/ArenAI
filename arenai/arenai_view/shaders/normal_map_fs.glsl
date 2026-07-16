@@ -1,12 +1,16 @@
-#extension GL_OES_standard_derivatives : enable
+#version 330 core
+
 precision mediump float;
+
 uniform sampler2D u_tex;
 uniform sampler2D u_normal_map;
 uniform vec3 u_light_pos;
 
-varying vec3 v_position;
-varying vec2 v_tex_coord;
-varying vec3 v_normal;
+in vec3 v_position;
+in vec2 v_tex_coord;
+in vec3 v_normal;
+
+out vec4 fragColor;
 
 // https://geeks3d.developpez.com/normal-mapping-glsl/
 mat3 cotangent_frame(vec3 N, vec3 p, vec2 uv) {
@@ -30,7 +34,7 @@ mat3 cotangent_frame(vec3 N, vec3 p, vec2 uv) {
 vec3 get_normal( vec3 N, vec3 V, vec2 texcoord ) {
     // N, la normale interpolee et
     // V, le vecteur vue (vertex dirige vers l'oeil)
-    vec3 map = texture2D(u_normal_map, texcoord).rgb;
+    vec3 map = texture(u_normal_map, texcoord).rgb;
     map = map * 255./127. - 128./127.;
     mat3 TBN = cotangent_frame(N, -V, texcoord);
     return normalize(TBN * map);
@@ -53,5 +57,5 @@ void main() {
         float specular = pow( max(dot(R, E), 0.0), material_shininess);
         final_color += light_specular * material_specular * specular;
     }*/
-    gl_FragColor = texture2D(u_tex, uv) * lambertTerm;
+    fragColor = texture(u_tex, uv) * lambertTerm;
 }

@@ -44,17 +44,24 @@ target_link_libraries(
 find_package(glfw3 REQUIRED)
 target_link_libraries(arenai_view PRIVATE glfw)
 
+# Desktop OpenGL 3.3 core. On Linux libGL (Mesa/NVIDIA, dispatched by libglvnd)
+# exports the full modern API as real symbols, so linking OpenGL::GL and
+# declaring the extension prototypes (see src/opengl/gl.h) is enough — no
+# function loader is needed. GL stays PRIVATE: it never leaks past arenai_view.
+find_package(OpenGL REQUIRED)
+target_link_libraries(arenai_view PRIVATE OpenGL::GL)
+
 if (WIN32)
     # Mesa3D SDK (headers + import libs) from mesa-dist-win "devel" package,
     # fetched by arenai_desktop/install_dependencies.ps1 into libs/mesa-devel.
+    # Only libEGL is needed here (context management); GL comes from OpenGL::GL.
     if (NOT MESA_SDK_DIR)
         set(MESA_SDK_DIR "${CMAKE_SOURCE_DIR}/libs/mesa-devel")
     endif ()
-    find_path(MESA_INCLUDE_DIR GLES3/gl3.h HINTS "${MESA_SDK_DIR}/include" REQUIRED)
+    find_path(MESA_INCLUDE_DIR EGL/egl.h HINTS "${MESA_SDK_DIR}/include" REQUIRED)
     find_library(MESA_EGL_LIB libEGL HINTS "${MESA_SDK_DIR}/lib/x64" REQUIRED)
-    find_library(MESA_GLES2_LIB libGLESv2 HINTS "${MESA_SDK_DIR}/lib/x64" REQUIRED)
-    target_link_libraries(arenai_view PUBLIC "${MESA_EGL_LIB}" "${MESA_GLES2_LIB}")
-    target_include_directories(arenai_view PUBLIC "${MESA_INCLUDE_DIR}")
+    target_link_libraries(arenai_view PRIVATE "${MESA_EGL_LIB}")
+    target_include_directories(arenai_view PRIVATE "${MESA_INCLUDE_DIR}")
 else ()
-    target_link_libraries(arenai_view PUBLIC EGL GLESv2 dl)
+    target_link_libraries(arenai_view PRIVATE EGL dl)
 endif ()

@@ -8,8 +8,8 @@
 #include <utility>
 
 #include <EGL/egl.h>
-#include <GLES3/gl3.h>
 
+#include "./gl.h"
 #include "./renderers/gl_offscreen_renderer.h"
 
 namespace arenai::view {

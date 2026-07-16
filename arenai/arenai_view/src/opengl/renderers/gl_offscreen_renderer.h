@@ -7,9 +7,8 @@
 
 #include <memory>
 
-#include <GLES3/gl3.h>
-
 #include "../egl_render_context.h"
+#include "../gl.h"
 #include "./gl_renderer.h"
 
 namespace arenai::view {

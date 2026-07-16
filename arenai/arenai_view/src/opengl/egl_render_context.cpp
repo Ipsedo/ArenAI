@@ -92,6 +92,13 @@ namespace arenai::view {
     void EglRenderContext::make_current() {
         if (eglMakeCurrent(get_display(), get_surface(), get_surface(), get_context()) != EGL_TRUE)
             throw std::runtime_error("Can't make context");
+
+        // Desktop GL core profile has no default vertex array object (unlike
+        // GLES3), so every glVertexAttribPointer call needs a VAO bound. One
+        // VAO per context is enough: attribute state is reconfigured on each
+        // draw, so this just restores the implicit-VAO behaviour of GLES.
+        if (vao_ == 0) glGenVertexArrays(1, &vao_);
+        glBindVertexArray(vao_);
     }
 
     void EglRenderContext::release_current() {
@@ -116,7 +123,7 @@ namespace arenai::view {
 
         const EGLint cfg_attribs[] = {
             EGL_RENDERABLE_TYPE,
-            EGL_OPENGL_ES3_BIT,
+            EGL_OPENGL_BIT,
             EGL_SURFACE_TYPE,
             EGL_PBUFFER_BIT,
             EGL_RED_SIZE,
@@ -154,8 +161,15 @@ namespace arenai::view {
         }
         if (config == nullptr) throw std::runtime_error("No 8-bit RGBA EGLConfig available");
 
-        eglBindAPI(EGL_OPENGL_ES_API);
-        constexpr EGLint ctx_attribs[] = {EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE};
+        eglBindAPI(EGL_OPENGL_API);
+        constexpr EGLint ctx_attribs[] = {
+            EGL_CONTEXT_MAJOR_VERSION,
+            3,
+            EGL_CONTEXT_MINOR_VERSION,
+            3,
+            EGL_CONTEXT_OPENGL_PROFILE_MASK,
+            EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT,
+            EGL_NONE};
         context = eglCreateContext(display, config, EGL_NO_CONTEXT, ctx_attribs);
         if (context == EGL_NO_CONTEXT) throw std::runtime_error("eglCreateContext() failed");
     }

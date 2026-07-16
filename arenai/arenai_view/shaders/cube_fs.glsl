@@ -1,8 +1,12 @@
+#version 330 core
+
 precision mediump float;
 
-varying vec3 v_tex_coords;
+in vec3 v_tex_coords;
 uniform samplerCube u_cube_map;
 
-void main () {
-  gl_FragColor = textureCube(u_cube_map, v_tex_coords);
+out vec4 fragColor;
+
+void main() {
+    fragColor = texture(u_cube_map, v_tex_coords);
 }

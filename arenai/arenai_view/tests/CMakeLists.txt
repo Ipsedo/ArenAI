@@ -6,6 +6,9 @@ set(CMAKE_CXX_STANDARD 20)
 
 enable_testing()
 find_package(GTest REQUIRED)
+# the tests exercise the GL renderer directly (glReadPixels, glClear, ...), so
+# they link OpenGL::GL themselves — arenai_view keeps it PRIVATE
+find_package(OpenGL REQUIRED)
 
 include(FetchContent)
 
@@ -17,7 +20,7 @@ file(GLOB_RECURSE SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 add_executable(arenai_view_tests "${SRC}")
 
 # arenai_view propagates the view/utils/controller headers through its PUBLIC interface.
-target_link_libraries(arenai_view_tests GTest::gtest GTest::gtest_main nlohmann_json::nlohmann_json soil2 arenai_view)
+target_link_libraries(arenai_view_tests GTest::gtest GTest::gtest_main nlohmann_json::nlohmann_json soil2 arenai_view OpenGL::GL)
 target_include_directories(arenai_view_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 # internal headers (shadow rendering is not part of the public API)
 target_include_directories(arenai_view_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../src")

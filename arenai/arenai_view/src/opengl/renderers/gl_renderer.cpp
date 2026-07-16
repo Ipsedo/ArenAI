@@ -7,10 +7,10 @@
 #include <cmath>
 #include <utility>
 
-#include <GLES3/gl3.h>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "../drawables/shadow_drawable.h"
+#include "../gl.h"
 
 using namespace arenai;
 

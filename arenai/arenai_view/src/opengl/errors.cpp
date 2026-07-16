@@ -7,9 +7,9 @@
 #include <iostream>
 #include <stdexcept>
 
-#include <GLES3/gl3.h>
-
 #include <arenai_utils/logging.h>
+
+#include "./gl.h"
 
 namespace arenai::view {
 

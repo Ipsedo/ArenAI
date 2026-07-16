@@ -8,9 +8,9 @@
 #include <vector>
 
 #include <EGL/egl.h>
-#include <GLES3/gl3.h>
 
 #include "../errors.h"
+#include "../gl.h"
 
 using namespace arenai;
 
@@ -25,7 +25,7 @@ namespace arenai::view {
         : display(main_context->get_display()) {
         const EGLint config_attrib[] = {
             EGL_RENDERABLE_TYPE,
-            EGL_OPENGL_ES3_BIT,
+            EGL_OPENGL_BIT,
             EGL_SURFACE_TYPE,
             EGL_PBUFFER_BIT,
             EGL_RED_SIZE,
@@ -43,7 +43,14 @@ namespace arenai::view {
             EGL_SAMPLES,
             0,
             EGL_NONE};
-        constexpr EGLint context_attrib[] = {EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE};
+        constexpr EGLint context_attrib[] = {
+            EGL_CONTEXT_MAJOR_VERSION,
+            3,
+            EGL_CONTEXT_MINOR_VERSION,
+            3,
+            EGL_CONTEXT_OPENGL_PROFILE_MASK,
+            EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT,
+            EGL_NONE};
 
         EGLConfig configs[64];
         EGLint num_config = 0;
@@ -65,6 +72,9 @@ namespace arenai::view {
         }
         if (config == nullptr) throw std::runtime_error("No 8-bit RGBA EGLConfig available");
 
+        // the bound API is thread-local and this context is often created on a
+        // thread-pool worker, so bind the desktop GL API here too
+        eglBindAPI(EGL_OPENGL_API);
         context = eglCreateContext(display, config, main_context->get_context(), context_attrib);
         if (context == EGL_NO_CONTEXT) throw std::runtime_error("eglCreateContext failed");
 

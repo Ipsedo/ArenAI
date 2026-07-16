@@ -11,10 +11,11 @@
 #include <string>
 #include <vector>
 
-#include <GLES3/gl3.h>
 #include <glm/glm.hpp>
 
 #include <arenai_utils/file_reader.h>
+
+#include "./gl.h"
 
 namespace arenai::view {
 

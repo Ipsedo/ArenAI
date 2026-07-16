@@ -7,7 +7,7 @@
 
 #include <filesystem>
 
-#include <GLES3/gl3.h>
+#include "./gl.h"
 
 namespace arenai::view {
 

@@ -11,6 +11,9 @@
 #include <string>
 
 #define GLFW_EXPOSE_NATIVE_EGL
+// GLFW must not pull its own GL headers: the desktop GL API is included
+// centrally through src/opengl/gl.h, so let that be the single source
+#define GLFW_INCLUDE_NONE
 #include <EGL/egl.h>
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>

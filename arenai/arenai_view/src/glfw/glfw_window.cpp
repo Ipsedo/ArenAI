@@ -71,10 +71,13 @@ namespace arenai::view {
 
         glfwUpdateGamepadMappings(EXTRA_GAMEPAD_MAPPINGS);
 
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
+        // keep EGL context creation so glfwGetEGL{Display,Surface,Context} stay
+        // usable to build the NativeEglContext bridging the window to the renderer
         glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
         window_ = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
         if (!window_) {

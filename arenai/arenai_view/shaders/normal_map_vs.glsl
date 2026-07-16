@@ -1,13 +1,15 @@
+#version 330 core
+
 uniform mat4 u_mvp_matrix;
 uniform mat4 u_mv_matrix;
 
-attribute vec3 a_position;
-attribute vec3 a_normal;
-attribute vec2 a_tex_coord;
+in vec3 a_position;
+in vec3 a_normal;
+in vec2 a_tex_coord;
 
-varying vec3 v_position;
-varying vec2 v_tex_coord;
-varying vec3 v_normal;
+out vec3 v_position;
+out vec2 v_tex_coord;
+out vec3 v_normal;
 
 void main() {
     v_position = vec3(u_mv_matrix * vec4(a_position, 1.0));

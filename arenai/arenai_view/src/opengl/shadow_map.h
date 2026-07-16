@@ -5,7 +5,7 @@
 #ifndef ARENAI_SHADOW_MAP_H
 #define ARENAI_SHADOW_MAP_H
 
-#include <GLES3/gl3.h>
+#include "./gl.h"
 
 namespace arenai::view {
 

@@ -5,10 +5,11 @@
 #ifndef ARENAI_SHADOW_DRAWABLE_H
 #define ARENAI_SHADOW_DRAWABLE_H
 
-#include <GLES3/gl3.h>
 #include <glm/glm.hpp>
 
 #include <arenai_view/drawable.h>
+
+#include "../gl.h"
 
 namespace arenai::view {
 

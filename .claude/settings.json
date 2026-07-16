@@ -22,6 +22,7 @@
       "Bash(make:*)",
       "Bash(ctest:*)",
       "Bash(mkdir -p build)",
+      "Bash(mkdir -p build && cd build)",
       "Bash(./arenai_core/tests/arenai_core_tests)",
       "Bash(./arenai_view/tests/arenai_view_tests)",
       "Bash(./arenai/.venv/bin/pre-commit run *)"

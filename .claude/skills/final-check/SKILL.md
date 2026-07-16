@@ -5,7 +5,7 @@ description: Final verification of code modifications via `pre-commit run --all-
 
 # Final check (pre-commit)
 
-Run the full pre-commit pipeline on the whole repo. The hooks (defined in the parent `PhyVR/.pre-commit-config.yaml`) do, in order: `end-of-file-fixer`, `trailing-whitespace`, `clang-format`, then **build** (`arenai/build_linux.sh`) and the **test binaries** of each module (view, model, core, train). `fail_fast: true` — the run stops at the first failing hook.
+Run the full pre-commit pipeline on the whole repo. The hooks (defined in the parent `ArenAI/.pre-commit-config.yaml`) do, in order: `end-of-file-fixer`, `trailing-whitespace`, `clang-format`, then **build** (`build_linux.sh`) and the **test binaries** of each module (view, model, core, train). `fail_fast: true` — the run stops at the first failing hook.
 
 ## Prerequisites
 
@@ -13,9 +13,9 @@ Run the full pre-commit pipeline on the whole repo. The hooks (defined in the pa
 
 ## Steps
 
-1. Run from the **git root** (`PhyVR/`, the directory containing `.pre-commit-config.yaml`), using the venv binary directly:
+1. Run from the **git root** (`ArenAI/`, the directory containing `.pre-commit-config.yaml`), using the venv binary directly:
    ```shell
-   ./arenai/.venv/bin/pre-commit run --all-files
+   ./.venv/bin/pre-commit run --all-files
    ```
 
 2. **Interpret failures** — a hook marked `Failed` means one of two things:
@@ -26,6 +26,6 @@ Run the full pre-commit pipeline on the whole repo. The hooks (defined in the pa
 
 ## Notes
 
-- The build hook is incremental (reuses `arenai/build/`), so re-runs are much faster than the first one; still allow several minutes for a cold build. Use a generous Bash timeout (≥ 10 min).
+- The build hook is incremental (reuses `./build/`), so re-runs are much faster than the first one; still allow several minutes for a cold build. Use a generous Bash timeout (≥ 10 min).
 - Report the outcome honestly: quote the failing hook's output if something fails; only claim success after a fully green run.
 - Formatting fixes made by the hooks are part of your change — don't revert them, and include them in any commit.

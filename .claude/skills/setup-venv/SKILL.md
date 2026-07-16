@@ -33,4 +33,4 @@ Run from the directory where the venv should live (default: the current working 
 - Idempotent by design — safe to re-run. An existing `.venv` is left untouched (step 1 skips creation; steps 2–3 just re-assert the desired state).
 - Use `./.venv/bin/python` / `./.venv/bin/pre-commit` directly rather than `source`-ing the activate script, so it works non-interactively.
 - On Windows the paths are `.venv\Scripts\python.exe` and `.venv\Scripts\pre-commit.exe`.
-- In this repo the `.pre-commit-config.yaml` for the C++ code lives in the parent `PhyVR/` directory; the Python tooling has its own under `arenai_train/python/`. Pick the one matching the directory you're bootstrapping.
+- In this repo the `.pre-commit-config.yaml` for the C++ code lives in the parent `ArenAI/` directory; the Python tooling has its own under `arenai_train/python/`. Pick the one matching the directory you're bootstrapping.

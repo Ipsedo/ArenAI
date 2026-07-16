@@ -9,7 +9,7 @@ Configure and compile the project from the repo root, parallelizing over all ava
 
 ## Steps
 
-Run from the **project root** (`arenai/`, the directory containing the top-level `CMakeLists.txt`):
+Run from the **project root** (`ArenAI/`, the directory containing the top-level `CMakeLists.txt`):
 
 ```shell
 mkdir -p build && cd build

@@ -8,6 +8,8 @@
 #include <map>
 #include <string>
 
+#include "./controller/control_kind.h"
+
 namespace arenai::desktop {
 
     struct ModelOptions {
@@ -23,6 +25,7 @@ namespace arenai::desktop {
         int nb_tanks;
         int window_width;
         int window_height;
+        ControllerKind controller_kind;
         std::filesystem::path resources_folder;
     };
 

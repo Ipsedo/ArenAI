@@ -10,6 +10,7 @@
 #include <arenai_view/backend.h>
 #include <arenai_view/renderer.h>
 
+#include "../controller/control_kind.h"
 #include "../controller/gamepad.h"
 #include "../controller/mouse_keyboard.h"
 
@@ -20,7 +21,8 @@ namespace arenai::desktop {
         DesktopGameEnvironment(
             const std::filesystem::path &asset_folder_path,
             const std::shared_ptr<view::AbstractWindowedGraphicBackend> &graphics_backend,
-            int nb_tanks, int vision_height, int vision_width, float wanted_frequency);
+            int nb_tanks, int vision_height, int vision_width, float wanted_frequency,
+            const ControllerKind &controller_kind);
 
         ~DesktopGameEnvironment() override;
 
@@ -39,9 +41,10 @@ namespace arenai::desktop {
         std::shared_ptr<utils::AbstractResourceFileReader> asset_file_reader;
         std::unique_ptr<model::PlayerTank> player_tank;
         std::unique_ptr<view::AbstractPlayerRenderer> player_renderer;
-        std::shared_ptr<PlayerGamepadHandler> player_controller_handler;
 
         float wanted_frequency;
+
+        ControllerKind controller_kind;
     };
 
 }// namespace arenai::desktop

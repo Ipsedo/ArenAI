@@ -19,7 +19,7 @@ namespace arenai::desktop {
         const std::filesystem::path &asset_folder_path,
         const std::shared_ptr<view::AbstractWindowedGraphicBackend> &graphics_backend,
         const int nb_tanks, const int vision_height, const int vision_width,
-        const float wanted_frequency)
+        const float wanted_frequency, const ControllerKind &controller_kind)
         // The tank visions get their own headless backend (integrated GPU): their
         // synchronous readbacks are latency-bound on a discrete GPU, and this keeps
         // them off the window's GPU when the player view is offloaded (prime-run).
@@ -30,7 +30,7 @@ namespace arenai::desktop {
           windowed_backend(graphics_backend),
           asset_file_reader(std::make_shared<train::DesktopAssetFileReader>(asset_folder_path)),
           player_tank(std::nullptr_t()), player_renderer(std::nullptr_t()),
-          player_controller_handler(std::nullptr_t()), wanted_frequency(wanted_frequency) {}
+          wanted_frequency(wanted_frequency), controller_kind(controller_kind) {}
 
     void DesktopGameEnvironment::on_draw(
         const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
@@ -51,15 +51,25 @@ namespace arenai::desktop {
         player_renderer = windowed_backend->make_player_renderer(
             glm::vec3(200, 300, 200), player_tank->get_camera());
 
-        /*player_controller_handler = std::make_shared<PlayerMouseKeyboardHandler>(
-            windowed_backend->get_window(), *player_renderer);*/
-        player_controller_handler = std::make_shared<PlayerGamepadHandler>();
+        // set controller callback and controllers
+        if (controller_kind == ControllerKind::Gamepad) {
+            const auto player_controller_handler = std::make_shared<PlayerGamepadHandler>();
 
-        for (auto &ctrl: player_tank->get_controllers())
-            player_controller_handler->add_controller(ctrl);
+            for (auto &ctrl: player_tank->get_controllers())
+                player_controller_handler->add_controller(ctrl);
 
-        windowed_backend->get_window()->set_gamepad_callback(player_controller_handler);
+            windowed_backend->get_window()->set_gamepad_callback(player_controller_handler);
+        } else if (controller_kind == ControllerKind::Keyboard) {
+            const auto player_controller_handler = std::make_shared<PlayerMouseKeyboardHandler>(
+                windowed_backend->get_window(), *player_renderer);
 
+            for (auto &ctrl: player_tank->get_controllers())
+                player_controller_handler->add_controller(ctrl);
+
+            windowed_backend->get_window()->set_keyboard_callback(player_controller_handler);
+        }
+
+        // set resize change callback
         windowed_backend->get_window()->set_resize_callback(
             [this](const int width, const int height) -> void {
                 player_renderer->set_window_size(width, height);

@@ -44,6 +44,9 @@ int main(const int argc, char **argv) {
     parser.add_argument("--vision_width").scan<'i', int>().default_value(256);
     parser.add_argument("--window_width").scan<'i', int>().default_value(1920);
     parser.add_argument("--window_height").scan<'i', int>().default_value(1080);
+    parser.add_argument("--controller_kind")
+        .default_value(std::string("Keyboard"))
+        .choices("Keyboard", "Gamepad");
     parser.add_argument("--resources_folder").required();
 
     // Model options
@@ -60,9 +63,13 @@ int main(const int argc, char **argv) {
     for (const auto &[key, value]: parser.get<hyper_params_vector>("--hyper_parameters"))
         hyper_params[key] = value;
 
+    const ControllerKind kind = parser.get<std::string>("--controller_kind") == "Keyboard"
+                                    ? ControllerKind::Keyboard
+                                    : ControllerKind::Gamepad;
+
     game_loop(
         {parser.get<float>("--wanted_frequency"), parser.get<int>("--nb_tanks"),
-         parser.get<int>("--window_width"), parser.get<int>("--window_height"),
+         parser.get<int>("--window_width"), parser.get<int>("--window_height"), kind,
          std::filesystem::path(parser.get<std::string>("--resources_folder"))},
         {parser.get<int>("--vision_height"), parser.get<int>("--vision_width"), hyper_params,
          std::filesystem::path(parser.get<std::string>("--state_dict_folder")),

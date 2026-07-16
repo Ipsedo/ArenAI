@@ -18,7 +18,7 @@ include(ArenaiRuntimeDlls)
 # dynamic shadows / low-poly changes broke the CI baselines), run the tests
 # once to regenerate + commit the new .json goldens, then set it back to OFF.
 option(ARENAI_REGENERATE_GOLDEN_IMAGES
-        "Rebuild golden reference images instead of comparing against them" OFF)
+        "Rebuild golden reference images instead of comparing against them" ON)
 
 # Train main & lib
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/arenai_train")

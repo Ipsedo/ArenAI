@@ -38,7 +38,7 @@ jobs:
       # Same script as scripts/goldens_docker.sh — single source of truth for
       # the toolchain, and above all for the Mesa the goldens depend on
       - name: Install system dependencies
-        run: arenai/scripts/ci/install_ubuntu_deps.sh
+        run: scripts/ci/install_ubuntu_deps.sh
 
       - name: Cache LibTorch
         id: cache-libtorch
@@ -70,20 +70,20 @@ jobs:
       - name: Cache FetchContent dependencies
         uses: actions/cache@v4
         with:
-          path: arenai/build/_deps
-          key: fetchcontent-${{ hashFiles('arenai/**/CMakeLists.txt') }}
+          path: build/_deps
+          key: fetchcontent-${{ hashFiles('**/CMakeLists.txt') }}
           restore-keys: fetchcontent-
 
       - name: Configure
         run: >
-          cmake -S arenai -B arenai/build
+          cmake -S . -B build
           -DCMAKE_BUILD_TYPE=Release
           -DLIBTORCH_PATH="$HOME/libtorch"
           -DCMAKE_C_COMPILER_LAUNCHER=ccache
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Build
-        run: cmake --build arenai/build -j"$(nproc)"
+        run: cmake --build build -j"$(nproc)"
 
       - name: ccache statistics
         run: ccache -s
@@ -95,5 +95,5 @@ jobs:
       # changes (actions/cache never overwrites an existing key).
       - name: Run tests
         run: |
-          . arenai/scripts/ci/render_env.sh
-          ctest --test-dir arenai/build --output-on-failure
+          . scripts/ci/render_env.sh
+          ctest --test-dir build --output-on-failure

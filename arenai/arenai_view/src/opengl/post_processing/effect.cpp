@@ -20,8 +20,8 @@ namespace arenai::view {
     // from disk would use it)
     Program::Builder AbstractPostProcessingEffect::effect_builder(const char *fragment_shader) {
         return Program::Builder(
-                   nullptr, std::filesystem::path("post_vs.glsl"),
-                   std::filesystem::path(fragment_shader))
+                   std::nullptr_t(), "post_vs.glsl",
+                   fragment_shader)
             .add_buffer("vertices_buffer", FULLSCREEN_TRIANGLE)
             .add_attribute("a_position");
     }

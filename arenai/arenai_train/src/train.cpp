@@ -76,7 +76,7 @@ namespace arenai::train {
         AgentSaver saver(agent, train_options.output_folder, train_options.save_every);
 
         std::unique_ptr<ReplayBuffer> replay_buffer = std::make_unique<RewardTransformReplayBuffer>(
-            train_options.replay_buffer_size,
+            train_options.replay_buffer_size, std::make_shared<IdentityTransform>(),
             std::make_shared<NormalizedRewardTransform>(train_options.replay_buffer_size, 1.f));
 
         // metrics
@@ -180,9 +180,9 @@ namespace arenai::train {
                     replay_buffer->add(
                         {{vision[i], proprioception[i]},
                          {torch_action.continuous_action[i], torch_action.discrete_action[i]},
+                         torch::tensor({reward}, torch::TensorOptions().dtype(torch::kFloat)),
                          torch::tensor(
-                             {reward + potential_reward},
-                             torch::TensorOptions().dtype(torch::kFloat)),
+                             {potential_reward}, torch::TensorOptions().dtype(torch::kFloat)),
                          torch::tensor({is_terminal}, torch::TensorOptions().dtype(torch::kBool)),
                          {next_vision, next_proprioception}});
                 }

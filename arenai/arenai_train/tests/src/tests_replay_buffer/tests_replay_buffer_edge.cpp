@@ -47,13 +47,14 @@ TEST_F(ReplayBufferEdgeTest, SampleBatchLargerThanSingleElement) {
 TEST_F(ReplayBufferEdgeTest, RewardUnchangedAtSample) {
     ReplayBuffer buffer(10);
 
-    TorchStep step;
+    TorchInputStep step;
     step.state.vision = torch::randint(255, {3, 8, 8}, torch::kUInt8);
     step.state.proprioception = torch::randn({5});
     step.action.continuous_action = torch::randn({3});
     step.action.discrete_action = torch::zeros({2});
     step.action.discrete_action[0] = 1.0f;
-    step.reward = torch::tensor({2.0f});
+    step.main_reward = torch::tensor({2.0f});
+    step.potential_reward = torch::tensor({0.0f});
     step.done = torch::tensor({0.0f});
     step.next_state.vision = torch::randint(255, {3, 8, 8}, torch::kUInt8);
     step.next_state.proprioception = torch::randn({5});

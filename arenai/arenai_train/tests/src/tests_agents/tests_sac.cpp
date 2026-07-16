@@ -35,7 +35,7 @@ SacAgentTest::make_filled_buffer(const SacTestConfig &cfg, const int n_steps) {
     auto buffer = std::make_unique<ReplayBuffer>(n_steps * 2);
 
     for (int i = 0; i < n_steps; ++i) {
-        TorchStep step;
+        TorchInputStep step;
         step.state.vision =
             torch::randint(0, 255, {3, cfg.vision_height, cfg.vision_width}, torch::kUInt8);
         step.state.proprioception = torch::randn({cfg.nb_sensors});
@@ -45,7 +45,8 @@ SacAgentTest::make_filled_buffer(const SacTestConfig &cfg, const int n_steps) {
         disc[0] = 1.0f;
         step.action.discrete_action = disc;
 
-        step.reward = torch::randn({1});
+        step.main_reward = torch::randn({1});
+        step.potential_reward = torch::randn({1});
         step.done = torch::zeros({1});
         step.next_state.vision =
             torch::randint(0, 255, {3, cfg.vision_height, cfg.vision_width}, torch::kUInt8);

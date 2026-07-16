@@ -3,8 +3,9 @@
   "askBeforeRunningTool": false,
   "permissions": {
     "allow": [
-      "Read(*)",
-      "Search(*)",
+      "Read(./*)",
+      "Read(./**)",
+      "Search(./*)",
       "Grep",
       "Glob",
       "Bash(grep:*)",
@@ -13,12 +14,17 @@
       "Bash(echo:*)",
       "Bash(ls:*)",
       "Bash(find:*)",
+      "Bash(wc:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
       "Bash(clang-format:*)",
       "Bash(cmake:*)",
       "Bash(make:*)",
+      "Bash(ctest:*)",
       "Bash(mkdir -p build)",
       "Bash(./arenai_core/tests/arenai_core_tests)",
-      "Bash(./arenai_view/tests/arenai_view_tests)"
+      "Bash(./arenai_view/tests/arenai_view_tests)",
+      "Bash(./arenai/.venv/bin/pre-commit run *)"
     ]
   },
   "hooks": {

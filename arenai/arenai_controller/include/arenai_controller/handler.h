@@ -23,7 +23,7 @@ namespace arenai::controller {
         bool on_event(Input event) {
             auto [used, input] = to_output(event);
             if (used)
-                for (auto &ctrl: controllers) ctrl->on_input(input);
+                for (auto &ctrl: controllers) ctrl->apply_input(input);
             return used;
         }
 

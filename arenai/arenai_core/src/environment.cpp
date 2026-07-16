@@ -1,9 +1,6 @@
 //
 // Created by samuel on 29/09/2025.
 //
-#include <cmath>
-#include <iostream>
-#include <thread>
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -18,27 +15,28 @@ using namespace arenai::core;
 namespace arenai::core {
 
     BaseTanksEnvironment::BaseTanksEnvironment(
-        const std::shared_ptr<utils::AbstractFileReader> &file_reader,
-        const std::shared_ptr<view::AbstractGLContext> &gl_context, const int nb_tanks,
+        const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
+        const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, const int nb_tanks,
         float wanted_frequency, const int vision_height, const int vision_width,
         const int vision_num_threads, const bool vision_thread_sleep)
         : wanted_frequency(wanted_frequency), nb_tanks(nb_tanks), vision_height(vision_height),
           vision_width(vision_width), vision_num_threads(vision_num_threads),
           vision_thread_sleep(vision_thread_sleep),
-          physic_engine(model::make_physic_engine(wanted_frequency)),
-          nb_reset_frames(static_cast<int>(4.f / wanted_frequency)), drawing_started_(false),
-          gl_context(gl_context), rng(dev()), file_reader(file_reader),
           vision_pool_(std::make_unique<EnemyVisionThreadPool>(
               nb_tanks, vision_num_threads, vision_height, vision_width, wanted_frequency,
-              vision_thread_sleep)) {}
+              vision_thread_sleep)),
+          physic_engine(model::make_physic_engine(wanted_frequency)),
+          nb_reset_frames(static_cast<int>(4.f / wanted_frequency)), drawing_started_(false),
+          graphics_backend(graphics_backend), gl_context(graphics_backend->render_context()),
+          rng(dev()), file_reader(file_reader) {}
 
-    std::vector<std::tuple<State, Reward, IsDone>>
+    std::vector<std::tuple<State, Reward, IsDone, IsTruncated>>
     BaseTanksEnvironment::step(const float time_delta, const std::vector<Action> &actions) {
 
         // 1. apply action
-        for (int i = 0; i < tank_factories.size(); i++) {
-            if (!tank_factories[i]->is_dead()) tank_controller_handler[i]->on_event(actions[i]);
-            else tank_factories[i]->on_death();
+        for (int i = 0; i < tanks.size(); i++) {
+            if (!tanks[i]->is_dead()) tank_controller_handler[i]->on_event(actions[i]);
+            else tanks[i]->on_death();
         }
 
         // 2. step physic
@@ -47,18 +45,19 @@ namespace arenai::core {
         // 3. set model matrices double buffer and draw scene
         const auto curr_model_matrices = get_model_matrices();
         vision_pool_->set_model_matrices(curr_model_matrices);
+        vision_pool_->begin_frame();
 
         on_draw(curr_model_matrices);
         vision_pool_->loop_wait();
 
         // 4. build State
-        std::vector<std::tuple<State, Reward, IsDone>> result;
-        result.reserve(tank_factories.size());
+        std::vector<std::tuple<State, Reward, IsDone, IsTruncated>> result;
+        result.reserve(tanks.size());
 
-        for (int i = 0; i < tank_factories.size(); i++) {
+        for (int i = 0; i < tanks.size(); i++) {
             result.emplace_back(
-                State(vision_pool_->read_vision(i), tank_factories[i]->get_proprioception()),
-                tank_factories[i]->get_reward(tank_factories), tank_factories[i]->is_dead());
+                State(vision_pool_->read_vision(i), tanks[i]->get_proprioception()),
+                tanks[i]->get_reward(tanks), tanks[i]->is_dead(), false);
         }
 
         return result;
@@ -67,10 +66,10 @@ namespace arenai::core {
     void BaseTanksEnvironment::reset_physics(const float spawn_width, const float spawn_height) {
         physic_engine->remove_bodies_and_constraints();
         tank_controller_handler.clear();
-        tank_factories.clear();
+        tanks.clear();
 
-        auto item_factory = physic_engine->get_item_factory();
-        auto tank_factory = model::make_tank_factory(*physic_engine, file_reader, wanted_frequency);
+        const auto item_factory = physic_engine->get_item_factory();
+        const auto tank_factory = physic_engine->get_tank_factory();
 
         item_factory->make_height_map_item(
             "height_map", file_reader, "heightmap/heightmap6.png", glm::vec3(0., 40., 0.),
@@ -83,15 +82,15 @@ namespace arenai::core {
 
         // add tanks
         for (int i = 0; i < nb_tanks; i++) {
-            tank_factories.push_back(tank_factory->make_enemy_tank(
-                "enemy_" + std::to_string(i),
+            tanks.push_back(tank_factory->make_enemy_tank(
+                file_reader, "enemy_" + std::to_string(i),
                 glm::vec3(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng))));
 
             tank_controller_handler.push_back(std::make_unique<EnemyControllerHandler>(
-                wanted_frequency, 1.f / 6.f, tank_factories.back()->get_action_stats(),
+                wanted_frequency, 1.f / 6.f, tanks.back()->get_action_stats(),
                 model::ENEMY_TURRET_RADIAL_VELOCITY));
 
-            for (const auto &controller: tank_factories.back()->get_controllers())
+            for (const auto &controller: tanks.back()->get_controllers())
                 tank_controller_handler.back()->add_controller(controller);
         }
 
@@ -138,36 +137,31 @@ namespace arenai::core {
         const auto model_matrices = get_model_matrices();
         for (int i = 0; i < 2; i++) {
             vision_pool_->set_model_matrices(model_matrices);
+            vision_pool_->begin_frame();
             on_draw(model_matrices);
             vision_pool_->loop_wait();
         }
 
         std::vector<State> states;
-        states.reserve(tank_factories.size());
-        for (int i = 0; i < static_cast<int>(tank_factories.size()); i++)
-            states.emplace_back(
-                vision_pool_->read_vision(i), tank_factories[i]->get_proprioception());
+        states.reserve(tanks.size());
+        for (int i = 0; i < static_cast<int>(tanks.size()); i++)
+            states.emplace_back(vision_pool_->read_vision(i), tanks[i]->get_proprioception());
 
         return states;
     }
 
-    void BaseTanksEnvironment::reset_drawables(
-        const std::shared_ptr<view::AbstractGLContext> &new_gl_context) {
-        gl_context = new_gl_context;
+    void BaseTanksEnvironment::reset_drawables() {
         gl_context->make_current();
 
-        on_reset_drawables(physic_engine, gl_context);
+        on_reset_drawables(physic_engine);
 
         gl_context->release_current();
 
         vision_pool_->start_thread(
-            tank_factories, gl_context, file_reader, get_model_matrices(),
-            physic_engine->get_items());
+            tanks, graphics_backend, file_reader, get_model_matrices(), physic_engine->get_items());
 
         gl_context->make_current();
     }
-
-    void BaseTanksEnvironment::reset_drawables() { reset_drawables(gl_context); }
 
     void BaseTanksEnvironment::seed(const unsigned int seed) {
         rng.seed(seed);
@@ -190,9 +184,14 @@ namespace arenai::core {
         return curr_model_matrices;
     }
 
+    const std::shared_ptr<view::AbstractGraphicBackend> &
+    BaseTanksEnvironment::get_graphics_backend() const {
+        return graphics_backend;
+    }
+
     BaseTanksEnvironment::~BaseTanksEnvironment() {
         stop_drawing();
-        tank_factories.clear();
+        tanks.clear();
     }
 
 }// namespace arenai::core

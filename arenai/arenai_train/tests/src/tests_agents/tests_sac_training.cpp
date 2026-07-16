@@ -14,16 +14,9 @@ using namespace arenai::train;
 std::unique_ptr<SacAgent> SacTrainingTest::make_agent(const SacTrainingTestConfig &cfg) const {
     return std::make_unique<SacAgent>(
         cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions,
-        /*actor_lr=*/1e-3f, /*critic_lr=*/1e-3f, /*alpha_lr=*/1e-3f,
-        /*hidden_size_sensors=*/8, /*hidden_size_actions=*/8,
-        /*actor_hidden_sizes=*/std::vector<int>{16},
-        /*critic_hidden_sizes=*/std::vector<int>{16},
-        /*vision_channels=*/std::vector<std::tuple<int, int>>{{3, 4}},
-        /*group_norm_nums=*/std::vector<int>{2}, device, /*metric_window_size=*/10,
-        /*tau=*/0.005f, /*gamma=*/0.99f,
-        /*initial_alpha_continuous=*/0.2f, /*initial_alpha_discrete=*/0.2f,
-        /*target_continuous_sigma=*/0.2f, /*discrete_entropy_factor=*/0.5f);
+        cfg.nb_discrete_actions, 1e-3f, 1e-3f, 1e-3f, 8, 8, std::vector<int>{16},
+        std::vector<int>{16}, std::vector<std::tuple<int, int>>{{3, 4}}, std::vector<int>{2},
+        device, 10, 0.005f, 0.99f);
 }
 
 std::unique_ptr<ReplayBuffer>
@@ -42,8 +35,7 @@ TEST_F(SacTrainingTest, TrainStepDoesNotCrash) {
     const auto agent = make_agent(cfg);
     const auto buffer = make_filled_buffer(cfg, 32);
 
-    ASSERT_NO_THROW(agent->train(buffer, /*epochs=*/1, /*batch_size=*/8))
-        << "Single training step should not crash";
+    ASSERT_NO_THROW(agent->train(buffer, 1, 8)) << "Single training step should not crash";
 }
 
 TEST_F(SacTrainingTest, MultipleTrainStepsDoNotCrash) {
@@ -52,8 +44,8 @@ TEST_F(SacTrainingTest, MultipleTrainStepsDoNotCrash) {
     const auto buffer = make_filled_buffer(cfg, 64);
 
     ASSERT_NO_THROW({
-        agent->train(buffer, /*epochs=*/3, /*batch_size=*/16);
-        agent->train(buffer, /*epochs=*/3, /*batch_size=*/16);
+        agent->train(buffer, 3, 16);
+        agent->train(buffer, 3, 16);
     }) << "Multiple training steps should not crash";
 }
 
@@ -62,7 +54,7 @@ TEST_F(SacTrainingTest, MetricsReturnedNonEmpty) {
     const auto agent = make_agent(cfg);
     const auto buffer = make_filled_buffer(cfg, 32);
 
-    agent->train(buffer, /*epochs=*/2, /*batch_size=*/8);
+    agent->train(buffer, 2, 8);
 
     const auto metrics = agent->get_metrics();
 
@@ -98,23 +90,13 @@ TEST_F(SacTrainingTest, MetricsHaveValuesAfterTraining) {
     const auto agent = make_agent(cfg);
     const auto buffer = make_filled_buffer(cfg, 32);
 
-    agent->train(buffer, /*epochs=*/3, /*batch_size=*/8);
+    agent->train(buffer, 3, 8);
 
     for (const auto metrics = agent->get_metrics(); const auto &m: metrics) {
         const auto val = m->compute_metric();
         ASSERT_TRUE(std::isfinite(val))
             << "Metric '" << m->get_name() << "' should be finite after training";
     }
-}
-
-TEST_F(SacTrainingTest, TargetEntropiesAreFinite) {
-    constexpr SacTrainingTestConfig cfg{8, 8, 3, 2, 3};
-    const auto agent = make_agent(cfg);
-
-    ASSERT_TRUE(std::isfinite(agent->get_continuous_target_entropy()))
-        << "Continuous target entropy should be finite";
-    ASSERT_TRUE(std::isfinite(agent->get_discrete_target_entropy()))
-        << "Discrete target entropy should be finite";
 }
 
 TEST_F(SacTrainingTest, CountParametersPositive) {

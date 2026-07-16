@@ -8,7 +8,7 @@
 #include <vector>
 
 #include <arenai_controller/inputs.h>
-#include <arenai_view/pbuffer_renderer.h>
+#include <arenai_view/renderer.h>
 
 namespace arenai::core {
     struct State {
@@ -19,6 +19,7 @@ namespace arenai::core {
     typedef float Reward;
 
     typedef bool IsDone;
+    typedef bool IsTruncated;
 
     typedef controller::user_input Action;
 }// namespace arenai::core

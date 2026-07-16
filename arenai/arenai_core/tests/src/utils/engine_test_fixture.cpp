@@ -6,7 +6,6 @@
 
 #include <arenai_core_tests/utils/engine_test_fixture.h>
 #include <arenai_core_tests/utils/local_file_reader.h>
-#include <arenai_core_tests/utils/local_gl_context.h>
 
 using namespace arenai;
 
@@ -20,7 +19,7 @@ void EngineTestFixture::SetUp() {
 
     file_reader = std::make_shared<LocalAssetFileReader>(std::filesystem::path(ARENAI_ASSETS_DIR));
 
-    gl_context = std::make_shared<LocalGlContext>();
+    graphics_backend = view::make_opengl_backend();
 
-    tank_factory = model::make_tank_factory(*engine, file_reader, frequency);
+    tank_factory = engine->get_tank_factory();
 }

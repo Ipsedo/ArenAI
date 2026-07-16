@@ -21,23 +21,25 @@ using namespace arenai::controller;
 
 TEST_F(RewardTest, RewardZeroWhenAliveNoShot) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank("tank_a", {0.f, 0.f, 0.f});
-    auto tank_b = tank_factory->make_enemy_tank("tank_b", {20.f, 0.f, 0.f});
+    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f});
+    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {20.f, 0.f, 0.f});
 
     engine->step(1.f / 60.f);
 
     const std::vector<std::shared_ptr<EnemyTank>> tanks{
         std::shared_ptr<EnemyTank>(tank_a.release()), std::shared_ptr<EnemyTank>(tank_b.release())};
 
-    const float reward = tanks[0]->get_reward(tanks);
+    const float reward_a = tanks[0]->get_reward(tanks);
+    const float reward_b = tanks[1]->get_reward(tanks);
 
-    ASSERT_FLOAT_EQ(reward, 0.f);
+    ASSERT_EQ(reward_a, 0.f);
+    ASSERT_EQ(reward_b, 0.f);
 }
 
 TEST_F(RewardTest, RewardNegativeWhenDead) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank("tank_a", {0.f, 0.f, 0.f});
-    auto tank_b = tank_factory->make_enemy_tank("tank_b", {20.f, 0.f, 0.f});
+    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f});
+    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {20.f, 0.f, 0.f});
 
     engine->step(1.f / 60.f);
 
@@ -61,12 +63,12 @@ TEST_F(RewardTest, RewardNegativeWhenDead) {
 
 TEST_F(RewardTest, SuicidePenaltyLessThanDeathPenalty) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank("tank_a", {0.f, 0.f, 0.f});
-    auto tank_b = tank_factory->make_enemy_tank("tank_b", {20.f, 0.f, 0.f});
+    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f});
+    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {20.f, 0.f, 0.f});
 
     engine->step(1.f / 60.f);
 
-    std::vector<std::shared_ptr<EnemyTank>> tanks{
+    const std::vector<std::shared_ptr<EnemyTank>> tanks{
         std::shared_ptr<EnemyTank>(tank_a.release()), std::shared_ptr<EnemyTank>(tank_b.release())};
 
     // kill by damage → normal death penalty
@@ -90,8 +92,8 @@ TEST_F(RewardTest, SuicidePenaltyLessThanDeathPenalty) {
 TEST_F(RewardTest, RewardPositiveOnHit) {
     add_ground();
     // spawn tanks high enough so all parts start above ground and settle cleanly
-    auto tank_a = tank_factory->make_enemy_tank("tank_a", {0.f, 5.f, 0.f});
-    auto tank_b = tank_factory->make_enemy_tank("tank_b", {0.f, 5.f, 30.f});
+    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
+    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f});
 
     // settle on ground (300 frames = 5s at 60fps)
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
@@ -101,122 +103,92 @@ TEST_F(RewardTest, RewardPositiveOnHit) {
 
     // fire from tank_a toward tank_b (canon points +Z by default)
     constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    for (const auto &ctrl: shared_a->get_controllers()) ctrl->on_input(fire_input);
+    for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
     const std::vector<std::shared_ptr<EnemyTank>> tanks{shared_a, shared_b};
 
+    const float reward = shared_a->get_reward(tanks);
+
     ASSERT_TRUE(shared_a->has_hit_other_tank()) << "shell should have hit the enemy tank";
 
-    const float reward = shared_a->get_reward(tanks);
-    ASSERT_GT(reward, 0.f) << "reward should be positive after hitting an enemy";
+    ASSERT_FALSE(std::isnan(reward)) << "reward should never be NaN";
+    ASSERT_FALSE(std::isinf(reward)) << "reward should never be Inf";
+
+    ASSERT_GE(reward, 1.f)
+        << "reward should be greater than or equal to 1.0 after hitting an enemy";
 }
 
-// ========================================================================
-// get_reward — last_shoot_info reset
-// ========================================================================
-
-TEST_F(RewardTest, ShootInfoResetAfterGetReward) {
+TEST_F(RewardTest, RewardUnderOneAfterHit) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank("tank_a", {0.f, 0.f, 0.f});
-    auto tank_b = tank_factory->make_enemy_tank("tank_b", {20.f, 0.f, 0.f});
+    // spawn tanks high enough so all parts start above ground and settle cleanly
+    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
+    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f});
 
-    engine->step(1.f / 60.f);
+    // settle on ground (300 frames = 5s at 60fps)
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
-    const std::vector<std::shared_ptr<EnemyTank>> tanks{
-        std::shared_ptr<EnemyTank>(tank_a.release()), std::shared_ptr<EnemyTank>(tank_b.release())};
+    const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
+    const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
-    tanks[0]->get_reward(tanks);
+    // fire from tank_a toward tank_b (canon points +Z by default)
+    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
-    // second call without any new shot should give 0 reward (no shoot info)
-    const float reward_second = tanks[0]->get_reward(tanks);
+    for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
-    ASSERT_FLOAT_EQ(reward_second, 0.f);
+    const std::vector<std::shared_ptr<EnemyTank>> tanks{shared_a, shared_b};
+
+    const float reward_on_hit = shared_a->get_reward(tanks);
+
+    ASSERT_TRUE(shared_a->has_hit_other_tank()) << "shell should have hit the enemy tank";
+
+    ASSERT_FALSE(std::isnan(reward_on_hit)) << "reward should never be NaN";
+    ASSERT_FALSE(std::isinf(reward_on_hit)) << "reward should never be Inf";
+
+    ASSERT_GE(reward_on_hit, 1.f)
+        << "reward should be greater than or equal to 1.0 after hitting an enemy";
+
+    // no fire, reward under 1.0
+    constexpr user_input no_fire_input{{0.f, 0.f}, {0.f, 0.f}, {false}};
+    for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(no_fire_input);
+
+    for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
+
+    const float reward_on_no_hit = shared_a->get_reward(tanks);
+
+    ASSERT_FALSE(shared_a->has_hit_other_tank()) << "no shell should have hit the enemy tank";
+
+    ASSERT_FALSE(std::isnan(reward_on_no_hit)) << "reward should never be NaN";
+    ASSERT_FALSE(std::isinf(reward_on_no_hit)) << "reward should never be Inf";
+
+    ASSERT_LE(reward_on_no_hit, 1.f) << "reward should be under 1.0 after no hitting an enemy";
 }
 
 // ========================================================================
 // get_reward — NaN / Inf stability
 // ========================================================================
 
-TEST_F(RewardTest, RewardNoNaNAfterMultipleSteps) {
+TEST_F(RewardTest, ZeroRewardWithEmptyTankList) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank("tank_a", {0.f, 5.f, 0.f});
-    auto tank_b = tank_factory->make_enemy_tank("tank_b", {0.f, 5.f, 30.f});
-
-    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
-
-    const std::vector<std::shared_ptr<EnemyTank>> tanks{
-        std::shared_ptr<EnemyTank>(tank_a.release()), std::shared_ptr<EnemyTank>(tank_b.release())};
-
-    // fire and let the shell travel
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    for (const auto &ctrl: tanks[0]->get_controllers()) ctrl->on_input(fire_input);
-
-    for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
-
-    const float reward = tanks[0]->get_reward(tanks);
-
-    ASSERT_FALSE(std::isnan(reward)) << "reward should never be NaN";
-    ASSERT_FALSE(std::isinf(reward)) << "reward should never be Inf";
-}
-
-TEST_F(RewardTest, RewardWithEmptyTankList) {
-    add_ground();
-    auto tank = tank_factory->make_enemy_tank("tank_a", {0.f, 5.f, 0.f});
+    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
 
     constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->on_input(fire_input);
+    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
     // pass an empty tank list — get_nearest_enemy_index returns -1
-    const std::vector<std::shared_ptr<EnemyTank>> empty_tanks;
+    constexpr std::vector<std::shared_ptr<EnemyTank>> empty_tanks;
     const float reward = shared_tank->get_reward(empty_tanks);
 
     ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN with empty tank list";
     ASSERT_FALSE(std::isinf(reward)) << "reward should not be Inf with empty tank list";
-}
 
-// ========================================================================
-// Reward — accumulation over multiple kills
-// ========================================================================
-
-TEST_F(RewardTest, RewardAccumulatesOverMultipleHits) {
-    add_ground();
-    auto tank_a = tank_factory->make_enemy_tank("tank_a", {0.f, 5.f, 0.f});
-    auto tank_b = tank_factory->make_enemy_tank("tank_b", {0.f, 5.f, 30.f});
-
-    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
-
-    const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
-    const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
-    const std::vector<std::shared_ptr<EnemyTank>> tanks{shared_a, shared_b};
-
-    // first shot
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    for (const auto &ctrl: shared_a->get_controllers()) ctrl->on_input(fire_input);
-
-    for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
-
-    const float reward_1 = shared_a->get_reward(tanks);
-
-    // second shot
-    constexpr user_input no_fire{{0.f, 0.f}, {0.f, 0.f}, {false}};
-    for (const auto &ctrl: shared_a->get_controllers()) ctrl->on_input(no_fire);
-    engine->step(1.f / 60.f);
-
-    for (const auto &ctrl: shared_a->get_controllers()) ctrl->on_input(fire_input);
-
-    for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
-
-    const float reward_2 = shared_a->get_reward(tanks);
-
-    // both rewards should be individually valid
-    ASSERT_FALSE(std::isnan(reward_1));
-    ASSERT_FALSE(std::isnan(reward_2));
+    ASSERT_FLOAT_EQ(reward, 0.f);
 }

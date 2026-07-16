@@ -45,6 +45,22 @@ cd build && ctest --output-on-failure
 # or run a specific binary: ./arenai_train/tests/arenai_train_tests
 ```
 
+### Golden images
+
+`arenai_view` and `arenai_core` compare rendered frames against committed `.json`
+references (`*/tests/resources/golden_images/`). Those references are **tied to the
+renderer**: they are generated with llvmpipe on Ubuntu 24.04, the environment the CI
+runs in, so they will not match a local GPU or Arch's Mesa.
+
+```shell
+./scripts/goldens_docker.sh              # reproduce the CI comparison locally (docker)
+./scripts/goldens_docker.sh --regenerate # rewrite the goldens after an intended render change
+```
+
+Regenerate + commit whenever the rendering legitimately changes (shaders, shadows,
+post-processing). `-DARENAI_REGENERATE_GOLDEN_IMAGES=ON` disables every pixel
+assertion — it is a regeneration switch, never a way to turn a red CI green.
+
 ## Running training
 
 ```shell

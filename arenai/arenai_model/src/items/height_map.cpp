@@ -17,11 +17,11 @@ using namespace arenai::utils;
 namespace arenai::model {
 
     HeightMapItem::HeightMapItem(
-        std::string name, const std::shared_ptr<utils::AbstractFileReader> &img_reader,
+        std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &img_reader,
         const std::filesystem::path &height_map_file, glm::vec3 pos, glm::vec3 scale)
         : BulletItem(std::move(name)), shape_id(height_map_file.string()), scale(scale) {
         ImageChannels tmp = img_reader->read_png(height_map_file);
-        auto [width, height, pixels] = utils::AbstractFileReader::to_img_grey(tmp);
+        auto [width, height, pixels] = utils::AbstractResourceFileReader::to_img_grey(tmp);
 
         map_width = width;
         map_height = height;
@@ -93,7 +93,7 @@ namespace arenai::model {
     }
 
     glm::vec3 HeightMapItem::make_pos(
-        const int x, const int z, const int min_height, const int max_height) const {
+        const int x, const int z, const float min_height, const float max_height) const {
         const float half_width = static_cast<float>(map_width - 1) * 0.5f;
         const float half_length = static_cast<float>(map_height - 1) * 0.5f;
         const float center_y = 0.5f * (min_height + max_height);

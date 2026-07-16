@@ -14,15 +14,15 @@
 #include <arenai_model/tank.h>
 #include <arenai_model/tank_factory.h>
 #include <arenai_utils/file_reader.h>
-#include <arenai_view/renderer.h>
+#include <arenai_view/backend.h>
 
 class EngineTestFixture : public testing::Test {
 protected:
     void SetUp() override;
 
     std::unique_ptr<arenai::model::AbstractPhysicEngine> engine;
-    std::shared_ptr<arenai::utils::AbstractFileReader> file_reader;
-    std::shared_ptr<arenai::view::AbstractGLContext> gl_context;
+    std::shared_ptr<arenai::utils::AbstractResourceFileReader> file_reader;
+    std::shared_ptr<arenai::view::AbstractGraphicBackend> graphics_backend;
     std::shared_ptr<arenai::model::TankFactory> tank_factory;
 };
 

@@ -4,11 +4,9 @@
 
 #include <numeric>
 
+#include <arenai_view/backend.h>
 #include <arenai_view/camera.h>
-#include <arenai_view/pbuffer_renderer.h>
 #include <arenai_view_tests/test_pbuffer.h>
-
-#include "./utils/local_gl_context.h"
 
 using namespace arenai;
 using namespace arenai::view;
@@ -16,22 +14,22 @@ using namespace arenai::view;
 TEST_P(PBufferClearColorParam, ClearColorNoDrawable) {
     const auto [width, height] = GetParam();
 
-    const auto local_gl_context = std::make_shared<LocalGlContext>();
+    const auto backend = view::make_opengl_backend();
 
-    PBufferRenderer buffer_renderer(
-        local_gl_context, width, height, {0.f, 10.f, -2.f},
+    const auto buffer_renderer = backend->make_offscreen_renderer(
+        width, height, {0.f, 10.f, -2.f},
         std::make_shared<StaticCamera>(
             glm::vec3{0.f, 0.f, -10.f}, glm::vec3{0.f, 0.f, 0.f}, glm::vec3{0.f, 1.f, 0.f}));
 
-    buffer_renderer.make_current();
+    buffer_renderer->make_current();
 
     constexpr auto model_matrices = std::vector<std::tuple<std::string, glm::mat4>>{};
 
     // warmup frame (black)
-    buffer_renderer.draw_and_get_frame(model_matrices);
+    buffer_renderer->draw_and_get_frame(model_matrices);
 
     // actual frame: should be the clear color (red = 1,0,0,0 in on_new_frame)
-    const auto [pixels] = buffer_renderer.draw_and_get_frame(model_matrices);
+    const auto [pixels] = buffer_renderer->draw_and_get_frame(model_matrices);
 
     const int hw = width * height;
     ASSERT_EQ(pixels.size(), 3 * hw);
@@ -48,19 +46,19 @@ TEST_P(PBufferClearColorParam, ClearColorNoDrawable) {
 TEST_P(PBufferClearColorParam, PixelLayoutCHW) {
     const auto [width, height] = GetParam();
 
-    const auto local_gl_context = std::make_shared<LocalGlContext>();
+    const auto backend = view::make_opengl_backend();
 
-    PBufferRenderer buffer_renderer(
-        local_gl_context, width, height, {0.f, 10.f, -2.f},
+    const auto buffer_renderer = backend->make_offscreen_renderer(
+        width, height, {0.f, 10.f, -2.f},
         std::make_shared<StaticCamera>(
             glm::vec3{0.f, 0.f, -10.f}, glm::vec3{0.f, 0.f, 0.f}, glm::vec3{0.f, 1.f, 0.f}));
 
-    buffer_renderer.make_current();
+    buffer_renderer->make_current();
 
     constexpr auto model_matrices = std::vector<std::tuple<std::string, glm::mat4>>{};
 
-    buffer_renderer.draw_and_get_frame(model_matrices);
-    const auto [pixels] = buffer_renderer.draw_and_get_frame(model_matrices);
+    buffer_renderer->draw_and_get_frame(model_matrices);
+    const auto [pixels] = buffer_renderer->draw_and_get_frame(model_matrices);
 
     const int hw = width * height;
 

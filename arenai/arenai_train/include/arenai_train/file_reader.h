@@ -11,16 +11,16 @@
 
 namespace arenai::train {
 
-    class DesktopAssetFileReader final : public utils::AbstractFileReader {
+    class DesktopAssetFileReader final : public utils::AbstractResourceFileReader {
     public:
-        explicit DesktopAssetFileReader(const std::filesystem::path &path_to_assets);
+        explicit DesktopAssetFileReader(const std::filesystem::path &path_to_resources);
 
         std::string read_text(const std::filesystem::path &file_path) override;
 
         utils::ImageChannels read_png(const std::filesystem::path &png_file_path) override;
 
     private:
-        std::filesystem::path path_to_assets;
+        std::filesystem::path path_to_resources;
     };
 
 }// namespace arenai::train

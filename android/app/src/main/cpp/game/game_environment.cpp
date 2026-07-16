@@ -14,7 +14,7 @@
 #include <arenai_utils/logging.h>
 #include <arenai_utils/singleton.h>
 #include <arenai_view/cubemap.h>
-#include <arenai_view/specular.h>
+#include <arenai_view/diffuse.h>
 
 #include "../utils/android_file_reader.h"
 #include "./android_gl_context.h"
@@ -106,9 +106,7 @@ void UserGameTanksEnvironment::on_reset_drawables(
         glm::vec4 color(u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, 1.f);
 
         player_renderer->add_drawable(
-            name, std::make_unique<Specular>(
-                      file_reader, shape->get_vertices(), shape->get_normals(), color, color, color,
-                      50.f, shape->get_id()));
+            name, std::make_unique<Diffuse>(file_reader, shape->get_vertices(), color));
     }
 
     for (const auto &item: engine->get_items()) {
@@ -116,9 +114,7 @@ void UserGameTanksEnvironment::on_reset_drawables(
 
         player_renderer->add_drawable(
             item->get_name(),
-            std::make_unique<Specular>(
-                file_reader, item->get_shape()->get_vertices(), item->get_shape()->get_normals(),
-                color, color, color, 50.f, item->get_shape()->get_id()));
+            std::make_unique<Diffuse>(file_reader, item->get_shape()->get_vertices(), color));
     }
 
     for (auto &hud_drawable: player_controller_handler->get_hud_drawables(file_reader))

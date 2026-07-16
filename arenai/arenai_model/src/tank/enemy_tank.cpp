@@ -22,7 +22,8 @@ using namespace arenai::model;
 namespace arenai::model {
 
     BulletEnemyTank::BulletEnemyTank(
-        BulletPhysicEngine &engine, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        BulletPhysicEngine &engine,
+        const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::string &tank_prefix_name, const glm::vec3 chassis_pos,
         const float wanted_frame_frequency)
         : BulletTank(
@@ -32,9 +33,10 @@ namespace arenai::model {
             }),
           tank_prefix_name(tank_prefix_name),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-          curr_frame_upside_down(0), distance_scale(250.f), impact_distance_scale(100.f),
-          angle_scale(glm::pi<float>() / 3.f), is_dead_already_triggered(false), has_touch(false),
-          last_shoot_info(std::nullopt), action_stats(std::make_shared<ActionStats>()) {}
+          curr_frame_upside_down(0), distance_scale(500.f), impact_distance_scale(25.f),
+          angle_scale(glm::pi<float>() / 3.f), optimal_distance(75.f),
+          is_dead_already_triggered(false), has_touch(false), last_shoot_info(std::nullopt),
+          action_stats(std::make_shared<ActionStats>()) {}
 
     float BulletEnemyTank::compute_aim_angle(const std::shared_ptr<EnemyTank> &other_tank) {
         const auto canon_tr = get_canon()->get_model_matrix();
@@ -99,9 +101,11 @@ namespace arenai::model {
                 constexpr float w_aim = 1.0f;
                 constexpr float c_miss = 0.4f;
 
-                hit_reward = w_aim * compute_hit_reward(fire_pos, best_tank_pos, hit_pos)
-                             - (has_hit ? 0.f : c_miss) + (has_hit ? 1.f : 0.f)
-                             + (has_killed ? 2.f : 0.f);
+                const float impact_reward =
+                    (w_aim + c_miss) * compute_hit_reward(fire_pos, best_tank_pos, hit_pos)
+                    - c_miss;
+
+                hit_reward = impact_reward + (has_hit ? 1.f : 0.f) + (has_killed ? 2.f : 0.f);
             }
 
             last_shoot_info = std::nullopt;
@@ -109,6 +113,44 @@ namespace arenai::model {
 
         // 4. total reward
         const float reward = dead_penalty + hit_reward;
+
+        return reward;
+    }
+
+    float BulletEnemyTank::get_phi(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
+        constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
+        const glm::vec3 chassis_pos = get_chassis()->get_model_matrix() * world_center;
+
+        std::vector<float> scores;
+        std::vector<float> logits;
+
+        for (const auto &enemy: tanks) {
+            if (enemy.get() == this || enemy->is_dead()) continue;
+
+            const glm::vec3 enemy_pos = enemy->get_chassis()->get_model_matrix() * world_center;
+
+            const float distance = glm::length(enemy_pos - chassis_pos);
+            const float angle = compute_aim_angle(enemy);
+
+            const float distance_score =
+                std::exp(-0.5f * std::pow((distance - optimal_distance) / distance_scale, 2.f));
+            const float angle_score = (std::cos(angle) + 1.f) / 2.f;
+
+            scores.push_back(distance_score * angle_score);
+            logits.push_back(-distance / distance_scale);
+        }
+
+        if (scores.empty()) return 0.f;
+
+        const float max_logit = *std::ranges::max_element(logits);
+        float sum_exp = 0.f;
+        for (const float l: logits) sum_exp += std::exp(l - max_logit);
+
+        float reward = 0.f;
+        for (std::size_t i = 0; i < scores.size(); ++i) {
+            const float weight = std::exp(logits[i] - max_logit) / sum_exp;
+            reward += weight * scores[i];
+        }
 
         return reward;
     }
@@ -121,7 +163,8 @@ namespace arenai::model {
         int best_i = -1;
 
         for (int i = 0; i < tanks.size(); i++) {
-            if (tanks[i].get() == this || tanks[i]->is_dead()) continue;
+            if (tanks[i].get() == this) continue;
+            if (tanks[i]->is_dead() && !tanks[i]->is_first_frame_dead()) continue;
 
             const auto other_pos =
                 glm::vec3(tanks[i]->get_chassis()->get_model_matrix() * world_center);
@@ -165,6 +208,8 @@ namespace arenai::model {
     }
 
     bool BulletEnemyTank::is_dead() { return BulletTank::is_dead() || is_suicide(); }
+
+    bool BulletEnemyTank::is_first_frame_dead() { return is_dead() && !is_dead_already_triggered; }
 
     bool BulletEnemyTank::is_suicide() const {
         return curr_frame_upside_down > max_frames_upside_down;

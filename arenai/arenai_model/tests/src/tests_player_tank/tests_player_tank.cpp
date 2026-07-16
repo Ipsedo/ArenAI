@@ -19,7 +19,7 @@ using namespace arenai::controller;
 
 TEST_F(PlayerTankTest, ScoreZeroAtCreation) {
     add_ground();
-    const auto tank = tank_factory->make_player_tank("player", {0.f, 0.f, 0.f});
+    const auto tank = tank_factory->make_player_tank(file_reader, "player", {0.f, 0.f, 0.f});
 
     engine->step(1.f / 60.f);
 
@@ -28,13 +28,13 @@ TEST_F(PlayerTankTest, ScoreZeroAtCreation) {
 
 TEST_F(PlayerTankTest, ScoreIncreasesOnHit) {
     add_ground();
-    const auto player = tank_factory->make_player_tank("player", {0.f, 5.f, 0.f});
-    auto enemy = tank_factory->make_enemy_tank("enemy", {0.f, 5.f, 30.f});
+    const auto player = tank_factory->make_player_tank(file_reader, "player", {0.f, 5.f, 0.f});
+    auto enemy = tank_factory->make_enemy_tank(file_reader, "enemy", {0.f, 5.f, 30.f});
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
     constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    for (const auto &ctrl: player->get_controllers()) ctrl->on_input(fire_input);
+    for (const auto &ctrl: player->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
@@ -43,8 +43,8 @@ TEST_F(PlayerTankTest, ScoreIncreasesOnHit) {
 
 TEST_F(PlayerTankTest, ScoreHigherOnKillThanHit) {
     add_ground();
-    const auto player = tank_factory->make_player_tank("player", {0.f, 5.f, 0.f});
-    const auto enemy = tank_factory->make_enemy_tank("enemy", {0.f, 5.f, 30.f});
+    const auto player = tank_factory->make_player_tank(file_reader, "player", {0.f, 5.f, 0.f});
+    const auto enemy = tank_factory->make_enemy_tank(file_reader, "enemy", {0.f, 5.f, 30.f});
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -54,7 +54,7 @@ TEST_F(PlayerTankTest, ScoreHigherOnKillThanHit) {
     }
 
     constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    for (const auto &ctrl: player->get_controllers()) ctrl->on_input(fire_input);
+    for (const auto &ctrl: player->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
@@ -65,13 +65,13 @@ TEST_F(PlayerTankTest, ScoreHigherOnKillThanHit) {
 
 TEST_F(PlayerTankTest, ScoreDoesNotIncreaseOnSelfHit) {
     add_ground();
-    const auto player = tank_factory->make_player_tank("player", {0.f, 5.f, 0.f});
+    const auto player = tank_factory->make_player_tank(file_reader, "player", {0.f, 5.f, 0.f});
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
     // fire without any enemy — shell should hit the ground or expire
     constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    for (const auto &ctrl: player->get_controllers()) ctrl->on_input(fire_input);
+    for (const auto &ctrl: player->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 1300; i++) engine->step(1.f / 60.f);
 
@@ -80,7 +80,7 @@ TEST_F(PlayerTankTest, ScoreDoesNotIncreaseOnSelfHit) {
 
 TEST_F(PlayerTankTest, PlayerTankIsDead) {
     add_ground();
-    const auto player = tank_factory->make_player_tank("player", {0.f, 0.f, 0.f});
+    const auto player = tank_factory->make_player_tank(file_reader, "player", {0.f, 0.f, 0.f});
 
     engine->step(1.f / 60.f);
 

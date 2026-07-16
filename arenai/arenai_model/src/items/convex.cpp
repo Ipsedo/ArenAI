@@ -52,7 +52,7 @@ namespace arenai::model {
  */
 
     CubeItem::CubeItem(
-        std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const glm::vec3 position, const glm::vec3 scale, const float mass)
         : ConvexItem(
             std::move(name),
@@ -60,7 +60,7 @@ namespace arenai::model {
             position, scale, mass) {}
 
     SphereItem::SphereItem(
-        std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const glm::vec3 position, const glm::vec3 scale, const float mass)
         : ConvexItem(
             std::move(name),
@@ -68,7 +68,7 @@ namespace arenai::model {
             position, scale, mass) {}
 
     CylinderItem::CylinderItem(
-        std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const glm::vec3 position, const glm::vec3 scale, const float mass)
         : ConvexItem(
             std::move(name),
@@ -76,7 +76,7 @@ namespace arenai::model {
             position, scale, mass) {}
 
     TetraItem::TetraItem(
-        std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const glm::vec3 position, const glm::vec3 scale, const float mass)
         : ConvexItem(
             std::move(name),

@@ -40,28 +40,28 @@ namespace arenai::model {
     class SphereItem final : public ConvexItem {
     public:
         SphereItem(
-            std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             glm::vec3 position, glm::vec3 scale, float mass);
     };
 
     class CubeItem final : public ConvexItem {
     public:
         CubeItem(
-            std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             glm::vec3 position, glm::vec3 scale, float mass);
     };
 
     class CylinderItem final : public ConvexItem {
     public:
         CylinderItem(
-            std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             glm::vec3 position, glm::vec3 scale, float mass);
     };
 
     class TetraItem final : public ConvexItem {
     public:
         TetraItem(
-            std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             glm::vec3 position, glm::vec3 scale, float mass);
     };
 

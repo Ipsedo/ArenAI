@@ -21,8 +21,7 @@ namespace arenai::train {
             const std::vector<int> &actor_hidden_sizes, const std::vector<int> &critic_hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
-            float tau, float gamma, float initial_alpha_continuous, float initial_alpha_discrete,
-            float target_continuous_sigma, float discrete_entropy_factor);
+            float tau, float gamma);
 
         void train(const std::unique_ptr<ReplayBuffer> &replay_buffer, int epochs, int batch_size)
             override;
@@ -38,10 +37,12 @@ namespace arenai::train {
 
         int count_parameters() override;
 
-        float get_continuous_target_entropy() const;
-        float get_discrete_target_entropy() const;
-
     private:
+        // FPS * sec * warmup_episodes / train_every
+        static constexpr int WARMUP_STEP = 30 * 30 * 500 / 64;
+
+        static constexpr double GRAD_NORM_MAX = 1.0;
+
         std::shared_ptr<Actor> actor;
 
         std::shared_ptr<QFunction> critic_1;
@@ -53,6 +54,9 @@ namespace arenai::train {
         std::shared_ptr<AlphaParameter> alpha_continuous;
         std::shared_ptr<AlphaParameter> alpha_discrete;
 
+        std::shared_ptr<AbstractTargetEntropy> continuous_target_entropy;
+        std::shared_ptr<AbstractTargetEntropy> discrete_target_entropy;
+
         std::shared_ptr<torch::optim::Adam> actor_optim;
         std::shared_ptr<torch::optim::Adam> critic_1_optim;
         std::shared_ptr<torch::optim::Adam> critic_2_optim;
@@ -60,7 +64,8 @@ namespace arenai::train {
         std::shared_ptr<torch::optim::Adam> alpha_continuous_optim;
         std::shared_ptr<torch::optim::Adam> alpha_discrete_optim;
 
-        std::shared_ptr<AbstractMetric> actor_loss_metric;
+        std::shared_ptr<AbstractMetric> actor_mean_loss_metric;
+        std::shared_ptr<AbstractMetric> actor_std_loss_metric;
 
         std::shared_ptr<AbstractMetric> critic_1_mean_loss_metric;
         std::shared_ptr<AbstractMetric> critic_1_std_loss_metric;
@@ -74,10 +79,11 @@ namespace arenai::train {
         std::shared_ptr<AbstractMetric> alpha_continuous_metric;
         std::shared_ptr<AbstractMetric> alpha_discrete_metric;
 
+        std::shared_ptr<AbstractMetric> continuous_target_entropy_metric;
+        std::shared_ptr<AbstractMetric> discrete_target_entropy_metric;
+
         float tau;
         float gamma;
-        float continuous_target_entropy;
-        float discrete_target_entropy;
     };
 
 }// namespace arenai::train

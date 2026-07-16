@@ -16,10 +16,10 @@ namespace arenai::model {
     public:
         TurretItem(
             const std::string &prefix_name,
-            const std::shared_ptr<utils::AbstractFileReader> &file_reader, glm::vec3 pos,
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, glm::vec3 pos,
             glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *chassis);
 
-        void on_input(const controller::user_input &input) override;
+        void apply_input(const controller::user_input &input) override;
 
         std::vector<btTypedConstraint *> get_constraints() override;
 

@@ -18,7 +18,7 @@ namespace arenai::controller {
     public:
         virtual ~Controller() = default;
 
-        virtual void on_input(const user_input &input) = 0;
+        virtual void apply_input(const user_input &input) = 0;
     };
 
 }// namespace arenai::controller

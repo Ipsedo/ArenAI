@@ -24,7 +24,7 @@ void EngineTestFixture::SetUp() {
 
     file_reader = std::make_shared<LocalAssetFileReader>(std::filesystem::path(ARENAI_ASSETS_DIR));
 
-    tank_factory = make_tank_factory(*engine, file_reader, frequency);
+    tank_factory = engine->get_tank_factory();
 }
 
 void EngineTestFixture::add_ground() {

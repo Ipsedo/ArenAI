@@ -1,0 +1,99 @@
+name: ArenAI CI
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  LIBTORCH_VERSION: 2.12.0
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
+  CCACHE_MAXSIZE: 500M
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    # Frozen render environment. The golden images record what llvmpipe
+    # rasterizes, so the renderer has to be identical here and when they are
+    # regenerated locally — the runner image alone can't guarantee that, its
+    # Mesa moves with every image bump. scripts/goldens_docker.sh runs this
+    # very image; keep the two in sync.
+    container: ubuntu:24.04
+
+    steps:
+      # actions/checkout falls back to the REST API tarball when git is
+      # missing, and FetchContent needs git for its GIT_REPOSITORY deps
+      - name: Bootstrap checkout
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends ca-certificates git
+
+      - uses: actions/checkout@v4
+
+      # Same script as scripts/goldens_docker.sh — single source of truth for
+      # the toolchain, and above all for the Mesa the goldens depend on
+      - name: Install system dependencies
+        run: arenai/scripts/ci/install_ubuntu_deps.sh
+
+      - name: Cache LibTorch
+        id: cache-libtorch
+        uses: actions/cache@v4
+        with:
+          path: ~/libtorch
+          key: libtorch-cpu-${{ env.LIBTORCH_VERSION }}
+
+      - name: Download LibTorch (CPU)
+        if: steps.cache-libtorch.outputs.cache-hit != 'true'
+        run: |
+          curl -fL -o /tmp/libtorch.zip \
+            "https://download.pytorch.org/libtorch/cpu/libtorch-shared-with-deps-${LIBTORCH_VERSION}%2Bcpu.zip"
+          unzip -q /tmp/libtorch.zip -d "$HOME"
+          rm /tmp/libtorch.zip
+
+      # Compilation cache: content-based, so unchanged files are cache hits
+      # even on a fresh runner. The key is unique per run so the updated
+      # cache is saved every time; restore-keys picks the most recent one.
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-${{ github.sha }}
+          restore-keys: ccache-
+
+      # FetchContent downloads (argparse, json, stb, soil2...): the key hashes
+      # every CMakeLists.txt, so bumping a dependency version invalidates it
+      - name: Cache FetchContent dependencies
+        uses: actions/cache@v4
+        with:
+          path: arenai/build/_deps
+          key: fetchcontent-${{ hashFiles('arenai/**/CMakeLists.txt') }}
+          restore-keys: fetchcontent-
+
+      - name: Configure
+        run: >
+          cmake -S arenai -B arenai/build
+          -DCMAKE_BUILD_TYPE=Release
+          -DLIBTORCH_PATH="$HOME/libtorch"
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+
+      - name: Build
+        run: cmake --build arenai/build -j"$(nproc)"
+
+      - name: ccache statistics
+        run: ccache -s
+
+      # The committed goldens are compared as-is: they are generated in this
+      # same container by scripts/goldens_docker.sh --regenerate. Do NOT cache
+      # or regenerate them here — a golden the CI produces itself can never
+      # catch a regression, and a cached one goes stale the moment the renderer
+      # changes (actions/cache never overwrites an existing key).
+      - name: Run tests
+        run: |
+          . arenai/scripts/ci/render_env.sh
+          ctest --test-dir arenai/build --output-on-failure

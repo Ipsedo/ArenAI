@@ -21,7 +21,8 @@ using namespace arenai::controller;
 namespace arenai::model {
 
     BulletTank::BulletTank(
-        BulletPhysicEngine &engine, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        BulletPhysicEngine &engine,
+        const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::string &tank_prefix_name, glm::vec3 chassis_pos,
         const float wanted_frame_frequency,
         const std::function<void(const ShellContactInfo &, Item *)> &on_contact_callback)
@@ -121,7 +122,7 @@ namespace arenai::model {
         engine.add_bullet_item_producer([c = canon_item]() { return c->produce_bullet_items(); });
     }
 
-    std::shared_ptr<Camera> BulletTank::get_camera() { return camera; }
+    std::shared_ptr<AbstractCamera> BulletTank::get_camera() { return camera; }
 
     std::vector<std::shared_ptr<Item>> BulletTank::get_items() { return items; }
 

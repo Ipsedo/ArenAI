@@ -5,6 +5,7 @@
 #include "./bullet_engine.h"
 
 #include "./items/bullet_item_factory.h"
+#include "./tank/bullet_tank_factory.h"
 
 using namespace arenai;
 using namespace arenai::model;
@@ -23,6 +24,7 @@ namespace arenai::model {
         m_world->setGravity(btVector3(0, -9.8f, 0));
 
         item_factory = std::make_shared<BulletItemFactory>(*this);
+        tank_factory = std::make_shared<BulletTankFactory>(*this, wanted_frequency);
     }
 
     void BulletPhysicEngine::add_bullet_item(const std::shared_ptr<BulletItem> &item) {
@@ -114,6 +116,8 @@ namespace arenai::model {
     }
 
     std::shared_ptr<ItemFactory> BulletPhysicEngine::get_item_factory() { return item_factory; }
+
+    std::shared_ptr<TankFactory> BulletPhysicEngine::get_tank_factory() { return tank_factory; }
 
     void BulletPhysicEngine::remove_bodies_and_constraints() {
         std::unique_lock lock(items_mutex);

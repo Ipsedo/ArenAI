@@ -16,23 +16,23 @@ namespace arenai::model {
         explicit BulletItemFactory(BulletPhysicEngine &engine);
 
         std::shared_ptr<Item> make_sphere_item(
-            std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             glm::vec3 position, glm::vec3 scale, float mass) override;
 
         std::shared_ptr<Item> make_cube_item(
-            std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             glm::vec3 position, glm::vec3 scale, float mass) override;
 
         std::shared_ptr<Item> make_tetra_item(
-            std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             glm::vec3 position, glm::vec3 scale, float mass) override;
 
         std::shared_ptr<Item> make_cylinder_item(
-            std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             glm::vec3 position, glm::vec3 scale, float mass) override;
 
         std::shared_ptr<Item> make_height_map_item(
-            std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::filesystem::path &height_map_file, glm::vec3 pos, glm::vec3 scale) override;
 
     private:

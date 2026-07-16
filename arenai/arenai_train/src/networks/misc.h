@@ -15,6 +15,8 @@ namespace arenai::train {
 
         torch::Tensor forward(const torch::Tensor &x);
 
+        void pretty_print(std::ostream &stream) const override;
+
     private:
         float lower_bound;
         float upper_bound;
@@ -23,6 +25,8 @@ namespace arenai::train {
     class Exp : public torch::nn::Module {
     public:
         torch::Tensor forward(const torch::Tensor &x);
+
+        void pretty_print(std::ostream &stream) const override;
     };
 
 }// namespace arenai::train

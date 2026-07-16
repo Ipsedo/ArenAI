@@ -8,56 +8,32 @@
 #include <functional>
 #include <memory>
 
+#include <glm/glm.hpp>
+
 #include <arenai_controller/inputs.h>
 #include <arenai_utils/file_reader.h>
 
-#include "./program.h"
-
 namespace arenai::view {
 
-    class HUDDrawable {
+    class AbstractHudDrawable {
     public:
         virtual void draw(int width, int height) = 0;
-        virtual ~HUDDrawable();
+        virtual ~AbstractHudDrawable() = default;
     };
 
-    class ButtonDrawable final : public HUDDrawable {
+    class AbstractHudFactory {
     public:
-        ButtonDrawable(
-            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
-            std::function<controller::button(void)> get_input, glm::vec2 center_px, float size_px);
+        virtual ~AbstractHudFactory() = default;
 
-        void draw(int width, int height) override;
-
-    private:
-        std::function<controller::button(void)> get_input;
-
-        std::unique_ptr<Program> program;
-
-        float center_x, center_y;
-        float size;
-
-        int nb_points;
-    };
-
-    class JoyStickDrawable final : public HUDDrawable {
-    public:
-        JoyStickDrawable(
-            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        virtual std::unique_ptr<AbstractHudDrawable> make_joystick(
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             std::function<controller::joystick(void)> get_input_px, glm::vec2 center_px,
-            float size_px, float stick_size_px);
+            float size_px, float stick_size_px) = 0;
 
-        void draw(int width, int height) override;
-
-    private:
-        std::function<controller::joystick(void)> get_input;
-
-        std::unique_ptr<Program> program;
-
-        float center_x, center_y;
-        float size, stick_size;
-
-        int nb_point_bound, nb_point_stick;
+        virtual std::unique_ptr<AbstractHudDrawable> make_button(
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
+            std::function<controller::button(void)> get_input, glm::vec2 center_px,
+            float size_px) = 0;
     };
 
 }// namespace arenai::view

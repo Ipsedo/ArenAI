@@ -25,13 +25,15 @@ namespace arenai::model {
     public:
         BulletEnemyTank(
             BulletPhysicEngine &engine,
-            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::string &tank_prefix_name, glm::vec3 chassis_pos,
             float wanted_frame_frequency);
 
         float get_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
+        float get_phi(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
 
         bool is_dead() override;
+        bool is_first_frame_dead() override;
         bool is_suicide() const override;
 
         bool has_hit_other_tank() override;
@@ -59,6 +61,7 @@ namespace arenai::model {
         float distance_scale;
         float impact_distance_scale;
         float angle_scale;
+        float optimal_distance;
 
         bool is_dead_already_triggered;
 

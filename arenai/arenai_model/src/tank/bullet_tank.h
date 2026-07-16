@@ -20,12 +20,12 @@ namespace arenai::model {
     public:
         BulletTank(
             BulletPhysicEngine &engine,
-            const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::string &tank_prefix_name, glm::vec3 chassis_pos,
             float wanted_frame_frequency,
             const std::function<void(const ShellContactInfo &, Item *)> &on_contact_callback);
 
-        std::shared_ptr<view::Camera> get_camera() override;
+        std::shared_ptr<view::AbstractCamera> get_camera() override;
         std::vector<std::shared_ptr<Item>> get_items() override;
         std::vector<std::shared_ptr<controller::Controller>> get_controllers() override;
         std::map<std::string, std::shared_ptr<Shape>> load_shell_shapes() const override;
@@ -41,14 +41,14 @@ namespace arenai::model {
 
     private:
         std::string name;
-        std::shared_ptr<view::Camera> camera;
+        std::shared_ptr<view::AbstractCamera> camera;
         std::vector<std::shared_ptr<Item>> items;
         std::vector<std::shared_ptr<BulletItem>> bullet_items;
         std::vector<std::shared_ptr<controller::Controller>> controllers;
         std::vector<LifeItem *> life_items;
         std::shared_ptr<Item> chassis;
         std::shared_ptr<Item> canon;
-        std::shared_ptr<utils::AbstractFileReader> file_reader;
+        std::shared_ptr<utils::AbstractResourceFileReader> file_reader;
     };
 
 }// namespace arenai::model

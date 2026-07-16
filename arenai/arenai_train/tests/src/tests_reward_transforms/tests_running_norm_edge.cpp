@@ -2,7 +2,7 @@
 // Created by claude on 01/07/2026.
 //
 
-#include <reward_transforms/running_norm.h>
+#include <reward_transforms/running_norm_transform.h>
 
 #include <arenai_train_tests/tests_reward_transforms/tests_running_norm_edge.h>
 

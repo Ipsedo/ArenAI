@@ -16,7 +16,7 @@ namespace arenai::model {
 
     WheelItem::WheelItem(
         const std::string &prefix_name,
-        const std::shared_ptr<utils::AbstractFileReader> &file_reader, const glm::vec3 pos,
+        const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, const glm::vec3 pos,
         const glm::vec3 rel_pos, const glm::vec3 scale, const float mass, btRigidBody *chassis,
         float front_axle_z)
         : LifeItem(5), ConvexItem(
@@ -71,7 +71,7 @@ namespace arenai::model {
         this->front_axle_z = front_axle_z;
     }
 
-    void WheelItem::on_input(const user_input &input) {
+    void WheelItem::apply_input(const user_input &input) {
         constexpr int motor_axis = 3;
         const auto radial_velocity = -input.left_joystick.y * WHEEL_RADIAL_VELOCITY;
 
@@ -114,8 +114,8 @@ namespace arenai::model {
  * DirectionalWheelItem
  */
 
-    void DirectionalWheelItem::on_input(const user_input &input) {
-        WheelItem::on_input(input);
+    void DirectionalWheelItem::apply_input(const user_input &input) {
+        WheelItem::apply_input(input);
 
         constexpr int motor_axis = 4;
         const float angle = input.left_joystick.x * WHEEL_DIRECTION_MAX_RADIAN * angle_factor;
@@ -124,9 +124,10 @@ namespace arenai::model {
     }
 
     DirectionalWheelItem::DirectionalWheelItem(
-        const std::string &name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
-        const glm::vec3 pos, const glm::vec3 rel_pos, const glm::vec3 scale, const float mass,
-        btRigidBody *chassis, float front_axle_z, const float angle_factor)
+        const std::string &name,
+        const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, const glm::vec3 pos,
+        const glm::vec3 rel_pos, const glm::vec3 scale, const float mass, btRigidBody *chassis,
+        float front_axle_z, const float angle_factor)
         : WheelItem(name, file_reader, pos, rel_pos, scale, mass, chassis, front_axle_z),
           angle_factor(angle_factor) {}
 

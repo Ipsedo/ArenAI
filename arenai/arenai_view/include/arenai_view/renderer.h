@@ -5,97 +5,60 @@
 #ifndef ARENAI_RENDERER_H
 #define ARENAI_RENDERER_H
 
-#include <map>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <tuple>
 #include <vector>
 
-#include <EGL/egl.h>
 #include <glm/glm.hpp>
 
-#include <arenai_view/camera.h>
-#include <arenai_view/drawable.h>
-#include <arenai_view/hud.h>
-
-#include "./camera.h"
 #include "./drawable.h"
 #include "./hud.h"
 
 namespace arenai::view {
 
-    class AbstractGLContext {
+    class AbstractRenderContext {
     public:
-        virtual ~AbstractGLContext() = default;
+        virtual ~AbstractRenderContext() = default;
 
-        AbstractGLContext();
-        virtual EGLDisplay get_display() = 0;
-        virtual EGLSurface get_surface() = 0;
-        virtual EGLContext get_context() = 0;
-
-        void make_current();
-        void release_current();
+        virtual void make_current() = 0;
+        virtual void release_current() = 0;
     };
 
-    class Renderer {
-    public:
-        Renderer(
-            const std::shared_ptr<AbstractGLContext> &gl_context, glm::vec3 light_pos,
-            const std::shared_ptr<Camera> &camera);
-        virtual void add_drawable(const std::string &name, std::unique_ptr<Drawable> drawable);
-        virtual void remove_drawable(const std::string &name);
+    template<typename T>
+    struct image {
+        std::vector<T> pixels;
+    };
 
-        void draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices);
+    class AbstractRenderer {
+    public:
+        virtual ~AbstractRenderer() = default;
+
+        virtual void
+        add_drawable(const std::string &name, std::unique_ptr<AbstractDrawable> drawable) = 0;
+        virtual void remove_drawable(const std::string &name) = 0;
+
+        virtual void
+        draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) = 0;
 
         virtual int get_width() const = 0;
         virtual int get_height() const = 0;
 
-        void make_current() const;
-        void release_current() const;
-
-        virtual ~Renderer();
-
-    protected:
-        virtual void on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_context) = 0;
-
-        virtual void on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_context) = 0;
-
-    private:
-        glm::vec3 light_pos;
-
-        std::map<std::string, std::unique_ptr<Drawable>> drawables;
-
-        std::shared_ptr<AbstractGLContext> gl_context;
-
-        std::shared_ptr<Camera> camera;
+        virtual void make_current() const = 0;
+        virtual void release_current() const = 0;
     };
 
-    class PlayerRenderer final : public Renderer {
+    class AbstractPlayerRenderer : public virtual AbstractRenderer {
     public:
-        PlayerRenderer(
-            const std::shared_ptr<AbstractGLContext> &gl_context, int width, int height,
-            const glm::vec3 &lightPos, const std::shared_ptr<Camera> &camera);
+        virtual void add_hud_drawable(std::unique_ptr<AbstractHudDrawable> hud_drawable) = 0;
+        virtual void set_window_size(int new_width, int new_height) = 0;
+    };
 
-        void add_hud_drawable(std::unique_ptr<HUDDrawable> hud_drawable);
-
-        int get_width() const override;
-
-        int get_height() const override;
-
-        void set_window_size(int new_width, int new_height);
-
-        ~PlayerRenderer() override;
-
-    protected:
-        void on_new_frame(const std::shared_ptr<AbstractGLContext> &gl_context) override;
-
-        void on_end_frame(const std::shared_ptr<AbstractGLContext> &gl_context) override;
-
-    private:
-        int width;
-        int height;
-
-        std::vector<std::unique_ptr<HUDDrawable>> hud_drawables;
+    class AbstractOffscreenRenderer : public virtual AbstractRenderer {
+    public:
+        virtual image<uint8_t> draw_and_get_frame(
+            const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) = 0;
     };
 
 }// namespace arenai::view

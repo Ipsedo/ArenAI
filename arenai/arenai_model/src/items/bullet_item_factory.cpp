@@ -16,7 +16,7 @@ namespace arenai::model {
     BulletItemFactory::BulletItemFactory(BulletPhysicEngine &engine) : engine(engine) {}
 
     std::shared_ptr<Item> BulletItemFactory::make_sphere_item(
-        std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         glm::vec3 position, glm::vec3 scale, float mass) {
         auto item =
             std::make_shared<SphereItem>(std::move(name), file_reader, position, scale, mass);
@@ -25,7 +25,7 @@ namespace arenai::model {
     }
 
     std::shared_ptr<Item> BulletItemFactory::make_cube_item(
-        std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         glm::vec3 position, glm::vec3 scale, float mass) {
         auto item = std::make_shared<CubeItem>(std::move(name), file_reader, position, scale, mass);
         engine.add_bullet_item(item);
@@ -33,7 +33,7 @@ namespace arenai::model {
     }
 
     std::shared_ptr<Item> BulletItemFactory::make_tetra_item(
-        std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         glm::vec3 position, glm::vec3 scale, float mass) {
         auto item =
             std::make_shared<TetraItem>(std::move(name), file_reader, position, scale, mass);
@@ -42,7 +42,7 @@ namespace arenai::model {
     }
 
     std::shared_ptr<Item> BulletItemFactory::make_cylinder_item(
-        std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         glm::vec3 position, glm::vec3 scale, float mass) {
         auto item =
             std::make_shared<CylinderItem>(std::move(name), file_reader, position, scale, mass);
@@ -51,7 +51,7 @@ namespace arenai::model {
     }
 
     std::shared_ptr<Item> BulletItemFactory::make_height_map_item(
-        std::string name, const std::shared_ptr<utils::AbstractFileReader> &file_reader,
+        std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::filesystem::path &height_map_file, glm::vec3 pos, glm::vec3 scale) {
         auto item = std::make_shared<HeightMapItem>(
             std::move(name), file_reader, height_map_file, pos, scale);

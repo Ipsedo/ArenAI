@@ -19,7 +19,7 @@
 #include "./networks_io/torch_saver.h"
 #include "./replay_buffer/reward_replay_buffer.h"
 #include "./reward_transforms/identity_transform.h"
-#include "./view/train_gl_context.h"
+#include "./reward_transforms/running_norm_transform.h"
 
 using namespace arenai;
 using namespace arenai::train;
@@ -30,13 +30,12 @@ namespace arenai::train {
         const EnvironmentOptions &environment_options, const ModelOptions &model_options,
         const TrainOptions &train_options) {
 
-        auto gl_context = std::make_shared<TrainGlContext>();
-        gl_context->make_current();// only for glGetString(GL_RENDERER)
+        auto graphics_backend = view::make_opengl_backend();
 
         torch::Device torch_device =
             train_options.cuda ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU);
 
-        std::cout << "OpenGL device : " << glGetString(GL_RENDERER) << std::endl;
+        std::cout << "OpenGL device : " << graphics_backend->renderer_info() << std::endl;
         std::cout << "PyTorch device : " << torch_device.str() << std::endl;
 
         std::cout << "Vision size : width=" << environment_options.vision_width
@@ -47,10 +46,10 @@ namespace arenai::train {
         std::cout << "Action size (discrete) : " << model::ENEMY_NB_DISCRETE_ACTION << std::endl;
 
         const auto env = std::make_unique<TrainTankEnvironment>(
-            gl_context, environment_options.nb_tanks, train_options.android_asset_folder,
-            environment_options.wanted_frequency, train_options.max_episode_steps,
-            environment_options.vision_height, environment_options.vision_width,
-            environment_options.num_threads);
+            std::move(graphics_backend), environment_options.nb_tanks,
+            train_options.resources_folder, environment_options.wanted_frequency,
+            train_options.max_episode_steps, environment_options.vision_height,
+            environment_options.vision_width, environment_options.num_threads);
 
         const float spawn_width_increase =
             (environment_options.final_spawn_width - environment_options.initial_spawn_width)
@@ -70,29 +69,27 @@ namespace arenai::train {
             model_options.hidden_size_sensors, model_options.hidden_size_actions,
             model_options.actor_hidden_sizes, model_options.critic_hidden_sizes,
             model_options.vision_channels, model_options.group_norm_nums, torch_device,
-            train_options.metric_window_size, model_options.tau, model_options.gamma,
-            model_options.initial_alpha_continuous, model_options.initial_alpha_discrete,
-            train_options.target_continuous_sigma, train_options.discrete_entropy_factor);
+            train_options.metric_window_size, model_options.tau, model_options.gamma);
 
         std::cout << "Parameters : " << agent->count_parameters() << std::endl;
-        std::cout << "Target entropy (continuous) : " << agent->get_continuous_target_entropy()
-                  << std::endl;
-        std::cout << "Target entropy (discrete) : " << agent->get_discrete_target_entropy()
-                  << std::endl;
 
         AgentSaver saver(agent, train_options.output_folder, train_options.save_every);
 
         std::unique_ptr<ReplayBuffer> replay_buffer = std::make_unique<RewardTransformReplayBuffer>(
-            train_options.replay_buffer_size, std::make_shared<IdentityTransform>());
+            train_options.replay_buffer_size, std::make_shared<IdentityTransform>(),
+            std::make_shared<NormalizedRewardTransform>(train_options.replay_buffer_size, 1.f));
 
         // metrics
         auto reward_mean_metric =
             std::make_shared<MeanMetric>("r", train_options.metric_window_size, 2, true);
+        auto potential_mean_metric =
+            std::make_shared<MeanMetric>("pr", train_options.metric_window_size, 2, true);
 
         const auto sac_metrics = agent->get_metrics();
         const auto env_metrics = env->get_metrics();
 
-        std::vector<std::shared_ptr<AbstractMetric>> metrics = {reward_mean_metric};
+        std::vector<std::shared_ptr<AbstractMetric>> metrics = {
+            reward_mean_metric, potential_mean_metric};
         metrics.insert(metrics.end(), env_metrics.begin(), env_metrics.end());
         metrics.insert(metrics.end(), sac_metrics.begin(), sac_metrics.end());
 
@@ -127,6 +124,7 @@ namespace arenai::train {
             bool is_done = false;
 
             auto last_states = env->reset(spawn_width, spawn_height);
+            auto last_phi_vector = env->get_phi_vector();
 
             while (!is_done) {
 
@@ -152,18 +150,28 @@ namespace arenai::train {
 
                 // step environment
                 const auto steps = env->step(environment_options.wanted_frequency, actions_for_env);
+                const auto phi_vector = env->get_phi_vector();
 
                 last_states.clear();
                 last_states.reserve(environment_options.nb_tanks);
 
                 // save to replay buffer
                 for (int i = 0; i < environment_options.nb_tanks; i++) {
-                    const auto [next_state, reward, env_done] = steps[i];
+                    const auto [next_state, reward, env_done, is_truncated] = steps[i];
                     last_states.push_back(next_state);
 
                     if (env->is_tank_factory_already_done(i)) continue;
 
+                    // truncated endings (timeout) are stored as non-terminal so the
+                    // critic target keeps bootstrapping on the next state value
+                    const bool is_terminal = env_done && !is_truncated;
+
+                    const auto potential_reward =
+                        (is_terminal ? 0.f : model_options.gamma * phi_vector[i])
+                        - last_phi_vector[i];
+
                     reward_mean_metric->add(reward);
+                    potential_mean_metric->add(potential_reward);
 
                     const auto [next_vision, next_proprioception] = state_to_tensor(
                         next_state, environment_options.vision_height,
@@ -173,7 +181,9 @@ namespace arenai::train {
                         {{vision[i], proprioception[i]},
                          {torch_action.continuous_action[i], torch_action.discrete_action[i]},
                          torch::tensor({reward}, torch::TensorOptions().dtype(torch::kFloat)),
-                         torch::tensor({env_done}, torch::TensorOptions().dtype(torch::kBool)),
+                         torch::tensor(
+                             {potential_reward}, torch::TensorOptions().dtype(torch::kFloat)),
+                         torch::tensor({is_terminal}, torch::TensorOptions().dtype(torch::kBool)),
                          {next_vision, next_proprioception}});
                 }
 
@@ -184,6 +194,7 @@ namespace arenai::train {
 
                 // step ending stuff
                 is_done = env->is_episode_terminated();
+                last_phi_vector = phi_vector;
 
                 train_counter = (train_counter + 1) % train_options.train_every;
 

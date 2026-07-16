@@ -19,9 +19,15 @@ add_executable(arenai_view_tests "${SRC}")
 # arenai_view propagates the view/utils/controller headers through its PUBLIC interface.
 target_link_libraries(arenai_view_tests GTest::gtest GTest::gtest_main nlohmann_json::nlohmann_json soil2 arenai_view)
 target_include_directories(arenai_view_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+# internal headers (shadow rendering is not part of the public API)
+target_include_directories(arenai_view_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../src")
 
 target_compile_definitions(arenai_view_tests PRIVATE
         ARENAI_ASSETS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../../../android/app/src/main/assets")
+
+if (ARENAI_REGENERATE_GOLDEN_IMAGES)
+    target_compile_definitions(arenai_view_tests PRIVATE ARENAI_REGENERATE_GOLDEN_IMAGES)
+endif ()
 
 # fix opengl header with glfw on windows
 if (WIN32)

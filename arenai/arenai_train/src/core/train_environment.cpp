@@ -7,7 +7,7 @@
 #include <arenai_train/file_reader.h>
 #include <arenai_utils/cache.h>
 #include <arenai_utils/singleton.h>
-#include <arenai_view/pbuffer_renderer.h>
+#include <arenai_view/backend.h>
 
 #include "../metrics/mean_metric.h"
 #include "../metrics/std_metric.h"
@@ -18,13 +18,13 @@ using namespace arenai::train;
 namespace arenai::train {
 
     TrainTankEnvironment::TrainTankEnvironment(
-        const std::shared_ptr<view::AbstractGLContext> &gl_context, const int nb_tanks,
+        const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, const int nb_tanks,
         const std::filesystem::path &android_assets_path, const float wanted_frequency,
         const int max_episode_steps, const int vision_height, const int vision_width,
         const int vision_num_threads)
         : core::BaseTanksEnvironment(
-            std::make_shared<DesktopAssetFileReader>(android_assets_path), gl_context, nb_tanks,
-            wanted_frequency, vision_height, vision_width, vision_num_threads, false),
+            std::make_shared<DesktopAssetFileReader>(android_assets_path), graphics_backend,
+            nb_tanks, wanted_frequency, vision_height, vision_width, vision_num_threads, false),
           wanted_frequency(wanted_frequency),
           max_frames_without_hit(static_cast<int>(30.f / wanted_frequency)),
           remaining_frames(nb_tanks, max_frames_without_hit),
@@ -34,8 +34,12 @@ namespace arenai::train {
           episode_step_mean_nb_metric(std::make_shared<MeanMetric>("s_μ", 32, 1)),
           episode_step_std_nb_metric(std::make_shared<StdMetric>("s_σ", 32)) {}
 
-    std::vector<std::tuple<core::State, core::Reward, core::IsDone>>
+    std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
     TrainTankEnvironment::step(const float time_delta, const std::vector<core::Action> &actions) {
+
+        // tanks flagged done on a previous step already emitted their terminal transition:
+        // mark them so the caller can skip their post-mortem steps
+        already_done = done;
 
         auto step_result = core::BaseTanksEnvironment::step(time_delta, actions);
 
@@ -47,17 +51,24 @@ namespace arenai::train {
             return has_hit_result;
         });
 
-        already_done = done;
-
         // natural ending (timeout, death)
         for (int i = 0; i < step_result.size(); i++) {
             remaining_frames[i]--;
             if (has_hit[i]) remaining_frames[i] += nb_frames_added_when_hit;
 
-            if (const auto &[state, reward, is_done] = step_result[i];
-                remaining_frames[i] <= 0 || is_done) {
-                const float timeout_penalty = remaining_frames[i] <= 0 ? 0.5f : 0.f;
-                step_result[i] = {state, reward - timeout_penalty, true};
+            const auto &[state, reward, is_done, is_truncated] = step_result[i];
+
+            if (is_done) {
+                step_result[i] = {state, reward, true, false};
+                done[i] = true;
+
+                continue;
+            }
+
+            if (remaining_frames[i] <= 0) {
+                constexpr float timeout_penalty = 0.5f;
+                step_result[i] = {state, reward - timeout_penalty, true, true};
+
                 done[i] = true;
             }
         }
@@ -67,10 +78,11 @@ namespace arenai::train {
             if (done[i]) continue;
 
             if (const long nb_not_done = std::ranges::count(done, false); nb_not_done == 1) {
-                const auto &[state, reward, is_done] = step_result[i];
+                const auto &[state, reward, is_done, is_truncated] = step_result[i];
                 if (only_one_tank_alive())
-                    step_result[i] = {state, reward + 2.f, true}; // winner réel
-                else step_result[i] = {state, reward + 1.f, true};// timeout winner
+                    step_result[i] = {state, reward + 2.f, true, is_truncated}; // winner réel
+                else step_result[i] = {state, reward + 1.f, true, is_truncated};// timeout winner
+
                 done[i] = true;
             }
         }
@@ -78,6 +90,16 @@ namespace arenai::train {
         nb_steps++;
 
         return step_result;
+    }
+
+    std::vector<float> TrainTankEnvironment::get_phi_vector() {
+        return apply_on_factories<std::vector<float>>(
+            [](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
+                std::vector<float> phi_vector;
+                phi_vector.reserve(tanks.size());
+                for (const auto &tank: tanks) phi_vector.emplace_back(tank->get_phi(tanks));
+                return phi_vector;
+            });
     }
 
     void TrainTankEnvironment::on_draw(
@@ -121,15 +143,11 @@ namespace arenai::train {
     }
 
     void TrainTankEnvironment::on_reset_drawables(
-        const std::unique_ptr<model::AbstractPhysicEngine> &engine,
-        const std::shared_ptr<view::AbstractGLContext> &gl_context) {}
+        const std::unique_ptr<model::AbstractPhysicEngine> &engine) {}
 
     void TrainTankEnvironment::reset_singleton() {
         utils::Singleton<utils::Cache<std::shared_ptr<model::Shape>>>::get_singleton()->clear();
         utils::Singleton<utils::Cache<std::shared_ptr<model::Shape>>>::reset_singleton();
-
-        utils::Singleton<utils::Cache<std::shared_ptr<view::Program>>>::get_singleton()->clear();
-        utils::Singleton<utils::Cache<std::shared_ptr<view::Program>>>::reset_singleton();
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> TrainTankEnvironment::get_metrics() const {

@@ -21,16 +21,16 @@ namespace arenai::model {
                             public ConvexItem,
                             public ItemProducer,
                             public controller::Controller,
-                            public view::Camera {
+                            public view::AbstractCamera {
     public:
         CanonItem(
             const std::string &prefix_name,
-            const std::shared_ptr<utils::AbstractFileReader> &file_reader, glm::vec3 pos,
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, glm::vec3 pos,
             glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *turret,
             float wanted_frame_frequency,
             const std::function<void(glm::vec3, glm::vec3, Item *)> &on_contact);
 
-        void on_input(const controller::user_input &input) override;
+        void apply_input(const controller::user_input &input) override;
 
         glm::vec3 pos() override;
         glm::vec3 look() override;
@@ -44,7 +44,7 @@ namespace arenai::model {
     private:
         float angle;
         btHingeConstraint *hinge;
-        std::shared_ptr<utils::AbstractFileReader> file_reader;
+        std::shared_ptr<utils::AbstractResourceFileReader> file_reader;
         bool will_fire;
         std::function<void(glm::vec3, glm::vec3, Item *)> on_contact;
         float wanted_frame_frequency;

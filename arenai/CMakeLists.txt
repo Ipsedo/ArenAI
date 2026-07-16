@@ -4,12 +4,22 @@ project(arenai)
 
 set(CMAKE_CXX_STANDARD 20)
 
+enable_testing()
+
 # Auto-export all symbols from our shared libraries on Windows (replaces the
 # per-target WINDOWS_EXPORT_ALL_SYMBOLS property in each module).
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(ArenaiRuntimeDlls)
+
+# Force golden-image tests to overwrite their reference files instead of
+# comparing against them. ON disables every pixel assertion, so never turn it on
+# to get a red CI green: that only hides the diff.
+# The committed goldens are llvmpipe/Ubuntu-specific — regenerate them with
+# scripts/goldens_docker.sh --regenerate, which runs the CI render environment.
+option(ARENAI_REGENERATE_GOLDEN_IMAGES
+        "Rebuild golden reference images instead of comparing against them" OFF)
 
 # Train main & lib
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/arenai_train")

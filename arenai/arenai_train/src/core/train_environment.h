@@ -13,12 +13,14 @@ namespace arenai::train {
     class TrainTankEnvironment final : public core::BaseTanksEnvironment {
     public:
         TrainTankEnvironment(
-            const std::shared_ptr<view::AbstractGLContext> &gl_context, int nb_tanks,
+            const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, int nb_tanks,
             const std::filesystem::path &android_assets_path, float wanted_frequency,
             int max_episode_steps, int vision_height, int vision_width, int vision_num_threads);
 
-        std::vector<std::tuple<core::State, core::Reward, core::IsDone>>
+        std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
         step(float time_delta, const std::vector<core::Action> &actions) override;
+
+        std::vector<float> get_phi_vector();
 
         std::vector<std::shared_ptr<AbstractMetric>> get_metrics() const;
 
@@ -33,9 +35,8 @@ namespace arenai::train {
 
         void on_reset_physics(const std::unique_ptr<model::AbstractPhysicEngine> &engine) override;
 
-        void on_reset_drawables(
-            const std::unique_ptr<model::AbstractPhysicEngine> &engine,
-            const std::shared_ptr<view::AbstractGLContext> &gl_context) override;
+        void
+        on_reset_drawables(const std::unique_ptr<model::AbstractPhysicEngine> &engine) override;
 
     private:
         float wanted_frequency;

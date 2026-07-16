@@ -27,7 +27,7 @@ std::unique_ptr<SacAgent> SacAgentTest::make_agent(const SacTestConfig &cfg) con
     return std::make_unique<SacAgent>(
         cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
         cfg.nb_discrete_actions, 1e-3f, 1e-3f, 1e-3f, 16, 16, actor_hidden, critic_hidden,
-        vision_channels, group_norm_nums, device, 10, 0.005f, 0.99f, 0.2f, 0.2f, 0.5f, 0.8f);
+        vision_channels, group_norm_nums, device, 10, 0.005f, 0.99f);
 }
 
 std::unique_ptr<ReplayBuffer>
@@ -35,7 +35,7 @@ SacAgentTest::make_filled_buffer(const SacTestConfig &cfg, const int n_steps) {
     auto buffer = std::make_unique<ReplayBuffer>(n_steps * 2);
 
     for (int i = 0; i < n_steps; ++i) {
-        TorchStep step;
+        TorchInputStep step;
         step.state.vision =
             torch::randint(0, 255, {3, cfg.vision_height, cfg.vision_width}, torch::kUInt8);
         step.state.proprioception = torch::randn({cfg.nb_sensors});
@@ -45,7 +45,8 @@ SacAgentTest::make_filled_buffer(const SacTestConfig &cfg, const int n_steps) {
         disc[0] = 1.0f;
         step.action.discrete_action = disc;
 
-        step.reward = torch::randn({1});
+        step.main_reward = torch::randn({1});
+        step.potential_reward = torch::randn({1});
         step.done = torch::zeros({1});
         step.next_state.vision =
             torch::randint(0, 255, {3, cfg.vision_height, cfg.vision_width}, torch::kUInt8);
@@ -74,15 +75,7 @@ TEST_F(SacAgentTest, MetricsNotEmpty) {
 
     const auto metrics = agent->get_metrics();
 
-    ASSERT_EQ(metrics.size(), 9);
-}
-
-TEST_F(SacAgentTest, TargetEntropiesFinite) {
-    constexpr SacTestConfig cfg{8, 8, 10, 4, 2};
-    const auto agent = make_agent(cfg);
-
-    ASSERT_TRUE(std::isfinite(agent->get_continuous_target_entropy()));
-    ASSERT_TRUE(std::isfinite(agent->get_discrete_target_entropy()));
+    ASSERT_EQ(metrics.size(), 12);
 }
 
 // ========================================================================

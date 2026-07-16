@@ -54,8 +54,8 @@ namespace arenai::train {
         std::shared_ptr<AlphaParameter> alpha_continuous;
         std::shared_ptr<AlphaParameter> alpha_discrete;
 
-        std::shared_ptr<AbstractTargetEntropyWarmup> continuous_target_entropy;
-        std::shared_ptr<AbstractTargetEntropyWarmup> discrete_target_entropy;
+        std::shared_ptr<AbstractTargetEntropy> continuous_target_entropy;
+        std::shared_ptr<AbstractTargetEntropy> discrete_target_entropy;
 
         std::shared_ptr<torch::optim::Adam> actor_optim;
         std::shared_ptr<torch::optim::Adam> critic_1_optim;

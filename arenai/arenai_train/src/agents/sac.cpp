@@ -50,10 +50,10 @@ namespace arenai::train {
               group_norm_nums)),
           alpha_continuous(std::make_shared<AlphaParameter>(5e-2f)),
           alpha_discrete(std::make_shared<AlphaParameter>(5e-2f)),
-          continuous_target_entropy(std::make_shared<ContinuousTargetEntropyWarmup>(
-              nb_continuous_actions, 0.5f, 0.1f, WARMUP_STEP)),
-          discrete_target_entropy(std::make_shared<DiscreteTargetEntropyWarmup>(
-              nb_discrete_actions, 0.98f, 0.5f, WARMUP_STEP)),
+          continuous_target_entropy(std::make_shared<ConstantTargetEntropy>(
+              truncated_normal_target_entropy(nb_continuous_actions, 0.1f))),
+          discrete_target_entropy(std::make_shared<ConstantTargetEntropy>(
+              0.98f * multinomial_maximum_entropy(nb_discrete_actions))),
           actor_optim(std::make_unique<torch::optim::Adam>(
               actor->parameters(), torch::optim::AdamOptions(actor_learning_rate))),
           critic_1_optim(std::make_unique<torch::optim::Adam>(

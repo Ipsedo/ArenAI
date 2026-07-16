@@ -28,6 +28,17 @@ namespace arenai::train {
      * Target entropy
      */
 
+    ConstantTargetEntropy::ConstantTargetEntropy(const float initial_target)
+        : initial_target(register_buffer("initial_target", torch::tensor(initial_target))) {}
+
+    void ConstantTargetEntropy::step() {}
+
+    torch::Tensor ConstantTargetEntropy::target_entropy() { return initial_target; }
+
+    /*
+     * Target entropy warmup
+     */
+
     AbstractTargetEntropyWarmup::AbstractTargetEntropyWarmup(
         const float initial_value, const float final_value, const int warmup_step)
         : initial(initial_value), final(final_value), warmup_step(warmup_step),

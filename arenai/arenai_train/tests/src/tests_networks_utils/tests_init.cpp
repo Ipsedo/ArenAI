@@ -46,6 +46,6 @@ TEST_F(InitWeightsTest, SigmaOutputBiasIsLog01) {
     torch::nn::Linear linear(32, 4);
     init_sigma_output_weights(*linear);
 
-    const auto expected_bias = torch::full_like(linear->bias, std::log(0.5f));
+    const auto expected_bias = torch::full_like(linear->bias, std::log(0.1f));
     ASSERT_TRUE(torch::allclose(linear->bias, expected_bias));
 }

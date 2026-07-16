@@ -14,9 +14,10 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(ArenaiRuntimeDlls)
 
 # Force golden-image tests to overwrite their reference files instead of
-# comparing against them. Turn this ON to rebuild the goldens (e.g. after the
-# dynamic shadows / low-poly changes broke the CI baselines), run the tests
-# once to regenerate + commit the new .json goldens, then set it back to OFF.
+# comparing against them. ON disables every pixel assertion, so never turn it on
+# to get a red CI green: that only hides the diff.
+# The committed goldens are llvmpipe/Ubuntu-specific — regenerate them with
+# scripts/goldens_docker.sh --regenerate, which runs the CI render environment.
 option(ARENAI_REGENERATE_GOLDEN_IMAGES
         "Rebuild golden reference images instead of comparing against them" OFF)
 

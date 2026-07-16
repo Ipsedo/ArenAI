@@ -64,6 +64,10 @@ TEST_P(PBufferParam, TestPBuffer) {
         0);
 
     // Golden image tests
+#ifndef ARENAI_REGENERATE_GOLDEN_IMAGES
+    ARENAI_SKIP_UNLESS_PINNED_RENDER_ENV();
+#endif
+
     const auto golden_image_path =
         std::filesystem::path(__FILE__).parent_path().parent_path() / "resources" / "golden_images"
         / ("golden_cubemap_" + std::to_string(width) + "_" + std::to_string(height) + ".json");

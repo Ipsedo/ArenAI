@@ -3,6 +3,7 @@
 //
 
 #include <cmath>
+#include <cstdlib>
 #include <fstream>
 #include <numeric>
 
@@ -65,6 +66,17 @@ TEST_F(EnvironmentTest, ResetInitialVisionIsNotBlack) {
 // ========================================================================
 
 TEST_F(EnvironmentTest, ResetGoldenImage) {
+#ifndef ARENAI_REGENERATE_GOLDEN_IMAGES
+    // This golden records a whole environment, down to the Bullet and Mesa
+    // versions: with another Bullet the tanks land elsewhere at reset and every
+    // pixel moves. Only the pinned environment (scripts/goldens_docker.sh, also
+    // used by the CI) can compare it, so skip rather than cry regression.
+    // ARENAI_PINNED_RENDER_ENV is set by scripts/ci/render_env.sh.
+    if (std::getenv("ARENAI_PINNED_RENDER_ENV") == nullptr)
+        GTEST_SKIP() << "golden comparison needs the pinned render environment: "
+                        "run ./scripts/goldens_docker.sh";
+#endif
+
     constexpr int nb_tanks = 2;
     constexpr float frequency = 1.f / 60.f;
     constexpr int vision_h = 16;

@@ -70,10 +70,10 @@ Many hyperparameters (tau, gamma, learning rates, nb_tanks, vision_height...) �
 
 ## Code conventions
 
-Enforced by `.clang-format` and pre-commit — both live in the **parent** `PhyVR/` repo, not in `arenai/`.
+Enforced by `.clang-format` and pre-commit — both live in the **parent** `ArenAI/` repo, not in `arenai/`.
 
 - **`.clang-format`** (`../.clang-format`): LLVM base, 4-space indent, 100-col limit, right-aligned pointers.
-  Run `clang-format -i` before committing, or install the hooks: `pre-commit install` (from `PhyVR/`).
+  Run `clang-format -i` before committing, or install the hooks: `pre-commit install` (from `ArenAI/`).
 - Include groups are auto-sorted (`IncludeBlocks: Regroup`): std `<...>` → external `<.../...>` → `<arenai...>` → local `"..."`.
 - Naming: classes `PascalCase`, functions/variables `snake_case`, constants `SCREAMING_CASE`.
 - No top-level namespace; header guards `ARENAI_<NAME>_H`.

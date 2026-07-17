@@ -72,7 +72,7 @@ IncludeCategories:
   # Local headers in ""
   - Regex: '"[-\w\/-_\.]*"'
     Priority: 4
-  # Headers in <> from PhyVR libraries.
+  # Headers in <> from ArenAI libraries.
   - Regex: '<arenai.+'
     Priority: 3
   # External headers in <> with extension or /

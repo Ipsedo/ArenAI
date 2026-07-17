@@ -60,24 +60,26 @@ target_link_libraries(arenai_view PRIVATE glfw)
 # Rml::RenderInterface, the library itself never leaks past arenai_view.
 target_link_libraries(arenai_view PRIVATE RmlUi::Core)
 
-# Desktop OpenGL 3.3 core. On Linux libGL (Mesa/NVIDIA, dispatched by libglvnd)
-# exports the full modern API as real symbols, so linking OpenGL::GL and
-# declaring the extension prototypes (see src/opengl/gl.h) is enough — no
-# function loader is needed. GL stays PRIVATE: it never leaks past arenai_view.
-find_package(OpenGL REQUIRED)
-target_link_libraries(arenai_view PRIVATE OpenGL::GL)
-
+# Modern OpenGL entry points as real symbols, no function loader (see src/opengl/gl.h).
+# GL stays PRIVATE: it never leaks past arenai_view.
 if (WIN32)
     # Mesa3D SDK (headers + import libs) from mesa-dist-win "devel" package,
     # fetched by arenai_desktop/install_dependencies.ps1 into libs/mesa-devel.
-    # Only libEGL is needed here (context management); GL comes from OpenGL::GL.
+    # The system opengl32.lib only exports OpenGL 1.1 and dispatches through
+    # WGL, while every context here (offscreen and GLFW window alike) is a mesa
+    # EGL one — so take the full GL API from mesa's libGLESv2 instead, which
+    # exports it as real symbols routed through mesa's shared dispatch.
     if (NOT MESA_SDK_DIR)
         set(MESA_SDK_DIR "${CMAKE_SOURCE_DIR}/libs/mesa-devel")
     endif ()
     find_path(MESA_INCLUDE_DIR EGL/egl.h HINTS "${MESA_SDK_DIR}/include" REQUIRED)
     find_library(MESA_EGL_LIB libEGL HINTS "${MESA_SDK_DIR}/lib/x64" REQUIRED)
-    target_link_libraries(arenai_view PRIVATE "${MESA_EGL_LIB}")
+    find_library(MESA_GLES_LIB libGLESv2 HINTS "${MESA_SDK_DIR}/lib/x64" REQUIRED)
+    target_link_libraries(arenai_view PRIVATE "${MESA_EGL_LIB}" "${MESA_GLES_LIB}")
     target_include_directories(arenai_view PRIVATE "${MESA_INCLUDE_DIR}")
 else ()
-    target_link_libraries(arenai_view PRIVATE EGL dl)
+    # On Linux libGL (Mesa/NVIDIA, dispatched by libglvnd) exports the full
+    # modern API as real symbols, valid for GLX and EGL contexts alike.
+    find_package(OpenGL REQUIRED)
+    target_link_libraries(arenai_view PRIVATE OpenGL::GL EGL dl)
 endif ()

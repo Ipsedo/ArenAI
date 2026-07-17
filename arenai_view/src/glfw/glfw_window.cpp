@@ -233,4 +233,10 @@ namespace arenai::view {
 
     EGLContext GlfwWindow::egl_context() const { return glfwGetEGLContext(window_); }
 
+    std::tuple<int, int> GlfwWindow::framebuffer_size() const {
+        int width, height;
+        glfwGetFramebufferSize(window_, &width, &height);
+        return {width, height};
+    }
+
 }// namespace arenai::view

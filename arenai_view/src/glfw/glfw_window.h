@@ -44,6 +44,8 @@ namespace arenai::view {
         EGLSurface egl_surface() const override;
         EGLContext egl_context() const override;
 
+        std::tuple<int, int> framebuffer_size() const override;
+
     private:
         GLFWwindow *window_;
         std::shared_ptr<controller::AbstractKeyboardCallback> keyboard_callback_;

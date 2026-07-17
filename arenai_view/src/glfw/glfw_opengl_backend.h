@@ -19,8 +19,7 @@ namespace arenai::view {
     class GlfwWindowedBackend final : public OpenGlBackend, public AbstractWindowedGraphicBackend {
     public:
         GlfwWindowedBackend(
-            std::shared_ptr<EglRenderContext> context, std::shared_ptr<AbstractGlWindow> window,
-            int window_width, int window_height);
+            std::shared_ptr<EglRenderContext> context, std::shared_ptr<AbstractGlWindow> window);
 
         std::shared_ptr<AbstractWindow> get_window() override;
 
@@ -35,9 +34,6 @@ namespace arenai::view {
 
     private:
         std::shared_ptr<AbstractGlWindow> window_;
-
-        int window_width_;
-        int window_height_;
 
         RmlGlRenderInterface rml_render_interface_;
     };

@@ -188,6 +188,11 @@ namespace arenai::view {
         width = new_width;
         height = new_height;
 
+        // the resize callback fires during event polling, when another context
+        // (the tanks' headless vision one) may be current on this thread: the
+        // post-process targets must be recreated on the window's context
+        make_current();
+
         glViewport(0, 0, width, height);
 
         if (post_process) post_process->resize(width, height);

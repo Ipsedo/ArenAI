@@ -172,12 +172,13 @@ namespace arenai::desktop::gui {
 
             MenuOutcome run_main_menu() override {
                 play_clicked_ = false;
+                quit_clicked_ = false;
 
                 window_->set_keyboard_callback(input_adapter_);
                 window_->set_cursor_mode(controller::CursorMode::Normal);
                 main_document_->Show();
 
-                while (!window_->should_close() && !play_clicked_) {
+                while (!window_->should_close() && !play_clicked_ && !quit_clicked_) {
                     window_->poll_events();
 
                     context_->Update();
@@ -285,6 +286,10 @@ namespace arenai::desktop::gui {
                 constructor.BindEventCallback(
                     "play", [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &) {
                         if (can_play_) play_clicked_ = true;
+                    });
+                constructor.BindEventCallback(
+                    "exit", [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &) {
+                        quit_clicked_ = true;
                     });
                 constructor.BindEventCallback(
                     "open_params",
@@ -407,6 +412,7 @@ namespace arenai::desktop::gui {
             std::vector<Rml::String> entries_;
             bool can_play_ = false;
             bool play_clicked_ = false;
+            bool quit_clicked_ = false;
             PauseAction pending_pause_action_ = PauseAction::None;
         };
 

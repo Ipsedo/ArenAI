@@ -1,14 +1,13 @@
-#version 330 core
+#version 450
 
-precision mediump float;
+layout(set = 1, binding = 0) uniform sampler2D u_source;
 
-uniform sampler2D u_source;
 // (1, 0) for the horizontal pass, (0, 1) for the vertical one
-uniform vec2 u_direction;
+layout(push_constant) uniform Push { vec2 u_direction; };
 
-in vec2 v_uv;
+layout(location = 0) in vec2 v_uv;
 
-out vec4 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 // 9-tap separable gaussian, offsets stretched 1.5x for a wider glow
 const float WEIGHTS[5] =

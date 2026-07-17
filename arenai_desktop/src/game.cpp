@@ -4,6 +4,7 @@
 
 #include "./game.h"
 
+#include <cstdlib>
 #include <iostream>
 
 #include <torch/torch.h>
@@ -92,10 +93,17 @@ namespace arenai::desktop {
 
             auto outcome = InGameOutcome::ExitGame;
 
+            // [ARENAI-DBG] temporary auto-repro
+            int dbg_auto_frames = -1;
+            if (const char *dbg = std::getenv("ARENAI_DEBUG_AUTOFRAMES"))
+                dbg_auto_frames = std::atoi(dbg);
+            int dbg_frame_count = 0;
+
             const auto frame_dt =
                 std::chrono::milliseconds(static_cast<int>(game_options.wanted_frequency * 1000.f));
 
             while (!window->should_close()) {
+                if (dbg_auto_frames > 0 && dbg_frame_count++ >= dbg_auto_frames) break;
                 window->poll_events();
 
                 if (toggle_requested) {
@@ -165,11 +173,11 @@ namespace arenai::desktop {
         // The view owns the window + GL context; the app only speaks the abstract
         // window/backend interface.
         const std::shared_ptr<view::AbstractWindowedGraphicBackend> graphics_backend =
-            view::make_glfw_backend(
+            view::make_glfw_vulkan_backend(
                 game_options.window_width, game_options.window_height, "ArenAI");
         const auto window = graphics_backend->get_window();
 
-        std::cout << "OpenGL : " << graphics_backend->renderer_info() << std::endl;
+        std::cout << "Vulkan : " << graphics_backend->renderer_info() << std::endl;
 
         const auto asset_reader =
             std::make_shared<train::DesktopAssetFileReader>(game_options.resources_folder);
@@ -187,10 +195,17 @@ namespace arenai::desktop {
         window->set_resize_callback(
             [&gui](const int width, const int height) { gui->on_window_resized(width, height); });
 
+        // apply the persisted display preference now that the resize callback
+        // is wired: the GUI picks the real size up like any user resize
+        if (initial_settings.fullscreen) window->set_fullscreen(true);
+
         // MainMenu <-> InGame state machine; "Main menu" in the pause popup
         // tears the environment down and loops back here, settings preserved
+        // [ARENAI-DBG] temporary auto-repro
+        const bool dbg_autoplay = std::getenv("ARENAI_DEBUG_AUTOPLAY") != nullptr;
+
         while (!window->should_close()) {
-            const auto menu_outcome = gui->run_main_menu();
+            const auto menu_outcome = dbg_autoplay ? gui::MenuOutcome::Play : gui->run_main_menu();
 
             // persisted on every menu exit (Play or Quit) so the tuned
             // settings survive the session whichever way it ends
@@ -200,7 +215,8 @@ namespace arenai::desktop {
 
             if (run_game(
                     game_options, model_options, gui->settings(), graphics_backend, gui, device)
-                == InGameOutcome::ExitGame)
+                    == InGameOutcome::ExitGame
+                || dbg_autoplay)
                 break;
         }
     }

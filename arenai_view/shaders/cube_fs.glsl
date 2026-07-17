@@ -1,11 +1,10 @@
-#version 330 core
+#version 450
 
-precision mediump float;
+layout(set = 1, binding = 0) uniform samplerCube u_cube_map;
 
-in vec3 v_tex_coords;
-uniform samplerCube u_cube_map;
+layout(location = 0) in vec3 v_tex_coords;
 
-out vec4 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 void main() {
     fragColor = texture(u_cube_map, v_tex_coords);

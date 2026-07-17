@@ -67,10 +67,10 @@ namespace arenai::view {
         virtual void present() = 0;
     };
 
-    // The single symbol that "names" the OpenGL/GLFW stack on the application side.
-    std::unique_ptr<AbstractGraphicBackend> make_opengl_backend();
+    // The single symbol that "names" the Vulkan/GLFW stack on the application side.
+    std::unique_ptr<AbstractGraphicBackend> make_vulkan_backend();
     std::unique_ptr<AbstractWindowedGraphicBackend>
-    make_glfw_backend(int window_width, int window_height, const std::string &title);
+    make_glfw_vulkan_backend(int window_width, int window_height, const std::string &title);
 
 }// namespace arenai::view
 

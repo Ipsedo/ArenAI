@@ -1,12 +1,10 @@
-#version 330 core
+#version 450
 
-precision mediump float;
+layout(set = 1, binding = 0) uniform sampler2D u_scene;
 
-uniform sampler2D u_scene;
+layout(location = 0) in vec2 v_uv;
 
-in vec2 v_uv;
-
-out vec4 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 // soft luminance knee keeping only the brightest parts of the LDR scene
 // (sun glints, explosions, tracers)

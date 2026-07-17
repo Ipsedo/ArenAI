@@ -25,7 +25,7 @@ namespace arenai::desktop {
         // them off the window's GPU when the player view is offloaded (prime-run).
         : core::BaseTanksEnvironment(
             std::make_shared<train::DesktopAssetFileReader>(asset_folder_path),
-            view::make_opengl_backend(), nb_tanks, wanted_frequency, vision_height, vision_width, 8,
+            view::make_vulkan_backend(), nb_tanks, wanted_frequency, vision_height, vision_width, 8,
             true),
           windowed_backend(graphics_backend),
           asset_file_reader(std::make_shared<train::DesktopAssetFileReader>(asset_folder_path)),

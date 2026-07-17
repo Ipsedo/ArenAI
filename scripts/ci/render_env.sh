@@ -4,15 +4,17 @@
 # the goldens are a byte-for-byte record of what this configuration renders, so
 # the two must set exactly the same variables.
 
-# Headless software rendering: the agent's vision is an offscreen EGL pbuffer
-# and CI runners have no GPU.
-export EGL_PLATFORM=surfaceless
-export LIBGL_ALWAYS_SOFTWARE=1
-export GALLIUM_DRIVER=llvmpipe
+# Headless software Vulkan: the agent's vision renders offscreen and CI
+# runners have no GPU. lavapipe is Mesa's software Vulkan implementation
+# (mesa-vulkan-drivers); both loader variable names are set, the older
+# VK_ICD_FILENAMES for pre-1.3.207 loaders.
+export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json
+export VK_DRIVER_FILES="$VK_ICD_FILENAMES"
 
-# llvmpipe picks its vector width from the host CPU (AVX2 vs AVX-512), and that
-# changes the rasterized pixels. GitHub runners have heterogeneous CPUs, so pin
-# it to keep the goldens reproducible across machines.
+# lavapipe shares the llvmpipe JIT, which picks its vector width from the host
+# CPU (AVX2 vs AVX-512), and that changes the rasterized pixels. GitHub
+# runners have heterogeneous CPUs, so pin it to keep the goldens reproducible
+# across machines.
 export LP_NATIVE_VECTOR_WIDTH=256
 
 # Tells the golden-image tests they are in the environment the references were

@@ -1,8 +1,10 @@
-#version 330 core
+#version 450
 
-in vec3 a_vp;
-uniform mat4 u_mvp_matrix;
-out vec3 v_tex_coords;
+layout(push_constant) uniform Push { mat4 u_mvp_matrix; };
+
+layout(location = 0) in vec3 a_vp;
+
+layout(location = 0) out vec3 v_tex_coords;
 
 void main() {
     v_tex_coords = a_vp;

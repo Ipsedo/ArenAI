@@ -4,7 +4,7 @@ A battle-royal game with trained agent which controls tanks in realistic physic 
 
 ## Description
 
-Each agent receives the OpenGL frame of its camera as input, and it is trained to fire and hit enemies.
+Each agent receives the rendered frame of its camera as input, and it is trained to fire and hit enemies.
 
 When agent is trained (with SAC algorithm) you can fight against other tanks.
 

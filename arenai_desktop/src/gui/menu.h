@@ -25,6 +25,7 @@ namespace arenai::desktop::gui {
         // side length (meters) of the square area the tanks spawn in
         int spawn_side = 500;
         ControllerKind controller_kind = ControllerKind::Keyboard;
+        bool fullscreen = false;
         // folder holding the trained SAC state dicts, empty until chosen
         std::filesystem::path sac_folder;
     };

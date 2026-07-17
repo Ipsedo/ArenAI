@@ -53,6 +53,8 @@ namespace arenai::desktop {
                                            ? ControllerKind::Gamepad
                                            : ControllerKind::Keyboard;
 
+            settings.fullscreen = json.value("fullscreen", settings.fullscreen);
+
             // a stale folder (moved, deleted, unplugged drive) falls back to
             // the default so the menu never starts on an unplayable selection
             if (const std::filesystem::path sac_folder = json.value("sac_folder", std::string());
@@ -75,6 +77,7 @@ namespace arenai::desktop {
                 {"spawn_side", settings.spawn_side},
                 {"controller",
                  settings.controller_kind == ControllerKind::Gamepad ? "gamepad" : "keyboard"},
+                {"fullscreen", settings.fullscreen},
                 {"sac_folder", settings.sac_folder.string()},
             };
 

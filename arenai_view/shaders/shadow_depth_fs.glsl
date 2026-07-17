@@ -1,5 +1,3 @@
-#version 330 core
-
-precision highp float;
+#version 450
 
 void main() {}

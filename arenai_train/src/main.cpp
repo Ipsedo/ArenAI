@@ -38,9 +38,9 @@ int main(const int argc, char **argv) {
     // train
     parser.add_argument("--output_folder").required();
     parser.add_argument("--resources_folder").required();
-    parser.add_argument("--actor_learning_rate").scan<'g', float>().default_value(1e-3f);
-    parser.add_argument("--critic_learning_rate").scan<'g', float>().default_value(3e-3f);
-    parser.add_argument("--alpha_learning_rate").scan<'g', float>().default_value(3e-3f);
+    parser.add_argument("--actor_learning_rate").scan<'g', float>().default_value(1e-4f);
+    parser.add_argument("--critic_learning_rate").scan<'g', float>().default_value(3e-4f);
+    parser.add_argument("--alpha_learning_rate").scan<'g', float>().default_value(3e-4f);
     parser.add_argument("--epochs").scan<'i', int>().default_value(64);
     parser.add_argument("--batch_size").scan<'i', int>().default_value(256);
     parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60 * 3);

@@ -66,8 +66,7 @@ namespace arenai::train {
             }
 
             if (remaining_frames[i] <= 0) {
-                constexpr float timeout_penalty = 0.5f;
-                step_result[i] = {state, reward - timeout_penalty, true, true};
+                step_result[i] = {state, reward, true, true};
 
                 done[i] = true;
             }

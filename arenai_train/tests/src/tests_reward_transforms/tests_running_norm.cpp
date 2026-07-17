@@ -13,7 +13,7 @@ using namespace arenai::train;
 // NormalizedRewardTransform
 // ========================================================================
 
-TEST_F(NormalizedRewardTransformTest, ConstantRewardNormalizesToZero) {
+TEST_F(NormalizedRewardTransformTest, ConstantRewardKeepsSignAndStaysFinite) {
     NormalizedRewardTransform transform(100, 1.0f);
 
     constexpr float constant = 5.0f;
@@ -21,7 +21,9 @@ TEST_F(NormalizedRewardTransformTest, ConstantRewardNormalizesToZero) {
 
     const auto result = transform.transform(torch::tensor({constant}));
 
-    ASSERT_NEAR(result.item<float>(), 0.0f, 1e-5f);
+    // no mean subtraction: a constant positive reward must stay positive
+    ASSERT_TRUE(torch::isfinite(result).item<bool>());
+    ASSERT_GT(result.item<float>(), 0.0f);
 }
 
 TEST_F(NormalizedRewardTransformTest, KnownMeanStd) {
@@ -35,7 +37,7 @@ TEST_F(NormalizedRewardTransformTest, KnownMeanStd) {
     const auto expected_std = std::sqrt(2.0f / 3.0f + 1e-8f);
 
     const auto result = transform.transform(torch::tensor({5.0f}));
-    const auto expected = (5.0f - 2.0f) / expected_std;
+    const auto expected = 5.0f / expected_std;
 
     ASSERT_NEAR(result.item<float>(), expected, 1e-4f);
 }
@@ -57,7 +59,7 @@ TEST_F(NormalizedRewardTransformTest, CircularEviction) {
     // now buffer = [1, 2, 3], same as KnownMeanStd
     const auto expected_std = std::sqrt(2.0f / 3.0f + 1e-8f);
     const auto result = transform.transform(torch::tensor({5.0f}));
-    const auto expected = (5.0f - 2.0f) / expected_std;
+    const auto expected = 5.0f / expected_std;
 
     ASSERT_NEAR(result.item<float>(), expected, 1e-4f);
 }

@@ -44,7 +44,9 @@ namespace arenai::train {
             static_cast<float>(running_sum_sq_ / current_size - reward_mean * reward_mean);
         const auto reward_std = std::sqrt(std::max(reward_var, 0.f) + 1e-8f);
 
-        const auto normalized_reward = (batch_step_reward - reward_mean) / reward_std;
+        // no mean subtraction: keeps potential-based shaping intact (a constant
+        // per-step offset would bias episode-length preferences), only rescale
+        const auto normalized_reward = batch_step_reward / reward_std;
 
         return reward_scale_ * normalized_reward;
     }

@@ -148,7 +148,10 @@ namespace arenai::view {
         glDisable(GL_DEPTH_TEST);
 
         for (const auto &hud_drawable: hud_drawables) hud_drawable->draw(get_width(), get_height());
-        eglSwapBuffers(context()->get_display(), context()->get_surface());
+
+        // no buffer swap here: presenting the frame is the application's call
+        // (an UI overlay may still be drawn on top), see
+        // AbstractWindowedGraphicBackend::present()
 
         glEnable(GL_DEPTH_TEST);
     }

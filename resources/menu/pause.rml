@@ -1,0 +1,14 @@
+<rml>
+<head>
+    <title>Paused</title>
+    <link type="text/rcss" href="menu.rcss"/>
+</head>
+<body class="overlay" data-model="settings">
+    <div id="pause-panel" class="panel">
+        <h1>Paused</h1>
+        <div class="button primary" data-event-click="pause_continue()">Continue</div>
+        <div class="button" data-event-click="pause_main_menu()">Main menu</div>
+        <div class="button" data-event-click="pause_exit()">Exit game</div>
+    </div>
+</body>
+</rml>

@@ -13,7 +13,9 @@ Dependency order: utils → model → view → core → train / desktop
 - **arenai_core**   — `BaseTanksEnvironment`, enemy_handler, thread_pool (RL env loop)
 - **arenai_controller** — input handling
 - **arenai_train**  — SAC: agents, networks, replay_buffer, reward_transforms + `main.cpp` (training executable)
-- **arenai_desktop** — the playable game executable
+- **arenai_desktop** — the playable game executable. Its `src/` folders are hexagons of their own:
+  `gui/` (RmlUi main menu — RmlUi types must never leak out of it, other code only includes
+  `gui/menu.h`), `controller/`, `core/`. Menu assets live in `resources/menu/` + `resources/font/`.
 
 ## Build
 
@@ -21,7 +23,7 @@ C++20, CMake ≥ 3.29.
 
 ### Linux (ArchLinux)
 ```shell
-sudo pacman -Sy bullet glm glfw
+sudo pacman -Sy bullet glm glfw freetype2
 # LibTorch expected in /opt/libtorch (override with -DLIBTORCH_PATH=...)
 mkdir build && cd build && cmake .. && make
 ```
@@ -32,8 +34,9 @@ mkdir build && cd build && cmake .. && make
 .\build_windows.ps1          # -Config Debug | -LibtorchPath ... to override
 ```
 
-Deps fetched via FetchContent (no manual install): argparse, nlohmann/json, stb, soil2, indicators.
-System libs: bullet, glm, glfw. LibTorch via `find_package(Torch)`.
+Deps fetched via FetchContent (no manual install): argparse, nlohmann/json, stb, soil2, indicators,
+RmlUi (PRIVATE in arenai_view — only its forward-declared render interface crosses the public API).
+System libs: bullet, glm, glfw, freetype (RmlUi font engine). LibTorch via `find_package(Torch)`.
 
 ## Tests
 

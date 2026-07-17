@@ -255,8 +255,6 @@ namespace arenai::train {
         save_torch(output_folder, alpha_continuous, "alpha_continuous.pt");
         save_torch(output_folder, alpha_discrete, "alpha_discrete.pt");
 
-        export_state_dict_neutral(actor, output_folder / "actor_state_dict");
-
         // Optimizers
         save_torch(output_folder, actor_optim, "actor_optim.pt");
 

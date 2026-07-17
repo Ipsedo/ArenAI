@@ -57,6 +57,7 @@ namespace arenai::view {
         void on_key(int key, int action) const;
         void on_cursor(double x, double y) const;
         void on_mouse_button(int button, int action) const;
+        void on_scroll(double x_offset, double y_offset) const;
         void on_resize(int width, int height) const;
 
         void poll_gamepad();

@@ -9,6 +9,18 @@ set(CMAKE_CXX_STANDARD 20)
 ##### GLM #####
 find_package(glm REQUIRED)
 
+##### RmlUi (UI library) #####
+# Built shared (this directory's scope only) so the code links into our shared
+# libraries without a PIC surprise. Needs FreeType on the system for fonts.
+set(BUILD_SHARED_LIBS ON)
+set(RMLUI_SAMPLES OFF)
+FetchContent_Declare(
+        rmlui
+        GIT_REPOSITORY https://github.com/mikke89/RmlUi.git
+        GIT_TAG 6.2
+)
+FetchContent_MakeAvailable(rmlui)
+
 # Embed the GLSL sources into the library: cmake/ArenaiEmbedShaders.cmake turns
 # shaders/*.glsl into a generated header (EMBEDDED_SHADERS map) consumed by
 # load_shader(). The built executables need no shader file at runtime.
@@ -43,6 +55,10 @@ target_link_libraries(
 
 find_package(glfw3 REQUIRED)
 target_link_libraries(arenai_view PRIVATE glfw)
+
+# PRIVATE like GL/GLFW: the public headers only forward-declare
+# Rml::RenderInterface, the library itself never leaks past arenai_view.
+target_link_libraries(arenai_view PRIVATE RmlUi::Core)
 
 # Desktop OpenGL 3.3 core. On Linux libGL (Mesa/NVIDIA, dispatched by libglvnd)
 # exports the full modern API as real symbols, so linking OpenGL::GL and

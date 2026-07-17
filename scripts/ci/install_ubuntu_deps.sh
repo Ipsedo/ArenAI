@@ -31,7 +31,8 @@ apt-get install -y --no-install-recommends \
     libgtest-dev \
     libegl-dev \
     libgles-dev \
-    libgl1-mesa-dri
+    libgl1-mesa-dri \
+    libfreetype-dev
 
 if ! cmake --version 2>/dev/null | head -1 | grep -q "${CMAKE_VERSION}"; then
     curl -fL "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz" |

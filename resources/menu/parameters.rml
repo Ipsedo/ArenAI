@@ -1,0 +1,42 @@
+<rml>
+<head>
+    <title>Parameters</title>
+    <link type="text/rcss" href="menu.rcss"/>
+</head>
+<body data-model="settings">
+    <div id="params-panel" class="panel">
+        <h1>Parameters</h1>
+
+        <div class="param-row">
+            <span class="param-label">Enemy tanks: {{nb_tanks}}</span>
+            <input type="range" min="1" max="32" step="1" data-value="nb_tanks"/>
+        </div>
+
+        <div class="param-row">
+            <span class="param-label">Spawn area side: {{spawn_side}} m</span>
+            <input type="range" min="100" max="1000" step="50" data-value="spawn_side"/>
+        </div>
+
+        <div class="param-row">
+            <span class="param-label">Controls</span>
+            <div class="toggle-group">
+                <div class="toggle" data-class-selected="controller=='keyboard'" data-event-click="set_controller('keyboard')">Mouse + Keyboard</div>
+                <div class="toggle" data-class-selected="controller=='gamepad'" data-event-click="set_controller('gamepad')">Gamepad</div>
+            </div>
+        </div>
+
+        <h2>Trained SAC folder</h2>
+        <div class="current-dir">{{current_dir}}</div>
+        <div class="file-list">
+            <div class="file-entry" data-for="entries" data-event-click="enter_dir(it_index)">{{it}}</div>
+        </div>
+        <div class="selected-folder" data-if="can_play">Selected: {{sac_folder}}</div>
+        <p class="hint" data-if="!can_play">No folder selected yet</p>
+
+        <div class="row-buttons">
+            <div class="button" data-event-click="select_folder()">Use this folder</div>
+            <div class="button" data-event-click="back()">Back</div>
+        </div>
+    </div>
+</body>
+</rml>

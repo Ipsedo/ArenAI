@@ -204,8 +204,6 @@ TEST_P(SacSaveLoadParamTest, SaveCreatesExpectedFiles) {
 
     for (const auto &f: expected_files)
         ASSERT_TRUE(std::filesystem::exists(save_dir / f)) << "Missing file: " << f;
-
-    ASSERT_TRUE(std::filesystem::is_directory(save_dir / "actor_state_dict"));
 }
 
 TEST_P(SacSaveLoadParamTest, SavedFilesNonEmpty) {

@@ -86,9 +86,10 @@ Write-Host "  vcpkg: $VcpkgRoot\vcpkg.exe"
 # Mesa is NOT built from source anymore: GLES3/EGL headers + import libs come
 # from the mesa-dist-win "devel" package, runtime DLLs from "release" (below).
 # ---------------------------------------------------------------------------
-Write-Step "Installing glfw3 glm bullet3 via vcpkg"
+Write-Step "Installing glfw3 glm bullet3 freetype via vcpkg"
 
-& "$VcpkgRoot\vcpkg.exe" install glfw3:x64-windows glm:x64-windows bullet3:x64-windows gtest:x64-windows
+# freetype: font engine of RmlUi (fetched by arenai_view through FetchContent)
+& "$VcpkgRoot\vcpkg.exe" install glfw3:x64-windows glm:x64-windows bullet3:x64-windows gtest:x64-windows freetype:x64-windows
 if ($LASTEXITCODE -ne 0) { Write-Error "vcpkg install failed"; exit 1 }
 
 # ---------------------------------------------------------------------------

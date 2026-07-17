@@ -105,6 +105,12 @@ namespace arenai::view {
                     ->on_mouse_button(button, action);
             });
 
+        glfwSetScrollCallback(
+            window_, [](GLFWwindow *w, const double x_offset, const double y_offset) -> void {
+                static_cast<GlfwWindow *>(glfwGetWindowUserPointer(w))
+                    ->on_scroll(x_offset, y_offset);
+            });
+
         glfwSetFramebufferSizeCallback(
             window_, [](GLFWwindow *w, const int new_width, const int new_height) -> void {
                 static_cast<GlfwWindow *>(glfwGetWindowUserPointer(w))
@@ -128,6 +134,10 @@ namespace arenai::view {
     void GlfwWindow::on_mouse_button(const int button, const int action) const {
         if (keyboard_callback_)
             keyboard_callback_->on_mouse_button(to_mouse_button(button), to_action(action));
+    }
+
+    void GlfwWindow::on_scroll(const double x_offset, const double y_offset) const {
+        if (keyboard_callback_) keyboard_callback_->on_scroll(x_offset, y_offset);
     }
 
     void GlfwWindow::on_resize(const int width, const int height) const {

@@ -14,9 +14,6 @@
 
 namespace arenai::train {
 
-    void export_state_dict_neutral(
-        const std::shared_ptr<torch::nn::Module> &m, const std::filesystem::path &outdir);
-
     template<typename T>
     void save_torch(
         const std::filesystem::path &output_folder_path, const T &to_save,

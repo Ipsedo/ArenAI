@@ -16,6 +16,13 @@
 #include "./renderer.h"
 #include "./window.h"
 
+// Forward declaration only: RmlUi's render interface is the UI-side port this
+// backend implements, but the library itself (like GL/GLFW) stays a PRIVATE
+// dependency of arenai_view.
+namespace Rml {
+    class RenderInterface;
+}
+
 namespace arenai::view {
 
     class AbstractGraphicBackend {
@@ -42,6 +49,22 @@ namespace arenai::view {
 
         virtual std::unique_ptr<AbstractPlayerRenderer> make_player_renderer(
             glm::vec3 light_pos, const std::shared_ptr<AbstractCamera> &camera) = 0;
+
+        // UI (RmlUi) support: the GL implementation of the render interface is
+        // owned by the backend; callers install it into RmlCore and draw their
+        // UI between begin_ui_frame()/begin_ui_overlay() and end_ui_frame(),
+        // then present() the finished frame.
+        virtual Rml::RenderInterface &ui_render_interface() = 0;
+        // makes the window context current, clears the framebuffer and sets the
+        // 2D UI render state for the given framebuffer size (UI-only frame)
+        virtual void begin_ui_frame(int width, int height) = 0;
+        // same, but without clearing: the UI is drawn on top of the frame
+        // already rendered in the backbuffer (e.g. the pause menu over the game)
+        virtual void begin_ui_overlay(int width, int height) = 0;
+        // finishes the UI pass (the frame is not presented yet)
+        virtual void end_ui_frame() = 0;
+        // swaps the window buffers, displaying everything drawn so far
+        virtual void present() = 0;
     };
 
     // The single symbol that "names" the OpenGL/GLFW stack on the application side.

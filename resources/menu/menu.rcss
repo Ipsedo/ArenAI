@@ -1,0 +1,278 @@
+/* Design tokens lifted from ipsedo.com:
+   bg #070b15, ink #f2f7ff, muted #9db1c9, faint #7b8fa8,
+   accent #63d9f7 (hover #8ce4fa) on accent-ink #05222d, sun #ffd27a,
+   surface #96beeb0f (hover #96beeb1a), line #8cb4dc24, line-strong #8cb4dc59.
+   Display font Sora, technical labels IBM Plex Mono. */
+
+body {
+    font-family: "Sora";
+    font-size: 16dp;
+    color: #f2f7ff;
+    background-color: #070b15;
+    width: 100%;
+    height: 100%;
+    /* center the single panel both ways */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* pause popup: the body is a translucent veil over the frozen game frame */
+body.overlay {
+    background-color: #070b15cc;
+}
+
+.panel {
+    padding: 40dp;
+    background-color: #96beeb0f;
+    border: 1dp #8cb4dc24;
+    border-radius: 10dp;
+}
+
+#pause-panel {
+    width: 340dp;
+    text-align: center;
+    /* nearly opaque: keeps the buttons readable over any game backdrop */
+    background-color: #0d1424f5;
+}
+
+#main-panel {
+    width: 380dp;
+    text-align: center;
+}
+
+#params-panel {
+    width: 100%;
+    max-width: 560dp;
+    /* guaranteed breathing room on both sides, whatever the window width */
+    margin-left: 48dp;
+    margin-right: 48dp;
+}
+
+h1 {
+    display: block;
+    font-size: 40dp;
+    font-weight: 700;
+    letter-spacing: -1dp;
+    color: #f2f7ff;
+    margin-bottom: 28dp;
+}
+
+h2 {
+    display: block;
+    font-family: "IBM Plex Mono";
+    font-size: 13dp;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2dp;
+    color: #9db1c9;
+    margin: 22dp 0 8dp 0;
+}
+
+.button {
+    display: block;
+    margin: 10dp auto;
+    padding: 12dp 20dp;
+    width: 260dp;
+    text-align: center;
+    font-size: 16dp;
+    font-weight: 600;
+    color: #f2f7ff;
+    border: 1dp #8cb4dc59;
+    border-radius: 6dp;
+    cursor: pointer;
+}
+
+.button:hover {
+    border-color: #63d9f7;
+    background-color: #96beeb1a;
+}
+
+.button.primary {
+    background-color: #63d9f7;
+    border-color: #63d9f7;
+    color: #05222d;
+}
+
+.button.primary:hover {
+    background-color: #8ce4fa;
+    border-color: #8ce4fa;
+}
+
+.button.disabled, .button.primary.disabled {
+    color: #7b8fa8;
+    background-color: #96beeb0f;
+    border-color: #8cb4dc24;
+}
+
+.hint {
+    display: block;
+    font-family: "IBM Plex Mono";
+    font-size: 12dp;
+    color: #7b8fa8;
+    margin-top: 14dp;
+}
+
+.param-row {
+    display: block;
+    margin: 16dp 0;
+}
+
+.param-label {
+    display: block;
+    font-family: "IBM Plex Mono";
+    font-size: 13dp;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 2dp;
+    color: #9db1c9;
+    margin-bottom: 8dp;
+}
+
+input.range {
+    display: block;
+    width: 100%;
+    height: 16dp;
+}
+
+/* the knob's vertical offset is its own margin-top measured from the input's
+   top, NOT from the track (RmlUi WidgetSlider::PositionBar): with a 16dp-high
+   input, a 16dp knob at margin-top 0 and a 4dp track pushed down by 6dp share
+   the same 8dp center line */
+input.range slidertrack {
+    background-color: #8cb4dc24;
+    border-radius: 2dp;
+    height: 4dp;
+    margin-top: 6dp;
+}
+
+input.range sliderprogress {
+    background-color: #63d9f759;
+    border-radius: 2dp;
+    height: 4dp;
+}
+
+input.range sliderbar {
+    width: 16dp;
+    height: 16dp;
+    margin-top: 0;
+    background-color: #63d9f7;
+    border-radius: 8dp;
+}
+
+input.range sliderbar:hover, input.range sliderbar:active {
+    background-color: #8ce4fa;
+}
+
+input.range sliderarrowdec, input.range sliderarrowinc {
+    width: 0;
+    height: 0;
+}
+
+.toggle-group {
+    display: block;
+}
+
+.toggle {
+    display: inline-block;
+    padding: 8dp 18dp;
+    margin-right: 8dp;
+    border: 1dp #8cb4dc59;
+    border-radius: 6dp;
+    font-size: 14dp;
+    font-weight: 600;
+    color: #f2f7ff;
+    cursor: pointer;
+}
+
+.toggle:hover {
+    background-color: #96beeb1a;
+    border-color: #63d9f7;
+}
+
+.toggle.selected {
+    background-color: #63d9f726;
+    border-color: #63d9f7;
+    color: #63d9f7;
+}
+
+.current-dir {
+    display: block;
+    padding: 8dp 10dp;
+    background-color: #070b15;
+    border: 1dp #8cb4dc24;
+    border-radius: 6dp 6dp 0 0;
+    font-family: "IBM Plex Mono";
+    font-size: 13dp;
+    color: #9db1c9;
+    /* long paths wrap instead of being clipped (RCSS has no text-overflow) */
+    word-break: break-all;
+}
+
+.file-list {
+    display: block;
+    height: 220dp;
+    overflow-y: auto;
+    background-color: #070b15;
+    border: 1dp #8cb4dc24;
+    border-top-width: 0;
+    border-radius: 0 0 6dp 6dp;
+    margin-bottom: 10dp;
+}
+
+.file-entry {
+    display: block;
+    padding: 6dp 10dp;
+    font-family: "IBM Plex Mono";
+    font-size: 13dp;
+    cursor: pointer;
+}
+
+.file-entry:hover {
+    background-color: #96beeb1a;
+    color: #63d9f7;
+}
+
+.selected-folder {
+    display: block;
+    font-family: "IBM Plex Mono";
+    font-size: 13dp;
+    color: #ffd27a;
+    margin: 8dp 0;
+    word-break: break-all;
+}
+
+.row-buttons {
+    display: block;
+    text-align: center;
+    margin-top: 20dp;
+}
+
+.row-buttons .button {
+    display: inline-block;
+    width: 220dp;
+    margin: 0 8dp;
+}
+
+scrollbarvertical {
+    width: 10dp;
+}
+
+scrollbarvertical slidertrack {
+    background-color: #070b15;
+}
+
+scrollbarvertical sliderbar {
+    background-color: #8cb4dc59;
+    min-height: 24dp;
+    border-radius: 5dp;
+}
+
+scrollbarvertical sliderbar:hover {
+    background-color: #63d9f7;
+}
+
+scrollbarvertical sliderarrowdec, scrollbarvertical sliderarrowinc {
+    width: 0;
+    height: 0;
+}

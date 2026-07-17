@@ -18,9 +18,22 @@ add_executable(arenai_desktop ${ARENAI_DESKTOP_SRC})
 
 # ArenAI module headers propagate through arenai_train_lib's PUBLIC interface.
 # Windowing (GLFW) is fully encapsulated inside arenai_view.
+# RmlUi is reserved to the src/gui/ hexagon: only gui/*.cpp may include it,
+# every other folder goes through gui/menu.h (which exposes no RmlUi type).
 target_link_libraries(
         arenai_desktop
         arenai_train_lib
+        RmlUi::Core
+        # user preferences are (de)serialized to JSON in src/core/
+        nlohmann_json::nlohmann_json
 )
 
 arenai_copy_runtime_dlls(arenai_desktop TORCH)
+
+# Game assets copied next to the executable: main.cpp resolves the resources
+# folder from the binary's location, whatever the working directory
+add_custom_command(
+        TARGET arenai_desktop POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+        "${CMAKE_SOURCE_DIR}/resources" "$<TARGET_FILE_DIR:arenai_desktop>/resources"
+)

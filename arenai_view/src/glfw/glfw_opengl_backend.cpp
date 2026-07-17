@@ -31,6 +31,35 @@ namespace arenai::view {
             context_, window_width_, window_height_, light_pos, camera);
     }
 
+    Rml::RenderInterface &GlfwWindowedBackend::ui_render_interface() {
+        return rml_render_interface_;
+    }
+
+    void GlfwWindowedBackend::begin_ui_frame(const int width, const int height) {
+        context_->make_current();
+
+        glViewport(0, 0, width, height);
+        glClearColor(0.f, 0.f, 0.f, 1.f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        rml_render_interface_.begin_frame(width, height);
+    }
+
+    void GlfwWindowedBackend::begin_ui_overlay(const int width, const int height) {
+        context_->make_current();
+
+        // no clear: the UI is composited over the frame already drawn
+        glViewport(0, 0, width, height);
+
+        rml_render_interface_.begin_frame(width, height);
+    }
+
+    void GlfwWindowedBackend::end_ui_frame() { rml_render_interface_.end_frame(); }
+
+    void GlfwWindowedBackend::present() {
+        eglSwapBuffers(context_->get_display(), context_->get_surface());
+    }
+
     /*
      * OpenGlViewFactory: windowed backend construction (GLFW-specific).
      */

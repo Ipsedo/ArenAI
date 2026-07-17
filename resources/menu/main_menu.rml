@@ -1,0 +1,14 @@
+<rml>
+<head>
+    <title>ArenAI</title>
+    <link type="text/rcss" href="menu.rcss"/>
+</head>
+<body data-model="settings">
+    <div id="main-panel" class="panel">
+        <h1>ArenAI</h1>
+        <div class="button primary" data-class-disabled="!can_play" data-event-click="play()">Play</div>
+        <div class="button" data-event-click="open_params()">Parameters</div>
+        <p class="hint" data-if="!can_play">Select a trained SAC folder in Parameters to play</p>
+    </div>
+</body>
+</rml>

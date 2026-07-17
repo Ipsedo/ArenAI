@@ -5,7 +5,10 @@
 </head>
 <body data-model="settings">
     <div id="params-panel" class="panel">
-        <h1>Parameters</h1>
+        <div class="params-header">
+            <div class="back-arrow" data-event-click="back()">←</div>
+            <h1>Parameters</h1>
+        </div>
 
         <div class="param-row">
             <span class="param-label">Enemy tanks: {{nb_tanks}}</span>
@@ -35,7 +38,10 @@
 
         <div class="row-buttons">
             <div class="button" data-event-click="select_folder()">Use this folder</div>
-            <div class="button" data-event-click="back()">Back</div>
+        </div>
+
+        <div class="row-buttons back-row">
+            <div class="button primary" data-event-click="back()">Back</div>
         </div>
     </div>
 </body>

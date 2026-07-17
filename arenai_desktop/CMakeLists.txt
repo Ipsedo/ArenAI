@@ -31,9 +31,17 @@ target_link_libraries(
 arenai_copy_runtime_dlls(arenai_desktop TORCH)
 
 # Game assets copied next to the executable: main.cpp resolves the resources
-# folder from the binary's location, whatever the working directory
-add_custom_command(
-        TARGET arenai_desktop POST_BUILD
+# folder from the binary's location, whatever the working directory.
+# A standalone ALL target rather than a POST_BUILD command: POST_BUILD only
+# fires when the executable relinks, so asset-only edits (RML/RCSS, textures)
+# would never reach the build tree; this target runs on every build and
+# copy_directory_if_different keeps the no-change case cheap.
+add_custom_target(
+        arenai_desktop_assets
         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
         "${CMAKE_SOURCE_DIR}/resources" "$<TARGET_FILE_DIR:arenai_desktop>/resources"
 )
+# the executable depends on the assets (not the other way round), so building
+# just the arenai_desktop target — what an IDE Run configuration does — also
+# refreshes the copied resources
+add_dependencies(arenai_desktop arenai_desktop_assets)

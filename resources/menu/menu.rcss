@@ -58,6 +58,35 @@ h1 {
     margin-bottom: 28dp;
 }
 
+.params-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 28dp;
+}
+
+.params-header h1 {
+    margin-bottom: 0;
+}
+
+/* IBM Plex Mono: the only menu font that ships the U+2190 arrow glyph */
+.back-arrow {
+    font-family: "IBM Plex Mono";
+    font-size: 18dp;
+    font-weight: 600;
+    color: #9db1c9;
+    padding: 5dp 12dp;
+    margin-right: 16dp;
+    border: 1dp #8cb4dc59;
+    border-radius: 6dp;
+    cursor: pointer;
+}
+
+.back-arrow:hover {
+    color: #63d9f7;
+    border-color: #63d9f7;
+    background-color: #96beeb1a;
+}
+
 h2 {
     display: block;
     font-family: "IBM Plex Mono";
@@ -252,6 +281,12 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     display: inline-block;
     width: 220dp;
     margin: 0 8dp;
+}
+
+/* wide gap above Back: visually detaches it from the explorer's
+   "Use this folder" action right above */
+.row-buttons.back-row {
+    margin-top: 36dp;
 }
 
 scrollbarvertical {

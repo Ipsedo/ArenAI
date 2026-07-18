@@ -87,7 +87,8 @@ namespace arenai::model {
         const auto dead_penalty = is_dead() ? -1.f : 0.f;
 
         // 3. fire cost (anti-spam)
-        const auto fire_penalty = !is_dead() && action_stats->has_fire() ? -fire_cost : 0.f;
+        const auto shoot_reward =
+            !is_dead() && action_stats->has_fire() ? rename_shoot_reward(tanks) - fire_cost : 0.f;
 
         // 4. hit reward
         float hit_reward = 0.f;
@@ -110,7 +111,7 @@ namespace arenai::model {
         }
 
         // 5. total reward
-        const float reward = dead_penalty + fire_penalty + hit_reward;
+        const float reward = dead_penalty + shoot_reward + hit_reward;
 
         return reward;
     }
@@ -174,6 +175,31 @@ namespace arenai::model {
         }
 
         return best_i;
+    }
+
+    float
+    BulletEnemyTank::rename_shoot_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
+        constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
+        const glm::vec3 chassis_pos = get_chassis()->get_model_matrix() * world_center;
+
+        float best_score = 0.f;
+        for (const auto &tank: tanks) {
+            if (tank.get() == this) continue;
+            if (tank->is_dead() && !tank->is_first_frame_dead()) continue;
+
+            const glm::vec3 other_pos = tank->get_chassis()->get_model_matrix() * world_center;
+            const float distance = glm::length(other_pos - chassis_pos);
+
+            const float angle = compute_aim_angle(tank);
+
+            const float distance_score = std::exp(-0.5f * std::pow(distance / distance_scale, 2.f));
+            const float angle_score = std::exp(-0.5f * std::pow(angle / angle_scale, 2.f));
+
+            if (const float curr_score = distance_score + angle_score; curr_score > best_score)
+                best_score = curr_score;
+        }
+
+        return best_score;
     }
 
     void BulletEnemyTank::on_fired_shell_contact(const ShellContactInfo &shell_info, Item *item) {

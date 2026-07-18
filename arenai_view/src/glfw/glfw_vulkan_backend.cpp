@@ -30,7 +30,11 @@ namespace arenai::view {
                 .surface = bootstrap.surface,
                 .device_env_var = "ARENAI_VK_DEVICE_WINDOW"}),
           window_(std::move(bootstrap.window)), surface_(bootstrap.surface) {
-        frame_context_ = std::make_shared<WindowFrameContext>(context()->device(), surface_);
+        frame_context_ =
+            std::make_shared<WindowFrameContext>(context()->device(), surface_, [window = window_] {
+                const auto [width, height] = window->framebuffer_size();
+                return VkExtent2D{static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
+            });
         rml_render_interface_ =
             std::make_unique<RmlVulkanRenderInterface>(context()->device(), frame_context_);
     }

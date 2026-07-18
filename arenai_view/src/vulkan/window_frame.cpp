@@ -12,8 +12,10 @@
 namespace arenai::view {
 
     WindowFrameContext::WindowFrameContext(
-        std::shared_ptr<VulkanDevice> device, const VkSurfaceKHR surface)
-        : device_(std::move(device)), swapchain_(std::make_unique<Swapchain>(device_, surface)),
+        std::shared_ptr<VulkanDevice> device, const VkSurfaceKHR surface,
+        std::function<VkExtent2D()> framebuffer_extent)
+        : device_(std::move(device)),
+          swapchain_(std::make_unique<Swapchain>(device_, surface, std::move(framebuffer_extent))),
           swapchain_valid_(swapchain_->handle() != VK_NULL_HANDLE),
           pool_(device_->make_command_pool()) {
         VkCommandBufferAllocateInfo alloc_info{};

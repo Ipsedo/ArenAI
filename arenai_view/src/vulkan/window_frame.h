@@ -5,6 +5,7 @@
 #ifndef ARENAI_VK_WINDOW_FRAME_H
 #define ARENAI_VK_WINDOW_FRAME_H
 
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -24,7 +25,11 @@ namespace arenai::view {
     public:
         static constexpr int FRAME_SLOTS = 2;
 
-        WindowFrameContext(std::shared_ptr<VulkanDevice> device, VkSurfaceKHR surface);
+        // framebuffer_extent: see Swapchain — window framebuffer size for
+        // surfaces without a fixed extent (Wayland)
+        WindowFrameContext(
+            std::shared_ptr<VulkanDevice> device, VkSurfaceKHR surface,
+            std::function<VkExtent2D()> framebuffer_extent);
 
         WindowFrameContext(const WindowFrameContext &) = delete;
         WindowFrameContext &operator=(const WindowFrameContext &) = delete;

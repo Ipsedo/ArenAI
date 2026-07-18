@@ -5,6 +5,7 @@
 #ifndef ARENAI_VK_SWAPCHAIN_H
 #define ARENAI_VK_SWAPCHAIN_H
 
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -17,7 +18,11 @@ namespace arenai::view {
     // shaders do their own sRGB encode, exactly like the GL pipeline.
     class Swapchain {
     public:
-        Swapchain(std::shared_ptr<VulkanDevice> device, VkSurfaceKHR surface);
+        // framebuffer_extent: current window framebuffer size, used when the
+        // surface reports no fixed extent (Wayland: currentExtent = 0xFFFFFFFF)
+        Swapchain(
+            std::shared_ptr<VulkanDevice> device, VkSurfaceKHR surface,
+            std::function<VkExtent2D()> framebuffer_extent);
 
         Swapchain(const Swapchain &) = delete;
         Swapchain &operator=(const Swapchain &) = delete;
@@ -44,6 +49,7 @@ namespace arenai::view {
 
         std::shared_ptr<VulkanDevice> device_;
         VkSurfaceKHR surface_;
+        std::function<VkExtent2D()> framebuffer_extent_;
         VkSwapchainKHR swapchain_;
         VkFormat format_;
         VkExtent2D extent_;

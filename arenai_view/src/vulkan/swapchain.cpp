@@ -11,8 +11,11 @@
 
 namespace arenai::view {
 
-    Swapchain::Swapchain(std::shared_ptr<VulkanDevice> device, const VkSurfaceKHR surface)
-        : device_(std::move(device)), surface_(surface), swapchain_(VK_NULL_HANDLE),
+    Swapchain::Swapchain(
+        std::shared_ptr<VulkanDevice> device, const VkSurfaceKHR surface,
+        std::function<VkExtent2D()> framebuffer_extent)
+        : device_(std::move(device)), surface_(surface),
+          framebuffer_extent_(std::move(framebuffer_extent)), swapchain_(VK_NULL_HANDLE),
           format_(VK_FORMAT_UNDEFINED), extent_{0, 0} {
         recreate();
     }
@@ -24,6 +27,17 @@ namespace arenai::view {
             "vkGetPhysicalDeviceSurfaceCapabilitiesKHR");
 
         VkExtent2D extent = capabilities.currentExtent;
+        if (extent.width == UINT32_MAX) {
+            // the surface has no fixed extent (Wayland): the swapchain sets
+            // the size — use the framebuffer size, clamped to the surface caps
+            extent = framebuffer_extent_();
+            if (extent.width == 0 || extent.height == 0) return false;
+            extent.width = std::clamp(
+                extent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
+            extent.height = std::clamp(
+                extent.height, capabilities.minImageExtent.height,
+                capabilities.maxImageExtent.height);
+        }
         if (extent.width == 0 || extent.height == 0) return false;
 
         // no-sRGB format: the shaders encode manually, like the GL pipeline

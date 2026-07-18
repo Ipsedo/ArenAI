@@ -34,7 +34,7 @@ namespace arenai::model {
           tank_prefix_name(tank_prefix_name),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), distance_scale(250.f), impact_distance_scale(10.f),
-          angle_scale(glm::pi<float>() / 3.f), optimal_distance(75.f),
+          angle_scale(glm::pi<float>() / 3.f), optimal_distance(75.f), fire_cost(0.02f),
           is_dead_already_triggered(false), has_touch(false), last_shoot_info(std::nullopt),
           action_stats(std::make_shared<ActionStats>()) {}
 
@@ -84,9 +84,12 @@ namespace arenai::model {
         else curr_frame_upside_down = 0;
 
         // 2. dead / suicide penalty
-        const auto dead_penalty = is_dead() ? (is_suicide() ? -0.5f : -1.f) : 0.f;
+        const auto dead_penalty = is_dead() ? -1.f : 0.f;
 
-        // 3. hit reward
+        // 3. fire cost (anti-spam)
+        const auto fire_penalty = !is_dead() && action_stats->has_fire() ? -fire_cost : 0.f;
+
+        // 4. hit reward
         float hit_reward = 0.f;
         if (last_shoot_info.has_value()) {
             const auto [fire_pos, hit_pos, has_hit, has_killed] = last_shoot_info.value();
@@ -98,12 +101,7 @@ namespace arenai::model {
                 const auto best_tank_pos =
                     glm::vec3(best_tank_model_matrix * glm::vec4(glm::vec3(0.f), 1.f));
 
-                constexpr float w_aim = 1.0f;
-                constexpr float c_miss = 0.4f;
-
-                const float impact_reward =
-                    (w_aim + c_miss) * compute_hit_reward(fire_pos, best_tank_pos, hit_pos)
-                    - c_miss;
+                const float impact_reward = compute_hit_reward(fire_pos, best_tank_pos, hit_pos);
 
                 hit_reward = impact_reward + (has_hit ? (has_killed ? 2.f : 1.f) : 0.f);
             }
@@ -111,8 +109,8 @@ namespace arenai::model {
             last_shoot_info = std::nullopt;
         }
 
-        // 4. total reward
-        const float reward = dead_penalty + hit_reward;
+        // 5. total reward
+        const float reward = dead_penalty + fire_penalty + hit_reward;
 
         return reward;
     }

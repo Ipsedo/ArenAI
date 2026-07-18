@@ -52,7 +52,7 @@ namespace arenai::train {
           alpha_discrete(std::make_shared<AlphaParameter>(0.1f)),
           continuous_target_entropy(
               std::make_shared<ConstantContinuousTargetEntropy>(nb_continuous_actions, 0.3f)),
-          discrete_target_entropy(std::make_shared<ConstantDiscreteTargetEntropy>(0.4f)),
+          discrete_target_entropy(std::make_shared<ConstantDiscreteTargetEntropy>(0.1f)),
           actor_optim(std::make_unique<torch::optim::Adam>(
               actor->parameters(), torch::optim::AdamOptions(actor_learning_rate))),
           critic_1_optim(std::make_unique<torch::optim::Adam>(

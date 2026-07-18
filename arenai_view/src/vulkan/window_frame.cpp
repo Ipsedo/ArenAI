@@ -51,8 +51,12 @@ namespace arenai::view {
 
     bool WindowFrameContext::ensure_frame_begun() {
         if (frame_active_) return true;
-        if (!swapchain_valid_) {
-            // minimized at the last resize: retry, the window may be back
+        // recreate when the last attempt failed (minimized) or when the
+        // window was resized: Wayland scales the buffer instead of raising
+        // VK_ERROR_OUT_OF_DATE_KHR, so a stale extent would silently render
+        // the frame at the old size (stretched, and mis-clipped by every
+        // scissor set in layout coordinates)
+        if (!swapchain_valid_ || !swapchain_->matches_framebuffer()) {
             device_->wait_idle();
             swapchain_valid_ = swapchain_->recreate();
             if (!swapchain_valid_) return false;

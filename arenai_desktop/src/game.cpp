@@ -71,6 +71,13 @@ namespace arenai::desktop {
             window->set_keyboard_callback(router);
             window->set_gamepad_callback(router);
 
+            // in keyboard mode the game handler captures (and hides) the cursor
+            // itself; the gamepad handler never touches the cursor, so the
+            // application hides it for the whole game and the pause popup
+            // restores it
+            if (settings.controller_kind == ControllerKind::Gamepad)
+                window->set_cursor_mode(controller::CursorMode::Disabled);
+
             // the window has a single resize slot: while in game it feeds both
             // the player renderer and the gui overlay
             window->set_resize_callback([&gui, env](const int width, const int height) {
@@ -88,6 +95,8 @@ namespace arenai::desktop {
                     gui->close_pause();
                     // in keyboard mode the game handler re-captures the cursor
                     // on its next event
+                    if (settings.controller_kind == ControllerKind::Gamepad)
+                        window->set_cursor_mode(controller::CursorMode::Disabled);
                 }
             };
 

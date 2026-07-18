@@ -20,6 +20,12 @@ namespace arenai::view {
         recreate();
     }
 
+    bool Swapchain::matches_framebuffer() const {
+        const auto [width, height] = framebuffer_extent_();
+        if (width == 0 || height == 0) return true;
+        return width == extent_.width && height == extent_.height;
+    }
+
     bool Swapchain::recreate() {
         VkSurfaceCapabilitiesKHR capabilities;
         vk_check(

@@ -30,7 +30,7 @@
 
         <div class="param-row">
             <span class="param-label">Display</span>
-            <div class="toggle-group">
+            <div class="toggle-group" id="display-row">
                 <div class="toggle" data-class-selected="display=='windowed'" data-event-click="set_display('windowed')"><div class="fill">Windowed</div></div>
                 <div class="toggle" data-class-selected="display=='fullscreen'" data-event-click="set_display('fullscreen')"><div class="fill">Fullscreen</div></div>
             </div>
@@ -38,14 +38,14 @@
 
         <h2>Trained SAC folder</h2>
         <div class="current-dir">{{current_dir}}</div>
-        <div class="file-list">
+        <div class="file-list" id="file-list">
             <div class="file-entry" data-for="entries" data-event-click="enter_dir(it_index)">{{it}}</div>
         </div>
         <div class="selected-folder" data-if="can_play">Selected: {{sac_folder}}</div>
         <p class="hint" data-if="!can_play">No folder selected yet</p>
 
         <div class="row-buttons">
-            <div class="button" data-event-click="select_folder()">Use this folder</div>
+            <div class="button" id="use-folder" data-event-click="select_folder()">Use this folder</div>
         </div>
 
         <div class="row-buttons back-row">

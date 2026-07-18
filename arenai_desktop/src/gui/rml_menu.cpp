@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <cstring>
 #include <iostream>
 #include <map>
@@ -188,11 +189,68 @@ namespace arenai::desktop::gui {
             Rml::PropertyId id_gap_{};
         };
 
+        // The entries of the file explorer live inside a scroll container
+        // (.file-list, overflow-y: auto), and RmlUi's spatial navigation
+        // treats scroll containers as isolated islands: the search never
+        // descends into one from outside nor climbs out from inside
+        // (SearchNavigationTarget in RmlUi's ElementDocument), so the D-pad
+        // alone can neither reach nor leave the list. This keydown listener
+        // bridges the island's borders before the document runs its default
+        // navigation: Down from the Display toggles dives onto the first
+        // entry, Up / Down on an edge entry resurfaces onto the neighbour
+        // rows; strictly between entries RmlUi's native navigation already
+        // moves the focus and scrolls it into view by itself.
+        class ExplorerNavListener final : public Rml::EventListener {
+        public:
+            // the data-for template stays in the list as a display:none
+            // child; only its instantiated clones are real entries
+            static std::vector<Rml::Element *> visible_file_entries(Rml::Element *file_list) {
+                std::vector<Rml::Element *> entries;
+                for (int i = 0; i < file_list->GetNumChildren(); i++)
+                    if (Rml::Element *child = file_list->GetChild(i); child->IsVisible())
+                        entries.push_back(child);
+                return entries;
+            }
+
+            void ProcessEvent(Rml::Event &event) override {
+                const auto key = static_cast<Rml::Input::KeyIdentifier>(
+                    event.GetParameter<int>("key_identifier", Rml::Input::KI_UNKNOWN));
+                if (key != Rml::Input::KI_UP && key != Rml::Input::KI_DOWN) return;
+
+                Rml::Element *focus = event.GetTargetElement();
+                Rml::ElementDocument *document = focus->GetOwnerDocument();
+                if (document == nullptr) return;
+                Rml::Element *list = document->GetElementById("file-list");
+                Rml::Element *above = document->GetElementById("display-row");
+                Rml::Element *below = document->GetElementById("use-folder");
+                if (list == nullptr || above == nullptr || below == nullptr) return;
+
+                const auto entries = visible_file_entries(list);
+                if (entries.empty()) return;
+
+                Rml::Element *target = nullptr;
+                if (focus->GetParentNode() == list) {
+                    if (key == Rml::Input::KI_UP && focus == entries.front())
+                        // resurface on the toggle that is actually lit
+                        target = above->QuerySelector(".toggle.selected");
+                    else if (key == Rml::Input::KI_DOWN && focus == entries.back()) target = below;
+                } else if (key == Rml::Input::KI_DOWN && focus->Closest("#display-row") != nullptr)
+                    target = entries.front();
+                else if (key == Rml::Input::KI_UP && focus == below) target = entries.back();
+
+                if (target != nullptr && target->Focus(true)) {
+                    target->ScrollIntoView(Rml::ScrollAlignment::Nearest);
+                    event.StopPropagation();
+                }
+            }
+        };
+
         // Adapts the window's input port to RmlUi context events: the menus
         // reuse the same controller callbacks as the game, so GLFW types
         // never surface here. The gamepad half rides RmlUi's keyboard
         // navigation: A activates the focused element (Enter), B backs out
-        // (the Escape path), D-pad and left stick move the spatial focus.
+        // (the Escape path), D-pad and left stick move the spatial focus,
+        // the right stick scrolls the focused scroll container.
         //
         // Only one pointing device highlights the menu at a time — whichever
         // spoke last. A gamepad action clears the mouse hover and flags the
@@ -261,6 +319,10 @@ namespace arenai::desktop::gui {
 
             void on_joystick(
                 const double x, const double y, const controller::GamepadJoystick stick) override {
+                if (stick == controller::GamepadJoystick::Right) {
+                    scroll_at_focus(y);
+                    return;
+                }
                 if (stick != controller::GamepadJoystick::Left) return;
 
                 // GLFW stick y grows downwards, matching KI_DOWN
@@ -292,6 +354,37 @@ namespace arenai::desktop::gui {
                 to_gamepad_mode();
                 context_->ProcessKeyDown(key, 0);
                 context_->ProcessKeyUp(key, 0);
+            }
+
+            // Right stick: scrolls the focused element's scroll container
+            // like a mouse wheel would under the cursor — the file explorer
+            // when the focus is inside it, the whole menu when the window is
+            // too small for the panel. The gamepad focus never leaves a
+            // scroll container island on its own, so walking up from the
+            // focus lands on the container the user is looking at.
+            void scroll_at_focus(const double value) {
+                constexpr double DEADZONE = 0.3;
+                // px per frame at full deflection on the 1080p design
+                // baseline (the window dispatches the stick once per frame)
+                constexpr float SPEED = 10.f;
+
+                if (std::abs(value) < DEADZONE) return;
+                to_gamepad_mode();
+
+                Rml::Element *element = context_->GetFocusElement();
+                for (; element != nullptr; element = element->GetParentNode())
+                    if (element->GetComputedValues().overflow_y() != Rml::Style::Overflow::Visible
+                        && element->GetScrollHeight() > element->GetClientHeight())
+                        break;
+                if (element == nullptr) return;
+
+                // smooth ramp starting at the deadzone edge
+                const double amount =
+                    (value > 0. ? 1. : -1.) * (std::abs(value) - DEADZONE) / (1. - DEADZONE);
+                element->SetScrollTop(
+                    element->GetScrollTop()
+                    + static_cast<float>(amount) * SPEED
+                          * context_->GetDensityIndependentPixelRatio());
             }
 
             struct AxisNav {
@@ -380,6 +473,9 @@ namespace arenai::desktop::gui {
                 if (!main_document_ || !params_document_ || !pause_document_)
                     throw std::runtime_error("RmlUi menu documents failed to load");
 
+                // D-pad bridge across the file explorer's scroll container
+                params_document_->AddEventListener(Rml::EventId::Keydown, &explorer_nav_listener_);
+
                 input_adapter_ = std::make_shared<MenuInputAdapter>(
                     context_,
                     [this] {
@@ -412,6 +508,13 @@ namespace arenai::desktop::gui {
                     window_->poll_events();
 
                     context_->Update();
+
+                    // entering a directory rebuilt the entry clones during
+                    // Update (dropping the focused one): put the cursor back
+                    // on the first entry of the fresh listing so the gamepad
+                    // walk resumes there — invisible for the mouse, the
+                    // :focus highlight only shows under .gamepad-nav
+                    if (std::exchange(focus_explorer_pending_, false)) focus_first_entry();
 
                     backend_->begin_ui_frame(width_, height_);
                     context_->Render();
@@ -563,6 +666,7 @@ namespace arenai::desktop::gui {
                         current_dir_ =
                             entry == ".." ? current_dir_.parent_path() : current_dir_ / entry;
                         refresh_explorer();
+                        focus_explorer_pending_ = true;
                     });
                 constructor.BindEventCallback(
                     "set_controller",
@@ -648,6 +752,15 @@ namespace arenai::desktop::gui {
                 main_document_->Show();
             }
 
+            void focus_first_entry() const {
+                Rml::Element *list = params_document_->GetElementById("file-list");
+                if (list == nullptr) return;
+                const auto entries = ExplorerNavListener::visible_file_entries(list);
+                if (entries.empty()) return;
+                if (entries.front()->Focus(true))
+                    entries.front()->ScrollIntoView(Rml::ScrollAlignment::Nearest);
+            }
+
             std::shared_ptr<view::AbstractWindowedGraphicBackend> backend_;
             std::shared_ptr<view::AbstractWindow> window_;
 
@@ -670,6 +783,10 @@ namespace arenai::desktop::gui {
             Rml::DataModelHandle model_handle_;
 
             std::shared_ptr<MenuInputAdapter> input_adapter_;
+            // removed from the document when Rml::Shutdown() destroys it in
+            // the destructor body, before the members are torn down
+            ExplorerNavListener explorer_nav_listener_;
+            bool focus_explorer_pending_ = false;
 
             std::filesystem::path current_dir_;
             Rml::String controller_display_;

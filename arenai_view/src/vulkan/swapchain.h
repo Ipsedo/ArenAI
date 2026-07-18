@@ -32,6 +32,13 @@ namespace arenai::view {
         // 0x0 (minimized): no swapchain exists until the next recreate.
         bool recreate();
 
+        // False when the window framebuffer no longer matches the swapchain
+        // extent. Wayland never reports VK_ERROR_OUT_OF_DATE_KHR on resize
+        // (the compositor rescales the buffer instead), so the frame loop
+        // polls this to recreate proactively; a 0x0 framebuffer (minimized)
+        // counts as matching until the window is back.
+        bool matches_framebuffer() const;
+
         VkResult acquire(VkSemaphore signal, uint32_t *image_index) const;
 
         VkSwapchainKHR handle() const;

@@ -12,7 +12,7 @@
 
         <div class="param-row">
             <span class="param-label">Enemy tanks: {{nb_tanks}}</span>
-            <input type="range" min="1" max="32" step="1" data-value="nb_tanks"/>
+            <input type="range" autofocus min="1" max="32" step="1" data-value="nb_tanks"/>
         </div>
 
         <div class="param-row">
@@ -23,33 +23,33 @@
         <div class="param-row">
             <span class="param-label">Controls</span>
             <div class="toggle-group">
-                <div class="toggle" data-class-selected="controller=='keyboard'" data-event-click="set_controller('keyboard')">Mouse + Keyboard</div>
-                <div class="toggle" data-class-selected="controller=='gamepad'" data-event-click="set_controller('gamepad')">Gamepad</div>
+                <div class="toggle" data-class-selected="controller=='keyboard'" data-event-click="set_controller('keyboard')"><div class="fill">Mouse + Keyboard</div></div>
+                <div class="toggle" data-class-selected="controller=='gamepad'" data-event-click="set_controller('gamepad')"><div class="fill">Gamepad</div></div>
             </div>
         </div>
 
         <div class="param-row">
             <span class="param-label">Display</span>
-            <div class="toggle-group">
-                <div class="toggle" data-class-selected="display=='windowed'" data-event-click="set_display('windowed')">Windowed</div>
-                <div class="toggle" data-class-selected="display=='fullscreen'" data-event-click="set_display('fullscreen')">Fullscreen</div>
+            <div class="toggle-group" id="display-row">
+                <div class="toggle" data-class-selected="display=='windowed'" data-event-click="set_display('windowed')"><div class="fill">Windowed</div></div>
+                <div class="toggle" data-class-selected="display=='fullscreen'" data-event-click="set_display('fullscreen')"><div class="fill">Fullscreen</div></div>
             </div>
         </div>
 
         <h2>Trained SAC folder</h2>
         <div class="current-dir">{{current_dir}}</div>
-        <div class="file-list">
+        <div class="file-list" id="file-list">
             <div class="file-entry" data-for="entries" data-event-click="enter_dir(it_index)">{{it}}</div>
         </div>
         <div class="selected-folder" data-if="can_play">Selected: {{sac_folder}}</div>
         <p class="hint" data-if="!can_play">No folder selected yet</p>
 
         <div class="row-buttons">
-            <div class="button" data-event-click="select_folder()">Use this folder</div>
+            <div class="button" id="use-folder" data-event-click="select_folder()">Use this folder</div>
         </div>
 
         <div class="row-buttons back-row">
-            <div class="button primary" data-event-click="back()">Back</div>
+            <div class="button primary" data-event-click="back()"><div class="fill">Back</div></div>
         </div>
     </div>
 </body>

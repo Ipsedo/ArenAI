@@ -28,10 +28,10 @@ int main(const int argc, char **argv) {
     parser.add_argument("--sensors_hidden_size").scan<'i', int>().default_value(256);
     parser.add_argument("--actions_hidden_size").scan<'i', int>().default_value(64);
     parser.add_argument("--actor_hidden_sizes")
-        .default_value<hidden_layers>({{2560, 1280}})
+        .default_value<hidden_layers>({{2560, 1024}})
         .action(parse_cli_hidden_layer);
     parser.add_argument("--critic_hidden_sizes")
-        .default_value<hidden_layers>({{2560, 1280}})
+        .default_value<hidden_layers>({{2560, 1024}})
         .action(parse_cli_hidden_layer);
     parser.add_argument("--tau").scan<'g', float>().default_value(0.005f);
     parser.add_argument("--gamma").scan<'g', float>().default_value(0.995f);
@@ -44,11 +44,11 @@ int main(const int argc, char **argv) {
     parser.add_argument("--critic_learning_rate").scan<'g', float>().default_value(3e-4f);
     parser.add_argument("--alpha_learning_rate").scan<'g', float>().default_value(3e-4f);
     parser.add_argument("--epochs").scan<'i', int>().default_value(64);
-    parser.add_argument("--batch_size").scan<'i', int>().default_value(256);
+    parser.add_argument("--batch_size").scan<'i', int>().default_value(512);
     parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60 * 3);
     parser.add_argument("--nb_episodes").scan<'i', int>().default_value(1000);
-    parser.add_argument("--replay_buffer_size").scan<'i', int>().default_value(150000);
-    parser.add_argument("--train_every").scan<'i', int>().default_value(64);
+    parser.add_argument("--replay_buffer_size").scan<'i', int>().default_value(200000);
+    parser.add_argument("--train_every").scan<'i', int>().default_value(256);
     parser.add_argument("--save_every").scan<'i', int>().default_value(30 * 60 * 3 * 25);
     parser.add_argument("--cuda").default_value(false).implicit_value(true);
     parser.add_argument("--metric_window_size").scan<'i', int>().default_value(256);

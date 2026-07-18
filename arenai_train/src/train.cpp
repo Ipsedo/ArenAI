@@ -19,7 +19,7 @@
 #include "./networks_io/torch_saver.h"
 #include "./replay_buffer/reward_replay_buffer.h"
 #include "./reward_transforms/identity_transform.h"
-#include "./reward_transforms/running_norm_transform.h"
+#include "./reward_transforms/scale_transform.h"
 
 using namespace arenai;
 using namespace arenai::train;
@@ -77,7 +77,7 @@ namespace arenai::train {
 
         std::unique_ptr<ReplayBuffer> replay_buffer = std::make_unique<RewardTransformReplayBuffer>(
             train_options.replay_buffer_size, std::make_shared<IdentityTransform>(),
-            std::make_shared<NormalizedRewardTransform>(train_options.replay_buffer_size, 0.1f));
+            std::make_shared<ScalePotentialTransform>(1.f));
 
         // metrics
         auto reward_mean_metric =

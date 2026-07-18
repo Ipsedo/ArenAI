@@ -61,7 +61,7 @@ TEST_F(RewardTest, RewardNegativeWhenDead) {
     ASSERT_LT(reward, 0.f);
 }
 
-TEST_F(RewardTest, SuicidePenaltyLessThanDeathPenalty) {
+TEST_F(RewardTest, DeathPenaltyIsMinusOne) {
     add_ground();
     auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f});
     auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {20.f, 0.f, 0.f});
@@ -81,8 +81,8 @@ TEST_F(RewardTest, SuicidePenaltyLessThanDeathPenalty) {
 
     const float death_reward = tanks[1]->get_reward(tanks);
 
-    // suicide penalty should be less severe (−0.5 vs −1.0)
-    ASSERT_LT(death_reward, -0.5f + 1e-5f);
+    // death and suicide share the same penalty so early termination is never an escape
+    ASSERT_FLOAT_EQ(death_reward, -1.f);
 }
 
 // ========================================================================

@@ -62,6 +62,7 @@ namespace arenai::model {
         float impact_distance_scale;
         float angle_scale;
         float optimal_distance;
+        float fire_cost;
 
         bool is_dead_already_triggered;
 
@@ -79,6 +80,8 @@ namespace arenai::model {
         float compute_hit_reward(
             const glm::vec3 &fire_pos, const glm::vec3 &best_enemy_pos,
             const glm::vec3 &hit_pos) const;
+
+        float rename_shoot_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks);
     };
 
 }// namespace arenai::model

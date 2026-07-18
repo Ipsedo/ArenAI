@@ -21,11 +21,11 @@ namespace arenai::train {
         return std::make_shared<SacAgent>(
             vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_action,
             get_value("actor_learning_rate", 1e-4f), get_value("critic_learning_rate", 3e-4f),
-            get_value("alpha_learning_rate", 1e-4f), get_value("sensors_hidden_size", 256),
+            get_value("alpha_learning_rate", 3e-4f), get_value("sensors_hidden_size", 256),
             get_value("actions_hidden_size", 64),
-            get_value<hidden_layers>("actor_hidden_size", parse_cli_hidden_layer, {{2560, 1280}})
+            get_value<hidden_layers>("actor_hidden_size", parse_cli_hidden_layer, {{2560, 1024}})
                 .layers,
-            get_value<hidden_layers>("critic_hidden_size", parse_cli_hidden_layer, {{2560, 1280}})
+            get_value<hidden_layers>("critic_hidden_size", parse_cli_hidden_layer, {{2560, 1024}})
                 .layers,
             get_value<vision_channels>(
                 "vision_channels", parse_cli_vision_channels,

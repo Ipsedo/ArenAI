@@ -34,7 +34,7 @@ namespace arenai::model {
           tank_prefix_name(tank_prefix_name),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), distance_scale(250.f), impact_distance_scale(10.f),
-          angle_scale(glm::pi<float>() / 3.f), optimal_distance(75.f), fire_cost(0.02f),
+          angle_scale(glm::pi<float>() / 3.f), optimal_distance(75.f), fire_cost(0.2f),
           is_dead_already_triggered(false), has_touch(false), last_shoot_info(std::nullopt),
           action_stats(std::make_shared<ActionStats>()) {}
 
@@ -87,8 +87,9 @@ namespace arenai::model {
         const auto dead_penalty = is_dead() ? -1.f : 0.f;
 
         // 3. fire cost (anti-spam)
-        const auto shoot_reward =
-            !is_dead() && action_stats->has_fire() ? rename_shoot_reward(tanks) - fire_cost : 0.f;
+        const auto shoot_reward = !is_dead() && action_stats->has_fire()
+                                      ? (1.f + fire_cost) * rename_shoot_reward(tanks) - fire_cost
+                                      : 0.f;
 
         // 4. hit reward
         float hit_reward = 0.f;

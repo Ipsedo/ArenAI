@@ -107,6 +107,12 @@ namespace arenai::desktop::gui {
                 const Rml::Vector2f size = element->GetBox().GetSize(Rml::BoxArea::Border);
                 const float ring_width = element->ResolveLength(ring_width_);
                 const float inset = ring_width + element->ResolveLength(gap_);
+                // ring and fill both adopt the element's border-radius: the
+                // ring must read as the same shape as the knob it surrounds
+                // (a concentric radius+inset ring looks round next to a
+                // square knob), so no radius inflation on the outer box
+                const float ring_radius = element->GetComputedValues().border_top_left_radius();
+                const float fill_radius = ring_radius;
 
                 Rml::Mesh mesh;
 
@@ -115,7 +121,7 @@ namespace arenai::desktop::gui {
                 const Rml::RenderBox ring_box(
                     {size.x - 2.f * ring_width, size.y - 2.f * ring_width}, {0.f, 0.f},
                     {ring_width, ring_width, ring_width, ring_width},
-                    {size.x / 2.f, size.x / 2.f, size.x / 2.f, size.x / 2.f});
+                    {ring_radius, ring_radius, ring_radius, ring_radius});
                 const Rml::ColourbPremultiplied ring = ring_color_.ToPremultiplied(opacity);
                 const Rml::ColourbPremultiplied ring_colors[4] = {ring, ring, ring, ring};
                 Rml::MeshUtilities::GenerateBackgroundBorder(
@@ -125,7 +131,7 @@ namespace arenai::desktop::gui {
                 const Rml::Vector2f fill_size = {size.x - 2.f * inset, size.y - 2.f * inset};
                 const Rml::RenderBox fill_box(
                     fill_size, {inset, inset}, {0.f, 0.f, 0.f, 0.f},
-                    {fill_size.x / 2.f, fill_size.x / 2.f, fill_size.x / 2.f, fill_size.x / 2.f});
+                    {fill_radius, fill_radius, fill_radius, fill_radius});
                 Rml::MeshUtilities::GenerateBackground(
                     mesh, fill_box, fill_color_.ToPremultiplied(opacity));
 
@@ -155,9 +161,9 @@ namespace arenai::desktop::gui {
         public:
             CursorRingDecoratorInstancer() {
                 id_ring_color_ =
-                    RegisterProperty("ring-color", "#f2f7ff").AddParser("color").GetId();
+                    RegisterProperty("ring-color", "#EAF7FF").AddParser("color").GetId();
                 id_fill_color_ =
-                    RegisterProperty("fill-color", "#63d9f7").AddParser("color").GetId();
+                    RegisterProperty("fill-color", "#00A6FB").AddParser("color").GetId();
                 id_ring_width_ = RegisterProperty("ring-width", "2dp").AddParser("length").GetId();
                 id_gap_ = RegisterProperty("gap", "2dp").AddParser("length").GetId();
                 RegisterShorthand(

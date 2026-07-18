@@ -1,14 +1,16 @@
-/* Design tokens lifted from ipsedo.com:
-   bg #070b15, ink #f2f7ff, muted #9db1c9, faint #7b8fa8,
-   accent #63d9f7 (hover #8ce4fa) on accent-ink #05222d, sun #ffd27a,
-   surface #96beeb0f (hover #96beeb1a), line #8cb4dc24, line-strong #8cb4dc59.
+/* "Blindage" design tokens — deep-blue palette (coolors 00A6FB→051923):
+   bg/night #051923, panel #003554, line #006494, line-strong #0582CA,
+   accent #00A6FB (hover #4DC0FC) on accent-ink #051923, progress #0582CA.
+   Light tints derived from the accent (the palette has no light value):
+   ink #EAF7FF, muted #8AC4E0, selection #7FD3FF, disabled #6FA3BF.
+   Sharp corners (2–3dp), 3dp accent stripe on panels, uppercase display.
    Display font Sora, technical labels IBM Plex Mono. */
 
 body {
     font-family: "Sora";
     font-size: 16dp;
-    color: #f2f7ff;
-    background-color: #070b15;
+    color: #EAF7FF;
+    background-color: #051923;
     box-sizing: border-box;
     width: 100%;
     height: 100%;
@@ -25,7 +27,7 @@ body {
 
 /* pause popup: the body is a translucent veil over the frozen game frame */
 body.overlay {
-    background-color: #070b15cc;
+    background-color: #051923d9;
 }
 
 .panel {
@@ -34,16 +36,16 @@ body.overlay {
        the body and triggers its scrollbars instead of crushing the panel */
     flex-shrink: 0;
     padding: 40dp;
-    background-color: #96beeb0f;
-    border: 1dp #8cb4dc24;
-    border-radius: 10dp;
+    background-color: #003554;
+    border: 1dp #006494;
+    /* the accent stripe carries the "Blindage" identity */
+    border-left: 3dp #00A6FB;
+    border-radius: 3dp;
 }
 
 #pause-panel {
     width: 340dp;
     text-align: center;
-    /* nearly opaque: keeps the buttons readable over any game backdrop */
-    background-color: #0d1424f5;
 }
 
 #main-panel {
@@ -59,10 +61,11 @@ body.overlay {
 
 h1 {
     display: block;
-    font-size: 40dp;
+    font-size: 32dp;
     font-weight: 700;
-    letter-spacing: -1dp;
-    color: #f2f7ff;
+    text-transform: uppercase;
+    letter-spacing: 3dp;
+    color: #EAF7FF;
     margin-bottom: 28dp;
 }
 
@@ -81,20 +84,20 @@ h1 {
     font-family: "IBM Plex Mono";
     font-size: 18dp;
     font-weight: 600;
-    color: #9db1c9;
+    color: #8AC4E0;
     padding: 5dp 12dp;
     margin-right: 16dp;
-    border: 1dp #8cb4dc59;
-    border-radius: 6dp;
+    border: 1dp #0582CA;
+    border-radius: 2dp;
     cursor: pointer;
     tab-index: auto;
     nav: auto;
 }
 
 .back-arrow:hover, body.gamepad-nav .back-arrow:focus {
-    color: #63d9f7;
-    border-color: #63d9f7;
-    background-color: #96beeb1a;
+    color: #00A6FB;
+    border-color: #00A6FB;
+    background-color: #00a6fb17;
 }
 
 h2 {
@@ -104,7 +107,7 @@ h2 {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 2dp;
-    color: #9db1c9;
+    color: #8AC4E0;
     margin: 22dp 0 8dp 0;
 }
 
@@ -114,11 +117,13 @@ h2 {
     padding: 12dp 20dp;
     width: 260dp;
     text-align: center;
-    font-size: 16dp;
+    font-size: 14dp;
     font-weight: 600;
-    color: #f2f7ff;
-    border: 1dp #8cb4dc59;
-    border-radius: 6dp;
+    text-transform: uppercase;
+    letter-spacing: 1dp;
+    color: #EAF7FF;
+    border: 1dp #0582CA;
+    border-radius: 2dp;
     cursor: pointer;
     tab-index: auto;
     nav: auto;
@@ -129,8 +134,8 @@ h2 {
    documents with .gamepad-nav (mouse hover is cleared on that switch, and
    the first mouse move flips back). */
 .button:hover, body.gamepad-nav .button:focus {
-    border-color: #63d9f7;
-    background-color: #96beeb1a;
+    border-color: #00A6FB;
+    background-color: #00a6fb17;
 }
 
 /* Primary buttons carry a detached cursor ring: RCSS cannot paint outside
@@ -143,48 +148,49 @@ h2 {
     margin: 6dp auto;
     padding: 2dp;
     border: 2dp transparent;
-    border-radius: 10dp;
+    /* concentric with the 2dp fill corners: 2dp + 2dp ring + 2dp gap */
+    border-radius: 6dp;
 }
 
 .button.primary .fill {
     display: block;
     padding: 12dp 20dp;
-    border: 1dp #63d9f7;
-    border-radius: 6dp;
-    background-color: #63d9f7;
-    color: #05222d;
+    border: 1dp #00A6FB;
+    border-radius: 2dp;
+    background-color: #00A6FB;
+    color: #051923;
 }
 
 .button.primary:hover, body.gamepad-nav .button.primary:focus {
-    border-color: #f2f7ff;
+    border-color: #EAF7FF;
     background-color: transparent;
 }
 
 .button.primary:hover .fill, body.gamepad-nav .button.primary:focus .fill {
-    background-color: #8ce4fa;
-    border-color: #8ce4fa;
+    background-color: #4DC0FC;
+    border-color: #4DC0FC;
 }
 
 .button.disabled {
-    color: #7b8fa8;
-    background-color: #96beeb0f;
-    border-color: #8cb4dc24;
+    color: #6FA3BF;
+    background-color: #003554;
+    border-color: #006494;
 }
 
 /* after the cursor rules, and restated under .gamepad-nav, so a disabled
    Play keeps its greyed fill under either cursor (the ring still shows,
    marking the position without promising a click) */
 .button.primary.disabled .fill, body.gamepad-nav .button.primary.disabled:focus .fill {
-    color: #7b8fa8;
-    background-color: #96beeb0f;
-    border-color: #8cb4dc24;
+    color: #6FA3BF;
+    background-color: #003554;
+    border-color: #006494;
 }
 
 .hint {
     display: block;
     font-family: "IBM Plex Mono";
     font-size: 12dp;
-    color: #7b8fa8;
+    color: #8AC4E0;
     margin-top: 14dp;
 }
 
@@ -200,7 +206,7 @@ h2 {
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 2dp;
-    color: #9db1c9;
+    color: #8AC4E0;
     margin-bottom: 8dp;
 }
 
@@ -219,14 +225,14 @@ input.range {
    input, a 16dp knob at margin-top 0 and a 4dp track pushed down by 6dp share
    the same 8dp center line */
 input.range slidertrack {
-    background-color: #8cb4dc24;
+    background-color: #006494;
     border-radius: 2dp;
     height: 4dp;
     margin-top: 6dp;
 }
 
 input.range sliderprogress {
-    background-color: #63d9f759;
+    background-color: #0582CA;
     border-radius: 2dp;
     height: 4dp;
 }
@@ -235,21 +241,23 @@ input.range sliderbar {
     width: 16dp;
     height: 16dp;
     margin-top: 0;
-    background-color: #63d9f7;
-    border-radius: 8dp;
+    background-color: #00A6FB;
+    border-radius: 2dp;
 }
 
 /* Detached cursor ring, as on the primary button. The knob is a
    widget-internal element that cannot be wrapped, so the ring + gap + fill
    are drawn by the gui-registered cursor-ring decorator; the box grows to
-   2dp ring + 2dp gap around the 16dp fill and recenters on the track. */
+   2dp ring + 2dp gap around the 16dp fill and recenters on the track.
+   Ring and fill reuse the base rule's 2dp border-radius (the decorator
+   follows the element's radius), so the ring stays square like the knob. */
 input.range sliderbar:hover, input.range sliderbar:active,
 body.gamepad-nav input.range:focus sliderbar {
     width: 24dp;
     height: 24dp;
     margin-top: -4dp;
     background-color: transparent;
-    decorator: cursor-ring(#f2f7ff #8ce4fa 2dp 2dp);
+    decorator: cursor-ring(#EAF7FF #4DC0FC 2dp 2dp);
 }
 
 input.range sliderarrowdec, input.range sliderarrowinc {
@@ -269,10 +277,12 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     display: inline-block;
     padding: 2dp;
     border: 2dp transparent;
-    border-radius: 10dp;
-    font-size: 14dp;
+    border-radius: 6dp;
+    font-size: 13dp;
     font-weight: 600;
-    color: #f2f7ff;
+    text-transform: uppercase;
+    letter-spacing: 1dp;
+    color: #EAF7FF;
     cursor: pointer;
     tab-index: auto;
     nav: auto;
@@ -281,42 +291,42 @@ input.range sliderarrowdec, input.range sliderarrowinc {
 .toggle .fill {
     display: block;
     padding: 8dp 18dp;
-    border: 1dp #8cb4dc59;
-    border-radius: 6dp;
+    border: 1dp #0582CA;
+    border-radius: 2dp;
 }
 
 /* unselected under the cursor: the plain-button feedback */
 .toggle:hover .fill, body.gamepad-nav .toggle:focus .fill {
-    background-color: #96beeb1a;
-    border-color: #63d9f7;
+    background-color: #00a6fb17;
+    border-color: #00A6FB;
 }
 
 .toggle.selected .fill {
-    background-color: #63d9f726;
-    border-color: #63d9f7;
-    color: #63d9f7;
+    background-color: #00a6fb24;
+    border-color: #00A6FB;
+    color: #00A6FB;
 }
 
 /* selected under the cursor: the detached ink ring, as on Play, and the
    selected tint restated so the cursor rules above cannot wash it out */
 .toggle.selected:hover, body.gamepad-nav .toggle.selected:focus {
-    border-color: #f2f7ff;
+    border-color: #EAF7FF;
 }
 
 .toggle.selected:hover .fill, body.gamepad-nav .toggle.selected:focus .fill {
-    background-color: #63d9f726;
-    border-color: #63d9f7;
+    background-color: #00a6fb24;
+    border-color: #00A6FB;
 }
 
 .current-dir {
     display: block;
     padding: 8dp 10dp;
-    background-color: #070b15;
-    border: 1dp #8cb4dc24;
-    border-radius: 6dp 6dp 0 0;
+    background-color: #051923;
+    border: 1dp #006494;
+    border-radius: 2dp 2dp 0 0;
     font-family: "IBM Plex Mono";
     font-size: 13dp;
-    color: #9db1c9;
+    color: #8AC4E0;
     /* long paths wrap instead of being clipped (RCSS has no text-overflow) */
     word-break: break-all;
 }
@@ -325,10 +335,10 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     display: block;
     height: 220dp;
     overflow-y: auto;
-    background-color: #070b15;
-    border: 1dp #8cb4dc24;
+    background-color: #051923;
+    border: 1dp #006494;
     border-top-width: 0;
-    border-radius: 0 0 6dp 6dp;
+    border-radius: 0 0 2dp 2dp;
     margin-bottom: 10dp;
 }
 
@@ -343,15 +353,16 @@ input.range sliderarrowdec, input.range sliderarrowinc {
 }
 
 .file-entry:hover, body.gamepad-nav .file-entry:focus {
-    background-color: #96beeb1a;
-    color: #63d9f7;
+    background-color: #00a6fb17;
+    color: #00A6FB;
 }
 
 .selected-folder {
     display: block;
     font-family: "IBM Plex Mono";
     font-size: 13dp;
-    color: #ffd27a;
+    font-weight: 600;
+    color: #7FD3FF;
     margin: 8dp 0;
     word-break: break-all;
 }
@@ -380,9 +391,9 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     margin-top: 36dp;
 }
 
-/* ipsedo.com scrollbars: thin 8px bars, invisible track, line-strong
-   rounded thumb turning accent (55%) on hover — shared by the file
-   explorer and the whole menu when the window is too small for it */
+/* thin 8px scrollbars, invisible track, line-strong rounded thumb turning
+   accent on hover — shared by the file explorer and the whole menu when
+   the window is too small for it */
 scrollbarvertical {
     width: 8dp;
 }
@@ -396,8 +407,8 @@ scrollbarvertical slidertrack, scrollbarhorizontal slidertrack {
 }
 
 scrollbarvertical sliderbar, scrollbarhorizontal sliderbar {
-    background-color: #8cb4dc59;
-    border-radius: 4dp;
+    background-color: #0582ca8c;
+    border-radius: 2dp;
 }
 
 scrollbarvertical sliderbar {
@@ -410,13 +421,7 @@ scrollbarhorizontal sliderbar {
 
 scrollbarvertical sliderbar:hover, scrollbarvertical sliderbar:active,
 scrollbarhorizontal sliderbar:hover, scrollbarhorizontal sliderbar:active {
-    background-color: #63d9f78c;
-}
-
-scrollbarvertical sliderarrowdec, scrollbarvertical sliderarrowinc,
-scrollbarhorizontal sliderarrowdec, scrollbarhorizontal sliderarrowinc {
-    width: 0;
-    height: 0;
+    background-color: #00a6fb8c;
 }
 
 /* both scrollbars visible at once: keep their meeting corner invisible */

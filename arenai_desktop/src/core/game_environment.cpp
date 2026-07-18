@@ -25,7 +25,7 @@ namespace arenai::desktop {
         // them off the window's GPU when the player view is offloaded (prime-run).
         : core::BaseTanksEnvironment(
             std::make_shared<train::DesktopAssetFileReader>(asset_folder_path),
-            view::make_opengl_backend(), nb_tanks, wanted_frequency, vision_height, vision_width, 8,
+            view::make_vulkan_backend(), nb_tanks, wanted_frequency, vision_height, vision_width, 8,
             true),
           windowed_backend(graphics_backend),
           asset_file_reader(std::make_shared<train::DesktopAssetFileReader>(asset_folder_path)),
@@ -34,10 +34,35 @@ namespace arenai::desktop {
 
     void DesktopGameEnvironment::on_draw(
         const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
+        // kept for redraw(): the pause menu re-renders this exact frame under
+        // its overlay while the simulation is frozen
+        last_model_matrices_ = model_matrices;
+
         // the base environment leaves its own (headless) context current on this
         // thread, so bind the window's context before drawing the player view
         player_renderer->make_current();
         player_renderer->draw(model_matrices);
+    }
+
+    void DesktopGameEnvironment::redraw() const {
+        if (!player_renderer || last_model_matrices_.empty()) return;
+
+        player_renderer->make_current();
+        player_renderer->draw(last_model_matrices_);
+    }
+
+    void DesktopGameEnvironment::resize(const int width, const int height) const {
+        if (player_renderer) player_renderer->set_window_size(width, height);
+    }
+
+    std::shared_ptr<controller::AbstractKeyboardCallback>
+    DesktopGameEnvironment::keyboard_handler() const {
+        return keyboard_handler_;
+    }
+
+    std::shared_ptr<controller::AbstractGamepadCallback>
+    DesktopGameEnvironment::gamepad_handler() const {
+        return gamepad_handler_;
     }
 
     void DesktopGameEnvironment::on_reset_physics(
@@ -51,14 +76,15 @@ namespace arenai::desktop {
         player_renderer = windowed_backend->make_player_renderer(
             glm::vec3(200, 300, 200), player_tank->get_camera());
 
-        // set controller callback and controllers
+        // build the controller handlers; the application decides when they
+        // actually receive the window inputs (see keyboard_handler())
         if (controller_kind == ControllerKind::Gamepad) {
             const auto player_controller_handler = std::make_shared<PlayerGamepadHandler>();
 
             for (auto &ctrl: player_tank->get_controllers())
                 player_controller_handler->add_controller(ctrl);
 
-            windowed_backend->get_window()->set_gamepad_callback(player_controller_handler);
+            gamepad_handler_ = player_controller_handler;
         } else if (controller_kind == ControllerKind::Keyboard) {
             const auto player_controller_handler = std::make_shared<PlayerMouseKeyboardHandler>(
                 windowed_backend->get_window(), *player_renderer);
@@ -66,14 +92,8 @@ namespace arenai::desktop {
             for (auto &ctrl: player_tank->get_controllers())
                 player_controller_handler->add_controller(ctrl);
 
-            windowed_backend->get_window()->set_keyboard_callback(player_controller_handler);
+            keyboard_handler_ = player_controller_handler;
         }
-
-        // set resize change callback
-        windowed_backend->get_window()->set_resize_callback(
-            [this](const int width, const int height) -> void {
-                player_renderer->set_window_size(width, height);
-            });
 
         player_renderer->make_current();
 

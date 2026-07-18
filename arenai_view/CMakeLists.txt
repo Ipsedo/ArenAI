@@ -9,26 +9,50 @@ set(CMAKE_CXX_STANDARD 20)
 ##### GLM #####
 find_package(glm REQUIRED)
 
-# Embed the GLSL sources into the library: cmake/ArenaiEmbedShaders.cmake turns
-# shaders/*.glsl into a generated header (EMBEDDED_SHADERS map) consumed by
-# load_shader(). The built executables need no shader file at runtime.
-file(GLOB ARENAI_VIEW_SHADER_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.glsl")
-set(ARENAI_VIEW_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
-set(ARENAI_VIEW_EMBEDDED_SHADERS_H "${ARENAI_VIEW_GENERATED_DIR}/shaders_embedded.h")
+##### Vulkan #####
+# Headers + loader: vcpkg (vulkan-headers/vulkan-loader) on Windows, distro
+# packages on Linux. The runtime driver comes from the system ICDs.
+# glslangValidator is the host GLSL->SPIR-V compiler (pacman glslang on Linux,
+# vcpkg glslang[tools] on Windows) used by arenai_compile_shaders below.
+find_package(Vulkan REQUIRED COMPONENTS glslangValidator)
 
-add_custom_command(
-        OUTPUT "${ARENAI_VIEW_EMBEDDED_SHADERS_H}"
-        COMMAND ${CMAKE_COMMAND}
-        -DSHADERS_DIR=${CMAKE_CURRENT_SOURCE_DIR}/shaders
-        -DOUTPUT_FILE=${ARENAI_VIEW_EMBEDDED_SHADERS_H}
-        -P ${CMAKE_SOURCE_DIR}/cmake/ArenaiEmbedShaders.cmake
-        DEPENDS ${ARENAI_VIEW_SHADER_FILES} "${CMAKE_SOURCE_DIR}/cmake/ArenaiEmbedShaders.cmake"
-        COMMENT "Embedding GLSL shaders into shaders_embedded.h"
+include("${CMAKE_SOURCE_DIR}/cmake/ArenaiCompileShaders.cmake")
+
+##### VulkanMemoryAllocator (header-only) #####
+FetchContent_Declare(
+        vma
+        GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
+        GIT_TAG v3.1.0
 )
+FetchContent_MakeAvailable(vma)
+
+##### RmlUi (UI library) #####
+# Built shared (this directory's scope only) so the code links into our shared
+# libraries without a PIC surprise. Needs FreeType on the system for fonts.
+set(BUILD_SHARED_LIBS ON)
+set(RMLUI_SAMPLES OFF)
+FetchContent_Declare(
+        rmlui
+        GIT_REPOSITORY https://github.com/mikke89/RmlUi.git
+        GIT_TAG 6.2
+)
+FetchContent_MakeAvailable(rmlui)
+
+# Vulkan shaders (shaders/*.glsl): compiled to SPIR-V by glslang at build
+# time and embedded into the library (EMBEDDED_SPIRV map in shaders_spirv.h,
+# see cmake/ArenaiCompileShaders.cmake). The built executables need no shader
+# file at runtime, and shader errors break the build instead of the first frame.
+set(ARENAI_VIEW_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+set(ARENAI_VIEW_GENERATED_SOURCES "")
+arenai_compile_shaders(
+        "${CMAKE_CURRENT_SOURCE_DIR}/shaders"
+        "${ARENAI_VIEW_GENERATED_DIR}"
+        "${ARENAI_VIEW_GENERATED_DIR}/shaders_spirv.h"
+        ARENAI_VIEW_GENERATED_SOURCES)
 
 # ARENAI VIEW
 file(GLOB_RECURSE ARENAI_VIEW_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
-add_library(arenai_view SHARED ${ARENAI_VIEW_SRC} "${ARENAI_VIEW_EMBEDDED_SHADERS_H}")
+add_library(arenai_view SHARED ${ARENAI_VIEW_SRC} ${ARENAI_VIEW_GENERATED_SOURCES})
 target_include_directories(arenai_view PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_include_directories(arenai_view PRIVATE "${ARENAI_VIEW_GENERATED_DIR}")
 
@@ -44,24 +68,9 @@ target_link_libraries(
 find_package(glfw3 REQUIRED)
 target_link_libraries(arenai_view PRIVATE glfw)
 
-# Desktop OpenGL 3.3 core. On Linux libGL (Mesa/NVIDIA, dispatched by libglvnd)
-# exports the full modern API as real symbols, so linking OpenGL::GL and
-# declaring the extension prototypes (see src/opengl/gl.h) is enough — no
-# function loader is needed. GL stays PRIVATE: it never leaks past arenai_view.
-find_package(OpenGL REQUIRED)
-target_link_libraries(arenai_view PRIVATE OpenGL::GL)
+# Vulkan stays PRIVATE like GL before it: no Vulkan type crosses the public API.
+target_link_libraries(arenai_view PRIVATE Vulkan::Vulkan GPUOpen::VulkanMemoryAllocator)
 
-if (WIN32)
-    # Mesa3D SDK (headers + import libs) from mesa-dist-win "devel" package,
-    # fetched by arenai_desktop/install_dependencies.ps1 into libs/mesa-devel.
-    # Only libEGL is needed here (context management); GL comes from OpenGL::GL.
-    if (NOT MESA_SDK_DIR)
-        set(MESA_SDK_DIR "${CMAKE_SOURCE_DIR}/libs/mesa-devel")
-    endif ()
-    find_path(MESA_INCLUDE_DIR EGL/egl.h HINTS "${MESA_SDK_DIR}/include" REQUIRED)
-    find_library(MESA_EGL_LIB libEGL HINTS "${MESA_SDK_DIR}/lib/x64" REQUIRED)
-    target_link_libraries(arenai_view PRIVATE "${MESA_EGL_LIB}")
-    target_include_directories(arenai_view PRIVATE "${MESA_INCLUDE_DIR}")
-else ()
-    target_link_libraries(arenai_view PRIVATE EGL dl)
-endif ()
+# PRIVATE like GL/GLFW: the public headers only forward-declare
+# Rml::RenderInterface, the library itself never leaks past arenai_view.
+target_link_libraries(arenai_view PRIVATE RmlUi::Core)

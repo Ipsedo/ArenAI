@@ -1,21 +1,22 @@
-#version 330 core
+#version 450
 
-precision highp float;
-precision highp int;
+// per-frame globals, bound once per renderer frame (set 0 of every scene pipeline)
+layout(set = 0, binding = 0, std140) uniform FrameGlobals {
+    vec4 u_light_pos;// light position in view space (w unused)
+    // world up axis expressed in view space (xyz) and camera world height (w):
+    // world_height(p_view) = dot(xyz, p_view) + w
+    vec4 u_world_up;
+    vec4 u_fog_color;// rgb only
+};
 
-uniform vec3 u_light_pos;
-uniform vec4 u_color;
-uniform vec3 u_fog_color;
-// world up axis expressed in view space (xyz) and camera world height (w):
-// world_height(p_view) = dot(xyz, p_view) + w
-uniform vec4 u_world_up;
+layout(set = 0, binding = 2) uniform sampler2DShadow u_shadow_map;
 
-uniform highp sampler2DShadow u_shadow_map;
+layout(set = 1, binding = 0, std140) uniform Material { vec4 u_color; };
 
-in vec3 v_position;
-in vec4 v_shadow_coord;
+layout(location = 0) in vec3 v_position;
+layout(location = 1) in vec4 v_shadow_coord;
 
-out vec4 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 const vec2 POISSON[12] = vec2[](
     vec2(-0.326, -0.406), vec2(-0.840, -0.074), vec2(-0.696, 0.457),
@@ -63,8 +64,8 @@ float shadow_factor() {
     float fade = smoothstep(0.0, EDGE_FADE, min(to_edge.x, to_edge.y));
     if (fade <= 0.0) return 1.0;
 
-    // constant bias; slope-scaled acne removal is handled by glPolygonOffset
-    // during the depth pass
+    // constant bias; slope-scaled acne removal is handled by the depth bias
+    // of the shadow pipeline during the depth pass
     const float bias = 0.0005;
     const float radius = 3.5;
     vec2 texel_size = 1.0 / vec2(textureSize(u_shadow_map, 0));
@@ -100,10 +101,12 @@ float fog_amount() {
 
 void main() {
     // flat shading: face normal from screen-space derivatives of the
-    // view-space position, so smooth vertex normals are not needed
-    vec3 normal = normalize(cross(dFdx(v_position), dFdy(v_position)));
+    // view-space position, so smooth vertex normals are not needed; dFdy
+    // follows Vulkan's downward window y (GL: upward), hence the swapped
+    // operands to keep the normal facing outward
+    vec3 normal = normalize(cross(dFdy(v_position), dFdx(v_position)));
 
-    vec3 light_vector = normalize(u_light_pos - v_position);
+    vec3 light_vector = normalize(u_light_pos.xyz - v_position);
 
     // wrapped (half-Lambert) diffuse: soft falloff, no pitch-black faces;
     // cubed to keep enough contrast between lit and unlit facets
@@ -134,10 +137,10 @@ void main() {
 
     // sky-tinted fresnel rim (camera sits at the view-space origin)
     float rim = pow(1.0 - max(dot(normal, view_vector), 0.0), RIM_POWER);
-    color += RIM_STRENGTH * rim * u_fog_color;
+    color += RIM_STRENGTH * rim * u_fog_color.rgb;
 
     // height fog toward the sky color
-    color = mix(color, u_fog_color, fog_amount());
+    color = mix(color, u_fog_color.rgb, fog_amount());
 
     fragColor = vec4(color, u_color.a);
 }

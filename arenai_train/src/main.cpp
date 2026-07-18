@@ -17,6 +17,7 @@ int main(const int argc, char **argv) {
     argparse::ArgumentParser parser("arenai train");
 
     // model
+    parser.add_group("model");
     parser.add_argument("--vision_channels")
         .default_value<vision_channels>(
             {{{3, 8}, {8, 16}, {16, 32}, {32, 64}, {64, 128}, {128, 256}}})
@@ -36,15 +37,16 @@ int main(const int argc, char **argv) {
     parser.add_argument("--gamma").scan<'g', float>().default_value(0.995f);
 
     // train
+    parser.add_group("train");
     parser.add_argument("--output_folder").required();
     parser.add_argument("--resources_folder").required();
-    parser.add_argument("--actor_learning_rate").scan<'g', float>().default_value(1e-3f);
-    parser.add_argument("--critic_learning_rate").scan<'g', float>().default_value(3e-3f);
-    parser.add_argument("--alpha_learning_rate").scan<'g', float>().default_value(3e-3f);
-    parser.add_argument("--epochs").scan<'i', int>().default_value(16);
+    parser.add_argument("--actor_learning_rate").scan<'g', float>().default_value(1e-4f);
+    parser.add_argument("--critic_learning_rate").scan<'g', float>().default_value(3e-4f);
+    parser.add_argument("--alpha_learning_rate").scan<'g', float>().default_value(3e-4f);
+    parser.add_argument("--epochs").scan<'i', int>().default_value(64);
     parser.add_argument("--batch_size").scan<'i', int>().default_value(256);
     parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60 * 3);
-    parser.add_argument("--nb_episodes").scan<'i', int>().default_value(2000);
+    parser.add_argument("--nb_episodes").scan<'i', int>().default_value(1000);
     parser.add_argument("--replay_buffer_size").scan<'i', int>().default_value(150000);
     parser.add_argument("--train_every").scan<'i', int>().default_value(64);
     parser.add_argument("--save_every").scan<'i', int>().default_value(30 * 60 * 3 * 25);
@@ -52,6 +54,7 @@ int main(const int argc, char **argv) {
     parser.add_argument("--metric_window_size").scan<'i', int>().default_value(256);
 
     // env
+    parser.add_group("environment");
     parser.add_argument("--wanted_frequency").scan<'g', float>().default_value(1.f / 30.f);
     parser.add_argument("--nb_tanks").scan<'i', int>().default_value(32);
     parser.add_argument("--vision_height").scan<'i', int>().default_value(128);

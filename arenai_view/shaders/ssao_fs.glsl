@@ -1,14 +1,14 @@
-#version 330 core
+#version 450
 
-precision highp float;
+layout(set = 1, binding = 0) uniform sampler2D u_depth;
 
-uniform highp sampler2D u_depth;
-// projection terms: xy = (proj[0][0], proj[1][1]), zw = (proj[2][2], proj[3][2])
-uniform vec4 u_proj_info;
+// projection terms of the zero-to-one depth projection:
+// xy = (proj[0][0], proj[1][1]), zw = (proj[2][2], proj[3][2])
+layout(push_constant) uniform Push { vec4 u_proj_info; };
 
-in vec2 v_uv;
+layout(location = 0) in vec2 v_uv;
 
-out vec4 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 const int NB_TAPS = 10;
 // world-space radius of the occlusion hemisphere
@@ -22,10 +22,14 @@ const float SKY_DISTANCE = 900.0;
 const float GOLDEN_ANGLE = 2.39996;
 
 float view_z(vec2 uv) {
-    float ndc_z = texture(u_depth, uv).r * 2.0 - 1.0;
+    // Vulkan depth is already in [0, 1]: no NDC remap needed
+    float ndc_z = texture(u_depth, uv).r;
     return -u_proj_info.w / (ndc_z + u_proj_info.z);
 }
 
+// note: uv now has a top-left origin, so the reconstructed position is the
+// y-mirror of the true view-space position — harmless here, the whole AO
+// estimator (positions, normal, distances) is consistent under that mirror
 vec3 view_pos(vec2 uv) {
     float z = view_z(uv);
     return vec3((uv * 2.0 - 1.0) * -z / u_proj_info.xy, z);

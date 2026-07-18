@@ -4,7 +4,7 @@ A battle-royal game with trained agent which controls tanks in realistic physic 
 
 ## Description
 
-Each agent receives the OpenGL frame of its camera as input, and it is trained to fire and hit enemies.
+Each agent receives the rendered frame of its camera as input, and it is trained to fire and hit enemies.
 
 When agent is trained (with SAC algorithm) you can fight against other tanks.
 
@@ -23,7 +23,7 @@ Windows build is now working !
 
 Install dependencies with pacman :
 ```shell
-$ sudo pacman -Sy bullet glm glfw
+$ sudo pacman -Sy bullet glm glfw vulkan-devel vulkan-headers glslang
 ```
 
 Then, download or install LibTorch :
@@ -41,9 +41,9 @@ $ paru -Sy libtorch-cuda
 
 Finally, build the project :
 ```shell
-$ cd /path/to/ArenAI/arenai/
+$ cd /path/to/ArenAI/
 $ mkdir build && cd build
-$ cmake .. && make
+$ cmake .. && make -j $(nproc)
 ```
 
 ### Windows
@@ -54,7 +54,7 @@ This will add the `vcpkg` executable in the `PATH` which is needed to compile th
 Then you are ready to build all modules.
 Open a PowerShell session :
 ```powershell
-cd C:\Users\MyName\path\to\ArenAI\arenai
+cd C:\Users\MyName\path\to\ArenAI\
 .\install_dependencies.ps1
 ```
 
@@ -62,7 +62,7 @@ This will create `libs` folder with all dependencies.
 
 You can now compile the project's modules :
 ```powershell
-cd C:\Users\MyName\path\to\ArenAI\arenai
+cd C:\Users\MyName\path\to\ArenAI\
 .\build_windows.ps1
 ```
 

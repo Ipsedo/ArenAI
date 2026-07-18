@@ -17,7 +17,8 @@ LocalAssetFileReader::LocalAssetFileReader(const std::filesystem::path &path_to_
     : path_to_assets(path_to_assets) {}
 
 std::string LocalAssetFileReader::read_text(const std::filesystem::path &file_path) {
-    const std::ifstream file(path_to_assets / file_path);
+    // binary: matches DesktopAssetFileReader (Windows text mode corrupts binary assets)
+    const std::ifstream file(path_to_assets / file_path, std::ios::binary);
     if (!file) throw std::runtime_error("Could not open " + file_path.string());
 
     std::stringstream buffer;

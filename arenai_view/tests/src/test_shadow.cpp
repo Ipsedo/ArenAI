@@ -11,8 +11,9 @@
 
 #include "./utils/local_file_reader.h"
 #include "./utils/make_shapes.h"
-#include "opengl/drawables/diffuse.h"
-#include "opengl/renderers/gl_offscreen_renderer.h"
+#include "vulkan/drawables/diffuse.h"
+#include "vulkan/renderers/offscreen_renderer.h"
+#include "vulkan/vulkan_backend.h"
 
 using namespace arenai;
 using namespace arenai::view;
@@ -34,14 +35,16 @@ namespace {
             [](const long acc, const uint8_t p) { return acc + static_cast<long>(p); });
     }
 
-    std::unique_ptr<GlOffscreenRenderer>
+    std::unique_ptr<VulkanOffscreenRenderer>
     make_shadow_test_renderer(const bool with_shadows, long &floor_only_sum, long &occluded_sum) {
-        const auto main_context = std::make_shared<HeadlessEglContext>();
+        const auto backend = std::make_unique<VulkanBackend>();
+        const auto context =
+            std::dynamic_pointer_cast<VulkanRenderContext>(backend->render_context());
         const auto file_reader =
             std::make_shared<LocalAssetFileReader>(std::filesystem::path(ARENAI_ASSETS_DIR));
 
-        auto renderer = std::make_unique<GlOffscreenRenderer>(
-            main_context, WIDTH, HEIGHT, glm::vec3(0.f, 300.f, 0.f),
+        auto renderer = std::make_unique<VulkanOffscreenRenderer>(
+            context->device(), WIDTH, HEIGHT, glm::vec3(0.f, 300.f, 0.f),
             std::make_shared<StaticCamera>(
                 glm::vec3{0.f, 80.f, -80.f}, glm::vec3{0.f, 0.f, 0.f}, glm::vec3{0.f, 1.f, 0.f}),
             with_shadows);
@@ -50,7 +53,7 @@ namespace {
 
         auto [vertices, normals] = make_cube(1.f);
         const auto make_drawable = [&] {
-            return std::make_unique<Diffuse>(
+            return std::make_unique<VulkanDiffuse>(
                 file_reader, vertices, glm::vec4(0.8f, 0.8f, 0.8f, 1.f));
         };
         renderer->add_drawable("floor", make_drawable());
@@ -61,7 +64,7 @@ namespace {
         const auto with_occluder = std::vector<std::tuple<std::string, glm::mat4>>{
             {"floor", FLOOR_MATRIX}, {"occluder", OCCLUDER_MATRIX}};
 
-        // PBO double-buffering: draw twice, keep the second frame
+        // async 2-slot readback: draw twice, keep the second frame
         renderer->draw_and_get_frame(floor_only);
         floor_only_sum = pixel_sum(renderer->draw_and_get_frame(floor_only).pixels);
 
@@ -81,7 +84,7 @@ TEST(ShadowRenderingTest, OccluderDarkensFloor) {
 
     // the occluder is not visible from the camera, so any brightness drop
     // comes from its shadow on the floor
-    constexpr long margin = 3L * WIDTH * HEIGHT;// per-pixel GL tolerance
+    constexpr long margin = 3L * WIDTH * HEIGHT;// per-pixel tolerance
     ASSERT_LT(occluded_sum + margin, floor_only_sum);
 }
 

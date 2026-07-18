@@ -6,9 +6,6 @@ set(CMAKE_CXX_STANDARD 20)
 
 enable_testing()
 find_package(GTest REQUIRED)
-# the tests exercise the GL renderer directly (glReadPixels, glClear, ...), so
-# they link OpenGL::GL themselves — arenai_view keeps it PRIVATE
-find_package(OpenGL REQUIRED)
 
 include(FetchContent)
 
@@ -20,7 +17,12 @@ file(GLOB_RECURSE SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 add_executable(arenai_view_tests "${SRC}")
 
 # arenai_view propagates the view/utils/controller headers through its PUBLIC interface.
-target_link_libraries(arenai_view_tests GTest::gtest GTest::gtest_main nlohmann_json::nlohmann_json soil2 arenai_view OpenGL::GL)
+target_link_libraries(arenai_view_tests GTest::gtest GTest::gtest_main nlohmann_json::nlohmann_json soil2 arenai_view)
+
+# the tests exercising the Vulkan renderer through the internal headers need
+# the Vulkan/VMA headers too (arenai_view keeps them PRIVATE)
+find_package(Vulkan REQUIRED)
+target_link_libraries(arenai_view_tests Vulkan::Vulkan GPUOpen::VulkanMemoryAllocator)
 target_include_directories(arenai_view_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 # internal headers (shadow rendering is not part of the public API)
 target_include_directories(arenai_view_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../src")
@@ -30,11 +32,6 @@ target_compile_definitions(arenai_view_tests PRIVATE
 
 if (ARENAI_REGENERATE_GOLDEN_IMAGES)
     target_compile_definitions(arenai_view_tests PRIVATE ARENAI_REGENERATE_GOLDEN_IMAGES)
-endif ()
-
-# fix opengl header with glfw on windows
-if (WIN32)
-    target_compile_definitions(arenai_view_tests PRIVATE GLFW_INCLUDE_NONE)
 endif ()
 
 arenai_copy_runtime_dlls(arenai_view_tests)

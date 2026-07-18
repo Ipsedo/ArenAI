@@ -9,8 +9,8 @@
 # newer Mesa) produces references the CI can never match, whatever the tolerance
 # — hence this container, which is the same one the CI job runs in.
 #
-# Everything lands in arenai/cmake-build-docker (gitignored, kept out of the
-# host build tree which is configured for the host toolchain). LibTorch and
+# Everything lands in cmake-build-docker (gitignored, kept out of the host
+# build tree which is configured for the host toolchain). LibTorch and
 # ccache are cached on the host between runs; the first run downloads ~500 MB.
 set -euo pipefail
 
@@ -32,12 +32,11 @@ REPO_ROOT="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/arenai-ci"
 mkdir -p "$CACHE_DIR"
 
-# The view tests read the assets from android/, outside arenai/, so the whole
-# repo is mounted — at its host path, to keep paths in error messages clickable.
+# The repo is mounted at its host path, to keep paths in error messages clickable.
 exec docker run --rm -i \
     -v "$REPO_ROOT:$REPO_ROOT" \
     -v "$CACHE_DIR:/cache" \
-    -w "$REPO_ROOT/arenai" \
+    -w "$REPO_ROOT" \
     -e LIBTORCH_VERSION="$LIBTORCH_VERSION" \
     -e REGENERATE="$REGENERATE" \
     -e HOST_UID="$(id -u)" \

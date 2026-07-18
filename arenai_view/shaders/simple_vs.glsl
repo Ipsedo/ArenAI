@@ -1,7 +1,8 @@
-#version 330 core
+#version 450
 
-uniform mat4 u_mvp_matrix;
-in vec4 a_position;
+layout(push_constant) uniform Push { mat4 u_mvp_matrix; };
+
+layout(location = 0) in vec4 a_position;
 
 void main() {
     gl_Position = u_mvp_matrix * a_position;

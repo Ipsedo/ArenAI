@@ -26,6 +26,8 @@ namespace arenai::controller {
         virtual void on_key(Key key, InputAction action) = 0;
         virtual void on_mouse_move(double x, double y) = 0;
         virtual void on_mouse_button(MouseButton button, InputAction action) = 0;
+        // no-op default: most handlers (tank controls) have no use for the wheel
+        virtual void on_scroll(double x_offset, double y_offset) {}
     };
 
     class AbstractGamepadCallback {

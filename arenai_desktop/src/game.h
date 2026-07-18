@@ -8,24 +8,21 @@
 #include <map>
 #include <string>
 
-#include "./controller/control_kind.h"
-
 namespace arenai::desktop {
 
     struct ModelOptions {
         int vision_height;
         int vision_width;
         std::map<std::string, std::string> hyper_parameters;
+        // may be empty: the menu then requires the player to pick a folder
         std::filesystem::path state_dict_folder;
         bool cuda;
     };
 
     struct GameOptions {
         float wanted_frequency;
-        int nb_tanks;
         int window_width;
         int window_height;
-        ControllerKind controller_kind;
         std::filesystem::path resources_folder;
     };
 

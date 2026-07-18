@@ -18,9 +18,30 @@ add_executable(arenai_desktop ${ARENAI_DESKTOP_SRC})
 
 # ArenAI module headers propagate through arenai_train_lib's PUBLIC interface.
 # Windowing (GLFW) is fully encapsulated inside arenai_view.
+# RmlUi is reserved to the src/gui/ hexagon: only gui/*.cpp may include it,
+# every other folder goes through gui/menu.h (which exposes no RmlUi type).
 target_link_libraries(
         arenai_desktop
         arenai_train_lib
+        RmlUi::Core
+        # user preferences are (de)serialized to JSON in src/core/
+        nlohmann_json::nlohmann_json
 )
 
 arenai_copy_runtime_dlls(arenai_desktop TORCH)
+
+# Game assets copied next to the executable: main.cpp resolves the resources
+# folder from the binary's location, whatever the working directory.
+# A standalone ALL target rather than a POST_BUILD command: POST_BUILD only
+# fires when the executable relinks, so asset-only edits (RML/RCSS, textures)
+# would never reach the build tree; this target runs on every build and
+# copy_directory_if_different keeps the no-change case cheap.
+add_custom_target(
+        arenai_desktop_assets
+        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+        "${CMAKE_SOURCE_DIR}/resources" "$<TARGET_FILE_DIR:arenai_desktop>/resources"
+)
+# the executable depends on the assets (not the other way round), so building
+# just the arenai_desktop target — what an IDE Run configuration does — also
+# refreshes the copied resources
+add_dependencies(arenai_desktop arenai_desktop_assets)

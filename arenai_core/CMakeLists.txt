@@ -14,7 +14,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(indicators)
 
-##### PhyVR #####
+##### ArenAI #####
 file(GLOB_RECURSE ARENAI_CORE_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 add_library(arenai_core SHARED ${ARENAI_CORE_SRC})
 target_include_directories(arenai_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")

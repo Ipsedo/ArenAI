@@ -25,13 +25,15 @@ apt-get install -y --no-install-recommends \
     curl \
     git \
     unzip \
+    python3 \
     libbullet-dev \
     libglm-dev \
     libglfw3-dev \
     libgtest-dev \
-    libegl-dev \
-    libgles-dev \
-    libgl1-mesa-dri
+    libvulkan-dev \
+    mesa-vulkan-drivers \
+    glslang-tools \
+    libfreetype-dev
 
 if ! cmake --version 2>/dev/null | head -1 | grep -q "${CMAKE_VERSION}"; then
     curl -fL "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz" |
@@ -40,5 +42,5 @@ fi
 
 # The goldens are tied to this version: a Mesa bump is the expected reason for
 # the pixel comparisons to start failing (see scripts/goldens_docker.sh).
-echo "mesa (libgl1-mesa-dri): $(dpkg-query -W -f='${Version}' libgl1-mesa-dri)"
+echo "mesa (mesa-vulkan-drivers): $(dpkg-query -W -f='${Version}' mesa-vulkan-drivers)"
 echo "cmake: $(cmake --version | head -1)"

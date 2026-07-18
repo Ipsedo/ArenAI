@@ -1,17 +1,20 @@
-#version 330 core
+#version 450
 
-precision highp float;
+layout(set = 1, binding = 0) uniform sampler2D u_depth;
 
-uniform highp sampler2D u_depth;
-// projection terms: xy = (proj[0][0], proj[1][1]), zw = (proj[2][2], proj[3][2])
-uniform vec4 u_proj_info;
-// sun position in uv space, and viewport aspect ratio (width / height)
-uniform vec2 u_sun_uv;
-uniform float u_aspect;
+layout(push_constant) uniform Push {
+    // projection terms of the zero-to-one depth projection:
+    // xy = (proj[0][0], proj[1][1]), zw = (proj[2][2], proj[3][2])
+    vec4 u_proj_info;
+    // sun position in uv space (top-left origin), and viewport aspect ratio
+    // (width / height)
+    vec2 u_sun_uv;
+    float u_aspect;
+};
 
-in vec2 v_uv;
+layout(location = 0) in vec2 v_uv;
 
-out vec4 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 const int NB_STEPS = 24;
 // fraction of the pixel→sun segment covered by the march
@@ -24,7 +27,8 @@ const float GLOW_SHARPNESS = 7.0;
 const float SKY_DISTANCE = 900.0;
 
 float view_z(vec2 uv) {
-    float ndc_z = texture(u_depth, uv).r * 2.0 - 1.0;
+    // Vulkan depth is already in [0, 1]: no NDC remap needed
+    float ndc_z = texture(u_depth, uv).r;
     return -u_proj_info.w / (ndc_z + u_proj_info.z);
 }
 

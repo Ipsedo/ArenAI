@@ -37,7 +37,7 @@ else ()
     find_package(Bullet REQUIRED)
 endif ()
 
-##### PhyVR #####
+##### ArenAI #####
 file(GLOB_RECURSE ARENAI_MODEL_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 add_library(arenai_model SHARED ${ARENAI_MODEL_SRC})
 target_include_directories(arenai_model PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")

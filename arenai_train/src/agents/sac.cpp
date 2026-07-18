@@ -48,11 +48,11 @@ namespace arenai::train {
               vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_actions,
               hidden_size_sensors, hidden_size_actions, critic_hidden_sizes, vision_channels,
               group_norm_nums)),
-          alpha_continuous(std::make_shared<AlphaParameter>(5e-2f)),
-          alpha_discrete(std::make_shared<AlphaParameter>(5e-2f)),
+          alpha_continuous(std::make_shared<AlphaParameter>(0.1f)),
+          alpha_discrete(std::make_shared<AlphaParameter>(0.1f)),
           continuous_target_entropy(
-              std::make_shared<ConstantContinuousTargetEntropy>(nb_continuous_actions, 0.1f)),
-          discrete_target_entropy(std::make_shared<ConstantDiscreteTargetEntropy>(0.3f)),
+              std::make_shared<ConstantContinuousTargetEntropy>(nb_continuous_actions, 0.3f)),
+          discrete_target_entropy(std::make_shared<ConstantDiscreteTargetEntropy>(0.4f)),
           actor_optim(std::make_unique<torch::optim::Adam>(
               actor->parameters(), torch::optim::AdamOptions(actor_learning_rate))),
           critic_1_optim(std::make_unique<torch::optim::Adam>(
@@ -254,8 +254,6 @@ namespace arenai::train {
 
         save_torch(output_folder, alpha_continuous, "alpha_continuous.pt");
         save_torch(output_folder, alpha_discrete, "alpha_discrete.pt");
-
-        export_state_dict_neutral(actor, output_folder / "actor_state_dict");
 
         // Optimizers
         save_torch(output_folder, actor_optim, "actor_optim.pt");

@@ -19,7 +19,7 @@ void EngineTestFixture::SetUp() {
 
     file_reader = std::make_shared<LocalAssetFileReader>(std::filesystem::path(ARENAI_ASSETS_DIR));
 
-    graphics_backend = view::make_opengl_backend();
+    graphics_backend = view::make_vulkan_backend();
 
     tank_factory = engine->get_tank_factory();
 }

@@ -1,12 +1,10 @@
-#version 330 core
+#version 450
 
-precision mediump float;
+layout(set = 1, binding = 0) uniform sampler2D u_ao;
 
-uniform sampler2D u_ao;
+layout(location = 0) in vec2 v_uv;
 
-in vec2 v_uv;
-
-out vec4 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 // 5x5 gaussian at half resolution, hiding the SSAO's rotated-spiral noise
 const float WEIGHTS[3] = float[](6.0, 4.0, 1.0);

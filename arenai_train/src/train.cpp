@@ -30,12 +30,12 @@ namespace arenai::train {
         const EnvironmentOptions &environment_options, const ModelOptions &model_options,
         const TrainOptions &train_options) {
 
-        auto graphics_backend = view::make_opengl_backend();
+        auto graphics_backend = view::make_vulkan_backend();
 
         torch::Device torch_device =
             train_options.cuda ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU);
 
-        std::cout << "OpenGL device : " << graphics_backend->renderer_info() << std::endl;
+        std::cout << "Vulkan device : " << graphics_backend->renderer_info() << std::endl;
         std::cout << "PyTorch device : " << torch_device.str() << std::endl;
 
         std::cout << "Vision size : width=" << environment_options.vision_width

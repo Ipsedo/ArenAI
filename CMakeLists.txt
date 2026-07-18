@@ -10,6 +10,14 @@ enable_testing()
 # per-target WINDOWS_EXPORT_ALL_SYMBOLS property in each module).
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
+# Windows has no rpath: executables only find DLLs next to themselves. One
+# shared runtime directory for every target — ours and FetchContent's (RmlUi)
+# alike — means no per-target DLL copying, and vcpkg's applocal deployment
+# (freetype and friends next to rmlui.dll) lands where the executables live.
+if (WIN32)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+endif ()
+
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(ArenaiRuntimeDlls)
 

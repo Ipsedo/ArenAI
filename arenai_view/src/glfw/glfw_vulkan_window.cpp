@@ -4,6 +4,7 @@
 
 #include "./glfw_vulkan_window.h"
 
+#include <algorithm>
 #include <iostream>
 #include <stdexcept>
 
@@ -241,6 +242,47 @@ namespace arenai::view {
             glfwSetWindowMonitor(
                 window_, nullptr, windowed_x_, windowed_y_, windowed_width_, windowed_height_, 0);
         }
+    }
+
+    std::tuple<int, int> GlfwVulkanWindow::screen_size() const {
+        // fullscreen: the owning monitor is known directly
+        GLFWmonitor *monitor = glfwGetWindowMonitor(window_);
+
+        if (!monitor) {
+            // windowed: pick the monitor showing the largest part of the window
+            int x, y, width, height;
+            glfwGetWindowPos(window_, &x, &y);
+            glfwGetWindowSize(window_, &width, &height);
+
+            int count = 0;
+            GLFWmonitor **monitors = glfwGetMonitors(&count);
+            int best_overlap = 0;
+            for (int i = 0; i < count; i++) {
+                const GLFWvidmode *mode = glfwGetVideoMode(monitors[i]);
+                if (!mode) continue;
+                int monitor_x, monitor_y;
+                glfwGetMonitorPos(monitors[i], &monitor_x, &monitor_y);
+
+                const int overlap =
+                    std::max(
+                        0, std::min(x + width, monitor_x + mode->width) - std::max(x, monitor_x))
+                    * std::max(
+                        0, std::min(y + height, monitor_y + mode->height) - std::max(y, monitor_y));
+                if (overlap > best_overlap) {
+                    best_overlap = overlap;
+                    monitor = monitors[i];
+                }
+            }
+            // window fully off-screen or no overlap information
+            if (!monitor) monitor = glfwGetPrimaryMonitor();
+        }
+
+        if (monitor)
+            if (const GLFWvidmode *mode = glfwGetVideoMode(monitor))
+                return {mode->width, mode->height};
+
+        // no monitor reachable: the framebuffer is the best remaining estimate
+        return framebuffer_size();
     }
 
     std::vector<const char *> GlfwVulkanWindow::required_instance_extensions() const {

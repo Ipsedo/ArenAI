@@ -42,6 +42,8 @@ namespace arenai::view {
 
         void set_fullscreen(bool fullscreen) override;
 
+        std::tuple<int, int> screen_size() const override;
+
         std::vector<const char *> required_instance_extensions() const override;
         VkSurfaceKHR create_surface(VkInstance instance) const override;
 

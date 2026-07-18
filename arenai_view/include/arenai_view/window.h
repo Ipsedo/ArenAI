@@ -7,6 +7,7 @@
 
 #include <functional>
 #include <memory>
+#include <tuple>
 #include <utility>
 
 #include <arenai_controller/callback.h>
@@ -36,6 +37,11 @@ namespace arenai::view {
         // video mode) and windowed mode; the new size reaches the application
         // through the resize callback, like any user resize
         virtual void set_fullscreen(bool fullscreen) = 0;
+
+        // resolution of the monitor the window currently sits on (the one
+        // showing most of it), so UI scale can follow the physical display
+        // rather than the window size
+        virtual std::tuple<int, int> screen_size() const = 0;
     };
 
 }// namespace arenai::view

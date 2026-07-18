@@ -9,12 +9,18 @@ body {
     font-size: 16dp;
     color: #f2f7ff;
     background-color: #070b15;
+    box-sizing: border-box;
     width: 100%;
     height: 100%;
-    /* center the single panel both ways */
+    /* guaranteed breathing room around the panel, whatever the window size */
+    padding: 24dp 48dp;
+    /* the panel centers itself through its auto margins (not align/justify
+       center): when the window is smaller than the menu, auto margins
+       collapse to zero so the whole content stays reachable through the
+       per-axis scrollbars below */
     display: flex;
-    align-items: center;
-    justify-content: center;
+    overflow-x: auto;
+    overflow-y: auto;
 }
 
 /* pause popup: the body is a translucent veil over the frozen game frame */
@@ -23,6 +29,10 @@ body.overlay {
 }
 
 .panel {
+    margin: auto;
+    /* never shrink below the design size: a too-small window overflows
+       the body and triggers its scrollbars instead of crushing the panel */
+    flex-shrink: 0;
     padding: 40dp;
     background-color: #96beeb0f;
     border: 1dp #8cb4dc24;
@@ -42,11 +52,9 @@ body.overlay {
 }
 
 #params-panel {
-    width: 100%;
-    max-width: 560dp;
-    /* guaranteed breathing room on both sides, whatever the window width */
-    margin-left: 48dp;
-    margin-right: 48dp;
+    /* fixed design width (side-by-side buttons need almost all of it);
+       side breathing room comes from the body padding */
+    width: 560dp;
 }
 
 h1 {
@@ -289,25 +297,46 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     margin-top: 36dp;
 }
 
+/* ipsedo.com scrollbars: thin 8px bars, invisible track, line-strong
+   rounded thumb turning accent (55%) on hover — shared by the file
+   explorer and the whole menu when the window is too small for it */
 scrollbarvertical {
-    width: 10dp;
+    width: 8dp;
 }
 
-scrollbarvertical slidertrack {
-    background-color: #070b15;
+scrollbarhorizontal {
+    height: 8dp;
+}
+
+scrollbarvertical slidertrack, scrollbarhorizontal slidertrack {
+    background-color: transparent;
+}
+
+scrollbarvertical sliderbar, scrollbarhorizontal sliderbar {
+    background-color: #8cb4dc59;
+    border-radius: 4dp;
 }
 
 scrollbarvertical sliderbar {
-    background-color: #8cb4dc59;
     min-height: 24dp;
-    border-radius: 5dp;
 }
 
-scrollbarvertical sliderbar:hover {
-    background-color: #63d9f7;
+scrollbarhorizontal sliderbar {
+    min-width: 24dp;
 }
 
-scrollbarvertical sliderarrowdec, scrollbarvertical sliderarrowinc {
+scrollbarvertical sliderbar:hover, scrollbarvertical sliderbar:active,
+scrollbarhorizontal sliderbar:hover, scrollbarhorizontal sliderbar:active {
+    background-color: #63d9f78c;
+}
+
+scrollbarvertical sliderarrowdec, scrollbarvertical sliderarrowinc,
+scrollbarhorizontal sliderarrowdec, scrollbarhorizontal sliderarrowinc {
     width: 0;
     height: 0;
+}
+
+/* both scrollbars visible at once: keep their meeting corner invisible */
+scrollbarcorner {
+    background-color: transparent;
 }

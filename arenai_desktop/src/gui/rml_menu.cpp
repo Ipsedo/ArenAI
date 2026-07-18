@@ -150,7 +150,7 @@ namespace arenai::desktop::gui {
 
                 context_ = Rml::CreateContext("menu", Rml::Vector2i(width_, height_));
                 if (!context_) throw std::runtime_error("RmlUi context creation failed");
-                context_->SetDensityIndependentPixelRatio(dp_ratio(width_, height_));
+                update_dp_ratio();
 
                 current_dir_ = std::filesystem::exists(settings_.sac_folder)
                                    ? std::filesystem::canonical(settings_.sac_folder)
@@ -227,7 +227,7 @@ namespace arenai::desktop::gui {
                 width_ = width;
                 height_ = height;
                 context_->SetDimensions(Rml::Vector2i(width_, height_));
-                context_->SetDensityIndependentPixelRatio(dp_ratio(width_, height_));
+                update_dp_ratio();
             }
 
             ~RmlGui() override {
@@ -242,11 +242,16 @@ namespace arenai::desktop::gui {
 
         private:
             // Every dp length in menu.rcss is mapped to pixels relative to a
-            // 1080p design baseline, so the menu keeps the same apparent size
-            // on any display — a 4K TV renders it twice as large. The min of
-            // both axes guarantees the design still fits on unusual ratios.
-            static float dp_ratio(const int width, const int height) {
-                return std::max(0.5f, std::min(width / 1920.0f, height / 1080.0f));
+            // 1080p design baseline, measured against the monitor the window
+            // sits on — not the window itself — so the menu keeps the same
+            // physical size on the display whether the game is fullscreen or
+            // in a small window (a 4K TV renders it twice as large either
+            // way). The min of both axes keeps the design fitting on unusual
+            // ratios.
+            void update_dp_ratio() const {
+                const auto [screen_width, screen_height] = window_->screen_size();
+                context_->SetDensityIndependentPixelRatio(
+                    std::max(0.5f, std::min(screen_width / 1920.0f, screen_height / 1080.0f)));
             }
 
             // Registered with an explicit family/weight (the static TTFs carry

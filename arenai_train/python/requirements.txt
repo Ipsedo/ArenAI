@@ -1,6 +1,4 @@
-torch
 numpy
-#executorch
 pandas
 matplotlib
 

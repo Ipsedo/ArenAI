@@ -6,7 +6,7 @@
 <body class="overlay" data-model="settings">
     <div id="pause-panel" class="panel">
         <h1>Paused</h1>
-        <div class="button primary" data-event-click="pause_continue()">Continue</div>
+        <div class="button primary" autofocus data-event-click="pause_continue()"><div class="fill">Continue</div></div>
         <div class="button" data-event-click="pause_main_menu()">Main menu</div>
         <div class="button" data-event-click="pause_exit()">Exit game</div>
     </div>

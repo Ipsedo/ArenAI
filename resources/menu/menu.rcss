@@ -87,9 +87,11 @@ h1 {
     border: 1dp #8cb4dc59;
     border-radius: 6dp;
     cursor: pointer;
+    tab-index: auto;
+    nav: auto;
 }
 
-.back-arrow:hover {
+.back-arrow:hover, body.gamepad-nav .back-arrow:focus {
     color: #63d9f7;
     border-color: #63d9f7;
     background-color: #96beeb1a;
@@ -118,25 +120,61 @@ h2 {
     border: 1dp #8cb4dc59;
     border-radius: 6dp;
     cursor: pointer;
+    tab-index: auto;
+    nav: auto;
 }
 
-.button:hover {
+/* One pointing device at a time: the gamepad cursor is the RmlUi focus and
+   reuses the exact hover look, but only when the C++ side has flagged the
+   documents with .gamepad-nav (mouse hover is cleared on that switch, and
+   the first mouse move flips back). */
+.button:hover, body.gamepad-nav .button:focus {
     border-color: #63d9f7;
     background-color: #96beeb1a;
 }
 
+/* Primary buttons carry a detached cursor ring: RCSS cannot paint outside
+   an element, so the outer .button.primary is a 2dp ring + 2dp gap
+   (reserved in transparent — nothing shifts) around an inner .fill that
+   owns the accent background. The outer element keeps the focus, the
+   navigation and the click bindings. */
 .button.primary {
+    width: 302dp;
+    margin: 6dp auto;
+    padding: 2dp;
+    border: 2dp transparent;
+    border-radius: 10dp;
+}
+
+.button.primary .fill {
+    display: block;
+    padding: 12dp 20dp;
+    border: 1dp #63d9f7;
+    border-radius: 6dp;
     background-color: #63d9f7;
-    border-color: #63d9f7;
     color: #05222d;
 }
 
-.button.primary:hover {
+.button.primary:hover, body.gamepad-nav .button.primary:focus {
+    border-color: #f2f7ff;
+    background-color: transparent;
+}
+
+.button.primary:hover .fill, body.gamepad-nav .button.primary:focus .fill {
     background-color: #8ce4fa;
     border-color: #8ce4fa;
 }
 
-.button.disabled, .button.primary.disabled {
+.button.disabled {
+    color: #7b8fa8;
+    background-color: #96beeb0f;
+    border-color: #8cb4dc24;
+}
+
+/* after the cursor rules, and restated under .gamepad-nav, so a disabled
+   Play keeps its greyed fill under either cursor (the ring still shows,
+   marking the position without promising a click) */
+.button.primary.disabled .fill, body.gamepad-nav .button.primary.disabled:focus .fill {
     color: #7b8fa8;
     background-color: #96beeb0f;
     border-color: #8cb4dc24;
@@ -170,7 +208,11 @@ input.range {
     display: block;
     width: 100%;
     height: 16dp;
+    /* tab-index comes built-in with form controls; nav must be local for
+       the spatial navigation to leave the slider upwards / downwards */
+    nav: auto;
 }
+
 
 /* the knob's vertical offset is its own margin-top measured from the input's
    top, NOT from the track (RmlUi WidgetSlider::PositionBar): with a 16dp-high
@@ -197,8 +239,17 @@ input.range sliderbar {
     border-radius: 8dp;
 }
 
-input.range sliderbar:hover, input.range sliderbar:active {
-    background-color: #8ce4fa;
+/* Detached cursor ring, as on the primary button. The knob is a
+   widget-internal element that cannot be wrapped, so the ring + gap + fill
+   are drawn by the gui-registered cursor-ring decorator; the box grows to
+   2dp ring + 2dp gap around the 16dp fill and recenters on the track. */
+input.range sliderbar:hover, input.range sliderbar:active,
+body.gamepad-nav input.range:focus sliderbar {
+    width: 24dp;
+    height: 24dp;
+    margin-top: -4dp;
+    background-color: transparent;
+    decorator: cursor-ring(#f2f7ff #8ce4fa 2dp 2dp);
 }
 
 input.range sliderarrowdec, input.range sliderarrowinc {
@@ -210,27 +261,51 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     display: block;
 }
 
+/* same detached-ring structure as .button.primary: the outer .toggle is the
+   ring slot (2dp ring + 2dp gap, transparent when idle — its 4dp per side
+   also supply the old 8dp gap between neighbours), the inner .fill draws
+   the actual chip */
 .toggle {
     display: inline-block;
-    padding: 8dp 18dp;
-    margin-right: 8dp;
-    border: 1dp #8cb4dc59;
-    border-radius: 6dp;
+    padding: 2dp;
+    border: 2dp transparent;
+    border-radius: 10dp;
     font-size: 14dp;
     font-weight: 600;
     color: #f2f7ff;
     cursor: pointer;
+    tab-index: auto;
+    nav: auto;
 }
 
-.toggle:hover {
+.toggle .fill {
+    display: block;
+    padding: 8dp 18dp;
+    border: 1dp #8cb4dc59;
+    border-radius: 6dp;
+}
+
+/* unselected under the cursor: the plain-button feedback */
+.toggle:hover .fill, body.gamepad-nav .toggle:focus .fill {
     background-color: #96beeb1a;
     border-color: #63d9f7;
 }
 
-.toggle.selected {
+.toggle.selected .fill {
     background-color: #63d9f726;
     border-color: #63d9f7;
     color: #63d9f7;
+}
+
+/* selected under the cursor: the detached ink ring, as on Play, and the
+   selected tint restated so the cursor rules above cannot wash it out */
+.toggle.selected:hover, body.gamepad-nav .toggle.selected:focus {
+    border-color: #f2f7ff;
+}
+
+.toggle.selected:hover .fill, body.gamepad-nav .toggle.selected:focus .fill {
+    background-color: #63d9f726;
+    border-color: #63d9f7;
 }
 
 .current-dir {
@@ -263,9 +338,11 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     font-family: "IBM Plex Mono";
     font-size: 13dp;
     cursor: pointer;
+    tab-index: auto;
+    nav: auto;
 }
 
-.file-entry:hover {
+.file-entry:hover, body.gamepad-nav .file-entry:focus {
     background-color: #96beeb1a;
     color: #63d9f7;
 }
@@ -289,6 +366,12 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     display: inline-block;
     width: 220dp;
     margin: 0 8dp;
+}
+
+/* the primary Back keeps the same visible size as its plain neighbours:
+   220dp content + 40dp padding + 2dp border, carried by the ring wrapper */
+.row-buttons .button.primary {
+    width: 262dp;
 }
 
 /* wide gap above Back: visually detaches it from the explorer's

@@ -47,6 +47,10 @@ namespace arenai::view {
             {GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER, controller::GamepadButton::RB},
             {GLFW_GAMEPAD_BUTTON_LEFT_BUMPER, controller::GamepadButton::LB},
             {GLFW_GAMEPAD_BUTTON_START, controller::GamepadButton::Start},
+            {GLFW_GAMEPAD_BUTTON_DPAD_UP, controller::GamepadButton::DPadUp},
+            {GLFW_GAMEPAD_BUTTON_DPAD_DOWN, controller::GamepadButton::DPadDown},
+            {GLFW_GAMEPAD_BUTTON_DPAD_LEFT, controller::GamepadButton::DPadLeft},
+            {GLFW_GAMEPAD_BUTTON_DPAD_RIGHT, controller::GamepadButton::DPadRight},
         };
 
         // GLFW only exposes the gamepad API for joysticks whose GUID it finds in

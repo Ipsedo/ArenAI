@@ -56,8 +56,9 @@ namespace arenai::desktop::gui {
         virtual void render_pause_overlay() = 0;
         // returns the pending button action and resets it to None
         virtual PauseAction poll_pause_action() = 0;
-        // input sink the application routes window events to while paused
+        // input sinks the application routes window events to while paused
         virtual std::shared_ptr<controller::AbstractKeyboardCallback> pause_input() = 0;
+        virtual std::shared_ptr<controller::AbstractGamepadCallback> pause_gamepad_input() = 0;
 
         virtual void on_window_resized(int width, int height) = 0;
     };

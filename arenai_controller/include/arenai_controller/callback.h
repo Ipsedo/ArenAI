@@ -16,7 +16,7 @@ namespace arenai::controller {
     // gamepad
     enum class GamepadJoystick { Right, Left };
     enum class GamepadTrigger { Right, Left };
-    enum class GamepadButton { A, B, X, Y, RB, LB, Start };
+    enum class GamepadButton { A, B, X, Y, RB, LB, Start, DPadUp, DPadDown, DPadLeft, DPadRight };
 
     class AbstractKeyboardCallback {
     public:

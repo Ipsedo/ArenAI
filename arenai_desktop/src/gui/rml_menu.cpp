@@ -87,13 +87,121 @@ namespace arenai::desktop::gui {
             std::shared_ptr<utils::AbstractResourceFileReader> reader_;
         };
 
+        // The slider knob is a widget-internal element (sliderbar) that cannot
+        // be wrapped in RML like the buttons, so its detached cursor ring is a
+        // gui-local decorator instead: an ink ring hugging the element's edge,
+        // a transparent gap, and the fill disc — plain triangle geometry, the
+        // only thing the Vulkan backend renders (no box-shadow, no textures).
+        // RCSS: decorator: cursor-ring(<ring-color> <fill-color> <ring-width> <gap>);
+        class CursorRingDecorator final : public Rml::Decorator {
+        public:
+            CursorRingDecorator(
+                const Rml::Colourb ring_color, const Rml::Colourb fill_color,
+                const Rml::NumericValue ring_width, const Rml::NumericValue gap)
+                : ring_color_(ring_color), fill_color_(fill_color), ring_width_(ring_width),
+                  gap_(gap) {}
+
+            Rml::DecoratorDataHandle
+            GenerateElementData(Rml::Element *element, Rml::BoxArea) const override {
+                const float opacity = element->GetComputedValues().opacity();
+                const Rml::Vector2f size = element->GetBox().GetSize(Rml::BoxArea::Border);
+                const float ring_width = element->ResolveLength(ring_width_);
+                const float inset = ring_width + element->ResolveLength(gap_);
+
+                Rml::Mesh mesh;
+
+                // hollow ring at the outer edge (zero-alpha background: only
+                // the border geometry is emitted)
+                const Rml::RenderBox ring_box(
+                    {size.x - 2.f * ring_width, size.y - 2.f * ring_width}, {0.f, 0.f},
+                    {ring_width, ring_width, ring_width, ring_width},
+                    {size.x / 2.f, size.x / 2.f, size.x / 2.f, size.x / 2.f});
+                const Rml::ColourbPremultiplied ring = ring_color_.ToPremultiplied(opacity);
+                const Rml::ColourbPremultiplied ring_colors[4] = {ring, ring, ring, ring};
+                Rml::MeshUtilities::GenerateBackgroundBorder(
+                    mesh, ring_box, Rml::ColourbPremultiplied(0, 0, 0, 0), ring_colors);
+
+                // fill disc, inset past the ring and the gap
+                const Rml::Vector2f fill_size = {size.x - 2.f * inset, size.y - 2.f * inset};
+                const Rml::RenderBox fill_box(
+                    fill_size, {inset, inset}, {0.f, 0.f, 0.f, 0.f},
+                    {fill_size.x / 2.f, fill_size.x / 2.f, fill_size.x / 2.f, fill_size.x / 2.f});
+                Rml::MeshUtilities::GenerateBackground(
+                    mesh, fill_box, fill_color_.ToPremultiplied(opacity));
+
+                auto *geometry =
+                    new Rml::Geometry(element->GetRenderManager()->MakeGeometry(std::move(mesh)));
+                return reinterpret_cast<Rml::DecoratorDataHandle>(geometry);
+            }
+
+            void ReleaseElementData(const Rml::DecoratorDataHandle element_data) const override {
+                delete reinterpret_cast<Rml::Geometry *>(element_data);
+            }
+
+            void RenderElement(
+                Rml::Element *element, const Rml::DecoratorDataHandle element_data) const override {
+                reinterpret_cast<Rml::Geometry *>(element_data)
+                    ->Render(element->GetAbsoluteOffset(Rml::BoxArea::Border));
+            }
+
+        private:
+            Rml::Colourb ring_color_;
+            Rml::Colourb fill_color_;
+            Rml::NumericValue ring_width_;
+            Rml::NumericValue gap_;
+        };
+
+        class CursorRingDecoratorInstancer final : public Rml::DecoratorInstancer {
+        public:
+            CursorRingDecoratorInstancer() {
+                id_ring_color_ =
+                    RegisterProperty("ring-color", "#f2f7ff").AddParser("color").GetId();
+                id_fill_color_ =
+                    RegisterProperty("fill-color", "#63d9f7").AddParser("color").GetId();
+                id_ring_width_ = RegisterProperty("ring-width", "2dp").AddParser("length").GetId();
+                id_gap_ = RegisterProperty("gap", "2dp").AddParser("length").GetId();
+                RegisterShorthand(
+                    "decorator", "ring-color, fill-color, ring-width, gap",
+                    Rml::ShorthandType::FallThrough);
+            }
+
+            Rml::SharedPtr<Rml::Decorator> InstanceDecorator(
+                const Rml::String &, const Rml::PropertyDictionary &properties,
+                const Rml::DecoratorInstancerInterface &) override {
+                return Rml::MakeShared<CursorRingDecorator>(
+                    properties.GetProperty(id_ring_color_)->Get<Rml::Colourb>(),
+                    properties.GetProperty(id_fill_color_)->Get<Rml::Colourb>(),
+                    properties.GetProperty(id_ring_width_)->GetNumericValue(),
+                    properties.GetProperty(id_gap_)->GetNumericValue());
+            }
+
+        private:
+            Rml::PropertyId id_ring_color_{};
+            Rml::PropertyId id_fill_color_{};
+            Rml::PropertyId id_ring_width_{};
+            Rml::PropertyId id_gap_{};
+        };
+
         // Adapts the window's input port to RmlUi context events: the menus
         // reuse the same controller callbacks as the game, so GLFW types
-        // never surface here.
-        class MenuInputAdapter final : public controller::AbstractKeyboardCallback {
+        // never surface here. The gamepad half rides RmlUi's keyboard
+        // navigation: A activates the focused element (Enter), B backs out
+        // (the Escape path), D-pad and left stick move the spatial focus.
+        //
+        // Only one pointing device highlights the menu at a time — whichever
+        // spoke last. A gamepad action clears the mouse hover and flags the
+        // documents (.gamepad-nav, which menu.rcss needs to show the :focus
+        // highlight); any mouse activity lifts the flag, and hover takes over
+        // again on the next cursor move. The RmlUi focus itself is kept across
+        // switches so the gamepad resumes right where it left the menu.
+        class MenuInputAdapter final : public controller::AbstractKeyboardCallback,
+                                       public controller::AbstractGamepadCallback {
         public:
-            MenuInputAdapter(Rml::Context *context, std::function<void()> on_escape)
-                : context_(context), on_escape_(std::move(on_escape)) {}
+            MenuInputAdapter(
+                Rml::Context *context, std::function<void()> on_escape,
+                std::function<void(bool)> on_gamepad_nav)
+                : context_(context), on_escape_(std::move(on_escape)),
+                  on_gamepad_nav_(std::move(on_gamepad_nav)) {}
 
             void on_key(const controller::Key key, const controller::InputAction action) override {
                 if (key == controller::Key::Escape && action == controller::InputAction::Press)
@@ -101,12 +209,14 @@ namespace arenai::desktop::gui {
             }
 
             void on_mouse_move(const double x, const double y) override {
+                to_mouse_mode();
                 context_->ProcessMouseMove(static_cast<int>(x), static_cast<int>(y), 0);
             }
 
             void on_mouse_button(
                 const controller::MouseButton button,
                 const controller::InputAction action) override {
+                to_mouse_mode();
                 const int index = button == controller::MouseButton::Left    ? 0
                                   : button == controller::MouseButton::Right ? 1
                                                                              : 2;
@@ -117,15 +227,105 @@ namespace arenai::desktop::gui {
             }
 
             void on_scroll(const double x_offset, const double y_offset) override {
+                to_mouse_mode();
                 // GLFW wheel offsets are positive upwards, RmlUi scrolls
                 // positive downwards
                 context_->ProcessMouseWheel(
                     Rml::Vector2f(-static_cast<float>(x_offset), -static_cast<float>(y_offset)), 0);
             }
 
+            void on_gamepad_button(
+                const controller::GamepadButton button,
+                const controller::InputAction action) override {
+                if (action != controller::InputAction::Press) return;
+
+                to_gamepad_mode();
+                switch (button) {
+                    case controller::GamepadButton::A: send_key(Rml::Input::KI_RETURN); break;
+                    case controller::GamepadButton::B: on_escape_(); break;
+                    case controller::GamepadButton::DPadUp: send_key(Rml::Input::KI_UP); break;
+                    case controller::GamepadButton::DPadDown: send_key(Rml::Input::KI_DOWN); break;
+                    case controller::GamepadButton::DPadLeft: send_key(Rml::Input::KI_LEFT); break;
+                    case controller::GamepadButton::DPadRight:
+                        send_key(Rml::Input::KI_RIGHT);
+                        break;
+                    default: break;
+                }
+            }
+
+            void on_joystick(
+                const double x, const double y, const controller::GamepadJoystick stick) override {
+                if (stick != controller::GamepadJoystick::Left) return;
+
+                // GLFW stick y grows downwards, matching KI_DOWN
+                axis_nav(x_nav_, x, Rml::Input::KI_LEFT, Rml::Input::KI_RIGHT);
+                axis_nav(y_nav_, y, Rml::Input::KI_UP, Rml::Input::KI_DOWN);
+            }
+
+            // triggers have no menu role
+            void on_trigger(double, controller::GamepadTrigger) override {}
+
         private:
+            void to_gamepad_mode() {
+                if (gamepad_mode_) return;
+                gamepad_mode_ = true;
+                // the hover chain would otherwise stay highlighted under the
+                // idle cursor; the next ProcessMouseMove reactivates it
+                context_->ProcessMouseLeave();
+                on_gamepad_nav_(true);
+            }
+
+            void to_mouse_mode() {
+                if (!gamepad_mode_) return;
+                gamepad_mode_ = false;
+                on_gamepad_nav_(false);
+            }
+
+            // one navigation step per key: RmlUi acts on the down event
+            void send_key(const Rml::Input::KeyIdentifier key) {
+                to_gamepad_mode();
+                context_->ProcessKeyDown(key, 0);
+                context_->ProcessKeyUp(key, 0);
+            }
+
+            struct AxisNav {
+                int direction = 0;// -1 / 0 / +1 after hysteresis
+                std::chrono::steady_clock::time_point next_repeat;
+            };
+
+            // Hysteresis (engage past 0.5, release under 0.3) turns the analog
+            // deflection into clean steps, and holding the stick auto-repeats
+            // like a held keyboard arrow; the window dispatches the stick once
+            // per frame, which paces the repeat clock.
+            void axis_nav(
+                AxisNav &nav, const double value, const Rml::Input::KeyIdentifier negative_key,
+                const Rml::Input::KeyIdentifier positive_key) {
+                constexpr double ENGAGE = 0.5, RELEASE = 0.3;
+                constexpr auto FIRST_REPEAT = std::chrono::milliseconds(400);
+                constexpr auto NEXT_REPEAT = std::chrono::milliseconds(120);
+
+                const int direction = value <= -ENGAGE ? -1 : value >= ENGAGE ? 1 : 0;
+                const bool held = nav.direction != 0 && value * nav.direction > RELEASE;
+                const auto now = std::chrono::steady_clock::now();
+
+                if (direction != 0 && direction != nav.direction) {
+                    nav.direction = direction;
+                    nav.next_repeat = now + FIRST_REPEAT;
+                    send_key(direction < 0 ? negative_key : positive_key);
+                } else if (held && now >= nav.next_repeat) {
+                    nav.next_repeat = now + NEXT_REPEAT;
+                    send_key(nav.direction < 0 ? negative_key : positive_key);
+                } else if (!held && direction == 0) {
+                    nav.direction = 0;
+                }
+            }
+
             Rml::Context *context_;
             std::function<void()> on_escape_;
+            std::function<void(bool)> on_gamepad_nav_;
+            bool gamepad_mode_ = false;
+            AxisNav x_nav_;
+            AxisNav y_nav_;
         };
 
         class RmlGui final : public AbstractGui {
@@ -146,6 +346,15 @@ namespace arenai::desktop::gui {
                 Rml::SetRenderInterface(&backend_->ui_render_interface());
                 Rml::Initialise();
 
+                // menu.rcss draws the slider knob's detached cursor ring with
+                // this gui-local decorator. Built only now: its property
+                // registration needs the style-sheet specification that
+                // Rml::Initialise() just created, so it cannot be a plain
+                // member (members are constructed before this body runs).
+                cursor_ring_instancer_ = std::make_unique<CursorRingDecoratorInstancer>();
+                Rml::Factory::RegisterDecoratorInstancer(
+                    "cursor-ring", cursor_ring_instancer_.get());
+
                 load_fonts(asset_reader);
 
                 context_ = Rml::CreateContext("menu", Rml::Vector2i(width_, height_));
@@ -165,11 +374,23 @@ namespace arenai::desktop::gui {
                 if (!main_document_ || !params_document_ || !pause_document_)
                     throw std::runtime_error("RmlUi menu documents failed to load");
 
-                input_adapter_ = std::make_shared<MenuInputAdapter>(context_, [this] {
-                    // Escape backs out of the parameters screen; while paused
-                    // the application intercepts Escape before this adapter
-                    if (params_document_->IsVisible()) close_params();
-                });
+                input_adapter_ = std::make_shared<MenuInputAdapter>(
+                    context_,
+                    [this] {
+                        // Escape / gamepad B back out of the parameters screen;
+                        // while paused B resumes the game (the application
+                        // intercepts Escape itself before this adapter)
+                        if (pause_document_->IsVisible())
+                            pending_pause_action_ = PauseAction::Continue;
+                        else if (params_document_->IsVisible()) close_params();
+                    },
+                    [this](const bool gamepad) {
+                        // menu.rcss shows the :focus highlight only under
+                        // .gamepad-nav, so the mouse hover and the gamepad
+                        // cursor are never visible together
+                        for (auto *document: {main_document_, params_document_, pause_document_})
+                            document->SetClass("gamepad-nav", gamepad);
+                    });
             }
 
             MenuOutcome run_main_menu() override {
@@ -177,6 +398,7 @@ namespace arenai::desktop::gui {
                 quit_clicked_ = false;
 
                 window_->set_keyboard_callback(input_adapter_);
+                window_->set_gamepad_callback(input_adapter_);
                 window_->set_cursor_mode(controller::CursorMode::Normal);
                 main_document_->Show();
 
@@ -194,6 +416,7 @@ namespace arenai::desktop::gui {
                 main_document_->Hide();
                 params_document_->Hide();
                 window_->set_keyboard_callback(nullptr);
+                window_->set_gamepad_callback(nullptr);
 
                 return play_clicked_ ? MenuOutcome::Play : MenuOutcome::Quit;
             }
@@ -223,6 +446,10 @@ namespace arenai::desktop::gui {
                 return input_adapter_;
             }
 
+            std::shared_ptr<controller::AbstractGamepadCallback> pause_gamepad_input() override {
+                return input_adapter_;
+            }
+
             void on_window_resized(const int width, const int height) override {
                 width_ = width;
                 height_ = height;
@@ -233,6 +460,7 @@ namespace arenai::desktop::gui {
             ~RmlGui() override {
                 // nothing may keep pointing at this object through the window
                 window_->set_keyboard_callback(nullptr);
+                window_->set_gamepad_callback(nullptr);
                 window_->set_resize_callback(nullptr);
 
                 // releases the GL resources through the backend's render
@@ -423,6 +651,10 @@ namespace arenai::desktop::gui {
 
             MenuSystemInterface system_interface_;
             ReaderBackedFileInterface file_interface_;
+            // unique_ptr: created after Rml::Initialise(), and member
+            // destruction keeps it alive until after Rml::Shutdown() as
+            // RmlUi requires of registered instancers
+            std::unique_ptr<CursorRingDecoratorInstancer> cursor_ring_instancer_;
             std::vector<std::string> font_buffers_;
 
             Rml::Context *context_ = nullptr;

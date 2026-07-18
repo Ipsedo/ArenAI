@@ -12,9 +12,12 @@ namespace arenai::desktop {
         std::shared_ptr<controller::AbstractKeyboardCallback> game_keyboard,
         std::shared_ptr<controller::AbstractGamepadCallback> game_gamepad,
         std::shared_ptr<controller::AbstractKeyboardCallback> pause_input,
+        std::shared_ptr<controller::AbstractGamepadCallback> pause_gamepad_input,
         std::function<void()> on_pause_toggle)
         : game_keyboard_(std::move(game_keyboard)), game_gamepad_(std::move(game_gamepad)),
-          pause_input_(std::move(pause_input)), on_pause_toggle_(std::move(on_pause_toggle)) {}
+          pause_input_(std::move(pause_input)),
+          pause_gamepad_input_(std::move(pause_gamepad_input)),
+          on_pause_toggle_(std::move(on_pause_toggle)) {}
 
     void GameInputRouter::set_paused(const bool paused) {
         paused_ = paused;
@@ -31,6 +34,11 @@ namespace arenai::desktop {
     const std::shared_ptr<controller::AbstractKeyboardCallback> &
     GameInputRouter::keyboard_sink() const {
         return paused_ ? pause_input_ : game_keyboard_;
+    }
+
+    const std::shared_ptr<controller::AbstractGamepadCallback> &
+    GameInputRouter::gamepad_sink() const {
+        return paused_ ? pause_gamepad_input_ : game_gamepad_;
     }
 
     void GameInputRouter::on_key(const controller::Key key, const controller::InputAction action) {
@@ -63,16 +71,16 @@ namespace arenai::desktop {
             return;
         }
 
-        if (!paused_ && game_gamepad_) game_gamepad_->on_gamepad_button(button, action);
+        if (const auto &sink = gamepad_sink()) sink->on_gamepad_button(button, action);
     }
 
     void GameInputRouter::on_joystick(
         const double x, const double y, const controller::GamepadJoystick stick) {
-        if (!paused_ && game_gamepad_) game_gamepad_->on_joystick(x, y, stick);
+        if (const auto &sink = gamepad_sink()) sink->on_joystick(x, y, stick);
     }
 
     void GameInputRouter::on_trigger(const double z, const controller::GamepadTrigger trigger) {
-        if (!paused_ && game_gamepad_) game_gamepad_->on_trigger(z, trigger);
+        if (const auto &sink = gamepad_sink()) sink->on_trigger(z, trigger);
     }
 
 }// namespace arenai::desktop

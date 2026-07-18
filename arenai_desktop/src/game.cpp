@@ -67,7 +67,7 @@ namespace arenai::desktop {
 
             const auto router = std::make_shared<GameInputRouter>(
                 env->keyboard_handler(), env->gamepad_handler(), gui->pause_input(),
-                [&toggle_requested] { toggle_requested = true; });
+                gui->pause_gamepad_input(), [&toggle_requested] { toggle_requested = true; });
             window->set_keyboard_callback(router);
             window->set_gamepad_callback(router);
 

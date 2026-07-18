@@ -1,14 +1,13 @@
-#version 330 core
+#version 450
 
-precision highp float;
-precision highp int;
+layout(push_constant) uniform Push {
+    mat4 u_mvp_matrix;
+    mat4 u_mv_matrix;
+};
 
-uniform mat4 u_mvp_matrix;
-uniform mat4 u_mv_matrix;
+layout(location = 0) in vec3 a_position;
 
-in vec3 a_position;
-
-out vec3 v_position;
+layout(location = 0) out vec3 v_position;
 
 void main() {
     v_position = vec3(u_mv_matrix * vec4(a_position, 1.0));

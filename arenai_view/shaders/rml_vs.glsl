@@ -1,14 +1,16 @@
-#version 330 core
+#version 450
 
-uniform mat4 u_projection;
-uniform vec2 u_translation;
+layout(push_constant) uniform Push {
+    mat4 u_projection;
+    vec2 u_translation;
+};
 
-in vec2 a_position;
-in vec4 a_color;
-in vec2 a_tex_coord;
+layout(location = 0) in vec2 a_position;
+layout(location = 1) in vec4 a_color;
+layout(location = 2) in vec2 a_tex_coord;
 
-out vec4 v_color;
-out vec2 v_tex_coord;
+layout(location = 0) out vec4 v_color;
+layout(location = 1) out vec2 v_tex_coord;
 
 void main() {
     v_color = a_color;

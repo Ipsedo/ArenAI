@@ -43,7 +43,9 @@ TEST_F(DesktopAssetFileReaderTest, ReadTextEmptyFile) {
 }
 
 TEST_F(DesktopAssetFileReaderTest, ReadTextMultiLine) {
-    std::ofstream(tmp_dir / "multi.txt") << "line1\nline2\nline3";
+    // written in binary so the file holds exactly these bytes on every
+    // platform: read_text is byte-exact (it also serves binary assets)
+    std::ofstream(tmp_dir / "multi.txt", std::ios::binary) << "line1\nline2\nline3";
 
     DesktopAssetFileReader reader(tmp_dir);
     const auto content = reader.read_text("multi.txt");

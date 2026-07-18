@@ -139,7 +139,8 @@ namespace arenai::desktop::gui {
                   width_(window_width), height_(window_height), file_interface_(asset_reader),
                   controller_display_(
                       initial_settings.controller_kind == ControllerKind::Gamepad ? "gamepad"
-                                                                                  : "keyboard") {
+                                                                                  : "keyboard"),
+                  display_display_(initial_settings.fullscreen ? "fullscreen" : "windowed") {
                 Rml::SetSystemInterface(&system_interface_);
                 Rml::SetFileInterface(&file_interface_);
                 Rml::SetRenderInterface(&backend_->ui_render_interface());
@@ -149,6 +150,7 @@ namespace arenai::desktop::gui {
 
                 context_ = Rml::CreateContext("menu", Rml::Vector2i(width_, height_));
                 if (!context_) throw std::runtime_error("RmlUi context creation failed");
+                update_dp_ratio();
 
                 current_dir_ = std::filesystem::exists(settings_.sac_folder)
                                    ? std::filesystem::canonical(settings_.sac_folder)
@@ -225,6 +227,7 @@ namespace arenai::desktop::gui {
                 width_ = width;
                 height_ = height;
                 context_->SetDimensions(Rml::Vector2i(width_, height_));
+                update_dp_ratio();
             }
 
             ~RmlGui() override {
@@ -238,6 +241,19 @@ namespace arenai::desktop::gui {
             }
 
         private:
+            // Every dp length in menu.rcss is mapped to pixels relative to a
+            // 1080p design baseline, measured against the monitor the window
+            // sits on — not the window itself — so the menu keeps the same
+            // physical size on the display whether the game is fullscreen or
+            // in a small window (a 4K TV renders it twice as large either
+            // way). The min of both axes keeps the design fitting on unusual
+            // ratios.
+            void update_dp_ratio() const {
+                const auto [screen_width, screen_height] = window_->screen_size();
+                context_->SetDensityIndependentPixelRatio(
+                    std::max(0.5f, std::min(screen_width / 1920.0f, screen_height / 1080.0f)));
+            }
+
             // Registered with an explicit family/weight (the static TTFs carry
             // per-weight legacy family names that would not match the RCSS
             // font-family otherwise). The buffers must outlive Rml::Shutdown().
@@ -278,6 +294,7 @@ namespace arenai::desktop::gui {
                 constructor.Bind("nb_tanks", &settings_.nb_tanks);
                 constructor.Bind("spawn_side", &settings_.spawn_side);
                 constructor.Bind("controller", &controller_display_);
+                constructor.Bind("display", &display_display_);
                 constructor.Bind("sac_folder", &sac_folder_display_);
                 constructor.Bind("current_dir", &current_dir_display_);
                 constructor.Bind("entries", &entries_);
@@ -322,6 +339,17 @@ namespace arenai::desktop::gui {
                                                         ? ControllerKind::Gamepad
                                                         : ControllerKind::Keyboard;
                         model_handle_.DirtyVariable("controller");
+                    });
+                constructor.BindEventCallback(
+                    "set_display",
+                    [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &arguments) {
+                        if (arguments.empty()) return;
+                        display_display_ = arguments[0].Get<Rml::String>();
+                        settings_.fullscreen = display_display_ == "fullscreen";
+                        // applied immediately; the window reports its new size
+                        // through the resize callback (dp-ratio included)
+                        window_->set_fullscreen(settings_.fullscreen);
+                        model_handle_.DirtyVariable("display");
                     });
                 constructor.BindEventCallback(
                     "select_folder",
@@ -407,6 +435,7 @@ namespace arenai::desktop::gui {
 
             std::filesystem::path current_dir_;
             Rml::String controller_display_;
+            Rml::String display_display_;
             Rml::String current_dir_display_;
             Rml::String sac_folder_display_;
             std::vector<Rml::String> entries_;

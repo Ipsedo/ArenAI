@@ -1,16 +1,18 @@
-#version 330 core
+#version 450
 
-precision highp float;
-precision highp int;
+layout(push_constant) uniform Push {
+    mat4 u_mvp_matrix;
+    mat4 u_mv_matrix;
+};
 
-uniform mat4 u_mvp_matrix;
-uniform mat4 u_mv_matrix;
-uniform mat4 u_shadow_mvp_matrix;
+// per-draw slice of the renderer's dynamic UBO: a third matrix does not fit
+// in the 128-byte push-constant budget guaranteed by the spec
+layout(set = 0, binding = 1, std140) uniform ShadowTransform { mat4 u_shadow_mvp_matrix; };
 
-in vec3 a_position;
+layout(location = 0) in vec3 a_position;
 
-out vec3 v_position;
-out vec4 v_shadow_coord;
+layout(location = 0) out vec3 v_position;
+layout(location = 1) out vec4 v_shadow_coord;
 
 void main() {
     v_position = vec3(u_mv_matrix * vec4(a_position, 1.0));

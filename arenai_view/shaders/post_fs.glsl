@@ -1,19 +1,20 @@
-#version 330 core
+#version 450
 
-precision highp float;
+layout(set = 1, binding = 0) uniform sampler2D u_scene;
+layout(set = 1, binding = 1) uniform sampler2D u_ao;
+layout(set = 1, binding = 2) uniform sampler2D u_bloom;
+layout(set = 1, binding = 3) uniform sampler2D u_rays;
 
-uniform sampler2D u_scene;
-uniform sampler2D u_ao;
-uniform sampler2D u_bloom;
-uniform sampler2D u_rays;
-// god-rays strength, faded on the CPU when the sun leaves the frame
-uniform float u_ray_strength;
-// frame counter animating the film grain
-uniform float u_frame;
+layout(push_constant) uniform Push {
+    // god-rays strength, faded on the CPU when the sun leaves the frame
+    float u_ray_strength;
+    // frame counter animating the film grain
+    float u_frame;
+};
 
-in vec2 v_uv;
+layout(location = 0) in vec2 v_uv;
 
-out vec4 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 // exposure applied in linear space, before tonemapping; the ACES curve lifts
 // mid-tones in the LDR range, so a value below 1 keeps the pass roughly

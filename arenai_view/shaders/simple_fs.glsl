@@ -1,10 +1,8 @@
-#version 330 core
+#version 450
 
-precision mediump float;
+layout(set = 1, binding = 0, std140) uniform Material { vec4 u_color; };
 
-uniform vec4 u_color;
-
-out vec4 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 void main() {
     fragColor = u_color;

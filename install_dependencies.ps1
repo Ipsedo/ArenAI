@@ -2,8 +2,10 @@
 .SYNOPSIS
     Install build dependencies for arenai_desktop on Windows.
     Checks prerequisites, sets up vcpkg, installs packages (glfw3, glm, bullet3,
-    Khronos GLES3/EGL headers), downloads prebuilt Mesa3D runtime DLLs
-    (pal1000/mesa-dist-win, GPU-capable) and LibTorch (CPU or CUDA).
+    Vulkan headers + loader) and LibTorch (CPU or CUDA). The Vulkan runtime
+    driver comes from the GPU driver (system vulkan-1.dll + ICD); pass
+    -SoftwareVulkan to also fetch Mesa3D's software Vulkan (lavapipe) as a
+    fallback for GPU-less machines.
 
 .USAGE
     # CPU (default)
@@ -15,13 +17,13 @@
     # Custom libtorch destination
     .\install_dependencies.ps1 -LibtorchPath "C:\libtorch"
 
-    # Skip Mesa download (use existing)
-    .\install_dependencies.ps1 -SkipMesa
+    # Also fetch the Mesa3D software Vulkan fallback (lavapipe)
+    .\install_dependencies.ps1 -SoftwareVulkan
 #>
 
 param(
     [switch]$Cuda,
-    [switch]$SkipMesa,
+    [switch]$SoftwareVulkan,
     [string]$LibtorchPath = "",
     [string]$VcpkgRoot = "$PSScriptRoot\libs\vcpkg"
 )
@@ -86,29 +88,31 @@ Write-Host "  vcpkg: $VcpkgRoot\vcpkg.exe"
 # Mesa is NOT built from source anymore: GLES3/EGL headers + import libs come
 # from the mesa-dist-win "devel" package, runtime DLLs from "release" (below).
 # ---------------------------------------------------------------------------
-Write-Step "Installing glfw3 glm bullet3 freetype via vcpkg"
+Write-Step "Installing glfw3 glm bullet3 freetype vulkan glslang via vcpkg"
 
 # freetype: font engine of RmlUi (fetched by arenai_view through FetchContent)
-& "$VcpkgRoot\vcpkg.exe" install glfw3:x64-windows glm:x64-windows bullet3:x64-windows gtest:x64-windows freetype:x64-windows
+# vulkan-headers + vulkan-loader: build-time Vulkan dependency of arenai_view
+# (the runtime driver comes from the GPU driver's ICD)
+# glslang[tools]: glslangValidator, the host GLSL->SPIR-V compiler used at
+# build time by arenai_view (found through find_package(Vulkan))
+& "$VcpkgRoot\vcpkg.exe" install glfw3:x64-windows glm:x64-windows bullet3:x64-windows gtest:x64-windows freetype:x64-windows vulkan-headers:x64-windows vulkan-loader:x64-windows glslang[tools]:x64-windows
 if ($LASTEXITCODE -ne 0) { Write-Error "vcpkg install failed"; exit 1 }
 
 # ---------------------------------------------------------------------------
-# Mesa3D (prebuilt, GPU-capable: llvmpipe + d3d12 + zink) from mesa-dist-win
-#   - release-msvc -> runtime DLLs       -> libs\mesa\x64   (MESA_PATH)
-#   - devel-msvc   -> headers + .lib     -> libs\mesa-devel (MESA_SDK_DIR)
-# Both packages must be the same Mesa version. CMake copies the runtime DLLs
-# next to the executable at build time.
+# Optional: Mesa3D software Vulkan fallback (lavapipe) from mesa-dist-win.
+# The primary Vulkan runtime is the GPU driver's (system vulkan-1.dll + ICD);
+# this bundle only serves GPU-less machines. CMake copies the DLLs next to
+# the executable at build time when libs\mesa exists.
 # ---------------------------------------------------------------------------
-Write-Step "Setting up Mesa3D (prebuilt from pal1000/mesa-dist-win)"
+$mesaDir = "$PSScriptRoot\libs\mesa"
 
-$mesaDir    = "$PSScriptRoot\libs\mesa"
-$mesaSdkDir = "$PSScriptRoot\libs\mesa-devel"
-
-if ($SkipMesa) {
-    Write-Host "  -SkipMesa specified, skipping Mesa download"
-} elseif ((Test-Path "$mesaDir\x64\libgallium_wgl.dll") -and (Test-Path "$mesaSdkDir\lib\x64\libGLESv2.lib")) {
-    Write-Host "  Using existing Mesa at $mesaDir (+ SDK at $mesaSdkDir)"
+if (-not $SoftwareVulkan) {
+    Write-Host "`n  (software Vulkan fallback skipped; pass -SoftwareVulkan to fetch Mesa3D lavapipe)"
+} elseif (Test-Path "$mesaDir\x64\lvp_icd.x86_64.json") {
+    Write-Step "Mesa3D software Vulkan already present at $mesaDir"
 } else {
+    Write-Step "Setting up Mesa3D software Vulkan (prebuilt from pal1000/mesa-dist-win)"
+
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     New-Item -ItemType Directory -Force -Path "$PSScriptRoot\libs" | Out-Null
 
@@ -122,36 +126,25 @@ if ($SkipMesa) {
     $headers = @{ "User-Agent" = "arenai-installer" }
     $release = Invoke-RestMethod -Uri "https://api.github.com/repos/pal1000/mesa-dist-win/releases/latest" -Headers $headers
 
-    function Get-MesaAsset($pattern) {
-        $a = $release.assets |
-            Where-Object { $_.name -like $pattern -and $_.name -notlike "*debug*" } |
-            Select-Object -First 1
-        if (-not $a) { Write-Error "No '$pattern' asset found in mesa-dist-win latest release"; exit 1 }
-        return $a
-    }
+    $asset = $release.assets |
+        Where-Object { $_.name -like "*release-msvc.7z" -and $_.name -notlike "*debug*" } |
+        Select-Object -First 1
+    if (-not $asset) { Write-Error "No 'release-msvc.7z' asset found in mesa-dist-win latest release"; exit 1 }
 
-    function Expand-Mesa7z($asset, $dest) {
-        $tmp = "$PSScriptRoot\libs\$($asset.name)"
-        Write-Host "  Downloading $($asset.name)..."
-        Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $tmp -UseBasicParsing
-        if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
-        New-Item -ItemType Directory -Force -Path $dest | Out-Null
-        & $sevenZr x $tmp "-o$dest" -y | Out-Null
-        if ($LASTEXITCODE -ne 0) { Write-Error "7zr extraction failed: $($asset.name)"; exit 1 }
-        Remove-Item $tmp
-    }
+    $tmp = "$PSScriptRoot\libs\$($asset.name)"
+    Write-Host "  Downloading $($asset.name)..."
+    Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $tmp -UseBasicParsing
+    if (Test-Path $mesaDir) { Remove-Item -Recurse -Force $mesaDir }
+    New-Item -ItemType Directory -Force -Path $mesaDir | Out-Null
+    & $sevenZr x $tmp "-o$mesaDir" -y | Out-Null
+    if ($LASTEXITCODE -ne 0) { Write-Error "7zr extraction failed: $($asset.name)"; exit 1 }
+    Remove-Item $tmp
 
-    Expand-Mesa7z (Get-MesaAsset "*release-msvc.7z") $mesaDir
-    Expand-Mesa7z (Get-MesaAsset "*devel-msvc.7z")   $mesaSdkDir
-
-    if (-not (Test-Path "$mesaDir\x64\libgallium_wgl.dll")) {
-        Write-Error "Mesa runtime extraction failed - x64\libgallium_wgl.dll not found in $mesaDir"; exit 1
-    }
-    if (-not (Test-Path "$mesaSdkDir\lib\x64\libGLESv2.lib")) {
-        Write-Error "Mesa SDK extraction failed - lib\x64\libGLESv2.lib not found in $mesaSdkDir"; exit 1
+    if (-not (Test-Path "$mesaDir\x64\lvp_icd.x86_64.json")) {
+        Write-Error "Mesa extraction failed - x64\lvp_icd.x86_64.json not found in $mesaDir"; exit 1
     }
     Write-Host "  Mesa3D runtime: $mesaDir\x64"
-    Write-Host "  Mesa3D SDK:     $mesaSdkDir"
+    Write-Host "  To force lavapipe, set VK_DRIVER_FILES=$mesaDir\x64\lvp_icd.x86_64.json"
 }
 
 # ---------------------------------------------------------------------------
@@ -192,7 +185,8 @@ if (-not (Test-Path "$LibtorchPath\share\cmake\Torch\TorchConfig.cmake")) {
 }
 
 Write-Step "Dependencies installed successfully!"
-Write-Host "  vcpkg:        $VcpkgRoot" -ForegroundColor Green
-Write-Host "  Mesa runtime: $mesaDir\x64" -ForegroundColor Green
-Write-Host "  Mesa SDK:     $mesaSdkDir" -ForegroundColor Green
-Write-Host "  LibTorch:     $LibtorchPath" -ForegroundColor Green
+Write-Host "  vcpkg:    $VcpkgRoot" -ForegroundColor Green
+if (Test-Path "$mesaDir\x64") {
+    Write-Host "  Mesa:     $mesaDir\x64 (software Vulkan fallback)" -ForegroundColor Green
+}
+Write-Host "  LibTorch: $LibtorchPath" -ForegroundColor Green

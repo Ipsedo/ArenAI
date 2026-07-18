@@ -12,13 +12,11 @@ find_package(glm REQUIRED)
 ##### Vulkan #####
 # Headers + loader: vcpkg (vulkan-headers/vulkan-loader) on Windows, distro
 # packages on Linux. The runtime driver comes from the system ICDs.
-find_package(Vulkan REQUIRED)
+# glslangValidator is the host GLSL->SPIR-V compiler (pacman glslang on Linux,
+# vcpkg glslang[tools] on Windows) used by arenai_compile_shaders below.
+find_package(Vulkan REQUIRED COMPONENTS glslangValidator)
 
-# glslang turns shaders_vk/*.glsl into SPIR-V at build time (host tool built
-# from source: no Vulkan SDK requirement). Static, so it MUST be fetched
-# before BUILD_SHARED_LIBS goes ON for RmlUi below.
 include("${CMAKE_SOURCE_DIR}/cmake/ArenaiCompileShaders.cmake")
-arenai_fetch_glslang()
 
 ##### VulkanMemoryAllocator (header-only) #####
 FetchContent_Declare(
@@ -76,4 +74,3 @@ target_link_libraries(arenai_view PRIVATE Vulkan::Vulkan GPUOpen::VulkanMemoryAl
 # PRIVATE like GL/GLFW: the public headers only forward-declare
 # Rml::RenderInterface, the library itself never leaks past arenai_view.
 target_link_libraries(arenai_view PRIVATE RmlUi::Core)
-

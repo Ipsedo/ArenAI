@@ -10,8 +10,8 @@ namespace arenai::view {
         const std::shared_ptr<VulkanDevice> &device, DescriptorAllocator *descriptors,
         const int width, const int height)
         : VulkanPostEffect(
-              device, descriptors, "ssao_fs.glsl", 1, sizeof(glm::vec4), {{VK_FORMAT_R8_UNORM, 2}},
-              width, height) {}
+            device, descriptors, "ssao_fs.glsl", 1, sizeof(glm::vec4), {{VK_FORMAT_R8_UNORM, 2}},
+            width, height) {}
 
     void SsaoEffect::render(FrameContext &context) {
         run_pass(context, 0, {context.depth}, &context.proj_info);

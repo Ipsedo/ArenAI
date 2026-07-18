@@ -10,8 +10,8 @@ namespace arenai::view {
         const std::shared_ptr<VulkanDevice> &device, DescriptorAllocator *descriptors,
         const int width, const int height)
         : VulkanPostEffect(
-              device, descriptors, "bloom_blur_fs.glsl", 1, sizeof(glm::vec2),
-              {{VK_FORMAT_R8G8B8A8_UNORM, 4}, {VK_FORMAT_R8G8B8A8_UNORM, 4}}, width, height) {}
+            device, descriptors, "bloom_blur_fs.glsl", 1, sizeof(glm::vec2),
+            {{VK_FORMAT_R8G8B8A8_UNORM, 4}, {VK_FORMAT_R8G8B8A8_UNORM, 4}}, width, height) {}
 
     void BloomBlurEffect::render(FrameContext &context) {
         // separable gaussian: horizontal into target 0, vertical into target 1

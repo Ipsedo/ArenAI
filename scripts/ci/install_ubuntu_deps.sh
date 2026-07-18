@@ -32,6 +32,7 @@ apt-get install -y --no-install-recommends \
     libgtest-dev \
     libvulkan-dev \
     mesa-vulkan-drivers \
+    glslang-tools \
     libfreetype-dev
 
 if ! cmake --version 2>/dev/null | head -1 | grep -q "${CMAKE_VERSION}"; then

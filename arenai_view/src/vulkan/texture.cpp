@@ -38,7 +38,7 @@ namespace arenai::view {
         const std::shared_ptr<VulkanDevice> &device, const VkCommandPool pool, const int width,
         const int height, const int channels, const uint8_t *pixels)
         : VulkanTexture(
-              device, pool, width, height, {to_rgba(width, height, channels, pixels)}, false) {}
+            device, pool, width, height, {to_rgba(width, height, channels, pixels)}, false) {}
 
     std::unique_ptr<VulkanTexture> VulkanTexture::make_white(
         const std::shared_ptr<VulkanDevice> &device, const VkCommandPool pool) {

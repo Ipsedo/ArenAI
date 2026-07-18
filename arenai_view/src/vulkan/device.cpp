@@ -68,10 +68,10 @@ namespace arenai::view {
             const auto order =
                 prefer_integrated
                     ? std::
-                          vector{VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PHYSICAL_DEVICE_TYPE_CPU}
+                        vector{VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PHYSICAL_DEVICE_TYPE_CPU}
                     : std::vector{
-                          VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
-                          VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, VK_PHYSICAL_DEVICE_TYPE_CPU};
+                        VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
+                        VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, VK_PHYSICAL_DEVICE_TYPE_CPU};
             const auto it = std::ranges::find(order, type);
             return it == order.end() ? static_cast<int>(order.size())
                                      : static_cast<int>(it - order.begin());

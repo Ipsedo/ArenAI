@@ -4,7 +4,7 @@
 # shader errors break the build instead of the first frame.
 #
 # Two modes, like ArenaiEmbedShaders.cmake before it:
-#  - included from a CMakeLists: provides arenai_fetch_glslang() and
+#  - included from a CMakeLists: provides
 #    arenai_compile_shaders(<shaders_dir> <gen_dir> <out_header> <sources_var>)
 #  - script mode: cmake -DSPV_DIR=<dir> -DOUTPUT_FILE=<file>
 #                       -P ArenaiCompileShaders.cmake
@@ -75,46 +75,20 @@ if (CMAKE_SCRIPT_MODE_FILE STREQUAL CMAKE_CURRENT_LIST_FILE)
     return()
 endif ()
 
-##### configure mode: glslang + per-shader build rules #####
-
-# Fetches the glslang compiler (built as a host tool from source: no Vulkan
-# SDK requirement). MUST be called while BUILD_SHARED_LIBS is OFF — glslang
-# is consumed as a build-time executable, its libs stay static.
-function(arenai_fetch_glslang)
-    if (TARGET glslang-standalone)
-        return()
-    endif ()
-    if (BUILD_SHARED_LIBS)
-        message(FATAL_ERROR "arenai_fetch_glslang() must run before BUILD_SHARED_LIBS is set to ON")
-    endif ()
-    # glslang's configure step runs a python script; Windows boxes often have
-    # no system python, but vcpkg ships an embeddable one that is enough
-    if (WIN32 AND NOT Python3_EXECUTABLE)
-        file(GLOB vcpkg_python "${CMAKE_SOURCE_DIR}/libs/vcpkg/downloads/tools/python/python-*/python.exe")
-        if (vcpkg_python)
-            list(GET vcpkg_python 0 vcpkg_python_exe)
-            set(Python3_EXECUTABLE "${vcpkg_python_exe}" CACHE FILEPATH "python for glslang's build scripts")
-        endif ()
-    endif ()
-    set(ENABLE_OPT OFF)
-    set(ENABLE_HLSL OFF)
-    set(ENABLE_SPVREMAPPER OFF)
-    set(ENABLE_GLSLANG_BINARIES ON)
-    set(GLSLANG_TESTS OFF)
-    set(GLSLANG_ENABLE_INSTALL OFF)
-    FetchContent_Declare(
-            glslang
-            GIT_REPOSITORY https://github.com/KhronosGroup/glslang.git
-            GIT_TAG 14.3.0
-    )
-    FetchContent_MakeAvailable(glslang)
-endfunction()
+##### configure mode: per-shader build rules #####
 
 # Declares the .glsl -> .spv -> <out_header> build rules for every shader of
 # <shaders_dir>. The shader stage comes from the file suffix (_vs/_fs).
+# Compilation runs the host glslangValidator: the caller must have done
+# find_package(Vulkan REQUIRED COMPONENTS glslangValidator) beforehand.
 # Appends the generated header to <sources_var> so the caller adds it to its
 # target's sources (which triggers the whole chain).
 function(arenai_compile_shaders shaders_dir gen_dir out_header sources_var)
+    if (NOT TARGET Vulkan::glslangValidator)
+        message(FATAL_ERROR "arenai_compile_shaders() needs Vulkan::glslangValidator: "
+                "call find_package(Vulkan REQUIRED COMPONENTS glslangValidator) first")
+    endif ()
+
     file(GLOB shader_files CONFIGURE_DEPENDS "${shaders_dir}/*.glsl")
     list(SORT shader_files)
     if (NOT shader_files)
@@ -122,6 +96,9 @@ function(arenai_compile_shaders shaders_dir gen_dir out_header sources_var)
     endif ()
 
     set(spv_dir "${gen_dir}/spv")
+    # Ninja creates OUTPUT directories itself but Makefiles does not: create it
+    # at configure time so glslangValidator can write there under both.
+    file(MAKE_DIRECTORY "${spv_dir}")
     set(spv_files "")
     foreach (shader_file IN LISTS shader_files)
         get_filename_component(name "${shader_file}" NAME_WE)
@@ -136,9 +113,9 @@ function(arenai_compile_shaders shaders_dir gen_dir out_header sources_var)
         set(spv_file "${spv_dir}/${name}.spv")
         add_custom_command(
                 OUTPUT "${spv_file}"
-                COMMAND glslang-standalone -V --target-env vulkan1.2 --quiet
+                COMMAND Vulkan::glslangValidator -V --target-env vulkan1.2 --quiet
                 -S ${stage} -o "${spv_file}" "${shader_file}"
-                DEPENDS "${shader_file}" glslang-standalone
+                DEPENDS "${shader_file}"
                 COMMENT "Compiling ${name}.glsl to SPIR-V"
         )
         list(APPEND spv_files "${spv_file}")

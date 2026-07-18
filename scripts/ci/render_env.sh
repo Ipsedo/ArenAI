@@ -7,8 +7,11 @@
 # Headless software Vulkan: the agent's vision renders offscreen and CI
 # runners have no GPU. lavapipe is Mesa's software Vulkan implementation
 # (mesa-vulkan-drivers); both loader variable names are set, the older
-# VK_ICD_FILENAMES for pre-1.3.207 loaders.
-export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json
+# VK_ICD_FILENAMES for pre-1.3.207 loaders. The manifest name depends on the
+# mesa package version (lvp_icd.x86_64.json before, lvp_icd.json now), hence
+# the glob.
+VK_ICD_FILENAMES="$(ls /usr/share/vulkan/icd.d/lvp_icd*.json | head -1)"
+export VK_ICD_FILENAMES
 export VK_DRIVER_FILES="$VK_ICD_FILENAMES"
 
 # lavapipe shares the llvmpipe JIT, which picks its vector width from the host

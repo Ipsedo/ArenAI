@@ -32,7 +32,7 @@ C++20, CMake ≥ 3.29.
 
 ### Linux (ArchLinux)
 ```shell
-sudo pacman -Sy bullet glm glfw freetype2 vulkan-headers vulkan-icd-loader
+sudo pacman -Sy bullet glm glfw freetype2 vulkan-headers vulkan-icd-loader glslang
 # LibTorch expected in /opt/libtorch (override with -DLIBTORCH_PATH=...)
 mkdir build && cd build && cmake .. && make
 ```
@@ -44,10 +44,12 @@ mkdir build && cd build && cmake .. && make
 ```
 
 Deps fetched via FetchContent (no manual install): argparse, nlohmann/json, stb, soil2, indicators,
-glslang (build-time GLSL→SPIR-V compiler, see cmake/ArenaiCompileShaders.cmake),
 VulkanMemoryAllocator,
 RmlUi (PRIVATE in arenai_view — only its forward-declared render interface crosses the public API).
-System libs: bullet, glm, glfw, freetype (RmlUi font engine), Vulkan loader (the runtime driver
+System libs: bullet, glm, glfw, freetype (RmlUi font engine), glslang (glslangValidator, the
+build-time GLSL→SPIR-V compiler — see cmake/ArenaiCompileShaders.cmake — via
+`find_package(Vulkan COMPONENTS glslangValidator)`; pacman glslang / vcpkg glslang[tools]),
+Vulkan loader (the runtime driver
 comes from the GPU's ICD; `ARENAI_VK_DEVICE`/`ARENAI_VK_DEVICE_WINDOW` override the device pick,
 `ARENAI_VK_VALIDATION` enables the validation layer when installed). LibTorch via `find_package(Torch)`.
 

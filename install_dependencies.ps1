@@ -88,12 +88,14 @@ Write-Host "  vcpkg: $VcpkgRoot\vcpkg.exe"
 # Mesa is NOT built from source anymore: GLES3/EGL headers + import libs come
 # from the mesa-dist-win "devel" package, runtime DLLs from "release" (below).
 # ---------------------------------------------------------------------------
-Write-Step "Installing glfw3 glm bullet3 freetype vulkan via vcpkg"
+Write-Step "Installing glfw3 glm bullet3 freetype vulkan glslang via vcpkg"
 
 # freetype: font engine of RmlUi (fetched by arenai_view through FetchContent)
 # vulkan-headers + vulkan-loader: build-time Vulkan dependency of arenai_view
 # (the runtime driver comes from the GPU driver's ICD)
-& "$VcpkgRoot\vcpkg.exe" install glfw3:x64-windows glm:x64-windows bullet3:x64-windows gtest:x64-windows freetype:x64-windows vulkan-headers:x64-windows vulkan-loader:x64-windows
+# glslang[tools]: glslangValidator, the host GLSL->SPIR-V compiler used at
+# build time by arenai_view (found through find_package(Vulkan))
+& "$VcpkgRoot\vcpkg.exe" install glfw3:x64-windows glm:x64-windows bullet3:x64-windows gtest:x64-windows freetype:x64-windows vulkan-headers:x64-windows vulkan-loader:x64-windows glslang[tools]:x64-windows
 if ($LASTEXITCODE -ne 0) { Write-Error "vcpkg install failed"; exit 1 }
 
 # ---------------------------------------------------------------------------

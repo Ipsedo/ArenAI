@@ -18,16 +18,15 @@ namespace arenai::view {
 
     VulkanBackend::VulkanBackend()
         : VulkanBackend(
-              std::make_shared<VulkanInstance>(), DeviceCriteria{
-                                                      .prefer_integrated = true,
-                                                      .surface = VK_NULL_HANDLE,
-                                                      .device_env_var = "ARENAI_VK_DEVICE"}) {}
+            std::make_shared<VulkanInstance>(), DeviceCriteria{
+                                                    .prefer_integrated = true,
+                                                    .surface = VK_NULL_HANDLE,
+                                                    .device_env_var = "ARENAI_VK_DEVICE"}) {}
 
     VulkanBackend::VulkanBackend(
         std::shared_ptr<VulkanInstance> instance, const DeviceCriteria &criteria)
-        : context_(
-              std::make_shared<VulkanRenderContext>(
-                  instance, std::make_shared<VulkanDevice>(instance, criteria))),
+        : context_(std::make_shared<VulkanRenderContext>(
+            instance, std::make_shared<VulkanDevice>(instance, criteria))),
           drawable_factory_(std::make_shared<VulkanDrawableFactory>()),
           hud_factory_(std::make_shared<VulkanHudFactory>()) {}
 

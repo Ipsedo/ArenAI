@@ -63,11 +63,10 @@ namespace arenai::view {
 
     void VulkanPostEffect::create_targets(const int width, const int height) {
         for (const auto &[format, size_divisor]: specs_)
-            targets_.push_back(
-                std::make_unique<Target>(
-                    device_, std::max(1, width / size_divisor), std::max(1, height / size_divisor),
-                    format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                    VK_IMAGE_ASPECT_COLOR_BIT));
+            targets_.push_back(std::make_unique<Target>(
+                device_, std::max(1, width / size_divisor), std::max(1, height / size_divisor),
+                format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                VK_IMAGE_ASPECT_COLOR_BIT));
         target_initialized_.assign(targets_.size(), false);
     }
 

@@ -31,9 +31,8 @@ namespace {
     public:
         PostProcessHarness()
             : backend_(std::make_unique<VulkanBackend>()),
-              device_(
-                  std::dynamic_pointer_cast<VulkanRenderContext>(backend_->render_context())
-                      ->device()),
+              device_(std::dynamic_pointer_cast<VulkanRenderContext>(backend_->render_context())
+                          ->device()),
               descriptors_(device_), pool_(device_->make_command_pool()),
               post_process_(
                   device_, &descriptors_, WIDTH, HEIGHT,

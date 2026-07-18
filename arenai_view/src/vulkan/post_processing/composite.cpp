@@ -17,7 +17,7 @@ namespace arenai::view {
         const std::shared_ptr<VulkanDevice> &device, DescriptorAllocator *descriptors,
         const int width, const int height)
         : VulkanPostEffect(
-              device, descriptors, "post_fs.glsl", 4, sizeof(CompositePush), {}, width, height) {}
+            device, descriptors, "post_fs.glsl", 4, sizeof(CompositePush), {}, width, height) {}
 
     void CompositeEffect::render(FrameContext &context) {
         const CompositePush push{

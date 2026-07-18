@@ -24,11 +24,11 @@ namespace arenai::view {
 
     GlfwVulkanBackend::GlfwVulkanBackend(Bootstrap bootstrap)
         : VulkanBackend(
-              bootstrap.instance,
-              DeviceCriteria{
-                  .prefer_integrated = false,
-                  .surface = bootstrap.surface,
-                  .device_env_var = "ARENAI_VK_DEVICE_WINDOW"}),
+            bootstrap.instance,
+            DeviceCriteria{
+                .prefer_integrated = false,
+                .surface = bootstrap.surface,
+                .device_env_var = "ARENAI_VK_DEVICE_WINDOW"}),
           window_(std::move(bootstrap.window)), surface_(bootstrap.surface) {
         frame_context_ = std::make_shared<WindowFrameContext>(context()->device(), surface_);
         rml_render_interface_ =

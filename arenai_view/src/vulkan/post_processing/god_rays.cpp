@@ -22,8 +22,8 @@ namespace arenai::view {
         const std::shared_ptr<VulkanDevice> &device, DescriptorAllocator *descriptors,
         const int width, const int height)
         : VulkanPostEffect(
-              device, descriptors, "god_rays_fs.glsl", 1, sizeof(GodRaysPush),
-              {{VK_FORMAT_R8_UNORM, 2}}, width, height) {}
+            device, descriptors, "god_rays_fs.glsl", 1, sizeof(GodRaysPush),
+            {{VK_FORMAT_R8_UNORM, 2}}, width, height) {}
 
     void GodRaysEffect::render(FrameContext &context) {
         float ray_strength = 0.f;

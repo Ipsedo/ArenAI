@@ -433,9 +433,10 @@ namespace arenai::desktop::gui {
                 const std::shared_ptr<view::AbstractWindowedGraphicBackend> &backend,
                 const std::shared_ptr<utils::AbstractResourceFileReader> &asset_reader,
                 const GameSettings &initial_settings, const int window_width,
-                const int window_height)
+                const int window_height, SacFolderValidator sac_validator)
                 : backend_(backend), window_(backend->get_window()), settings_(initial_settings),
-                  width_(window_width), height_(window_height), file_interface_(asset_reader),
+                  sac_validator_(std::move(sac_validator)), width_(window_width),
+                  height_(window_height), file_interface_(asset_reader),
                   controller_display_(
                       initial_settings.controller_kind == ControllerKind::Gamepad ? "gamepad"
                                                                                   : "keyboard"),
@@ -463,6 +464,10 @@ namespace arenai::desktop::gui {
                 current_dir_ = std::filesystem::exists(settings_.sac_folder)
                                    ? std::filesystem::canonical(settings_.sac_folder)
                                    : std::filesystem::current_path();
+
+                // the folder persisted from the previous run gets the same
+                // dry-run check as a freshly picked one
+                validate_sac_folder();
 
                 bind_data_model();
                 refresh_explorer();
@@ -633,6 +638,8 @@ namespace arenai::desktop::gui {
                 constructor.Bind("controller", &controller_display_);
                 constructor.Bind("display", &display_display_);
                 constructor.Bind("sac_folder", &sac_folder_display_);
+                constructor.Bind("sac_status", &sac_status_);
+                constructor.Bind("sac_valid", &sac_valid_);
                 constructor.Bind("current_dir", &current_dir_display_);
                 constructor.Bind("entries", &entries_);
                 constructor.Bind("can_play", &can_play_);
@@ -693,6 +700,7 @@ namespace arenai::desktop::gui {
                     "select_folder",
                     [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &) {
                         settings_.sac_folder = current_dir_;
+                        validate_sac_folder();
                         refresh_explorer();
                     });
 
@@ -736,15 +744,30 @@ namespace arenai::desktop::gui {
 
                 current_dir_display_ = current_dir_.string();
                 sac_folder_display_ = settings_.sac_folder.string();
-                can_play_ = !settings_.sac_folder.empty()
-                            && std::filesystem::is_directory(settings_.sac_folder);
 
                 if (model_handle_) {
                     model_handle_.DirtyVariable("entries");
                     model_handle_.DirtyVariable("current_dir");
                     model_handle_.DirtyVariable("sac_folder");
+                    model_handle_.DirtyVariable("sac_status");
+                    model_handle_.DirtyVariable("sac_valid");
                     model_handle_.DirtyVariable("can_play");
                 }
+            }
+
+            // runs the injected dry-run load and turns its outcome into the
+            // tri-state the parameters screen displays (nothing chosen yet /
+            // model loaded / error message); can_play_ follows the real load
+            void validate_sac_folder() {
+                if (settings_.sac_folder.empty()) {
+                    sac_valid_ = false;
+                    sac_status_ = "";
+                } else {
+                    const auto error = sac_validator_(settings_.sac_folder);
+                    sac_valid_ = !error.has_value();
+                    sac_status_ = error.value_or("AI model loaded");
+                }
+                can_play_ = sac_valid_;
             }
 
             void close_params() {
@@ -789,11 +812,15 @@ namespace arenai::desktop::gui {
             bool focus_explorer_pending_ = false;
 
             std::filesystem::path current_dir_;
+            SacFolderValidator sac_validator_;
             Rml::String controller_display_;
             Rml::String display_display_;
             Rml::String current_dir_display_;
             Rml::String sac_folder_display_;
+            // empty while no folder is chosen; otherwise success or error text
+            Rml::String sac_status_;
             std::vector<Rml::String> entries_;
+            bool sac_valid_ = false;
             bool can_play_ = false;
             bool play_clicked_ = false;
             bool quit_clicked_ = false;
@@ -805,9 +832,11 @@ namespace arenai::desktop::gui {
     std::unique_ptr<AbstractGui> make_gui(
         const std::shared_ptr<view::AbstractWindowedGraphicBackend> &backend,
         const std::shared_ptr<utils::AbstractResourceFileReader> &asset_reader,
-        const GameSettings &initial_settings, const int window_width, const int window_height) {
+        const GameSettings &initial_settings, const int window_width, const int window_height,
+        SacFolderValidator sac_validator) {
         return std::make_unique<RmlGui>(
-            backend, asset_reader, initial_settings, window_width, window_height);
+            backend, asset_reader, initial_settings, window_width, window_height,
+            std::move(sac_validator));
     }
 
 }// namespace arenai::desktop::gui

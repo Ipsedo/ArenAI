@@ -9,6 +9,8 @@
 
 #include <torch/torch.h>
 
+#include <arenai_utils/exceptions.h>
+
 namespace arenai::train {
 
     template<typename T>
@@ -16,13 +18,17 @@ namespace arenai::train {
         const std::filesystem::path &input_folder_path, const T &to_load,
         const std::filesystem::path &file_name) {
 
-        if (!std::filesystem::exists(input_folder_path))
-            throw std::runtime_error("Could not find " + input_folder_path.string());
-
         const auto file = input_folder_path / file_name;
-        torch::serialize::InputArchive archive;
-        archive.load_from(file.string(), torch::kCPU);
-        to_load->load(archive);
+
+        if (!std::filesystem::exists(file)) throw utils::FileDoesNotExistException(file);
+
+        try {
+            torch::serialize::InputArchive archive;
+            archive.load_from(file.string(), torch::kCPU);
+            to_load->load(archive);
+        } catch (const std::exception &e) {
+            std::throw_with_nested(utils::ModelLoadException(file));
+        }
     }
 
 }// namespace arenai::train

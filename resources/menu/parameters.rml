@@ -41,8 +41,10 @@
         <div class="file-list" id="file-list">
             <div class="file-entry" data-for="entries" data-event-click="enter_dir(it_index)">{{it}}</div>
         </div>
-        <div class="selected-folder" data-if="can_play">Selected: {{sac_folder}}</div>
-        <p class="hint" data-if="!can_play">No folder selected yet</p>
+        <div class="selected-folder" data-if="sac_valid">Selected: {{sac_folder}}</div>
+        <p class="hint status-ok" data-if="sac_valid">{{sac_status}}</p>
+        <p class="hint status-error" data-if="!sac_valid && sac_status != ''">{{sac_status}}</p>
+        <p class="hint" data-if="sac_status == ''">No folder selected yet</p>
 
         <div class="row-buttons">
             <div class="button" id="use-folder" data-event-click="select_folder()">Use this folder</div>

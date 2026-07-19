@@ -16,6 +16,7 @@
 #include <arenai_view/backend.h>
 
 #include "./controller/game_input_router.h"
+#include "./core/agent_loading_checker.h"
 #include "./core/game_environment.h"
 #include "./core/user_preferences.h"
 #include "./gui/menu.h"
@@ -199,7 +200,9 @@ namespace arenai::desktop {
             load_preferences({.sac_folder = model_options.state_dict_folder});
         const auto gui = gui::make_gui(
             graphics_backend, asset_reader, initial_settings, game_options.window_width,
-            game_options.window_height);
+            game_options.window_height, [&model_options](const std::filesystem::path &folder) {
+                return check_agent_folder(model_options, folder);
+            });
 
         window->set_resize_callback(
             [&gui](const int width, const int height) { gui->on_window_resized(width, height); });

@@ -34,9 +34,9 @@ namespace arenai::model {
           tank_prefix_name(tank_prefix_name),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), distance_scale(250.f), impact_distance_scale(10.f),
-          angle_scale(glm::pi<float>() / 3.f), optimal_distance(75.f), fire_cost(0.5f),
-          is_dead_already_triggered(false), has_touch(false), last_shoot_info(std::nullopt),
-          action_stats(std::make_shared<ActionStats>()) {}
+          angle_scale(glm::pi<float>() / 3.f), optimal_distance(75.f), fire_cost(0.4f),
+          miss_cost(0.4f), is_dead_already_triggered(false), has_touch(false),
+          last_shoot_info(std::nullopt), action_stats(std::make_shared<ActionStats>()) {}
 
     float BulletEnemyTank::compute_aim_angle(const std::shared_ptr<EnemyTank> &other_tank) {
         const auto canon_tr = get_canon()->get_model_matrix();
@@ -87,9 +87,8 @@ namespace arenai::model {
         const auto dead_penalty = is_dead() ? -1.f : 0.f;
 
         // 3. fire cost (anti-spam)
-        const auto shoot_reward = !is_dead() && action_stats->has_fire()
-                                      ? (1.f + fire_cost) * compute_shoot_reward(tanks) - fire_cost
-                                      : 0.f;
+        const auto shoot_reward =
+            !is_dead() && action_stats->has_fire() ? compute_shoot_reward(tanks) - fire_cost : 0.f;
 
         // 4. hit reward
         float hit_reward = 0.f;
@@ -105,7 +104,7 @@ namespace arenai::model {
 
                 const float impact_reward = compute_hit_reward(fire_pos, best_tank_pos, hit_pos);
 
-                hit_reward = impact_reward + (has_hit ? (has_killed ? 2.f : 1.f) : 0.f);
+                hit_reward = impact_reward + (has_hit ? (has_killed ? 2.f : 1.f) : -miss_cost);
             }
 
             last_shoot_info = std::nullopt;

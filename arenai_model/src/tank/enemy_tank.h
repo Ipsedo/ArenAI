@@ -62,7 +62,9 @@ namespace arenai::model {
         float impact_distance_scale;
         float angle_scale;
         float optimal_distance;
+
         float fire_cost;
+        float miss_cost;
 
         bool is_dead_already_triggered;
 

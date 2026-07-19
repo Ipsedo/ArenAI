@@ -34,7 +34,7 @@ namespace arenai::model {
           tank_prefix_name(tank_prefix_name),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), distance_scale(250.f), impact_distance_scale(10.f),
-          angle_scale(glm::pi<float>() / 3.f), optimal_distance(75.f), fire_cost(0.5f),
+          angle_scale(glm::pi<float>() / 3.f), optimal_distance(75.f), fire_cost(0.1f),
           is_dead_already_triggered(false), has_touch(false), last_shoot_info(std::nullopt),
           action_stats(std::make_shared<ActionStats>()) {}
 
@@ -88,7 +88,7 @@ namespace arenai::model {
 
         // 3. fire cost (anti-spam)
         const auto shoot_reward = !is_dead() && action_stats->has_fire()
-                                      ? (1.f + fire_cost) * rename_shoot_reward(tanks) - fire_cost
+                                      ? (1.f + fire_cost) * compute_shoot_reward(tanks) - fire_cost
                                       : 0.f;
 
         // 4. hit reward
@@ -179,7 +179,7 @@ namespace arenai::model {
     }
 
     float
-    BulletEnemyTank::rename_shoot_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
+    BulletEnemyTank::compute_shoot_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
         constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
         const glm::vec3 chassis_pos = get_chassis()->get_model_matrix() * world_center;
 
@@ -196,7 +196,7 @@ namespace arenai::model {
             const float distance_score = std::exp(-0.5f * std::pow(distance / distance_scale, 2.f));
             const float angle_score = std::exp(-0.5f * std::pow(angle / angle_scale, 2.f));
 
-            if (const float curr_score = distance_score + angle_score; curr_score > best_score)
+            if (const float curr_score = distance_score * angle_score; curr_score > best_score)
                 best_score = curr_score;
         }
 

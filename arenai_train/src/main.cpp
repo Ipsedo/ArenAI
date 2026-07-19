@@ -28,10 +28,10 @@ int main(const int argc, char **argv) {
     parser.add_argument("--sensors_hidden_size").scan<'i', int>().default_value(256);
     parser.add_argument("--actions_hidden_size").scan<'i', int>().default_value(64);
     parser.add_argument("--actor_hidden_sizes")
-        .default_value<hidden_layers>({{2560, 1024}})
+        .default_value<hidden_layers>({{2560, 1280}})
         .action(parse_cli_hidden_layer);
     parser.add_argument("--critic_hidden_sizes")
-        .default_value<hidden_layers>({{2560, 1024}})
+        .default_value<hidden_layers>({{2560, 1280}})
         .action(parse_cli_hidden_layer);
     parser.add_argument("--tau").scan<'g', float>().default_value(0.005f);
     parser.add_argument("--gamma").scan<'g', float>().default_value(0.995f);

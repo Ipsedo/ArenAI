@@ -72,6 +72,54 @@ namespace arenai::model {
         return distance_reward * angle_reward;
     }
 
+    float
+    BulletEnemyTank::compute_shoot_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
+        constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
+        const glm::vec3 chassis_pos = get_chassis()->get_model_matrix() * world_center;
+
+        float best_score = 0.f;
+        for (const auto &tank: tanks) {
+            if (tank.get() == this) continue;
+            if (tank->is_dead() && !tank->is_first_frame_dead()) continue;
+
+            const glm::vec3 other_pos = tank->get_chassis()->get_model_matrix() * world_center;
+            const float distance = glm::length(other_pos - chassis_pos);
+
+            const float angle = compute_aim_angle(tank);
+
+            const float distance_score = std::exp(-0.5f * std::pow(distance / distance_scale, 2.f));
+            const float angle_score = std::exp(-0.5f * std::pow(angle / angle_scale, 2.f));
+
+            if (const float curr_score = distance_score * angle_score; curr_score > best_score)
+                best_score = curr_score;
+        }
+
+        return best_score;
+    }
+
+    int BulletEnemyTank::get_nearest_enemy_index(
+        const std::vector<std::shared_ptr<EnemyTank>> &tanks, const glm::vec3 &pos) const {
+        constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
+
+        float min_distance = std::numeric_limits<float>::infinity();
+        int best_i = -1;
+
+        for (int i = 0; i < tanks.size(); i++) {
+            if (tanks[i].get() == this) continue;
+            if (tanks[i]->is_dead() && !tanks[i]->is_first_frame_dead()) continue;
+
+            const auto other_pos =
+                glm::vec3(tanks[i]->get_chassis()->get_model_matrix() * world_center);
+
+            if (const float distance = glm::length(pos - other_pos); distance < min_distance) {
+                min_distance = distance;
+                best_i = i;
+            }
+        }
+
+        return best_i;
+    }
+
     float BulletEnemyTank::get_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
 
         // 1. flipped detection
@@ -152,54 +200,6 @@ namespace arenai::model {
         }
 
         return reward;
-    }
-
-    int BulletEnemyTank::get_nearest_enemy_index(
-        const std::vector<std::shared_ptr<EnemyTank>> &tanks, const glm::vec3 &pos) const {
-        constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
-
-        float min_distance = std::numeric_limits<float>::infinity();
-        int best_i = -1;
-
-        for (int i = 0; i < tanks.size(); i++) {
-            if (tanks[i].get() == this) continue;
-            if (tanks[i]->is_dead() && !tanks[i]->is_first_frame_dead()) continue;
-
-            const auto other_pos =
-                glm::vec3(tanks[i]->get_chassis()->get_model_matrix() * world_center);
-
-            if (const float distance = glm::length(pos - other_pos); distance < min_distance) {
-                min_distance = distance;
-                best_i = i;
-            }
-        }
-
-        return best_i;
-    }
-
-    float
-    BulletEnemyTank::compute_shoot_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
-        constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
-        const glm::vec3 chassis_pos = get_chassis()->get_model_matrix() * world_center;
-
-        float best_score = 0.f;
-        for (const auto &tank: tanks) {
-            if (tank.get() == this) continue;
-            if (tank->is_dead() && !tank->is_first_frame_dead()) continue;
-
-            const glm::vec3 other_pos = tank->get_chassis()->get_model_matrix() * world_center;
-            const float distance = glm::length(other_pos - chassis_pos);
-
-            const float angle = compute_aim_angle(tank);
-
-            const float distance_score = std::exp(-0.5f * std::pow(distance / distance_scale, 2.f));
-            const float angle_score = std::exp(-0.5f * std::pow(angle / angle_scale, 2.f));
-
-            if (const float curr_score = distance_score * angle_score; curr_score > best_score)
-                best_score = curr_score;
-        }
-
-        return best_score;
     }
 
     void BulletEnemyTank::on_fired_shell_contact(const ShellContactInfo &shell_info, Item *item) {

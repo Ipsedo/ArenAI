@@ -34,8 +34,8 @@ namespace arenai::model {
           tank_prefix_name(tank_prefix_name),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), distance_scale(250.f), impact_distance_scale(10.f),
-          angle_scale(glm::pi<float>() / 3.f), optimal_distance(75.f), fire_cost(0.4f),
-          miss_cost(0.4f), is_dead_already_triggered(false), has_touch(false),
+          angle_scale(glm::pi<float>() / 3.f), optimal_distance(75.f), fire_cost(0.3f),
+          miss_cost(0.3f), is_dead_already_triggered(false), has_touch(false),
           last_shoot_info(std::nullopt), action_stats(std::make_shared<ActionStats>()) {}
 
     float BulletEnemyTank::compute_aim_angle(const std::shared_ptr<EnemyTank> &other_tank) {

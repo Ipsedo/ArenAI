@@ -6,9 +6,9 @@
 
 #include <utility>
 
-#include "./drawables/drawable_factory.h"
-#include "./drawables/hud_factory.h"
-#include "./renderers/offscreen_renderer.h"
+#include "./scene/drawables/drawable_factory.h"
+#include "./scene/drawables/hud_factory.h"
+#include "./scene/renderers/offscreen_renderer.h"
 
 namespace arenai::view {
 

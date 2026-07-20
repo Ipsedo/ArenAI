@@ -10,9 +10,9 @@
 
 #include <arenai_view/backend.h>
 
-#include "../vulkan/rml_render_interface.h"
+#include "../vulkan/present/window_frame.h"
+#include "../vulkan/ui/rml_render_interface.h"
 #include "../vulkan/vulkan_backend.h"
-#include "../vulkan/window_frame.h"
 #include "./glfw_vulkan_window.h"
 
 namespace arenai::view {

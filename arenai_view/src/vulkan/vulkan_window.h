@@ -10,7 +10,7 @@
 
 #include <arenai_view/window.h>
 
-#include "./vk.h"
+#include "./core/vk.h"
 
 namespace arenai::view {
 

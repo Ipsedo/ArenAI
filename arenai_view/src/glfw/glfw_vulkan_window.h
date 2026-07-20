@@ -14,7 +14,7 @@
 // first so glfw3.h declares its Vulkan helpers (glfwCreateWindowSurface, ...)
 // clang-format off
 #define GLFW_INCLUDE_NONE
-#include "../vulkan/vk.h"
+#include "../vulkan/core/vk.h"
 #include <GLFW/glfw3.h>
 // clang-format on
 

@@ -59,8 +59,8 @@ int main(const int argc, char **argv) {
     parser.add_argument("--nb_tanks").scan<'i', int>().default_value(32);
     parser.add_argument("--vision_height").scan<'i', int>().default_value(128);
     parser.add_argument("--vision_width").scan<'i', int>().default_value(256);
-    parser.add_argument("--initial_spawn_width").scan<'g', float>().default_value(500.f);
-    parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(500.f);
+    parser.add_argument("--initial_spawn_width").scan<'g', float>().default_value(1000.f);
+    parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(1000.f);
     parser.add_argument("--final_spawn_width").scan<'g', float>().default_value(2000.f);
     parser.add_argument("--final_spawn_height").scan<'g', float>().default_value(2000.f);
     parser.add_argument("--vision_num_threads")

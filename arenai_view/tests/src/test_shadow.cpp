@@ -11,8 +11,8 @@
 
 #include "./utils/local_file_reader.h"
 #include "./utils/make_shapes.h"
-#include "vulkan/drawables/diffuse.h"
-#include "vulkan/renderers/offscreen_renderer.h"
+#include "vulkan/scene/drawables/diffuse.h"
+#include "vulkan/scene/renderers/offscreen_renderer.h"
 #include "vulkan/vulkan_backend.h"
 
 using namespace arenai;

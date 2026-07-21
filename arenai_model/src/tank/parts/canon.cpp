@@ -19,14 +19,15 @@ namespace arenai::model {
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, glm::vec3 pos,
         glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *turret,
         const float wanted_frame_frequency,
-        const std::function<void(glm::vec3, glm::vec3, Item *)> &on_contact)
+        const std::function<void(glm::vec3, glm::vec3, Item *)> &on_contact,
+        const std::function<void(const std::shared_ptr<ShellItem> &)> &on_shell_fired)
         : LifeItem(5), ConvexItem(
                            prefix_name + "_canon",
                            std::make_shared<ObjShape>(
                                file_reader, std::filesystem::path("obj") / "anubis_canon.obj"),
                            pos, scale, mass),
           angle(0.f), file_reader(file_reader), will_fire(false), on_contact(on_contact),
-          wanted_frame_frequency(wanted_frame_frequency) {
+          on_shell_fired(on_shell_fired), wanted_frame_frequency(wanted_frame_frequency) {
 
         auto turret_pivot = btVector3(rel_pos.x, rel_pos.y, rel_pos.z);
         auto canon_pivot = btVector3(0.f, 0.f, 0);
@@ -58,6 +59,8 @@ namespace arenai::model {
 
             shell_item->get_body()->applyCentralForce(
                 btVector3(force_vec.x, force_vec.y, force_vec.z) * 1.5e5f);
+
+            on_shell_fired(shell_item);
 
             return {shell_item};
         }

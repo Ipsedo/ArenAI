@@ -4,8 +4,8 @@
 
 #include "./bullet_tank_factory.h"
 
-#include "./enemy_tank.h"
-#include "./player_tank.h"
+#include "./bullet_enemy_tank.h"
+#include "./bullet_player_tank.h"
 
 using namespace arenai;
 using namespace arenai::model;

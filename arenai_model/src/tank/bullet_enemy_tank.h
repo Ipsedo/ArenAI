@@ -5,7 +5,7 @@
 #ifndef ARENAI_BULLET_ENEMY_TANK_H
 #define ARENAI_BULLET_ENEMY_TANK_H
 
-#include <optional>
+#include <memory>
 
 #include <arenai_model/action_stats.h>
 #include <arenai_model/tank.h>
@@ -14,11 +14,22 @@
 
 namespace arenai::model {
 
-    struct shoot_info {
-        glm::vec3 start_pos;
-        glm::vec3 hit_pos;
-        bool has_touch_enemy;
-        bool enemy_killed;
+    struct TrackedShell {
+        std::weak_ptr<ShellItem> shell;
+        glm::vec3 fire_pos;
+
+        // closest approach over the whole trajectory
+        float min_distance;
+        glm::vec3 enemy_pos_at_t;
+        glm::vec3 shell_pos_at_t;
+        bool has_sample;
+
+        // last shell position, recorded at contact (the shell is already removed
+        // from the engine when get_reward runs on the contact frame)
+        glm::vec3 final_shell_pos;
+        bool has_final_pos;
+        bool has_hit;
+        bool has_killed;
     };
 
     class BulletEnemyTank final : public BulletTank, public EnemyTank {
@@ -59,19 +70,18 @@ namespace arenai::model {
         int curr_frame_upside_down;
 
         float distance_scale;
-        float impact_distance_scale;
-        float angle_scale;
+        float dispersion_angle_scale;
         float optimal_distance;
 
-        float fire_cost;
         float miss_cost;
 
         bool is_dead_already_triggered;
 
         bool has_touch;
-        std::optional<shoot_info> last_shoot_info;
+        std::vector<TrackedShell> tracked_shells;
         std::shared_ptr<ActionStats> action_stats;
 
+        void on_shell_fired(const std::shared_ptr<ShellItem> &shell);
         void on_fired_shell_contact(const ShellContactInfo &shell_info, Item *item);
 
         float compute_aim_angle(const std::shared_ptr<EnemyTank> &other_tank);
@@ -79,11 +89,13 @@ namespace arenai::model {
         int get_nearest_enemy_index(
             const std::vector<std::shared_ptr<EnemyTank>> &tanks, const glm::vec3 &pos) const;
 
-        float compute_hit_reward(
-            const glm::vec3 &fire_pos, const glm::vec3 &best_enemy_pos,
-            const glm::vec3 &hit_pos) const;
+        void update_closest_approach(
+            TrackedShell &tracked, const glm::vec3 &shell_pos,
+            const std::vector<std::shared_ptr<EnemyTank>> &tanks) const;
 
-        float compute_shoot_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks);
+        float compute_dispersion_reward(
+            const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos,
+            const glm::vec3 &shell_pos) const;
     };
 
 }// namespace arenai::model

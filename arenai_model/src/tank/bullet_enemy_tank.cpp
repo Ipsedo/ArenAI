@@ -2,10 +2,11 @@
 // Created by samuel on 20/10/2025.
 //
 
-#include "./enemy_tank.h"
+#include "./bullet_enemy_tank.h"
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <vector>
 
 #include <arenai_model/constants.h>
@@ -15,6 +16,7 @@
 #include <glm/gtx/vector_angle.hpp>
 
 #include "../bullet_engine.h"
+#include "./parts/shell.h"
 
 using namespace arenai;
 using namespace arenai::model;
@@ -30,13 +32,14 @@ namespace arenai::model {
             engine, file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency,
             [this](const ShellContactInfo &info, Item *item) {
                 on_fired_shell_contact(info, item);
-            }),
+            },
+            [this](const std::shared_ptr<ShellItem> &shell) { on_shell_fired(shell); }),
           tank_prefix_name(tank_prefix_name),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-          curr_frame_upside_down(0), distance_scale(250.f), impact_distance_scale(10.f),
-          angle_scale(glm::pi<float>() / 3.f), optimal_distance(75.f), fire_cost(0.9f),
-          miss_cost(0.5f), is_dead_already_triggered(false), has_touch(false),
-          last_shoot_info(std::nullopt), action_stats(std::make_shared<ActionStats>()) {}
+          curr_frame_upside_down(0), distance_scale(250.f),
+          dispersion_angle_scale(glm::radians(7.5f)), optimal_distance(75.f), miss_cost(0.5f),
+          is_dead_already_triggered(false), has_touch(false),
+          action_stats(std::make_shared<ActionStats>()) {}
 
     float BulletEnemyTank::compute_aim_angle(const std::shared_ptr<EnemyTank> &other_tank) {
         const auto canon_tr = get_canon()->get_model_matrix();
@@ -53,48 +56,35 @@ namespace arenai::model {
         return std::acos(d);
     }
 
-    float BulletEnemyTank::compute_hit_reward(
-        const glm::vec3 &fire_pos, const glm::vec3 &best_enemy_pos,
-        const glm::vec3 &hit_pos) const {
-        const float distance_impact = glm::length(hit_pos - best_enemy_pos);
-
-        const glm::vec3 fire_to_enemy = best_enemy_pos - fire_pos;
-        const glm::vec3 fire_to_hit = hit_pos - fire_pos;
+    float BulletEnemyTank::compute_dispersion_reward(
+        const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos, const glm::vec3 &shell_pos) const {
+        const glm::vec3 fire_to_enemy = enemy_pos - fire_pos;
+        const glm::vec3 fire_to_shell = shell_pos - fire_pos;
 
         const float angle = std::atan2(
-            glm::length(glm::cross(fire_to_enemy, fire_to_hit)),
-            glm::dot(fire_to_enemy, fire_to_hit));
+            glm::length(glm::cross(fire_to_enemy, fire_to_shell)),
+            glm::dot(fire_to_enemy, fire_to_shell));
 
-        const float distance_reward =
-            std::exp(-0.5f * std::pow(distance_impact / impact_distance_scale, 2.f));
-        const float angle_reward = std::exp(-0.5f * std::pow(angle / angle_scale, 2.f));
-
-        return distance_reward * angle_reward;
+        return std::exp(-0.5f * std::pow(angle / dispersion_angle_scale, 2.f));
     }
 
-    float
-    BulletEnemyTank::compute_shoot_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
-        constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
-        const glm::vec3 chassis_pos = get_chassis()->get_model_matrix() * world_center;
+    void BulletEnemyTank::update_closest_approach(
+        TrackedShell &tracked, const glm::vec3 &shell_pos,
+        const std::vector<std::shared_ptr<EnemyTank>> &tanks) const {
+        const int nearest_index = get_nearest_enemy_index(tanks, shell_pos);
+        if (nearest_index == -1) return;
 
-        float best_score = 0.f;
-        for (const auto &tank: tanks) {
-            if (tank.get() == this) continue;
-            if (tank->is_dead() && !tank->is_first_frame_dead()) continue;
+        const auto enemy_pos = glm::vec3(
+            tanks[nearest_index]->get_chassis()->get_model_matrix()
+            * glm::vec4(glm::vec3(0.f), 1.f));
 
-            const glm::vec3 other_pos = tank->get_chassis()->get_model_matrix() * world_center;
-            const float distance = glm::length(other_pos - chassis_pos);
-
-            const float angle = compute_aim_angle(tank);
-
-            const float distance_score = std::exp(-0.5f * std::pow(distance / distance_scale, 2.f));
-            const float angle_score = std::exp(-0.5f * std::pow(angle / angle_scale, 2.f));
-
-            if (const float curr_score = distance_score * angle_score; curr_score > best_score)
-                best_score = curr_score;
+        if (const float distance = glm::length(shell_pos - enemy_pos);
+            distance < tracked.min_distance) {
+            tracked.min_distance = distance;
+            tracked.enemy_pos_at_t = enemy_pos;
+            tracked.shell_pos_at_t = shell_pos;
+            tracked.has_sample = true;
         }
-
-        return best_score;
     }
 
     int BulletEnemyTank::get_nearest_enemy_index(
@@ -134,32 +124,32 @@ namespace arenai::model {
         // 2. dead / suicide penalty
         const auto dead_penalty = is_dead() ? -1.f : 0.f;
 
-        // 3. fire cost (anti-spam)
-        const auto shoot_reward =
-            !is_dead() && action_stats->has_fire() ? compute_shoot_reward(tanks) - fire_cost : 0.f;
+        // 3. fired shells: sample the closest tank along the trajectory, pay the
+        // dispersion gaussian (plus hit/kill bonuses) once the shell dies
+        float shells_reward = 0.f;
+        for (int i = static_cast<int>(tracked_shells.size()) - 1; i >= 0; i--) {
+            auto &tracked = tracked_shells[i];
 
-        // 4. hit reward
-        float hit_reward = 0.f;
-        if (last_shoot_info.has_value()) {
-            const auto [fire_pos, hit_pos, has_hit, has_killed] = last_shoot_info.value();
+            const auto shell = tracked.shell.lock();
+            const bool in_flight = shell && !shell->need_destroy();
 
-            if (const auto best_tank_index = get_nearest_enemy_index(tanks, hit_pos);
-                best_tank_index != -1) {
-                const auto best_tank_model_matrix =
-                    tanks[best_tank_index]->get_chassis()->get_model_matrix();
-                const auto best_tank_pos =
-                    glm::vec3(best_tank_model_matrix * glm::vec4(glm::vec3(0.f), 1.f));
+            if (shell) update_closest_approach(tracked, shell->get_current_position(), tanks);
+            else if (tracked.has_final_pos)
+                update_closest_approach(tracked, tracked.final_shell_pos, tanks);
 
-                const float impact_reward = compute_hit_reward(fire_pos, best_tank_pos, hit_pos);
+            if (in_flight) continue;
 
-                hit_reward = impact_reward + (has_hit ? (has_killed ? 2.f : 1.f) : -miss_cost);
+            if (tracked.has_sample) {
+                shells_reward += compute_dispersion_reward(
+                    tracked.fire_pos, tracked.enemy_pos_at_t, tracked.shell_pos_at_t);
+                shells_reward += tracked.has_hit ? (tracked.has_killed ? 2.f : 1.f) : -miss_cost;
             }
 
-            last_shoot_info = std::nullopt;
+            tracked_shells.erase(tracked_shells.begin() + i);
         }
 
-        // 5. total reward
-        const float reward = dead_penalty + shoot_reward + hit_reward;
+        // 4. total reward
+        const float reward = dead_penalty + shells_reward;
 
         return reward;
     }
@@ -202,6 +192,20 @@ namespace arenai::model {
         return reward;
     }
 
+    void BulletEnemyTank::on_shell_fired(const std::shared_ptr<ShellItem> &shell) {
+        tracked_shells.push_back(
+            {.shell = shell,
+             .fire_pos = shell->get_fire_position(),
+             .min_distance = std::numeric_limits<float>::infinity(),
+             .enemy_pos_at_t = glm::vec3(0.f),
+             .shell_pos_at_t = glm::vec3(0.f),
+             .has_sample = false,
+             .final_shell_pos = glm::vec3(0.f),
+             .has_final_pos = false,
+             .has_hit = false,
+             .has_killed = false});
+    }
+
     void BulletEnemyTank::on_fired_shell_contact(const ShellContactInfo &shell_info, Item *item) {
         for (const auto &i: get_items())
             if (i->get_name() == item->get_name()) return;
@@ -220,7 +224,15 @@ namespace arenai::model {
             }
         }
 
-        last_shoot_info = {shell_info.fire_position, shell_info.current_position, hit, killed};
+        for (auto &tracked: tracked_shells) {
+            if (tracked.has_final_pos || tracked.fire_pos != shell_info.fire_position) continue;
+
+            tracked.final_shell_pos = shell_info.current_position;
+            tracked.has_final_pos = true;
+            tracked.has_hit = hit;
+            tracked.has_killed = killed;
+            break;
+        }
     }
 
     bool BulletEnemyTank::has_hit_other_tank() {
@@ -231,6 +243,7 @@ namespace arenai::model {
         return false;
     }
 
+    // ReSharper disable once CppReferenceToOverriddenVirtualFunction
     bool BulletEnemyTank::is_dead() { return BulletTank::is_dead() || is_suicide(); }
 
     bool BulletEnemyTank::is_first_frame_dead() { return is_dead() && !is_dead_already_triggered; }

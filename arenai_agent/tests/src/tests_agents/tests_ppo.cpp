@@ -23,7 +23,6 @@ std::unique_ptr<PpoTorchAgentFactory> PpoAgentTest::make_factory(const PpoTestCo
         .actor_learning_rate = 1e-3f,
         .critic_learning_rate = 1e-3f,
         .hidden_size_sensors = 16,
-        .hidden_size_actions = 16,
         .actor_hidden_sizes = {32},
         .critic_hidden_sizes = {32},
         .vision_channels = {{3, 8}},

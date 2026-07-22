@@ -11,7 +11,6 @@ namespace arenai::agent {
             {"--actor_learning_rate", &PpoHyperParams::actor_learning_rate},
             {"--critic_learning_rate", &PpoHyperParams::critic_learning_rate},
             {"--hidden_size_sensors", &PpoHyperParams::hidden_size_sensors},
-            {"--hidden_size_actions", &PpoHyperParams::hidden_size_actions},
             {"--actor_hidden_sizes", &PpoHyperParams::actor_hidden_sizes},
             {"--critic_hidden_sizes", &PpoHyperParams::critic_hidden_sizes},
             {"--vision_channels", &PpoHyperParams::vision_channels},

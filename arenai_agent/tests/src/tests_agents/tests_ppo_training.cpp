@@ -13,7 +13,6 @@ PpoTrainingTest::make_factory(const PpoTrainingTestConfig &cfg) const {
         .actor_learning_rate = 1e-3f,
         .critic_learning_rate = 1e-3f,
         .hidden_size_sensors = 8,
-        .hidden_size_actions = 8,
         .actor_hidden_sizes = {16},
         .critic_hidden_sizes = {16},
         .vision_channels = {{3, 4}},
@@ -77,7 +76,7 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
     const auto agent = std::make_shared<TorchPpoAgent>(actor, device, collector);
     const auto trainer = std::make_shared<PpoTrainer>(
         actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_sensors, 1e-3f, 1e-3f, 8,
-        8, std::vector<int>{16}, vision_channels, group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f,
+        std::vector<int>{16}, vision_channels, group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f,
         0.01f, 0.01f, 2, ROLLOUT_SIZE);
 
     std::vector<torch::Tensor> initial_parameters;

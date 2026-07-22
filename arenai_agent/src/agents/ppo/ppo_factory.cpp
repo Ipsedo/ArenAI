@@ -23,10 +23,10 @@ namespace arenai::agent {
           trainer(std::make_shared<PpoTrainer>(
               actor, rollout_buffer, vision_height, vision_width, nb_sensors,
               params.actor_learning_rate, params.critic_learning_rate, params.hidden_size_sensors,
-              params.hidden_size_actions, params.critic_hidden_sizes, params.vision_channels,
-              params.group_norm_nums, device, params.metric_window_size, params.gamma,
-              params.gae_lambda, params.clip_epsilon, params.continuous_entropy_coef,
-              params.discrete_entropy_coef, params.epochs, params.rollout_size)) {}
+              params.critic_hidden_sizes, params.vision_channels, params.group_norm_nums, device,
+              params.metric_window_size, params.gamma, params.gae_lambda, params.clip_epsilon,
+              params.continuous_entropy_coef, params.discrete_entropy_coef, params.epochs,
+              params.rollout_size)) {}
 
     std::shared_ptr<AbstractTorchAgent> PpoTorchAgentFactory::get_agent() { return agent; }
 

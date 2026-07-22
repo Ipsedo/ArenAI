@@ -17,7 +17,6 @@ namespace arenai::agent {
         float actor_learning_rate = 1e-4f;
         float critic_learning_rate = 3e-4f;
         int hidden_size_sensors = 256;
-        int hidden_size_actions = 64;
         std::vector<int> actor_hidden_sizes = {2560, 1280};
         std::vector<int> critic_hidden_sizes = {2560, 1280};
         std::vector<std::tuple<int, int>> vision_channels = {{3, 8},   {8, 16},   {16, 32},

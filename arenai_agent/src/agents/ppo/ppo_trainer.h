@@ -17,7 +17,7 @@ namespace arenai::agent {
         PpoTrainer(
             std::shared_ptr<Actor> actor, std::shared_ptr<PpoRolloutBuffer> rollout_buffer,
             int vision_height, int vision_width, int nb_sensors, float actor_learning_rate,
-            float critic_learning_rate, int hidden_size_sensors, int hidden_size_actions,
+            float critic_learning_rate, int hidden_size_sensors,
             const std::vector<int> &critic_hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,

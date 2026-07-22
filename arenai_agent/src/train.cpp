@@ -58,21 +58,22 @@ namespace arenai::agent {
         float spawn_width = environment_options.initial_spawn_width;
         float spawn_height = environment_options.initial_spawn_height;
 
-        SacTorchAgentFactory agent_factory(
-            environment_options.vision_height, environment_options.vision_width,
-            model::ENEMY_PROPRIOCEPTION_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
-            model::ENEMY_NB_DISCRETE_ACTION, train_options.actor_learning_rate,
-            train_options.critic_learning_rate, train_options.alpha_learning_rate,
-            model_options.hidden_size_sensors, model_options.hidden_size_actions,
-            model_options.actor_hidden_sizes, model_options.critic_hidden_sizes,
-            model_options.vision_channels, model_options.group_norm_nums, torch_device,
-            train_options.metric_window_size, model_options.tau, model_options.gamma,
-            train_options.replay_buffer_size, train_options.train_every, train_options.epochs,
-            train_options.batch_size);
+        std::unique_ptr<AbstractTorchAgentFactory> agent_factory =
+            std::make_unique<SacTorchAgentFactory>(
+                environment_options.vision_height, environment_options.vision_width,
+                model::ENEMY_PROPRIOCEPTION_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
+                model::ENEMY_NB_DISCRETE_ACTION, train_options.actor_learning_rate,
+                train_options.critic_learning_rate, train_options.alpha_learning_rate,
+                model_options.hidden_size_sensors, model_options.hidden_size_actions,
+                model_options.actor_hidden_sizes, model_options.critic_hidden_sizes,
+                model_options.vision_channels, model_options.group_norm_nums, torch_device,
+                train_options.metric_window_size, model_options.tau, model_options.gamma,
+                train_options.replay_buffer_size, train_options.train_every, train_options.epochs,
+                train_options.batch_size);
 
-        const auto agent = agent_factory.get_agent();
-        const auto collector = agent_factory.get_collector();
-        const auto trainer = agent_factory.get_trainer();
+        const auto agent = agent_factory->get_agent();
+        const auto collector = agent_factory->get_collector();
+        const auto trainer = agent_factory->get_trainer();
 
         std::cout << "Parameters : " << trainer->count_parameters() << std::endl;
 

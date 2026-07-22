@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.29)
 
-project(arenai_agent_host)
+project(arenai_agent)
 
 set(CMAKE_CXX_STANDARD 20)
 

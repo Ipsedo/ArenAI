@@ -10,7 +10,7 @@
 
 #include <torch/torch.h>
 
-#include <arenai_train/agent.h>
+#include "../agents/trainer.h"
 
 namespace arenai::train {
 
@@ -31,13 +31,13 @@ namespace arenai::train {
     class AgentSaver {
     public:
         AgentSaver(
-            const std::shared_ptr<AbstractAgent> &agent, const std::filesystem::path &output_path,
-            int save_every);
+            const std::shared_ptr<AbstractTrainer> &trainer,
+            const std::filesystem::path &output_path, int save_every);
 
         void attempt_save();
 
     private:
-        std::shared_ptr<AbstractAgent> agent;
+        std::shared_ptr<AbstractTrainer> trainer;
         long curr_step;
         int save_every;
         std::filesystem::path output_path;

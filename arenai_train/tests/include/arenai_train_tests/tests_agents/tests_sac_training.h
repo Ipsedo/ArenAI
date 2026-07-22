@@ -8,7 +8,7 @@
 #include <filesystem>
 #include <memory>
 
-#include <agents/sac.h>
+#include <agents/sac/sac_factory.h>
 #include <gtest/gtest.h>
 
 struct SacTrainingTestConfig {
@@ -23,9 +23,10 @@ class SacTrainingTest : public testing::Test {
 protected:
     torch::Device device{torch::kCPU};
 
-    std::unique_ptr<arenai::train::SacAgent> make_agent(const SacTrainingTestConfig &cfg) const;
-    static std::unique_ptr<arenai::train::ReplayBuffer>
-    make_filled_buffer(const SacTrainingTestConfig &cfg, int n_steps);
+    std::unique_ptr<arenai::train::SacTorchAgentFactory>
+    make_factory(const SacTrainingTestConfig &cfg) const;
+
+    static arenai::train::TorchState make_state(const SacTrainingTestConfig &cfg);
 };
 
 #endif//ARENAI_TESTS_SAC_TRAINING_H

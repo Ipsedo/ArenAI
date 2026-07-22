@@ -13,7 +13,7 @@
 
 namespace arenai::train {
 
-    struct actor_response {
+    struct ActorRawOutput {
         torch::Tensor mu;
         torch::Tensor sigma;
         torch::Tensor discrete;
@@ -27,7 +27,7 @@ namespace arenai::train {
             const int &hidden_size_sensors, const std::vector<int> &hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums);
-        actor_response act(const torch::Tensor &vision, const torch::Tensor &sensors);
+        ActorRawOutput act(const torch::Tensor &vision, const torch::Tensor &sensors);
 
     private:
         std::shared_ptr<ConvolutionNetwork> vision_encoder;

@@ -9,6 +9,14 @@ project(arenai_desktop)
 
 set(CMAKE_CXX_STANDARD 20)
 
+# argparse
+FetchContent_Declare(
+        argparse
+        GIT_REPOSITORY https://github.com/p-ranav/argparse.git
+        GIT_TAG v3.2
+)
+FetchContent_MakeAvailable(argparse)
+
 # ArenAI Desktop
 set(ARENAI_DESKTOP_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
@@ -26,8 +34,10 @@ target_link_libraries(
         RmlUi::Core
         # user preferences are (de)serialized to JSON in src/core/
         nlohmann_json::nlohmann_json
+        argparse
 )
 
+# this is not a leak, just an arg ON/OFF
 arenai_copy_runtime_dlls(arenai_desktop TORCH)
 
 # Game assets copied next to the executable: main.cpp resolves the resources

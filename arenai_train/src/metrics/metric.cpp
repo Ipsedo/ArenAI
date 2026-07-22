@@ -2,10 +2,10 @@
 // Created by samuel on 12/10/2025.
 //
 
+#include "./metric.h"
+
 #include <numeric>
 #include <stdexcept>
-
-#include <arenai_train/metric.h>
 
 using namespace arenai;
 using namespace arenai::train;

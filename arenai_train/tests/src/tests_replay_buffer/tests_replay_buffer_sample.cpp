@@ -2,7 +2,8 @@
 // Created by samuel on 30/06/2026.
 //
 
-#include <arenai_train/replay_buffer.h>
+#include <agents/sac/replay_buffer.h>
+
 #include <arenai_train_tests/tests_replay_buffer/tests_replay_buffer_sample.h>
 
 #include "./create_random_step.h"
@@ -15,7 +16,7 @@ namespace {
     constexpr int CONT_ACTIONS_NB = 3, DISCRETE_ACTIONS_NB = 4;
     constexpr int SENSORS_NB = 5;
 
-    void assert_sample_shapes(const TorchStep &output, const int expected_batch_size) {
+    void assert_sample_shapes(const SacTrainStep &output, const int expected_batch_size) {
         const auto &[state, action, reward, done, next_state] = output;
 
         ASSERT_EQ(state.vision.ndimension(), 4);
@@ -55,10 +56,13 @@ namespace {
         ASSERT_EQ(next_state.proprioception.size(1), SENSORS_NB);
     }
 
-    void fill_buffer(ReplayBuffer &buffer, const uint32_t count) {
+    void fill_buffer(SacReplayBuffer &buffer, const uint32_t count) {
         for (uint32_t i = 0; i < count; ++i)
             buffer.add(create_random_step(
                 WIDTH, HEIGHT, CONT_ACTIONS_NB, DISCRETE_ACTIONS_NB, SENSORS_NB, false));
+
+        // the final observation closes the episode and makes the last added step sampleable
+        buffer.finish_episode(create_random_state(WIDTH, HEIGHT, SENSORS_NB));
     }
 }// namespace
 
@@ -69,7 +73,7 @@ namespace {
 TEST_P(ReplayBufferSampleNormalTestParam, BatchSizeRespected) {
     const auto [memory_size, batch_size, steps_to_add] = GetParam();
 
-    ReplayBuffer buffer(static_cast<int>(memory_size));
+    SacReplayBuffer buffer(static_cast<int>(memory_size));
     fill_buffer(buffer, steps_to_add);
 
     const auto output = buffer.sample(static_cast<int>(batch_size), torch::kCPU);
@@ -89,12 +93,14 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(ReplayBufferSampleOverflowTestParam, BatchSizeClampedToMemorySize) {
     const auto [memory_size, batch_size, steps_to_add] = GetParam();
 
-    ReplayBuffer buffer(static_cast<int>(memory_size));
+    SacReplayBuffer buffer(static_cast<int>(memory_size));
     fill_buffer(buffer, steps_to_add);
 
     const auto output = buffer.sample(static_cast<int>(batch_size), torch::kCPU);
 
-    assert_sample_shapes(output, static_cast<int>(memory_size));
+    // once the ring has wrapped, the final-observation slot is not sampleable:
+    // memory_size - 1 transitions remain
+    assert_sample_shapes(output, static_cast<int>(memory_size) - 1);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -109,7 +115,7 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(ReplayBufferSampleUnderflowTestParam, BatchSizeClampedToBufferSize) {
     const auto [memory_size, batch_size, steps_to_add] = GetParam();
 
-    ReplayBuffer buffer(static_cast<int>(memory_size));
+    SacReplayBuffer buffer(static_cast<int>(memory_size));
     fill_buffer(buffer, steps_to_add);
 
     const auto output = buffer.sample(static_cast<int>(batch_size), torch::kCPU);
@@ -128,7 +134,7 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(ReplayBufferSampleDoubleOverflowTestParam, BatchSizeClampedToBufferSize) {
     const auto [memory_size, batch_size, steps_to_add] = GetParam();
 
-    ReplayBuffer buffer(static_cast<int>(memory_size));
+    SacReplayBuffer buffer(static_cast<int>(memory_size));
     fill_buffer(buffer, steps_to_add);
 
     const auto output = buffer.sample(static_cast<int>(batch_size), torch::kCPU);

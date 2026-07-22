@@ -133,10 +133,6 @@ namespace arenai::train {
             [](const int acc, const bool curr_done) { return acc && curr_done; });
     }
 
-    bool TrainTankEnvironment::is_tank_factory_already_done(const int tank_factory_index) {
-        return already_done[tank_factory_index];
-    }
-
     bool TrainTankEnvironment::is_episode_terminated() {
         return are_all_done() || nb_steps > max_episode_steps;
     }

@@ -2,7 +2,8 @@
 // Created by samuel on 30/06/2026.
 //
 
-#include <arenai_train/replay_buffer.h>
+#include <agents/sac/replay_buffer.h>
+
 #include <arenai_train_tests/tests_replay_buffer/tests_replay_buffer_add.h>
 
 #include "./create_random_step.h"
@@ -17,7 +18,7 @@ using namespace arenai::train;
 TEST_P(ReplayBufferAddNormalTestParam, SizeMatchesAdded) {
     const auto [memory_size, to_add] = GetParam();
 
-    ReplayBuffer buffer(static_cast<int>(memory_size));
+    SacReplayBuffer buffer(static_cast<int>(memory_size));
 
     for (uint32_t i = 0; i < to_add; ++i) buffer.add(create_random_step(8, 8, 3, 2, 5, false));
 
@@ -35,7 +36,7 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(ReplayBufferAddOverflowTestParam, SizeCappedAtMemorySize) {
     const auto [memory_size, to_add] = GetParam();
 
-    ReplayBuffer buffer(static_cast<int>(memory_size));
+    SacReplayBuffer buffer(static_cast<int>(memory_size));
 
     for (uint32_t i = 0; i < to_add; ++i) buffer.add(create_random_step(8, 8, 3, 2, 5, false));
 

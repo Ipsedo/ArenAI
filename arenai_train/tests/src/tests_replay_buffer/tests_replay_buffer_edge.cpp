@@ -2,7 +2,8 @@
 // Created by claude on 01/07/2026.
 //
 
-#include <arenai_train/replay_buffer.h>
+#include <agents/sac/replay_buffer.h>
+
 #include <arenai_train_tests/tests_replay_buffer/tests_replay_buffer_edge.h>
 
 #include "./create_random_step.h"
@@ -11,7 +12,7 @@ using namespace arenai;
 using namespace arenai::train;
 
 TEST_F(ReplayBufferEdgeTest, SampleFromEmptyBufferDoesNotCrash) {
-    ReplayBuffer buffer(10);
+    SacReplayBuffer buffer(10);
 
     ASSERT_EQ(buffer.size(), 0u);
 
@@ -22,11 +23,12 @@ TEST_F(ReplayBufferEdgeTest, SampleFromEmptyBufferDoesNotCrash) {
 }
 
 TEST_F(ReplayBufferEdgeTest, SampleFromSingleElement) {
-    ReplayBuffer buffer(10);
+    SacReplayBuffer buffer(10);
 
     buffer.add(create_random_step(8, 8, 3, 2, 5, false));
+    buffer.finish_episode(create_random_state(8, 8, 5));
 
-    ASSERT_EQ(buffer.size(), 1u);
+    ASSERT_EQ(buffer.size(), 2u);
 
     const auto output = buffer.sample(1, torch::kCPU);
 
@@ -35,30 +37,31 @@ TEST_F(ReplayBufferEdgeTest, SampleFromSingleElement) {
 }
 
 TEST_F(ReplayBufferEdgeTest, SampleBatchLargerThanSingleElement) {
-    ReplayBuffer buffer(10);
+    SacReplayBuffer buffer(10);
 
     buffer.add(create_random_step(8, 8, 3, 2, 5, false));
+    buffer.finish_episode(create_random_state(8, 8, 5));
 
     const auto output = buffer.sample(5, torch::kCPU);
 
-    ASSERT_EQ(output.state.vision.size(0), 1) << "Batch size should be clamped to buffer size (1)";
+    ASSERT_EQ(output.state.vision.size(0), 1)
+        << "Batch size should be clamped to the single available transition";
 }
 
 TEST_F(ReplayBufferEdgeTest, RewardUnchangedAtSample) {
-    ReplayBuffer buffer(10);
+    SacReplayBuffer buffer(10);
 
-    TorchInputStep step;
-    step.state.vision = torch::randint(255, {3, 8, 8}, torch::kUInt8);
-    step.state.proprioception = torch::randn({5});
-    step.action.continuous_action = torch::randn({3});
-    step.action.discrete_action = torch::zeros({2});
-    step.action.discrete_action[0] = 1.0f;
-    step.main_reward = torch::tensor({2.0f});
-    step.potential_reward = torch::tensor({0.0f});
-    step.done = torch::tensor({0.0f});
-    step.next_state.vision = torch::randint(255, {3, 8, 8}, torch::kUInt8);
-    step.next_state.proprioception = torch::randn({5});
+    SacInputStep step;
+    step.state.vision = torch::randint(255, {1, 3, 8, 8}, torch::kUInt8);
+    step.state.proprioception = torch::randn({1, 5});
+    step.action.continuous_action = torch::randn({1, 3});
+    step.action.discrete_action = torch::zeros({1, 2});
+    step.action.discrete_action[0][0] = 1.0f;
+    step.reward = torch::full({1, 1}, 2.0f);
+    step.done = torch::zeros({1, 1});
+    step.truncated = torch::zeros({1, 1});
 
+    buffer.add(step);
     buffer.add(step);
 
     const auto output = buffer.sample(1, torch::kCPU);
@@ -68,7 +71,7 @@ TEST_F(ReplayBufferEdgeTest, RewardUnchangedAtSample) {
 }
 
 TEST_F(ReplayBufferEdgeTest, SampleWithZeroBatchSize) {
-    ReplayBuffer buffer(10);
+    SacReplayBuffer buffer(10);
 
     buffer.add(create_random_step(8, 8, 3, 2, 5, false));
     buffer.add(create_random_step(8, 8, 3, 2, 5, false));
@@ -79,9 +82,10 @@ TEST_F(ReplayBufferEdgeTest, SampleWithZeroBatchSize) {
 }
 
 TEST_F(ReplayBufferEdgeTest, SampleWithNegativeBatchSize) {
-    ReplayBuffer buffer(10);
+    SacReplayBuffer buffer(10);
 
     buffer.add(create_random_step(8, 8, 3, 2, 5, false));
+    buffer.finish_episode(create_random_state(8, 8, 5));
 
     const auto output = buffer.sample(-5, torch::kCPU);
 
@@ -89,7 +93,7 @@ TEST_F(ReplayBufferEdgeTest, SampleWithNegativeBatchSize) {
 }
 
 TEST_F(ReplayBufferEdgeTest, CircularOverwriteKeepsMaxSize) {
-    ReplayBuffer buffer(3);
+    SacReplayBuffer buffer(3);
 
     buffer.add(create_random_step(8, 8, 3, 2, 5, false));
     buffer.add(create_random_step(8, 8, 3, 2, 5, false));

@@ -2,10 +2,11 @@
 // Created by samuel on 12/10/2025.
 //
 
+#include "../networks_utils/torch_converter.h"
+
 #include <ATen/Parallel.h>
 
 #include <arenai_core/constants.h>
-#include <arenai_train/torch_converter.h>
 
 using namespace arenai;
 using namespace arenai::train;
@@ -35,7 +36,7 @@ namespace arenai::train {
         return actions;
     }
 
-    std::tuple<torch::Tensor, torch::Tensor> states_to_tensor(
+    TorchState states_to_tensor(
         const std::vector<core::State> &states, const int vision_height, const int vision_width) {
         const auto N = static_cast<int64_t>(states.size());
         constexpr int64_t C = 3;
@@ -66,14 +67,39 @@ namespace arenai::train {
             }
         });
 
-        return {visions_u8, proprioceptions};
+        return {.vision = visions_u8, .proprioception = proprioceptions};
     }
 
-    std::tuple<torch::Tensor, torch::Tensor>
+    TorchState
     state_to_tensor(const core::State &state, const int vision_height, const int vision_width) {
         const auto [vision, proprioception] =
             states_to_tensor({state}, vision_height, vision_width);
-        return {vision[0], proprioception[0]};
+        return {.vision = vision[0], .proprioception = proprioception[0]};
+    }
+
+    TorchStep steps_to_tensor(
+        const std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
+            &steps,
+        const int vision_height, const int vision_width) {
+        std::vector<core::State> states;
+        std::vector<torch::Tensor> rewards;
+        std::vector<torch::Tensor> are_done;
+        std::vector<torch::Tensor> are_truncated;
+
+        for (const auto &[state, reward, is_done, is_truncated]: steps) {
+            states.push_back(state);
+            rewards.push_back(torch::tensor({reward}, torch::TensorOptions().dtype(torch::kFloat)));
+            are_done.push_back(
+                torch::tensor({is_done}, torch::TensorOptions().dtype(torch::kBool)));
+            are_truncated.push_back(
+                torch::tensor({is_truncated}, torch::TensorOptions().dtype(torch::kBool)));
+        }
+
+        return {
+            .states = states_to_tensor(states, vision_height, vision_width),
+            .rewards = torch::stack(rewards),
+            .is_done = torch::stack(are_done),
+            .is_truncated = torch::stack(are_truncated)};
     }
 
 }// namespace arenai::train

@@ -68,7 +68,7 @@ namespace arenai::train {
         discrete->apply(init_discrete_output_weights);
     }
 
-    actor_response Actor::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
+    ActorRawOutput Actor::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
         auto vision_encoded = vision_encoder->forward(vision);
         auto sensors_encoded = sensors_encoder->forward(sensors);
         auto encoded = head->forward(torch::cat({vision_encoded, sensors_encoded}, 1));

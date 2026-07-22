@@ -7,7 +7,7 @@
 
 #include <filesystem>
 
-#include <arenai_train/metric.h>
+#include "./metric.h"
 
 namespace arenai::train {
 

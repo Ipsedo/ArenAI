@@ -2,7 +2,10 @@
 // Created by samuel on 22/01/2026.
 //
 
+#include <format>
 #include <iostream>
+#include <map>
+#include <string>
 
 #include <arenai_train/factory.h>
 
@@ -21,7 +24,7 @@ namespace arenai::train {
             vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_actions);
 
         if (!arguments.empty()) {
-            std::cerr << "Invalid argument(s) : " << arguments << std::endl;
+            std::cerr << "Invalid argument(s) : " << std::get<0>(*arguments.begin()) << std::endl;
             throw std::runtime_error("Invalid argument(s)");
         }
 

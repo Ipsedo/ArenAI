@@ -2,8 +2,9 @@
 // Created by samuel on 30/06/2026.
 //
 
+#include <networks_utils/torch_converter.h>
+
 #include <arenai_core/constants.h>
-#include <arenai_train/torch_converter.h>
 #include <arenai_train_tests/tests_utils/tests_torch_converter.h>
 
 using namespace arenai;

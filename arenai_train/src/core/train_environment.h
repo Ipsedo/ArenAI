@@ -6,7 +6,8 @@
 #define ARENAI_TRAIN_HOST_TRAIN_ENVIRONMENT_H
 
 #include <arenai_core/environment.h>
-#include <arenai_train/metric.h>
+
+#include "../metrics/metric.h"
 
 namespace arenai::train {
 
@@ -25,7 +26,6 @@ namespace arenai::train {
         std::vector<std::shared_ptr<AbstractMetric>> get_metrics() const;
 
         bool is_episode_terminated();
-        bool is_tank_factory_already_done(int tank_factory_index);
 
         static void reset_singleton();
 

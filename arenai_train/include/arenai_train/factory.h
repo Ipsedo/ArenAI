@@ -5,6 +5,7 @@
 #ifndef ARENAI_TRAIN_HOST_FACTORY_H
 #define ARENAI_TRAIN_HOST_FACTORY_H
 
+#include <format>
 #include <map>
 #include <memory>
 #include <string>

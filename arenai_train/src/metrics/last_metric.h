@@ -5,7 +5,7 @@
 #ifndef ARENAI_LAST_METRIC_H
 #define ARENAI_LAST_METRIC_H
 
-#include <arenai_train/metric.h>
+#include "./metric.h"
 
 namespace arenai::train {
     class LastMetric final : public AbstractMetric {

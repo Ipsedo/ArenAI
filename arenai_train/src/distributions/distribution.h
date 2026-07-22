@@ -23,7 +23,7 @@ namespace arenai::train {
     public:
         virtual ~TorchDistributionFactory() = default;
 
-        virtual std::shared_ptr<TorchDistribution> get_distribution(actor_response input) = 0;
+        virtual std::shared_ptr<TorchDistribution> get_distribution(ActorRawOutput input) = 0;
         virtual float get_target_entropy() = 0;
     };
 

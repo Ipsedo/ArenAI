@@ -7,12 +7,9 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <torch/torch.h>
-
 #include <arenai_core/constants.h>
 #include <arenai_train/factory_set.h>
 #include <arenai_train/file_reader.h>
-#include <arenai_train/torch_converter.h>
 #include <arenai_view/backend.h>
 
 #include "./controller/game_input_router.h"
@@ -37,7 +34,7 @@ namespace arenai::desktop {
             const GameOptions &game_options, const ModelOptions &model_options,
             const gui::GameSettings &settings,
             const std::shared_ptr<view::AbstractWindowedGraphicBackend> &graphics_backend,
-            const std::unique_ptr<gui::AbstractGui> &gui, const torch::Device device) {
+            const std::unique_ptr<gui::AbstractGui> &gui) {
             const auto window = graphics_backend->get_window();
 
             const auto sac_agent =
@@ -46,12 +43,8 @@ namespace arenai::desktop {
                         model_options.vision_height, model_options.vision_width,
                         model::ENEMY_PROPRIOCEPTION_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
                         model::ENEMY_NB_DISCRETE_ACTION);
-            sac_agent->set_train(false);
 
             sac_agent->load(settings.sac_folder);
-            sac_agent->to(device);
-
-            std::cout << "Parameters : " << sac_agent->count_parameters() << std::endl;
 
             const auto env = std::make_shared<DesktopGameEnvironment>(
                 game_options.resources_folder, graphics_backend, settings.nb_tanks,
@@ -127,8 +120,9 @@ namespace arenai::desktop {
                     gui->render_pause_overlay();
                     graphics_backend->present();
 
-                    const auto action = gui->poll_pause_action();
-                    if (action == gui::PauseAction::Continue) set_paused(false);
+                    if (const auto action = gui->poll_pause_action();
+                        action == gui::PauseAction::Continue)
+                        set_paused(false);
                     else if (action == gui::PauseAction::MainMenu) {
                         outcome = InGameOutcome::MainMenu;
                         break;
@@ -139,15 +133,10 @@ namespace arenai::desktop {
 
                 auto last_time = std::chrono::steady_clock::now();
 
-                const auto [vision, proprioception] = train::states_to_tensor(
-                    states, model_options.vision_height, model_options.vision_width);
+                const auto action =
+                    sac_agent->act(states, model_options.vision_height, model_options.vision_width);
 
-                const auto [continuous_action, discrete_action] =
-                    sac_agent->act(vision.to(device), proprioception.to(device));
-                const auto actions_for_env =
-                    train::tensor_to_actions(continuous_action.cpu(), discrete_action.cpu());
-
-                const auto steps = env->step(game_options.wanted_frequency, actions_for_env);
+                const auto steps = env->step(game_options.wanted_frequency, action);
 
                 graphics_backend->present();
 
@@ -176,10 +165,6 @@ namespace arenai::desktop {
     }// namespace
 
     void game_loop(const GameOptions &game_options, const ModelOptions &model_options) {
-        torch::NoGradGuard no_grad;
-
-        const torch::Device device = model_options.cuda ? torch::kCUDA : torch::kCPU;
-
         // The view owns the window + GL context; the app only speaks the abstract
         // window/backend interface.
         const std::shared_ptr<view::AbstractWindowedGraphicBackend> graphics_backend =
@@ -225,8 +210,7 @@ namespace arenai::desktop {
 
             if (menu_outcome == gui::MenuOutcome::Quit) break;
 
-            if (run_game(
-                    game_options, model_options, gui->settings(), graphics_backend, gui, device)
+            if (run_game(game_options, model_options, gui->settings(), graphics_backend, gui)
                     == InGameOutcome::ExitGame
                 || dbg_autoplay)
                 break;

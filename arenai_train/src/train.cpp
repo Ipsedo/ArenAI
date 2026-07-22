@@ -10,16 +10,13 @@
 #include <indicators/progress_bar.hpp>
 
 #include <arenai_core/constants.h>
-#include <arenai_train/torch_converter.h>
 
-#include "./agents/sac.h"
+#include "./agents/sac/sac_factory.h"
 #include "./core/train_environment.h"
 #include "./metrics/mean_metric.h"
 #include "./metrics/metric_saver.h"
 #include "./networks_io/torch_saver.h"
-#include "./replay_buffer/reward_replay_buffer.h"
-#include "./reward_transforms/identity_transform.h"
-#include "./reward_transforms/scale_transform.h"
+#include "networks_utils/torch_converter.h"
 
 using namespace arenai;
 using namespace arenai::train;
@@ -61,7 +58,7 @@ namespace arenai::train {
         float spawn_width = environment_options.initial_spawn_width;
         float spawn_height = environment_options.initial_spawn_height;
 
-        auto agent = std::make_shared<SacAgent>(
+        SacTorchAgentFactory agent_factory(
             environment_options.vision_height, environment_options.vision_width,
             model::ENEMY_PROPRIOCEPTION_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
             model::ENEMY_NB_DISCRETE_ACTION, train_options.actor_learning_rate,
@@ -69,15 +66,17 @@ namespace arenai::train {
             model_options.hidden_size_sensors, model_options.hidden_size_actions,
             model_options.actor_hidden_sizes, model_options.critic_hidden_sizes,
             model_options.vision_channels, model_options.group_norm_nums, torch_device,
-            train_options.metric_window_size, model_options.tau, model_options.gamma);
+            train_options.metric_window_size, model_options.tau, model_options.gamma,
+            train_options.replay_buffer_size, train_options.train_every, train_options.epochs,
+            train_options.batch_size);
 
-        std::cout << "Parameters : " << agent->count_parameters() << std::endl;
+        const auto agent = agent_factory.get_agent();
+        const auto collector = agent_factory.get_collector();
+        const auto trainer = agent_factory.get_trainer();
 
-        AgentSaver saver(agent, train_options.output_folder, train_options.save_every);
+        std::cout << "Parameters : " << trainer->count_parameters() << std::endl;
 
-        std::unique_ptr<ReplayBuffer> replay_buffer = std::make_unique<RewardTransformReplayBuffer>(
-            train_options.replay_buffer_size, std::make_shared<IdentityTransform>(),
-            std::make_shared<ScalePotentialTransform>(1.f));
+        AgentSaver saver(trainer, train_options.output_folder, train_options.save_every);
 
         // metrics
         auto reward_mean_metric =
@@ -85,7 +84,7 @@ namespace arenai::train {
         auto potential_mean_metric =
             std::make_shared<MeanMetric>("pr", train_options.metric_window_size, 2, true);
 
-        const auto sac_metrics = agent->get_metrics();
+        const auto sac_metrics = trainer->get_metrics();
         const auto env_metrics = env->get_metrics();
 
         std::vector<std::shared_ptr<AbstractMetric>> metrics = {
@@ -96,9 +95,6 @@ namespace arenai::train {
         MetricCsvSaver metric_csv_saver(
             train_options.output_folder, metrics,
             static_cast<int>(30.f / environment_options.wanted_frequency));
-
-        // to detect when need train
-        int train_counter = 0;
 
         // progress bar
         indicators::ProgressBar p_bar{
@@ -117,93 +113,72 @@ namespace arenai::train {
 
         indicators::show_console_cursor(false);
 
+        const int print_tqdm_bar_every =
+            static_cast<int>(1.f / environment_options.wanted_frequency);
+        int print_counter = 0;
+
         for (int episode_index = 0; episode_index < train_options.nb_episodes; episode_index++) {
             const float spawn_side = std::sqrt(spawn_width * spawn_height);
 
             // set variable for episode
             bool is_done = false;
 
-            auto last_states = env->reset(spawn_width, spawn_height);
-            auto last_phi_vector = env->get_phi_vector();
+            auto [vision, proprioception] = states_to_tensor(
+                env->reset(spawn_width, spawn_height), environment_options.vision_height,
+                environment_options.vision_width);
+            auto last_phi_tensor = torch::tensor(env->get_phi_vector()).unsqueeze(1);
 
             while (!is_done) {
 
-                TorchAction torch_action;
                 std::vector<core::Action> actions_for_env;
 
-                const auto [vision, proprioception] = states_to_tensor(
-                    last_states, environment_options.vision_height,
-                    environment_options.vision_width);
+                const auto [continuous_action, discrete_action] = agent->act(
+                    {.vision = vision.to(torch_device),
+                     .proprioception = proprioception.to(torch_device)});
 
-                {
-                    // action
-                    torch::NoGradGuard no_grad_guard;
-                    agent->set_train(false);
+                TorchAction torch_action = {
+                    .continuous_action = continuous_action, .discrete_action = discrete_action};
 
-                    const auto [continuous_action, discrete_action] =
-                        agent->act(vision.to(torch_device), proprioception.to(torch_device));
-
-                    torch_action = {continuous_action, discrete_action};
-
-                    actions_for_env = tensor_to_actions(continuous_action, discrete_action);
-                }
+                actions_for_env = tensor_to_actions(continuous_action, discrete_action);
 
                 // step environment
                 const auto steps = env->step(environment_options.wanted_frequency, actions_for_env);
-                const auto phi_vector = env->get_phi_vector();
+                const auto phi_tensor = torch::tensor(env->get_phi_vector()).unsqueeze(1);
 
-                last_states.clear();
-                last_states.reserve(environment_options.nb_tanks);
+                const auto [torch_next_states, torch_rewards, torch_are_done, torch_are_truncated] =
+                    steps_to_tensor(
+                        steps, environment_options.vision_height, environment_options.vision_width);
 
-                // save to replay buffer
-                for (int i = 0; i < environment_options.nb_tanks; i++) {
-                    const auto [next_state, reward, env_done, is_truncated] = steps[i];
-                    last_states.push_back(next_state);
+                const auto is_not_terminal = torch::logical_not(
+                    torch::logical_and(torch_are_done, torch::logical_not(torch_are_truncated)));
+                const auto potential_rewards =
+                    is_not_terminal * model_options.gamma * phi_tensor - last_phi_tensor;
 
-                    if (env->is_tank_factory_already_done(i)) continue;
+                const auto torch_final_reward = torch_rewards + potential_rewards;
 
-                    // truncated endings (timeout) are stored as non-terminal so the
-                    // critic target keeps bootstrapping on the next state value
-                    const bool is_terminal = env_done && !is_truncated;
-
-                    const auto potential_reward =
-                        (is_terminal ? 0.f : model_options.gamma * phi_vector[i])
-                        - last_phi_vector[i];
-
-                    reward_mean_metric->add(reward);
-                    potential_mean_metric->add(potential_reward);
-
-                    const auto [next_vision, next_proprioception] = state_to_tensor(
-                        next_state, environment_options.vision_height,
-                        environment_options.vision_width);
-
-                    replay_buffer->add(
-                        {{vision[i], proprioception[i]},
-                         {torch_action.continuous_action[i], torch_action.discrete_action[i]},
-                         torch::tensor({reward}, torch::TensorOptions().dtype(torch::kFloat)),
-                         torch::tensor(
-                             {potential_reward}, torch::TensorOptions().dtype(torch::kFloat)),
-                         torch::tensor({is_terminal}, torch::TensorOptions().dtype(torch::kBool)),
-                         {next_vision, next_proprioception}});
-                }
-
-                // check if it's time to train
-                if (train_counter % train_options.train_every == train_options.train_every - 1
-                    && replay_buffer->size() >= train_options.batch_size * train_options.epochs)
-                    agent->train(replay_buffer, train_options.epochs, train_options.batch_size);
+                // complete the pending transition - maybe train
+                collector->on_transition(torch_final_reward, torch_are_done, torch_are_truncated);
+                trainer->step();
 
                 // step ending stuff
                 is_done = env->is_episode_terminated();
-                last_phi_vector = phi_vector;
+                last_phi_tensor = phi_tensor;
 
-                train_counter = (train_counter + 1) % train_options.train_every;
+                vision = torch_next_states.vision;
+                proprioception = torch_next_states.proprioception;
+
+                print_counter = (print_counter + 1) % print_tqdm_bar_every;
 
                 // attempt to save
                 saver.attempt_save();
                 metric_csv_saver.attempt_append_to_csv();
 
+                // metrics
+                reward_mean_metric->add(torch_rewards.mean().item<float>());
+                potential_mean_metric->add(potential_rewards.mean().item<float>());
+
                 // progress bar metrics display
-                if (train_counter % train_options.train_every == train_options.train_every - 1) {
+                if (print_counter == print_tqdm_bar_every - 1) {
                     std::stringstream stream;
                     stream << "- " << episode_index << " (" << static_cast<int>(spawn_side)
                            << "m) : " << AbstractMetric::metrics_to_string(metrics);
@@ -213,7 +188,9 @@ namespace arenai::train {
                 }
             }
 
-            last_states.clear();
+            // close episode
+            collector->on_episode_end({.vision = vision, .proprioception = proprioception});
+
             env->stop_drawing();
 
             spawn_width += spawn_width_increase;

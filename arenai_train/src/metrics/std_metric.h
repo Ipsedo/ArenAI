@@ -5,9 +5,8 @@
 #ifndef ARENAI_TRAIN_HOST_STD_METRIC_H
 #define ARENAI_TRAIN_HOST_STD_METRIC_H
 
-#include <arenai_train/metric.h>
-
 #include "./mean_metric.h"
+#include "./metric.h"
 
 namespace arenai::train {
 

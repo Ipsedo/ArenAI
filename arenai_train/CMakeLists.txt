@@ -58,25 +58,30 @@ set(ARENAI_TRAIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src")
 file(GLOB_RECURSE ARENAI_TRAIN_SRC "${ARENAI_TRAIN_PATH}/*.cpp")
 
 # Dependencies shared by the executable and the shared library
-set(ARENAI_TRAIN_LINK_LIBS
+set(ARENAI_TRAIN_LINK_PUBLIC_LIBS
         arenai_model
         arenai_view
         arenai_utils
         arenai_core
+)
+
+set(ARENAI_TRAIN_LINK_PRIVATE_LIBS
         ${TORCH_LIBRARIES}
         soil2
         argparse
         nlohmann_json::nlohmann_json
 )
 
+
 # Executable
 add_executable(arenai_train_exec ${ARENAI_TRAIN_SRC})
-target_link_libraries(arenai_train_exec PUBLIC ${ARENAI_TRAIN_LINK_LIBS})
+target_link_libraries(arenai_train_exec PUBLIC ${ARENAI_TRAIN_LINK_PUBLIC_LIBS})
+target_link_libraries(arenai_train_exec PRIVATE ${ARENAI_TRAIN_LINK_PRIVATE_LIBS})
 target_include_directories(arenai_train_exec PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include" "${stb_SOURCE_DIR}")
 arenai_copy_runtime_dlls(arenai_train_exec TORCH)
 
 # Library
 add_library(arenai_train_lib SHARED ${ARENAI_TRAIN_SRC})
-target_link_libraries(arenai_train_lib PUBLIC ${ARENAI_TRAIN_LINK_LIBS})
+target_link_libraries(arenai_train_lib PUBLIC ${ARENAI_TRAIN_LINK_PUBLIC_LIBS})
+target_link_libraries(arenai_train_lib PRIVATE ${ARENAI_TRAIN_LINK_PRIVATE_LIBS} "${stb_SOURCE_DIR}")
 target_include_directories(arenai_train_lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_include_directories(arenai_train_lib PRIVATE "${stb_SOURCE_DIR}")

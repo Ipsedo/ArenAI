@@ -14,14 +14,14 @@ Bullet physics, offscreen Vulkan rendering (the agent's vision), NN via LibTorch
 
 ## Architecture (CMake modules)
 
-Dependency order: utils → model → view → core → train / desktop
+Dependency order: utils → model → view → core → agent / desktop
 
 - **arenai_utils**  — helpers (file_reader, cache, double_buffer, logging, singleton)
 - **arenai_model**  — physics & entities: Bullet engine, tank, items (`arenai_model/`)
 - **arenai_view**   — Vulkan rendering; `offscreen_renderer` = offscreen render for the agent's vision
 - **arenai_core**   — `BaseTanksEnvironment`, enemy_handler, thread_pool (RL env loop)
 - **arenai_controller** — input handling
-- **arenai_train**  — SAC: agents, networks, replay_buffer, reward_transforms + `main.cpp` (training executable)
+- **arenai_agent**  — SAC: agents, networks, replay_buffer, reward_transforms + `main.cpp` (training executable)
 - **arenai_desktop** — the playable game executable. Its `src/` folders are hexagons of their own:
   `gui/` (RmlUi main menu — RmlUi types must never leak out of it, other code only includes
   `gui/menu.h`), `controller/`, `core/`. Menu assets live in `resources/menu/` + `resources/font/`.
@@ -55,11 +55,11 @@ comes from the GPU's ICD; `ARENAI_VK_DEVICE`/`ARENAI_VK_DEVICE_WINDOW` override 
 
 ## Tests
 
-Framework: **GoogleTest**. One `tests/` folder per module (core, model, view, train).
+Framework: **GoogleTest**. One `tests/` folder per module (core, model, view, agent).
 
 ```shell
 cd build && ctest --output-on-failure
-# or run a specific binary: ./arenai_train/tests/arenai_train_tests
+# or run a specific binary: ./arenai_agent/tests/arenai_agent_tests
 ```
 
 ### Golden images
@@ -81,10 +81,10 @@ assertion — it is a regeneration switch, never a way to turn a red CI green.
 ## Running training
 
 ```shell
-./arenai_train_exec --output_folder <dir> --asset_folder <dir> [--cuda] ...
+./arenai_agent_exec --output_folder <dir> --asset_folder <dir> [--cuda] ...
 ```
-`--output_folder` and `--asset_folder` are **required**. Outputs go to `arenai_train/outputs/train_NNN/`.
-Many hyperparameters (tau, gamma, learning rates, nb_tanks, vision_height...) — see `arenai_train/src/main.cpp`.
+`--output_folder` and `--asset_folder` are **required**. Outputs go to `arenai_agent/outputs/train_NNN/`.
+Many hyperparameters (tau, gamma, learning rates, nb_tanks, vision_height...) — see `arenai_agent/src/main.cpp`.
 
 ## Code conventions
 
@@ -98,4 +98,4 @@ Enforced by `.clang-format` and pre-commit — both live in the **parent** `Aren
 
 ## Python tooling
 
-`arenai_train/python/` (`.venv`): ExecuTorch model conversion + metrics visualization.
+`arenai_agent/python/` (`.venv`): ExecuTorch model conversion + metrics visualization.

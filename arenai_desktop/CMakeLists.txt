@@ -24,13 +24,13 @@ file(GLOB_RECURSE ARENAI_DESKTOP_SRC "${ARENAI_DESKTOP_PATH}/*.cpp")
 
 add_executable(arenai_desktop ${ARENAI_DESKTOP_SRC})
 
-# ArenAI module headers propagate through arenai_train_lib's PUBLIC interface.
+# ArenAI module headers propagate through arenai_agent_lib's PUBLIC interface.
 # Windowing (GLFW) is fully encapsulated inside arenai_view.
 # RmlUi is reserved to the src/gui/ hexagon: only gui/*.cpp may include it,
 # every other folder goes through gui/menu.h (which exposes no RmlUi type).
 target_link_libraries(
         arenai_desktop
-        arenai_train_lib
+        arenai_agent_lib
         RmlUi::Core
         # user preferences are (de)serialized to JSON in src/core/
         nlohmann_json::nlohmann_json

@@ -7,9 +7,9 @@
 #include <cstdlib>
 #include <iostream>
 
+#include <arenai_agent/factory_set.h>
+#include <arenai_agent/file_reader.h>
 #include <arenai_core/constants.h>
-#include <arenai_train/factory_set.h>
-#include <arenai_train/file_reader.h>
 #include <arenai_view/backend.h>
 
 #include "./controller/game_input_router.h"
@@ -38,7 +38,7 @@ namespace arenai::desktop {
             const auto window = graphics_backend->get_window();
 
             const auto sac_agent =
-                train::SacAgentFactory(model_options.hyper_parameters)
+                agent::SacAgentFactory(model_options.hyper_parameters)
                     .get_agent(
                         model_options.vision_height, model_options.vision_width,
                         model::ENEMY_PROPRIOCEPTION_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
@@ -175,7 +175,7 @@ namespace arenai::desktop {
         std::cout << "Vulkan : " << graphics_backend->renderer_info() << std::endl;
 
         const auto asset_reader =
-            std::make_shared<train::DesktopAssetFileReader>(game_options.resources_folder);
+            std::make_shared<agent::DesktopAssetFileReader>(game_options.resources_folder);
 
         // the gui (and the RmlUi stack it owns) lives for the whole session:
         // the main menu and the pause popup are two screens of the same context

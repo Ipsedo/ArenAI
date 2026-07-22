@@ -41,10 +41,10 @@ repos:
         types: [ c++, c ]
         pass_filenames: false
         require_serial: true
-      - id: test_train
-        name: test_train
+      - id: test_agent
+        name: test_agent
         language: system
-        entry: ./build/arenai_train/tests/arenai_train_tests
+        entry: ./build/arenai_agent/tests/arenai_agent_tests
         types: [ c++, c ]
         pass_filenames: false
         require_serial: true

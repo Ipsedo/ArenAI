@@ -30,13 +30,13 @@ option(ARENAI_REGENERATE_GOLDEN_IMAGES
         "Rebuild golden reference images instead of comparing against them" OFF)
 
 # Train main & lib
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/arenai_train")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/arenai_agent")
 
 # Desktop main (game)
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/arenai_desktop")
 
 # Tests
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/arenai_view/tests")
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/arenai_train/tests")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/arenai_agent/tests")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/arenai_model/tests")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/arenai_core/tests")

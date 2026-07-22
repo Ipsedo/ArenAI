@@ -5,7 +5,7 @@ description: Final verification of code modifications via `pre-commit run --all-
 
 # Final check (pre-commit)
 
-Run the full pre-commit pipeline on the whole repo. The hooks (defined in the parent `ArenAI/.pre-commit-config.yaml`) do, in order: `end-of-file-fixer`, `trailing-whitespace`, `clang-format`, then **build** (`build_linux.sh`) and the **test binaries** of each module (view, model, core, train). `fail_fast: true` — the run stops at the first failing hook.
+Run the full pre-commit pipeline on the whole repo. The hooks (defined in the parent `ArenAI/.pre-commit-config.yaml`) do, in order: `end-of-file-fixer`, `trailing-whitespace`, `clang-format`, then **build** (`build_linux.sh`) and the **test binaries** of each module (view, model, core, agent). `fail_fast: true` — the run stops at the first failing hook.
 
 ## Prerequisites
 

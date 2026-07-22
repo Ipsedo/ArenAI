@@ -2,7 +2,7 @@
 // Created by samuel on 21/01/2026.
 //
 
-#include "./sac.h"
+#include "./agent.h"
 
 #include "../../distributions/multinomial.h"
 #include "../../distributions/truncated_normal.h"

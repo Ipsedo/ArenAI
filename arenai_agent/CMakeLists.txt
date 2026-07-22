@@ -72,7 +72,6 @@ set(ARENAI_AGENT_LINK_PRIVATE_LIBS
         nlohmann_json::nlohmann_json
 )
 
-
 # Executable
 add_executable(arenai_agent_train ${ARENAI_AGENT_SRC})
 target_link_libraries(arenai_agent_train PUBLIC ${ARENAI_AGENT_LINK_PUBLIC_LIBS})

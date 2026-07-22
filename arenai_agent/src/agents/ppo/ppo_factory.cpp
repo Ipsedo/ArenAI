@@ -18,7 +18,8 @@ namespace arenai::agent {
         const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, const torch::Device device,
         const int metric_window_size, const float gamma, const float gae_lambda,
-        const float clip_epsilon, const float entropy_coef, const int epochs, const int batch_size)
+        const float clip_epsilon, const float continuous_entropy_coef,
+        const float discrete_entropy_coef, const int epochs, const int batch_size)
         : actor(std::make_shared<Actor>(
             vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_actions,
             hidden_size_sensors, actor_hidden_sizes, vision_channels, group_norm_nums)),
@@ -29,7 +30,7 @@ namespace arenai::agent {
               actor, rollout_buffer, vision_height, vision_width, nb_sensors, actor_learning_rate,
               critic_learning_rate, hidden_size_sensors, hidden_size_actions, critic_hidden_sizes,
               vision_channels, group_norm_nums, device, metric_window_size, gamma, gae_lambda,
-              clip_epsilon, entropy_coef, epochs, batch_size)) {}
+              clip_epsilon, continuous_entropy_coef, discrete_entropy_coef, epochs, batch_size)) {}
 
     std::shared_ptr<AbstractTorchAgent> PpoTorchAgentFactory::get_agent() { return agent; }
 

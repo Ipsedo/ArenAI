@@ -29,7 +29,8 @@ namespace arenai::agent {
         const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, const torch::Device device,
         const int metric_window_size, const float gamma, const float gae_lambda,
-        const float clip_epsilon, const float entropy_coef, const int epochs, const int batch_size)
+        const float clip_epsilon, const float continuous_entropy_coef,
+        const float discrete_entropy_coef, const int epochs, const int batch_size)
         : actor(std::move(actor)), rollout_buffer(std::move(rollout_buffer)),
           critic(std::make_shared<ValueFunction>(
               vision_height, vision_width, nb_sensors, hidden_size_sensors, hidden_size_actions,
@@ -46,7 +47,8 @@ namespace arenai::agent {
           discrete_entropy_metric(std::make_shared<MeanMetric>("Hd", metric_window_size)),
           clip_fraction_metric(std::make_shared<MeanMetric>("clip", metric_window_size)),
           gamma(gamma), gae_lambda(gae_lambda), clip_epsilon(clip_epsilon),
-          entropy_coef(entropy_coef), epochs(epochs), batch_size(batch_size) {
+          continuous_entropy_coef(continuous_entropy_coef),
+          discrete_entropy_coef(discrete_entropy_coef), epochs(epochs), batch_size(batch_size) {
 
         to(device);
     }
@@ -168,9 +170,9 @@ namespace arenai::agent {
             const auto continuous_entropy = truncated_normal_entropy(mu, sigma).sum(-1, true);
             const auto discrete_entropy = multinomial_entropy(discrete_proba);
 
-            const auto actor_loss =
-                -torch::mean(surrogate)
-                - entropy_coef * torch::mean(continuous_entropy + discrete_entropy);
+            const auto actor_loss = -torch::mean(
+                surrogate + continuous_entropy_coef * continuous_entropy
+                + discrete_entropy_coef * discrete_entropy);
 
             actor_optim->zero_grad();
             actor_loss.backward();

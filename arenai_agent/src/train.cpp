@@ -16,7 +16,7 @@
 #include "./metrics/mean_metric.h"
 #include "./metrics/metric_saver.h"
 #include "./networks_io/torch_saver.h"
-#include "networks_utils/torch_converter.h"
+#include "./networks_utils/torch_converter.h"
 
 using namespace arenai;
 using namespace arenai::agent;

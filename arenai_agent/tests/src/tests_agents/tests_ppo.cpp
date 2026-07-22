@@ -27,7 +27,7 @@ std::unique_ptr<PpoTorchAgentFactory> PpoAgentTest::make_factory(const PpoTestCo
     return std::make_unique<PpoTorchAgentFactory>(
         cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
         cfg.nb_discrete_actions, 1e-3f, 1e-3f, 16, 16, actor_hidden, critic_hidden, vision_channels,
-        group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.01f, 1, 8);
+        group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.01f, 0.01f, 1, 8);
 }
 
 TorchState PpoAgentTest::make_state(const PpoTestConfig &cfg, const int batch) {

@@ -22,8 +22,8 @@ namespace arenai::agent {
             const std::vector<int> &actor_hidden_sizes, const std::vector<int> &critic_hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
-            float gamma, float gae_lambda, float clip_epsilon, float entropy_coef, int epochs,
-            int batch_size);
+            float gamma, float gae_lambda, float clip_epsilon, float continuous_entropy_coef,
+            float discrete_entropy_coef, int epochs, int batch_size);
 
         std::shared_ptr<AbstractTorchAgent> get_agent() override;
         std::shared_ptr<AbstractStepCollector> get_collector() override;

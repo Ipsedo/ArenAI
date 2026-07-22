@@ -13,7 +13,7 @@ PpoTrainingTest::make_factory(const PpoTrainingTestConfig &cfg) const {
         cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
         cfg.nb_discrete_actions, 1e-3f, 1e-3f, 8, 8, std::vector<int>{16}, std::vector<int>{16},
         std::vector<std::tuple<int, int>>{{3, 4}}, std::vector<int>{2}, device, 10, 0.99f, 0.95f,
-        0.2f, 0.01f, 2, BATCH_SIZE);
+        0.2f, 0.01f, 0.01f, 2, BATCH_SIZE);
 }
 
 TorchState PpoTrainingTest::make_state(const PpoTrainingTestConfig &cfg, const int nb_tanks) {
@@ -62,7 +62,7 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
     const auto trainer = std::make_shared<PpoTrainer>(
         actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_sensors, 1e-3f, 1e-3f, 8,
         8, std::vector<int>{16}, vision_channels, group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f,
-        0.01f, 2, BATCH_SIZE);
+        0.01f, 0.01f, 2, BATCH_SIZE);
 
     std::vector<torch::Tensor> initial_parameters;
     for (const auto &parameter: actor->parameters())

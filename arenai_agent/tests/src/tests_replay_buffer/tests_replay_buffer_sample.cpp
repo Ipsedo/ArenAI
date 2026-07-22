@@ -2,7 +2,7 @@
 // Created by samuel on 30/06/2026.
 //
 
-#include <agents/sac/replay_buffer.h>
+#include <agents/sac/sac_replay_buffer.h>
 
 #include <arenai_agent_tests/tests_replay_buffer/tests_replay_buffer_sample.h>
 

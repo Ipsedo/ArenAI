@@ -5,7 +5,7 @@
 #ifndef ARENAI_ADD_RANDOM_STEP_H
 #define ARENAI_ADD_RANDOM_STEP_H
 
-#include <agents/sac/replay_buffer.h>
+#include <agents/sac/sac_replay_buffer.h>
 #include <agents/torch_types.h>
 
 arenai::agent::TorchState create_random_state(int width, int height, int nb_sensors);

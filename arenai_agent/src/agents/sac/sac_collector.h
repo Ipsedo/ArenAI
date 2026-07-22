@@ -9,7 +9,7 @@
 
 #include "../step_collector.h"
 #include "../torch_types.h"
-#include "./replay_buffer.h"
+#include "./sac_replay_buffer.h"
 
 namespace arenai::agent {
 

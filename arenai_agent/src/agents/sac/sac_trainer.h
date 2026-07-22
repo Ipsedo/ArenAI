@@ -9,7 +9,7 @@
 #include "../../networks/entropy.h"
 #include "../../networks/q_function.h"
 #include "../trainer.h"
-#include "./replay_buffer.h"
+#include "./sac_replay_buffer.h"
 
 namespace arenai::agent {
 

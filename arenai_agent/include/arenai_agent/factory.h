@@ -10,7 +10,7 @@
 #include <memory>
 #include <string>
 
-#include "./agent.h"
+#include "./sac_agent.h"
 
 namespace arenai::agent {
 

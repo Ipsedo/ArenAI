@@ -2,7 +2,7 @@
 // Created by samuel on 03/10/2025.
 //
 
-#include "./replay_buffer.h"
+#include "./sac_replay_buffer.h"
 
 #include <algorithm>
 

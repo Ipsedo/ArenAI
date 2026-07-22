@@ -5,7 +5,7 @@
 #ifndef ARENAI_AGENT_HOST_SAC_H
 #define ARENAI_AGENT_HOST_SAC_H
 
-#include <arenai_agent/agent.h>
+#include <arenai_agent/sac_agent.h>
 
 #include "../../networks/actor.h"
 #include "../torch_agent.h"

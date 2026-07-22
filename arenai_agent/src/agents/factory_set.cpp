@@ -6,7 +6,7 @@
 
 #include "../utils/cli_parser.h"
 #include "./empty_step_collector.h"
-#include "./sac/agent.h"
+#include "./sac/sac_agent.h"
 
 using namespace arenai;
 using namespace arenai::agent;

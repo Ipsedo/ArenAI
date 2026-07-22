@@ -6,9 +6,9 @@
 #define ARENAI_SAC_FACTORY_H
 
 #include "../torch_factory.h"
-#include "./agent.h"
-#include "./replay_buffer.h"
+#include "./sac_agent.h"
 #include "./sac_collector.h"
+#include "./sac_replay_buffer.h"
 #include "./sac_trainer.h"
 
 namespace arenai::agent {

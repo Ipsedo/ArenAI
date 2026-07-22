@@ -21,8 +21,6 @@ namespace arenai::agent {
         std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
         step(float time_delta, const std::vector<core::Action> &actions) override;
 
-        std::vector<float> get_phi_vector();
-
         std::vector<std::shared_ptr<AbstractMetric>> get_metrics() const;
 
         bool is_episode_terminated();

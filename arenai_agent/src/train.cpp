@@ -82,14 +82,11 @@ namespace arenai::agent {
         // metrics
         auto reward_mean_metric =
             std::make_shared<MeanMetric>("r", train_options.metric_window_size, 2, true);
-        auto potential_mean_metric =
-            std::make_shared<MeanMetric>("pr", train_options.metric_window_size, 2, true);
 
         const auto sac_metrics = trainer->get_metrics();
         const auto env_metrics = env->get_metrics();
 
-        std::vector<std::shared_ptr<AbstractMetric>> metrics = {
-            reward_mean_metric, potential_mean_metric};
+        std::vector<std::shared_ptr<AbstractMetric>> metrics = {reward_mean_metric};
         metrics.insert(metrics.end(), env_metrics.begin(), env_metrics.end());
         metrics.insert(metrics.end(), sac_metrics.begin(), sac_metrics.end());
 
@@ -127,7 +124,6 @@ namespace arenai::agent {
             auto [vision, proprioception] = states_to_tensor(
                 env->reset(spawn_width, spawn_height), environment_options.vision_height,
                 environment_options.vision_width);
-            auto last_phi_tensor = torch::tensor(env->get_phi_vector()).unsqueeze(1);
 
             while (!is_done) {
 
@@ -144,18 +140,12 @@ namespace arenai::agent {
 
                 // step environment
                 const auto steps = env->step(environment_options.wanted_frequency, actions_for_env);
-                const auto phi_tensor = torch::tensor(env->get_phi_vector()).unsqueeze(1);
 
                 const auto [torch_next_states, torch_rewards, torch_are_done, torch_are_truncated] =
                     steps_to_tensor(
                         steps, environment_options.vision_height, environment_options.vision_width);
 
-                const auto is_not_terminal = torch::logical_not(
-                    torch::logical_and(torch_are_done, torch::logical_not(torch_are_truncated)));
-                const auto potential_rewards =
-                    is_not_terminal * model_options.gamma * phi_tensor - last_phi_tensor;
-
-                const auto torch_final_reward = torch_rewards + potential_rewards;
+                const auto torch_final_reward = torch_rewards;
 
                 // complete the pending transition - maybe train
                 collector->on_transition(torch_final_reward, torch_are_done, torch_are_truncated);
@@ -163,7 +153,6 @@ namespace arenai::agent {
 
                 // step ending stuff
                 is_done = env->is_episode_terminated();
-                last_phi_tensor = phi_tensor;
 
                 vision = torch_next_states.vision;
                 proprioception = torch_next_states.proprioception;
@@ -176,7 +165,6 @@ namespace arenai::agent {
 
                 // metrics
                 reward_mean_metric->add(torch_rewards.mean().item<float>());
-                potential_mean_metric->add(potential_rewards.mean().item<float>());
 
                 // progress bar metrics display
                 if (print_counter == print_tqdm_bar_every - 1) {

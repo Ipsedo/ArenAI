@@ -41,7 +41,6 @@ namespace arenai::model {
             float wanted_frame_frequency);
 
         float get_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
-        float get_phi(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
 
         bool is_dead() override;
         bool is_first_frame_dead() override;
@@ -73,6 +72,7 @@ namespace arenai::model {
         float dispersion_angle_scale;
         float optimal_distance;
 
+        float fire_cost;
         float miss_cost;
 
         bool is_dead_already_triggered;

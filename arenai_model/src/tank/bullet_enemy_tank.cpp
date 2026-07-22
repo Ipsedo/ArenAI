@@ -37,8 +37,8 @@ namespace arenai::model {
           tank_prefix_name(tank_prefix_name),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), distance_scale(250.f),
-          dispersion_angle_scale(glm::radians(7.5f)), optimal_distance(75.f), miss_cost(0.1f),
-          is_dead_already_triggered(false), has_touch(false),
+          dispersion_angle_scale(glm::radians(7.5f)), optimal_distance(75.f), fire_cost(0.05f),
+          miss_cost(0.1f), is_dead_already_triggered(false), has_touch(false),
           action_stats(std::make_shared<ActionStats>()) {}
 
     float BulletEnemyTank::compute_aim_angle(const std::shared_ptr<EnemyTank> &other_tank) {
@@ -148,46 +148,11 @@ namespace arenai::model {
             tracked_shells.erase(tracked_shells.begin() + i);
         }
 
-        // 4. total reward
-        const float reward = dead_penalty + shells_reward;
+        // 4. shoot cost
+        const float shoot_cost = action_stats->has_fire() ? -fire_cost : 0.f;
 
-        return reward;
-    }
-
-    float BulletEnemyTank::get_phi(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
-        constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
-        const glm::vec3 chassis_pos = get_chassis()->get_model_matrix() * world_center;
-
-        std::vector<float> scores;
-        std::vector<float> logits;
-
-        for (const auto &enemy: tanks) {
-            if (enemy.get() == this || enemy->is_dead()) continue;
-
-            const glm::vec3 enemy_pos = enemy->get_chassis()->get_model_matrix() * world_center;
-
-            const float distance = glm::length(enemy_pos - chassis_pos);
-            const float angle = compute_aim_angle(enemy);
-
-            const float distance_score =
-                std::exp(-0.5f * std::pow((distance - optimal_distance) / distance_scale, 2.f));
-            const float angle_score = (std::cos(angle) + 1.f) / 2.f;
-
-            scores.push_back(distance_score * angle_score);
-            logits.push_back(-distance / distance_scale);
-        }
-
-        if (scores.empty()) return 0.f;
-
-        const float max_logit = *std::ranges::max_element(logits);
-        float sum_exp = 0.f;
-        for (const float l: logits) sum_exp += std::exp(l - max_logit);
-
-        float reward = 0.f;
-        for (std::size_t i = 0; i < scores.size(); ++i) {
-            const float weight = std::exp(logits[i] - max_logit) / sum_exp;
-            reward += weight * scores[i];
-        }
+        // 5. total reward
+        const float reward = dead_penalty + shells_reward + shoot_cost;
 
         return reward;
     }

@@ -27,6 +27,10 @@ namespace arenai::agent {
     group_norm_nums parse_cli_group_norms(const std::string &value);
     hidden_layers parse_cli_hidden_layer(const std::string &value);
 
+    std::vector<int> parse_int_vector(
+        const std::string &value, const std::string &cli_arg_name,
+        const std::string &cli_arg_value_suggestion);
+
 }// namespace arenai::agent
 
 #endif//ARENAI_AGENT_HOST_CLI_PARSER_H

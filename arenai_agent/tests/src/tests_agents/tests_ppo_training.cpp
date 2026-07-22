@@ -9,11 +9,27 @@ using namespace arenai::agent;
 
 std::unique_ptr<PpoTorchAgentFactory>
 PpoTrainingTest::make_factory(const PpoTrainingTestConfig &cfg) const {
+    const PpoHyperParams params{
+        .actor_learning_rate = 1e-3f,
+        .critic_learning_rate = 1e-3f,
+        .hidden_size_sensors = 8,
+        .hidden_size_actions = 8,
+        .actor_hidden_sizes = {16},
+        .critic_hidden_sizes = {16},
+        .vision_channels = {{3, 4}},
+        .group_norm_nums = {2},
+        .metric_window_size = 10,
+        .gamma = 0.99f,
+        .gae_lambda = 0.95f,
+        .clip_epsilon = 0.2f,
+        .continuous_entropy_coef = 0.01f,
+        .discrete_entropy_coef = 0.01f,
+        .epochs = 2,
+        .rollout_size = ROLLOUT_SIZE};
+
     return std::make_unique<PpoTorchAgentFactory>(
         cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, 1e-3f, 1e-3f, 8, 8, std::vector<int>{16}, std::vector<int>{16},
-        std::vector<std::tuple<int, int>>{{3, 4}}, std::vector<int>{2}, device, 10, 0.99f, 0.95f,
-        0.2f, 0.01f, 0.01f, 2, BATCH_SIZE);
+        cfg.nb_discrete_actions, device, params);
 }
 
 TorchState PpoTrainingTest::make_state(const PpoTrainingTestConfig &cfg, const int nb_tanks) {
@@ -62,7 +78,7 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
     const auto trainer = std::make_shared<PpoTrainer>(
         actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_sensors, 1e-3f, 1e-3f, 8,
         8, std::vector<int>{16}, vision_channels, group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f,
-        0.01f, 0.01f, 2, BATCH_SIZE);
+        0.01f, 0.01f, 2, ROLLOUT_SIZE);
 
     std::vector<torch::Tensor> initial_parameters;
     for (const auto &parameter: actor->parameters())
@@ -70,7 +86,7 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
 
     // env loop: act -> transition -> maybe train, one more step than the rollout
     // horizon so that the batch is complete when the trainer checks
-    for (int t = 0; t < BATCH_SIZE + 2; t++) {
+    for (int t = 0; t < ROLLOUT_SIZE + 2; t++) {
         agent->act(make_state(cfg, nb_tanks));
         collector->on_transition(
             torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
@@ -78,7 +94,7 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
     }
 
     // the rollout has been consumed by the training
-    ASSERT_LT(rollout_buffer->nb_complete_steps(), static_cast<size_t>(BATCH_SIZE));
+    ASSERT_LT(rollout_buffer->nb_complete_steps(), static_cast<size_t>(ROLLOUT_SIZE));
 
     const auto parameters = actor->parameters();
     ASSERT_EQ(parameters.size(), initial_parameters.size());

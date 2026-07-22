@@ -19,15 +19,27 @@ void SacAgentTest::SetUp() {
 void SacAgentTest::TearDown() { std::filesystem::remove_all(tmp_dir); }
 
 std::unique_ptr<SacTorchAgentFactory> SacAgentTest::make_factory(const SacTestConfig &cfg) const {
-    const std::vector<int> actor_hidden{32};
-    const std::vector<int> critic_hidden{32};
-    const std::vector<std::tuple<int, int>> vision_channels{{3, 8}};
-    const std::vector<int> group_norm_nums{4};
+    const SacHyperParams params{
+        .actor_learning_rate = 1e-3f,
+        .critic_learning_rate = 1e-3f,
+        .alpha_learning_rate = 1e-3f,
+        .hidden_size_sensors = 16,
+        .hidden_size_actions = 16,
+        .actor_hidden_sizes = {32},
+        .critic_hidden_sizes = {32},
+        .vision_channels = {{3, 8}},
+        .group_norm_nums = {4},
+        .metric_window_size = 10,
+        .tau = 0.005f,
+        .gamma = 0.99f,
+        .replay_buffer_size = 10,
+        .train_every = 1,
+        .epochs = 1,
+        .batch_size = 1};
 
     return std::make_unique<SacTorchAgentFactory>(
         cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, 1e-3f, 1e-3f, 1e-3f, 16, 16, actor_hidden, critic_hidden,
-        vision_channels, group_norm_nums, device, 10, 0.005f, 0.99f, 10, 1, 1, 1);
+        cfg.nb_discrete_actions, device, params);
 }
 
 TorchState SacAgentTest::make_state(const SacTestConfig &cfg, const int batch) {

@@ -8,6 +8,7 @@
 #include "../torch_factory.h"
 #include "./ppo_agent.h"
 #include "./ppo_collector.h"
+#include "./ppo_hyperparams.h"
 #include "./ppo_rollout_buffer.h"
 #include "./ppo_trainer.h"
 
@@ -17,13 +18,7 @@ namespace arenai::agent {
     public:
         PpoTorchAgentFactory(
             int vision_height, int vision_width, int nb_sensors, int nb_continuous_actions,
-            int nb_discrete_actions, float actor_learning_rate, float critic_learning_rate,
-            int hidden_size_sensors, int hidden_size_actions,
-            const std::vector<int> &actor_hidden_sizes, const std::vector<int> &critic_hidden_sizes,
-            const std::vector<std::tuple<int, int>> &vision_channels,
-            const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
-            float gamma, float gae_lambda, float clip_epsilon, float continuous_entropy_coef,
-            float discrete_entropy_coef, int epochs, int batch_size);
+            int nb_discrete_actions, torch::Device device, const PpoHyperParams &params);
 
         std::shared_ptr<AbstractTorchAgent> get_agent() override;
         std::shared_ptr<AbstractStepCollector> get_collector() override;

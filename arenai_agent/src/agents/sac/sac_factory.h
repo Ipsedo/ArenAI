@@ -8,6 +8,7 @@
 #include "../torch_factory.h"
 #include "./sac_agent.h"
 #include "./sac_collector.h"
+#include "./sac_hyperparams.h"
 #include "./sac_replay_buffer.h"
 #include "./sac_trainer.h"
 
@@ -17,13 +18,7 @@ namespace arenai::agent {
     public:
         SacTorchAgentFactory(
             int vision_height, int vision_width, int nb_sensors, int nb_continuous_actions,
-            int nb_discrete_actions, float actor_learning_rate, float critic_learning_rate,
-            float alpha_learning_rate, int hidden_size_sensors, int hidden_size_actions,
-            const std::vector<int> &actor_hidden_sizes, const std::vector<int> &critic_hidden_sizes,
-            const std::vector<std::tuple<int, int>> &vision_channels,
-            const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
-            float tau, float gamma, int replay_buffer_size, int train_every, int epochs,
-            int batch_size);
+            int nb_discrete_actions, torch::Device device, const SacHyperParams &params);
 
         std::shared_ptr<AbstractTorchAgent> get_agent() override;
         std::shared_ptr<AbstractStepCollector> get_collector() override;

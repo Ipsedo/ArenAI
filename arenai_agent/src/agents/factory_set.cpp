@@ -5,7 +5,6 @@
 #include <arenai_agent/factory_set.h>
 
 #include "../utils/cli_parser.h"
-#include "./empty_step_collector.h"
 #include "./ppo/ppo_agent.h"
 #include "./sac/sac_agent.h"
 

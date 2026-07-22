@@ -22,7 +22,7 @@ namespace arenai::agent {
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
             float gamma, float gae_lambda, float clip_epsilon, float continuous_entropy_coef,
-            float discrete_entropy_coef, int epochs, int batch_size);
+            float discrete_entropy_coef, int epochs, int rollout_size);
 
         void step() override;
 
@@ -62,8 +62,8 @@ namespace arenai::agent {
         float discrete_entropy_coef;
 
         int epochs;
-        // rollout horizon: one train() consumes batch_size complete steps in a single update
-        int batch_size;
+        // rollout horizon: one train() consumes rollout_size complete steps in a single update
+        int rollout_size;
 
         void train() const;
 

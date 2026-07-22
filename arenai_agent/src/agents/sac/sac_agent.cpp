@@ -6,8 +6,8 @@
 
 #include "../../distributions/multinomial.h"
 #include "../../distributions/truncated_normal.h"
-#include "../../networks_io/torch_loader.h"
 #include "../../networks_utils/torch_converter.h"
+#include "../../networks_utils/torch_loader.h"
 
 using namespace arenai;
 using namespace arenai::agent;

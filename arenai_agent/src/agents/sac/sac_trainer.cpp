@@ -11,10 +11,10 @@
 #include "../../metrics/last_metric.h"
 #include "../../metrics/mean_metric.h"
 #include "../../metrics/std_metric.h"
-#include "../../networks_io/torch_loader.h"
-#include "../../networks_io/torch_saver.h"
 #include "../../networks_utils/print_module.h"
 #include "../../networks_utils/target_update.h"
+#include "../../networks_utils/torch_loader.h"
+#include "../../networks_utils/torch_saver.h"
 
 using namespace arenai;
 using namespace arenai::agent;

@@ -12,8 +12,8 @@
 #include "../../distributions/truncated_normal.h"
 #include "../../metrics/mean_metric.h"
 #include "../../metrics/std_metric.h"
-#include "../../networks_io/torch_saver.h"
 #include "../../networks_utils/print_module.h"
+#include "../../networks_utils/torch_saver.h"
 
 using namespace arenai;
 using namespace arenai::agent;
@@ -30,7 +30,7 @@ namespace arenai::agent {
         const std::vector<int> &group_norm_nums, const torch::Device device,
         const int metric_window_size, const float gamma, const float gae_lambda,
         const float clip_epsilon, const float continuous_entropy_coef,
-        const float discrete_entropy_coef, const int epochs, const int batch_size)
+        const float discrete_entropy_coef, const int epochs, const int rollout_size)
         : actor(std::move(actor)), rollout_buffer(std::move(rollout_buffer)),
           critic(std::make_shared<ValueFunction>(
               vision_height, vision_width, nb_sensors, hidden_size_sensors, hidden_size_actions,
@@ -48,14 +48,14 @@ namespace arenai::agent {
           clip_fraction_metric(std::make_shared<MeanMetric>("clip", metric_window_size)),
           gamma(gamma), gae_lambda(gae_lambda), clip_epsilon(clip_epsilon),
           continuous_entropy_coef(continuous_entropy_coef),
-          discrete_entropy_coef(discrete_entropy_coef), epochs(epochs), batch_size(batch_size) {
+          discrete_entropy_coef(discrete_entropy_coef), epochs(epochs), rollout_size(rollout_size) {
 
         to(device);
     }
 
     void PpoTrainer::step() {
-        // on-policy cadence: wait for a full rollout (batch_size steps), consume it, start over
-        if (rollout_buffer->nb_complete_steps() >= static_cast<size_t>(batch_size)) train();
+        // on-policy cadence: wait for a full rollout (rollout_size steps), consume it, start over
+        if (rollout_buffer->nb_complete_steps() >= static_cast<size_t>(rollout_size)) train();
     }
 
     void PpoTrainer::train() const {

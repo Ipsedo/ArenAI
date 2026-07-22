@@ -21,7 +21,7 @@ struct PpoTrainingTestConfig {
 class PpoTrainingTest : public testing::Test {
 protected:
     // small enough for the trainer to trigger during the test loop
-    static constexpr int BATCH_SIZE = 3;
+    static constexpr int ROLLOUT_SIZE = 3;
 
     torch::Device device{torch::kCPU};
 

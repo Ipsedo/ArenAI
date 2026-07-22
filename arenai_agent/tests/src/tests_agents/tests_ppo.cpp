@@ -19,15 +19,27 @@ void PpoAgentTest::SetUp() {
 void PpoAgentTest::TearDown() { std::filesystem::remove_all(tmp_dir); }
 
 std::unique_ptr<PpoTorchAgentFactory> PpoAgentTest::make_factory(const PpoTestConfig &cfg) const {
-    const std::vector<int> actor_hidden{32};
-    const std::vector<int> critic_hidden{32};
-    const std::vector<std::tuple<int, int>> vision_channels{{3, 8}};
-    const std::vector<int> group_norm_nums{4};
+    const PpoHyperParams params{
+        .actor_learning_rate = 1e-3f,
+        .critic_learning_rate = 1e-3f,
+        .hidden_size_sensors = 16,
+        .hidden_size_actions = 16,
+        .actor_hidden_sizes = {32},
+        .critic_hidden_sizes = {32},
+        .vision_channels = {{3, 8}},
+        .group_norm_nums = {4},
+        .metric_window_size = 10,
+        .gamma = 0.99f,
+        .gae_lambda = 0.95f,
+        .clip_epsilon = 0.2f,
+        .continuous_entropy_coef = 0.01f,
+        .discrete_entropy_coef = 0.01f,
+        .epochs = 1,
+        .rollout_size = 8};
 
     return std::make_unique<PpoTorchAgentFactory>(
         cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, 1e-3f, 1e-3f, 16, 16, actor_hidden, critic_hidden, vision_channels,
-        group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.01f, 0.01f, 1, 8);
+        cfg.nb_discrete_actions, device, params);
 }
 
 TorchState PpoAgentTest::make_state(const PpoTestConfig &cfg, const int batch) {

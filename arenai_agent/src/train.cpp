@@ -11,12 +11,11 @@
 
 #include <arenai_core/constants.h>
 
-#include "./agents/sac/sac_factory.h"
 #include "./core/train_environment.h"
 #include "./metrics/mean_metric.h"
 #include "./metrics/metric_saver.h"
-#include "./networks_io/torch_saver.h"
 #include "./networks_utils/torch_converter.h"
+#include "./networks_utils/torch_saver.h"
 
 using namespace arenai;
 using namespace arenai::agent;
@@ -24,8 +23,8 @@ using namespace arenai::agent;
 namespace arenai::agent {
 
     void train_main(
-        const EnvironmentOptions &environment_options, const ModelOptions &model_options,
-        const TrainOptions &train_options) {
+        const EnvironmentOptions &environment_options, const TrainOptions &train_options,
+        const std::unique_ptr<AbstractTorchAgentFactory> &agent_factory) {
 
         auto graphics_backend = view::make_vulkan_backend();
 
@@ -58,19 +57,6 @@ namespace arenai::agent {
         float spawn_width = environment_options.initial_spawn_width;
         float spawn_height = environment_options.initial_spawn_height;
 
-        std::unique_ptr<AbstractTorchAgentFactory> agent_factory =
-            std::make_unique<SacTorchAgentFactory>(
-                environment_options.vision_height, environment_options.vision_width,
-                model::ENEMY_PROPRIOCEPTION_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
-                model::ENEMY_NB_DISCRETE_ACTION, train_options.actor_learning_rate,
-                train_options.critic_learning_rate, train_options.alpha_learning_rate,
-                model_options.hidden_size_sensors, model_options.hidden_size_actions,
-                model_options.actor_hidden_sizes, model_options.critic_hidden_sizes,
-                model_options.vision_channels, model_options.group_norm_nums, torch_device,
-                train_options.metric_window_size, model_options.tau, model_options.gamma,
-                train_options.replay_buffer_size, train_options.train_every, train_options.epochs,
-                train_options.batch_size);
-
         const auto agent = agent_factory->get_agent();
         const auto collector = agent_factory->get_collector();
         const auto trainer = agent_factory->get_trainer();
@@ -80,8 +66,7 @@ namespace arenai::agent {
         AgentSaver saver(trainer, train_options.output_folder, train_options.save_every);
 
         // metrics
-        auto reward_mean_metric =
-            std::make_shared<MeanMetric>("r", train_options.metric_window_size, 2, true);
+        auto reward_mean_metric = std::make_shared<MeanMetric>("r", 256, 2, true);
 
         const auto sac_metrics = trainer->get_metrics();
         const auto env_metrics = env->get_metrics();

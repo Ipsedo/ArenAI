@@ -18,7 +18,7 @@ file(GLOB_RECURSE SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
 add_executable(arenai_agent_tests "${SRC}")
 
-target_link_libraries(arenai_agent_tests GTest::gtest GTest::gtest_main nlohmann_json::nlohmann_json soil2 ${TORCH_LIBRARIES} arenai_agent_lib)
+target_link_libraries(arenai_agent_tests GTest::gtest GTest::gtest_main nlohmann_json::nlohmann_json soil2 ${TORCH_LIBRARIES} arenai_agent)
 target_include_directories(arenai_agent_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 target_include_directories(arenai_agent_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../src")

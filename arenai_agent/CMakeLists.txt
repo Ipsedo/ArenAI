@@ -74,14 +74,14 @@ set(ARENAI_AGENT_LINK_PRIVATE_LIBS
 
 
 # Executable
-add_executable(arenai_agent_exec ${ARENAI_AGENT_SRC})
-target_link_libraries(arenai_agent_exec PUBLIC ${ARENAI_AGENT_LINK_PUBLIC_LIBS})
-target_link_libraries(arenai_agent_exec PRIVATE ${ARENAI_AGENT_LINK_PRIVATE_LIBS})
-target_include_directories(arenai_agent_exec PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include" "${stb_SOURCE_DIR}")
-arenai_copy_runtime_dlls(arenai_agent_exec TORCH)
+add_executable(arenai_agent_train ${ARENAI_AGENT_SRC})
+target_link_libraries(arenai_agent_train PUBLIC ${ARENAI_AGENT_LINK_PUBLIC_LIBS})
+target_link_libraries(arenai_agent_train PRIVATE ${ARENAI_AGENT_LINK_PRIVATE_LIBS})
+target_include_directories(arenai_agent_train PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include" "${stb_SOURCE_DIR}")
+arenai_copy_runtime_dlls(arenai_agent_train TORCH)
 
 # Library
-add_library(arenai_agent_lib SHARED ${ARENAI_AGENT_SRC})
-target_link_libraries(arenai_agent_lib PUBLIC ${ARENAI_AGENT_LINK_PUBLIC_LIBS})
-target_link_libraries(arenai_agent_lib PRIVATE ${ARENAI_AGENT_LINK_PRIVATE_LIBS} "${stb_SOURCE_DIR}")
-target_include_directories(arenai_agent_lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+add_library(arenai_agent SHARED ${ARENAI_AGENT_SRC})
+target_link_libraries(arenai_agent PUBLIC ${ARENAI_AGENT_LINK_PUBLIC_LIBS})
+target_link_libraries(arenai_agent PRIVATE ${ARENAI_AGENT_LINK_PRIVATE_LIBS} "${stb_SOURCE_DIR}")
+target_include_directories(arenai_agent PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")

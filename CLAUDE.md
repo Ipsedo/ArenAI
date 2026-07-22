@@ -81,7 +81,7 @@ assertion — it is a regeneration switch, never a way to turn a red CI green.
 ## Running training
 
 ```shell
-./arenai_agent_exec --output_folder <dir> --asset_folder <dir> [--cuda] ...
+./arenai_agent_train --output_folder <dir> --asset_folder <dir> [--cuda] ...
 ```
 `--output_folder` and `--asset_folder` are **required**. Outputs go to `arenai_agent/outputs/train_NNN/`.
 Many hyperparameters (tau, gamma, learning rates, nb_tanks, vision_height...) — see `arenai_agent/src/main.cpp`.

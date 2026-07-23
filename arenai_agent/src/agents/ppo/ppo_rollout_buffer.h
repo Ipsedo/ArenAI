@@ -33,13 +33,14 @@ namespace arenai::agent {
         torch::Tensor rewards;
         torch::Tensor dones;
         torch::Tensor truncateds;
-        TorchState next_states;
+        // [nb_tanks, ...] observation closing the last step, for the value bootstrap
+        TorchState bootstrap_state;
         // [T, nb_tanks, 1] whether the (step, tank) pair is a live transition
         torch::Tensor valids;
     };
 
-    // Sequential on-policy buffer. A step is "complete" once its next state is
-    // known - filled by the following add() or by finish_episode().
+    // Sequential on-policy buffer. A step is "complete" once the observation that
+    // follows it is known - the next add()'s state, or finish_episode()'s final state.
     class PpoRolloutBuffer {
     public:
         void add(const PpoInputStep &step);
@@ -54,10 +55,12 @@ namespace arenai::agent {
         struct StoredStep {
             PpoInputStep step;
             torch::Tensor valid;
-            std::optional<TorchState> next_state;
         };
 
         std::vector<StoredStep> steps_;
+
+        // observation closing the last stored step, set by finish_episode()
+        std::optional<TorchState> final_state_;
 
         // [nb_tanks] tanks already done/truncated in the current episode
         torch::Tensor already_terminated_;

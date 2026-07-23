@@ -12,6 +12,11 @@
 
 namespace arenai::agent {
 
+    struct GaeResult {
+        torch::Tensor advantages;
+        torch::Tensor returns;
+    };
+
     class PpoTrainer final : public AbstractTrainer {
     public:
         PpoTrainer(
@@ -21,8 +26,9 @@ namespace arenai::agent {
             const std::vector<int> &critic_hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
-            float gamma, float gae_lambda, float clip_epsilon, float continuous_entropy_coef,
-            float discrete_entropy_coef, int epochs, int rollout_size);
+            float gamma, float gae_lambda, float clip_epsilon, float grad_norm_max,
+            float continuous_entropy_coef, float discrete_entropy_coef, int epochs,
+            int rollout_size, int minibatch_size);
 
         void step() override;
 
@@ -33,8 +39,6 @@ namespace arenai::agent {
         int count_parameters() override;
 
     private:
-        static constexpr double GRAD_NORM_MAX = 1.0;
-
         std::shared_ptr<Actor> actor;
         std::shared_ptr<PpoRolloutBuffer> rollout_buffer;
 
@@ -58,14 +62,22 @@ namespace arenai::agent {
         float gae_lambda;
         float clip_epsilon;
 
+        float grad_norm_max;
+
         float continuous_entropy_coef;
         float discrete_entropy_coef;
 
         int epochs;
         // rollout horizon: one train() consumes rollout_size complete steps in a single update
         int rollout_size;
+        // rows per gradient step; also the chunk size for the no-grad value evaluation
+        int minibatch_size;
 
         void train() const;
+
+        // GAE advantages (normalized over the valid pairs) and value targets,
+        // computed with the pre-update critic
+        GaeResult compute_gae(const PpoRollout &rollout, torch::Device device) const;
 
         void set_train(bool train) const;
         void to(torch::Device device) const;

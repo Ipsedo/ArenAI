@@ -101,7 +101,11 @@ TEST_F(PpoRolloutBufferTest, RolloutShapes) {
     const auto expected_vision =
         std::vector<int64_t>{nb_steps, NB_TANKS, 3, VISION_SIZE, VISION_SIZE};
     ASSERT_EQ(rollout.states.vision.sizes().vec(), expected_vision);
-    ASSERT_EQ(rollout.next_states.vision.sizes().vec(), expected_vision);
+
+    // the bootstrap state has no time dimension
+    ASSERT_EQ(
+        rollout.bootstrap_state.vision.sizes().vec(),
+        (std::vector<int64_t>{NB_TANKS, 3, VISION_SIZE, VISION_SIZE}));
 
     const auto expected_scalar = std::vector<int64_t>{nb_steps, NB_TANKS, 1};
     ASSERT_EQ(rollout.rewards.sizes().vec(), expected_scalar);
@@ -114,7 +118,7 @@ TEST_F(PpoRolloutBufferTest, RolloutShapes) {
         (std::vector<int64_t>{nb_steps, NB_TANKS, NB_CONTINUOUS_ACTIONS}));
 }
 
-TEST_F(PpoRolloutBufferTest, NextStateIsFollowingObservation) {
+TEST_F(PpoRolloutBufferTest, BootstrapStateIsEpisodeFinalObservation) {
     PpoRolloutBuffer buffer;
 
     const auto state_0 = make_state();
@@ -127,8 +131,24 @@ TEST_F(PpoRolloutBufferTest, NextStateIsFollowingObservation) {
 
     const auto rollout = buffer.get_rollout();
 
-    ASSERT_TRUE(torch::allclose(rollout.next_states.vision[0], state_1.vision));
-    ASSERT_TRUE(torch::allclose(rollout.next_states.vision[1], final_state.vision));
+    ASSERT_EQ(rollout.rewards.size(0), 2);
+    ASSERT_TRUE(torch::allclose(rollout.bootstrap_state.vision, final_state.vision));
+}
+
+TEST_F(PpoRolloutBufferTest, BootstrapStateIsPendingObservationMidEpisode) {
+    PpoRolloutBuffer buffer;
+
+    const auto state_0 = make_state();
+    const auto state_1 = make_state();
+
+    buffer.add(make_step(state_0));
+    buffer.add(make_step(state_1));
+
+    const auto rollout = buffer.get_rollout();
+
+    // only the first step is complete; the pending step's own observation closes it
+    ASSERT_EQ(rollout.rewards.size(0), 1);
+    ASSERT_TRUE(torch::allclose(rollout.bootstrap_state.vision, state_1.vision));
 }
 
 // ========================================================================

@@ -26,10 +26,12 @@ namespace arenai::agent {
         float gamma = 0.995f;
         float gae_lambda = 0.95f;
         float clip_epsilon = 0.2f;
-        float continuous_entropy_coef = 0.0005f;
+        float grad_norm_max = 1.f;
+        float continuous_entropy_coef = 0.01f;
         float discrete_entropy_coef = 0.01f;
-        int epochs = 8;
-        int rollout_size = 16;
+        int epochs = 4;
+        int rollout_size = 300;// 10 s of game time at 30 Hz
+        int minibatch_size = 256;
     };
 
     std::vector<CliField<PpoHyperParams>> ppo_cli_fields();

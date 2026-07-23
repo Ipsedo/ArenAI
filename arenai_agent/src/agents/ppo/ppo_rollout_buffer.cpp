@@ -24,12 +24,6 @@ namespace arenai::agent {
             already_terminated_ = torch::zeros(
                 {nb_tanks}, torch::TensorOptions().dtype(torch::kBool).device(torch::kCPU));
 
-        const auto cpu_state = to_cpu(step.state);
-
-        // the new observation closes the previous pending transition
-        if (!steps_.empty() && !steps_.back().next_state.has_value())
-            steps_.back().next_state = cpu_state;
-
         // tanks already terminated before this step have no valid transition to store
         const auto valid = already_terminated_.logical_not();
         already_terminated_.logical_or_(
@@ -41,7 +35,7 @@ namespace arenai::agent {
 
         steps_.push_back(
             {.step =
-                 {.state = cpu_state,
+                 {.state = to_cpu(step.state),
                   .action =
                       {.continuous_action = step.action.continuous_action.detach().cpu(),
                        .discrete_action = step.action.discrete_action.detach().cpu()},
@@ -50,25 +44,31 @@ namespace arenai::agent {
                   .reward = step.reward.detach().cpu(),
                   .done = step.done.detach().cpu(),
                   .truncated = step.truncated.detach().cpu()},
-             .valid = valid,
-             .next_state = std::nullopt});
+             .valid = valid});
+
+        // the freshly added step is pending: its closing observation is not known yet
+        final_state_.reset();
     }
 
     void PpoRolloutBuffer::finish_episode(const TorchState &final_state) {
-        if (!steps_.empty() && !steps_.back().next_state.has_value())
-            steps_.back().next_state = to_cpu(final_state);
+        if (!steps_.empty()) final_state_ = to_cpu(final_state);
 
         if (already_terminated_.defined()) already_terminated_.fill_(false);
     }
 
     size_t PpoRolloutBuffer::nb_complete_steps() const {
         if (steps_.empty()) return 0;
-        return steps_.back().next_state.has_value() ? steps_.size() : steps_.size() - 1;
+        return final_state_.has_value() ? steps_.size() : steps_.size() - 1;
     }
 
     PpoRollout PpoRolloutBuffer::get_rollout() {
         const auto nb_steps = nb_complete_steps();
         TORCH_CHECK(nb_steps > 0, "PpoRolloutBuffer: no complete step to train on");
+
+        // the observation closing the last consumed step: the episode's final state,
+        // or the pending step's own observation
+        const auto bootstrap_state =
+            final_state_.has_value() ? *final_state_ : steps_[nb_steps].step.state;
 
         const auto stack = [&](const auto &get_field) {
             std::vector<torch::Tensor> tensors;
@@ -94,13 +94,11 @@ namespace arenai::agent {
             .rewards = stack([](const StoredStep &s) { return s.step.reward; }),
             .dones = stack([](const StoredStep &s) { return s.step.done; }),
             .truncateds = stack([](const StoredStep &s) { return s.step.truncated; }),
-            .next_states =
-                {.vision = stack([](const StoredStep &s) { return s.next_state->vision; }),
-                 .proprioception =
-                     stack([](const StoredStep &s) { return s.next_state->proprioception; })},
+            .bootstrap_state = bootstrap_state,
             .valids = stack([](const StoredStep &s) { return s.valid; }).unsqueeze(-1)};
 
         steps_.erase(steps_.begin(), steps_.begin() + static_cast<long>(nb_steps));
+        final_state_.reset();
 
         return rollout;
     }

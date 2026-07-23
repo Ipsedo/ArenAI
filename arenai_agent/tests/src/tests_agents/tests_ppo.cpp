@@ -31,10 +31,12 @@ std::unique_ptr<PpoTorchAgentFactory> PpoAgentTest::make_factory(const PpoTestCo
         .gamma = 0.99f,
         .gae_lambda = 0.95f,
         .clip_epsilon = 0.2f,
+        .grad_norm_max = 1.f,
         .continuous_entropy_coef = 0.01f,
         .discrete_entropy_coef = 0.01f,
         .epochs = 1,
-        .rollout_size = 8};
+        .rollout_size = 8,
+        .minibatch_size = 10};
 
     return std::make_unique<PpoTorchAgentFactory>(
         cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,

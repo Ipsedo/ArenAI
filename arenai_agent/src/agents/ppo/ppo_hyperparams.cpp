@@ -19,10 +19,12 @@ namespace arenai::agent {
             {"--gamma", &PpoHyperParams::gamma},
             {"--gae_lambda", &PpoHyperParams::gae_lambda},
             {"--clip_epsilon", &PpoHyperParams::clip_epsilon},
+            {"--grad_norm_max", &PpoHyperParams::grad_norm_max},
             {"--continuous_entropy_coef", &PpoHyperParams::continuous_entropy_coef},
             {"--discrete_entropy_coef", &PpoHyperParams::discrete_entropy_coef},
             {"--epochs", &PpoHyperParams::epochs},
             {"--rollout_size", &PpoHyperParams::rollout_size},
+            {"--minibatch_size", &PpoHyperParams::minibatch_size},
         };
     }
 

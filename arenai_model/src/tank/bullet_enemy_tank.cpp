@@ -37,7 +37,7 @@ namespace arenai::model {
           tank_prefix_name(tank_prefix_name),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), distance_scale(250.f),
-          dispersion_angle_scale(glm::radians(15.f)), optimal_distance(75.f), fire_cost(0.1f),
+          dispersion_angle_scale(glm::radians(5.f)), optimal_distance(75.f), fire_cost(0.05f),
           miss_cost(0.1f), is_dead_already_triggered(false), has_touch(false),
           action_stats(std::make_shared<ActionStats>()) {}
 

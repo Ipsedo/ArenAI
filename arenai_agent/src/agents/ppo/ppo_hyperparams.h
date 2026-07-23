@@ -31,7 +31,7 @@ namespace arenai::agent {
         float discrete_entropy_coef = 0.01f;
         int epochs = 4;
         int rollout_size = 300;// 10 s of game time at 30 Hz
-        int minibatch_size = 256;
+        int minibatch_size = 512;
     };
 
     std::vector<CliField<PpoHyperParams>> ppo_cli_fields();

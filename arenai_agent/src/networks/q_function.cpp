@@ -26,19 +26,19 @@ namespace arenai::agent {
               torch::nn::Sequential(
                   torch::nn::Linear(nb_sensors, hidden_size_sensors),
                   torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_sensors})),
-                  torch::nn::GELU()))),
+                  torch::nn::SiLU()))),
           continuous_action_encoder(register_module(
               "continuous_action_encoder",
               torch::nn::Sequential(
                   torch::nn::Linear(nb_continuous_actions, hidden_size_actions),
                   torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_actions})),
-                  torch::nn::GELU()))),
+                  torch::nn::SiLU()))),
           discrete_action_encoder(register_module(
               "discrete_action_encoder",
               torch::nn::Sequential(
                   torch::nn::Linear(nb_discrete_actions, hidden_size_actions),
                   torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_actions})),
-                  torch::nn::GELU()))),
+                  torch::nn::SiLU()))),
           head(register_module("head", torch::nn::Sequential())),
           to_value(register_module("to_value", torch::nn::Linear(hidden_sizes.back(), 1))) {
 
@@ -46,14 +46,14 @@ namespace arenai::agent {
             2 * hidden_size_actions + hidden_size_sensors + vision_encoder->get_output_size(),
             hidden_sizes.front()));
         head->push_back(torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_sizes.front()})));
-        head->push_back(torch::nn::GELU());
+        head->push_back(torch::nn::SiLU());
 
         for (int i = 1; i < hidden_sizes.size(); i++) {
             const auto curr_size = hidden_sizes[i - 1];
             const auto next_size = hidden_sizes[i];
             head->push_back(torch::nn::Linear(curr_size, next_size));
             head->push_back(torch::nn::LayerNorm(torch::nn::LayerNormOptions({next_size})));
-            head->push_back(torch::nn::GELU());
+            head->push_back(torch::nn::SiLU());
         }
 
         vision_encoder->apply(init_hidden_weights);

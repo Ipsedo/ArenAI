@@ -32,7 +32,7 @@ namespace arenai::agent {
                                                  .padding(padding)
                                                  .bias(false)));
             cnn->push_back(torch::nn::GroupNorm(torch::nn::GroupNormOptions(groups, c_o)));
-            cnn->push_back(torch::nn::GELU());
+            cnn->push_back(torch::nn::SiLU());
         }
 
         output_size = w * h * std::get<1>(channels.back());

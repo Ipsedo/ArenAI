@@ -46,26 +46,15 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(soil2)
 
 # ARENAI modules
-set(ARENAI_CPP_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/..")
-
-add_subdirectory("${ARENAI_CPP_FOLDER}/arenai_controller" "${CMAKE_CURRENT_BINARY_DIR}/arenai_controller")
-add_subdirectory("${ARENAI_CPP_FOLDER}/arenai_utils" "${CMAKE_CURRENT_BINARY_DIR}/arenai_utils")
-add_subdirectory("${ARENAI_CPP_FOLDER}/arenai_view" "${CMAKE_CURRENT_BINARY_DIR}/arenai_view")
-add_subdirectory("${ARENAI_CPP_FOLDER}/arenai_model" "${CMAKE_CURRENT_BINARY_DIR}/arenai_model")
-add_subdirectory("${ARENAI_CPP_FOLDER}/arenai_core" "${CMAKE_CURRENT_BINARY_DIR}/arenai_core")
-
 set(ARENAI_AGENT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src")
 file(GLOB_RECURSE ARENAI_AGENT_SRC "${ARENAI_AGENT_PATH}/*.cpp")
 
 # Dependencies shared by the executable and the shared library
-set(ARENAI_AGENT_LINK_PUBLIC_LIBS
+set(ARENAI_AGENT_LINK_LIBS
         arenai_model
         arenai_view
         arenai_utils
         arenai_core
-)
-
-set(ARENAI_AGENT_LINK_PRIVATE_LIBS
         ${TORCH_LIBRARIES}
         soil2
         argparse
@@ -74,13 +63,11 @@ set(ARENAI_AGENT_LINK_PRIVATE_LIBS
 
 # Executable
 add_executable(arenai_agent_train ${ARENAI_AGENT_SRC})
-target_link_libraries(arenai_agent_train PUBLIC ${ARENAI_AGENT_LINK_PUBLIC_LIBS})
-target_link_libraries(arenai_agent_train PRIVATE ${ARENAI_AGENT_LINK_PRIVATE_LIBS})
+target_link_libraries(arenai_agent_train PRIVATE ${ARENAI_AGENT_LINK_LIBS})
 target_include_directories(arenai_agent_train PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include" "${stb_SOURCE_DIR}")
 arenai_copy_runtime_dlls(arenai_agent_train TORCH)
 
 # Library
 add_library(arenai_agent SHARED ${ARENAI_AGENT_SRC})
-target_link_libraries(arenai_agent PUBLIC ${ARENAI_AGENT_LINK_PUBLIC_LIBS})
-target_link_libraries(arenai_agent PRIVATE ${ARENAI_AGENT_LINK_PRIVATE_LIBS} "${stb_SOURCE_DIR}")
+target_link_libraries(arenai_agent PRIVATE ${ARENAI_AGENT_LINK_LIBS} "${stb_SOURCE_DIR}")
 target_include_directories(arenai_agent PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")

@@ -29,6 +29,12 @@ include(ArenaiRuntimeDlls)
 option(ARENAI_REGENERATE_GOLDEN_IMAGES
         "Rebuild golden reference images instead of comparing against them" OFF)
 
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/arenai_controller")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/arenai_utils")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/arenai_view")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/arenai_model")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/arenai_core")
+
 # Train main & lib
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/arenai_agent")
 

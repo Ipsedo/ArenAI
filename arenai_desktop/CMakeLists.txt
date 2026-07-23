@@ -30,6 +30,11 @@ add_executable(arenai_desktop ${ARENAI_DESKTOP_SRC})
 # every other folder goes through gui/menu.h (which exposes no RmlUi type).
 target_link_libraries(
         arenai_desktop
+        PRIVATE
+        arenai_model
+        arenai_view
+        arenai_utils
+        arenai_core
         arenai_agent
         RmlUi::Core
         # user preferences are (de)serialized to JSON in src/core/

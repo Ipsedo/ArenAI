@@ -54,6 +54,7 @@ namespace arenai::agent {
         // natural ending (timeout, death)
         for (int i = 0; i < step_result.size(); i++) {
             remaining_frames[i]--;
+
             if (has_hit[i]) remaining_frames[i] += nb_frames_added_when_hit;
 
             const auto &[state, reward, is_done, is_truncated] = step_result[i];
@@ -61,14 +62,17 @@ namespace arenai::agent {
             if (is_done) {
                 step_result[i] = {state, reward, true, false};
                 done[i] = true;
-
-                continue;
             }
 
-            if (remaining_frames[i] <= 0) {
+            if (!done[i] && remaining_frames[i] <= 0) {
                 step_result[i] = {state, reward, true, true};
-
                 done[i] = true;
+            }
+
+            if (done[i] && !already_done[i]) {
+                const float nb_seconds = static_cast<float>(nb_steps) * wanted_frequency;
+                episode_step_mean_nb_metric->add(nb_seconds);
+                episode_step_std_nb_metric->add(nb_seconds);
             }
         }
 
@@ -97,10 +101,6 @@ namespace arenai::agent {
     void TrainTankEnvironment::on_reset_physics(
         const std::unique_ptr<model::AbstractPhysicEngine> &engine) {
         remaining_frames = std::vector(nb_tanks, max_frames_without_hit);
-
-        const float nb_seconds = static_cast<float>(nb_steps) * wanted_frequency;
-        episode_step_mean_nb_metric->add(nb_seconds);
-        episode_step_std_nb_metric->add(nb_seconds);
 
         nb_steps = 0;
 

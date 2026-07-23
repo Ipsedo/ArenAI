@@ -27,7 +27,7 @@ namespace arenai::agent {
         float gae_lambda = 0.95f;
         float clip_epsilon = 0.2f;
         float continuous_entropy_coef = 0.0005f;
-        float discrete_entropy_coef = 0.001f;
+        float discrete_entropy_coef = 0.01f;
         int epochs = 8;
         int rollout_size = 16;
     };

@@ -70,13 +70,14 @@ namespace arenai::agent {
     }
 
     void PpoTrainer::train() const {
-        set_train(true);
-
         const auto device = actor->parameters().back().device();
 
         const auto rollout = rollout_buffer->get_rollout();
 
+        set_train(false);
         const auto [advantages, returns] = compute_gae(rollout, device);
+
+        set_train(true);
 
         // the rollout stays on CPU; only the minibatches hit the device
         const auto flat_vision = flatten_steps(rollout.states.vision);

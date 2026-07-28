@@ -17,8 +17,6 @@
 
 namespace arenai::agent {
 
-    inline constexpr std::string DEFAULT_AGENT = "sac";
-
     // One RL algorithm exposed as a CLI subcommand: its subparser (owning the
     // algorithm's hyper-parameter options) and the builder reading them back
     // to construct the concrete factory.
@@ -32,6 +30,8 @@ namespace arenai::agent {
     };
 
     std::vector<AgentCli> make_agent_clis();
+
+    AgentCli get_default_agent_cli();
 
 }// namespace arenai::agent
 

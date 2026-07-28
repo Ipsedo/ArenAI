@@ -19,6 +19,7 @@ namespace arenai::agent {
             {"--gamma", &PpoHyperParams::gamma},
             {"--gae_lambda", &PpoHyperParams::gae_lambda},
             {"--clip_epsilon", &PpoHyperParams::clip_epsilon},
+            {"--target_kl", &PpoHyperParams::target_kl},
             {"--grad_norm_max", &PpoHyperParams::grad_norm_max},
             {"--continuous_entropy_coef", &PpoHyperParams::continuous_entropy_coef},
             {"--discrete_entropy_coef", &PpoHyperParams::discrete_entropy_coef},

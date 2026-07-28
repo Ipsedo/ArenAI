@@ -38,9 +38,9 @@ namespace arenai::agent {
         const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, const torch::Device device,
         const int metric_window_size, const float gamma, const float gae_lambda,
-        const float clip_epsilon, const float grad_norm_max, const float continuous_entropy_coef,
-        const float discrete_entropy_coef, const int epochs, const int rollout_size,
-        const int minibatch_size)
+        const float clip_epsilon, const float target_kl, const float grad_norm_max,
+        const float continuous_entropy_coef, const float discrete_entropy_coef, const int epochs,
+        const int rollout_size, const int minibatch_size)
         : actor(std::move(actor)), rollout_buffer(std::move(rollout_buffer)),
           critic(std::make_shared<ValueFunction>(
               vision_height, vision_width, nb_sensors, hidden_size_sensors, critic_hidden_sizes,
@@ -56,7 +56,8 @@ namespace arenai::agent {
           continuous_entropy_metric(std::make_shared<MeanMetric>("Hc", metric_window_size)),
           discrete_entropy_metric(std::make_shared<MeanMetric>("Hd", metric_window_size)),
           clip_fraction_metric(std::make_shared<MeanMetric>("clip", metric_window_size)),
-          gamma(gamma), gae_lambda(gae_lambda), clip_epsilon(clip_epsilon),
+          kl_metric(std::make_shared<MeanMetric>("kl", metric_window_size, 2, true)), gamma(gamma),
+          gae_lambda(gae_lambda), clip_epsilon(clip_epsilon), target_kl(target_kl),
           grad_norm_max(grad_norm_max), continuous_entropy_coef(continuous_entropy_coef),
           discrete_entropy_coef(discrete_entropy_coef), epochs(epochs), rollout_size(rollout_size),
           minibatch_size(minibatch_size) {
@@ -95,7 +96,8 @@ namespace arenai::agent {
         const auto nb_valid_rows = valid_idx.size(0);
         if (nb_valid_rows == 0) return;
 
-        for (int e = 0; e < epochs; e++) {
+        bool kl_stop = false;
+        for (int e = 0; e < epochs && !kl_stop; e++) {
             const auto perm = valid_idx.index_select(0, torch::randperm(nb_valid_rows));
 
             for (int64_t start = 0; start < nb_valid_rows; start += minibatch_size) {
@@ -127,6 +129,16 @@ namespace arenai::agent {
 
                 const auto ratio = torch::exp(
                     curr_continuous_log_probs + curr_discrete_log_probs - mb_old_log_probs);
+
+                // approx KL (Schulman): E[(ratio - 1) - log ratio]; stop the update before
+                // this minibatch if the policy drifted too far from the rollout policy
+                const auto approx_kl = ((ratio - 1.f) - torch::log(ratio)).mean().item<float>();
+                kl_metric->add(approx_kl);
+                if (target_kl > 0.f && approx_kl > 1.5f * target_kl) {
+                    kl_stop = true;
+                    break;
+                }
+
                 const auto clipped_ratio =
                     torch::clamp(ratio, 1.f - clip_epsilon, 1.f + clip_epsilon);
 
@@ -232,9 +244,10 @@ namespace arenai::agent {
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> PpoTrainer::get_metrics() {
-        return {actor_mean_loss_metric, actor_std_loss_metric,     critic_mean_loss_metric,
-                critic_std_loss_metric, continuous_entropy_metric, discrete_entropy_metric,
-                clip_fraction_metric};
+        return {actor_mean_loss_metric,    actor_std_loss_metric,
+                critic_mean_loss_metric,   critic_std_loss_metric,
+                continuous_entropy_metric, discrete_entropy_metric,
+                clip_fraction_metric,      kl_metric};
     }
 
     void PpoTrainer::save(const std::filesystem::path &output_folder) {

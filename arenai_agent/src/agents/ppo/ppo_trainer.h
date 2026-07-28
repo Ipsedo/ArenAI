@@ -26,7 +26,7 @@ namespace arenai::agent {
             const std::vector<int> &critic_hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
-            float gamma, float gae_lambda, float clip_epsilon, float grad_norm_max,
+            float gamma, float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
             float continuous_entropy_coef, float discrete_entropy_coef, int epochs,
             int rollout_size, int minibatch_size);
 
@@ -57,10 +57,13 @@ namespace arenai::agent {
         std::shared_ptr<AbstractMetric> discrete_entropy_metric;
 
         std::shared_ptr<AbstractMetric> clip_fraction_metric;
+        std::shared_ptr<AbstractMetric> kl_metric;
 
         float gamma;
         float gae_lambda;
         float clip_epsilon;
+        // approx-KL threshold ending the epoch loop early (<= 0: disabled)
+        float target_kl;
 
         float grad_norm_max;
 

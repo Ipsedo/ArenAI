@@ -32,8 +32,10 @@ TEST_F(RewardTest, RewardZeroWhenAliveNoShot) {
     const float reward_a = tanks[0]->get_reward(tanks);
     const float reward_b = tanks[1]->get_reward(tanks);
 
-    ASSERT_EQ(reward_a, 0.f);
-    ASSERT_EQ(reward_b, 0.f);
+    // the dense aim shaping leaves a negligible residue when the canon points ~90°
+    // away from the enemy, so the reward is near zero rather than exactly zero
+    ASSERT_NEAR(reward_a, 0.f, 1e-3f);
+    ASSERT_NEAR(reward_b, 0.f, 1e-3f);
 }
 
 TEST_F(RewardTest, RewardNegativeWhenDead) {

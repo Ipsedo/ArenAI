@@ -32,7 +32,10 @@ namespace arenai::agent {
           nb_steps(0), done(nb_tanks, false), already_done(nb_tanks, false),
           max_episode_steps(max_episode_steps),
           episode_step_mean_nb_metric(std::make_shared<MeanMetric>("s_μ", 32, 1)),
-          episode_step_std_nb_metric(std::make_shared<StdMetric>("s_σ", 32)) {}
+          episode_step_std_nb_metric(std::make_shared<StdMetric>("s_σ", 32)),
+          fire_metric(std::make_shared<MeanMetric>("fire", 256, 2)),
+          hit_metric(std::make_shared<MeanMetric>("hit", 256, 2, true)),
+          kill_metric(std::make_shared<MeanMetric>("kill", 16, 1)), nb_kills_episode(0) {}
 
     std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
     TrainTankEnvironment::step(const float time_delta, const std::vector<core::Action> &actions) {
@@ -51,6 +54,36 @@ namespace arenai::agent {
             return has_hit_result;
         });
 
+        const auto has_fired = apply_on_factories<std::vector<bool>>([&](const auto &factories) {
+            std::vector<bool> has_fired_result;
+            has_fired_result.reserve(nb_tanks);
+            for (const auto &factory: factories)
+                has_fired_result.push_back(factory->get_action_stats()->has_fire());
+            return has_fired_result;
+        });
+
+        const auto is_suicide = apply_on_factories<std::vector<bool>>([&](const auto &factories) {
+            std::vector<bool> is_suicide_result;
+            is_suicide_result.reserve(nb_tanks);
+            for (const auto &factory: factories) is_suicide_result.push_back(factory->is_suicide());
+            return is_suicide_result;
+        });
+
+        // fire / hit frequencies (per second, per tank that acted this step)
+        int nb_acting = 0, nb_fires = 0, nb_hits = 0;
+        for (int i = 0; i < nb_tanks; i++) {
+            if (already_done[i]) continue;
+            nb_acting++;
+            nb_fires += has_fired[i] ? 1 : 0;
+            nb_hits += has_hit[i] ? 1 : 0;
+        }
+        if (nb_acting > 0) {
+            fire_metric->add(
+                static_cast<float>(nb_fires) / (static_cast<float>(nb_acting) * wanted_frequency));
+            hit_metric->add(
+                static_cast<float>(nb_hits) / (static_cast<float>(nb_acting) * wanted_frequency));
+        }
+
         // natural ending (timeout, death)
         for (int i = 0; i < step_result.size(); i++) {
             remaining_frames[i]--;
@@ -61,6 +94,7 @@ namespace arenai::agent {
 
             if (is_done) {
                 step_result[i] = {state, reward, true, false};
+                if (!already_done[i] && !is_suicide[i]) nb_kills_episode++;
                 done[i] = true;
             }
 
@@ -95,12 +129,26 @@ namespace arenai::agent {
         return step_result;
     }
 
+    std::vector<float> TrainTankEnvironment::get_phi_vector() {
+        return apply_on_factories<std::vector<float>>(
+            [](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
+                std::vector<float> phi_vector;
+                phi_vector.reserve(tanks.size());
+                for (const auto &tank: tanks) phi_vector.emplace_back(tank->get_phi(tanks));
+                return phi_vector;
+            });
+    }
+
     void TrainTankEnvironment::on_draw(
         const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {}
 
     void TrainTankEnvironment::on_reset_physics(
         const std::unique_ptr<model::AbstractPhysicEngine> &engine) {
         remaining_frames = std::vector(nb_tanks, max_frames_without_hit);
+
+        // close the previous episode's kill count (skip the very first reset)
+        if (nb_steps > 0) kill_metric->add(static_cast<float>(nb_kills_episode));
+        nb_kills_episode = 0;
 
         nb_steps = 0;
 
@@ -136,7 +184,15 @@ namespace arenai::agent {
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> TrainTankEnvironment::get_metrics() const {
-        return {episode_step_mean_nb_metric, episode_step_std_nb_metric};
+        return {
+            episode_step_mean_nb_metric, episode_step_std_nb_metric, fire_metric, hit_metric,
+            kill_metric};
+    }
+
+    std::vector<bool> TrainTankEnvironment::get_valid_mask() const {
+        std::vector<bool> valid(nb_tanks);
+        for (int i = 0; i < nb_tanks; i++) valid[i] = !already_done[i];
+        return valid;
     }
 
 }// namespace arenai::agent

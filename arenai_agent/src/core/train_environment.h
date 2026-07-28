@@ -21,7 +21,13 @@ namespace arenai::agent {
         std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
         step(float time_delta, const std::vector<core::Action> &actions) override;
 
+        std::vector<float> get_phi_vector();
+
         std::vector<std::shared_ptr<AbstractMetric>> get_metrics() const;
+
+        // tanks whose transition of the last step is a live one (not already done before
+        // the step) — mask for reward metrics, mirrors the rollout buffer's valid rows
+        std::vector<bool> get_valid_mask() const;
 
         bool is_episode_terminated();
 
@@ -52,6 +58,12 @@ namespace arenai::agent {
 
         std::shared_ptr<AbstractMetric> episode_step_mean_nb_metric;
         std::shared_ptr<AbstractMetric> episode_step_std_nb_metric;
+
+        std::shared_ptr<AbstractMetric> fire_metric;
+        std::shared_ptr<AbstractMetric> hit_metric;
+        std::shared_ptr<AbstractMetric> kill_metric;
+
+        int nb_kills_episode;
 
         bool only_one_tank_alive();
 

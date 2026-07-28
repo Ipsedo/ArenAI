@@ -75,10 +75,11 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
     const auto rollout_buffer = std::make_shared<PpoRolloutBuffer>();
     const auto collector = std::make_shared<PpoStepCollector>(rollout_buffer);
     const auto agent = std::make_shared<TorchPpoAgent>(actor, device, collector);
+    // target_kl = 0 : early stop disabled so every minibatch applies its update
     const auto trainer = std::make_shared<PpoTrainer>(
         actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_sensors, 1e-3f, 1e-3f, 8,
-        std::vector<int>{16}, vision_channels, group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 1.f,
-        0.01f, 0.01f, 2, ROLLOUT_SIZE, MINIBATCH_SIZE);
+        std::vector<int>{16}, vision_channels, group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.f,
+        1.f, 0.01f, 0.01f, 2, ROLLOUT_SIZE, MINIBATCH_SIZE);
 
     std::vector<torch::Tensor> initial_parameters;
     for (const auto &parameter: actor->parameters())

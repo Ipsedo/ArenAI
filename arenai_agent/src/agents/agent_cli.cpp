@@ -47,4 +47,7 @@ namespace arenai::agent {
         return algorithms;
     }
 
+    AgentCli get_default_agent_cli() {
+        return make_agent_cli<SacHyperParams, SacTorchAgentFactory>("sac", sac_cli_fields());
+    }
 }// namespace arenai::agent

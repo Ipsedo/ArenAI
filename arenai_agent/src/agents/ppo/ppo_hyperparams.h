@@ -23,9 +23,14 @@ namespace arenai::agent {
                                                              {32, 64}, {64, 128}, {128, 256}};
         std::vector<int> group_norm_nums = {1, 2, 4, 8, 16, 32};
         int metric_window_size = 256;
-        float gamma = 0.99f;
-        float gae_lambda = 0.95f;
+        // 0.997 at 30 Hz -> ~11 s credit horizon (shell flight time + fights stay visible)
+        float gamma = 0.997f;
+        // 0.98: a shell resolving 30-60 steps after the fire still reaches the fire
+        // decision at x0.25-0.5 through GAE, instead of x0.04-0.2 with 0.95
+        float gae_lambda = 0.98f;
         float clip_epsilon = 0.2f;
+        // early-stop of the epoch loop when approx KL > 1.5 * target_kl; <= 0 disables it
+        float target_kl = 0.02f;
         float grad_norm_max = 0.5f;
         float continuous_entropy_coef = 0.005f;
         float discrete_entropy_coef = 0.01f;

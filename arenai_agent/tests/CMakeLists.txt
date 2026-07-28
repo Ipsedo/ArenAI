@@ -37,6 +37,13 @@ target_include_directories(arenai_agent_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DI
 
 target_include_directories(arenai_agent_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../src")
 
+target_compile_definitions(arenai_agent_tests PRIVATE
+        ARENAI_ASSETS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../../resources")
+
+if (ARENAI_REGENERATE_GOLDEN_IMAGES)
+    target_compile_definitions(arenai_agent_tests PRIVATE ARENAI_REGENERATE_GOLDEN_IMAGES)
+endif ()
+
 # fix opengl header with glfw on windows
 if (WIN32)
     target_compile_definitions(arenai_agent_tests PRIVATE GLFW_INCLUDE_NONE)

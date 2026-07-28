@@ -48,3 +48,10 @@ repos:
         types: [ c++, c ]
         pass_filenames: false
         require_serial: true
+      - id: test_desktop
+        name: test_desktop
+        language: system
+        entry: ./build/arenai_desktop/tests/arenai_desktop_tests
+        types: [ c++, c ]
+        pass_filenames: false
+        require_serial: true

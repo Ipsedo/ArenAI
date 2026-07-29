@@ -72,7 +72,6 @@ namespace arenai::model {
         float distance_scale;
         float dispersion_angle_scale;
         float dispersion_reward_scale;
-        float aim_angle_scale;
         float optimal_distance;
 
         float fire_cost;

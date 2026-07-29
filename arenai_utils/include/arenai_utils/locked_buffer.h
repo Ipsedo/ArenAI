@@ -2,8 +2,8 @@
 // Created by samuel on 27/02/2026.
 //
 
-#ifndef ARENAI_TRAIN_HOST_ATOMIC_SNAPSHOT_H
-#define ARENAI_TRAIN_HOST_ATOMIC_SNAPSHOT_H
+#ifndef ARENAI_AGENT_HOST_ATOMIC_SNAPSHOT_H
+#define ARENAI_AGENT_HOST_ATOMIC_SNAPSHOT_H
 
 #include <atomic>
 #include <memory>
@@ -38,4 +38,4 @@ namespace arenai::utils {
 
 }// namespace arenai::utils
 
-#endif//ARENAI_TRAIN_HOST_ATOMIC_SNAPSHOT_H
+#endif//ARENAI_AGENT_HOST_ATOMIC_SNAPSHOT_H

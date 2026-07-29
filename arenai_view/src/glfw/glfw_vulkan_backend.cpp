@@ -6,7 +6,7 @@
 
 #include <utility>
 
-#include "../vulkan/renderers/player_renderer.h"
+#include "../vulkan/scene/renderers/player_renderer.h"
 
 namespace arenai::view {
 

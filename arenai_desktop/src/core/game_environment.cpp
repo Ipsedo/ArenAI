@@ -6,10 +6,10 @@
 
 #include <iostream>
 
+#include <arenai_agent/file_reader.h>
 #include <arenai_model/engine.h>
 #include <arenai_model/tank.h>
 #include <arenai_model/tank_factory.h>
-#include <arenai_train/file_reader.h>
 
 using namespace arenai;
 
@@ -24,11 +24,11 @@ namespace arenai::desktop {
         // synchronous readbacks are latency-bound on a discrete GPU, and this keeps
         // them off the window's GPU when the player view is offloaded (prime-run).
         : core::BaseTanksEnvironment(
-            std::make_shared<train::DesktopAssetFileReader>(asset_folder_path),
+            std::make_shared<agent::DesktopAssetFileReader>(asset_folder_path),
             view::make_vulkan_backend(), nb_tanks, wanted_frequency, vision_height, vision_width, 8,
             true),
           windowed_backend(graphics_backend),
-          asset_file_reader(std::make_shared<train::DesktopAssetFileReader>(asset_folder_path)),
+          asset_file_reader(std::make_shared<agent::DesktopAssetFileReader>(asset_folder_path)),
           player_tank(std::nullptr_t()), player_renderer(std::nullptr_t()),
           wanted_frequency(wanted_frequency), controller_kind(controller_kind) {}
 

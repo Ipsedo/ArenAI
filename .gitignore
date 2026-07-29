@@ -5,3 +5,5 @@ vcpkg/
 
 .idea/
 .venv/
+
+outputs/

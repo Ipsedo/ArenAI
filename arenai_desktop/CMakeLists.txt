@@ -1,13 +1,25 @@
 cmake_minimum_required(VERSION 3.29)
 
-# Must be set before project() so CMake picks it up at configure time
-if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+# Must be set before project() so CMake picks it up at configure time.
+# Only when the vcpkg tree is actually there (Windows, install_dependencies.ps1):
+# caching a nonexistent path breaks the next full reconfigure (e.g. after a
+# cmake version upgrade) on every other platform.
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE
+        AND EXISTS "${CMAKE_SOURCE_DIR}/libs/vcpkg/scripts/buildsystems/vcpkg.cmake")
     set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/libs/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
 endif()
 
 project(arenai_desktop)
 
 set(CMAKE_CXX_STANDARD 20)
+
+# argparse
+FetchContent_Declare(
+        argparse
+        GIT_REPOSITORY https://github.com/p-ranav/argparse.git
+        GIT_TAG v3.2
+)
+FetchContent_MakeAvailable(argparse)
 
 # ArenAI Desktop
 set(ARENAI_DESKTOP_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -16,18 +28,25 @@ file(GLOB_RECURSE ARENAI_DESKTOP_SRC "${ARENAI_DESKTOP_PATH}/*.cpp")
 
 add_executable(arenai_desktop ${ARENAI_DESKTOP_SRC})
 
-# ArenAI module headers propagate through arenai_train_lib's PUBLIC interface.
+# ArenAI module headers propagate through arenai_agent's PUBLIC interface.
 # Windowing (GLFW) is fully encapsulated inside arenai_view.
 # RmlUi is reserved to the src/gui/ hexagon: only gui/*.cpp may include it,
 # every other folder goes through gui/menu.h (which exposes no RmlUi type).
 target_link_libraries(
         arenai_desktop
-        arenai_train_lib
+        PRIVATE
+        arenai_model
+        arenai_view
+        arenai_utils
+        arenai_core
+        arenai_agent
         RmlUi::Core
         # user preferences are (de)serialized to JSON in src/core/
         nlohmann_json::nlohmann_json
+        argparse
 )
 
+# this is not a leak, just an arg ON/OFF
 arenai_copy_runtime_dlls(arenai_desktop TORCH)
 
 # Game assets copied next to the executable: main.cpp resolves the resources

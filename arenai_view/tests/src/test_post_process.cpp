@@ -10,10 +10,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <gtest/gtest.h>
 
-#include "vulkan/buffer.h"
-#include "vulkan/descriptors.h"
-#include "vulkan/post_processing/post_process.h"
-#include "vulkan/render_target.h"
+#include "vulkan/core/buffer.h"
+#include "vulkan/core/descriptors.h"
+#include "vulkan/core/render_target.h"
+#include "vulkan/post/post_process.h"
 #include "vulkan/vulkan_backend.h"
 
 using namespace arenai;

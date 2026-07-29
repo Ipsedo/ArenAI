@@ -10,8 +10,8 @@
 
 #include <arenai_view/backend.h>
 
-#include "./device.h"
-#include "./instance.h"
+#include "./core/device.h"
+#include "./core/instance.h"
 #include "./render_context.h"
 
 namespace arenai::view {

@@ -6,7 +6,10 @@
 #define ARENAI_DESKTOP_GUI_MENU_H
 
 #include <filesystem>
+#include <functional>
 #include <memory>
+#include <optional>
+#include <string>
 
 #include <arenai_controller/callback.h>
 #include <arenai_utils/file_reader.h>
@@ -63,10 +66,17 @@ namespace arenai::desktop::gui {
         virtual void on_window_resized(int width, int height) = 0;
     };
 
+    // checks a candidate SAC folder without starting a game: returns
+    // std::nullopt when the state dicts load, else a user-displayable error
+    // message. Injected by the application so the gui stays torch-free.
+    using SacFolderValidator =
+        std::function<std::optional<std::string>(const std::filesystem::path &)>;
+
     std::unique_ptr<AbstractGui> make_gui(
         const std::shared_ptr<view::AbstractWindowedGraphicBackend> &backend,
         const std::shared_ptr<utils::AbstractResourceFileReader> &asset_reader,
-        const GameSettings &initial_settings, int window_width, int window_height);
+        const GameSettings &initial_settings, int window_width, int window_height,
+        SacFolderValidator sac_validator);
 
 }// namespace arenai::desktop::gui
 

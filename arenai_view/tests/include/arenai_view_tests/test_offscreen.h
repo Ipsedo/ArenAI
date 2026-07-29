@@ -2,8 +2,8 @@
 // Created by samuel on 26/06/2026.
 //
 
-#ifndef ARENAI_TRAIN_HOST_TEST_OFFSCREEN_H
-#define ARENAI_TRAIN_HOST_TEST_OFFSCREEN_H
+#ifndef ARENAI_AGENT_HOST_TEST_OFFSCREEN_H
+#define ARENAI_AGENT_HOST_TEST_OFFSCREEN_H
 
 #include <cstdlib>
 
@@ -33,4 +33,4 @@ class OffscreenClearColorParam : public testing::TestWithParam<image_size> {};
 
 class OffscreenMultiFrameParam : public testing::TestWithParam<image_size> {};
 
-#endif//ARENAI_TRAIN_HOST_TEST_OFFSCREEN_H
+#endif//ARENAI_AGENT_HOST_TEST_OFFSCREEN_H

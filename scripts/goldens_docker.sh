@@ -64,15 +64,20 @@ cmake -S . -B cmake-build-docker \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
 cmake --build cmake-build-docker -j"$(nproc)" \
-    --target arenai_view_tests arenai_core_tests
+    --target arenai_view_tests arenai_core_tests arenai_agent_tests arenai_desktop_tests
 
 . scripts/ci/render_env.sh
-ctest --test-dir cmake-build-docker --output-on-failure -R 'arenai_(view|core)_tests'
+ctest --test-dir cmake-build-docker --output-on-failure -R 'arenai_(view|core|agent|desktop)_tests'
 
 # docker runs as root; hand the regenerated goldens back to the caller
+mkdir -p \
+    arenai_agent/tests/resources/golden_images \
+    arenai_desktop/tests/resources/golden_images
 chown -R "${HOST_UID}:${HOST_GID}" \
     arenai_core/tests/resources/golden_images \
     arenai_view/tests/resources/golden_images \
+    arenai_agent/tests/resources \
+    arenai_desktop/tests/resources \
     cmake-build-docker
 
 if [ "$REGENERATE" -eq 1 ]; then

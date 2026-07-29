@@ -2,8 +2,8 @@
 // Created by samuel on 03/10/2025.
 //
 
-#ifndef ARENAI_TRAIN_HOST_LINUX_FILE_READER_H
-#define ARENAI_TRAIN_HOST_LINUX_FILE_READER_H
+#ifndef ARENAI_AGENT_HOST_LINUX_FILE_READER_H
+#define ARENAI_AGENT_HOST_LINUX_FILE_READER_H
 
 #include <filesystem>
 
@@ -21,4 +21,4 @@ private:
     std::filesystem::path path_to_assets;
 };
 
-#endif// ARENAI_TRAIN_HOST_LINUX_FILE_READER_H
+#endif// ARENAI_AGENT_HOST_LINUX_FILE_READER_H

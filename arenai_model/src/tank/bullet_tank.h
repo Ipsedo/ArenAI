@@ -15,6 +15,7 @@ namespace arenai::model {
 
     class BulletPhysicEngine;
     class CanonItem;
+    class ShellItem;
 
     class BulletTank : virtual public Tank {
     public:
@@ -23,7 +24,9 @@ namespace arenai::model {
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::string &tank_prefix_name, glm::vec3 chassis_pos,
             float wanted_frame_frequency,
-            const std::function<void(const ShellContactInfo &, Item *)> &on_contact_callback);
+            const std::function<void(const ShellContactInfo &, Item *)> &on_contact_callback,
+            const std::function<void(const std::shared_ptr<ShellItem> &)> &on_shell_fired_callback =
+                [](const std::shared_ptr<ShellItem> &) {});
 
         std::shared_ptr<view::AbstractCamera> get_camera() override;
         std::vector<std::shared_ptr<Item>> get_items() override;

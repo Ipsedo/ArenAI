@@ -28,7 +28,8 @@ namespace arenai::model {
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, glm::vec3 pos,
             glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *turret,
             float wanted_frame_frequency,
-            const std::function<void(glm::vec3, glm::vec3, Item *)> &on_contact);
+            const std::function<void(glm::vec3, glm::vec3, Item *)> &on_contact,
+            const std::function<void(const std::shared_ptr<ShellItem> &)> &on_shell_fired);
 
         void apply_input(const controller::user_input &input) override;
 
@@ -47,6 +48,7 @@ namespace arenai::model {
         std::shared_ptr<utils::AbstractResourceFileReader> file_reader;
         bool will_fire;
         std::function<void(glm::vec3, glm::vec3, Item *)> on_contact;
+        std::function<void(const std::shared_ptr<ShellItem> &)> on_shell_fired;
         float wanted_frame_frequency;
     };
 

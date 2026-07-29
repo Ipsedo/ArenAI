@@ -2,8 +2,8 @@
 // Created by samuel on 15/02/2026.
 //
 
-#ifndef ARENAI_TRAIN_HOST_DOUBLE_BUFFER_H
-#define ARENAI_TRAIN_HOST_DOUBLE_BUFFER_H
+#ifndef ARENAI_AGENT_HOST_DOUBLE_BUFFER_H
+#define ARENAI_AGENT_HOST_DOUBLE_BUFFER_H
 
 #include <array>
 #include <atomic>
@@ -55,4 +55,4 @@ namespace arenai::utils {
 
 }// namespace arenai::utils
 
-#endif//ARENAI_TRAIN_HOST_DOUBLE_BUFFER_H
+#endif//ARENAI_AGENT_HOST_DOUBLE_BUFFER_H

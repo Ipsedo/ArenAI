@@ -2,8 +2,8 @@
 // Created by samuel on 10/06/2026.
 //
 
-#ifndef ARENAI_TRAIN_HOST_THREAD_POOL_H
-#define ARENAI_TRAIN_HOST_THREAD_POOL_H
+#ifndef ARENAI_AGENT_HOST_THREAD_POOL_H
+#define ARENAI_AGENT_HOST_THREAD_POOL_H
 #include <barrier>
 #include <condition_variable>
 #include <memory>
@@ -112,4 +112,4 @@ namespace arenai::core {
     };
 }// namespace arenai::core
 
-#endif//ARENAI_TRAIN_HOST_THREAD_POOL_H
+#endif//ARENAI_AGENT_HOST_THREAD_POOL_H

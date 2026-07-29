@@ -2,8 +2,8 @@
 // Created by samuel on 21/10/2025.
 //
 
-#ifndef ARENAI_TRAIN_HOST_CONSTANTS_H
-#define ARENAI_TRAIN_HOST_CONSTANTS_H
+#ifndef ARENAI_AGENT_HOST_CONSTANTS_H
+#define ARENAI_AGENT_HOST_CONSTANTS_H
 
 #include <arenai_model/constants.h>
 
@@ -15,4 +15,4 @@ namespace arenai::core {
 
 }// namespace arenai::core
 
-#endif//ARENAI_TRAIN_HOST_CONSTANTS_H
+#endif//ARENAI_AGENT_HOST_CONSTANTS_H

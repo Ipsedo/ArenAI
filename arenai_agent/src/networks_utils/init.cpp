@@ -39,7 +39,7 @@ namespace arenai::agent {
     void init_sigma_output_weights(torch::nn::Module &module) {
         if (auto *lin = dynamic_cast<torch::nn::LinearImpl *>(&module)) {
             torch::nn::init::orthogonal_(lin->weight, 0.01f);
-            if (lin->options.bias()) torch::nn::init::constant_(lin->bias, std::log(1.0f));
+            if (lin->options.bias()) torch::nn::init::constant_(lin->bias, std::log(0.5f));
         }
     }
 

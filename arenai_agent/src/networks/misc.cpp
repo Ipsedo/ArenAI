@@ -32,4 +32,17 @@ namespace arenai::agent {
         stream << name() << "(min=" << lower_bound << ", max=" << upper_bound << ")";
     }
 
+    /*
+     * Sigma of normal distribution output layer
+     */
+
+    SigmaOutput::SigmaOutput(const float min_sigma, const float max_sigma)
+        : min_log_sigma(std::log(min_sigma)), max_log_sigma(std::log(max_sigma)) {}
+
+    torch::Tensor SigmaOutput::forward(const torch::Tensor &input) {
+        const auto log_sigma =
+            min_log_sigma + (max_log_sigma - min_log_sigma) * torch::sigmoid(input);
+        return torch::exp(log_sigma);
+    }
+
 }// namespace arenai::agent

@@ -29,6 +29,17 @@ namespace arenai::agent {
         void pretty_print(std::ostream &stream) const override;
     };
 
+    class SigmaOutput : public torch::nn::Module {
+    public:
+        SigmaOutput(float min_sigma, float max_sigma);
+
+        torch::Tensor forward(const torch::Tensor &input);
+
+    private:
+        float min_log_sigma;
+        float max_log_sigma;
+    };
+
 }// namespace arenai::agent
 
 #endif//ARENAI_AGENT_HOST_MISC_H

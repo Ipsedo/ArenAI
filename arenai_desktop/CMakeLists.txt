@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.29)
 
-# Must be set before project() so CMake picks it up at configure time
-if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+# Must be set before project() so CMake picks it up at configure time.
+# Only when the vcpkg tree is actually there (Windows, install_dependencies.ps1):
+# caching a nonexistent path breaks the next full reconfigure (e.g. after a
+# cmake version upgrade) on every other platform.
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE
+        AND EXISTS "${CMAKE_SOURCE_DIR}/libs/vcpkg/scripts/buildsystems/vcpkg.cmake")
     set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/libs/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
 endif()
 

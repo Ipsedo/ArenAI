@@ -138,7 +138,10 @@ namespace arenai::model {
         const btVector3 bt_to(to.x, to.y, to.z);
 
         ExcludingRayCallback callback(bt_from, bt_to, excluded);
-        m_world->rayTest(bt_from, bt_to, callback);
+        {
+            std::lock_guard lock(ray_test_mutex);
+            m_world->rayTest(bt_from, bt_to, callback);
+        }
 
         if (callback.hasHit()) return callback.m_closestHitFraction;
         return std::nullopt;

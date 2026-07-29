@@ -51,6 +51,11 @@ namespace arenai::model {
     private:
         std::shared_mutex items_mutex;
 
+        // btDbvtBroadphase::rayTest scribbles into a shared member scratch stack
+        // (m_rayTestStacks), so two concurrent rayTest calls on the same world are
+        // a data race: serialize them to keep the concurrency ray_test promises.
+        mutable std::mutex ray_test_mutex;
+
         float wanted_frequency;
 
         btDefaultCollisionConfiguration *m_collision_configuration;

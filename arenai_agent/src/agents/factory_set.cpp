@@ -22,7 +22,7 @@ namespace arenai::agent {
         return std::make_shared<TorchSacAgent>(
             std::make_shared<Actor>(
                 vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_action,
-                get_value("sensors_hidden_size", 256),
+                get_value("hidden_size_sensors", 256),
                 get_value<hidden_layers>("hidden_sizes", parse_cli_hidden_layer, {{2560, 1280}})
                     .layers,
                 get_value<vision_channels>(

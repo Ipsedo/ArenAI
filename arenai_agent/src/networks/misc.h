@@ -35,6 +35,8 @@ namespace arenai::agent {
 
         torch::Tensor forward(const torch::Tensor &input);
 
+        void pretty_print(std::ostream &stream) const override;
+
     private:
         float min_log_sigma;
         float max_log_sigma;

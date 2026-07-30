@@ -22,15 +22,15 @@ namespace arenai::agent {
         return std::make_shared<TorchSacAgent>(
             std::make_shared<Actor>(
                 vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_action,
-                get_value("hidden_size_sensors", 256),
-                get_value<hidden_layers>("hidden_sizes", parse_cli_hidden_layer, {{2560, 1280}})
+                get_value("hidden_size_sensors", 128),
+                get_value<hidden_layers>("hidden_sizes", parse_cli_hidden_layer, {{1024, 512}})
                     .layers,
                 get_value<vision_channels>(
                     "vision_channels", parse_cli_vision_channels,
-                    {{{3, 8}, {8, 16}, {16, 32}, {32, 64}, {64, 128}, {128, 256}}})
+                    {{{3, 8}, {8, 16}, {16, 32}, {32, 64}}})
                     .channels,
                 get_value<group_norm_nums>(
-                    "group_norm_nums", parse_cli_group_norms, {{{1, 2, 4, 8, 16, 32}}})
+                    "group_norm_nums", parse_cli_group_norms, {{{1, 2, 4, 8}}})
                     .groups),
             get_value<bool>("cuda", false) ? torch::kCUDA : torch::kCPU);
     }

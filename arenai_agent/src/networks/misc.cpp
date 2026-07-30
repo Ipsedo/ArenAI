@@ -45,4 +45,9 @@ namespace arenai::agent {
         return torch::exp(log_sigma);
     }
 
+    void SigmaOutput::pretty_print(std::ostream &stream) const {
+        stream << name() << "(min=" << std::exp(min_log_sigma)
+               << ", max=" << std::exp(max_log_sigma) << ")";
+    }
+
 }// namespace arenai::agent

@@ -66,7 +66,15 @@ cd C:\Users\MyName\path\to\ArenAI\
 .\build_windows.ps1
 ```
 
-## Note
+## Known issues
 
 Any bug, build failed, etc. reports will be really appreciated.
 Create your issue if you want to participate !
+
+### GNOME system monitor extension
+
+The `system-monitor` extension is causing freeze periodically. The fix is to disable it when playing :
+```bash
+# on ArchLinux
+gnome-extensions disable system-monitor@gnome-shell-extensions.gcampax.github.com
+```

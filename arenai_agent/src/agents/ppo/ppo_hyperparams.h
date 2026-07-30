@@ -16,12 +16,11 @@ namespace arenai::agent {
     struct PpoHyperParams {
         float actor_learning_rate = 1e-4f;
         float critic_learning_rate = 3e-4f;
-        int hidden_size_sensors = 256;
-        std::vector<int> actor_hidden_sizes = {2560, 1280};
-        std::vector<int> critic_hidden_sizes = {2560, 1280};
-        std::vector<std::tuple<int, int>> vision_channels = {{3, 8},   {8, 16},   {16, 32},
-                                                             {32, 64}, {64, 128}, {128, 256}};
-        std::vector<int> group_norm_nums = {1, 2, 4, 8, 16, 32};
+        int hidden_size_sensors = 128;
+        std::vector<int> actor_hidden_sizes = {1024, 512};
+        std::vector<int> critic_hidden_sizes = {1024, 512};
+        std::vector<std::tuple<int, int>> vision_channels = {{3, 8}, {8, 16}, {16, 32}, {32, 64}};
+        std::vector<int> group_norm_nums = {1, 2, 4, 8};
         int metric_window_size = 256;
         // 0.997 at 30 Hz -> ~11 s credit horizon (shell flight time + fights stay visible)
         float gamma = 0.997f;
@@ -32,11 +31,11 @@ namespace arenai::agent {
         // early-stop of the epoch loop when approx KL > 1.5 * target_kl; <= 0 disables it
         float target_kl = 0.02f;
         float grad_norm_max = 0.5f;
-        float continuous_entropy_coef = 0.005f;
+        float continuous_entropy_coef = 0.01f;
         float discrete_entropy_coef = 0.01f;
         int epochs = 4;
         int rollout_size = 30 * 30;
-        int minibatch_size = 512;
+        int minibatch_size = 8192;
     };
 
     std::vector<CliField<PpoHyperParams>> ppo_cli_fields();

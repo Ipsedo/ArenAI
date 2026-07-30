@@ -26,7 +26,6 @@ apt-get install -y --no-install-recommends \
     git \
     unzip \
     python3 \
-    libbullet-dev \
     libglm-dev \
     libglfw3-dev \
     libgtest-dev \

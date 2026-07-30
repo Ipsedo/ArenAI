@@ -6,6 +6,9 @@
 
 #include <arenai_agent_tests/tests_networks_utils/tests_init.h>
 
+#include "networks/constants.h"
+#include "networks/misc.h"
+
 using namespace arenai;
 using namespace arenai::agent;
 
@@ -61,12 +64,19 @@ TEST_F(InitWeightsTest, SigmaOutputWeightsOrthogonal) {
     assert_orthogonal(linear->weight, 0.01f);
 }
 
-TEST_F(InitWeightsTest, SigmaOutputBiasIsLogOne) {
-    torch::nn::Linear linear(32, 4);
-    init_sigma_output_weights(*linear);
+TEST_F(InitWeightsTest, SigmaOutputIsEqualToWantedOne) {
+    torch::nn::Sequential sequential(
+        torch::nn::Linear(32, 4),
+        std::make_shared<SigmaOutput>(agent::SIGMA_MIN, agent::SIGMA_MAX));
 
-    const auto expected_bias = torch::full_like(linear->bias, std::log(0.5f));
-    ASSERT_TRUE(torch::allclose(linear->bias, expected_bias));
+    constexpr float wanted_sigma = 0.5f;
+
+    sequential->apply([](torch::nn::Module &m) { init_sigma_output_weights(m, wanted_sigma); });
+
+    const auto x = torch::zeros({3, 32});
+    const auto out = sequential->forward(x);
+
+    ASSERT_NEAR(out.mean().item<float>(), wanted_sigma, 1e-3);
 }
 
 TEST_F(InitWeightsTest, DiscreteOutputWeightsOrthogonal) {

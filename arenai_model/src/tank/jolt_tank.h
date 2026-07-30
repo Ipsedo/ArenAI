@@ -2,25 +2,25 @@
 // Created by samuel on 02/04/2023.
 //
 
-#ifndef ARENAI_BULLET_TANK_H
-#define ARENAI_BULLET_TANK_H
+#ifndef ARENAI_JOLT_TANK_H
+#define ARENAI_JOLT_TANK_H
 
 #include <functional>
 
 #include <arenai_model/tank.h>
 
-#include "../bullet_item.h"
+#include "../jolt_item.h"
 
 namespace arenai::model {
 
-    class BulletPhysicEngine;
+    class JoltPhysicEngine;
     class CanonItem;
     class ShellItem;
 
-    class BulletTank : virtual public Tank {
+    class JoltTank : virtual public Tank {
     public:
-        BulletTank(
-            BulletPhysicEngine &engine,
+        JoltTank(
+            JoltPhysicEngine &engine,
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::string &tank_prefix_name, glm::vec3 chassis_pos,
             float wanted_frame_frequency,
@@ -36,17 +36,17 @@ namespace arenai::model {
         std::shared_ptr<Item> get_chassis() override;
         std::shared_ptr<Item> get_canon() override;
 
-        ~BulletTank() override;
+        ~JoltTank() override;
 
     protected:
         void remove_constraints_from_engine();
-        BulletPhysicEngine &engine;
+        JoltPhysicEngine &engine;
 
     private:
         std::string name;
         std::shared_ptr<view::AbstractCamera> camera;
         std::vector<std::shared_ptr<Item>> items;
-        std::vector<std::shared_ptr<BulletItem>> bullet_items;
+        std::vector<std::shared_ptr<JoltItem>> jolt_items;
         std::vector<std::shared_ptr<controller::Controller>> controllers;
         std::vector<LifeItem *> life_items;
         std::shared_ptr<Item> chassis;
@@ -56,4 +56,4 @@ namespace arenai::model {
 
 }// namespace arenai::model
 
-#endif// ARENAI_BULLET_TANK_H
+#endif// ARENAI_JOLT_TANK_H

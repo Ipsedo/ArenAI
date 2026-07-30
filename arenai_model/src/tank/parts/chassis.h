@@ -12,7 +12,7 @@ namespace arenai::model {
     class ChassisItem final : public LifeItem, public ConvexItem {
     public:
         ChassisItem(
-            const std::string &prefix_name,
+            const std::string &prefix_name, JoltPhysicEngine &engine,
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             glm::vec3 position, glm::vec3 scale, float mass);
     };

@@ -4,7 +4,7 @@
 
 #include "./agent_cli.h"
 
-#include <arenai_core/constants.h>
+#include <arenai_model/constants.h>
 
 #include "../utils/cli_fields.h"
 #include "./ppo/ppo_factory.h"

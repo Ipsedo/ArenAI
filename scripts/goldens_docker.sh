@@ -5,7 +5,7 @@
 #   ./scripts/goldens_docker.sh --regenerate # rewrite the committed goldens
 #
 # The goldens record what llvmpipe rasterizes on Ubuntu 24.04, down to the Mesa
-# and Bullet versions. Regenerating them from a desktop GPU (or from Arch's much
+# and physics versions. Regenerating them from a desktop GPU (or from Arch's much
 # newer Mesa) produces references the CI can never match, whatever the tolerance
 # — hence this container, which is the same one the CI job runs in.
 #

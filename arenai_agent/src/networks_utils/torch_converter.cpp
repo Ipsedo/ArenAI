@@ -6,7 +6,7 @@
 
 #include <ATen/Parallel.h>
 
-#include <arenai_core/constants.h>
+#include <arenai_model/constants.h>
 
 using namespace arenai;
 using namespace arenai::agent;

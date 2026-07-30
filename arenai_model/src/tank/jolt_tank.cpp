@@ -2,11 +2,14 @@
 // Created by samuel on 02/04/2023.
 //
 
-#include "./bullet_tank.h"
+#include "./jolt_tank.h"
 
 #include <algorithm>
+#include <atomic>
 
-#include "../bullet_engine.h"
+#include <Jolt/Physics/Collision/GroupFilterTable.h>
+
+#include "../jolt_engine.h"
 #include "./parts/canon.h"
 #include "./parts/chassis.h"
 #include "./parts/shell.h"
@@ -20,8 +23,8 @@ using namespace arenai::controller;
 
 namespace arenai::model {
 
-    BulletTank::BulletTank(
-        BulletPhysicEngine &engine,
+    JoltTank::JoltTank(
+        JoltPhysicEngine &engine,
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::string &tank_prefix_name, glm::vec3 chassis_pos,
         const float wanted_frame_frequency,
@@ -35,11 +38,11 @@ namespace arenai::model {
         // chassis
         constexpr float chassis_mass = 1e4f;
         auto chassis_item = std::make_shared<ChassisItem>(
-            tank_prefix_name, file_reader, chassis_pos, scale, chassis_mass);
+            tank_prefix_name, engine, file_reader, chassis_pos, scale, chassis_mass);
 
         chassis = chassis_item;
         items.push_back(chassis);
-        bullet_items.push_back(chassis_item);
+        jolt_items.push_back(chassis_item);
         life_items.push_back(chassis_item.get());
 
         // wheels
@@ -56,11 +59,11 @@ namespace arenai::model {
 
         for (auto &[wheel_name, wheel_pos, angle_factor]: front_wheel_config) {
             auto wheel = std::make_shared<DirectionalWheelItem>(
-                tank_prefix_name + "_" + wheel_name, file_reader, wheel_pos + chassis_pos,
+                tank_prefix_name + "_" + wheel_name, engine, file_reader, wheel_pos + chassis_pos,
                 wheel_pos, wheel_scale, wheel_mass, chassis_item->get_body(), front_axle_z,
                 angle_factor);
 
-            bullet_items.push_back(wheel);
+            jolt_items.push_back(wheel);
             items.push_back(wheel);
             controllers.push_back(wheel);
             life_items.push_back(wheel.get());
@@ -72,10 +75,10 @@ namespace arenai::model {
 
         for (auto &[wheel_name, wheel_pos]: wheel_config) {
             auto wheel = std::make_shared<WheelItem>(
-                tank_prefix_name + "_" + wheel_name, file_reader, wheel_pos + chassis_pos,
+                tank_prefix_name + "_" + wheel_name, engine, file_reader, wheel_pos + chassis_pos,
                 wheel_pos, wheel_scale, wheel_mass, chassis_item->get_body(), front_axle_z);
 
-            bullet_items.push_back(wheel);
+            jolt_items.push_back(wheel);
             items.push_back(wheel);
             controllers.push_back(wheel);
             life_items.push_back(wheel.get());
@@ -85,9 +88,9 @@ namespace arenai::model {
         glm::vec3 turret_pos(0.f, 1.3f, 1.2f);
         glm::vec3 turret_scale(1.2f);
         auto turret = std::make_shared<TurretItem>(
-            tank_prefix_name, file_reader, chassis_pos + turret_pos, turret_pos,
+            tank_prefix_name, engine, file_reader, chassis_pos + turret_pos, turret_pos,
             scale * turret_scale, 300, chassis_item->get_body());
-        bullet_items.push_back(turret);
+        jolt_items.push_back(turret);
         items.push_back(turret);
         controllers.push_back(turret);
         life_items.push_back(turret.get());
@@ -96,14 +99,14 @@ namespace arenai::model {
         glm::vec3 canon_pos(0.f, 0.5f, 1.7f);
         glm::vec3 canon_scale = turret_scale;
         auto canon_item = std::make_shared<CanonItem>(
-            tank_prefix_name, file_reader, chassis_pos + turret_pos + canon_pos, canon_pos,
+            tank_prefix_name, engine, file_reader, chassis_pos + turret_pos + canon_pos, canon_pos,
             scale * canon_scale, 100, turret->get_body(), wanted_frame_frequency,
             [on_contact_callback](const glm::vec3 fire_pos, const glm::vec3 hit_pos, Item *item) {
                 on_contact_callback({fire_pos, hit_pos}, item);
             },
             on_shell_fired_callback);
 
-        bullet_items.push_back(canon_item);
+        jolt_items.push_back(canon_item);
         items.push_back(canon_item);
         controllers.push_back(canon_item);
         life_items.push_back(canon_item.get());
@@ -113,9 +116,9 @@ namespace arenai::model {
         // spring-arm camera: pull the canon camera in front of any world geometry
         // (terrain, obstacles) blocking the [aim point -> camera] segment. The
         // tank's own bodies are excluded, the ray starts inside them.
-        std::vector<const btCollisionObject *> own_bodies;
-        own_bodies.reserve(bullet_items.size());
-        for (const auto &item: bullet_items) own_bodies.push_back(item->get_body());
+        std::vector<JPH::BodyID> own_bodies;
+        own_bodies.reserve(jolt_items.size());
+        for (const auto &item: jolt_items) own_bodies.push_back(item->get_body()->GetID());
 
         camera = std::make_shared<view::CollisionCamera>(
             canon_item,
@@ -125,45 +128,55 @@ namespace arenai::model {
             },
             wanted_frame_frequency);
 
-        for (int i = 0; i < bullet_items.size() - 1; i++)
-            for (int j = i + 1; j < bullet_items.size(); j++)
-                bullet_items[i]->get_body()->setIgnoreCollisionCheck(
-                    bullet_items[j]->get_body(), true);
+        // the tank never collides with itself, like Bullet's pairwise
+        // setIgnoreCollisionCheck
+        static std::atomic<JPH::CollisionGroup::GroupID> next_group_id{0};
+        const auto group_id = next_group_id++;
 
-        for (auto &item: bullet_items) item->get_body()->setActivationState(DISABLE_DEACTIVATION);
+        const JPH::Ref group_filter =
+            new JPH::GroupFilterTable(static_cast<JPH::uint>(jolt_items.size()));
+        for (JPH::uint i = 0; i + 1 < jolt_items.size(); i++)
+            for (JPH::uint j = i + 1; j < jolt_items.size(); j++)
+                group_filter->DisableCollision(i, j);
+
+        for (JPH::uint i = 0; i < jolt_items.size(); i++)
+            jolt_items[i]->get_body()->SetCollisionGroup(
+                JPH::CollisionGroup(group_filter, group_id, i));
+
+        for (auto &item: jolt_items) item->get_body()->SetAllowSleeping(false);
 
         // register with engine
-        for (const auto &item: bullet_items) engine.add_bullet_item(item);
+        for (const auto &item: jolt_items) engine.add_jolt_item(item);
 
-        engine.add_bullet_item_producer([c = canon_item]() { return c->produce_bullet_items(); });
+        engine.add_jolt_item_producer([c = canon_item]() { return c->produce_jolt_items(); });
     }
 
-    std::shared_ptr<AbstractCamera> BulletTank::get_camera() { return camera; }
+    std::shared_ptr<AbstractCamera> JoltTank::get_camera() { return camera; }
 
-    std::vector<std::shared_ptr<Item>> BulletTank::get_items() { return items; }
+    std::vector<std::shared_ptr<Item>> JoltTank::get_items() { return items; }
 
-    std::vector<std::shared_ptr<Controller>> BulletTank::get_controllers() { return controllers; }
+    std::vector<std::shared_ptr<Controller>> JoltTank::get_controllers() { return controllers; }
 
-    std::map<std::string, std::shared_ptr<Shape>> BulletTank::load_shell_shapes() const {
+    std::map<std::string, std::shared_ptr<Shape>> JoltTank::load_shell_shapes() const {
         return {{ShellItem::NAME, ShellItem::load_shape(file_reader)}};
     }
 
-    bool BulletTank::is_dead() {
+    bool JoltTank::is_dead() {
         return std::ranges::any_of(life_items, [](const LifeItem *li) { return li->is_dead(); });
     }
 
-    std::shared_ptr<Item> BulletTank::get_chassis() { return chassis; }
+    std::shared_ptr<Item> JoltTank::get_chassis() { return chassis; }
 
-    std::shared_ptr<Item> BulletTank::get_canon() { return canon; }
+    std::shared_ptr<Item> JoltTank::get_canon() { return canon; }
 
-    void BulletTank::remove_constraints_from_engine() {
-        for (const auto &item: bullet_items) engine.remove_bullet_item_constraints(item);
+    void JoltTank::remove_constraints_from_engine() {
+        for (const auto &item: jolt_items) engine.remove_jolt_item_constraints(item);
     }
 
-    BulletTank::~BulletTank() {
+    JoltTank::~JoltTank() {
         controllers.clear();
         items.clear();
-        bullet_items.clear();
+        jolt_items.clear();
         life_items.clear();
     }
 

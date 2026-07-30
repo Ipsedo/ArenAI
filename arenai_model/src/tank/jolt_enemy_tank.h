@@ -2,15 +2,15 @@
 // Created by samuel on 20/10/2025.
 //
 
-#ifndef ARENAI_BULLET_ENEMY_TANK_H
-#define ARENAI_BULLET_ENEMY_TANK_H
+#ifndef ARENAI_JOLT_ENEMY_TANK_H
+#define ARENAI_JOLT_ENEMY_TANK_H
 
 #include <memory>
 
 #include <arenai_model/action_stats.h>
 #include <arenai_model/tank.h>
 
-#include "./bullet_tank.h"
+#include "./jolt_tank.h"
 
 namespace arenai::model {
 
@@ -32,10 +32,10 @@ namespace arenai::model {
         bool has_killed;
     };
 
-    class BulletEnemyTank final : public BulletTank, public EnemyTank {
+    class JoltEnemyTank final : public JoltTank, public EnemyTank {
     public:
-        BulletEnemyTank(
-            BulletPhysicEngine &engine,
+        JoltEnemyTank(
+            JoltPhysicEngine &engine,
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::string &tank_prefix_name, glm::vec3 chassis_pos,
             float wanted_frame_frequency);
@@ -55,13 +55,13 @@ namespace arenai::model {
 
         std::shared_ptr<ActionStats> get_action_stats() override;
 
-        // Tank methods resolved via BulletTank
-        using BulletTank::get_camera;
-        using BulletTank::get_canon;
-        using BulletTank::get_chassis;
-        using BulletTank::get_controllers;
-        using BulletTank::get_items;
-        using BulletTank::load_shell_shapes;
+        // Tank methods resolved via JoltTank
+        using JoltTank::get_camera;
+        using JoltTank::get_canon;
+        using JoltTank::get_chassis;
+        using JoltTank::get_controllers;
+        using JoltTank::get_items;
+        using JoltTank::load_shell_shapes;
 
     private:
         std::string tank_prefix_name;
@@ -83,7 +83,7 @@ namespace arenai::model {
         std::shared_ptr<ActionStats> action_stats;
 
         void on_shell_fired(const std::shared_ptr<ShellItem> &shell);
-        void on_fired_shell_contact(const ShellContactInfo &shell_info, Item *item);
+        void on_shell_contact(const ShellContactInfo &shell_info, Item *item);
 
         float compute_aim_angle(const std::shared_ptr<EnemyTank> &other_tank);
 
@@ -101,4 +101,4 @@ namespace arenai::model {
 
 }// namespace arenai::model
 
-#endif//ARENAI_BULLET_ENEMY_TANK_H
+#endif//ARENAI_JOLT_ENEMY_TANK_H

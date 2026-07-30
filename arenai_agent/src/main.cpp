@@ -24,7 +24,7 @@ int main(const int argc, char **argv) {
     parser.add_argument("--resources_folder").required();
     parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60 * 3);
     parser.add_argument("--potential_reward_gamma").scan<'g', float>().default_value(0.997f);
-    parser.add_argument("--nb_episodes").scan<'i', int>().default_value(1000);
+    parser.add_argument("--nb_episodes").scan<'i', int>().default_value(2000);
     parser.add_argument("--save_every").scan<'i', int>().default_value(30 * 60 * 3 * 5);
     parser.add_argument("--cuda").default_value(false).implicit_value(true);
 
@@ -32,8 +32,8 @@ int main(const int argc, char **argv) {
     parser.add_group("environment");
     parser.add_argument("--wanted_frequency").scan<'g', float>().default_value(1.f / 30.f);
     parser.add_argument("--nb_tanks").scan<'i', int>().default_value(32);
-    parser.add_argument("--vision_height").scan<'i', int>().default_value(128);
-    parser.add_argument("--vision_width").scan<'i', int>().default_value(256);
+    parser.add_argument("--vision_height").scan<'i', int>().default_value(32);
+    parser.add_argument("--vision_width").scan<'i', int>().default_value(64);
     parser.add_argument("--initial_spawn_width").scan<'g', float>().default_value(500.f);
     parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(500.f);
     parser.add_argument("--final_spawn_width").scan<'g', float>().default_value(2000.f);

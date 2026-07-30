@@ -2,7 +2,7 @@
 // Created by samuel on 20/10/2025.
 //
 
-#include "./bullet_enemy_tank.h"
+#include "./jolt_enemy_tank.h"
 
 #include <algorithm>
 #include <cmath>
@@ -15,7 +15,7 @@
 #include <glm/gtx/norm.hpp>
 #include <glm/gtx/vector_angle.hpp>
 
-#include "../bullet_engine.h"
+#include "../jolt_engine.h"
 #include "./parts/shell.h"
 
 using namespace arenai;
@@ -23,25 +23,23 @@ using namespace arenai::model;
 
 namespace arenai::model {
 
-    BulletEnemyTank::BulletEnemyTank(
-        BulletPhysicEngine &engine,
+    JoltEnemyTank::JoltEnemyTank(
+        JoltPhysicEngine &engine,
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::string &tank_prefix_name, const glm::vec3 chassis_pos,
         const float wanted_frame_frequency)
-        : BulletTank(
+        : JoltTank(
             engine, file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency,
-            [this](const ShellContactInfo &info, Item *item) {
-                on_fired_shell_contact(info, item);
-            },
+            [this](const ShellContactInfo &info, Item *item) { on_shell_contact(info, item); },
             [this](const std::shared_ptr<ShellItem> &shell) { on_shell_fired(shell); }),
           tank_prefix_name(tank_prefix_name),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), distance_scale(250.f),
           dispersion_angle_scale(glm::radians(15.f)), dispersion_reward_scale(0.1f),
-          optimal_distance(75.f), fire_cost(0.05f), is_dead_already_triggered(false),
+          optimal_distance(75.f), fire_cost(0.01f), is_dead_already_triggered(false),
           has_touch(false), action_stats(std::make_shared<ActionStats>()) {}
 
-    float BulletEnemyTank::compute_aim_angle(const std::shared_ptr<EnemyTank> &other_tank) {
+    float JoltEnemyTank::compute_aim_angle(const std::shared_ptr<EnemyTank> &other_tank) {
         const auto canon_tr = get_canon()->get_model_matrix();
         const auto other_tr = other_tank->get_chassis()->get_model_matrix();
 
@@ -56,7 +54,7 @@ namespace arenai::model {
         return std::acos(d);
     }
 
-    float BulletEnemyTank::compute_dispersion_reward(
+    float JoltEnemyTank::compute_dispersion_reward(
         const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos, const glm::vec3 &shell_pos) const {
         const glm::vec3 fire_to_enemy = enemy_pos - fire_pos;
         const glm::vec3 fire_to_shell = shell_pos - fire_pos;
@@ -68,7 +66,7 @@ namespace arenai::model {
         return std::exp(-0.5f * std::pow(angle / dispersion_angle_scale, 2.f));
     }
 
-    void BulletEnemyTank::update_closest_approach(
+    void JoltEnemyTank::update_closest_approach(
         TrackedShell &tracked, const glm::vec3 &shell_pos,
         const std::vector<std::shared_ptr<EnemyTank>> &tanks) const {
         const int nearest_index = get_nearest_enemy_index(tanks, shell_pos);
@@ -87,7 +85,7 @@ namespace arenai::model {
         }
     }
 
-    int BulletEnemyTank::get_nearest_enemy_index(
+    int JoltEnemyTank::get_nearest_enemy_index(
         const std::vector<std::shared_ptr<EnemyTank>> &tanks, const glm::vec3 &pos) const {
         constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
 
@@ -110,7 +108,7 @@ namespace arenai::model {
         return best_i;
     }
 
-    float BulletEnemyTank::get_phi(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
+    float JoltEnemyTank::get_phi(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
         constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
         const glm::vec3 chassis_pos = get_chassis()->get_model_matrix() * world_center;
 
@@ -148,7 +146,7 @@ namespace arenai::model {
         return reward;
     }
 
-    float BulletEnemyTank::get_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
+    float JoltEnemyTank::get_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
 
         // 1. flipped detection
         const auto chassis_model_mat = get_chassis()->get_model_matrix();
@@ -199,7 +197,7 @@ namespace arenai::model {
         return reward;
     }
 
-    void BulletEnemyTank::on_shell_fired(const std::shared_ptr<ShellItem> &shell) {
+    void JoltEnemyTank::on_shell_fired(const std::shared_ptr<ShellItem> &shell) {
         tracked_shells.push_back(
             {.shell = shell,
              .fire_pos = shell->get_fire_position(),
@@ -213,7 +211,7 @@ namespace arenai::model {
              .has_killed = false});
     }
 
-    void BulletEnemyTank::on_fired_shell_contact(const ShellContactInfo &shell_info, Item *item) {
+    void JoltEnemyTank::on_shell_contact(const ShellContactInfo &shell_info, Item *item) {
         for (const auto &i: get_items())
             if (i->get_name() == item->get_name()) return;
 
@@ -242,7 +240,7 @@ namespace arenai::model {
         }
     }
 
-    bool BulletEnemyTank::has_hit_other_tank() {
+    bool JoltEnemyTank::has_hit_other_tank() {
         if (has_touch) {
             has_touch = false;
             return true;
@@ -251,22 +249,22 @@ namespace arenai::model {
     }
 
     // ReSharper disable once CppReferenceToOverriddenVirtualFunction
-    bool BulletEnemyTank::is_dead() { return BulletTank::is_dead() || is_suicide(); }
+    bool JoltEnemyTank::is_dead() { return JoltTank::is_dead() || is_suicide(); }
 
-    bool BulletEnemyTank::is_first_frame_dead() { return is_dead() && !is_dead_already_triggered; }
+    bool JoltEnemyTank::is_first_frame_dead() { return is_dead() && !is_dead_already_triggered; }
 
-    bool BulletEnemyTank::is_suicide() const {
+    bool JoltEnemyTank::is_suicide() const {
         return curr_frame_upside_down > max_frames_upside_down;
     }
 
-    void BulletEnemyTank::on_death() {
+    void JoltEnemyTank::on_death() {
         if (is_dead() && !is_dead_already_triggered) {
             is_dead_already_triggered = true;
             remove_constraints_from_engine();
         }
     }
 
-    std::vector<float> BulletEnemyTank::get_proprioception() {
+    std::vector<float> JoltEnemyTank::get_proprioception() {
         const auto items = get_items();
 
         const auto &chassis = get_chassis();
@@ -307,6 +305,6 @@ namespace arenai::model {
         return result;
     }
 
-    std::shared_ptr<ActionStats> BulletEnemyTank::get_action_stats() { return action_stats; }
+    std::shared_ptr<ActionStats> JoltEnemyTank::get_action_stats() { return action_stats; }
 
 }// namespace arenai::model

@@ -4,8 +4,8 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <arenai_core/constants.h>
 #include <arenai_core/environment.h>
+#include <arenai_model/constants.h>
 #include <arenai_model/item_factory.h>
 #include <arenai_model/tank_factory.h>
 

@@ -60,8 +60,8 @@ int main(const int argc, char **argv) {
 
     // Game options (nb_tanks, spawn_side and controller_kind are set in the menu)
     parser.add_argument("--wanted_frequency").scan<'g', float>().default_value(1.f / 30.f);
-    parser.add_argument("--vision_height").scan<'i', int>().default_value(128);
-    parser.add_argument("--vision_width").scan<'i', int>().default_value(256);
+    parser.add_argument("--vision_height").scan<'i', int>().default_value(32);
+    parser.add_argument("--vision_width").scan<'i', int>().default_value(64);
     parser.add_argument("--window_width").scan<'i', int>().default_value(1920);
     parser.add_argument("--window_height").scan<'i', int>().default_value(1080);
 

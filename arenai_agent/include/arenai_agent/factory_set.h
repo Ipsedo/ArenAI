@@ -9,19 +9,9 @@
 
 namespace arenai::agent {
 
-    class SacAgentFactory : public AgentFactory {
+    class ActorAgentFactory : public AgentFactory {
     public:
-        explicit SacAgentFactory(const std::map<std::string, std::string> &arguments);
-
-    protected:
-        std::shared_ptr<AbstractAgent> get_agent_impl(
-            const int &vision_height, const int &vision_width, const int &nb_sensors,
-            const int &nb_continuous_actions, const int &nb_discrete_action) override;
-    };
-
-    class PpoAgentFactory : public AgentFactory {
-    public:
-        explicit PpoAgentFactory(const std::map<std::string, std::string> &arguments);
+        explicit ActorAgentFactory(const std::map<std::string, std::string> &arguments);
 
     protected:
         std::shared_ptr<AbstractAgent> get_agent_impl(

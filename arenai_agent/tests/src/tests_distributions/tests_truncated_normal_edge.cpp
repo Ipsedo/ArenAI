@@ -5,7 +5,6 @@
 #include <distributions/truncated_normal.h>
 
 #include <arenai_agent_tests/tests_distributions/tests_truncated_normal_edge.h>
-#include <arenai_core/constants.h>
 
 using namespace arenai;
 using namespace arenai::agent;

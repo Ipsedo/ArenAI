@@ -4,22 +4,20 @@
 
 #include "../distributions/truncated_normal.h"
 
-#include <arenai_core/constants.h>
-
 using namespace arenai;
 using namespace arenai::agent;
 
 namespace arenai::agent {
 
-    torch::Tensor phi(const torch::Tensor &z) {
+    static torch::Tensor phi(const torch::Tensor &z) {
         return torch::exp(-0.5 * torch::pow(z, 2.0)) / std::sqrt(2.0 * M_PI);
     }
 
-    torch::Tensor theta(const torch::Tensor &x) {
+    static torch::Tensor theta(const torch::Tensor &x) {
         return 0.5 * (1.0 + torch::erf(x / std::sqrt(2.0)));
     }
 
-    torch::Tensor theta_inv(const torch::Tensor &theta) {
+    static torch::Tensor theta_inv(const torch::Tensor &theta) {
         return std::sqrt(2.0) * torch::erfinv(2.0 * theta - 1.0);
     }
 

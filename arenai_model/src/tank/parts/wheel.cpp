@@ -6,6 +6,8 @@
 
 #include <utility>
 
+#include <Jolt/Physics/Constraints/SixDOFConstraint.h>
+
 #include <arenai_model/constants.h>
 
 using namespace arenai;
@@ -14,57 +16,63 @@ using namespace arenai::controller;
 
 namespace arenai::model {
 
+    using EAxis = JPH::SixDOFConstraintSettings::EAxis;
+
     WheelItem::WheelItem(
-        const std::string &prefix_name,
+        const std::string &prefix_name, JoltPhysicEngine &engine,
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, const glm::vec3 pos,
-        const glm::vec3 rel_pos, const glm::vec3 scale, const float mass, btRigidBody *chassis,
+        const glm::vec3 rel_pos, const glm::vec3 scale, const float mass, JPH::Body *chassis,
         float front_axle_z)
         : LifeItem(5), ConvexItem(
-                           prefix_name + "_wheel",
+                           prefix_name + "_wheel", engine,
                            std::make_shared<ObjShape>(
                                file_reader, std::filesystem::path("obj") / "anubis_wheel.obj"),
                            pos, scale, mass) {
 
-        btTransform frame_in_wheel;
-        frame_in_wheel.setIdentity();
-        frame_in_wheel.setOrigin(btVector3(0, 0, 0));
+        JPH::SixDOFConstraintSettings settings;
+        settings.mSpace = JPH::EConstraintSpace::LocalToBodyCOM;
 
-        btTransform frame_in_chassis;
-        frame_in_chassis.setIdentity();
-        frame_in_chassis.setOrigin(btVector3(rel_pos.x, rel_pos.y, rel_pos.z));
+        settings.mPosition1 = JPH::RVec3(rel_pos.x, rel_pos.y, rel_pos.z);
+        settings.mAxisX1 = JPH::Vec3::sAxisX();
+        settings.mAxisY1 = JPH::Vec3::sAxisY();
 
-        hinge = new btGeneric6DofSpring2Constraint(
-            *chassis, *ConvexItem::get_body(), frame_in_chassis, frame_in_wheel, RO_XYZ);
+        settings.mPosition2 = JPH::RVec3::sZero();
+        settings.mAxisX2 = JPH::Vec3::sAxisX();
+        settings.mAxisY2 = JPH::Vec3::sAxisY();
 
-        hinge->setAngularLowerLimit(btVector3(1, 0, 0));
-        hinge->setAngularUpperLimit(btVector3(-1, 0, 0));
+        // same axis setup as the Bullet 6DOF spring constraint: only the wheel
+        // spin (rotation X) is free, the suspension (translation Y) is limited,
+        // the steering (rotation Y) is held by hard equal limits, everything
+        // else is locked. Pyramid swing: unlike the default cone it accepts the
+        // asymmetric [angle, angle] steering limits Bullet used.
+        settings.mSwingType = JPH::ESwingType::Pyramid;
 
-        // Linear limits
-        hinge->setLinearLowerLimit(btVector3(0, -0.4f, 0));
-        hinge->setLinearUpperLimit(btVector3(0, 0, 0));
+        settings.MakeFixedAxis(EAxis::TranslationX);
+        settings.SetLimitedAxis(EAxis::TranslationY, -0.4f, 0.f);
+        settings.MakeFixedAxis(EAxis::TranslationZ);
 
-        constexpr int motor_axis = 3;
-        hinge->enableMotor(motor_axis, true);
-        hinge->setMaxMotorForce(motor_axis, 2e4f);
-        hinge->setTargetVelocity(motor_axis, 0.f);
+        settings.MakeFreeAxis(EAxis::RotationX);
+        settings.SetLimitedAxis(EAxis::RotationY, 0.f, 0.f);
+        settings.MakeFixedAxis(EAxis::RotationZ);
 
-        constexpr int index = 1;
-        hinge->enableSpring(index, true);
-        hinge->setDamping(index, 30.f, true);
-        hinge->setStiffness(index, 2e5f, true);
-        hinge->setBounce(index, 1e-2f);
-        hinge->setEquilibriumPoint(index, -0.2f);
+        // suspension spring toward its equilibrium point
+        settings.mMotorSettings[EAxis::TranslationY].mSpringSettings =
+            JPH::SpringSettings(JPH::ESpringMode::StiffnessAndDamping, 2e5f, 30.f);
 
-        // disable axis
-        for (int axis_to_disable[] = {0, 2, 5}; const auto axis: axis_to_disable) {
-            hinge->setParam(BT_CONSTRAINT_STOP_ERP, 0.9, axis);
-            hinge->setParam(BT_CONSTRAINT_STOP_CFM, 0.0, axis);
-            hinge->setLimit(axis, 0, 0);
-            hinge->enableMotor(axis, false);
-            hinge->enableSpring(axis, false);
-        }
+        // drive motor torque budget
+        settings.mMotorSettings[EAxis::RotationX].mMinTorqueLimit = -2e4f;
+        settings.mMotorSettings[EAxis::RotationX].mMaxTorqueLimit = 2e4f;
 
-        ConvexItem::get_body()->setFriction(1.f);
+        hinge = static_cast<JPH::SixDOFConstraint *>(
+            settings.Create(*chassis, *ConvexItem::get_body()));
+
+        hinge->SetMotorState(EAxis::TranslationY, JPH::EMotorState::Position);
+        hinge->SetTargetPositionCS(JPH::Vec3(0.f, -0.2f, 0.f));
+
+        hinge->SetMotorState(EAxis::RotationX, JPH::EMotorState::Velocity);
+        hinge->SetTargetAngularVelocityCS(JPH::Vec3::sZero());
+
+        ConvexItem::get_body()->SetFriction(1.f);
 
         // for differential
         wheel_center_pos_rel_to_chassis = rel_pos;
@@ -72,18 +80,20 @@ namespace arenai::model {
     }
 
     void WheelItem::apply_input(const user_input &input) {
-        constexpr int motor_axis = 3;
         const auto radial_velocity = -input.left_joystick.y * WHEEL_RADIAL_VELOCITY;
 
         const float angle = input.left_joystick.x * WHEEL_DIRECTION_MAX_RADIAN;
 
-        hinge->setTargetVelocity(
-            motor_axis, adjust_rotation_velocity_differential(angle, radial_velocity));
+        // Bullet's 6DOF angular motor spins opposite to the right-handed
+        // relative angular velocity Jolt expects: negate to keep the same
+        // input -> motion mapping
+        hinge->SetTargetAngularVelocityCS(
+            JPH::Vec3(-adjust_rotation_velocity_differential(angle, radial_velocity), 0.f, 0.f));
     }
 
-    std::vector<btTypedConstraint *> WheelItem::get_constraints() {
-        auto constraints = BulletItem::get_constraints();
-        constraints.push_back(hinge);
+    std::vector<JPH::Ref<JPH::TwoBodyConstraint>> WheelItem::get_constraints() {
+        auto constraints = JoltItem::get_constraints();
+        constraints.push_back(hinge.GetPtr());
         return constraints;
     }
 
@@ -117,18 +127,20 @@ namespace arenai::model {
     void DirectionalWheelItem::apply_input(const user_input &input) {
         WheelItem::apply_input(input);
 
-        constexpr int motor_axis = 4;
         const float angle = input.left_joystick.x * WHEEL_DIRECTION_MAX_RADIAN * angle_factor;
 
-        hinge->setLimit(motor_axis, angle, angle);
+        // hard equal limits, like Bullet's setLimit(angle, angle) steering;
+        // same inverted angular convention as the drive motor
+        hinge->SetRotationLimits(
+            JPH::Vec3(-JPH::JPH_PI, -angle, 0.f), JPH::Vec3(JPH::JPH_PI, -angle, 0.f));
     }
 
     DirectionalWheelItem::DirectionalWheelItem(
-        const std::string &name,
+        const std::string &name, JoltPhysicEngine &engine,
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, const glm::vec3 pos,
-        const glm::vec3 rel_pos, const glm::vec3 scale, const float mass, btRigidBody *chassis,
+        const glm::vec3 rel_pos, const glm::vec3 scale, const float mass, JPH::Body *chassis,
         float front_axle_z, const float angle_factor)
-        : WheelItem(name, file_reader, pos, rel_pos, scale, mass, chassis, front_axle_z),
+        : WheelItem(name, engine, file_reader, pos, rel_pos, scale, mass, chassis, front_axle_z),
           angle_factor(angle_factor) {}
 
 }// namespace arenai::model

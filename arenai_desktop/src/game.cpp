@@ -9,7 +9,7 @@
 
 #include <arenai_agent/factory_set.h>
 #include <arenai_agent/file_reader.h>
-#include <arenai_core/constants.h>
+#include <arenai_model/constants.h>
 #include <arenai_view/backend.h>
 
 #include "./controller/game_input_router.h"
@@ -37,8 +37,8 @@ namespace arenai::desktop {
             const std::unique_ptr<gui::AbstractGui> &gui) {
             const auto window = graphics_backend->get_window();
 
-            const auto sac_agent =
-                agent::SacAgentFactory(model_options.hyper_parameters)
+            const std::shared_ptr<agent::AbstractAgent> sac_agent =
+                agent::ActorAgentFactory(model_options.hyper_parameters)
                     .get_agent(
                         model_options.vision_height, model_options.vision_width,
                         model::ENEMY_PROPRIOCEPTION_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,

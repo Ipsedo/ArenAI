@@ -4,7 +4,7 @@
 
 #include "./multinomial.h"
 
-#include "arenai_core/constants.h"
+#include "../networks/constants.h"
 
 using namespace arenai;
 using namespace arenai::agent;
@@ -12,14 +12,14 @@ using namespace arenai::agent;
 namespace arenai::agent {
 
     torch::Tensor multinomial_sample(const torch::Tensor &probabilities) {
-        const auto clamped_proba = torch::clamp(probabilities, core::EPSILON, 1.0 - core::EPSILON);
+        const auto clamped_proba = torch::clamp(probabilities, EPSILON, 1.0 - EPSILON);
         const auto idx = torch::multinomial(clamped_proba, 1, false);
         const auto one_hot = torch::zeros_like(clamped_proba).scatter_(1, idx, 1.0);
         return one_hot;
     }
 
     torch::Tensor multinomial_entropy(const torch::Tensor &probabilities) {
-        const auto clamped_proba = torch::clamp(probabilities, core::EPSILON, 1.0 - core::EPSILON);
+        const auto clamped_proba = torch::clamp(probabilities, EPSILON, 1.0 - EPSILON);
         return -torch::sum(clamped_proba * torch::log(clamped_proba), -1, true);
     }
 

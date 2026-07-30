@@ -5,7 +5,7 @@
 #include "./agent_loading_checker.h"
 
 #include <arenai_agent/factory_set.h>
-#include <arenai_core/constants.h>
+#include <arenai_model/constants.h>
 #include <arenai_utils/exceptions.h>
 
 namespace arenai::desktop {

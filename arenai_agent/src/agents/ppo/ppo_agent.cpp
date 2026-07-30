@@ -4,10 +4,9 @@
 
 #include "./ppo_agent.h"
 
-#include <arenai_core/constants.h>
-
 #include "../../distributions/multinomial.h"
 #include "../../distributions/truncated_normal.h"
+#include "../../networks/constants.h"
 #include "../../networks_utils/torch_converter.h"
 #include "../../networks_utils/torch_loader.h"
 
@@ -52,8 +51,7 @@ namespace arenai::agent {
             continuous_log_prob =
                 truncated_normal_log_pdf(action.continuous_action, mu, sigma).sum(-1, true);
 
-            const auto clamped_proba =
-                torch::clamp(discrete_proba, core::EPSILON, 1.0 - core::EPSILON);
+            const auto clamped_proba = torch::clamp(discrete_proba, EPSILON, 1.0 - EPSILON);
             discrete_log_prob = (action.discrete_action * torch::log(clamped_proba)).sum(-1, true);
         }
 

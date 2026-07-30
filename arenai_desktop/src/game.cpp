@@ -9,7 +9,7 @@
 
 #include <arenai_agent/factory_set.h>
 #include <arenai_agent/file_reader.h>
-#include <arenai_core/constants.h>
+#include <arenai_model/constants.h>
 #include <arenai_view/backend.h>
 
 #include "./controller/game_input_router.h"

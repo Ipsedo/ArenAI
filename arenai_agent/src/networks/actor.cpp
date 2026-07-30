@@ -4,8 +4,6 @@
 
 #include "./actor.h"
 
-#include <arenai_core/constants.h>
-
 #include "../networks_utils/init.h"
 #include "./constants.h"
 #include "./misc.h"

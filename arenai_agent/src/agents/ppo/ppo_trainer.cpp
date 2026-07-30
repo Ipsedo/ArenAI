@@ -6,12 +6,11 @@
 
 #include <fstream>
 
-#include <arenai_core/constants.h>
-
 #include "../../distributions/multinomial.h"
 #include "../../distributions/truncated_normal.h"
 #include "../../metrics/mean_metric.h"
 #include "../../metrics/std_metric.h"
+#include "../../networks/constants.h"
 #include "../../networks_utils/print_module.h"
 #include "../../networks_utils/torch_saver.h"
 
@@ -122,8 +121,7 @@ namespace arenai::agent {
                 const auto curr_continuous_log_probs =
                     truncated_normal_log_pdf(mb_continuous_actions, mu, sigma).sum(-1, true);
 
-                const auto clamped_proba =
-                    torch::clamp(discrete_proba, core::EPSILON, 1.0 - core::EPSILON);
+                const auto clamped_proba = torch::clamp(discrete_proba, EPSILON, 1.0 - EPSILON);
                 const auto curr_discrete_log_probs =
                     (mb_discrete_actions * torch::log(clamped_proba)).sum(-1, true);
 
@@ -238,7 +236,7 @@ namespace arenai::agent {
         const auto advantage_mean = (advantages * valids).sum() / nb_valid;
         const auto advantage_std =
             (((advantages - advantage_mean).square() * valids).sum() / nb_valid).sqrt();
-        advantages = (advantages - advantage_mean) / (advantage_std + core::EPSILON);
+        advantages = (advantages - advantage_mean) / (advantage_std + EPSILON);
 
         return {.advantages = advantages, .returns = returns};
     }

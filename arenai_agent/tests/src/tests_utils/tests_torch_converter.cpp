@@ -5,7 +5,7 @@
 #include <networks_utils/torch_converter.h>
 
 #include <arenai_agent_tests/tests_utils/tests_torch_converter.h>
-#include <arenai_core/constants.h>
+#include <arenai_model/constants.h>
 
 using namespace arenai;
 using namespace arenai::core;

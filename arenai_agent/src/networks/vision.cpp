@@ -4,8 +4,6 @@
 
 #include "./vision.h"
 
-#include <arenai_core/constants.h>
-
 using namespace arenai;
 using namespace arenai::agent;
 

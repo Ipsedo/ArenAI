@@ -9,7 +9,7 @@
 #include <indicators/cursor_control.hpp>
 #include <indicators/progress_bar.hpp>
 
-#include <arenai_core/constants.h>
+#include <arenai_model/constants.h>
 
 #include "./core/train_environment.h"
 #include "./metrics/mean_metric.h"

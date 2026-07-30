@@ -83,7 +83,7 @@ namespace arenai::model {
         std::shared_ptr<ActionStats> action_stats;
 
         void on_shell_fired(const std::shared_ptr<ShellItem> &shell);
-        void on_fired_shell_contact(const ShellContactInfo &shell_info, Item *item);
+        void on_shell_contact(const ShellContactInfo &shell_info, Item *item);
 
         float compute_aim_angle(const std::shared_ptr<EnemyTank> &other_tank);
 

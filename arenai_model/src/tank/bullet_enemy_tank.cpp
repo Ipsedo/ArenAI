@@ -30,9 +30,7 @@ namespace arenai::model {
         const float wanted_frame_frequency)
         : BulletTank(
             engine, file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency,
-            [this](const ShellContactInfo &info, Item *item) {
-                on_fired_shell_contact(info, item);
-            },
+            [this](const ShellContactInfo &info, Item *item) { on_shell_contact(info, item); },
             [this](const std::shared_ptr<ShellItem> &shell) { on_shell_fired(shell); }),
           tank_prefix_name(tank_prefix_name),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
@@ -213,7 +211,7 @@ namespace arenai::model {
              .has_killed = false});
     }
 
-    void BulletEnemyTank::on_fired_shell_contact(const ShellContactInfo &shell_info, Item *item) {
+    void BulletEnemyTank::on_shell_contact(const ShellContactInfo &shell_info, Item *item) {
         for (const auto &i: get_items())
             if (i->get_name() == item->get_name()) return;
 

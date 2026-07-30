@@ -7,6 +7,7 @@
 #include <arenai_core/constants.h>
 
 #include "../networks_utils/init.h"
+#include "./constants.h"
 #include "./misc.h"
 
 using namespace arenai;
@@ -37,7 +38,7 @@ namespace arenai::agent {
           sigma(register_module(
               "sigma", torch::nn::Sequential(
                            torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
-                           std::make_shared<SigmaOutput>(core::SIGMA_MIN, core::SIGMA_MAX)))),
+                           std::make_shared<SigmaOutput>(SIGMA_MIN, SIGMA_MAX)))),
           discrete(register_module(
               "discrete", torch::nn::Sequential(
                               torch::nn::Linear(hidden_sizes.back(), nb_discrete_actions),
@@ -61,7 +62,7 @@ namespace arenai::agent {
         head->apply(init_hidden_weights);
 
         mu->apply(init_mu_output_weights);
-        sigma->apply(init_sigma_output_weights);
+        sigma->apply([](torch::nn::Module &m) { init_sigma_output_weights(m, 0.5f); });
 
         discrete->apply(init_discrete_output_weights);
     }

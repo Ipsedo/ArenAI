@@ -9,8 +9,6 @@
 
 namespace arenai::core {
 
-    constexpr float SIGMA_MIN = 1e-3f;
-    constexpr float SIGMA_MAX = 1.f;
     constexpr float EPSILON = 1e-8f;
 
 }// namespace arenai::core

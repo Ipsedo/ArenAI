@@ -64,7 +64,7 @@ TEST_F(InitWeightsTest, SigmaOutputWeightsOrthogonal) {
     assert_orthogonal(linear->weight, 0.01f);
 }
 
-TEST_F(InitWeightsTest, SigmaOutputBiasIsLogOne) {
+TEST_F(InitWeightsTest, SigmaOutputIsEqualToWantedOne) {
     torch::nn::Sequential sequential(
         torch::nn::Linear(32, 4),
         std::make_shared<SigmaOutput>(agent::SIGMA_MIN, agent::SIGMA_MAX));

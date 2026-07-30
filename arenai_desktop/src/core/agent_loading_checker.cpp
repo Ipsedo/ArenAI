@@ -15,7 +15,7 @@ namespace arenai::desktop {
         try {
 
             const auto agent =
-                agent::SacAgentFactory(model_options.hyper_parameters)
+                agent::ActorAgentFactory(model_options.hyper_parameters)
                     .get_agent(
                         model_options.vision_height, model_options.vision_width,
                         model::ENEMY_PROPRIOCEPTION_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,

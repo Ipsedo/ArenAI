@@ -7,6 +7,9 @@
 
 #include <functional>
 
+#include <Jolt/Jolt.h>
+#include <Jolt/Physics/Constraints/HingeConstraint.h>
+
 #include <arenai_controller/controller.h>
 #include <arenai_controller/inputs.h>
 #include <arenai_utils/file_reader.h>
@@ -24,9 +27,9 @@ namespace arenai::model {
                             public view::AbstractCamera {
     public:
         CanonItem(
-            const std::string &prefix_name,
+            const std::string &prefix_name, JoltPhysicEngine &engine,
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, glm::vec3 pos,
-            glm::vec3 rel_pos, glm::vec3 scale, float mass, btRigidBody *turret,
+            glm::vec3 rel_pos, glm::vec3 scale, float mass, JPH::Body *turret,
             float wanted_frame_frequency,
             const std::function<void(glm::vec3, glm::vec3, Item *)> &on_contact,
             const std::function<void(const std::shared_ptr<ShellItem> &)> &on_shell_fired);
@@ -37,14 +40,14 @@ namespace arenai::model {
         glm::vec3 look() override;
         glm::vec3 up() override;
 
-        std::vector<btTypedConstraint *> get_constraints() override;
+        std::vector<JPH::Ref<JPH::TwoBodyConstraint>> get_constraints() override;
 
         std::vector<std::shared_ptr<Item>> get_produced_items() override;
-        std::vector<std::shared_ptr<BulletItem>> produce_bullet_items();
+        std::vector<std::shared_ptr<JoltItem>> produce_jolt_items();
 
     private:
         float angle;
-        btHingeConstraint *hinge;
+        JPH::Ref<JPH::HingeConstraint> hinge;
         std::shared_ptr<utils::AbstractResourceFileReader> file_reader;
         bool will_fire;
         std::function<void(glm::vec3, glm::vec3, Item *)> on_contact;

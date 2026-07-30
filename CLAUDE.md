@@ -10,14 +10,14 @@ options, attendre la réponse. Les corrections de bugs internes (fichiers `src/`
 changent ni contrat ni comportement voulu restent autorisées.
 
 A neural network (SAC) trained to play a tank-arena game.
-Bullet physics, offscreen Vulkan rendering (the agent's vision), NN via LibTorch.
+Jolt physics, offscreen Vulkan rendering (the agent's vision), NN via LibTorch.
 
 ## Architecture (CMake modules)
 
 Dependency order: utils → model → view → core → agent / desktop
 
 - **arenai_utils**  — helpers (file_reader, cache, double_buffer, logging, singleton)
-- **arenai_model**  — physics & entities: Bullet engine, tank, items (`arenai_model/`)
+- **arenai_model**  — physics & entities: Jolt engine, tank, items (`arenai_model/`)
 - **arenai_view**   — Vulkan rendering; `offscreen_renderer` = offscreen render for the agent's vision
 - **arenai_core**   — `BaseTanksEnvironment`, enemy_handler, thread_pool (RL env loop)
 - **arenai_controller** — input handling
@@ -32,7 +32,7 @@ C++20, CMake ≥ 3.29.
 
 ### Linux (ArchLinux)
 ```shell
-sudo pacman -Sy bullet glm glfw freetype2 vulkan-headers vulkan-icd-loader glslang
+sudo pacman -Sy glm glfw freetype2 vulkan-headers vulkan-icd-loader glslang
 # LibTorch expected in /opt/libtorch (override with -DLIBTORCH_PATH=...)
 mkdir build && cd build && cmake .. && make
 ```
@@ -46,7 +46,7 @@ mkdir build && cd build && cmake .. && make
 Deps fetched via FetchContent (no manual install): argparse, nlohmann/json, stb, soil2, indicators,
 VulkanMemoryAllocator,
 RmlUi (PRIVATE in arenai_view — only its forward-declared render interface crosses the public API).
-System libs: bullet, glm, glfw, freetype (RmlUi font engine), glslang (glslangValidator, the
+System libs: glm, glfw, freetype (RmlUi font engine), glslang (glslangValidator, the
 build-time GLSL→SPIR-V compiler — see cmake/ArenaiCompileShaders.cmake — via
 `find_package(Vulkan COMPONENTS glslangValidator)`; pacman glslang / vcpkg glslang[tools]),
 Vulkan loader (the runtime driver

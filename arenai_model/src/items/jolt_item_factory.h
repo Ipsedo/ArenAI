@@ -2,18 +2,18 @@
 // Created by samuel on 30/06/2026.
 //
 
-#ifndef ARENAI_BULLET_ITEM_FACTORY_H
-#define ARENAI_BULLET_ITEM_FACTORY_H
+#ifndef ARENAI_JOLT_ITEM_FACTORY_H
+#define ARENAI_JOLT_ITEM_FACTORY_H
 
 #include <arenai_model/item_factory.h>
 
 namespace arenai::model {
 
-    class BulletPhysicEngine;
+    class JoltPhysicEngine;
 
-    class BulletItemFactory final : public ItemFactory {
+    class JoltItemFactory final : public ItemFactory {
     public:
-        explicit BulletItemFactory(BulletPhysicEngine &engine);
+        explicit JoltItemFactory(JoltPhysicEngine &engine);
 
         std::shared_ptr<Item> make_sphere_item(
             std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
@@ -36,9 +36,9 @@ namespace arenai::model {
             const std::filesystem::path &height_map_file, glm::vec3 pos, glm::vec3 scale) override;
 
     private:
-        BulletPhysicEngine &engine;
+        JoltPhysicEngine &engine;
     };
 
 }// namespace arenai::model
 
-#endif// ARENAI_BULLET_ITEM_FACTORY_H
+#endif// ARENAI_JOLT_ITEM_FACTORY_H

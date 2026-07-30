@@ -5,26 +5,27 @@
 #ifndef ARENAI_HEIGHT_MAP_H
 #define ARENAI_HEIGHT_MAP_H
 
-#include <btBulletDynamicsCommon.h>
-#include <BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
+#include <Jolt/Jolt.h>
+#include <Jolt/Physics/Body/Body.h>
 
 #include <arenai_model/item.h>
 #include <arenai_model/shapes.h>
 #include <arenai_utils/file_reader.h>
 
-#include "./bullet_item.h"
+#include "../jolt_item.h"
 
 namespace arenai::model {
 
-    class HeightMapItem final : public BulletItem {
+    class HeightMapItem final : public JoltItem {
     public:
         HeightMapItem(
-            std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &img_reader,
+            std::string name, JoltPhysicEngine &engine,
+            const std::shared_ptr<utils::AbstractResourceFileReader> &img_reader,
             const std::filesystem::path &height_map_file, glm::vec3 pos, glm::vec3 scale);
 
         std::shared_ptr<Shape> get_shape() override;
 
-        btRigidBody *get_body() override;
+        JPH::Body *get_body() override;
 
         ~HeightMapItem() override;
 
@@ -32,8 +33,7 @@ namespace arenai::model {
         glm::vec3 _get_scale() override;
 
     private:
-        btHeightfieldTerrainShape *map;
-        btRigidBody *body;
+        JPH::Body *body;
 
         std::string shape_id;
         glm::vec3 scale;

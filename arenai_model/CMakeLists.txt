@@ -14,28 +14,24 @@ else ()
     find_package(glm REQUIRED)
 endif ()
 
-##### Bullet3 #####
-if (ANDROID)
-    set(BUILD_UNIT_TESTS OFF CACHE INTERNAL "turn off bullet test")
-    set(BUILD_CPU_DEMOS OFF CACHE INTERNAL "turn off bullet demos")
-    set(BUILD_PYBULLET OFF CACHE INTERNAL "turn off pybullet")
-    set(BUILD_ENET OFF CACHE INTERNAL "turn off bullet enet")
-    set(BUILD_CLSOCKET OFF CACHE INTERNAL "turn off bullet enet")
-    set(BUILD_EGL OFF CACHE INTERNAL "turn off bullet EGL")
-    set(BUILD_OPENGL3_DEMOS OFF CACHE INTERNAL "turn off bullet opengl demos")
-    set(BUILD_BULLET2_DEMOS OFF CACHE INTERNAL "turn off bullet2 demos")
-    set(BUILD_EXTRAS OFF CACHE INTERNAL "turn off bullet extra")
-    set(BULLET2_MULTITHREADING ON CACHE INTERNAL "turn off bullet extra")
+##### Jolt Physics #####
+set(TARGET_UNIT_TESTS OFF CACHE INTERNAL "turn off jolt tests")
+set(TARGET_HELLO_WORLD OFF CACHE INTERNAL "turn off jolt hello world")
+set(TARGET_PERFORMANCE_TEST OFF CACHE INTERNAL "turn off jolt performance test")
+set(TARGET_SAMPLES OFF CACHE INTERNAL "turn off jolt samples")
+set(TARGET_VIEWER OFF CACHE INTERNAL "turn off jolt viewer")
+set(INTERPROCEDURAL_OPTIMIZATION OFF CACHE INTERNAL "turn off jolt lto")
 
-    FetchContent_Declare(
-            bullet3
-            GIT_REPOSITORY https://github.com/bulletphysics/bullet3.git
-            GIT_TAG        3.25 # release 3.25
-    )
-    FetchContent_MakeAvailable(bullet3)
-else ()
-    find_package(Bullet REQUIRED)
-endif ()
+FetchContent_Declare(
+        JoltPhysics
+        GIT_REPOSITORY https://github.com/jrouwe/JoltPhysics.git
+        GIT_TAG v5.3.0
+        SOURCE_SUBDIR Build
+)
+FetchContent_MakeAvailable(JoltPhysics)
+
+# Jolt is a static library linked into this shared library
+set_target_properties(Jolt PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 ##### ArenAI #####
 file(GLOB_RECURSE ARENAI_MODEL_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
@@ -51,11 +47,5 @@ target_link_libraries(
         arenai_controller
         glm::glm
         PRIVATE
-        ${BULLET_LIBRARIES}
+        Jolt
 )
-
-if (ANDROID)
-    target_include_directories(arenai_model PRIVATE "${bullet3_SOURCE_DIR}/src")
-else ()
-    target_include_directories(arenai_model PRIVATE "${BULLET_INCLUDE_DIR}")
-endif ()

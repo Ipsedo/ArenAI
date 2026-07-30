@@ -22,5 +22,5 @@ export LP_NATIVE_VECTOR_WIDTH=256
 
 # Tells the golden-image tests they are in the environment the references were
 # recorded in, and may compare pixels. Everywhere else they skip that
-# comparison instead of failing on the local Mesa/Bullet versions.
+# comparison instead of failing on the local Mesa/physics versions.
 export ARENAI_PINNED_RENDER_ENV=1

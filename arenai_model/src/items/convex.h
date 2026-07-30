@@ -5,33 +5,33 @@
 #ifndef ARENAI_CONVEX_H
 #define ARENAI_CONVEX_H
 
-#include <btBulletDynamicsCommon.h>
+#include <glm/gtc/quaternion.hpp>
+#include <Jolt/Jolt.h>
+#include <Jolt/Physics/Body/Body.h>
 
 #include <arenai_model/item.h>
 #include <arenai_utils/file_reader.h>
 
-#include "./bullet_item.h"
+#include "../jolt_item.h"
 
 namespace arenai::model {
 
-    class ConvexItem : public BulletItem {
+    class ConvexItem : public JoltItem {
     public:
         ConvexItem(
-            std::string name, const std::shared_ptr<Shape> &shape, glm::vec3 position,
-            glm::vec3 scale, float mass);
+            std::string name, JoltPhysicEngine &engine, const std::shared_ptr<Shape> &shape,
+            glm::vec3 position, glm::vec3 scale, float mass,
+            glm::quat rotation = glm::quat(1.f, 0.f, 0.f, 0.f));
 
         std::shared_ptr<Shape> get_shape() override;
 
-        btRigidBody *get_body() override;
-
-        ~ConvexItem() override;
+        JPH::Body *get_body() override;
 
     protected:
         glm::vec3 _get_scale() override;
 
     private:
-        btRigidBody *body;
-        btConvexHullShape *collision_shape;
+        JPH::Body *body;
 
         std::shared_ptr<Shape> shape;
         glm::vec3 scale;
@@ -40,28 +40,32 @@ namespace arenai::model {
     class SphereItem final : public ConvexItem {
     public:
         SphereItem(
-            std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
+            std::string name, JoltPhysicEngine &engine,
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             glm::vec3 position, glm::vec3 scale, float mass);
     };
 
     class CubeItem final : public ConvexItem {
     public:
         CubeItem(
-            std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
+            std::string name, JoltPhysicEngine &engine,
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             glm::vec3 position, glm::vec3 scale, float mass);
     };
 
     class CylinderItem final : public ConvexItem {
     public:
         CylinderItem(
-            std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
+            std::string name, JoltPhysicEngine &engine,
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             glm::vec3 position, glm::vec3 scale, float mass);
     };
 
     class TetraItem final : public ConvexItem {
     public:
         TetraItem(
-            std::string name, const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
+            std::string name, JoltPhysicEngine &engine,
+            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             glm::vec3 position, glm::vec3 scale, float mass);
     };
 

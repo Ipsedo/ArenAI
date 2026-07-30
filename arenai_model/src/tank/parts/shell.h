@@ -22,6 +22,7 @@ namespace arenai::model {
         load_shape(const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader);
 
         ShellItem(
+            JoltPhysicEngine &engine,
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, glm::vec3 pos,
             glm::quat rot, glm::vec3 scale, float mass, float wanted_frame_frequency,
             const std::function<void(glm::vec3, glm::vec3, Item *)> &contact_callback =

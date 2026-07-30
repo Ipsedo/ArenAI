@@ -24,7 +24,7 @@ int main(const int argc, char **argv) {
     parser.add_argument("--resources_folder").required();
     parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60 * 3);
     parser.add_argument("--potential_reward_gamma").scan<'g', float>().default_value(0.997f);
-    parser.add_argument("--nb_episodes").scan<'i', int>().default_value(1000);
+    parser.add_argument("--nb_episodes").scan<'i', int>().default_value(2000);
     parser.add_argument("--save_every").scan<'i', int>().default_value(30 * 60 * 3 * 5);
     parser.add_argument("--cuda").default_value(false).implicit_value(true);
 

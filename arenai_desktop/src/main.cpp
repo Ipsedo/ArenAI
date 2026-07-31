@@ -84,7 +84,8 @@ int main(const int argc, char **argv) {
         {parser.get<float>("--wanted_frequency"), parser.get<int>("--window_width"),
          parser.get<int>("--window_height"), resources_folder},
         {parser.get<int>("--vision_height"), parser.get<int>("--vision_width"), hyper_params,
-         resources_folder / "dummy_model", parser.get<bool>("--cuda")});
+         resources_folder / "trained_models" / "ppo-thin-256x128_save_6",
+         parser.get<bool>("--cuda")});
 
     return 0;
 }

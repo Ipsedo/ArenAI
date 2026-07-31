@@ -64,8 +64,6 @@ namespace arenai::model {
         using JoltTank::load_shell_shapes;
 
     private:
-        std::string tank_prefix_name;
-
         int max_frames_upside_down;
         int curr_frame_upside_down;
 

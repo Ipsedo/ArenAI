@@ -32,7 +32,6 @@ namespace arenai::model {
             engine, file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency,
             [this](const ShellContactInfo &info, Item *item) { on_shell_contact(info, item); },
             [this](const std::shared_ptr<ShellItem> &shell) { on_shell_fired(shell); }),
-          tank_prefix_name(tank_prefix_name),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), distance_scale(250.f),
           dispersion_angle_scale(glm::radians(7.5f)), dispersion_reward_scale(0.1f),

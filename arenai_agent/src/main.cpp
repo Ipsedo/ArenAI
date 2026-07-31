@@ -5,6 +5,7 @@
 #include <thread>
 
 #include <argparse/argparse.hpp>
+#include <ATen/Context.h>
 
 #include "./agents/agent_cli.h"
 #include "./train.h"
@@ -52,6 +53,9 @@ int main(const int argc, char **argv) {
         if (parser.is_subcommand_used(algorithm.name)) selected_algorithm = &algorithm;
 
     const bool cuda = parser.get<bool>("--cuda");
+    // input sizes are constant, let the cuDNN autotuner pick the best conv algorithms
+    if (cuda) at::globalContext().setBenchmarkCuDNN(true);
+
     const int vision_height = parser.get<int>("--vision_height");
     const int vision_width = parser.get<int>("--vision_width");
 

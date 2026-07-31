@@ -53,9 +53,10 @@ namespace arenai::agent {
      * Warmup
      */
 
-    class AbstractTargetEntropyWarmup : public AbstractTargetEntropy {
+    class AbstractCosineAnnealingTargetEntropy : public AbstractTargetEntropy {
     public:
-        AbstractTargetEntropyWarmup(float initial_value, float final_value, int warmup_step);
+        AbstractCosineAnnealingTargetEntropy(
+            float initial_value, float final_value, int warmup_step);
         torch::Tensor target_entropy() override;
 
     protected:
@@ -69,21 +70,18 @@ namespace arenai::agent {
         torch::Tensor current_step;
     };
 
-    class DiscreteTargetEntropyWarmup : public AbstractTargetEntropyWarmup {
+    class DiscreteCosineAnnealingTargetEntropy : public AbstractCosineAnnealingTargetEntropy {
     public:
-        DiscreteTargetEntropyWarmup(
-            int nb_actions, float initial_factor, float final_factor, int warmup_step);
+        DiscreteCosineAnnealingTargetEntropy(
+            float initial_probability, float final_probability, int warmup_step);
 
     protected:
         float to_target_entropy(float value) override;
-
-    private:
-        int nb_actions;
     };
 
-    class ContinuousTargetEntropyWarmup : public AbstractTargetEntropyWarmup {
+    class ContinuousCosineAnnealingTargetEntropy : public AbstractCosineAnnealingTargetEntropy {
     public:
-        ContinuousTargetEntropyWarmup(
+        ContinuousCosineAnnealingTargetEntropy(
             int nb_actions, float initial_sigma, float final_sigma, int warmup_step);
 
     protected:

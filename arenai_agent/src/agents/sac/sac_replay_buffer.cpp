@@ -51,19 +51,22 @@ namespace arenai::agent {
 
         const auto idx = static_cast<int64_t>(write_idx_);
 
+        const auto done_bool = step.done.to(torch::kBool);
+        const auto truncated_bool = step.truncated.to(torch::kBool);
+
         store_vision_[idx].copy_(step.state.vision);
         store_proprioception_[idx].copy_(step.state.proprioception);
         store_cont_action_[idx].copy_(step.action.continuous_action.detach());
         store_disc_action_[idx].copy_(step.action.discrete_action.detach());
         store_reward_[idx].copy_(step.reward);
-        store_done_[idx].copy_(step.done);
+        // a truncated step is not a real terminal: the critic must keep bootstrapping
+        // through it, only actual terminations (done && !truncated) cut the return
+        store_done_[idx].copy_(done_bool.logical_and(truncated_bool.logical_not()));
 
         // tanks already terminated before this step have no valid transition to store
         store_sampleable_[idx].copy_(already_terminated_.logical_not());
         already_terminated_.logical_or_(
-            step.done.to(torch::kBool)
-                .reshape({nb_tanks_})
-                .logical_or(step.truncated.to(torch::kBool).reshape({nb_tanks_})));
+            done_bool.reshape({nb_tanks_}).logical_or(truncated_bool.reshape({nb_tanks_})));
 
         advance_write_idx();
     }

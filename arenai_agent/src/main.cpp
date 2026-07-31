@@ -5,6 +5,7 @@
 #include <thread>
 
 #include <argparse/argparse.hpp>
+#include <ATen/Context.h>
 
 #include "./agents/agent_cli.h"
 #include "./train.h"
@@ -32,8 +33,8 @@ int main(const int argc, char **argv) {
     parser.add_group("environment");
     parser.add_argument("--wanted_frequency").scan<'g', float>().default_value(1.f / 30.f);
     parser.add_argument("--nb_tanks").scan<'i', int>().default_value(32);
-    parser.add_argument("--vision_height").scan<'i', int>().default_value(32);
-    parser.add_argument("--vision_width").scan<'i', int>().default_value(64);
+    parser.add_argument("--vision_height").scan<'i', int>().default_value(128);
+    parser.add_argument("--vision_width").scan<'i', int>().default_value(256);
     parser.add_argument("--initial_spawn_width").scan<'g', float>().default_value(500.f);
     parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(500.f);
     parser.add_argument("--final_spawn_width").scan<'g', float>().default_value(2000.f);
@@ -52,6 +53,9 @@ int main(const int argc, char **argv) {
         if (parser.is_subcommand_used(algorithm.name)) selected_algorithm = &algorithm;
 
     const bool cuda = parser.get<bool>("--cuda");
+    // input sizes are constant, let the cuDNN autotuner pick the best conv algorithms
+    if (cuda) at::globalContext().setBenchmarkCuDNN(true);
+
     const int vision_height = parser.get<int>("--vision_height");
     const int vision_width = parser.get<int>("--vision_width");
 

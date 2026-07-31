@@ -32,11 +32,10 @@ namespace arenai::model {
             engine, file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency,
             [this](const ShellContactInfo &info, Item *item) { on_shell_contact(info, item); },
             [this](const std::shared_ptr<ShellItem> &shell) { on_shell_fired(shell); }),
-          tank_prefix_name(tank_prefix_name),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), distance_scale(250.f),
-          dispersion_angle_scale(glm::radians(15.f)), dispersion_reward_scale(0.1f),
-          optimal_distance(75.f), fire_cost(0.01f), is_dead_already_triggered(false),
+          dispersion_angle_scale(glm::radians(7.5f)), dispersion_reward_scale(0.1f),
+          optimal_distance(75.f), miss_cost(0.01f), is_dead_already_triggered(false),
           has_touch(false), action_stats(std::make_shared<ActionStats>()) {}
 
     float JoltEnemyTank::compute_aim_angle(const std::shared_ptr<EnemyTank> &other_tank) {
@@ -183,16 +182,14 @@ namespace arenai::model {
                     * compute_dispersion_reward(
                         tracked.fire_pos, tracked.enemy_pos_at_t, tracked.shell_pos_at_t);
                 if (tracked.has_hit) shells_reward += tracked.has_killed ? 2.f : 1.f;
+                else shells_reward -= miss_cost;
             }
 
             tracked_shells.erase(tracked_shells.begin() + i);
         }
 
-        // 4. shoot cost
-        const float shoot_cost = action_stats->has_fire() ? -fire_cost : 0.f;
-
-        // 5. total reward
-        const float reward = dead_penalty + shells_reward + shoot_cost;
+        // 4. total reward
+        const float reward = dead_penalty + shells_reward;
 
         return reward;
     }

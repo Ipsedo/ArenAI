@@ -40,6 +40,10 @@ namespace arenai::desktop {
 
         void resize(int width, int height) const;
 
+        bool is_player_dead() const;
+
+        int get_score() const;
+
     protected:
         void
         on_draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) override;

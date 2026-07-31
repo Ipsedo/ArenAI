@@ -61,6 +61,7 @@ namespace arenai::agent {
         torch::Tensor store_cont_action_;
         torch::Tensor store_disc_action_;
         torch::Tensor store_reward_;
+        // real terminals only (done && !truncated): truncated steps stay bootstrappable
         torch::Tensor store_done_;
 
         // [mem, nb_tanks] whether the (step, tank) pair can start a sampled transition

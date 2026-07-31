@@ -64,8 +64,6 @@ namespace arenai::model {
         using JoltTank::load_shell_shapes;
 
     private:
-        std::string tank_prefix_name;
-
         int max_frames_upside_down;
         int curr_frame_upside_down;
 
@@ -74,7 +72,7 @@ namespace arenai::model {
         float dispersion_reward_scale;
         float optimal_distance;
 
-        float fire_cost;
+        float miss_cost;
 
         bool is_dead_already_triggered;
 

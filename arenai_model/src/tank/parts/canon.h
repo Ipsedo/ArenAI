@@ -16,7 +16,7 @@
 #include <arenai_view/camera.h>
 
 #include "./items/convex.h"
-#include "shell.h"
+#include "./shell.h"
 
 namespace arenai::model {
 

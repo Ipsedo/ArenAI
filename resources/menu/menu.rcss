@@ -43,9 +43,22 @@ body.overlay {
     border-radius: 3dp;
 }
 
-#pause-panel {
+#pause-panel, #game-over-panel {
     width: 340dp;
     text-align: center;
+}
+
+/* final score between the Game Over title and the buttons, in the
+   technical-label voice (mono, uppercase, accent) */
+.game-over-score {
+    display: block;
+    font-family: "IBM Plex Mono";
+    font-size: 16dp;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2dp;
+    color: #00A6FB;
+    margin-bottom: 24dp;
 }
 
 #main-panel {

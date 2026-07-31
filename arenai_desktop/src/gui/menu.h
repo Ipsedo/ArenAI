@@ -35,7 +35,7 @@ namespace arenai::desktop::gui {
 
     enum class MenuOutcome { Play, Quit };
 
-    enum class PauseAction { None, Continue, MainMenu, ExitGame };
+    enum class PauseAction { None, Continue, MainMenu, ExitGame, Retry };
 
     // Lives for the whole session (the UI stack is initialised once): the main
     // menu runs its own blocking loop, while the pause popup is driven
@@ -57,6 +57,11 @@ namespace arenai::desktop::gui {
         // draws the popup over the frame already in the backbuffer; the caller
         // presents afterwards
         virtual void render_pause_overlay() = 0;
+        // game-over popup, driven exactly like the pause popup (same overlay
+        // rendering and same action polling); shows the final score and its
+        // buttons emit Retry / MainMenu / ExitGame
+        virtual void open_game_over(int score) = 0;
+        virtual void close_game_over() = 0;
         // returns the pending button action and resets it to None
         virtual PauseAction poll_pause_action() = 0;
         // input sinks the application routes window events to while paused

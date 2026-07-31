@@ -45,13 +45,13 @@ namespace arenai::agent {
      * Target entropy warmup
      */
 
-    AbstractTargetEntropyWarmup::AbstractTargetEntropyWarmup(
+    AbstractCosineAnnealingTargetEntropy::AbstractCosineAnnealingTargetEntropy(
         const float initial_value, const float final_value, const int warmup_step)
         : initial(initial_value), final(final_value), warmup_step(warmup_step),
           current_step(register_buffer(
               "current_step", torch::zeros({1}, torch::TensorOptions().dtype(torch::kLong)))) {}
 
-    torch::Tensor AbstractTargetEntropyWarmup::target_entropy() {
+    torch::Tensor AbstractCosineAnnealingTargetEntropy::target_entropy() {
         const float progress = std::min(
             1.f,
             static_cast<float>(current_step.item<int64_t>()) / static_cast<float>(warmup_step));
@@ -68,27 +68,26 @@ namespace arenai::agent {
      * Discrete
      */
 
-    DiscreteTargetEntropyWarmup::DiscreteTargetEntropyWarmup(
-        const int nb_actions, const float initial_factor, const float final_factor,
-        const int warmup_step)
-        : AbstractTargetEntropyWarmup(initial_factor, final_factor, warmup_step),
-          nb_actions(nb_actions) {}
+    DiscreteCosineAnnealingTargetEntropy::DiscreteCosineAnnealingTargetEntropy(
+        const float initial_probability, const float final_probability, const int warmup_step)
+        : AbstractCosineAnnealingTargetEntropy(
+            initial_probability, final_probability, warmup_step) {}
 
-    float DiscreteTargetEntropyWarmup::to_target_entropy(const float value) {
-        return multinomial_maximum_entropy(nb_actions) * value;
+    float DiscreteCosineAnnealingTargetEntropy::to_target_entropy(const float value) {
+        return multinomial_target_entropy(value);
     }
 
     /*
      * Continuous
      */
 
-    ContinuousTargetEntropyWarmup::ContinuousTargetEntropyWarmup(
+    ContinuousCosineAnnealingTargetEntropy::ContinuousCosineAnnealingTargetEntropy(
         const int nb_actions, const float initial_sigma, const float final_sigma,
         const int warmup_step)
-        : AbstractTargetEntropyWarmup(initial_sigma, final_sigma, warmup_step),
+        : AbstractCosineAnnealingTargetEntropy(initial_sigma, final_sigma, warmup_step),
           nb_actions(nb_actions) {}
 
-    float ContinuousTargetEntropyWarmup::to_target_entropy(const float value) {
+    float ContinuousCosineAnnealingTargetEntropy::to_target_entropy(const float value) {
         return truncated_normal_target_entropy(nb_actions, value);
     }
 

@@ -24,7 +24,7 @@ namespace arenai::desktop {
 
     namespace {
 
-        enum class InGameOutcome { MainMenu, ExitGame };
+        enum class InGameOutcome { MainMenu, ExitGame, Retry };
 
         // One game session: steps the environment until the window closes or
         // the pause menu asks to leave. While paused, the simulation and the
@@ -57,6 +57,7 @@ namespace arenai::desktop {
             // the router owns the window's input slots for the whole session;
             // Escape / Start flip the pause state through toggle_requested
             bool paused = false;
+            bool game_over = false;
             bool toggle_requested = false;
 
             const auto router = std::make_shared<GameInputRouter>(
@@ -94,6 +95,17 @@ namespace arenai::desktop {
                 }
             };
 
+            // the frame the player dies on freezes under the game-over popup,
+            // exactly like the pause: same input routing, same overlay loop —
+            // only the popup (and its actions) differ, and it cannot be
+            // toggled away
+            const auto set_game_over = [&] {
+                game_over = true;
+                router->set_paused(true);
+                gui->open_game_over(env->get_score());
+                window->set_cursor_mode(controller::CursorMode::Normal);
+            };
+
             auto outcome = InGameOutcome::ExitGame;
 
             // [ARENAI-DBG] temporary auto-repro
@@ -111,10 +123,10 @@ namespace arenai::desktop {
 
                 if (toggle_requested) {
                     toggle_requested = false;
-                    set_paused(!paused);
+                    if (!game_over) set_paused(!paused);
                 }
 
-                if (paused) {
+                if (paused || game_over) {
                     // frozen scene + popup; pacing comes from the vsync
                     env->redraw();
                     gui->render_pause_overlay();
@@ -123,7 +135,10 @@ namespace arenai::desktop {
                     if (const auto action = gui->poll_pause_action();
                         action == gui::PauseAction::Continue)
                         set_paused(false);
-                    else if (action == gui::PauseAction::MainMenu) {
+                    else if (action == gui::PauseAction::Retry) {
+                        outcome = InGameOutcome::Retry;
+                        break;
+                    } else if (action == gui::PauseAction::MainMenu) {
                         outcome = InGameOutcome::MainMenu;
                         break;
                     } else if (action == gui::PauseAction::ExitGame) break;
@@ -140,6 +155,8 @@ namespace arenai::desktop {
 
                 graphics_backend->present();
 
+                if (env->is_player_dead()) set_game_over();
+
                 states.clear();
 
                 for (const auto &[state, reward, done, is_truncated]: steps)
@@ -153,6 +170,7 @@ namespace arenai::desktop {
             }
 
             gui->close_pause();
+            gui->close_game_over();
             window->set_keyboard_callback(nullptr);
             window->set_gamepad_callback(nullptr);
             window->set_resize_callback([&gui](const int width, const int height) {
@@ -210,10 +228,15 @@ namespace arenai::desktop {
 
             if (menu_outcome == gui::MenuOutcome::Quit) break;
 
-            if (run_game(game_options, model_options, gui->settings(), graphics_backend, gui)
-                    == InGameOutcome::ExitGame
-                || dbg_autoplay)
-                break;
+            // Retry tears the session down like Main menu, but relaunches a
+            // fresh game right away with the same settings
+            InGameOutcome game_outcome;
+            do {
+                game_outcome =
+                    run_game(game_options, model_options, gui->settings(), graphics_backend, gui);
+            } while (game_outcome == InGameOutcome::Retry);
+
+            if (game_outcome == InGameOutcome::ExitGame || dbg_autoplay) break;
         }
     }
 

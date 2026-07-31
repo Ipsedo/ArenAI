@@ -38,4 +38,6 @@ namespace arenai::model {
 
     int JoltPlayerTank::get_score() const { return killed_nb * 10 + hit_nb; }
 
+    void JoltPlayerTank::destroy() { remove_constraints_from_engine(); }
+
 }// namespace arenai::model

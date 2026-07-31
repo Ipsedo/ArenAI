@@ -6,8 +6,8 @@
 
 #include <arenai_agent_tests/tests_networks_utils/tests_init.h>
 
-#include "networks/constants.h"
-#include "networks/misc.h"
+#include "./networks/constants.h"
+#include "./networks/misc.h"
 
 using namespace arenai;
 using namespace arenai::agent;

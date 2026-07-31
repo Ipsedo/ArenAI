@@ -54,6 +54,7 @@ namespace arenai::model {
     class PlayerTank : virtual public Tank {
     public:
         virtual int get_score() const = 0;
+        virtual void destroy() = 0;
     };
 
 }// namespace arenai::model

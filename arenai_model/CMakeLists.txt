@@ -21,6 +21,12 @@ set(TARGET_PERFORMANCE_TEST OFF CACHE INTERNAL "turn off jolt performance test")
 set(TARGET_SAMPLES OFF CACHE INTERNAL "turn off jolt samples")
 set(TARGET_VIEWER OFF CACHE INTERNAL "turn off jolt viewer")
 set(INTERPROCEDURAL_OPTIMIZATION OFF CACHE INTERNAL "turn off jolt lto")
+if (MSVC)
+    # /Wall /WX breaks on newer MSVC/Windows SDK (warnings inside wingdi.h become errors)
+    set(ENABLE_ALL_WARNINGS OFF CACHE INTERNAL "don't treat jolt warnings as errors")
+    # match the dynamic CRT (/MD) used by the rest of the project
+    set(USE_STATIC_MSVC_RUNTIME_LIBRARY OFF CACHE INTERNAL "build jolt with the dynamic runtime")
+endif ()
 
 FetchContent_Declare(
         JoltPhysics

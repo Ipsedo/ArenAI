@@ -4,6 +4,7 @@
 
 #include "./game_environment.h"
 
+#include <algorithm>
 #include <iostream>
 
 #include <arenai_agent/file_reader.h>
@@ -54,6 +55,22 @@ namespace arenai::desktop {
     void DesktopGameEnvironment::resize(const int width, const int height) const {
         if (player_renderer) player_renderer->set_window_size(width, height);
     }
+
+    bool DesktopGameEnvironment::is_player_dead() const {
+        const bool is_any_item_dead = std::ranges::any_of(
+            player_tank->get_items(), [](const std::shared_ptr<model::Item> &item) {
+                if (const auto &life_item = std::dynamic_pointer_cast<model::LifeItem>(item);
+                    life_item)
+                    return life_item->is_dead();
+                return false;
+            });
+
+        if (is_any_item_dead) player_tank->destroy();
+
+        return is_any_item_dead;
+    }
+
+    int DesktopGameEnvironment::get_score() const { return player_tank->get_score(); }
 
     std::shared_ptr<controller::AbstractKeyboardCallback>
     DesktopGameEnvironment::keyboard_handler() const {

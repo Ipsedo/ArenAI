@@ -475,7 +475,9 @@ namespace arenai::desktop::gui {
                 main_document_ = context_->LoadDocument("menu/main_menu.rml");
                 params_document_ = context_->LoadDocument("menu/parameters.rml");
                 pause_document_ = context_->LoadDocument("menu/pause.rml");
-                if (!main_document_ || !params_document_ || !pause_document_)
+                game_over_document_ = context_->LoadDocument("menu/game_over.rml");
+                if (!main_document_ || !params_document_ || !pause_document_
+                    || !game_over_document_)
                     throw std::runtime_error("RmlUi menu documents failed to load");
 
                 // D-pad bridge across the file explorer's scroll container
@@ -486,7 +488,9 @@ namespace arenai::desktop::gui {
                     [this] {
                         // Escape / gamepad B back out of the parameters screen;
                         // while paused B resumes the game (the application
-                        // intercepts Escape itself before this adapter)
+                        // intercepts Escape itself before this adapter); the
+                        // game-over popup cannot be backed out of
+                        if (game_over_document_->IsVisible()) return;
                         if (pause_document_->IsVisible())
                             pending_pause_action_ = PauseAction::Continue;
                         else if (params_document_->IsVisible()) close_params();
@@ -495,7 +499,9 @@ namespace arenai::desktop::gui {
                         // menu.rcss shows the :focus highlight only under
                         // .gamepad-nav, so the mouse hover and the gamepad
                         // cursor are never visible together
-                        for (auto *document: {main_document_, params_document_, pause_document_})
+                        for (auto *document:
+                             {main_document_, params_document_, pause_document_,
+                              game_over_document_})
                             document->SetClass("gamepad-nav", gamepad);
                     });
             }
@@ -543,6 +549,15 @@ namespace arenai::desktop::gui {
             }
 
             void close_pause() override { pause_document_->Hide(); }
+
+            void open_game_over(const int score) override {
+                pending_pause_action_ = PauseAction::None;
+                score_ = score;
+                model_handle_.DirtyVariable("score");
+                game_over_document_->Show();
+            }
+
+            void close_game_over() override { game_over_document_->Hide(); }
 
             void render_pause_overlay() override {
                 context_->Update();
@@ -643,6 +658,7 @@ namespace arenai::desktop::gui {
                 constructor.Bind("current_dir", &current_dir_display_);
                 constructor.Bind("entries", &entries_);
                 constructor.Bind("can_play", &can_play_);
+                constructor.Bind("score", &score_);
 
                 constructor.BindEventCallback(
                     "play", [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &) {
@@ -718,6 +734,11 @@ namespace arenai::desktop::gui {
                     "pause_exit",
                     [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &) {
                         pending_pause_action_ = PauseAction::ExitGame;
+                    });
+                constructor.BindEventCallback(
+                    "game_over_retry",
+                    [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &) {
+                        pending_pause_action_ = PauseAction::Retry;
                     });
 
                 model_handle_ = constructor.GetModelHandle();
@@ -803,6 +824,7 @@ namespace arenai::desktop::gui {
             Rml::ElementDocument *main_document_ = nullptr;
             Rml::ElementDocument *params_document_ = nullptr;
             Rml::ElementDocument *pause_document_ = nullptr;
+            Rml::ElementDocument *game_over_document_ = nullptr;
             Rml::DataModelHandle model_handle_;
 
             std::shared_ptr<MenuInputAdapter> input_adapter_;
@@ -822,6 +844,8 @@ namespace arenai::desktop::gui {
             std::vector<Rml::String> entries_;
             bool sac_valid_ = false;
             bool can_play_ = false;
+            // final score shown by the game-over popup
+            int score_ = 0;
             bool play_clicked_ = false;
             bool quit_clicked_ = false;
             PauseAction pending_pause_action_ = PauseAction::None;

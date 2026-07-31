@@ -27,10 +27,10 @@ namespace arenai::agent {
                     .layers,
                 get_value<vision_channels>(
                     "vision_channels", parse_cli_vision_channels,
-                    {{{3, 8}, {8, 16}, {16, 32}, {32, 64}}})
+                    {{{3, 8}, {8, 16}, {16, 24}, {24, 32}, {32, 48}, {48, 64}}})
                     .channels,
                 get_value<group_norm_nums>(
-                    "group_norm_nums", parse_cli_group_norms, {{{1, 2, 4, 8}}})
+                    "group_norm_nums", parse_cli_group_norms, {{{1, 2, 3, 4, 6, 8}}})
                     .groups),
             get_value<bool>("cuda", false) ? torch::kCUDA : torch::kCPU);
     }

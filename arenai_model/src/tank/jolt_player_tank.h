@@ -21,14 +21,7 @@ namespace arenai::model {
 
         int get_score() const override;
 
-        // Tank methods resolved via JoltTank
-        using JoltTank::get_camera;
-        using JoltTank::get_canon;
-        using JoltTank::get_chassis;
-        using JoltTank::get_controllers;
-        using JoltTank::get_items;
-        using JoltTank::is_dead;
-        using JoltTank::load_shell_shapes;
+        void destroy() override;
 
     private:
         void on_fired_shell_contact(const ShellContactInfo &shell_info, Item *item);

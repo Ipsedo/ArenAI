@@ -21,15 +21,16 @@ namespace arenai::agent {
         int hidden_size_actions = 32;
         std::vector<int> actor_hidden_sizes = {1024, 512};
         std::vector<int> critic_hidden_sizes = {1024, 512};
-        std::vector<std::tuple<int, int>> vision_channels = {{3, 8}, {8, 16}, {16, 32}, {32, 64}};
-        std::vector<int> group_norm_nums = {1, 2, 4, 8};
+        std::vector<std::tuple<int, int>> vision_channels = {{3, 8},   {8, 16},  {16, 24},
+                                                             {24, 32}, {32, 48}, {48, 64}};
+        std::vector<int> group_norm_nums = {1, 2, 3, 4, 6, 8};
         int metric_window_size = 256;
         float tau = 0.005f;
         float gamma = 0.995f;
-        int replay_buffer_size = 5000000;
+        int replay_buffer_size = 300000;
         int train_every = 256;
-        int epochs = 16;
-        int batch_size = 8192;
+        int epochs = 64;
+        int batch_size = 1024;
     };
 
     std::vector<CliField<SacHyperParams>> sac_cli_fields();

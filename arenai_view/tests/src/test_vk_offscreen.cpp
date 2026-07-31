@@ -13,8 +13,8 @@
 #include <arenai_view/camera.h>
 
 #include "./utils/local_file_reader.h"
-#include "vulkan/scene/renderers/offscreen_renderer.h"
-#include "vulkan/vulkan_backend.h"
+#include "./vulkan/scene/renderers/offscreen_renderer.h"
+#include "./vulkan/vulkan_backend.h"
 
 using namespace arenai;
 using namespace arenai::view;

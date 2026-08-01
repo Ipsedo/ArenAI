@@ -6,7 +6,6 @@
 #include <arenai_model/tank_factory.h>
 
 #include "./jolt_engine.h"
-#include "./tank/jolt_tank_factory.h"
 
 using namespace arenai;
 using namespace arenai::model;

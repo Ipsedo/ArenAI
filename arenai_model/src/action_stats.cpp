@@ -8,7 +8,6 @@
 
 using namespace arenai;
 using namespace arenai::model;
-using namespace arenai::controller;
 
 namespace arenai::model {
 
@@ -18,7 +17,7 @@ namespace arenai::model {
 
     float ActionStats::energy_consumed() const { return energy_consumed_; }
 
-    void ActionStats::process_input(const user_input &action) {
+    void ActionStats::process_input(const controller::user_input &action) {
         has_fire_ = action.fire_button.pressed;
         energy_consumed_ = (std::abs(action.left_joystick.x) + std::abs(action.left_joystick.y)
                             + std::abs(action.right_joystick.x) + std::abs(action.right_joystick.y))

@@ -12,7 +12,6 @@
 #include <glm/glm.hpp>
 
 #include <arenai_controller/controller.h>
-#include <arenai_utils/file_reader.h>
 #include <arenai_view/camera.h>
 
 #include "./item.h"

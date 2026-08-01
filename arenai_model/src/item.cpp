@@ -10,8 +10,8 @@ using namespace arenai::model;
 namespace arenai::model {
 
     /*
- * Base Item
- */
+     * Base Item
+     */
 
     Item::Item(std::string name) : name(std::move(name)), will_destroy(false) {}
 
@@ -26,8 +26,8 @@ namespace arenai::model {
     void Item::tick() {}
 
     /*
- * Life Item
- */
+     * Life Item
+     */
 
     LifeItem::LifeItem(const float health_points)
         : health_points(std::max(health_points, 0.f)), already_dead(false) {}

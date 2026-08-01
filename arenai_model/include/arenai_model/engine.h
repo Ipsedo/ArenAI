@@ -8,8 +8,6 @@
 #include <memory>
 #include <vector>
 
-#include <arenai_utils/file_reader.h>
-
 #include "./item.h"
 
 namespace arenai::model {

@@ -11,7 +11,6 @@
 
 using namespace arenai;
 using namespace arenai::model;
-using namespace arenai::utils;
 
 namespace arenai::model {
 
@@ -42,9 +41,9 @@ namespace arenai::model {
 
         const std::string file_content = file_reader->read_text(obj_file_path);
 
-        for (const std::vector<std::string> lines = split_string(file_content, '\n');
+        for (const std::vector<std::string> lines = utils::split_string(file_content, '\n');
              const auto &line: lines) {
-            if (std::vector<std::string> split_line = split_string(line, ' ');
+            if (std::vector<std::string> split_line = utils::split_string(line, ' ');
                 split_line[0] == "vn") {
                 normals_ref.emplace_back(
                     std::stof(split_line[1]), std::stof(split_line[2]), std::stof(split_line[3]));
@@ -53,13 +52,13 @@ namespace arenai::model {
                     std::stof(split_line[1]), std::stof(split_line[2]), std::stof(split_line[3]));
 
             } else if (split_line[0] == "f") {
-                vertices_order.push_back(std::stoi(split_string(split_line[1], '/')[0]));
-                vertices_order.push_back(std::stoi(split_string(split_line[2], '/')[0]));
-                vertices_order.push_back(std::stoi(split_string(split_line[3], '/')[0]));
+                vertices_order.push_back(std::stoi(utils::split_string(split_line[1], '/')[0]));
+                vertices_order.push_back(std::stoi(utils::split_string(split_line[2], '/')[0]));
+                vertices_order.push_back(std::stoi(utils::split_string(split_line[3], '/')[0]));
 
-                normals_order.push_back(std::stoi(split_string(split_line[1], '/')[2]));
-                normals_order.push_back(std::stoi(split_string(split_line[2], '/')[2]));
-                normals_order.push_back(std::stoi(split_string(split_line[3], '/')[2]));
+                normals_order.push_back(std::stoi(utils::split_string(split_line[1], '/')[2]));
+                normals_order.push_back(std::stoi(utils::split_string(split_line[2], '/')[2]));
+                normals_order.push_back(std::stoi(utils::split_string(split_line[3], '/')[2]));
             }
         }
 

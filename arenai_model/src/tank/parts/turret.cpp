@@ -10,7 +10,6 @@
 
 using namespace arenai;
 using namespace arenai::model;
-using namespace arenai::controller;
 
 namespace arenai::model {
 
@@ -42,7 +41,7 @@ namespace arenai::model {
         // the servo
     }
 
-    void TurretItem::apply_input(const user_input &input) {
+    void TurretItem::apply_input(const controller::user_input &input) {
         // angle is the hinge target in radians; input.right_joystick.x is a per-frame
         // delta already expressed in rad/frame by the controller handler.
         angle += -input.right_joystick.x;
@@ -57,7 +56,7 @@ namespace arenai::model {
 
     std::vector<JPH::Ref<JPH::TwoBodyConstraint>> TurretItem::get_constraints() {
         auto constraints = JoltItem::get_constraints();
-        constraints.push_back(hinge.GetPtr());
+        constraints.emplace_back(hinge.GetPtr());
         return constraints;
     }
 

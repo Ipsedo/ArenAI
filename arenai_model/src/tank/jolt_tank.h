@@ -39,7 +39,7 @@ namespace arenai::model {
         ~JoltTank() override;
 
     protected:
-        void remove_constraints_from_engine();
+        void remove_constraints_from_engine() const;
         JoltPhysicEngine &engine;
 
     private:

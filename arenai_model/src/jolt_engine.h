@@ -67,7 +67,7 @@ namespace arenai::model {
         ray_test(glm::vec3 from, glm::vec3 to, const std::vector<JPH::BodyID> &excluded) const;
 
         // for items building their body / reading it back
-        JPH::BodyInterface &get_body_interface();
+        JPH::BodyInterface &get_body_interface() const;
         float get_wanted_frequency() const;
 
         // Bullet's motion-state latency interpolation offset: leftover time

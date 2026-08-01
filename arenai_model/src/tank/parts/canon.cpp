@@ -127,7 +127,7 @@ namespace arenai::model {
 
     std::vector<JPH::Ref<JPH::TwoBodyConstraint>> CanonItem::get_constraints() {
         auto constraints = JoltItem::get_constraints();
-        constraints.push_back(hinge.GetPtr());
+        constraints.emplace_back(hinge.GetPtr());
         return constraints;
     }
 

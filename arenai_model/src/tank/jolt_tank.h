@@ -33,6 +33,7 @@ namespace arenai::model {
         std::vector<std::shared_ptr<controller::Controller>> get_controllers() override;
         std::map<std::string, std::shared_ptr<Shape>> load_shell_shapes() const override;
         bool is_dead() override;
+        int get_received_hits();
         std::shared_ptr<Item> get_chassis() override;
         std::shared_ptr<Item> get_canon() override;
 

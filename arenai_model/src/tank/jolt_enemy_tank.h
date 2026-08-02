@@ -73,6 +73,7 @@ namespace arenai::model {
         float optimal_distance;
 
         float miss_cost;
+        float hit_received_cost;
 
         bool is_dead_already_triggered;
 

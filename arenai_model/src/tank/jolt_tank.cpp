@@ -165,6 +165,12 @@ namespace arenai::model {
         return std::ranges::any_of(life_items, [](const LifeItem *li) { return li->is_dead(); });
     }
 
+    int JoltTank::get_received_hits() {
+        int hits = 0;
+        for (const auto life_item: life_items) hits += life_item->consume_hits_received();
+        return hits;
+    }
+
     std::shared_ptr<Item> JoltTank::get_chassis() { return chassis; }
 
     std::shared_ptr<Item> JoltTank::get_canon() { return canon; }

@@ -60,10 +60,12 @@ namespace arenai::model {
         bool is_already_dead();
 
         float receive_damages(float damages);
+        int consume_hits_received();
 
     private:
         float health_points;
         bool already_dead;
+        int hits_received;
     };
 
 }// namespace arenai::model

@@ -35,8 +35,9 @@ namespace arenai::model {
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), distance_scale(250.f),
           dispersion_angle_scale(glm::radians(7.5f)), dispersion_reward_scale(0.1f),
-          optimal_distance(75.f), miss_cost(0.01f), is_dead_already_triggered(false),
-          has_touch(false), action_stats(std::make_shared<ActionStats>()) {}
+          optimal_distance(75.f), miss_cost(0.01f), hit_received_cost(0.25f),
+          is_dead_already_triggered(false), has_touch(false),
+          action_stats(std::make_shared<ActionStats>()) {}
 
     float JoltEnemyTank::compute_aim_angle(const std::shared_ptr<EnemyTank> &other_tank) {
         const auto canon_tr = get_canon()->get_model_matrix();
@@ -188,8 +189,12 @@ namespace arenai::model {
             tracked_shells.erase(tracked_shells.begin() + i);
         }
 
-        // 4. total reward
-        const float reward = dead_penalty + shells_reward;
+        // 4. hits received penalty
+        const float hit_received_penalty =
+            -hit_received_cost * static_cast<float>(get_received_hits());
+
+        // 5. total reward
+        const float reward = dead_penalty + shells_reward + hit_received_penalty;
 
         return reward;
     }

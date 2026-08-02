@@ -19,7 +19,8 @@
 
 // The gui/ folder is a hexagon of its own: this header is its only public
 // port, and it exposes no RmlUi type — the library stays an implementation
-// detail of rml_menu.cpp, exactly like GL stays inside arenai_view.
+// detail of rml_menu.cpp and the rml/ subfolder, exactly like GL stays
+// inside arenai_view.
 namespace arenai::desktop::gui {
 
     // what the player can tune in the menu before launching a game

@@ -34,8 +34,8 @@ namespace arenai::model {
             [this](const std::shared_ptr<ShellItem> &shell) { on_shell_fired(shell); }),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), distance_scale(250.f),
-          dispersion_angle_scale(glm::radians(7.5f)), dispersion_reward_scale(0.1f),
-          optimal_distance(75.f), miss_cost(0.05f), hit_received_cost(0.05f),
+          dispersion_angle_scale(glm::radians(7.5f)), hit_distance_scale(10.f),
+          hit_reward_scale(1.f), optimal_distance(75.f), miss_cost(0.1f), hit_received_cost(0.25f),
           is_dead_already_triggered(false), has_touch(false),
           action_stats(std::make_shared<ActionStats>()) {}
 
@@ -54,7 +54,7 @@ namespace arenai::model {
         return std::acos(d);
     }
 
-    float JoltEnemyTank::compute_dispersion_reward(
+    float JoltEnemyTank::compute_hit_reward(
         const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos, const glm::vec3 &shell_pos) const {
         const glm::vec3 fire_to_enemy = enemy_pos - fire_pos;
         const glm::vec3 fire_to_shell = shell_pos - fire_pos;
@@ -62,8 +62,13 @@ namespace arenai::model {
         const float angle = std::atan2(
             glm::length(glm::cross(fire_to_enemy, fire_to_shell)),
             glm::dot(fire_to_enemy, fire_to_shell));
+        const auto distance = glm::length(shell_pos - enemy_pos);
 
-        return std::exp(-0.5f * std::pow(angle / dispersion_angle_scale, 2.f));
+        const auto dispersion_reward =
+            std::exp(-0.5f * std::pow(angle / dispersion_angle_scale, 2.f));
+        const auto distance_reward = std::exp(-0.5f * std::pow(distance / hit_distance_scale, 2.f));
+
+        return dispersion_reward * distance_reward;
     }
 
     void JoltEnemyTank::update_closest_approach(
@@ -179,8 +184,8 @@ namespace arenai::model {
                 // the gaussian stays an order of magnitude under the hit bonus: a gradient
                 // toward the aim, not a farmable income; fire_cost alone taxes the spam
                 shells_reward +=
-                    dispersion_reward_scale
-                    * compute_dispersion_reward(
+                    hit_reward_scale
+                    * compute_hit_reward(
                         tracked.fire_pos, tracked.enemy_pos_at_t, tracked.shell_pos_at_t);
                 if (tracked.has_hit) shells_reward += tracked.has_killed ? 2.f : 1.f;
                 else shells_reward -= miss_cost;

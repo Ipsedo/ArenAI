@@ -29,8 +29,8 @@ namespace arenai::agent {
         float gamma = 0.995f;
         int replay_buffer_size = 300000;
         int train_every = 256;
-        int epochs = 64;
-        int batch_size = 1024;
+        int epochs = 128;
+        int batch_size = 256;
     };
 
     std::vector<CliField<SacHyperParams>> sac_cli_fields();

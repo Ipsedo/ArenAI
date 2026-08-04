@@ -68,8 +68,11 @@ namespace arenai::model {
         int curr_frame_upside_down;
 
         float distance_scale;
+
         float dispersion_angle_scale;
-        float dispersion_reward_scale;
+        float hit_distance_scale;
+        float hit_reward_scale;
+
         float optimal_distance;
 
         float miss_cost;
@@ -93,7 +96,7 @@ namespace arenai::model {
             TrackedShell &tracked, const glm::vec3 &shell_pos,
             const std::vector<std::shared_ptr<EnemyTank>> &tanks) const;
 
-        float compute_dispersion_reward(
+        float compute_hit_reward(
             const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos,
             const glm::vec3 &shell_pos) const;
     };

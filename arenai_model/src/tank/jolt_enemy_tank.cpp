@@ -35,7 +35,7 @@ namespace arenai::model {
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), distance_scale(250.f),
           dispersion_angle_scale(glm::radians(7.5f)), hit_distance_scale(10.f),
-          hit_reward_scale(1.f), optimal_distance(75.f), miss_cost(0.1f), hit_received_cost(0.25f),
+          hit_reward_scale(0.5f), optimal_distance(75.f), miss_cost(0.25f), hit_received_cost(0.1f),
           is_dead_already_triggered(false), has_touch(false),
           action_stats(std::make_shared<ActionStats>()) {}
 

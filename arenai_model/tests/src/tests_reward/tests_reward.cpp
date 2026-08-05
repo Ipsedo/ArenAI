@@ -85,7 +85,7 @@ TEST_F(RewardTest, DeathPenaltyIsMinusOne) {
 
     // death and suicide share the same penalty so early termination is never an escape;
     // the fatal hit also counts as a received hit (-0.05)
-    ASSERT_FLOAT_EQ(death_reward, -1.25f);
+    ASSERT_FLOAT_EQ(death_reward, -1.1f);
 }
 
 // ========================================================================

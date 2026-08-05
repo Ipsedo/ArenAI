@@ -29,7 +29,8 @@ namespace arenai::model {
         const std::string &tank_prefix_name, glm::vec3 chassis_pos,
         const float wanted_frame_frequency,
         const std::function<void(const ShellContactInfo &, Item *)> &on_contact_callback,
-        const std::function<void(const std::shared_ptr<ShellItem> &)> &on_shell_fired_callback)
+        const std::function<void(const std::shared_ptr<ShellItem> &)> &on_shell_fired_callback,
+        const std::function<bool()> &can_fire_callback)
         : engine(engine), name(tank_prefix_name), camera(std::nullptr_t()),
           file_reader(file_reader) {
 
@@ -104,7 +105,7 @@ namespace arenai::model {
             [on_contact_callback](const glm::vec3 fire_pos, const glm::vec3 hit_pos, Item *item) {
                 on_contact_callback({fire_pos, hit_pos}, item);
             },
-            on_shell_fired_callback);
+            on_shell_fired_callback, can_fire_callback);
 
         jolt_items.push_back(canon_item);
         items.push_back(canon_item);

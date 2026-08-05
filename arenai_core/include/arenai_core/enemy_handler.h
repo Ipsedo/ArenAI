@@ -8,7 +8,6 @@
 #include <chrono>
 
 #include <arenai_controller/handler.h>
-#include <arenai_model/action_stats.h>
 
 #include "./types.h"
 
@@ -16,8 +15,7 @@ namespace arenai::core {
     class EnemyControllerHandler final : public controller::EventHandler<Action> {
     public:
         explicit EnemyControllerHandler(
-            float refresh_frequency, float wanted_fire_frequency,
-            const std::shared_ptr<model::ActionStats> &action_stats, float turret_rad_per_second);
+            float refresh_frequency, float wanted_fire_frequency, float turret_rad_per_second);
 
     protected:
         std::tuple<bool, controller::user_input> to_output(Action event) override;
@@ -25,8 +23,6 @@ namespace arenai::core {
     private:
         int nb_frames_to_fire;
         int curr_frame;
-
-        std::shared_ptr<model::ActionStats> action_stats;
 
         float turret_scale_per_frame;
     };

@@ -58,7 +58,7 @@ namespace arenai::agent {
             std::vector<bool> has_fired_result;
             has_fired_result.reserve(nb_tanks);
             for (const auto &factory: factories)
-                has_fired_result.push_back(factory->get_action_stats()->has_fire());
+                has_fired_result.push_back(factory->has_fired_shell());
             return has_fired_result;
         });
 

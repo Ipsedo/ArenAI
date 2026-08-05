@@ -26,7 +26,8 @@ namespace arenai::model {
             float wanted_frame_frequency,
             const std::function<void(const ShellContactInfo &, Item *)> &on_contact_callback,
             const std::function<void(const std::shared_ptr<ShellItem> &)> &on_shell_fired_callback =
-                [](const std::shared_ptr<ShellItem> &) {});
+                [](const std::shared_ptr<ShellItem> &) {},
+            const std::function<bool()> &can_fire_callback = [] { return true; });
 
         std::shared_ptr<view::AbstractCamera> get_camera() override;
         std::vector<std::shared_ptr<Item>> get_items() override;

@@ -16,42 +16,15 @@ repos:
         name: build
         language: system
         entry: sh
-        args: [ ./build_linux.sh ]
+        args: [ "./build_linux.sh" ]
         types: [ c++, c ]
         pass_filenames: false
         require_serial: true
-      - id: test_view
-        name: test_view
+      - id: tests
+        name: tests
         language: system
-        entry: ./build/arenai_view/tests/arenai_view_tests
-        types: [ c++, c ]
-        pass_filenames: false
-        require_serial: true
-      - id: test_model
-        name: test_model
-        language: system
-        entry: ./build/arenai_model/tests/arenai_model_tests
-        types: [ c++, c ]
-        pass_filenames: false
-        require_serial: true
-      - id: test_core
-        name: test_core
-        language: system
-        entry: ./build/arenai_core/tests/arenai_core_tests
-        types: [ c++, c ]
-        pass_filenames: false
-        require_serial: true
-      - id: test_agent
-        name: test_agent
-        language: system
-        entry: ./build/arenai_agent/tests/arenai_agent_tests
-        types: [ c++, c ]
-        pass_filenames: false
-        require_serial: true
-      - id: test_desktop
-        name: test_desktop
-        language: system
-        entry: ./build/arenai_desktop/tests/arenai_desktop_tests
+        entry: ctest
+        args: [ "--build-dir", "./build", "--output-on-failure" ]
         types: [ c++, c ]
         pass_filenames: false
         require_serial: true

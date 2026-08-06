@@ -54,6 +54,7 @@ namespace arenai::agent {
           critic_std_loss_metric(std::make_shared<StdMetric>("v_σ", metric_window_size)),
           continuous_entropy_metric(std::make_shared<MeanMetric>("Hc", metric_window_size)),
           discrete_entropy_metric(std::make_shared<MeanMetric>("Hd", metric_window_size)),
+          sigma_metric(std::make_shared<MeanMetric>("σ", metric_window_size)),
           clip_fraction_metric(std::make_shared<MeanMetric>("clip", metric_window_size)),
           kl_metric(std::make_shared<MeanMetric>("kl", metric_window_size, 2, true)), gamma(gamma),
           gae_lambda(gae_lambda), clip_epsilon(clip_epsilon), target_kl(target_kl),
@@ -173,6 +174,7 @@ namespace arenai::agent {
 
                 continuous_entropy_metric->add(continuous_entropy.mean().item<float>());
                 discrete_entropy_metric->add(discrete_entropy.mean().item<float>());
+                sigma_metric->add(sigma.mean().item<float>());
 
                 clip_fraction_metric->add(
                     ((ratio - 1.f).abs() > clip_epsilon).to(torch::kFloat).mean().item<float>());
@@ -242,10 +244,9 @@ namespace arenai::agent {
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> PpoTrainer::get_metrics() {
-        return {actor_mean_loss_metric,    actor_std_loss_metric,
-                critic_mean_loss_metric,   critic_std_loss_metric,
-                continuous_entropy_metric, discrete_entropy_metric,
-                clip_fraction_metric,      kl_metric};
+        return {actor_mean_loss_metric, actor_std_loss_metric,     critic_mean_loss_metric,
+                critic_std_loss_metric, continuous_entropy_metric, discrete_entropy_metric,
+                sigma_metric,           clip_fraction_metric,      kl_metric};
     }
 
     void PpoTrainer::save(const std::filesystem::path &output_folder) {

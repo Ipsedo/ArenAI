@@ -19,7 +19,11 @@ void EngineTestFixture::SetUp() {
 
     file_reader = std::make_shared<LocalAssetFileReader>(std::filesystem::path(ARENAI_ASSETS_DIR));
 
-    graphics_backend = view::make_vulkan_backend();
+    // one Vulkan backend (instance + device) shared by every test of the
+    // binary: recreating it per test dominated the suite's runtime
+    static const std::shared_ptr<view::AbstractGraphicBackend> shared_backend =
+        view::make_vulkan_backend();
+    graphics_backend = shared_backend;
 
     tank_factory = engine->get_tank_factory();
 }

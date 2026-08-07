@@ -193,5 +193,6 @@ TEST_F(RewardTest, ZeroRewardWithEmptyTankList) {
     ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN with empty tank list";
     ASSERT_FALSE(std::isinf(reward)) << "reward should not be Inf with empty tank list";
 
-    ASSERT_FLOAT_EQ(reward, 0.f);
+    // only the fire cost remains: no enemy to sample, so no gaussian income
+    ASSERT_FLOAT_EQ(reward, -0.05f);
 }

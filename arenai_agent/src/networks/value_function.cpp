@@ -27,14 +27,17 @@ ValueFunction::ValueFunction(
       to_value(register_module("to_value", torch::nn::Linear(hidden_sizes.back(), 1))) {
 
     head->push_back(torch::nn::Linear(
-        hidden_size_sensors + vision_encoder->get_output_size(), hidden_sizes.front()));
+        torch::nn::LinearOptions(
+            hidden_size_sensors + vision_encoder->get_output_size(), hidden_sizes.front())
+            .bias(false)));
     head->push_back(torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_sizes.front()})));
     head->push_back(torch::nn::SiLU());
 
     for (int i = 1; i < hidden_sizes.size(); i++) {
         const auto curr_size = hidden_sizes[i - 1];
         const auto next_size = hidden_sizes[i];
-        head->push_back(torch::nn::Linear(curr_size, next_size));
+        head->push_back(
+            torch::nn::Linear(torch::nn::LinearOptions(curr_size, next_size).bias(false)));
         head->push_back(torch::nn::LayerNorm(torch::nn::LayerNormOptions({next_size})));
         head->push_back(torch::nn::SiLU());
     }

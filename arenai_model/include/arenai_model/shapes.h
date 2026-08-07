@@ -5,7 +5,6 @@
 #ifndef ARENAI_SHAPES_H
 #define ARENAI_SHAPES_H
 
-#include <map>
 #include <memory>
 #include <string>
 #include <tuple>

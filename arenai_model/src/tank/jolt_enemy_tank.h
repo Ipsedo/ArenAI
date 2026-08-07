@@ -7,7 +7,6 @@
 
 #include <memory>
 
-#include <arenai_model/action_stats.h>
 #include <arenai_model/tank.h>
 
 #include "./jolt_tank.h"
@@ -48,12 +47,11 @@ namespace arenai::model {
         bool is_suicide() const override;
 
         bool has_hit_other_tank() override;
+        bool has_fired_shell() override;
 
         void on_death() override;
 
         std::vector<float> get_proprioception() override;
-
-        std::shared_ptr<ActionStats> get_action_stats() override;
 
         // Tank methods resolved via JoltTank
         using JoltTank::get_camera;
@@ -68,17 +66,26 @@ namespace arenai::model {
         int curr_frame_upside_down;
 
         float distance_scale;
-        float dispersion_angle_scale;
-        float dispersion_reward_scale;
-        float optimal_distance;
 
-        float miss_cost;
+        float miss_distance_scale;
+        float hit_reward_scale;
+
+        float optimal_distance;
+        float aim_angle_scale;
+
+        float hit_received_cost;
+        float fire_cost;
+
+        int initial_nb_shells;
+        int nb_shells;
+        int shells_recharged_per_hit;
 
         bool is_dead_already_triggered;
 
         bool has_touch;
+        bool has_fired;
+        int fires_since_reward;
         std::vector<TrackedShell> tracked_shells;
-        std::shared_ptr<ActionStats> action_stats;
 
         void on_shell_fired(const std::shared_ptr<ShellItem> &shell);
         void on_shell_contact(const ShellContactInfo &shell_info, Item *item);
@@ -92,7 +99,7 @@ namespace arenai::model {
             TrackedShell &tracked, const glm::vec3 &shell_pos,
             const std::vector<std::shared_ptr<EnemyTank>> &tanks) const;
 
-        float compute_dispersion_reward(
+        float compute_hit_reward(
             const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos,
             const glm::vec3 &shell_pos) const;
     };

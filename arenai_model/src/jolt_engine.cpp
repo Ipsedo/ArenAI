@@ -156,7 +156,7 @@ namespace arenai::model {
     void JoltPhysicEngine::add_item_locked(const std::shared_ptr<JoltItem> &item) {
         items.push_back(item);
 
-        auto *body = item->get_body();
+        const auto *body = item->get_body();
         physics_system->GetBodyInterface().AddBody(body->GetID(), JPH::EActivation::Activate);
 
         for (const auto &constraint: item->get_constraints()) {
@@ -182,7 +182,7 @@ namespace arenai::model {
         for (const auto &constraint: item->get_constraints()) {
             physics_system->RemoveConstraint(constraint);
 
-            for (auto *body: {constraint->GetBody1(), constraint->GetBody2()}) {
+            for (const auto *body: {constraint->GetBody1(), constraint->GetBody2()}) {
                 if (const auto it = constraints_per_body.find(body->GetID());
                     it != constraints_per_body.end()) {
                     std::erase(it->second, constraint);
@@ -277,11 +277,11 @@ namespace arenai::model {
         const JPH::Vec3 direction(to.x - from.x, to.y - from.y, to.z - from.z);
 
         const JPH::RRayCast ray(origin, direction);
-        JPH::RayCastResult result;
 
         const ExcludingBodyFilter body_filter(excluded);
 
-        if (physics_system->GetNarrowPhaseQuery().CastRay(ray, result, {}, {}, body_filter))
+        if (JPH::RayCastResult result;
+            physics_system->GetNarrowPhaseQuery().CastRay(ray, result, {}, {}, body_filter))
             return result.mFraction;
         return std::nullopt;
     }
@@ -295,7 +295,7 @@ namespace arenai::model {
 
     std::shared_ptr<TankFactory> JoltPhysicEngine::get_tank_factory() { return tank_factory; }
 
-    JPH::BodyInterface &JoltPhysicEngine::get_body_interface() {
+    JPH::BodyInterface &JoltPhysicEngine::get_body_interface() const {
         return physics_system->GetBodyInterface();
     }
 

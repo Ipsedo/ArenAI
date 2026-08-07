@@ -83,8 +83,9 @@ TEST_F(RewardTest, DeathPenaltyIsMinusOne) {
 
     const float death_reward = tanks[1]->get_reward(tanks);
 
-    // death and suicide share the same penalty so early termination is never an escape
-    ASSERT_FLOAT_EQ(death_reward, -1.f);
+    // death and suicide share the same penalty so early termination is never an escape;
+    // the fatal hit also counts as a received hit (-0.05)
+    ASSERT_FLOAT_EQ(death_reward, -1.1f);
 }
 
 // ========================================================================
@@ -192,5 +193,6 @@ TEST_F(RewardTest, ZeroRewardWithEmptyTankList) {
     ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN with empty tank list";
     ASSERT_FALSE(std::isinf(reward)) << "reward should not be Inf with empty tank list";
 
-    ASSERT_FLOAT_EQ(reward, 0.f);
+    // only the fire cost remains: no enemy to sample, so no gaussian income
+    ASSERT_FLOAT_EQ(reward, -0.05f);
 }

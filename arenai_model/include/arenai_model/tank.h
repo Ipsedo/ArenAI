@@ -12,7 +12,6 @@
 #include <glm/glm.hpp>
 
 #include <arenai_controller/controller.h>
-#include <arenai_utils/file_reader.h>
 #include <arenai_view/camera.h>
 
 #include "./item.h"
@@ -23,8 +22,6 @@ namespace arenai::model {
         glm::vec3 fire_position;
         glm::vec3 current_position;
     };
-
-    class ActionStats;
 
     class Tank {
     public:
@@ -44,8 +41,8 @@ namespace arenai::model {
         virtual float get_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) = 0;
         virtual float get_phi(const std::vector<std::shared_ptr<EnemyTank>> &tanks) = 0;
         virtual std::vector<float> get_proprioception() = 0;
-        virtual std::shared_ptr<ActionStats> get_action_stats() = 0;
         virtual bool has_hit_other_tank() = 0;
+        virtual bool has_fired_shell() = 0;
         virtual bool is_suicide() const = 0;
         virtual bool is_first_frame_dead() = 0;
         virtual void on_death() = 0;

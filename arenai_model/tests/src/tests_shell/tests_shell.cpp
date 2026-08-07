@@ -6,8 +6,6 @@
 #include <memory>
 
 #include <arenai_controller/inputs.h>
-#include <arenai_model/action_stats.h>
-#include <arenai_model/constants.h>
 #include <arenai_model_tests/tests_shell/tests_shell.h>
 
 using namespace arenai;
@@ -146,18 +144,4 @@ TEST_F(ShellTest, ShellContactCallbackSetsReward) {
 
     const float reward = shared_a->get_reward(tanks);
     ASSERT_GT(reward, 0.f) << "reward should be positive after shell contact callback";
-}
-
-TEST_F(ShellTest, ActionStatsTracksFireButton) {
-    add_ground();
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
-
-    engine->step(1.f / 60.f);
-
-    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
-
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
-    shared_tank->get_action_stats()->process_input(fire_input);
-
-    ASSERT_TRUE(shared_tank->get_action_stats()->has_fire());
 }

@@ -31,12 +31,15 @@ namespace arenai::model {
         : JoltTank(
             engine, file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency,
             [this](const ShellContactInfo &info, Item *item) { on_shell_contact(info, item); },
-            [this](const std::shared_ptr<ShellItem> &shell) { on_shell_fired(shell); }),
+            [this](const std::shared_ptr<ShellItem> &shell) { on_shell_fired(shell); },
+            [this] { return nb_shells > 0; }),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-          curr_frame_upside_down(0), distance_scale(250.f),
-          dispersion_angle_scale(glm::radians(7.5f)), dispersion_reward_scale(0.1f),
-          optimal_distance(75.f), miss_cost(0.01f), is_dead_already_triggered(false),
-          has_touch(false), action_stats(std::make_shared<ActionStats>()) {}
+          curr_frame_upside_down(0), distance_scale(250.f), miss_distance_scale(2.f),
+          hit_reward_scale(0.5f), optimal_distance(75.f), aim_angle_scale(glm::radians(10.f)),
+          hit_received_cost(0.1f), fire_cost(0.05f), initial_nb_shells(30),
+          nb_shells(initial_nb_shells), shells_recharged_per_hit(5),
+          is_dead_already_triggered(false), has_touch(false), has_fired(false),
+          fires_since_reward(0) {}
 
     float JoltEnemyTank::compute_aim_angle(const std::shared_ptr<EnemyTank> &other_tank) {
         const auto canon_tr = get_canon()->get_model_matrix();
@@ -53,16 +56,18 @@ namespace arenai::model {
         return std::acos(d);
     }
 
-    float JoltEnemyTank::compute_dispersion_reward(
+    float JoltEnemyTank::compute_hit_reward(
         const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos, const glm::vec3 &shell_pos) const {
-        const glm::vec3 fire_to_enemy = enemy_pos - fire_pos;
-        const glm::vec3 fire_to_shell = shell_pos - fire_pos;
 
-        const float angle = std::atan2(
-            glm::length(glm::cross(fire_to_enemy, fire_to_shell)),
-            glm::dot(fire_to_enemy, fire_to_shell));
+        const glm::vec3 ideal_trajectory = enemy_pos - fire_pos;
+        const glm::vec3 miss_trajectory = shell_pos - enemy_pos;
 
-        return std::exp(-0.5f * std::pow(angle / dispersion_angle_scale, 2.f));
+        const float ideal_trajectory_distance = glm::length(ideal_trajectory);
+        const float miss_distance = glm::length(miss_trajectory);
+
+        const float ratio = miss_distance_scale * miss_distance / ideal_trajectory_distance;
+
+        return std::exp(-0.5f * std::pow(ratio, 2.f));
     }
 
     void JoltEnemyTank::update_closest_approach(
@@ -124,7 +129,9 @@ namespace arenai::model {
 
             const float distance_score =
                 std::exp(-0.5f * std::pow((distance - optimal_distance) / distance_scale, 2.f));
-            const float angle_score = (std::cos(angle) + 1.f) / 2.f;
+            // sharp gaussian: pointing the canon at an enemy is the dense precursor of a
+            // hit; the previous (cos+1)/2 was still at 0.93 with 30 degrees of error
+            const float angle_score = std::exp(-0.5f * std::pow(angle / aim_angle_scale, 2.f));
 
             scores.push_back(distance_score * angle_score);
             logits.push_back(-distance / distance_scale);
@@ -159,9 +166,12 @@ namespace arenai::model {
         // 2. dead / suicide penalty
         const auto dead_penalty = is_dead() ? -1.f : 0.f;
 
-        // 3. fired shells: sample the closest tank along the trajectory, pay the
-        // dispersion gaussian (plus hit/kill bonuses) once the shell dies
-        float shells_reward = 0.f;
+        // 3. fired shells: pay a small cost at fire time (a shot toward nobody must be
+        // net-negative, break-even at gaussian ~0.1), then sample the closest tank along
+        // the trajectory and pay the dispersion gaussian (plus hit/kill bonuses) once the
+        // shell dies
+        float shells_reward = -fire_cost * static_cast<float>(fires_since_reward);
+        fires_since_reward = 0;
         for (int i = static_cast<int>(tracked_shells.size()) - 1; i >= 0; i--) {
             auto &tracked = tracked_shells[i];
 
@@ -176,25 +186,33 @@ namespace arenai::model {
 
             if (tracked.has_sample) {
                 // the gaussian stays an order of magnitude under the hit bonus: a gradient
-                // toward the aim, not a farmable income; fire_cost alone taxes the spam
+                // toward the aim, not a farmable income; fire_cost and the shell reserve
+                // tax the spam
                 shells_reward +=
-                    dispersion_reward_scale
-                    * compute_dispersion_reward(
+                    hit_reward_scale
+                    * compute_hit_reward(
                         tracked.fire_pos, tracked.enemy_pos_at_t, tracked.shell_pos_at_t);
                 if (tracked.has_hit) shells_reward += tracked.has_killed ? 2.f : 1.f;
-                else shells_reward -= miss_cost;
             }
 
             tracked_shells.erase(tracked_shells.begin() + i);
         }
 
-        // 4. total reward
-        const float reward = dead_penalty + shells_reward;
+        // 4. hits received penalty
+        const float hit_received_penalty =
+            -hit_received_cost * static_cast<float>(get_received_hits());
+
+        // 5. total reward
+        const float reward = dead_penalty + shells_reward + hit_received_penalty;
 
         return reward;
     }
 
     void JoltEnemyTank::on_shell_fired(const std::shared_ptr<ShellItem> &shell) {
+        nb_shells--;
+        has_fired = true;
+        fires_since_reward++;
+
         tracked_shells.push_back(
             {.shell = shell,
              .fire_pos = shell->get_fire_position(),
@@ -226,6 +244,9 @@ namespace arenai::model {
             }
         }
 
+        // a shell dies on its first contact, so a hit recharges exactly once
+        if (hit) nb_shells += shells_recharged_per_hit;
+
         for (auto &tracked: tracked_shells) {
             if (tracked.has_final_pos || tracked.fire_pos != shell_info.fire_position) continue;
 
@@ -235,6 +256,14 @@ namespace arenai::model {
             tracked.has_killed = killed;
             break;
         }
+    }
+
+    bool JoltEnemyTank::has_fired_shell() {
+        if (has_fired) {
+            has_fired = false;
+            return true;
+        }
+        return false;
     }
 
     bool JoltEnemyTank::has_hit_other_tank() {
@@ -299,9 +328,10 @@ namespace arenai::model {
                 {pos.x, pos.y, pos.z, vel.x, vel.y, vel.z, item_forward.x, item_forward.y,
                  item_forward.z, item_up.x, item_up.y, item_up.z, ang_vel.x, ang_vel.y, ang_vel.z});
         }
+
+        result.push_back(static_cast<float>(nb_shells) / static_cast<float>(initial_nb_shells));
+
         return result;
     }
-
-    std::shared_ptr<ActionStats> JoltEnemyTank::get_action_stats() { return action_stats; }
 
 }// namespace arenai::model

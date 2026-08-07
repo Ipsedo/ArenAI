@@ -56,6 +56,9 @@ namespace arenai::agent {
         std::shared_ptr<AbstractMetric> continuous_entropy_metric;
         std::shared_ptr<AbstractMetric> discrete_entropy_metric;
 
+        // mean sigma of the truncated normal: direct view of the aim spread, Hc only bounds it
+        std::shared_ptr<AbstractMetric> sigma_metric;
+
         std::shared_ptr<AbstractMetric> clip_fraction_metric;
         std::shared_ptr<AbstractMetric> kl_metric;
 

@@ -11,7 +11,8 @@ namespace arenai::model {
 
     constexpr float WHEEL_RADIAL_VELOCITY = static_cast<float>(M_PI) * 5.f;
 
-    constexpr int ENEMY_PROPRIOCEPTION_SIZE = (3 + 3 + 3 + 3 + 3) * (6 + 3) - 3;
+    // (pos, vel, forward, up, ang_vel) * (9 items: 6 wheels, 1 chassis, 1 turret, 1 canon) - chassis pos + remaining shells ratio
+    constexpr int ENEMY_PROPRIOCEPTION_SIZE = (3 + 3 + 3 + 3 + 3) * (6 + 3) - 3 + 1;
     constexpr int ENEMY_NB_CONTINUOUS_ACTION = 2 + 2;
     constexpr int ENEMY_NB_DISCRETE_ACTION = 2;
 

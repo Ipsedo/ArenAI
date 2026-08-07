@@ -33,14 +33,16 @@ namespace arenai::model {
         glm::vec3 rel_pos, glm::vec3 scale, float mass, JPH::Body *turret,
         const float wanted_frame_frequency,
         const std::function<void(glm::vec3, glm::vec3, Item *)> &on_contact,
-        const std::function<void(const std::shared_ptr<ShellItem> &)> &on_shell_fired)
+        const std::function<void(const std::shared_ptr<ShellItem> &)> &on_shell_fired,
+        const std::function<bool()> &can_fire)
         : LifeItem(5), ConvexItem(
                            prefix_name + "_canon", engine,
                            std::make_shared<ObjShape>(
                                file_reader, std::filesystem::path("obj") / "anubis_canon.obj"),
                            pos, scale, mass),
           angle(0.f), file_reader(file_reader), will_fire(false), on_contact(on_contact),
-          on_shell_fired(on_shell_fired), wanted_frame_frequency(wanted_frame_frequency) {
+          on_shell_fired(on_shell_fired), can_fire(can_fire),
+          wanted_frame_frequency(wanted_frame_frequency) {
 
         JPH::HingeConstraintSettings settings;
         settings.mSpace = JPH::EConstraintSpace::LocalToBodyCOM;
@@ -104,7 +106,7 @@ namespace arenai::model {
 
         hinge->SetTargetAngle(angle);
 
-        if (input.fire_button.pressed) will_fire = true;
+        if (input.fire_button.pressed && can_fire()) will_fire = true;
     }
 
     glm::vec3 CanonItem::pos() {
@@ -127,7 +129,7 @@ namespace arenai::model {
 
     std::vector<JPH::Ref<JPH::TwoBodyConstraint>> CanonItem::get_constraints() {
         auto constraints = JoltItem::get_constraints();
-        constraints.push_back(hinge.GetPtr());
+        constraints.emplace_back(hinge.GetPtr());
         return constraints;
     }
 

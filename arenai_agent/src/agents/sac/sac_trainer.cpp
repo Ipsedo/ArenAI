@@ -52,9 +52,9 @@ namespace arenai::agent {
           alpha_continuous(std::make_shared<AlphaParameter>(0.01f)),
           alpha_discrete(std::make_shared<AlphaParameter>(0.01f)),
           continuous_target_entropy(std::make_shared<ContinuousCosineAnnealingTargetEntropy>(
-              nb_continuous_actions, 0.7f, 0.1f, 100000)),
+              nb_continuous_actions, 0.7f, 0.1f, 1000000)),
           discrete_target_entropy(
-              std::make_shared<DiscreteCosineAnnealingTargetEntropy>(0.5f, 0.1f, 100000)),
+              std::make_shared<DiscreteCosineAnnealingTargetEntropy>(0.5f, 0.1f, 1000000)),
           actor_optim(std::make_unique<torch::optim::Adam>(
               this->actor->parameters(), torch::optim::AdamOptions(actor_learning_rate))),
           critic_1_optim(std::make_unique<torch::optim::Adam>(

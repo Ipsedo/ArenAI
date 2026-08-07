@@ -87,8 +87,7 @@ namespace arenai::core {
                 glm::vec3(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng))));
 
             tank_controller_handler.push_back(std::make_unique<EnemyControllerHandler>(
-                wanted_frequency, 1.f / 6.f, tanks.back()->get_action_stats(),
-                model::ENEMY_TURRET_RADIAL_VELOCITY));
+                wanted_frequency, 1.f / 6.f, model::ENEMY_TURRET_RADIAL_VELOCITY));
 
             for (const auto &controller: tanks.back()->get_controllers())
                 tank_controller_handler.back()->add_controller(controller);

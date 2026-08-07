@@ -11,11 +11,12 @@
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Collision/Shape/MeshShape.h>
 
+#include <arenai_utils/cache.h>
+
 #include "../jolt_engine.h"
 
 using namespace arenai;
 using namespace arenai::model;
-using namespace arenai::utils;
 
 namespace arenai::model {
 
@@ -24,7 +25,7 @@ namespace arenai::model {
         const std::shared_ptr<utils::AbstractResourceFileReader> &img_reader,
         const std::filesystem::path &height_map_file, glm::vec3 pos, glm::vec3 scale)
         : JoltItem(std::move(name), engine), shape_id(height_map_file.string()), scale(scale) {
-        ImageChannels tmp = img_reader->read_png(height_map_file);
+        utils::ImageChannels tmp = img_reader->read_png(height_map_file);
         auto [width, height, pixels] = utils::AbstractResourceFileReader::to_img_grey(tmp);
 
         map_width = width;
@@ -44,41 +45,57 @@ namespace arenai::model {
             glm::vec3(-2000.f, -2000.f, -2000.f), glm::vec3(2000.f, 2000.f, 2000.f), min_height,
             max_height);
 
-        // collision mesh: same grid, same centering and diamond subdivision as
-        // Bullet's btHeightfieldTerrainShape, triangles wound to face +Y (Jolt
-        // meshes are single-sided)
-        JPH::TriangleList triangles;
-        triangles.reserve(2 * (map_height - 1) * (map_width - 1));
+        // the Jolt MeshShape build (indexify, active edges, BVH) takes seconds
+        // on a big grid; the shape is immutable and refcounted, so identical
+        // (file, scale) pairs share one instance across engines for the whole
+        // process (the Jolt runtime itself is never torn down)
+        static utils::Cache<JPH::ShapeRefC> shape_cache;
 
-        auto to_jolt = [](const glm::vec3 &v) { return JPH::Float3(v.x, v.y, v.z); };
+        const std::string cache_key = shape_id + "|" + std::to_string(scale.x) + ","
+                                      + std::to_string(scale.y) + "," + std::to_string(scale.z);
 
-        auto push_triangle = [&](const glm::vec3 &p0, const glm::vec3 &p1, const glm::vec3 &p2) {
-            const glm::vec3 normal = glm::cross(p1 - p0, p2 - p0);
-            if (normal.y >= 0.f) triangles.emplace_back(to_jolt(p0), to_jolt(p1), to_jolt(p2));
-            else triangles.emplace_back(to_jolt(p0), to_jolt(p2), to_jolt(p1));
-        };
+        JPH::ShapeRefC mesh_shape;
+        if (shape_cache.exists(cache_key)) {
+            mesh_shape = shape_cache.get(cache_key);
+        } else {
+            // collision mesh: same grid, same centering and diamond subdivision as
+            // Bullet's btHeightfieldTerrainShape, triangles wound to face +Y (Jolt
+            // meshes are single-sided)
+            JPH::TriangleList triangles;
+            triangles.reserve(2 * (map_height - 1) * (map_width - 1));
 
-        for (int z = 0; z < map_height - 1; ++z) {
-            for (int x = 0; x < map_width - 1; ++x) {
-                const glm::vec3 p00 = make_pos(x, z, min_height, max_height);
-                const glm::vec3 p10 = make_pos(x + 1, z, min_height, max_height);
-                const glm::vec3 p01 = make_pos(x, z + 1, min_height, max_height);
-                const glm::vec3 p11 = make_pos(x + 1, z + 1, min_height, max_height);
+            auto to_jolt = [](const glm::vec3 &v) { return JPH::Float3(v.x, v.y, v.z); };
 
-                // btHeightfieldTerrainShape with diamond subdivision alternates
-                // the split diagonal on (x + z) parity
-                if ((x + z) % 2 == 0) {
-                    push_triangle(p00, p01, p11);
-                    push_triangle(p00, p11, p10);
-                } else {
-                    push_triangle(p00, p01, p10);
-                    push_triangle(p10, p01, p11);
+            auto push_triangle = [&](const glm::vec3 &p0, const glm::vec3 &p1,
+                                     const glm::vec3 &p2) {
+                const glm::vec3 normal = glm::cross(p1 - p0, p2 - p0);
+                if (normal.y >= 0.f) triangles.emplace_back(to_jolt(p0), to_jolt(p1), to_jolt(p2));
+                else triangles.emplace_back(to_jolt(p0), to_jolt(p2), to_jolt(p1));
+            };
+
+            for (int z = 0; z < map_height - 1; ++z) {
+                for (int x = 0; x < map_width - 1; ++x) {
+                    const glm::vec3 p00 = make_pos(x, z, min_height, max_height);
+                    const glm::vec3 p10 = make_pos(x + 1, z, min_height, max_height);
+                    const glm::vec3 p01 = make_pos(x, z + 1, min_height, max_height);
+                    const glm::vec3 p11 = make_pos(x + 1, z + 1, min_height, max_height);
+
+                    // btHeightfieldTerrainShape with diamond subdivision alternates
+                    // the split diagonal on (x + z) parity
+                    if ((x + z) % 2 == 0) {
+                        push_triangle(p00, p01, p11);
+                        push_triangle(p00, p11, p10);
+                    } else {
+                        push_triangle(p00, p01, p10);
+                        push_triangle(p10, p01, p11);
+                    }
                 }
             }
-        }
 
-        const JPH::MeshShapeSettings mesh_settings(triangles);
-        const JPH::ShapeRefC mesh_shape = mesh_settings.Create().Get();
+            const JPH::MeshShapeSettings mesh_settings(triangles);
+            mesh_shape = mesh_settings.Create().Get();
+            shape_cache.add(cache_key, mesh_shape);
+        }
 
         JPH::BodyCreationSettings body_settings(
             mesh_shape, JPH::RVec3(pos.x, pos.y, pos.z), JPH::Quat::sIdentity(),

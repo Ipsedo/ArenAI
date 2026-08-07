@@ -4,8 +4,6 @@
 
 #include "./shell.h"
 
-#include <utility>
-
 using namespace arenai;
 using namespace arenai::model;
 

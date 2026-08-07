@@ -12,7 +12,6 @@
 
 using namespace arenai;
 using namespace arenai::model;
-using namespace arenai::controller;
 
 namespace arenai::model {
 
@@ -79,7 +78,7 @@ namespace arenai::model {
         this->front_axle_z = front_axle_z;
     }
 
-    void WheelItem::apply_input(const user_input &input) {
+    void WheelItem::apply_input(const controller::user_input &input) {
         const auto radial_velocity = -input.left_joystick.y * WHEEL_RADIAL_VELOCITY;
 
         const float angle = input.left_joystick.x * WHEEL_DIRECTION_MAX_RADIAN;
@@ -93,7 +92,7 @@ namespace arenai::model {
 
     std::vector<JPH::Ref<JPH::TwoBodyConstraint>> WheelItem::get_constraints() {
         auto constraints = JoltItem::get_constraints();
-        constraints.push_back(hinge.GetPtr());
+        constraints.emplace_back(hinge.GetPtr());
         return constraints;
     }
 
@@ -102,8 +101,8 @@ namespace arenai::model {
 
         const float delta = front_wheel_orientation_radian;
 
-        constexpr float eps = 1e-6f;
-        if (std::fabs(delta) < eps || std::fabs(std::tan(delta)) < eps) {
+        if (constexpr float eps = 1e-6f;
+            std::fabs(delta) < eps || std::fabs(std::tan(delta)) < eps) {
             return original_rotation_velocity;
         }
 
@@ -124,7 +123,7 @@ namespace arenai::model {
  * DirectionalWheelItem
  */
 
-    void DirectionalWheelItem::apply_input(const user_input &input) {
+    void DirectionalWheelItem::apply_input(const controller::user_input &input) {
         WheelItem::apply_input(input);
 
         const float angle = input.left_joystick.x * WHEEL_DIRECTION_MAX_RADIAN * angle_factor;

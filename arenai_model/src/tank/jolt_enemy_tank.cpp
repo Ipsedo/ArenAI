@@ -59,13 +59,13 @@ namespace arenai::model {
     float JoltEnemyTank::compute_hit_reward(
         const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos, const glm::vec3 &shell_pos) const {
 
-        const glm::vec3 trajectory = shell_pos - fire_pos;
+        const glm::vec3 ideal_trajectory = enemy_pos - fire_pos;
         const glm::vec3 miss_trajectory = shell_pos - enemy_pos;
 
-        const float fire_distance = glm::length(trajectory);
+        const float ideal_trajectory_distance = glm::length(ideal_trajectory);
         const float miss_distance = glm::length(miss_trajectory);
 
-        const float ratio = miss_distance_scale * miss_distance / fire_distance;
+        const float ratio = miss_distance_scale * miss_distance / ideal_trajectory_distance;
 
         return std::exp(-0.5f * std::pow(ratio, 2.f));
     }

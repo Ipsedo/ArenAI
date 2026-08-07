@@ -67,8 +67,7 @@ namespace arenai::model {
 
         float distance_scale;
 
-        float dispersion_angle_scale;
-        float hit_distance_scale;
+        float miss_distance_scale;
         float hit_reward_scale;
 
         float optimal_distance;

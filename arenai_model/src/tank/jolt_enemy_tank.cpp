@@ -34,8 +34,7 @@ namespace arenai::model {
             [this](const std::shared_ptr<ShellItem> &shell) { on_shell_fired(shell); },
             [this] { return nb_shells > 0; }),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-          curr_frame_upside_down(0), distance_scale(250.f),
-          dispersion_angle_scale(glm::radians(7.5f)), hit_distance_scale(30.f),
+          curr_frame_upside_down(0), distance_scale(250.f), miss_distance_scale(2.f),
           hit_reward_scale(0.5f), optimal_distance(75.f), aim_angle_scale(glm::radians(10.f)),
           hit_received_cost(0.1f), fire_cost(0.05f), initial_nb_shells(30),
           nb_shells(initial_nb_shells), shells_recharged_per_hit(5),
@@ -59,19 +58,16 @@ namespace arenai::model {
 
     float JoltEnemyTank::compute_hit_reward(
         const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos, const glm::vec3 &shell_pos) const {
-        const glm::vec3 fire_to_enemy = enemy_pos - fire_pos;
-        const glm::vec3 fire_to_shell = shell_pos - fire_pos;
 
-        const float angle = std::atan2(
-            glm::length(glm::cross(fire_to_enemy, fire_to_shell)),
-            glm::dot(fire_to_enemy, fire_to_shell));
-        const auto distance = glm::length(shell_pos - enemy_pos);
+        const glm::vec3 trajectory = shell_pos - fire_pos;
+        const glm::vec3 miss_trajectory = shell_pos - enemy_pos;
 
-        const auto dispersion_reward =
-            std::exp(-0.5f * std::pow(angle / dispersion_angle_scale, 2.f));
-        const auto distance_reward = std::exp(-0.5f * std::pow(distance / hit_distance_scale, 2.f));
+        const float fire_distance = glm::length(trajectory);
+        const float miss_distance = glm::length(miss_trajectory);
 
-        return dispersion_reward * distance_reward;
+        const float ratio = miss_distance_scale * miss_distance / fire_distance;
+
+        return std::exp(-0.5f * std::pow(ratio, 2.f));
     }
 
     void JoltEnemyTank::update_closest_approach(

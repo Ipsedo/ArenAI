@@ -34,7 +34,7 @@ namespace arenai::model {
             [this](const std::shared_ptr<ShellItem> &shell) { on_shell_fired(shell); },
             [this] { return nb_shells > 0; }),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-          curr_frame_upside_down(0), distance_scale(250.f), miss_distance_scale(2.f),
+          curr_frame_upside_down(0), distance_scale(250.f), miss_distance_scale(10.f),
           hit_reward_scale(0.5f), optimal_distance(75.f), aim_angle_scale(glm::radians(10.f)),
           hit_received_cost(0.1f), fire_cost(0.05f), initial_nb_shells(30),
           nb_shells(initial_nb_shells), shells_recharged_per_hit(5),

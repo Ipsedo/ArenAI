@@ -111,14 +111,17 @@ namespace arenai::agent {
 
                 const auto next_discrete_entropy = multinomial_entropy(next_discrete_proba);
 
-                const auto next_target_q_value_1 = target_critic_1->value_expectation(
-                    next_state.vision, next_state.proprioception, next_continuous_action,
-                    next_discrete_proba);
-                const auto next_target_q_value_2 = target_critic_2->value_expectation(
-                    next_state.vision, next_state.proprioception, next_continuous_action,
-                    next_discrete_proba);
+                const auto next_target_q_values_1 = target_critic_1->value_per_discrete_action(
+                    next_state.vision, next_state.proprioception, next_continuous_action);
+                const auto next_target_q_values_2 = target_critic_2->value_per_discrete_action(
+                    next_state.vision, next_state.proprioception, next_continuous_action);
 
-                const auto target_v_value = torch::min(next_target_q_value_1, next_target_q_value_2)
+                const auto next_min_q_value =
+                    (next_discrete_proba
+                     * torch::min(next_target_q_values_1, next_target_q_values_2))
+                        .sum(-1, true);
+
+                const auto target_v_value = next_min_q_value
                                             + alpha_continuous->alpha() * next_continuous_entropy
                                             + alpha_discrete->alpha() * next_discrete_entropy;
 
@@ -163,11 +166,12 @@ namespace arenai::agent {
 
             const auto curr_discrete_entropy = multinomial_entropy(curr_discrete_proba);
 
-            const auto curr_q_value_1 = critic_1->value_expectation(
-                state.vision, state.proprioception, curr_continuous_action, curr_discrete_proba);
-            const auto curr_q_value_2 = critic_2->value_expectation(
-                state.vision, state.proprioception, curr_continuous_action, curr_discrete_proba);
-            const auto q_value = torch::min(curr_q_value_1, curr_q_value_2);
+            const auto curr_q_values_1 = critic_1->value_per_discrete_action(
+                state.vision, state.proprioception, curr_continuous_action);
+            const auto curr_q_values_2 = critic_2->value_per_discrete_action(
+                state.vision, state.proprioception, curr_continuous_action);
+            const auto q_value =
+                (curr_discrete_proba * torch::min(curr_q_values_1, curr_q_values_2)).sum(-1, true);
 
             const auto actor_loss = -torch::mean(
                 alpha_continuous->alpha().detach() * curr_continuous_entropy

@@ -11,10 +11,10 @@ using namespace arenai;
 using namespace arenai::agent;
 
 // ========================================================================
-// value_expectation must equal the weighted sum of value_ohe
+// value_per_discrete_action must match value_ohe action by action
 // ========================================================================
 
-TEST_F(QFunctionConsistencyTest, ExpectationMatchesManualWeightedSum) {
+TEST_F(QFunctionConsistencyTest, PerDiscreteActionMatchesOhe) {
     constexpr int height = 8, width = 8;
     constexpr int nb_sensors = 5, nb_cont = 3, nb_disc = 4;
     constexpr int batch = 4;
@@ -24,50 +24,23 @@ TEST_F(QFunctionConsistencyTest, ExpectationMatchesManualWeightedSum) {
     const auto vision = torch::randint(0, 255, {batch, 3, height, width}, torch::kUInt8);
     const auto sensors = torch::randn({batch, nb_sensors});
     const auto cont_actions = torch::randn({batch, nb_cont});
-    const auto disc_proba = torch::softmax(torch::randn({batch, nb_disc}), -1);
 
     torch::NoGradGuard no_grad;
 
-    const auto v_exp = q.value_expectation(vision, sensors, cont_actions, disc_proba);
+    const auto q_per_action = q.value_per_discrete_action(vision, sensors, cont_actions);
 
-    auto v_manual = torch::zeros({batch, 1});
+    ASSERT_EQ(q_per_action.size(0), batch);
+    ASSERT_EQ(q_per_action.size(1), nb_disc);
+
     const auto one_hots = torch::eye(nb_disc);
     for (int a = 0; a < nb_disc; a++) {
         const auto ohe = one_hots[a].unsqueeze(0).expand({batch, -1});
         const auto q_a = q.value_ohe(vision, sensors, cont_actions, ohe);
-        v_manual = v_manual + disc_proba.select(1, a).unsqueeze(1) * q_a;
+
+        ASSERT_TRUE(torch::allclose(q_per_action.select(1, a).unsqueeze(1), q_a, 1e-4, 1e-4))
+            << "value_per_discrete_action column " << a << " should equal value_ohe(one_hot[" << a
+            << "])";
     }
-
-    ASSERT_TRUE(torch::allclose(v_exp, v_manual, 1e-4, 1e-4))
-        << "value_expectation should equal sum of proba[a] * value_ohe(one_hot[a])";
-}
-
-TEST_F(QFunctionConsistencyTest, ExpectationWithUniformProbaIsMeanOfOhe) {
-    constexpr int height = 8, width = 8;
-    constexpr int nb_sensors = 3, nb_cont = 2, nb_disc = 3;
-    constexpr int batch = 2;
-
-    QFunction q(height, width, nb_sensors, nb_cont, nb_disc, 8, 8, {16}, {{3, 4}}, {2});
-
-    const auto vision = torch::randint(0, 255, {batch, 3, height, width}, torch::kUInt8);
-    const auto sensors = torch::randn({batch, nb_sensors});
-    const auto cont_actions = torch::randn({batch, nb_cont});
-    const auto uniform_proba = torch::ones({batch, nb_disc}) / static_cast<float>(nb_disc);
-
-    torch::NoGradGuard no_grad;
-
-    const auto v_exp = q.value_expectation(vision, sensors, cont_actions, uniform_proba);
-
-    auto sum_q = torch::zeros({batch, 1});
-    const auto one_hots = torch::eye(nb_disc);
-    for (int a = 0; a < nb_disc; a++) {
-        const auto ohe = one_hots[a].unsqueeze(0).expand({batch, -1});
-        sum_q = sum_q + q.value_ohe(vision, sensors, cont_actions, ohe);
-    }
-    const auto mean_q = sum_q / static_cast<float>(nb_disc);
-
-    ASSERT_TRUE(torch::allclose(v_exp, mean_q, 1e-4, 1e-4))
-        << "With uniform probabilities, expectation should be mean of Q values";
 }
 
 TEST_F(QFunctionConsistencyTest, ValueOheOutputFinite) {
@@ -102,9 +75,8 @@ TEST_F(QFunctionGradientTest, GradientFlowsThroughQFunction) {
     const auto vision = torch::randint(0, 255, {batch, 3, height, width}, torch::kUInt8);
     const auto sensors = torch::randn({batch, nb_sensors});
     const auto cont_actions = torch::randn({batch, nb_cont});
-    const auto disc_proba = torch::softmax(torch::randn({batch, nb_disc}), -1);
 
-    const auto value = q.value_expectation(vision, sensors, cont_actions, disc_proba);
+    const auto value = q.value_per_discrete_action(vision, sensors, cont_actions);
     const auto loss = value.sum();
 
     loss.backward();

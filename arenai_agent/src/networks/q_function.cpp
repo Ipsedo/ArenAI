@@ -18,9 +18,11 @@ namespace arenai::agent {
         const std::vector<int> &hidden_sizes,
         const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums)
-        : vision_encoder(register_module(
-            "vision_encoder", std::make_shared<ConvolutionNetwork>(
-                                  vision_height, vision_width, vision_channels, group_norm_nums))),
+        : nb_discrete_actions(nb_discrete_actions),
+          vision_encoder(register_module(
+              "vision_encoder",
+              std::make_shared<ConvolutionNetwork>(
+                  vision_height, vision_width, vision_channels, group_norm_nums))),
           sensors_encoder(register_module(
               "sensors_encoder",
               torch::nn::Sequential(
@@ -79,28 +81,26 @@ namespace arenai::agent {
         return to_value->forward(head->forward(encoded_hidden));
     }
 
-    torch::Tensor QFunction::value_expectation(
+    torch::Tensor QFunction::value_per_discrete_action(
         const torch::Tensor &vision, const torch::Tensor &sensors,
-        const torch::Tensor &continuous_actions, const torch::Tensor &discrete_actions_proba) {
+        const torch::Tensor &continuous_actions) {
         const auto batch_size = vision.size(0);
-        const auto nb_discrete_actions = discrete_actions_proba.size(1);
 
         const auto common_encoded = encode_common(vision, sensors, continuous_actions);
-        const auto one_hots = torch::eye(nb_discrete_actions, discrete_actions_proba.options());
+        const auto one_hots = torch::eye(nb_discrete_actions, common_encoded.options());
 
-        auto result = torch::zeros({batch_size, 1}, common_encoded.options());
+        std::vector<torch::Tensor> q_values;
+        q_values.reserve(nb_discrete_actions);
 
         for (int a = 0; a < nb_discrete_actions; a++) {
             const auto discrete_encoded =
                 discrete_action_encoder->forward(one_hots[a].unsqueeze(0).expand({batch_size, -1}));
 
-            const auto q_a =
-                to_value->forward(head->forward(torch::cat({common_encoded, discrete_encoded}, 1)));
-
-            result = result + discrete_actions_proba.select(1, a).unsqueeze(1) * q_a;
+            q_values.push_back(to_value->forward(
+                head->forward(torch::cat({common_encoded, discrete_encoded}, 1))));
         }
 
-        return result;
+        return torch::cat(q_values, 1);
     }
 
     torch::Tensor QFunction::encode_common(

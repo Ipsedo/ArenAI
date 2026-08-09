@@ -74,7 +74,6 @@ namespace arenai::model {
         float aim_angle_scale;
 
         float hit_received_cost;
-        float fire_cost;
 
         int initial_nb_shells;
         int nb_shells;
@@ -84,7 +83,6 @@ namespace arenai::model {
 
         bool has_touch;
         bool has_fired;
-        int fires_since_reward;
         std::vector<TrackedShell> tracked_shells;
 
         void on_shell_fired(const std::shared_ptr<ShellItem> &shell);

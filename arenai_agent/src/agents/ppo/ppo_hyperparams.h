@@ -32,7 +32,7 @@ namespace arenai::agent {
         // early-stop of the epoch loop when approx KL > 1.5 * target_kl; <= 0 disables it
         float target_kl = 0.02f;
         float grad_norm_max = 0.5f;
-        float continuous_entropy_coef = 0.001f;
+        float continuous_entropy_coef = 0.0005f;
         float discrete_entropy_coef = 0.01f;
         int epochs = 4;
         int rollout_size = 30 * 30;

@@ -36,10 +36,9 @@ namespace arenai::model {
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), distance_scale(250.f), miss_distance_scale(10.f),
           hit_reward_scale(0.5f), optimal_distance(75.f), aim_angle_scale(glm::radians(10.f)),
-          hit_received_cost(0.1f), fire_cost(0.05f), initial_nb_shells(30),
-          nb_shells(initial_nb_shells), shells_recharged_per_hit(5),
-          is_dead_already_triggered(false), has_touch(false), has_fired(false),
-          fires_since_reward(0) {}
+          hit_received_cost(0.1f), initial_nb_shells(30), nb_shells(initial_nb_shells),
+          shells_recharged_per_hit(5), is_dead_already_triggered(false), has_touch(false),
+          has_fired(false) {}
 
     float JoltEnemyTank::compute_aim_angle(const std::shared_ptr<EnemyTank> &other_tank) {
         const auto canon_tr = get_canon()->get_model_matrix();
@@ -166,12 +165,10 @@ namespace arenai::model {
         // 2. dead / suicide penalty
         const auto dead_penalty = is_dead() ? -1.f : 0.f;
 
-        // 3. fired shells: pay a small cost at fire time (a shot toward nobody must be
-        // net-negative, break-even at gaussian ~0.1), then sample the closest tank along
-        // the trajectory and pay the dispersion gaussian (plus hit/kill bonuses) once the
-        // shell dies
-        float shells_reward = -fire_cost * static_cast<float>(fires_since_reward);
-        fires_since_reward = 0;
+        // 3. fired shells: sample the closest tank along the trajectory and pay the
+        // dispersion gaussian (plus hit/kill bonuses) once the shell dies; firing itself
+        // is free — the limited shell reserve (recharged on hit) taxes the spam
+        float shells_reward = 0.f;
         for (int i = static_cast<int>(tracked_shells.size()) - 1; i >= 0; i--) {
             auto &tracked = tracked_shells[i];
 
@@ -186,8 +183,7 @@ namespace arenai::model {
 
             if (tracked.has_sample) {
                 // the gaussian stays an order of magnitude under the hit bonus: a gradient
-                // toward the aim, not a farmable income; fire_cost and the shell reserve
-                // tax the spam
+                // toward the aim, not a farmable income; the shell reserve taxes the spam
                 shells_reward +=
                     hit_reward_scale
                     * compute_hit_reward(
@@ -211,7 +207,6 @@ namespace arenai::model {
     void JoltEnemyTank::on_shell_fired(const std::shared_ptr<ShellItem> &shell) {
         nb_shells--;
         has_fired = true;
-        fires_since_reward++;
 
         tracked_shells.push_back(
             {.shell = shell,

@@ -60,7 +60,6 @@ namespace {
         step.action.discrete_action[0][0] = 1.0f;
         step.reward = torch::full({1, 1}, reward);
         step.done = torch::zeros({1, 1});
-        step.truncated = torch::zeros({1, 1});
         return step;
     }
 }// namespace
@@ -95,21 +94,6 @@ TEST_F(ReplayBufferEdgeTest, RewardDividedByRunningStdAtSample) {
     }
 }
 
-TEST_F(ReplayBufferEdgeTest, TruncatedStepIsNotStoredAsTerminal) {
-    SacReplayBuffer buffer(10);
-
-    auto step = create_random_step(8, 8, 3, 2, 5, true);
-    step.truncated = torch::full({1, 1}, true, torch::kBool);
-
-    buffer.add(step);
-    buffer.finish_episode(create_random_state(8, 8, 5));
-
-    const auto output = buffer.sample(1, torch::kCPU);
-
-    ASSERT_FALSE(output.done.to(torch::kBool).item<bool>())
-        << "A truncated step must sample done=false so the critic keeps bootstrapping";
-}
-
 TEST_F(ReplayBufferEdgeTest, DeadStepIsStoredAsTerminal) {
     SacReplayBuffer buffer(10);
 
@@ -119,7 +103,7 @@ TEST_F(ReplayBufferEdgeTest, DeadStepIsStoredAsTerminal) {
     const auto output = buffer.sample(1, torch::kCPU);
 
     ASSERT_TRUE(output.done.to(torch::kBool).item<bool>())
-        << "A real termination (done && !truncated) must sample done=true";
+        << "A termination (done) must sample done=true";
 }
 
 TEST_F(ReplayBufferEdgeTest, SampleWithZeroBatchSize) {

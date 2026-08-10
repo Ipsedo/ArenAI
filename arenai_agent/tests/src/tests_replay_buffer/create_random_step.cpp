@@ -22,6 +22,5 @@ arenai::agent::SacInputStep create_random_step(
         {torch::rand({1, nb_cont_actions}) * 2.f - 1.f,
          torch::softmax(torch::randn({1, nb_discrete_actions}), -1)},
         torch::randn({1, 1}),
-        torch::full({1, 1}, done, torch::kBool),
-        torch::full({1, 1}, false, torch::kBool)};
+        torch::full({1, 1}, done, torch::kBool)};
 }

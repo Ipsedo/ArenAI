@@ -37,7 +37,7 @@ namespace arenai::agent {
           hit_metric(std::make_shared<MeanMetric>("hit", 256, 2, true)),
           kill_metric(std::make_shared<MeanMetric>("kill", 16, 1)), nb_kills_episode(0) {}
 
-    std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
+    std::vector<std::tuple<core::State, core::Reward, core::IsDone>>
     TrainTankEnvironment::step(const float time_delta, const std::vector<core::Action> &actions) {
 
         // tanks flagged done on a previous step already emitted their terminal transition:
@@ -90,16 +90,16 @@ namespace arenai::agent {
 
             if (has_hit[i]) remaining_frames[i] += nb_frames_added_when_hit;
 
-            const auto &[state, reward, is_done, is_truncated] = step_result[i];
+            const auto &[state, reward, is_done] = step_result[i];
 
             if (is_done) {
-                step_result[i] = {state, reward, true, false};
                 if (!already_done[i] && !is_suicide[i]) nb_kills_episode++;
                 done[i] = true;
             }
 
+            // starving out (no hit for too long) is a real death: penalized and terminal
             if (!done[i] && remaining_frames[i] <= 0) {
-                step_result[i] = {state, reward, true, true};
+                step_result[i] = {state, reward - 1.f, true};
                 done[i] = true;
             }
 
@@ -115,10 +115,10 @@ namespace arenai::agent {
             if (done[i]) continue;
 
             if (const long nb_not_done = std::ranges::count(done, false); nb_not_done == 1) {
-                const auto &[state, reward, is_done, is_truncated] = step_result[i];
+                const auto &[state, reward, is_done] = step_result[i];
                 if (only_one_tank_alive())
-                    step_result[i] = {state, reward + 2.f, true, is_truncated}; // winner réel
-                else step_result[i] = {state, reward + 1.f, true, is_truncated};// timeout winner
+                    step_result[i] = {state, reward + 2.f, true}; // winner réel
+                else step_result[i] = {state, reward + 1.f, true};// timeout winner
 
                 done[i] = true;
             }

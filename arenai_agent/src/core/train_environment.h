@@ -18,7 +18,7 @@ namespace arenai::agent {
             const std::filesystem::path &android_assets_path, float wanted_frequency,
             int max_episode_steps, int vision_height, int vision_width, int vision_num_threads);
 
-        std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
+        std::vector<std::tuple<core::State, core::Reward, core::IsDone>>
         step(float time_delta, const std::vector<core::Action> &actions) override;
 
         std::vector<float> get_phi_vector();

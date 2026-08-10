@@ -213,7 +213,7 @@ TEST_F(EnvironmentTest, StepRewardAndDoneAreValid) {
     const std::vector<controller::user_input> actions(nb_tanks, {{0.f, 0.f}, {0.f, 0.f}, {false}});
 
     for (const auto results = env.step(frequency, actions);
-         const auto &[state, reward, is_done, is_truncated]: results) {
+         const auto &[state, reward, is_done]: results) {
         ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN";
         ASSERT_FALSE(std::isinf(reward)) << "reward should not be Inf";
     }

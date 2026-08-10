@@ -53,7 +53,7 @@ namespace {
             const auto steps = env.step(FREQUENCY, actions);
 
             states.clear();
-            for (const auto &[state, reward, done, truncated]: steps) states.push_back(state);
+            for (const auto &[state, reward, done]: steps) states.push_back(state);
 
             actions = agent.act(states, VISION_HEIGHT, VISION_WIDTH);
         }

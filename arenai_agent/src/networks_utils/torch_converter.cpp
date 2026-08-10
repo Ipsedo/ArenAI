@@ -78,28 +78,23 @@ namespace arenai::agent {
     }
 
     TorchStep steps_to_tensor(
-        const std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
-            &steps,
+        const std::vector<std::tuple<core::State, core::Reward, core::IsDone>> &steps,
         const int vision_height, const int vision_width) {
         std::vector<core::State> states;
         std::vector<torch::Tensor> rewards;
         std::vector<torch::Tensor> are_done;
-        std::vector<torch::Tensor> are_truncated;
 
-        for (const auto &[state, reward, is_done, is_truncated]: steps) {
+        for (const auto &[state, reward, is_done]: steps) {
             states.push_back(state);
             rewards.push_back(torch::tensor({reward}, torch::TensorOptions().dtype(torch::kFloat)));
             are_done.push_back(
                 torch::tensor({is_done}, torch::TensorOptions().dtype(torch::kBool)));
-            are_truncated.push_back(
-                torch::tensor({is_truncated}, torch::TensorOptions().dtype(torch::kBool)));
         }
 
         return {
             .states = states_to_tensor(states, vision_height, vision_width),
             .rewards = torch::stack(rewards),
-            .is_done = torch::stack(are_done),
-            .is_truncated = torch::stack(are_truncated)};
+            .is_done = torch::stack(are_done)};
     }
 
 }// namespace arenai::agent

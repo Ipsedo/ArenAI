@@ -129,12 +129,10 @@ namespace arenai::agent {
                 const auto steps = env->step(environment_options.wanted_frequency, actions_for_env);
                 const auto phi_tensor = torch::tensor(env->get_phi_vector()).unsqueeze(1);
 
-                const auto [torch_next_states, torch_rewards, torch_are_done, torch_are_truncated] =
-                    steps_to_tensor(
-                        steps, environment_options.vision_height, environment_options.vision_width);
+                const auto [torch_next_states, torch_rewards, torch_are_done] = steps_to_tensor(
+                    steps, environment_options.vision_height, environment_options.vision_width);
 
-                const auto terminal_mask = torch::logical_not(
-                    torch::logical_and(torch_are_done, torch::logical_not(torch_are_truncated)));
+                const auto terminal_mask = torch::logical_not(torch_are_done);
                 const auto potential_reward =
                     terminal_mask * train_options.potential_reward_gamma * phi_tensor
                     - last_phi_tensor;
@@ -142,7 +140,7 @@ namespace arenai::agent {
                 const auto torch_final_reward = torch_rewards + potential_reward;
 
                 // complete the pending transition - maybe train
-                collector->on_transition(torch_final_reward, torch_are_done, torch_are_truncated);
+                collector->on_transition(torch_final_reward, torch_are_done);
                 trainer->step();
 
                 // step ending stuff

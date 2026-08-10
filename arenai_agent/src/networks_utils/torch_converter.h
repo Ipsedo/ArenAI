@@ -23,8 +23,7 @@ namespace arenai::agent {
     TorchState state_to_tensor(const core::State &state, int vision_height, int vision_width);
 
     TorchStep steps_to_tensor(
-        const std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
-            &steps,
+        const std::vector<std::tuple<core::State, core::Reward, core::IsDone>> &steps,
         int vision_height, int vision_width);
 
 }// namespace arenai::agent

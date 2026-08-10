@@ -246,19 +246,14 @@ namespace arenai::agent {
 
         const auto rewards = rollout.rewards.to(torch::kFloat);
         const auto dones = rollout.dones.to(torch::kFloat);
-        const auto truncateds = rollout.truncateds.to(torch::kFloat);
         const auto valids = rollout.valids.to(torch::kFloat);
 
-        // terminal: no bootstrap; truncated: bootstrap but stop the GAE recursion
-        const auto terminals = dones * (1.f - truncateds);
-        const auto boundaries = torch::max(dones, truncateds);
-
-        const auto deltas = rewards + gamma * next_values * (1.f - terminals) - values;
+        const auto deltas = rewards + gamma * next_values * (1.f - dones) - values;
 
         auto advantages = torch::zeros_like(deltas);
         auto gae = torch::zeros({nb_tanks, 1}, deltas.options());
         for (int64_t t = nb_steps - 1; t >= 0; t--) {
-            gae = deltas[t] + gamma * gae_lambda * (1.f - boundaries[t]) * gae;
+            gae = deltas[t] + gamma * gae_lambda * (1.f - dones[t]) * gae;
             advantages[t] = gae;
         }
 

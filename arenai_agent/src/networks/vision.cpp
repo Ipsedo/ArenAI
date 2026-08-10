@@ -39,7 +39,7 @@ namespace arenai::agent {
     }
 
     torch::Tensor ConvolutionNetwork::forward(const torch::Tensor &input) {
-        if (input.dtype() != torch::kUInt8) throw std::runtime_error("Input must be UInt8");
+        TORCH_CHECK(input.dtype() == torch::kUInt8, "Input must be UInt8");
 
         return cnn->forward(input.to(torch::kFloat).mul_(2.0f / 255.0f).add_(-1.0f));
     }

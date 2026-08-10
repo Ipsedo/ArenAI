@@ -45,6 +45,8 @@ namespace arenai::agent {
     private:
         void initialize(const SacInputStep &first_step);
         void advance_write_idx();
+        void update_reward_stats(const torch::Tensor &rewards, const torch::Tensor &valid_mask);
+        float reward_scale() const;
 
         bool initialized_;
 
@@ -68,6 +70,13 @@ namespace arenai::agent {
         torch::Tensor store_sampleable_;
         // [nb_tanks] tanks already done/truncated in the current episode
         torch::Tensor already_terminated_;
+
+        // running reward statistics (Welford, over every reward ever added): rewards are
+        // divided by the running std at sample time, never mean-shifted (a shift would
+        // change the optimal policy)
+        double reward_count_;
+        double reward_mean_;
+        double reward_m2_;
     };
 
 }// namespace arenai::agent

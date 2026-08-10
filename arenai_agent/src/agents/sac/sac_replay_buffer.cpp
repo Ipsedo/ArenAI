@@ -5,6 +5,7 @@
 #include "./sac_replay_buffer.h"
 
 #include <algorithm>
+#include <cmath>
 
 using namespace arenai;
 using namespace arenai::agent;
@@ -13,7 +14,7 @@ namespace arenai::agent {
 
     SacReplayBuffer::SacReplayBuffer(const int memory_size)
         : initialized_(false), memory_size_(memory_size), nb_steps_(0), write_idx_(0), size_(0),
-          nb_tanks_(0) {}
+          nb_tanks_(0), reward_count_(0.), reward_mean_(0.), reward_m2_(0.) {}
 
     void SacReplayBuffer::initialize(const SacInputStep &first_step) {
         constexpr auto cpu = torch::kCPU;
@@ -64,7 +65,9 @@ namespace arenai::agent {
         store_done_[idx].copy_(done_bool.logical_and(truncated_bool.logical_not()));
 
         // tanks already terminated before this step have no valid transition to store
-        store_sampleable_[idx].copy_(already_terminated_.logical_not());
+        const auto valid_mask = already_terminated_.logical_not();
+        store_sampleable_[idx].copy_(valid_mask);
+        update_reward_stats(step.reward, valid_mask);
         already_terminated_.logical_or_(
             done_bool.reshape({nb_tanks_}).logical_or(truncated_bool.reshape({nb_tanks_})));
 
@@ -89,6 +92,31 @@ namespace arenai::agent {
         already_terminated_.fill_(false);
 
         advance_write_idx();
+    }
+
+    void SacReplayBuffer::update_reward_stats(
+        const torch::Tensor &rewards, const torch::Tensor &valid_mask) {
+        // Chan et al. parallel Welford update with the batch of valid tank rewards
+        const auto valid_rewards =
+            rewards.reshape({nb_tanks_}).to(torch::kFloat).masked_select(valid_mask);
+        const auto batch_count = static_cast<double>(valid_rewards.numel());
+        if (batch_count == 0.) return;
+
+        const auto batch_mean = valid_rewards.mean().item<double>();
+        const auto batch_m2 = (valid_rewards - batch_mean).square().sum().item<double>();
+
+        const double delta = batch_mean - reward_mean_;
+        const double total_count = reward_count_ + batch_count;
+
+        reward_mean_ += delta * batch_count / total_count;
+        reward_m2_ += batch_m2 + delta * delta * reward_count_ * batch_count / total_count;
+        reward_count_ = total_count;
+    }
+
+    float SacReplayBuffer::reward_scale() const {
+        if (reward_count_ < 2.) return 1.f;
+        const double std = std::sqrt(reward_m2_ / reward_count_);
+        return std > 1e-6 ? static_cast<float>(std) : 1.f;
     }
 
     void SacReplayBuffer::advance_write_idx() {
@@ -126,7 +154,7 @@ namespace arenai::agent {
             .action =
                 {.continuous_action = take(store_cont_action_, step_idx),
                  .discrete_action = take(store_disc_action_, step_idx)},
-            .reward = take(store_reward_, step_idx),
+            .reward = take(store_reward_, step_idx) / reward_scale(),
             .done = take(store_done_, step_idx),
             .next_state = {
                 .vision = take(store_vision_, next_idx),

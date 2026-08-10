@@ -21,8 +21,7 @@ PpoTrainingTest::make_factory(const PpoTrainingTestConfig &cfg) const {
         .gamma = 0.99f,
         .gae_lambda = 0.95f,
         .clip_epsilon = 0.2f,
-        .continuous_entropy_coef = 0.01f,
-        .discrete_entropy_coef = 0.01f,
+        .alpha_learning_rate = 1e-3f,
         .epochs = 2,
         .rollout_size = ROLLOUT_SIZE,
         .minibatch_size = MINIBATCH_SIZE};
@@ -77,9 +76,9 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
     const auto agent = std::make_shared<TorchPpoAgent>(actor, device, collector);
     // target_kl = 0 : early stop disabled so every minibatch applies its update
     const auto trainer = std::make_shared<PpoTrainer>(
-        actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_sensors, 1e-3f, 1e-3f, 8,
-        std::vector<int>{16}, vision_channels, group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.f,
-        1.f, 0.01f, 0.01f, 2, ROLLOUT_SIZE, MINIBATCH_SIZE);
+        actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_sensors,
+        cfg.nb_continuous_actions, 1e-3f, 1e-3f, 1e-3f, 8, std::vector<int>{16}, vision_channels,
+        group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 2, ROLLOUT_SIZE, MINIBATCH_SIZE);
 
     std::vector<torch::Tensor> initial_parameters;
     for (const auto &parameter: actor->parameters())

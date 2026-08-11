@@ -64,7 +64,7 @@ namespace arenai::agent {
         head->apply(init_hidden_weights);
 
         mu->apply(init_mu_output_weights);
-        sigma->apply([](torch::nn::Module &m) { init_sigma_output_weights(m, 0.1f); });
+        sigma->apply([](torch::nn::Module &m) { init_sigma_output_weights(m); });
 
         discrete->apply(init_discrete_output_weights);
     }

@@ -46,9 +46,10 @@ namespace arenai::agent {
               vision_channels, group_norm_nums)),
           alpha_continuous(std::make_shared<AlphaParameter>(0.001f)),
           alpha_discrete(std::make_shared<AlphaParameter>(0.001f)),
-          continuous_target_entropy(
-              std::make_shared<ConstantContinuousTargetEntropy>(nb_continuous_actions, 0.2f)),
-          discrete_target_entropy(std::make_shared<ConstantDiscreteTargetEntropy>(0.2f)),
+          continuous_target_entropy(std::make_shared<ConstantContinuousTargetEntropy>(
+              nb_continuous_actions, TARGET_SIGMA)),
+          discrete_target_entropy(
+              std::make_shared<ConstantDiscreteTargetEntropy>(TARGET_FIRE_PROBABILITY)),
           actor_optim(std::make_unique<torch::optim::Adam>(
               this->actor->parameters(), torch::optim::AdamOptions(actor_learning_rate))),
           critic_optim(std::make_unique<torch::optim::Adam>(

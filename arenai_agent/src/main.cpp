@@ -35,10 +35,10 @@ int main(const int argc, char **argv) {
     parser.add_argument("--nb_tanks").scan<'i', int>().default_value(32);
     parser.add_argument("--vision_height").scan<'i', int>().default_value(128);
     parser.add_argument("--vision_width").scan<'i', int>().default_value(256);
-    parser.add_argument("--initial_spawn_width").scan<'g', float>().default_value(500.f);
-    parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(500.f);
-    parser.add_argument("--final_spawn_width").scan<'g', float>().default_value(2000.f);
-    parser.add_argument("--final_spawn_height").scan<'g', float>().default_value(2000.f);
+    parser.add_argument("--initial_spawn_width").scan<'g', float>().default_value(750.f);
+    parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(750.f);
+    parser.add_argument("--final_spawn_width").scan<'g', float>().default_value(750.f);
+    parser.add_argument("--final_spawn_height").scan<'g', float>().default_value(750.f);
     parser.add_argument("--vision_num_threads")
         .scan<'i', int>()
         .default_value(static_cast<int>(std::thread::hardware_concurrency()));
@@ -48,7 +48,9 @@ int main(const int argc, char **argv) {
 
     parser.parse_args(argc, argv);
 
-    const AgentCli *selected_algorithm = nullptr;
+    // first algorithm by default: its subparser is not parsed, argparse falls back on
+    // the defaults carried by its arguments
+    const AgentCli *selected_algorithm = &algorithms.front();
     for (const auto &algorithm: algorithms)
         if (parser.is_subcommand_used(algorithm.name)) selected_algorithm = &algorithm;
 
@@ -59,11 +61,7 @@ int main(const int argc, char **argv) {
     const int vision_height = parser.get<int>("--vision_height");
     const int vision_width = parser.get<int>("--vision_width");
 
-    const auto create_factory_function = selected_algorithm == nullptr
-                                             ? get_default_agent_cli().create_factory
-                                             : selected_algorithm->create_factory;
-
-    const auto agent_factory = create_factory_function(
+    const auto agent_factory = selected_algorithm->create_factory(
         vision_height, vision_width,
         cuda ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU));
 

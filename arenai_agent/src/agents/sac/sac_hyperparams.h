@@ -26,7 +26,7 @@ namespace arenai::agent {
         std::vector<int> group_norm_nums = {1, 2, 3, 4, 6, 8};
         int metric_window_size = 256;
         float tau = 0.005f;
-        float gamma = 0.995f;
+        float gamma = 0.997f;
         int replay_buffer_size = 300000;
         int train_every = 256;
         int epochs = 128;

@@ -35,7 +35,7 @@ namespace arenai::model {
             [this] { return nb_shells > 0; }),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), distance_scale(250.f), miss_distance_scale(10.f),
-          hit_reward_scale(0.5f), optimal_distance(75.f), aim_angle_scale(glm::radians(10.f)),
+          hit_reward_scale(0.5f), optimal_distance(75.f), aim_angle_scale(glm::radians(30.f)),
           hit_received_cost(0.1f), initial_nb_shells(30), nb_shells(initial_nb_shells),
           shells_recharged_per_hit(5), is_dead_already_triggered(false), has_touch(false),
           has_fired(false) {}

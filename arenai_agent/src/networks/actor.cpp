@@ -66,7 +66,7 @@ namespace arenai::agent {
         mu->apply(init_mu_output_weights);
         sigma->apply([](torch::nn::Module &m) { init_sigma_output_weights(m); });
 
-        discrete->apply(init_discrete_output_weights);
+        discrete->apply([](torch::nn::Module &m) { init_discrete_output_weights(m); });
     }
 
     ActorRawOutput Actor::act(const torch::Tensor &vision, const torch::Tensor &sensors) {

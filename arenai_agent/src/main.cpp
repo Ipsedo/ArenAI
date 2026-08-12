@@ -66,14 +66,22 @@ int main(const int argc, char **argv) {
         cuda ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU));
 
     train_main(
-        {parser.get<float>("--wanted_frequency"), parser.get<int>("--nb_tanks"), vision_height,
-         vision_width, parser.get<float>("--initial_spawn_width"),
-         parser.get<float>("--initial_spawn_height"), parser.get<float>("--final_spawn_width"),
-         parser.get<float>("--final_spawn_height"), parser.get<int>("--vision_num_threads")},
-        {std::filesystem::path(parser.get<std::string>("--output_folder")),
-         std::filesystem::path(parser.get<std::string>("--resources_folder")),
-         parser.get<float>("--potential_reward_gamma"), parser.get<int>("--max_episode_steps"),
-         parser.get<int>("--nb_episodes"), parser.get<int>("--save_every"), cuda},
+        {.wanted_frequency = parser.get<float>("--wanted_frequency"),
+         .nb_tanks = parser.get<int>("--nb_tanks"),
+         .vision_height = vision_height,
+         .vision_width = vision_width,
+         .initial_spawn_width = parser.get<float>("--initial_spawn_width"),
+         .initial_spawn_height = parser.get<float>("--initial_spawn_height"),
+         .final_spawn_width = parser.get<float>("--final_spawn_width"),
+         .final_spawn_height = parser.get<float>("--final_spawn_height"),
+         .num_threads = parser.get<int>("--vision_num_threads")},
+        {.output_folder = std::filesystem::path(parser.get<std::string>("--output_folder")),
+         .resources_folder = std::filesystem::path(parser.get<std::string>("--resources_folder")),
+         .potential_reward_gamma = parser.get<float>("--potential_reward_gamma"),
+         .max_episode_steps = parser.get<int>("--max_episode_steps"),
+         .nb_episodes = parser.get<int>("--nb_episodes"),
+         .save_every = parser.get<int>("--save_every"),
+         .cuda = cuda},
         agent_factory);
 
     return 0;

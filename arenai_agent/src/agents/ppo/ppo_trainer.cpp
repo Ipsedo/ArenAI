@@ -44,10 +44,10 @@ namespace arenai::agent {
           critic(std::make_shared<ValueFunction>(
               vision_height, vision_width, nb_sensors, hidden_size_sensors, critic_hidden_sizes,
               vision_channels, group_norm_nums)),
-          alpha_continuous(std::make_shared<AlphaParameter>(0.0001f)),
+          alpha_continuous(std::make_shared<AlphaParameter>(0.001f)),
           alpha_discrete(std::make_shared<AlphaParameter>(0.001f)),
           continuous_target_entropy(
-              std::make_shared<ConstantContinuousTargetEntropy>(nb_continuous_actions, 0.1f)),
+              std::make_shared<ConstantContinuousTargetEntropy>(nb_continuous_actions, 0.2f)),
           discrete_target_entropy(std::make_shared<ConstantDiscreteTargetEntropy>(0.2f)),
           actor_optim(std::make_unique<torch::optim::Adam>(
               this->actor->parameters(), torch::optim::AdamOptions(actor_learning_rate))),
@@ -106,110 +106,158 @@ namespace arenai::agent {
         const auto nb_valid_rows = valid_idx.size(0);
         if (nb_valid_rows == 0) return;
 
+        const auto select = [&](const torch::Tensor &tensor, const torch::Tensor &idx) {
+            return tensor.index_select(0, idx).to(device);
+        };
+
+        float continuous_entropy_sum = 0.f;
+        float discrete_entropy_sum = 0.f;
+        int nb_actor_minibatches = 0;
+
         bool kl_stop = false;
-        for (int e = 0; e < epochs && !kl_stop; e++) {
+        for (int e = 0; e < epochs; e++) {
             const auto perm = valid_idx.index_select(0, torch::randperm(nb_valid_rows));
 
             for (int64_t start = 0; start < nb_valid_rows; start += minibatch_size) {
                 const auto idx =
                     perm.slice(0, start, std::min<int64_t>(start + minibatch_size, nb_valid_rows));
 
-                const auto select = [&](const torch::Tensor &tensor) {
-                    return tensor.index_select(0, idx).to(device);
-                };
+                // the observation is the bulk of the transfer: uploaded once, used by both
+                const auto mb_vision = select(flat_vision, idx);
+                const auto mb_proprioception = select(flat_proprioception, idx);
 
-                const auto mb_vision = select(flat_vision);
-                const auto mb_proprioception = select(flat_proprioception);
-                const auto mb_continuous_actions = select(flat_continuous_actions);
-                const auto mb_discrete_actions = select(flat_discrete_actions);
-                const auto mb_old_log_probs = select(flat_old_log_probs);
-                const auto mb_advantages = select(flat_advantages);
-                const auto mb_returns = select(flat_returns);
+                // actor: skipped for the rest of the update once a minibatch drifted past
+                // the KL threshold
+                if (!kl_stop) {
+                    const auto [kl_exceeded, continuous_entropy, discrete_entropy] = train_actor(
+                        mb_vision, mb_proprioception, select(flat_continuous_actions, idx),
+                        select(flat_discrete_actions, idx), select(flat_old_log_probs, idx),
+                        select(flat_advantages, idx));
 
-                // policy: clipped surrogate on the joint (continuous x discrete) ratio
-                const auto [mu, sigma, discrete_proba] = actor->act(mb_vision, mb_proprioception);
+                    continuous_entropy_sum += continuous_entropy;
+                    discrete_entropy_sum += discrete_entropy;
+                    nb_actor_minibatches++;
 
-                const auto curr_continuous_log_probs =
-                    truncated_normal_log_pdf(mb_continuous_actions, mu, sigma).sum(-1, true);
-
-                const auto clamped_proba = torch::clamp(discrete_proba, EPSILON, 1.0 - EPSILON);
-                const auto curr_discrete_log_probs =
-                    (mb_discrete_actions * torch::log(clamped_proba)).sum(-1, true);
-
-                const auto ratio = torch::exp(
-                    curr_continuous_log_probs + curr_discrete_log_probs - mb_old_log_probs);
-
-                // approx KL (Schulman): E[(ratio - 1) - log ratio]; stop the update before
-                // this minibatch if the policy drifted too far from the rollout policy
-                const auto approx_kl = ((ratio - 1.f) - torch::log(ratio)).mean().item<float>();
-                kl_metric->add(approx_kl);
-                if (target_kl > 0.f && approx_kl > 1.5f * target_kl) {
-                    kl_stop = true;
-                    break;
+                    kl_stop = kl_exceeded;
                 }
 
-                const auto clipped_ratio =
-                    torch::clamp(ratio, 1.f - clip_epsilon, 1.f + clip_epsilon);
-
-                const auto surrogate =
-                    torch::min(ratio * mb_advantages, clipped_ratio * mb_advantages);
-
-                const auto continuous_entropy = truncated_normal_entropy(mu, sigma).sum(-1, true);
-                const auto discrete_entropy = multinomial_entropy(discrete_proba);
-
-                const auto actor_loss = -torch::mean(
-                    surrogate + alpha_continuous->alpha().detach() * continuous_entropy
-                    + alpha_discrete->alpha().detach() * discrete_entropy);
-
-                actor_optim->zero_grad();
-                actor_loss.backward();
-                torch::nn::utils::clip_grad_norm_(actor->parameters(), grad_norm_max);
-                actor_optim->step();
-
-                // dual ascent: entropy above target -> alpha decays toward 0 (stops pushing
-                // sigma up); entropy below target -> alpha grows (prevents entropy collapse)
-                const auto alpha_continuous_loss = torch::mean(
-                    alpha_continuous->log_alpha()
-                    * (continuous_entropy.detach() - continuous_target_entropy->target_entropy()));
-
-                alpha_continuous_optim->zero_grad();
-                alpha_continuous_loss.backward();
-                alpha_continuous_optim->step();
-
-                const auto alpha_discrete_loss = torch::mean(
-                    alpha_discrete->log_alpha()
-                    * (discrete_entropy.detach() - discrete_target_entropy->target_entropy()));
-
-                alpha_discrete_optim->zero_grad();
-                alpha_discrete_loss.backward();
-                alpha_discrete_optim->step();
-
-                // critic
-                const auto values = critic->value(mb_vision, mb_proprioception);
-                const auto critic_loss = torch::mse_loss(values, mb_returns, at::Reduction::Mean);
-
-                critic_optim->zero_grad();
-                critic_loss.backward();
-                torch::nn::utils::clip_grad_norm_(critic->parameters(), grad_norm_max);
-                critic_optim->step();
-
-                // metrics
-                actor_mean_loss_metric->add(actor_loss.cpu().item<float>());
-                actor_std_loss_metric->add(actor_loss.cpu().item<float>());
-
-                critic_mean_loss_metric->add(critic_loss.cpu().item<float>());
-                critic_std_loss_metric->add(critic_loss.cpu().item<float>());
-
-                continuous_entropy_metric->add(continuous_entropy.mean().item<float>());
-                discrete_entropy_metric->add(discrete_entropy.mean().item<float>());
-                alpha_continuous_metric->add(alpha_continuous->alpha().item<float>());
-                alpha_discrete_metric->add(alpha_discrete->alpha().item<float>());
-                sigma_metric->add(sigma.mean().item<float>());
-
-                clip_fraction_metric->add(
-                    ((ratio - 1.f).abs() > clip_epsilon).to(torch::kFloat).mean().item<float>());
+                // critic: keeps training through the whole update, the KL early stop is a
+                // policy criterion only
+                train_critic(mb_vision, mb_proprioception, select(flat_returns, idx));
             }
         }
+
+        // dual ascent, once per rollout on the mean entropy of the whole update: outside the
+        // epoch loop, an early KL stop can no longer freeze the entropy regulation
+        if (nb_actor_minibatches > 0) {
+            const auto nb_minibatches = static_cast<float>(nb_actor_minibatches);
+
+            train_alpha(
+                alpha_continuous, alpha_continuous_optim, continuous_target_entropy,
+                continuous_entropy_sum / nb_minibatches, alpha_continuous_metric);
+            train_alpha(
+                alpha_discrete, alpha_discrete_optim, discrete_target_entropy,
+                discrete_entropy_sum / nb_minibatches, alpha_discrete_metric);
+        }
+    }
+
+    ActorUpdateResult PpoTrainer::train_actor(
+        const torch::Tensor &vision, const torch::Tensor &proprioception,
+        const torch::Tensor &continuous_actions, const torch::Tensor &discrete_actions,
+        const torch::Tensor &old_log_probs, const torch::Tensor &advantages) const {
+
+        // policy: clipped surrogate on the joint (continuous x discrete) ratio
+        const auto [mu, sigma, discrete_proba] = actor->act(vision, proprioception);
+
+        const auto curr_continuous_log_probs =
+            truncated_normal_log_pdf(continuous_actions, mu, sigma).sum(-1, true);
+
+        const auto clamped_proba = torch::clamp(discrete_proba, EPSILON, 1.0 - EPSILON);
+        const auto curr_discrete_log_probs =
+            (discrete_actions * torch::log(clamped_proba)).sum(-1, true);
+
+        const auto ratio =
+            torch::exp(curr_continuous_log_probs + curr_discrete_log_probs - old_log_probs);
+
+        const auto continuous_entropy = truncated_normal_entropy(mu, sigma).sum(-1, true);
+        const auto discrete_entropy = multinomial_entropy(discrete_proba);
+
+        const auto mean_continuous_entropy = continuous_entropy.mean().item<float>();
+        const auto mean_discrete_entropy = discrete_entropy.mean().item<float>();
+
+        continuous_entropy_metric->add(mean_continuous_entropy);
+        discrete_entropy_metric->add(mean_discrete_entropy);
+        sigma_metric->add(sigma.mean().item<float>());
+
+        // approx KL (Schulman): E[(ratio - 1) - log ratio]; skip this minibatch when the
+        // policy drifted too far from the rollout policy
+        const auto approx_kl = torch::mean(ratio - 1.f - torch::log(ratio)).item<float>();
+        kl_metric->add(approx_kl);
+        if (target_kl > 0.f && approx_kl > 1.5f * target_kl)
+            return {
+                .kl_exceeded = true,
+                .continuous_entropy = mean_continuous_entropy,
+                .discrete_entropy = mean_discrete_entropy};
+
+        const auto clipped_ratio = torch::clamp(ratio, 1.f - clip_epsilon, 1.f + clip_epsilon);
+
+        const auto surrogate = torch::min(ratio * advantages, clipped_ratio * advantages);
+
+        const auto actor_loss = -torch::mean(
+            surrogate + alpha_continuous->alpha().detach() * continuous_entropy
+            + alpha_discrete->alpha().detach() * discrete_entropy);
+
+        actor_optim->zero_grad();
+        actor_loss.backward();
+        torch::nn::utils::clip_grad_norm_(actor->parameters(), grad_norm_max);
+        actor_optim->step();
+
+        const auto loss_value = actor_loss.cpu().item<float>();
+        actor_mean_loss_metric->add(loss_value);
+        actor_std_loss_metric->add(loss_value);
+
+        clip_fraction_metric->add(
+            ((ratio - 1.f).abs() > clip_epsilon).to(torch::kFloat).mean().item<float>());
+
+        return {
+            .kl_exceeded = false,
+            .continuous_entropy = mean_continuous_entropy,
+            .discrete_entropy = mean_discrete_entropy};
+    }
+
+    void PpoTrainer::train_critic(
+        const torch::Tensor &vision, const torch::Tensor &proprioception,
+        const torch::Tensor &returns) const {
+
+        const auto values = critic->value(vision, proprioception);
+        const auto critic_loss = torch::mse_loss(values, returns, at::Reduction::Mean);
+
+        critic_optim->zero_grad();
+        critic_loss.backward();
+        torch::nn::utils::clip_grad_norm_(critic->parameters(), grad_norm_max);
+        critic_optim->step();
+
+        const auto loss_value = critic_loss.cpu().item<float>();
+        critic_mean_loss_metric->add(loss_value);
+        critic_std_loss_metric->add(loss_value);
+    }
+
+    void PpoTrainer::train_alpha(
+        const std::shared_ptr<AlphaParameter> &alpha,
+        const std::shared_ptr<torch::optim::Adam> &optim,
+        const std::shared_ptr<AbstractTargetEntropy> &target_entropy, const float mean_entropy,
+        const std::shared_ptr<AbstractMetric> &alpha_metric) {
+
+        // entropy above target -> alpha decays toward 0 (stops pushing sigma up);
+        // entropy below target -> alpha grows (prevents entropy collapse)
+        const auto alpha_loss =
+            torch::mean(alpha->log_alpha() * (mean_entropy - target_entropy->target_entropy()));
+
+        optim->zero_grad();
+        alpha_loss.backward();
+        optim->step();
+
+        alpha_metric->add(alpha->alpha().item<float>());
     }
 
     GaeResult PpoTrainer::compute_gae(const PpoRollout &rollout, const torch::Device device) const {
@@ -260,9 +308,9 @@ namespace arenai::agent {
         const auto returns = advantages + values;
 
         const auto nb_valid = valids.sum().clamp_min(1.f);
-        const auto advantage_mean = (advantages * valids).sum() / nb_valid;
+        const auto advantage_mean = torch::sum(advantages * valids) / nb_valid;
         const auto advantage_std =
-            (((advantages - advantage_mean).square() * valids).sum() / nb_valid).sqrt();
+            torch::sqrt(torch::sum(torch::square(advantages - advantage_mean) * valids) / nb_valid);
         advantages = (advantages - advantage_mean) / (advantage_std + EPSILON);
 
         return {.advantages = advantages, .returns = returns};

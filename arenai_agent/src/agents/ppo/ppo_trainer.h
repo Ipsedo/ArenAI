@@ -18,6 +18,13 @@ namespace arenai::agent {
         torch::Tensor returns;
     };
 
+    struct ActorUpdateResult {
+        // the minibatch drifted past the KL threshold: no update was applied
+        bool kl_exceeded;
+        float continuous_entropy;
+        float discrete_entropy;
+    };
+
     class PpoTrainer final : public AbstractTrainer {
     public:
         PpoTrainer(
@@ -88,6 +95,27 @@ namespace arenai::agent {
         int minibatch_size;
 
         void train() const;
+
+        // one backward pass on the actor for a single minibatch; the update is skipped
+        // when the minibatch already drifted past the KL threshold, its entropies are
+        // reported either way so the caller can feed the dual ascent
+        ActorUpdateResult train_actor(
+            const torch::Tensor &vision, const torch::Tensor &proprioception,
+            const torch::Tensor &continuous_actions, const torch::Tensor &discrete_actions,
+            const torch::Tensor &old_log_probs, const torch::Tensor &advantages) const;
+
+        // one backward pass on the critic for a single minibatch
+        void train_critic(
+            const torch::Tensor &vision, const torch::Tensor &proprioception,
+            const torch::Tensor &returns) const;
+
+        // one backward pass of the dual ascent on a single entropy coefficient, fed with
+        // the mean entropy of the whole update
+        static void train_alpha(
+            const std::shared_ptr<AlphaParameter> &alpha,
+            const std::shared_ptr<torch::optim::Adam> &optim,
+            const std::shared_ptr<AbstractTargetEntropy> &target_entropy, float mean_entropy,
+            const std::shared_ptr<AbstractMetric> &alpha_metric);
 
         // GAE advantages (normalized over the valid pairs) and value targets,
         // computed with the pre-update critic

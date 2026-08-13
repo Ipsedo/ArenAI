@@ -17,7 +17,9 @@ namespace arenai::model {
         std::weak_ptr<ShellItem> shell;
         glm::vec3 fire_pos;
 
-        // closest approach over the whole trajectory
+        // closest approach over the whole trajectory, measured against the segment
+        // travelled each frame (last_shell_pos → current position)
+        glm::vec3 last_shell_pos;
         float min_distance;
         glm::vec3 enemy_pos_at_t;
         glm::vec3 shell_pos_at_t;
@@ -40,7 +42,6 @@ namespace arenai::model {
             float wanted_frame_frequency);
 
         float get_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
-        float get_phi(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
 
         bool is_dead() override;
         bool is_first_frame_dead() override;
@@ -65,13 +66,8 @@ namespace arenai::model {
         int max_frames_upside_down;
         int curr_frame_upside_down;
 
-        float distance_scale;
-
         float miss_distance_scale;
         float hit_reward_scale;
-
-        float optimal_distance;
-        float aim_angle_scale;
 
         float hit_received_cost;
 
@@ -86,9 +82,8 @@ namespace arenai::model {
         std::vector<TrackedShell> tracked_shells;
 
         void on_shell_fired(const std::shared_ptr<ShellItem> &shell);
-        void on_shell_contact(const ShellContactInfo &shell_info, Item *item);
-
-        float compute_aim_angle(const std::shared_ptr<EnemyTank> &other_tank);
+        void
+        on_shell_contact(const ShellItem *shell, const ShellContactInfo &shell_info, Item *item);
 
         int get_nearest_enemy_index(
             const std::vector<std::shared_ptr<EnemyTank>> &tanks, const glm::vec3 &pos) const;

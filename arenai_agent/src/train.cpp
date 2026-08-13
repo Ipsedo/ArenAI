@@ -66,12 +66,11 @@ namespace arenai::agent {
         AgentSaver saver(trainer, train_options.output_folder, train_options.save_every);
 
         // metrics
-        auto reward_mean_metric = std::make_shared<MeanMetric>("r", 256, 2, true);
 
         const auto sac_metrics = trainer->get_metrics();
         const auto env_metrics = env->get_metrics();
 
-        std::vector<std::shared_ptr<AbstractMetric>> metrics = {reward_mean_metric};
+        std::vector<std::shared_ptr<AbstractMetric>> metrics;
         metrics.insert(metrics.end(), env_metrics.begin(), env_metrics.end());
         metrics.insert(metrics.end(), sac_metrics.begin(), sac_metrics.end());
 
@@ -110,8 +109,6 @@ namespace arenai::agent {
                 env->reset(spawn_width, spawn_height), environment_options.vision_height,
                 environment_options.vision_width);
 
-            auto last_phi_tensor = torch::tensor(env->get_phi_vector()).unsqueeze(1);
-
             while (!is_done) {
 
                 std::vector<core::Action> actions_for_env;
@@ -127,25 +124,16 @@ namespace arenai::agent {
 
                 // step environment
                 const auto steps = env->step(environment_options.wanted_frequency, actions_for_env);
-                const auto phi_tensor = torch::tensor(env->get_phi_vector()).unsqueeze(1);
 
                 const auto [torch_next_states, torch_rewards, torch_are_done] = steps_to_tensor(
                     steps, environment_options.vision_height, environment_options.vision_width);
 
-                const auto terminal_mask = torch::logical_not(torch_are_done);
-                const auto potential_reward =
-                    terminal_mask * train_options.potential_reward_gamma * phi_tensor
-                    - last_phi_tensor;
-
-                const auto torch_final_reward = torch_rewards + potential_reward;
-
                 // complete the pending transition - maybe train
-                collector->on_transition(torch_final_reward, torch_are_done);
+                collector->on_transition(torch_rewards, torch_are_done);
                 trainer->step();
 
                 // step ending stuff
                 is_done = env->is_episode_terminated();
-                last_phi_tensor = phi_tensor;
 
                 vision = torch_next_states.vision;
                 proprioception = torch_next_states.proprioception;
@@ -155,19 +143,6 @@ namespace arenai::agent {
                 // attempt to save
                 saver.attempt_save();
                 metric_csv_saver.attempt_append_to_csv();
-
-                // metrics: mean reward over the tanks still in play, dead tanks emit a
-                // post-mortem -1 every frame that would drown the signal
-                const auto valid_mask = env->get_valid_mask();
-                float valid_reward_sum = 0.f;
-                int nb_valid = 0;
-                for (size_t i = 0; i < steps.size(); i++) {
-                    if (!valid_mask[i]) continue;
-                    valid_reward_sum += std::get<1>(steps[i]);
-                    nb_valid++;
-                }
-                if (nb_valid > 0)
-                    reward_mean_metric->add(valid_reward_sum / static_cast<float>(nb_valid));
 
                 // progress bar metrics display
                 if (print_counter == print_tqdm_bar_every - 1) {

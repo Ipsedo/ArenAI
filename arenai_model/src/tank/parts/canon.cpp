@@ -32,7 +32,7 @@ namespace arenai::model {
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, glm::vec3 pos,
         glm::vec3 rel_pos, glm::vec3 scale, float mass, JPH::Body *turret,
         const float wanted_frame_frequency,
-        const std::function<void(glm::vec3, glm::vec3, Item *)> &on_contact,
+        const std::function<void(const ShellItem *, glm::vec3, glm::vec3, Item *)> &on_contact,
         const std::function<void(const std::shared_ptr<ShellItem> &)> &on_shell_fired,
         const std::function<bool()> &can_fire)
         : LifeItem(5), ConvexItem(

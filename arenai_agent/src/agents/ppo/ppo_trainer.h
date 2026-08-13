@@ -62,6 +62,8 @@ namespace arenai::agent {
         std::shared_ptr<torch::optim::Adam> alpha_continuous_optim;
         std::shared_ptr<torch::optim::Adam> alpha_discrete_optim;
 
+        std::shared_ptr<AbstractMetric> training_reward_metric;
+
         std::shared_ptr<AbstractMetric> actor_mean_loss_metric;
         std::shared_ptr<AbstractMetric> actor_std_loss_metric;
 

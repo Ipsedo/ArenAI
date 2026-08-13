@@ -58,6 +58,7 @@ namespace arenai::agent {
               alpha_continuous->parameters(), torch::optim::AdamOptions(alpha_learning_rate))),
           alpha_discrete_optim(std::make_unique<torch::optim::Adam>(
               alpha_discrete->parameters(), torch::optim::AdamOptions(alpha_learning_rate))),
+          training_reward_metric(std::make_shared<MeanMetric>("tr", metric_window_size)),
           actor_mean_loss_metric(std::make_shared<MeanMetric>("π_μ", metric_window_size)),
           actor_std_loss_metric(std::make_shared<StdMetric>("π_σ", metric_window_size)),
           critic_mean_loss_metric(std::make_shared<MeanMetric>("v_μ", metric_window_size)),
@@ -85,6 +86,8 @@ namespace arenai::agent {
         const auto device = actor->parameters().back().device();
 
         const auto rollout = rollout_buffer->get_rollout();
+
+        training_reward_metric->add(rollout.rewards.mean().item<float>());
 
         set_train(false);
         const auto [advantages, returns] = compute_gae(rollout, device);
@@ -318,18 +321,12 @@ namespace arenai::agent {
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> PpoTrainer::get_metrics() {
-        return {
-            actor_mean_loss_metric,
-            actor_std_loss_metric,
-            critic_mean_loss_metric,
-            critic_std_loss_metric,
-            continuous_entropy_metric,
-            discrete_entropy_metric,
-            alpha_continuous_metric,
-            alpha_discrete_metric,
-            sigma_metric,
-            clip_fraction_metric,
-            kl_metric};
+        return {training_reward_metric,  actor_mean_loss_metric,
+                actor_std_loss_metric,   critic_mean_loss_metric,
+                critic_std_loss_metric,  continuous_entropy_metric,
+                discrete_entropy_metric, alpha_continuous_metric,
+                alpha_discrete_metric,   sigma_metric,
+                clip_fraction_metric,    kl_metric};
     }
 
     void PpoTrainer::save(const std::filesystem::path &output_folder) {

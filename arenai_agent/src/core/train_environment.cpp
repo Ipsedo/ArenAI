@@ -31,6 +31,7 @@ namespace arenai::agent {
           nb_frames_added_when_hit(static_cast<int>(5.f / wanted_frequency)), nb_tanks(nb_tanks),
           nb_steps(0), done(nb_tanks, false), already_done(nb_tanks, false),
           max_episode_steps(max_episode_steps),
+          reward_metric(std::make_shared<MeanMetric>("r", 4 * nb_tanks * max_episode_steps, 3)),
           episode_step_mean_nb_metric(std::make_shared<MeanMetric>("s_μ", 32, 1)),
           episode_step_std_nb_metric(std::make_shared<StdMetric>("s_σ", 32)),
           fire_metric(std::make_shared<MeanMetric>("fire", 256, 2)),
@@ -110,10 +111,11 @@ namespace arenai::agent {
             }
         }
 
-        // detect winner
+        // detect winner and log reward
         for (int i = 0; i < step_result.size(); i++) {
             if (done[i]) continue;
 
+            // detact winner
             if (const long nb_not_done = std::ranges::count(done, false); nb_not_done == 1) {
                 const auto &[state, reward, is_done] = step_result[i];
                 if (only_one_tank_alive())
@@ -122,21 +124,14 @@ namespace arenai::agent {
 
                 done[i] = true;
             }
+
+            // log reward
+            reward_metric->add(std::get<1>(step_result[i]));
         }
 
         nb_steps++;
 
         return step_result;
-    }
-
-    std::vector<float> TrainTankEnvironment::get_phi_vector() {
-        return apply_on_factories<std::vector<float>>(
-            [](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
-                std::vector<float> phi_vector;
-                phi_vector.reserve(tanks.size());
-                for (const auto &tank: tanks) phi_vector.emplace_back(tank->get_phi(tanks));
-                return phi_vector;
-            });
     }
 
     void TrainTankEnvironment::on_draw(
@@ -184,15 +179,12 @@ namespace arenai::agent {
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> TrainTankEnvironment::get_metrics() const {
-        return {
-            episode_step_mean_nb_metric, episode_step_std_nb_metric, fire_metric, hit_metric,
-            kill_metric};
-    }
-
-    std::vector<bool> TrainTankEnvironment::get_valid_mask() const {
-        std::vector<bool> valid(nb_tanks);
-        for (int i = 0; i < nb_tanks; i++) valid[i] = !already_done[i];
-        return valid;
+        return {reward_metric,
+                episode_step_mean_nb_metric,
+                episode_step_std_nb_metric,
+                fire_metric,
+                hit_metric,
+                kill_metric};
     }
 
 }// namespace arenai::agent

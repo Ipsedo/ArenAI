@@ -28,7 +28,8 @@ namespace arenai::model {
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::string &tank_prefix_name, glm::vec3 chassis_pos,
         const float wanted_frame_frequency,
-        const std::function<void(const ShellContactInfo &, Item *)> &on_contact_callback,
+        const std::function<void(const ShellItem *, const ShellContactInfo &, Item *)>
+            &on_contact_callback,
         const std::function<void(const std::shared_ptr<ShellItem> &)> &on_shell_fired_callback,
         const std::function<bool()> &can_fire_callback)
         : engine(engine), name(tank_prefix_name), camera(std::nullptr_t()),
@@ -102,8 +103,10 @@ namespace arenai::model {
         auto canon_item = std::make_shared<CanonItem>(
             tank_prefix_name, engine, file_reader, chassis_pos + turret_pos + canon_pos, canon_pos,
             scale * canon_scale, 100, turret->get_body(), wanted_frame_frequency,
-            [on_contact_callback](const glm::vec3 fire_pos, const glm::vec3 hit_pos, Item *item) {
-                on_contact_callback({fire_pos, hit_pos}, item);
+            [on_contact_callback](
+                const ShellItem *shell, const glm::vec3 fire_pos, const glm::vec3 hit_pos,
+                Item *item) {
+                on_contact_callback(shell, {fire_pos, hit_pos}, item);
             },
             on_shell_fired_callback, can_fire_callback);
 
@@ -175,6 +178,10 @@ namespace arenai::model {
     std::shared_ptr<Item> JoltTank::get_chassis() { return chassis; }
 
     std::shared_ptr<Item> JoltTank::get_canon() { return canon; }
+
+    void JoltTank::kill_life_items() const {
+        for (const auto life_item: life_items) life_item->kill();
+    }
 
     void JoltTank::remove_constraints_from_engine() const {
         for (const auto &item: jolt_items) engine.remove_jolt_item_constraints(item);

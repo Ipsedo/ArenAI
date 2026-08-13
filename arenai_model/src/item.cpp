@@ -42,6 +42,11 @@ namespace arenai::model {
         return already_dead;
     }
 
+    void LifeItem::kill() {
+        health_points = 0.f;
+        already_dead = true;
+    }
+
     float LifeItem::receive_damages(const float damages) {
         const float new_health_point = std::max(health_points - damages, 0.f);
         const float received_damages = health_points - new_health_point;

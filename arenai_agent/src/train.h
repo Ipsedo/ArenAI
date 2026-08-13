@@ -15,7 +15,6 @@ namespace arenai::agent {
     struct TrainOptions {
         std::filesystem::path output_folder;
         std::filesystem::path resources_folder;
-        float potential_reward_gamma;
         int max_episode_steps;
         int nb_episodes;
         int save_every;

@@ -59,6 +59,10 @@ namespace arenai::model {
         bool is_dead() const;
         bool is_already_dead();
 
+        // zeroes the health and flags the item as already dead: a wreck pays
+        // neither hit nor kill to whoever keeps shooting at it
+        void kill();
+
         float receive_damages(float damages);
         int consume_hits_received();
 

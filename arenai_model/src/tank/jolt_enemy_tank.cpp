@@ -21,6 +21,24 @@
 using namespace arenai;
 using namespace arenai::model;
 
+namespace {
+
+    // closest point of segment [a, b] to p, and its distance
+    float distance_to_segment(
+        const glm::vec3 &a, const glm::vec3 &b, const glm::vec3 &p, glm::vec3 &closest) {
+        const glm::vec3 ab = b - a;
+        const float length_squared = glm::length2(ab);
+
+        const float t =
+            length_squared > 0.f ? std::clamp(glm::dot(p - a, ab) / length_squared, 0.f, 1.f) : 0.f;
+
+        closest = a + t * ab;
+
+        return glm::length(p - closest);
+    }
+
+}// namespace
+
 namespace arenai::model {
 
     JoltEnemyTank::JoltEnemyTank(
@@ -30,30 +48,20 @@ namespace arenai::model {
         const float wanted_frame_frequency)
         : JoltTank(
             engine, file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency,
-            [this](const ShellContactInfo &info, Item *item) { on_shell_contact(info, item); },
+            [this](const ShellItem *shell, const ShellContactInfo &info, Item *item) {
+                on_shell_contact(shell, info, item);
+            },
             [this](const std::shared_ptr<ShellItem> &shell) { on_shell_fired(shell); },
             [this] { return nb_shells > 0; }),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-          curr_frame_upside_down(0), distance_scale(250.f), miss_distance_scale(10.f),
-          hit_reward_scale(0.5f), optimal_distance(75.f), aim_angle_scale(glm::radians(30.f)),
-          hit_received_cost(0.1f), initial_nb_shells(30), nb_shells(initial_nb_shells),
+          curr_frame_upside_down(0), miss_distance_scale(10.f), hit_reward_scale(0.5f),
+          // 10 shells at 6 shots/s: the reserve binds after ~1.5 s of spam instead of 5 s,
+          // so running dry still falls inside the discount horizon of the shots that
+          // caused it — a scarcity the policy can see (proprioception) rather than a
+          // per-shot penalty, which would make firing negative before aiming is learned
+          hit_received_cost(0.1f), initial_nb_shells(10), nb_shells(initial_nb_shells),
           shells_recharged_per_hit(5), is_dead_already_triggered(false), has_touch(false),
           has_fired(false) {}
-
-    float JoltEnemyTank::compute_aim_angle(const std::shared_ptr<EnemyTank> &other_tank) {
-        const auto canon_tr = get_canon()->get_model_matrix();
-        const auto other_tr = other_tank->get_chassis()->get_model_matrix();
-
-        const auto canon_muzzle_pos = glm::vec3(canon_tr * glm::vec4(0.f, 0.f, 10.f, 1.f));
-        const auto other_pos = glm::vec3(other_tr * glm::vec4(0.f, 0.f, 0.f, 1.f));
-
-        const glm::vec3 to_other = glm::normalize(other_pos - canon_muzzle_pos);
-        const auto forward = glm::normalize(glm::vec3(canon_tr * glm::vec4(0.f, 0.f, 1.f, 0.f)));
-
-        const float d = std::clamp(glm::dot(forward, to_other), -1.f, 1.f);
-
-        return std::acos(d);
-    }
 
     float JoltEnemyTank::compute_hit_reward(
         const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos, const glm::vec3 &shell_pos) const {
@@ -72,20 +80,28 @@ namespace arenai::model {
     void JoltEnemyTank::update_closest_approach(
         TrackedShell &tracked, const glm::vec3 &shell_pos,
         const std::vector<std::shared_ptr<EnemyTank>> &tanks) const {
-        const int nearest_index = get_nearest_enemy_index(tanks, shell_pos);
-        if (nearest_index == -1) return;
+        if (const int nearest_index = get_nearest_enemy_index(tanks, shell_pos);
+            nearest_index != -1) {
 
-        const auto enemy_pos = glm::vec3(
-            tanks[nearest_index]->get_chassis()->get_model_matrix()
-            * glm::vec4(glm::vec3(0.f), 1.f));
+            const auto enemy_pos = glm::vec3(
+                tanks[nearest_index]->get_chassis()->get_model_matrix()
+                * glm::vec4(glm::vec3(0.f), 1.f));
 
-        if (const float distance = glm::length(shell_pos - enemy_pos);
-            distance < tracked.min_distance) {
-            tracked.min_distance = distance;
-            tracked.enemy_pos_at_t = enemy_pos;
-            tracked.shell_pos_at_t = shell_pos;
-            tracked.has_sample = true;
+            // a shell covers ~8 m per frame, an order of magnitude more than the
+            // dispersion sigma: sampling positions alone aliases the miss distance,
+            // so measure against the segment actually travelled during the frame
+            glm::vec3 closest;
+            if (const float distance =
+                    distance_to_segment(tracked.last_shell_pos, shell_pos, enemy_pos, closest);
+                distance < tracked.min_distance) {
+                tracked.min_distance = distance;
+                tracked.enemy_pos_at_t = enemy_pos;
+                tracked.shell_pos_at_t = closest;
+                tracked.has_sample = true;
+            }
         }
+
+        tracked.last_shell_pos = shell_pos;
     }
 
     int JoltEnemyTank::get_nearest_enemy_index(
@@ -109,46 +125,6 @@ namespace arenai::model {
         }
 
         return best_i;
-    }
-
-    float JoltEnemyTank::get_phi(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
-        constexpr glm::vec4 world_center(glm::vec3(0.f), 1.f);
-        const glm::vec3 chassis_pos = get_chassis()->get_model_matrix() * world_center;
-
-        std::vector<float> scores;
-        std::vector<float> logits;
-
-        for (const auto &enemy: tanks) {
-            if (enemy.get() == this || enemy->is_dead()) continue;
-
-            const glm::vec3 enemy_pos = enemy->get_chassis()->get_model_matrix() * world_center;
-
-            const float distance = glm::length(enemy_pos - chassis_pos);
-            const float angle = compute_aim_angle(enemy);
-
-            const float distance_score =
-                std::exp(-0.5f * std::pow((distance - optimal_distance) / distance_scale, 2.f));
-            // sharp gaussian: pointing the canon at an enemy is the dense precursor of a
-            // hit; the previous (cos+1)/2 was still at 0.93 with 30 degrees of error
-            const float angle_score = std::exp(-0.5f * std::pow(angle / aim_angle_scale, 2.f));
-
-            scores.push_back(distance_score * angle_score);
-            logits.push_back(-distance / distance_scale);
-        }
-
-        if (scores.empty()) return 0.f;
-
-        const float max_logit = *std::ranges::max_element(logits);
-        float sum_exp = 0.f;
-        for (const float l: logits) sum_exp += std::exp(l - max_logit);
-
-        float reward = 0.f;
-        for (std::size_t i = 0; i < scores.size(); ++i) {
-            const float weight = std::exp(logits[i] - max_logit) / sum_exp;
-            reward += weight * scores[i];
-        }
-
-        return reward;
     }
 
     float JoltEnemyTank::get_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
@@ -211,6 +187,8 @@ namespace arenai::model {
         tracked_shells.push_back(
             {.shell = shell,
              .fire_pos = shell->get_fire_position(),
+             // seeding the segment at the muzzle also covers the fire → first frame gap
+             .last_shell_pos = shell->get_fire_position(),
              .min_distance = std::numeric_limits<float>::infinity(),
              .enemy_pos_at_t = glm::vec3(0.f),
              .shell_pos_at_t = glm::vec3(0.f),
@@ -221,7 +199,8 @@ namespace arenai::model {
              .has_killed = false});
     }
 
-    void JoltEnemyTank::on_shell_contact(const ShellContactInfo &shell_info, Item *item) {
+    void JoltEnemyTank::on_shell_contact(
+        const ShellItem *shell, const ShellContactInfo &shell_info, Item *item) {
         for (const auto &i: get_items())
             if (i->get_name() == item->get_name()) return;
 
@@ -243,7 +222,7 @@ namespace arenai::model {
         if (hit) nb_shells += shells_recharged_per_hit;
 
         for (auto &tracked: tracked_shells) {
-            if (tracked.has_final_pos || tracked.fire_pos != shell_info.fire_position) continue;
+            if (tracked.has_final_pos || tracked.shell.lock().get() != shell) continue;
 
             tracked.final_shell_pos = shell_info.current_position;
             tracked.has_final_pos = true;
@@ -282,6 +261,9 @@ namespace arenai::model {
         if (is_dead() && !is_dead_already_triggered) {
             is_dead_already_triggered = true;
             remove_constraints_from_engine();
+            // the wreck stays in the world as an obstacle, but its surviving parts must
+            // not pay hits, kills, shells nor survival frames to whoever keeps shooting it
+            kill_life_items();
         }
     }
 

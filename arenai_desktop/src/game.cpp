@@ -100,17 +100,10 @@ namespace arenai::desktop {
 
         auto outcome = InGameOutcome::ExitGame;
 
-        // [ARENAI-DBG] temporary auto-repro
-        int dbg_auto_frames = -1;
-        if (const char *dbg = std::getenv("ARENAI_DEBUG_AUTOFRAMES"))
-            dbg_auto_frames = std::atoi(dbg);
-        int dbg_frame_count = 0;
-
         const auto frame_dt =
             std::chrono::milliseconds(static_cast<int>(game_options.wanted_frequency * 1000.f));
 
         while (!window->should_close()) {
-            if (dbg_auto_frames > 0 && dbg_frame_count++ >= dbg_auto_frames) break;
             window->poll_events();
 
             if (toggle_requested) {
@@ -173,9 +166,8 @@ namespace arenai::desktop {
     void run_gui(const GameOptions &game_options, const ModelOptions &model_options) {
         // The view owns the window + GL context; the app only speaks the abstract
         // window/backend interface.
-        const std::shared_ptr<view::AbstractWindowedGraphicBackend> graphics_backend =
-            view::make_glfw_vulkan_backend(
-                game_options.window_width, game_options.window_height, "ArenAI");
+        const std::shared_ptr graphics_backend = view::make_glfw_vulkan_backend(
+            game_options.window_width, game_options.window_height, "ArenAI");
         const auto window = graphics_backend->get_window();
 
         std::cout << "Vulkan : " << graphics_backend->renderer_info() << std::endl;

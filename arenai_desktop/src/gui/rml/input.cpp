@@ -9,7 +9,8 @@
 
 namespace arenai::desktop::gui {
 
-    std::vector<Rml::Element *> ExplorerNavListener::visible_file_entries(Rml::Element *file_list) {
+    std::vector<Rml::Element *>
+    ExplorerNavListener::visible_file_entries(const Rml::Element *file_list) {
         std::vector<Rml::Element *> entries;
         for (int i = 0; i < file_list->GetNumChildren(); i++)
             if (Rml::Element *child = file_list->GetChild(i); child->IsVisible())
@@ -22,10 +23,10 @@ namespace arenai::desktop::gui {
             event.GetParameter<int>("key_identifier", Rml::Input::KI_UNKNOWN));
         if (key != Rml::Input::KI_UP && key != Rml::Input::KI_DOWN) return;
 
-        Rml::Element *focus = event.GetTargetElement();
+        const Rml::Element *focus = event.GetTargetElement();
         Rml::ElementDocument *document = focus->GetOwnerDocument();
         if (document == nullptr) return;
-        Rml::Element *list = document->GetElementById("file-list");
+        const Rml::Element *list = document->GetElementById("file-list");
         Rml::Element *above = document->GetElementById("display-row");
         Rml::Element *below = document->GetElementById("use-folder");
         if (list == nullptr || above == nullptr || below == nullptr) return;

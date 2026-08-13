@@ -21,7 +21,8 @@ namespace arenai::desktop::gui {
 
     Rml::FileHandle ReaderBackedFileInterface::Open(const Rml::String &path) {
         try {
-            auto file = std::make_unique<OpenedFile>(OpenedFile{reader_->read_text(path)});
+            auto file =
+                std::make_unique<OpenedFile>(OpenedFile{.content = reader_->read_text(path)});
             return reinterpret_cast<Rml::FileHandle>(file.release());
         } catch (const std::exception &e) {
             std::cerr << "RmlUi asset open failed: " << e.what() << std::endl;

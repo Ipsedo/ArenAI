@@ -30,7 +30,7 @@ namespace arenai::desktop::gui {
     public:
         // the data-for template stays in the list as a display:none
         // child; only its instantiated clones are real entries
-        static std::vector<Rml::Element *> visible_file_entries(Rml::Element *file_list);
+        static std::vector<Rml::Element *> visible_file_entries(const Rml::Element *file_list);
 
         void ProcessEvent(Rml::Event &event) override;
     };

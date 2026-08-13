@@ -29,7 +29,7 @@ namespace arenai::desktop {
             return "Missing file: " + e.missing_file().filename().string();
         } catch (utils::ModelLoadException &e) {
             return "Error while loading file: " + e.wrong_state_dict_file().filename().string();
-        } catch (const std::exception &e) { return "Unknow error while loading Model"; }
+        } catch (const std::exception &_) { return "Unknow error while loading Model"; }
     }
 
 }// namespace arenai::desktop

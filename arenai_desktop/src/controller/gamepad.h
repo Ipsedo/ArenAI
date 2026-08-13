@@ -41,6 +41,8 @@ namespace arenai::desktop {
 
     private:
         PlayerGamepadInput state;
+
+        static float apply_dead_zone(double value);
     };
 
 }// namespace arenai::desktop

@@ -8,7 +8,7 @@
 namespace arenai::agent {
     constexpr float EPSILON = 1e-8f;
 
-    constexpr float TARGET_SIGMA = 0.1f;
+    constexpr float TARGET_SIGMA = 0.2f;
     constexpr float TARGET_FIRE_PROBABILITY = 0.05f;
 
     constexpr float SIGMA_MIN = 1e-4f;

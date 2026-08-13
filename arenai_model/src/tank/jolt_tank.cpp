@@ -18,8 +18,6 @@
 
 using namespace arenai;
 using namespace arenai::model;
-using namespace arenai::view;
-using namespace arenai::controller;
 
 namespace arenai::model {
 
@@ -157,11 +155,13 @@ namespace arenai::model {
         engine.add_jolt_item_producer([c = canon_item] { return c->produce_jolt_items(); });
     }
 
-    std::shared_ptr<AbstractCamera> JoltTank::get_camera() { return camera; }
+    std::shared_ptr<view::AbstractCamera> JoltTank::get_camera() { return camera; }
 
     std::vector<std::shared_ptr<Item>> JoltTank::get_items() { return items; }
 
-    std::vector<std::shared_ptr<Controller>> JoltTank::get_controllers() { return controllers; }
+    std::vector<std::shared_ptr<controller::Controller>> JoltTank::get_controllers() {
+        return controllers;
+    }
 
     std::map<std::string, std::shared_ptr<Shape>> JoltTank::load_shell_shapes() const {
         return {{ShellItem::NAME, ShellItem::load_shape(file_reader)}};

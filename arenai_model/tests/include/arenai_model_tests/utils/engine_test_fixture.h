@@ -11,7 +11,6 @@
 
 #include <arenai_model/engine.h>
 #include <arenai_model/item.h>
-#include <arenai_model/tank.h>
 #include <arenai_model/tank_factory.h>
 #include <arenai_utils/file_reader.h>
 

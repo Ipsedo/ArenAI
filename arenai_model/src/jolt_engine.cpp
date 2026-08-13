@@ -44,8 +44,8 @@ namespace {
         JPH::uint GetNumBroadPhaseLayers() const override { return broad_phase_layers::NUM_LAYERS; }
 
         JPH::BroadPhaseLayer GetBroadPhaseLayer(const JPH::ObjectLayer layer) const override {
-            return layer == arenai::model::layers::NON_MOVING ? broad_phase_layers::NON_MOVING
-                                                              : broad_phase_layers::MOVING;
+            return layer == layers::NON_MOVING ? broad_phase_layers::NON_MOVING
+                                               : broad_phase_layers::MOVING;
         }
 
 #if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
@@ -59,8 +59,7 @@ namespace {
     public:
         bool ShouldCollide(
             const JPH::ObjectLayer layer1, const JPH::BroadPhaseLayer layer2) const override {
-            return layer1 != arenai::model::layers::NON_MOVING
-                   || layer2 != broad_phase_layers::NON_MOVING;
+            return layer1 != layers::NON_MOVING || layer2 != broad_phase_layers::NON_MOVING;
         }
     };
 
@@ -68,8 +67,7 @@ namespace {
     public:
         bool
         ShouldCollide(const JPH::ObjectLayer layer1, const JPH::ObjectLayer layer2) const override {
-            return layer1 != arenai::model::layers::NON_MOVING
-                   || layer2 != arenai::model::layers::NON_MOVING;
+            return layer1 != layers::NON_MOVING || layer2 != layers::NON_MOVING;
         }
     };
 

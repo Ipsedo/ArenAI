@@ -10,7 +10,6 @@
 
 using namespace arenai;
 using namespace arenai::model;
-using namespace arenai::controller;
 
 namespace {
 
@@ -101,7 +100,7 @@ namespace arenai::model {
         return {jolt_items.begin(), jolt_items.end()};
     }
 
-    void CanonItem::apply_input(const user_input &input) {
+    void CanonItem::apply_input(const controller::user_input &input) {
         angle += input.right_joystick.y * 0.4f;
 
         angle =

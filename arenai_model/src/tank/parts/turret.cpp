@@ -6,7 +6,6 @@
 
 #include <algorithm>
 #include <memory>
-#include <utility>
 
 using namespace arenai;
 using namespace arenai::model;

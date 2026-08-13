@@ -6,7 +6,6 @@
 #include <memory>
 
 #include <arenai_controller/inputs.h>
-#include <arenai_model/constants.h>
 #include <arenai_model/item.h>
 #include <arenai_model_tests/tests_enemy_tank/tests_enemy_tank.h>
 

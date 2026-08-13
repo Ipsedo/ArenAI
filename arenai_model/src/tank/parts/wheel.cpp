@@ -4,8 +4,6 @@
 
 #include "./wheel.h"
 
-#include <utility>
-
 #include <Jolt/Physics/Constraints/SixDOFConstraint.h>
 
 #include <arenai_model/constants.h>

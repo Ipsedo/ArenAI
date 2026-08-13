@@ -131,7 +131,7 @@ namespace {
         explicit DummyItem(const std::string &name) : Item(name) {}
 
         std::shared_ptr<Shape> get_shape() override { return nullptr; }
-        glm::mat4 get_model_matrix() override { return glm::mat4(1.f); }
+        glm::mat4 get_model_matrix() override { return {1.f}; }
         glm::vec3 get_linear_velocity() override { return glm::vec3(0.f); }
         glm::vec3 get_angular_velocity() override { return glm::vec3(0.f); }
 

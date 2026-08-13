@@ -51,16 +51,8 @@ namespace arenai::agent {
 
         std::shared_ptr<ValueFunction> critic;
 
-        // adaptive entropy coefficients (dual ascent toward fixed entropy targets)
-        std::shared_ptr<AlphaParameter> alpha_continuous;
-        std::shared_ptr<AlphaParameter> alpha_discrete;
-        std::shared_ptr<AbstractTargetEntropy> continuous_target_entropy;
-        std::shared_ptr<AbstractTargetEntropy> discrete_target_entropy;
-
         std::shared_ptr<torch::optim::Adam> actor_optim;
         std::shared_ptr<torch::optim::Adam> critic_optim;
-        std::shared_ptr<torch::optim::Adam> alpha_continuous_optim;
-        std::shared_ptr<torch::optim::Adam> alpha_discrete_optim;
 
         std::shared_ptr<AbstractMetric> actor_mean_loss_metric;
         std::shared_ptr<AbstractMetric> actor_std_loss_metric;
@@ -70,9 +62,6 @@ namespace arenai::agent {
 
         std::shared_ptr<AbstractMetric> continuous_entropy_metric;
         std::shared_ptr<AbstractMetric> discrete_entropy_metric;
-
-        std::shared_ptr<AbstractMetric> alpha_continuous_metric;
-        std::shared_ptr<AbstractMetric> alpha_discrete_metric;
 
         // mean sigma of the truncated normal: direct view of the aim spread, Hc only bounds it
         std::shared_ptr<AbstractMetric> sigma_metric;
@@ -94,6 +83,9 @@ namespace arenai::agent {
         // rows per gradient step; also the chunk size for the no-grad value evaluation
         int minibatch_size;
 
+        float continuous_entropy_coefficient;
+        float discrete_entropy_coefficient;
+
         void train() const;
 
         // one backward pass on the actor for a single minibatch; the update is skipped
@@ -108,14 +100,6 @@ namespace arenai::agent {
         void train_critic(
             const torch::Tensor &vision, const torch::Tensor &proprioception,
             const torch::Tensor &returns) const;
-
-        // one backward pass of the dual ascent on a single entropy coefficient, fed with
-        // the mean entropy of the whole update
-        static void train_alpha(
-            const std::shared_ptr<AlphaParameter> &alpha,
-            const std::shared_ptr<torch::optim::Adam> &optim,
-            const std::shared_ptr<AbstractTargetEntropy> &target_entropy, float mean_entropy,
-            const std::shared_ptr<AbstractMetric> &alpha_metric);
 
         // GAE advantages (normalized over the valid pairs) and value targets,
         // computed with the pre-update critic

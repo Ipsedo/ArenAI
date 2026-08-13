@@ -76,7 +76,7 @@ TEST_F(PpoAgentTest, MetricsNotEmpty) {
 
     const auto metrics = factory->get_trainer()->get_metrics();
 
-    ASSERT_EQ(metrics.size(), 11);
+    ASSERT_EQ(metrics.size(), 9);
 }
 
 // ========================================================================
@@ -145,9 +145,8 @@ TEST_P(PpoSaveLoadParamTest, SaveCreatesExpectedFiles) {
     factory->get_trainer()->save(save_dir);
 
     const std::vector<std::string> expected_files = {
-        "actor.pt",       "critic.pt",       "alpha_continuous.pt",       "alpha_discrete.pt",
-        "actor_optim.pt", "critic_optim.pt", "alpha_continuous_optim.pt", "alpha_discrete_optim.pt",
-        "actor_repr.txt", "critic_repr.txt",
+        "actor.pt",        "critic.pt",      "actor_optim.pt",
+        "critic_optim.pt", "actor_repr.txt", "critic_repr.txt",
     };
 
     for (const auto &f: expected_files)

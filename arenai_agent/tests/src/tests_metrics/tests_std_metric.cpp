@@ -2,6 +2,8 @@
 // Created by samuel on 30/06/2026.
 //
 
+#include <cmath>
+
 #include <metrics/std_metric.h>
 
 #include <arenai_agent_tests/tests_metrics/tests_metrics.h>

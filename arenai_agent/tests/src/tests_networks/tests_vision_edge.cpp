@@ -32,7 +32,7 @@ TEST_F(VisionEdgeTest, NormalizesToExpectedRange) {
 
 TEST_F(VisionEdgeTest, OutputSizeMatchesGetOutputSize) {
     const std::vector<std::tuple<int, int>> channels = {{3, 8}, {8, 16}};
-    const std::vector<int> gnums = {4, 4};
+    const std::vector gnums = {4, 4};
     constexpr int h = 16, w = 16;
     constexpr int batch_size = 2;
 

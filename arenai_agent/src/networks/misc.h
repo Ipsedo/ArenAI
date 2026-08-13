@@ -9,33 +9,40 @@
 
 namespace arenai::agent {
 
-    class Clamp : public torch::nn::Module {
+    class AbstractFunctionModule : public torch::nn::Module {
+    public:
+        virtual torch::Tensor forward(const torch::Tensor &input) = 0;
+
+        virtual void pretty_print(std::ostream &stream) = 0;
+    };
+
+    class Clamp : public AbstractFunctionModule {
     public:
         Clamp(float lower_bound, float upper_bound);
 
-        torch::Tensor forward(const torch::Tensor &x);
+        torch::Tensor forward(const torch::Tensor &x) override;
 
-        void pretty_print(std::ostream &stream) const override;
+        void pretty_print(std::ostream &stream) override;
 
     private:
         float lower_bound;
         float upper_bound;
     };
 
-    class Exp : public torch::nn::Module {
+    class Exp : public AbstractFunctionModule {
     public:
-        torch::Tensor forward(const torch::Tensor &x);
+        torch::Tensor forward(const torch::Tensor &x) override;
 
-        void pretty_print(std::ostream &stream) const override;
+        void pretty_print(std::ostream &stream) override;
     };
 
-    class SigmaOutput : public torch::nn::Module {
+    class SigmaOutput : public AbstractFunctionModule {
     public:
         SigmaOutput(float min_sigma, float max_sigma);
 
-        torch::Tensor forward(const torch::Tensor &input);
+        torch::Tensor forward(const torch::Tensor &input) override;
 
-        void pretty_print(std::ostream &stream) const override;
+        void pretty_print(std::ostream &stream) override;
 
     private:
         float min_log_sigma;

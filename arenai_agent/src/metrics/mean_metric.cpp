@@ -4,6 +4,8 @@
 
 #include "./mean_metric.h"
 
+#include <numeric>
+
 using namespace arenai;
 using namespace arenai::agent;
 

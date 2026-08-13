@@ -15,7 +15,7 @@ namespace arenai::agent {
 
     torch::Tensor Exp::forward(const torch::Tensor &x) { return torch::exp(x); }
 
-    void Exp::pretty_print(std::ostream &stream) const { stream << name() << "()"; }
+    void Exp::pretty_print(std::ostream &stream) { stream << name() << "()"; }
 
     /*
      * Clamp
@@ -28,7 +28,7 @@ namespace arenai::agent {
         return torch::clamp(x, lower_bound, upper_bound);
     }
 
-    void Clamp::pretty_print(std::ostream &stream) const {
+    void Clamp::pretty_print(std::ostream &stream) {
         stream << name() << "(min=" << lower_bound << ", max=" << upper_bound << ")";
     }
 
@@ -45,7 +45,7 @@ namespace arenai::agent {
         return torch::exp(log_sigma);
     }
 
-    void SigmaOutput::pretty_print(std::ostream &stream) const {
+    void SigmaOutput::pretty_print(std::ostream &stream) {
         stream << name() << "(min=" << std::exp(min_log_sigma)
                << ", max=" << std::exp(max_log_sigma) << ")";
     }

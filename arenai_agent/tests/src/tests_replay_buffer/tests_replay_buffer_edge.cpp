@@ -14,7 +14,7 @@ using namespace arenai;
 using namespace arenai::agent;
 
 TEST_F(ReplayBufferEdgeTest, SampleFromEmptyBufferDoesNotCrash) {
-    SacReplayBuffer buffer(10);
+    const SacReplayBuffer buffer(10);
 
     ASSERT_EQ(buffer.size(), 0u);
 
@@ -88,7 +88,7 @@ TEST_F(ReplayBufferEdgeTest, RewardDividedByRunningStdAtSample) {
 
     const auto rewards = output.reward.reshape({-1});
     for (int64_t i = 0; i < rewards.size(0); i++) {
-        const float r = rewards[i].item<float>();
+        const auto r = rewards[i].item<float>();
         ASSERT_TRUE(std::abs(r - 0.0f) < 1e-5f || std::abs(r - 2.0f) < 1e-5f)
             << "Sampled reward " << r << " should be a stored reward divided by the running std";
     }

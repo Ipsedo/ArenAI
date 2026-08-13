@@ -5,8 +5,6 @@
 #ifndef ARENAI_AGENT_HOST_REPLAY_BUFFER_H
 #define ARENAI_AGENT_HOST_REPLAY_BUFFER_H
 
-#include <vector>
-
 #include <torch/torch.h>
 
 #include "../torch_types.h"

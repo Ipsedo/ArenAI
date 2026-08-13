@@ -5,8 +5,6 @@
 #ifndef ARENAI_STEP_COLLECTOR_H
 #define ARENAI_STEP_COLLECTOR_H
 
-#include <torch/torch.h>
-
 #include "./torch_types.h"
 
 namespace arenai::agent {

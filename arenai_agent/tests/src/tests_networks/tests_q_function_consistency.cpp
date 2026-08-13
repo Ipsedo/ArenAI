@@ -53,7 +53,7 @@ TEST_F(QFunctionConsistencyTest, ValueOheOutputFinite) {
     const auto vision = torch::randint(0, 255, {batch, 3, height, width}, torch::kUInt8);
     const auto sensors = torch::randn({batch, nb_sensors});
     const auto cont_actions = torch::randn({batch, nb_cont});
-    auto disc_ohe = torch::zeros({batch, nb_disc});
+    const auto disc_ohe = torch::zeros({batch, nb_disc});
     disc_ohe.select(1, 0).fill_(1.0f);
 
     const auto value = q.value_ohe(vision, sensors, cont_actions, disc_ohe);

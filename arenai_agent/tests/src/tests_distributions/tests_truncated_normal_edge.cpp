@@ -71,7 +71,7 @@ TEST_F(TruncatedNormalEdgeTest, LogPdfAndPdfConsistent) {
 // ========================================================================
 
 TEST_F(TruncatedNormalGradientTest, LogPdfGradientFlowsThroughMu) {
-    auto mu = torch::zeros({5}, torch::TensorOptions().requires_grad(true));
+    const auto mu = torch::zeros({5}, torch::TensorOptions().requires_grad(true));
     const auto sigma = torch::ones({5}) * 0.5f;
     const auto x = torch::tensor({0.1f, -0.2f, 0.3f, -0.1f, 0.0f});
 
@@ -89,7 +89,7 @@ TEST_F(TruncatedNormalGradientTest, LogPdfGradientFlowsThroughMu) {
 
 TEST_F(TruncatedNormalGradientTest, LogPdfGradientFlowsThroughSigma) {
     const auto mu = torch::zeros({5});
-    auto sigma = torch::full({5}, 0.5f, torch::TensorOptions().requires_grad(true));
+    const auto sigma = torch::full({5}, 0.5f, torch::TensorOptions().requires_grad(true));
     const auto x = torch::tensor({0.1f, -0.2f, 0.3f, -0.1f, 0.0f});
 
     const auto log_pdf = truncated_normal_log_pdf(x, mu, sigma);
@@ -103,7 +103,7 @@ TEST_F(TruncatedNormalGradientTest, LogPdfGradientFlowsThroughSigma) {
 }
 
 TEST_F(TruncatedNormalGradientTest, EntropyGradientFlowsThroughMu) {
-    auto mu = torch::zeros({5}, torch::TensorOptions().requires_grad(true));
+    const auto mu = torch::zeros({5}, torch::TensorOptions().requires_grad(true));
     const auto sigma = torch::ones({5}) * 0.5f;
 
     const auto entropy = truncated_normal_entropy(mu, sigma);
@@ -118,7 +118,7 @@ TEST_F(TruncatedNormalGradientTest, EntropyGradientFlowsThroughMu) {
 
 TEST_F(TruncatedNormalGradientTest, EntropyGradientFlowsThroughSigma) {
     const auto mu = torch::zeros({5});
-    auto sigma = torch::full({5}, 0.5f, torch::TensorOptions().requires_grad(true));
+    const auto sigma = torch::full({5}, 0.5f, torch::TensorOptions().requires_grad(true));
 
     const auto entropy = truncated_normal_entropy(mu, sigma);
     const auto loss = entropy.sum();

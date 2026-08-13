@@ -7,14 +7,14 @@
 
 #include <gtest/gtest.h>
 
-typedef uint32_t VisionWidth;
-typedef uint32_t VisionHeight;
-typedef uint32_t VisionChannel;
+typedef int VisionWidth;
+typedef int VisionHeight;
+typedef int VisionChannel;
 
 typedef std::vector<int> OutputConvChannels;
 typedef std::vector<int> GroupNormNums;
 
-typedef uint32_t BatchSize;
+typedef int BatchSize;
 
 class VisionTestParam
     : public testing::TestWithParam<std::tuple<

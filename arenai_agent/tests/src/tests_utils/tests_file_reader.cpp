@@ -34,7 +34,7 @@ TEST_F(DesktopAssetFileReaderTest, ReadTextReturnsContent) {
 }
 
 TEST_F(DesktopAssetFileReaderTest, ReadTextEmptyFile) {
-    std::ofstream(tmp_dir / "empty.txt");
+    std::ofstream tmp(tmp_dir / "empty.txt");
 
     DesktopAssetFileReader reader(tmp_dir);
     const auto content = reader.read_text("empty.txt");
@@ -92,17 +92,17 @@ TEST_F(DesktopAssetFileReaderTest, ReadPngValidImage) {
         << "Failed to create test PNG";
 
     DesktopAssetFileReader reader(tmp_dir);
-    const auto img = reader.read_png("test.png");
+    const auto [width, height, channels, out_pixels] = reader.read_png("test.png");
 
-    ASSERT_EQ(img.width, W);
-    ASSERT_EQ(img.height, H);
-    ASSERT_EQ(img.channels, 4);
-    ASSERT_EQ(img.pixels.size(), static_cast<size_t>(W * H * 4));
+    ASSERT_EQ(width, W);
+    ASSERT_EQ(height, H);
+    ASSERT_EQ(channels, 4);
+    ASSERT_EQ(out_pixels.size(), static_cast<size_t>(W * H * 4));
 }
 
 TEST_F(DesktopAssetFileReaderTest, ReadPngPixelsNotAllZero) {
     constexpr int W = 2, H = 2, C = 4;
-    std::vector<uint8_t> pixels(W * H * C, 200);
+    const std::vector<uint8_t> pixels(W * H * C, 200);
 
     const auto png_path = (tmp_dir / "bright.png").string();
     SOIL_save_image(png_path.c_str(), SOIL_SAVE_TYPE_PNG, W, H, C, pixels.data());
@@ -128,7 +128,7 @@ TEST_F(DesktopAssetFileReaderTest, ReadPngThrowsOnMissing) {
 
 TEST_F(DesktopAssetFileReaderTest, ReadPngAlwaysRGBA) {
     constexpr int W = 2, H = 2, C = 3;
-    std::vector<uint8_t> pixels(W * H * C, 128);
+    const std::vector<uint8_t> pixels(W * H * C, 128);
 
     const auto png_path = (tmp_dir / "rgb.png").string();
     SOIL_save_image(png_path.c_str(), SOIL_SAVE_TYPE_PNG, W, H, C, pixels.data());

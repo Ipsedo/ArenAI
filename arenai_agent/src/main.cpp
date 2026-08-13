@@ -43,7 +43,7 @@ int main(const int argc, char **argv) {
         .default_value(static_cast<int>(std::thread::hardware_concurrency()));
 
     // one subcommand per algorithm, carrying its own hyper-parameter options
-    for (const auto &algorithm: algorithms) parser.add_subparser(*algorithm.parser);
+    for (const auto &[name, subparser, create_agent]: algorithms) parser.add_subparser(*subparser);
 
     parser.parse_args(argc, argv);
 

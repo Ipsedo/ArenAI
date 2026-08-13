@@ -4,6 +4,8 @@
 
 #include "./train_environment.h"
 
+#include <algorithm>
+
 #include <arenai_agent/file_reader.h>
 #include <arenai_utils/cache.h>
 #include <arenai_utils/singleton.h>
@@ -22,7 +24,7 @@ namespace arenai::agent {
         const std::filesystem::path &android_assets_path, const float wanted_frequency,
         const int max_episode_steps, const int vision_height, const int vision_width,
         const int vision_num_threads)
-        : core::BaseTanksEnvironment(
+        : BaseTanksEnvironment(
             std::make_shared<DesktopAssetFileReader>(android_assets_path), graphics_backend,
             nb_tanks, wanted_frequency, vision_height, vision_width, vision_num_threads, false),
           wanted_frequency(wanted_frequency),
@@ -46,7 +48,7 @@ namespace arenai::agent {
         // mark them so the caller can skip their post-mortem steps
         already_done = done;
 
-        auto step_result = core::BaseTanksEnvironment::step(time_delta, actions);
+        auto step_result = BaseTanksEnvironment::step(time_delta, actions);
 
         const auto has_hit = apply_on_factories<std::vector<bool>>([&](const auto &factories) {
             std::vector<bool> has_hit_result;

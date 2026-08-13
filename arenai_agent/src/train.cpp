@@ -12,7 +12,6 @@
 #include <arenai_model/constants.h>
 
 #include "./core/train_environment.h"
-#include "./metrics/mean_metric.h"
 #include "./metrics/metric_saver.h"
 #include "./networks_utils/torch_converter.h"
 #include "./networks_utils/torch_saver.h"

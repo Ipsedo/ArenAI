@@ -63,21 +63,20 @@ TEST_F(PpoTrainingTest, CountParametersPositive) {
 TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
     // build the triad by hand to keep a handle on the actor's parameters
     constexpr PpoTrainingTestConfig cfg{8, 8, 3, 2, 3};
-    constexpr int nb_tanks = 2;
 
     const std::vector<std::tuple<int, int>> vision_channels{{3, 4}};
-    const std::vector<int> group_norm_nums{2};
+    const std::vector group_norm_nums{2};
 
     const auto actor = std::make_shared<Actor>(
         cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, 8, std::vector<int>{16}, vision_channels, group_norm_nums);
+        cfg.nb_discrete_actions, 8, std::vector{16}, vision_channels, group_norm_nums);
     const auto rollout_buffer = std::make_shared<PpoRolloutBuffer>();
     const auto collector = std::make_shared<PpoStepCollector>(rollout_buffer);
     const auto agent = std::make_shared<TorchPpoAgent>(actor, device, collector);
     // target_kl = 0 : early stop disabled so every minibatch applies its update
     const auto trainer = std::make_shared<PpoTrainer>(
         actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_sensors,
-        cfg.nb_continuous_actions, 1e-3f, 1e-3f, 1e-3f, 8, std::vector<int>{16}, vision_channels,
+        cfg.nb_continuous_actions, 1e-3f, 1e-3f, 1e-3f, 8, std::vector{16}, vision_channels,
         group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 2, ROLLOUT_SIZE, MINIBATCH_SIZE);
 
     std::vector<torch::Tensor> initial_parameters;
@@ -87,6 +86,8 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
     // env loop: act -> transition -> maybe train, one more step than the rollout
     // horizon so that the batch is complete when the trainer checks
     for (int t = 0; t < ROLLOUT_SIZE + 2; t++) {
+        constexpr int nb_tanks = 2;
+
         agent->act(make_state(cfg, nb_tanks));
         collector->on_transition(torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
         trainer->step();

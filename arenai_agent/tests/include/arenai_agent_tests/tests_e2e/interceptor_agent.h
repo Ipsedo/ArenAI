@@ -12,20 +12,23 @@
 // Records every batch of states the host loop hands to the agent and answers
 // with neutral actions: what act() received is exactly what a real network
 // would have seen.
-class InterceptorAgent final : public arenai::agent::AbstractAgent {
+class InterceptorAgent final : public agent::AbstractAgent {
 public:
-    std::vector<std::vector<arenai::core::State>> received_states;
+    std::vector<std::vector<core::State>> received_states;
     int last_vision_height = -1;
     int last_vision_width = -1;
 
-    std::vector<arenai::core::Action>
-    act(const std::vector<arenai::core::State> &states, const int vision_height,
+    std::vector<core::Action>
+    act(const std::vector<core::State> &states, const int vision_height,
         const int vision_width) override {
         received_states.push_back(states);
         last_vision_height = vision_height;
         last_vision_width = vision_width;
 
-        return std::vector<arenai::core::Action>(states.size(), {{0.f, 0.f}, {0.f, 0.f}, {false}});
+        return std::vector<core::Action>(
+            states.size(), {.left_joystick = {.x = 0.f, .y = 0.f},
+                            .right_joystick = {.x = 0.f, .y = 0.f},
+                            .fire_button = {false}});
     }
 
     void load(const std::filesystem::path &agent_folder) override {}

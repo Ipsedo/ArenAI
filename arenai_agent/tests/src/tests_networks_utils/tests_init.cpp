@@ -66,8 +66,7 @@ TEST_F(InitWeightsTest, SigmaOutputWeightsOrthogonal) {
 
 TEST_F(InitWeightsTest, SigmaOutputIsEqualToWantedOne) {
     torch::nn::Sequential sequential(
-        torch::nn::Linear(32, 4),
-        std::make_shared<SigmaOutput>(agent::SIGMA_MIN, agent::SIGMA_MAX));
+        torch::nn::Linear(32, 4), std::make_shared<SigmaOutput>(SIGMA_MIN, SIGMA_MAX));
 
     constexpr float wanted_sigma = 0.5f;
 

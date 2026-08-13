@@ -26,7 +26,7 @@ TEST_F(RewardTest, RewardZeroWhenAliveNoShot) {
 
     engine->step(1.f / 60.f);
 
-    const std::vector<std::shared_ptr<EnemyTank>> tanks{
+    const std::vector tanks{
         std::shared_ptr<EnemyTank>(tank_a.release()), std::shared_ptr<EnemyTank>(tank_b.release())};
 
     const float reward_a = tanks[0]->get_reward(tanks);
@@ -45,7 +45,7 @@ TEST_F(RewardTest, RewardNegativeWhenDead) {
 
     engine->step(1.f / 60.f);
 
-    std::vector<std::shared_ptr<EnemyTank>> tanks{
+    const std::vector tanks{
         std::shared_ptr<EnemyTank>(tank_a.release()), std::shared_ptr<EnemyTank>(tank_b.release())};
 
     // damage chassis enough to kill it
@@ -70,7 +70,7 @@ TEST_F(RewardTest, DeathPenaltyIsMinusOne) {
 
     engine->step(1.f / 60.f);
 
-    const std::vector<std::shared_ptr<EnemyTank>> tanks{
+    const std::vector tanks{
         std::shared_ptr<EnemyTank>(tank_a.release()), std::shared_ptr<EnemyTank>(tank_b.release())};
 
     // kill by damage → normal death penalty
@@ -105,12 +105,15 @@ TEST_F(RewardTest, RewardPositiveOnHit) {
     const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
     // fire from tank_a toward tank_b (canon points +Z by default)
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
-    const std::vector<std::shared_ptr<EnemyTank>> tanks{shared_a, shared_b};
+    const std::vector tanks{shared_a, shared_b};
 
     const float reward = shared_a->get_reward(tanks);
 
@@ -136,12 +139,15 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
     const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
     // fire from tank_a toward tank_b (canon points +Z by default)
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
-    const std::vector<std::shared_ptr<EnemyTank>> tanks{shared_a, shared_b};
+    const std::vector tanks{shared_a, shared_b};
 
     const float reward_on_hit = shared_a->get_reward(tanks);
 
@@ -154,7 +160,10 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
         << "reward should be greater than or equal to 1.0 after hitting an enemy";
 
     // no fire, reward under 1.0
-    constexpr user_input no_fire_input{{0.f, 0.f}, {0.f, 0.f}, {false}};
+    constexpr user_input no_fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {false}};
     for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(no_fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
@@ -199,12 +208,15 @@ TEST_F(RewardTest, NoRewardWhenShootingAWreck) {
     const auto shells_ratio_before = shared_a->get_proprioception().back();
 
     // fire from tank_a toward the wreck (canon points +Z by default)
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
-    const std::vector<std::shared_ptr<EnemyTank>> tanks{shared_a, shared_b};
+    const std::vector tanks{shared_a, shared_b};
 
     const float reward = shared_a->get_reward(tanks);
 
@@ -228,7 +240,10 @@ TEST_F(RewardTest, ZeroRewardWithEmptyTankList) {
 
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
 
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);

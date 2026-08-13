@@ -35,8 +35,11 @@ namespace arenai::model {
         settings.mHingeAxis2 = JPH::Vec3::sAxisY();
         settings.mNormalAxis2 = JPH::Vec3::sAxisX();
 
-        hinge =
-            static_cast<JPH::HingeConstraint *>(settings.Create(*chassis, *ConvexItem::get_body()));
+        auto *constraint = settings.Create(*chassis, *ConvexItem::get_body());
+        // Jolt is built without RTTI (-fno-rtti): dynamic_cast would not link. The dynamic
+        // type is guaranteed by the settings object the constraint was created from.
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+        hinge = static_cast<JPH::HingeConstraint *>(constraint);
         // like Bullet's limit-less hinge: free until the first input engages
         // the servo
     }

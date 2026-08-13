@@ -104,12 +104,15 @@ TEST_F(EnemyTankTest, RewardWhenAllEnemiesDeadAndShellFired) {
     ASSERT_TRUE(shared_b->is_dead());
 
     // fire from tank_a — shell will hit the dead tank or ground
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
-    const std::vector<std::shared_ptr<EnemyTank>> tanks{shared_a, shared_b};
+    const std::vector tanks{shared_a, shared_b};
 
     // get_nearest_enemy_index should return -1 (all dead)
     // reward should not crash and should be 0 (no valid target)
@@ -127,12 +130,15 @@ TEST_F(EnemyTankTest, RewardNoNaNWhenAloneInTankList) {
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
 
     // fire a shell that will hit the ground
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
-    const std::vector<std::shared_ptr<EnemyTank>> tanks{shared_tank};
+    const std::vector tanks{shared_tank};
 
     const float reward = shared_tank->get_reward(tanks);
     ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN when alone";
@@ -153,12 +159,18 @@ TEST_F(EnemyTankTest, ShellHitsGroundNoRewardNoCrash) {
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
 
     // tilt canon downward to ensure it hits the ground
-    constexpr user_input aim_down{{0.f, 0.f}, {0.f, 1.f}, {false}};
+    constexpr user_input aim_down{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 1.f},
+        .fire_button = {false}};
     for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(aim_down);
     for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(aim_down);
     for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(aim_down);
 
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
@@ -168,7 +180,7 @@ TEST_F(EnemyTankTest, ShellHitsGroundNoRewardNoCrash) {
         << "hitting the ground should not count as hitting another tank";
 
     // but last_shoot_info should still be set — reward should not crash
-    std::vector<std::shared_ptr<EnemyTank>> tanks{shared_tank};
+    const std::vector tanks{shared_tank};
     const float reward = shared_tank->get_reward(tanks);
     ASSERT_FALSE(std::isnan(reward));
 }
@@ -207,7 +219,10 @@ TEST_F(EnemyTankTest, HasHitOtherTankResetsAfterCall) {
     const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
     std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);

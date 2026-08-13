@@ -30,7 +30,7 @@ namespace arenai::model {
 
         void on_contact(Item *other) override;
 
-        inline const static std::string NAME = "shell_item";
+        static constexpr std::string NAME = "shell_item";
 
         void tick() override;
 

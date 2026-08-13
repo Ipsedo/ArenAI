@@ -25,7 +25,10 @@ TEST_F(ShellTest, FireCreatesShellItem) {
 
     const int count_before = static_cast<int>(engine->get_items().size());
 
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: tank->get_controllers()) ctrl->apply_input(fire_input);
 
     engine->step(1.f / 60.f);
@@ -43,7 +46,10 @@ TEST_F(ShellTest, ShellDestroyedAfterLifetime) {
 
     const int count_before_fire = static_cast<int>(engine->get_items().size());
 
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: tank->get_controllers()) ctrl->apply_input(fire_input);
 
     engine->step(1.f / 60.f);
@@ -70,7 +76,10 @@ TEST_F(ShellTest, ShellHitsEnemyTank) {
     const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
     std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
@@ -90,7 +99,10 @@ TEST_F(ShellTest, ShellDestroyedOnContact) {
     const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
     std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
     engine->step(1.f / 60.f);
@@ -113,7 +125,10 @@ TEST_F(ShellTest, NoFireNoNewItems) {
 
     const int count_before = static_cast<int>(engine->get_items().size());
 
-    constexpr user_input no_fire{{0.f, 1.f}, {0.f, 0.f}, {false}};
+    constexpr user_input no_fire{
+        .left_joystick = {.x = 0.f, .y = 1.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {false}};
     for (const auto &ctrl: tank->get_controllers()) ctrl->apply_input(no_fire);
 
     engine->step(1.f / 60.f);
@@ -133,12 +148,15 @@ TEST_F(ShellTest, ShellContactCallbackSetsReward) {
     const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
     const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
-    const std::vector<std::shared_ptr<EnemyTank>> tanks{shared_a, shared_b};
+    const std::vector tanks{shared_a, shared_b};
 
     ASSERT_TRUE(shared_a->has_hit_other_tank()) << "shell must hit for reward test";
 

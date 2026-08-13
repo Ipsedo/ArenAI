@@ -31,7 +31,8 @@ namespace arenai::agent {
           nb_frames_added_when_hit(static_cast<int>(5.f / wanted_frequency)), nb_tanks(nb_tanks),
           nb_steps(0), done(nb_tanks, false), already_done(nb_tanks, false),
           max_episode_steps(max_episode_steps),
-          reward_metric(std::make_shared<MeanMetric>("r", 4 * nb_tanks * max_episode_steps, 3)),
+          reward_metric(
+              std::make_shared<MeanMetric>("r", 4 * nb_tanks * max_episode_steps, 3, true)),
           episode_step_mean_nb_metric(std::make_shared<MeanMetric>("s_μ", 32, 1)),
           episode_step_std_nb_metric(std::make_shared<StdMetric>("s_σ", 32)),
           fire_metric(std::make_shared<MeanMetric>("fire", 256, 2)),

@@ -1,0 +1,7 @@
+---
+# Checks désactivés pour tout le projet (clang-tidy n'est utilisé que par l'IDE :
+# ni le build CMake ni la CI ne le lancent).
+#
+# modernize-use-nodiscard : réclame [[nodiscard]] sur toute méthode const
+# renvoyant une valeur — trop bruyant pour les nombreux getters du projet.
+Checks: '-modernize-use-nodiscard'

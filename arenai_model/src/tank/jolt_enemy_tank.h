@@ -74,6 +74,8 @@ namespace arenai::model {
         int initial_nb_shells;
         int nb_shells;
         int shells_recharged_per_hit;
+        int nb_frames_per_shell_regen;
+        int curr_frame_shell_regen;
 
         bool is_dead_already_triggered;
 

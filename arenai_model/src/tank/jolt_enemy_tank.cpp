@@ -60,7 +60,13 @@ namespace arenai::model {
           // caused it — a scarcity the policy can see (proprioception) rather than a
           // per-shot penalty, which would make firing negative before aiming is learned
           hit_received_cost(0.1f), initial_nb_shells(10), nb_shells(initial_nb_shells),
-          shells_recharged_per_hit(5), is_dead_already_triggered(false), has_touch(false),
+          shells_recharged_per_hit(5),
+          // the reserve also refills on its own, one shell every 1.5 s: with the recharge
+          // conditioned on a hit alone, a policy that never hits stays dry for the rest of
+          // its life — an absorbing state where the fire action is a no-op and stops
+          // producing any gradient. The hit recharge remains the fast path
+          nb_frames_per_shell_regen(static_cast<int>(1.5f / wanted_frame_frequency)),
+          curr_frame_shell_regen(0), is_dead_already_triggered(false), has_touch(false),
           has_fired(false) {}
 
     float JoltEnemyTank::compute_hit_reward(
@@ -138,10 +144,17 @@ namespace arenai::model {
             curr_frame_upside_down++;
         else curr_frame_upside_down = 0;
 
-        // 2. dead / suicide penalty
+        // 2. passive shell regeneration, capped at the initial reserve: the hit recharge
+        // may push the reserve above it, regeneration never does
+        if (++curr_frame_shell_regen >= nb_frames_per_shell_regen) {
+            curr_frame_shell_regen = 0;
+            if (nb_shells < initial_nb_shells) nb_shells++;
+        }
+
+        // 3. dead / suicide penalty
         const auto dead_penalty = is_dead() ? -1.f : 0.f;
 
-        // 3. fired shells: sample the closest tank along the trajectory and pay the
+        // 4. fired shells: sample the closest tank along the trajectory and pay the
         // dispersion gaussian (plus hit/kill bonuses) once the shell dies; firing itself
         // is free — the limited shell reserve (recharged on hit) taxes the spam
         float shells_reward = 0.f;
@@ -170,11 +183,11 @@ namespace arenai::model {
             tracked_shells.erase(tracked_shells.begin() + i);
         }
 
-        // 4. hits received penalty
+        // 5. hits received penalty
         const float hit_received_penalty =
             -hit_received_cost * static_cast<float>(get_received_hits());
 
-        // 5. total reward
+        // 6. total reward
         const float reward = dead_penalty + shells_reward + hit_received_penalty;
 
         return reward;

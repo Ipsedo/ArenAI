@@ -83,7 +83,7 @@ namespace arenai::agent {
           target_sigma(
               torch::tensor(std::vector(nb_continuous_actions, TARGET_SIGMA)).unsqueeze(0)),
           target_discrete_entropy(
-              torch::tensor({multinomial_target_entropy(TARGET_FIRE_PROBABILITY)})) {
+              torch::tensor({multinomial_target_entropy(TARGET_FIRE_PROBABILITY)}).unsqueeze(0)) {
 
         to(device);
     }
@@ -127,10 +127,10 @@ namespace arenai::agent {
         // the action count does not have to be carried around
         const auto options = torch::TensorOptions().device(device);
         torch::Tensor continuous_entropy_sum =
-            torch::zeros({flat_continuous_actions.size(-1)}, options);
+            torch::zeros({1, flat_continuous_actions.size(-1)}, options);
         torch::Tensor continuous_target_entropy_sum =
-            torch::zeros({flat_continuous_actions.size(-1)}, options);
-        torch::Tensor discrete_entropy_sum = torch::zeros({1}, options);
+            torch::zeros({1, flat_continuous_actions.size(-1)}, options);
+        torch::Tensor discrete_entropy_sum = torch::zeros({1, 1}, options);
 
         int nb_actor_minibatches = 0;
 
@@ -212,9 +212,10 @@ namespace arenai::agent {
         const auto continuous_target_entropy = truncated_normal_entropy(mu, target_sigma);
 
         // mean over batch
-        const auto mean_continuous_entropy = continuous_entropy.mean(0).detach();
-        const auto mean_continuous_target_entropy = continuous_target_entropy.mean(0).detach();
-        const auto mean_discrete_entropy = discrete_entropy.mean(0).detach();
+        const auto mean_continuous_entropy = continuous_entropy.mean(0, true).detach();
+        const auto mean_continuous_target_entropy =
+            continuous_target_entropy.mean(0, true).detach();
+        const auto mean_discrete_entropy = discrete_entropy.mean(0, true).detach();
 
         continuous_entropy_metric->add(mean_continuous_entropy.mean().item<float>());
         discrete_entropy_metric->add(mean_discrete_entropy.mean().item<float>());
@@ -288,7 +289,7 @@ namespace arenai::agent {
 
         // train continuous alpha
         const auto continuous_alpha_loss = torch::sum(
-            alpha_continuous->log_alpha().squeeze(0)
+            alpha_continuous->log_alpha()
             * torch::detach(continuous_entropy - continuous_target_entropy));
 
         alpha_continuous_optim->zero_grad();
@@ -296,8 +297,8 @@ namespace arenai::agent {
         alpha_continuous_optim->step();
 
         // train discrete alpha
-        const auto discrete_alpha_loss = torch::mean(
-            alpha_discrete->log_alpha().squeeze(0)
+        const auto discrete_alpha_loss = torch::sum(
+            alpha_discrete->log_alpha()
             * torch::detach(discrete_entropy - target_discrete_entropy));
 
         alpha_discrete_optim->zero_grad();

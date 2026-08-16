@@ -20,6 +20,30 @@ namespace arenai::agent {
         torch::Tensor log_alpha_tensor;
     };
 
+    // one independent coefficient per action dimension: a single coefficient can only
+    // constrain the summed entropy, which a wide dimension keeps on target while another one
+    // collapses.
+    // The bounds are anti-windup guards: dual ascent is a pure integrator, so while the
+    // entropy stays on one side of its target log_alpha drifts without bound and ends up
+    // orders of magnitude away from any useful value, unable to come back in time once the
+    // error flips sign.
+    class MultiAlphaParameters final : public torch::nn::Module {
+    public:
+        MultiAlphaParameters(float initial_alpha, float min_alpha, float max_alpha, int nb_alphas);
+
+        // clamps the parameters in place instead of returning a clamped view: torch::clamp
+        // has a zero gradient outside the bounds, so a clamped view would freeze log_alpha
+        // for good the first time it steps past a bound, in both directions
+        torch::Tensor log_alpha();
+        torch::Tensor alpha();
+
+    private:
+        torch::Tensor log_alpha_tensor;
+
+        float min_log_alpha;
+        float max_log_alpha;
+    };
+
     class AbstractTargetEntropy : public torch::nn::Module {
     public:
         virtual torch::Tensor target_entropy() = 0;
@@ -47,6 +71,13 @@ namespace arenai::agent {
     class ConstantContinuousTargetEntropy : public ConstantTargetEntropy {
     public:
         explicit ConstantContinuousTargetEntropy(int nb_continuous_action, float target_sigma);
+    };
+
+    // target of a single action instead of the sum over them, to be broadcast against one
+    // alpha per dimension
+    class ConstantContinuousPerActionTargetEntropy : public ConstantTargetEntropy {
+    public:
+        explicit ConstantContinuousPerActionTargetEntropy(float target_sigma);
     };
 
     /*

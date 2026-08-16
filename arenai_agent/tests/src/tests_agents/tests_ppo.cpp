@@ -32,7 +32,8 @@ std::unique_ptr<PpoTorchAgentFactory> PpoAgentTest::make_factory(const PpoTestCo
         .gae_lambda = 0.95f,
         .clip_epsilon = 0.2f,
         .grad_norm_max = 1.f,
-        .alpha_learning_rate = 1e-3f,
+        .continuous_alpha_learning_rate = 1e-3f,
+        .discrete_alpha_learning_rate = 1e-3f,
         .epochs = 1,
         .rollout_size = 8,
         .minibatch_size = 10};
@@ -76,7 +77,7 @@ TEST_F(PpoAgentTest, MetricsNotEmpty) {
 
     const auto metrics = factory->get_trainer()->get_metrics();
 
-    ASSERT_EQ(metrics.size(), 9);
+    ASSERT_EQ(metrics.size(), 15);
 }
 
 // ========================================================================
@@ -145,8 +146,9 @@ TEST_P(PpoSaveLoadParamTest, SaveCreatesExpectedFiles) {
     factory->get_trainer()->save(save_dir);
 
     const std::vector<std::string> expected_files = {
-        "actor.pt",        "critic.pt",      "actor_optim.pt",
-        "critic_optim.pt", "actor_repr.txt", "critic_repr.txt",
+        "actor.pt",       "critic.pt",       "alpha_continuous.pt",       "alpha_discrete.pt",
+        "actor_optim.pt", "critic_optim.pt", "alpha_continuous_optim.pt", "alpha_discrete_optim.pt",
+        "actor_repr.txt", "critic_repr.txt",
     };
 
     for (const auto &f: expected_files)

@@ -24,6 +24,25 @@ namespace arenai::agent {
 
     torch::Tensor AlphaParameter::alpha() { return log_alpha().exp(); }
 
+    MultiAlphaParameters::MultiAlphaParameters(
+        const float initial_alpha, const float min_alpha, const float max_alpha,
+        const int nb_alphas)
+        : log_alpha_tensor(register_parameter(
+            "log_alpha",
+            torch::full({nb_alphas}, std::log(std::clamp(initial_alpha, min_alpha, max_alpha))))),
+          min_log_alpha(std::log(min_alpha)), max_log_alpha(std::log(max_alpha)) {}
+
+    torch::Tensor MultiAlphaParameters::log_alpha() {
+        {
+            const torch::NoGradGuard no_grad;
+            log_alpha_tensor.data().clamp_(min_log_alpha, max_log_alpha);
+        }
+
+        return log_alpha_tensor;
+    }
+
+    torch::Tensor MultiAlphaParameters::alpha() { return log_alpha().exp(); }
+
     /*
      * Constant target entropy
      */
@@ -40,6 +59,10 @@ namespace arenai::agent {
         const int nb_continuous_action, const float target_sigma)
         : ConstantTargetEntropy(
             truncated_normal_target_entropy(nb_continuous_action, target_sigma)) {}
+
+    ConstantContinuousPerActionTargetEntropy::ConstantContinuousPerActionTargetEntropy(
+        const float target_sigma)
+        : ConstantTargetEntropy(truncated_normal_target_entropy(1, target_sigma)) {}
 
     /*
      * Target entropy warmup

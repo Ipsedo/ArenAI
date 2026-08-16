@@ -50,8 +50,9 @@ namespace arenai::agent {
               vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_actions,
               hidden_size_sensors, hidden_size_actions, critic_hidden_sizes, vision_channels,
               group_norm_nums)),
-          alpha_continuous(std::make_shared<AlphaParameter>(0.001f)),
-          alpha_discrete(std::make_shared<AlphaParameter>(0.001f)),
+          alpha_continuous(
+              std::make_shared<MultiAlphaParameters>(0.001f, 1e-5f, 1e-2f, nb_continuous_actions)),
+          alpha_discrete(std::make_shared<MultiAlphaParameters>(0.001f, 1e-5f, 1e-2f, 1)),
           continuous_target_entropy(std::make_shared<ConstantContinuousTargetEntropy>(
               nb_continuous_actions, TARGET_SIGMA)),
           discrete_target_entropy(
@@ -163,8 +164,7 @@ namespace arenai::agent {
                 actor->act(state.vision, state.proprioception);
 
             const auto curr_continuous_action = truncated_normal_sample(curr_mu, curr_sigma);
-            const auto curr_continuous_entropy =
-                truncated_normal_entropy(curr_mu, curr_sigma).sum(-1, true);
+            const auto curr_continuous_entropy = truncated_normal_entropy(curr_mu, curr_sigma);
 
             const auto curr_discrete_entropy = multinomial_entropy(curr_discrete_proba);
 
@@ -176,8 +176,8 @@ namespace arenai::agent {
                 (curr_discrete_proba * torch::min(curr_q_values_1, curr_q_values_2)).sum(-1, true);
 
             const auto actor_loss = -torch::mean(
-                alpha_continuous->alpha().detach() * curr_continuous_entropy
-                + alpha_discrete->alpha().detach() * curr_discrete_entropy + q_value);
+                alpha_continuous->alpha().detach() * curr_continuous_entropy.sum(-1, true)
+                + alpha_discrete->alpha().detach() * curr_discrete_entropy.sum(-1, true) + q_value);
 
             actor_optim->zero_grad();
             actor_loss.backward();
@@ -185,18 +185,26 @@ namespace arenai::agent {
             actor_optim->step();
 
             // continuous entropy
-            const auto alpha_continuous_loss = torch::mean(
-                alpha_continuous->log_alpha()
-                * (curr_continuous_entropy.detach() - continuous_target_entropy->target_entropy()));
+            const auto alpha_continuous_loss =
+                torch::sum(
+                    alpha_continuous->log_alpha()
+                        * (curr_continuous_entropy.detach()
+                           - continuous_target_entropy->target_entropy()),
+                    -1)
+                    .mean();
 
             alpha_continuous_optim->zero_grad();
             alpha_continuous_loss.backward();
             alpha_continuous_optim->step();
 
             // discrete entropy
-            const auto alpha_discrete_loss = torch::mean(
-                alpha_discrete->log_alpha()
-                * (curr_discrete_entropy.detach() - discrete_target_entropy->target_entropy()));
+            const auto alpha_discrete_loss =
+                torch::sum(
+                    alpha_discrete->log_alpha()
+                        * (curr_discrete_entropy.detach()
+                           - discrete_target_entropy->target_entropy()),
+                    -1)
+                    .mean();
 
             alpha_discrete_optim->zero_grad();
             alpha_discrete_loss.backward();
@@ -214,8 +222,8 @@ namespace arenai::agent {
             critic_2_mean_loss_metric->add(critic_2_loss.cpu().item<float>());
             critic_2_std_loss_metric->add(critic_2_loss.cpu().item<float>());
 
-            alpha_continuous_metric->add(alpha_continuous->alpha().item<float>());
-            alpha_discrete_metric->add(alpha_discrete->alpha().item<float>());
+            alpha_continuous_metric->add(alpha_continuous->alpha().mean().item<float>());
+            alpha_discrete_metric->add(alpha_discrete->alpha().mean().item<float>());
         }
 
         continuous_target_entropy_metric->add(

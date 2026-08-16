@@ -210,7 +210,7 @@ namespace arenai::agent {
 
         const auto clamped_proba = torch::clamp(discrete_proba, EPSILON, 1.0 - EPSILON);
         const auto curr_discrete_log_probs =
-            (discrete_actions * torch::log(clamped_proba)).sum(-1, true);
+            torch::sum(discrete_actions * torch::log(clamped_proba), -1, true);
 
         const auto ratio =
             torch::exp(curr_continuous_log_probs + curr_discrete_log_probs - old_log_probs);
@@ -235,7 +235,9 @@ namespace arenai::agent {
         // approx KL (Schulman): E[(ratio - 1) - log ratio]; skip this minibatch when the
         // policy drifted too far from the rollout policy
         const auto approx_kl = torch::mean(ratio - 1.f - torch::log(ratio)).item<float>();
+
         kl_metric->add(approx_kl);
+
         if (target_kl > 0.f && approx_kl > 1.5f * target_kl)
             return {
                 .kl_exceeded = true,

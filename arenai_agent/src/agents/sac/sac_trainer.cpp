@@ -172,8 +172,8 @@ namespace arenai::agent {
                 state.vision, state.proprioception, curr_continuous_action);
             const auto curr_q_values_2 = critic_2->value_per_discrete_action(
                 state.vision, state.proprioception, curr_continuous_action);
-            const auto q_value =
-                (curr_discrete_proba * torch::min(curr_q_values_1, curr_q_values_2)).sum(-1, true);
+            const auto q_value = torch::sum(
+                curr_discrete_proba * torch::min(curr_q_values_1, curr_q_values_2), -1, true);
 
             const auto actor_loss = -torch::mean(
                 torch::sum(alpha_continuous->alpha().detach() * curr_continuous_entropy, -1, true)
@@ -186,12 +186,13 @@ namespace arenai::agent {
             actor_optim->step();
 
             // continuous entropy
-            const auto continuous_target_entropy = truncated_normal_entropy(curr_mu, target_sigma);
+            const auto curr_continuous_target_entropy =
+                truncated_normal_entropy(curr_mu, target_sigma);
 
             const auto alpha_continuous_loss =
                 torch::sum(
                     alpha_continuous->log_alpha()
-                        * torch::detach(curr_continuous_entropy - continuous_target_entropy),
+                        * torch::detach(curr_continuous_entropy - curr_continuous_target_entropy),
                     -1)
                     .mean();
 
@@ -203,7 +204,7 @@ namespace arenai::agent {
             const auto alpha_discrete_loss =
                 torch::sum(
                     alpha_discrete->log_alpha()
-                        * (curr_discrete_entropy.detach() - target_discrete_entropy),
+                        * torch::detach(curr_discrete_entropy - target_discrete_entropy),
                     -1)
                     .mean();
 
@@ -218,7 +219,8 @@ namespace arenai::agent {
             continuous_entropy_metric->add(curr_continuous_entropy.mean().item<float>());
             discrete_entropy_metric->add(curr_discrete_entropy.mean().item<float>());
 
-            continuous_target_entropy_metric->add(continuous_target_entropy.mean().item<float>());
+            continuous_target_entropy_metric->add(
+                curr_continuous_target_entropy.mean().item<float>());
             discrete_target_entropy_metric->add(target_discrete_entropy.item<float>());
 
             critic_1_mean_loss_metric->add(critic_1_loss.cpu().item<float>());

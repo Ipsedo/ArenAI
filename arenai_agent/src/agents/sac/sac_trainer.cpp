@@ -51,10 +51,10 @@ namespace arenai::agent {
               hidden_size_sensors, hidden_size_actions, critic_hidden_sizes, vision_channels,
               group_norm_nums)),
           alpha_continuous(
-              std::make_shared<MultiAlphaParameters>(0.001f, 1e-5f, 1e-2f, nb_continuous_actions)),
-          alpha_discrete(std::make_shared<MultiAlphaParameters>(0.001f, 1e-5f, 1e-2f, 1)),
-          continuous_target_entropy(std::make_shared<ConstantContinuousTargetEntropy>(
-              nb_continuous_actions, TARGET_SIGMA)),
+              std::make_shared<RangeAlphaParameters>(0.001f, 1e-5f, 1e-2f, nb_continuous_actions)),
+          alpha_discrete(std::make_shared<RangeAlphaParameters>(0.001f, 1e-5f, 1e-2f, 1)),
+          continuous_target_entropy(
+              std::make_shared<ConstantContinuousTargetEntropy>(1, TARGET_SIGMA)),
           discrete_target_entropy(
               std::make_shared<ConstantDiscreteTargetEntropy>(TARGET_FIRE_PROBABILITY)),
           actor_optim(std::make_unique<torch::optim::Adam>(
@@ -109,8 +109,7 @@ namespace arenai::agent {
                     actor->act(next_state.vision, next_state.proprioception);
 
                 const auto next_continuous_action = truncated_normal_sample(next_mu, next_sigma);
-                const auto next_continuous_entropy =
-                    truncated_normal_entropy(next_mu, next_sigma).sum(-1, true);
+                const auto next_continuous_entropy = truncated_normal_entropy(next_mu, next_sigma);
 
                 const auto next_discrete_entropy = multinomial_entropy(next_discrete_proba);
 
@@ -119,14 +118,15 @@ namespace arenai::agent {
                 const auto next_target_q_values_2 = target_critic_2->value_per_discrete_action(
                     next_state.vision, next_state.proprioception, next_continuous_action);
 
-                const auto next_min_q_value =
-                    (next_discrete_proba
-                     * torch::min(next_target_q_values_1, next_target_q_values_2))
-                        .sum(-1, true);
+                const auto next_min_q_value = torch::sum(
+                    next_discrete_proba
+                        * torch::min(next_target_q_values_1, next_target_q_values_2),
+                    -1, true);
 
-                const auto target_v_value = next_min_q_value
-                                            + alpha_continuous->alpha() * next_continuous_entropy
-                                            + alpha_discrete->alpha() * next_discrete_entropy;
+                const auto target_v_value =
+                    next_min_q_value
+                    + torch::sum(alpha_continuous->alpha() * next_continuous_entropy, -1, true)
+                    + torch::sum(alpha_discrete->alpha() * next_discrete_entropy, -1, true);
 
                 target_q_values = reward + (1.f - done.to(torch::kFloat)) * gamma * target_v_value;
             }
@@ -176,8 +176,9 @@ namespace arenai::agent {
                 (curr_discrete_proba * torch::min(curr_q_values_1, curr_q_values_2)).sum(-1, true);
 
             const auto actor_loss = -torch::mean(
-                alpha_continuous->alpha().detach() * curr_continuous_entropy.sum(-1, true)
-                + alpha_discrete->alpha().detach() * curr_discrete_entropy.sum(-1, true) + q_value);
+                torch::sum(alpha_continuous->alpha().detach() * curr_continuous_entropy, -1, true)
+                + torch::sum(alpha_discrete->alpha().detach() * curr_discrete_entropy, -1, true)
+                + q_value);
 
             actor_optim->zero_grad();
             actor_loss.backward();

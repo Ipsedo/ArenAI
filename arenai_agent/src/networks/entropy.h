@@ -9,17 +9,6 @@
 
 namespace arenai::agent {
 
-    class AlphaParameter final : public torch::nn::Module {
-    public:
-        explicit AlphaParameter(float initial_alpha);
-
-        torch::Tensor log_alpha();
-        torch::Tensor alpha();
-
-    private:
-        torch::Tensor log_alpha_tensor;
-    };
-
     // one independent coefficient per action dimension: a single coefficient can only
     // constrain the summed entropy, which a wide dimension keeps on target while another one
     // collapses.
@@ -27,19 +16,28 @@ namespace arenai::agent {
     // entropy stays on one side of its target log_alpha drifts without bound and ends up
     // orders of magnitude away from any useful value, unable to come back in time once the
     // error flips sign.
-    class MultiAlphaParameters final : public torch::nn::Module {
+    class AlphaParameters : public torch::nn::Module {
     public:
-        MultiAlphaParameters(float initial_alpha, float min_alpha, float max_alpha, int nb_alphas);
+        explicit AlphaParameters(float initial_alpha, int nb_alphas);
 
         // clamps the parameters in place instead of returning a clamped view: torch::clamp
         // has a zero gradient outside the bounds, so a clamped view would freeze log_alpha
         // for good the first time it steps past a bound, in both directions
-        torch::Tensor log_alpha();
+        virtual torch::Tensor log_alpha();
         torch::Tensor alpha();
 
     private:
         torch::Tensor log_alpha_tensor;
+    };
 
+    class RangeAlphaParameters final : public AlphaParameters {
+    public:
+        explicit RangeAlphaParameters(
+            float initial_alpha, float min_alpha, float max_alpha, int nb_alphas);
+
+        torch::Tensor log_alpha() override;
+
+    private:
         float min_log_alpha;
         float max_log_alpha;
     };

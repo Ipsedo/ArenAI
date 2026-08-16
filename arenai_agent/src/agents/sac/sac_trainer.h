@@ -48,8 +48,8 @@ namespace arenai::agent {
         std::shared_ptr<QFunction> target_critic_1;
         std::shared_ptr<QFunction> target_critic_2;
 
-        std::shared_ptr<MultiAlphaParameters> alpha_continuous;
-        std::shared_ptr<MultiAlphaParameters> alpha_discrete;
+        std::shared_ptr<RangeAlphaParameters> alpha_continuous;
+        std::shared_ptr<RangeAlphaParameters> alpha_discrete;
 
         std::shared_ptr<AbstractTargetEntropy> continuous_target_entropy;
         std::shared_ptr<AbstractTargetEntropy> discrete_target_entropy;

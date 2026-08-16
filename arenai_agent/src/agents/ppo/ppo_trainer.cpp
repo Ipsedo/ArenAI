@@ -49,8 +49,8 @@ namespace arenai::agent {
           // the bounds are anti-windup guards, two decades on each side of the initial value:
           // they stay inactive as long as the dual ascent behaves
           alpha_continuous(
-              std::make_shared<RangeAlphaParameters>(1e-3f, 1e-5f, 1e-2f, nb_continuous_actions)),
-          alpha_discrete(std::make_shared<RangeAlphaParameters>(1e-3f, 1e-5f, 1e-2f, 1)),
+              std::make_shared<ClampedAlphaParameters>(1e-3f, 1e-5f, 1e-2f, nb_continuous_actions)),
+          alpha_discrete(std::make_shared<ClampedAlphaParameters>(1e-3f, 1e-5f, 1e-2f, 1)),
           actor_optim(std::make_unique<torch::optim::Adam>(
               this->actor->parameters(), torch::optim::AdamOptions(actor_learning_rate))),
           critic_optim(std::make_unique<torch::optim::Adam>(
@@ -294,7 +294,7 @@ namespace arenai::agent {
     }
 
     void PpoTrainer::train_alpha(
-        const std::shared_ptr<RangeAlphaParameters> &alpha,
+        const std::shared_ptr<ClampedAlphaParameters> &alpha,
         const std::shared_ptr<torch::optim::SGD> &optim, const torch::Tensor &target_entropy,
         const torch::Tensor &mean_entropy) {
 

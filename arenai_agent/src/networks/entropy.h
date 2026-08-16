@@ -30,9 +30,9 @@ namespace arenai::agent {
         torch::Tensor log_alpha_tensor;
     };
 
-    class RangeAlphaParameters final : public AlphaParameters {
+    class ClampedAlphaParameters final : public AlphaParameters {
     public:
-        explicit RangeAlphaParameters(
+        explicit ClampedAlphaParameters(
             float initial_alpha, float min_alpha, float max_alpha, int nb_alphas);
 
         torch::Tensor log_alpha() override;

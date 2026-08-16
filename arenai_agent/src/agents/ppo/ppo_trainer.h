@@ -55,8 +55,8 @@ namespace arenai::agent {
         std::shared_ptr<ValueFunction> critic;
 
         // adaptive entropy coefficients (dual ascent toward fixed entropy targets)
-        std::shared_ptr<RangeAlphaParameters> alpha_continuous;
-        std::shared_ptr<RangeAlphaParameters> alpha_discrete;
+        std::shared_ptr<ClampedAlphaParameters> alpha_continuous;
+        std::shared_ptr<ClampedAlphaParameters> alpha_discrete;
 
         std::shared_ptr<torch::optim::Adam> actor_optim;
         std::shared_ptr<torch::optim::Adam> critic_optim;
@@ -127,7 +127,7 @@ namespace arenai::agent {
         // one backward pass of the dual ascent, fed with the mean entropy of the whole update:
         // a scalar for the discrete coefficient, one entropy per action for the continuous ones
         static void train_alpha(
-            const std::shared_ptr<RangeAlphaParameters> &alpha,
+            const std::shared_ptr<ClampedAlphaParameters> &alpha,
             const std::shared_ptr<torch::optim::SGD> &optim, const torch::Tensor &target_entropy,
             const torch::Tensor &mean_entropy);
 

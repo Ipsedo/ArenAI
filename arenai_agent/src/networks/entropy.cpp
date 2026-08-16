@@ -30,21 +30,21 @@ namespace arenai::agent {
     torch::Tensor AlphaParameters::alpha() { return log_alpha().exp(); }
 
     /*
-     * Range alpha parameters
+     * Clamped alpha parameters
      */
 
-    RangeAlphaParameters::RangeAlphaParameters(
+    ClampedAlphaParameters::ClampedAlphaParameters(
         const float initial_alpha, const float min_alpha, const float max_alpha,
         const int nb_alphas)
         : AlphaParameters(std::clamp(initial_alpha, min_alpha, max_alpha), nb_alphas),
           min_log_alpha(std::log(min_alpha)), max_log_alpha(std::log(max_alpha)) {}
 
-    torch::Tensor RangeAlphaParameters::log_alpha() {
+    torch::Tensor ClampedAlphaParameters::log_alpha() {
         auto curr_log_alpha = AlphaParameters::log_alpha();
 
         {
             const torch::NoGradGuard no_grad;
-            curr_log_alpha = curr_log_alpha.clamp(min_log_alpha, max_log_alpha);
+            curr_log_alpha.data().clamp_(min_log_alpha, max_log_alpha);
         }
 
         return curr_log_alpha;

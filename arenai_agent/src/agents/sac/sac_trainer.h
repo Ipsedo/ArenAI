@@ -48,8 +48,8 @@ namespace arenai::agent {
         std::shared_ptr<QFunction> target_critic_1;
         std::shared_ptr<QFunction> target_critic_2;
 
-        std::shared_ptr<RangeAlphaParameters> alpha_continuous;
-        std::shared_ptr<RangeAlphaParameters> alpha_discrete;
+        std::shared_ptr<ClampedAlphaParameters> alpha_continuous;
+        std::shared_ptr<ClampedAlphaParameters> alpha_discrete;
 
         std::shared_ptr<torch::optim::Adam> actor_optim;
         std::shared_ptr<torch::optim::Adam> critic_1_optim;

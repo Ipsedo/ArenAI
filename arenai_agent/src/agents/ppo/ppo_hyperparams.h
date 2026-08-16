@@ -32,17 +32,7 @@ namespace arenai::agent {
         // early-stop of the epoch loop when approx KL > 1.5 * target_kl; <= 0 disables it
         float target_kl = 0.02f;
         float grad_norm_max = 0.5f;
-        // lr of the SAC-style adaptive entropy alphas (fixed targets: sigma 0.2, fire proba 0.15).
-        // Plain SGD, so the step is lr * (entropy - target): proportional to the error, it slows
-        // down near the target instead of the fixed +-lr of a normalized optimizer, which drove
-        // the alpha into a limit cycle. Two rates because the two errors live on different
-        // scales: the continuous entropy is summed over the actions (error ~1 nat), the discrete
-        // one is a single binary entropy (error ~0.15 nat).
-        // Sized for reaction speed alone, not for windup: the MultiAlphaParameters bounds cap
-        // the drift whatever the rate. At these values an alpha crosses its whole admissible
-        // range in ~130 rollouts once the entropy leaves its target, against ~1300 an order of
-        // magnitude lower - too slow to catch an entropy collapse.
-        float continuous_alpha_learning_rate = 1e-2f;
+        float continuous_alpha_learning_rate = 4e-2f;
         float discrete_alpha_learning_rate = 1e-1f;
         int epochs = 4;
         int rollout_size = 30 * 30;

@@ -124,12 +124,9 @@ namespace arenai::agent {
             const torch::Tensor &vision, const torch::Tensor &proprioception,
             const torch::Tensor &returns) const;
 
-        // one backward pass of the dual ascent, fed with the mean entropy of the whole update:
-        // a scalar for the discrete coefficient, one entropy per action for the continuous ones
-        static void train_alpha(
-            const std::shared_ptr<ClampedAlphaParameters> &alpha,
-            const std::shared_ptr<torch::optim::SGD> &optim, const torch::Tensor &target_entropy,
-            const torch::Tensor &mean_entropy);
+        void train_alphas(
+            const torch::Tensor &continuous_entropy, const torch::Tensor &continuous_target_entropy,
+            const torch::Tensor &discrete_entropy) const;
 
         // GAE advantages (normalized over the valid pairs) and value targets,
         // computed with the pre-update critic

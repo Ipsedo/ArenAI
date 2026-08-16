@@ -83,7 +83,7 @@ namespace arenai::agent {
           target_sigma(
               torch::tensor(std::vector(nb_continuous_actions, TARGET_SIGMA)).unsqueeze(0)),
           target_discrete_entropy(
-              torch::tensor(multinomial_target_entropy(TARGET_FIRE_PROBABILITY))) {
+              torch::tensor({multinomial_target_entropy(TARGET_FIRE_PROBABILITY)})) {
 
         to(device);
     }
@@ -130,8 +130,7 @@ namespace arenai::agent {
             torch::zeros({flat_continuous_actions.size(-1)}, options);
         torch::Tensor continuous_target_entropy_sum =
             torch::zeros({flat_continuous_actions.size(-1)}, options);
-        torch::Tensor discrete_entropy_sum =
-            torch::zeros({flat_discrete_actions.size(-1)}, options);
+        torch::Tensor discrete_entropy_sum = torch::zeros({1}, options);
 
         int nb_actor_minibatches = 0;
 
@@ -178,22 +177,12 @@ namespace arenai::agent {
         if (nb_actor_minibatches > 0) {
             const auto nb_minibatches = static_cast<float>(nb_actor_minibatches);
 
+            const auto continuous_entropy = continuous_entropy_sum / nb_minibatches;
             const auto continuous_target_entropy = continuous_target_entropy_sum / nb_minibatches;
 
-            train_alpha(
-                alpha_continuous, alpha_continuous_optim, continuous_target_entropy,
-                continuous_entropy_sum / nb_minibatches);
-            train_alpha(
-                alpha_discrete, alpha_discrete_optim, target_discrete_entropy,
-                discrete_entropy_sum / nb_minibatches);
+            const auto discrete_entropy = discrete_entropy_sum / nb_minibatches;
 
-            const auto continuous_alphas = alpha_continuous->alpha();
-            alpha_continuous_metric->add(continuous_alphas.mean().item<float>());
-            alpha_continuous_max_metric->add(continuous_alphas.max().item<float>());
-            alpha_discrete_metric->add(alpha_discrete->alpha().mean().item<float>());
-
-            continuous_target_entropy_metric->add(continuous_target_entropy.mean().item<float>());
-            discrete_target_entropy_metric->add(target_discrete_entropy.item<float>());
+            train_alphas(continuous_entropy, continuous_target_entropy, discrete_entropy);
         }
     }
 
@@ -293,16 +282,36 @@ namespace arenai::agent {
         critic_std_loss_metric->add(loss_value);
     }
 
-    void PpoTrainer::train_alpha(
-        const std::shared_ptr<ClampedAlphaParameters> &alpha,
-        const std::shared_ptr<torch::optim::SGD> &optim, const torch::Tensor &target_entropy,
-        const torch::Tensor &mean_entropy) {
+    void PpoTrainer::train_alphas(
+        const torch::Tensor &continuous_entropy, const torch::Tensor &continuous_target_entropy,
+        const torch::Tensor &discrete_entropy) const {
 
-        const auto alpha_loss = torch::sum(alpha->log_alpha() * (mean_entropy - target_entropy));
+        // train continuous alpha
+        const auto continuous_alpha_loss = torch::sum(
+            alpha_continuous->log_alpha().squeeze(0)
+            * torch::detach(continuous_entropy - continuous_target_entropy));
 
-        optim->zero_grad();
-        alpha_loss.backward();
-        optim->step();
+        alpha_continuous_optim->zero_grad();
+        continuous_alpha_loss.backward();
+        alpha_continuous_optim->step();
+
+        // train discrete alpha
+        const auto discrete_alpha_loss = torch::mean(
+            alpha_discrete->log_alpha().squeeze(0)
+            * torch::detach(discrete_entropy - target_discrete_entropy));
+
+        alpha_discrete_optim->zero_grad();
+        discrete_alpha_loss.backward();
+        alpha_discrete_optim->step();
+
+        // metrics
+        const auto continuous_alphas = alpha_continuous->alpha();
+        alpha_continuous_metric->add(continuous_alphas.mean().item<float>());
+        alpha_continuous_max_metric->add(continuous_alphas.max().item<float>());
+        alpha_discrete_metric->add(alpha_discrete->alpha().mean().item<float>());
+
+        continuous_target_entropy_metric->add(continuous_target_entropy.mean().item<float>());
+        discrete_target_entropy_metric->add(target_discrete_entropy.item<float>());
     }
 
     GaeResult PpoTrainer::compute_gae(const PpoRollout &rollout, const torch::Device device) const {

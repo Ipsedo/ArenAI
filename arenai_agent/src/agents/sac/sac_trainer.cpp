@@ -80,7 +80,7 @@ namespace arenai::agent {
           target_sigma(
               torch::tensor(std::vector(nb_continuous_actions, TARGET_SIGMA)).unsqueeze(0)),
           target_discrete_entropy(
-              torch::tensor(multinomial_target_entropy(TARGET_FIRE_PROBABILITY))) {
+              torch::tensor({multinomial_target_entropy(TARGET_FIRE_PROBABILITY)}).unsqueeze(0)) {
 
         hard_update(target_critic_1, critic_1);
         hard_update(target_critic_2, critic_2);

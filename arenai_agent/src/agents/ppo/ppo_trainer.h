@@ -23,7 +23,8 @@ namespace arenai::agent {
         bool kl_exceeded;
         // one entropy per continuous action, detached: each dimension feeds its own alpha
         torch::Tensor continuous_entropy;
-        float discrete_entropy;
+        torch::Tensor continuous_target_entropy;
+        torch::Tensor discrete_entropy;
     };
 
     class PpoTrainer final : public AbstractTrainer {
@@ -56,8 +57,6 @@ namespace arenai::agent {
         // adaptive entropy coefficients (dual ascent toward fixed entropy targets)
         std::shared_ptr<RangeAlphaParameters> alpha_continuous;
         std::shared_ptr<RangeAlphaParameters> alpha_discrete;
-        std::shared_ptr<AbstractTargetEntropy> continuous_target_entropy;
-        std::shared_ptr<AbstractTargetEntropy> discrete_target_entropy;
 
         std::shared_ptr<torch::optim::Adam> actor_optim;
         std::shared_ptr<torch::optim::Adam> critic_optim;
@@ -107,6 +106,9 @@ namespace arenai::agent {
         // rows per gradient step; also the chunk size for the no-grad value evaluation
         int minibatch_size;
 
+        torch::Tensor target_sigma;
+        torch::Tensor target_discrete_entropy;
+
         void train() const;
 
         // one backward pass on the actor for a single minibatch; the update is skipped
@@ -126,8 +128,7 @@ namespace arenai::agent {
         // a scalar for the discrete coefficient, one entropy per action for the continuous ones
         static void train_alpha(
             const std::shared_ptr<RangeAlphaParameters> &alpha,
-            const std::shared_ptr<torch::optim::SGD> &optim,
-            const std::shared_ptr<AbstractTargetEntropy> &target_entropy,
+            const std::shared_ptr<torch::optim::SGD> &optim, const torch::Tensor &target_entropy,
             const torch::Tensor &mean_entropy);
 
         // GAE advantages (normalized over the valid pairs) and value targets,
@@ -135,7 +136,7 @@ namespace arenai::agent {
         GaeResult compute_gae(const PpoRollout &rollout, torch::Device device) const;
 
         void set_train(bool train) const;
-        void to(torch::Device device) const;
+        void to(torch::Device device);
     };
 
 }// namespace arenai::agent

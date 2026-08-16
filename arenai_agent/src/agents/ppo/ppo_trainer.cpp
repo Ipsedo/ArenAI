@@ -51,10 +51,6 @@ namespace arenai::agent {
           alpha_continuous(
               std::make_shared<RangeAlphaParameters>(1e-3f, 1e-5f, 1e-2f, nb_continuous_actions)),
           alpha_discrete(std::make_shared<RangeAlphaParameters>(1e-3f, 1e-5f, 1e-2f, 1)),
-          continuous_target_entropy(
-              std::make_shared<ConstantContinuousPerActionTargetEntropy>(TARGET_SIGMA)),
-          discrete_target_entropy(
-              std::make_shared<ConstantDiscreteTargetEntropy>(TARGET_FIRE_PROBABILITY)),
           actor_optim(std::make_unique<torch::optim::Adam>(
               this->actor->parameters(), torch::optim::AdamOptions(actor_learning_rate))),
           critic_optim(std::make_unique<torch::optim::Adam>(
@@ -83,7 +79,11 @@ namespace arenai::agent {
           kl_metric(std::make_shared<MeanMetric>("kl", metric_window_size, 2, true)), gamma(gamma),
           gae_lambda(gae_lambda), clip_epsilon(clip_epsilon), target_kl(target_kl),
           grad_norm_max(grad_norm_max), epochs(epochs), rollout_size(rollout_size),
-          minibatch_size(minibatch_size) {
+          minibatch_size(minibatch_size),
+          target_sigma(
+              torch::tensor(std::vector(nb_continuous_actions, TARGET_SIGMA)).unsqueeze(0)),
+          target_discrete_entropy(
+              torch::tensor(multinomial_target_entropy(TARGET_FIRE_PROBABILITY))) {
 
         to(device);
     }
@@ -125,8 +125,14 @@ namespace arenai::agent {
 
         // one running sum per continuous action; left undefined until the first minibatch so
         // the action count does not have to be carried around
-        torch::Tensor continuous_entropy_sum;
-        float discrete_entropy_sum = 0.f;
+        const auto options = torch::TensorOptions().device(device);
+        torch::Tensor continuous_entropy_sum =
+            torch::zeros({flat_continuous_actions.size(-1)}, options);
+        torch::Tensor continuous_target_entropy_sum =
+            torch::zeros({flat_continuous_actions.size(-1)}, options);
+        torch::Tensor discrete_entropy_sum =
+            torch::zeros({flat_discrete_actions.size(-1)}, options);
+
         int nb_actor_minibatches = 0;
 
         bool kl_stop = false;
@@ -144,15 +150,18 @@ namespace arenai::agent {
                 // actor: skipped for the rest of the update once a minibatch drifted past
                 // the KL threshold
                 if (!kl_stop) {
-                    const auto [kl_exceeded, continuous_entropy, discrete_entropy] = train_actor(
-                        mb_vision, mb_proprioception, select(flat_continuous_actions, idx),
-                        select(flat_discrete_actions, idx), select(flat_old_log_probs, idx),
-                        select(flat_advantages, idx));
+                    const auto
+                        [kl_exceeded, continuous_entropy, continuous_target_entropy,
+                         discrete_entropy] =
+                            train_actor(
+                                mb_vision, mb_proprioception, select(flat_continuous_actions, idx),
+                                select(flat_discrete_actions, idx), select(flat_old_log_probs, idx),
+                                select(flat_advantages, idx));
 
-                    continuous_entropy_sum = continuous_entropy_sum.defined()
-                                                 ? continuous_entropy_sum + continuous_entropy
-                                                 : continuous_entropy;
+                    continuous_entropy_sum += continuous_entropy;
+                    continuous_target_entropy_sum += continuous_target_entropy;
                     discrete_entropy_sum += discrete_entropy;
+
                     nb_actor_minibatches++;
 
                     kl_stop = kl_exceeded;
@@ -169,25 +178,23 @@ namespace arenai::agent {
         if (nb_actor_minibatches > 0) {
             const auto nb_minibatches = static_cast<float>(nb_actor_minibatches);
 
+            const auto continuous_target_entropy = continuous_target_entropy_sum / nb_minibatches;
+
             train_alpha(
                 alpha_continuous, alpha_continuous_optim, continuous_target_entropy,
                 continuous_entropy_sum / nb_minibatches);
             train_alpha(
-                alpha_discrete, alpha_discrete_optim, discrete_target_entropy,
-                torch::tensor(
-                    discrete_entropy_sum / nb_minibatches,
-                    torch::TensorOptions().device(continuous_entropy_sum.device())));
+                alpha_discrete, alpha_discrete_optim, target_discrete_entropy,
+                discrete_entropy_sum / nb_minibatches);
 
             const auto continuous_alphas = alpha_continuous->alpha();
             alpha_continuous_metric->add(continuous_alphas.mean().item<float>());
             alpha_continuous_max_metric->add(continuous_alphas.max().item<float>());
             alpha_discrete_metric->add(alpha_discrete->alpha().mean().item<float>());
-        }
 
-        continuous_target_entropy_metric->add(
-            continuous_target_entropy->target_entropy().item<float>());
-        discrete_target_entropy_metric->add(
-            discrete_target_entropy->target_entropy().item<float>());
+            continuous_target_entropy_metric->add(continuous_target_entropy.mean().item<float>());
+            discrete_target_entropy_metric->add(target_discrete_entropy.item<float>());
+        }
     }
 
     ActorUpdateResult PpoTrainer::train_actor(
@@ -213,11 +220,15 @@ namespace arenai::agent {
         const auto continuous_entropy = truncated_normal_entropy(mu, sigma);
         const auto discrete_entropy = multinomial_entropy(discrete_proba);
 
+        const auto continuous_target_entropy = truncated_normal_entropy(mu, target_sigma);
+
+        // mean over batch
         const auto mean_continuous_entropy = continuous_entropy.mean(0).detach();
-        const auto mean_discrete_entropy = discrete_entropy.mean().item<float>();
+        const auto mean_continuous_target_entropy = continuous_target_entropy.mean(0).detach();
+        const auto mean_discrete_entropy = discrete_entropy.mean(0).detach();
 
         continuous_entropy_metric->add(mean_continuous_entropy.mean().item<float>());
-        discrete_entropy_metric->add(mean_discrete_entropy);
+        discrete_entropy_metric->add(mean_discrete_entropy.mean().item<float>());
         sigma_metric->add(sigma.mean().item<float>());
         sigma_min_metric->add(sigma.mean(0).min().item<float>());
 
@@ -229,6 +240,7 @@ namespace arenai::agent {
             return {
                 .kl_exceeded = true,
                 .continuous_entropy = mean_continuous_entropy,
+                .continuous_target_entropy = mean_continuous_target_entropy,
                 .discrete_entropy = mean_discrete_entropy};
 
         const auto clipped_ratio = torch::clamp(ratio, 1.f - clip_epsilon, 1.f + clip_epsilon);
@@ -237,7 +249,7 @@ namespace arenai::agent {
 
         // one coefficient per action dimension, broadcast over the batch and summed back
         const auto continuous_entropy_bonus =
-            (alpha_continuous->alpha().detach() * continuous_entropy).sum(-1, true);
+            torch::sum(alpha_continuous->alpha().detach() * continuous_entropy, -1, true);
 
         const auto actor_loss = -torch::mean(
             surrogate + continuous_entropy_bonus
@@ -258,6 +270,7 @@ namespace arenai::agent {
         return {
             .kl_exceeded = false,
             .continuous_entropy = mean_continuous_entropy,
+            .continuous_target_entropy = mean_continuous_target_entropy,
             .discrete_entropy = mean_discrete_entropy};
     }
 
@@ -280,18 +293,10 @@ namespace arenai::agent {
 
     void PpoTrainer::train_alpha(
         const std::shared_ptr<RangeAlphaParameters> &alpha,
-        const std::shared_ptr<torch::optim::SGD> &optim,
-        const std::shared_ptr<AbstractTargetEntropy> &target_entropy,
+        const std::shared_ptr<torch::optim::SGD> &optim, const torch::Tensor &target_entropy,
         const torch::Tensor &mean_entropy) {
 
-        // entropy above target -> alpha decays toward 0 (stops pushing sigma up);
-        // entropy below target -> alpha grows (prevents entropy collapse).
-        // SGD, not Adam: the step must stay proportional to the entropy error, a normalized
-        // step keeps its full speed next to the target and makes the loop oscillate.
-        // Summed and not averaged: each coefficient must receive its own error untouched,
-        // averaging would divide every gradient by the number of dimensions
-        const auto alpha_loss =
-            torch::sum(alpha->log_alpha() * (mean_entropy - target_entropy->target_entropy()));
+        const auto alpha_loss = torch::sum(alpha->log_alpha() * (mean_entropy - target_entropy));
 
         optim->zero_grad();
         alpha_loss.backward();
@@ -408,20 +413,17 @@ namespace arenai::agent {
 
         alpha_continuous->train(train);
         alpha_discrete->train(train);
-
-        continuous_target_entropy->train(train);
-        discrete_target_entropy->train(train);
     }
 
-    void PpoTrainer::to(const torch::Device device) const {
+    void PpoTrainer::to(const torch::Device device) {
         actor->to(device);
         critic->to(device);
 
         alpha_continuous->to(device);
         alpha_discrete->to(device);
 
-        continuous_target_entropy->to(device);
-        discrete_target_entropy->to(device);
+        target_sigma = target_sigma.to(device);
+        target_discrete_entropy = target_discrete_entropy.to(device);
     }
 
     int PpoTrainer::count_parameters() {

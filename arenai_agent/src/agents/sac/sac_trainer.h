@@ -51,9 +51,6 @@ namespace arenai::agent {
         std::shared_ptr<RangeAlphaParameters> alpha_continuous;
         std::shared_ptr<RangeAlphaParameters> alpha_discrete;
 
-        std::shared_ptr<AbstractTargetEntropy> continuous_target_entropy;
-        std::shared_ptr<AbstractTargetEntropy> discrete_target_entropy;
-
         std::shared_ptr<torch::optim::Adam> actor_optim;
         std::shared_ptr<torch::optim::Adam> critic_1_optim;
         std::shared_ptr<torch::optim::Adam> critic_2_optim;
@@ -88,10 +85,13 @@ namespace arenai::agent {
         int epochs;
         int batch_size;
 
+        torch::Tensor target_sigma;
+        torch::Tensor target_discrete_entropy;
+
         void train() const;
 
         void set_train(bool train) const;
-        void to(torch::Device device) const;
+        void to(torch::Device device);
     };
 
 }// namespace arenai::agent

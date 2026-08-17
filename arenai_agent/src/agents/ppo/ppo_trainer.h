@@ -60,8 +60,12 @@ namespace arenai::agent {
         // mean sigma of the truncated normal: direct view of the aim spread, Hc only bounds it
         std::shared_ptr<AbstractMetric> sigma_metric;
 
+        // both recorded on every attempted minibatch, skipped ones included
         std::shared_ptr<AbstractMetric> clip_fraction_metric;
         std::shared_ptr<AbstractMetric> kl_metric;
+
+        // fraction of minibatches the KL threshold skipped
+        std::shared_ptr<AbstractMetric> skip_fraction_metric;
 
         float gamma;
         float gae_lambda;
@@ -83,7 +87,8 @@ namespace arenai::agent {
         void train() const;
 
         // one backward pass on the actor for a single minibatch; returns true when the
-        // minibatch already drifted past the KL threshold, in which case no update was applied
+        // minibatch drifted past the KL threshold, in which case no update was applied and
+        // only the kl metric was recorded — the next minibatch is tried either way
         bool train_actor(
             const torch::Tensor &vision, const torch::Tensor &proprioception,
             const torch::Tensor &continuous_actions, const torch::Tensor &discrete_actions,

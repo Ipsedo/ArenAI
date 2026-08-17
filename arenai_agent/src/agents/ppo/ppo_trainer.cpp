@@ -56,8 +56,9 @@ namespace arenai::agent {
           discrete_entropy_metric(std::make_shared<MeanMetric>("Hd", metric_window_size)),
           sigma_metric(std::make_shared<MeanMetric>("σ", metric_window_size)),
           clip_fraction_metric(std::make_shared<MeanMetric>("clip", metric_window_size)),
-          kl_metric(std::make_shared<MeanMetric>("kl", metric_window_size, 2, true)), gamma(gamma),
-          gae_lambda(gae_lambda), clip_epsilon(clip_epsilon), target_kl(target_kl),
+          kl_metric(std::make_shared<MeanMetric>("kl", metric_window_size, 2, true)),
+          skip_fraction_metric(std::make_shared<MeanMetric>("skip", metric_window_size)),
+          gamma(gamma), gae_lambda(gae_lambda), clip_epsilon(clip_epsilon), target_kl(target_kl),
           grad_norm_max(grad_norm_max),
           continuous_entropy_coefficient(continuous_entropy_coefficient),
           discrete_entropy_coefficient(discrete_entropy_coefficient), epochs(epochs),
@@ -101,7 +102,6 @@ namespace arenai::agent {
             return tensor.index_select(0, idx).to(device);
         };
 
-        bool kl_stop = false;
         for (int e = 0; e < epochs; e++) {
             const auto perm = valid_idx.index_select(0, torch::randperm(nb_valid_rows));
 
@@ -113,13 +113,14 @@ namespace arenai::agent {
                 const auto mb_vision = select(flat_vision, idx);
                 const auto mb_proprioception = select(flat_proprioception, idx);
 
-                // actor: skipped for the rest of the update once a minibatch drifted past
-                // the KL threshold
-                if (!kl_stop)
-                    kl_stop = train_actor(
-                        mb_vision, mb_proprioception, select(flat_continuous_actions, idx),
-                        select(flat_discrete_actions, idx), select(flat_old_log_probs, idx),
-                        select(flat_advantages, idx));
+                // actor: a minibatch past the KL threshold skips its own update only. Latching
+                // the stop for the rest of the update let a few outlier rows cost the 111
+                // other minibatches of the rollout — the recurring cause of the post-peak
+                // decay of train_341/343/344/346
+                train_actor(
+                    mb_vision, mb_proprioception, select(flat_continuous_actions, idx),
+                    select(flat_discrete_actions, idx), select(flat_old_log_probs, idx),
+                    select(flat_advantages, idx));
 
                 // critic: keeps training through the whole update, the KL early stop is a
                 // policy criterion only
@@ -163,7 +164,18 @@ namespace arenai::agent {
 
         kl_metric->add(approx_kl);
 
-        if (target_kl > 0.f && approx_kl > 1.5f * target_kl) return true;
+        // recorded before the skip, unlike the actor losses: clip then describes the same
+        // population of minibatches as kl, whatever the skip rate
+        clip_fraction_metric->add(
+            ((ratio - 1.f).abs() > clip_epsilon).to(torch::kFloat).mean().item<float>());
+
+        const bool kl_exceeded = target_kl > 0.f && approx_kl > 1.5f * target_kl;
+
+        // how much of the update the KL threshold is eating. It is also the only reading left
+        // when a single underflowed ratio turns the whole kl window into inf
+        skip_fraction_metric->add(kl_exceeded ? 1.f : 0.f);
+
+        if (kl_exceeded) return true;
 
         const auto clipped_ratio = torch::clamp(ratio, 1.f - clip_epsilon, 1.f + clip_epsilon);
 
@@ -183,9 +195,6 @@ namespace arenai::agent {
         const auto loss_value = actor_loss.cpu().item<float>();
         actor_mean_loss_metric->add(loss_value);
         actor_std_loss_metric->add(loss_value);
-
-        clip_fraction_metric->add(
-            ((ratio - 1.f).abs() > clip_epsilon).to(torch::kFloat).mean().item<float>());
 
         return false;
     }
@@ -266,7 +275,8 @@ namespace arenai::agent {
     std::vector<std::shared_ptr<AbstractMetric>> PpoTrainer::get_metrics() {
         return {actor_mean_loss_metric, actor_std_loss_metric,     critic_mean_loss_metric,
                 critic_std_loss_metric, continuous_entropy_metric, discrete_entropy_metric,
-                sigma_metric,           clip_fraction_metric,      kl_metric};
+                sigma_metric,           clip_fraction_metric,      kl_metric,
+                skip_fraction_metric};
     }
 
     void PpoTrainer::save(const std::filesystem::path &output_folder) {

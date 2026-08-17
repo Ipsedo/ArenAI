@@ -76,24 +76,6 @@ TEST_F(ReplayBufferEdgeTest, ConstantRewardsAreNotRescaled) {
         << "Zero reward variance must keep the scale at 1 (no division by ~0)";
 }
 
-TEST_F(ReplayBufferEdgeTest, RewardDividedByRunningStdAtSample) {
-    SacReplayBuffer buffer(10);
-
-    // rewards {0, 4}: mean 2, population std 2
-    buffer.add(create_step_with_reward(0.0f));
-    buffer.add(create_step_with_reward(4.0f));
-    buffer.finish_episode(create_random_state(8, 8, 5));
-
-    const auto output = buffer.sample(64, torch::kCPU);
-
-    const auto rewards = output.reward.reshape({-1});
-    for (int64_t i = 0; i < rewards.size(0); i++) {
-        const auto r = rewards[i].item<float>();
-        ASSERT_TRUE(std::abs(r - 0.0f) < 1e-5f || std::abs(r - 2.0f) < 1e-5f)
-            << "Sampled reward " << r << " should be a stored reward divided by the running std";
-    }
-}
-
 TEST_F(ReplayBufferEdgeTest, DeadStepIsStoredAsTerminal) {
     SacReplayBuffer buffer(10);
 

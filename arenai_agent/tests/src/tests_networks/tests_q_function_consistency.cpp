@@ -97,7 +97,7 @@ TEST_F(ActorGradientTest, GradientFlowsThroughActor) {
     constexpr int nb_sensors = 3, nb_cont = 2, nb_disc = 2;
     constexpr int batch = 2;
 
-    Actor actor(height, width, nb_sensors, nb_cont, nb_disc, 8, {16}, {{3, 4}}, {2});
+    Actor actor(height, width, nb_sensors, nb_cont, nb_disc, 8, {16}, {{3, 4}}, {2}, 0.1f, 0.2f);
 
     const auto vision = torch::randint(0, 255, {batch, 3, height, width}, torch::kUInt8);
     const auto sensors = torch::randn({batch, nb_sensors});
@@ -123,7 +123,7 @@ TEST_F(ActorGradientTest, ActorWeightsChangeAfterOptimStep) {
     constexpr int nb_sensors = 3, nb_cont = 2, nb_disc = 2;
     constexpr int batch = 2;
 
-    Actor actor(height, width, nb_sensors, nb_cont, nb_disc, 8, {16}, {{3, 4}}, {2});
+    Actor actor(height, width, nb_sensors, nb_cont, nb_disc, 8, {16}, {{3, 4}}, {2}, 0.1f, 0.2f);
 
     auto optimizer = torch::optim::Adam(actor.parameters(), 1e-3);
 

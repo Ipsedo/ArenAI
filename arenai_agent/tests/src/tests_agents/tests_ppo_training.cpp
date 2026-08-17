@@ -68,7 +68,7 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
 
     const auto actor = std::make_shared<Actor>(
         cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, 8, std::vector{16}, vision_channels, group_norm_nums);
+        cfg.nb_discrete_actions, 8, std::vector{16}, vision_channels, group_norm_nums, 0.1f, 0.2f);
     const auto rollout_buffer = std::make_shared<PpoRolloutBuffer>();
     const auto collector = std::make_shared<PpoStepCollector>(rollout_buffer);
     const auto agent = std::make_shared<TorchPpoAgent>(actor, device, collector);

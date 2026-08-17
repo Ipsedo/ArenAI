@@ -44,8 +44,9 @@ std::unique_ptr<SacTorchAgentFactory> SacAgentTest::make_factory(const SacTestCo
 
 TorchState SacAgentTest::make_state(const SacTestConfig &cfg, const int batch) {
     return {
-        torch::randint(0, 255, {batch, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
-        torch::randn({batch, cfg.nb_sensors})};
+        .vision =
+            torch::randint(0, 255, {batch, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
+        .proprioception = torch::randn({batch, cfg.nb_sensors})};
 }
 
 // ========================================================================

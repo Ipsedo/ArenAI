@@ -15,6 +15,8 @@ namespace arenai::agent {
             {"--critic_hidden_sizes", &PpoHyperParams::critic_hidden_sizes},
             {"--vision_channels", &PpoHyperParams::vision_channels},
             {"--group_norm_nums", &PpoHyperParams::group_norm_nums},
+            {"--initial_sigma", &PpoHyperParams::initial_sigma},
+            {"--initial_fire_proba", &PpoHyperParams::initial_fire_proba},
             {"--metric_window_size", &PpoHyperParams::metric_window_size},
             {"--gamma", &PpoHyperParams::gamma},
             {"--gae_lambda", &PpoHyperParams::gae_lambda},

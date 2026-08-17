@@ -32,7 +32,8 @@ namespace arenai::agent {
         const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, const torch::Device device,
         const int metric_window_size, const float tau, const float gamma, const int train_every,
-        const int epochs, const int batch_size)
+        const int epochs, const int batch_size, const float target_sigma,
+        const float target_fire_proba)
         : actor(std::move(actor)), replay_buffer(std::move(replay_buffer)),
           critic_1(std::make_shared<QFunction>(
               vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_actions,
@@ -78,9 +79,9 @@ namespace arenai::agent {
           gamma(gamma), train_every(train_every), train_counter(0), epochs(epochs),
           batch_size(batch_size),
           target_sigma(
-              torch::tensor(std::vector(nb_continuous_actions, TARGET_SIGMA)).unsqueeze(0)),
+              torch::tensor(std::vector(nb_continuous_actions, target_sigma)).unsqueeze(0)),
           target_discrete_entropy(
-              torch::tensor({multinomial_target_entropy(TARGET_FIRE_PROBABILITY)}).unsqueeze(0)) {
+              torch::tensor({multinomial_target_entropy(target_fire_proba)}).unsqueeze(0)) {
 
         hard_update(target_critic_1, critic_1);
         hard_update(target_critic_2, critic_2);

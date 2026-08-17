@@ -23,7 +23,8 @@ namespace arenai::agent {
             const std::vector<int> &critic_hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
-            float tau, float gamma, int train_every, int epochs, int batch_size);
+            float tau, float gamma, int train_every, int epochs, int batch_size, float target_sigma,
+            float target_fire_proba);
 
         void step() override;
 

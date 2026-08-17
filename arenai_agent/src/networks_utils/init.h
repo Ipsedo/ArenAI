@@ -14,9 +14,8 @@ namespace arenai::agent {
     void init_hidden_weights(torch::nn::Module &module);
 
     void init_mu_output_weights(torch::nn::Module &module);
-    void init_sigma_output_weights(torch::nn::Module &module, float wanted_sigma = TARGET_SIGMA);
-    void init_discrete_output_weights(
-        torch::nn::Module &module, float initial_fire_probability = TARGET_FIRE_PROBABILITY);
+    void init_sigma_output_weights(torch::nn::Module &module, float wanted_sigma);
+    void init_discrete_output_weights(torch::nn::Module &module, float initial_fire_probability);
 
     void init_value_output_weights(torch::nn::Module &module);
 

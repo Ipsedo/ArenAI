@@ -18,7 +18,8 @@ namespace arenai::agent {
         const int &nb_continuous_actions, const int &nb_discrete_actions,
         const int &hidden_size_sensors, const std::vector<int> &hidden_sizes,
         const std::vector<std::tuple<int, int>> &vision_channels,
-        const std::vector<int> &group_norm_nums)
+        const std::vector<int> &group_norm_nums, const float &initial_sigma,
+        const float &initial_fire_proba)
         : vision_encoder(register_module(
             "vision_encoder", std::make_shared<ConvolutionNetwork>(
                                   vision_height, vision_width, vision_channels, group_norm_nums))),
@@ -64,9 +65,11 @@ namespace arenai::agent {
         head->apply(init_hidden_weights);
 
         mu->apply(init_mu_output_weights);
-        sigma->apply([](Module &m) { init_sigma_output_weights(m); });
+        sigma->apply([initial_sigma](Module &m) { init_sigma_output_weights(m, initial_sigma); });
 
-        discrete->apply([](Module &m) { init_discrete_output_weights(m); });
+        discrete->apply([initial_fire_proba](Module &m) {
+            init_discrete_output_weights(m, initial_fire_proba);
+        });
     }
 
     ActorRawOutput Actor::act(const torch::Tensor &vision, const torch::Tensor &sensors) {

@@ -57,17 +57,19 @@ namespace arenai::model {
           curr_frame_upside_down(0), miss_distance_scale(10.f), hit_reward_scale(0.5f),
           // 10 shells at 6 shots/s: the reserve binds after ~1.5 s of spam instead of 5 s,
           // so running dry still falls inside the discount horizon of the shots that
-          // caused it — a scarcity the policy can see (proprioception) rather than a
-          // per-shot penalty, which would make firing negative before aiming is learned
-          hit_received_cost(0.1f), initial_nb_shells(10), nb_shells(initial_nb_shells),
-          shells_recharged_per_hit(5),
+          // caused it. The scarcity alone was not enough — train_344 fired at the full
+          // budget (1.5 shell/s) with a 2.3% hit rate, because a randomly aimed shell still
+          // earns 0.115 in a 32-tank arena. fire_cost puts the average shell slightly in the
+          // red, so the trigger has to become selective instead of merely rate-limited
+          hit_received_cost(0.1f), fire_cost(0.2f), initial_nb_shells(10),
+          nb_shells(initial_nb_shells), shells_recharged_per_hit(5),
           // the reserve also refills on its own, one shell every 1.5 s: with the recharge
           // conditioned on a hit alone, a policy that never hits stays dry for the rest of
           // its life — an absorbing state where the fire action is a no-op and stops
           // producing any gradient. The hit recharge remains the fast path
           nb_frames_per_shell_regen(static_cast<int>(1.5f / wanted_frame_frequency)),
-          curr_frame_shell_regen(0), is_dead_already_triggered(false), has_touch(false),
-          has_fired(false) {}
+          curr_frame_shell_regen(0), nb_shells_fired_since_reward(0),
+          is_dead_already_triggered(false), has_touch(false), has_fired(false) {}
 
     float JoltEnemyTank::compute_hit_reward(
         const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos, const glm::vec3 &shell_pos) const {
@@ -183,12 +185,16 @@ namespace arenai::model {
             tracked_shells.erase(tracked_shells.begin() + i);
         }
 
-        // 5. hits received penalty
+        // 5. fired shells cost, paid up front and independently of the outcome
+        const float fire_penalty = -fire_cost * static_cast<float>(nb_shells_fired_since_reward);
+        nb_shells_fired_since_reward = 0;
+
+        // 6. hits received penalty
         const float hit_received_penalty =
             -hit_received_cost * static_cast<float>(get_received_hits());
 
-        // 6. total reward
-        const float reward = dead_penalty + shells_reward + hit_received_penalty;
+        // 7. total reward
+        const float reward = dead_penalty + shells_reward + fire_penalty + hit_received_penalty;
 
         return reward;
     }
@@ -196,6 +202,7 @@ namespace arenai::model {
     void JoltEnemyTank::on_shell_fired(const std::shared_ptr<ShellItem> &shell) {
         nb_shells--;
         has_fired = true;
+        nb_shells_fired_since_reward++;
 
         tracked_shells.push_back(
             {.shell = shell,

@@ -71,21 +71,11 @@ namespace arenai::model {
 
         float hit_received_cost;
 
-        // paid per shell actually fired, not per requested trigger: the request is blocked by
-        // the cooldown and the reserve, charging it would bill noise the policy cannot control.
-        // Calibrated above the 0.115 a randomly aimed shell earns in a 32-tank arena, so that
-        // spraying stops being profitable and the trigger has to become selective
-        float fire_cost;
-
         int initial_nb_shells;
         int nb_shells;
         int shells_recharged_per_hit;
         int nb_frames_per_shell_regen;
         int curr_frame_shell_regen;
-
-        // shells fired since the last get_reward: has_fired is consumed by has_fired_shell()
-        // for the metric, so the reward keeps its own counter
-        int nb_shells_fired_since_reward;
 
         bool is_dead_already_triggered;
 

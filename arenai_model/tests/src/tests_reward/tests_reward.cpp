@@ -14,9 +14,6 @@ using namespace arenai::model;
 using namespace arenai::utils;
 using namespace arenai::controller;
 
-// mirrors JoltEnemyTank::fire_cost: a fired shell is charged up front, whatever it hits
-constexpr float FIRE_COST = 0.2f;
-
 // ========================================================================
 // get_reward — base scenarios
 // ========================================================================
@@ -223,9 +220,7 @@ TEST_F(RewardTest, NoRewardWhenShootingAWreck) {
     const float reward = shared_a->get_reward(tanks);
 
     ASSERT_FALSE(shared_a->has_hit_other_tank()) << "a wreck must not count as a hit";
-    // the shell is still charged: only the hit/kill/aim payout is withheld, so a wreck is a
-    // strictly losing target rather than a neutral one
-    ASSERT_FLOAT_EQ(reward, -FIRE_COST) << "shooting a wreck must pay neither hit nor kill";
+    ASSERT_FLOAT_EQ(reward, 0.f) << "shooting a wreck must pay neither hit nor kill";
 
     // the shell spent must not be given back: a wreck is not an ammo dump
     ASSERT_LT(shared_a->get_proprioception().back(), shells_ratio_before)
@@ -259,6 +254,6 @@ TEST_F(RewardTest, ZeroRewardWithEmptyTankList) {
     ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN with empty tank list";
     ASSERT_FALSE(std::isinf(reward)) << "reward should not be Inf with empty tank list";
 
-    // there is no enemy to sample, so the shell pays nothing back and only its cost remains
-    ASSERT_FLOAT_EQ(reward, -FIRE_COST);
+    // firing is free and there is no enemy to sample, so no reward at all
+    ASSERT_FLOAT_EQ(reward, 0.f);
 }

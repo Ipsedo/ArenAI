@@ -6,6 +6,7 @@
 
 #include <iomanip>
 #include <stdexcept>
+#include <sstream>
 
 using namespace arenai;
 using namespace arenai::agent;

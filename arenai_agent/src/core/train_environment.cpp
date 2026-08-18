@@ -5,6 +5,7 @@
 #include "./train_environment.h"
 
 #include <algorithm>
+#include <numeric>
 
 #include <arenai_agent/file_reader.h>
 #include <arenai_utils/cache.h>

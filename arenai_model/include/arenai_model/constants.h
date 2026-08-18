@@ -5,6 +5,8 @@
 #ifndef ARENAI_MODEL_CONSTANTS_H
 #define ARENAI_MODEL_CONSTANTS_H
 
+#include <numbers>
+
 namespace arenai::model {
 
     constexpr float WHEEL_RADIAL_VELOCITY = std::numbers::pi * 5.f;

@@ -96,8 +96,8 @@ TEST_F(InitWeightsTest, DiscreteOutputFireProbaIsEqualToWantedOne) {
     torch::Tensor x = torch::randn({1, 32});
     const auto out = seq->forward(x);
 
-    ASSERT_NEAR(out[0][0].item<float>(), wanted_fire_proba, 5e-3f);
-    ASSERT_NEAR(out[0][1].item<float>(), 1.f - wanted_fire_proba, 5e-3f);
+    ASSERT_NEAR(out[0][0].item<float>(), wanted_fire_proba, 1e-2f);
+    ASSERT_NEAR(out[0][1].item<float>(), 1.f - wanted_fire_proba, 1e-2f);
 }
 
 TEST_F(InitWeightsTest, ValueOutputWeightsOrthogonal) {

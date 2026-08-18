@@ -4,6 +4,7 @@
 
 #include "./ppo_trainer.h"
 
+#include <algorithm>
 #include <fstream>
 
 #include "../../distributions/multinomial.h"
@@ -27,6 +28,17 @@ namespace arenai::agent {
             sizes[0] = tensor.size(0) * tensor.size(1);
             return tensor.reshape(sizes);
         }
+
+        // log-ratio guard. Past +-3 the ratio sits two orders of magnitude outside the clip
+        // range: a row the trust region cannot say anything about anymore. Clamping keeps
+        // exp() finite, and since clamp has no gradient outside its bounds it also drops
+        // those rows from the update instead of letting a single one steer it
+        constexpr float LOG_RATIO_MAX_ABS = 3.f;
+
+        // share of the highest per-row KL dropped before averaging. The threshold has to
+        // describe the bulk of the minibatch, not its tail: over 1024 rows a single one at
+        // ratio ~ 40 is worth 0.036 of the mean, more than the whole target_kl
+        constexpr float KL_TRIM_FRACTION = 0.01f;
     }// namespace
 
     PpoTrainer::PpoTrainer(
@@ -144,8 +156,12 @@ namespace arenai::agent {
         const auto curr_discrete_log_probs =
             torch::sum(discrete_actions * torch::log(clamped_proba), -1, true);
 
-        const auto ratio =
-            torch::exp(curr_continuous_log_probs + curr_discrete_log_probs - old_log_probs);
+        // kept as a log-ratio: exp(log_ratio) may underflow to 0, log_ratio itself stays finite
+        const auto log_ratio = torch::clamp(
+            curr_continuous_log_probs + curr_discrete_log_probs - old_log_probs, -LOG_RATIO_MAX_ABS,
+            LOG_RATIO_MAX_ABS);
+
+        const auto ratio = torch::exp(log_ratio);
 
         const auto continuous_entropy = truncated_normal_entropy(mu, sigma);
 
@@ -159,8 +175,18 @@ namespace arenai::agent {
         discrete_entropy_metric->add(discrete_entropy.mean().item<float>());
 
         // approx KL (Schulman): E[(ratio - 1) - log ratio]; skip this minibatch when the
-        // policy drifted too far from the rollout policy
-        const auto approx_kl = torch::mean(ratio - 1.f - torch::log(ratio)).item<float>();
+        // policy drifted too far from the rollout policy. Averaged over the lowest rows only:
+        // the estimator is a mean of a heavy-tailed population, and the tail was deciding for
+        // the whole minibatch (train_349: kl x5 the value its own clip fraction implies)
+        const auto kl_per_row = (ratio - 1.f - log_ratio).flatten();
+
+        const auto nb_kept = std::max<int64_t>(
+            1, static_cast<int64_t>(
+                   static_cast<float>(kl_per_row.size(0)) * (1.f - KL_TRIM_FRACTION)));
+
+        // per-row KL is non-negative: sorting ascending puts the outliers past nb_kept
+        const auto approx_kl =
+            std::get<0>(torch::sort(kl_per_row)).slice(0, 0, nb_kept).mean().item<float>();
 
         kl_metric->add(approx_kl);
 
@@ -171,8 +197,9 @@ namespace arenai::agent {
 
         const bool kl_exceeded = target_kl > 0.f && approx_kl > 1.5f * target_kl;
 
-        // how much of the update the KL threshold is eating. It is also the only reading left
-        // when a single underflowed ratio turns the whole kl window into inf
+        // how much of the update the KL threshold is eating. Also the check on the trim: a
+        // skip that stays high while kl sits under the threshold means the tail is wider
+        // than KL_TRIM_FRACTION
         skip_fraction_metric->add(kl_exceeded ? 1.f : 0.f);
 
         if (kl_exceeded) return true;

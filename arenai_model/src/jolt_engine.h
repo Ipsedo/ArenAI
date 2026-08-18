@@ -75,7 +75,7 @@ namespace arenai::model {
         float get_interpolation_delta() const;
 
     private:
-        // every step's penetrating contact points, kept until the next simulated
+        // every step's penetrating body pairs, kept until the next simulated
         // sub-step so that a step() call that simulates nothing (accumulated time
         // under the fixed timestep) re-fires the same contacts, like Bullet's
         // persistent manifolds did

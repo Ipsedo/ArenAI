@@ -5,8 +5,8 @@
 #include "./metric.h"
 
 #include <iomanip>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 
 using namespace arenai;
 using namespace arenai::agent;

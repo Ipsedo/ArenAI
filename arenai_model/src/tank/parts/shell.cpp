@@ -26,13 +26,13 @@ namespace arenai::model {
           nb_frames_alive(static_cast<int>(20.f / wanted_frame_frequency)), start_pos(pos) {}
 
     void ShellItem::on_contact(Item *other) {
+        if (is_dead()) return;
+
         if (const auto t = dynamic_cast<LifeItem *>(other)) t->receive_damages(1);
         receive_damages(1);
 
         Item::on_contact(other);
-        // the shell identifies itself: the firing tank matches it against its tracked
-        // shells, two shells fired from the same muzzle pose being indistinguishable
-        // by position alone
+
         contact_callback(this, get_fire_position(), get_current_position(), other);
 
         if (is_dead()) destroy();

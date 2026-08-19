@@ -17,6 +17,8 @@ namespace arenai::agent {
             {.name = "--critic_hidden_sizes", .member = &SacHyperParams::critic_hidden_sizes},
             {.name = "--vision_channels", .member = &SacHyperParams::vision_channels},
             {.name = "--group_norm_nums", .member = &SacHyperParams::group_norm_nums},
+            {.name = "--initial_sigma", .member = &SacHyperParams::initial_sigma},
+            {.name = "--initial_fire_proba", .member = &SacHyperParams::initial_fire_proba},
             {.name = "--target_sigma", .member = &SacHyperParams::target_sigma},
             {.name = "--target_fire_proba", .member = &SacHyperParams::target_fire_proba},
             {.name = "--metric_window_size", .member = &SacHyperParams::metric_window_size},

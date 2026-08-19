@@ -52,8 +52,8 @@ namespace arenai::agent {
               hidden_size_sensors, hidden_size_actions, critic_hidden_sizes, vision_channels,
               group_norm_nums)),
           alpha_continuous(
-              std::make_shared<ClampedAlphaParameters>(1e-2f, 1e-5f, 1e-1f, nb_continuous_actions)),
-          alpha_discrete(std::make_shared<ClampedAlphaParameters>(1e-2f, 1e-5f, 1e-1f, 1)),
+              std::make_shared<ClampedAlphaParameters>(5e-2f, 1e-5f, 1e-1f, nb_continuous_actions)),
+          alpha_discrete(std::make_shared<ClampedAlphaParameters>(5e-2f, 1e-5f, 1e-1f, 1)),
           actor_optim(std::make_unique<torch::optim::Adam>(
               this->actor->parameters(), torch::optim::AdamOptions(actor_learning_rate))),
           critic_1_optim(std::make_unique<torch::optim::Adam>(

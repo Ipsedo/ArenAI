@@ -28,15 +28,8 @@ namespace arenai::agent {
             return tensor.reshape(sizes);
         }
 
-        // log-ratio guard. Past +-3 the ratio sits two orders of magnitude outside the clip
-        // range: a row the trust region cannot say anything about anymore. Clamping keeps
-        // exp() finite, and since clamp has no gradient outside its bounds it also drops
-        // those rows from the update instead of letting a single one steer it
         constexpr float LOG_RATIO_MAX_ABS = 3.f;
 
-        // share of the highest per-row KL dropped before averaging. The threshold has to
-        // describe the bulk of the minibatch, not its tail: over 1024 rows a single one at
-        // ratio ~ 40 is worth 0.036 of the mean, more than the whole target_kl
         constexpr float KL_TRIM_FRACTION = 0.01f;
     }// namespace
 
@@ -264,10 +257,6 @@ namespace arenai::agent {
         critic_mean_loss_metric->add(loss_value);
         critic_std_loss_metric->add(loss_value);
 
-        // explained variance of the forward the step was computed from: the share of the
-        // return variance the critic accounts for. 1 = perfect fit, <= 0 = no better than
-        // predicting the mean return — the residual v_μ cannot tell those apart on its own
-        // since it also moves with the scale of the returns
         const auto residual_var = (returns - values.detach()).var(false);
         const auto returns_var = returns.var(false);
         explained_variance_metric->add(

@@ -64,6 +64,7 @@ namespace arenai::agent {
           actor_std_loss_metric(std::make_shared<StdMetric>("π_σ", metric_window_size)),
           critic_mean_loss_metric(std::make_shared<MeanMetric>("v_μ", metric_window_size)),
           critic_std_loss_metric(std::make_shared<StdMetric>("v_σ", metric_window_size)),
+          explained_variance_metric(std::make_shared<MeanMetric>("ev", metric_window_size)),
           continuous_entropy_metric(std::make_shared<MeanMetric>("Hc", metric_window_size)),
           discrete_entropy_metric(std::make_shared<MeanMetric>("Hd", metric_window_size)),
           sigma_metric(std::make_shared<MeanMetric>("σ", metric_window_size)),
@@ -224,6 +225,15 @@ namespace arenai::agent {
         const auto loss_value = critic_loss.cpu().item<float>();
         critic_mean_loss_metric->add(loss_value);
         critic_std_loss_metric->add(loss_value);
+
+        // explained variance of the forward the step was computed from: the share of the
+        // return variance the critic accounts for. 1 = perfect fit, <= 0 = no better than
+        // predicting the mean return — the residual v_μ cannot tell those apart on its own
+        // since it also moves with the scale of the returns
+        const auto residual_var = (returns - values.detach()).var(false);
+        const auto returns_var = returns.var(false);
+        explained_variance_metric->add(
+            (1.f - residual_var / returns_var.clamp_min(EPSILON)).item<float>());
     }
 
     GaeResult PpoTrainer::compute_gae(const PpoRollout &rollout, const torch::Device device) const {
@@ -283,9 +293,11 @@ namespace arenai::agent {
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> PpoTrainer::get_metrics() {
-        return {actor_mean_loss_metric, actor_std_loss_metric,     critic_mean_loss_metric,
-                critic_std_loss_metric, continuous_entropy_metric, discrete_entropy_metric,
-                sigma_metric,           clip_fraction_metric,      kl_metric,
+        return {actor_mean_loss_metric,    actor_std_loss_metric,
+                critic_mean_loss_metric,   critic_std_loss_metric,
+                explained_variance_metric, continuous_entropy_metric,
+                discrete_entropy_metric,   sigma_metric,
+                clip_fraction_metric,      kl_metric,
                 skip_fraction_metric};
     }
 

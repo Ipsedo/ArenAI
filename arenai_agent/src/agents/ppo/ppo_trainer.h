@@ -53,6 +53,9 @@ namespace arenai::agent {
         std::shared_ptr<AbstractMetric> critic_mean_loss_metric;
         std::shared_ptr<AbstractMetric> critic_std_loss_metric;
 
+        // share of the return variance the critic explains, per critic minibatch
+        std::shared_ptr<AbstractMetric> explained_variance_metric;
+
         // both regulated by their constant entropy bonus
         std::shared_ptr<AbstractMetric> continuous_entropy_metric;
         std::shared_ptr<AbstractMetric> discrete_entropy_metric;

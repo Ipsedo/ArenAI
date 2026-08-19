@@ -104,7 +104,7 @@ namespace arenai::agent {
         GaeResult compute_gae(const PpoRollout &rollout, torch::Device device) const;
 
         void set_train(bool train) const;
-        void to(torch::Device device);
+        void to(torch::Device device) const;
     };
 
 }// namespace arenai::agent

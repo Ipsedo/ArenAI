@@ -77,6 +77,8 @@ namespace arenai::agent {
           rollout_size(rollout_size), minibatch_size(minibatch_size) {
 
         to(device);
+
+        set_train(false);
     }
 
     void PpoTrainer::step() {
@@ -121,24 +123,19 @@ namespace arenai::agent {
                 const auto idx =
                     perm.slice(0, start, std::min<int64_t>(start + minibatch_size, nb_valid_rows));
 
-                // the observation is the bulk of the transfer: uploaded once, used by both
                 const auto mb_vision = select(flat_vision, idx);
                 const auto mb_proprioception = select(flat_proprioception, idx);
 
-                // actor: a minibatch past the KL threshold skips its own update only. Latching
-                // the stop for the rest of the update let a few outlier rows cost the 111
-                // other minibatches of the rollout — the recurring cause of the post-peak
-                // decay of train_341/343/344/346
                 train_actor(
                     mb_vision, mb_proprioception, select(flat_continuous_actions, idx),
                     select(flat_discrete_actions, idx), select(flat_old_log_probs, idx),
                     select(flat_advantages, idx));
 
-                // critic: keeps training through the whole update, the KL early stop is a
-                // policy criterion only
                 train_critic(mb_vision, mb_proprioception, select(flat_returns, idx));
             }
         }
+
+        set_train(false);
     }
 
     bool PpoTrainer::train_actor(
@@ -146,7 +143,6 @@ namespace arenai::agent {
         const torch::Tensor &continuous_actions, const torch::Tensor &discrete_actions,
         const torch::Tensor &old_log_probs, const torch::Tensor &advantages) const {
 
-        // policy: clipped surrogate on the joint (continuous x discrete) ratio
         const auto [mu, sigma, discrete_proba] = actor->act(vision, proprioception);
 
         const auto curr_continuous_log_probs =
@@ -156,7 +152,6 @@ namespace arenai::agent {
         const auto curr_discrete_log_probs =
             torch::sum(discrete_actions * torch::log(clamped_proba), -1, true);
 
-        // kept as a log-ratio: exp(log_ratio) may underflow to 0, log_ratio itself stays finite
         const auto log_ratio = torch::clamp(
             curr_continuous_log_probs + curr_discrete_log_probs - old_log_probs, -LOG_RATIO_MAX_ABS,
             LOG_RATIO_MAX_ABS);
@@ -164,20 +159,8 @@ namespace arenai::agent {
         const auto ratio = torch::exp(log_ratio);
 
         const auto continuous_entropy = truncated_normal_entropy(mu, sigma);
-
-        // as in SAC: summed over the dimensions in the loss, averaged in the metric
-        continuous_entropy_metric->add(continuous_entropy.mean().item<float>());
-        sigma_metric->add(sigma.mean().item<float>());
-
-        // already summed over the discrete actions: multinomial_entropy keeps the last dim
         const auto discrete_entropy = multinomial_entropy(discrete_proba);
 
-        discrete_entropy_metric->add(discrete_entropy.mean().item<float>());
-
-        // approx KL (Schulman): E[(ratio - 1) - log ratio]; skip this minibatch when the
-        // policy drifted too far from the rollout policy. Averaged over the lowest rows only:
-        // the estimator is a mean of a heavy-tailed population, and the tail was deciding for
-        // the whole minibatch (train_349: kl x5 the value its own clip fraction implies)
         const auto kl_per_row = (ratio - 1.f - log_ratio).flatten();
 
         const auto nb_kept = std::max<int64_t>(
@@ -188,42 +171,42 @@ namespace arenai::agent {
         const auto approx_kl =
             std::get<0>(torch::sort(kl_per_row)).slice(0, 0, nb_kept).mean().item<float>();
 
-        kl_metric->add(approx_kl);
-
-        // recorded before the skip, unlike the actor losses: clip then describes the same
-        // population of minibatches as kl, whatever the skip rate
-        clip_fraction_metric->add(
-            ((ratio - 1.f).abs() > clip_epsilon).to(torch::kFloat).mean().item<float>());
-
         const bool kl_exceeded = target_kl > 0.f && approx_kl > 1.5f * target_kl;
 
-        // how much of the update the KL threshold is eating. Also the check on the trim: a
-        // skip that stays high while kl sits under the threshold means the tail is wider
-        // than KL_TRIM_FRACTION
-        skip_fraction_metric->add(kl_exceeded ? 1.f : 0.f);
+        const auto entropy_bonus =
+            continuous_entropy_coefficient * torch::sum(continuous_entropy, -1, true)
+            + discrete_entropy_coefficient * discrete_entropy;
 
-        if (kl_exceeded) return true;
+        torch::Tensor actor_loss = -torch::mean(entropy_bonus);
 
-        const auto clipped_ratio = torch::clamp(ratio, 1.f - clip_epsilon, 1.f + clip_epsilon);
+        if (!kl_exceeded) {
+            const auto clipped_ratio = torch::clamp(ratio, 1.f - clip_epsilon, 1.f + clip_epsilon);
+            const auto surrogate = torch::min(ratio * advantages, clipped_ratio * advantages);
 
-        const auto surrogate = torch::min(ratio * advantages, clipped_ratio * advantages);
-
-        // the bonuses are the only upward force on the entropies: the surrogate shrinks both
-        // on its own, and neither head has a restoring force of its own
-        const auto actor_loss = -torch::mean(
-            surrogate + continuous_entropy_coefficient * torch::sum(continuous_entropy, -1, true)
-            + discrete_entropy_coefficient * discrete_entropy);
+            actor_loss -= torch::mean(surrogate + entropy_bonus);
+        }
 
         actor_optim->zero_grad();
         actor_loss.backward();
         torch::nn::utils::clip_grad_norm_(actor->parameters(), grad_norm_max);
         actor_optim->step();
 
-        const auto loss_value = actor_loss.cpu().item<float>();
-        actor_mean_loss_metric->add(loss_value);
-        actor_std_loss_metric->add(loss_value);
+        // metrics
+        if (!kl_exceeded) {
+            const auto loss_value = actor_loss.cpu().item<float>();
+            actor_mean_loss_metric->add(loss_value);
+            actor_std_loss_metric->add(loss_value);
+        }
 
-        return false;
+        continuous_entropy_metric->add(continuous_entropy.mean().item<float>());
+        sigma_metric->add(sigma.mean().item<float>());
+        discrete_entropy_metric->add(discrete_entropy.mean().item<float>());
+        kl_metric->add(approx_kl);
+        clip_fraction_metric->add(
+            ((ratio - 1.f).abs() > clip_epsilon).to(torch::kFloat).mean().item<float>());
+        skip_fraction_metric->add(kl_exceeded ? 1.f : 0.f);
+
+        return kl_exceeded;
     }
 
     void PpoTrainer::train_critic(
@@ -334,7 +317,7 @@ namespace arenai::agent {
         critic->train(train);
     }
 
-    void PpoTrainer::to(const torch::Device device) {
+    void PpoTrainer::to(const torch::Device device) const {
         actor->to(device);
         critic->to(device);
     }

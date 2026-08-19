@@ -87,6 +87,8 @@ namespace arenai::agent {
         hard_update(target_critic_2, critic_2);
 
         to(device);
+
+        set_train(false);
     }
 
     void SacTrainer::step() {
@@ -232,6 +234,8 @@ namespace arenai::agent {
             alpha_continuous_metric->add(alpha_continuous->alpha().mean().item<float>());
             alpha_discrete_metric->add(alpha_discrete->alpha().mean().item<float>());
         }
+
+        set_train(false);
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> SacTrainer::get_metrics() {

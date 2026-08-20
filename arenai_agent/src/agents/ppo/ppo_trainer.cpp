@@ -47,8 +47,9 @@ namespace arenai::agent {
         const float target_sigma, const float target_fire_proba, const int epochs,
         const int rollout_size, const int minibatch_size)
         : actor(actor), rollout_buffer(rollout_buffer),
-          continuous_alpha(std::make_shared<AlphaParameters>(1e-3f, nb_continuous_actions)),
-          discrete_alpha(std::make_shared<AlphaParameters>(1e-3f, 1)),
+          continuous_alpha(
+              std::make_shared<ClampedAlphaParameters>(1e-3f, 1e-5f, 1e-1f, nb_continuous_actions)),
+          discrete_alpha(std::make_shared<ClampedAlphaParameters>(1e-3f, 1e-5f, 1e-1f, 1)),
           critic(std::make_shared<ValueFunction>(
               vision_height, vision_width, nb_sensors, hidden_size_sensors, critic_hidden_sizes,
               vision_channels, group_norm_nums)),
@@ -177,21 +178,22 @@ namespace arenai::agent {
             torch::sum(continuous_alpha->alpha().detach() * continuous_entropy, -1)
             + discrete_alpha->alpha().squeeze(1).detach() * discrete_entropy;
 
-        torch::Tensor actor_loss = -torch::mean(entropy_bonus);
-
         if (!kl_exceeded) {
             const auto clipped_ratio = torch::clamp(ratio, 1.f - clip_epsilon, 1.f + clip_epsilon);
             const auto surrogate = torch::min(ratio * advantages, clipped_ratio * advantages);
 
-            actor_loss -= torch::mean(surrogate + entropy_bonus);
+            const auto actor_loss = -torch::mean(surrogate + entropy_bonus);
+
+            actor_optim->zero_grad();
+            actor_loss.backward();
+            torch::nn::utils::clip_grad_norm_(actor->parameters(), grad_norm_max);
+            actor_optim->step();
+
+            const auto loss_value = actor_loss.cpu().item<float>();
+            actor_mean_loss_metric->add(loss_value);
+            actor_std_loss_metric->add(loss_value);
         }
 
-        actor_optim->zero_grad();
-        actor_loss.backward();
-        torch::nn::utils::clip_grad_norm_(actor->parameters(), grad_norm_max);
-        actor_optim->step();
-
-        // train continuous alpha
         const auto target_sigma_tensor = torch::ones_like(continuous_entropy) * target_sigma;
         const auto target_continuous_entropy =
             truncated_normal_entropy(mu.detach(), target_sigma_tensor);
@@ -219,12 +221,6 @@ namespace arenai::agent {
         discrete_alpha_optim->step();
 
         // metrics
-        if (!kl_exceeded) {
-            const auto loss_value = actor_loss.cpu().item<float>();
-            actor_mean_loss_metric->add(loss_value);
-            actor_std_loss_metric->add(loss_value);
-        }
-
         continuous_entropy_metric->add(continuous_entropy.mean().item<float>());
         sigma_metric->add(sigma.mean().item<float>());
         continuous_alpha_metric->add(continuous_alpha->alpha().mean().item<float>());

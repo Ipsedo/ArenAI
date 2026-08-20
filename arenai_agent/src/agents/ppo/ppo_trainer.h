@@ -44,8 +44,8 @@ namespace arenai::agent {
         std::shared_ptr<Actor> actor;
         std::shared_ptr<PpoRolloutBuffer> rollout_buffer;
 
-        std::shared_ptr<AlphaParameters> continuous_alpha;
-        std::shared_ptr<AlphaParameters> discrete_alpha;
+        std::shared_ptr<ClampedAlphaParameters> continuous_alpha;
+        std::shared_ptr<ClampedAlphaParameters> discrete_alpha;
 
         std::shared_ptr<ValueFunction> critic;
 

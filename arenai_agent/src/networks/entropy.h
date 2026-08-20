@@ -9,20 +9,14 @@
 
 namespace arenai::agent {
 
-    // one independent coefficient per action dimension: a single coefficient can only
-    // constrain the summed entropy, which a wide dimension keeps on target while another one
-    // collapses.
-    // The bounds are anti-windup guards: dual ascent is a pure integrator, so while the
-    // entropy stays on one side of its target log_alpha drifts without bound and ends up
-    // orders of magnitude away from any useful value, unable to come back in time once the
-    // error flips sign.
+    /*
+     * Base class
+     */
+
     class AlphaParameters : public torch::nn::Module {
     public:
         explicit AlphaParameters(float initial_alpha, int nb_alphas);
 
-        // clamps the parameters in place instead of returning a clamped view: torch::clamp
-        // has a zero gradient outside the bounds, so a clamped view would freeze log_alpha
-        // for good the first time it steps past a bound, in both directions
         virtual torch::Tensor log_alpha();
         torch::Tensor alpha();
 
@@ -118,6 +112,25 @@ namespace arenai::agent {
 
     private:
         int nb_actions;
+    };
+
+    /*
+     * Lagrangian
+     */
+
+    class PidLagrangianAlphaParameters final : public AlphaParameters {
+    public:
+        PidLagrangianAlphaParameters(
+            float k_p, float k_i, float k_d, float initial_alpha, int nb_alphas);
+
+        torch::Tensor pid(const torch::Tensor &entropy, const torch::Tensor &target_entropy) const;
+
+    private:
+        float k_p, k_i, k_d;
+
+        torch::Tensor previous_error;
+        torch::Tensor integral;
+        torch::Tensor derivative;
     };
 
 }// namespace arenai::agent

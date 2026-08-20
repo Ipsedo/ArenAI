@@ -47,9 +47,10 @@ namespace arenai::agent {
         const float target_sigma, const float target_fire_proba, const int epochs,
         const int rollout_size, const int minibatch_size)
         : actor(actor), rollout_buffer(rollout_buffer),
-          continuous_alpha(
-              std::make_shared<ClampedAlphaParameters>(1e-3f, 1e-5f, 1e-1f, nb_continuous_actions)),
-          discrete_alpha(std::make_shared<ClampedAlphaParameters>(1e-3f, 1e-5f, 1e-1f, 1)),
+          continuous_alpha(std::make_shared<PidLagrangianAlphaParameters>(
+              0.3f, 2.5e-2f, 3.f, 1e-3f, nb_continuous_actions)),
+          discrete_alpha(
+              std::make_shared<PidLagrangianAlphaParameters>(0.3f, 2.5e-2f, 3.f, 1e-3f, 1)),
           critic(std::make_shared<ValueFunction>(
               vision_height, vision_width, nb_sensors, hidden_size_sensors, critic_hidden_sizes,
               vision_channels, group_norm_nums)),
@@ -57,9 +58,9 @@ namespace arenai::agent {
               std::make_unique<torch::optim::Adam>(this->actor->parameters(), actor_learning_rate)),
           critic_optim(
               std::make_unique<torch::optim::Adam>(critic->parameters(), critic_learning_rate)),
-          continuous_alpha_optim(std::make_unique<torch::optim::Adam>(
+          continuous_alpha_optim(std::make_unique<torch::optim::SGD>(
               continuous_alpha->parameters(), alpha_learning_rate)),
-          discrete_alpha_optim(std::make_unique<torch::optim::Adam>(
+          discrete_alpha_optim(std::make_unique<torch::optim::SGD>(
               discrete_alpha->parameters(), alpha_learning_rate)),
           actor_mean_loss_metric(std::make_shared<MeanMetric>("π_μ", metric_window_size)),
           actor_std_loss_metric(std::make_shared<StdMetric>("π_σ", metric_window_size)),
@@ -198,12 +199,9 @@ namespace arenai::agent {
         const auto target_continuous_entropy =
             truncated_normal_entropy(mu.detach(), target_sigma_tensor);
 
-        const auto continuous_alpha_loss =
-            torch::sum(
-                continuous_alpha->log_alpha()
-                    * torch::detach(continuous_entropy - target_continuous_entropy),
-                -1)
-                .mean();
+        const auto continuous_alpha_loss = -torch::sum(
+            continuous_alpha->log_alpha()
+            * continuous_alpha->pid(continuous_entropy, target_continuous_entropy));
 
         continuous_alpha_optim->zero_grad();
         continuous_alpha_loss.backward();
@@ -212,7 +210,7 @@ namespace arenai::agent {
         // train discrete alpha
         const auto target_discrete_entropy = multinomial_target_entropy(target_fire_proba);
 
-        const auto discrete_alpha_loss = torch::mean(
+        const auto discrete_alpha_loss = torch::sum(
             discrete_alpha->log_alpha().squeeze(1)
             * torch::detach(discrete_entropy - target_discrete_entropy));
 

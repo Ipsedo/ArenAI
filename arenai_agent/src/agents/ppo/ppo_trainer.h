@@ -44,16 +44,16 @@ namespace arenai::agent {
         std::shared_ptr<Actor> actor;
         std::shared_ptr<PpoRolloutBuffer> rollout_buffer;
 
-        std::shared_ptr<ClampedAlphaParameters> continuous_alpha;
-        std::shared_ptr<ClampedAlphaParameters> discrete_alpha;
+        std::shared_ptr<PidLagrangianAlphaParameters> continuous_alpha;
+        std::shared_ptr<PidLagrangianAlphaParameters> discrete_alpha;
 
         std::shared_ptr<ValueFunction> critic;
 
         std::unique_ptr<torch::optim::Adam> actor_optim;
         std::unique_ptr<torch::optim::Adam> critic_optim;
 
-        std::unique_ptr<torch::optim::Adam> continuous_alpha_optim;
-        std::unique_ptr<torch::optim::Adam> discrete_alpha_optim;
+        std::unique_ptr<torch::optim::SGD> continuous_alpha_optim;
+        std::unique_ptr<torch::optim::SGD> discrete_alpha_optim;
 
         std::shared_ptr<AbstractMetric> actor_mean_loss_metric;
         std::shared_ptr<AbstractMetric> actor_std_loss_metric;

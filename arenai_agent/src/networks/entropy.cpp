@@ -121,4 +121,29 @@ namespace arenai::agent {
         return truncated_normal_target_entropy(nb_actions, value);
     }
 
+    /*
+     * PID Lagrangian
+     */
+
+    PidLagrangianAlphaParameters::PidLagrangianAlphaParameters(
+        const float k_p, const float k_i, const float k_d, const float initial_alpha,
+        const int nb_alphas)
+        : AlphaParameters(initial_alpha, nb_alphas), k_p(k_p), k_i(k_i), k_d(k_d),
+          previous_error(register_buffer("previous_error", torch::zeros({1, nb_alphas}))),
+          integral(register_buffer("integral", torch::zeros({1, nb_alphas}))),
+          derivative(register_buffer("derivative", torch::zeros({1, nb_alphas}))) {}
+
+    torch::Tensor PidLagrangianAlphaParameters::pid(
+        const torch::Tensor &entropy, const torch::Tensor &target_entropy) const {
+
+        const auto error = torch::mean(target_entropy - entropy, 0, true).detach();
+
+        integral.data().copy_(integral + error);
+        derivative.data().copy_(error - previous_error);
+
+        previous_error.data().copy_(error);
+
+        return k_p * error + k_i * integral + k_d * derivative;
+    }
+
 }// namespace arenai::agent

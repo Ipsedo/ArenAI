@@ -208,11 +208,12 @@ namespace arenai::agent {
         continuous_alpha_optim->step();
 
         // train discrete alpha
-        const auto target_discrete_entropy = multinomial_target_entropy(target_fire_proba);
+        const auto target_discrete_entropy =
+            torch::tensor(multinomial_target_entropy(target_fire_proba), discrete_entropy.device());
 
-        const auto discrete_alpha_loss = torch::sum(
-            discrete_alpha->log_alpha().squeeze(1)
-            * torch::detach(discrete_entropy - target_discrete_entropy));
+        const auto discrete_alpha_loss =
+            -(discrete_alpha->log_alpha()
+              * discrete_alpha->pid(discrete_entropy, target_discrete_entropy));
 
         discrete_alpha_optim->zero_grad();
         discrete_alpha_loss.backward();

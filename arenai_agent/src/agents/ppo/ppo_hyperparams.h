@@ -24,7 +24,7 @@ namespace arenai::agent {
                                                              {24, 32}, {32, 48}, {48, 64}};
         std::vector<int> group_norm_nums = {1, 2, 3, 4, 6, 8};
         float initial_sigma = 0.1f;
-        float initial_fire_proba = 0.2f;
+        float initial_fire_proba = 0.05f;
         int metric_window_size = 256;
         float gamma = 0.99f;
         float gae_lambda = 0.98f;
@@ -32,7 +32,7 @@ namespace arenai::agent {
         float target_kl = 0.05f;
         float grad_norm_max = 0.5f;
         float target_sigma = 0.1f;
-        float target_fire_proba = 0.2f;
+        float target_fire_proba = 0.05f;
         int epochs = 2;
         int rollout_size = 30 * 30;
         int minibatch_size = 1024;

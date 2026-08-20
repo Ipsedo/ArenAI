@@ -9,4 +9,6 @@
 
 class AlphaParameterTest : public testing::Test {};
 
+class PidLagrangianAlphaParameterTest : public testing::Test {};
+
 #endif//ARENAI_TESTS_ENTROPY_H

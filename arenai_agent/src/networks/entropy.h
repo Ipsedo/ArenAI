@@ -118,19 +118,30 @@ namespace arenai::agent {
      * Lagrangian
      */
 
-    class PidLagrangianAlphaParameters final : public AlphaParameters {
+    // alpha is the output of the controller, not a parameter moved by gradient ascent: the
+    // integral term *is* the dual variable. It is driven on the log scale, where each gain
+    // acts multiplicatively on alpha whatever decade it currently sits in, and where the
+    // multiplier stays positive without a clamp on the output.
+    class PidLagrangianAlphaParameters final : public torch::nn::Module {
     public:
         PidLagrangianAlphaParameters(
             float k_p, float k_i, float k_d, float initial_alpha, int nb_alphas);
 
-        torch::Tensor pid(const torch::Tensor &entropy, const torch::Tensor &target_entropy) const;
+        void update(const torch::Tensor &entropy, const torch::Tensor &target_entropy) const;
+
+        torch::Tensor alpha() const;
 
     private:
+        static constexpr float MIN_ALPHA = 1e-8f;
+        static constexpr float MAX_ALPHA = 1.f;
+
         float k_p, k_i, k_d;
 
-        torch::Tensor previous_error;
+        torch::Tensor previous_entropy;
+        torch::Tensor has_previous;
+
         torch::Tensor integral;
-        torch::Tensor derivative;
+        torch::Tensor log_alpha_tensor;
     };
 
 }// namespace arenai::agent

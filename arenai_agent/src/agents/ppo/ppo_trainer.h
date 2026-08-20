@@ -52,9 +52,6 @@ namespace arenai::agent {
         std::unique_ptr<torch::optim::Adam> actor_optim;
         std::unique_ptr<torch::optim::Adam> critic_optim;
 
-        std::unique_ptr<torch::optim::SGD> continuous_alpha_optim;
-        std::unique_ptr<torch::optim::SGD> discrete_alpha_optim;
-
         std::shared_ptr<AbstractMetric> actor_mean_loss_metric;
         std::shared_ptr<AbstractMetric> actor_std_loss_metric;
 

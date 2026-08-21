@@ -48,7 +48,8 @@ TEST_F(SacTrainingTest, ActProducesValidOutput) {
         .nb_discrete_actions = 3};
     const auto factory = make_factory(cfg);
 
-    const auto [continuous_action, discrete_action] = factory->get_agent()->act(make_state(cfg));
+    const auto [continuous_action, discrete_action] =
+        factory->get_agent()->act(make_state(cfg), true);
 
     ASSERT_EQ(continuous_action.size(0), 1);
     ASSERT_EQ(continuous_action.size(1), 2);

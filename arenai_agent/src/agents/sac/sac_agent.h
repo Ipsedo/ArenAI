@@ -19,7 +19,7 @@ namespace arenai::agent {
             const std::shared_ptr<Actor> &actor, torch::Device device,
             std::optional<std::shared_ptr<SacStepCollector>> collector = std::nullopt);
 
-        TorchAction act(const TorchState &state) override;
+        TorchAction act(const TorchState &state, bool sample) override;
 
         std::vector<core::Action>
         act(const std::vector<core::State> &states, int vision_height, int vision_width) override;

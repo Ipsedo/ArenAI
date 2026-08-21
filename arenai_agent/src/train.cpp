@@ -114,7 +114,8 @@ namespace arenai::agent {
 
                 const auto [continuous_action, discrete_action] = agent->act(
                     {.vision = vision.to(torch_device),
-                     .proprioception = proprioception.to(torch_device)});
+                     .proprioception = proprioception.to(torch_device)},
+                    true);
 
                 TorchAction torch_action = {
                     .continuous_action = continuous_action, .discrete_action = discrete_action};

@@ -45,7 +45,8 @@ TEST_F(PpoTrainingTest, ActProducesValidOutput) {
         .nb_discrete_actions = 3};
     const auto factory = make_factory(cfg);
 
-    const auto [continuous_action, discrete_action] = factory->get_agent()->act(make_state(cfg, 1));
+    const auto [continuous_action, discrete_action] =
+        factory->get_agent()->act(make_state(cfg, 1), true);
 
     ASSERT_EQ(continuous_action.size(0), 1);
     ASSERT_EQ(continuous_action.size(1), 2);
@@ -103,7 +104,7 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
     for (int t = 0; t < ROLLOUT_SIZE + 2; t++) {
         constexpr int nb_tanks = 2;
 
-        agent->act(make_state(cfg, nb_tanks));
+        agent->act(make_state(cfg, nb_tanks), true);
         collector->on_transition(torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
         trainer->step();
     }

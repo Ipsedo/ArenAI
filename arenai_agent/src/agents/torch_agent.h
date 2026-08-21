@@ -13,7 +13,7 @@ namespace arenai::agent {
     public:
         virtual ~AbstractTorchAgent() = default;
 
-        virtual TorchAction act(const TorchState &state) = 0;
+        virtual TorchAction act(const TorchState &state, bool sample) = 0;
     };
 
 }// namespace arenai::agent

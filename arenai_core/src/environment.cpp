@@ -30,7 +30,7 @@ namespace arenai::core {
           graphics_backend(graphics_backend), gl_context(graphics_backend->render_context()),
           rng(dev()), file_reader(file_reader) {}
 
-    std::vector<std::tuple<State, Reward, IsDone, IsTruncated>>
+    std::vector<std::tuple<State, Reward, IsDone>>
     BaseTanksEnvironment::step(const float time_delta, const std::vector<Action> &actions) {
 
         // 1. apply action
@@ -51,13 +51,13 @@ namespace arenai::core {
         vision_pool_->loop_wait();
 
         // 4. build State
-        std::vector<std::tuple<State, Reward, IsDone, IsTruncated>> result;
+        std::vector<std::tuple<State, Reward, IsDone>> result;
         result.reserve(tanks.size());
 
         for (int i = 0; i < tanks.size(); i++) {
             result.emplace_back(
                 State(vision_pool_->read_vision(i), tanks[i]->get_proprioception()),
-                tanks[i]->get_reward(tanks), tanks[i]->is_dead(), false);
+                tanks[i]->get_reward(tanks), tanks[i]->is_dead());
         }
 
         return result;

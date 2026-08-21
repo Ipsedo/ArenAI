@@ -8,19 +8,25 @@
 
 namespace arenai::desktop {
 
-    namespace {
-        float apply_deadzone(const double value) {
-            constexpr double DEADZONE = 0.05;
+    float PlayerGamepadHandler::apply_dead_zone(const double value) {
+        constexpr double DEAD_ZONE = 0.05;
 
-            if (std::abs(value) < DEADZONE) return 0.f;
+        if (std::abs(value) < DEAD_ZONE) return 0.f;
 
-            // ramp from 0 at the deadzone edge up to ±1 at full deflection
-            const double sign = value > 0. ? 1. : -1.;
-            return static_cast<float>(sign * (std::abs(value) - DEADZONE) / (1. - DEADZONE));
-        }
-    }// namespace
+        // ramp from 0 at the deadzone edge up to ±1 at full deflection
+        const double sign = value > 0. ? 1. : -1.;
+        return static_cast<float>(sign * (std::abs(value) - DEAD_ZONE) / (1. - DEAD_ZONE));
+    }
 
-    PlayerGamepadHandler::PlayerGamepadHandler() : state{0., 0., 0., 0., 0., 0., std::nullopt} {}
+    PlayerGamepadHandler::PlayerGamepadHandler()
+        : state{
+            .left_stick_x = 0.,
+            .left_stick_y = 0.,
+            .right_stick_x = 0.,
+            .right_stick_y = 0.,
+            .left_trigger = 0.,
+            .right_trigger = 0.,
+            .button = std::nullopt} {}
 
     void PlayerGamepadHandler::on_gamepad_button(
         const controller::GamepadButton button, const controller::InputAction action) {
@@ -75,15 +81,19 @@ namespace arenai::desktop {
             // deflection is scaled into radians here (like the mouse handler)
             constexpr float factor = 0.02f * static_cast<float>(M_PI);
 
-            turret_rotation = factor * apply_deadzone(event.right_stick_x);
-            canon_rotation = factor * apply_deadzone(event.right_stick_y);
+            turret_rotation = factor * apply_dead_zone(event.right_stick_x);
+            canon_rotation = factor * apply_dead_zone(event.right_stick_y);
         }
 
-        const float direction = apply_deadzone(event.left_stick_x);
+        const float direction = apply_dead_zone(event.left_stick_x);
         // triggers drive the tank: right forward, left backward (both in [0, 1])
         const auto speed = static_cast<float>(event.right_trigger - event.left_trigger);
 
-        return {true, {{direction, speed}, {turret_rotation, canon_rotation}, {need_fire}}};
+        return {
+            true,
+            {.left_joystick = {.x = direction, .y = speed},
+             .right_joystick = {.x = turret_rotation, .y = canon_rotation},
+             .fire_button = {need_fire}}};
     }
 
 }// namespace arenai::desktop

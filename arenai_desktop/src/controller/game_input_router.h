@@ -21,10 +21,10 @@ namespace arenai::desktop {
                                   public controller::AbstractGamepadCallback {
     public:
         GameInputRouter(
-            std::shared_ptr<controller::AbstractKeyboardCallback> game_keyboard,
-            std::shared_ptr<controller::AbstractGamepadCallback> game_gamepad,
-            std::shared_ptr<controller::AbstractKeyboardCallback> pause_input,
-            std::shared_ptr<controller::AbstractGamepadCallback> pause_gamepad_input,
+            std::shared_ptr<AbstractKeyboardCallback> game_keyboard,
+            std::shared_ptr<AbstractGamepadCallback> game_gamepad,
+            std::shared_ptr<AbstractKeyboardCallback> pause_input,
+            std::shared_ptr<AbstractGamepadCallback> pause_gamepad_input,
             std::function<void()> on_pause_toggle);
 
         void set_paused(bool paused);
@@ -43,13 +43,13 @@ namespace arenai::desktop {
         void on_trigger(double z, controller::GamepadTrigger trigger) override;
 
     private:
-        const std::shared_ptr<controller::AbstractKeyboardCallback> &keyboard_sink() const;
-        const std::shared_ptr<controller::AbstractGamepadCallback> &gamepad_sink() const;
+        const std::shared_ptr<AbstractKeyboardCallback> &keyboard_sink() const;
+        const std::shared_ptr<AbstractGamepadCallback> &gamepad_sink() const;
 
-        std::shared_ptr<controller::AbstractKeyboardCallback> game_keyboard_;
-        std::shared_ptr<controller::AbstractGamepadCallback> game_gamepad_;
-        std::shared_ptr<controller::AbstractKeyboardCallback> pause_input_;
-        std::shared_ptr<controller::AbstractGamepadCallback> pause_gamepad_input_;
+        std::shared_ptr<AbstractKeyboardCallback> game_keyboard_;
+        std::shared_ptr<AbstractGamepadCallback> game_gamepad_;
+        std::shared_ptr<AbstractKeyboardCallback> pause_input_;
+        std::shared_ptr<AbstractGamepadCallback> pause_gamepad_input_;
         std::function<void()> on_pause_toggle_;
 
         bool paused_ = false;

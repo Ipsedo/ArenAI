@@ -44,8 +44,9 @@ std::unique_ptr<SacTorchAgentFactory> SacAgentTest::make_factory(const SacTestCo
 
 TorchState SacAgentTest::make_state(const SacTestConfig &cfg, const int batch) {
     return {
-        torch::randint(0, 255, {batch, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
-        torch::randn({batch, cfg.nb_sensors})};
+        .vision =
+            torch::randint(0, 255, {batch, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
+        .proprioception = torch::randn({batch, cfg.nb_sensors})};
 }
 
 // ========================================================================
@@ -78,7 +79,7 @@ TEST_P(SacActShapeParamTest, ActOutputShapes) {
 
     constexpr int batch = 4;
     const auto [continuous_action, discrete_action] =
-        factory->get_agent()->act(make_state(cfg, batch));
+        factory->get_agent()->act(make_state(cfg, batch), true);
 
     ASSERT_EQ(continuous_action.size(0), batch);
     ASSERT_EQ(continuous_action.size(1), cfg.nb_continuous_actions);
@@ -93,7 +94,7 @@ TEST_P(SacActShapeParamTest, ActContinuousFinite) {
 
     constexpr int batch = 4;
     const auto [continuous_action, discrete_action] =
-        factory->get_agent()->act(make_state(cfg, batch));
+        factory->get_agent()->act(make_state(cfg, batch), true);
 
     ASSERT_TRUE(torch::all(torch::isfinite(continuous_action)).item<bool>());
 }
@@ -104,7 +105,7 @@ TEST_P(SacActShapeParamTest, ActDiscreteIsOneHot) {
 
     constexpr int batch = 4;
     const auto [continuous_action, discrete_action] =
-        factory->get_agent()->act(make_state(cfg, batch));
+        factory->get_agent()->act(make_state(cfg, batch), true);
 
     const auto row_sums = torch::sum(discrete_action, -1);
     ASSERT_TRUE(torch::allclose(row_sums, torch::ones({batch})));

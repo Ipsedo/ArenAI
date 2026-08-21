@@ -10,7 +10,6 @@
 
 using namespace arenai;
 using namespace arenai::model;
-using namespace arenai::controller;
 
 namespace {
 
@@ -32,7 +31,7 @@ namespace arenai::model {
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, glm::vec3 pos,
         glm::vec3 rel_pos, glm::vec3 scale, float mass, JPH::Body *turret,
         const float wanted_frame_frequency,
-        const std::function<void(glm::vec3, glm::vec3, Item *)> &on_contact,
+        const std::function<void(const ShellItem *, glm::vec3, glm::vec3, Item *)> &on_contact,
         const std::function<void(const std::shared_ptr<ShellItem> &)> &on_shell_fired,
         const std::function<bool()> &can_fire)
         : LifeItem(5), ConvexItem(
@@ -55,8 +54,11 @@ namespace arenai::model {
         settings.mHingeAxis2 = JPH::Vec3::sAxisX();
         settings.mNormalAxis2 = JPH::Vec3::sAxisY();
 
-        hinge =
-            static_cast<JPH::HingeConstraint *>(settings.Create(*turret, *ConvexItem::get_body()));
+        auto *constraint = settings.Create(*turret, *ConvexItem::get_body());
+        // Jolt is built without RTTI (-fno-rtti): dynamic_cast would not link. The dynamic
+        // type is guaranteed by the settings object the constraint was created from.
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+        hinge = static_cast<JPH::HingeConstraint *>(constraint);
 
         hinge->SetMotorState(JPH::EMotorState::Position);
         hinge->SetTargetAngle(angle);
@@ -98,7 +100,7 @@ namespace arenai::model {
         return {jolt_items.begin(), jolt_items.end()};
     }
 
-    void CanonItem::apply_input(const user_input &input) {
+    void CanonItem::apply_input(const controller::user_input &input) {
         angle += input.right_joystick.y * 0.4f;
 
         angle =

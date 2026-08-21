@@ -218,12 +218,18 @@ namespace arenai::desktop::gui {
                     int weight;
                 };
                 constexpr FontSpec MENU_FONTS[] = {
-                    {"font/Sora-Regular.ttf", "Sora", 400},
-                    {"font/Sora-SemiBold.ttf", "Sora", 600},
-                    {"font/Sora-Bold.ttf", "Sora", 700},
-                    {"font/IBMPlexMono-Regular.ttf", "IBM Plex Mono", 400},
-                    {"font/IBMPlexMono-Medium.ttf", "IBM Plex Mono", 500},
-                    {"font/IBMPlexMono-SemiBold.ttf", "IBM Plex Mono", 600},
+                    {.path = "font/Sora-Regular.ttf", .family = "Sora", .weight = 400},
+                    {.path = "font/Sora-SemiBold.ttf", .family = "Sora", .weight = 600},
+                    {.path = "font/Sora-Bold.ttf", .family = "Sora", .weight = 700},
+                    {.path = "font/IBMPlexMono-Regular.ttf",
+                     .family = "IBM Plex Mono",
+                     .weight = 400},
+                    {.path = "font/IBMPlexMono-Medium.ttf",
+                     .family = "IBM Plex Mono",
+                     .weight = 500},
+                    {.path = "font/IBMPlexMono-SemiBold.ttf",
+                     .family = "IBM Plex Mono",
+                     .weight = 600},
                 };
 
                 font_buffers_.reserve(std::size(MENU_FONTS));
@@ -231,7 +237,7 @@ namespace arenai::desktop::gui {
                     font_buffers_.push_back(asset_reader->read_text(path));
                     const auto &buffer = font_buffers_.back();
                     Rml::LoadFontFace(
-                        Rml::Span<const Rml::byte>(
+                        Rml::Span(
                             reinterpret_cast<const Rml::byte *>(buffer.data()), buffer.size()),
                         family, Rml::Style::FontStyle::Normal,
                         static_cast<Rml::Style::FontWeight>(weight));
@@ -393,7 +399,7 @@ namespace arenai::desktop::gui {
             }
 
             void focus_first_entry() const {
-                Rml::Element *list = params_document_->GetElementById("file-list");
+                const Rml::Element *list = params_document_->GetElementById("file-list");
                 if (list == nullptr) return;
                 const auto entries = ExplorerNavListener::visible_file_entries(list);
                 if (entries.empty()) return;

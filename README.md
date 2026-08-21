@@ -4,9 +4,9 @@ A battle-royal game with trained agent which controls tanks in realistic physic 
 
 ## Description
 
-Each agent receives the rendered frame of its camera as input, and it is trained to fire and hit enemies.
+Each tank receives the rendered frame of its camera as input, and the agent is trained to fire and hit enemies.
 
-When agent is trained (with SAC algorithm) you can fight against other tanks.
+When the agent is trained (with the PPO or SAC algorithm), you can fight it through the tanks it handles.
 
 ## Installation
 

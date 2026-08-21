@@ -68,8 +68,8 @@ namespace arenai::model {
 
             auto push_triangle = [&](const glm::vec3 &p0, const glm::vec3 &p1,
                                      const glm::vec3 &p2) {
-                const glm::vec3 normal = glm::cross(p1 - p0, p2 - p0);
-                if (normal.y >= 0.f) triangles.emplace_back(to_jolt(p0), to_jolt(p1), to_jolt(p2));
+                if (const glm::vec3 normal = glm::cross(p1 - p0, p2 - p0); normal.y >= 0.f)
+                    triangles.emplace_back(to_jolt(p0), to_jolt(p1), to_jolt(p2));
                 else triangles.emplace_back(to_jolt(p0), to_jolt(p2), to_jolt(p1));
             };
 

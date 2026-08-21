@@ -5,8 +5,6 @@
 #ifndef ARENAI_STEP_COLLECTOR_H
 #define ARENAI_STEP_COLLECTOR_H
 
-#include <torch/torch.h>
-
 #include "./torch_types.h"
 
 namespace arenai::agent {
@@ -18,9 +16,7 @@ namespace arenai::agent {
     public:
         virtual ~AbstractStepCollector() = default;
 
-        virtual void on_transition(
-            const torch::Tensor &rewards, const torch::Tensor &done,
-            const torch::Tensor &truncated) = 0;
+        virtual void on_transition(const torch::Tensor &rewards, const torch::Tensor &done) = 0;
 
         virtual void on_episode_end(const TorchState &final_state) = 0;
     };

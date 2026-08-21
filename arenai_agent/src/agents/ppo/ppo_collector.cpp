@@ -21,16 +21,14 @@ namespace arenai::agent {
         last_discrete_log_prob = discrete_log_prob;
     }
 
-    void PpoStepCollector::on_transition(
-        const torch::Tensor &rewards, const torch::Tensor &done, const torch::Tensor &truncated) {
+    void PpoStepCollector::on_transition(const torch::Tensor &rewards, const torch::Tensor &done) {
         rollout_buffer->add(
             {.state = last_state,
              .action = last_action,
              .continuous_log_prob = last_continuous_log_prob,
              .discrete_log_prob = last_discrete_log_prob,
              .reward = rewards,
-             .done = done,
-             .truncated = truncated});
+             .done = done});
     }
 
     void PpoStepCollector::on_episode_end(const TorchState &final_state) {

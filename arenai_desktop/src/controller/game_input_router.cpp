@@ -9,10 +9,10 @@
 namespace arenai::desktop {
 
     GameInputRouter::GameInputRouter(
-        std::shared_ptr<controller::AbstractKeyboardCallback> game_keyboard,
-        std::shared_ptr<controller::AbstractGamepadCallback> game_gamepad,
-        std::shared_ptr<controller::AbstractKeyboardCallback> pause_input,
-        std::shared_ptr<controller::AbstractGamepadCallback> pause_gamepad_input,
+        std::shared_ptr<AbstractKeyboardCallback> game_keyboard,
+        std::shared_ptr<AbstractGamepadCallback> game_gamepad,
+        std::shared_ptr<AbstractKeyboardCallback> pause_input,
+        std::shared_ptr<AbstractGamepadCallback> pause_gamepad_input,
         std::function<void()> on_pause_toggle)
         : game_keyboard_(std::move(game_keyboard)), game_gamepad_(std::move(game_gamepad)),
           pause_input_(std::move(pause_input)),

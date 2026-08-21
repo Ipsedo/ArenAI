@@ -19,7 +19,6 @@ namespace arenai::core {
     typedef float Reward;
 
     typedef bool IsDone;
-    typedef bool IsTruncated;
 
     typedef controller::user_input Action;
 }// namespace arenai::core

@@ -34,15 +34,22 @@ SacTrainingTest::make_factory(const SacTrainingTestConfig &cfg) const {
 
 TorchState SacTrainingTest::make_state(const SacTrainingTestConfig &cfg) {
     return {
-        torch::randint(0, 255, {1, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
-        torch::randn({1, cfg.nb_sensors})};
+        .vision =
+            torch::randint(0, 255, {1, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
+        .proprioception = torch::randn({1, cfg.nb_sensors})};
 }
 
 TEST_F(SacTrainingTest, ActProducesValidOutput) {
-    constexpr SacTrainingTestConfig cfg{8, 8, 3, 2, 3};
+    constexpr SacTrainingTestConfig cfg{
+        .vision_height = 8,
+        .vision_width = 8,
+        .nb_sensors = 3,
+        .nb_continuous_actions = 2,
+        .nb_discrete_actions = 3};
     const auto factory = make_factory(cfg);
 
-    const auto [continuous_action, discrete_action] = factory->get_agent()->act(make_state(cfg));
+    const auto [continuous_action, discrete_action] =
+        factory->get_agent()->act(make_state(cfg), true);
 
     ASSERT_EQ(continuous_action.size(0), 1);
     ASSERT_EQ(continuous_action.size(1), 2);
@@ -54,7 +61,12 @@ TEST_F(SacTrainingTest, ActProducesValidOutput) {
 }
 
 TEST_F(SacTrainingTest, CountParametersPositive) {
-    constexpr SacTrainingTestConfig cfg{8, 8, 3, 2, 3};
+    constexpr SacTrainingTestConfig cfg{
+        .vision_height = 8,
+        .vision_width = 8,
+        .nb_sensors = 3,
+        .nb_continuous_actions = 2,
+        .nb_discrete_actions = 3};
     const auto factory = make_factory(cfg);
 
     ASSERT_GT(factory->get_trainer()->count_parameters(), 0)

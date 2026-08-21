@@ -53,7 +53,7 @@ namespace {
             const auto steps = env.step(FREQUENCY, actions);
 
             states.clear();
-            for (const auto &[state, reward, done, truncated]: steps) states.push_back(state);
+            for (const auto &[state, reward, done]: steps) states.push_back(state);
 
             actions = agent.act(states, VISION_HEIGHT, VISION_WIDTH);
         }
@@ -91,7 +91,7 @@ namespace {
     void
     write_golden(const std::filesystem::path &golden_path, const std::vector<uint8_t> &pixels) {
         std::filesystem::create_directories(golden_path.parent_path());
-        nlohmann::json output_json(pixels);
+        const nlohmann::json output_json(pixels);
         std::ofstream output_file(golden_path);
         output_file << output_json;
     }

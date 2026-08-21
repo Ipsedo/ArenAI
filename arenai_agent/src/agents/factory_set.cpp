@@ -31,7 +31,8 @@ namespace arenai::agent {
                     .channels,
                 get_value<group_norm_nums>(
                     "group_norm_nums", parse_cli_group_norms, {{{1, 2, 3, 4, 6, 8}}})
-                    .groups),
+                    .groups,
+                0.f, 0.f),
             get_value<bool>("cuda", false) ? torch::kCUDA : torch::kCPU);
     }
 

@@ -4,7 +4,8 @@
 
 #include "./metric.h"
 
-#include <numeric>
+#include <iomanip>
+#include <sstream>
 #include <stdexcept>
 
 using namespace arenai;

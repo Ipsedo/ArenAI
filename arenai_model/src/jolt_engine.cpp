@@ -44,8 +44,8 @@ namespace {
         JPH::uint GetNumBroadPhaseLayers() const override { return broad_phase_layers::NUM_LAYERS; }
 
         JPH::BroadPhaseLayer GetBroadPhaseLayer(const JPH::ObjectLayer layer) const override {
-            return layer == arenai::model::layers::NON_MOVING ? broad_phase_layers::NON_MOVING
-                                                              : broad_phase_layers::MOVING;
+            return layer == layers::NON_MOVING ? broad_phase_layers::NON_MOVING
+                                               : broad_phase_layers::MOVING;
         }
 
 #if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
@@ -59,8 +59,7 @@ namespace {
     public:
         bool ShouldCollide(
             const JPH::ObjectLayer layer1, const JPH::BroadPhaseLayer layer2) const override {
-            return layer1 != arenai::model::layers::NON_MOVING
-                   || layer2 != broad_phase_layers::NON_MOVING;
+            return layer1 != layers::NON_MOVING || layer2 != broad_phase_layers::NON_MOVING;
         }
     };
 
@@ -68,8 +67,7 @@ namespace {
     public:
         bool
         ShouldCollide(const JPH::ObjectLayer layer1, const JPH::ObjectLayer layer2) const override {
-            return layer1 != arenai::model::layers::NON_MOVING
-                   || layer2 != arenai::model::layers::NON_MOVING;
+            return layer1 != layers::NON_MOVING || layer2 != layers::NON_MOVING;
         }
     };
 
@@ -79,16 +77,20 @@ namespace arenai::model {
 
     void JoltPhysicEngine::BufferedContactListener::record(
         const JPH::Body &body1, const JPH::Body &body2, const JPH::ContactManifold &manifold) {
-        // Bullet fired on_contact once per penetrating manifold point
+        // speculative contacts are reported before they touch: only penetration counts
         if (manifold.mPenetrationDepth <= 0.f) return;
 
         const auto item_a = reinterpret_cast<Item *>(body1.GetUserData());
         const auto item_b = reinterpret_cast<Item *>(body2.GetUserData());
         if (item_a == nullptr || item_b == nullptr) return;
 
+        // one dispatch per touching body pair, never one per manifold point: Jolt
+        // builds the whole contact patch on the very first frame of an impact, where
+        // Bullet's persistent manifold grew one point per frame. Iterating the points
+        // would multiply on_contact — and the damages an impact deals — by however
+        // many points the clipping happened to produce
         std::lock_guard lock(contacts_mutex);
-        for (JPH::uint i = 0; i < manifold.mRelativeContactPointsOn1.size(); i++)
-            contacts.emplace_back(item_a, item_b);
+        contacts.emplace_back(item_a, item_b);
     }
 
     void JoltPhysicEngine::BufferedContactListener::OnContactAdded(

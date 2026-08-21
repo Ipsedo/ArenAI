@@ -4,8 +4,6 @@
 
 #include "./wheel.h"
 
-#include <utility>
-
 #include <Jolt/Physics/Constraints/SixDOFConstraint.h>
 
 #include <arenai_model/constants.h>
@@ -62,8 +60,11 @@ namespace arenai::model {
         settings.mMotorSettings[EAxis::RotationX].mMinTorqueLimit = -2e4f;
         settings.mMotorSettings[EAxis::RotationX].mMaxTorqueLimit = 2e4f;
 
-        hinge = static_cast<JPH::SixDOFConstraint *>(
-            settings.Create(*chassis, *ConvexItem::get_body()));
+        auto *constraint = settings.Create(*chassis, *ConvexItem::get_body());
+        // Jolt is built without RTTI (-fno-rtti): dynamic_cast would not link. The dynamic
+        // type is guaranteed by the settings object the constraint was created from.
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+        hinge = static_cast<JPH::SixDOFConstraint *>(constraint);
 
         hinge->SetMotorState(EAxis::TranslationY, JPH::EMotorState::Position);
         hinge->SetTargetPositionCS(JPH::Vec3(0.f, -0.2f, 0.f));

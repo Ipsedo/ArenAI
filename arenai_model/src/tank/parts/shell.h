@@ -25,12 +25,12 @@ namespace arenai::model {
             JoltPhysicEngine &engine,
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, glm::vec3 pos,
             glm::quat rot, glm::vec3 scale, float mass, float wanted_frame_frequency,
-            const std::function<void(glm::vec3, glm::vec3, Item *)> &contact_callback =
-                [](glm::vec3, glm::vec3, Item *) {});
+            const std::function<void(const ShellItem *, glm::vec3, glm::vec3, Item *)>
+                &contact_callback = [](const ShellItem *, glm::vec3, glm::vec3, Item *) {});
 
         void on_contact(Item *other) override;
 
-        inline const static std::string NAME = "shell_item";
+        static constexpr std::string NAME = "shell_item";
 
         void tick() override;
 
@@ -38,7 +38,7 @@ namespace arenai::model {
         glm::vec3 get_current_position();
 
     private:
-        std::function<void(glm::vec3, glm::vec3, Item *)> contact_callback;
+        std::function<void(const ShellItem *, glm::vec3, glm::vec3, Item *)> contact_callback;
         int nb_frames_alive;
 
         glm::vec3 start_pos;

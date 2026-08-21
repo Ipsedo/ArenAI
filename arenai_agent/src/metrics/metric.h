@@ -5,10 +5,9 @@
 #ifndef ARENAI_AGENT_HOST_METRIC_H
 #define ARENAI_AGENT_HOST_METRIC_H
 
+#include <memory>
 #include <string>
 #include <vector>
-
-#include <torch/torch.h>
 
 namespace arenai::agent {
 

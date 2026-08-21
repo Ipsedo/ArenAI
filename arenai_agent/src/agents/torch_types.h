@@ -22,7 +22,6 @@ namespace arenai::agent {
         TorchState states;
         torch::Tensor rewards;
         torch::Tensor is_done;
-        torch::Tensor is_truncated;
     };
 }// namespace arenai::agent
 

@@ -24,7 +24,7 @@ namespace arenai::desktop {
         // The tank visions get their own headless backend (integrated GPU): their
         // synchronous readbacks are latency-bound on a discrete GPU, and this keeps
         // them off the window's GPU when the player view is offloaded (prime-run).
-        : core::BaseTanksEnvironment(
+        : BaseTanksEnvironment(
             std::make_shared<agent::DesktopAssetFileReader>(asset_folder_path),
             view::make_vulkan_backend(), nb_tanks, wanted_frequency, vision_height, vision_width, 8,
             true),
@@ -119,7 +119,7 @@ namespace arenai::desktop {
         player_renderer->add_drawable(
             "cubemap", drawable_factory->make_cube_map(file_reader, "cubemap/1"));
 
-        std::uniform_real_distribution<float> u_dist(0.f, 1.f);
+        std::uniform_real_distribution u_dist(0.f, 1.f);
 
         for (const auto &[name, shape]: player_tank->load_shell_shapes()) {
             const glm::vec4 color(u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, 1.f);

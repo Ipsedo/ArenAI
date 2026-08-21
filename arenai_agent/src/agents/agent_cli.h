@@ -29,9 +29,8 @@ namespace arenai::agent {
             create_factory;
     };
 
+    // the first entry is the algorithm used when no subcommand is given
     std::vector<AgentCli> make_agent_clis();
-
-    AgentCli get_default_agent_cli();
 
 }// namespace arenai::agent
 

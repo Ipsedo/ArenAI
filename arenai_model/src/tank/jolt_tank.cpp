@@ -18,8 +18,6 @@
 
 using namespace arenai;
 using namespace arenai::model;
-using namespace arenai::view;
-using namespace arenai::controller;
 
 namespace arenai::model {
 
@@ -28,7 +26,8 @@ namespace arenai::model {
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::string &tank_prefix_name, glm::vec3 chassis_pos,
         const float wanted_frame_frequency,
-        const std::function<void(const ShellContactInfo &, Item *)> &on_contact_callback,
+        const std::function<void(const ShellItem *, const ShellContactInfo &, Item *)>
+            &on_contact_callback,
         const std::function<void(const std::shared_ptr<ShellItem> &)> &on_shell_fired_callback,
         const std::function<bool()> &can_fire_callback)
         : engine(engine), name(tank_prefix_name), camera(std::nullptr_t()),
@@ -60,9 +59,9 @@ namespace arenai::model {
 
         for (auto &[wheel_name, wheel_pos, angle_factor]: front_wheel_config) {
             auto wheel = std::make_shared<DirectionalWheelItem>(
-                tank_prefix_name + "_" + wheel_name, engine, file_reader, wheel_pos + chassis_pos,
-                wheel_pos, wheel_scale, wheel_mass, chassis_item->get_body(), front_axle_z,
-                angle_factor);
+                std::format("{}_{}", tank_prefix_name, wheel_name), engine, file_reader,
+                wheel_pos + chassis_pos, wheel_pos, wheel_scale, wheel_mass,
+                chassis_item->get_body(), front_axle_z, angle_factor);
 
             jolt_items.push_back(wheel);
             items.push_back(wheel);
@@ -76,8 +75,9 @@ namespace arenai::model {
 
         for (auto &[wheel_name, wheel_pos]: wheel_config) {
             auto wheel = std::make_shared<WheelItem>(
-                tank_prefix_name + "_" + wheel_name, engine, file_reader, wheel_pos + chassis_pos,
-                wheel_pos, wheel_scale, wheel_mass, chassis_item->get_body(), front_axle_z);
+                std::format("{}_{}", tank_prefix_name, wheel_name), engine, file_reader,
+                wheel_pos + chassis_pos, wheel_pos, wheel_scale, wheel_mass,
+                chassis_item->get_body(), front_axle_z);
 
             jolt_items.push_back(wheel);
             items.push_back(wheel);
@@ -102,8 +102,11 @@ namespace arenai::model {
         auto canon_item = std::make_shared<CanonItem>(
             tank_prefix_name, engine, file_reader, chassis_pos + turret_pos + canon_pos, canon_pos,
             scale * canon_scale, 100, turret->get_body(), wanted_frame_frequency,
-            [on_contact_callback](const glm::vec3 fire_pos, const glm::vec3 hit_pos, Item *item) {
-                on_contact_callback({fire_pos, hit_pos}, item);
+            [on_contact_callback](
+                const ShellItem *shell, const glm::vec3 fire_pos, const glm::vec3 hit_pos,
+                Item *item) {
+                on_contact_callback(
+                    shell, {.fire_position = fire_pos, .current_position = hit_pos}, item);
             },
             on_shell_fired_callback, can_fire_callback);
 
@@ -149,14 +152,16 @@ namespace arenai::model {
         // register with engine
         for (const auto &item: jolt_items) engine.add_jolt_item(item);
 
-        engine.add_jolt_item_producer([c = canon_item]() { return c->produce_jolt_items(); });
+        engine.add_jolt_item_producer([c = canon_item] { return c->produce_jolt_items(); });
     }
 
-    std::shared_ptr<AbstractCamera> JoltTank::get_camera() { return camera; }
+    std::shared_ptr<view::AbstractCamera> JoltTank::get_camera() { return camera; }
 
     std::vector<std::shared_ptr<Item>> JoltTank::get_items() { return items; }
 
-    std::vector<std::shared_ptr<Controller>> JoltTank::get_controllers() { return controllers; }
+    std::vector<std::shared_ptr<controller::Controller>> JoltTank::get_controllers() {
+        return controllers;
+    }
 
     std::map<std::string, std::shared_ptr<Shape>> JoltTank::load_shell_shapes() const {
         return {{ShellItem::NAME, ShellItem::load_shape(file_reader)}};
@@ -166,7 +171,7 @@ namespace arenai::model {
         return std::ranges::any_of(life_items, [](const LifeItem *li) { return li->is_dead(); });
     }
 
-    int JoltTank::get_received_hits() {
+    int JoltTank::get_received_hits() const {
         int hits = 0;
         for (const auto life_item: life_items) hits += life_item->consume_hits_received();
         return hits;
@@ -175,6 +180,10 @@ namespace arenai::model {
     std::shared_ptr<Item> JoltTank::get_chassis() { return chassis; }
 
     std::shared_ptr<Item> JoltTank::get_canon() { return canon; }
+
+    void JoltTank::kill_life_items() const {
+        for (const auto life_item: life_items) life_item->kill();
+    }
 
     void JoltTank::remove_constraints_from_engine() const {
         for (const auto &item: jolt_items) engine.remove_jolt_item_constraints(item);

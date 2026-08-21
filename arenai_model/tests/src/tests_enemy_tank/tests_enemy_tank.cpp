@@ -6,7 +6,6 @@
 #include <memory>
 
 #include <arenai_controller/inputs.h>
-#include <arenai_model/constants.h>
 #include <arenai_model/item.h>
 #include <arenai_model_tests/tests_enemy_tank/tests_enemy_tank.h>
 
@@ -104,12 +103,15 @@ TEST_F(EnemyTankTest, RewardWhenAllEnemiesDeadAndShellFired) {
     ASSERT_TRUE(shared_b->is_dead());
 
     // fire from tank_a — shell will hit the dead tank or ground
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
-    const std::vector<std::shared_ptr<EnemyTank>> tanks{shared_a, shared_b};
+    const std::vector tanks{shared_a, shared_b};
 
     // get_nearest_enemy_index should return -1 (all dead)
     // reward should not crash and should be 0 (no valid target)
@@ -127,12 +129,15 @@ TEST_F(EnemyTankTest, RewardNoNaNWhenAloneInTankList) {
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
 
     // fire a shell that will hit the ground
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
-    const std::vector<std::shared_ptr<EnemyTank>> tanks{shared_tank};
+    const std::vector tanks{shared_tank};
 
     const float reward = shared_tank->get_reward(tanks);
     ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN when alone";
@@ -153,12 +158,18 @@ TEST_F(EnemyTankTest, ShellHitsGroundNoRewardNoCrash) {
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
 
     // tilt canon downward to ensure it hits the ground
-    constexpr user_input aim_down{{0.f, 0.f}, {0.f, 1.f}, {false}};
+    constexpr user_input aim_down{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 1.f},
+        .fire_button = {false}};
     for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(aim_down);
     for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(aim_down);
     for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(aim_down);
 
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
@@ -168,7 +179,7 @@ TEST_F(EnemyTankTest, ShellHitsGroundNoRewardNoCrash) {
         << "hitting the ground should not count as hitting another tank";
 
     // but last_shoot_info should still be set — reward should not crash
-    std::vector<std::shared_ptr<EnemyTank>> tanks{shared_tank};
+    const std::vector tanks{shared_tank};
     const float reward = shared_tank->get_reward(tanks);
     ASSERT_FALSE(std::isnan(reward));
 }
@@ -207,7 +218,10 @@ TEST_F(EnemyTankTest, HasHitOtherTankResetsAfterCall) {
     const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
     std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
@@ -217,4 +231,65 @@ TEST_F(EnemyTankTest, HasHitOtherTankResetsAfterCall) {
     // second call should return false (reset)
     ASSERT_FALSE(shared_a->has_hit_other_tank())
         << "has_hit_other_tank should reset to false after being queried";
+}
+
+// ========================================================================
+// Shell reserve — passive regeneration
+// ========================================================================
+
+TEST_F(EnemyTankTest, ShellReserveRegeneratesOverTime) {
+    // the fixture engine runs at 60 Hz: one reward call per frame, one shell every 1.5 s.
+    // the bounds stay a frame away from the period so the test does not depend on how the
+    // period rounds to an integer number of frames
+    constexpr int nb_frames_one_second = 60;
+
+    add_ground();
+    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
+
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
+    const std::vector tanks{shared_tank};
+
+    ASSERT_FLOAT_EQ(shared_tank->get_proprioception().back(), 1.f)
+        << "the reserve should start full";
+
+    // fire one shell: the reserve drops by one
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
+    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
+    engine->step(1.f / 60.f);
+
+    const float reserve_after_fire = shared_tank->get_proprioception().back();
+    ASSERT_LT(reserve_after_fire, 1.f) << "firing should consume a shell";
+
+    // after 1 s the period is not over yet: still nothing
+    for (int i = 0; i < nb_frames_one_second; i++) shared_tank->get_reward(tanks);
+    ASSERT_FLOAT_EQ(shared_tank->get_proprioception().back(), reserve_after_fire)
+        << "the reserve should not regenerate before the full period has elapsed";
+
+    // after 2 s the shell is back
+    for (int i = 0; i < nb_frames_one_second; i++) shared_tank->get_reward(tanks);
+    ASSERT_FLOAT_EQ(shared_tank->get_proprioception().back(), 1.f)
+        << "one shell should be given back after 1.5 s";
+}
+
+TEST_F(EnemyTankTest, ShellReserveRegenerationIsCappedAtInitialReserve) {
+    constexpr int nb_frames_one_second = 60;
+
+    add_ground();
+    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
+
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
+    const std::vector tanks{shared_tank};
+
+    // the reserve is already full: several periods must not push it above it
+    for (int i = 0; i < 5 * nb_frames_one_second; i++) shared_tank->get_reward(tanks);
+
+    ASSERT_FLOAT_EQ(shared_tank->get_proprioception().back(), 1.f)
+        << "regeneration should never take the reserve above its initial value";
 }

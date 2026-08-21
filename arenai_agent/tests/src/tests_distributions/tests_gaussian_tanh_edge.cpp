@@ -85,7 +85,7 @@ TEST_F(GaussianTanhEdgeTest, SampleWithZeroSigma) {
 // ========================================================================
 
 TEST_F(GaussianTanhGradientTest, LogPdfGradientFlowsThroughMu) {
-    auto mu = torch::zeros({5}, torch::TensorOptions().requires_grad(true));
+    const auto mu = torch::zeros({5}, torch::TensorOptions().requires_grad(true));
     const auto sigma = torch::ones({5}) * 0.5f;
     const auto u = torch::tensor({0.1f, -0.2f, 0.3f, -0.1f, 0.0f});
 
@@ -103,7 +103,7 @@ TEST_F(GaussianTanhGradientTest, LogPdfGradientFlowsThroughMu) {
 
 TEST_F(GaussianTanhGradientTest, LogPdfGradientFlowsThroughSigma) {
     const auto mu = torch::zeros({5});
-    auto sigma = torch::full({5}, 0.5f, torch::TensorOptions().requires_grad(true));
+    const auto sigma = torch::full({5}, 0.5f, torch::TensorOptions().requires_grad(true));
     const auto u = torch::tensor({0.1f, -0.2f, 0.3f, -0.1f, 0.0f});
 
     const auto log_p = gaussian_tanh_log_pdf(u, mu, sigma);
@@ -117,7 +117,7 @@ TEST_F(GaussianTanhGradientTest, LogPdfGradientFlowsThroughSigma) {
 }
 
 TEST_F(GaussianTanhGradientTest, LogPdfGradientFiniteWithLargeU) {
-    auto mu = torch::zeros({5}, torch::TensorOptions().requires_grad(true));
+    const auto mu = torch::zeros({5}, torch::TensorOptions().requires_grad(true));
     const auto sigma = torch::ones({5}) * 0.5f;
     const auto u = torch::ones({5}) * 10.0f;
 

@@ -5,6 +5,7 @@
 #include <networks_utils/init.h>
 
 #include <arenai_agent_tests/tests_networks_utils/tests_init.h>
+#include <arenai_model/constants.h>
 
 #include "./networks/constants.h"
 #include "./networks/misc.h"
@@ -59,15 +60,14 @@ TEST_F(InitWeightsTest, MuOutputBiasZero) {
 
 TEST_F(InitWeightsTest, SigmaOutputWeightsOrthogonal) {
     torch::nn::Linear linear(32, 4);
-    init_sigma_output_weights(*linear);
+    init_sigma_output_weights(*linear, 0.f);
 
     assert_orthogonal(linear->weight, 0.01f);
 }
 
 TEST_F(InitWeightsTest, SigmaOutputIsEqualToWantedOne) {
     torch::nn::Sequential sequential(
-        torch::nn::Linear(32, 4),
-        std::make_shared<SigmaOutput>(agent::SIGMA_MIN, agent::SIGMA_MAX));
+        torch::nn::Linear(32, 4), std::make_shared<SigmaOutput>(SIGMA_MIN, SIGMA_MAX));
 
     constexpr float wanted_sigma = 0.5f;
 
@@ -81,9 +81,23 @@ TEST_F(InitWeightsTest, SigmaOutputIsEqualToWantedOne) {
 
 TEST_F(InitWeightsTest, DiscreteOutputWeightsOrthogonal) {
     torch::nn::Linear linear(32, 6);
-    init_discrete_output_weights(*linear);
+    init_discrete_output_weights(*linear, 0.f);
 
     assert_orthogonal(linear->weight, 0.01f);
+}
+
+TEST_F(InitWeightsTest, DiscreteOutputFireProbaIsEqualToWantedOne) {
+    constexpr float wanted_fire_proba = 0.2f;
+
+    torch::nn::Sequential seq(
+        torch::nn::Linear(32, model::ENEMY_NB_DISCRETE_ACTION), torch::nn::Softmax(-1));
+    seq->apply([](torch::nn::Module &m) { init_discrete_output_weights(m, wanted_fire_proba); });
+
+    torch::Tensor x = torch::randn({1, 32});
+    const auto out = seq->forward(x);
+
+    ASSERT_NEAR(out[0][0].item<float>(), wanted_fire_proba, 1e-2f);
+    ASSERT_NEAR(out[0][1].item<float>(), 1.f - wanted_fire_proba, 1e-2f);
 }
 
 TEST_F(InitWeightsTest, ValueOutputWeightsOrthogonal) {

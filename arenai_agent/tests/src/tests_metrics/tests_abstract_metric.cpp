@@ -39,7 +39,7 @@ TEST_F(AbstractMetricTest, ToStringFormat) {
     const auto str = metric.to_string();
 
     ASSERT_TRUE(str.find("loss") != std::string::npos);
-    ASSERT_TRUE(str.find("=") != std::string::npos);
+    ASSERT_TRUE(str.find('=') != std::string::npos);
     ASSERT_TRUE(str.find("2.00") != std::string::npos);
 }
 
@@ -50,7 +50,7 @@ TEST_F(AbstractMetricTest, ToStringScientific) {
 
     const auto str = metric.to_string();
 
-    ASSERT_TRUE(str.find("e") != std::string::npos || str.find("E") != std::string::npos);
+    ASSERT_TRUE(str.find('e') != std::string::npos || str.find('E') != std::string::npos);
 }
 
 TEST_F(AbstractMetricTest, MetricsToStringMultiple) {
@@ -62,9 +62,9 @@ TEST_F(AbstractMetricTest, MetricsToStringMultiple) {
 
     const auto str = AbstractMetric::metrics_to_string({m1, m2});
 
-    ASSERT_TRUE(str.find("a") != std::string::npos);
-    ASSERT_TRUE(str.find("b") != std::string::npos);
-    ASSERT_TRUE(str.find(",") != std::string::npos);
+    ASSERT_TRUE(str.find('a') != std::string::npos);
+    ASSERT_TRUE(str.find('b') != std::string::npos);
+    ASSERT_TRUE(str.find(',') != std::string::npos);
 }
 
 // ========================================================================

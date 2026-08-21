@@ -178,9 +178,9 @@ TEST_P(StatesToTensorParamTest, OutputShapeCorrect) {
     const auto [batch, height, width] = GetParam();
 
     std::vector<State> states(batch);
-    for (auto &s: states) {
-        s.vision.pixels.resize(3 * height * width, 0);
-        s.proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE, 0.0f);
+    for (auto &[vision, proprioception]: states) {
+        vision.pixels.resize(3 * height * width, 0);
+        proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE, 0.0f);
     }
 
     const auto [vision, proprioception] = states_to_tensor(states, height, width);
@@ -200,9 +200,9 @@ TEST_P(StatesToTensorParamTest, NoGradient) {
     const auto [batch, height, width] = GetParam();
 
     std::vector<State> states(batch);
-    for (auto &s: states) {
-        s.vision.pixels.resize(3 * height * width, 0);
-        s.proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE, 0.0f);
+    for (auto &[vision, proprioception]: states) {
+        vision.pixels.resize(3 * height * width, 0);
+        proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE, 0.0f);
     }
 
     const auto [vision, proprioception] = states_to_tensor(states, height, width);

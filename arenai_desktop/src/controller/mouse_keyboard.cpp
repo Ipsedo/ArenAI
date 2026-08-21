@@ -4,7 +4,6 @@
 
 #include "./mouse_keyboard.h"
 
-#include <cmath>
 #include <utility>
 
 namespace arenai::desktop {
@@ -27,18 +26,26 @@ namespace arenai::desktop {
 
     void PlayerMouseKeyboardHandler::on_key(
         const controller::Key key, const controller::InputAction action) {
-        on_event({std::make_pair(key, action), std::nullopt, last_mouse_x, last_mouse_y});
+        on_event(
+            {.key = std::make_pair(key, action),
+             .button = std::nullopt,
+             .mouse_x = last_mouse_x,
+             .mouse_y = last_mouse_y});
     }
 
     void PlayerMouseKeyboardHandler::on_mouse_move(const double x, const double y) {
         last_mouse_x = x;
         last_mouse_y = y;
-        on_event({std::nullopt, std::nullopt, x, y});
+        on_event({.key = std::nullopt, .button = std::nullopt, .mouse_x = x, .mouse_y = y});
     }
 
     void PlayerMouseKeyboardHandler::on_mouse_button(
         const controller::MouseButton button, const controller::InputAction action) {
-        on_event({std::nullopt, std::make_pair(button, action), last_mouse_x, last_mouse_y});
+        on_event(
+            {.key = std::nullopt,
+             .button = std::make_pair(button, action),
+             .mouse_x = last_mouse_x,
+             .mouse_y = last_mouse_y});
     }
 
     std::tuple<bool, controller::user_input>
@@ -92,8 +99,8 @@ namespace arenai::desktop {
 
         // mouse buttons
         if (event.button) {
-            const auto [button, action] = *event.button;
-            if (button == controller::MouseButton::Left
+            if (const auto [button, action] = *event.button;
+                button == controller::MouseButton::Left
                 && action == controller::InputAction::Press) {
                 need_fire = true;
                 cursor_captured = true;
@@ -102,9 +109,9 @@ namespace arenai::desktop {
 
         return {
             true,
-            {{current_dir, current_speed},
-             {current_turret_rotation, current_canon_rotation},
-             {need_fire}}};
+            {.left_joystick = {.x = current_dir, .y = current_speed},
+             .right_joystick = {.x = current_turret_rotation, .y = current_canon_rotation},
+             .fire_button = {need_fire}}};
     }
 
 }// namespace arenai::desktop

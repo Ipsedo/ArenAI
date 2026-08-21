@@ -50,7 +50,7 @@ INSTANTIATE_TEST_SUITE_P(
 // ========================================================================
 
 TEST_P(ExpModuleParamTest, OutputAlwaysPositive) {
-    const auto shape = GetParam();
+    const auto &shape = GetParam();
 
     Exp exp_module;
 
@@ -62,7 +62,7 @@ TEST_P(ExpModuleParamTest, OutputAlwaysPositive) {
 }
 
 TEST_P(ExpModuleParamTest, MatchesTorchExp) {
-    const auto shape = GetParam();
+    const auto &shape = GetParam();
 
     Exp exp_module;
 

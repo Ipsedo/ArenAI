@@ -53,10 +53,19 @@ namespace arenai::agent {
         }
     }
 
-    void init_discrete_output_weights(torch::nn::Module &module) {
+    void
+    init_discrete_output_weights(torch::nn::Module &module, const float initial_fire_probability) {
         if (auto *lin = module.as<torch::nn::Linear>()) {
             torch::nn::init::orthogonal_(lin->weight, 0.01f);
-            if (lin->options.bias()) torch::nn::init::zeros_(lin->bias);
+
+            if (lin->options.bias()) {
+                torch::nn::init::zeros_(lin->bias);
+
+                lin->bias.data().index_fill_(
+                    0, torch::tensor({0}), std::log(initial_fire_probability));
+                lin->bias.data().index_fill_(
+                    0, torch::tensor({1}), std::log(1.f - initial_fire_probability));
+            }
         }
     }
 

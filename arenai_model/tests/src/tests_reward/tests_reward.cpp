@@ -7,7 +7,6 @@
 #include <vector>
 
 #include <arenai_controller/inputs.h>
-#include <arenai_model/constants.h>
 #include <arenai_model_tests/tests_reward/tests_reward.h>
 
 using namespace arenai;
@@ -26,7 +25,7 @@ TEST_F(RewardTest, RewardZeroWhenAliveNoShot) {
 
     engine->step(1.f / 60.f);
 
-    const std::vector<std::shared_ptr<EnemyTank>> tanks{
+    const std::vector tanks{
         std::shared_ptr<EnemyTank>(tank_a.release()), std::shared_ptr<EnemyTank>(tank_b.release())};
 
     const float reward_a = tanks[0]->get_reward(tanks);
@@ -45,7 +44,7 @@ TEST_F(RewardTest, RewardNegativeWhenDead) {
 
     engine->step(1.f / 60.f);
 
-    std::vector<std::shared_ptr<EnemyTank>> tanks{
+    const std::vector tanks{
         std::shared_ptr<EnemyTank>(tank_a.release()), std::shared_ptr<EnemyTank>(tank_b.release())};
 
     // damage chassis enough to kill it
@@ -70,7 +69,7 @@ TEST_F(RewardTest, DeathPenaltyIsMinusOne) {
 
     engine->step(1.f / 60.f);
 
-    const std::vector<std::shared_ptr<EnemyTank>> tanks{
+    const std::vector tanks{
         std::shared_ptr<EnemyTank>(tank_a.release()), std::shared_ptr<EnemyTank>(tank_b.release())};
 
     // kill by damage → normal death penalty
@@ -105,12 +104,15 @@ TEST_F(RewardTest, RewardPositiveOnHit) {
     const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
     // fire from tank_a toward tank_b (canon points +Z by default)
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
-    const std::vector<std::shared_ptr<EnemyTank>> tanks{shared_a, shared_b};
+    const std::vector tanks{shared_a, shared_b};
 
     const float reward = shared_a->get_reward(tanks);
 
@@ -136,12 +138,15 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
     const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
     // fire from tank_a toward tank_b (canon points +Z by default)
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
-    const std::vector<std::shared_ptr<EnemyTank>> tanks{shared_a, shared_b};
+    const std::vector tanks{shared_a, shared_b};
 
     const float reward_on_hit = shared_a->get_reward(tanks);
 
@@ -154,7 +159,10 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
         << "reward should be greater than or equal to 1.0 after hitting an enemy";
 
     // no fire, reward under 1.0
-    constexpr user_input no_fire_input{{0.f, 0.f}, {0.f, 0.f}, {false}};
+    constexpr user_input no_fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {false}};
     for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(no_fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
@@ -170,6 +178,56 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
 }
 
 // ========================================================================
+// get_reward — wrecks are not farmable
+// ========================================================================
+
+TEST_F(RewardTest, NoRewardWhenShootingAWreck) {
+    add_ground();
+    // spawn tanks high enough so all parts start above ground and settle cleanly
+    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
+    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f});
+
+    // settle on ground (300 frames = 5s at 60fps)
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+
+    const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
+    const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
+
+    // kill tank_b by destroying a single part, then close its death as the environment
+    // does: the 8 surviving parts must stop paying anything
+    for (const auto items_b = shared_b->get_items(); const auto &item: items_b) {
+        if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
+            life->receive_damages(1e6f);
+            break;
+        }
+    }
+    ASSERT_TRUE(shared_b->is_dead());
+    shared_b->on_death();
+
+    const auto shells_ratio_before = shared_a->get_proprioception().back();
+
+    // fire from tank_a toward the wreck (canon points +Z by default)
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
+    for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
+
+    for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
+
+    const std::vector tanks{shared_a, shared_b};
+
+    const float reward = shared_a->get_reward(tanks);
+
+    ASSERT_FALSE(shared_a->has_hit_other_tank()) << "a wreck must not count as a hit";
+    ASSERT_FLOAT_EQ(reward, 0.f) << "shooting a wreck must pay neither hit nor kill";
+
+    // the shell spent must not be given back: a wreck is not an ammo dump
+    ASSERT_LT(shared_a->get_proprioception().back(), shells_ratio_before)
+        << "a wreck must not recharge the shell reserve";
+}
+
+// ========================================================================
 // get_reward — NaN / Inf stability
 // ========================================================================
 
@@ -181,7 +239,10 @@ TEST_F(RewardTest, ZeroRewardWithEmptyTankList) {
 
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
 
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
@@ -193,6 +254,6 @@ TEST_F(RewardTest, ZeroRewardWithEmptyTankList) {
     ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN with empty tank list";
     ASSERT_FALSE(std::isinf(reward)) << "reward should not be Inf with empty tank list";
 
-    // only the fire cost remains: no enemy to sample, so no gaussian income
-    ASSERT_FLOAT_EQ(reward, -0.05f);
+    // firing is free and there is no enemy to sample, so no reward at all
+    ASSERT_FLOAT_EQ(reward, 0.f);
 }

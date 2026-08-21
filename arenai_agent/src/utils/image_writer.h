@@ -5,10 +5,8 @@
 #ifndef ARENAI_AGENT_HOST_IMAGE_WRITER_H
 #define ARENAI_AGENT_HOST_IMAGE_WRITER_H
 
-#include <stdexcept>
 #include <string>
 
-#include <stb_image_write.h>
 #include <torch/torch.h>
 
 namespace arenai::agent {

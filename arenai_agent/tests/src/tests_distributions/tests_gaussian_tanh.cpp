@@ -52,7 +52,7 @@ TEST_F(GaussianTanhTest, SmallSigmaConcentratesAction) {
 // ========================================================================
 
 TEST_P(GaussianTanhShapeParamTest, SampleShapeAndBounds) {
-    const auto shape = GetParam();
+    const auto &shape = GetParam();
 
     const auto mu = torch::randn(shape);
     const auto sigma = torch::rand(shape) + 0.1f;
@@ -66,7 +66,7 @@ TEST_P(GaussianTanhShapeParamTest, SampleShapeAndBounds) {
 }
 
 TEST_P(GaussianTanhShapeParamTest, LogPdfShapeAndFinite) {
-    const auto shape = GetParam();
+    const auto &shape = GetParam();
 
     const auto mu = torch::randn(shape);
     const auto sigma = torch::rand(shape) + 0.1f;
@@ -79,7 +79,7 @@ TEST_P(GaussianTanhShapeParamTest, LogPdfShapeAndFinite) {
 }
 
 TEST_P(GaussianTanhShapeParamTest, SampleFiniteWithZeroMu) {
-    const auto shape = GetParam();
+    const auto &shape = GetParam();
 
     const auto mu = torch::zeros(shape);
     const auto sigma = torch::ones(shape) * 0.5f;
@@ -91,7 +91,7 @@ TEST_P(GaussianTanhShapeParamTest, SampleFiniteWithZeroMu) {
 }
 
 TEST_P(GaussianTanhShapeParamTest, SampleFiniteWithLargeMu) {
-    const auto shape = GetParam();
+    const auto &shape = GetParam();
 
     const auto mu = torch::ones(shape) * 10.0f;
     const auto sigma = torch::ones(shape) * 0.1f;

@@ -61,7 +61,8 @@ namespace arenai::agent {
     }
 
     float beta_law_target_entropy(const int &nb_actions) {
-        return beta_law_entropy(torch::tensor(1.f), torch::tensor(1.f)).item<float>() * nb_actions;
+        return beta_law_entropy(torch::tensor(1.f), torch::tensor(1.f)).item<float>()
+               * static_cast<float>(nb_actions);
     }
 
 }// namespace arenai::agent

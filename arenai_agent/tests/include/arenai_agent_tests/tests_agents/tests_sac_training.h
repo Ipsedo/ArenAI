@@ -5,7 +5,6 @@
 #ifndef ARENAI_TESTS_SAC_TRAINING_H
 #define ARENAI_TESTS_SAC_TRAINING_H
 
-#include <filesystem>
 #include <memory>
 
 #include <agents/sac/sac_factory.h>

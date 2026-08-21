@@ -4,6 +4,9 @@
 
 #include "./std_metric.h"
 
+#include <cmath>
+#include <numeric>
+
 using namespace arenai;
 using namespace arenai::agent;
 

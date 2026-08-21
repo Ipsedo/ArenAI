@@ -22,7 +22,7 @@ TEST_F(ProprioceptionTest, ProprioceptionSizeCorrect) {
 
     engine->step(1.f / 60.f);
 
-    std::shared_ptr<EnemyTank> shared_tank(tank.release());
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
     const auto proprio = shared_tank->get_proprioception();
 
     ASSERT_EQ(proprio.size(), ENEMY_PROPRIOCEPTION_SIZE);
@@ -34,7 +34,7 @@ TEST_F(ProprioceptionTest, ProprioceptionNoNaN) {
 
     engine->step(1.f / 60.f);
 
-    std::shared_ptr<EnemyTank> shared_tank(tank.release());
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
     const auto proprio = shared_tank->get_proprioception();
 
     for (int i = 0; i < proprio.size(); i++) {
@@ -49,7 +49,7 @@ TEST_F(ProprioceptionTest, ProprioceptionNoInfinity) {
 
     for (int i = 0; i < 10; i++) engine->step(1.f / 60.f);
 
-    std::shared_ptr<EnemyTank> shared_tank(tank.release());
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
     const auto proprio = shared_tank->get_proprioception();
 
     for (int i = 0; i < proprio.size(); i++) {
@@ -63,7 +63,7 @@ TEST_F(ProprioceptionTest, ProprioceptionContainsSubItemRelativePositions) {
 
     engine->step(1.f / 60.f);
 
-    std::shared_ptr<EnemyTank> shared_tank(tank.release());
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
     const auto proprio = shared_tank->get_proprioception();
 
     // after the chassis data (12 floats), each sub-item contributes 15 floats:
@@ -93,7 +93,7 @@ TEST_F(ProprioceptionTest, ProprioceptionConsistentSize) {
 
     engine->step(1.f / 60.f);
 
-    std::shared_ptr<EnemyTank> shared_tank(tank.release());
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
 
     const auto proprio_1 = shared_tank->get_proprioception();
 
@@ -110,7 +110,7 @@ TEST_F(ProprioceptionTest, ProprioceptionForwardAndUpVectorsValid) {
 
     engine->step(1.f / 60.f);
 
-    std::shared_ptr<EnemyTank> shared_tank(tank.release());
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
     const auto proprio = shared_tank->get_proprioception();
 
     // elements [3..5] are chassis forward direction, [6..8] are chassis up direction

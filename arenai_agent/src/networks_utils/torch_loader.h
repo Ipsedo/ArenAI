@@ -26,7 +26,7 @@ namespace arenai::agent {
             torch::serialize::InputArchive archive;
             archive.load_from(file.string(), torch::kCPU);
             to_load->load(archive);
-        } catch (const std::exception &e) {
+        } catch (const std::exception &_) {
             std::throw_with_nested(utils::ModelLoadException(file));
         }
     }

@@ -25,7 +25,10 @@ TEST_F(ShellTest, FireCreatesShellItem) {
 
     const int count_before = static_cast<int>(engine->get_items().size());
 
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: tank->get_controllers()) ctrl->apply_input(fire_input);
 
     engine->step(1.f / 60.f);
@@ -43,7 +46,10 @@ TEST_F(ShellTest, ShellDestroyedAfterLifetime) {
 
     const int count_before_fire = static_cast<int>(engine->get_items().size());
 
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: tank->get_controllers()) ctrl->apply_input(fire_input);
 
     engine->step(1.f / 60.f);
@@ -70,7 +76,10 @@ TEST_F(ShellTest, ShellHitsEnemyTank) {
     const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
     std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
@@ -90,7 +99,10 @@ TEST_F(ShellTest, ShellDestroyedOnContact) {
     const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
     std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
     engine->step(1.f / 60.f);
@@ -113,7 +125,10 @@ TEST_F(ShellTest, NoFireNoNewItems) {
 
     const int count_before = static_cast<int>(engine->get_items().size());
 
-    constexpr user_input no_fire{{0.f, 1.f}, {0.f, 0.f}, {false}};
+    constexpr user_input no_fire{
+        .left_joystick = {.x = 0.f, .y = 1.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {false}};
     for (const auto &ctrl: tank->get_controllers()) ctrl->apply_input(no_fire);
 
     engine->step(1.f / 60.f);
@@ -133,15 +148,138 @@ TEST_F(ShellTest, ShellContactCallbackSetsReward) {
     const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
     const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
-    constexpr user_input fire_input{{0.f, 0.f}, {0.f, 0.f}, {true}};
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
     for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
-    const std::vector<std::shared_ptr<EnemyTank>> tanks{shared_a, shared_b};
+    const std::vector tanks{shared_a, shared_b};
 
     ASSERT_TRUE(shared_a->has_hit_other_tank()) << "shell must hit for reward test";
 
     const float reward = shared_a->get_reward(tanks);
     ASSERT_GT(reward, 0.f) << "reward should be positive after shell contact callback";
+}
+
+// ========================================================================
+// ShellItem — damages dealt per impact
+// ========================================================================
+
+namespace {
+
+    constexpr user_input FIRE_INPUT{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
+
+    void fire_once(const std::shared_ptr<EnemyTank> &tank) {
+        for (const auto &ctrl: tank->get_controllers()) ctrl->apply_input(FIRE_INPUT);
+    }
+
+    // a tank spreads its health over its parts: its damages are the sum over them
+    int consume_tank_hits(const std::shared_ptr<EnemyTank> &tank) {
+        int hits = 0;
+        for (const auto &item: tank->get_items())
+            if (const auto life_item = dynamic_cast<LifeItem *>(item.get()); life_item)
+                hits += life_item->consume_hits_received();
+        return hits;
+    }
+
+    // ShellItem lives behind arenai_model's private Jolt headers: match it by name
+    std::shared_ptr<Item> find_shell(AbstractPhysicEngine &engine) {
+        for (const auto &item: engine.get_items())
+            if (item->get_name() == "shell_item") return item;
+        return nullptr;
+    }
+
+}// namespace
+
+TEST_F(ShellTest, ShellImpactDealsExactlyOneDamage) {
+    add_ground();
+    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
+    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f});
+
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+
+    const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
+    const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
+
+    consume_tank_hits(shared_b);// drop whatever the settling produced
+
+    fire_once(shared_a);
+    for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
+
+    ASSERT_TRUE(shared_a->has_hit_other_tank()) << "shell must hit for this test to mean anything";
+
+    ASSERT_EQ(consume_tank_hits(shared_b), 1)
+        << "one shell removes exactly one health point, whatever the number of contact "
+           "points the physics engine reports for the impact";
+}
+
+TEST_F(ShellTest, TankSurvivesUntilAPartsHealthPointsAreSpent) {
+    add_ground();
+    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
+    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f});
+
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+
+    const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
+    const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
+
+    consume_tank_hits(shared_b);// drop whatever the settling produced
+
+    // the cheapest part (wheel, turret, canon) is worth 5 health points, and every
+    // shell removes at most one: no tank dies in fewer than 5 shells, whatever the
+    // parts they land on
+    constexpr int cheapest_part_health_points = 5;
+    constexpr int max_shots = 20;
+
+    int hits = 0;
+    int shots = 0;
+    while (!shared_b->is_dead() && shots < max_shots) {
+        fire_once(shared_a);
+        for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
+
+        hits += consume_tank_hits(shared_b);
+        shots++;
+    }
+
+    ASSERT_TRUE(shared_b->is_dead()) << "tank should have died within " << max_shots << " shots";
+    ASSERT_GE(shots, cheapest_part_health_points)
+        << "tank died in " << shots << " shells for " << hits
+        << " health points: a single impact removed more than one";
+}
+
+TEST_F(ShellTest, SpentShellDealsNoFurtherDamage) {
+    add_ground();
+    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
+    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f});
+
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+
+    const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
+    const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
+
+    fire_once(shared_a);
+    engine->step(1.f / 60.f);
+
+    const auto shell = find_shell(*engine);
+    ASSERT_NE(shell, nullptr) << "shell must exist after fire";
+
+    const auto target = shared_b->get_chassis();
+    const auto target_life = dynamic_cast<LifeItem *>(target.get());
+    ASSERT_NE(target_life, nullptr) << "the chassis is a life item";
+
+    target_life->consume_hits_received();
+
+    // a shell colliding with several bodies in the same step is dispatched once per
+    // body: only the first contact may be paid for
+    shell->on_contact(target.get());
+    shell->on_contact(target.get());
+
+    ASSERT_EQ(target_life->consume_hits_received(), 1)
+        << "a spent shell must not damage anything again";
 }

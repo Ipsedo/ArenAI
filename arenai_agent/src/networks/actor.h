@@ -26,7 +26,8 @@ namespace arenai::agent {
             const int &nb_continuous_actions, const int &nb_discrete_actions,
             const int &hidden_size_sensors, const std::vector<int> &hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
-            const std::vector<int> &group_norm_nums);
+            const std::vector<int> &group_norm_nums, const float &initial_sigma,
+            const float &initial_fire_proba);
         ActorRawOutput act(const torch::Tensor &vision, const torch::Tensor &sensors);
 
     private:

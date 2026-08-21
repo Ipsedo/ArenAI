@@ -9,7 +9,7 @@
 using namespace arenai;
 using namespace arenai::agent;
 
-TEST_P(QFunctionTestParam, TestQFunctionExpectation) {
+TEST_P(QFunctionTestParam, TestQFunctionPerDiscreteAction) {
     const auto
         [layers, cont_actions_nb, discrete_actions_nb, sensors_nb, sensors_hidden_size,
          actions_hidden_size, batch_size] = GetParam();
@@ -28,15 +28,12 @@ TEST_P(QFunctionTestParam, TestQFunctionExpectation) {
     const auto sensors = torch::randn({batch_size, sensors_nb});
 
     const auto continuous_actions = torch::rand({batch_size, cont_actions_nb}) * 2.f - 1.f;
-    const auto discrete_actions =
-        torch::softmax(torch::randn({batch_size, discrete_actions_nb}), -1);
 
-    const auto value =
-        q_function.value_expectation(image, sensors, continuous_actions, discrete_actions);
+    const auto value = q_function.value_per_discrete_action(image, sensors, continuous_actions);
 
     ASSERT_EQ(value.ndimension(), 2);
     ASSERT_EQ(value.size(0), batch_size);
-    ASSERT_EQ(value.size(1), 1);
+    ASSERT_EQ(value.size(1), discrete_actions_nb);
 }
 
 TEST_P(QFunctionTestParam, TestQFunctionOHE) {

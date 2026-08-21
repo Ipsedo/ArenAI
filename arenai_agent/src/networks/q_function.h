@@ -26,11 +26,12 @@ namespace arenai::agent {
             const torch::Tensor &vision, const torch::Tensor &sensors,
             const torch::Tensor &continuous_actions, const torch::Tensor &discrete_action_ohe);
 
-        torch::Tensor value_expectation(
+        torch::Tensor value_per_discrete_action(
             const torch::Tensor &vision, const torch::Tensor &sensors,
-            const torch::Tensor &continuous_actions, const torch::Tensor &discrete_actions_proba);
+            const torch::Tensor &continuous_actions);
 
     private:
+        int nb_discrete_actions;
         std::shared_ptr<ConvolutionNetwork> vision_encoder;
         torch::nn::Sequential sensors_encoder;
         torch::nn::Sequential continuous_action_encoder;

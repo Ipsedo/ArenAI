@@ -21,7 +21,6 @@ namespace arenai::agent {
         torch::Tensor discrete_log_prob;
         torch::Tensor reward;
         torch::Tensor done;
-        torch::Tensor truncated;
     };
 
     // On-policy rollout stacked on the time dimension: every tensor is [T, nb_tanks, ...]
@@ -32,7 +31,6 @@ namespace arenai::agent {
         torch::Tensor discrete_log_probs;
         torch::Tensor rewards;
         torch::Tensor dones;
-        torch::Tensor truncateds;
         // [nb_tanks, ...] observation closing the last step, for the value bootstrap
         TorchState bootstrap_state;
         // [T, nb_tanks, 1] whether the (step, tank) pair is a live transition
@@ -62,7 +60,7 @@ namespace arenai::agent {
         // observation closing the last stored step, set by finish_episode()
         std::optional<TorchState> final_state_;
 
-        // [nb_tanks] tanks already done/truncated in the current episode
+        // [nb_tanks] tanks already done in the current episode
         torch::Tensor already_terminated_;
     };
 

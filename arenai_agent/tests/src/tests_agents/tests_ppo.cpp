@@ -32,8 +32,6 @@ std::unique_ptr<PpoTorchAgentFactory> PpoAgentTest::make_factory(const PpoTestCo
         .gae_lambda = 0.95f,
         .clip_epsilon = 0.2f,
         .grad_norm_max = 1.f,
-        .continuous_entropy_coef = 0.01f,
-        .discrete_entropy_coef = 0.01f,
         .epochs = 1,
         .rollout_size = 8,
         .minibatch_size = 10};
@@ -45,8 +43,9 @@ std::unique_ptr<PpoTorchAgentFactory> PpoAgentTest::make_factory(const PpoTestCo
 
 TorchState PpoAgentTest::make_state(const PpoTestConfig &cfg, const int batch) {
     return {
-        torch::randint(0, 255, {batch, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
-        torch::randn({batch, cfg.nb_sensors})};
+        .vision =
+            torch::randint(0, 255, {batch, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
+        .proprioception = torch::randn({batch, cfg.nb_sensors})};
 }
 
 // ========================================================================
@@ -54,19 +53,29 @@ TorchState PpoAgentTest::make_state(const PpoTestConfig &cfg, const int batch) {
 // ========================================================================
 
 TEST_F(PpoAgentTest, ParameterCountPositive) {
-    constexpr PpoTestConfig cfg{8, 8, 10, 4, 2};
+    constexpr PpoTestConfig cfg{
+        .vision_height = 8,
+        .vision_width = 8,
+        .nb_sensors = 10,
+        .nb_continuous_actions = 4,
+        .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
     ASSERT_GT(factory->get_trainer()->count_parameters(), 0);
 }
 
 TEST_F(PpoAgentTest, MetricsNotEmpty) {
-    constexpr PpoTestConfig cfg{8, 8, 10, 4, 2};
+    constexpr PpoTestConfig cfg{
+        .vision_height = 8,
+        .vision_width = 8,
+        .nb_sensors = 10,
+        .nb_continuous_actions = 4,
+        .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
     const auto metrics = factory->get_trainer()->get_metrics();
 
-    ASSERT_EQ(metrics.size(), 9);
+    ASSERT_EQ(metrics.size(), 13);
 }
 
 // ========================================================================
@@ -79,7 +88,7 @@ TEST_P(PpoActShapeParamTest, ActOutputShapes) {
 
     constexpr int batch = 4;
     const auto [continuous_action, discrete_action] =
-        factory->get_agent()->act(make_state(cfg, batch));
+        factory->get_agent()->act(make_state(cfg, batch), true);
 
     ASSERT_EQ(continuous_action.size(0), batch);
     ASSERT_EQ(continuous_action.size(1), cfg.nb_continuous_actions);
@@ -94,7 +103,7 @@ TEST_P(PpoActShapeParamTest, ActContinuousFinite) {
 
     constexpr int batch = 4;
     const auto [continuous_action, discrete_action] =
-        factory->get_agent()->act(make_state(cfg, batch));
+        factory->get_agent()->act(make_state(cfg, batch), true);
 
     ASSERT_TRUE(torch::all(torch::isfinite(continuous_action)).item<bool>());
 }
@@ -105,7 +114,7 @@ TEST_P(PpoActShapeParamTest, ActDiscreteIsOneHot) {
 
     constexpr int batch = 4;
     const auto [continuous_action, discrete_action] =
-        factory->get_agent()->act(make_state(cfg, batch));
+        factory->get_agent()->act(make_state(cfg, batch), true);
 
     const auto row_sums = torch::sum(discrete_action, -1);
     ASSERT_TRUE(torch::allclose(row_sums, torch::ones({batch})));

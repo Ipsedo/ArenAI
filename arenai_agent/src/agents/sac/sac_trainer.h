@@ -23,7 +23,8 @@ namespace arenai::agent {
             const std::vector<int> &critic_hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
-            float tau, float gamma, int train_every, int epochs, int batch_size);
+            float tau, float gamma, int train_every, int epochs, int batch_size, float target_sigma,
+            float target_fire_proba);
 
         void step() override;
 
@@ -48,11 +49,8 @@ namespace arenai::agent {
         std::shared_ptr<QFunction> target_critic_1;
         std::shared_ptr<QFunction> target_critic_2;
 
-        std::shared_ptr<AlphaParameter> alpha_continuous;
-        std::shared_ptr<AlphaParameter> alpha_discrete;
-
-        std::shared_ptr<AbstractTargetEntropy> continuous_target_entropy;
-        std::shared_ptr<AbstractTargetEntropy> discrete_target_entropy;
+        std::shared_ptr<ClampedAlphaParameters> alpha_continuous;
+        std::shared_ptr<ClampedAlphaParameters> alpha_discrete;
 
         std::shared_ptr<torch::optim::Adam> actor_optim;
         std::shared_ptr<torch::optim::Adam> critic_1_optim;
@@ -88,10 +86,13 @@ namespace arenai::agent {
         int epochs;
         int batch_size;
 
+        torch::Tensor target_sigma;
+        torch::Tensor target_discrete_entropy;
+
         void train() const;
 
         void set_train(bool train) const;
-        void to(torch::Device device) const;
+        void to(torch::Device device);
     };
 
 }// namespace arenai::agent

@@ -43,7 +43,7 @@ TEST_F(BetaLawTest, LogProbaConsistentWithSample) {
 // ========================================================================
 
 TEST_P(BetaLawParamTest, SampleBounds) {
-    const auto shape = GetParam();
+    const auto &shape = GetParam();
 
     const auto alpha = torch::rand(shape) * 4.0f + 0.5f;
     const auto beta = torch::rand(shape) * 4.0f + 0.5f;
@@ -56,7 +56,7 @@ TEST_P(BetaLawParamTest, SampleBounds) {
 }
 
 TEST_P(BetaLawParamTest, LogProbaShape) {
-    const auto shape = GetParam();
+    const auto &shape = GetParam();
 
     const auto alpha = torch::rand(shape) * 4.0f + 0.5f;
     const auto beta = torch::rand(shape) * 4.0f + 0.5f;
@@ -69,7 +69,7 @@ TEST_P(BetaLawParamTest, LogProbaShape) {
 }
 
 TEST_P(BetaLawParamTest, EntropyShape) {
-    const auto shape = GetParam();
+    const auto &shape = GetParam();
 
     const auto alpha = torch::rand(shape) * 4.0f + 0.5f;
     const auto beta = torch::rand(shape) * 4.0f + 0.5f;
@@ -81,7 +81,7 @@ TEST_P(BetaLawParamTest, EntropyShape) {
 }
 
 TEST_P(BetaLawParamTest, SampleNoNaNWithSmallParams) {
-    const auto shape = GetParam();
+    const auto &shape = GetParam();
 
     const auto alpha = torch::ones(shape) * 0.1f;
     const auto beta = torch::ones(shape) * 0.1f;
@@ -94,7 +94,7 @@ TEST_P(BetaLawParamTest, SampleNoNaNWithSmallParams) {
 }
 
 TEST_P(BetaLawParamTest, SampleNoNaNWithLargeParams) {
-    const auto shape = GetParam();
+    const auto &shape = GetParam();
 
     const auto alpha = torch::ones(shape) * 50.0f;
     const auto beta = torch::ones(shape) * 50.0f;

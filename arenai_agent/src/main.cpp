@@ -24,9 +24,8 @@ int main(const int argc, char **argv) {
     parser.add_argument("--output_folder").required();
     parser.add_argument("--resources_folder").required();
     parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60 * 3);
-    parser.add_argument("--potential_reward_gamma").scan<'g', float>().default_value(0.997f);
     parser.add_argument("--nb_episodes").scan<'i', int>().default_value(2000);
-    parser.add_argument("--save_every").scan<'i', int>().default_value(30 * 60 * 3 * 5);
+    parser.add_argument("--save_every").scan<'i', int>().default_value(30 * 60 * 3 * 20);
     parser.add_argument("--cuda").default_value(false).implicit_value(true);
 
     // env
@@ -37,18 +36,20 @@ int main(const int argc, char **argv) {
     parser.add_argument("--vision_width").scan<'i', int>().default_value(256);
     parser.add_argument("--initial_spawn_width").scan<'g', float>().default_value(500.f);
     parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(500.f);
-    parser.add_argument("--final_spawn_width").scan<'g', float>().default_value(2000.f);
-    parser.add_argument("--final_spawn_height").scan<'g', float>().default_value(2000.f);
+    parser.add_argument("--final_spawn_width").scan<'g', float>().default_value(500.f);
+    parser.add_argument("--final_spawn_height").scan<'g', float>().default_value(500.f);
     parser.add_argument("--vision_num_threads")
         .scan<'i', int>()
         .default_value(static_cast<int>(std::thread::hardware_concurrency()));
 
     // one subcommand per algorithm, carrying its own hyper-parameter options
-    for (const auto &algorithm: algorithms) parser.add_subparser(*algorithm.parser);
+    for (const auto &[name, subparser, create_agent]: algorithms) parser.add_subparser(*subparser);
 
     parser.parse_args(argc, argv);
 
-    const AgentCli *selected_algorithm = nullptr;
+    // first algorithm by default: its subparser is not parsed, argparse falls back on
+    // the defaults carried by its arguments
+    const AgentCli *selected_algorithm = &algorithms.front();
     for (const auto &algorithm: algorithms)
         if (parser.is_subcommand_used(algorithm.name)) selected_algorithm = &algorithm;
 
@@ -59,23 +60,26 @@ int main(const int argc, char **argv) {
     const int vision_height = parser.get<int>("--vision_height");
     const int vision_width = parser.get<int>("--vision_width");
 
-    const auto create_factory_function = selected_algorithm == nullptr
-                                             ? get_default_agent_cli().create_factory
-                                             : selected_algorithm->create_factory;
-
-    const auto agent_factory = create_factory_function(
+    const auto agent_factory = selected_algorithm->create_factory(
         vision_height, vision_width,
         cuda ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU));
 
     train_main(
-        {parser.get<float>("--wanted_frequency"), parser.get<int>("--nb_tanks"), vision_height,
-         vision_width, parser.get<float>("--initial_spawn_width"),
-         parser.get<float>("--initial_spawn_height"), parser.get<float>("--final_spawn_width"),
-         parser.get<float>("--final_spawn_height"), parser.get<int>("--vision_num_threads")},
-        {std::filesystem::path(parser.get<std::string>("--output_folder")),
-         std::filesystem::path(parser.get<std::string>("--resources_folder")),
-         parser.get<float>("--potential_reward_gamma"), parser.get<int>("--max_episode_steps"),
-         parser.get<int>("--nb_episodes"), parser.get<int>("--save_every"), cuda},
+        {.wanted_frequency = parser.get<float>("--wanted_frequency"),
+         .nb_tanks = parser.get<int>("--nb_tanks"),
+         .vision_height = vision_height,
+         .vision_width = vision_width,
+         .initial_spawn_width = parser.get<float>("--initial_spawn_width"),
+         .initial_spawn_height = parser.get<float>("--initial_spawn_height"),
+         .final_spawn_width = parser.get<float>("--final_spawn_width"),
+         .final_spawn_height = parser.get<float>("--final_spawn_height"),
+         .num_threads = parser.get<int>("--vision_num_threads")},
+        {.output_folder = std::filesystem::path(parser.get<std::string>("--output_folder")),
+         .resources_folder = std::filesystem::path(parser.get<std::string>("--resources_folder")),
+         .max_episode_steps = parser.get<int>("--max_episode_steps"),
+         .nb_episodes = parser.get<int>("--nb_episodes"),
+         .save_every = parser.get<int>("--save_every"),
+         .cuda = cuda},
         agent_factory);
 
     return 0;

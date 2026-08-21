@@ -22,172 +22,152 @@ using namespace arenai;
 
 namespace arenai::desktop {
 
-    namespace {
+    InGameOutcome run_game(
+        const GameOptions &game_options, const ModelOptions &model_options,
+        const gui::GameSettings &settings,
+        const std::shared_ptr<view::AbstractWindowedGraphicBackend> &graphics_backend,
+        const std::unique_ptr<gui::AbstractGui> &gui) {
+        const auto window = graphics_backend->get_window();
 
-        enum class InGameOutcome { MainMenu, ExitGame, Retry };
+        const std::shared_ptr<agent::AbstractAgent> sac_agent =
+            agent::ActorAgentFactory(model_options.hyper_parameters)
+                .get_agent(
+                    model_options.vision_height, model_options.vision_width,
+                    model::ENEMY_PROPRIOCEPTION_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
+                    model::ENEMY_NB_DISCRETE_ACTION);
 
-        // One game session: steps the environment until the window closes or
-        // the pause menu asks to leave. While paused, the simulation and the
-        // agent are simply not stepped; the frozen frame is re-rendered with
-        // the pause popup composited on top.
-        InGameOutcome run_game(
-            const GameOptions &game_options, const ModelOptions &model_options,
-            const gui::GameSettings &settings,
-            const std::shared_ptr<view::AbstractWindowedGraphicBackend> &graphics_backend,
-            const std::unique_ptr<gui::AbstractGui> &gui) {
-            const auto window = graphics_backend->get_window();
+        sac_agent->load(settings.sac_folder);
 
-            const std::shared_ptr<agent::AbstractAgent> sac_agent =
-                agent::ActorAgentFactory(model_options.hyper_parameters)
-                    .get_agent(
-                        model_options.vision_height, model_options.vision_width,
-                        model::ENEMY_PROPRIOCEPTION_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
-                        model::ENEMY_NB_DISCRETE_ACTION);
+        const auto env = std::make_shared<DesktopGameEnvironment>(
+            game_options.resources_folder, graphics_backend, settings.nb_tanks,
+            model_options.vision_height, model_options.vision_width, game_options.wanted_frequency,
+            settings.controller_kind);
 
-            sac_agent->load(settings.sac_folder);
+        auto states = env->reset(
+            static_cast<float>(settings.spawn_side), static_cast<float>(settings.spawn_side));
 
-            const auto env = std::make_shared<DesktopGameEnvironment>(
-                game_options.resources_folder, graphics_backend, settings.nb_tanks,
-                model_options.vision_height, model_options.vision_width,
-                game_options.wanted_frequency, settings.controller_kind);
+        // the router owns the window's input slots for the whole session;
+        // Escape / Start flip the pause state through toggle_requested
+        bool paused = false;
+        bool game_over = false;
+        bool toggle_requested = false;
 
-            auto states = env->reset(
-                static_cast<float>(settings.spawn_side), static_cast<float>(settings.spawn_side));
+        const auto router = std::make_shared<GameInputRouter>(
+            env->keyboard_handler(), env->gamepad_handler(), gui->pause_input(),
+            gui->pause_gamepad_input(), [&toggle_requested] { toggle_requested = true; });
+        window->set_keyboard_callback(router);
+        window->set_gamepad_callback(router);
 
-            // the router owns the window's input slots for the whole session;
-            // Escape / Start flip the pause state through toggle_requested
-            bool paused = false;
-            bool game_over = false;
-            bool toggle_requested = false;
+        // in keyboard mode the game handler captures (and hides) the cursor
+        // itself; the gamepad handler never touches the cursor, so the
+        // application hides it for the whole game and the pause popup
+        // restores it
+        if (settings.controller_kind == ControllerKind::Gamepad)
+            window->set_cursor_mode(controller::CursorMode::Disabled);
 
-            const auto router = std::make_shared<GameInputRouter>(
-                env->keyboard_handler(), env->gamepad_handler(), gui->pause_input(),
-                gui->pause_gamepad_input(), [&toggle_requested] { toggle_requested = true; });
-            window->set_keyboard_callback(router);
-            window->set_gamepad_callback(router);
+        // the window has a single resize slot: while in game it feeds both
+        // the player renderer and the gui overlay
+        window->set_resize_callback([&gui, env](const int width, const int height) {
+            gui->on_window_resized(width, height);
+            env->resize(width, height);
+        });
 
-            // in keyboard mode the game handler captures (and hides) the cursor
-            // itself; the gamepad handler never touches the cursor, so the
-            // application hides it for the whole game and the pause popup
-            // restores it
-            if (settings.controller_kind == ControllerKind::Gamepad)
-                window->set_cursor_mode(controller::CursorMode::Disabled);
-
-            // the window has a single resize slot: while in game it feeds both
-            // the player renderer and the gui overlay
-            window->set_resize_callback([&gui, env](const int width, const int height) {
-                gui->on_window_resized(width, height);
-                env->resize(width, height);
-            });
-
-            const auto set_paused = [&](const bool value) {
-                paused = value;
-                router->set_paused(value);
-                if (value) {
-                    gui->open_pause();
-                    window->set_cursor_mode(controller::CursorMode::Normal);
-                } else {
-                    gui->close_pause();
-                    // in keyboard mode the game handler re-captures the cursor
-                    // on its next event
-                    if (settings.controller_kind == ControllerKind::Gamepad)
-                        window->set_cursor_mode(controller::CursorMode::Disabled);
-                }
-            };
-
-            // the frame the player dies on freezes under the game-over popup,
-            // exactly like the pause: same input routing, same overlay loop —
-            // only the popup (and its actions) differ, and it cannot be
-            // toggled away
-            const auto set_game_over = [&] {
-                game_over = true;
-                router->set_paused(true);
-                gui->open_game_over(env->get_score());
+        const auto set_paused = [&](const bool value) {
+            paused = value;
+            router->set_paused(value);
+            if (value) {
+                gui->open_pause();
                 window->set_cursor_mode(controller::CursorMode::Normal);
-            };
+            } else {
+                gui->close_pause();
+                // in keyboard mode the game handler re-captures the cursor
+                // on its next event
+                if (settings.controller_kind == ControllerKind::Gamepad)
+                    window->set_cursor_mode(controller::CursorMode::Disabled);
+            }
+        };
 
-            auto outcome = InGameOutcome::ExitGame;
+        // the frame the player dies on freezes under the game-over popup,
+        // exactly like the pause: same input routing, same overlay loop —
+        // only the popup (and its actions) differ, and it cannot be
+        // toggled away
+        const auto set_game_over = [&] {
+            game_over = true;
+            router->set_paused(true);
+            gui->open_game_over(env->get_score());
+            window->set_cursor_mode(controller::CursorMode::Normal);
+        };
 
-            // [ARENAI-DBG] temporary auto-repro
-            int dbg_auto_frames = -1;
-            if (const char *dbg = std::getenv("ARENAI_DEBUG_AUTOFRAMES"))
-                dbg_auto_frames = std::atoi(dbg);
-            int dbg_frame_count = 0;
+        auto outcome = InGameOutcome::ExitGame;
 
-            const auto frame_dt =
-                std::chrono::milliseconds(static_cast<int>(game_options.wanted_frequency * 1000.f));
+        const auto frame_dt =
+            std::chrono::milliseconds(static_cast<int>(game_options.wanted_frequency * 1000.f));
 
-            while (!window->should_close()) {
-                if (dbg_auto_frames > 0 && dbg_frame_count++ >= dbg_auto_frames) break;
-                window->poll_events();
+        while (!window->should_close()) {
+            window->poll_events();
 
-                if (toggle_requested) {
-                    toggle_requested = false;
-                    if (!game_over) set_paused(!paused);
-                }
-
-                if (paused || game_over) {
-                    // frozen scene + popup; pacing comes from the vsync
-                    env->redraw();
-                    gui->render_pause_overlay();
-                    graphics_backend->present();
-
-                    if (const auto action = gui->poll_pause_action();
-                        action == gui::PauseAction::Continue)
-                        set_paused(false);
-                    else if (action == gui::PauseAction::Retry) {
-                        outcome = InGameOutcome::Retry;
-                        break;
-                    } else if (action == gui::PauseAction::MainMenu) {
-                        outcome = InGameOutcome::MainMenu;
-                        break;
-                    } else if (action == gui::PauseAction::ExitGame) break;
-
-                    continue;
-                }
-
-                auto last_time = std::chrono::steady_clock::now();
-
-                const auto action =
-                    sac_agent->act(states, model_options.vision_height, model_options.vision_width);
-
-                const auto steps = env->step(game_options.wanted_frequency, action);
-
-                graphics_backend->present();
-
-                if (env->is_player_dead()) set_game_over();
-
-                states.clear();
-
-                for (const auto &[state, reward, done, is_truncated]: steps)
-                    states.push_back(state);
-
-                auto now = std::chrono::steady_clock::now();
-                auto dt = now - last_time;
-
-                std::this_thread::sleep_for(
-                    std::max(frame_dt - dt, std::chrono::steady_clock::duration::zero()));
+            if (toggle_requested) {
+                toggle_requested = false;
+                if (!game_over) set_paused(!paused);
             }
 
-            gui->close_pause();
-            gui->close_game_over();
-            window->set_keyboard_callback(nullptr);
-            window->set_gamepad_callback(nullptr);
-            window->set_resize_callback([&gui](const int width, const int height) {
-                gui->on_window_resized(width, height);
-            });
+            if (paused || game_over) {
+                // frozen scene + popup; pacing comes from the vsync
+                env->redraw();
+                gui->render_pause_overlay();
+                graphics_backend->present();
 
-            return outcome;
+                if (const auto action = gui->poll_pause_action();
+                    action == gui::PauseAction::Continue)
+                    set_paused(false);
+                else if (action == gui::PauseAction::Retry) {
+                    outcome = InGameOutcome::Retry;
+                    break;
+                } else if (action == gui::PauseAction::MainMenu) {
+                    outcome = InGameOutcome::MainMenu;
+                    break;
+                } else if (action == gui::PauseAction::ExitGame) break;
+
+                continue;
+            }
+
+            auto last_time = std::chrono::steady_clock::now();
+
+            const auto action =
+                sac_agent->act(states, model_options.vision_height, model_options.vision_width);
+
+            const auto steps = env->step(game_options.wanted_frequency, action);
+
+            graphics_backend->present();
+
+            if (env->is_player_dead()) set_game_over();
+
+            states.clear();
+
+            for (const auto &[state, reward, done]: steps) states.push_back(state);
+
+            auto now = std::chrono::steady_clock::now();
+            auto dt = now - last_time;
+
+            std::this_thread::sleep_for(
+                std::max(frame_dt - dt, std::chrono::steady_clock::duration::zero()));
         }
 
-    }// namespace
+        gui->close_pause();
+        gui->close_game_over();
+        window->set_keyboard_callback(nullptr);
+        window->set_gamepad_callback(nullptr);
+        window->set_resize_callback(
+            [&gui](const int width, const int height) { gui->on_window_resized(width, height); });
 
-    void game_loop(const GameOptions &game_options, const ModelOptions &model_options) {
+        return outcome;
+    }
+
+    void run_gui(const GameOptions &game_options, const ModelOptions &model_options) {
         // The view owns the window + GL context; the app only speaks the abstract
         // window/backend interface.
-        const std::shared_ptr<view::AbstractWindowedGraphicBackend> graphics_backend =
-            view::make_glfw_vulkan_backend(
-                game_options.window_width, game_options.window_height, "ArenAI");
+        const std::shared_ptr graphics_backend = view::make_glfw_vulkan_backend(
+            game_options.window_width, game_options.window_height, "ArenAI");
         const auto window = graphics_backend->get_window();
 
         std::cout << "Vulkan : " << graphics_backend->renderer_info() << std::endl;

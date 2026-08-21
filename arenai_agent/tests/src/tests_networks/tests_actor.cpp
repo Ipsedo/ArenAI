@@ -20,7 +20,7 @@ TEST_P(ActorTestParam, TestActorAct) {
 
     Actor actor(
         height, width, sensors_nb, cont_actions_nb, discrete_actions_nb, sensors_hidden_size,
-        layers, {{input_channels, 4}, {4, 8}}, {2, 4});
+        layers, {{input_channels, 4}, {4, 8}}, {2, 4}, 0.1f, 0.2f);
 
     const auto image = torch::randint(
         255, {batch_size, input_channels, height, width},

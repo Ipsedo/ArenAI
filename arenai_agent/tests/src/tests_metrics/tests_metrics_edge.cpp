@@ -2,6 +2,7 @@
 // Created by claude on 01/07/2026.
 //
 
+#include <cmath>
 #include <stdexcept>
 
 #include <metrics/mean_metric.h>

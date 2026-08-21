@@ -7,8 +7,8 @@
 
 #include <gtest/gtest.h>
 
-typedef int UpperBound;
-typedef int LowerBound;
+typedef float UpperBound;
+typedef float LowerBound;
 
 typedef std::vector<int64_t> Shape;
 

@@ -9,15 +9,31 @@
 
 namespace arenai::agent {
 
-    class AlphaParameter final : public torch::nn::Module {
-    public:
-        explicit AlphaParameter(float initial_alpha);
+    /*
+     * Base class
+     */
 
-        torch::Tensor log_alpha();
+    class AlphaParameters : public torch::nn::Module {
+    public:
+        explicit AlphaParameters(float initial_alpha, int nb_alphas);
+
+        virtual torch::Tensor log_alpha();
         torch::Tensor alpha();
 
     private:
         torch::Tensor log_alpha_tensor;
+    };
+
+    class ClampedAlphaParameters final : public AlphaParameters {
+    public:
+        explicit ClampedAlphaParameters(
+            float initial_alpha, float min_alpha, float max_alpha, int nb_alphas);
+
+        torch::Tensor log_alpha() override;
+
+    private:
+        float min_log_alpha;
+        float max_log_alpha;
     };
 
     class AbstractTargetEntropy : public torch::nn::Module {
@@ -47,6 +63,13 @@ namespace arenai::agent {
     class ConstantContinuousTargetEntropy : public ConstantTargetEntropy {
     public:
         explicit ConstantContinuousTargetEntropy(int nb_continuous_action, float target_sigma);
+    };
+
+    // target of a single action instead of the sum over them, to be broadcast against one
+    // alpha per dimension
+    class ConstantContinuousPerActionTargetEntropy : public ConstantTargetEntropy {
+    public:
+        explicit ConstantContinuousPerActionTargetEntropy(float target_sigma);
     };
 
     /*
@@ -89,6 +112,36 @@ namespace arenai::agent {
 
     private:
         int nb_actions;
+    };
+
+    /*
+     * Lagrangian
+     */
+
+    // alpha is the output of the controller, not a parameter moved by gradient ascent: the
+    // integral term *is* the dual variable. It is driven on the log scale, where each gain
+    // acts multiplicatively on alpha whatever decade it currently sits in, and where the
+    // multiplier stays positive without a clamp on the output.
+    class PidLagrangianAlphaParameters final : public torch::nn::Module {
+    public:
+        PidLagrangianAlphaParameters(
+            float k_p, float k_i, float k_d, float initial_alpha, int nb_alphas);
+
+        void update(const torch::Tensor &entropy, const torch::Tensor &target_entropy) const;
+
+        torch::Tensor alpha() const;
+
+    private:
+        static constexpr float MIN_ALPHA = 1e-8f;
+        static constexpr float MAX_ALPHA = 1.f;
+
+        float k_p, k_i, k_d;
+
+        torch::Tensor previous_entropy;
+        torch::Tensor has_previous;
+
+        torch::Tensor integral;
+        torch::Tensor log_alpha_tensor;
     };
 
 }// namespace arenai::agent

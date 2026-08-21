@@ -13,8 +13,8 @@ using namespace arenai::agent;
 
 TorchState PpoRolloutBufferTest::make_state() {
     return {
-        torch::randn({NB_TANKS, 3, VISION_SIZE, VISION_SIZE}),
-        torch::randn({NB_TANKS, NB_SENSORS})};
+        .vision = torch::randn({NB_TANKS, 3, VISION_SIZE, VISION_SIZE}),
+        .proprioception = torch::randn({NB_TANKS, NB_SENSORS})};
 }
 
 PpoInputStep PpoRolloutBufferTest::make_step(const TorchState &state, const torch::Tensor &done) {
@@ -30,8 +30,7 @@ PpoInputStep PpoRolloutBufferTest::make_step(const TorchState &state, const torc
         .continuous_log_prob = torch::randn({NB_TANKS, 1}),
         .discrete_log_prob = torch::randn({NB_TANKS, 1}),
         .reward = torch::randn({NB_TANKS, 1}),
-        .done = done,
-        .truncated = torch::zeros({NB_TANKS, 1})};
+        .done = done};
 }
 
 PpoInputStep PpoRolloutBufferTest::make_step(const TorchState &state) {

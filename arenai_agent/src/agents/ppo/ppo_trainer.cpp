@@ -359,6 +359,9 @@ namespace arenai::agent {
 
         continuous_alpha->train(train);
         discrete_alpha->train(train);
+
+        continuous_target_entropy->train(train);
+        discrete_target_entropy->train(train);
     }
 
     void PpoTrainer::to(const torch::Device device) const {
@@ -367,6 +370,9 @@ namespace arenai::agent {
 
         continuous_alpha->to(device);
         discrete_alpha->to(device);
+
+        continuous_target_entropy->to(device);
+        discrete_target_entropy->to(device);
     }
 
     int PpoTrainer::count_parameters() {

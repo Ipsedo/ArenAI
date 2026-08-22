@@ -38,7 +38,13 @@ namespace arenai::agent {
 
     class AbstractTargetEntropy : public torch::nn::Module {
     public:
-        virtual torch::Tensor target_entropy() = 0;
+        // the current target: pure, safe to call several times inside the same rollout
+        virtual torch::Tensor target_entropy() const = 0;
+
+        // advances the schedule by nb_env_steps environment steps. Called once per rollout,
+        // so a schedule is expressed in the same unit as the training progress reported in
+        // metrics.csv — independent of minibatch_size, epochs, nb_tanks and tank mortality.
+        virtual void step(int64_t nb_env_steps);
     };
 
     /*
@@ -49,7 +55,7 @@ namespace arenai::agent {
     public:
         explicit ConstantTargetEntropy(float initial_target);
 
-        torch::Tensor target_entropy() override;
+        torch::Tensor target_entropy() const override;
 
     private:
         torch::Tensor initial_target;
@@ -59,15 +65,19 @@ namespace arenai::agent {
      * Warmup
      */
 
-    class CosineAnnealingTargetEntropy : public AbstractTargetEntropy {
+    class CosineAnnealingTargetEntropy final : public AbstractTargetEntropy {
     public:
-        CosineAnnealingTargetEntropy(float initial_value, float final_value, int warmup_step);
-        torch::Tensor target_entropy() override;
+        // warmup_env_step: number of environment steps to go from initial_value to final_value
+        CosineAnnealingTargetEntropy(
+            float initial_value, float final_value, int64_t warmup_env_step);
+
+        torch::Tensor target_entropy() const override;
+        void step(int64_t nb_env_steps) override;
 
     private:
         float initial;
         float final;
-        int warmup_step;
+        int64_t warmup_env_step;
 
         torch::Tensor current_step;
     };

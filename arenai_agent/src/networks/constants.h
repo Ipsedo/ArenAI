@@ -9,7 +9,7 @@ namespace arenai::agent {
     constexpr float EPSILON = 1e-8f;
 
     constexpr float SIGMA_MIN = 1e-4f;
-    constexpr float SIGMA_MAX = 2.f;
+    constexpr float SIGMA_MAX = 1.f;
 }// namespace arenai::agent
 
 #endif//ARENAI_CONSTANTS_H

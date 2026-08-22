@@ -8,9 +8,6 @@
 #include <cmath>
 #include <numbers>
 
-#include "../distributions/multinomial.h"
-#include "../distributions/truncated_normal.h"
-
 using namespace arenai;
 using namespace arenai::agent;
 
@@ -51,35 +48,46 @@ namespace arenai::agent {
     }
 
     /*
+     * Abstract target entropy
+     */
+
+    // a schedule-less target ignores the progression
+    void AbstractTargetEntropy::step(int64_t) {}
+
+    /*
      * Constant target entropy
      */
 
     ConstantTargetEntropy::ConstantTargetEntropy(const float initial_target)
         : initial_target(register_buffer("initial_target", torch::tensor(initial_target))) {}
 
-    torch::Tensor ConstantTargetEntropy::target_entropy() { return initial_target; }
+    torch::Tensor ConstantTargetEntropy::target_entropy() const { return initial_target; }
 
     /*
      * Target entropy cosine annealing
      */
 
     CosineAnnealingTargetEntropy::CosineAnnealingTargetEntropy(
-        const float initial_value, const float final_value, const int warmup_step)
-        : initial(initial_value), final(final_value), warmup_step(warmup_step),
+        const float initial_value, const float final_value, const int64_t warmup_env_step)
+        : initial(initial_value), final(final_value),
+          warmup_env_step(std::max<int64_t>(1, warmup_env_step)),
           current_step(register_buffer(
               "current_step", torch::zeros({1}, torch::TensorOptions().dtype(torch::kLong)))) {}
 
-    torch::Tensor CosineAnnealingTargetEntropy::target_entropy() {
+    torch::Tensor CosineAnnealingTargetEntropy::target_entropy() const {
         const float progress = std::min(
             1.f,
-            static_cast<float>(current_step.item<int64_t>()) / static_cast<float>(warmup_step));
+            static_cast<float>(current_step.item<int64_t>()) / static_cast<float>(warmup_env_step));
         const float cosine = 0.5f * (1.f - std::cos(std::numbers::pi_v<float> * progress));
-
-        current_step += 1;
 
         return torch::tensor(
             {initial + (final - initial) * cosine},
             torch::TensorOptions().device(current_step.device()));
+    }
+
+    void CosineAnnealingTargetEntropy::step(const int64_t nb_env_steps) {
+        const torch::NoGradGuard no_grad;
+        current_step += nb_env_steps;
     }
 
     /*

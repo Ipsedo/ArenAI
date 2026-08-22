@@ -32,9 +32,13 @@ namespace arenai::agent {
 
         constexpr float KL_TRIM_FRACTION = 0.01f;
 
-        constexpr float ALPHA_K_P = 2e-1f;
-        constexpr float ALPHA_K_I = 5e-3f;
-        constexpr float ALPHA_K_D = 1.f;
+        constexpr float CONTINUOUS_ALPHA_K_P = 2e-1f;
+        constexpr float CONTINUOUS_ALPHA_K_I = 5e-3f;
+        constexpr float CONTINUOUS_ALPHA_K_D = 1.f;
+
+        constexpr float DISCRETE_ALPHA_K_P = 2e-1f;
+        constexpr float DISCRETE_ALPHA_K_I = 5e-4f;
+        constexpr float DISCRETE_ALPHA_K_D = 1.f;
 
         constexpr float ALPHA_INITIAL = 1e-3f;
     }// namespace
@@ -49,15 +53,17 @@ namespace arenai::agent {
         const std::vector<int> &group_norm_nums, const torch::Device device,
         const int metric_window_size, const float gamma, const float gae_lambda,
         const float clip_epsilon, const float target_kl, const float grad_norm_max,
-        const float target_fire_proba, const int epochs, const int rollout_size,
-        const int minibatch_size)
+        const float target_entropy_init, const float target_entropy_final,
+        const int target_entropy_warmup_steps, const float target_fire_proba, const int epochs,
+        const int rollout_size, const int minibatch_size)
         : actor(actor), rollout_buffer(rollout_buffer),
           continuous_alpha(std::make_shared<PidLagrangianAlphaParameters>(
-              ALPHA_K_P, ALPHA_K_I, ALPHA_K_D, ALPHA_INITIAL, nb_continuous_actions)),
+              CONTINUOUS_ALPHA_K_P, CONTINUOUS_ALPHA_K_I, CONTINUOUS_ALPHA_K_D, ALPHA_INITIAL,
+              nb_continuous_actions)),
           discrete_alpha(std::make_shared<PidLagrangianAlphaParameters>(
-              ALPHA_K_P, ALPHA_K_I, ALPHA_K_D, ALPHA_INITIAL, 1)),
+              DISCRETE_ALPHA_K_P, DISCRETE_ALPHA_K_I, DISCRETE_ALPHA_K_D, ALPHA_INITIAL, 1)),
           continuous_target_entropy(std::make_unique<CosineAnnealingTargetEntropy>(
-              0.f, -1.f, 100000 * epochs * rollout_size / minibatch_size)),
+              target_entropy_init, target_entropy_final, target_entropy_warmup_steps)),
           discrete_target_entropy(std::make_unique<ConstantTargetEntropy>(
               multinomial_target_entropy(target_fire_proba))),
           critic(std::make_shared<ValueFunction>(
@@ -77,7 +83,6 @@ namespace arenai::agent {
           continuous_entropy_metric(std::make_shared<MeanMetric>("Hc", metric_window_size)),
           discrete_target_entropy_metric(std::make_shared<MeanMetric>("Hd_t", metric_window_size)),
           discrete_entropy_metric(std::make_shared<MeanMetric>("Hd", metric_window_size)),
-
           continuous_alpha_metric(std::make_shared<MeanMetric>("α_c", metric_window_size, 2, true)),
           discrete_alpha_metric(std::make_shared<MeanMetric>("α_d", metric_window_size, 2, true)),
           sigma_metric(std::make_shared<MeanMetric>("σ", metric_window_size)),
@@ -127,6 +132,12 @@ namespace arenai::agent {
             return tensor.index_select(0, idx).to(device);
         };
 
+        // read once: the entropy floor stays constant over the whole update, so the dual
+        // variables regulate against a fixed reference within a rollout
+        const TargetEntropies targets{
+            .continuous = continuous_target_entropy->target_entropy(),
+            .discrete = discrete_target_entropy->target_entropy()};
+
         for (int e = 0; e < epochs; e++) {
             const auto perm = valid_idx.index_select(0, torch::randperm(nb_valid_rows));
 
@@ -140,11 +151,14 @@ namespace arenai::agent {
                 train_actor(
                     mb_vision, mb_proprioception, select(flat_continuous_actions, idx),
                     select(flat_discrete_actions, idx), select(flat_old_log_probs, idx),
-                    select(flat_advantages, idx));
+                    select(flat_advantages, idx), targets);
 
                 train_critic(mb_vision, mb_proprioception, select(flat_returns, idx));
             }
         }
+
+        continuous_target_entropy->step(rollout_size);
+        discrete_target_entropy->step(rollout_size);
 
         set_train(false);
     }
@@ -152,7 +166,8 @@ namespace arenai::agent {
     bool PpoTrainer::train_actor(
         const torch::Tensor &vision, const torch::Tensor &proprioception,
         const torch::Tensor &continuous_actions, const torch::Tensor &discrete_actions,
-        const torch::Tensor &old_log_probs, const torch::Tensor &advantages) const {
+        const torch::Tensor &old_log_probs, const torch::Tensor &advantages,
+        const TargetEntropies &targets) const {
         const auto [mu, sigma, discrete_proba] = actor->act(vision, proprioception);
 
         const auto curr_continuous_log_probs =
@@ -205,23 +220,19 @@ namespace arenai::agent {
         }
 
         // adjust continuous alpha
-        const auto curr_continuous_target_entropy = continuous_target_entropy->target_entropy();
-
-        continuous_alpha->update(continuous_entropy, curr_continuous_target_entropy);
+        continuous_alpha->update(continuous_entropy, targets.continuous);
 
         // adjust discrete alpha
-        const auto curr_discrete_target_entropy = discrete_target_entropy->target_entropy();
-
-        discrete_alpha->update(discrete_entropy, curr_discrete_target_entropy);
+        discrete_alpha->update(discrete_entropy, targets.discrete);
 
         // metrics
         continuous_entropy_metric->add(continuous_entropy.mean().item<float>());
-        continuous_target_entropy_metric->add(curr_continuous_target_entropy.mean().item<float>());
+        continuous_target_entropy_metric->add(targets.continuous.mean().item<float>());
         sigma_metric->add(sigma.mean().item<float>());
         continuous_alpha_metric->add(continuous_alpha->alpha().mean().item<float>());
 
         discrete_entropy_metric->add(discrete_entropy.mean().item<float>());
-        discrete_target_entropy_metric->add(curr_discrete_target_entropy.mean().item<float>());
+        discrete_target_entropy_metric->add(targets.discrete.mean().item<float>());
         discrete_alpha_metric->add(discrete_alpha->alpha().mean().item<float>());
 
         kl_metric->add(approx_kl);

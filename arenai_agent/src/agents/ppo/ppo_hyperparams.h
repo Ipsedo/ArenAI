@@ -16,22 +16,20 @@ namespace arenai::agent {
     struct PpoHyperParams {
         float actor_learning_rate = 1e-4f;
         float critic_learning_rate = 3e-4f;
-        float alpha_learning_rate = 1e-3f;
         int hidden_size_sensors = 128;
         std::vector<int> actor_hidden_sizes = {1024, 512};
         std::vector<int> critic_hidden_sizes = {1024, 512};
         std::vector<std::tuple<int, int>> vision_channels = {{3, 8},   {8, 16},  {16, 24},
                                                              {24, 32}, {32, 48}, {48, 64}};
         std::vector<int> group_norm_nums = {1, 2, 3, 4, 6, 8};
-        float initial_sigma = 0.4f;
-        float initial_fire_proba = 0.025f;
+        float initial_sigma = 0.3f;
+        float initial_fire_proba = 0.03f;
         int metric_window_size = 256;
         float gamma = 0.99f;
         float gae_lambda = 0.98f;
         float clip_epsilon = 0.2f;
         float target_kl = 0.05f;
         float grad_norm_max = 0.5f;
-        float target_sigma = 0.4f;
         float target_fire_proba = 0.025f;
         int epochs = 2;
         int rollout_size = 30 * 30;

@@ -24,13 +24,12 @@ namespace arenai::agent {
             const std::shared_ptr<Actor> &actor,
             const std::shared_ptr<PpoRolloutBuffer> &rollout_buffer, int vision_height,
             int vision_width, int nb_sensors, int nb_continuous_actions, float actor_learning_rate,
-            float critic_learning_rate, float alpha_learning_rate, int hidden_size_sensors,
+            float critic_learning_rate, int hidden_size_sensors,
             const std::vector<int> &critic_hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
             float gamma, float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
-            float target_sigma, float target_fire_proba, int epochs, int rollout_size,
-            int minibatch_size);
+            float target_fire_proba, int epochs, int rollout_size, int minibatch_size);
 
         void step() override;
 
@@ -46,6 +45,9 @@ namespace arenai::agent {
 
         std::shared_ptr<PidLagrangianAlphaParameters> continuous_alpha;
         std::shared_ptr<PidLagrangianAlphaParameters> discrete_alpha;
+
+        std::shared_ptr<AbstractTargetEntropy> continuous_target_entropy;
+        std::shared_ptr<AbstractTargetEntropy> discrete_target_entropy;
 
         std::shared_ptr<ValueFunction> critic;
 
@@ -64,6 +66,9 @@ namespace arenai::agent {
         // both regulated by their constant entropy bonus
         std::shared_ptr<AbstractMetric> continuous_entropy_metric;
         std::shared_ptr<AbstractMetric> discrete_entropy_metric;
+
+        std::shared_ptr<AbstractMetric> continuous_target_entropy_metric;
+        std::shared_ptr<AbstractMetric> discrete_target_entropy_metric;
 
         std::shared_ptr<AbstractMetric> continuous_alpha_metric;
         std::shared_ptr<AbstractMetric> discrete_alpha_metric;
@@ -85,9 +90,6 @@ namespace arenai::agent {
         float target_kl;
 
         float grad_norm_max;
-
-        float target_sigma;
-        float target_fire_proba;
 
         int epochs;
         // rollout horizon: one train() consumes rollout_size complete steps in a single update

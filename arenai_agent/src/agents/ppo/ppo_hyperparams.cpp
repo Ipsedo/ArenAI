@@ -10,7 +10,6 @@ namespace arenai::agent {
         return {
             {.name = "--actor_learning_rate", .member = &PpoHyperParams::actor_learning_rate},
             {.name = "--critic_learning_rate", .member = &PpoHyperParams::critic_learning_rate},
-            {.name = "--alpha_learning_rate", .member = &PpoHyperParams::alpha_learning_rate},
             {.name = "--hidden_size_sensors", .member = &PpoHyperParams::hidden_size_sensors},
             {.name = "--actor_hidden_sizes", .member = &PpoHyperParams::actor_hidden_sizes},
             {.name = "--critic_hidden_sizes", .member = &PpoHyperParams::critic_hidden_sizes},
@@ -24,7 +23,6 @@ namespace arenai::agent {
             {.name = "--clip_epsilon", .member = &PpoHyperParams::clip_epsilon},
             {.name = "--target_kl", .member = &PpoHyperParams::target_kl},
             {.name = "--grad_norm_max", .member = &PpoHyperParams::grad_norm_max},
-            {.name = "--target_sigma", .member = &PpoHyperParams::target_sigma},
             {.name = "--target_fire_proba", .member = &PpoHyperParams::target_fire_proba},
             {.name = "--epochs", .member = &PpoHyperParams::epochs},
             {.name = "--rollout_size", .member = &PpoHyperParams::rollout_size},

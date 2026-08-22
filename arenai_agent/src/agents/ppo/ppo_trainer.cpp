@@ -57,7 +57,7 @@ namespace arenai::agent {
           discrete_alpha(std::make_shared<PidLagrangianAlphaParameters>(
               ALPHA_K_P, ALPHA_K_I, ALPHA_K_D, ALPHA_INITIAL, 1)),
           continuous_target_entropy(std::make_unique<CosineAnnealingTargetEntropy>(
-              0.f, -1.f, 3000 * epochs * rollout_size / minibatch_size)),
+              0.f, -1.f, 100000 * epochs * rollout_size / minibatch_size)),
           discrete_target_entropy(std::make_unique<ConstantTargetEntropy>(
               multinomial_target_entropy(target_fire_proba))),
           critic(std::make_shared<ValueFunction>(

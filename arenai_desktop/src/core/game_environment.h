@@ -5,6 +5,8 @@
 #ifndef ARENAI_DESKTOP_GAME_ENVIRONMENT_H
 #define ARENAI_DESKTOP_GAME_ENVIRONMENT_H
 
+#include <optional>
+
 #include <arenai_core/environment.h>
 #include <arenai_model/tank.h>
 #include <arenai_view/backend.h>
@@ -43,6 +45,12 @@ namespace arenai::desktop {
         bool is_player_dead() const;
 
         int get_score() const;
+
+        model::PlayerHits consume_player_hits() const;
+
+        static constexpr float AIM_DISTANCE = 75.f;
+
+        std::optional<glm::vec2> aim_point_on_screen() const;
 
     protected:
         void

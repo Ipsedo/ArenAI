@@ -21,6 +21,8 @@ namespace arenai::model {
 
         int get_score() const override;
 
+        PlayerHits consume_hits() override;
+
         void destroy() override;
 
     private:
@@ -28,6 +30,8 @@ namespace arenai::model {
 
         int killed_nb;
         int hit_nb;
+
+        PlayerHits pending_hits;
     };
 
 }// namespace arenai::model

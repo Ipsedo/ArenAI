@@ -72,6 +72,28 @@ namespace arenai::desktop {
 
     int DesktopGameEnvironment::get_score() const { return player_tank->get_score(); }
 
+    std::optional<glm::vec2> DesktopGameEnvironment::aim_point_on_screen() const {
+        if (!player_tank || !player_renderer) return std::nullopt;
+
+        const glm::mat4 canon_matrix = player_tank->get_canon()->get_model_matrix();
+        const glm::vec3 origin = canon_matrix * glm::vec4(0.f, 0.f, 0.f, 1.f);
+        const glm::vec3 forward =
+            glm::normalize(glm::mat3(canon_matrix) * glm::vec3(0.f, 0.f, 1.f));
+        const glm::vec3 aim = origin + forward * AIM_DISTANCE;
+
+        const glm::vec4 clip = player_renderer->last_view_projection() * glm::vec4(aim, 1.f);
+        if (clip.w <= 0.f) return std::nullopt;
+
+        const glm::vec2 ndc = glm::vec2(clip) / clip.w;
+        if (ndc.x < -1.f || ndc.x > 1.f || ndc.y < -1.f || ndc.y > 1.f) return std::nullopt;
+
+        return glm::vec2((ndc.x + 1.f) * 0.5f, (1.f - ndc.y) * 0.5f);
+    }
+
+    model::PlayerHits DesktopGameEnvironment::consume_player_hits() const {
+        return player_tank->consume_hits();
+    }
+
     std::shared_ptr<controller::AbstractKeyboardCallback>
     DesktopGameEnvironment::keyboard_handler() const {
         return keyboard_handler_;

@@ -138,6 +138,12 @@ namespace arenai::desktop {
 
             const auto steps = env->step(game_options.wanted_frequency, action);
 
+            if (const auto [hits, kills] = env->consume_player_hits(); kills > 0)
+                gui->notify_hit(gui::HitKind::Kill);
+            else if (hits > 0) gui->notify_hit(gui::HitKind::Hit);
+            gui->set_aim_point(env->aim_point_on_screen());
+            gui->render_hud_overlay();
+
             graphics_backend->present();
 
             if (env->is_player_dead()) set_game_over();

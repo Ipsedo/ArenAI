@@ -47,9 +47,15 @@ namespace arenai::model {
         virtual void on_death() = 0;
     };
 
+    struct PlayerHits {
+        int hits = 0;
+        int kills = 0;
+    };
+
     class PlayerTank : virtual public Tank {
     public:
         virtual int get_score() const = 0;
+        virtual PlayerHits consume_hits() = 0;
         virtual void destroy() = 0;
     };
 

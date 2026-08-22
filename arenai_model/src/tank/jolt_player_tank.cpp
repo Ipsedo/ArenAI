@@ -4,6 +4,8 @@
 
 #include "./jolt_player_tank.h"
 
+#include <utility>
+
 #include "../jolt_engine.h"
 
 using namespace arenai;
@@ -31,13 +33,17 @@ namespace arenai::model {
         if (const auto &life_item = dynamic_cast<LifeItem *>(item); life_item) {
             if (life_item->is_dead() && !life_item->is_already_dead()) {
                 killed_nb++;
+                pending_hits.kills++;
             } else if (!life_item->is_dead()) {
                 hit_nb++;
+                pending_hits.hits++;
             }
         }
     }
 
     int JoltPlayerTank::get_score() const { return killed_nb * 10 + hit_nb; }
+
+    PlayerHits JoltPlayerTank::consume_hits() { return std::exchange(pending_hits, PlayerHits{}); }
 
     void JoltPlayerTank::destroy() { remove_constraints_from_engine(); }
 

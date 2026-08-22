@@ -35,6 +35,7 @@ namespace arenai::view {
         int get_height() const override;
 
         void set_window_size(int new_width, int new_height) override;
+        glm::mat4 last_view_projection() const override;
 
         VkFormat scene_color_format() const override;
         VkFormat scene_depth_format() const override;

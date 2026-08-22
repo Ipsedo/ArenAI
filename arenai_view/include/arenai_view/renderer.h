@@ -53,6 +53,7 @@ namespace arenai::view {
     public:
         virtual void add_hud_drawable(std::unique_ptr<AbstractHudDrawable> hud_drawable) = 0;
         virtual void set_window_size(int new_width, int new_height) = 0;
+        virtual glm::mat4 last_view_projection() const = 0;
     };
 
     class AbstractOffscreenRenderer : public virtual AbstractRenderer {

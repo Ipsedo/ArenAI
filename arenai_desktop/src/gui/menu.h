@@ -11,6 +11,8 @@
 #include <optional>
 #include <string>
 
+#include <glm/glm.hpp>
+
 #include <arenai_controller/callback.h>
 #include <arenai_utils/file_reader.h>
 #include <arenai_view/backend.h>
@@ -37,6 +39,8 @@ namespace arenai::desktop::gui {
     enum class MenuOutcome { Play, Quit };
 
     enum class PauseAction { None, Continue, MainMenu, ExitGame, Retry };
+
+    enum class HitKind { Hit, Kill };
 
     // Lives for the whole session (the UI stack is initialised once): the main
     // menu runs its own blocking loop, while the pause popup is driven
@@ -65,6 +69,10 @@ namespace arenai::desktop::gui {
         virtual void close_game_over() = 0;
         // returns the pending button action and resets it to None
         virtual PauseAction poll_pause_action() = 0;
+
+        virtual void notify_hit(HitKind kind) = 0;
+        virtual void set_aim_point(std::optional<glm::vec2> normalized) = 0;
+        virtual void render_hud_overlay() = 0;
         // input sinks the application routes window events to while paused
         virtual std::shared_ptr<controller::AbstractKeyboardCallback> pause_input() = 0;
         virtual std::shared_ptr<controller::AbstractGamepadCallback> pause_gamepad_input() = 0;

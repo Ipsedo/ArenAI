@@ -145,6 +145,7 @@ namespace arenai::view {
             static_cast<float>(M_PI) / 4.f,
             static_cast<float>(get_width()) / static_cast<float>(get_height()), 1.f,
             2000.f * std::sqrt(3.f));
+        last_view_proj_matrix_ = proj_matrix * view_matrix;
 
         const glm::mat4 biased_light_vp_matrix = ShadowPass::biased(light_vp_matrix);
 
@@ -204,6 +205,10 @@ namespace arenai::view {
     const glm::vec3 &VulkanRenderer::light_position() const { return light_pos_; }
 
     const std::shared_ptr<AbstractCamera> &VulkanRenderer::camera() const { return camera_; }
+
+    const glm::mat4 &VulkanRenderer::last_view_proj_matrix() const {
+        return last_view_proj_matrix_;
+    }
 
     VulkanRenderer::~VulkanRenderer() {
         // the subclass destructor has already waited its frame fences

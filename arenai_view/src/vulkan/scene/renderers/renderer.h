@@ -80,6 +80,7 @@ namespace arenai::view {
 
         const glm::vec3 &light_position() const;
         const std::shared_ptr<AbstractCamera> &camera() const;
+        const glm::mat4 &last_view_proj_matrix() const;
 
     private:
         // a drawable and its shadow capability, resolved once at add time
@@ -116,6 +117,7 @@ namespace arenai::view {
 
         SlotResources slots_[FRAME_SLOTS];
         SceneFrame frame_;
+        glm::mat4 last_view_proj_matrix_{1.f};
     };
 
 }// namespace arenai::view

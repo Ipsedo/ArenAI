@@ -33,7 +33,7 @@ namespace arenai::agent {
         float gamma = 0.997f;
         int replay_buffer_size = 300000;
         int train_every = 256;
-        int epochs = 32;
+        int epochs = 128;
         int batch_size = 256;
     };
 

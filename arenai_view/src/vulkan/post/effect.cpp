@@ -170,7 +170,12 @@ namespace arenai::view {
 
         // regular viewport: image-space pass, rows map 1:1
         const VkViewport viewport{
-            0.f, 0.f, static_cast<float>(out.width()), static_cast<float>(out.height()), 0.f, 1.f};
+            .x = 0.f,
+            .y = 0.f,
+            .width = static_cast<float>(out.width()),
+            .height = static_cast<float>(out.height()),
+            .minDepth = 0.f,
+            .maxDepth = 1.f};
         vkCmdSetViewport(cmd, 0, 1, &viewport);
         const VkRect2D scissor{
             .offset = {.x = 0, .y = 0},

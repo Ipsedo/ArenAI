@@ -26,12 +26,12 @@ make_cube(const float half_size) {
         std::tuple<float, float, float> normal;
     };
     const Face faces[6] = {
-        {0, 1, 2, 3, {0.f, 0.f, 1.f}}, // avant   (+Z)
-        {4, 7, 6, 5, {0.f, 0.f, -1.f}},// arrière (-Z)
-        {0, 3, 7, 4, {1.f, 0.f, 0.f}}, // droite  (+X)
-        {1, 5, 6, 2, {-1.f, 0.f, 0.f}},// gauche  (-X)
-        {0, 4, 5, 1, {0.f, 1.f, 0.f}}, // haut    (+Y)
-        {2, 6, 7, 3, {0.f, -1.f, 0.f}},// bas     (-Y)
+        {.a = 0, .b = 1, .c = 2, .d = 3, .normal = {0.f, 0.f, 1.f}}, // avant   (+Z)
+        {.a = 4, .b = 7, .c = 6, .d = 5, .normal = {0.f, 0.f, -1.f}},// arrière (-Z)
+        {.a = 0, .b = 3, .c = 7, .d = 4, .normal = {1.f, 0.f, 0.f}}, // droite  (+X)
+        {.a = 1, .b = 5, .c = 6, .d = 2, .normal = {-1.f, 0.f, 0.f}},// gauche  (-X)
+        {.a = 0, .b = 4, .c = 5, .d = 1, .normal = {0.f, 1.f, 0.f}}, // haut    (+Y)
+        {.a = 2, .b = 6, .c = 7, .d = 3, .normal = {0.f, -1.f, 0.f}},// bas     (-Y)
     };
 
     std::vector<std::tuple<float, float, float>> vertices;

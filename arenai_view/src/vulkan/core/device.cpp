@@ -18,7 +18,7 @@ namespace arenai::view {
         : instance_(std::move(instance)), physical_(VK_NULL_HANDLE), properties_(),
           queue_family_(0), device_(VK_NULL_HANDLE), queue_(VK_NULL_HANDLE),
           allocator_(VK_NULL_HANDLE), pipeline_cache_(VK_NULL_HANDLE), wide_lines_(false) {
-        const auto [physical, properties, queue_family] =
+        auto [physical, properties, queue_family] =
             pick_physical_device(instance_->handle(), criteria);
         physical_ = physical;
         properties_ = properties;

@@ -106,15 +106,21 @@ namespace arenai::view {
             view_info.image = images_[i];
             view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
             view_info.format = format_;
-            view_info.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+            view_info.subresourceRange = {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .baseMipLevel = 0,
+                .levelCount = 1,
+                .baseArrayLayer = 0,
+                .layerCount = 1};
             vk_check(
                 vkCreateImageView(device_->handle(), &view_info, nullptr, &views_[i]),
                 "vkCreateImageView (swapchain)");
         }
+
         return true;
     }
 
-    VkResult SwapChain::acquire(const VkSemaphore signal, uint32_t *image_index) const {
+    VkResult SwapChain::acquire(const VkSemaphore &signal, uint32_t *image_index) const {
         return vkAcquireNextImageKHR(
             device_->handle(), swapchain_, UINT64_MAX, signal, VK_NULL_HANDLE, image_index);
     }

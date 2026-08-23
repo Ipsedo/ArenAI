@@ -20,7 +20,7 @@ namespace arenai::view {
         static constexpr int FRAME_SLOTS = 2;
 
         WindowFrameContext(
-            std::shared_ptr<VulkanDevice> device, VkSurfaceKHR surface,
+            std::shared_ptr<VulkanDevice> device, const VkSurfaceKHR &surface,
             std::function<VkExtent2D()> framebuffer_extent);
 
         WindowFrameContext(const WindowFrameContext &) = delete;
@@ -31,8 +31,10 @@ namespace arenai::view {
 
         VkCommandBuffer cmd() const;
         int slot() const;
+
         VkImageView swapchain_view() const;
         VkFormat swapchain_format() const;
+
         int width() const;
         int height() const;
 

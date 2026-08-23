@@ -101,12 +101,14 @@ namespace arenai::view {
         depth_attachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
         depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        depth_attachment.clearValue.depthStencil = {1.f, 0};
+        depth_attachment.clearValue.depthStencil = {.depth = 1.f, .stencil = 0};
 
         VkRenderingInfo rendering_info{};
         rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
         rendering_info.renderArea = {
-            {0, 0}, {static_cast<uint32_t>(width_), static_cast<uint32_t>(height_)}};
+            .offset = {.x = 0, .y = 0},
+            .extent = {
+                .width = static_cast<uint32_t>(width_), .height = static_cast<uint32_t>(height_)}};
         rendering_info.layerCount = 1;
         rendering_info.colorAttachmentCount = 1;
         rendering_info.pColorAttachments = &color_attachment;

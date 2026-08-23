@@ -33,7 +33,8 @@ namespace arenai::view {
         frame_context_ =
             std::make_shared<WindowFrameContext>(context()->device(), surface_, [window = window_] {
                 const auto [width, height] = window->framebuffer_size();
-                return VkExtent2D{static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
+                return VkExtent2D{
+                    .width = static_cast<uint32_t>(width), .height = static_cast<uint32_t>(height)};
             });
         rml_render_interface_ =
             std::make_unique<RmlVulkanRenderInterface>(context()->device(), frame_context_);

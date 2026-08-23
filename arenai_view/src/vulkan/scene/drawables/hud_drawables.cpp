@@ -79,12 +79,17 @@ namespace arenai::view {
 
         pipeline_layout_ = make_pipeline_layout(
             device_->handle(), {empty_layout_, material_layout_},
-            {{VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4)}});
+            {{.stageFlags = VK_SHADER_STAGE_VERTEX_BIT, .offset = 0, .size = sizeof(glm::mat4)}});
         pipeline_ = PipelineBuilder()
                         .shaders("simple_vs.glsl", "simple_fs.glsl")
                         .vertex_input(
-                            {{0, 3 * sizeof(float), VK_VERTEX_INPUT_RATE_VERTEX}},
-                            {{0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0}})
+                            {{.binding = 0,
+                              .stride = 3 * sizeof(float),
+                              .inputRate = VK_VERTEX_INPUT_RATE_VERTEX}},
+                            {{.location = 0,
+                              .binding = 0,
+                              .format = VK_FORMAT_R32G32B32_SFLOAT,
+                              .offset = 0}})
                         .topology(VK_PRIMITIVE_TOPOLOGY_LINE_STRIP)
                         .dynamic_line_width()
                         .cull_mode(VK_CULL_MODE_NONE)
@@ -93,8 +98,8 @@ namespace arenai::view {
                         .build(device_, pipeline_layout_);
     }
 
-    std::unique_ptr<VulkanBuffer> HudLineDrawable::make_loop_buffer(
-        const HudFrame &frame, const std::vector<float> &points) const {
+    std::unique_ptr<VulkanBuffer>
+    HudLineDrawable::make_loop_buffer(const HudFrame &frame, const std::vector<float> &points) {
         return std::make_unique<VulkanBuffer>(
             frame.device, frame.upload_pool, points.data(), points.size() * sizeof(float),
             VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);

@@ -27,7 +27,7 @@ namespace arenai::view {
 
         bool matches_framebuffer() const;
 
-        VkResult acquire(VkSemaphore signal, uint32_t *image_index) const;
+        VkResult acquire(const VkSemaphore &signal, uint32_t *image_index) const;
 
         VkSwapchainKHR handle() const;
         VkFormat format() const;

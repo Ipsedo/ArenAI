@@ -48,8 +48,8 @@ namespace arenai::view {
             const HudFrame &frame, const VulkanBuffer &loop, int nb_points,
             const glm::mat4 &mvp_matrix, float line_width) const;
 
-        std::unique_ptr<VulkanBuffer>
-        make_loop_buffer(const HudFrame &frame, const std::vector<float> &points) const;
+        static std::unique_ptr<VulkanBuffer>
+        make_loop_buffer(const HudFrame &frame, const std::vector<float> &points);
 
         ~HudLineDrawable() override;
 

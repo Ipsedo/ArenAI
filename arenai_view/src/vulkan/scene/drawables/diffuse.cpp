@@ -20,9 +20,9 @@ namespace arenai::view {
         };
 
         const std::vector<VkVertexInputBindingDescription> POSITION_BINDING = {
-            {0, 3 * sizeof(float), VK_VERTEX_INPUT_RATE_VERTEX}};
+            {.binding = 0, .stride = 3 * sizeof(float), .inputRate = VK_VERTEX_INPUT_RATE_VERTEX}};
         const std::vector<VkVertexInputAttributeDescription> POSITION_ATTRIBUTE = {
-            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0}};
+            {.location = 0, .binding = 0, .format = VK_FORMAT_R32G32B32_SFLOAT, .offset = 0}};
     }// namespace
 
     VulkanDiffuse::VulkanDiffuse(
@@ -63,7 +63,7 @@ namespace arenai::view {
 
         plain_pipeline_layout_ = make_pipeline_layout(
             context_->device()->handle(), {context_->set0_plain_layout(), material_layout_},
-            {{VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(ScenePush)}});
+            {{.stageFlags = VK_SHADER_STAGE_VERTEX_BIT, .offset = 0, .size = sizeof(ScenePush)}});
         plain_pipeline_ = PipelineBuilder()
                               .shaders("diffuse_vs.glsl", "diffuse_fs.glsl")
                               .vertex_input(POSITION_BINDING, POSITION_ATTRIBUTE)
@@ -77,7 +77,8 @@ namespace arenai::view {
         if (depth_pipeline_ != VK_NULL_HANDLE) return;
 
         depth_pipeline_layout_ = make_pipeline_layout(
-            context_->device()->handle(), {}, {{VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4)}});
+            context_->device()->handle(), {},
+            {{.stageFlags = VK_SHADER_STAGE_VERTEX_BIT, .offset = 0, .size = sizeof(glm::mat4)}});
         depth_pipeline_ = PipelineBuilder()
                               .shaders("shadow_depth_vs.glsl", "shadow_depth_fs.glsl")
                               .vertex_input(POSITION_BINDING, POSITION_ATTRIBUTE)

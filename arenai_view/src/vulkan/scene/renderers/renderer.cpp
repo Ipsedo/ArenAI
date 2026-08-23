@@ -60,16 +60,17 @@ namespace arenai::view {
 
     void VulkanRenderer::add_drawable(
         const std::string &name, std::unique_ptr<AbstractDrawable> drawable) {
-        // the capability casts happen once here, never in the frame loop
         if (auto *vulkan_drawable = dynamic_cast<VulkanDrawable *>(drawable.get()))
             vulkan_drawable->attach(this);
+
         auto *shadow = dynamic_cast<VulkanShadowDrawable *>(drawable.get());
-        drawables_.insert({name, DrawableEntry{std::move(drawable), shadow}});
+        drawables_.insert({name, DrawableEntry{.drawable = std::move(drawable), .shadow = shadow}});
     }
 
     void VulkanRenderer::remove_drawable(const std::string &name) {
         const auto entry = drawables_.find(name);
         if (entry == drawables_.end()) return;
+
         retired_.retire(std::move(entry->second.drawable));
         drawables_.erase(entry);
     }

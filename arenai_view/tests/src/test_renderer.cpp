@@ -16,17 +16,19 @@
 using namespace arenai;
 using namespace arenai::view;
 
-class RendererTest : public testing::Test {
-protected:
-    void SetUp() override {
-        backend = view::make_vulkan_backend();
-        file_reader =
-            std::make_shared<LocalAssetFileReader>(std::filesystem::path(ARENAI_ASSETS_DIR));
-    }
+namespace {
+    class RendererTest : public testing::Test {
+    protected:
+        void SetUp() override {
+            backend = view::make_vulkan_backend();
+            file_reader =
+                std::make_shared<LocalAssetFileReader>(std::filesystem::path(ARENAI_ASSETS_DIR));
+        }
 
-    std::shared_ptr<AbstractGraphicBackend> backend;
-    std::shared_ptr<LocalAssetFileReader> file_reader;
-};
+        std::shared_ptr<AbstractGraphicBackend> backend;
+        std::shared_ptr<LocalAssetFileReader> file_reader;
+    };
+}// namespace
 
 TEST_F(RendererTest, RemoveDrawableThenDrawClearColor) {
     constexpr int w = 16, h = 16;
@@ -57,14 +59,14 @@ TEST_F(RendererTest, RemoveDrawableThenDrawClearColor) {
     // remove the drawable
     renderer->remove_drawable("sky");
 
-    const auto empty = std::vector<std::tuple<std::string, glm::mat4>>{};
+    constexpr auto empty = std::vector<std::tuple<std::string, glm::mat4>>{};
 
     // draw two more frames (PBO double-buffering: need 2 to flush)
     renderer->draw_and_get_frame(empty);
     const auto [after_pixels] = renderer->draw_and_get_frame(empty);
 
     // should be clear color (red)
-    const int hw = w * h;
+    constexpr int hw = w * h;
     for (int i = 0; i < hw; ++i) {
         ASSERT_EQ(after_pixels[0 * hw + i], 255) << "R at pixel " << i;
         ASSERT_EQ(after_pixels[1 * hw + i], 0) << "G at pixel " << i;

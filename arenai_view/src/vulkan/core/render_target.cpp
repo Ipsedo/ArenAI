@@ -46,7 +46,12 @@ namespace arenai::view {
         view_info.image = image_;
         view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
         view_info.format = format;
-        view_info.subresourceRange = {aspect, 0, 1, 0, 1};
+        view_info.subresourceRange = {
+            .aspectMask = aspect,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1};
 
         vk_check(
             vkCreateImageView(device_->handle(), &view_info, nullptr, &view_),

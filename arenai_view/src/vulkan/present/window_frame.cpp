@@ -12,7 +12,7 @@
 namespace arenai::view {
 
     WindowFrameContext::WindowFrameContext(
-        std::shared_ptr<VulkanDevice> device, const VkSurfaceKHR surface,
+        std::shared_ptr<VulkanDevice> device, const VkSurfaceKHR &surface,
         std::function<VkExtent2D()> framebuffer_extent)
         : device_(std::move(device)),
           swapchain_(std::make_unique<SwapChain>(device_, surface, std::move(framebuffer_extent))),
@@ -127,9 +127,10 @@ namespace arenai::view {
         VkRenderingInfo rendering_info{};
         rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
         rendering_info.renderArea = {
-            {0, 0},
-            {static_cast<uint32_t>(swapchain_->width()),
-             static_cast<uint32_t>(swapchain_->height())}};
+            .offset = {.x = 0, .y = 0},
+            .extent = {
+                .width = static_cast<uint32_t>(swapchain_->width()),
+                .height = static_cast<uint32_t>(swapchain_->height())}};
         rendering_info.layerCount = 1;
         rendering_info.colorAttachmentCount = 1;
         rendering_info.pColorAttachments = &color_attachment;
@@ -148,17 +149,19 @@ namespace arenai::view {
         vkCmdBeginRendering(command_buffer, &rendering_info);
 
         const VkViewport viewport{
-            0.f,
-            static_cast<float>(swapchain_->height()),
-            static_cast<float>(swapchain_->width()),
-            -static_cast<float>(swapchain_->height()),
-            0.f,
-            1.f};
+            .x = 0.f,
+            .y = static_cast<float>(swapchain_->height()),
+            .width = static_cast<float>(swapchain_->width()),
+            .height = -static_cast<float>(swapchain_->height()),
+            .minDepth = 0.f,
+            .maxDepth = 1.f};
         vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+
         const VkRect2D scissor{
-            {0, 0},
-            {static_cast<uint32_t>(swapchain_->width()),
-             static_cast<uint32_t>(swapchain_->height())}};
+            .offset = {.x = 0, .y = 0},
+            .extent = {
+                .width = static_cast<uint32_t>(swapchain_->width()),
+                .height = static_cast<uint32_t>(swapchain_->height())}};
         vkCmdSetScissor(command_buffer, 0, 1, &scissor);
     }
 
@@ -186,8 +189,8 @@ namespace arenai::view {
             in_flight);
         submitted = true;
 
-        const VkResult result = device_->present(swapchain_->handle(), image_index_, finished);
-        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+        if (const VkResult result = device_->present(swapchain_->handle(), image_index_, finished);
+            result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
             device_->wait_idle();
             swapchain_valid_ = swapchain_->recreate();
         } else {
@@ -205,9 +208,12 @@ namespace arenai::view {
         if (swapchain_valid_ && render_finished_.size() != swapchain_->image_count()) {
             for (const auto semaphore: render_finished_)
                 vkDestroySemaphore(device_->handle(), semaphore, nullptr);
+
             render_finished_.assign(swapchain_->image_count(), VK_NULL_HANDLE);
+
             VkSemaphoreCreateInfo semaphore_info{};
             semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
             for (auto &semaphore: render_finished_)
                 vk_check(
                     vkCreateSemaphore(device_->handle(), &semaphore_info, nullptr, &semaphore),
@@ -224,13 +230,17 @@ namespace arenai::view {
     WindowFrameContext::~WindowFrameContext() {
         wait_all_fences();
         device_->wait_idle();
+
         for (const auto semaphore: render_finished_)
             vkDestroySemaphore(device_->handle(), semaphore, nullptr);
+
         for (const auto &slot: slots_) {
             vkDestroySemaphore(device_->handle(), slot.image_acquired, nullptr);
             vkDestroyFence(device_->handle(), slot.in_flight, nullptr);
         }
+
         vkDestroyCommandPool(device_->handle(), pool_, nullptr);
+
         swapchain_.reset();
     }
 

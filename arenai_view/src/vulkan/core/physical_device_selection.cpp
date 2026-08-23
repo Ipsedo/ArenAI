@@ -99,7 +99,8 @@ namespace arenai::view {
             const auto family = find_graphics_family(device, criteria.surface);
             if (!family.has_value()) continue;
 
-            candidates.push_back({device, properties, family.value()});
+            candidates.push_back(
+                {.device = device, .properties = properties, .queue_family = family.value()});
         }
         if (candidates.empty())
             throw std::runtime_error(

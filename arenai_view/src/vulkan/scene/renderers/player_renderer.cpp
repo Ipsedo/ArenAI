@@ -82,7 +82,7 @@ namespace arenai::view {
     }
 
     VkFormat VulkanPlayerRenderer::scene_color_format() const {
-        return post_process_->scene_color_format();
+        return VulkanPostProcess::scene_color_format();
     }
 
     VkFormat VulkanPlayerRenderer::scene_depth_format() const {

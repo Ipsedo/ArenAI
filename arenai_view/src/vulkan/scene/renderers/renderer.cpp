@@ -91,7 +91,6 @@ namespace arenai::view {
         if (shadow_pass_->ensure_ring(slot, draw_count)) {
             if (set0_shadow == VK_NULL_HANDLE) {
                 set0_shadow = descriptors_->allocate(set0_shadow_layout_);
-                slots_[slot].set0_shadow = set0_shadow;
 
                 write_buffer_descriptor(
                     device_->handle(), set0_shadow, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,

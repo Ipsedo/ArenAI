@@ -112,7 +112,7 @@ namespace arenai::view {
             &mvp_matrix);
         vkCmdSetLineWidth(frame.cmd, frame.device->wide_lines() ? line_width : 1.f);
 
-        const VkBuffer vertex_buffer = loop.handle();
+        const VkBuffer &vertex_buffer = loop.handle();
         constexpr VkDeviceSize offset = 0;
         vkCmdBindVertexBuffers(frame.cmd, 0, 1, &vertex_buffer, &offset);
         // +1: the loop is closed by the repeated first point
@@ -132,7 +132,7 @@ namespace arenai::view {
      */
 
     VulkanButtonDrawable::VulkanButtonDrawable(
-        std::function<controller::button(void)> get_input, const glm::vec2 center_px,
+        std::function<controller::button()> get_input, const glm::vec2 center_px,
         const float size_px)
         : get_input_(std::move(get_input)), center_x_(center_px.x), center_y_(center_px.y),
           size_(size_px), nb_points_(128) {}
@@ -163,7 +163,7 @@ namespace arenai::view {
      */
 
     VulkanJoyStickDrawable::VulkanJoyStickDrawable(
-        std::function<controller::joystick(void)> get_input_px, const glm::vec2 center_px,
+        std::function<controller::joystick()> get_input_px, const glm::vec2 center_px,
         const float size_px, const float stick_size_px)
         : get_input_(std::move(get_input_px)), center_x_(center_px.x), center_y_(center_px.y),
           size_(size_px), stick_size_(stick_size_px), nb_point_bound_(4), nb_point_stick_(128) {}

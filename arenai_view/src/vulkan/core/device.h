@@ -35,27 +35,24 @@ namespace arenai::view {
         VkPipelineCache pipeline_cache() const;
         const VkPhysicalDeviceProperties &properties() const;
 
-        // asynchronous submit; the fence (optional) signals completion
-        void submit(VkCommandBuffer cmd, VkFence fence);
-        // full form for the windowed frame loop (acquire/present semaphores)
+        void submit(const VkCommandBuffer &cmd, const VkFence &fence);
         void submit(
-            VkCommandBuffer cmd, VkSemaphore wait, VkPipelineStageFlags wait_stage,
-            VkSemaphore signal, VkFence fence);
-        // returns VK_ERROR_OUT_OF_DATE_KHR / VK_SUBOPTIMAL_KHR untouched so the
-        // caller can recreate the swapchain
-        VkResult present(VkSwapchainKHR swapchain, uint32_t image_index, VkSemaphore wait);
-        // records with a one-shot command buffer from the caller's (thread
-        // confined) pool, submits and waits: reset-time uploads only
-        void
-        immediate_submit(VkCommandPool pool, const std::function<void(VkCommandBuffer)> &record);
+            const VkCommandBuffer &cmd, const VkSemaphore &wait, VkPipelineStageFlags wait_stage,
+            const VkSemaphore &signal, const VkFence &fence);
+
+        VkResult
+        present(const VkSwapchainKHR &swap_chain, uint32_t image_index, const VkSemaphore &wait);
+
+        void immediate_submit(
+            const VkCommandPool &pool, const std::function<void(VkCommandBuffer)> &record);
+
         void wait_idle();
 
         VkCommandPool make_command_pool() const;
 
-        // D24 when available (parity with the GL depth buffers), D32F otherwise
         VkFormat find_depth_format(bool needs_sampling) const;
         VkSampleCountFlagBits clamp_sample_count(int wanted) const;
-        // whether line widths above 1.0 are supported (HUD line drawing)
+
         bool wide_lines() const;
 
         std::string renderer_info() const;

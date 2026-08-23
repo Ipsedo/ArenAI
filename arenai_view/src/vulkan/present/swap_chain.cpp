@@ -2,7 +2,7 @@
 // Created by samuel on 17/07/2026.
 //
 
-#include "./swapchain.h"
+#include "./swap_chain.h"
 
 #include <algorithm>
 #include <utility>
@@ -11,42 +11,43 @@
 
 namespace arenai::view {
 
-    Swapchain::Swapchain(
-        std::shared_ptr<VulkanDevice> device, const VkSurfaceKHR surface,
+    SwapChain::SwapChain(
+        std::shared_ptr<VulkanDevice> device, const VkSurfaceKHR &surface,
         std::function<VkExtent2D()> framebuffer_extent)
         : device_(std::move(device)), surface_(surface),
           framebuffer_extent_(std::move(framebuffer_extent)), swapchain_(VK_NULL_HANDLE),
-          format_(VK_FORMAT_UNDEFINED), extent_{0, 0} {
+          format_(VK_FORMAT_UNDEFINED), extent_{.width = 0, .height = 0} {
         recreate();
     }
 
-    bool Swapchain::matches_framebuffer() const {
+    bool SwapChain::matches_framebuffer() const {
         const auto [width, height] = framebuffer_extent_();
         if (width == 0 || height == 0) return true;
         return width == extent_.width && height == extent_.height;
     }
 
-    bool Swapchain::recreate() {
+    bool SwapChain::recreate() {
         VkSurfaceCapabilitiesKHR capabilities;
         vk_check(
             vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device_->physical(), surface_, &capabilities),
             "vkGetPhysicalDeviceSurfaceCapabilitiesKHR");
 
         VkExtent2D extent = capabilities.currentExtent;
+
         if (extent.width == UINT32_MAX) {
-            // the surface has no fixed extent (Wayland): the swapchain sets
-            // the size — use the framebuffer size, clamped to the surface caps
             extent = framebuffer_extent_();
+
             if (extent.width == 0 || extent.height == 0) return false;
+
             extent.width = std::clamp(
                 extent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
             extent.height = std::clamp(
                 extent.height, capabilities.minImageExtent.height,
                 capabilities.maxImageExtent.height);
         }
+
         if (extent.width == 0 || extent.height == 0) return false;
 
-        // no-sRGB format: the shaders encode manually, like the GL pipeline
         uint32_t format_count = 0;
         vkGetPhysicalDeviceSurfaceFormatsKHR(device_->physical(), surface_, &format_count, nullptr);
         std::vector<VkSurfaceFormatKHR> formats(format_count);
@@ -77,7 +78,6 @@ namespace arenai::view {
         create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
         create_info.preTransform = capabilities.currentTransform;
         create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-        // FIFO: vsync pacing, guaranteed available (matches eglSwapBuffers)
         create_info.presentMode = VK_PRESENT_MODE_FIFO_KHR;
         create_info.clipped = VK_TRUE;
         create_info.oldSwapchain = swapchain_;
@@ -114,31 +114,31 @@ namespace arenai::view {
         return true;
     }
 
-    VkResult Swapchain::acquire(const VkSemaphore signal, uint32_t *image_index) const {
+    VkResult SwapChain::acquire(const VkSemaphore signal, uint32_t *image_index) const {
         return vkAcquireNextImageKHR(
             device_->handle(), swapchain_, UINT64_MAX, signal, VK_NULL_HANDLE, image_index);
     }
 
-    VkSwapchainKHR Swapchain::handle() const { return swapchain_; }
+    VkSwapchainKHR SwapChain::handle() const { return swapchain_; }
 
-    VkFormat Swapchain::format() const { return format_; }
+    VkFormat SwapChain::format() const { return format_; }
 
-    int Swapchain::width() const { return static_cast<int>(extent_.width); }
+    int SwapChain::width() const { return static_cast<int>(extent_.width); }
 
-    int Swapchain::height() const { return static_cast<int>(extent_.height); }
+    int SwapChain::height() const { return static_cast<int>(extent_.height); }
 
-    uint32_t Swapchain::image_count() const { return static_cast<uint32_t>(images_.size()); }
+    uint32_t SwapChain::image_count() const { return static_cast<uint32_t>(images_.size()); }
 
-    VkImage Swapchain::image(const uint32_t index) const { return images_[index]; }
+    VkImage SwapChain::image(const uint32_t index) const { return images_[index]; }
 
-    VkImageView Swapchain::view(const uint32_t index) const { return views_[index]; }
+    VkImageView SwapChain::view(const uint32_t index) const { return views_[index]; }
 
-    void Swapchain::destroy_views() {
+    void SwapChain::destroy_views() {
         for (const auto view: views_) vkDestroyImageView(device_->handle(), view, nullptr);
         views_.clear();
     }
 
-    Swapchain::~Swapchain() {
+    SwapChain::~SwapChain() {
         destroy_views();
         if (swapchain_ != VK_NULL_HANDLE)
             vkDestroySwapchainKHR(device_->handle(), swapchain_, nullptr);

@@ -72,13 +72,11 @@ namespace arenai::view {
     void VulkanOffscreenRenderer::on_begin_scene_pass() {
         const VkCommandBuffer &cmd = scene_frame().cmd;
 
-        // previous content is fully overwritten: UNDEFINED discards it
         record_image_barrier(
             cmd, color_->image(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
             VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-        // src = fragment tests: orders against the previous frame still using
-        // this depth image (the two frame slots share the render targets)
+
         record_image_barrier(
             cmd, depth_->image(), VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
             VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
@@ -94,7 +92,7 @@ namespace arenai::view {
         color_attachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        // same red clear as the GL offscreen renderer
+
         color_attachment.clearValue.color = {{1.f, 0.f, 0.f, 0.f}};
 
         VkRenderingAttachmentInfo depth_attachment{};
@@ -116,8 +114,6 @@ namespace arenai::view {
 
         vkCmdBeginRendering(cmd, &rendering_info);
 
-        // negative height: row 0 of the image is the top of the frame, GL
-        // winding and matrices stay untouched
         const VkViewport viewport{
             .x = 0.f,
             .y = static_cast<float>(height_),
@@ -161,7 +157,7 @@ namespace arenai::view {
         vk_check(vkEndCommandBuffer(cmd), "vkEndCommandBuffer (offscreen)");
 
         device()->submit(cmd, fence);
-        slots_[slot_index_].submitted = true;
+        submitted = true;
         slot_index_ = (slot_index_ + 1) % FRAME_SLOTS;
     }
 
@@ -174,8 +170,6 @@ namespace arenai::view {
         const int hw = width_ * height_;
         auto frame = image(std::vector<uint8_t>(hw * 3));
 
-        // RGBA HWC -> RGB CHW (drop alpha, separate channels); no vertical
-        // flip: the negative-height viewport already stores rows top-down
         const auto *src = static_cast<const uint8_t *>(slot.readback->data());
         auto *dst = frame.pixels.data();
         for (int i = 0; i < hw; i++) {
@@ -190,9 +184,6 @@ namespace arenai::view {
         const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
         draw(model_matrices);
 
-        // after draw() the index points at the previous frame's slot; on the
-        // very first call it was never submitted: return the black warm-up
-        // frame, like the GL PBO pipeline
         const auto &previous = slots_[slot_index_];
         if (!previous.submitted) {
             const int hw = width_ * height_;
@@ -224,7 +215,6 @@ namespace arenai::view {
             vkDestroyFence(VulkanRenderer::device()->handle(), slot.fence, nullptr);
             slot.readback.reset();
         }
-        // the command buffers die with the base class's pool
     }
 
 }// namespace arenai::view

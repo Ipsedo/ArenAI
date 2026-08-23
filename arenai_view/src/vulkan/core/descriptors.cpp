@@ -25,7 +25,7 @@ namespace arenai::view {
         return *this;
     }
 
-    VkDescriptorSetLayout DescriptorLayoutBuilder::build(const VkDevice device) const {
+    VkDescriptorSetLayout DescriptorLayoutBuilder::build(const VkDevice &device) const {
         VkDescriptorSetLayoutCreateInfo create_info{};
         create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         create_info.bindingCount = static_cast<uint32_t>(bindings_.size());
@@ -48,9 +48,10 @@ namespace arenai::view {
     VkDescriptorPool DescriptorAllocator::make_pool() const {
         constexpr uint32_t sets_per_pool = 64;
         const std::vector<VkDescriptorPoolSize> sizes = {
-            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2 * sets_per_pool},
-            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, sets_per_pool},
-            {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4 * sets_per_pool},
+            {.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .descriptorCount = 2 * sets_per_pool},
+            {.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, .descriptorCount = sets_per_pool},
+            {.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+             .descriptorCount = 4 * sets_per_pool},
         };
 
         VkDescriptorPoolCreateInfo pool_info{};
@@ -66,7 +67,7 @@ namespace arenai::view {
         return pool;
     }
 
-    VkDescriptorSet DescriptorAllocator::allocate(const VkDescriptorSetLayout layout) {
+    VkDescriptorSet DescriptorAllocator::allocate(const VkDescriptorSetLayout &layout) {
         if (pools_.empty()) pools_.push_back(make_pool());
 
         VkDescriptorSetAllocateInfo alloc_info{};
@@ -95,10 +96,11 @@ namespace arenai::view {
      */
 
     void write_buffer_descriptor(
-        const VkDevice device, const VkDescriptorSet set, const uint32_t binding,
-        const VkDescriptorType type, const VkBuffer buffer, const VkDeviceSize offset,
+        const VkDevice &device, const VkDescriptorSet &set, const uint32_t binding,
+        const VkDescriptorType type, const VkBuffer &buffer, const VkDeviceSize offset,
         const VkDeviceSize range) {
-        VkDescriptorBufferInfo buffer_info{buffer, offset, range};
+        const VkDescriptorBufferInfo buffer_info{
+            .buffer = buffer, .offset = offset, .range = range};
 
         VkWriteDescriptorSet write{};
         write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -112,9 +114,10 @@ namespace arenai::view {
     }
 
     void write_image_descriptor(
-        const VkDevice device, const VkDescriptorSet set, const uint32_t binding,
-        const VkSampler sampler, const VkImageView view, const VkImageLayout layout) {
-        VkDescriptorImageInfo image_info{sampler, view, layout};
+        const VkDevice &device, const VkDescriptorSet &set, const uint32_t binding,
+        const VkSampler &sampler, const VkImageView &view, const VkImageLayout layout) {
+        const VkDescriptorImageInfo image_info{
+            .sampler = sampler, .imageView = view, .imageLayout = layout};
 
         VkWriteDescriptorSet write{};
         write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

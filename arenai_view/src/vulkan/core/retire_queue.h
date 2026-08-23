@@ -12,19 +12,13 @@
 
 namespace arenai::view {
 
-    // Deferred destruction of GPU-referenced objects: an item handed to
-    // retire() may still be referenced by an in-flight frame, so it is kept
-    // alive for lifetime_frames more tick() calls (one tick per rendered
-    // frame) before being destroyed.
     template<typename T>
     class RetireQueue {
     public:
         explicit RetireQueue(const uint64_t lifetime_frames) : lifetime_frames_(lifetime_frames) {}
 
-        // tags the item with the current frame; destroyed lifetime frames later
         void retire(std::unique_ptr<T> item) { retired_.emplace_back(frame_, std::move(item)); }
 
-        // advances the frame counter and destroys every expired item
         void tick() {
             frame_++;
             std::erase_if(retired_, [this](const auto &entry) {
@@ -32,7 +26,6 @@ namespace arenai::view {
             });
         }
 
-        // immediate destruction of everything, once the GPU is known idle
         void drain_all() { retired_.clear(); }
 
     private:

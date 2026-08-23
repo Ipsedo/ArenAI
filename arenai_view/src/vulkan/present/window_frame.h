@@ -11,22 +11,14 @@
 
 #include "../core/device.h"
 #include "../core/vk.h"
-#include "./swapchain.h"
+#include "./swap_chain.h"
 
 namespace arenai::view {
 
-    // Orchestrates the windowed frame: 2 frames in flight over the swapchain,
-    // shared by the backend (UI passes, present), the player renderer (scene
-    // + composite + HUD) and the Rml render interface. One frame spans the
-    // whole application call sequence — player draw, then optionally the UI
-    // overlay, then present() — so the swapchain image is acquired lazily on
-    // the first draw and the command buffer stays open until present().
     class WindowFrameContext {
     public:
         static constexpr int FRAME_SLOTS = 2;
 
-        // framebuffer_extent: see Swapchain — window framebuffer size for
-        // surfaces without a fixed extent (Wayland)
         WindowFrameContext(
             std::shared_ptr<VulkanDevice> device, VkSurfaceKHR surface,
             std::function<VkExtent2D()> framebuffer_extent);
@@ -34,9 +26,6 @@ namespace arenai::view {
         WindowFrameContext(const WindowFrameContext &) = delete;
         WindowFrameContext &operator=(const WindowFrameContext &) = delete;
 
-        // waits the slot fence, acquires a swapchain image and begins the
-        // command buffer; idempotent within a frame. Returns false when the
-        // window is minimized (0x0): the frame is skipped entirely.
         bool ensure_frame_begun();
         bool frame_active() const;
 
@@ -47,19 +36,11 @@ namespace arenai::view {
         int width() const;
         int height() const;
 
-        // rendering scope on the swapchain image: load_existing keeps the
-        // pixels already recorded this frame (UI overlay over the game),
-        // otherwise the image is cleared to black (UI-only frame) or left
-        // undefined (clear = false: the composite pass covers every pixel)
-        void begin_swapchain_pass(bool load_existing, bool clear);
+        void begin_swapchain_pass(bool load_existing, bool clear) const;
         void end_swapchain_pass();
 
-        // barrier to PRESENT_SRC, submit, present, advance the slot; no-op
-        // when no frame was begun (minimized window)
         void present();
 
-        // called from the resize callback: waits the device idle and
-        // recreates the swapchain at the new surface size
         void handle_resize();
 
         ~WindowFrameContext();
@@ -75,12 +56,12 @@ namespace arenai::view {
         void wait_all_fences();
 
         std::shared_ptr<VulkanDevice> device_;
-        std::unique_ptr<Swapchain> swapchain_;
+        std::unique_ptr<SwapChain> swapchain_;
         bool swapchain_valid_;
 
         VkCommandPool pool_;
         Slot slots_[FRAME_SLOTS];
-        // one per swapchain image: signaled by the submit, waited by present
+
         std::vector<VkSemaphore> render_finished_;
 
         int slot_index_ = 0;

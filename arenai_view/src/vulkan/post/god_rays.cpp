@@ -23,15 +23,14 @@ namespace arenai::view {
         const int width, const int height)
         : VulkanPostEffect(
             device, descriptors, "god_rays_fs.glsl", 1, sizeof(GodRaysPush),
-            {{VK_FORMAT_R8_UNORM, 2}}, width, height) {}
+            {{.format = VK_FORMAT_R8_UNORM, .size_divisor = 2}}, width, height) {}
 
     void GodRaysEffect::render(FrameContext &context) {
         float ray_strength = 0.f;
         glm::vec2 sun_uv(0.5f);
         if (context.sun_dir_view.z < 0.f) {
             const glm::vec4 sun_clip = context.proj_matrix * glm::vec4(context.sun_dir_view, 0.f);
-            // top-left-origin uv space (the images are stored top-down): the
-            // y term is flipped compared to the GL formula
+
             sun_uv = glm::vec2(
                 sun_clip.x / sun_clip.w * 0.5f + 0.5f, 0.5f - sun_clip.y / sun_clip.w * 0.5f);
 
@@ -44,13 +43,12 @@ namespace arenai::view {
 
         if (ray_strength > 0.f) {
             const GodRaysPush push{
-                context.proj_info, sun_uv,
-                static_cast<float>(context.screen_width)
-                    / static_cast<float>(context.screen_height)};
+                .proj_info = context.proj_info,
+                .sun_uv = sun_uv,
+                .aspect = static_cast<float>(context.screen_width)
+                          / static_cast<float>(context.screen_height)};
             run_pass(context, 0, {context.depth}, &push);
         } else {
-            // pass skipped: the composite still samples the target (weighted
-            // by ray_strength = 0), its layout must stay valid
             ensure_target_readable(context, 0);
         }
 

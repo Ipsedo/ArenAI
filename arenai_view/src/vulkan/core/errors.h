@@ -11,7 +11,6 @@
 
 namespace arenai::view {
 
-    // Throws std::runtime_error with the result name when result is not VK_SUCCESS.
     void vk_check(VkResult result, const std::string &message);
 
 }// namespace arenai::view

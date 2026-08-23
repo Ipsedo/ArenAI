@@ -43,9 +43,9 @@ namespace arenai::view {
 
     // Records a full-image layout transition barrier.
     void record_image_barrier(
-        VkCommandBuffer cmd, VkImage image, VkImageAspectFlags aspect, VkImageLayout old_layout,
-        VkImageLayout new_layout, VkAccessFlags src_access, VkAccessFlags dst_access,
-        VkPipelineStageFlags src_stage, VkPipelineStageFlags dst_stage);
+        const VkCommandBuffer &cmd, const VkImage &image, VkImageAspectFlags aspect,
+        VkImageLayout old_layout, VkImageLayout new_layout, VkAccessFlags src_access,
+        VkAccessFlags dst_access, VkPipelineStageFlags src_stage, VkPipelineStageFlags dst_stage);
 
 }// namespace arenai::view
 

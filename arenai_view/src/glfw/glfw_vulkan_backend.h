@@ -35,8 +35,6 @@ namespace arenai::view {
         ~GlfwVulkanBackend() override;
 
     private:
-        // window + instance + surface exist before the device is picked
-        // against the surface: built ahead of the base-class construction
         struct Bootstrap {
             std::shared_ptr<GlfwVulkanWindow> window;
             std::shared_ptr<VulkanInstance> instance;

@@ -31,8 +31,6 @@ namespace arenai::view {
     }
 
     void VulkanShadowMap::begin_depth_pass(const VkCommandBuffer &cmd) const {
-        // the previous content is cleared below: UNDEFINED discards it and
-        // covers the first use as well
         record_image_barrier(
             cmd, depth_->image(), VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
             VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 0,

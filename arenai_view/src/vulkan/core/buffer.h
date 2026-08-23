@@ -14,13 +14,11 @@
 
 namespace arenai::view {
 
-    // Device-local buffer filled once through a staging copy (vertex/index
-    // data, uploaded at drawable-creation time on the caller's thread).
     class VulkanBuffer {
     public:
         VulkanBuffer(
-            std::shared_ptr<VulkanDevice> device, VkCommandPool pool, const void *data, size_t size,
-            VkBufferUsageFlags usage);
+            std::shared_ptr<VulkanDevice> device, const VkCommandPool &pool, const void *data,
+            size_t size, VkBufferUsageFlags usage);
 
         VulkanBuffer(const VulkanBuffer &) = delete;
         VulkanBuffer &operator=(const VulkanBuffer &) = delete;
@@ -37,11 +35,10 @@ namespace arenai::view {
         size_t size_;
     };
 
-    // Host-visible, persistently mapped buffer: readbacks and UBO rings.
     class HostVisibleBuffer {
     public:
         HostVisibleBuffer(
-            std::shared_ptr<VulkanDevice> device, size_t size, VkBufferUsageFlags usage);
+            std::shared_ptr<VulkanDevice> device, size_t size, const VkBufferUsageFlags &usage);
 
         HostVisibleBuffer(const HostVisibleBuffer &) = delete;
         HostVisibleBuffer &operator=(const HostVisibleBuffer &) = delete;
@@ -50,8 +47,6 @@ namespace arenai::view {
         void *data() const;
         size_t size() const;
 
-        // non-coherent memory support: flush after CPU writes, invalidate
-        // before CPU reads (no-ops on the usual coherent heaps)
         void flush() const;
         void invalidate() const;
 

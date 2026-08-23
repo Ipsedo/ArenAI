@@ -15,7 +15,7 @@ namespace arenai::view {
         std::shared_ptr<VulkanDevice> device, const VkSurfaceKHR surface,
         std::function<VkExtent2D()> framebuffer_extent)
         : device_(std::move(device)),
-          swapchain_(std::make_unique<Swapchain>(device_, surface, std::move(framebuffer_extent))),
+          swapchain_(std::make_unique<SwapChain>(device_, surface, std::move(framebuffer_extent))),
           swapchain_valid_(swapchain_->handle() != VK_NULL_HANDLE),
           pool_(device_->make_command_pool()) {
         VkCommandBufferAllocateInfo alloc_info{};
@@ -51,32 +51,25 @@ namespace arenai::view {
 
     bool WindowFrameContext::ensure_frame_begun() {
         if (frame_active_) return true;
-        // recreate when the last attempt failed (minimized) or when the
-        // window was resized: Wayland scales the buffer instead of raising
-        // VK_ERROR_OUT_OF_DATE_KHR, so a stale extent would silently render
-        // the frame at the old size (stretched, and mis-clipped by every
-        // scissor set in layout coordinates)
+
         if (!swapchain_valid_ || !swapchain_->matches_framebuffer()) {
             device_->wait_idle();
             swapchain_valid_ = swapchain_->recreate();
             if (!swapchain_valid_) return false;
         }
 
-        auto &slot = slots_[slot_index_];
-        if (slot.submitted) {
+        auto &[cmd, in_flight, image_acquired, submitted] = slots_[slot_index_];
+        if (submitted) {
             vk_check(
-                vkWaitForFences(device_->handle(), 1, &slot.in_flight, VK_TRUE, UINT64_MAX),
+                vkWaitForFences(device_->handle(), 1, &in_flight, VK_TRUE, UINT64_MAX),
                 "vkWaitForFences (window frame)");
             vk_check(
-                vkResetFences(device_->handle(), 1, &slot.in_flight),
-                "vkResetFences (window frame)");
-            slot.submitted = false;
+                vkResetFences(device_->handle(), 1, &in_flight), "vkResetFences (window frame)");
+            submitted = false;
         }
 
-        // acquire, recreating the swapchain when it no longer matches the
-        // surface (resize, fullscreen toggle)
         while (true) {
-            const VkResult result = swapchain_->acquire(slot.image_acquired, &image_index_);
+            const VkResult result = swapchain_->acquire(image_acquired, &image_index_);
             if (result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR) break;
             if (result == VK_ERROR_OUT_OF_DATE_KHR) {
                 device_->wait_idle();
@@ -90,11 +83,10 @@ namespace arenai::view {
         VkCommandBufferBeginInfo begin_info{};
         begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-        vk_check(vkBeginCommandBuffer(slot.cmd, &begin_info), "vkBeginCommandBuffer (window)");
+        vk_check(vkBeginCommandBuffer(cmd, &begin_info), "vkBeginCommandBuffer (window)");
 
-        // the whole frame is rewritten: discard the previous content
         record_image_barrier(
-            slot.cmd, swapchain_->image(image_index_), VK_IMAGE_ASPECT_COLOR_BIT,
+            cmd, swapchain_->image(image_index_), VK_IMAGE_ASPECT_COLOR_BIT,
             VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0,
             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
@@ -120,7 +112,8 @@ namespace arenai::view {
 
     int WindowFrameContext::height() const { return swapchain_->height(); }
 
-    void WindowFrameContext::begin_swapchain_pass(const bool load_existing, const bool clear) {
+    void
+    WindowFrameContext::begin_swapchain_pass(const bool load_existing, const bool clear) const {
         VkRenderingAttachmentInfo color_attachment{};
         color_attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
         color_attachment.imageView = swapchain_->view(image_index_);
@@ -141,9 +134,8 @@ namespace arenai::view {
         rendering_info.colorAttachmentCount = 1;
         rendering_info.pColorAttachments = &color_attachment;
 
-        const VkCommandBuffer command_buffer = cmd();
+        const VkCommandBuffer &command_buffer = cmd();
         if (image_written_) {
-            // order this pass after the previous one on the same image
             record_image_barrier(
                 command_buffer, swapchain_->image(image_index_), VK_IMAGE_ASPECT_COLOR_BIT,
                 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -155,7 +147,6 @@ namespace arenai::view {
 
         vkCmdBeginRendering(command_buffer, &rendering_info);
 
-        // negative height: GL orientation preserved, row 0 = top of frame
         const VkViewport viewport{
             0.f,
             static_cast<float>(swapchain_->height()),
@@ -179,21 +170,21 @@ namespace arenai::view {
     void WindowFrameContext::present() {
         if (!frame_active_) return;
 
-        auto &slot = slots_[slot_index_];
+        auto &[cmd, in_flight, image_acquired, submitted] = slots_[slot_index_];
 
         record_image_barrier(
-            slot.cmd, swapchain_->image(image_index_), VK_IMAGE_ASPECT_COLOR_BIT,
+            cmd, swapchain_->image(image_index_), VK_IMAGE_ASPECT_COLOR_BIT,
             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, 0, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
             VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
 
-        vk_check(vkEndCommandBuffer(slot.cmd), "vkEndCommandBuffer (window)");
+        vk_check(vkEndCommandBuffer(cmd), "vkEndCommandBuffer (window)");
 
-        const VkSemaphore finished = render_finished_[image_index_];
+        const VkSemaphore &finished = render_finished_[image_index_];
         device_->submit(
-            slot.cmd, slot.image_acquired, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, finished,
-            slot.in_flight);
-        slot.submitted = true;
+            cmd, image_acquired, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, finished,
+            in_flight);
+        submitted = true;
 
         const VkResult result = device_->present(swapchain_->handle(), image_index_, finished);
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
@@ -208,11 +199,9 @@ namespace arenai::view {
     }
 
     void WindowFrameContext::handle_resize() {
-        // the resize callback fires between frames (during event polling)
         device_->wait_idle();
         swapchain_valid_ = swapchain_->recreate();
 
-        // render-finished semaphores are per swapchain image
         if (swapchain_valid_ && render_finished_.size() != swapchain_->image_count()) {
             for (const auto semaphore: render_finished_)
                 vkDestroySemaphore(device_->handle(), semaphore, nullptr);
@@ -237,7 +226,7 @@ namespace arenai::view {
         device_->wait_idle();
         for (const auto semaphore: render_finished_)
             vkDestroySemaphore(device_->handle(), semaphore, nullptr);
-        for (auto &slot: slots_) {
+        for (const auto &slot: slots_) {
             vkDestroySemaphore(device_->handle(), slot.image_acquired, nullptr);
             vkDestroyFence(device_->handle(), slot.in_flight, nullptr);
         }

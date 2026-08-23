@@ -77,8 +77,6 @@ namespace arenai::view {
 
         glfwUpdateGamepadMappings(EXTRA_GAMEPAD_MAPPINGS);
 
-        // Vulkan renders into the window through a VkSurfaceKHR: no GL
-        // context at all
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
         window_ = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
@@ -161,8 +159,6 @@ namespace arenai::view {
         for (int jid = GLFW_JOYSTICK_1; jid <= GLFW_JOYSTICK_LAST && !found; jid++)
             found = glfwJoystickIsGamepad(jid) && glfwGetGamepadState(jid, &state);
         if (!found) {
-            // a joystick GLFW has no gamepad mapping for would be silently
-            // ignored above: report it once to ease diagnosis
             for (int jid = GLFW_JOYSTICK_1; jid <= GLFW_JOYSTICK_LAST && !unmapped_joystick_warned_;
                  jid++)
                 if (glfwJoystickPresent(jid)) {
@@ -185,7 +181,6 @@ namespace arenai::view {
             gamepad_button_states_[glfw_button] = curr;
         }
 
-        // GLFW triggers range in [-1, 1], normalized here to [0, 1]
         gamepad_callback_->on_trigger(
             (state.axes[GLFW_GAMEPAD_AXIS_LEFT_TRIGGER] + 1.) / 2.,
             controller::GamepadTrigger::Left);
@@ -193,8 +188,6 @@ namespace arenai::view {
             (state.axes[GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER] + 1.) / 2.,
             controller::GamepadTrigger::Right);
 
-        // right stick last: it is dispatched exactly once per frame, so handlers
-        // may use it as the per-frame tick to apply the accumulated input state
         gamepad_callback_->on_joystick(
             state.axes[GLFW_GAMEPAD_AXIS_LEFT_X], state.axes[GLFW_GAMEPAD_AXIS_LEFT_Y],
             controller::GamepadJoystick::Left);
@@ -229,15 +222,14 @@ namespace arenai::view {
     }
 
     void GlfwVulkanWindow::set_fullscreen(const bool fullscreen) {
-        const bool is_fullscreen = glfwGetWindowMonitor(window_) != nullptr;
-        if (fullscreen == is_fullscreen) return;
+        if (const bool is_fullscreen = glfwGetWindowMonitor(window_) != nullptr;
+            fullscreen == is_fullscreen)
+            return;
 
         if (fullscreen) {
             glfwGetWindowPos(window_, &windowed_x_, &windowed_y_);
             glfwGetWindowSize(window_, &windowed_width_, &windowed_height_);
 
-            // the monitor's current video mode: borderless fullscreen without
-            // a display mode switch
             GLFWmonitor *monitor = glfwGetPrimaryMonitor();
             const GLFWvidmode *mode = glfwGetVideoMode(monitor);
             glfwSetWindowMonitor(
@@ -249,11 +241,9 @@ namespace arenai::view {
     }
 
     std::tuple<int, int> GlfwVulkanWindow::screen_size() const {
-        // fullscreen: the owning monitor is known directly
         GLFWmonitor *monitor = glfwGetWindowMonitor(window_);
 
         if (!monitor) {
-            // windowed: pick the monitor showing the largest part of the window
             int x, y, width, height;
             glfwGetWindowPos(window_, &x, &y);
             glfwGetWindowSize(window_, &width, &height);
@@ -277,7 +267,7 @@ namespace arenai::view {
                     monitor = monitors[i];
                 }
             }
-            // window fully off-screen or no overlap information
+
             if (!monitor) monitor = glfwGetPrimaryMonitor();
         }
 
@@ -285,7 +275,6 @@ namespace arenai::view {
             if (const GLFWvidmode *mode = glfwGetVideoMode(monitor))
                 return {mode->width, mode->height};
 
-        // no monitor reachable: the framebuffer is the best remaining estimate
         return framebuffer_size();
     }
 
@@ -296,7 +285,7 @@ namespace arenai::view {
         return {extensions, extensions + count};
     }
 
-    VkSurfaceKHR GlfwVulkanWindow::create_surface(const VkInstance instance) const {
+    VkSurfaceKHR GlfwVulkanWindow::create_surface(const VkInstance &instance) const {
         VkSurfaceKHR surface = VK_NULL_HANDLE;
         if (glfwCreateWindowSurface(instance, window_, nullptr, &surface) != VK_SUCCESS)
             throw std::runtime_error("glfwCreateWindowSurface() failed");

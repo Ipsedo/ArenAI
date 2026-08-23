@@ -81,7 +81,6 @@ namespace arenai::view {
         depth_pipeline_ = PipelineBuilder()
                               .shaders("shadow_depth_vs.glsl", "shadow_depth_fs.glsl")
                               .vertex_input(POSITION_BINDING, POSITION_ATTRIBUTE)
-                              // slope-scaled acne removal, ex-glPolygonOffset(2, 4)
                               .depth_bias(4.f, 2.f)
                               .depth_format(context_->shadow_depth_format())
                               .build(context_->device(), depth_pipeline_layout_);
@@ -92,7 +91,7 @@ namespace arenai::view {
 
         shadow_pipeline_layout_ = make_pipeline_layout(
             context_->device()->handle(), {context_->set0_shadow_layout(), material_layout_},
-            {{VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(ScenePush)}});
+            {{.stageFlags = VK_SHADER_STAGE_VERTEX_BIT, .offset = 0, .size = sizeof(ScenePush)}});
         shadow_pipeline_ = PipelineBuilder()
                                .shaders("diffuse_shadow_vs.glsl", "diffuse_shadow_fs.glsl")
                                .vertex_input(POSITION_BINDING, POSITION_ATTRIBUTE)
@@ -103,7 +102,7 @@ namespace arenai::view {
     }
 
     void VulkanDiffuse::record_draw(
-        const VkPipeline pipeline, const VkPipelineLayout layout, const VkDescriptorSet set0,
+        const VkPipeline &pipeline, const VkPipelineLayout &layout, const VkDescriptorSet &set0,
         const uint32_t dynamic_offset_count, const glm::mat4 &mvp_matrix,
         const glm::mat4 &mv_matrix) const {
         const auto &frame = context_->scene_frame();
@@ -115,11 +114,11 @@ namespace arenai::view {
             frame.cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 2, sets, dynamic_offset_count,
             &frame.shadow_dynamic_offset);
 
-        const ScenePush push{mvp_matrix, mv_matrix};
+        const ScenePush push{.mvp_matrix = mvp_matrix, .mv_matrix = mv_matrix};
         vkCmdPushConstants(
             frame.cmd, layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(ScenePush), &push);
 
-        const VkBuffer vertex_buffer = vertices_->handle();
+        const VkBuffer &vertex_buffer = vertices_->handle();
         constexpr VkDeviceSize offset = 0;
         vkCmdBindVertexBuffers(frame.cmd, 0, 1, &vertex_buffer, &offset);
 
@@ -145,7 +144,7 @@ namespace arenai::view {
             frame.cmd, depth_pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4),
             &light_mvp_matrix);
 
-        const VkBuffer vertex_buffer = vertices_->handle();
+        const VkBuffer &vertex_buffer = vertices_->handle();
         constexpr VkDeviceSize offset = 0;
         vkCmdBindVertexBuffers(frame.cmd, 0, 1, &vertex_buffer, &offset);
 
@@ -163,7 +162,9 @@ namespace arenai::view {
 
     VulkanDiffuse::~VulkanDiffuse() {
         if (context_ == nullptr) return;
-        const VkDevice device = context_->device()->handle();
+
+        const VkDevice &device = context_->device()->handle();
+
         vkDestroyPipeline(device, shadow_pipeline_, nullptr);
         vkDestroyPipelineLayout(device, shadow_pipeline_layout_, nullptr);
         vkDestroyPipeline(device, depth_pipeline_, nullptr);

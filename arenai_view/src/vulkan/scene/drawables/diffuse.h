@@ -18,10 +18,6 @@
 
 namespace arenai::view {
 
-    // Flat-shaded matte drawable: the fragment shader derives per-face normals
-    // from screen-space derivatives, so only vertex positions are uploaded.
-    // Three pipelines, built lazily on first use so that renderers without
-    // shadows (offscreen agent vision) pay nothing for the shadow ones.
     class VulkanDiffuse final : public VulkanShadowDrawable {
     public:
         VulkanDiffuse(
@@ -41,13 +37,14 @@ namespace arenai::view {
         ~VulkanDiffuse() override;
 
     private:
-        // vertex buffer + material UBO/set, shared by the three pipelines
         void ensure_common();
+
         void ensure_plain_pipeline();
         void ensure_depth_pipeline();
         void ensure_shadow_pipeline();
+
         void record_draw(
-            VkPipeline pipeline, VkPipelineLayout layout, VkDescriptorSet set0,
+            const VkPipeline &pipeline, const VkPipelineLayout &layout, const VkDescriptorSet &set0,
             uint32_t dynamic_offset_count, const glm::mat4 &mvp_matrix,
             const glm::mat4 &mv_matrix) const;
 

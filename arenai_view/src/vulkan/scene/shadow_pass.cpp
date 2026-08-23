@@ -14,10 +14,6 @@
 
 namespace arenai::view {
 
-    // maps light-space NDC to shadow-map coordinates: x/y from [-1, 1] to
-    // [0, 1] with the y axis flipped (the depth pass rasterizes with a
-    // negative-height viewport, so row 0 holds ndc.y = +1), z already in
-    // [0, 1] with the zero-to-one ortho projection
     constexpr glm::mat4 SHADOW_BIAS_MATRIX(
         0.5f, 0.f, 0.f, 0.f, 0.f, -0.5f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.5f, 0.5f, 0.f, 1.f);
 
@@ -41,8 +37,6 @@ namespace arenai::view {
         const glm::mat4 light_view =
             glm::lookAt(light_dir * settings_.distance, glm::vec3(0.f), up);
 
-        // center the ortho frustum on the camera, snapped to the shadow-map
-        // texel grid to avoid shadow shimmering when the camera moves
         const auto center = glm::vec3(light_view * glm::vec4(camera_pos, 1.f));
         const float texel_size = 2.f * settings_.half_extent / static_cast<float>(map_->size());
         const float x = std::floor(center.x / texel_size) * texel_size;
@@ -76,10 +70,10 @@ namespace arenai::view {
 
         const uint32_t new_capacity = std::max(64u, std::bit_ceil(needed));
 
-        rings_[slot].buffer = std::make_unique<HostVisibleBuffer>(
+        buffer = std::make_unique<HostVisibleBuffer>(
             device_, static_cast<size_t>(new_capacity) * settings_.ring_stride,
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-        rings_[slot].capacity = new_capacity;
+        capacity = new_capacity;
 
         return true;
     }

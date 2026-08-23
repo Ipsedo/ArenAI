@@ -12,11 +12,6 @@
 
 namespace arenai::view {
 
-    // Offscreen renderer for the agents' vision. Keeps the asynchronous
-    // 2-slot readback of the GL PBO implementation: frame N is submitted
-    // without waiting and the frame N-1 pixels are returned, the very first
-    // call returning a black image — arenai_core's 2-frame warm-up relies on
-    // this exact latency.
     class VulkanOffscreenRenderer final : public VulkanRenderer, public AbstractOffscreenRenderer {
     public:
         VulkanOffscreenRenderer(

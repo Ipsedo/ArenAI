@@ -20,7 +20,7 @@ namespace arenai::view {
     class AbstractVulkanWindow : public AbstractWindow {
     public:
         virtual std::vector<const char *> required_instance_extensions() const = 0;
-        virtual VkSurfaceKHR create_surface(VkInstance instance) const = 0;
+        virtual VkSurfaceKHR create_surface(const VkInstance &instance) const = 0;
 
         virtual std::tuple<int, int> framebuffer_size() const = 0;
     };

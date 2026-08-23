@@ -38,11 +38,12 @@ namespace arenai::view {
     }
 
     void VulkanPostProcess::create_scene_targets() {
-        // single-sampled resolve targets, sampled by the effect chain
+
         resolve_color_ = std::make_unique<Target>(
             device_, width_, height_, VK_FORMAT_R8G8B8A8_UNORM,
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
             VK_IMAGE_ASPECT_COLOR_BIT);
+
         resolve_depth_ = std::make_unique<Target>(
             device_, width_, height_, depth_format_,
             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
@@ -56,7 +57,6 @@ namespace arenai::view {
                 device_, width_, height_, depth_format_,
                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, samples_);
         } else {
-            // no MSAA available: render straight into the resolve targets
             msaa_color_.reset();
             msaa_depth_.reset();
         }
@@ -74,13 +74,13 @@ namespace arenai::view {
         for (const auto &effect: ordered_effects_) effect->resize(width_, height_);
     }
 
-    VkFormat VulkanPostProcess::scene_color_format() const { return VK_FORMAT_R8G8B8A8_UNORM; }
+    VkFormat VulkanPostProcess::scene_color_format() { return VK_FORMAT_R8G8B8A8_UNORM; }
 
     VkFormat VulkanPostProcess::scene_depth_format() const { return depth_format_; }
 
     VkSampleCountFlagBits VulkanPostProcess::scene_samples() const { return samples_; }
 
-    void VulkanPostProcess::begin_scene_pass(const VkCommandBuffer cmd) {
+    void VulkanPostProcess::begin_scene_pass(const VkCommandBuffer &cmd) const {
         const bool msaa = samples_ != VK_SAMPLE_COUNT_1_BIT;
         const Target &color = msaa ? *msaa_color_ : *resolve_color_;
         const Target &depth = msaa ? *msaa_depth_ : *resolve_depth_;
@@ -92,6 +92,7 @@ namespace arenai::view {
             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+
         record_image_barrier(
             cmd, depth.image(), VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
             VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
@@ -108,6 +109,7 @@ namespace arenai::view {
                 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
                 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                 VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+
             record_image_barrier(
                 cmd, resolve_depth_->image(), VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
                 VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 0,
@@ -123,7 +125,7 @@ namespace arenai::view {
         color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         color_attachment.storeOp =
             msaa ? VK_ATTACHMENT_STORE_OP_DONT_CARE : VK_ATTACHMENT_STORE_OP_STORE;
-        // same red clear as the GL player renderer
+
         color_attachment.clearValue.color = {{1.f, 0.f, 0.f, 0.f}};
         if (msaa) {
             color_attachment.resolveMode = VK_RESOLVE_MODE_AVERAGE_BIT;
@@ -138,10 +140,9 @@ namespace arenai::view {
         depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         depth_attachment.storeOp =
             msaa ? VK_ATTACHMENT_STORE_OP_DONT_CARE : VK_ATTACHMENT_STORE_OP_STORE;
-        depth_attachment.clearValue.depthStencil = {1.f, 0};
+        depth_attachment.clearValue.depthStencil = {.depth = 1.f, .stencil = 0};
+
         if (msaa) {
-            // GL's depth blit takes one sample: SAMPLE_ZERO, mandated by the
-            // 1.2 depth-stencil-resolve support
             depth_attachment.resolveMode = VK_RESOLVE_MODE_SAMPLE_ZERO_BIT;
             depth_attachment.resolveImageView = resolve_depth_->view();
             depth_attachment.resolveImageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -150,7 +151,9 @@ namespace arenai::view {
         VkRenderingInfo rendering_info{};
         rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
         rendering_info.renderArea = {
-            {0, 0}, {static_cast<uint32_t>(width_), static_cast<uint32_t>(height_)}};
+            .offset = {.x = 0, .y = 0},
+            .extent = {
+                .width = static_cast<uint32_t>(width_), .height = static_cast<uint32_t>(height_)}};
         rendering_info.layerCount = 1;
         rendering_info.colorAttachmentCount = 1;
         rendering_info.pColorAttachments = &color_attachment;
@@ -159,23 +162,25 @@ namespace arenai::view {
         vkCmdBeginRendering(cmd, &rendering_info);
 
         // negative height: the scene keeps the GL orientation conventions
-        const VkViewport viewport{0.f,
-                                  static_cast<float>(height_),
-                                  static_cast<float>(width_),
-                                  -static_cast<float>(height_),
-                                  0.f,
-                                  1.f};
+        const VkViewport viewport{
+            .x = 0.f,
+            .y = static_cast<float>(height_),
+            .width = static_cast<float>(width_),
+            .height = -static_cast<float>(height_),
+            .minDepth = 0.f,
+            .maxDepth = 1.f};
         vkCmdSetViewport(cmd, 0, 1, &viewport);
         const VkRect2D scissor{
-            {0, 0}, {static_cast<uint32_t>(width_), static_cast<uint32_t>(height_)}};
+            .offset = {.x = 0, .y = 0},
+            .extent = {
+                .width = static_cast<uint32_t>(width_), .height = static_cast<uint32_t>(height_)}};
         vkCmdSetScissor(cmd, 0, 1, &scissor);
     }
 
     void VulkanPostProcess::run_effects(
-        const VkCommandBuffer cmd, const glm::mat4 &proj_matrix, const glm::vec3 &sun_dir_view) {
+        const VkCommandBuffer &cmd, const glm::mat4 &proj_matrix, const glm::vec3 &sun_dir_view) {
         vkCmdEndRendering(cmd);
 
-        // the resolved color + depth become the inputs of the effect chain
         record_image_barrier(
             cmd, resolve_color_->image(), VK_IMAGE_ASPECT_COLOR_BIT,
             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
@@ -191,28 +196,28 @@ namespace arenai::view {
         frame_ = (frame_ + 1) % 1024;
 
         context_ = VulkanPostEffect::FrameContext{
-            cmd,
-            resolve_color_.get(),
-            resolve_depth_.get(),
-            width_,
-            height_,
-            proj_matrix,
-            // projection terms consumed by the depth-reconstruction shaders
-            glm::vec4(proj_matrix[0][0], proj_matrix[1][1], proj_matrix[2][2], proj_matrix[3][2]),
-            sun_dir_view,
-            frame_,
-            {},
-            {},
-            VK_FORMAT_UNDEFINED,
-            0,
-            0};
+            .cmd = cmd,
+            .scene = resolve_color_.get(),
+            .depth = resolve_depth_.get(),
+            .screen_width = width_,
+            .screen_height = height_,
+            .proj_matrix = proj_matrix,
+            .proj_info = glm::vec4(
+                proj_matrix[0][0], proj_matrix[1][1], proj_matrix[2][2], proj_matrix[3][2]),
+            .sun_dir_view = sun_dir_view,
+            .frame = frame_,
+            .textures = {},
+            .scalars = {},
+            .output_format = VK_FORMAT_UNDEFINED,
+            .output_width = 0,
+            .output_height = 0};
 
         for (size_t i = 0; i + 1 < ordered_effects_.size(); i++)
             ordered_effects_[i]->render(context_);
     }
 
     void VulkanPostProcess::composite_within(
-        const VkCommandBuffer cmd, const VkFormat output_format, const int output_width,
+        const VkCommandBuffer &cmd, const VkFormat output_format, const int output_width,
         const int output_height) {
         context_.cmd = cmd;
         context_.output_format = output_format;

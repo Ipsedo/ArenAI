@@ -96,13 +96,13 @@ namespace arenai::view {
 
     const VkPhysicalDeviceProperties &VulkanDevice::properties() const { return properties_; }
 
-    void VulkanDevice::submit(const VkCommandBuffer cmd, const VkFence fence) {
+    void VulkanDevice::submit(const VkCommandBuffer &cmd, const VkFence &fence) {
         submit(cmd, VK_NULL_HANDLE, 0, VK_NULL_HANDLE, fence);
     }
 
     void VulkanDevice::submit(
-        const VkCommandBuffer cmd, const VkSemaphore wait, const VkPipelineStageFlags wait_stage,
-        const VkSemaphore signal, const VkFence fence) {
+        const VkCommandBuffer &cmd, const VkSemaphore &wait, const VkPipelineStageFlags wait_stage,
+        const VkSemaphore &signal, const VkFence &fence) {
         VkSubmitInfo submit_info{};
         submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submit_info.commandBufferCount = 1;
@@ -122,13 +122,13 @@ namespace arenai::view {
     }
 
     VkResult VulkanDevice::present(
-        const VkSwapchainKHR swapchain, const uint32_t image_index, const VkSemaphore wait) {
+        const VkSwapchainKHR &swap_chain, const uint32_t image_index, const VkSemaphore &wait) {
         VkPresentInfoKHR present_info{};
         present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         present_info.waitSemaphoreCount = wait != VK_NULL_HANDLE ? 1 : 0;
         present_info.pWaitSemaphores = &wait;
         present_info.swapchainCount = 1;
-        present_info.pSwapchains = &swapchain;
+        present_info.pSwapchains = &swap_chain;
         present_info.pImageIndices = &image_index;
 
         std::lock_guard lock(queue_mutex_);
@@ -136,7 +136,7 @@ namespace arenai::view {
     }
 
     void VulkanDevice::immediate_submit(
-        const VkCommandPool pool, const std::function<void(VkCommandBuffer)> &record) {
+        const VkCommandPool &pool, const std::function<void(VkCommandBuffer)> &record) {
         VkCommandBufferAllocateInfo alloc_info{};
         alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         alloc_info.commandPool = pool;

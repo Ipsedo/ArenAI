@@ -133,7 +133,7 @@ namespace arenai::agent {
             if (const long nb_not_done = std::ranges::count(done, false); nb_not_done == 1) {
                 const auto &[state, reward, is_done] = step_result[i];
                 if (only_one_tank_alive())
-                    step_result[i] = {state, reward + 2.f, true}; // winner réel
+                    step_result[i] = {state, reward + 4.f, true}; // winner réel
                 else step_result[i] = {state, reward + 1.f, true};// timeout winner
 
                 done[i] = true;

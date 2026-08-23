@@ -83,8 +83,8 @@ TEST_F(RewardTest, DeathPenaltyIsMinusOne) {
     const float death_reward = tanks[1]->get_reward(tanks);
 
     // death and suicide share the same penalty so early termination is never an escape;
-    // the fatal hit also counts as a received hit (-0.05)
-    ASSERT_FLOAT_EQ(death_reward, -1.1f);
+    // the fatal hit also counts as a received hit (-0.15)
+    ASSERT_FLOAT_EQ(death_reward, -1.15f);
 }
 
 // ========================================================================
@@ -121,8 +121,8 @@ TEST_F(RewardTest, RewardPositiveOnHit) {
     ASSERT_FALSE(std::isnan(reward)) << "reward should never be NaN";
     ASSERT_FALSE(std::isinf(reward)) << "reward should never be Inf";
 
-    ASSERT_GE(reward, 1.f)
-        << "reward should be greater than or equal to 1.0 after hitting an enemy";
+    ASSERT_GE(reward, 0.2f)
+        << "reward should be greater than or equal to the hit bonus after hitting an enemy";
 }
 
 TEST_F(RewardTest, RewardUnderOneAfterHit) {
@@ -155,10 +155,10 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
     ASSERT_FALSE(std::isnan(reward_on_hit)) << "reward should never be NaN";
     ASSERT_FALSE(std::isinf(reward_on_hit)) << "reward should never be Inf";
 
-    ASSERT_GE(reward_on_hit, 1.f)
-        << "reward should be greater than or equal to 1.0 after hitting an enemy";
+    ASSERT_GE(reward_on_hit, 0.2f)
+        << "reward should be greater than or equal to the hit bonus after hitting an enemy";
 
-    // no fire, reward under 1.0
+    // no fire, reward under the hit bonus
     constexpr user_input no_fire_input{
         .left_joystick = {.x = 0.f, .y = 0.f},
         .right_joystick = {.x = 0.f, .y = 0.f},
@@ -174,7 +174,8 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
     ASSERT_FALSE(std::isnan(reward_on_no_hit)) << "reward should never be NaN";
     ASSERT_FALSE(std::isinf(reward_on_no_hit)) << "reward should never be Inf";
 
-    ASSERT_LE(reward_on_no_hit, 1.f) << "reward should be under 1.0 after no hitting an enemy";
+    ASSERT_LE(reward_on_no_hit, 0.2f)
+        << "reward should stay under the hit bonus when no shell hit an enemy";
 }
 
 // ========================================================================

@@ -54,8 +54,9 @@ namespace arenai::agent {
         const int metric_window_size, const float gamma, const float gae_lambda,
         const float clip_epsilon, const float target_kl, const float grad_norm_max,
         const float target_entropy_init, const float target_entropy_final,
-        const int target_entropy_warmup_steps, const float target_fire_proba, const int epochs,
-        const int rollout_size, const int minibatch_size)
+        const int target_entropy_warmup_steps, const float target_fire_proba_init,
+        const float target_fire_proba_final, const int target_fire_proba_warmup_steps,
+        const int epochs, const int rollout_size, const int minibatch_size)
         : actor(actor), rollout_buffer(rollout_buffer),
           continuous_alpha(std::make_shared<PidLagrangianAlphaParameters>(
               CONTINUOUS_ALPHA_K_P, CONTINUOUS_ALPHA_K_I, CONTINUOUS_ALPHA_K_D, ALPHA_INITIAL,
@@ -64,8 +65,9 @@ namespace arenai::agent {
               DISCRETE_ALPHA_K_P, DISCRETE_ALPHA_K_I, DISCRETE_ALPHA_K_D, ALPHA_INITIAL, 1)),
           continuous_target_entropy(std::make_unique<CosineAnnealingTargetEntropy>(
               target_entropy_init, target_entropy_final, target_entropy_warmup_steps)),
-          discrete_target_entropy(std::make_unique<ConstantTargetEntropy>(
-              multinomial_target_entropy(target_fire_proba))),
+          discrete_target_entropy(std::make_unique<CosineAnnealingTargetEntropy>(
+              multinomial_target_entropy(target_fire_proba_init),
+              multinomial_target_entropy(target_fire_proba_final), target_fire_proba_warmup_steps)),
           critic(std::make_shared<ValueFunction>(
               vision_height, vision_width, nb_sensors, hidden_size_sensors, critic_hidden_sizes,
               vision_channels, group_norm_nums)),

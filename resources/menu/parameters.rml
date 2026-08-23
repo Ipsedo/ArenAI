@@ -17,7 +17,7 @@
 
         <div class="param-row">
             <span class="param-label">Spawn area side: {{spawn_side}} m</span>
-            <input type="range" min="100" max="1000" step="50" data-value="spawn_side"/>
+            <input type="range" min="100" max="2000" step="50" data-value="spawn_side"/>
         </div>
 
         <div class="param-row">

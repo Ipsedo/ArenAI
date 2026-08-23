@@ -54,6 +54,8 @@ namespace arenai::view {
         void EnableScissorRegion(bool enable) override;
         void SetScissorRegion(Rml::Rectanglei region) override;
 
+        void SetTransform(const Rml::Matrix4f *transform) override;
+
     private:
         struct CompiledGeometry {
             std::unique_ptr<VulkanBuffer> vertices;
@@ -92,6 +94,9 @@ namespace arenai::view {
 
         bool in_frame_ = false;
         glm::mat4 projection_{1.f};
+        // element transform pushed by RmlUi (identity outside transformed
+        // elements); pre-multiplied by the projection at draw time
+        glm::mat4 transform_{1.f};
         int viewport_width_ = 0;
         int viewport_height_ = 0;
         bool scissor_enabled_ = false;

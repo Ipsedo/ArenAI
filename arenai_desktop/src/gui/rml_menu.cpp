@@ -180,12 +180,26 @@ namespace arenai::desktop::gui {
             }
 
             void notify_hit(const HitKind kind) override {
-                hit_marker_->SetClass("kill", kind == HitKind::Kill);
+                const bool kill = kind == HitKind::Kill;
+                hit_marker_->SetClass("kill", kill);
+
+                // Battlefield-style feedback: the ticks spread outward while
+                // fading; a kill starts bigger, flares wider and lasts longer
+                const float duration = kill ? KILL_MARKER_FADE_SECONDS : HIT_MARKER_FADE_SECONDS;
+                const Rml::Tween tween(Rml::Tween::Quadratic, Rml::Tween::Out);
 
                 const Rml::Property opaque(1.f, Rml::Unit::NUMBER);
                 hit_marker_->Animate(
-                    "opacity", Rml::Property(0.f, Rml::Unit::NUMBER), HIT_MARKER_FADE_SECONDS,
-                    Rml::Tween(Rml::Tween::Quadratic, Rml::Tween::In), 1, false, 0.f, &opaque);
+                    "opacity", Rml::Property(0.f, Rml::Unit::NUMBER), duration, tween, 1, false,
+                    0.f, &opaque);
+
+                const Rml::Property start_scale = Rml::Transform::MakeProperty(
+                    {Rml::Transforms::Scale2D(kill ? KILL_MARKER_START_SCALE : 1.f)});
+                hit_marker_->Animate(
+                    "transform",
+                    Rml::Transform::MakeProperty({Rml::Transforms::Scale2D(
+                        kill ? KILL_MARKER_END_SCALE : HIT_MARKER_END_SCALE)}),
+                    duration, tween, 1, false, 0.f, &start_scale);
             }
 
             void set_aim_point(const std::optional<glm::vec2> normalized) override {
@@ -480,7 +494,11 @@ namespace arenai::desktop::gui {
             Rml::ElementDocument *hud_document_ = nullptr;
             Rml::Element *reticle_ = nullptr;
             Rml::Element *hit_marker_ = nullptr;
-            static constexpr float HIT_MARKER_FADE_SECONDS = 0.3f;
+            static constexpr float HIT_MARKER_FADE_SECONDS = 0.45f;
+            static constexpr float HIT_MARKER_END_SCALE = 1.3f;
+            static constexpr float KILL_MARKER_FADE_SECONDS = 0.6f;
+            static constexpr float KILL_MARKER_START_SCALE = 1.1f;
+            static constexpr float KILL_MARKER_END_SCALE = 1.55f;
             Rml::DataModelHandle model_handle_;
 
             std::shared_ptr<MenuInputAdapter> input_adapter_;

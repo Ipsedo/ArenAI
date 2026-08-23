@@ -8,6 +8,7 @@
          and the hit marker are both centered on it -->
     <div id="reticle">
         <div id="crosshair"></div>
+        <div id="crosshair-dot"></div>
         <div id="hit-marker"></div>
     </div>
 </body>

@@ -61,23 +61,26 @@ namespace arenai::view {
         return SHADOW_BIAS_MATRIX * light_vp_matrix;
     }
 
-    void ShadowPass::begin_depth_pass(const VkCommandBuffer cmd) const {
+    void ShadowPass::begin_depth_pass(const VkCommandBuffer &cmd) const {
         map_->begin_depth_pass(cmd);
     }
 
-    void ShadowPass::end_depth_pass(const VkCommandBuffer cmd) const { map_->end_depth_pass(cmd); }
+    void ShadowPass::end_depth_pass(const VkCommandBuffer &cmd) const { map_->end_depth_pass(cmd); }
 
     bool ShadowPass::ensure_ring(const int slot, const size_t draw_count) {
-        auto &ring = rings_[slot];
+        auto &[buffer, capacity] = rings_[slot];
 
         const auto needed = static_cast<uint32_t>(std::max<size_t>(draw_count, 1));
-        if (ring.capacity >= needed) return false;
 
-        const uint32_t capacity = std::max(64u, std::bit_ceil(needed));
-        ring.buffer = std::make_unique<HostVisibleBuffer>(
-            device_, static_cast<size_t>(capacity) * settings_.ring_stride,
+        if (capacity >= needed) return false;
+
+        const uint32_t new_capacity = std::max(64u, std::bit_ceil(needed));
+
+        rings_[slot].buffer = std::make_unique<HostVisibleBuffer>(
+            device_, static_cast<size_t>(new_capacity) * settings_.ring_stride,
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-        ring.capacity = capacity;
+        rings_[slot].capacity = new_capacity;
+
         return true;
     }
 

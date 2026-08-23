@@ -30,7 +30,7 @@ namespace arenai::view {
 
         VkCommandBufferAllocateInfo alloc_info{};
         alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        alloc_info.commandPool = upload_pool();
+        alloc_info.commandPool = VulkanRenderer::upload_pool();
         alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         alloc_info.commandBufferCount = 1;
 
@@ -70,7 +70,7 @@ namespace arenai::view {
     }
 
     void VulkanOffscreenRenderer::on_begin_scene_pass() {
-        const VkCommandBuffer cmd = scene_frame().cmd;
+        const VkCommandBuffer &cmd = scene_frame().cmd;
 
         // previous content is fully overwritten: UNDEFINED discards it
         record_image_barrier(
@@ -118,21 +118,23 @@ namespace arenai::view {
 
         // negative height: row 0 of the image is the top of the frame, GL
         // winding and matrices stay untouched
-        const VkViewport viewport{0.f,
-                                  static_cast<float>(height_),
-                                  static_cast<float>(width_),
-                                  -static_cast<float>(height_),
-                                  0.f,
-                                  1.f};
+        const VkViewport viewport{
+            .x = 0.f,
+            .y = static_cast<float>(height_),
+            .width = static_cast<float>(width_),
+            .height = -static_cast<float>(height_),
+            .minDepth = 0.f,
+            .maxDepth = 1.f};
         vkCmdSetViewport(cmd, 0, 1, &viewport);
         const VkRect2D scissor{
-            {0, 0}, {static_cast<uint32_t>(width_), static_cast<uint32_t>(height_)}};
+            .offset = {.x = 0, .y = 0},
+            .extent = {
+                .width = static_cast<uint32_t>(width_), .height = static_cast<uint32_t>(height_)}};
         vkCmdSetScissor(cmd, 0, 1, &scissor);
     }
 
     void VulkanOffscreenRenderer::on_end_frame(const glm::mat4 &, const glm::mat4 &) {
-        auto &slot = slots_[slot_index_];
-        const VkCommandBuffer cmd = slot.cmd;
+        auto &[cmd, fence, readback, submitted] = slots_[slot_index_];
 
         vkCmdEndRendering(cmd);
 
@@ -143,16 +145,23 @@ namespace arenai::view {
             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
         VkBufferImageCopy copy{};
-        copy.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-        copy.imageExtent = {static_cast<uint32_t>(width_), static_cast<uint32_t>(height_), 1};
+        copy.imageSubresource = {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .mipLevel = 0,
+            .baseArrayLayer = 0,
+            .layerCount = 1};
+        copy.imageExtent = {
+            .width = static_cast<uint32_t>(width_),
+            .height = static_cast<uint32_t>(height_),
+            .depth = 1};
         vkCmdCopyImageToBuffer(
-            cmd, color_->image(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, slot.readback->handle(), 1,
+            cmd, color_->image(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, readback->handle(), 1,
             &copy);
 
         vk_check(vkEndCommandBuffer(cmd), "vkEndCommandBuffer (offscreen)");
 
-        device()->submit(cmd, slot.fence);
-        slot.submitted = true;
+        device()->submit(cmd, fence);
+        slots_[slot_index_].submitted = true;
         slot_index_ = (slot_index_ + 1) % FRAME_SLOTS;
     }
 
@@ -209,9 +218,10 @@ namespace arenai::view {
     VulkanOffscreenRenderer::~VulkanOffscreenRenderer() {
         for (auto &slot: slots_)
             if (slot.submitted)
-                vkWaitForFences(device()->handle(), 1, &slot.fence, VK_TRUE, UINT64_MAX);
+                vkWaitForFences(
+                    VulkanRenderer::device()->handle(), 1, &slot.fence, VK_TRUE, UINT64_MAX);
         for (auto &slot: slots_) {
-            vkDestroyFence(device()->handle(), slot.fence, nullptr);
+            vkDestroyFence(VulkanRenderer::device()->handle(), slot.fence, nullptr);
             slot.readback.reset();
         }
         // the command buffers die with the base class's pool

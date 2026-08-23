@@ -21,34 +21,49 @@ body {
 }
 
 /* the crosshair, drawn by the gui-registered reticle decorator inside this
-   centered square: arms 2dp thick, stopping 7dp short of the center */
+   centered square: Battlefield-style thin cross, arms 1.5dp thick stopping
+   5dp short of the center */
 #crosshair {
     position: absolute;
-    width: 48dp;
-    height: 48dp;
+    width: 28dp;
+    height: 28dp;
     left: 0;
     top: 0;
-    margin-left: -24dp;
-    margin-top: -24dp;
-    color: #EAF7FFCC;
-    decorator: reticle(2dp 7dp);
+    margin-left: -14dp;
+    margin-top: -14dp;
+    color: #EAF7FFD9;
+    decorator: reticle(1.5dp 5dp);
+}
+
+/* the Battlefield center dot, a rounded quad centered on the aim point */
+#crosshair-dot {
+    position: absolute;
+    width: 2.5dp;
+    height: 2.5dp;
+    left: 0;
+    top: 0;
+    margin-left: -1.25dp;
+    margin-top: -1.25dp;
+    border-radius: 1.25dp;
+    background-color: #EAF7FFD9;
 }
 
 /* the X of the marker is drawn by the gui-registered hit-marker decorator
-   inside this centered square: bars 3dp thick, stopping 6dp short of the
-   center. Its color paints the bars; its opacity is driven from code (1 on
-   a hit, animated down to 0). */
+   inside this centered square: Battlefield-style thin ticks (2dp) stopping
+   11dp short of the center. Its color paints the bars; its opacity and
+   scale are driven from code (appears at 1, expands outward while fading
+   to 0, larger and longer on a kill). */
 #hit-marker {
     position: absolute;
-    width: 36dp;
-    height: 36dp;
+    width: 30dp;
+    height: 30dp;
     left: 0;
     top: 0;
-    margin-left: -18dp;
-    margin-top: -18dp;
+    margin-left: -15dp;
+    margin-top: -15dp;
     opacity: 0;
     color: #EAF7FF;
-    decorator: hit-marker(3dp 6dp);
+    decorator: hit-marker(2dp 11dp);
 }
 
 /* the shell that destroyed the tank flashes red */

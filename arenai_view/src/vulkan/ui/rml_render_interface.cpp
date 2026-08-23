@@ -10,6 +10,7 @@
 #include <utility>
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "../core/pipeline.h"
 
@@ -96,6 +97,7 @@ namespace arenai::view {
             0.f, static_cast<float>(viewport_width), static_cast<float>(viewport_height), 0.f);
 
         scissor_enabled_ = false;
+        transform_ = glm::mat4(1.f);
         in_frame_ = true;
     }
 
@@ -138,7 +140,7 @@ namespace arenai::view {
             cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_, 0, 1, &rml_texture->set, 0,
             nullptr);
 
-        const RmlPush push{projection_, glm::vec2(translation.x, translation.y)};
+        const RmlPush push{projection_ * transform_, glm::vec2(translation.x, translation.y)};
         vkCmdPushConstants(
             cmd, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(RmlPush), &push);
 
@@ -205,6 +207,11 @@ namespace arenai::view {
         if (!in_frame_ || !scissor_enabled_) return;
         // RmlUi regions and Vulkan scissors share the top-left origin
         set_scissor(region.Left(), region.Top(), region.Width(), region.Height());
+    }
+
+    void RmlVulkanRenderInterface::SetTransform(const Rml::Matrix4f *transform) {
+        // both sides are column-major: the values map one to one
+        transform_ = transform ? glm::make_mat4(transform->data()) : glm::mat4(1.f);
     }
 
 }// namespace arenai::view

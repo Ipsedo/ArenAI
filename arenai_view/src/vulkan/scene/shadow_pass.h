@@ -54,8 +54,8 @@ namespace arenai::view {
         // maps light-space NDC to shadow-map coordinates (see SHADOW_BIAS_MATRIX)
         static glm::mat4 biased(const glm::mat4 &light_vp_matrix);
 
-        void begin_depth_pass(VkCommandBuffer cmd) const;
-        void end_depth_pass(VkCommandBuffer cmd) const;
+        void begin_depth_pass(const VkCommandBuffer &cmd) const;
+        void end_depth_pass(const VkCommandBuffer &cmd) const;
 
         // grows the slot's matrix ring to hold draw_count entries; returns
         // true when the buffer was (re)allocated and the descriptor bound to

@@ -235,6 +235,9 @@ namespace arenai::agent {
             alpha_discrete_metric->add(alpha_discrete->alpha().mean().item<float>());
         }
 
+        continuous_target_entropy->step(train_every);
+        discrete_target_entropy->step(train_every);
+
         set_train(false);
     }
 

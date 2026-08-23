@@ -46,7 +46,7 @@ namespace arenai::model {
 
         virtual bool consume_has_hit() = 0;
         virtual bool consume_has_kill() = 0;
-        virtual bool consume_has_fired() = 0;
+        virtual bool consume_has_fire() = 0;
 
         virtual bool is_suicide() const = 0;
         virtual bool is_first_frame_dead() = 0;

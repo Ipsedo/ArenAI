@@ -49,7 +49,7 @@ namespace arenai::model {
 
         bool consume_has_hit() override;
         bool consume_has_kill() override;
-        bool consume_has_fired() override;
+        bool consume_has_fire() override;
 
         void on_death() override;
 

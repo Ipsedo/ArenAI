@@ -240,7 +240,7 @@ namespace arenai::model {
         }
     }
 
-    bool JoltEnemyTank::consume_has_fired() {
+    bool JoltEnemyTank::consume_has_fire() {
         if (has_fired) {
             has_fired = false;
             return true;

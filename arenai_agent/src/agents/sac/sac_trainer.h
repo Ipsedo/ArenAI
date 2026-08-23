@@ -23,7 +23,8 @@ namespace arenai::agent {
             const std::vector<int> &critic_hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
-            float tau, float gamma, int train_every, int epochs, int batch_size, float target_sigma,
+            float tau, float gamma, int train_every, int epochs, int batch_size,
+            float target_entropy_init, float target_entropy_final, int target_entropy_warmup_step,
             float target_fire_proba);
 
         void step() override;
@@ -35,9 +36,6 @@ namespace arenai::agent {
         int count_parameters() override;
 
     private:
-        // FPS * sec * warmup_episodes / train_every
-        static constexpr int WARMUP_STEP = 30 * 30 * 500 / 64;
-
         static constexpr double GRAD_NORM_MAX = 1.0;
 
         std::shared_ptr<Actor> actor;
@@ -49,8 +47,11 @@ namespace arenai::agent {
         std::shared_ptr<QFunction> target_critic_1;
         std::shared_ptr<QFunction> target_critic_2;
 
-        std::shared_ptr<ClampedAlphaParameters> alpha_continuous;
-        std::shared_ptr<ClampedAlphaParameters> alpha_discrete;
+        std::shared_ptr<AlphaParameters> alpha_continuous;
+        std::shared_ptr<AlphaParameters> alpha_discrete;
+
+        std::shared_ptr<AbstractTargetEntropy> continuous_target_entropy;
+        std::shared_ptr<AbstractTargetEntropy> discrete_target_entropy;
 
         std::shared_ptr<torch::optim::Adam> actor_optim;
         std::shared_ptr<torch::optim::Adam> critic_1_optim;
@@ -86,13 +87,10 @@ namespace arenai::agent {
         int epochs;
         int batch_size;
 
-        torch::Tensor target_sigma;
-        torch::Tensor target_discrete_entropy;
-
         void train() const;
 
         void set_train(bool train) const;
-        void to(torch::Device device);
+        void to(torch::Device device) const;
     };
 
 }// namespace arenai::agent

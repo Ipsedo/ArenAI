@@ -24,7 +24,7 @@ namespace arenai::view {
                                                     .device_env_var = "ARENAI_VK_DEVICE"}) {}
 
     VulkanBackend::VulkanBackend(
-        std::shared_ptr<VulkanInstance> instance, const DeviceCriteria &criteria)
+        const std::shared_ptr<VulkanInstance> &instance, const DeviceCriteria &criteria)
         : context_(std::make_shared<VulkanRenderContext>(
             instance, std::make_shared<VulkanDevice>(instance, criteria))),
           drawable_factory_(std::make_shared<VulkanDrawableFactory>()),

@@ -14,9 +14,6 @@
 
 namespace arenai::view {
 
-    // Window-side contract of the Vulkan backend (the counterpart of the old
-    // AbstractGlWindow): the window exposes what instance extensions it needs
-    // and turns itself into a VkSurfaceKHR.
     class AbstractVulkanWindow : public AbstractWindow {
     public:
         virtual std::vector<const char *> required_instance_extensions() const = 0;

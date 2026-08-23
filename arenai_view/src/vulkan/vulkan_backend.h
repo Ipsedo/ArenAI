@@ -21,8 +21,6 @@ namespace arenai::view {
 
     class VulkanBackend : public virtual AbstractGraphicBackend {
     public:
-        // headless backend: no surface, prefers the integrated GPU so the
-        // agent visions stay off the GPU driving the window
         VulkanBackend();
 
         std::shared_ptr<AbstractRenderContext> render_context() override;
@@ -39,9 +37,8 @@ namespace arenai::view {
         void release_thread() override;
 
     protected:
-        // windowed subclass: instance carries the surface extensions, the
-        // device is picked against the window surface
-        VulkanBackend(std::shared_ptr<VulkanInstance> instance, const DeviceCriteria &criteria);
+        VulkanBackend(
+            const std::shared_ptr<VulkanInstance> &instance, const DeviceCriteria &criteria);
 
         const std::shared_ptr<VulkanRenderContext> &context() const;
 

@@ -47,7 +47,8 @@ namespace arenai::model {
         bool is_first_frame_dead() override;
         bool is_suicide() const override;
 
-        bool has_hit_other_tank() override;
+        bool consume_has_hit() override;
+        bool consume_has_kill() override;
         bool has_fired_shell() override;
 
         void on_death() override;
@@ -80,6 +81,7 @@ namespace arenai::model {
         bool is_dead_already_triggered;
 
         bool has_touch;
+        bool has_kill;
         bool has_fired;
         std::vector<TrackedShell> tracked_shells;
 

@@ -35,8 +35,7 @@ namespace arenai::agent {
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
             float gamma, float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
             float target_entropy_init, float target_entropy_final, int target_entropy_warmup_steps,
-            float target_fire_proba_init, float target_fire_proba_final,
-            int target_fire_proba_warmup_steps, int epochs, int rollout_size, int minibatch_size);
+            float target_fire_proba, int epochs, int rollout_size, int minibatch_size);
 
         void step() override;
 

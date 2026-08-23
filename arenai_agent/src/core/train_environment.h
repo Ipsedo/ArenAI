@@ -41,6 +41,7 @@ namespace arenai::agent {
         int max_frames_without_hit;
         std::vector<int> remaining_frames;
         int nb_frames_added_when_hit;
+        int nb_frames_added_when_kill;
         int nb_tanks;
 
         int nb_steps;

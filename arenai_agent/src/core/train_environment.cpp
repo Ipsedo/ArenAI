@@ -31,7 +31,8 @@ namespace arenai::agent {
           wanted_frequency(wanted_frequency),
           max_frames_without_hit(static_cast<int>(30.f / wanted_frequency)),
           remaining_frames(nb_tanks, max_frames_without_hit),
-          nb_frames_added_when_hit(static_cast<int>(5.f / wanted_frequency)), nb_tanks(nb_tanks),
+          nb_frames_added_when_hit(static_cast<int>(1.f / wanted_frequency)),
+          nb_frames_added_when_kill(static_cast<int>(5.f / wanted_frequency)), nb_tanks(nb_tanks),
           nb_steps(0), done(nb_tanks, false), already_done(nb_tanks, false),
           max_episode_steps(max_episode_steps),
           reward_metric(
@@ -55,8 +56,16 @@ namespace arenai::agent {
             std::vector<bool> has_hit_result;
             has_hit_result.reserve(nb_tanks);
             for (const auto &factory: factories)
-                has_hit_result.push_back(factory->has_hit_other_tank());
+                has_hit_result.push_back(factory->consume_has_hit());
             return has_hit_result;
+        });
+
+        const auto has_kill = apply_on_factories<std::vector<bool>>([&](const auto &factories) {
+            std::vector<bool> has_kill_result;
+            has_kill_result.reserve(nb_tanks);
+            for (const auto &factory: factories)
+                has_kill_result.push_back(factory->consume_has_kill());
+            return has_kill_result;
         });
 
         const auto has_fired = apply_on_factories<std::vector<bool>>([&](const auto &factories) {
@@ -94,6 +103,7 @@ namespace arenai::agent {
             remaining_frames[i]--;
 
             if (has_hit[i]) remaining_frames[i] += nb_frames_added_when_hit;
+            if (has_kill[i]) remaining_frames[i] += nb_frames_added_when_kill;
 
             const auto &[state, reward, is_done] = step_result[i];
 

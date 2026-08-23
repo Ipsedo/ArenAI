@@ -116,7 +116,7 @@ TEST_F(RewardTest, RewardPositiveOnHit) {
 
     const float reward = shared_a->get_reward(tanks);
 
-    ASSERT_TRUE(shared_a->has_hit_other_tank()) << "shell should have hit the enemy tank";
+    ASSERT_TRUE(shared_a->consume_has_hit()) << "shell should have hit the enemy tank";
 
     ASSERT_FALSE(std::isnan(reward)) << "reward should never be NaN";
     ASSERT_FALSE(std::isinf(reward)) << "reward should never be Inf";
@@ -150,7 +150,7 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
 
     const float reward_on_hit = shared_a->get_reward(tanks);
 
-    ASSERT_TRUE(shared_a->has_hit_other_tank()) << "shell should have hit the enemy tank";
+    ASSERT_TRUE(shared_a->consume_has_hit()) << "shell should have hit the enemy tank";
 
     ASSERT_FALSE(std::isnan(reward_on_hit)) << "reward should never be NaN";
     ASSERT_FALSE(std::isinf(reward_on_hit)) << "reward should never be Inf";
@@ -169,7 +169,7 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
 
     const float reward_on_no_hit = shared_a->get_reward(tanks);
 
-    ASSERT_FALSE(shared_a->has_hit_other_tank()) << "no shell should have hit the enemy tank";
+    ASSERT_FALSE(shared_a->consume_has_hit()) << "no shell should have hit the enemy tank";
 
     ASSERT_FALSE(std::isnan(reward_on_no_hit)) << "reward should never be NaN";
     ASSERT_FALSE(std::isinf(reward_on_no_hit)) << "reward should never be Inf";
@@ -219,7 +219,7 @@ TEST_F(RewardTest, NoRewardWhenShootingAWreck) {
 
     const float reward = shared_a->get_reward(tanks);
 
-    ASSERT_FALSE(shared_a->has_hit_other_tank()) << "a wreck must not count as a hit";
+    ASSERT_FALSE(shared_a->consume_has_hit()) << "a wreck must not count as a hit";
     ASSERT_FLOAT_EQ(reward, 0.f) << "shooting a wreck must pay neither hit nor kill";
 
     // the shell spent must not be given back: a wreck is not an ammo dump

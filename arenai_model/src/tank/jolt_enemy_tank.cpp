@@ -59,7 +59,7 @@ namespace arenai::model {
           shells_recharged_per_hit(5),
           nb_frames_per_shell_regen(static_cast<int>(1.5f / wanted_frame_frequency)),
           curr_frame_shell_regen(0), is_dead_already_triggered(false), has_touch(false),
-          has_fired(false) {}
+          has_kill(false), has_fired(false) {}
 
     float JoltEnemyTank::compute_hit_reward(
         const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos, const glm::vec3 &shell_pos) const {
@@ -170,7 +170,7 @@ namespace arenai::model {
                     hit_reward_scale
                     * compute_hit_reward(
                         tracked.fire_pos, tracked.enemy_pos_at_t, tracked.shell_pos_at_t);
-                if (tracked.has_hit) shells_reward += tracked.has_killed ? 2.f : 1.f;
+                if (tracked.has_hit) shells_reward += tracked.has_killed ? 10.f : 1.f;
             }
 
             tracked_shells.erase(tracked_shells.begin() + i);
@@ -217,7 +217,9 @@ namespace arenai::model {
             if (life_item->is_dead() && !life_item->is_already_dead()) {
                 hit = true;
                 killed = true;
+
                 has_touch = true;
+                has_kill = true;
             } else if (!life_item->is_dead()) {
                 hit = true;
                 has_touch = true;
@@ -246,9 +248,17 @@ namespace arenai::model {
         return false;
     }
 
-    bool JoltEnemyTank::has_hit_other_tank() {
+    bool JoltEnemyTank::consume_has_hit() {
         if (has_touch) {
             has_touch = false;
+            return true;
+        }
+        return false;
+    }
+
+    bool JoltEnemyTank::consume_has_kill() {
+        if (has_kill) {
+            has_kill = false;
             return true;
         }
         return false;

@@ -32,10 +32,8 @@ namespace arenai::agent {
         float grad_norm_max = 0.5f;
         float target_entropy_init = 0.25f;
         float target_entropy_final = -1.f;
-        int target_entropy_warmup_steps = 3000000;
-        float target_fire_proba_init = 0.05f;
-        float target_fire_proba_final = 1e-3f;
-        int target_fire_proba_warmup_steps = 3000000;
+        int target_entropy_warmup_steps = 15000000;
+        float target_fire_proba = 0.02f;
         int epochs = 2;
         int rollout_size = 30 * 30;
         int minibatch_size = 1024;

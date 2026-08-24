@@ -48,7 +48,7 @@ namespace arenai::desktop {
 
         model::PlayerHits consume_player_hits() const;
 
-        static constexpr float AIM_DISTANCE = 75.f;
+        static constexpr float AIM_DISTANCE = 100.f;
 
         std::optional<glm::vec2> aim_point_on_screen() const;
 

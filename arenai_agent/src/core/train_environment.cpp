@@ -31,8 +31,8 @@ namespace arenai::agent {
           wanted_frequency(wanted_frequency),
           max_frames_without_hit(static_cast<int>(30.f / wanted_frequency)),
           remaining_frames(nb_tanks, max_frames_without_hit),
-          nb_frames_added_when_hit(static_cast<int>(1.f / wanted_frequency)),
-          nb_frames_added_when_kill(static_cast<int>(5.f / wanted_frequency)), nb_tanks(nb_tanks),
+          nb_frames_added_when_hit(static_cast<int>(2.5f / wanted_frequency)),
+          nb_frames_added_when_kill(static_cast<int>(10.f / wanted_frequency)), nb_tanks(nb_tanks),
           nb_steps(0), done(nb_tanks, false), already_done(nb_tanks, false),
           max_episode_steps(max_episode_steps),
           reward_metric(
@@ -41,7 +41,9 @@ namespace arenai::agent {
           episode_step_std_nb_metric(std::make_shared<StdMetric>("s_σ", 32)),
           fire_metric(std::make_shared<MeanMetric>("fire", 256, 2)),
           hit_metric(std::make_shared<MeanMetric>("hit", 256, 2, true)),
-          kill_metric(std::make_shared<MeanMetric>("kill", 16, 1)), nb_kills_episode(0) {}
+          kill_metric(std::make_shared<MeanMetric>("kill", 16, 1)),
+          hits_per_kill_metric(std::make_shared<MeanMetric>("h/k", 16, 1)), nb_kills_episode(0),
+          nb_hits_episode(0) {}
 
     std::vector<std::tuple<core::State, core::Reward, core::IsDone>>
     TrainTankEnvironment::step(const float time_delta, const std::vector<core::Action> &actions) {
@@ -91,6 +93,8 @@ namespace arenai::agent {
             nb_fires += has_fired[i] ? 1 : 0;
             nb_hits += has_hit[i] ? 1 : 0;
         }
+        nb_hits_episode += nb_hits;
+
         if (nb_acting > 0) {
             fire_metric->add(
                 static_cast<float>(nb_fires) / (static_cast<float>(nb_acting) * wanted_frequency));
@@ -155,9 +159,19 @@ namespace arenai::agent {
         const std::unique_ptr<model::AbstractPhysicEngine> &engine) {
         remaining_frames = std::vector(nb_tanks, max_frames_without_hit);
 
-        // close the previous episode's kill count (skip the very first reset)
-        if (nb_steps > 0) kill_metric->add(static_cast<float>(nb_kills_episode));
+        // close the previous episode's counters (skip the very first reset)
+        if (nb_steps > 0) {
+            kill_metric->add(static_cast<float>(nb_kills_episode));
+
+            // hits per kill measures how well the damage is concentrated: the theoretical
+            // floor is a part's health points. Undefined without a kill — such an episode
+            // would inject its raw hit count and swamp the window
+            if (nb_kills_episode > 0)
+                hits_per_kill_metric->add(
+                    static_cast<float>(nb_hits_episode) / static_cast<float>(nb_kills_episode));
+        }
         nb_kills_episode = 0;
+        nb_hits_episode = 0;
 
         nb_steps = 0;
 
@@ -198,7 +212,8 @@ namespace arenai::agent {
                 episode_step_std_nb_metric,
                 fire_metric,
                 hit_metric,
-                kill_metric};
+                kill_metric,
+                hits_per_kill_metric};
     }
 
 }// namespace arenai::agent

@@ -28,16 +28,9 @@ namespace arenai::desktop {
 
         ~DesktopGameEnvironment() override;
 
-        // The environment builds its controller handlers (they need the player
-        // tank and the renderer) but does NOT install them on the window:
-        // routing the inputs (game vs pause menu) is the application's policy.
-        // One of the two is null, depending on the controller kind.
         std::shared_ptr<controller::AbstractKeyboardCallback> keyboard_handler() const;
         std::shared_ptr<controller::AbstractGamepadCallback> gamepad_handler() const;
 
-        // re-renders the player view with the matrices of the last on_draw():
-        // used while the game is paused, to draw the frozen scene under the
-        // pause menu overlay
         void redraw() const;
 
         void resize(int width, int height) const;

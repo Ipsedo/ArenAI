@@ -86,9 +86,6 @@ namespace arenai::model {
                 tanks[nearest_index]->get_chassis()->get_model_matrix()
                 * glm::vec4(glm::vec3(0.f), 1.f));
 
-            // a shell covers ~8 m per frame, an order of magnitude more than the
-            // dispersion sigma: sampling positions alone aliases the miss distance,
-            // so measure against the segment actually travelled during the frame
             glm::vec3 closest;
             if (const float distance =
                     distance_to_segment(tracked.last_shell_pos, shell_pos, enemy_pos, closest);
@@ -147,9 +144,7 @@ namespace arenai::model {
         // 3. dead / suicide penalty
         const auto dead_penalty = is_dead() ? -1.f : 0.f;
 
-        // 4. fired shells: sample the closest tank along the trajectory and pay the
-        // dispersion gaussian (plus hit/kill bonuses) once the shell dies; firing itself
-        // is free — the limited shell reserve (recharged on hit) taxes the spam
+        // 4. fired shells reward
         float shells_reward = 0.f;
         for (int i = static_cast<int>(tracked_shells.size()) - 1; i >= 0; i--) {
             auto &tracked = tracked_shells[i];
@@ -164,8 +159,6 @@ namespace arenai::model {
             if (in_flight) continue;
 
             if (tracked.has_sample) {
-                // the gaussian stays an order of magnitude under the hit bonus: a gradient
-                // toward the aim, not a farmable income; the shell reserve taxes the spam
                 shells_reward +=
                     hit_reward_scale
                     * compute_hit_reward(
@@ -193,7 +186,6 @@ namespace arenai::model {
         tracked_shells.push_back(
             {.shell = shell,
              .fire_pos = shell->get_fire_position(),
-             // seeding the segment at the muzzle also covers the fire → first frame gap
              .last_shell_pos = shell->get_fire_position(),
              .min_distance = std::numeric_limits<float>::infinity(),
              .enemy_pos_at_t = glm::vec3(0.f),
@@ -226,7 +218,6 @@ namespace arenai::model {
             }
         }
 
-        // a shell dies on its first contact, so a hit recharges exactly once
         if (hit) nb_shells += shells_recharged_per_hit;
 
         for (auto &tracked: tracked_shells) {
@@ -276,9 +267,8 @@ namespace arenai::model {
     void JoltEnemyTank::on_death() {
         if (is_dead() && !is_dead_already_triggered) {
             is_dead_already_triggered = true;
+
             remove_constraints_from_engine();
-            // the wreck stays in the world as an obstacle, but its surviving parts must
-            // not pay hits, kills, shells nor survival frames to whoever keeps shooting it
             kill_life_items();
         }
     }

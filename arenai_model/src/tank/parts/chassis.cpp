@@ -19,8 +19,6 @@ namespace arenai::model {
                             prefix_name + "_chassis", engine,
                             std::make_shared<ObjShape>(
                                 file_reader, std::filesystem::path("obj") / "anubis_chassis.obj"),
-                            // Bullet shifted the freshly created body two units
-                            // down through setCenterOfMassTransform: same spawn
                             position + glm::vec3(0.f, -2.f, 0.f), scale, mass) {}
 
 }// namespace arenai::model

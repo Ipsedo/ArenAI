@@ -37,11 +37,6 @@ namespace arenai::model {
         settings.mAxisX2 = JPH::Vec3::sAxisX();
         settings.mAxisY2 = JPH::Vec3::sAxisY();
 
-        // same axis setup as the Bullet 6DOF spring constraint: only the wheel
-        // spin (rotation X) is free, the suspension (translation Y) is limited,
-        // the steering (rotation Y) is held by hard equal limits, everything
-        // else is locked. Pyramid swing: unlike the default cone it accepts the
-        // asymmetric [angle, angle] steering limits Bullet used.
         settings.mSwingType = JPH::ESwingType::Pyramid;
 
         settings.MakeFixedAxis(EAxis::TranslationX);
@@ -52,17 +47,14 @@ namespace arenai::model {
         settings.SetLimitedAxis(EAxis::RotationY, 0.f, 0.f);
         settings.MakeFixedAxis(EAxis::RotationZ);
 
-        // suspension spring toward its equilibrium point
         settings.mMotorSettings[EAxis::TranslationY].mSpringSettings =
             JPH::SpringSettings(JPH::ESpringMode::StiffnessAndDamping, 2e5f, 30.f);
 
-        // drive motor torque budget
         settings.mMotorSettings[EAxis::RotationX].mMinTorqueLimit = -2e4f;
         settings.mMotorSettings[EAxis::RotationX].mMaxTorqueLimit = 2e4f;
 
         auto *constraint = settings.Create(*chassis, *ConvexItem::get_body());
-        // Jolt is built without RTTI (-fno-rtti): dynamic_cast would not link. The dynamic
-        // type is guaranteed by the settings object the constraint was created from.
+
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
         hinge = static_cast<JPH::SixDOFConstraint *>(constraint);
 
@@ -84,9 +76,6 @@ namespace arenai::model {
 
         const float angle = input.left_joystick.x * WHEEL_DIRECTION_MAX_RADIAN;
 
-        // Bullet's 6DOF angular motor spins opposite to the right-handed
-        // relative angular velocity Jolt expects: negate to keep the same
-        // input -> motion mapping
         hinge->SetTargetAngularVelocityCS(
             JPH::Vec3(-adjust_rotation_velocity_differential(angle, radial_velocity), 0.f, 0.f));
     }
@@ -129,8 +118,6 @@ namespace arenai::model {
 
         const float angle = input.left_joystick.x * WHEEL_DIRECTION_MAX_RADIAN * angle_factor;
 
-        // hard equal limits, like Bullet's setLimit(angle, angle) steering;
-        // same inverted angular convention as the drive motor
         hinge->SetRotationLimits(
             JPH::Vec3(-JPH::JPH_PI, -angle, 0.f), JPH::Vec3(JPH::JPH_PI, -angle, 0.f));
     }

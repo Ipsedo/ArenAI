@@ -45,10 +45,6 @@ namespace arenai::model {
             glm::vec3(-2000.f, -2000.f, -2000.f), glm::vec3(2000.f, 2000.f, 2000.f), min_height,
             max_height);
 
-        // the Jolt MeshShape build (indexify, active edges, BVH) takes seconds
-        // on a big grid; the shape is immutable and refcounted, so identical
-        // (file, scale) pairs share one instance across engines for the whole
-        // process (the Jolt runtime itself is never torn down)
         static utils::Cache<JPH::ShapeRefC> shape_cache;
 
         const std::string cache_key = shape_id + "|" + std::to_string(scale.x) + ","
@@ -80,8 +76,6 @@ namespace arenai::model {
                     const glm::vec3 p01 = make_pos(x, z + 1, min_height, max_height);
                     const glm::vec3 p11 = make_pos(x + 1, z + 1, min_height, max_height);
 
-                    // btHeightfieldTerrainShape with diamond subdivision alternates
-                    // the split diagonal on (x + z) parity
                     if ((x + z) % 2 == 0) {
                         push_triangle(p00, p01, p11);
                         push_triangle(p00, p11, p10);

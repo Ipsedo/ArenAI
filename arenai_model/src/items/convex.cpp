@@ -25,7 +25,6 @@ namespace arenai::model {
         const glm::vec3 position, const glm::vec3 scale, const float mass, const glm::quat rotation)
         : JoltItem(std::move(name), engine), shape(shape), scale(scale) {
 
-        // scale baked into the points, like Bullet's local scaling on the hull
         JPH::Array<JPH::Vec3> points;
         glm::vec3 aabb_min(std::numeric_limits<float>::infinity());
         glm::vec3 aabb_max(-std::numeric_limits<float>::infinity());
@@ -40,8 +39,6 @@ namespace arenai::model {
         const JPH::ConvexHullShapeSettings hull_settings(points);
         JPH::ShapeRefC hull_shape = hull_settings.Create().Get();
 
-        // Bullet rotates bodies about the mesh origin, not the hull centroid:
-        // pull the center of mass back onto the origin
         const JPH::OffsetCenterOfMassShapeSettings com_settings(
             -hull_shape->GetCenterOfMass(), hull_shape);
         const JPH::ShapeRefC body_shape = com_settings.Create().Get();
@@ -52,14 +49,12 @@ namespace arenai::model {
             mass == 0.f ? JPH::EMotionType::Static : JPH::EMotionType::Dynamic,
             mass == 0.f ? layers::NON_MOVING : layers::MOVING);
 
-        // Bullet defaults: friction 0.5, no restitution, no damping
         body_settings.mFriction = 0.5f;
         body_settings.mRestitution = 0.f;
         body_settings.mLinearDamping = 0.f;
         body_settings.mAngularDamping = 0.f;
 
         if (mass != 0.f) {
-            // Bullet's convex hulls use the inertia of their margin-inflated AABB
             constexpr float margin = 0.04f;
             const glm::vec3 half_extents = (aabb_max - aabb_min) * 0.5f + margin;
             const glm::vec3 full_extents = 2.f * half_extents;

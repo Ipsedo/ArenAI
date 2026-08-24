@@ -55,8 +55,7 @@ namespace arenai::model {
         settings.mNormalAxis2 = JPH::Vec3::sAxisY();
 
         auto *constraint = settings.Create(*turret, *ConvexItem::get_body());
-        // Jolt is built without RTTI (-fno-rtti): dynamic_cast would not link. The dynamic
-        // type is guaranteed by the settings object the constraint was created from.
+
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
         hinge = static_cast<JPH::HingeConstraint *>(constraint);
 
@@ -80,8 +79,6 @@ namespace arenai::model {
             glm::vec4 force_vec(0.f, 0.f, 1.f, 0.f);
             force_vec = m_matrix * force_vec;
 
-            // Bullet applied a 1.5e5 central force integrated over exactly one
-            // fixed timestep: same impulse, applied as a starting velocity
             const glm::vec3 velocity =
                 glm::vec3(force_vec) * 1.5e5f * wanted_frame_frequency / 20.f;
             shell_item->get_body()->SetLinearVelocity(

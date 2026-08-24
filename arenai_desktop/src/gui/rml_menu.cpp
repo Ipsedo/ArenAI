@@ -151,8 +151,10 @@ namespace arenai::desktop::gui {
 
             GameSettings settings() const override { return settings_; }
 
-            void open_pause() override {
+            void open_pause(const int score) override {
                 pending_pause_action_ = PauseAction::None;
+                score_ = score;
+                model_handle_.DirtyVariable("score");
                 pause_document_->Show();
             }
 
@@ -518,7 +520,7 @@ namespace arenai::desktop::gui {
             std::vector<Rml::String> entries_;
             bool sac_valid_ = false;
             bool can_play_ = false;
-            // final score shown by the game-over popup
+            // score shown by the pause and game-over popups
             int score_ = 0;
             bool play_clicked_ = false;
             bool quit_clicked_ = false;

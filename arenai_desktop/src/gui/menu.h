@@ -56,8 +56,9 @@ namespace arenai::desktop::gui {
         virtual GameSettings settings() const = 0;
 
         // pause popup, non-blocking: the game loop opens/closes it, renders it
-        // over the frozen game frame and polls the clicked button
-        virtual void open_pause() = 0;
+        // over the frozen game frame and polls the clicked button; shows the
+        // score reached so far, frozen like the rest of the scene
+        virtual void open_pause(int score) = 0;
         virtual void close_pause() = 0;
         // draws the popup over the frame already in the backbuffer; the caller
         // presents afterwards

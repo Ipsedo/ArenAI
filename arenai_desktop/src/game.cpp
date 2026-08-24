@@ -76,7 +76,7 @@ namespace arenai::desktop {
             paused = value;
             router->set_paused(value);
             if (value) {
-                gui->open_pause();
+                gui->open_pause(env->get_score());
                 window->set_cursor_mode(controller::CursorMode::Normal);
             } else {
                 gui->close_pause();

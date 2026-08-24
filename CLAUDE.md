@@ -32,7 +32,7 @@ C++20, CMake ≥ 3.29.
 
 ### Linux (ArchLinux)
 ```shell
-sudo pacman -Sy glm glfw freetype2 vulkan-headers vulkan-icd-loader glslang
+sudo pacman -Sy glm glfw freetype2 vulkan-headers vulkan-icd-loader glslang gtest
 # LibTorch expected in /opt/libtorch (override with -DLIBTORCH_PATH=...)
 mkdir build && cd build && cmake .. && make
 ```

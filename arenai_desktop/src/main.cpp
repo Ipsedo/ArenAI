@@ -16,9 +16,6 @@
 using namespace arenai;
 using namespace arenai::desktop;
 
-// resources live next to the binary (copied there at build time, see
-// CMakeLists.txt), so they are resolved from the executable's folder — the
-// game can be launched from any working directory
 static std::filesystem::path executable_dir(const char *argv0) {
 #ifdef _WIN32
     wchar_t buffer[MAX_PATH];

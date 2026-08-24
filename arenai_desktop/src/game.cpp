@@ -46,8 +46,6 @@ namespace arenai::desktop {
         auto states = env->reset(
             static_cast<float>(settings.spawn_side), static_cast<float>(settings.spawn_side));
 
-        // the router owns the window's input slots for the whole session;
-        // Escape / Start flip the pause state through toggle_requested
         bool paused = false;
         bool game_over = false;
         bool toggle_requested = false;
@@ -58,15 +56,9 @@ namespace arenai::desktop {
         window->set_keyboard_callback(router);
         window->set_gamepad_callback(router);
 
-        // in keyboard mode the game handler captures (and hides) the cursor
-        // itself; the gamepad handler never touches the cursor, so the
-        // application hides it for the whole game and the pause popup
-        // restores it
         if (settings.controller_kind == ControllerKind::Gamepad)
             window->set_cursor_mode(controller::CursorMode::Disabled);
 
-        // the window has a single resize slot: while in game it feeds both
-        // the player renderer and the gui overlay
         window->set_resize_callback([&gui, env](const int width, const int height) {
             gui->on_window_resized(width, height);
             env->resize(width, height);
@@ -80,17 +72,12 @@ namespace arenai::desktop {
                 window->set_cursor_mode(controller::CursorMode::Normal);
             } else {
                 gui->close_pause();
-                // in keyboard mode the game handler re-captures the cursor
-                // on its next event
+
                 if (settings.controller_kind == ControllerKind::Gamepad)
                     window->set_cursor_mode(controller::CursorMode::Disabled);
             }
         };
 
-        // the frame the player dies on freezes under the game-over popup,
-        // exactly like the pause: same input routing, same overlay loop —
-        // only the popup (and its actions) differ, and it cannot be
-        // toggled away
         const auto set_game_over = [&] {
             game_over = true;
             router->set_paused(true);
@@ -112,7 +99,6 @@ namespace arenai::desktop {
             }
 
             if (paused || game_over) {
-                // frozen scene + popup; pacing comes from the vsync
                 env->redraw();
                 gui->render_pause_overlay();
                 graphics_backend->present();
@@ -170,8 +156,6 @@ namespace arenai::desktop {
     }
 
     void run_gui(const GameOptions &game_options, const ModelOptions &model_options) {
-        // The view owns the window + GL context; the app only speaks the abstract
-        // window/backend interface.
         const std::shared_ptr graphics_backend = view::make_glfw_vulkan_backend(
             game_options.window_width, game_options.window_height, "ArenAI");
         const auto window = graphics_backend->get_window();
@@ -181,10 +165,6 @@ namespace arenai::desktop {
         const auto asset_reader =
             std::make_shared<agent::DesktopAssetFileReader>(game_options.resources_folder);
 
-        // the gui (and the RmlUi stack it owns) lives for the whole session:
-        // the main menu and the pause popup are two screens of the same context
-        // the menu starts from the settings saved on the previous run, falling
-        // back to GameSettings' defaults on a first launch
         const auto initial_settings =
             load_preferences({.sac_folder = model_options.state_dict_folder});
         const auto gui = gui::make_gui(
@@ -196,26 +176,17 @@ namespace arenai::desktop {
         window->set_resize_callback(
             [&gui](const int width, const int height) { gui->on_window_resized(width, height); });
 
-        // apply the persisted display preference now that the resize callback
-        // is wired: the GUI picks the real size up like any user resize
         if (initial_settings.fullscreen) window->set_fullscreen(true);
 
-        // MainMenu <-> InGame state machine; "Main menu" in the pause popup
-        // tears the environment down and loops back here, settings preserved
-        // [ARENAI-DBG] temporary auto-repro
         const bool dbg_autoplay = std::getenv("ARENAI_DEBUG_AUTOPLAY") != nullptr;
 
         while (!window->should_close()) {
             const auto menu_outcome = dbg_autoplay ? gui::MenuOutcome::Play : gui->run_main_menu();
 
-            // persisted on every menu exit (Play or Quit) so the tuned
-            // settings survive the session whichever way it ends
             save_preferences(gui->settings());
 
             if (menu_outcome == gui::MenuOutcome::Quit) break;
 
-            // Retry tears the session down like Main menu, but relaunches a
-            // fresh game right away with the same settings
             InGameOutcome game_outcome;
             do {
                 game_outcome =

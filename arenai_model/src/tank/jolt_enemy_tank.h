@@ -68,6 +68,7 @@ namespace arenai::model {
         int curr_frame_upside_down;
 
         float miss_distance_scale;
+        float miss_distance_exponent;
         float hit_reward_scale;
 
         float hit_received_cost;

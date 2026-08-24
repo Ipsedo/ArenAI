@@ -54,9 +54,9 @@ namespace arenai::model {
             [this](const std::shared_ptr<ShellItem> &shell) { on_shell_fired(shell); },
             [this] { return nb_shells > 0; }),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-          curr_frame_upside_down(0), miss_distance_scale(1.5f), hit_reward_scale(0.1f),
-          hit_received_cost(0.15f), initial_nb_shells(10), nb_shells(initial_nb_shells),
-          shells_recharged_per_hit(5),
+          curr_frame_upside_down(0), miss_distance_scale(1.5f), miss_distance_exponent(1.f / 2.f),
+          hit_reward_scale(0.1f), hit_received_cost(0.15f), initial_nb_shells(10),
+          nb_shells(initial_nb_shells), shells_recharged_per_hit(5),
           nb_frames_per_shell_regen(static_cast<int>(1.5f / wanted_frame_frequency)),
           curr_frame_shell_regen(0), is_dead_already_triggered(false), has_touch(false),
           has_kill(false), has_fired(false) {}
@@ -70,8 +70,8 @@ namespace arenai::model {
         const float ideal_trajectory_distance = glm::length(ideal_trajectory);
         const float miss_distance = glm::length(miss_trajectory);
 
-        const float ratio =
-            miss_distance_scale * miss_distance / std::sqrt(ideal_trajectory_distance);
+        const float ratio = miss_distance_scale * miss_distance
+                            / std::pow(ideal_trajectory_distance, miss_distance_exponent);
 
         return std::exp(-0.5f * std::pow(ratio, 2.f));
     }

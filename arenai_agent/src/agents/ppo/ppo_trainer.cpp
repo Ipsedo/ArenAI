@@ -78,11 +78,11 @@ namespace arenai::agent {
           critic_mean_loss_metric(std::make_shared<MeanMetric>("v_μ", metric_window_size)),
           critic_std_loss_metric(std::make_shared<StdMetric>("v_σ", metric_window_size)),
           explained_variance_metric(std::make_shared<MeanMetric>("ev", metric_window_size)),
+          continuous_entropy_metric(std::make_shared<MeanMetric>("Hc", metric_window_size)),
+          discrete_entropy_metric(std::make_shared<MeanMetric>("Hd", metric_window_size)),
           continuous_target_entropy_metric(
               std::make_shared<MeanMetric>("Hc_t", metric_window_size)),
-          continuous_entropy_metric(std::make_shared<MeanMetric>("Hc", metric_window_size)),
           discrete_target_entropy_metric(std::make_shared<MeanMetric>("Hd_t", metric_window_size)),
-          discrete_entropy_metric(std::make_shared<MeanMetric>("Hd", metric_window_size)),
           continuous_alpha_metric(std::make_shared<MeanMetric>("α_c", metric_window_size, 2, true)),
           discrete_alpha_metric(std::make_shared<MeanMetric>("α_d", metric_window_size, 2, true)),
           sigma_metric(std::make_shared<MeanMetric>("σ", metric_window_size)),

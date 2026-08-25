@@ -92,12 +92,12 @@ TEST_F(CosineAnnealingTargetEntropyTest, ClampsAfterWarmup) {
 TEST_F(CosineAnnealingTargetEntropyTest, DecreasesMonotonically) {
     CosineAnnealingTargetEntropy target(0.25f, -1.f, 1000);
 
-    float previous = target.target_entropy().item<float>();
+    auto previous = target.target_entropy().item<float>();
 
     for (int i = 0; i < 20; i++) {
         target.step(50);
 
-        const float current = target.target_entropy().item<float>();
+        const auto current = target.target_entropy().item<float>();
         ASSERT_LE(current, previous + 1e-6f);
         previous = current;
     }

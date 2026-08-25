@@ -97,3 +97,180 @@ jobs:
         run: |
           . scripts/ci/render_env.sh
           ctest --test-dir build --output-on-failure
+
+  # ---------------------------------------------------------------------------
+  # CD: on a green master push, publish a GitHub release with self-contained
+  # zips — unless the version is a snapshot or has already been released.
+  # ---------------------------------------------------------------------------
+  release-gate:
+    needs: build-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check version against latest release
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version=$(tr -d '[:space:]' < version.txt)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+          if echo "$version" | grep -qiE 'snapshot$'; then
+            echo "snapshot version ($version), skipping release"
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          latest=$(gh release view --json tagName -q .tagName 2>/dev/null || echo "none")
+          if [ "$latest" = "v$version" ]; then
+            echo "v$version is already the latest release, skipping"
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "releasing v$version (latest release: $latest)"
+          echo "should_release=true" >> "$GITHUB_OUTPUT"
+
+  package-linux:
+    needs: release-gate
+    if: needs.release-gate.outputs.should_release == 'true'
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+
+    # ubuntu:22.04, not 24.04: the released binaries inherit the glibc they are
+    # linked against (2.35 here), which decides which distros can run them.
+    # Everything above glibc is bundled into the zip (package_linux.sh).
+    container: ubuntu:22.04
+
+    steps:
+      - name: Bootstrap checkout
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends ca-certificates git
+
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: scripts/ci/install_ubuntu_release_deps.sh
+
+      - name: Cache LibTorch
+        uses: actions/cache@v4
+        with:
+          path: ~/libtorch
+          key: libtorch-cpu-${{ env.LIBTORCH_VERSION }}-${{ matrix.arch }}
+
+      - name: Download LibTorch (CPU)
+        run: scripts/ci/fetch_libtorch.sh "$LIBTORCH_VERSION" "$HOME/libtorch"
+
+      - name: Configure
+        run: >
+          cmake -S . -B build
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_C_COMPILER=gcc-13
+          -DCMAKE_CXX_COMPILER=g++-13
+          -DLIBTORCH_PATH="$HOME/libtorch"
+          -DARENAI_PORTABLE_RPATH=ON
+
+      - name: Build
+        run: cmake --build build -j"$(nproc)" --target arenai_desktop arenai_agent_train
+
+      - name: Package
+        run: >
+          scripts/ci/package_linux.sh build
+          "${{ needs.release-gate.outputs.version }}" dist
+
+      # Prove the zip is self-contained: with the build tree and libtorch gone,
+      # only the bundled lib/ (via the $ORIGIN RPATH) and system libraries can
+      # satisfy the executables.
+      - name: Verify the zip resolves on its own
+        run: |
+          mkdir /tmp/verify
+          unzip -q dist/*.zip -d /tmp/verify
+          mv "$HOME/libtorch" "$HOME/libtorch.away"
+          mv build build.away
+          for exe in arenai_desktop arenai_agent_train; do
+            if ldd "/tmp/verify/$exe" | grep "not found"; then
+              echo "$exe is not self-contained" >&2
+              exit 1
+            fi
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arenai-linux-${{ matrix.arch }}
+          path: dist/*.zip
+          if-no-files-found: error
+
+  package-windows:
+    needs: release-gate
+    if: needs.release-gate.outputs.should_release == 'true'
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # libs\ holds vcpkg (glfw, freetype, glslang... built from source, the
+      # expensive part) and libtorch, exactly as install_dependencies.ps1 lays
+      # them out; the script skips whatever is already present.
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: libs
+          key: windows-deps-${{ hashFiles('install_dependencies.ps1') }}
+
+      - name: Install dependencies
+        run: .\install_dependencies.ps1
+
+      - name: Prune vcpkg intermediates before caching
+        run: |
+          foreach ($dir in "buildtrees", "downloads", "packages") {
+            $path = "libs\vcpkg\$dir"
+            if (Test-Path $path) { Remove-Item -Recurse -Force $path }
+          }
+
+      - name: Build
+        run: .\build_windows.ps1
+
+      - name: Package
+        run: >
+          .\scripts\ci\package_windows.ps1 -BuildDir build
+          -Version "${{ needs.release-gate.outputs.version }}" -OutDir dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arenai-windows-x86_64
+          path: dist/*.zip
+          if-no-files-found: error
+
+  publish-release:
+    needs: [release-gate, package-linux, package-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.release-gate.outputs.version }}
+        run: >
+          gh release create "v$VERSION" dist/*.zip
+          --repo "$GITHUB_REPOSITORY"
+          --target "$GITHUB_SHA"
+          --title "ArenAI v$VERSION"
+          --generate-notes

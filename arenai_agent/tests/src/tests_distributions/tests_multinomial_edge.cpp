@@ -10,7 +10,7 @@ using namespace arenai;
 using namespace arenai::agent;
 
 TEST_F(MultinomialEdgeTest, EntropyWithNearZeroProbabilities) {
-    auto proba = torch::zeros({1, 5});
+    const auto proba = torch::zeros({1, 5});
     proba[0][0] = 1e-10f;
     proba[0][1] = 1e-10f;
     proba[0][2] = 1e-10f;
@@ -25,7 +25,7 @@ TEST_F(MultinomialEdgeTest, EntropyWithNearZeroProbabilities) {
 }
 
 TEST_F(MultinomialEdgeTest, EntropyGradientFlowsThroughProbabilities) {
-    auto logits = torch::randn({4, 3}, torch::TensorOptions().requires_grad(true));
+    const auto logits = torch::randn({4, 3}, torch::TensorOptions().requires_grad(true));
     const auto proba = torch::softmax(logits, -1);
 
     const auto entropy = multinomial_entropy(proba);

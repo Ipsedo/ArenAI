@@ -26,11 +26,14 @@ namespace arenai::agent {
         auto disc_acc = disc_cpu.accessor<float, 2>();
 
         for (int i = 0; i < batch_size; i++) {
-            const controller::joystick joystick_direction{cont_acc[i][0], cont_acc[i][1]};
-            const controller::joystick joystick_canon{cont_acc[i][2], cont_acc[i][3]};
+            const controller::joystick joystick_direction{.x = cont_acc[i][0], .y = cont_acc[i][1]};
+            const controller::joystick joystick_canon{.x = cont_acc[i][2], .y = cont_acc[i][3]};
             const controller::button fire_button(disc_acc[i][0] > disc_acc[i][1]);
 
-            actions.push_back({joystick_direction, joystick_canon, fire_button});
+            actions.push_back(
+                {.left_joystick = joystick_direction,
+                 .right_joystick = joystick_canon,
+                 .fire_button = fire_button});
         }
 
         return actions;
@@ -47,7 +50,7 @@ namespace arenai::agent {
         const torch::Tensor visions_u8 = torch::zeros(
             {N, C, H, W}, torch::TensorOptions().dtype(torch::kUInt8).requires_grad(false));
 
-        torch::Tensor proprioceptions =
+        const torch::Tensor proprioceptions =
             torch::zeros({N, P}, torch::TensorOptions().dtype(torch::kFloat).requires_grad(false));
 
         auto *vision_ptr = visions_u8.data_ptr<uint8_t>();

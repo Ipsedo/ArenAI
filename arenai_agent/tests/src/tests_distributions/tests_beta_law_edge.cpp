@@ -105,7 +105,7 @@ TEST_F(BetaLawEdgeTest, LogProbAtExactBoundaryValues) {
 // ========================================================================
 
 TEST_F(BetaLawGradientTest, LogProbaGradientFlowsThroughAlpha) {
-    auto alpha = torch::full({5}, 2.0f, torch::TensorOptions().requires_grad(true));
+    const auto alpha = torch::full({5}, 2.0f, torch::TensorOptions().requires_grad(true));
     const auto beta = torch::ones({5}) * 3.0f;
     const auto x = torch::tensor({0.0f, 0.2f, -0.3f, 0.5f, -0.1f});
 
@@ -121,7 +121,7 @@ TEST_F(BetaLawGradientTest, LogProbaGradientFlowsThroughAlpha) {
 
 TEST_F(BetaLawGradientTest, LogProbaGradientFlowsThroughBeta) {
     const auto alpha = torch::ones({5}) * 2.0f;
-    auto beta = torch::full({5}, 3.0f, torch::TensorOptions().requires_grad(true));
+    const auto beta = torch::full({5}, 3.0f, torch::TensorOptions().requires_grad(true));
     const auto x = torch::tensor({0.0f, 0.2f, -0.3f, 0.5f, -0.1f});
 
     const auto log_p = beta_law_log_proba(x, alpha, beta);
@@ -135,7 +135,7 @@ TEST_F(BetaLawGradientTest, LogProbaGradientFlowsThroughBeta) {
 }
 
 TEST_F(BetaLawGradientTest, EntropyGradientFlowsThroughAlpha) {
-    auto alpha = torch::full({5}, 2.0f, torch::TensorOptions().requires_grad(true));
+    const auto alpha = torch::full({5}, 2.0f, torch::TensorOptions().requires_grad(true));
     const auto beta = torch::ones({5}) * 3.0f;
 
     const auto entropy = beta_law_entropy(alpha, beta);
@@ -150,7 +150,7 @@ TEST_F(BetaLawGradientTest, EntropyGradientFlowsThroughAlpha) {
 
 TEST_F(BetaLawGradientTest, EntropyGradientFlowsThroughBeta) {
     const auto alpha = torch::ones({5}) * 2.0f;
-    auto beta = torch::full({5}, 3.0f, torch::TensorOptions().requires_grad(true));
+    const auto beta = torch::full({5}, 3.0f, torch::TensorOptions().requires_grad(true));
 
     const auto entropy = beta_law_entropy(alpha, beta);
     const auto loss = entropy.sum();

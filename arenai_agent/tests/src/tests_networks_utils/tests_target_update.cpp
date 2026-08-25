@@ -16,8 +16,8 @@ namespace {
 }// namespace
 
 TEST_F(TargetUpdateTest, HardUpdateCopiesExact) {
-    auto from = make_linear(4, 2);
-    auto to = make_linear(4, 2);
+    const auto from = make_linear(4, 2);
+    const auto to = make_linear(4, 2);
 
     // ensure they differ
     torch::nn::init::ones_(to->weight);
@@ -36,8 +36,8 @@ TEST_F(TargetUpdateTest, HardUpdateCopiesExact) {
 }
 
 TEST_F(TargetUpdateTest, SoftUpdateTau1IsHardUpdate) {
-    auto from = make_linear(4, 2);
-    auto to = make_linear(4, 2);
+    const auto from = make_linear(4, 2);
+    const auto to = make_linear(4, 2);
 
     torch::nn::init::ones_(to->weight);
     torch::nn::init::uniform_(from->weight, -1.0, 1.0);
@@ -55,8 +55,8 @@ TEST_F(TargetUpdateTest, SoftUpdateTau1IsHardUpdate) {
 }
 
 TEST_F(TargetUpdateTest, SoftUpdateTau0NoChange) {
-    auto from = make_linear(4, 2);
-    auto to = make_linear(4, 2);
+    const auto from = make_linear(4, 2);
+    const auto to = make_linear(4, 2);
 
     // save original 'to' params
     std::map<std::string, torch::Tensor> original;
@@ -72,8 +72,8 @@ TEST_F(TargetUpdateTest, SoftUpdateTau0NoChange) {
 }
 
 TEST_F(TargetUpdateTest, SoftUpdateInterpolation) {
-    auto from = make_linear(4, 2);
-    auto to = make_linear(4, 2);
+    const auto from = make_linear(4, 2);
+    const auto to = make_linear(4, 2);
 
     constexpr float tau = 0.5f;
 

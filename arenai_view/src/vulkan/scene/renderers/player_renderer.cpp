@@ -13,7 +13,7 @@ namespace arenai::view {
         std::shared_ptr<WindowFrameContext> frame_context, const int width, const int height,
         const glm::vec3 light_pos, const std::shared_ptr<AbstractCamera> &camera)
         : VulkanRenderer(device, light_pos, camera, true), width_(width), height_(height),
-          frame_context_(std::move(frame_context)), hud_drawables_() {}
+          frame_context_(std::move(frame_context)) {}
 
     void VulkanPlayerRenderer::add_hud_drawable(std::unique_ptr<AbstractHudDrawable> hud_drawable) {
         if (auto *vulkan_hud = dynamic_cast<VulkanHudDrawable *>(hud_drawable.get()))
@@ -41,11 +41,8 @@ namespace arenai::view {
 
     void
     VulkanPlayerRenderer::on_end_frame(const glm::mat4 &view_matrix, const glm::mat4 &proj_matrix) {
-        const VkCommandBuffer cmd = scene_frame().cmd;
+        const VkCommandBuffer &cmd = scene_frame().cmd;
 
-        // post-processing chain, then composite + HUD onto the swapchain
-        // image; the HUD shares the composite's rendering scope so that it
-        // stays untouched by the effects
         const glm::vec3 sun_dir_view =
             glm::normalize(glm::mat3(view_matrix) * glm::normalize(light_position()));
         post_process_->run_effects(cmd, proj_matrix, sun_dir_view);
@@ -55,30 +52,26 @@ namespace arenai::view {
             cmd, frame_context_->swapchain_format(), frame_context_->width(),
             frame_context_->height());
 
-        // the composite pass switched to its image-space viewport: restore
-        // the negative-height one the HUD math expects
         const VkViewport viewport{
-            0.f,
-            static_cast<float>(frame_context_->height()),
-            static_cast<float>(frame_context_->width()),
-            -static_cast<float>(frame_context_->height()),
-            0.f,
-            1.f};
+            .x = 0.f,
+            .y = static_cast<float>(frame_context_->height()),
+            .width = static_cast<float>(frame_context_->width()),
+            .height = -static_cast<float>(frame_context_->height()),
+            .minDepth = 0.f,
+            .maxDepth = 1.f};
         vkCmdSetViewport(cmd, 0, 1, &viewport);
 
         for (const auto &hud_drawable: hud_drawables_)
             hud_drawable->draw(get_width(), get_height());
 
         frame_context_->end_swapchain_pass();
-
-        // no present here: presenting the frame is the application's call (an
-        // UI overlay may still be drawn on top), see
-        // AbstractWindowedGraphicBackend::present()
     }
 
     int VulkanPlayerRenderer::get_width() const { return width_; }
 
     int VulkanPlayerRenderer::get_height() const { return height_; }
+
+    glm::mat4 VulkanPlayerRenderer::last_view_projection() const { return last_view_proj_matrix(); }
 
     void VulkanPlayerRenderer::set_window_size(const int new_width, const int new_height) {
         width_ = new_width;
@@ -89,7 +82,7 @@ namespace arenai::view {
     }
 
     VkFormat VulkanPlayerRenderer::scene_color_format() const {
-        return post_process_->scene_color_format();
+        return VulkanPostProcess::scene_color_format();
     }
 
     VkFormat VulkanPlayerRenderer::scene_depth_format() const {
@@ -102,14 +95,15 @@ namespace arenai::view {
 
     HudFrame VulkanPlayerRenderer::hud_frame() {
         return {
-            frame_context_->cmd(), frame_context_->swapchain_format(), device(), upload_pool(),
-            &descriptors()};
+            .cmd = frame_context_->cmd(),
+            .color_format = frame_context_->swapchain_format(),
+            .device = device(),
+            .upload_pool = upload_pool(),
+            .descriptors = &descriptors()};
     }
 
     VulkanPlayerRenderer::~VulkanPlayerRenderer() {
-        // in-flight frames may still reference the pipelines and buffers of
-        // the drawables/effects destroyed with this renderer
-        device()->wait_idle();
+        VulkanRenderer::device()->wait_idle();
         hud_drawables_.clear();
         post_process_.reset();
     }

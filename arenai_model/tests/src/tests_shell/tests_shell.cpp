@@ -84,7 +84,7 @@ TEST_F(ShellTest, ShellHitsEnemyTank) {
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
-    ASSERT_TRUE(shared_a->has_hit_other_tank()) << "shell should hit the enemy tank";
+    ASSERT_TRUE(shared_a->consume_has_hit()) << "shell should hit the enemy tank";
 }
 
 TEST_F(ShellTest, ShellDestroyedOnContact) {
@@ -111,7 +111,7 @@ TEST_F(ShellTest, ShellDestroyedOnContact) {
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
-    ASSERT_TRUE(shared_a->has_hit_other_tank()) << "shell must hit enemy tank";
+    ASSERT_TRUE(shared_a->consume_has_hit()) << "shell must hit enemy tank";
 
     ASSERT_EQ(static_cast<int>(engine->get_items().size()), count_before_fire)
         << "shell should be destroyed after contact (on_contact self-destructs)";
@@ -158,7 +158,7 @@ TEST_F(ShellTest, ShellContactCallbackSetsReward) {
 
     const std::vector tanks{shared_a, shared_b};
 
-    ASSERT_TRUE(shared_a->has_hit_other_tank()) << "shell must hit for reward test";
+    ASSERT_TRUE(shared_a->consume_has_hit()) << "shell must hit for reward test";
 
     const float reward = shared_a->get_reward(tanks);
     ASSERT_GT(reward, 0.f) << "reward should be positive after shell contact callback";
@@ -212,7 +212,7 @@ TEST_F(ShellTest, ShellImpactDealsExactlyOneDamage) {
     fire_once(shared_a);
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
-    ASSERT_TRUE(shared_a->has_hit_other_tank()) << "shell must hit for this test to mean anything";
+    ASSERT_TRUE(shared_a->consume_has_hit()) << "shell must hit for this test to mean anything";
 
     ASSERT_EQ(consume_tank_hits(shared_b), 1)
         << "one shell removes exactly one health point, whatever the number of contact "

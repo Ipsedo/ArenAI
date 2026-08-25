@@ -175,7 +175,7 @@ TEST_F(EnemyTankTest, ShellHitsGroundNoRewardNoCrash) {
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
     // shell hit the ground (CubeItem, not LifeItem) — has_hit should be false
-    ASSERT_FALSE(shared_tank->has_hit_other_tank())
+    ASSERT_FALSE(shared_tank->consume_has_hit())
         << "hitting the ground should not count as hitting another tank";
 
     // but last_shoot_info should still be set — reward should not crash
@@ -227,9 +227,9 @@ TEST_F(EnemyTankTest, HasHitOtherTankResetsAfterCall) {
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
     // first call returns true
-    ASSERT_TRUE(shared_a->has_hit_other_tank());
+    ASSERT_TRUE(shared_a->consume_has_hit());
     // second call should return false (reset)
-    ASSERT_FALSE(shared_a->has_hit_other_tank())
+    ASSERT_FALSE(shared_a->consume_has_hit())
         << "has_hit_other_tank should reset to false after being queried";
 }
 

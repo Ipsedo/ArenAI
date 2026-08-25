@@ -14,10 +14,6 @@
 
 namespace arenai::view {
 
-    // maps light-space NDC to shadow-map coordinates: x/y from [-1, 1] to
-    // [0, 1] with the y axis flipped (the depth pass rasterizes with a
-    // negative-height viewport, so row 0 holds ndc.y = +1), z already in
-    // [0, 1] with the zero-to-one ortho projection
     constexpr glm::mat4 SHADOW_BIAS_MATRIX(
         0.5f, 0.f, 0.f, 0.f, 0.f, -0.5f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.5f, 0.5f, 0.f, 1.f);
 
@@ -41,8 +37,6 @@ namespace arenai::view {
         const glm::mat4 light_view =
             glm::lookAt(light_dir * settings_.distance, glm::vec3(0.f), up);
 
-        // center the ortho frustum on the camera, snapped to the shadow-map
-        // texel grid to avoid shadow shimmering when the camera moves
         const auto center = glm::vec3(light_view * glm::vec4(camera_pos, 1.f));
         const float texel_size = 2.f * settings_.half_extent / static_cast<float>(map_->size());
         const float x = std::floor(center.x / texel_size) * texel_size;
@@ -61,23 +55,26 @@ namespace arenai::view {
         return SHADOW_BIAS_MATRIX * light_vp_matrix;
     }
 
-    void ShadowPass::begin_depth_pass(const VkCommandBuffer cmd) const {
+    void ShadowPass::begin_depth_pass(const VkCommandBuffer &cmd) const {
         map_->begin_depth_pass(cmd);
     }
 
-    void ShadowPass::end_depth_pass(const VkCommandBuffer cmd) const { map_->end_depth_pass(cmd); }
+    void ShadowPass::end_depth_pass(const VkCommandBuffer &cmd) const { map_->end_depth_pass(cmd); }
 
     bool ShadowPass::ensure_ring(const int slot, const size_t draw_count) {
-        auto &ring = rings_[slot];
+        auto &[buffer, capacity] = rings_[slot];
 
         const auto needed = static_cast<uint32_t>(std::max<size_t>(draw_count, 1));
-        if (ring.capacity >= needed) return false;
 
-        const uint32_t capacity = std::max(64u, std::bit_ceil(needed));
-        ring.buffer = std::make_unique<HostVisibleBuffer>(
-            device_, static_cast<size_t>(capacity) * settings_.ring_stride,
+        if (capacity >= needed) return false;
+
+        const uint32_t new_capacity = std::max(64u, std::bit_ceil(needed));
+
+        buffer = std::make_unique<HostVisibleBuffer>(
+            device_, static_cast<size_t>(new_capacity) * settings_.ring_stride,
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-        ring.capacity = capacity;
+        capacity = new_capacity;
+
         return true;
     }
 

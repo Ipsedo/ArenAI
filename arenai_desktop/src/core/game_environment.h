@@ -5,6 +5,8 @@
 #ifndef ARENAI_DESKTOP_GAME_ENVIRONMENT_H
 #define ARENAI_DESKTOP_GAME_ENVIRONMENT_H
 
+#include <optional>
+
 #include <arenai_core/environment.h>
 #include <arenai_model/tank.h>
 #include <arenai_view/backend.h>
@@ -26,16 +28,9 @@ namespace arenai::desktop {
 
         ~DesktopGameEnvironment() override;
 
-        // The environment builds its controller handlers (they need the player
-        // tank and the renderer) but does NOT install them on the window:
-        // routing the inputs (game vs pause menu) is the application's policy.
-        // One of the two is null, depending on the controller kind.
         std::shared_ptr<controller::AbstractKeyboardCallback> keyboard_handler() const;
         std::shared_ptr<controller::AbstractGamepadCallback> gamepad_handler() const;
 
-        // re-renders the player view with the matrices of the last on_draw():
-        // used while the game is paused, to draw the frozen scene under the
-        // pause menu overlay
         void redraw() const;
 
         void resize(int width, int height) const;
@@ -43,6 +38,12 @@ namespace arenai::desktop {
         bool is_player_dead() const;
 
         int get_score() const;
+
+        model::PlayerHits consume_player_hits() const;
+
+        static constexpr float AIM_DISTANCE = 100.f;
+
+        std::optional<glm::vec2> aim_point_on_screen() const;
 
     protected:
         void

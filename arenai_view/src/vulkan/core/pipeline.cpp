@@ -10,7 +10,7 @@
 namespace arenai::view {
 
     VkPipelineLayout make_pipeline_layout(
-        const VkDevice device, const std::vector<VkDescriptorSetLayout> &set_layouts,
+        const VkDevice &device, const std::vector<VkDescriptorSetLayout> &set_layouts,
         const std::vector<VkPushConstantRange> &push_ranges) {
         VkPipelineLayoutCreateInfo layout_info{};
         layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -100,9 +100,10 @@ namespace arenai::view {
     }
 
     VkPipeline PipelineBuilder::build(
-        const std::shared_ptr<VulkanDevice> &device, const VkPipelineLayout layout) const {
-        const VkShaderModule vertex_module = load_shader_module(device->handle(), vertex_name_);
-        const VkShaderModule fragment_module = load_shader_module(device->handle(), fragment_name_);
+        const std::shared_ptr<VulkanDevice> &device, const VkPipelineLayout &layout) const {
+        const VkShaderModule &vertex_module = load_shader_module(device->handle(), vertex_name_);
+        const VkShaderModule &fragment_module =
+            load_shader_module(device->handle(), fragment_name_);
 
         VkPipelineShaderStageCreateInfo stages[2]{};
         stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;

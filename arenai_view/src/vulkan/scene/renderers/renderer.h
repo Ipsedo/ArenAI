@@ -28,14 +28,6 @@ namespace arenai::view {
 
     class VulkanShadowDrawable;
 
-    // Base scene renderer: same orchestration as the GL one (shadow depth
-    // pass, then the scene pass through the drawables map), rebuilt on the
-    // frame model of Vulkan. Subclasses own the frame slots (command buffer,
-    // fence, targets) and expose them through the on_* hooks; the base owns
-    // the drawable registry, the per-slot set-0 descriptors (frame globals
-    // UBO, dynamic shadow-matrix ring, shadow-map sampler), the
-    // thread-confined upload pool and the descriptor allocator. Everything
-    // the drawables consume goes through the DrawableContext port.
     class VulkanRenderer : public virtual AbstractRenderer, public DrawableContext {
     public:
         static constexpr int FRAME_SLOTS = 2;
@@ -51,7 +43,6 @@ namespace arenai::view {
 
         void draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) override;
 
-        // Vulkan has no thread-bound context: both are no-ops
         void make_current() const override;
         void release_current() const override;
 
@@ -60,29 +51,28 @@ namespace arenai::view {
          */
 
         const SceneFrame &scene_frame() const override;
-        const std::shared_ptr<VulkanDevice> &device() const override;
         VkCommandPool upload_pool() const override;
+        VkFormat shadow_depth_format() const override;
+
+        const std::shared_ptr<VulkanDevice> &device() const override;
+
         DescriptorAllocator &descriptors() override;
+
         VkDescriptorSetLayout set0_plain_layout() const override;
         VkDescriptorSetLayout set0_shadow_layout() const override;
-        VkFormat shadow_depth_format() const override;
-        // scene_color_format/scene_depth_format/scene_samples stay pure: the
-        // subclasses own the scene attachments
 
     protected:
-        // waits/reuses a frame slot and returns its begun command buffer
         virtual std::pair<VkCommandBuffer, int> on_begin_frame() = 0;
-        // begins the scene rendering pass (attachments, viewport, scissor)
+
         virtual void on_begin_scene_pass() = 0;
-        // ends the scene pass; the subclass decides what follows (readback
-        // copy + submit offscreen, post-processing + HUD for the player)
+
         virtual void on_end_frame(const glm::mat4 &view_matrix, const glm::mat4 &proj_matrix) = 0;
 
         const glm::vec3 &light_position() const;
         const std::shared_ptr<AbstractCamera> &camera() const;
+        const glm::mat4 &last_view_proj_matrix() const;
 
     private:
-        // a drawable and its shadow capability, resolved once at add time
         struct DrawableEntry {
             std::unique_ptr<AbstractDrawable> drawable;
             VulkanShadowDrawable *shadow = nullptr;
@@ -103,8 +93,7 @@ namespace arenai::view {
         std::unique_ptr<ShadowPass> shadow_pass_;
 
         std::map<std::string, DrawableEntry> drawables_;
-        // a removed drawable may still be referenced by an in-flight frame:
-        // it is destroyed FRAME_SLOTS frames later
+
         RetireQueue<AbstractDrawable> retired_;
 
         std::shared_ptr<AbstractCamera> camera_;
@@ -116,6 +105,7 @@ namespace arenai::view {
 
         SlotResources slots_[FRAME_SLOTS];
         SceneFrame frame_;
+        glm::mat4 last_view_proj_matrix_{1.f};
     };
 
 }// namespace arenai::view

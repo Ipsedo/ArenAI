@@ -21,9 +21,6 @@ namespace arenai::desktop {
         const std::shared_ptr<view::AbstractWindowedGraphicBackend> &graphics_backend,
         const int nb_tanks, const int vision_height, const int vision_width,
         const float wanted_frequency, const ControllerKind &controller_kind)
-        // The tank visions get their own headless backend (integrated GPU): their
-        // synchronous readbacks are latency-bound on a discrete GPU, and this keeps
-        // them off the window's GPU when the player view is offloaded (prime-run).
         : BaseTanksEnvironment(
             std::make_shared<agent::DesktopAssetFileReader>(asset_folder_path),
             view::make_vulkan_backend(), nb_tanks, wanted_frequency, vision_height, vision_width, 8,
@@ -35,12 +32,8 @@ namespace arenai::desktop {
 
     void DesktopGameEnvironment::on_draw(
         const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
-        // kept for redraw(): the pause menu re-renders this exact frame under
-        // its overlay while the simulation is frozen
         last_model_matrices_ = model_matrices;
 
-        // the base environment leaves its own (headless) context current on this
-        // thread, so bind the window's context before drawing the player view
         player_renderer->make_current();
         player_renderer->draw(model_matrices);
     }
@@ -72,6 +65,28 @@ namespace arenai::desktop {
 
     int DesktopGameEnvironment::get_score() const { return player_tank->get_score(); }
 
+    std::optional<glm::vec2> DesktopGameEnvironment::aim_point_on_screen() const {
+        if (!player_tank || !player_renderer) return std::nullopt;
+
+        const glm::mat4 canon_matrix = player_tank->get_canon()->get_model_matrix();
+        const glm::vec3 origin = canon_matrix * glm::vec4(0.f, 0.f, 0.f, 1.f);
+        const glm::vec3 forward =
+            glm::normalize(glm::mat3(canon_matrix) * glm::vec3(0.f, 0.f, 1.f));
+        const glm::vec3 aim = origin + forward * AIM_DISTANCE;
+
+        const glm::vec4 clip = player_renderer->last_view_projection() * glm::vec4(aim, 1.f);
+        if (clip.w <= 0.f) return std::nullopt;
+
+        const glm::vec2 ndc = glm::vec2(clip) / clip.w;
+        if (ndc.x < -1.f || ndc.x > 1.f || ndc.y < -1.f || ndc.y > 1.f) return std::nullopt;
+
+        return glm::vec2((ndc.x + 1.f) * 0.5f, (1.f - ndc.y) * 0.5f);
+    }
+
+    model::PlayerHits DesktopGameEnvironment::consume_player_hits() const {
+        return player_tank->consume_hits();
+    }
+
     std::shared_ptr<controller::AbstractKeyboardCallback>
     DesktopGameEnvironment::keyboard_handler() const {
         return keyboard_handler_;
@@ -93,8 +108,6 @@ namespace arenai::desktop {
         player_renderer = windowed_backend->make_player_renderer(
             glm::vec3(200, 300, 200), player_tank->get_camera());
 
-        // build the controller handlers; the application decides when they
-        // actually receive the window inputs (see keyboard_handler())
         if (controller_kind == ControllerKind::Gamepad) {
             const auto player_controller_handler = std::make_shared<PlayerGamepadHandler>();
 
@@ -135,9 +148,6 @@ namespace arenai::desktop {
                 item->get_name(), drawable_factory->make_diffuse(
                                       file_reader, item->get_shape()->get_vertices(), color));
         }
-
-        /*for (auto &hud_drawable: player_controller_handler->get_hud_drawables(file_reader))
-        player_renderer->add_hud_drawable(std::move(hud_drawable));*/
 
         player_renderer->release_current();
     }

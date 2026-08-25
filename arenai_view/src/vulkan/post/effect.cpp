@@ -5,6 +5,7 @@
 #include "./effect.h"
 
 #include <algorithm>
+#include <ranges>
 #include <utility>
 
 #include "../core/errors.h"
@@ -45,16 +46,18 @@ namespace arenai::view {
             "vkCreateSampler (effect nearest)");
 
         DescriptorLayoutBuilder layout_builder;
+
         for (uint32_t binding = 0; binding < nb_inputs_; binding++)
             layout_builder.add_binding(
                 binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+
         input_layout_ = layout_builder.build(device_->handle());
-        // the effect shaders bind their samplers on set 1: set 0 stays an
-        // empty placeholder, never bound
         empty_layout_ = DescriptorLayoutBuilder().build(device_->handle());
 
         std::vector<VkPushConstantRange> push_ranges;
-        if (push_size_ > 0) push_ranges.push_back({VK_SHADER_STAGE_FRAGMENT_BIT, 0, push_size_});
+        if (push_size_ > 0)
+            push_ranges.push_back(
+                {.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT, .offset = 0, .size = push_size_});
         pipeline_layout_ =
             make_pipeline_layout(device_->handle(), {empty_layout_, input_layout_}, push_ranges);
 
@@ -72,50 +75,55 @@ namespace arenai::view {
 
     void VulkanPostEffect::resize(const int new_width, const int new_height) {
         device_->wait_idle();
+
         targets_.clear();
-        // recreated targets may reuse freed addresses: drop the cached sets
         input_sets_.clear();
+
         create_targets(new_width, new_height);
     }
 
     VkPipeline VulkanPostEffect::pipeline_for(const VkFormat color_format) {
-        const auto cached = pipelines_.find(color_format);
-        if (cached != pipelines_.end()) return cached->second;
+        if (const auto cached = pipelines_.find(color_format); cached != pipelines_.end())
+            return cached->second;
 
-        const VkPipeline pipeline = PipelineBuilder()
-                                        .shaders("post_vs.glsl", fragment_shader_)
-                                        .cull_mode(VK_CULL_MODE_NONE)
-                                        .depth(false, false)
-                                        .color_format(color_format)
-                                        .build(device_, pipeline_layout_);
+        const VkPipeline &pipeline = PipelineBuilder()
+                                         .shaders("post_vs.glsl", fragment_shader_)
+                                         .cull_mode(VK_CULL_MODE_NONE)
+                                         .depth(false, false)
+                                         .color_format(color_format)
+                                         .build(device_, pipeline_layout_);
         pipelines_.insert({color_format, pipeline});
         return pipeline;
     }
 
     VkDescriptorSet VulkanPostEffect::set_for(const std::vector<const Target *> &inputs) {
-        const auto cached = input_sets_.find(inputs);
-        if (cached != input_sets_.end()) return cached->second;
+        if (const auto cached = input_sets_.find(inputs); cached != input_sets_.end())
+            return cached->second;
 
-        const VkDescriptorSet set = descriptors_->allocate(input_layout_);
+        const VkDescriptorSet &set = descriptors_->allocate(input_layout_);
+
         for (uint32_t binding = 0; binding < inputs.size(); binding++) {
             const auto *input = inputs[binding];
             const bool depth = is_depth_format(input->format());
+
             write_image_descriptor(
                 device_->handle(), set, binding, depth ? nearest_sampler_ : linear_sampler_,
                 input->view(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         }
+
         input_sets_.insert({inputs, set});
+
         return set;
     }
 
     void VulkanPostEffect::record_draw(
         const FrameContext &context, const VkFormat color_format,
         const std::vector<const Target *> &inputs, const void *push_data) {
-        const VkCommandBuffer cmd = context.cmd;
+        const VkCommandBuffer &cmd = context.cmd;
 
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_for(color_format));
 
-        const VkDescriptorSet set = set_for(inputs);
+        const VkDescriptorSet &set = set_for(inputs);
         vkCmdBindDescriptorSets(
             cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_, 1, 1, &set, 0, nullptr);
 
@@ -123,14 +131,13 @@ namespace arenai::view {
             vkCmdPushConstants(
                 cmd, pipeline_layout_, VK_SHADER_STAGE_FRAGMENT_BIT, 0, push_size_, push_data);
 
-        // buffer-less fullscreen triangle (see post_vs.glsl)
         vkCmdDraw(cmd, 3, 1, 0, 0);
     }
 
     void VulkanPostEffect::run_pass(
         const FrameContext &context, const size_t target_index,
         const std::vector<const Target *> &inputs, const void *push_data) {
-        const VkCommandBuffer cmd = context.cmd;
+        const VkCommandBuffer &cmd = context.cmd;
         const Target &out = *targets_[target_index];
 
         // previous readers of this target are done before it is rewritten
@@ -151,7 +158,10 @@ namespace arenai::view {
         VkRenderingInfo rendering_info{};
         rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
         rendering_info.renderArea = {
-            {0, 0}, {static_cast<uint32_t>(out.width()), static_cast<uint32_t>(out.height())}};
+            .offset = {.x = 0, .y = 0},
+            .extent = {
+                .width = static_cast<uint32_t>(out.width()),
+                .height = static_cast<uint32_t>(out.height())}};
         rendering_info.layerCount = 1;
         rendering_info.colorAttachmentCount = 1;
         rendering_info.pColorAttachments = &color_attachment;
@@ -160,10 +170,18 @@ namespace arenai::view {
 
         // regular viewport: image-space pass, rows map 1:1
         const VkViewport viewport{
-            0.f, 0.f, static_cast<float>(out.width()), static_cast<float>(out.height()), 0.f, 1.f};
+            .x = 0.f,
+            .y = 0.f,
+            .width = static_cast<float>(out.width()),
+            .height = static_cast<float>(out.height()),
+            .minDepth = 0.f,
+            .maxDepth = 1.f};
         vkCmdSetViewport(cmd, 0, 1, &viewport);
         const VkRect2D scissor{
-            {0, 0}, {static_cast<uint32_t>(out.width()), static_cast<uint32_t>(out.height())}};
+            .offset = {.x = 0, .y = 0},
+            .extent = {
+                .width = static_cast<uint32_t>(out.width()),
+                .height = static_cast<uint32_t>(out.height())}};
         vkCmdSetScissor(cmd, 0, 1, &scissor);
 
         record_draw(context, out.format(), inputs, push_data);
@@ -181,14 +199,14 @@ namespace arenai::view {
     void VulkanPostEffect::run_inline(
         const FrameContext &context, const std::vector<const Target *> &inputs,
         const void *push_data) {
-        // image-space viewport inside the caller's scope (which set the
-        // negative scene viewport): rows map 1:1 onto the output
-        const VkViewport viewport{0.f,
-                                  0.f,
-                                  static_cast<float>(context.output_width),
-                                  static_cast<float>(context.output_height),
-                                  0.f,
-                                  1.f};
+
+        const VkViewport viewport{
+            .x = 0.f,
+            .y = 0.f,
+            .width = static_cast<float>(context.output_width),
+            .height = static_cast<float>(context.output_height),
+            .minDepth = 0.f,
+            .maxDepth = 1.f};
         vkCmdSetViewport(context.cmd, 0, 1, &viewport);
 
         record_draw(context, context.output_format, inputs, push_data);
@@ -197,8 +215,7 @@ namespace arenai::view {
     void VulkanPostEffect::ensure_target_readable(
         const FrameContext &context, const size_t target_index) {
         if (target_initialized_[target_index]) return;
-        // content stays undefined (the consumer weights it to zero): only the
-        // layout has to be valid for sampling
+
         record_image_barrier(
             context.cmd, targets_[target_index]->image(), VK_IMAGE_ASPECT_COLOR_BIT,
             VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0,
@@ -212,8 +229,9 @@ namespace arenai::view {
     }
 
     VulkanPostEffect::~VulkanPostEffect() {
-        for (const auto &[format, pipeline]: pipelines_)
+        for (const auto &pipeline: pipelines_ | std::views::values)
             vkDestroyPipeline(device_->handle(), pipeline, nullptr);
+
         vkDestroyPipelineLayout(device_->handle(), pipeline_layout_, nullptr);
         vkDestroyDescriptorSetLayout(device_->handle(), input_layout_, nullptr);
         vkDestroyDescriptorSetLayout(device_->handle(), empty_layout_, nullptr);

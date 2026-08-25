@@ -30,9 +30,7 @@ namespace arenai::view {
             "vkCreateSampler (shadow map)");
     }
 
-    void VulkanShadowMap::begin_depth_pass(const VkCommandBuffer cmd) const {
-        // the previous content is cleared below: UNDEFINED discards it and
-        // covers the first use as well
+    void VulkanShadowMap::begin_depth_pass(const VkCommandBuffer &cmd) const {
         record_image_barrier(
             cmd, depth_->image(), VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
             VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 0,
@@ -47,30 +45,35 @@ namespace arenai::view {
         depth_attachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
         depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        depth_attachment.clearValue.depthStencil = {1.f, 0};
+        depth_attachment.clearValue.depthStencil = {.depth = 1.f, .stencil = 0};
 
         VkRenderingInfo rendering_info{};
         rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
         rendering_info.renderArea = {
-            {0, 0}, {static_cast<uint32_t>(size_), static_cast<uint32_t>(size_)}};
+            .offset = {.x = 0, .y = 0},
+            .extent = {
+                .width = static_cast<uint32_t>(size_), .height = static_cast<uint32_t>(size_)}};
         rendering_info.layerCount = 1;
         rendering_info.pDepthAttachment = &depth_attachment;
 
         vkCmdBeginRendering(cmd, &rendering_info);
 
-        const VkViewport viewport{0.f,
-                                  static_cast<float>(size_),
-                                  static_cast<float>(size_),
-                                  -static_cast<float>(size_),
-                                  0.f,
-                                  1.f};
+        const VkViewport viewport{
+            .x = 0.f,
+            .y = static_cast<float>(size_),
+            .width = static_cast<float>(size_),
+            .height = -static_cast<float>(size_),
+            .minDepth = 0.f,
+            .maxDepth = 1.f};
         vkCmdSetViewport(cmd, 0, 1, &viewport);
         const VkRect2D scissor{
-            {0, 0}, {static_cast<uint32_t>(size_), static_cast<uint32_t>(size_)}};
+            .offset = {.x = 0, .y = 0},
+            .extent = {
+                .width = static_cast<uint32_t>(size_), .height = static_cast<uint32_t>(size_)}};
         vkCmdSetScissor(cmd, 0, 1, &scissor);
     }
 
-    void VulkanShadowMap::end_depth_pass(const VkCommandBuffer cmd) const {
+    void VulkanShadowMap::end_depth_pass(const VkCommandBuffer &cmd) const {
         vkCmdEndRendering(cmd);
 
         record_image_barrier(

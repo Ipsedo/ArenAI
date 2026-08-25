@@ -25,13 +25,6 @@ namespace arenai::model {
         JPH::RVec3 position = body->GetPosition();
         JPH::Quat rotation = body->GetRotation();
 
-        // Bullet's motion states are written through its latency interpolation:
-        // the rendered transform is the simulated one shifted along the current
-        // velocities so that rendered time = accumulated real time minus one
-        // fixed timestep. The shift is (leftover - fixed), not a constant -fixed:
-        // that keeps motion continuous on render frames where no physics
-        // sub-step ran. Reproduce it so every consumer (rendering,
-        // proprioception, rewards) measures the same thing.
         if (body->IsDynamic() && body->IsActive()) {
             const float dt = engine.get_interpolation_delta();
 

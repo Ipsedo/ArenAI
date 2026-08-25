@@ -30,8 +30,11 @@ namespace arenai::model {
         virtual std::shared_ptr<view::AbstractCamera> get_camera() = 0;
         virtual std::vector<std::shared_ptr<Item>> get_items() = 0;
         virtual std::vector<std::shared_ptr<controller::Controller>> get_controllers() = 0;
+
         virtual std::map<std::string, std::shared_ptr<Shape>> load_shell_shapes() const = 0;
+
         virtual bool is_dead() = 0;
+
         virtual std::shared_ptr<Item> get_chassis() = 0;
         virtual std::shared_ptr<Item> get_canon() = 0;
     };
@@ -40,16 +43,28 @@ namespace arenai::model {
     public:
         virtual float get_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) = 0;
         virtual std::vector<float> get_proprioception() = 0;
-        virtual bool has_hit_other_tank() = 0;
-        virtual bool has_fired_shell() = 0;
+
+        virtual bool consume_has_hit() = 0;
+        virtual bool consume_has_kill() = 0;
+        virtual bool consume_has_fire() = 0;
+
         virtual bool is_suicide() const = 0;
         virtual bool is_first_frame_dead() = 0;
+
         virtual void on_death() = 0;
+    };
+
+    struct PlayerHits {
+        int hits = 0;
+        int kills = 0;
     };
 
     class PlayerTank : virtual public Tank {
     public:
         virtual int get_score() const = 0;
+
+        virtual PlayerHits consume_hits() = 0;
+
         virtual void destroy() = 0;
     };
 

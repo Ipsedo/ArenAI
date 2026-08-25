@@ -15,11 +15,6 @@
 
 namespace arenai::view {
 
-    // Player view: scene into the MSAA post-processing targets, effect
-    // chain, then composite + HUD into the swapchain image, all recorded in
-    // the frame command buffer owned by the shared WindowFrameContext. The
-    // frame stays open after draw(): the application may still composite the
-    // UI overlay before present().
     class VulkanPlayerRenderer final : public VulkanRenderer,
                                        public AbstractPlayerRenderer,
                                        public AbstractHudFrameProvider {
@@ -35,6 +30,7 @@ namespace arenai::view {
         int get_height() const override;
 
         void set_window_size(int new_width, int new_height) override;
+        glm::mat4 last_view_projection() const override;
 
         VkFormat scene_color_format() const override;
         VkFormat scene_depth_format() const override;
@@ -57,7 +53,6 @@ namespace arenai::view {
 
         std::shared_ptr<WindowFrameContext> frame_context_;
 
-        // MSAA + tonemapping/grading pipeline, built lazily on first frame
         std::unique_ptr<VulkanPostProcess> post_process_;
 
         std::vector<std::unique_ptr<AbstractHudDrawable>> hud_drawables_;

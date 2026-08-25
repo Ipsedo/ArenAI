@@ -15,35 +15,36 @@
 namespace arenai::view {
 
     VkPipelineLayout make_pipeline_layout(
-        VkDevice device, const std::vector<VkDescriptorSetLayout> &set_layouts,
+        const VkDevice &device, const std::vector<VkDescriptorSetLayout> &set_layouts,
         const std::vector<VkPushConstantRange> &push_ranges);
 
-    // Graphics pipeline builder for dynamic rendering (no render pass), with
-    // dynamic viewport + scissor. Defaults: triangle list, back-face culling
-    // (CCW front), depth LESS_OR_EQUAL test+write, no blending, 1 sample.
     class PipelineBuilder {
     public:
-        // shader names as embedded at build time, e.g. "diffuse_vs.glsl"
         PipelineBuilder &shaders(const std::string &vertex_name, const std::string &fragment_name);
+
         PipelineBuilder &vertex_input(
             const std::vector<VkVertexInputBindingDescription> &bindings,
             const std::vector<VkVertexInputAttributeDescription> &attributes);
+
         PipelineBuilder &topology(VkPrimitiveTopology topology);
-        // adds VK_DYNAMIC_STATE_LINE_WIDTH (line pipelines only)
+
         PipelineBuilder &dynamic_line_width();
+
         PipelineBuilder &cull_mode(VkCullModeFlags mode);
+
         PipelineBuilder &depth(bool test, bool write);
         PipelineBuilder &depth_bias(float constant_factor, float slope_factor);
-        // src=ONE, dst=ONE_MINUS_SRC_ALPHA: premultiplied-alpha blending
+
         PipelineBuilder &blend_premultiplied();
-        // src=SRC_ALPHA, dst=ONE_MINUS_SRC_ALPHA: classic alpha blending
         PipelineBuilder &blend_alpha();
+
         PipelineBuilder &color_format(VkFormat format);// none = depth-only pass
         PipelineBuilder &depth_format(VkFormat format);
+
         PipelineBuilder &samples(VkSampleCountFlagBits samples);
 
         VkPipeline
-        build(const std::shared_ptr<VulkanDevice> &device, VkPipelineLayout layout) const;
+        build(const std::shared_ptr<VulkanDevice> &device, const VkPipelineLayout &layout) const;
 
     private:
         std::string vertex_name_;

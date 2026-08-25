@@ -60,48 +60,50 @@ namespace arenai::view {
 
     void VulkanRenderer::add_drawable(
         const std::string &name, std::unique_ptr<AbstractDrawable> drawable) {
-        // the capability casts happen once here, never in the frame loop
         if (auto *vulkan_drawable = dynamic_cast<VulkanDrawable *>(drawable.get()))
             vulkan_drawable->attach(this);
+
         auto *shadow = dynamic_cast<VulkanShadowDrawable *>(drawable.get());
-        drawables_.insert({name, DrawableEntry{std::move(drawable), shadow}});
+        drawables_.insert({name, DrawableEntry{.drawable = std::move(drawable), .shadow = shadow}});
     }
 
     void VulkanRenderer::remove_drawable(const std::string &name) {
         const auto entry = drawables_.find(name);
         if (entry == drawables_.end()) return;
+
         retired_.retire(std::move(entry->second.drawable));
         drawables_.erase(entry);
     }
 
     void VulkanRenderer::ensure_slot_resources(const int slot, const size_t draw_count) {
-        auto &resources = slots_[slot];
+        auto &[globals, set0_plain, set0_shadow] = slots_[slot];
 
-        if (!resources.globals) {
-            resources.globals = std::make_unique<HostVisibleBuffer>(
+        if (!globals) {
+            globals = std::make_unique<HostVisibleBuffer>(
                 device_, sizeof(FrameGlobals), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-            resources.set0_plain = descriptors_->allocate(set0_plain_layout_);
+            set0_plain = descriptors_->allocate(set0_plain_layout_);
             write_buffer_descriptor(
-                device_->handle(), resources.set0_plain, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                resources.globals->handle(), 0, sizeof(FrameGlobals));
+                device_->handle(), set0_plain, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                globals->handle(), 0, sizeof(FrameGlobals));
         }
 
         if (!with_shadows_) return;
 
         if (shadow_pass_->ensure_ring(slot, draw_count)) {
-            if (resources.set0_shadow == VK_NULL_HANDLE) {
-                resources.set0_shadow = descriptors_->allocate(set0_shadow_layout_);
+            if (set0_shadow == VK_NULL_HANDLE) {
+                set0_shadow = descriptors_->allocate(set0_shadow_layout_);
+
                 write_buffer_descriptor(
-                    device_->handle(), resources.set0_shadow, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                    resources.globals->handle(), 0, sizeof(FrameGlobals));
+                    device_->handle(), set0_shadow, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                    globals->handle(), 0, sizeof(FrameGlobals));
                 write_image_descriptor(
-                    device_->handle(), resources.set0_shadow, 2, shadow_pass_->sampler(),
+                    device_->handle(), set0_shadow, 2, shadow_pass_->sampler(),
                     shadow_pass_->view(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
             }
+
             write_buffer_descriptor(
-                device_->handle(), resources.set0_shadow, 1,
-                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, shadow_pass_->ring(slot).handle(), 0,
-                sizeof(glm::mat4));
+                device_->handle(), set0_shadow, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
+                shadow_pass_->ring(slot).handle(), 0, sizeof(glm::mat4));
         }
     }
 
@@ -144,7 +146,8 @@ namespace arenai::view {
         const glm::mat4 proj_matrix = glm::perspectiveRH_ZO(
             static_cast<float>(M_PI) / 4.f,
             static_cast<float>(get_width()) / static_cast<float>(get_height()), 1.f,
-            2000.f * std::sqrt(3.f));
+            10000.f * std::sqrt(3.f));
+        last_view_proj_matrix_ = proj_matrix * view_matrix;
 
         const glm::mat4 biased_light_vp_matrix = ShadowPass::biased(light_vp_matrix);
 
@@ -153,7 +156,10 @@ namespace arenai::view {
         // without a full inverse view matrix
         const glm::vec4 world_up(glm::mat3(view_matrix) * glm::vec3(0.f, 1.f, 0.f), camera_pos.y);
 
-        const FrameGlobals globals{glm::vec4(light_pos_, 0.f), world_up, glm::vec4(FOG_COLOR, 0.f)};
+        const FrameGlobals globals{
+            .light_pos = glm::vec4(light_pos_, 0.f),
+            .world_up = world_up,
+            .fog_color = glm::vec4(FOG_COLOR, 0.f)};
         std::memcpy(slots_[slot].globals->data(), &globals, sizeof(FrameGlobals));
 
         on_begin_scene_pass();
@@ -163,10 +169,9 @@ namespace arenai::view {
             auto mv_matrix = view_matrix * m_matrix;
             const auto mvp_matrix = proj_matrix * mv_matrix;
 
-            const auto &entry = drawables_.at(name);
-            auto *shadow_drawable = shadow_pass_done ? entry.shadow : nullptr;
+            const auto &[drawable, shadow] = drawables_.at(name);
 
-            if (shadow_drawable) {
+            if (auto *shadow_drawable = shadow_pass_done ? shadow : nullptr) {
                 const glm::mat4 shadow_mvp_matrix = biased_light_vp_matrix * m_matrix;
                 frame_.shadow_dynamic_offset =
                     shadow_pass_->push_matrix(slot, shadow_index, shadow_mvp_matrix);
@@ -174,7 +179,7 @@ namespace arenai::view {
 
                 shadow_drawable->draw_with_shadow(
                     mvp_matrix, mv_matrix, light_pos_, camera_pos, world_up);
-            } else entry.drawable->draw(mvp_matrix, mv_matrix, light_pos_, camera_pos);
+            } else drawable->draw(mvp_matrix, mv_matrix, light_pos_, camera_pos);
         }
 
         slots_[slot].globals->flush();
@@ -204,6 +209,10 @@ namespace arenai::view {
     const glm::vec3 &VulkanRenderer::light_position() const { return light_pos_; }
 
     const std::shared_ptr<AbstractCamera> &VulkanRenderer::camera() const { return camera_; }
+
+    const glm::mat4 &VulkanRenderer::last_view_proj_matrix() const {
+        return last_view_proj_matrix_;
+    }
 
     VulkanRenderer::~VulkanRenderer() {
         // the subclass destructor has already waited its frame fences

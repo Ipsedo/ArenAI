@@ -19,7 +19,7 @@ namespace arenai::view {
     namespace {
 
         std::optional<uint32_t>
-        find_graphics_family(const VkPhysicalDevice device, const VkSurfaceKHR surface) {
+        find_graphics_family(const VkPhysicalDevice &device, const VkSurfaceKHR &surface) {
             uint32_t count = 0;
             vkGetPhysicalDeviceQueueFamilyProperties(device, &count, nullptr);
             std::vector<VkQueueFamilyProperties> families(count);
@@ -37,7 +37,7 @@ namespace arenai::view {
             return std::nullopt;
         }
 
-        bool has_extension(const VkPhysicalDevice device, const char *name) {
+        bool has_extension(const VkPhysicalDevice &device, const char *name) {
             uint32_t count = 0;
             vkEnumerateDeviceExtensionProperties(device, nullptr, &count, nullptr);
             std::vector<VkExtensionProperties> extensions(count);
@@ -47,7 +47,7 @@ namespace arenai::view {
             });
         }
 
-        bool supports_dynamic_rendering(const VkPhysicalDevice device) {
+        bool supports_dynamic_rendering(const VkPhysicalDevice &device) {
             VkPhysicalDeviceDynamicRenderingFeatures dynamic_rendering{};
             dynamic_rendering.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
             VkPhysicalDeviceFeatures2 features{};
@@ -74,7 +74,7 @@ namespace arenai::view {
     }// namespace
 
     PhysicalDeviceChoice
-    pick_physical_device(const VkInstance instance, const DeviceCriteria &criteria) {
+    pick_physical_device(const VkInstance &instance, const DeviceCriteria &criteria) {
         uint32_t count = 0;
         vk_check(
             vkEnumeratePhysicalDevices(instance, &count, nullptr), "vkEnumeratePhysicalDevices");
@@ -99,7 +99,8 @@ namespace arenai::view {
             const auto family = find_graphics_family(device, criteria.surface);
             if (!family.has_value()) continue;
 
-            candidates.push_back({device, properties, family.value()});
+            candidates.push_back(
+                {.device = device, .properties = properties, .queue_family = family.value()});
         }
         if (candidates.empty())
             throw std::runtime_error(

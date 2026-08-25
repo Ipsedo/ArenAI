@@ -16,7 +16,7 @@ namespace arenai::view {
      */
 
     VulkanBuffer::VulkanBuffer(
-        std::shared_ptr<VulkanDevice> device, const VkCommandPool pool, const void *data,
+        std::shared_ptr<VulkanDevice> device, const VkCommandPool &pool, const void *data,
         const size_t size, const VkBufferUsageFlags usage)
         : device_(std::move(device)), buffer_(VK_NULL_HANDLE), allocation_(VK_NULL_HANDLE),
           size_(size) {
@@ -55,8 +55,8 @@ namespace arenai::view {
 
         std::memcpy(staging_mapped.pMappedData, data, size);
 
-        device_->immediate_submit(pool, [&](const VkCommandBuffer cmd) {
-            VkBufferCopy copy{0, 0, size};
+        device_->immediate_submit(pool, [&](const VkCommandBuffer &cmd) {
+            const VkBufferCopy copy{.srcOffset = 0, .dstOffset = 0, .size = size};
             vkCmdCopyBuffer(cmd, staging, buffer_, 1, &copy);
         });
 
@@ -76,7 +76,7 @@ namespace arenai::view {
      */
 
     HostVisibleBuffer::HostVisibleBuffer(
-        std::shared_ptr<VulkanDevice> device, const size_t size, const VkBufferUsageFlags usage)
+        std::shared_ptr<VulkanDevice> device, const size_t size, const VkBufferUsageFlags &usage)
         : device_(std::move(device)), buffer_(VK_NULL_HANDLE), allocation_(VK_NULL_HANDLE),
           mapped_(nullptr), size_(size) {
         VkBufferCreateInfo buffer_info{};

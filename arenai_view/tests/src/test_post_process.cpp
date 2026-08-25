@@ -55,7 +55,7 @@ namespace {
             const HostVisibleBuffer readback(
                 device_, static_cast<size_t>(width) * height * 4, VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
-            device_->immediate_submit(pool_, [&](const VkCommandBuffer cmd) {
+            device_->immediate_submit(pool_, [&](const VkCommandBuffer &cmd) {
                 // scene pass: the red clear alone feeds the effect chain
                 post_process_.begin_scene_pass(cmd);
                 post_process_.run_effects(cmd, proj_matrix, sun_dir_view);
@@ -78,14 +78,20 @@ namespace {
                 VkRenderingInfo rendering_info{};
                 rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
                 rendering_info.renderArea = {
-                    {0, 0}, {static_cast<uint32_t>(width), static_cast<uint32_t>(height)}};
+                    .offset = {.x = 0, .y = 0},
+                    .extent = {
+                        .width = static_cast<uint32_t>(width),
+                        .height = static_cast<uint32_t>(height)}};
                 rendering_info.layerCount = 1;
                 rendering_info.colorAttachmentCount = 1;
                 rendering_info.pColorAttachments = &color_attachment;
                 vkCmdBeginRendering(cmd, &rendering_info);
 
                 const VkRect2D scissor{
-                    {0, 0}, {static_cast<uint32_t>(width), static_cast<uint32_t>(height)}};
+                    .offset = {.x = 0, .y = 0},
+                    .extent = {
+                        .width = static_cast<uint32_t>(width),
+                        .height = static_cast<uint32_t>(height)}};
                 vkCmdSetScissor(cmd, 0, 1, &scissor);
 
                 post_process_.composite_within(cmd, output.format(), width, height);
@@ -99,8 +105,15 @@ namespace {
                     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
                 VkBufferImageCopy copy{};
-                copy.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-                copy.imageExtent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1};
+                copy.imageSubresource = {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .mipLevel = 0,
+                    .baseArrayLayer = 0,
+                    .layerCount = 1};
+                copy.imageExtent = {
+                    .width = static_cast<uint32_t>(width),
+                    .height = static_cast<uint32_t>(height),
+                    .depth = 1};
                 vkCmdCopyImageToBuffer(
                     cmd, output.image(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, readback.handle(), 1,
                     &copy);

@@ -27,8 +27,6 @@ namespace arenai::view {
 
     VulkanInstance::VulkanInstance(const std::vector<const char *> &extra_extensions)
         : instance_(VK_NULL_HANDLE), api_version_(VK_API_VERSION_1_2) {
-        // negotiate the highest version the loader offers, floored at 1.2
-        // (the device layer requires 1.2 + dynamic rendering)
         uint32_t loader_version = VK_API_VERSION_1_0;
         vkEnumerateInstanceVersion(&loader_version);
         if (loader_version < VK_API_VERSION_1_2)

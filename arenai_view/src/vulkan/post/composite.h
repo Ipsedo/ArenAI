@@ -9,8 +9,6 @@
 
 namespace arenai::view {
 
-    // Final pass: tonemapping/grading onto the caller's open rendering scope
-    // (the swapchain image for the player, an offscreen target in the tests).
     class CompositeEffect final : public VulkanPostEffect {
     public:
         CompositeEffect(

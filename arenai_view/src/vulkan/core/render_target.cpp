@@ -20,7 +20,10 @@ namespace arenai::view {
         image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         image_info.imageType = VK_IMAGE_TYPE_2D;
         image_info.format = format;
-        image_info.extent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1};
+        image_info.extent = {
+            .width = static_cast<uint32_t>(width),
+            .height = static_cast<uint32_t>(height),
+            .depth = 1};
         image_info.mipLevels = 1;
         image_info.arrayLayers = 1;
         image_info.samples = samples;
@@ -43,7 +46,12 @@ namespace arenai::view {
         view_info.image = image_;
         view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
         view_info.format = format;
-        view_info.subresourceRange = {aspect, 0, 1, 0, 1};
+        view_info.subresourceRange = {
+            .aspectMask = aspect,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1};
 
         vk_check(
             vkCreateImageView(device_->handle(), &view_info, nullptr, &view_),
@@ -66,7 +74,7 @@ namespace arenai::view {
     }
 
     void record_image_barrier(
-        const VkCommandBuffer cmd, const VkImage image, const VkImageAspectFlags aspect,
+        const VkCommandBuffer &cmd, const VkImage &image, const VkImageAspectFlags aspect,
         const VkImageLayout old_layout, const VkImageLayout new_layout,
         const VkAccessFlags src_access, const VkAccessFlags dst_access,
         const VkPipelineStageFlags src_stage, const VkPipelineStageFlags dst_stage) {
@@ -78,7 +86,11 @@ namespace arenai::view {
         barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         barrier.image = image;
         barrier.subresourceRange = {
-            aspect, 0, VK_REMAINING_MIP_LEVELS, 0, VK_REMAINING_ARRAY_LAYERS};
+            .aspectMask = aspect,
+            .baseMipLevel = 0,
+            .levelCount = VK_REMAINING_MIP_LEVELS,
+            .baseArrayLayer = 0,
+            .layerCount = VK_REMAINING_ARRAY_LAYERS};
         barrier.srcAccessMask = src_access;
         barrier.dstAccessMask = dst_access;
 

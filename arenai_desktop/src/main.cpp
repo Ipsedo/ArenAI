@@ -16,9 +16,6 @@
 using namespace arenai;
 using namespace arenai::desktop;
 
-// resources live next to the binary (copied there at build time, see
-// CMakeLists.txt), so they are resolved from the executable's folder — the
-// game can be launched from any working directory
 static std::filesystem::path executable_dir(const char *argv0) {
 #ifdef _WIN32
     wchar_t buffer[MAX_PATH];
@@ -88,7 +85,7 @@ int main(const int argc, char **argv) {
         {.vision_height = parser.get<int>("--vision_height"),
          .vision_width = parser.get<int>("--vision_width"),
          .hyper_parameters = hyper_params,
-         .state_dict_folder = resources_folder / "trained_models" / "ppo_save_41",
+         .state_dict_folder = resources_folder / "trained_models" / "ppo_save_28",
          .cuda = parser.get<bool>("--cuda")});
 
     return 0;

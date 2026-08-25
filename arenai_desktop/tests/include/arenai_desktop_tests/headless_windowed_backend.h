@@ -54,6 +54,7 @@ public:
 
     void add_hud_drawable(std::unique_ptr<view::AbstractHudDrawable> hud_drawable) override {}
     void set_window_size(int new_width, int new_height) override {}
+    glm::mat4 last_view_projection() const override { return glm::mat4(1.f); }
 };
 
 class HeadlessWindowedBackend final : public view::AbstractWindowedGraphicBackend {

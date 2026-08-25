@@ -17,7 +17,6 @@ namespace arenai::desktop {
         int vision_height;
         int vision_width;
         std::map<std::string, std::string> hyper_parameters;
-        // may be empty: the menu then requires the player to pick a folder
         std::filesystem::path state_dict_folder;
         bool cuda;
     };

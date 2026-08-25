@@ -14,10 +14,6 @@
 
 namespace arenai::view {
 
-    // Vulkan has no thread-bound "current context": make_current() and
-    // release_current() keep the AbstractRenderContext contract as no-ops,
-    // this class only carries the instance/device shared by the renderers of
-    // one backend.
     class VulkanRenderContext final : public AbstractRenderContext {
     public:
         VulkanRenderContext(

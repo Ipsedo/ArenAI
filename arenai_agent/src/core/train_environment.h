@@ -41,6 +41,7 @@ namespace arenai::agent {
         int max_frames_without_hit;
         std::vector<int> remaining_frames;
         int nb_frames_added_when_hit;
+        int nb_frames_added_when_kill;
         int nb_tanks;
 
         int nb_steps;
@@ -58,8 +59,10 @@ namespace arenai::agent {
         std::shared_ptr<AbstractMetric> fire_metric;
         std::shared_ptr<AbstractMetric> hit_metric;
         std::shared_ptr<AbstractMetric> kill_metric;
+        std::shared_ptr<AbstractMetric> hits_per_kill_metric;
 
         int nb_kills_episode;
+        int nb_hits_episode;
 
         bool only_one_tank_alive();
 

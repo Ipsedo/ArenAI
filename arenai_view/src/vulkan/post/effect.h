@@ -20,9 +20,6 @@
 
 namespace arenai::view {
 
-    // The whole inter-effect contract of the post-processing chain lives in
-    // these two enums: what an effect publishes into the FrameContext
-    // blackboard, under a typed key, for a later effect to look up.
     enum class PostTexture {
         ao_raw,      // SsaoEffect -> AoBlurEffect
         ao,          // AoBlurEffect -> CompositeEffect
@@ -35,22 +32,12 @@ namespace arenai::view {
         god_ray_strength,// GodRaysEffect -> CompositeEffect
     };
 
-    // One pass (or ping-pong group of passes) of the post-processing chain.
-    // The concrete effect declares its render targets (format + resolution
-    // divisor) at construction; this base class owns their lifecycle, the
-    // per-pass pipeline and the fullscreen-triangle draw. Effects communicate
-    // through the FrameContext: each pass publishes its output target under a
-    // typed key that later passes look up.
-    //
-    // The passes are pure image-space work: they rasterize with a regular
-    // (positive-height) viewport so that uv maps rows identically between
-    // input and output — only the scene pass uses the negative viewport.
     class VulkanPostEffect {
     public:
         struct FrameContext {
             VkCommandBuffer cmd;
-            const Target *scene;// resolved scene color, SHADER_READ layout
-            const Target *depth;// resolved scene depth, SHADER_READ layout
+            const Target *scene;
+            const Target *depth;
             int screen_width;
             int screen_height;
             glm::mat4 proj_matrix;
@@ -61,7 +48,6 @@ namespace arenai::view {
             std::unordered_map<PostTexture, const Target *> textures;
             std::unordered_map<PostScalar, float> scalars;
 
-            // the composite pass draws into the caller's open rendering scope
             VkFormat output_format;
             int output_width;
             int output_height;
@@ -69,14 +55,11 @@ namespace arenai::view {
 
         virtual ~VulkanPostEffect();
 
-        // recreates the effect's targets at the new screen resolution
         void resize(int new_width, int new_height);
 
-        // records the pass(es) and publishes the effect's outputs
         virtual void render(FrameContext &context) = 0;
 
     protected:
-        // declares one target: screen resolution / size_divisor
         struct TargetSpec {
             VkFormat format;
             int size_divisor;
@@ -87,20 +70,14 @@ namespace arenai::view {
             std::string fragment_shader, uint32_t nb_inputs, uint32_t push_size,
             std::vector<TargetSpec> specs, int width, int height);
 
-        // renders a fullscreen triangle into targets[target_index], sampling
-        // the given inputs; handles the layout barriers around the target
         void run_pass(
             const FrameContext &context, size_t target_index,
             const std::vector<const Target *> &inputs, const void *push_data);
 
-        // records the fullscreen draw inside the caller's open rendering
-        // scope (composite pass): the pipeline targets context.output_format
         void run_inline(
             const FrameContext &context, const std::vector<const Target *> &inputs,
             const void *push_data);
 
-        // puts a target in a sampleable layout even when its pass was
-        // skipped this frame (god rays with the sun out of frame)
         void ensure_target_readable(const FrameContext &context, size_t target_index);
 
         const Target *target(size_t index) const;
@@ -129,9 +106,9 @@ namespace arenai::view {
         VkDescriptorSetLayout input_layout_ = VK_NULL_HANDLE;
         VkDescriptorSetLayout empty_layout_ = VK_NULL_HANDLE;
         VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
-        // one pipeline per output format (own targets + the composite output)
+
         std::map<VkFormat, VkPipeline> pipelines_;
-        // descriptor sets cached by input combination, cleared on resize
+
         std::map<std::vector<const Target *>, VkDescriptorSet> input_sets_;
     };
 

@@ -11,7 +11,7 @@
 
 namespace arenai::view {
 
-    VkShaderModule load_shader_module(const VkDevice device, const std::string &glsl_name) {
+    VkShaderModule load_shader_module(const VkDevice &device, const std::string &glsl_name) {
         const auto entry = EMBEDDED_SPIRV.find(glsl_name);
         if (entry == EMBEDDED_SPIRV.end())
             throw std::runtime_error("unknown embedded shader: " + glsl_name);

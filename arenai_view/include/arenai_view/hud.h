@@ -27,13 +27,12 @@ namespace arenai::view {
 
         virtual std::unique_ptr<AbstractHudDrawable> make_joystick(
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
-            std::function<controller::joystick(void)> get_input_px, glm::vec2 center_px,
-            float size_px, float stick_size_px) = 0;
+            std::function<controller::joystick()> get_input_px, glm::vec2 center_px, float size_px,
+            float stick_size_px) = 0;
 
         virtual std::unique_ptr<AbstractHudDrawable> make_button(
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
-            std::function<controller::button(void)> get_input, glm::vec2 center_px,
-            float size_px) = 0;
+            std::function<controller::button()> get_input, glm::vec2 center_px, float size_px) = 0;
     };
 
 }// namespace arenai::view

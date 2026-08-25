@@ -23,7 +23,6 @@ using namespace arenai::model;
 
 namespace {
 
-    // process-wide Jolt runtime, initialized once whatever the number of engines
     void ensure_jolt_initialized() {
         static std::once_flag once;
         std::call_once(once, [] {
@@ -77,18 +76,12 @@ namespace arenai::model {
 
     void JoltPhysicEngine::BufferedContactListener::record(
         const JPH::Body &body1, const JPH::Body &body2, const JPH::ContactManifold &manifold) {
-        // speculative contacts are reported before they touch: only penetration counts
         if (manifold.mPenetrationDepth <= 0.f) return;
 
         const auto item_a = reinterpret_cast<Item *>(body1.GetUserData());
         const auto item_b = reinterpret_cast<Item *>(body2.GetUserData());
         if (item_a == nullptr || item_b == nullptr) return;
 
-        // one dispatch per touching body pair, never one per manifold point: Jolt
-        // builds the whole contact patch on the very first frame of an impact, where
-        // Bullet's persistent manifold grew one point per frame. Iterating the points
-        // would multiply on_contact — and the damages an impact deals — by however
-        // many points the clipping happened to produce
         std::lock_guard lock(contacts_mutex);
         contacts.emplace_back(item_a, item_b);
     }
@@ -141,8 +134,6 @@ namespace arenai::model {
         physics_system->SetGravity(JPH::Vec3(0.f, -9.8f, 0.f));
         physics_system->SetContactListener(&contact_listener);
 
-        // Bullet combines friction and restitution by multiplying them (Jolt
-        // defaults to geometric mean / max): keep the same effective traction
         physics_system->SetCombineFriction(
             [](const JPH::Body &body1, const JPH::SubShapeID &, const JPH::Body &body2,
                const JPH::SubShapeID &) { return body1.GetFriction() * body2.GetFriction(); });
@@ -205,8 +196,6 @@ namespace arenai::model {
             if (const auto item = items[i]; item->need_destroy()) {
                 const auto body_id = item->get_body()->GetID();
 
-                // like Bullet, removing a body also drops every constraint
-                // still referencing it
                 if (const auto it = constraints_per_body.find(body_id);
                     it != constraints_per_body.end()) {
                     for (const auto &constraint: it->second) {
@@ -241,8 +230,6 @@ namespace arenai::model {
                 for (const auto &item: producer()) add_item_locked(item);
         }
 
-        // Bullet's stepSimulation(delta, 1, wanted_frequency): accumulate time,
-        // simulate at most one fixed sub-step per call, drop the surplus
         local_time += delta;
         if (local_time >= wanted_frequency) {
             local_time -= std::floor(local_time / wanted_frequency) * wanted_frequency;

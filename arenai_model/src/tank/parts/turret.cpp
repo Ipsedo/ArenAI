@@ -35,17 +35,12 @@ namespace arenai::model {
         settings.mNormalAxis2 = JPH::Vec3::sAxisX();
 
         auto *constraint = settings.Create(*chassis, *ConvexItem::get_body());
-        // Jolt is built without RTTI (-fno-rtti): dynamic_cast would not link. The dynamic
-        // type is guaranteed by the settings object the constraint was created from.
+
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
         hinge = static_cast<JPH::HingeConstraint *>(constraint);
-        // like Bullet's limit-less hinge: free until the first input engages
-        // the servo
     }
 
     void TurretItem::apply_input(const controller::user_input &input) {
-        // angle is the hinge target in radians; input.right_joystick.x is a per-frame
-        // delta already expressed in rad/frame by the controller handler.
         angle += -input.right_joystick.x;
 
         if (angle < -static_cast<float>(M_PI)) angle += 2.f * static_cast<float>(M_PI);

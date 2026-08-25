@@ -42,7 +42,7 @@ TEST(VkContextTest, MultipleRenderersSameContext) {
 
     const auto sky_matrices = std::vector<std::tuple<std::string, glm::mat4>>{
         {"sky", glm::scale(glm::mat4(1.f), glm::vec3(2000.f))}};
-    const auto empty_matrices = std::vector<std::tuple<std::string, glm::mat4>>{};
+    constexpr auto empty_matrices = std::vector<std::tuple<std::string, glm::mat4>>{};
 
     // draw renderer_a
     renderer_a->make_current();
@@ -112,7 +112,7 @@ TEST(VkContextTest, AlternateContexts) {
 
     const auto sky_matrices = std::vector<std::tuple<std::string, glm::mat4>>{
         {"sky", glm::scale(glm::mat4(1.f), glm::vec3(2000.f))}};
-    const auto empty_matrices = std::vector<std::tuple<std::string, glm::mat4>>{};
+    constexpr auto empty_matrices = std::vector<std::tuple<std::string, glm::mat4>>{};
 
     // alternate between contexts multiple times
     for (int i = 0; i < 4; ++i) {

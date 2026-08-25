@@ -38,7 +38,13 @@ namespace arenai::agent {
 
     class AbstractTargetEntropy : public torch::nn::Module {
     public:
-        virtual torch::Tensor target_entropy() = 0;
+        // the current target: pure, safe to call several times inside the same rollout
+        virtual torch::Tensor target_entropy() const = 0;
+
+        // advances the schedule by nb_env_steps environment steps. Called once per rollout,
+        // so a schedule is expressed in the same unit as the training progress reported in
+        // metrics.csv — independent of minibatch_size, epochs, nb_tanks and tank mortality.
+        virtual void step(int64_t nb_env_steps);
     };
 
     /*
@@ -49,79 +55,37 @@ namespace arenai::agent {
     public:
         explicit ConstantTargetEntropy(float initial_target);
 
-        torch::Tensor target_entropy() override;
+        torch::Tensor target_entropy() const override;
 
     private:
         torch::Tensor initial_target;
-    };
-
-    class ConstantDiscreteTargetEntropy : public ConstantTargetEntropy {
-    public:
-        explicit ConstantDiscreteTargetEntropy(float fire_probability);
-    };
-
-    class ConstantContinuousTargetEntropy : public ConstantTargetEntropy {
-    public:
-        explicit ConstantContinuousTargetEntropy(int nb_continuous_action, float target_sigma);
-    };
-
-    // target of a single action instead of the sum over them, to be broadcast against one
-    // alpha per dimension
-    class ConstantContinuousPerActionTargetEntropy : public ConstantTargetEntropy {
-    public:
-        explicit ConstantContinuousPerActionTargetEntropy(float target_sigma);
     };
 
     /*
      * Warmup
      */
 
-    class AbstractCosineAnnealingTargetEntropy : public AbstractTargetEntropy {
+    class CosineAnnealingTargetEntropy final : public AbstractTargetEntropy {
     public:
-        AbstractCosineAnnealingTargetEntropy(
-            float initial_value, float final_value, int warmup_step);
-        torch::Tensor target_entropy() override;
+        // warmup_env_step: number of environment steps to go from initial_value to final_value
+        CosineAnnealingTargetEntropy(
+            float initial_value, float final_value, int64_t warmup_env_step);
 
-    protected:
-        virtual float to_target_entropy(float value) = 0;
+        torch::Tensor target_entropy() const override;
+        void step(int64_t nb_env_steps) override;
 
     private:
         float initial;
         float final;
-        int warmup_step;
+        int64_t warmup_env_step;
 
         torch::Tensor current_step;
-    };
-
-    class DiscreteCosineAnnealingTargetEntropy : public AbstractCosineAnnealingTargetEntropy {
-    public:
-        DiscreteCosineAnnealingTargetEntropy(
-            float initial_probability, float final_probability, int warmup_step);
-
-    protected:
-        float to_target_entropy(float value) override;
-    };
-
-    class ContinuousCosineAnnealingTargetEntropy : public AbstractCosineAnnealingTargetEntropy {
-    public:
-        ContinuousCosineAnnealingTargetEntropy(
-            int nb_actions, float initial_sigma, float final_sigma, int warmup_step);
-
-    protected:
-        float to_target_entropy(float value) override;
-
-    private:
-        int nb_actions;
     };
 
     /*
      * Lagrangian
      */
 
-    // alpha is the output of the controller, not a parameter moved by gradient ascent: the
-    // integral term *is* the dual variable. It is driven on the log scale, where each gain
-    // acts multiplicatively on alpha whatever decade it currently sits in, and where the
-    // multiplier stays positive without a clamp on the output.
     class PidLagrangianAlphaParameters final : public torch::nn::Module {
     public:
         PidLagrangianAlphaParameters(

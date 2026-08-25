@@ -15,23 +15,23 @@ using namespace arenai;
 namespace arenai::view {
 
     namespace {
-        const std::vector<float> CUBE_VERTICES{-1.f, 1.f,  -1.f, -1.f, -1.f, -1.f, 1.f,  -1.f, -1.f,
-                                               1.f,  -1.f, -1.f, 1.f,  1.f,  -1.f, -1.f, 1.f,  -1.f,
+        const std::vector CUBE_VERTICES{-1.f, 1.f,  -1.f, -1.f, -1.f, -1.f, 1.f,  -1.f, -1.f,
+                                        1.f,  -1.f, -1.f, 1.f,  1.f,  -1.f, -1.f, 1.f,  -1.f,
 
-                                               -1.f, -1.f, 1.f,  -1.f, -1.f, -1.f, -1.f, 1.f,  -1.f,
-                                               -1.f, 1.f,  -1.f, -1.f, 1.f,  1.f,  -1.f, -1.f, 1.f,
+                                        -1.f, -1.f, 1.f,  -1.f, -1.f, -1.f, -1.f, 1.f,  -1.f,
+                                        -1.f, 1.f,  -1.f, -1.f, 1.f,  1.f,  -1.f, -1.f, 1.f,
 
-                                               1.f,  -1.f, -1.f, 1.f,  -1.f, 1.f,  1.f,  1.f,  1.f,
-                                               1.f,  1.f,  1.f,  1.f,  1.f,  -1.f, 1.f,  -1.f, -1.f,
+                                        1.f,  -1.f, -1.f, 1.f,  -1.f, 1.f,  1.f,  1.f,  1.f,
+                                        1.f,  1.f,  1.f,  1.f,  1.f,  -1.f, 1.f,  -1.f, -1.f,
 
-                                               -1.f, -1.f, 1.f,  -1.f, 1.f,  1.f,  1.f,  1.f,  1.f,
-                                               1.f,  1.f,  1.f,  1.f,  -1.f, 1.f,  -1.f, -1.f, 1.f,
+                                        -1.f, -1.f, 1.f,  -1.f, 1.f,  1.f,  1.f,  1.f,  1.f,
+                                        1.f,  1.f,  1.f,  1.f,  -1.f, 1.f,  -1.f, -1.f, 1.f,
 
-                                               -1.f, 1.f,  -1.f, 1.f,  1.f,  -1.f, 1.f,  1.f,  1.f,
-                                               1.f,  1.f,  1.f,  -1.f, 1.f,  1.f,  -1.f, 1.f,  -1.f,
+                                        -1.f, 1.f,  -1.f, 1.f,  1.f,  -1.f, 1.f,  1.f,  1.f,
+                                        1.f,  1.f,  1.f,  -1.f, 1.f,  1.f,  -1.f, 1.f,  -1.f,
 
-                                               -1.f, -1.f, -1.f, -1.f, -1.f, 1.f,  1.f,  -1.f, -1.f,
-                                               1.f,  -1.f, -1.f, -1.f, -1.f, 1.f,  1.f,  -1.f, 1.f};
+                                        -1.f, -1.f, -1.f, -1.f, -1.f, 1.f,  1.f,  -1.f, -1.f,
+                                        1.f,  -1.f, -1.f, -1.f, -1.f, 1.f,  1.f,  -1.f, 1.f};
     }// namespace
 
     VulkanCubeMap::VulkanCubeMap(
@@ -62,12 +62,17 @@ namespace arenai::view {
 
         pipeline_layout_ = make_pipeline_layout(
             context_->device()->handle(), {context_->set0_plain_layout(), texture_layout_},
-            {{VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4)}});
+            {{.stageFlags = VK_SHADER_STAGE_VERTEX_BIT, .offset = 0, .size = sizeof(glm::mat4)}});
         pipeline_ = PipelineBuilder()
                         .shaders("cube_vs.glsl", "cube_fs.glsl")
                         .vertex_input(
-                            {{0, 3 * sizeof(float), VK_VERTEX_INPUT_RATE_VERTEX}},
-                            {{0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0}})
+                            {{.binding = 0,
+                              .stride = 3 * sizeof(float),
+                              .inputRate = VK_VERTEX_INPUT_RATE_VERTEX}},
+                            {{.location = 0,
+                              .binding = 0,
+                              .format = VK_FORMAT_R32G32B32_SFLOAT,
+                              .offset = 0}})
                         .color_format(context_->scene_color_format())
                         .depth_format(context_->scene_depth_format())
                         .samples(context_->scene_samples())
@@ -89,7 +94,7 @@ namespace arenai::view {
             frame.cmd, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4),
             &mvp_matrix);
 
-        const VkBuffer vertex_buffer = vertices_->handle();
+        const VkBuffer &vertex_buffer = vertices_->handle();
         constexpr VkDeviceSize offset = 0;
         vkCmdBindVertexBuffers(frame.cmd, 0, 1, &vertex_buffer, &offset);
 
@@ -98,7 +103,9 @@ namespace arenai::view {
 
     VulkanCubeMap::~VulkanCubeMap() {
         if (context_ == nullptr) return;
-        const VkDevice device = context_->device()->handle();
+
+        const VkDevice &device = context_->device()->handle();
+
         vkDestroyPipeline(device, pipeline_, nullptr);
         vkDestroyPipelineLayout(device, pipeline_layout_, nullptr);
         vkDestroyDescriptorSetLayout(device, texture_layout_, nullptr);

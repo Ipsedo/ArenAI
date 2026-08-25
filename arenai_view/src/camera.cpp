@@ -20,9 +20,9 @@ namespace arenai::view {
     glm::vec3 StaticCamera::up() { return up_vec; }
 
     CollisionCamera::CollisionCamera(
-        std::shared_ptr<AbstractCamera> inner, RaycastFunction raycast, const float frame_period,
+        std::shared_ptr<AbstractCamera> inner, RaycastFunction ray_cast, const float frame_period,
         const float margin, const float min_distance, const float extend_speed)
-        : inner(std::move(inner)), raycast(std::move(raycast)), frame_period(frame_period),
+        : inner(std::move(inner)), raycast(std::move(ray_cast)), frame_period(frame_period),
           margin(margin), min_distance(min_distance), extend_speed(extend_speed),
           current_distance(std::numeric_limits<float>::max()) {}
 

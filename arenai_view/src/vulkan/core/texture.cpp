@@ -35,19 +35,19 @@ namespace arenai::view {
     }// namespace
 
     VulkanTexture::VulkanTexture(
-        const std::shared_ptr<VulkanDevice> &device, const VkCommandPool pool, const int width,
+        const std::shared_ptr<VulkanDevice> &device, const VkCommandPool &pool, const int width,
         const int height, const int channels, const uint8_t *pixels)
         : VulkanTexture(
             device, pool, width, height, {to_rgba(width, height, channels, pixels)}, false) {}
 
     std::unique_ptr<VulkanTexture> VulkanTexture::make_white(
-        const std::shared_ptr<VulkanDevice> &device, const VkCommandPool pool) {
+        const std::shared_ptr<VulkanDevice> &device, const VkCommandPool &pool) {
         constexpr uint8_t white[4] = {255, 255, 255, 255};
         return std::make_unique<VulkanTexture>(device, pool, 1, 1, 4, white);
     }
 
     std::unique_ptr<VulkanTexture> VulkanTexture::from_png(
-        const std::shared_ptr<VulkanDevice> &device, const VkCommandPool pool,
+        const std::shared_ptr<VulkanDevice> &device, const VkCommandPool &pool,
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::filesystem::path &png_path) {
         const auto [width, height, channels, pixels] = file_reader->read_png(png_path);
@@ -56,7 +56,7 @@ namespace arenai::view {
     }
 
     std::unique_ptr<VulkanTexture> VulkanTexture::cube_from_pngs(
-        const std::shared_ptr<VulkanDevice> &device, const VkCommandPool pool,
+        const std::shared_ptr<VulkanDevice> &device, const VkCommandPool &pool,
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::filesystem::path &pngs_root_path) {
         // Vulkan cube layer order: +X, -X, +Y, -Y, +Z, -Z
@@ -81,7 +81,7 @@ namespace arenai::view {
     }
 
     VulkanTexture::VulkanTexture(
-        const std::shared_ptr<VulkanDevice> &device, const VkCommandPool pool, const int width,
+        const std::shared_ptr<VulkanDevice> &device, const VkCommandPool &pool, const int width,
         const int height, const std::vector<std::vector<uint8_t>> &rgba_layers, const bool cube)
         : device_(device), image_(VK_NULL_HANDLE), allocation_(VK_NULL_HANDLE),
           view_(VK_NULL_HANDLE), sampler_(VK_NULL_HANDLE), width_(width), height_(height),
@@ -91,7 +91,10 @@ namespace arenai::view {
         image_info.flags = cube ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0;
         image_info.imageType = VK_IMAGE_TYPE_2D;
         image_info.format = VK_FORMAT_R8G8B8A8_UNORM;
-        image_info.extent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1};
+        image_info.extent = {
+            .width = static_cast<uint32_t>(width),
+            .height = static_cast<uint32_t>(height),
+            .depth = 1};
         image_info.mipLevels = 1;
         image_info.arrayLayers = layers_;
         image_info.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -114,7 +117,12 @@ namespace arenai::view {
         view_info.image = image_;
         view_info.viewType = cube ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D;
         view_info.format = VK_FORMAT_R8G8B8A8_UNORM;
-        view_info.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, layers_};
+        view_info.subresourceRange = {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = layers_};
         vk_check(
             vkCreateImageView(device_->handle(), &view_info, nullptr, &view_),
             "vkCreateImageView (texture)");
@@ -133,7 +141,7 @@ namespace arenai::view {
     }
 
     void VulkanTexture::upload(
-        const VkCommandPool pool, const std::vector<std::vector<uint8_t>> &rgba_layers) {
+        const VkCommandPool &pool, const std::vector<std::vector<uint8_t>> &rgba_layers) const {
         const size_t layer_size = static_cast<size_t>(width_) * static_cast<size_t>(height_) * 4;
 
         VkBufferCreateInfo staging_info{};
@@ -159,7 +167,7 @@ namespace arenai::view {
         for (size_t layer = 0; layer < rgba_layers.size(); layer++)
             std::memcpy(dst + layer * layer_size, rgba_layers[layer].data(), layer_size);
 
-        device_->immediate_submit(pool, [&](const VkCommandBuffer cmd) {
+        device_->immediate_submit(pool, [&](const VkCommandBuffer &cmd) {
             record_layout_transition(
                 cmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
@@ -167,9 +175,15 @@ namespace arenai::view {
             for (uint32_t layer = 0; layer < layers_; layer++) {
                 VkBufferImageCopy copy{};
                 copy.bufferOffset = layer * layer_size;
-                copy.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, layer, 1};
+                copy.imageSubresource = {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .mipLevel = 0,
+                    .baseArrayLayer = layer,
+                    .layerCount = 1};
                 copy.imageExtent = {
-                    static_cast<uint32_t>(width_), static_cast<uint32_t>(height_), 1};
+                    .width = static_cast<uint32_t>(width_),
+                    .height = static_cast<uint32_t>(height_),
+                    .depth = 1};
                 copies.push_back(copy);
             }
             vkCmdCopyBufferToImage(
@@ -185,7 +199,7 @@ namespace arenai::view {
     }
 
     void VulkanTexture::record_layout_transition(
-        const VkCommandBuffer cmd, const VkImageLayout old_layout,
+        const VkCommandBuffer &cmd, const VkImageLayout old_layout,
         const VkImageLayout new_layout) const {
         VkImageMemoryBarrier barrier{};
         barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -194,7 +208,12 @@ namespace arenai::view {
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         barrier.image = image_;
-        barrier.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, layers_};
+        barrier.subresourceRange = {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = layers_};
 
         VkPipelineStageFlags src_stage, dst_stage;
         if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED) {

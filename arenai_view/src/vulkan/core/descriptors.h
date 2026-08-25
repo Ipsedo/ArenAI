@@ -18,7 +18,7 @@ namespace arenai::view {
         DescriptorLayoutBuilder &
         add_binding(uint32_t binding, VkDescriptorType type, VkShaderStageFlags stages);
 
-        VkDescriptorSetLayout build(VkDevice device) const;
+        VkDescriptorSetLayout build(const VkDevice &device) const;
 
     private:
         std::vector<VkDescriptorSetLayoutBinding> bindings_;
@@ -34,7 +34,7 @@ namespace arenai::view {
         DescriptorAllocator(const DescriptorAllocator &) = delete;
         DescriptorAllocator &operator=(const DescriptorAllocator &) = delete;
 
-        VkDescriptorSet allocate(VkDescriptorSetLayout layout);
+        VkDescriptorSet allocate(const VkDescriptorSetLayout &layout);
 
         ~DescriptorAllocator();
 
@@ -47,11 +47,11 @@ namespace arenai::view {
 
     // Descriptor write helpers (immediate vkUpdateDescriptorSets)
     void write_buffer_descriptor(
-        VkDevice device, VkDescriptorSet set, uint32_t binding, VkDescriptorType type,
-        VkBuffer buffer, VkDeviceSize offset, VkDeviceSize range);
+        const VkDevice &device, const VkDescriptorSet &set, uint32_t binding, VkDescriptorType type,
+        const VkBuffer &buffer, VkDeviceSize offset, VkDeviceSize range);
     void write_image_descriptor(
-        VkDevice device, VkDescriptorSet set, uint32_t binding, VkSampler sampler, VkImageView view,
-        VkImageLayout layout);
+        const VkDevice &device, const VkDescriptorSet &set, uint32_t binding,
+        const VkSampler &sampler, const VkImageView &view, VkImageLayout layout);
 
 }// namespace arenai::view
 

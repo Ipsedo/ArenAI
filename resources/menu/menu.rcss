@@ -48,8 +48,8 @@ body.overlay {
     text-align: center;
 }
 
-/* final score between the Game Over title and the buttons, in the
-   technical-label voice (mono, uppercase, accent) */
+/* score between the popup title and the buttons (pause and Game Over
+   alike), in the technical-label voice (mono, uppercase, accent) */
 .game-over-score {
     display: block;
     font-family: "IBM Plex Mono";

@@ -53,7 +53,7 @@ namespace arenai::view {
     class CollisionCamera final : public AbstractCamera {
     public:
         CollisionCamera(
-            std::shared_ptr<AbstractCamera> inner, RaycastFunction raycast, float frame_period,
+            std::shared_ptr<AbstractCamera> inner, RaycastFunction ray_cast, float frame_period,
             float margin = 0.5f, float min_distance = 2.f, float extend_speed = 4.f);
 
         glm::vec3 pos() override;

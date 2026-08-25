@@ -1,0 +1,72 @@
+/* In-game HUD: a transparent full-screen layer that ignores the pointer and
+   carries only the aiming reticle. Not linked to menu.rcss on purpose: the
+   menu body paints a background and pads the content. */
+
+body {
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+/* zero-sized anchor placed by code (left/top in px) at the point where the
+   canon axis meets the screen; hidden from code when that point is off
+   screen. Its children center themselves on it with negative margins. */
+#reticle {
+    position: absolute;
+    width: 0;
+    height: 0;
+    left: 50%;
+    top: 50%;
+    visibility: hidden;
+}
+
+/* the crosshair, drawn by the gui-registered reticle decorator inside this
+   centered square: Battlefield-style thin cross, arms 1.5dp thick stopping
+   5dp short of the center */
+#crosshair {
+    position: absolute;
+    width: 28dp;
+    height: 28dp;
+    left: 0;
+    top: 0;
+    margin-left: -14dp;
+    margin-top: -14dp;
+    color: #EAF7FFD9;
+    decorator: reticle(1.5dp 5dp);
+}
+
+/* the Battlefield center dot, a rounded quad centered on the aim point */
+#crosshair-dot {
+    position: absolute;
+    width: 2.5dp;
+    height: 2.5dp;
+    left: 0;
+    top: 0;
+    margin-left: -1.25dp;
+    margin-top: -1.25dp;
+    border-radius: 1.25dp;
+    background-color: #EAF7FFD9;
+}
+
+/* the X of the marker is drawn by the gui-registered hit-marker decorator
+   inside this centered square: Battlefield-style thin ticks (2dp) stopping
+   11dp short of the center. Its color paints the bars; its opacity and
+   scale are driven from code (appears at 1, expands outward while fading
+   to 0, larger and longer on a kill). */
+#hit-marker {
+    position: absolute;
+    width: 30dp;
+    height: 30dp;
+    left: 0;
+    top: 0;
+    margin-left: -15dp;
+    margin-top: -15dp;
+    opacity: 0;
+    color: #EAF7FF;
+    decorator: hit-marker(2dp 11dp);
+}
+
+/* the shell that destroyed the tank flashes red */
+#hit-marker.kill {
+    color: #FF3B3B;
+}

@@ -21,7 +21,8 @@ namespace arenai::view {
 
     void CompositeEffect::render(FrameContext &context) {
         const CompositePush push{
-            context.scalars.at(PostScalar::god_ray_strength), static_cast<float>(context.frame)};
+            .ray_strength = context.scalars.at(PostScalar::god_ray_strength),
+            .frame = static_cast<float>(context.frame)};
         run_inline(
             context,
             {context.scene, context.textures.at(PostTexture::ao),

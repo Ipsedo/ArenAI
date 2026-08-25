@@ -15,7 +15,7 @@ namespace arenai::view {
     // build time (see cmake/ArenaiCompileShaders.cmake), keyed by the source
     // file name e.g. "diffuse_vs.glsl". The caller destroys the module once
     // its pipelines are built.
-    VkShaderModule load_shader_module(VkDevice device, const std::string &glsl_name);
+    VkShaderModule load_shader_module(const VkDevice &device, const std::string &glsl_name);
 
 }// namespace arenai::view
 

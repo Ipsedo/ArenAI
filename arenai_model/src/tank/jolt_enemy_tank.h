@@ -47,8 +47,9 @@ namespace arenai::model {
         bool is_first_frame_dead() override;
         bool is_suicide() const override;
 
-        bool has_hit_other_tank() override;
-        bool has_fired_shell() override;
+        bool consume_has_hit() override;
+        bool consume_has_kill() override;
+        bool consume_has_fire() override;
 
         void on_death() override;
 
@@ -67,6 +68,7 @@ namespace arenai::model {
         int curr_frame_upside_down;
 
         float miss_distance_scale;
+        float miss_distance_exponent;
         float hit_reward_scale;
 
         float hit_received_cost;
@@ -80,6 +82,7 @@ namespace arenai::model {
         bool is_dead_already_triggered;
 
         bool has_touch;
+        bool has_kill;
         bool has_fired;
         std::vector<TrackedShell> tracked_shells;
 

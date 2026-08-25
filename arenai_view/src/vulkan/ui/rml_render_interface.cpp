@@ -10,6 +10,7 @@
 #include <utility>
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "../core/pipeline.h"
 
@@ -40,18 +41,28 @@ namespace arenai::view {
 
         pipeline_layout_ = make_pipeline_layout(
             device_->handle(), {texture_layout_},
-            {{VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(RmlPush)}});
+            {{.stageFlags = VK_SHADER_STAGE_VERTEX_BIT, .offset = 0, .size = sizeof(RmlPush)}});
 
         pipeline_ = PipelineBuilder()
                         .shaders("rml_vs.glsl", "rml_fs.glsl")
                         .vertex_input(
-                            {{0, sizeof(Rml::Vertex), VK_VERTEX_INPUT_RATE_VERTEX}},
-                            {{0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Rml::Vertex, position)},
-                             {1, 0, VK_FORMAT_R8G8B8A8_UNORM, offsetof(Rml::Vertex, colour)},
-                             {2, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Rml::Vertex, tex_coord)}})
+                            {{.binding = 0,
+                              .stride = sizeof(Rml::Vertex),
+                              .inputRate = VK_VERTEX_INPUT_RATE_VERTEX}},
+                            {{.location = 0,
+                              .binding = 0,
+                              .format = VK_FORMAT_R32G32_SFLOAT,
+                              .offset = offsetof(Rml::Vertex, position)},
+                             {.location = 1,
+                              .binding = 0,
+                              .format = VK_FORMAT_R8G8B8A8_UNORM,
+                              .offset = offsetof(Rml::Vertex, colour)},
+                             {.location = 2,
+                              .binding = 0,
+                              .format = VK_FORMAT_R32G32_SFLOAT,
+                              .offset = offsetof(Rml::Vertex, tex_coord)}})
                         .cull_mode(VK_CULL_MODE_NONE)
                         .depth(false, false)
-                        // RmlUi outputs premultiplied-alpha colors
                         .blend_premultiplied()
                         .color_format(frame_context_->swapchain_format())
                         .build(device_, pipeline_layout_);
@@ -91,16 +102,15 @@ namespace arenai::view {
         viewport_width_ = viewport_width;
         viewport_height_ = viewport_height;
 
-        // pixel coordinates with the origin at the top-left, as RmlUi expects
         projection_ = glm::ortho(
             0.f, static_cast<float>(viewport_width), static_cast<float>(viewport_height), 0.f);
 
         scissor_enabled_ = false;
+        transform_ = glm::mat4(1.f);
         in_frame_ = true;
     }
 
     void RmlVulkanRenderInterface::end_frame() {
-        // restore the full-viewport scissor for whoever draws next in this scope
         if (in_frame_) set_scissor(0, 0, viewport_width_, viewport_height_);
         in_frame_ = false;
     }
@@ -124,25 +134,26 @@ namespace arenai::view {
     void RmlVulkanRenderInterface::RenderGeometry(
         const Rml::CompiledGeometryHandle geometry, const Rml::Vector2f translation,
         const Rml::TextureHandle texture) {
-        // minimized window: the UI frame was skipped entirely
         if (!in_frame_) return;
 
         const auto *compiled = reinterpret_cast<const CompiledGeometry *>(geometry);
         const auto *rml_texture =
             texture ? reinterpret_cast<const RmlTexture *>(texture) : white_texture_.get();
 
-        const VkCommandBuffer cmd = frame_context_->cmd();
+        const VkCommandBuffer &cmd = frame_context_->cmd();
 
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_);
         vkCmdBindDescriptorSets(
             cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_, 0, 1, &rml_texture->set, 0,
             nullptr);
 
-        const RmlPush push{projection_, glm::vec2(translation.x, translation.y)};
+        const RmlPush push{
+            .projection = projection_ * transform_,
+            .translation = glm::vec2(translation.x, translation.y)};
         vkCmdPushConstants(
             cmd, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(RmlPush), &push);
 
-        const VkBuffer vertex_buffer = compiled->vertices->handle();
+        const VkBuffer &vertex_buffer = compiled->vertices->handle();
         constexpr VkDeviceSize offset = 0;
         vkCmdBindVertexBuffers(cmd, 0, 1, &vertex_buffer, &offset);
         vkCmdBindIndexBuffer(cmd, compiled->indices->handle(), 0, VK_INDEX_TYPE_UINT32);
@@ -157,8 +168,6 @@ namespace arenai::view {
 
     Rml::TextureHandle RmlVulkanRenderInterface::LoadTexture(
         Rml::Vector2i &texture_dimensions, const Rml::String &source) {
-        // no image decoding on the UI path yet: the menu documents are styled
-        // with plain decorators (colors, borders) and need no texture files
         std::cerr << "RmlUi texture files are not supported (requested: " << source << ")"
                   << std::endl;
         (void) texture_dimensions;
@@ -188,23 +197,32 @@ namespace arenai::view {
     void RmlVulkanRenderInterface::set_scissor(
         const int x, const int y, const int width, const int height) const {
         if (!frame_context_->frame_active()) return;
+
         const VkRect2D scissor{
-            {std::max(0, x), std::max(0, y)},
-            {static_cast<uint32_t>(std::max(0, width)),
-             static_cast<uint32_t>(std::max(0, height))}};
+            .offset = {.x = std::max(0, x), .y = std::max(0, y)},
+            .extent = {
+                .width = static_cast<uint32_t>(std::max(0, width)),
+                .height = static_cast<uint32_t>(std::max(0, height))}};
+
         vkCmdSetScissor(frame_context_->cmd(), 0, 1, &scissor);
     }
 
     void RmlVulkanRenderInterface::EnableScissorRegion(const bool enable) {
         if (!in_frame_) return;
+
         scissor_enabled_ = enable;
+
         if (!enable) set_scissor(0, 0, viewport_width_, viewport_height_);
     }
 
     void RmlVulkanRenderInterface::SetScissorRegion(const Rml::Rectanglei region) {
         if (!in_frame_ || !scissor_enabled_) return;
-        // RmlUi regions and Vulkan scissors share the top-left origin
+
         set_scissor(region.Left(), region.Top(), region.Width(), region.Height());
+    }
+
+    void RmlVulkanRenderInterface::SetTransform(const Rml::Matrix4f *transform) {
+        transform_ = transform ? glm::make_mat4(transform->data()) : glm::mat4(1.f);
     }
 
 }// namespace arenai::view

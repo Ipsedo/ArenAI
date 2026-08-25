@@ -153,7 +153,7 @@ TEST(CollisionCameraTest, ExtensionIsSmoothedAndMonotonic) {
 
     // one smoothed step must not jump straight back to the nominal distance
     ASSERT_LT(previous, FULL_DISTANCE);
-    const float first_step = EXTEND_SPEED * FRAME_PERIOD;
+    constexpr float first_step = EXTEND_SPEED * FRAME_PERIOD;
     ASSERT_LT(
         glm::length(camera.pos() - COLLISION_PIVOT),
         blocked_distance + (FULL_DISTANCE - blocked_distance) * first_step * 12.f);

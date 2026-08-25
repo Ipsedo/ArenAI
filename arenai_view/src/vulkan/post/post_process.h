@@ -34,24 +34,26 @@ namespace arenai::view {
 
         void resize(int new_width, int new_height);
 
-        VkFormat scene_color_format() const;
+        static VkFormat scene_color_format();
         VkFormat scene_depth_format() const;
         VkSampleCountFlagBits scene_samples() const;
 
         // begins the MSAA scene rendering scope (with the resolve
         // attachments) and sets the negative-height scene viewport
-        void begin_scene_pass(VkCommandBuffer cmd);
+        void begin_scene_pass(const VkCommandBuffer &cmd) const;
 
         // ends the scene scope and runs every effect except the final
         // composite; proj_matrix is the scene projection (depth
         // reconstruction) and sun_dir_view the normalized view-space
         // direction toward the sun
         void run_effects(
-            VkCommandBuffer cmd, const glm::mat4 &proj_matrix, const glm::vec3 &sun_dir_view);
+            const VkCommandBuffer &cmd, const glm::mat4 &proj_matrix,
+            const glm::vec3 &sun_dir_view);
 
         // records the composite draw inside the caller's open rendering scope
         void composite_within(
-            VkCommandBuffer cmd, VkFormat output_format, int output_width, int output_height);
+            const VkCommandBuffer &cmd, VkFormat output_format, int output_width,
+            int output_height);
 
         ~VulkanPostProcess() = default;
 

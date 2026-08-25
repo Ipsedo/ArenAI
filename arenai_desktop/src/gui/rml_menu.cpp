@@ -15,7 +15,9 @@
 #include "./menu.h"
 #include "./rml/adapters.h"
 #include "./rml/cursor_ring.h"
+#include "./rml/hit_marker.h"
 #include "./rml/input.h"
+#include "./rml/reticle.h"
 
 namespace arenai::desktop::gui {
 
@@ -48,6 +50,10 @@ namespace arenai::desktop::gui {
                 cursor_ring_instancer_ = std::make_unique<CursorRingDecoratorInstancer>();
                 Rml::Factory::RegisterDecoratorInstancer(
                     "cursor-ring", cursor_ring_instancer_.get());
+                hit_marker_instancer_ = std::make_unique<HitMarkerDecoratorInstancer>();
+                Rml::Factory::RegisterDecoratorInstancer("hit-marker", hit_marker_instancer_.get());
+                reticle_instancer_ = std::make_unique<ReticleDecoratorInstancer>();
+                Rml::Factory::RegisterDecoratorInstancer("reticle", reticle_instancer_.get());
 
                 load_fonts(asset_reader);
 
@@ -70,11 +76,19 @@ namespace arenai::desktop::gui {
                 params_document_ = context_->LoadDocument("menu/parameters.rml");
                 pause_document_ = context_->LoadDocument("menu/pause.rml");
                 game_over_document_ = context_->LoadDocument("menu/game_over.rml");
-                if (!main_document_ || !params_document_ || !pause_document_
-                    || !game_over_document_)
+                hud_document_ = context_->LoadDocument("menu/hud.rml");
+                if (!main_document_ || !params_document_ || !pause_document_ || !game_over_document_
+                    || !hud_document_)
                     throw std::runtime_error("RmlUi menu documents failed to load");
 
                 // D-pad bridge across the file explorer's scroll container
+                reticle_ = hud_document_->GetElementById("reticle");
+                hit_marker_ = hud_document_->GetElementById("hit-marker");
+                if (reticle_ == nullptr || hit_marker_ == nullptr)
+                    throw std::runtime_error("hud.rml misses its #reticle / #hit-marker elements");
+
+                hud_document_->Show(Rml::ModalFlag::None, Rml::FocusFlag::None);
+
                 params_document_->AddEventListener(Rml::EventId::Keydown, &explorer_nav_listener_);
 
                 input_adapter_ = std::make_shared<MenuInputAdapter>(
@@ -137,8 +151,10 @@ namespace arenai::desktop::gui {
 
             GameSettings settings() const override { return settings_; }
 
-            void open_pause() override {
+            void open_pause(const int score) override {
                 pending_pause_action_ = PauseAction::None;
+                score_ = score;
+                model_handle_.DirtyVariable("score");
                 pause_document_->Show();
             }
 
@@ -163,6 +179,53 @@ namespace arenai::desktop::gui {
 
             PauseAction poll_pause_action() override {
                 return std::exchange(pending_pause_action_, PauseAction::None);
+            }
+
+            void notify_hit(const HitKind kind) override {
+                const bool kill = kind == HitKind::Kill;
+                hit_marker_->SetClass("kill", kill);
+
+                // Battlefield-style feedback: the ticks spread outward while
+                // fading; a kill starts bigger, flares wider and lasts longer
+                const float duration = kill ? KILL_MARKER_FADE_SECONDS : HIT_MARKER_FADE_SECONDS;
+                const Rml::Tween tween(Rml::Tween::Quadratic, Rml::Tween::Out);
+
+                const Rml::Property opaque(1.f, Rml::Unit::NUMBER);
+                hit_marker_->Animate(
+                    "opacity", Rml::Property(0.f, Rml::Unit::NUMBER), duration, tween, 1, false,
+                    0.f, &opaque);
+
+                const Rml::Property start_scale = Rml::Transform::MakeProperty(
+                    {Rml::Transforms::Scale2D(kill ? KILL_MARKER_START_SCALE : 1.f)});
+                hit_marker_->Animate(
+                    "transform",
+                    Rml::Transform::MakeProperty({Rml::Transforms::Scale2D(
+                        kill ? KILL_MARKER_END_SCALE : HIT_MARKER_END_SCALE)}),
+                    duration, tween, 1, false, 0.f, &start_scale);
+            }
+
+            void set_aim_point(const std::optional<glm::vec2> normalized) override {
+                if (!normalized) {
+                    reticle_->SetProperty(
+                        Rml::PropertyId::Visibility, Rml::Property(Rml::Style::Visibility::Hidden));
+                    return;
+                }
+                reticle_->SetProperty(
+                    Rml::PropertyId::Visibility, Rml::Property(Rml::Style::Visibility::Visible));
+                reticle_->SetProperty(
+                    Rml::PropertyId::Left,
+                    Rml::Property(normalized->x * static_cast<float>(width_), Rml::Unit::PX));
+                reticle_->SetProperty(
+                    Rml::PropertyId::Top,
+                    Rml::Property(normalized->y * static_cast<float>(height_), Rml::Unit::PX));
+            }
+
+            void render_hud_overlay() override {
+                context_->Update();
+
+                backend_->begin_ui_overlay(width_, height_);
+                context_->Render();
+                backend_->end_ui_frame();
             }
 
             std::shared_ptr<controller::AbstractKeyboardCallback> pause_input() override {
@@ -419,7 +482,10 @@ namespace arenai::desktop::gui {
             // unique_ptr: created after Rml::Initialise(), and member
             // destruction keeps it alive until after Rml::Shutdown() as
             // RmlUi requires of registered instancers
+
             std::unique_ptr<CursorRingDecoratorInstancer> cursor_ring_instancer_;
+            std::unique_ptr<HitMarkerDecoratorInstancer> hit_marker_instancer_;
+            std::unique_ptr<ReticleDecoratorInstancer> reticle_instancer_;
             std::vector<std::string> font_buffers_;
 
             Rml::Context *context_ = nullptr;
@@ -427,6 +493,14 @@ namespace arenai::desktop::gui {
             Rml::ElementDocument *params_document_ = nullptr;
             Rml::ElementDocument *pause_document_ = nullptr;
             Rml::ElementDocument *game_over_document_ = nullptr;
+            Rml::ElementDocument *hud_document_ = nullptr;
+            Rml::Element *reticle_ = nullptr;
+            Rml::Element *hit_marker_ = nullptr;
+            static constexpr float HIT_MARKER_FADE_SECONDS = 0.45f;
+            static constexpr float HIT_MARKER_END_SCALE = 1.3f;
+            static constexpr float KILL_MARKER_FADE_SECONDS = 0.6f;
+            static constexpr float KILL_MARKER_START_SCALE = 1.1f;
+            static constexpr float KILL_MARKER_END_SCALE = 1.55f;
             Rml::DataModelHandle model_handle_;
 
             std::shared_ptr<MenuInputAdapter> input_adapter_;
@@ -446,7 +520,7 @@ namespace arenai::desktop::gui {
             std::vector<Rml::String> entries_;
             bool sac_valid_ = false;
             bool can_play_ = false;
-            // final score shown by the game-over popup
+            // score shown by the pause and game-over popups
             int score_ = 0;
             bool play_clicked_ = false;
             bool quit_clicked_ = false;

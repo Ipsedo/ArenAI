@@ -8,11 +8,13 @@
 
 #include "./utils/make_shapes.h"
 
-struct cube_param {
-    float half_size;
-};
+namespace {
+    struct cube_param {
+        float half_size;
+    };
 
-class MakeCubeParam : public testing::TestWithParam<cube_param> {};
+    class MakeCubeParam : public testing::TestWithParam<cube_param> {};
+}// namespace
 
 TEST_P(MakeCubeParam, VertexCount) {
     const auto [half_size] = GetParam();

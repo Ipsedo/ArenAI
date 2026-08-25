@@ -87,7 +87,7 @@ TEST(VkOffscreenTest, DiffuseNonBlack) {
     const auto [pixels] = renderer->draw_and_get_frame(matrices);
 
     // the green channel must dominate somewhere: the triangle is lit green
-    const int hw = w * h;
+    constexpr int hw = w * h;
     const int green = std::accumulate(pixels.begin() + hw, pixels.begin() + 2 * hw, 0);
     ASSERT_GT(green, 0);
 }
@@ -108,7 +108,7 @@ TEST(VkOffscreenTest, TwoRenderersAlternate) {
 
     const auto sky_matrices = std::vector<std::tuple<std::string, glm::mat4>>{
         {"sky", glm::scale(glm::mat4(1.f), glm::vec3(2000.f))}};
-    const auto empty_matrices = std::vector<std::tuple<std::string, glm::mat4>>{};
+    constexpr auto empty_matrices = std::vector<std::tuple<std::string, glm::mat4>>{};
 
     for (int i = 0; i < 4; ++i) {
         renderer_a->make_current();
@@ -135,7 +135,7 @@ TEST(VkOffscreenTest, ConcurrentRenderers) {
     constexpr int nb_threads = 8, nb_frames = 5, w = 16, h = 16;
 
     std::vector<std::thread> workers;
-    std::vector<int> sums(nb_threads, -1);
+    std::vector sums(nb_threads, -1);
     for (int t = 0; t < nb_threads; t++)
         workers.emplace_back([&, t] {
             const auto renderer =

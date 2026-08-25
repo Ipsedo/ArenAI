@@ -13,17 +13,13 @@ namespace arenai::view {
 
     class VulkanInstance {
     public:
-        // extra_extensions: e.g. the surface extensions reported by GLFW for
-        // the windowed backend; the headless backend passes none.
-        // Setting the ARENAI_VK_VALIDATION environment variable enables the
-        // Khronos validation layer when it is installed.
         explicit VulkanInstance(const std::vector<const char *> &extra_extensions = {});
 
         VulkanInstance(const VulkanInstance &) = delete;
         VulkanInstance &operator=(const VulkanInstance &) = delete;
 
         VkInstance handle() const;
-        // the Vulkan version negotiated with the loader (>= 1.2)
+
         uint32_t api_version() const;
 
         ~VulkanInstance();

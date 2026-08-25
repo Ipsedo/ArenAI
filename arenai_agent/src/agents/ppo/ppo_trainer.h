@@ -18,19 +18,24 @@ namespace arenai::agent {
         torch::Tensor returns;
     };
 
+    struct TargetEntropies {
+        torch::Tensor continuous;
+        torch::Tensor discrete;
+    };
+
     class PpoTrainer final : public AbstractTrainer {
     public:
         PpoTrainer(
             const std::shared_ptr<Actor> &actor,
             const std::shared_ptr<PpoRolloutBuffer> &rollout_buffer, int vision_height,
             int vision_width, int nb_sensors, int nb_continuous_actions, float actor_learning_rate,
-            float critic_learning_rate, float alpha_learning_rate, int hidden_size_sensors,
+            float critic_learning_rate, int hidden_size_sensors,
             const std::vector<int> &critic_hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
             float gamma, float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
-            float target_sigma, float target_fire_proba, int epochs, int rollout_size,
-            int minibatch_size);
+            float target_entropy_init, float target_entropy_final, int target_entropy_warmup_steps,
+            float target_fire_proba, int epochs, int rollout_size, int minibatch_size);
 
         void step() override;
 
@@ -46,6 +51,9 @@ namespace arenai::agent {
 
         std::shared_ptr<PidLagrangianAlphaParameters> continuous_alpha;
         std::shared_ptr<PidLagrangianAlphaParameters> discrete_alpha;
+
+        std::shared_ptr<AbstractTargetEntropy> continuous_target_entropy;
+        std::shared_ptr<AbstractTargetEntropy> discrete_target_entropy;
 
         std::shared_ptr<ValueFunction> critic;
 
@@ -65,6 +73,9 @@ namespace arenai::agent {
         std::shared_ptr<AbstractMetric> continuous_entropy_metric;
         std::shared_ptr<AbstractMetric> discrete_entropy_metric;
 
+        std::shared_ptr<AbstractMetric> continuous_target_entropy_metric;
+        std::shared_ptr<AbstractMetric> discrete_target_entropy_metric;
+
         std::shared_ptr<AbstractMetric> continuous_alpha_metric;
         std::shared_ptr<AbstractMetric> discrete_alpha_metric;
 
@@ -81,37 +92,26 @@ namespace arenai::agent {
         float gamma;
         float gae_lambda;
         float clip_epsilon;
-        // approx-KL threshold ending the epoch loop early (<= 0: disabled)
         float target_kl;
 
         float grad_norm_max;
 
-        float target_sigma;
-        float target_fire_proba;
-
         int epochs;
-        // rollout horizon: one train() consumes rollout_size complete steps in a single update
         int rollout_size;
-        // rows per gradient step; also the chunk size for the no-grad value evaluation
         int minibatch_size;
 
         void train() const;
 
-        // one backward pass on the actor for a single minibatch; returns true when the
-        // minibatch drifted past the KL threshold, in which case no update was applied and
-        // only the kl metric was recorded — the next minibatch is tried either way
         bool train_actor(
             const torch::Tensor &vision, const torch::Tensor &proprioception,
             const torch::Tensor &continuous_actions, const torch::Tensor &discrete_actions,
-            const torch::Tensor &old_log_probs, const torch::Tensor &advantages) const;
+            const torch::Tensor &old_log_probs, const torch::Tensor &advantages,
+            const TargetEntropies &targets) const;
 
-        // one backward pass on the critic for a single minibatch
         void train_critic(
             const torch::Tensor &vision, const torch::Tensor &proprioception,
             const torch::Tensor &returns) const;
 
-        // GAE advantages (normalized over the valid pairs) and value targets,
-        // computed with the pre-update critic
         GaeResult compute_gae(const PpoRollout &rollout, torch::Device device) const;
 
         void set_train(bool train) const;

@@ -22,11 +22,12 @@ namespace arenai::agent {
           agent(std::make_shared<TorchPpoAgent>(actor, device, collector)),
           trainer(std::make_shared<PpoTrainer>(
               actor, rollout_buffer, vision_height, vision_width, nb_sensors, nb_continuous_actions,
-              params.actor_learning_rate, params.critic_learning_rate, params.alpha_learning_rate,
-              params.hidden_size_sensors, params.critic_hidden_sizes, params.vision_channels,
-              params.group_norm_nums, device, params.metric_window_size, params.gamma,
-              params.gae_lambda, params.clip_epsilon, params.target_kl, params.grad_norm_max,
-              params.target_sigma, params.target_fire_proba, params.epochs, params.rollout_size,
+              params.actor_learning_rate, params.critic_learning_rate, params.hidden_size_sensors,
+              params.critic_hidden_sizes, params.vision_channels, params.group_norm_nums, device,
+              params.metric_window_size, params.gamma, params.gae_lambda, params.clip_epsilon,
+              params.target_kl, params.grad_norm_max, params.target_entropy_init,
+              params.target_entropy_final, params.target_entropy_warmup_steps,
+              params.target_fire_proba, params.epochs, params.rollout_size,
               params.minibatch_size)) {}
 
     std::shared_ptr<AbstractTorchAgent> PpoTorchAgentFactory::get_agent() { return agent; }

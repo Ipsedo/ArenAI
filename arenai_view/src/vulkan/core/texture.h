@@ -25,22 +25,22 @@ namespace arenai::view {
     public:
         // 2D texture from raw RGBA/RGB bytes
         VulkanTexture(
-            const std::shared_ptr<VulkanDevice> &device, VkCommandPool pool, int width, int height,
-            int channels, const uint8_t *pixels);
+            const std::shared_ptr<VulkanDevice> &device, const VkCommandPool &pool, int width,
+            int height, int channels, const uint8_t *pixels);
 
         // 1x1 opaque white texture (untextured UI geometry)
         static std::unique_ptr<VulkanTexture>
-        make_white(const std::shared_ptr<VulkanDevice> &device, VkCommandPool pool);
+        make_white(const std::shared_ptr<VulkanDevice> &device, const VkCommandPool &pool);
 
         // 2D texture from a png resource
         static std::unique_ptr<VulkanTexture> from_png(
-            const std::shared_ptr<VulkanDevice> &device, VkCommandPool pool,
+            const std::shared_ptr<VulkanDevice> &device, const VkCommandPool &pool,
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::filesystem::path &png_path);
 
         // cube map from the 6 pngs (posx/negx/posy/negy/posz/negz.png) of a folder
         static std::unique_ptr<VulkanTexture> cube_from_pngs(
-            const std::shared_ptr<VulkanDevice> &device, VkCommandPool pool,
+            const std::shared_ptr<VulkanDevice> &device, const VkCommandPool &pool,
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::filesystem::path &pngs_root_path);
 
@@ -56,12 +56,13 @@ namespace arenai::view {
     private:
         // cube = 6 layers, pixels_per_face laid out +X,-X,+Y,-Y,+Z,-Z
         VulkanTexture(
-            const std::shared_ptr<VulkanDevice> &device, VkCommandPool pool, int width, int height,
-            const std::vector<std::vector<uint8_t>> &rgba_layers, bool cube);
+            const std::shared_ptr<VulkanDevice> &device, const VkCommandPool &pool, int width,
+            int height, const std::vector<std::vector<uint8_t>> &rgba_layers, bool cube);
 
-        void upload(VkCommandPool pool, const std::vector<std::vector<uint8_t>> &rgba_layers);
+        void upload(
+            const VkCommandPool &pool, const std::vector<std::vector<uint8_t>> &rgba_layers) const;
         void record_layout_transition(
-            VkCommandBuffer cmd, VkImageLayout old_layout, VkImageLayout new_layout) const;
+            const VkCommandBuffer &cmd, VkImageLayout old_layout, VkImageLayout new_layout) const;
 
         std::shared_ptr<VulkanDevice> device_;
         VkImage image_;

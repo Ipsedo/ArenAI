@@ -45,7 +45,7 @@ namespace arenai::view {
         std::tuple<int, int> screen_size() const override;
 
         std::vector<const char *> required_instance_extensions() const override;
-        VkSurfaceKHR create_surface(VkInstance instance) const override;
+        VkSurfaceKHR create_surface(const VkInstance &instance) const override;
 
         std::tuple<int, int> framebuffer_size() const override;
 

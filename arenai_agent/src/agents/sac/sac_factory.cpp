@@ -26,7 +26,9 @@ namespace arenai::agent {
               params.alpha_learning_rate, params.hidden_size_sensors, params.hidden_size_actions,
               params.critic_hidden_sizes, params.vision_channels, params.group_norm_nums, device,
               params.metric_window_size, params.tau, params.gamma, params.train_every,
-              params.epochs, params.batch_size, params.target_sigma, params.target_fire_proba)) {}
+              params.epochs, params.batch_size, params.target_entropy_init,
+              params.target_entropy_final, params.target_entropy_warmup_steps,
+              params.target_fire_proba)) {}
 
     std::shared_ptr<AbstractTorchAgent> SacTorchAgentFactory::get_agent() { return agent; }
 

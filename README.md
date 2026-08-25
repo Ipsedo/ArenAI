@@ -23,7 +23,7 @@ Windows build is now working !
 
 Install dependencies with pacman :
 ```shell
-$ sudo pacman -Sy glm glfw vulkan-devel vulkan-headers glslang
+$ sudo pacman -Sy glm glfw vulkan-devel vulkan-headers glslang gtest
 ```
 
 Then, download or install LibTorch :

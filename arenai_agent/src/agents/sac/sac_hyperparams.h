@@ -16,7 +16,7 @@ namespace arenai::agent {
     struct SacHyperParams {
         float actor_learning_rate = 1e-4f;
         float critic_learning_rate = 3e-4f;
-        float alpha_learning_rate = 3e-4f;
+        float alpha_learning_rate = 3e-5f;
         int hidden_size_sensors = 128;
         int hidden_size_actions = 32;
         std::vector<int> actor_hidden_sizes = {1024, 512};
@@ -24,13 +24,15 @@ namespace arenai::agent {
         std::vector<std::tuple<int, int>> vision_channels = {{3, 8},   {8, 16},  {16, 24},
                                                              {24, 32}, {32, 48}, {48, 64}};
         std::vector<int> group_norm_nums = {1, 2, 3, 4, 6, 8};
-        float initial_sigma = 0.4f;
-        float initial_fire_proba = 0.025f;
-        float target_sigma = 0.4f;
+        float initial_sigma = 0.3f;
+        float initial_fire_proba = 0.03f;
         float target_fire_proba = 0.025f;
+        float target_entropy_init = 0.25f;
+        float target_entropy_final = -1.f;
+        int target_entropy_warmup_steps = 3000000;
         int metric_window_size = 256;
         float tau = 0.005f;
-        float gamma = 0.99f;
+        float gamma = 0.997f;
         int replay_buffer_size = 300000;
         int train_every = 256;
         int epochs = 128;

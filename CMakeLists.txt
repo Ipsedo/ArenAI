@@ -21,6 +21,19 @@ endif ()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(ArenaiRuntimeDlls)
 
+# Self-contained release layout (Linux): the CD zips the executables with every
+# bundled .so in a lib/ folder next to them (scripts/ci/package_linux.sh). The
+# $ORIGIN-relative RPATH lets the relocated binaries find those libraries no
+# matter where the zip is extracted. OFF by default so local dev builds keep
+# their normal build-tree RPATH only.
+option(ARENAI_PORTABLE_RPATH
+        "Link with \$ORIGIN-relative RPATH for the packaged release layout" OFF)
+if (ARENAI_PORTABLE_RPATH AND UNIX)
+    # $ORIGIN/lib: executable at the zip root next to lib/
+    # $ORIGIN: the bundled libraries resolving each other inside lib/
+    set(CMAKE_BUILD_RPATH "$ORIGIN/lib;$ORIGIN")
+endif ()
+
 # Force golden-image tests to overwrite their reference files instead of
 # comparing against them. ON disables every pixel assertion, so never turn it on
 # to get a red CI green: that only hides the diff.

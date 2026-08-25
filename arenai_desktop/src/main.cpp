@@ -85,7 +85,7 @@ int main(const int argc, char **argv) {
         {.vision_height = parser.get<int>("--vision_height"),
          .vision_width = parser.get<int>("--vision_width"),
          .hyper_parameters = hyper_params,
-         .state_dict_folder = resources_folder / "trained_models" / "ppo_save_28",
+         .state_dict_folder = resources_folder / "trained_models" / "ppo_save_69",
          .cuda = parser.get<bool>("--cuda")});
 
     return 0;

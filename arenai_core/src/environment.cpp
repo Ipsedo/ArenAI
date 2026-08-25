@@ -61,7 +61,7 @@ namespace arenai::core {
             // compute/get state
             result.emplace_back(
                 State(vision_pool_->read_vision(i), tanks[i]->get_proprioception()),
-                tanks[i]->get_reward(tanks), tanks[i]->is_dead());
+                tanks[i]->get_reward(), tanks[i]->is_dead());
         }
 
         return result;

@@ -109,7 +109,7 @@ namespace arenai::model {
 
         for (int i = 0; i < tanks.size(); i++) {
             if (tanks[i].get() == this) continue;
-            if (tanks[i]->is_dead() && !tanks[i]->consume_is_first_frame_dead()) continue;
+            if (tanks[i]->is_dead() && !tanks[i]->is_first_frame_dead()) continue;
 
             const auto other_pos =
                 glm::vec3(tanks[i]->get_chassis()->get_model_matrix() * world_center);
@@ -123,7 +123,7 @@ namespace arenai::model {
         return best_i;
     }
 
-    float JoltEnemyTank::get_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const {
+    float JoltEnemyTank::get_reward() const {
         // 1. dead / suicide penalty
         const auto dead_penalty = is_dead() ? -1.f : 0.f;
 
@@ -191,10 +191,8 @@ namespace arenai::model {
             else if (tracked.has_final_pos)
                 update_closest_approach(tracked, tracked.final_shell_pos, tanks);
 
-            if (in_flight) continue;
-
             // remove next tick => allow get_reward(...) to see it
-            tracked.need_remove = true;
+            if (!in_flight) tracked.need_remove = true;
         }
     }
 
@@ -278,7 +276,7 @@ namespace arenai::model {
     // ReSharper disable once CppReferenceToOverriddenVirtualFunction
     bool JoltEnemyTank::is_dead() const { return JoltTank::is_dead() || is_suicide(); }
 
-    bool JoltEnemyTank::consume_is_first_frame_dead() {
+    bool JoltEnemyTank::is_first_frame_dead() const {
         return is_dead() && !is_dead_already_triggered;
     }
 

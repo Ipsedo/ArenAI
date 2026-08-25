@@ -41,7 +41,7 @@ namespace arenai::model {
 
     class EnemyTank : virtual public Tank {
     public:
-        virtual float get_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const = 0;
+        virtual float get_reward() const = 0;
         virtual std::vector<float> get_proprioception() const = 0;
 
         virtual void tick(const std::vector<std::shared_ptr<EnemyTank>> &tanks) = 0;
@@ -49,7 +49,7 @@ namespace arenai::model {
         virtual bool consume_has_hit() = 0;
         virtual bool consume_has_kill() = 0;
         virtual bool consume_has_fire() = 0;
-        virtual bool consume_is_first_frame_dead() = 0;
+        virtual bool is_first_frame_dead() const = 0;
 
         virtual bool is_suicide() const = 0;
 

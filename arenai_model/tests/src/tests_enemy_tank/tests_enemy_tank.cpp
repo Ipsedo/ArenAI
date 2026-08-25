@@ -115,7 +115,7 @@ TEST_F(EnemyTankTest, RewardWhenAllEnemiesDeadAndShellFired) {
 
     // get_nearest_enemy_index should return -1 (all dead)
     // reward should not crash and should be 0 (no valid target)
-    const float reward = shared_a->get_reward(tanks);
+    const float reward = shared_a->get_reward();
     ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN when all enemies are dead";
     ASSERT_FALSE(std::isinf(reward)) << "reward should not be Inf when all enemies are dead";
 }
@@ -137,9 +137,7 @@ TEST_F(EnemyTankTest, RewardNoNaNWhenAloneInTankList) {
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
-    const std::vector tanks{shared_tank};
-
-    const float reward = shared_tank->get_reward(tanks);
+    const float reward = shared_tank->get_reward();
     ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN when alone";
     ASSERT_FALSE(std::isinf(reward)) << "reward should not be Inf when alone";
 }
@@ -179,8 +177,7 @@ TEST_F(EnemyTankTest, ShellHitsGroundNoRewardNoCrash) {
         << "hitting the ground should not count as hitting another tank";
 
     // but last_shoot_info should still be set — reward should not crash
-    const std::vector tanks{shared_tank};
-    const float reward = shared_tank->get_reward(tanks);
+    const float reward = shared_tank->get_reward();
     ASSERT_FALSE(std::isnan(reward));
 }
 

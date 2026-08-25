@@ -28,8 +28,8 @@ TEST_F(RewardTest, RewardZeroWhenAliveNoShot) {
     const std::vector tanks{
         std::shared_ptr<EnemyTank>(tank_a.release()), std::shared_ptr<EnemyTank>(tank_b.release())};
 
-    const float reward_a = tanks[0]->get_reward(tanks);
-    const float reward_b = tanks[1]->get_reward(tanks);
+    const float reward_a = tanks[0]->get_reward();
+    const float reward_b = tanks[1]->get_reward();
 
     // the dense aim shaping leaves a negligible residue when the canon points ~90°
     // away from the enemy, so the reward is near zero rather than exactly zero
@@ -57,7 +57,7 @@ TEST_F(RewardTest, RewardNegativeWhenDead) {
 
     ASSERT_TRUE(tanks[0]->is_dead());
 
-    const float reward = tanks[0]->get_reward(tanks);
+    const float reward = tanks[0]->get_reward();
 
     ASSERT_LT(reward, 0.f);
 }
@@ -80,7 +80,7 @@ TEST_F(RewardTest, DeathPenaltyIsMinusOne) {
         }
     }
 
-    const float death_reward = tanks[1]->get_reward(tanks);
+    const float death_reward = tanks[1]->get_reward();
 
     // death and suicide share the same penalty so early termination is never an escape;
     // the fatal hit also counts as a received hit (-0.15)
@@ -117,7 +117,7 @@ TEST_F(RewardTest, RewardPositiveOnHit) {
         engine->step(1.f / 60.f);
         shared_a->tick(tanks);
 
-        max_reward = std::max(shared_a->get_reward(tanks), max_reward);
+        max_reward = std::max(shared_a->get_reward(), max_reward);
     }
 
     ASSERT_TRUE(shared_a->consume_has_hit()) << "shell should have hit the enemy tank";
@@ -154,7 +154,7 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
     for (int i = 0; i < 60; i++) {
         engine->step(1.f / 60.f);
         shared_a->tick(tanks);
-        max_reward_on_hit = std::max(shared_a->get_reward(tanks), max_reward_on_hit);
+        max_reward_on_hit = std::max(shared_a->get_reward(), max_reward_on_hit);
     }
 
     ASSERT_TRUE(shared_a->consume_has_hit()) << "shell should have hit the enemy tank";
@@ -176,7 +176,7 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
     for (int i = 0; i < 60; i++) {
         engine->step(1.f / 60.f);
         shared_a->tick(tanks);
-        max_reward_on_no_hit = std::max(shared_a->get_reward(tanks), max_reward_on_no_hit);
+        max_reward_on_no_hit = std::max(shared_a->get_reward(), max_reward_on_no_hit);
     }
 
     ASSERT_FALSE(shared_a->consume_has_hit()) << "no shell should have hit the enemy tank";
@@ -229,7 +229,7 @@ TEST_F(RewardTest, NoRewardWhenShootingAWreck) {
         engine->step(1.f / 60.f);
         shared_a->tick(tanks);
     }
-    const float reward = shared_a->get_reward(tanks);
+    const float reward = shared_a->get_reward();
 
     ASSERT_FALSE(shared_a->consume_has_hit()) << "a wreck must not count as a hit";
     ASSERT_FLOAT_EQ(reward, 0.f) << "shooting a wreck must pay neither hit nor kill";
@@ -257,14 +257,13 @@ TEST_F(RewardTest, ZeroRewardWithEmptyTankList) {
         .fire_button = {true}};
     for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
 
-    constexpr std::vector<std::shared_ptr<EnemyTank>> empty_tanks;
     for (int i = 0; i < 60; i++) {
         engine->step(1.f / 60.f);
-        shared_tank->tick(empty_tanks);
+        shared_tank->tick({});
     }
 
     // pass an empty tank list — get_nearest_enemy_index returns -1
-    const float reward = shared_tank->get_reward(empty_tanks);
+    const float reward = shared_tank->get_reward();
 
     ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN with empty tank list";
     ASSERT_FALSE(std::isinf(reward)) << "reward should not be Inf with empty tank list";

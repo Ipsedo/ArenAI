@@ -43,10 +43,10 @@ namespace arenai::model {
             const std::string &tank_prefix_name, glm::vec3 chassis_pos,
             float wanted_frame_frequency);
 
-        float get_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const override;
+        float get_reward() const override;
 
         bool is_dead() const override;
-        bool consume_is_first_frame_dead() override;
+        bool is_first_frame_dead() const override;
         bool is_suicide() const override;
 
         bool consume_has_hit() override;

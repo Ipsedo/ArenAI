@@ -160,7 +160,7 @@ TEST_F(ShellTest, ShellContactCallbackSetsReward) {
     for (int i = 0; i < 60; i++) {
         engine->step(1.f / 60.f);
         shared_a->tick(tanks);
-        max_reward = std::max(max_reward, shared_a->get_reward(tanks));
+        max_reward = std::max(max_reward, shared_a->get_reward());
     }
     ASSERT_TRUE(shared_a->consume_has_hit()) << "shell must hit for reward test";
 

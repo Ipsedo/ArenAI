@@ -154,14 +154,17 @@ TEST_F(ShellTest, ShellContactCallbackSetsReward) {
         .fire_button = {true}};
     for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
-    for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
-
     const std::vector tanks{shared_a, shared_b};
 
+    float max_reward = 0.f;
+    for (int i = 0; i < 60; i++) {
+        engine->step(1.f / 60.f);
+        shared_a->tick(tanks);
+        max_reward = std::max(max_reward, shared_a->get_reward(tanks));
+    }
     ASSERT_TRUE(shared_a->consume_has_hit()) << "shell must hit for reward test";
 
-    const float reward = shared_a->get_reward(tanks);
-    ASSERT_GT(reward, 0.f) << "reward should be positive after shell contact callback";
+    ASSERT_GT(max_reward, 0.f) << "reward should be positive after shell contact callback";
 }
 
 // ========================================================================
@@ -210,8 +213,10 @@ TEST_F(ShellTest, ShellImpactDealsExactlyOneDamage) {
     consume_tank_hits(shared_b);// drop whatever the settling produced
 
     fire_once(shared_a);
-    for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
-
+    for (int i = 0; i < 60; i++) {
+        engine->step(1.f / 60.f);
+        shared_a->tick({shared_a, shared_b});
+    }
     ASSERT_TRUE(shared_a->consume_has_hit()) << "shell must hit for this test to mean anything";
 
     ASSERT_EQ(consume_tank_hits(shared_b), 1)

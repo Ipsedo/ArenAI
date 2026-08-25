@@ -110,18 +110,22 @@ TEST_F(RewardTest, RewardPositiveOnHit) {
         .fire_button = {true}};
     for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
-    for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
-
     const std::vector tanks{shared_a, shared_b};
 
-    const float reward = shared_a->get_reward(tanks);
+    float max_reward = 0.f;
+    for (int i = 0; i < 60; i++) {
+        engine->step(1.f / 60.f);
+        shared_a->tick(tanks);
+
+        max_reward = std::max(shared_a->get_reward(tanks), max_reward);
+    }
 
     ASSERT_TRUE(shared_a->consume_has_hit()) << "shell should have hit the enemy tank";
 
-    ASSERT_FALSE(std::isnan(reward)) << "reward should never be NaN";
-    ASSERT_FALSE(std::isinf(reward)) << "reward should never be Inf";
+    ASSERT_FALSE(std::isnan(max_reward)) << "reward should never be NaN";
+    ASSERT_FALSE(std::isinf(max_reward)) << "reward should never be Inf";
 
-    ASSERT_GE(reward, 0.2f)
+    ASSERT_GE(max_reward, 0.2f)
         << "reward should be greater than or equal to the hit bonus after hitting an enemy";
 }
 
@@ -144,18 +148,21 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
         .fire_button = {true}};
     for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
-    for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
-
     const std::vector tanks{shared_a, shared_b};
 
-    const float reward_on_hit = shared_a->get_reward(tanks);
+    float max_reward_on_hit = 0.f;
+    for (int i = 0; i < 60; i++) {
+        engine->step(1.f / 60.f);
+        shared_a->tick(tanks);
+        max_reward_on_hit = std::max(shared_a->get_reward(tanks), max_reward_on_hit);
+    }
 
     ASSERT_TRUE(shared_a->consume_has_hit()) << "shell should have hit the enemy tank";
 
-    ASSERT_FALSE(std::isnan(reward_on_hit)) << "reward should never be NaN";
-    ASSERT_FALSE(std::isinf(reward_on_hit)) << "reward should never be Inf";
+    ASSERT_FALSE(std::isnan(max_reward_on_hit)) << "reward should never be NaN";
+    ASSERT_FALSE(std::isinf(max_reward_on_hit)) << "reward should never be Inf";
 
-    ASSERT_GE(reward_on_hit, 0.2f)
+    ASSERT_GE(max_reward_on_hit, 0.2f)
         << "reward should be greater than or equal to the hit bonus after hitting an enemy";
 
     // no fire, reward under the hit bonus
@@ -165,16 +172,19 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
         .fire_button = {false}};
     for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(no_fire_input);
 
-    for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
-
-    const float reward_on_no_hit = shared_a->get_reward(tanks);
+    float max_reward_on_no_hit = 0.f;
+    for (int i = 0; i < 60; i++) {
+        engine->step(1.f / 60.f);
+        shared_a->tick(tanks);
+        max_reward_on_no_hit = std::max(shared_a->get_reward(tanks), max_reward_on_no_hit);
+    }
 
     ASSERT_FALSE(shared_a->consume_has_hit()) << "no shell should have hit the enemy tank";
 
-    ASSERT_FALSE(std::isnan(reward_on_no_hit)) << "reward should never be NaN";
-    ASSERT_FALSE(std::isinf(reward_on_no_hit)) << "reward should never be Inf";
+    ASSERT_FALSE(std::isnan(max_reward_on_no_hit)) << "reward should never be NaN";
+    ASSERT_FALSE(std::isinf(max_reward_on_no_hit)) << "reward should never be Inf";
 
-    ASSERT_LE(reward_on_no_hit, 0.2f)
+    ASSERT_LE(max_reward_on_no_hit, 0.2f)
         << "reward should stay under the hit bonus when no shell hit an enemy";
 }
 
@@ -214,10 +224,11 @@ TEST_F(RewardTest, NoRewardWhenShootingAWreck) {
         .fire_button = {true}};
     for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
-    for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
-
     const std::vector tanks{shared_a, shared_b};
-
+    for (int i = 0; i < 60; i++) {
+        engine->step(1.f / 60.f);
+        shared_a->tick(tanks);
+    }
     const float reward = shared_a->get_reward(tanks);
 
     ASSERT_FALSE(shared_a->consume_has_hit()) << "a wreck must not count as a hit";
@@ -246,10 +257,13 @@ TEST_F(RewardTest, ZeroRewardWithEmptyTankList) {
         .fire_button = {true}};
     for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
 
-    for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
+    constexpr std::vector<std::shared_ptr<EnemyTank>> empty_tanks;
+    for (int i = 0; i < 60; i++) {
+        engine->step(1.f / 60.f);
+        shared_tank->tick(empty_tanks);
+    }
 
     // pass an empty tank list — get_nearest_enemy_index returns -1
-    constexpr std::vector<std::shared_ptr<EnemyTank>> empty_tanks;
     const float reward = shared_tank->get_reward(empty_tanks);
 
     ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN with empty tank list";

@@ -155,11 +155,11 @@ namespace arenai::model {
         engine.add_jolt_item_producer([c = canon_item] { return c->produce_jolt_items(); });
     }
 
-    std::shared_ptr<view::AbstractCamera> JoltTank::get_camera() { return camera; }
+    std::shared_ptr<view::AbstractCamera> JoltTank::get_camera() const { return camera; }
 
-    std::vector<std::shared_ptr<Item>> JoltTank::get_items() { return items; }
+    std::vector<std::shared_ptr<Item>> JoltTank::get_items() const { return items; }
 
-    std::vector<std::shared_ptr<controller::Controller>> JoltTank::get_controllers() {
+    std::vector<std::shared_ptr<controller::Controller>> JoltTank::get_controllers() const {
         return controllers;
     }
 
@@ -167,7 +167,7 @@ namespace arenai::model {
         return {{ShellItem::NAME, ShellItem::load_shape(file_reader)}};
     }
 
-    bool JoltTank::is_dead() {
+    bool JoltTank::is_dead() const {
         return std::ranges::any_of(life_items, [](const LifeItem *li) { return li->is_dead(); });
     }
 
@@ -177,9 +177,9 @@ namespace arenai::model {
         return hits;
     }
 
-    std::shared_ptr<Item> JoltTank::get_chassis() { return chassis; }
+    std::shared_ptr<Item> JoltTank::get_chassis() const { return chassis; }
 
-    std::shared_ptr<Item> JoltTank::get_canon() { return canon; }
+    std::shared_ptr<Item> JoltTank::get_canon() const { return canon; }
 
     void JoltTank::kill_life_items() const {
         for (const auto life_item: life_items) life_item->kill();

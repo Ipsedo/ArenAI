@@ -56,7 +56,7 @@ namespace arenai::model {
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), miss_distance_scale(1.5f), miss_distance_exponent(1.f / 2.f),
           hit_reward_scale(0.1f), hit_received_cost(0.15f), initial_nb_shells(10),
-          nb_shells(initial_nb_shells), shells_recharged_per_hit(5),
+          nb_shells(initial_nb_shells), max_shells(30), shells_recharged_per_hit(5),
           nb_frames_per_shell_regen(static_cast<int>(1.5f / wanted_frame_frequency)),
           curr_frame_shell_regen(0), is_dead_already_triggered(false), has_touch(false),
           has_kill(false), has_fired(false) {}
@@ -109,7 +109,7 @@ namespace arenai::model {
 
         for (int i = 0; i < tanks.size(); i++) {
             if (tanks[i].get() == this) continue;
-            if (tanks[i]->is_dead() && !tanks[i]->is_first_frame_dead()) continue;
+            if (tanks[i]->is_dead() && !tanks[i]->consume_is_first_frame_dead()) continue;
 
             const auto other_pos =
                 glm::vec3(tanks[i]->get_chassis()->get_model_matrix() * world_center);
@@ -123,8 +123,39 @@ namespace arenai::model {
         return best_i;
     }
 
-    float JoltEnemyTank::get_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
+    float JoltEnemyTank::get_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const {
+        // 1. dead / suicide penalty
+        const auto dead_penalty = is_dead() ? -1.f : 0.f;
 
+        // 2. fired shells reward
+        float shells_reward = 0.f;
+        for (int i = static_cast<int>(tracked_shells.size()) - 1; i >= 0; i--) {
+            auto &tracked = tracked_shells[i];
+
+            const auto shell = tracked.shell.lock();
+
+            if (const bool in_flight = shell && !shell->need_destroy(); in_flight) continue;
+
+            if (tracked.has_sample) {
+                shells_reward +=
+                    hit_reward_scale
+                    * compute_hit_reward(
+                        tracked.fire_pos, tracked.enemy_pos_at_t, tracked.shell_pos_at_t);
+                if (tracked.has_hit) shells_reward += tracked.has_killed ? 2.f : 0.2f;
+            }
+        }
+
+        // 3. hits received penalty
+        const float hit_received_penalty =
+            -hit_received_cost * static_cast<float>(get_received_hits());
+
+        // 4. total reward
+        const float reward = dead_penalty + shells_reward + hit_received_penalty;
+
+        return reward;
+    }
+
+    void JoltEnemyTank::tick(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
         // 1. flipped detection
         const auto chassis_model_mat = get_chassis()->get_model_matrix();
         constexpr glm::vec4 up(0.f, 1.f, 0.f, 0.f);
@@ -138,16 +169,20 @@ namespace arenai::model {
         // may push the reserve above it, regeneration never does
         if (++curr_frame_shell_regen >= nb_frames_per_shell_regen) {
             curr_frame_shell_regen = 0;
-            if (nb_shells < initial_nb_shells) nb_shells++;
+            nb_shells++;
         }
 
-        // 3. dead / suicide penalty
-        const auto dead_penalty = is_dead() ? -1.f : 0.f;
+        nb_shells = std::min(nb_shells, max_shells);
 
-        // 4. fired shells reward
-        float shells_reward = 0.f;
+        // 3. track shells
         for (int i = static_cast<int>(tracked_shells.size()) - 1; i >= 0; i--) {
             auto &tracked = tracked_shells[i];
+
+            // reward already saw it, can remove
+            if (tracked.need_remove) {
+                tracked_shells.erase(tracked_shells.begin() + i);
+                continue;
+            }
 
             const auto shell = tracked.shell.lock();
             const bool in_flight = shell && !shell->need_destroy();
@@ -158,25 +193,9 @@ namespace arenai::model {
 
             if (in_flight) continue;
 
-            if (tracked.has_sample) {
-                shells_reward +=
-                    hit_reward_scale
-                    * compute_hit_reward(
-                        tracked.fire_pos, tracked.enemy_pos_at_t, tracked.shell_pos_at_t);
-                if (tracked.has_hit) shells_reward += tracked.has_killed ? 2.f : 0.2f;
-            }
-
-            tracked_shells.erase(tracked_shells.begin() + i);
+            // remove next tick => allow get_reward(...) to see it
+            tracked.need_remove = true;
         }
-
-        // 5. hits received penalty
-        const float hit_received_penalty =
-            -hit_received_cost * static_cast<float>(get_received_hits());
-
-        // 6. total reward
-        const float reward = dead_penalty + shells_reward + hit_received_penalty;
-
-        return reward;
     }
 
     void JoltEnemyTank::on_shell_fired(const std::shared_ptr<ShellItem> &shell) {
@@ -194,7 +213,8 @@ namespace arenai::model {
              .final_shell_pos = glm::vec3(0.f),
              .has_final_pos = false,
              .has_hit = false,
-             .has_killed = false});
+             .has_killed = false,
+             .need_remove = false});
     }
 
     void JoltEnemyTank::on_shell_contact(
@@ -256,9 +276,11 @@ namespace arenai::model {
     }
 
     // ReSharper disable once CppReferenceToOverriddenVirtualFunction
-    bool JoltEnemyTank::is_dead() { return JoltTank::is_dead() || is_suicide(); }
+    bool JoltEnemyTank::is_dead() const { return JoltTank::is_dead() || is_suicide(); }
 
-    bool JoltEnemyTank::is_first_frame_dead() { return is_dead() && !is_dead_already_triggered; }
+    bool JoltEnemyTank::consume_is_first_frame_dead() {
+        return is_dead() && !is_dead_already_triggered;
+    }
 
     bool JoltEnemyTank::is_suicide() const {
         return curr_frame_upside_down > max_frames_upside_down;
@@ -273,7 +295,7 @@ namespace arenai::model {
         }
     }
 
-    std::vector<float> JoltEnemyTank::get_proprioception() {
+    std::vector<float> JoltEnemyTank::get_proprioception() const {
         const auto items = get_items();
 
         const auto &chassis = get_chassis();
@@ -312,7 +334,7 @@ namespace arenai::model {
                  item_forward.z, item_up.x, item_up.y, item_up.z, ang_vel.x, ang_vel.y, ang_vel.z});
         }
 
-        result.push_back(static_cast<float>(nb_shells) / static_cast<float>(initial_nb_shells));
+        result.push_back(static_cast<float>(nb_shells) / static_cast<float>(max_shells));
 
         return result;
     }

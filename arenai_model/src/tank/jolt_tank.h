@@ -30,14 +30,14 @@ namespace arenai::model {
                 [](const std::shared_ptr<ShellItem> &) {},
             const std::function<bool()> &can_fire_callback = [] { return true; });
 
-        std::shared_ptr<view::AbstractCamera> get_camera() override;
-        std::vector<std::shared_ptr<Item>> get_items() override;
-        std::vector<std::shared_ptr<controller::Controller>> get_controllers() override;
+        std::shared_ptr<view::AbstractCamera> get_camera() const override;
+        std::vector<std::shared_ptr<Item>> get_items() const override;
+        std::vector<std::shared_ptr<controller::Controller>> get_controllers() const override;
         std::map<std::string, std::shared_ptr<Shape>> load_shell_shapes() const override;
-        bool is_dead() override;
+        bool is_dead() const override;
         int get_received_hits() const;
-        std::shared_ptr<Item> get_chassis() override;
-        std::shared_ptr<Item> get_canon() override;
+        std::shared_ptr<Item> get_chassis() const override;
+        std::shared_ptr<Item> get_canon() const override;
 
         ~JoltTank() override;
 

@@ -31,6 +31,8 @@ namespace arenai::model {
         bool has_final_pos;
         bool has_hit;
         bool has_killed;
+
+        bool need_remove;
     };
 
     class JoltEnemyTank final : public JoltTank, public EnemyTank {
@@ -41,10 +43,10 @@ namespace arenai::model {
             const std::string &tank_prefix_name, glm::vec3 chassis_pos,
             float wanted_frame_frequency);
 
-        float get_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
+        float get_reward(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const override;
 
-        bool is_dead() override;
-        bool is_first_frame_dead() override;
+        bool is_dead() const override;
+        bool consume_is_first_frame_dead() override;
         bool is_suicide() const override;
 
         bool consume_has_hit() override;
@@ -53,7 +55,9 @@ namespace arenai::model {
 
         void on_death() override;
 
-        std::vector<float> get_proprioception() override;
+        void tick(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
+
+        std::vector<float> get_proprioception() const override;
 
         // Tank methods resolved via JoltTank
         using JoltTank::get_camera;
@@ -75,7 +79,10 @@ namespace arenai::model {
 
         int initial_nb_shells;
         int nb_shells;
+        int max_shells;
+
         int shells_recharged_per_hit;
+
         int nb_frames_per_shell_regen;
         int curr_frame_shell_regen;
 

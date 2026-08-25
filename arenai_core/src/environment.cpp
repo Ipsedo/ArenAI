@@ -55,6 +55,10 @@ namespace arenai::core {
         result.reserve(tanks.size());
 
         for (int i = 0; i < tanks.size(); i++) {
+            // tick
+            tanks[i]->tick(tanks);
+
+            // compute/get state
             result.emplace_back(
                 State(vision_pool_->read_vision(i), tanks[i]->get_proprioception()),
                 tanks[i]->get_reward(tanks), tanks[i]->is_dead());

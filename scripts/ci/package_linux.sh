@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Assembles the self-contained Linux release archive:
 #
-#   arenai_linux-<arch>_<version>.zip
+#   arenai-<version>_linux-<arch>.zip
 #   ├── arenai_desktop        (looks for ./resources next to itself)
 #   ├── arenai_agent_train
 #   ├── resources/
@@ -25,7 +25,7 @@ case "$(uname -m)" in
     *) echo "unsupported architecture: $(uname -m)" >&2; exit 1 ;;
 esac
 
-ZIP_NAME="arenai_linux-${ARCH}_${VERSION}.zip"
+ZIP_NAME="arenai-${VERSION}_linux-${ARCH}.zip"
 
 # glibc and the windowing/session stack must come from the user's system: the
 # libc family is tied to the dynamic loader, and the X11/Wayland client

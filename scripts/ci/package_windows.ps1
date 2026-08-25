@@ -2,7 +2,7 @@
 .SYNOPSIS
     Assembles the self-contained Windows release archive:
 
-      arenai_windows-<arch>_<version>.zip
+      arenai-<version>_windows-<arch>.zip
       |-- arenai_desktop.exe      (looks for .\resources next to itself)
       |-- arenai_agent_train.exe
       |-- *.dll                   (vcpkg applocal + libtorch, already staged
@@ -30,7 +30,7 @@ $arch = switch ($env:PROCESSOR_ARCHITECTURE) {
     default { Write-Error "unsupported architecture: $env:PROCESSOR_ARCHITECTURE"; exit 1 }
 }
 
-$zipName = "arenai_windows-${arch}_${Version}.zip"
+$zipName = "arenai-${Version}_windows-${arch}.zip"
 
 $stage = Join-Path ([System.IO.Path]::GetTempPath()) "arenai_package_$([System.IO.Path]::GetRandomFileName())"
 New-Item -ItemType Directory -Force -Path $stage | Out-Null

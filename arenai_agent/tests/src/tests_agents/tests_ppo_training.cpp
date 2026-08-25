@@ -32,8 +32,9 @@ PpoTrainingTest::make_factory(const PpoTrainingTestConfig &cfg) const {
 
 TorchState PpoTrainingTest::make_state(const PpoTrainingTestConfig &cfg, const int nb_tanks) {
     return {
-        torch::randint(0, 255, {nb_tanks, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
-        torch::randn({nb_tanks, cfg.nb_sensors})};
+        .vision = torch::randint(
+            0, 255, {nb_tanks, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
+        .proprioception = torch::randn({nb_tanks, cfg.nb_sensors})};
 }
 
 TEST_F(PpoTrainingTest, ActProducesValidOutput) {

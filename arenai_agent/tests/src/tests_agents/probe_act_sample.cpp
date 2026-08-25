@@ -66,16 +66,15 @@ TEST(ProbeActSample, PpoLogProbs) {
 
     const auto state = probe_state(3, h, w, nb_sensors);
 
-    const auto action = agent->act(state, true);
+    const auto [continuous_action, discrete_action] = agent->act(state, true);
     collector->on_transition(torch::randn({3, 1}), torch::zeros({3, 1}));
     collector->on_episode_end(state);
 
     torch::NoGradGuard guard;
     const auto [mu, sigma, disc] = actor->act(state.vision, state.proprioception);
-    const auto expected_cont =
-        truncated_normal_log_pdf(action.continuous_action, mu, sigma).sum(-1, true);
+    const auto expected_cont = truncated_normal_log_pdf(continuous_action, mu, sigma).sum(-1, true);
     const auto expected_disc =
-        (action.discrete_action * torch::log(torch::clamp(disc, 1e-8, 1.0 - 1e-8))).sum(-1, true);
+        (discrete_action * torch::log(torch::clamp(disc, 1e-8, 1.0 - 1e-8))).sum(-1, true);
 
     const auto rollout = rollout_buffer->get_rollout();
     std::cout << "stored cont lp: " << rollout.continuous_log_probs
@@ -101,18 +100,18 @@ TEST(ProbeActSample, SacStats) {
     std::cout << "mu: " << mu << "\nsigma: " << sigma << "\ndisc_proba: " << disc << std::endl;
 
     // deterministic
-    const auto det = agent->act(state, false);
-    std::cout << "act(false) cont: " << det.continuous_action
-              << "\nact(false) disc: " << det.discrete_action << std::endl;
-    std::cout << "cont == mu ? " << torch::allclose(det.continuous_action, mu) << std::endl;
+    const auto [continuous_action, discrete_action] = agent->act(state, false);
+    std::cout << "act(false) cont: " << continuous_action
+              << "\nact(false) disc: " << discrete_action << std::endl;
+    std::cout << "cont == mu ? " << torch::allclose(continuous_action, mu) << std::endl;
 
     // stochastic stats
     constexpr int N = 2000;
     std::vector<torch::Tensor> conts, discs;
     for (int i = 0; i < N; i++) {
-        const auto a = agent->act(state, true);
-        conts.push_back(a.continuous_action);
-        discs.push_back(a.discrete_action);
+        const auto [curr_continuous_action, curr_discrete_action] = agent->act(state, true);
+        conts.push_back(curr_continuous_action);
+        discs.push_back(curr_discrete_action);
     }
     const auto cont_all = torch::cat(conts, 0);
     const auto disc_all = torch::cat(discs, 0);

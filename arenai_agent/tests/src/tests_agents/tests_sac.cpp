@@ -54,14 +54,24 @@ TorchState SacAgentTest::make_state(const SacTestConfig &cfg, const int batch) {
 // ========================================================================
 
 TEST_F(SacAgentTest, ParameterCountPositive) {
-    constexpr SacTestConfig cfg{8, 8, 10, 4, 2};
+    constexpr SacTestConfig cfg{
+        .vision_height = 8,
+        .vision_width = 8,
+        .nb_sensors = 10,
+        .nb_continuous_actions = 4,
+        .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
     ASSERT_GT(factory->get_trainer()->count_parameters(), 0);
 }
 
 TEST_F(SacAgentTest, MetricsNotEmpty) {
-    constexpr SacTestConfig cfg{8, 8, 10, 4, 2};
+    constexpr SacTestConfig cfg{
+        .vision_height = 8,
+        .vision_width = 8,
+        .nb_sensors = 10,
+        .nb_continuous_actions = 4,
+        .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
     const auto metrics = factory->get_trainer()->get_metrics();

@@ -31,8 +31,8 @@ namespace arenai::agent {
           wanted_frequency(wanted_frequency),
           max_frames_without_hit(static_cast<int>(30.f / wanted_frequency)),
           remaining_frames(nb_tanks, max_frames_without_hit),
-          nb_frames_added_when_hit(static_cast<int>(2.f / wanted_frequency)),
-          nb_frames_added_when_kill(static_cast<int>(10.f / wanted_frequency)), nb_tanks(nb_tanks),
+          nb_frames_added_when_hit(static_cast<int>(3.f / wanted_frequency)),
+          nb_frames_added_when_kill(static_cast<int>(15.f / wanted_frequency)), nb_tanks(nb_tanks),
           nb_steps(0), done(nb_tanks, false), already_done(nb_tanks, false),
           max_episode_steps(max_episode_steps), nb_hits_per_tanks(nb_tanks, 0),
           nb_kills_per_tanks(nb_tanks, 0), reward_metric(std::make_shared<MeanMetric>(

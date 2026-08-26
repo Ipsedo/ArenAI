@@ -31,12 +31,12 @@ namespace arenai::agent {
           wanted_frequency(wanted_frequency),
           max_frames_without_hit(static_cast<int>(30.f / wanted_frequency)),
           remaining_frames(nb_tanks, max_frames_without_hit),
-          nb_frames_added_when_hit(static_cast<int>(1.f / wanted_frequency)),
-          nb_frames_added_when_kill(static_cast<int>(5.f / wanted_frequency)), nb_tanks(nb_tanks),
+          nb_frames_added_when_hit(static_cast<int>(2.f / wanted_frequency)),
+          nb_frames_added_when_kill(static_cast<int>(10.f / wanted_frequency)), nb_tanks(nb_tanks),
           nb_steps(0), done(nb_tanks, false), already_done(nb_tanks, false),
-          max_episode_steps(max_episode_steps),
-          reward_metric(
-              std::make_shared<MeanMetric>("r", 4 * nb_tanks * max_episode_steps, 3, true)),
+          max_episode_steps(max_episode_steps), nb_hits_per_tanks(nb_tanks, 0),
+          nb_kills_per_tanks(nb_tanks, 0), reward_metric(std::make_shared<MeanMetric>(
+                                               "r", 4 * nb_tanks * max_episode_steps, 3, true)),
           episode_step_mean_nb_metric(std::make_shared<MeanMetric>("s_μ", 32, 1)),
           episode_step_std_nb_metric(std::make_shared<StdMetric>("s_σ", 32)),
           fire_metric(std::make_shared<MeanMetric>("fire", 256, 2)),
@@ -103,11 +103,20 @@ namespace arenai::agent {
         }
 
         // natural ending (timeout, death)
+        const float timeout_penalty =
+            1.f - static_cast<float>(nb_steps) / static_cast<float>(max_episode_steps);
+
         for (int i = 0; i < step_result.size(); i++) {
             remaining_frames[i]--;
 
-            if (has_hit[i]) remaining_frames[i] += nb_frames_added_when_hit;
-            if (has_kill[i]) remaining_frames[i] += nb_frames_added_when_kill;
+            if (has_hit[i]) {
+                remaining_frames[i] += nb_frames_added_when_hit;
+                nb_hits_per_tanks[i] += 1;
+            }
+            if (has_kill[i]) {
+                remaining_frames[i] += nb_frames_added_when_kill;
+                nb_kills_per_tanks[i] += 1;
+            }
 
             const auto &[state, reward, is_done] = step_result[i];
 
@@ -118,7 +127,7 @@ namespace arenai::agent {
 
             // starving out (no hit for too long) is a real death: penalized and terminal
             if (!done[i] && remaining_frames[i] <= 0) {
-                step_result[i] = {state, reward - 1.f, true};
+                step_result[i] = {state, reward - timeout_penalty, true};
                 done[i] = true;
             }
 
@@ -133,12 +142,16 @@ namespace arenai::agent {
         for (int i = 0; i < step_result.size(); i++) {
             if (done[i]) continue;
 
-            // detact winner
+            // detect winner
             if (const long nb_not_done = std::ranges::count(done, false); nb_not_done == 1) {
                 const auto &[state, reward, is_done] = step_result[i];
+
+                const float done_reward = static_cast<float>(nb_kills_per_tanks[i])
+                                          + 0.05f * static_cast<float>(nb_hits_per_tanks[i]);
+
                 if (only_one_tank_alive())
-                    step_result[i] = {state, reward + 4.f, true}; // winner réel
-                else step_result[i] = {state, reward + 1.f, true};// timeout winner
+                    step_result[i] = {state, reward + 4.f * done_reward, true}; // winner réel
+                else step_result[i] = {state, reward + 1.f * done_reward, true};// timeout winner
 
                 done[i] = true;
             }
@@ -177,6 +190,9 @@ namespace arenai::agent {
 
         already_done = std::vector(nb_tanks, false);
         done = std::vector(nb_tanks, false);
+
+        nb_hits_per_tanks = std::vector(nb_tanks, 0);
+        nb_kills_per_tanks = std::vector(nb_tanks, 0);
     }
 
     bool TrainTankEnvironment::only_one_tank_alive() {

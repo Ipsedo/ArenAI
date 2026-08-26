@@ -51,6 +51,9 @@ namespace arenai::agent {
 
         int max_episode_steps;
 
+        std::vector<int> nb_hits_per_tanks;
+        std::vector<int> nb_kills_per_tanks;
+
         std::shared_ptr<AbstractMetric> reward_metric;
 
         std::shared_ptr<AbstractMetric> episode_step_mean_nb_metric;

@@ -239,6 +239,54 @@ TEST_F(RewardTest, NoRewardWhenShootingAWreck) {
         << "a wreck must not recharge the shell reserve";
 }
 
+TEST_F(RewardTest, NoKillRewardWhenHittingAnotherPartOfAWreck) {
+    add_ground();
+    // spawn tanks high enough so all parts start above ground and settle cleanly
+    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
+    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f});
+
+    // settle on ground (300 frames = 5s at 60fps)
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+
+    const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
+    const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
+
+    // kill tank_b through a front wheel — on the far side of the wreck, low on the
+    // ground, unreachable by the incoming shell. Every other part dies only through
+    // kill_life_items() in on_death(): the shell will thus hit a part whose death was
+    // never observed by is_already_dead(), the exact spot where a fresh kill (+2)
+    // would be wrongly counted if kill() forgot to flag the part as already dead
+    for (const auto items_b = shared_b->get_items(); const auto &item: items_b) {
+        auto *life = dynamic_cast<LifeItem *>(item.get());
+        if (life && item->get_name().find("wheel_right_1") != std::string::npos) {
+            life->receive_damages(1e6f);
+            break;
+        }
+    }
+    ASSERT_TRUE(shared_b->is_dead());
+    shared_b->on_death();
+
+    // fire from tank_a toward the wreck (canon points +Z by default): the shell hits
+    // the rear of the chassis or the turret, never the destroyed front wheel
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
+    for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
+
+    const std::vector tanks{shared_a, shared_b};
+    for (int i = 0; i < 60; i++) {
+        engine->step(1.f / 60.f);
+        shared_a->tick(tanks);
+    }
+    const float reward = shared_a->get_reward();
+
+    ASSERT_FALSE(shared_a->consume_has_hit()) << "a wreck part must not count as a hit";
+    ASSERT_FALSE(shared_a->consume_has_kill())
+        << "a part killed by on_death must not count as a fresh kill";
+    ASSERT_FLOAT_EQ(reward, 0.f) << "hitting any part of a wreck must pay neither hit nor kill";
+}
+
 // ========================================================================
 // get_reward — NaN / Inf stability
 // ========================================================================

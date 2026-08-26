@@ -38,10 +38,20 @@ namespace arenai::desktop {
 
         sac_agent->load(settings.sac_folder);
 
+        // route the pad input to the configured device when it is connected
+        // (also covers runs that skip the menu, e.g. ARENAI_DEBUG_AUTOPLAY)
+        if (settings.controller_kind == ControllerKind::Gamepad
+            && !settings.bindings.gamepad.device_guid.empty())
+            for (const auto &[id, name, guid]: window->list_gamepads())
+                if (guid == settings.bindings.gamepad.device_guid) {
+                    window->select_gamepad(id);
+                    break;
+                }
+
         const auto env = std::make_shared<DesktopGameEnvironment>(
             game_options.resources_folder, graphics_backend, settings.nb_tanks,
             model_options.vision_height, model_options.vision_width, game_options.wanted_frequency,
-            settings.controller_kind);
+            settings.controller_kind, settings.bindings);
 
         auto states = env->reset(
             static_cast<float>(settings.spawn_side), static_cast<float>(settings.spawn_side));
@@ -52,7 +62,8 @@ namespace arenai::desktop {
 
         const auto router = std::make_shared<GameInputRouter>(
             env->keyboard_handler(), env->gamepad_handler(), gui->pause_input(),
-            gui->pause_gamepad_input(), [&toggle_requested] { toggle_requested = true; });
+            gui->pause_gamepad_input(), [&toggle_requested] { toggle_requested = true; },
+            settings.bindings.keyboard);
         window->set_keyboard_callback(router);
         window->set_gamepad_callback(router);
 

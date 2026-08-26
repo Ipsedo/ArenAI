@@ -17,6 +17,7 @@
 #include <arenai_utils/file_reader.h>
 #include <arenai_view/backend.h>
 
+#include "../controller/bindings.h"
 #include "../controller/control_kind.h"
 
 // The gui/ folder is a hexagon of its own: this header is its only public
@@ -31,6 +32,7 @@ namespace arenai::desktop::gui {
         // side length (meters) of the square area the tanks spawn in
         int spawn_side = 500;
         ControllerKind controller_kind = ControllerKind::Keyboard;
+        ControlBindings bindings;
         bool fullscreen = false;
         // folder holding the trained SAC state dicts, empty until chosen
         std::filesystem::path sac_folder;

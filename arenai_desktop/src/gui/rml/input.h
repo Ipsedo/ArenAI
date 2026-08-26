@@ -7,13 +7,23 @@
 
 #include <chrono>
 #include <functional>
+#include <utility>
+#include <variant>
 #include <vector>
 
 #include <RmlUi/Core.h>
 
 #include <arenai_controller/callback.h>
 
+#include "../../controller/bindings.h"
+
 namespace arenai::desktop::gui {
+
+    // one raw input event handed to the controls page while it captures a
+    // binding: a key, a mouse button, a pad button, or a pad axis deflection
+    using RawMenuInput = std::variant<
+        controller::Key, controller::MouseButton, controller::GamepadButton,
+        std::pair<GamepadAxis, double>>;
 
     // The entries of the file explorer live inside a scroll container
     // (.file-list, overflow-y: auto), and RmlUi's spatial navigation
@@ -55,6 +65,14 @@ namespace arenai::desktop::gui {
             Rml::Context *context, std::function<void()> on_escape,
             std::function<void(bool)> on_gamepad_nav);
 
+        // While a sink is installed the adapter mutes the menu (no
+        // navigation, no clicks, no escape) and hands it every key / button
+        // press and every pad axis motion instead; mouse moves, scrolls and
+        // releases keep flowing to RmlUi so the cursor stays alive. The
+        // controls page uses this to capture a new binding; nullptr
+        // uninstalls.
+        void set_capture_sink(std::function<void(const RawMenuInput &)> sink);
+
         void on_key(controller::Key key, controller::InputAction action) override;
         void on_mouse_move(double x, double y) override;
         void
@@ -64,8 +82,8 @@ namespace arenai::desktop::gui {
         void on_gamepad_button(
             controller::GamepadButton button, controller::InputAction action) override;
         void on_joystick(double x, double y, controller::GamepadJoystick stick) override;
-        // triggers have no menu role
-        void on_trigger(double, controller::GamepadTrigger) override {}
+        // triggers have no menu role outside binding capture
+        void on_trigger(double z, controller::GamepadTrigger trigger) override;
 
     private:
         void to_gamepad_mode();
@@ -98,6 +116,7 @@ namespace arenai::desktop::gui {
         Rml::Context *context_;
         std::function<void()> on_escape_;
         std::function<void(bool)> on_gamepad_nav_;
+        std::function<void(const RawMenuInput &)> capture_sink_;
         bool gamepad_mode_ = false;
         AxisNav x_nav_;
         AxisNav y_nav_;

@@ -56,9 +56,19 @@ namespace arenai::desktop::gui {
         : context_(context), on_escape_(std::move(on_escape)),
           on_gamepad_nav_(std::move(on_gamepad_nav)) {}
 
+    void MenuInputAdapter::set_capture_sink(std::function<void(const RawMenuInput &)> sink) {
+        capture_sink_ = std::move(sink);
+    }
+
     void MenuInputAdapter::on_key(const controller::Key key, const controller::InputAction action) {
-        if (key == controller::Key::Escape && action == controller::InputAction::Press)
-            on_escape_();
+        if (action != controller::InputAction::Press) return;
+
+        if (capture_sink_) {
+            capture_sink_(key);
+            return;
+        }
+
+        if (key == controller::Key::Escape) on_escape_();
     }
 
     void MenuInputAdapter::on_mouse_move(const double x, const double y) {
@@ -68,6 +78,13 @@ namespace arenai::desktop::gui {
 
     void MenuInputAdapter::on_mouse_button(
         const controller::MouseButton button, const controller::InputAction action) {
+        // presses feed the capture; releases keep flowing so RmlUi never
+        // keeps an element stuck :active
+        if (capture_sink_ && action == controller::InputAction::Press) {
+            capture_sink_(button);
+            return;
+        }
+
         to_mouse_mode();
         const int index = button == controller::MouseButton::Left    ? 0
                           : button == controller::MouseButton::Right ? 1
@@ -89,6 +106,11 @@ namespace arenai::desktop::gui {
         const controller::GamepadButton button, const controller::InputAction action) {
         if (action != controller::InputAction::Press) return;
 
+        if (capture_sink_) {
+            capture_sink_(button);
+            return;
+        }
+
         to_gamepad_mode();
         switch (button) {
             case controller::GamepadButton::A: send_key(Rml::Input::KI_RETURN); break;
@@ -103,6 +125,15 @@ namespace arenai::desktop::gui {
 
     void MenuInputAdapter::on_joystick(
         const double x, const double y, const controller::GamepadJoystick stick) {
+        if (capture_sink_) {
+            const bool left = stick == controller::GamepadJoystick::Left;
+            capture_sink_(
+                std::make_pair(left ? GamepadAxis::LeftStickX : GamepadAxis::RightStickX, x));
+            capture_sink_(
+                std::make_pair(left ? GamepadAxis::LeftStickY : GamepadAxis::RightStickY, y));
+            return;
+        }
+
         if (stick == controller::GamepadJoystick::Right) {
             scroll_at_focus(y);
             return;
@@ -112,6 +143,14 @@ namespace arenai::desktop::gui {
         // GLFW stick y grows downwards, matching KI_DOWN
         axis_nav(x_nav_, x, Rml::Input::KI_LEFT, Rml::Input::KI_RIGHT);
         axis_nav(y_nav_, y, Rml::Input::KI_UP, Rml::Input::KI_DOWN);
+    }
+
+    void MenuInputAdapter::on_trigger(const double z, const controller::GamepadTrigger trigger) {
+        if (!capture_sink_) return;
+        capture_sink_(std::make_pair(
+            trigger == controller::GamepadTrigger::Left ? GamepadAxis::LeftTrigger
+                                                        : GamepadAxis::RightTrigger,
+            z));
     }
 
     void MenuInputAdapter::to_gamepad_mode() {

@@ -20,7 +20,8 @@ namespace arenai::desktop {
         const std::filesystem::path &asset_folder_path,
         const std::shared_ptr<view::AbstractWindowedGraphicBackend> &graphics_backend,
         const int nb_tanks, const int vision_height, const int vision_width,
-        const float wanted_frequency, const ControllerKind &controller_kind)
+        const float wanted_frequency, const ControllerKind &controller_kind,
+        const ControlBindings &bindings)
         : BaseTanksEnvironment(
             std::make_shared<agent::DesktopAssetFileReader>(asset_folder_path),
             view::make_vulkan_backend(), nb_tanks, wanted_frequency, vision_height, vision_width, 8,
@@ -28,7 +29,8 @@ namespace arenai::desktop {
           windowed_backend(graphics_backend),
           asset_file_reader(std::make_shared<agent::DesktopAssetFileReader>(asset_folder_path)),
           player_tank(std::nullptr_t()), player_renderer(std::nullptr_t()),
-          wanted_frequency(wanted_frequency), controller_kind(controller_kind) {}
+          wanted_frequency(wanted_frequency), controller_kind(controller_kind), bindings(bindings) {
+    }
 
     void DesktopGameEnvironment::on_draw(
         const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
@@ -109,7 +111,8 @@ namespace arenai::desktop {
             glm::vec3(200, 300, 200), player_tank->get_camera());
 
         if (controller_kind == ControllerKind::Gamepad) {
-            const auto player_controller_handler = std::make_shared<PlayerGamepadHandler>();
+            const auto player_controller_handler =
+                std::make_shared<PlayerGamepadHandler>(bindings.gamepad);
 
             for (auto &ctrl: player_tank->get_controllers())
                 player_controller_handler->add_controller(ctrl);
@@ -117,7 +120,7 @@ namespace arenai::desktop {
             gamepad_handler_ = player_controller_handler;
         } else if (controller_kind == ControllerKind::Keyboard) {
             const auto player_controller_handler = std::make_shared<PlayerMouseKeyboardHandler>(
-                windowed_backend->get_window(), *player_renderer);
+                windowed_backend->get_window(), *player_renderer, bindings.keyboard);
 
             for (auto &ctrl: player_tank->get_controllers())
                 player_controller_handler->add_controller(ctrl);

@@ -14,6 +14,8 @@
 #include <arenai_view/renderer.h>
 #include <arenai_view/window.h>
 
+#include "./bindings.h"
+
 namespace arenai::desktop {
 
     struct PlayerMouseKeyboardInput {
@@ -27,7 +29,8 @@ namespace arenai::desktop {
                                        public controller::AbstractKeyboardCallback {
     public:
         PlayerMouseKeyboardHandler(
-            std::shared_ptr<view::AbstractWindow> window, const view::AbstractRenderer &renderer);
+            std::shared_ptr<view::AbstractWindow> window, const view::AbstractRenderer &renderer,
+            const KeyboardBindings &bindings);
 
         void on_key(controller::Key key, controller::InputAction action) override;
         void on_mouse_move(double x, double y) override;
@@ -38,9 +41,16 @@ namespace arenai::desktop {
         std::tuple<bool, controller::user_input> to_output(PlayerMouseKeyboardInput event) override;
 
     private:
+        // presses / releases of a bound key or mouse button drive the
+        // movement state and the fire flag; an unbound slot never matches
+        void apply_binding(
+            const KeyboardBinding &input, controller::InputAction action, bool &need_fire);
+
         std::shared_ptr<view::AbstractWindow> window;
 
         const view::AbstractRenderer &renderer;
+
+        KeyboardBindings bindings;
 
         double last_mouse_x;
         double last_mouse_y;

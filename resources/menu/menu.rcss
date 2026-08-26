@@ -331,6 +331,156 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     border-color: #00A6FB;
 }
 
+/* Controls page — same design width as the parameters panel */
+#controls-panel {
+    width: 560dp;
+}
+
+/* the Controls row lays its toggles out as a flex line so Configure can
+   ride its auto margin to the right edge */
+.toggle-group.controls-row {
+    display: flex;
+    align-items: center;
+}
+
+/* opens the controls page from the Controls row: chip-sized, pushed to the
+   right edge by its auto margin */
+.button.configure {
+    display: inline-block;
+    width: auto;
+    margin: 0 0 0 auto;
+    padding: 9dp 18dp;
+    font-size: 13dp;
+}
+
+/* binding rows: a dark inset list, like the file explorer */
+.bind-list {
+    display: block;
+    background-color: #051923;
+    border: 1dp #006494;
+    border-radius: 2dp;
+    margin-bottom: 10dp;
+}
+
+.bind-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8dp 14dp;
+    border-bottom: 1dp #062b3d;
+}
+
+.bind-row:last-child {
+    border-bottom-width: 0;
+}
+
+.bind-action {
+    font-family: "IBM Plex Mono";
+    font-size: 13dp;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 2dp;
+    color: #8AC4E0;
+}
+
+/* the clickable slot showing the current binding */
+.keychip {
+    font-family: "IBM Plex Mono";
+    font-size: 13dp;
+    font-weight: 600;
+    min-width: 74dp;
+    text-align: center;
+    padding: 6dp 14dp;
+    background-color: #051923;
+    border: 1dp #0582CA;
+    border-radius: 2dp;
+    color: #EAF7FF;
+    cursor: pointer;
+    tab-index: auto;
+    nav: auto;
+}
+
+.keychip:hover, body.gamepad-nav .keychip:focus {
+    border-color: #00A6FB;
+    background-color: #00a6fb17;
+    color: #00A6FB;
+}
+
+@keyframes chip-pulse {
+    from { background-color: #00a6fb17; }
+    to { background-color: #00a6fb33; }
+}
+
+.keychip.listening {
+    border-color: #00A6FB;
+    color: #00A6FB;
+    animation: 0.55s cubic-in-out infinite alternate chip-pulse;
+}
+
+/* conflict fallout: the action lost its input, amber until rebound */
+.keychip.unbound {
+    color: #F5B356;
+    border-color: #B97E2F;
+    background-color: #b97e2f14;
+}
+
+/* non-remappable rows: visible so the full scheme reads, but inert */
+.bind-row.fixed .bind-action {
+    color: #4C7A94;
+}
+
+.bind-row.fixed .keychip {
+    color: #6FA3BF;
+    border-color: #006494;
+    background-color: #003554;
+    cursor: default;
+    tab-index: none;
+    nav: none;
+}
+
+.fixed-tag {
+    font-family: "IBM Plex Mono";
+    font-size: 10dp;
+    letter-spacing: 1dp;
+    text-transform: uppercase;
+    color: #4C7A94;
+    margin-left: 10dp;
+}
+
+.hint.warn {
+    color: #F5B356;
+}
+
+/* gamepad device picker, in the file-explorer visual vocabulary */
+.device-list {
+    display: block;
+    background-color: #051923;
+    border: 1dp #006494;
+    border-radius: 2dp;
+    margin-bottom: 10dp;
+}
+
+.device-entry {
+    display: block;
+    padding: 7dp 12dp;
+    font-family: "IBM Plex Mono";
+    font-size: 13dp;
+    color: #8AC4E0;
+    cursor: pointer;
+    tab-index: auto;
+    nav: auto;
+}
+
+.device-entry:hover, body.gamepad-nav .device-entry:focus {
+    background-color: #00a6fb17;
+    color: #00A6FB;
+}
+
+.device-entry.selected {
+    background-color: #00a6fb24;
+    color: #00A6FB;
+}
+
 .current-dir {
     display: block;
     padding: 8dp 10dp;

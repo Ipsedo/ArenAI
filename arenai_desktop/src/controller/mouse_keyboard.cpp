@@ -9,9 +9,10 @@
 namespace arenai::desktop {
 
     PlayerMouseKeyboardHandler::PlayerMouseKeyboardHandler(
-        std::shared_ptr<view::AbstractWindow> window, const view::AbstractRenderer &renderer)
-        : window(std::move(window)), renderer(renderer), last_mouse_x(0.), last_mouse_y(0.),
-          current_dir(0.f), current_speed(0.f), current_turret_rotation(0.f),
+        std::shared_ptr<view::AbstractWindow> window, const view::AbstractRenderer &renderer,
+        const KeyboardBindings &bindings)
+        : window(std::move(window)), renderer(renderer), bindings(bindings), last_mouse_x(0.),
+          last_mouse_y(0.), current_dir(0.f), current_speed(0.f), current_turret_rotation(0.f),
           current_canon_rotation(0.f), cursor_captured(true) {
 
         const auto center_x = static_cast<double>(renderer.get_width()) / 2.,
@@ -48,6 +49,20 @@ namespace arenai::desktop {
              .mouse_y = last_mouse_y});
     }
 
+    void PlayerMouseKeyboardHandler::apply_binding(
+        const KeyboardBinding &input, const controller::InputAction action, bool &need_fire) {
+        if (action == controller::InputAction::Press) {
+            if (input == bindings.forward) current_speed = 1.f;
+            else if (input == bindings.backward) current_speed = -1.f;
+            else if (input == bindings.turn_left) current_dir = -1.f;
+            else if (input == bindings.turn_right) current_dir = 1.f;
+            else if (input == bindings.fire) need_fire = true;
+        } else if (action == controller::InputAction::Release) {
+            if (input == bindings.forward || input == bindings.backward) current_speed = 0.f;
+            if (input == bindings.turn_left || input == bindings.turn_right) current_dir = 0.f;
+        }
+    }
+
     std::tuple<bool, controller::user_input>
     PlayerMouseKeyboardHandler::to_output(const PlayerMouseKeyboardInput event) {
 
@@ -57,20 +72,11 @@ namespace arenai::desktop {
         if (event.key) {
             const auto [key, action] = *event.key;
 
-            if (action == controller::InputAction::Press) switch (key) {
-                    case controller::Key::W: current_speed = 1.f; break;
-                    case controller::Key::S: current_speed = -1.f; break;
-                    case controller::Key::A: current_dir = -1.f; break;
-                    case controller::Key::D: current_dir = 1.f; break;
-                    case controller::Key::Space: need_fire = true; break;
-                    case controller::Key::Escape: cursor_captured = false; break;
-                    default: break;
-                }
+            apply_binding(KeyboardBinding(key), action, need_fire);
 
-            if (action == controller::InputAction::Release) {
-                if (key == controller::Key::W || key == controller::Key::S) current_speed = 0.f;
-                if (key == controller::Key::A || key == controller::Key::D) current_dir = 0.f;
-            }
+            // Escape stays hardwired: it hands the cursor back to the OS
+            if (key == controller::Key::Escape && action == controller::InputAction::Press)
+                cursor_captured = false;
         }
 
         // mouse
@@ -99,12 +105,13 @@ namespace arenai::desktop {
 
         // mouse buttons
         if (event.button) {
-            if (const auto [button, action] = *event.button;
-                button == controller::MouseButton::Left
-                && action == controller::InputAction::Press) {
-                need_fire = true;
+            const auto [button, action] = *event.button;
+
+            apply_binding(KeyboardBinding(button), action, need_fire);
+
+            // a left click always recaptures the cursor after an Escape
+            if (button == controller::MouseButton::Left && action == controller::InputAction::Press)
                 cursor_captured = true;
-            }
         }
 
         return {

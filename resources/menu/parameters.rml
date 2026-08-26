@@ -22,9 +22,10 @@
 
         <div class="param-row">
             <span class="param-label">Controls</span>
-            <div class="toggle-group">
+            <div class="toggle-group controls-row">
                 <div class="toggle" data-class-selected="controller=='keyboard'" data-event-click="set_controller('keyboard')"><div class="fill">Mouse + Keyboard</div></div>
                 <div class="toggle" data-class-selected="controller=='gamepad'" data-event-click="set_controller('gamepad')"><div class="fill">Gamepad</div></div>
+                <div class="button configure" data-event-click="open_controls()">Configure</div>
             </div>
         </div>
 

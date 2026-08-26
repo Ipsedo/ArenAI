@@ -24,7 +24,7 @@ namespace arenai::desktop {
             const std::filesystem::path &asset_folder_path,
             const std::shared_ptr<view::AbstractWindowedGraphicBackend> &graphics_backend,
             int nb_tanks, int vision_height, int vision_width, float wanted_frequency,
-            const ControllerKind &controller_kind);
+            const ControllerKind &controller_kind, const ControlBindings &bindings = {});
 
         ~DesktopGameEnvironment() override;
 
@@ -69,6 +69,7 @@ namespace arenai::desktop {
         float wanted_frequency;
 
         ControllerKind controller_kind;
+        ControlBindings bindings;
     };
 
 }// namespace arenai::desktop

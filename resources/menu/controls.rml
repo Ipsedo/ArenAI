@@ -1,0 +1,55 @@
+<rml>
+<head>
+    <title>Controls</title>
+    <link type="text/rcss" href="menu.rcss"/>
+</head>
+<body data-model="settings">
+    <div id="controls-panel" class="panel">
+        <div class="params-header">
+            <div class="back-arrow" data-event-click="controls_back()">←</div>
+            <h1>Controls</h1>
+        </div>
+
+        <div data-if="controller=='keyboard'">
+            <h2>Mouse + Keyboard</h2>
+            <div class="bind-list">
+                <div class="bind-row" data-for="kb_rows">
+                    <span class="bind-action">{{it.label}}</span>
+                    <div class="keychip" data-class-listening="it.listening" data-class-unbound="!it.bound" data-event-click="capture_kb(it_index)">{{it.binding}}</div>
+                </div>
+                <div class="bind-row fixed">
+                    <span class="bind-action">Aim<span class="fixed-tag">fixed</span></span>
+                    <div class="keychip">MOUSE</div>
+                </div>
+                <div class="bind-row fixed">
+                    <span class="bind-action">Pause / Cursor<span class="fixed-tag">fixed</span></span>
+                    <div class="keychip">ESC</div>
+                </div>
+            </div>
+        </div>
+
+        <div data-if="controller=='gamepad'">
+            <h2>Device</h2>
+            <div class="device-list" data-if="selected_gamepad >= 0">
+                <div class="device-entry" data-for="gamepads" data-class-selected="it_index == selected_gamepad" data-event-click="select_pad(it_index)">{{it}}</div>
+            </div>
+            <p class="hint" data-if="selected_gamepad < 0">No gamepad detected — plug one in, it will show up here.</p>
+
+            <h2>Bindings</h2>
+            <div class="bind-list">
+                <div class="bind-row" data-for="gp_rows">
+                    <span class="bind-action">{{it.label}}</span>
+                    <div class="keychip" data-class-listening="it.listening" data-class-unbound="!it.bound" data-event-click="capture_gp(it_index)">{{it.binding}}</div>
+                </div>
+            </div>
+        </div>
+
+        <p class="hint" data-class-warn="bind_warning">{{bind_status}}</p>
+
+        <div class="row-buttons back-row">
+            <div class="button" data-event-click="reset_bindings()">Reset to defaults</div>
+            <div class="button primary" data-event-click="controls_back()"><div class="fill">Back</div></div>
+        </div>
+    </div>
+</body>
+</rml>

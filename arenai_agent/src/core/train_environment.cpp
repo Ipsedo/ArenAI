@@ -106,6 +106,7 @@ namespace arenai::agent {
         const float timeout_penalty =
             1.f - static_cast<float>(nb_steps) / static_cast<float>(max_episode_steps);
 
+        // step over tanks (remaining steps, hits and kills counters + detect and apply timeout + detect death)
         for (int i = 0; i < step_result.size(); i++) {
             remaining_frames[i]--;
 
@@ -120,6 +121,7 @@ namespace arenai::agent {
 
             const auto &[state, reward, is_done] = step_result[i];
 
+            // detect death (kill or suicide)
             if (is_done) {
                 if (!already_done[i] && !is_suicide[i]) nb_kills_episode++;
                 done[i] = true;
@@ -130,41 +132,37 @@ namespace arenai::agent {
                 step_result[i] = {state, reward - timeout_penalty, true};
                 done[i] = true;
             }
-
-            if (done[i] && !already_done[i]) {
-                const float nb_seconds = static_cast<float>(nb_steps) * wanted_frequency;
-                episode_step_mean_nb_metric->add(nb_seconds);
-                episode_step_std_nb_metric->add(nb_seconds);
-            }
         }
 
         // detect winner
-        const auto tanks_not_done =
-            apply_on_enemies<std::vector<std::tuple<int, std::shared_ptr<model::EnemyTank>>>>(
-                [&](const std::vector<std::shared_ptr<model::EnemyTank>> &factories) {
-                    std::vector<std::tuple<int, std::shared_ptr<model::EnemyTank>>> filtered_tanks;
+        std::vector<int> tanks_not_done_indexes;
+        for (int i = 0; i < nb_tanks; i++)
+            if (!done[i]) tanks_not_done_indexes.push_back(i);
 
-                    for (int i = 0; i < factories.size(); i++)
-                        if (!done[i]) filtered_tanks.emplace_back(i, factories[i]);
-                    return filtered_tanks;
-                });
+        if (tanks_not_done_indexes.size() == 1) {
+            const auto winner_index = tanks_not_done_indexes[0];
 
-        if (tanks_not_done.size() == 1) {
-            const auto [i, winner] = tanks_not_done[0];
+            const auto &[state, reward, is_done] = step_result[winner_index];
 
-            const auto &[state, reward, is_done] = step_result[i];
+            const float win_reward = static_cast<float>(nb_kills_per_tanks[winner_index])
+                                     + 0.05f * static_cast<float>(nb_hits_per_tanks[winner_index]);
 
-            const float win_reward = static_cast<float>(nb_kills_per_tanks[i])
-                                     + 0.05f * static_cast<float>(nb_hits_per_tanks[i]);
+            step_result[winner_index] = {state, reward + win_reward, true};
 
-            step_result[i] = {state, reward + win_reward, true};
-
-            done[i] = true;
+            done[winner_index] = true;
         }
 
-        // log reward
+        // log metrics
         for (int i = 0; i < step_result.size(); i++)
-            if (!already_done[i]) reward_metric->add(std::get<1>(step_result[i]));
+            if (!already_done[i]) {
+                reward_metric->add(std::get<1>(step_result[i]));
+
+                if (done[i]) {
+                    const float nb_seconds = static_cast<float>(nb_steps) * wanted_frequency;
+                    episode_step_mean_nb_metric->add(nb_seconds);
+                    episode_step_std_nb_metric->add(nb_seconds);
+                }
+            }
 
         nb_steps++;
 

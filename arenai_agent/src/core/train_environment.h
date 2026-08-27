@@ -67,8 +67,6 @@ namespace arenai::agent {
         int nb_kills_episode;
         int nb_hits_episode;
 
-        bool only_one_tank_alive();
-
         bool are_all_done();
     };
 

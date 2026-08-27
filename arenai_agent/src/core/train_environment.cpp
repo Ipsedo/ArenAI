@@ -54,7 +54,7 @@ namespace arenai::agent {
 
         auto step_result = BaseTanksEnvironment::step(time_delta, actions);
 
-        const auto has_hit = apply_on_factories<std::vector<bool>>([&](const auto &factories) {
+        const auto has_hit = apply_on_enemies<std::vector<bool>>([&](const auto &factories) {
             std::vector<bool> has_hit_result;
             has_hit_result.reserve(nb_tanks);
             for (const auto &factory: factories)
@@ -62,7 +62,7 @@ namespace arenai::agent {
             return has_hit_result;
         });
 
-        const auto has_kill = apply_on_factories<std::vector<bool>>([&](const auto &factories) {
+        const auto has_kill = apply_on_enemies<std::vector<bool>>([&](const auto &factories) {
             std::vector<bool> has_kill_result;
             has_kill_result.reserve(nb_tanks);
             for (const auto &factory: factories)
@@ -70,7 +70,7 @@ namespace arenai::agent {
             return has_kill_result;
         });
 
-        const auto has_fired = apply_on_factories<std::vector<bool>>([&](const auto &factories) {
+        const auto has_fired = apply_on_enemies<std::vector<bool>>([&](const auto &factories) {
             std::vector<bool> has_fired_result;
             has_fired_result.reserve(nb_tanks);
             for (const auto &factory: factories)
@@ -78,7 +78,7 @@ namespace arenai::agent {
             return has_fired_result;
         });
 
-        const auto is_suicide = apply_on_factories<std::vector<bool>>([&](const auto &factories) {
+        const auto is_suicide = apply_on_enemies<std::vector<bool>>([&](const auto &factories) {
             std::vector<bool> is_suicide_result;
             is_suicide_result.reserve(nb_tanks);
             for (const auto &factory: factories) is_suicide_result.push_back(factory->is_suicide());
@@ -138,27 +138,33 @@ namespace arenai::agent {
             }
         }
 
-        // detect winner and log reward
-        for (int i = 0; i < step_result.size(); i++) {
-            if (done[i]) continue;
+        // detect winner
+        const auto tanks_not_done =
+            apply_on_enemies<std::vector<std::tuple<int, std::shared_ptr<model::EnemyTank>>>>(
+                [&](const std::vector<std::shared_ptr<model::EnemyTank>> &factories) {
+                    std::vector<std::tuple<int, std::shared_ptr<model::EnemyTank>>> filtered_tanks;
 
-            // detect winner
-            if (const long nb_not_done = std::ranges::count(done, false); nb_not_done == 1) {
-                const auto &[state, reward, is_done] = step_result[i];
+                    for (int i = 0; i < factories.size(); i++)
+                        if (!done[i]) filtered_tanks.emplace_back(i, factories[i]);
+                    return filtered_tanks;
+                });
 
-                const float done_reward = static_cast<float>(nb_kills_per_tanks[i])
-                                          + 0.05f * static_cast<float>(nb_hits_per_tanks[i]);
+        if (tanks_not_done.size() == 1) {
+            const auto [i, winner] = tanks_not_done[0];
 
-                if (only_one_tank_alive())
-                    step_result[i] = {state, reward + 4.f * done_reward, true}; // winner réel
-                else step_result[i] = {state, reward + 1.f * done_reward, true};// timeout winner
+            const auto &[state, reward, is_done] = step_result[i];
 
-                done[i] = true;
-            }
+            const float win_reward = static_cast<float>(nb_kills_per_tanks[i])
+                                     + 0.05f * static_cast<float>(nb_hits_per_tanks[i]);
 
-            // log reward
-            reward_metric->add(std::get<1>(step_result[i]));
+            step_result[i] = {state, reward + win_reward, true};
+
+            done[i] = true;
         }
+
+        // log reward
+        for (int i = 0; i < step_result.size(); i++)
+            if (!already_done[i]) reward_metric->add(std::get<1>(step_result[i]));
 
         nb_steps++;
 
@@ -193,15 +199,6 @@ namespace arenai::agent {
 
         nb_hits_per_tanks = std::vector(nb_tanks, 0);
         nb_kills_per_tanks = std::vector(nb_tanks, 0);
-    }
-
-    bool TrainTankEnvironment::only_one_tank_alive() {
-        return apply_on_factories<bool>([](const auto &factories) {
-            int nb_alive = 0;
-            for (const auto &factory: factories) nb_alive += static_cast<int>(!factory->is_dead());
-
-            return nb_alive == 1;
-        });
     }
 
     bool TrainTankEnvironment::are_all_done() {

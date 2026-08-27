@@ -96,7 +96,7 @@ namespace arenai::agent {
         torch::Tensor alpha() const;
 
     private:
-        static constexpr float MIN_ALPHA = 1e-8f;
+        static constexpr float MIN_ALPHA = 1e-6f;
         static constexpr float MAX_ALPHA = 1.f;
 
         float k_p, k_i, k_d;

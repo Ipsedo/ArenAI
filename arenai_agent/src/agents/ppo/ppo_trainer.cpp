@@ -37,7 +37,7 @@ namespace arenai::agent {
         constexpr float CONTINUOUS_ALPHA_K_D = 1.f;
 
         constexpr float DISCRETE_ALPHA_K_P = 2e-1f;
-        constexpr float DISCRETE_ALPHA_K_I = 5e-4f;
+        constexpr float DISCRETE_ALPHA_K_I = 1e-2f;
         constexpr float DISCRETE_ALPHA_K_D = 1.f;
 
         constexpr float ALPHA_INITIAL = 1e-3f;

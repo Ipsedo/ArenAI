@@ -167,13 +167,33 @@ TEST_F(PidLagrangianAlphaParameterTest, RecoversFromSaturationWithoutWindup) {
 
     const auto target = torch::full({8, 1}, 0.7f);
 
-    // long stretch above target: alpha bottoms out
+    // long stretch above target: alpha bottoms out on the integral floor (MIN_ALPHA)
     for (int i = 0; i < 5000; i++) pid.update(torch::full({8, 1}, 5.f), target);
-    ASSERT_LT(pid.alpha().item<float>(), 1e-7f);
+    ASSERT_LT(pid.alpha().item<float>(), 1e-6f);
 
     // the integral is bounded, so coming back up takes (log range) / (k_i * error) updates
     // and not the unbounded time an unclamped integral would need
     for (int i = 0; i < 5000; i++) pid.update(torch::full({8, 1}, 0.2f), target);
+    ASSERT_GT(pid.alpha().item<float>(), 1e-3f);
+}
+
+// the recovery time from the floor is (log range) / (k_i * |error|), so a gain has to be
+// scaled to the error range of its own head. The discrete target is the binary entropy of
+// the fire probability -- 0.098 nat -- so its errors sit around 0.03, twenty times smaller
+// than the continuous head's. Locks DISCRETE_ALPHA_K_I against that scale: with the gain it
+// replaces, alpha stayed pinned at the floor for the whole of train_368
+TEST_F(PidLagrangianAlphaParameterTest, DiscreteGainRecoversAtItsOwnErrorScale) {
+    // DISCRETE_ALPHA_K_P / K_I / K_D and ALPHA_INITIAL, as set in ppo_trainer.cpp
+    const PidLagrangianAlphaParameters pid(2e-1f, 1e-2f, 1.f, 1e-3f, 1);
+
+    const auto target = torch::full({8, 1}, 0.098039f);
+
+    // fire head still exploring: entropy above target, alpha bottoms out
+    for (int i = 0; i < 3000; i++) pid.update(torch::full({8, 1}, 0.693f), target);
+    ASSERT_LT(pid.alpha().item<float>(), 1e-6f);
+
+    // entropy now under target: the bonus has to come back within the run, not after it
+    for (int i = 0; i < 25000; i++) pid.update(torch::full({8, 1}, 0.068f), target);
     ASSERT_GT(pid.alpha().item<float>(), 1e-3f);
 }
 

@@ -6,7 +6,7 @@
 <body data-model="settings">
     <div id="controls-panel" class="panel">
         <div class="params-header">
-            <div class="back-arrow" data-event-click="controls_back()">←</div>
+            <div class="back-arrow" autofocus data-event-click="controls_back()">←</div>
             <h1>Controls</h1>
         </div>
 

@@ -147,7 +147,7 @@ namespace arenai::model {
 
         // 3. hits received penalty
         const float hit_received_penalty =
-            -hit_received_cost * static_cast<float>(get_received_hits());
+            -hit_received_cost * static_cast<float>(consume_received_impacts().size());
 
         // 4. total reward
         const float reward = dead_penalty + shells_reward + hit_received_penalty;

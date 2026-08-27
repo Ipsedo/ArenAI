@@ -35,7 +35,7 @@ namespace arenai::model {
         std::vector<std::shared_ptr<controller::Controller>> get_controllers() const override;
         std::map<std::string, std::shared_ptr<Shape>> load_shell_shapes() const override;
         bool is_dead() const override;
-        int get_received_hits() const;
+        std::vector<ImpactInfo> consume_received_impacts() const;
         std::shared_ptr<Item> get_chassis() const override;
         std::shared_ptr<Item> get_canon() const override;
 

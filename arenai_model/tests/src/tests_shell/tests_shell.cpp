@@ -187,7 +187,7 @@ namespace {
         int hits = 0;
         for (const auto &item: tank->get_items())
             if (const auto life_item = dynamic_cast<LifeItem *>(item.get()); life_item)
-                hits += life_item->consume_hits_received();
+                hits += static_cast<int>(life_item->consume_hits_received().size());
         return hits;
     }
 
@@ -285,6 +285,6 @@ TEST_F(ShellTest, SpentShellDealsNoFurtherDamage) {
     shell->on_contact(target.get());
     shell->on_contact(target.get());
 
-    ASSERT_EQ(target_life->consume_hits_received(), 1)
+    ASSERT_EQ(target_life->consume_hits_received().size(), 1u)
         << "a spent shell must not damage anything again";
 }

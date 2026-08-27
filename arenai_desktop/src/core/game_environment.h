@@ -6,6 +6,7 @@
 #define ARENAI_DESKTOP_GAME_ENVIRONMENT_H
 
 #include <optional>
+#include <vector>
 
 #include <arenai_core/environment.h>
 #include <arenai_model/tank.h>
@@ -40,6 +41,7 @@ namespace arenai::desktop {
         int get_score() const;
 
         model::PlayerHits consume_player_hits() const;
+        std::vector<float> consume_damage_screen_angles() const;
 
         static constexpr float AIM_DISTANCE = 100.f;
 

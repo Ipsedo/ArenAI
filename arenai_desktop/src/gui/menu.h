@@ -74,6 +74,10 @@ namespace arenai::desktop::gui {
         virtual PauseAction poll_pause_action() = 0;
 
         virtual void notify_hit(HitKind kind) = 0;
+        // flashes one damage arc rotated toward the impact the player
+        // suffered; angle in radians around the screen center, 0 = ahead,
+        // positive = to the right
+        virtual void notify_damage(float screen_angle) = 0;
         virtual void set_aim_point(std::optional<glm::vec2> normalized) = 0;
         virtual void render_hud_overlay() = 0;
         // input sinks the application routes window events to while paused

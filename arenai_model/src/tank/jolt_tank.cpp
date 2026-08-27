@@ -171,10 +171,13 @@ namespace arenai::model {
         return std::ranges::any_of(life_items, [](const LifeItem *li) { return li->is_dead(); });
     }
 
-    int JoltTank::get_received_hits() const {
-        int hits = 0;
-        for (const auto life_item: life_items) hits += life_item->consume_hits_received();
-        return hits;
+    std::vector<ImpactInfo> JoltTank::consume_received_impacts() const {
+        std::vector<ImpactInfo> impacts;
+        for (const auto life_item: life_items) {
+            auto item_impacts = life_item->consume_hits_received();
+            impacts.insert(impacts.end(), item_impacts.begin(), item_impacts.end());
+        }
+        return impacts;
     }
 
     std::shared_ptr<Item> JoltTank::get_chassis() const { return chassis; }

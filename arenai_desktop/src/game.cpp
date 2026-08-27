@@ -138,6 +138,9 @@ namespace arenai::desktop {
             if (const auto [hits, kills] = env->consume_player_hits(); kills > 0)
                 gui->notify_hit(gui::HitKind::Kill);
             else if (hits > 0) gui->notify_hit(gui::HitKind::Hit);
+
+            for (const float angle: env->consume_damage_screen_angles()) gui->notify_damage(angle);
+
             gui->set_aim_point(env->aim_point_on_screen());
             gui->render_hud_overlay();
 

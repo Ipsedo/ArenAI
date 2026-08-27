@@ -7,6 +7,7 @@
 #include <chrono>
 #include <cmath>
 #include <iostream>
+#include <numbers>
 #include <utility>
 #include <vector>
 
@@ -19,6 +20,7 @@
 #include "./menu.h"
 #include "./rml/adapters.h"
 #include "./rml/cursor_ring.h"
+#include "./rml/damage_arc.h"
 #include "./rml/hit_marker.h"
 #include "./rml/input.h"
 #include "./rml/reticle.h"
@@ -90,6 +92,8 @@ namespace arenai::desktop::gui {
                 Rml::Factory::RegisterDecoratorInstancer("hit-marker", hit_marker_instancer_.get());
                 reticle_instancer_ = std::make_unique<ReticleDecoratorInstancer>();
                 Rml::Factory::RegisterDecoratorInstancer("reticle", reticle_instancer_.get());
+                damage_arc_instancer_ = std::make_unique<DamageArcDecoratorInstancer>();
+                Rml::Factory::RegisterDecoratorInstancer("damage-arc", damage_arc_instancer_.get());
 
                 load_fonts(asset_reader);
 
@@ -123,6 +127,12 @@ namespace arenai::desktop::gui {
                 hit_marker_ = hud_document_->GetElementById("hit-marker");
                 if (reticle_ == nullptr || hit_marker_ == nullptr)
                     throw std::runtime_error("hud.rml misses its #reticle / #hit-marker elements");
+
+                if (Rml::Element *arcs = hud_document_->GetElementById("damage-arcs"))
+                    for (int i = 0; i < arcs->GetNumChildren(); i++)
+                        damage_arcs_.push_back(arcs->GetChild(i));
+                if (damage_arcs_.empty())
+                    throw std::runtime_error("hud.rml misses its #damage-arcs elements");
 
                 hud_document_->Show(Rml::ModalFlag::None, Rml::FocusFlag::None);
 
@@ -262,6 +272,25 @@ namespace arenai::desktop::gui {
                     Rml::Transform::MakeProperty({Rml::Transforms::Scale2D(
                         kill ? KILL_MARKER_END_SCALE : HIT_MARKER_END_SCALE)}),
                     duration, tween, 1, false, 0.f, &start_scale);
+            }
+
+            void notify_damage(const float screen_angle) override {
+                // oldest-slot reuse: a burst of impacts shows as many arcs as
+                // the pool holds, each rotated toward its own shooter
+                Rml::Element *arc = damage_arcs_[next_damage_arc_];
+                next_damage_arc_ = (next_damage_arc_ + 1) % damage_arcs_.size();
+
+                constexpr float rad_to_deg = 180.f / std::numbers::pi_v<float>;
+                arc->SetProperty(
+                    Rml::PropertyId::Transform,
+                    Rml::Transform::MakeProperty(
+                        {Rml::Transforms::Rotate2D(screen_angle * rad_to_deg)}));
+
+                const Rml::Tween tween(Rml::Tween::Quadratic, Rml::Tween::Out);
+                const Rml::Property opaque(1.f, Rml::Unit::NUMBER);
+                arc->Animate(
+                    "opacity", Rml::Property(0.f, Rml::Unit::NUMBER), DAMAGE_ARC_FADE_SECONDS,
+                    tween, 1, false, 0.f, &opaque);
             }
 
             void set_aim_point(const std::optional<glm::vec2> normalized) override {
@@ -859,6 +888,7 @@ namespace arenai::desktop::gui {
             std::unique_ptr<CursorRingDecoratorInstancer> cursor_ring_instancer_;
             std::unique_ptr<HitMarkerDecoratorInstancer> hit_marker_instancer_;
             std::unique_ptr<ReticleDecoratorInstancer> reticle_instancer_;
+            std::unique_ptr<DamageArcDecoratorInstancer> damage_arc_instancer_;
             std::vector<std::string> font_buffers_;
 
             Rml::Context *context_ = nullptr;
@@ -870,6 +900,9 @@ namespace arenai::desktop::gui {
             Rml::ElementDocument *hud_document_ = nullptr;
             Rml::Element *reticle_ = nullptr;
             Rml::Element *hit_marker_ = nullptr;
+            std::vector<Rml::Element *> damage_arcs_;
+            std::size_t next_damage_arc_ = 0;
+            static constexpr float DAMAGE_ARC_FADE_SECONDS = 0.8f;
             static constexpr float HIT_MARKER_FADE_SECONDS = 0.45f;
             static constexpr float HIT_MARKER_END_SCALE = 1.3f;
             static constexpr float KILL_MARKER_FADE_SECONDS = 0.6f;

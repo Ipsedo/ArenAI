@@ -8,6 +8,33 @@ body {
     pointer-events: none;
 }
 
+/* zero-sized anchor fixed at the screen center; each arc child is a
+   centered square the gui-registered damage-arc decorator fills with an
+   annular sector pointing up. Code rotates the square toward the impact
+   (transform origin = box center = screen center) and fades its opacity. */
+#damage-arcs {
+    position: absolute;
+    width: 0;
+    height: 0;
+    left: 50%;
+    top: 50%;
+}
+
+/* Battlefield-style incoming-damage arc: 16dp thick, 60 degrees wide, at
+   100dp from the screen center, in the kill-marker red */
+.damage-arc {
+    position: absolute;
+    width: 200dp;
+    height: 200dp;
+    left: 0;
+    top: 0;
+    margin-left: -100dp;
+    margin-top: -100dp;
+    opacity: 0;
+    color: #FF3B3B;
+    decorator: damage-arc(16dp 60);
+}
+
 /* zero-sized anchor placed by code (left/top in px) at the point where the
    canon axis meets the screen; hidden from code when that point is off
    screen. Its children center themselves on it with negative margins. */

@@ -45,6 +45,10 @@ namespace arenai::model {
 
     PlayerHits JoltPlayerTank::consume_hits() { return std::exchange(pending_hits, PlayerHits{}); }
 
+    std::vector<ImpactInfo> JoltPlayerTank::consume_received_impacts() {
+        return JoltTank::consume_received_impacts();
+    }
+
     void JoltPlayerTank::destroy() { remove_constraints_from_engine(); }
 
 }// namespace arenai::model

@@ -5,6 +5,7 @@
 #include "./game_environment.h"
 
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 
 #include <arenai_agent/file_reader.h>
@@ -87,6 +88,41 @@ namespace arenai::desktop {
 
     model::PlayerHits DesktopGameEnvironment::consume_player_hits() const {
         return player_tank->consume_hits();
+    }
+
+    std::vector<float> DesktopGameEnvironment::consume_damage_screen_angles() const {
+        std::vector<float> angles;
+        if (!player_tank) return angles;
+
+        const auto impacts = player_tank->consume_received_impacts();
+        if (impacts.empty()) return angles;
+
+        constexpr float minimal_length = 1e-4f;
+
+        const auto camera = player_tank->get_camera();
+        const glm::vec3 up = glm::normalize(camera->up());
+        const glm::vec3 view = camera->look() - camera->pos();
+        const glm::vec3 forward_flat = view - up * glm::dot(view, up);
+        if (glm::length(forward_flat) < minimal_length) return angles;
+
+        const glm::vec3 forward = glm::normalize(forward_flat);
+        const glm::vec3 right = glm::normalize(glm::cross(forward, up));
+
+        const glm::vec3 chassis_center =
+            player_tank->get_chassis()->get_model_matrix() * glm::vec4(0.f, 0.f, 0.f, 1.f);
+
+        for (const auto &[position, damages]: impacts) {
+            // the impact lies on the face exposed to the shooter: its offset
+            // from the chassis center points at where the shot came from
+            const glm::vec3 direction = position - chassis_center;
+            const glm::vec3 direction_flat = direction - up * glm::dot(direction, up);
+            if (glm::length(direction_flat) < minimal_length) continue;
+
+            angles.push_back(
+                std::atan2(glm::dot(direction_flat, right), glm::dot(direction_flat, forward)));
+        }
+
+        return angles;
     }
 
     std::shared_ptr<controller::AbstractKeyboardCallback>

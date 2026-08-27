@@ -66,6 +66,7 @@ namespace arenai::model {
         virtual int get_score() const = 0;
 
         virtual PlayerHits consume_hits() = 0;
+        virtual std::vector<ImpactInfo> consume_received_impacts() = 0;
 
         virtual void destroy() = 0;
     };

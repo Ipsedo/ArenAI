@@ -30,7 +30,7 @@ TEST_F(EnemyTankTest, DeadWhenSingleWheelDestroyed) {
     for (const auto &item: items) {
         if (item->get_name().find("wheel") != std::string::npos) {
             if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
-                life->receive_damages(1e6f);
+                life->receive_damages({.position = glm::vec3(0.f), .damages = 1e6f});
                 wheel_killed = true;
                 break;
             }
@@ -57,7 +57,7 @@ TEST_F(EnemyTankTest, OnDeathMultipleCallsDoNotCrash) {
     // kill the tank
     for (const auto &item: shared_tank->get_items()) {
         if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
-            life->receive_damages(1e6f);
+            life->receive_damages({.position = glm::vec3(0.f), .damages = 1e6f});
             break;
         }
     }
@@ -98,7 +98,9 @@ TEST_F(EnemyTankTest, RewardWhenAllEnemiesDeadAndShellFired) {
 
     // kill tank_b before firing
     for (const auto &item: shared_b->get_items()) {
-        if (auto *life = dynamic_cast<LifeItem *>(item.get())) { life->receive_damages(1e6f); }
+        if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
+            life->receive_damages({.position = glm::vec3(0.f), .damages = 1e6f});
+        }
     }
     ASSERT_TRUE(shared_b->is_dead());
 

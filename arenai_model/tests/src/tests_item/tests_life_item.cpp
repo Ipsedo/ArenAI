@@ -9,6 +9,13 @@ using namespace arenai;
 using namespace arenai::model;
 using namespace arenai::utils;
 
+namespace {
+    // damage-only impact: the position is irrelevant to health accounting
+    ImpactInfo impact_of(const float damages) {
+        return {.position = glm::vec3(0.f), .damages = damages};
+    }
+}// namespace
+
 // ========================================================================
 // LifeItem
 // ========================================================================
@@ -22,7 +29,7 @@ TEST_F(LifeItemTest, AliveAtCreation) {
 TEST_F(LifeItemTest, DeadWhenHpReachZero) {
     LifeItem item(10.f);
 
-    item.receive_damages(10.f);
+    item.receive_damages(impact_of(10.f));
 
     ASSERT_TRUE(item.is_dead());
 }
@@ -30,7 +37,7 @@ TEST_F(LifeItemTest, DeadWhenHpReachZero) {
 TEST_F(LifeItemTest, DeadWhenHpExceeded) {
     LifeItem item(5.f);
 
-    item.receive_damages(100.f);
+    item.receive_damages(impact_of(100.f));
 
     ASSERT_TRUE(item.is_dead());
 }
@@ -38,7 +45,7 @@ TEST_F(LifeItemTest, DeadWhenHpExceeded) {
 TEST_F(LifeItemTest, AliveAfterPartialDamages) {
     LifeItem item(100.f);
 
-    item.receive_damages(50.f);
+    item.receive_damages(impact_of(50.f));
 
     ASSERT_FALSE(item.is_dead());
 }
@@ -46,7 +53,7 @@ TEST_F(LifeItemTest, AliveAfterPartialDamages) {
 TEST_F(LifeItemTest, ReceiveDamagesReturnsActualDamage) {
     LifeItem item(10.f);
 
-    const float received = item.receive_damages(7.f);
+    const float received = item.receive_damages(impact_of(7.f));
 
     ASSERT_FLOAT_EQ(received, 7.f);
 }
@@ -54,7 +61,7 @@ TEST_F(LifeItemTest, ReceiveDamagesReturnsActualDamage) {
 TEST_F(LifeItemTest, ReceiveDamagesClampedToRemainingHp) {
     LifeItem item(5.f);
 
-    const float received = item.receive_damages(20.f);
+    const float received = item.receive_damages(impact_of(20.f));
 
     ASSERT_FLOAT_EQ(received, 5.f);
 }
@@ -62,7 +69,7 @@ TEST_F(LifeItemTest, ReceiveDamagesClampedToRemainingHp) {
 TEST_F(LifeItemTest, ReceiveZeroDamages) {
     LifeItem item(100.f);
 
-    const float received = item.receive_damages(0.f);
+    const float received = item.receive_damages(impact_of(0.f));
 
     ASSERT_FLOAT_EQ(received, 0.f);
     ASSERT_FALSE(item.is_dead());
@@ -71,13 +78,13 @@ TEST_F(LifeItemTest, ReceiveZeroDamages) {
 TEST_F(LifeItemTest, MultipleDamagesAccumulate) {
     LifeItem item(10.f);
 
-    item.receive_damages(3.f);
-    item.receive_damages(3.f);
-    item.receive_damages(3.f);
+    item.receive_damages(impact_of(3.f));
+    item.receive_damages(impact_of(3.f));
+    item.receive_damages(impact_of(3.f));
 
     ASSERT_FALSE(item.is_dead());
 
-    item.receive_damages(1.f);
+    item.receive_damages(impact_of(1.f));
 
     ASSERT_TRUE(item.is_dead());
 }
@@ -91,7 +98,7 @@ TEST_F(LifeItemTest, ZeroHpAtCreationIsDead) {
 TEST_F(LifeItemTest, IsAlreadyDeadReturnsFalseFirstTime) {
     LifeItem item(1.f);
 
-    item.receive_damages(1.f);
+    item.receive_damages(impact_of(1.f));
     ASSERT_TRUE(item.is_dead());
 
     ASSERT_FALSE(item.is_already_dead());
@@ -100,7 +107,7 @@ TEST_F(LifeItemTest, IsAlreadyDeadReturnsFalseFirstTime) {
 TEST_F(LifeItemTest, IsAlreadyDeadReturnsTrueSecondTime) {
     LifeItem item(1.f);
 
-    item.receive_damages(1.f);
+    item.receive_damages(impact_of(1.f));
 
     item.is_already_dead();
     ASSERT_TRUE(item.is_already_dead());
@@ -115,10 +122,52 @@ TEST_F(LifeItemTest, IsAlreadyDeadReturnsFalseWhenAlive) {
 TEST_F(LifeItemTest, NoDamagesAfterDeath) {
     LifeItem item(5.f);
 
-    item.receive_damages(5.f);
-    const float received = item.receive_damages(10.f);
+    item.receive_damages(impact_of(5.f));
+    const float received = item.receive_damages(impact_of(10.f));
 
     ASSERT_FLOAT_EQ(received, 0.f);
+}
+
+// ========================================================================
+// LifeItem — impacts received
+// ========================================================================
+
+TEST_F(LifeItemTest, ConsumeHitsReceivedReturnsStoredImpacts) {
+    LifeItem item(10.f);
+
+    item.receive_damages({.position = glm::vec3(1.f, 2.f, 3.f), .damages = 4.f});
+
+    const auto impacts = item.consume_hits_received();
+    ASSERT_EQ(impacts.size(), 1u);
+    ASSERT_FLOAT_EQ(impacts[0].position.x, 1.f);
+    ASSERT_FLOAT_EQ(impacts[0].position.y, 2.f);
+    ASSERT_FLOAT_EQ(impacts[0].position.z, 3.f);
+    ASSERT_FLOAT_EQ(impacts[0].damages, 4.f);
+}
+
+TEST_F(LifeItemTest, ConsumeHitsReceivedResetsImpacts) {
+    LifeItem item(10.f);
+
+    item.receive_damages(impact_of(1.f));
+    item.consume_hits_received();
+
+    ASSERT_TRUE(item.consume_hits_received().empty());
+}
+
+TEST_F(LifeItemTest, AbsorbedlessImpactIsNotRecorded) {
+    LifeItem item(5.f);
+
+    item.receive_damages(impact_of(0.f));
+
+    ASSERT_TRUE(item.consume_hits_received().empty())
+        << "an impact absorbing no health point is not a hit";
+
+    item.receive_damages(impact_of(5.f));
+    item.consume_hits_received();
+    item.receive_damages(impact_of(1.f));
+
+    ASSERT_TRUE(item.consume_hits_received().empty())
+        << "a dead item pays no further hit, whatever keeps colliding with it";
 }
 
 // ========================================================================
@@ -186,7 +235,7 @@ TEST_F(LifeItemTest, NegativeHpAtCreationIsDead) {
 TEST_F(LifeItemTest, NegativeHpReceiveDamagesReturnsZero) {
     LifeItem item(-5.f);
 
-    const float received = item.receive_damages(10.f);
+    const float received = item.receive_damages(impact_of(10.f));
 
     ASSERT_FLOAT_EQ(received, 0.f)
         << "receiving damages on a negative-HP item should return 0 (already dead)";

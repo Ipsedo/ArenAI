@@ -53,7 +53,9 @@ TEST_F(PlayerTankTest, ScoreHigherOnKillThanHit) {
 
     // weaken the enemy chassis so a single shell kills it
     for (const auto &item: enemy->get_items()) {
-        if (auto *life = dynamic_cast<LifeItem *>(item.get())) { life->receive_damages(9.f); }
+        if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
+            life->receive_damages({.position = glm::vec3(0.f), .damages = 9.f});
+        }
     }
 
     constexpr user_input fire_input{
@@ -97,7 +99,7 @@ TEST_F(PlayerTankTest, PlayerTankIsDead) {
 
     for (const auto &item: player->get_items()) {
         if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
-            life->receive_damages(1e6f);
+            life->receive_damages({.position = glm::vec3(0.f), .damages = 1e6f});
             break;
         }
     }

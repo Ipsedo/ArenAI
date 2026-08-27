@@ -63,8 +63,9 @@ namespace arenai::desktop::gui {
     void MenuInputAdapter::on_key(const controller::Key key, const controller::InputAction action) {
         if (action != controller::InputAction::Press) return;
 
-        if (capture_sink_) {
-            capture_sink_(key);
+        // local copy: the sink uninstalls itself from inside the call
+        if (const auto sink = capture_sink_) {
+            sink(key);
             return;
         }
 
@@ -80,9 +81,12 @@ namespace arenai::desktop::gui {
         const controller::MouseButton button, const controller::InputAction action) {
         // presses feed the capture; releases keep flowing so RmlUi never
         // keeps an element stuck :active
-        if (capture_sink_ && action == controller::InputAction::Press) {
-            capture_sink_(button);
-            return;
+        if (action == controller::InputAction::Press) {
+            // local copy: the sink uninstalls itself from inside the call
+            if (const auto sink = capture_sink_) {
+                sink(button);
+                return;
+            }
         }
 
         to_mouse_mode();
@@ -106,8 +110,9 @@ namespace arenai::desktop::gui {
         const controller::GamepadButton button, const controller::InputAction action) {
         if (action != controller::InputAction::Press) return;
 
-        if (capture_sink_) {
-            capture_sink_(button);
+        // local copy: the sink uninstalls itself from inside the call
+        if (const auto sink = capture_sink_) {
+            sink(button);
             return;
         }
 
@@ -125,12 +130,16 @@ namespace arenai::desktop::gui {
 
     void MenuInputAdapter::on_joystick(
         const double x, const double y, const controller::GamepadJoystick stick) {
-        if (capture_sink_) {
+        // invoked through a local copy: the sink completes the capture by
+        // uninstalling itself (set_capture_sink(nullptr)) from inside the
+        // call, which would destroy the member mid-execution — and when the
+        // X half binds the slot, the Y half must be dropped, not handed to
+        // the emptied std::function
+        if (const auto sink = capture_sink_) {
             const bool left = stick == controller::GamepadJoystick::Left;
-            capture_sink_(
-                std::make_pair(left ? GamepadAxis::LeftStickX : GamepadAxis::RightStickX, x));
-            capture_sink_(
-                std::make_pair(left ? GamepadAxis::LeftStickY : GamepadAxis::RightStickY, y));
+            sink(std::make_pair(left ? GamepadAxis::LeftStickX : GamepadAxis::RightStickX, x));
+            if (capture_sink_)
+                sink(std::make_pair(left ? GamepadAxis::LeftStickY : GamepadAxis::RightStickY, y));
             return;
         }
 
@@ -146,8 +155,10 @@ namespace arenai::desktop::gui {
     }
 
     void MenuInputAdapter::on_trigger(const double z, const controller::GamepadTrigger trigger) {
-        if (!capture_sink_) return;
-        capture_sink_(std::make_pair(
+        // local copy: the sink uninstalls itself from inside the call
+        const auto sink = capture_sink_;
+        if (!sink) return;
+        sink(std::make_pair(
             trigger == controller::GamepadTrigger::Left ? GamepadAxis::LeftTrigger
                                                         : GamepadAxis::RightTrigger,
             z));

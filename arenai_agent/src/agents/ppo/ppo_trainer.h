@@ -28,14 +28,15 @@ namespace arenai::agent {
         PpoTrainer(
             const std::shared_ptr<Actor> &actor,
             const std::shared_ptr<PpoRolloutBuffer> &rollout_buffer, int vision_height,
-            int vision_width, int nb_sensors, int nb_continuous_actions, float actor_learning_rate,
-            float critic_learning_rate, int hidden_size_sensors,
+            int vision_width, int nb_sensors, int nb_continuous_actions, int nb_discrete_action,
+            float actor_learning_rate, float critic_learning_rate, int hidden_size_sensors,
             const std::vector<int> &critic_hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
             float gamma, float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
             float target_entropy_init, float target_entropy_final, int target_entropy_warmup_steps,
-            float target_fire_proba, int epochs, int rollout_size, int minibatch_size);
+            float discrete_entropy_factor_init, float discrete_entropy_factor_final, int epochs,
+            int rollout_size, int minibatch_size);
 
         void step() override;
 
@@ -46,6 +47,8 @@ namespace arenai::agent {
         int count_parameters() override;
 
     private:
+        float discrete_maximal_entropy;
+
         std::shared_ptr<Actor> actor;
         std::shared_ptr<PpoRolloutBuffer> rollout_buffer;
 

@@ -102,10 +102,6 @@ namespace arenai::agent {
                 static_cast<float>(nb_hits) / (static_cast<float>(nb_acting) * wanted_frequency));
         }
 
-        // natural ending (timeout, death)
-        const float timeout_penalty =
-            1.f - static_cast<float>(nb_steps) / static_cast<float>(max_episode_steps);
-
         // step over tanks (remaining steps, hits and kills counters + detect and apply timeout + detect death)
         for (int i = 0; i < step_result.size(); i++) {
             remaining_frames[i]--;
@@ -129,6 +125,8 @@ namespace arenai::agent {
 
             // starving out (no hit for too long) is a real death: penalized and terminal
             if (!done[i] && remaining_frames[i] <= 0) {
+                constexpr float timeout_penalty = 1.f;
+
                 step_result[i] = {state, reward - timeout_penalty, true};
                 done[i] = true;
             }
@@ -144,9 +142,7 @@ namespace arenai::agent {
 
             const auto &[state, reward, is_done] = step_result[winner_index];
 
-            const float win_reward = static_cast<float>(nb_kills_per_tanks[winner_index])
-                                     + 0.05f * static_cast<float>(nb_hits_per_tanks[winner_index]);
-
+            constexpr float win_reward = 2.f;
             step_result[winner_index] = {state, reward + win_reward, true};
 
             done[winner_index] = true;

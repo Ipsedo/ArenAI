@@ -78,8 +78,8 @@ namespace arenai::agent {
               std::make_unique<torch::optim::Adam>(this->actor->parameters(), actor_learning_rate)),
           critic_optim(
               std::make_unique<torch::optim::Adam>(critic->parameters(), critic_learning_rate)),
-          actor_mean_loss_metric(std::make_shared<MeanMetric>("π_μ", metric_window_size)),
-          critic_mean_loss_metric(std::make_shared<MeanMetric>("v_μ", metric_window_size)),
+          actor_mean_loss_metric(std::make_shared<MeanMetric>("π", metric_window_size)),
+          critic_mean_loss_metric(std::make_shared<MeanMetric>("v", metric_window_size)),
           explained_variance_metric(std::make_shared<MeanMetric>("ev", metric_window_size)),
           continuous_entropy_metric(std::make_shared<MeanMetric>("Hc", metric_window_size)),
           discrete_entropy_metric(std::make_shared<MeanMetric>("Hd", metric_window_size)),

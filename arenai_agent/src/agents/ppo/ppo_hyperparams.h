@@ -30,7 +30,7 @@ namespace arenai::agent {
         float clip_epsilon = 0.2f;
         float target_kl = 0.05f;
         float grad_norm_max = 0.5f;
-        float continuous_target_entropy_init = 0.25f;
+        float continuous_target_entropy_init = 0.5f;
         float continuous_target_entropy_final = -1.f;
         int target_entropy_warmup_steps = 7500000;
         float discrete_entropy_factor_init = 0.98f;

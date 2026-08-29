@@ -88,6 +88,7 @@ namespace arenai::agent {
           discrete_target_entropy_metric(std::make_shared<MeanMetric>("Hd_t", metric_window_size)),
           continuous_alpha_metric(std::make_shared<MeanMetric>("α_c", metric_window_size, 2, true)),
           discrete_alpha_metric(std::make_shared<MeanMetric>("α_d", metric_window_size, 2, true)),
+          mu_abs_metric(std::make_shared<MeanMetric>("|μ|", metric_window_size)),
           sigma_metric(std::make_shared<MeanMetric>("σ", metric_window_size)),
           clip_fraction_metric(std::make_shared<MeanMetric>("clip", metric_window_size)),
           kl_metric(std::make_shared<MeanMetric>("kl", metric_window_size, 2, true)),
@@ -229,6 +230,7 @@ namespace arenai::agent {
         // metrics
         continuous_entropy_metric->add(continuous_entropy.mean().item<float>());
         continuous_target_entropy_metric->add(targets.continuous.mean().item<float>());
+        mu_abs_metric->add(mu.abs().mean().item<float>());
         sigma_metric->add(sigma.mean().item<float>());
         continuous_alpha_metric->add(continuous_alpha->alpha().mean().item<float>());
 
@@ -329,6 +331,7 @@ namespace arenai::agent {
             continuous_target_entropy_metric,
             continuous_entropy_metric,
             continuous_alpha_metric,
+            mu_abs_metric,
             sigma_metric,
             discrete_target_entropy_metric,
             discrete_entropy_metric,

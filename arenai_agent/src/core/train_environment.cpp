@@ -36,6 +36,8 @@ namespace arenai::agent {
           max_episode_steps(max_episode_steps), nb_hits_per_tanks(nb_tanks, 0),
           nb_kills_per_tanks(nb_tanks, 0), reward_metric(std::make_shared<MeanMetric>(
                                                "r", 4 * nb_tanks * max_episode_steps, 1, true)),
+          reward_aim_metric(
+              std::make_shared<MeanMetric>("r_aim", 4 * nb_tanks * max_episode_steps, 1, true)),
           reward_hit_metric(
               std::make_shared<MeanMetric>("r_hit", 4 * nb_tanks * max_episode_steps, 1, true)),
           reward_received_metric(
@@ -163,6 +165,7 @@ namespace arenai::agent {
 
                 const auto &detail = reward_details[i];
 
+                reward_aim_metric->add(detail.aim);
                 reward_hit_metric->add(detail.hit);
                 reward_received_metric->add(detail.received);
 
@@ -221,15 +224,11 @@ namespace arenai::agent {
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> TrainTankEnvironment::get_metrics() const {
-        return {
-            reward_metric,
-            reward_hit_metric,
-            reward_received_metric,
-            miss_distance_metric,
-            episode_step_mean_nb_metric,
-            fire_metric,
-            hit_metric,
-            kill_metric};
+        return {reward_metric,        reward_aim_metric,
+                reward_hit_metric,    reward_received_metric,
+                miss_distance_metric, episode_step_mean_nb_metric,
+                fire_metric,          hit_metric,
+                kill_metric};
     }
 
 }// namespace arenai::agent

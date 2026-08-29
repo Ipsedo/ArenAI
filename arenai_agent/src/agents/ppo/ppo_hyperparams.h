@@ -22,7 +22,9 @@ namespace arenai::agent {
         std::vector<std::tuple<int, int>> vision_channels = {{3, 8},   {8, 16},  {16, 24},
                                                              {24, 32}, {32, 48}, {48, 64}};
         std::vector<int> group_norm_nums = {1, 2, 3, 4, 6, 8};
-        float initial_sigma = 0.3f;
+        // sigma such that truncated_normal_entropy(mu = 0, sigma) over [-1, 1] equals
+        // continuous_target_entropy_init: the dual starts at its equilibrium, alpha ~ 0
+        float initial_sigma = 0.242f;
         float initial_fire_proba = 0.5f;
         int metric_window_size = 256;
         float gamma = 0.997f;

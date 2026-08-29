@@ -73,7 +73,7 @@ namespace arenai::model {
         const float ratio = miss_distance_scale * miss_distance
                             / std::pow(ideal_trajectory_distance, miss_distance_exponent);
 
-        return std::exp(-0.5f * std::pow(ratio, 2.f));
+        return 1.f / (1.f + std::pow(ratio, 2.f));
     }
 
     void JoltEnemyTank::update_closest_approach(

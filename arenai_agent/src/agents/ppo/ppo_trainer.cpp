@@ -47,15 +47,16 @@ namespace arenai::agent {
         const std::shared_ptr<Actor> &actor,
         const std::shared_ptr<PpoRolloutBuffer> &rollout_buffer, const int vision_height,
         const int vision_width, const int nb_sensors, const int nb_continuous_actions,
-        int nb_discrete_action, const float actor_learning_rate, const float critic_learning_rate,
-        const int hidden_size_sensors, const std::vector<int> &critic_hidden_sizes,
+        const int nb_discrete_action, const float actor_learning_rate,
+        const float critic_learning_rate, const int hidden_size_sensors,
+        const std::vector<int> &critic_hidden_sizes,
         const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, const torch::Device device,
         const int metric_window_size, const float gamma, const float gae_lambda,
         const float clip_epsilon, const float target_kl, const float grad_norm_max,
-        const float target_entropy_init, const float target_entropy_final,
-        const int target_entropy_warmup_steps, const float discrete_entropy_factor_init,
-        const float discrete_entropy_factor_final, const int epochs, const int rollout_size,
+        const float continuous_target_entropy_init, const float continuous_target_entropy_final,
+        const float discrete_entropy_factor_init, const float discrete_entropy_factor_final,
+        const int target_entropy_warmup_steps, const int epochs, const int rollout_size,
         const int minibatch_size)
         : discrete_maximal_entropy(multinomial_maximum_entropy(nb_discrete_action)), actor(actor),
           rollout_buffer(rollout_buffer),
@@ -65,7 +66,8 @@ namespace arenai::agent {
           discrete_alpha(std::make_shared<PidLagrangianAlphaParameters>(
               DISCRETE_ALPHA_K_P, DISCRETE_ALPHA_K_I, DISCRETE_ALPHA_K_D, ALPHA_INITIAL, 1)),
           continuous_target_entropy(std::make_unique<CosineAnnealingTargetEntropy>(
-              target_entropy_init, target_entropy_final, target_entropy_warmup_steps)),
+              continuous_target_entropy_init, continuous_target_entropy_final,
+              target_entropy_warmup_steps)),
           discrete_target_entropy(std::make_unique<CosineAnnealingTargetEntropy>(
               discrete_entropy_factor_init * discrete_maximal_entropy,
               discrete_entropy_factor_final * discrete_maximal_entropy,

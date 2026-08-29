@@ -94,7 +94,7 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
         actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_sensors,
         cfg.nb_continuous_actions, cfg.nb_discrete_actions, 1e-3f, 1e-3f, 8, std::vector{16},
         vision_channels, group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.25f, -1.f,
-        3000000, 0.98f, 0.3f, 2, ROLLOUT_SIZE, MINIBATCH_SIZE);
+        0.98f, 0.3f, 3000000, 2, ROLLOUT_SIZE, MINIBATCH_SIZE);
 
     std::vector<torch::Tensor> initial_parameters;
     for (const auto &parameter: actor->parameters())

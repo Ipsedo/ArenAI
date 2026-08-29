@@ -32,10 +32,11 @@ namespace arenai::agent {
         const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, const torch::Device device,
         const int metric_window_size, const float tau, const float gamma, const int train_every,
-        const int epochs, const int batch_size, const float target_entropy_init,
-        const float target_entropy_final, const int target_entropy_warmup_step,
-        const float target_fire_proba)
-        : actor(std::move(actor)), replay_buffer(std::move(replay_buffer)),
+        const int epochs, const int batch_size, const float continuous_target_entropy_init,
+        const float continuous_target_entropy_final, const float discrete_target_factor_init,
+        const float discrete_target_factor_final, const int target_entropy_warmup_step)
+        : maximal_discrete_entropy(multinomial_maximum_entropy(nb_discrete_actions)),
+          actor(std::move(actor)), replay_buffer(std::move(replay_buffer)),
           critic_1(std::make_shared<QFunction>(
               vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_actions,
               hidden_size_sensors, hidden_size_actions, critic_hidden_sizes, vision_channels,
@@ -55,9 +56,11 @@ namespace arenai::agent {
           alpha_continuous(std::make_shared<AlphaParameters>(5e-2f, nb_continuous_actions)),
           alpha_discrete(std::make_shared<AlphaParameters>(5e-2f, 1)),
           continuous_target_entropy(std::make_unique<CosineAnnealingTargetEntropy>(
-              target_entropy_init, target_entropy_final, target_entropy_warmup_step)),
-          discrete_target_entropy(std::make_unique<ConstantTargetEntropy>(
-              multinomial_target_entropy(target_fire_proba))),
+              continuous_target_entropy_init, continuous_target_entropy_final,
+              target_entropy_warmup_step)),
+          discrete_target_entropy(std::make_unique<CosineAnnealingTargetEntropy>(
+              discrete_target_factor_init * maximal_discrete_entropy,
+              discrete_target_factor_final * maximal_discrete_entropy, target_entropy_warmup_step)),
           actor_optim(std::make_unique<torch::optim::Adam>(
               this->actor->parameters(), torch::optim::AdamOptions(actor_learning_rate))),
           critic_1_optim(std::make_unique<torch::optim::Adam>(

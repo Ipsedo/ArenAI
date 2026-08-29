@@ -24,8 +24,9 @@ namespace arenai::agent {
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
             float tau, float gamma, int train_every, int epochs, int batch_size,
-            float target_entropy_init, float target_entropy_final, int target_entropy_warmup_step,
-            float target_fire_proba);
+            float continuous_target_entropy_init, float continuous_target_entropy_final,
+            float discrete_target_factor_init, float discrete_target_factor_final,
+            int target_entropy_warmup_step);
 
         void step() override;
 
@@ -37,6 +38,8 @@ namespace arenai::agent {
 
     private:
         static constexpr double GRAD_NORM_MAX = 1.0;
+
+        float maximal_discrete_entropy;
 
         std::shared_ptr<Actor> actor;
         std::shared_ptr<SacReplayBuffer> replay_buffer;

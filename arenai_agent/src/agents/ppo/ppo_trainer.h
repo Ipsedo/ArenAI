@@ -34,9 +34,9 @@ namespace arenai::agent {
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
             float gamma, float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
-            float target_entropy_init, float target_entropy_final, int target_entropy_warmup_steps,
-            float discrete_entropy_factor_init, float discrete_entropy_factor_final, int epochs,
-            int rollout_size, int minibatch_size);
+            float continuous_target_entropy_init, float continuous_target_entropy_final,
+            float discrete_entropy_factor_init, float discrete_entropy_factor_final,
+            int target_entropy_warmup_steps, int epochs, int rollout_size, int minibatch_size);
 
         void step() override;
 

@@ -56,6 +56,16 @@ namespace arenai::agent {
 
         std::shared_ptr<AbstractMetric> reward_metric;
 
+        // reward_metric split by term: r = r_aim + r_hit + r_rcv + r_end
+        std::shared_ptr<AbstractMetric> reward_aim_metric;
+        std::shared_ptr<AbstractMetric> reward_hit_metric;
+        std::shared_ptr<AbstractMetric> reward_received_metric;
+        std::shared_ptr<AbstractMetric> reward_terminal_metric;
+
+        // aim quality of the shells that landed, one sample per step that resolved a shell
+        std::shared_ptr<AbstractMetric> aim_quality_metric;
+        std::shared_ptr<AbstractMetric> miss_distance_metric;
+
         std::shared_ptr<AbstractMetric> episode_step_mean_nb_metric;
         std::shared_ptr<AbstractMetric> episode_step_std_nb_metric;
 

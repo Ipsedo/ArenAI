@@ -54,7 +54,7 @@ namespace arenai::model {
             [this](const std::shared_ptr<ShellItem> &shell) { on_shell_fired(shell); },
             [this] { return nb_shells > 0; }),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-          curr_frame_upside_down(0), miss_distance_scale(1.5f), miss_distance_exponent(1.f / 2.f),
+          curr_frame_upside_down(0), miss_distance_scale(3.f), miss_distance_exponent(1.f / 2.f),
           hit_reward_scale(0.1f), hit_received_cost(0.15f), initial_nb_shells(10),
           nb_shells(initial_nb_shells), max_shells(30), shells_recharged_per_hit(5),
           nb_frames_per_shell_regen(static_cast<int>(1.5f / wanted_frame_frequency)),
@@ -124,11 +124,12 @@ namespace arenai::model {
     }
 
     float JoltEnemyTank::get_reward() const {
+        RewardDetail detail;
+
         // 1. dead / suicide penalty
-        const auto dead_penalty = is_dead() ? -1.f : 0.f;
+        detail.death = is_dead() ? -1.f : 0.f;
 
         // 2. fired shells reward
-        float shells_reward = 0.f;
         for (int i = static_cast<int>(tracked_shells.size()) - 1; i >= 0; i--) {
             auto &tracked = tracked_shells[i];
 
@@ -137,23 +138,31 @@ namespace arenai::model {
             if (const bool in_flight = shell && !shell->need_destroy(); in_flight) continue;
 
             if (tracked.has_sample) {
-                shells_reward +=
-                    hit_reward_scale
-                    * compute_hit_reward(
-                        tracked.fire_pos, tracked.enemy_pos_at_t, tracked.shell_pos_at_t);
-                if (tracked.has_hit) shells_reward += tracked.has_killed ? 2.f : 0.2f;
+                const float aim_quality = compute_hit_reward(
+                    tracked.fire_pos, tracked.enemy_pos_at_t, tracked.shell_pos_at_t);
+
+                detail.aim += hit_reward_scale * aim_quality;
+
+                detail.nb_landed_shells++;
+                detail.sum_aim_quality += aim_quality;
+                detail.sum_miss_distance +=
+                    glm::length(tracked.shell_pos_at_t - tracked.enemy_pos_at_t);
+
+                if (tracked.has_hit) detail.hit += tracked.has_killed ? 2.f : 0.2f;
             }
         }
 
         // 3. hits received penalty
-        const float hit_received_penalty =
+        detail.received =
             -hit_received_cost * static_cast<float>(consume_received_impacts().size());
 
-        // 4. total reward
-        const float reward = dead_penalty + shells_reward + hit_received_penalty;
+        // 4. total reward, kept split for the metrics
+        last_reward_detail = detail;
 
-        return reward;
+        return detail.aim + detail.hit + detail.received + detail.death;
     }
+
+    RewardDetail JoltEnemyTank::get_last_reward_detail() const { return last_reward_detail; }
 
     void JoltEnemyTank::tick(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
         // 1. flipped detection

@@ -16,6 +16,7 @@
 #include "../../networks_utils/target_update.h"
 #include "../../networks_utils/torch_loader.h"
 #include "../../networks_utils/torch_saver.h"
+#include "../../utils/config_format.h"
 
 using namespace arenai;
 using namespace arenai::agent;
@@ -92,6 +93,35 @@ namespace arenai::agent {
         to(device);
 
         set_train(false);
+
+        // what this trainer was built with, for the run's config dump
+        config = {
+            {"device", device.str()},
+            {"vision_height", format_config_value(vision_height)},
+            {"vision_width", format_config_value(vision_width)},
+            {"nb_sensors", format_config_value(nb_sensors)},
+            {"nb_continuous_actions", format_config_value(nb_continuous_actions)},
+            {"nb_discrete_actions", format_config_value(nb_discrete_actions)},
+            {"actor_learning_rate", format_config_value(actor_learning_rate)},
+            {"critic_learning_rate", format_config_value(critic_learning_rate)},
+            {"alpha_learning_rate", format_config_value(alpha_learning_rate)},
+            {"hidden_size_sensors", format_config_value(hidden_size_sensors)},
+            {"hidden_size_actions", format_config_value(hidden_size_actions)},
+            {"critic_hidden_sizes", format_config_value(critic_hidden_sizes)},
+            {"vision_channels", format_config_value(vision_channels)},
+            {"group_norm_nums", format_config_value(group_norm_nums)},
+            {"metric_window_size", format_config_value(metric_window_size)},
+            {"tau", format_config_value(tau)},
+            {"gamma", format_config_value(gamma)},
+            {"train_every", format_config_value(train_every)},
+            {"epochs", format_config_value(epochs)},
+            {"batch_size", format_config_value(batch_size)},
+            {"continuous_target_entropy_init", format_config_value(continuous_target_entropy_init)},
+            {"continuous_target_entropy_final",
+             format_config_value(continuous_target_entropy_final)},
+            {"discrete_target_factor_init", format_config_value(discrete_target_factor_init)},
+            {"discrete_target_factor_final", format_config_value(discrete_target_factor_final)},
+            {"target_entropy_warmup_step", format_config_value(target_entropy_warmup_step)}};
     }
 
     void SacTrainer::step() {
@@ -243,6 +273,8 @@ namespace arenai::agent {
 
         set_train(false);
     }
+
+    std::map<std::string, std::string> SacTrainer::get_config() const { return config; }
 
     std::vector<std::shared_ptr<AbstractMetric>> SacTrainer::get_metrics() {
         return {

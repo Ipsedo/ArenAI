@@ -57,6 +57,8 @@ namespace arenai::model {
 
         void tick(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
 
+        RewardDetail get_last_reward_detail() const override;
+
         std::vector<float> get_proprioception() const override;
 
         // Tank methods resolved via JoltTank
@@ -91,6 +93,10 @@ namespace arenai::model {
         bool has_touch;
         bool has_kill;
         bool has_fired;
+
+        // written by get_reward(), which stays const: the split is a read of the same
+        // computation, not a second one
+        mutable RewardDetail last_reward_detail;
         std::vector<TrackedShell> tracked_shells;
 
         void on_shell_fired(const std::shared_ptr<ShellItem> &shell);

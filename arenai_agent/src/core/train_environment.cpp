@@ -37,6 +37,16 @@ namespace arenai::agent {
           max_episode_steps(max_episode_steps), nb_hits_per_tanks(nb_tanks, 0),
           nb_kills_per_tanks(nb_tanks, 0), reward_metric(std::make_shared<MeanMetric>(
                                                "r", 4 * nb_tanks * max_episode_steps, 3, true)),
+          reward_aim_metric(
+              std::make_shared<MeanMetric>("r_aim", 4 * nb_tanks * max_episode_steps, 3, true)),
+          reward_hit_metric(
+              std::make_shared<MeanMetric>("r_hit", 4 * nb_tanks * max_episode_steps, 3, true)),
+          reward_received_metric(
+              std::make_shared<MeanMetric>("r_rcv", 4 * nb_tanks * max_episode_steps, 3, true)),
+          reward_terminal_metric(
+              std::make_shared<MeanMetric>("r_end", 4 * nb_tanks * max_episode_steps, 3, true)),
+          aim_quality_metric(std::make_shared<MeanMetric>("g", 1024 * nb_tanks, 3)),
+          miss_distance_metric(std::make_shared<MeanMetric>("miss", 1024 * nb_tanks, 1)),
           episode_step_mean_nb_metric(std::make_shared<MeanMetric>("s_μ", 32, 1)),
           episode_step_std_nb_metric(std::make_shared<StdMetric>("s_σ", 32)),
           fire_metric(std::make_shared<MeanMetric>("fire", 256, 2)),
@@ -78,6 +88,15 @@ namespace arenai::agent {
             return has_fired_result;
         });
 
+        const auto reward_details =
+            apply_on_enemies<std::vector<model::RewardDetail>>([&](const auto &factories) {
+                std::vector<model::RewardDetail> details;
+                details.reserve(nb_tanks);
+                for (const auto &factory: factories)
+                    details.push_back(factory->get_last_reward_detail());
+                return details;
+            });
+
         const auto is_suicide = apply_on_enemies<std::vector<bool>>([&](const auto &factories) {
             std::vector<bool> is_suicide_result;
             is_suicide_result.reserve(nb_tanks);
@@ -101,6 +120,9 @@ namespace arenai::agent {
             hit_metric->add(
                 static_cast<float>(nb_hits) / (static_cast<float>(nb_acting) * wanted_frequency));
         }
+
+        // reward terms this environment adds on top of the tank's own, for the r_end metric
+        std::vector<float> terminal_rewards(nb_tanks, 0.f);
 
         // step over tanks (remaining steps, hits and kills counters + detect and apply timeout + detect death)
         for (int i = 0; i < step_result.size(); i++) {
@@ -128,6 +150,7 @@ namespace arenai::agent {
                 constexpr float timeout_penalty = 1.f;
 
                 step_result[i] = {state, reward - timeout_penalty, true};
+                terminal_rewards[i] -= timeout_penalty;
                 done[i] = true;
             }
         }
@@ -144,6 +167,7 @@ namespace arenai::agent {
 
             constexpr float win_reward = 2.f;
             step_result[winner_index] = {state, reward + win_reward, true};
+            terminal_rewards[winner_index] += win_reward;
 
             done[winner_index] = true;
         }
@@ -152,6 +176,21 @@ namespace arenai::agent {
         for (int i = 0; i < step_result.size(); i++)
             if (!already_done[i]) {
                 reward_metric->add(std::get<1>(step_result[i]));
+
+                const auto &detail = reward_details[i];
+
+                reward_aim_metric->add(detail.aim);
+                reward_hit_metric->add(detail.hit);
+                reward_received_metric->add(detail.received);
+                reward_terminal_metric->add(detail.death + terminal_rewards[i]);
+
+                // undefined on a step where no shell landed: averaging a zero in would
+                // measure the firing rate, not the aim
+                if (detail.nb_landed_shells > 0) {
+                    const auto nb_landed = static_cast<float>(detail.nb_landed_shells);
+                    aim_quality_metric->add(detail.sum_aim_quality / nb_landed);
+                    miss_distance_metric->add(detail.sum_miss_distance / nb_landed);
+                }
 
                 if (done[i]) {
                     const float nb_seconds = static_cast<float>(nb_steps) * wanted_frequency;
@@ -214,13 +253,20 @@ namespace arenai::agent {
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> TrainTankEnvironment::get_metrics() const {
-        return {reward_metric,
-                episode_step_mean_nb_metric,
-                episode_step_std_nb_metric,
-                fire_metric,
-                hit_metric,
-                kill_metric,
-                hits_per_kill_metric};
+        return {
+            reward_metric,
+            reward_aim_metric,
+            reward_hit_metric,
+            reward_received_metric,
+            reward_terminal_metric,
+            aim_quality_metric,
+            miss_distance_metric,
+            episode_step_mean_nb_metric,
+            episode_step_std_nb_metric,
+            fire_metric,
+            hit_metric,
+            kill_metric,
+            hits_per_kill_metric};
     }
 
 }// namespace arenai::agent

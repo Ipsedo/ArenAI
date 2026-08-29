@@ -39,9 +39,22 @@ namespace arenai::model {
         virtual std::shared_ptr<Item> get_canon() const = 0;
     };
 
+    struct RewardDetail {
+        float aim = 0.f;
+        float hit = 0.f;
+        float received = 0.f;
+        float death = 0.f;
+
+        int nb_landed_shells = 0;
+        float sum_aim_quality = 0.f;
+        float sum_miss_distance = 0.f;
+    };
+
     class EnemyTank : virtual public Tank {
     public:
         virtual float get_reward() const = 0;
+
+        virtual RewardDetail get_last_reward_detail() const = 0;
         virtual std::vector<float> get_proprioception() const = 0;
 
         virtual void tick(const std::vector<std::shared_ptr<EnemyTank>> &tanks) = 0;

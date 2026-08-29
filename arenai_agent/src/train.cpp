@@ -4,10 +4,14 @@
 
 #include "./train.h"
 
+#include <fstream>
 #include <future>
+#include <map>
+#include <string>
 
 #include <indicators/cursor_control.hpp>
 #include <indicators/progress_bar.hpp>
+#include <nlohmann/json.hpp>
 
 #include <arenai_model/constants.h>
 
@@ -20,6 +24,40 @@ using namespace arenai;
 using namespace arenai::agent;
 
 namespace arenai::agent {
+
+    namespace {
+        // every resolved option of the run, written next to the metrics: a run must stay
+        // identifiable once its command line is forgotten
+        void save_run_config(
+            const EnvironmentOptions &environment_options, const TrainOptions &train_options,
+            const std::map<std::string, std::string> &agent_config) {
+
+            const nlohmann::json config = {
+                {"train",
+                 {{"output_folder", train_options.output_folder.string()},
+                  {"resources_folder", train_options.resources_folder.string()},
+                  {"max_episode_steps", train_options.max_episode_steps},
+                  {"nb_episodes", train_options.nb_episodes},
+                  {"save_every", train_options.save_every},
+                  {"cuda", train_options.cuda}}},
+                {"environment",
+                 {{"wanted_frequency", environment_options.wanted_frequency},
+                  {"nb_tanks", environment_options.nb_tanks},
+                  {"vision_height", environment_options.vision_height},
+                  {"vision_width", environment_options.vision_width},
+                  {"initial_spawn_width", environment_options.initial_spawn_width},
+                  {"initial_spawn_height", environment_options.initial_spawn_height},
+                  {"final_spawn_width", environment_options.final_spawn_width},
+                  {"final_spawn_height", environment_options.final_spawn_height},
+                  {"vision_num_threads", environment_options.num_threads}}},
+                {"agent", agent_config}};
+
+            std::filesystem::create_directories(train_options.output_folder);
+
+            std::ofstream stream(train_options.output_folder / "config.json");
+            stream << config.dump(4) << std::endl;
+        }
+    }// namespace
 
     void train_main(
         const EnvironmentOptions &environment_options, const TrainOptions &train_options,
@@ -61,6 +99,8 @@ namespace arenai::agent {
         const auto trainer = agent_factory->get_trainer();
 
         std::cout << "Parameters : " << trainer->count_parameters() << std::endl;
+
+        save_run_config(environment_options, train_options, trainer->get_config());
 
         AgentSaver saver(trainer, train_options.output_folder, train_options.save_every);
 

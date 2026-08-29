@@ -24,7 +24,11 @@ namespace arenai::agent {
         std::shared_ptr<AbstractStepCollector> get_collector() override;
         std::shared_ptr<AbstractTrainer> get_trainer() override;
 
+        std::map<std::string, std::string> get_config() const override;
+
     private:
+        std::map<std::string, std::string> config;
+
         // triad built once, sharing actor + replay_buffer
         std::shared_ptr<Actor> actor;
 

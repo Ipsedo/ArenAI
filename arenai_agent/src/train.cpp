@@ -100,7 +100,7 @@ namespace arenai::agent {
 
         std::cout << "Parameters : " << trainer->count_parameters() << std::endl;
 
-        save_run_config(environment_options, train_options, trainer->get_config());
+        save_run_config(environment_options, train_options, agent_factory->get_config());
 
         AgentSaver saver(trainer, train_options.output_folder, train_options.save_every);
 

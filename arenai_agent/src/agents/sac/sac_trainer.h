@@ -32,16 +32,12 @@ namespace arenai::agent {
 
         std::vector<std::shared_ptr<AbstractMetric>> get_metrics() override;
 
-        std::map<std::string, std::string> get_config() const override;
-
         void save(const std::filesystem::path &output_folder) override;
 
         int count_parameters() override;
 
     private:
         static constexpr double GRAD_NORM_MAX = 1.0;
-
-        std::map<std::string, std::string> config;
 
         float maximal_discrete_entropy;
 

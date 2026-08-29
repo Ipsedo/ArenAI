@@ -14,7 +14,6 @@
 #include "../../networks/constants.h"
 #include "../../networks_utils/print_module.h"
 #include "../../networks_utils/torch_saver.h"
-#include "../../utils/config_format.h"
 
 using namespace arenai;
 using namespace arenai::agent;
@@ -102,36 +101,6 @@ namespace arenai::agent {
         to(device);
 
         set_train(false);
-
-        // what this trainer was built with, for the run's config dump
-        config = {
-            {"device", device.str()},
-            {"vision_height", format_config_value(vision_height)},
-            {"vision_width", format_config_value(vision_width)},
-            {"nb_sensors", format_config_value(nb_sensors)},
-            {"nb_continuous_actions", format_config_value(nb_continuous_actions)},
-            {"nb_discrete_actions", format_config_value(nb_discrete_action)},
-            {"actor_learning_rate", format_config_value(actor_learning_rate)},
-            {"critic_learning_rate", format_config_value(critic_learning_rate)},
-            {"hidden_size_sensors", format_config_value(hidden_size_sensors)},
-            {"critic_hidden_sizes", format_config_value(critic_hidden_sizes)},
-            {"vision_channels", format_config_value(vision_channels)},
-            {"group_norm_nums", format_config_value(group_norm_nums)},
-            {"metric_window_size", format_config_value(metric_window_size)},
-            {"gamma", format_config_value(gamma)},
-            {"gae_lambda", format_config_value(gae_lambda)},
-            {"clip_epsilon", format_config_value(clip_epsilon)},
-            {"target_kl", format_config_value(target_kl)},
-            {"grad_norm_max", format_config_value(grad_norm_max)},
-            {"continuous_target_entropy_init", format_config_value(continuous_target_entropy_init)},
-            {"continuous_target_entropy_final",
-             format_config_value(continuous_target_entropy_final)},
-            {"discrete_entropy_factor_init", format_config_value(discrete_entropy_factor_init)},
-            {"discrete_entropy_factor_final", format_config_value(discrete_entropy_factor_final)},
-            {"target_entropy_warmup_steps", format_config_value(target_entropy_warmup_steps)},
-            {"epochs", format_config_value(epochs)},
-            {"rollout_size", format_config_value(rollout_size)},
-            {"minibatch_size", format_config_value(minibatch_size)}};
     }
 
     void PpoTrainer::step() {
@@ -358,8 +327,6 @@ namespace arenai::agent {
 
         return {.advantages = advantages, .returns = returns};
     }
-
-    std::map<std::string, std::string> PpoTrainer::get_config() const { return config; }
 
     std::vector<std::shared_ptr<AbstractMetric>> PpoTrainer::get_metrics() {
         return {

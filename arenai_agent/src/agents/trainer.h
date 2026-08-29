@@ -6,9 +6,7 @@
 #define ARENAI_AGENTER_H
 
 #include <filesystem>
-#include <map>
 #include <memory>
-#include <string>
 #include <vector>
 
 #include <torch/torch.h>
@@ -24,7 +22,6 @@ namespace arenai::agent {
         virtual void step() = 0;
 
         virtual std::vector<std::shared_ptr<AbstractMetric>> get_metrics() = 0;
-        virtual std::map<std::string, std::string> get_config() const = 0;
 
         virtual void save(const std::filesystem::path &output_folder) = 0;
 

@@ -50,7 +50,10 @@ TEST_F(RewardTest, RewardNegativeWhenDead) {
     // damage chassis enough to kill it
     for (const auto chassis_items = tanks[0]->get_items(); const auto &item: chassis_items) {
         if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
-            life->receive_damages({.position = glm::vec3(0.f), .damages = 1e6f});
+            life->receive_damages(
+                {.fire_position = glm::vec3(0.f),
+                 .impact_position = glm::vec3(0.f),
+                 .damages = 1e6f});
             break;
         }
     }
@@ -75,7 +78,7 @@ TEST_F(RewardTest, DeathPenaltyIsMinusOne) {
     // kill by damage → normal death penalty
     for (const auto chassis_items_b = tanks[1]->get_items(); const auto &item: chassis_items_b) {
         if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
-            life->receive_damages({.position = glm::vec3(0.f), .damages = 1e6f});
+            life->receive_damages({.impact_position = glm::vec3(0.f), .damages = 1e6f});
             break;
         }
     }
@@ -208,7 +211,7 @@ TEST_F(RewardTest, NoRewardWhenShootingAWreck) {
     // does: the 8 surviving parts must stop paying anything
     for (const auto items_b = shared_b->get_items(); const auto &item: items_b) {
         if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
-            life->receive_damages({.position = glm::vec3(0.f), .damages = 1e6f});
+            life->receive_damages({.impact_position = glm::vec3(0.f), .damages = 1e6f});
             break;
         }
     }
@@ -259,7 +262,7 @@ TEST_F(RewardTest, NoKillRewardWhenHittingAnotherPartOfAWreck) {
     for (const auto items_b = shared_b->get_items(); const auto &item: items_b) {
         auto *life = dynamic_cast<LifeItem *>(item.get());
         if (life && item->get_name().find("wheel_right_1") != std::string::npos) {
-            life->receive_damages({.position = glm::vec3(0.f), .damages = 1e6f});
+            life->receive_damages({.impact_position = glm::vec3(0.f), .damages = 1e6f});
             break;
         }
     }

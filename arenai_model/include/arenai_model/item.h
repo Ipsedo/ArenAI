@@ -52,8 +52,8 @@ namespace arenai::model {
     };
 
     struct ImpactInfo {
-        // world-space position of the impact
-        glm::vec3 position;
+        glm::vec3 fire_position;
+        glm::vec3 impact_position;
         float damages;
     };
 

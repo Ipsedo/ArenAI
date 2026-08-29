@@ -12,7 +12,8 @@ using namespace arenai::utils;
 namespace {
     // damage-only impact: the position is irrelevant to health accounting
     ImpactInfo impact_of(const float damages) {
-        return {.position = glm::vec3(0.f), .damages = damages};
+        return {
+            .fire_position = glm::vec3(0.f), .impact_position = glm::vec3(0.f), .damages = damages};
     }
 }// namespace
 
@@ -135,13 +136,19 @@ TEST_F(LifeItemTest, NoDamagesAfterDeath) {
 TEST_F(LifeItemTest, ConsumeHitsReceivedReturnsStoredImpacts) {
     LifeItem item(10.f);
 
-    item.receive_damages({.position = glm::vec3(1.f, 2.f, 3.f), .damages = 4.f});
+    item.receive_damages(
+        {.fire_position = glm::vec3(4.f, 5.f, 6.f),
+         .impact_position = glm::vec3(1.f, 2.f, 3.f),
+         .damages = 4.f});
 
     const auto impacts = item.consume_hits_received();
     ASSERT_EQ(impacts.size(), 1u);
-    ASSERT_FLOAT_EQ(impacts[0].position.x, 1.f);
-    ASSERT_FLOAT_EQ(impacts[0].position.y, 2.f);
-    ASSERT_FLOAT_EQ(impacts[0].position.z, 3.f);
+    ASSERT_FLOAT_EQ(impacts[0].impact_position.x, 1.f);
+    ASSERT_FLOAT_EQ(impacts[0].impact_position.y, 2.f);
+    ASSERT_FLOAT_EQ(impacts[0].impact_position.z, 3.f);
+    ASSERT_FLOAT_EQ(impacts[0].fire_position.x, 4.f);
+    ASSERT_FLOAT_EQ(impacts[0].fire_position.y, 5.f);
+    ASSERT_FLOAT_EQ(impacts[0].fire_position.z, 6.f);
     ASSERT_FLOAT_EQ(impacts[0].damages, 4.f);
 }
 

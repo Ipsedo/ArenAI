@@ -111,10 +111,10 @@ namespace arenai::desktop {
         const glm::vec3 chassis_center =
             player_tank->get_chassis()->get_model_matrix() * glm::vec4(0.f, 0.f, 0.f, 1.f);
 
-        for (const auto &[position, damages]: impacts) {
+        for (const auto &[fire_position, impact_position, damages]: impacts) {
             // the impact lies on the face exposed to the shooter: its offset
             // from the chassis center points at where the shot came from
-            const glm::vec3 direction = position - chassis_center;
+            const glm::vec3 direction = fire_position - chassis_center;
             const glm::vec3 direction_flat = direction - up * glm::dot(direction, up);
             if (glm::length(direction_flat) < minimal_length) continue;
 

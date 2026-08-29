@@ -14,7 +14,7 @@ using namespace arenai::agent;
 // ========================================================================
 
 TEST_F(BetaLawTest, UniformEntropyIsMaximal) {
-    // alpha=1, beta=1 → Kumaraswamy uniform → maximal entropy
+    // alpha=1, beta=1 → uniform → maximal entropy
     const auto entropy_uniform = beta_law_entropy(torch::tensor({1.0f}), torch::tensor({1.0f}));
     const auto entropy_peaked = beta_law_entropy(torch::tensor({5.0f}), torch::tensor({5.0f}));
 

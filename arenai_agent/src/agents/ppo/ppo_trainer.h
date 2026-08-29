@@ -79,10 +79,6 @@ namespace arenai::agent {
         std::shared_ptr<AbstractMetric> continuous_alpha_metric;
         std::shared_ptr<AbstractMetric> discrete_alpha_metric;
 
-        // mean sigma of the truncated normal: direct view of the aim spread, Hc only bounds it
-        std::shared_ptr<AbstractMetric> mu_abs_metric;
-        std::shared_ptr<AbstractMetric> sigma_metric;
-
         // both recorded on every attempted minibatch, skipped ones included
         std::shared_ptr<AbstractMetric> clip_fraction_metric;
         std::shared_ptr<AbstractMetric> kl_metric;

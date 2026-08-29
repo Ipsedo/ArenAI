@@ -7,7 +7,6 @@
 #include <arenai_agent_tests/tests_networks_utils/tests_init.h>
 #include <arenai_model/constants.h>
 
-#include "./networks/constants.h"
 #include "./networks/misc.h"
 
 using namespace arenai;
@@ -44,39 +43,29 @@ TEST_F(InitWeightsTest, HiddenLinearBiasZero) {
     ASSERT_TRUE(torch::allclose(linear->bias, torch::zeros_like(linear->bias)));
 }
 
-TEST_F(InitWeightsTest, MuOutputWeightsOrthogonal) {
+TEST_F(InitWeightsTest, ConcentrationOutputWeightsOrthogonal) {
     torch::nn::Linear linear(32, 4);
-    init_mu_output_weights(*linear);
+    init_concentration_output_weights(*linear, 0.5f);
 
     assert_orthogonal(linear->weight, 0.01f);
 }
 
-TEST_F(InitWeightsTest, MuOutputBiasZero) {
-    torch::nn::Linear linear(32, 4);
-    init_mu_output_weights(*linear);
-
-    ASSERT_TRUE(torch::allclose(linear->bias, torch::zeros_like(linear->bias)));
-}
-
-TEST_F(InitWeightsTest, SigmaOutputWeightsOrthogonal) {
-    torch::nn::Linear linear(32, 4);
-    init_sigma_output_weights(*linear, 0.f);
-
-    assert_orthogonal(linear->weight, 0.01f);
-}
-
-TEST_F(InitWeightsTest, SigmaOutputIsEqualToWantedOne) {
+TEST_F(InitWeightsTest, ConcentrationOutputGivesWantedSigma) {
     torch::nn::Sequential sequential(
-        torch::nn::Linear(32, 4), std::make_shared<SigmaOutput>(SIGMA_MIN, SIGMA_MAX));
+        torch::nn::Linear(32, 4), std::make_shared<ConcentrationOutput>());
 
     constexpr float wanted_sigma = 0.5f;
 
-    sequential->apply([](torch::nn::Module &m) { init_sigma_output_weights(m, wanted_sigma); });
+    sequential->apply(
+        [](torch::nn::Module &m) { init_concentration_output_weights(m, wanted_sigma); });
 
     const auto x = torch::zeros({3, 32});
-    const auto out = sequential->forward(x);
+    const auto concentration = sequential->forward(x);
 
-    ASSERT_NEAR(out.mean().item<float>(), wanted_sigma, 1e-3);
+    // a symmetric Beta(c, c) on [-1, 1] has std = 1 / sqrt(2c + 1)
+    const auto implied_sigma = 1.f / torch::sqrt(2.f * concentration + 1.f);
+
+    ASSERT_NEAR(implied_sigma.mean().item<float>(), wanted_sigma, 1e-3);
 }
 
 TEST_F(InitWeightsTest, DiscreteOutputWeightsOrthogonal) {

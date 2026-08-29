@@ -33,21 +33,14 @@ namespace arenai::agent {
     }
 
     /*
-     * Sigma of normal distribution output layer
+     * Beta distribution concentration (α or β) output layer
      */
 
-    SigmaOutput::SigmaOutput(const float min_sigma, const float max_sigma)
-        : min_log_sigma(std::log(min_sigma)), max_log_sigma(std::log(max_sigma)) {}
-
-    torch::Tensor SigmaOutput::forward(const torch::Tensor &input) {
-        const auto log_sigma =
-            min_log_sigma + (max_log_sigma - min_log_sigma) * torch::sigmoid(input);
-        return torch::exp(log_sigma);
+    torch::Tensor ConcentrationOutput::forward(const torch::Tensor &input) {
+        // α, β ≥ 1 keeps the Beta density unimodal
+        return 1.f + torch::softplus(input);
     }
 
-    void SigmaOutput::pretty_print(std::ostream &stream) {
-        stream << name() << "(min=" << std::exp(min_log_sigma)
-               << ", max=" << std::exp(max_log_sigma) << ")";
-    }
+    void ConcentrationOutput::pretty_print(std::ostream &stream) { stream << name() << "()"; }
 
 }// namespace arenai::agent

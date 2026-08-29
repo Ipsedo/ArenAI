@@ -4,8 +4,8 @@
 
 #include "./sac_agent.h"
 
+#include "../../distributions/beta_law.h"
 #include "../../distributions/multinomial.h"
-#include "../../distributions/truncated_normal.h"
 #include "../../networks_utils/torch_converter.h"
 #include "../../networks_utils/torch_loader.h"
 
@@ -41,13 +41,13 @@ namespace arenai::agent {
             actor->train(false);
 
             const auto &[vision, sensors] = state;
-            const auto &[mu, sigma, discrete_proba] = actor->act(vision, sensors);
+            const auto &[alpha, beta, discrete_proba] = actor->act(vision, sensors);
 
             if (sample) {
-                action.continuous_action = truncated_normal_sample(mu, sigma);
+                action.continuous_action = beta_law_sample(alpha, beta);
                 action.discrete_action = multinomial_sample(discrete_proba);
             } else {
-                action.continuous_action = mu;
+                action.continuous_action = beta_law_mean_action(alpha, beta);
                 action.discrete_action = multinomial_max_action(discrete_proba);
             }
         }

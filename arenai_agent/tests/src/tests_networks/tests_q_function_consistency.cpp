@@ -102,8 +102,8 @@ TEST_F(ActorGradientTest, GradientFlowsThroughActor) {
     const auto vision = torch::randint(0, 255, {batch, 3, height, width}, torch::kUInt8);
     const auto sensors = torch::randn({batch, nb_sensors});
 
-    const auto [mu, sigma, discrete] = actor.act(vision, sensors);
-    const auto loss = mu.sum() + sigma.sum() + discrete.sum();
+    const auto [alpha, beta, discrete] = actor.act(vision, sensors);
+    const auto loss = alpha.sum() + beta.sum() + discrete.sum();
 
     loss.backward();
 
@@ -133,8 +133,8 @@ TEST_F(ActorGradientTest, ActorWeightsChangeAfterOptimStep) {
     const auto vision = torch::randint(0, 255, {batch, 3, height, width}, torch::kUInt8);
     const auto sensors = torch::randn({batch, nb_sensors});
 
-    const auto [mu, sigma, discrete] = actor.act(vision, sensors);
-    const auto loss = -(mu.sum() + sigma.log().sum());
+    const auto [alpha, beta, discrete] = actor.act(vision, sensors);
+    const auto loss = -(alpha.sum() + beta.log().sum());
 
     optimizer.zero_grad();
     loss.backward();

@@ -75,7 +75,7 @@ TEST_F(PpoAgentTest, MetricsNotEmpty) {
 
     const auto metrics = factory->get_trainer()->get_metrics();
 
-    ASSERT_EQ(metrics.size(), 14);
+    ASSERT_EQ(metrics.size(), 12);
 }
 
 // ========================================================================

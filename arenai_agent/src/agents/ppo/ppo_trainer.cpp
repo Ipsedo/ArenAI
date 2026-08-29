@@ -7,8 +7,8 @@
 #include <algorithm>
 #include <fstream>
 
+#include "../../distributions/beta_law.h"
 #include "../../distributions/multinomial.h"
-#include "../../distributions/truncated_normal.h"
 #include "../../metrics/mean_metric.h"
 #include "../../networks/constants.h"
 #include "../../networks_utils/print_module.h"
@@ -88,8 +88,6 @@ namespace arenai::agent {
           discrete_target_entropy_metric(std::make_shared<MeanMetric>("Hd_t", metric_window_size)),
           continuous_alpha_metric(std::make_shared<MeanMetric>("α_c", metric_window_size, 2, true)),
           discrete_alpha_metric(std::make_shared<MeanMetric>("α_d", metric_window_size, 2, true)),
-          mu_abs_metric(std::make_shared<MeanMetric>("|μ|", metric_window_size)),
-          sigma_metric(std::make_shared<MeanMetric>("σ", metric_window_size)),
           clip_fraction_metric(std::make_shared<MeanMetric>("clip", metric_window_size)),
           kl_metric(std::make_shared<MeanMetric>("kl", metric_window_size, 2, true)),
           skip_fraction_metric(std::make_shared<MeanMetric>("skip", metric_window_size)),
@@ -172,10 +170,10 @@ namespace arenai::agent {
         const torch::Tensor &continuous_actions, const torch::Tensor &discrete_actions,
         const torch::Tensor &old_log_probs, const torch::Tensor &advantages,
         const TargetEntropies &targets) const {
-        const auto [mu, sigma, discrete_proba] = actor->act(vision, proprioception);
+        const auto [alpha, beta, discrete_proba] = actor->act(vision, proprioception);
 
         const auto curr_continuous_log_probs =
-            truncated_normal_log_pdf(continuous_actions, mu, sigma).sum(-1, true);
+            beta_law_log_proba(continuous_actions, alpha, beta).sum(-1, true);
 
         const auto clamped_proba = torch::clamp(discrete_proba, EPSILON, 1.0 - EPSILON);
         const auto curr_discrete_log_probs =
@@ -187,7 +185,7 @@ namespace arenai::agent {
 
         const auto ratio = torch::exp(log_ratio);
 
-        const auto continuous_entropy = truncated_normal_entropy(mu, sigma);
+        const auto continuous_entropy = beta_law_entropy(alpha, beta);
         const auto discrete_entropy = multinomial_entropy(discrete_proba);
 
         const auto kl_per_row = (ratio - 1.f - log_ratio).flatten();
@@ -230,8 +228,6 @@ namespace arenai::agent {
         // metrics
         continuous_entropy_metric->add(continuous_entropy.mean().item<float>());
         continuous_target_entropy_metric->add(targets.continuous.mean().item<float>());
-        mu_abs_metric->add(mu.abs().mean().item<float>());
-        sigma_metric->add(sigma.mean().item<float>());
         continuous_alpha_metric->add(continuous_alpha->alpha().mean().item<float>());
 
         discrete_entropy_metric->add(discrete_entropy.mean().item<float>());
@@ -331,8 +327,6 @@ namespace arenai::agent {
             continuous_target_entropy_metric,
             continuous_entropy_metric,
             continuous_alpha_metric,
-            mu_abs_metric,
-            sigma_metric,
             discrete_target_entropy_metric,
             discrete_entropy_metric,
             discrete_alpha_metric,

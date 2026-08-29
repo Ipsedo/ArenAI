@@ -25,8 +25,8 @@ namespace arenai::agent {
         float initial_sigma = 0.5f;
         float initial_fire_proba = 0.5f;
         int metric_window_size = 256;
-        float gamma = 0.99f;
-        float gae_lambda = 0.98f;
+        float gamma = 0.997f;
+        float gae_lambda = 0.99f;
         float clip_epsilon = 0.2f;
         float target_kl = 0.05f;
         float grad_norm_max = 0.5f;

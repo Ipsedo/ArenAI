@@ -10,7 +10,6 @@
 #include "../../distributions/multinomial.h"
 #include "../../distributions/truncated_normal.h"
 #include "../../metrics/mean_metric.h"
-#include "../../metrics/std_metric.h"
 #include "../../networks/constants.h"
 #include "../../networks_utils/print_module.h"
 #include "../../networks_utils/torch_saver.h"
@@ -80,9 +79,7 @@ namespace arenai::agent {
           critic_optim(
               std::make_unique<torch::optim::Adam>(critic->parameters(), critic_learning_rate)),
           actor_mean_loss_metric(std::make_shared<MeanMetric>("π_μ", metric_window_size)),
-          actor_std_loss_metric(std::make_shared<StdMetric>("π_σ", metric_window_size)),
           critic_mean_loss_metric(std::make_shared<MeanMetric>("v_μ", metric_window_size)),
-          critic_std_loss_metric(std::make_shared<StdMetric>("v_σ", metric_window_size)),
           explained_variance_metric(std::make_shared<MeanMetric>("ev", metric_window_size)),
           continuous_entropy_metric(std::make_shared<MeanMetric>("Hc", metric_window_size)),
           discrete_entropy_metric(std::make_shared<MeanMetric>("Hd", metric_window_size)),
@@ -220,9 +217,7 @@ namespace arenai::agent {
             actor_optim->step();
 
             // actor metrics
-            const auto loss_value = actor_loss.cpu().item<float>();
-            actor_mean_loss_metric->add(loss_value);
-            actor_std_loss_metric->add(loss_value);
+            actor_mean_loss_metric->add(actor_loss.cpu().item<float>());
         }
 
         // adjust continuous alpha
@@ -262,9 +257,7 @@ namespace arenai::agent {
         torch::nn::utils::clip_grad_norm_(critic->parameters(), grad_norm_max);
         critic_optim->step();
 
-        const auto loss_value = critic_loss.cpu().item<float>();
-        critic_mean_loss_metric->add(loss_value);
-        critic_std_loss_metric->add(loss_value);
+        critic_mean_loss_metric->add(critic_loss.cpu().item<float>());
 
         const auto residual_var = (returns - values.detach()).var(false);
         const auto returns_var = returns.var(false);
@@ -331,9 +324,7 @@ namespace arenai::agent {
     std::vector<std::shared_ptr<AbstractMetric>> PpoTrainer::get_metrics() {
         return {
             actor_mean_loss_metric,
-            actor_std_loss_metric,
             critic_mean_loss_metric,
-            critic_std_loss_metric,
             explained_variance_metric,
             continuous_target_entropy_metric,
             continuous_entropy_metric,

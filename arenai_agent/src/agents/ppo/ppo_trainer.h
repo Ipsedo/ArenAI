@@ -64,10 +64,7 @@ namespace arenai::agent {
         std::unique_ptr<torch::optim::Adam> critic_optim;
 
         std::shared_ptr<AbstractMetric> actor_mean_loss_metric;
-        std::shared_ptr<AbstractMetric> actor_std_loss_metric;
-
         std::shared_ptr<AbstractMetric> critic_mean_loss_metric;
-        std::shared_ptr<AbstractMetric> critic_std_loss_metric;
 
         // share of the return variance the critic explains, per critic minibatch
         std::shared_ptr<AbstractMetric> explained_variance_metric;

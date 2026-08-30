@@ -27,7 +27,7 @@ namespace arenai::desktop::gui {
         Rml::ElementDocument *document = focus->GetOwnerDocument();
         if (document == nullptr) return;
         const Rml::Element *list = document->GetElementById("file-list");
-        Rml::Element *above = document->GetElementById("display-row");
+        Rml::Element *above = document->GetElementById("graphics-configure");
         Rml::Element *below = document->GetElementById("use-folder");
         if (list == nullptr || above == nullptr || below == nullptr) return;
 
@@ -36,12 +36,9 @@ namespace arenai::desktop::gui {
 
         Rml::Element *target = nullptr;
         if (focus->GetParentNode() == list) {
-            if (key == Rml::Input::KI_UP && focus == entries.front())
-                // resurface on the toggle that is actually lit
-                target = above->QuerySelector(".toggle.selected");
+            if (key == Rml::Input::KI_UP && focus == entries.front()) target = above;
             else if (key == Rml::Input::KI_DOWN && focus == entries.back()) target = below;
-        } else if (key == Rml::Input::KI_DOWN && focus->Closest("#display-row") != nullptr)
-            target = entries.front();
+        } else if (key == Rml::Input::KI_DOWN && focus == above) target = entries.front();
         else if (key == Rml::Input::KI_UP && focus == below) target = entries.back();
 
         if (target != nullptr && target->Focus(true)) {
@@ -130,11 +127,7 @@ namespace arenai::desktop::gui {
 
     void MenuInputAdapter::on_joystick(
         const double x, const double y, const controller::GamepadJoystick stick) {
-        // invoked through a local copy: the sink completes the capture by
-        // uninstalling itself (set_capture_sink(nullptr)) from inside the
-        // call, which would destroy the member mid-execution — and when the
-        // X half binds the slot, the Y half must be dropped, not handed to
-        // the emptied std::function
+
         if (const auto sink = capture_sink_) {
             const bool left = stick == controller::GamepadJoystick::Left;
             sink(std::make_pair(left ? GamepadAxis::LeftStickX : GamepadAxis::RightStickX, x));
@@ -167,8 +160,7 @@ namespace arenai::desktop::gui {
     void MenuInputAdapter::to_gamepad_mode() {
         if (gamepad_mode_) return;
         gamepad_mode_ = true;
-        // the hover chain would otherwise stay highlighted under the
-        // idle cursor; the next ProcessMouseMove reactivates it
+
         context_->ProcessMouseLeave();
         on_gamepad_nav_(true);
     }
@@ -187,8 +179,6 @@ namespace arenai::desktop::gui {
 
     void MenuInputAdapter::scroll_at_focus(const double value) {
         constexpr double DEADZONE = 0.3;
-        // px per frame at full deflection on the 1080p design
-        // baseline (the window dispatches the stick once per frame)
         constexpr float SPEED = 10.f;
 
         if (std::abs(value) < DEADZONE) return;

@@ -32,9 +32,9 @@ namespace arenai::agent {
         float grad_norm_max = 0.5f;
         float continuous_target_entropy_init = 0.6f;
         float continuous_target_entropy_final = -1.f;
-        int target_entropy_warmup_steps = 7500000;
         float discrete_entropy_factor_init = 0.98f;
         float discrete_entropy_factor_final = 0.2f;
+        int target_entropy_warmup_steps = 7500000;
         int epochs = 2;
         int rollout_size = 30 * 30;
         int minibatch_size = 1024;

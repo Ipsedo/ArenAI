@@ -22,7 +22,7 @@ namespace arenai::agent {
         std::vector<std::tuple<int, int>> vision_channels = {{3, 8},   {8, 16},  {16, 24},
                                                              {24, 32}, {32, 48}, {48, 64}};
         std::vector<int> group_norm_nums = {1, 2, 3, 4, 6, 8};
-        float initial_sigma = 0.242f;
+        float initial_sigma = 0.5f;
         float initial_fire_proba = 0.5f;
         int metric_window_size = 256;
         float gamma = 0.997f;
@@ -30,11 +30,11 @@ namespace arenai::agent {
         float clip_epsilon = 0.2f;
         float target_kl = 0.05f;
         float grad_norm_max = 0.5f;
-        float continuous_target_entropy_init = 0.f;
+        float continuous_target_entropy_init = 0.6f;
         float continuous_target_entropy_final = -1.f;
         int target_entropy_warmup_steps = 7500000;
         float discrete_entropy_factor_init = 0.98f;
-        float discrete_entropy_factor_final = 0.3f;
+        float discrete_entropy_factor_final = 0.2f;
         int epochs = 2;
         int rollout_size = 30 * 30;
         int minibatch_size = 1024;

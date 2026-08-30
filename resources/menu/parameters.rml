@@ -37,6 +37,11 @@
             </div>
         </div>
 
+        <div class="param-row">
+            <span class="param-label">Graphics</span>
+            <div class="button configure left" data-event-click="open_graphics()">Configure</div>
+        </div>
+
         <h2>Trained SAC folder</h2>
         <div class="current-dir">{{current_dir}}</div>
         <div class="file-list" id="file-list">

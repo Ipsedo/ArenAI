@@ -49,9 +49,8 @@ namespace arenai::desktop {
                 }
 
         const auto env = std::make_shared<DesktopGameEnvironment>(
-            game_options.resources_folder, graphics_backend, settings.nb_tanks,
-            model_options.vision_height, model_options.vision_width, game_options.wanted_frequency,
-            settings.controller_kind, settings.bindings);
+            game_options.resources_folder, graphics_backend, settings, model_options.vision_height,
+            model_options.vision_width, game_options.wanted_frequency);
 
         auto states = env->reset(
             static_cast<float>(settings.spawn_side), static_cast<float>(settings.spawn_side));
@@ -170,8 +169,14 @@ namespace arenai::desktop {
     }
 
     void run_gui(const GameOptions &game_options, const ModelOptions &model_options) {
+        // loaded before the backend: the window GPU choice only applies at
+        // device creation, i.e. here
+        const auto initial_settings =
+            load_preferences({.sac_folder = model_options.state_dict_folder});
+
         const std::shared_ptr graphics_backend = view::make_glfw_vulkan_backend(
-            game_options.window_width, game_options.window_height, "ArenAI");
+            game_options.window_width, game_options.window_height, "ArenAI",
+            initial_settings.window_gpu);
         const auto window = graphics_backend->get_window();
 
         std::cout << "Vulkan : " << graphics_backend->renderer_info() << std::endl;
@@ -179,11 +184,10 @@ namespace arenai::desktop {
         const auto asset_reader =
             std::make_shared<agent::DesktopAssetFileReader>(game_options.resources_folder);
 
-        const auto initial_settings =
-            load_preferences({.sac_folder = model_options.state_dict_folder});
         const auto gui = gui::make_gui(
-            graphics_backend, asset_reader, initial_settings, game_options.window_width,
-            game_options.window_height, [&model_options](const std::filesystem::path &folder) {
+            graphics_backend, asset_reader, initial_settings, view::list_vulkan_gpus(),
+            game_options.window_width, game_options.window_height,
+            [&model_options](const std::filesystem::path &folder) {
                 return check_agent_folder(model_options, folder);
             });
 

@@ -169,6 +169,15 @@ namespace arenai::desktop {
 
             settings.fullscreen = json.value("fullscreen", settings.fullscreen);
 
+            if (const auto quality =
+                    gui::shadow_quality_from_string(json.value("shadow_quality", std::string())))
+                settings.shadow_quality = *quality;
+            if (const int msaa = json.value("msaa", settings.msaa_samples);
+                msaa == 1 || msaa == 2 || msaa == 4 || msaa == 8)
+                settings.msaa_samples = msaa;
+            settings.window_gpu = json.value("window_gpu", settings.window_gpu);
+            settings.vision_gpu = json.value("vision_gpu", settings.vision_gpu);
+
             if (const auto bindings = json.value("bindings", nlohmann::json::object());
                 bindings.is_object())
                 load_bindings(bindings, settings.bindings);
@@ -196,6 +205,10 @@ namespace arenai::desktop {
                 {"controller",
                  settings.controller_kind == ControllerKind::Gamepad ? "gamepad" : "keyboard"},
                 {"fullscreen", settings.fullscreen},
+                {"shadow_quality", gui::to_string(settings.shadow_quality)},
+                {"msaa", settings.msaa_samples},
+                {"window_gpu", settings.window_gpu},
+                {"vision_gpu", settings.vision_gpu},
                 {"bindings", bindings_to_json(settings.bindings)},
                 {"sac_folder", settings.sac_folder.string()},
             };

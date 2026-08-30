@@ -79,8 +79,8 @@ namespace arenai::core {
             "height_map", file_reader, "heightmap/heightmap6.png", glm::vec3(0., 40., 0.),
             glm::vec3(10., 200., 10.));
 
-        std::uniform_real_distribution<float> x_pos_u_dist(-spawn_width / 2, spawn_width / 2);
-        std::uniform_real_distribution<float> y_pos_u_dist(-spawn_height / 2, spawn_height / 2);
+        std::uniform_real_distribution x_pos_u_dist(-spawn_width / 2, spawn_width / 2);
+        std::uniform_real_distribution y_pos_u_dist(-spawn_height / 2, spawn_height / 2);
 
         std::uniform_real_distribution<float> mass_u_dist(3, 100);
 

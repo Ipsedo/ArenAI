@@ -13,6 +13,8 @@ file(GLOB_RECURSE SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 # compiled straight into the test binary
 set(ARENAI_DESKTOP_TESTED_SRC
         "${CMAKE_CURRENT_SOURCE_DIR}/../src/core/game_environment.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../src/core/user_preferences.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../src/controller/bindings.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../src/controller/gamepad.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../src/controller/mouse_keyboard.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../src/gui/rml/input.cpp")

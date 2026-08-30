@@ -32,14 +32,16 @@ namespace arenai::view {
 
     VulkanRenderer::VulkanRenderer(
         std::shared_ptr<VulkanDevice> device, const glm::vec3 light_pos,
-        std::shared_ptr<AbstractCamera> camera, const bool with_shadows)
+        std::shared_ptr<AbstractCamera> camera, const bool with_shadows,
+        const ShadowSettings &shadow_settings)
         : device_(std::move(device)), light_pos_(light_pos), with_shadows_(with_shadows),
           retired_(FRAME_SLOTS), camera_(std::move(camera)),
           upload_pool_(device_->make_command_pool()),
           descriptors_(std::make_unique<DescriptorAllocator>(device_)),
           set0_plain_layout_(VK_NULL_HANDLE), set0_shadow_layout_(VK_NULL_HANDLE) {
         if (with_shadows_)
-            shadow_pass_ = std::make_unique<ShadowPass>(device_, light_pos_, FRAME_SLOTS);
+            shadow_pass_ =
+                std::make_unique<ShadowPass>(device_, light_pos_, FRAME_SLOTS, shadow_settings);
 
         set0_plain_layout_ = DescriptorLayoutBuilder()
                                  .add_binding(

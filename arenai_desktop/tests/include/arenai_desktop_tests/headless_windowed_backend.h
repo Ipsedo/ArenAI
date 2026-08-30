@@ -80,7 +80,8 @@ public:
     std::shared_ptr<view::AbstractWindow> get_window() override { return nullptr; }
 
     std::unique_ptr<view::AbstractPlayerRenderer> make_player_renderer(
-        glm::vec3 light_pos, const std::shared_ptr<view::AbstractCamera> &camera) override {
+        glm::vec3 light_pos, const std::shared_ptr<view::AbstractCamera> &camera,
+        const view::PlayerRendererSettings &settings) override {
         return std::make_unique<NoopPlayerRenderer>();
     }
 

@@ -331,8 +331,8 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     border-color: #00A6FB;
 }
 
-/* Controls page — same design width as the parameters panel */
-#controls-panel {
+/* Controls and Graphics pages — same design width as the parameters panel */
+#controls-panel, #graphics-panel {
     width: 560dp;
 }
 
@@ -351,6 +351,11 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     margin: 0 0 0 auto;
     padding: 9dp 18dp;
     font-size: 13dp;
+}
+
+/* the Graphics row's Configure sits flush left under its label */
+.button.configure.left {
+    margin-left: 0;
 }
 
 /* binding rows: a dark inset list, like the file explorer */

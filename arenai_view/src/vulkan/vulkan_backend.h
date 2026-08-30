@@ -21,7 +21,7 @@ namespace arenai::view {
 
     class VulkanBackend : public virtual AbstractGraphicBackend {
     public:
-        VulkanBackend();
+        explicit VulkanBackend(const std::string &gpu_name = "");
 
         std::shared_ptr<AbstractRenderContext> render_context() override;
 

@@ -1,0 +1,52 @@
+<rml>
+<head>
+    <title>Graphics</title>
+    <link type="text/rcss" href="menu.rcss"/>
+</head>
+<body data-model="settings">
+    <div id="graphics-panel" class="panel">
+        <div class="params-header">
+            <div class="back-arrow" autofocus data-event-click="graphics_back()">←</div>
+            <h1>Graphics</h1>
+        </div>
+
+        <div class="param-row">
+            <span class="param-label">Shadows</span>
+            <div class="toggle-group">
+                <div class="toggle" data-class-selected="shadow_quality=='off'" data-event-click="set_shadow_quality('off')"><div class="fill">Off</div></div>
+                <div class="toggle" data-class-selected="shadow_quality=='low'" data-event-click="set_shadow_quality('low')"><div class="fill">Low</div></div>
+                <div class="toggle" data-class-selected="shadow_quality=='medium'" data-event-click="set_shadow_quality('medium')"><div class="fill">Medium</div></div>
+                <div class="toggle" data-class-selected="shadow_quality=='high'" data-event-click="set_shadow_quality('high')"><div class="fill">High</div></div>
+                <div class="toggle" data-class-selected="shadow_quality=='ultra'" data-event-click="set_shadow_quality('ultra')"><div class="fill">Ultra</div></div>
+            </div>
+        </div>
+
+        <div class="param-row">
+            <span class="param-label">Anti-aliasing</span>
+            <div class="toggle-group">
+                <div class="toggle" data-class-selected="msaa == 1" data-event-click="set_msaa(1)"><div class="fill">Off</div></div>
+                <div class="toggle" data-class-selected="msaa == 2" data-event-click="set_msaa(2)"><div class="fill">2x</div></div>
+                <div class="toggle" data-class-selected="msaa == 4" data-event-click="set_msaa(4)"><div class="fill">4x</div></div>
+                <div class="toggle" data-class-selected="msaa == 8" data-event-click="set_msaa(8)"><div class="fill">8x</div></div>
+            </div>
+        </div>
+
+        <h2>Window GPU</h2>
+        <div class="device-list">
+            <div class="device-entry" data-for="gpus" data-class-selected="it_index == selected_window_gpu" data-event-click="set_window_gpu(it_index)">{{it}}</div>
+        </div>
+        <p class="hint">Takes effect on the next startup.</p>
+        <p class="hint warn" data-if="window_gpu_env">Overridden by the ARENAI_VK_DEVICE_WINDOW environment variable.</p>
+
+        <h2>AI vision GPU</h2>
+        <div class="device-list">
+            <div class="device-entry" data-for="gpus" data-class-selected="it_index == selected_vision_gpu" data-event-click="set_vision_gpu(it_index)">{{it}}</div>
+        </div>
+        <p class="hint warn" data-if="vision_gpu_env">Overridden by the ARENAI_VK_DEVICE environment variable.</p>
+
+        <div class="row-buttons back-row">
+            <div class="button primary" data-event-click="graphics_back()"><div class="fill">Back</div></div>
+        </div>
+    </div>
+</body>
+</rml>

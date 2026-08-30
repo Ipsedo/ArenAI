@@ -21,8 +21,7 @@ void EngineTestFixture::SetUp() {
 
     // one Vulkan backend (instance + device) shared by every test of the
     // binary: recreating it per test dominated the suite's runtime
-    static const std::shared_ptr<view::AbstractGraphicBackend> shared_backend =
-        view::make_vulkan_backend();
+    static const std::shared_ptr shared_backend = view::make_vulkan_backend();
     graphics_backend = shared_backend;
 
     tank_factory = engine->get_tank_factory();

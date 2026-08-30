@@ -17,17 +17,12 @@
 
 namespace arenai::view {
 
-    // Player-only post-processing pipeline: the scene is rendered into a 4x
-    // MSAA target, resolved (color + depth) through the dynamic-rendering
-    // resolve attachments, then run through the ordered effect chain. The
-    // final composite pass is recorded separately, inside the rendering
-    // scope the caller opened on its output (swapchain image or test target),
-    // so the HUD can share that scope.
     class VulkanPostProcess {
     public:
         VulkanPostProcess(
             std::shared_ptr<VulkanDevice> device, DescriptorAllocator *descriptors, int width,
-            int height, std::vector<std::shared_ptr<VulkanPostEffect>> ordered_effects);
+            int height, std::vector<std::shared_ptr<VulkanPostEffect>> ordered_effects,
+            int msaa_samples = 4);
 
         VulkanPostProcess(const VulkanPostProcess &) = delete;
         VulkanPostProcess &operator=(const VulkanPostProcess &) = delete;
@@ -38,19 +33,12 @@ namespace arenai::view {
         VkFormat scene_depth_format() const;
         VkSampleCountFlagBits scene_samples() const;
 
-        // begins the MSAA scene rendering scope (with the resolve
-        // attachments) and sets the negative-height scene viewport
         void begin_scene_pass(const VkCommandBuffer &cmd) const;
 
-        // ends the scene scope and runs every effect except the final
-        // composite; proj_matrix is the scene projection (depth
-        // reconstruction) and sun_dir_view the normalized view-space
-        // direction toward the sun
         void run_effects(
             const VkCommandBuffer &cmd, const glm::mat4 &proj_matrix,
             const glm::vec3 &sun_dir_view);
 
-        // records the composite draw inside the caller's open rendering scope
         void composite_within(
             const VkCommandBuffer &cmd, VkFormat output_format, int output_width,
             int output_height);
@@ -58,8 +46,6 @@ namespace arenai::view {
         ~VulkanPostProcess() = default;
 
     private:
-        static constexpr int MSAA_SAMPLES = 4;
-
         void create_scene_targets();
 
         std::shared_ptr<VulkanDevice> device_;
@@ -68,7 +54,6 @@ namespace arenai::view {
         int width_;
         int height_;
 
-        // frame counter animating the film grain (wraps to stay float-exact)
         int frame_;
 
         VkSampleCountFlagBits samples_;
@@ -84,8 +69,6 @@ namespace arenai::view {
         VulkanPostEffect::FrameContext context_{};
     };
 
-    // the standard player chain: SSAO → AO blur → bloom bright → bloom blur
-    // → god rays → composite
     std::vector<std::shared_ptr<VulkanPostEffect>> make_default_post_processing_effects(
         const std::shared_ptr<VulkanDevice> &device, DescriptorAllocator *descriptors, int width,
         int height);

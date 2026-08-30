@@ -20,18 +20,16 @@ namespace arenai::desktop {
     DesktopGameEnvironment::DesktopGameEnvironment(
         const std::filesystem::path &asset_folder_path,
         const std::shared_ptr<view::AbstractWindowedGraphicBackend> &graphics_backend,
-        const int nb_tanks, const int vision_height, const int vision_width,
-        const float wanted_frequency, const ControllerKind &controller_kind,
-        const ControlBindings &bindings)
+        const gui::GameSettings &settings, const int vision_height, const int vision_width,
+        const float wanted_frequency)
         : BaseTanksEnvironment(
             std::make_shared<agent::DesktopAssetFileReader>(asset_folder_path),
-            view::make_vulkan_backend(), nb_tanks, wanted_frequency, vision_height, vision_width, 8,
-            true),
+            view::make_vulkan_backend(settings.vision_gpu), settings.nb_tanks, wanted_frequency,
+            vision_height, vision_width, 8, true),
           windowed_backend(graphics_backend),
           asset_file_reader(std::make_shared<agent::DesktopAssetFileReader>(asset_folder_path)),
           player_tank(std::nullptr_t()), player_renderer(std::nullptr_t()),
-          wanted_frequency(wanted_frequency), controller_kind(controller_kind), bindings(bindings) {
-    }
+          wanted_frequency(wanted_frequency), settings(settings) {}
 
     void DesktopGameEnvironment::on_draw(
         const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
@@ -144,19 +142,22 @@ namespace arenai::desktop {
     void DesktopGameEnvironment::on_reset_drawables(
         const std::unique_ptr<model::AbstractPhysicEngine> &engine) {
         player_renderer = windowed_backend->make_player_renderer(
-            glm::vec3(200, 300, 200), player_tank->get_camera());
+            glm::vec3(200, 300, 200), player_tank->get_camera(),
+            {.shadows = settings.shadow_quality != gui::ShadowQuality::Off,
+             .shadow_map_size = gui::shadow_map_size(settings.shadow_quality),
+             .msaa_samples = settings.msaa_samples});
 
-        if (controller_kind == ControllerKind::Gamepad) {
+        if (settings.controller_kind == ControllerKind::Gamepad) {
             const auto player_controller_handler =
-                std::make_shared<PlayerGamepadHandler>(bindings.gamepad);
+                std::make_shared<PlayerGamepadHandler>(settings.bindings.gamepad);
 
             for (auto &ctrl: player_tank->get_controllers())
                 player_controller_handler->add_controller(ctrl);
 
             gamepad_handler_ = player_controller_handler;
-        } else if (controller_kind == ControllerKind::Keyboard) {
+        } else if (settings.controller_kind == ControllerKind::Keyboard) {
             const auto player_controller_handler = std::make_shared<PlayerMouseKeyboardHandler>(
-                windowed_backend->get_window(), *player_renderer, bindings.keyboard);
+                windowed_backend->get_window(), *player_renderer, settings.bindings.keyboard);
 
             for (auto &ctrl: player_tank->get_controllers())
                 player_controller_handler->add_controller(ctrl);

@@ -29,9 +29,10 @@ namespace arenai::view {
 
     VulkanPostProcess::VulkanPostProcess(
         std::shared_ptr<VulkanDevice> device, DescriptorAllocator *descriptors, const int width,
-        const int height, std::vector<std::shared_ptr<VulkanPostEffect>> ordered_effects)
+        const int height, std::vector<std::shared_ptr<VulkanPostEffect>> ordered_effects,
+        const int msaa_samples)
         : device_(std::move(device)), descriptors_(descriptors), width_(width), height_(height),
-          frame_(0), samples_(device_->clamp_sample_count(MSAA_SAMPLES)),
+          frame_(0), samples_(device_->clamp_sample_count(msaa_samples)),
           depth_format_(device_->find_depth_format(true)),
           ordered_effects_(std::move(ordered_effects)) {
         create_scene_targets();

@@ -68,10 +68,10 @@ TEST_F(VisionDoubleBufferTest, SecondWriteOverwritesFirst) {
 
     VisionDoubleBuffer buffer(height, width);
 
-    view::image<uint8_t> first{std::vector<uint8_t>(total, 100)};
+    view::image first{std::vector<uint8_t>(total, 100)};
     buffer.write(first);
 
-    view::image<uint8_t> second{std::vector<uint8_t>(total, 200)};
+    view::image second{std::vector<uint8_t>(total, 200)};
     buffer.write(second);
 
     const auto [pixels] = buffer.read_copy();

@@ -6,6 +6,7 @@
 #include <array>
 #include <chrono>
 #include <cmath>
+#include <cstdlib>
 #include <iostream>
 #include <numbers>
 #include <utility>
@@ -66,15 +67,33 @@ namespace arenai::desktop::gui {
             RmlGui(
                 const std::shared_ptr<view::AbstractWindowedGraphicBackend> &backend,
                 const std::shared_ptr<utils::AbstractResourceFileReader> &asset_reader,
-                const GameSettings &initial_settings, const int window_width,
-                const int window_height, SacFolderValidator sac_validator)
+                const GameSettings &initial_settings, const std::vector<std::string> &gpus,
+                const int window_width, const int window_height, SacFolderValidator sac_validator)
                 : backend_(backend), window_(backend->get_window()), settings_(initial_settings),
                   width_(window_width), height_(window_height), file_interface_(asset_reader),
                   sac_validator_(std::move(sac_validator)),
                   controller_display_(
                       initial_settings.controller_kind == ControllerKind::Gamepad ? "gamepad"
                                                                                   : "keyboard"),
-                  display_display_(initial_settings.fullscreen ? "fullscreen" : "windowed") {
+                  display_display_(initial_settings.fullscreen ? "fullscreen" : "windowed"),
+                  shadow_display_(to_string(initial_settings.shadow_quality)) {
+                gpu_names_.emplace_back("Auto");
+                for (const auto &gpu: gpus) gpu_names_.emplace_back(gpu);
+
+                const auto gpu_index = [this](const std::string &name) -> int {
+                    for (size_t i = 1; i < gpu_names_.size(); i++)
+                        if (!name.empty() && gpu_names_[i] == name) return static_cast<int>(i);
+                    return 0;
+                };
+                selected_window_gpu_ = gpu_index(settings_.window_gpu);
+                selected_vision_gpu_ = gpu_index(settings_.vision_gpu);
+                // a saved GPU that disappeared falls back to Auto, re-saved as such
+                if (selected_window_gpu_ == 0) settings_.window_gpu.clear();
+                if (selected_vision_gpu_ == 0) settings_.vision_gpu.clear();
+
+                window_gpu_env_override_ = std::getenv("ARENAI_VK_DEVICE_WINDOW") != nullptr;
+                vision_gpu_env_override_ = std::getenv("ARENAI_VK_DEVICE") != nullptr;
+
                 Rml::SetSystemInterface(&system_interface_);
                 Rml::SetFileInterface(&file_interface_);
                 Rml::SetRenderInterface(&backend_->ui_render_interface());
@@ -115,11 +134,13 @@ namespace arenai::desktop::gui {
                 main_document_ = context_->LoadDocument("menu/main_menu.rml");
                 params_document_ = context_->LoadDocument("menu/parameters.rml");
                 controls_document_ = context_->LoadDocument("menu/controls.rml");
+                graphics_document_ = context_->LoadDocument("menu/graphics.rml");
                 pause_document_ = context_->LoadDocument("menu/pause.rml");
                 game_over_document_ = context_->LoadDocument("menu/game_over.rml");
                 hud_document_ = context_->LoadDocument("menu/hud.rml");
-                if (!main_document_ || !params_document_ || !controls_document_ || !pause_document_
-                    || !game_over_document_ || !hud_document_)
+                if (!main_document_ || !params_document_ || !controls_document_
+                    || !graphics_document_ || !pause_document_ || !game_over_document_
+                    || !hud_document_)
                     throw std::runtime_error("RmlUi menu documents failed to load");
 
                 // D-pad bridge across the file explorer's scroll container
@@ -150,6 +171,7 @@ namespace arenai::desktop::gui {
                         if (pause_document_->IsVisible())
                             pending_pause_action_ = PauseAction::Continue;
                         else if (controls_document_->IsVisible()) close_controls();
+                        else if (graphics_document_->IsVisible()) close_graphics();
                         else if (params_document_->IsVisible()) close_params();
                     },
                     [this](const bool gamepad) {
@@ -157,8 +179,8 @@ namespace arenai::desktop::gui {
                         // .gamepad-nav, so the mouse hover and the gamepad
                         // cursor are never visible together
                         for (auto *document:
-                             {main_document_, params_document_, controls_document_, pause_document_,
-                              game_over_document_})
+                             {main_document_, params_document_, controls_document_,
+                              graphics_document_, pause_document_, game_over_document_})
                             document->SetClass("gamepad-nav", gamepad);
                     });
 
@@ -211,6 +233,7 @@ namespace arenai::desktop::gui {
 
                 main_document_->Hide();
                 params_document_->Hide();
+                graphics_document_->Hide();
                 end_capture();
                 controls_document_->Hide();
                 window_->set_keyboard_callback(nullptr);
@@ -421,6 +444,13 @@ namespace arenai::desktop::gui {
                 constructor.Bind("spawn_side", &settings_.spawn_side);
                 constructor.Bind("controller", &controller_display_);
                 constructor.Bind("display", &display_display_);
+                constructor.Bind("shadow_quality", &shadow_display_);
+                constructor.Bind("msaa", &settings_.msaa_samples);
+                constructor.Bind("gpus", &gpu_names_);
+                constructor.Bind("selected_window_gpu", &selected_window_gpu_);
+                constructor.Bind("selected_vision_gpu", &selected_vision_gpu_);
+                constructor.Bind("window_gpu_env", &window_gpu_env_override_);
+                constructor.Bind("vision_gpu_env", &vision_gpu_env_override_);
                 constructor.Bind("sac_folder", &sac_folder_display_);
                 constructor.Bind("sac_status", &sac_status_);
                 constructor.Bind("sac_valid", &sac_valid_);
@@ -480,6 +510,53 @@ namespace arenai::desktop::gui {
                         // through the resize callback (dp-ratio included)
                         window_->set_fullscreen(settings_.fullscreen);
                         model_handle_.DirtyVariable("display");
+                    });
+                constructor.BindEventCallback(
+                    "open_graphics",
+                    [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &) {
+                        params_document_->Hide();
+                        graphics_document_->Show();
+                    });
+                constructor.BindEventCallback(
+                    "graphics_back",
+                    [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &) {
+                        close_graphics();
+                    });
+                constructor.BindEventCallback(
+                    "set_shadow_quality",
+                    [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &arguments) {
+                        if (arguments.empty()) return;
+                        const auto quality =
+                            shadow_quality_from_string(arguments[0].Get<Rml::String>());
+                        if (!quality) return;
+                        settings_.shadow_quality = *quality;
+                        shadow_display_ = to_string(*quality);
+                        model_handle_.DirtyVariable("shadow_quality");
+                    });
+                constructor.BindEventCallback(
+                    "set_msaa",
+                    [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &arguments) {
+                        if (arguments.empty()) return;
+                        const int samples = arguments[0].Get<int>();
+                        if (samples != 1 && samples != 2 && samples != 4 && samples != 8) return;
+                        settings_.msaa_samples = samples;
+                        model_handle_.DirtyVariable("msaa");
+                    });
+                constructor.BindEventCallback(
+                    "set_window_gpu",
+                    [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &arguments) {
+                        if (arguments.empty()) return;
+                        select_gpu(
+                            arguments[0].Get<int>(), selected_window_gpu_, settings_.window_gpu,
+                            "selected_window_gpu");
+                    });
+                constructor.BindEventCallback(
+                    "set_vision_gpu",
+                    [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &arguments) {
+                        if (arguments.empty()) return;
+                        select_gpu(
+                            arguments[0].Get<int>(), selected_vision_gpu_, settings_.vision_gpu,
+                            "selected_vision_gpu");
                     });
                 constructor.BindEventCallback(
                     "open_controls",
@@ -612,6 +689,22 @@ namespace arenai::desktop::gui {
             void close_params() const {
                 params_document_->Hide();
                 main_document_->Show();
+            }
+
+            // ---- graphics page ------------------------------------------
+
+            void close_graphics() const {
+                graphics_document_->Hide();
+                params_document_->Show();
+            }
+
+            // "Auto" rides index 0 of gpu_names_, the actual devices follow
+            void
+            select_gpu(const int index, int &selected, std::string &setting, const char *variable) {
+                if (index < 0 || index >= static_cast<int>(gpu_names_.size())) return;
+                selected = index;
+                setting = index == 0 ? std::string() : std::string(gpu_names_[index]);
+                model_handle_.DirtyVariable(variable);
             }
 
             // ---- controls page ------------------------------------------
@@ -895,6 +988,7 @@ namespace arenai::desktop::gui {
             Rml::ElementDocument *main_document_ = nullptr;
             Rml::ElementDocument *params_document_ = nullptr;
             Rml::ElementDocument *controls_document_ = nullptr;
+            Rml::ElementDocument *graphics_document_ = nullptr;
             Rml::ElementDocument *pause_document_ = nullptr;
             Rml::ElementDocument *game_over_document_ = nullptr;
             Rml::ElementDocument *hud_document_ = nullptr;
@@ -920,6 +1014,13 @@ namespace arenai::desktop::gui {
             SacFolderValidator sac_validator_;
             Rml::String controller_display_;
             Rml::String display_display_;
+            // graphics page state
+            Rml::String shadow_display_;
+            std::vector<Rml::String> gpu_names_;
+            int selected_window_gpu_ = 0;
+            int selected_vision_gpu_ = 0;
+            bool window_gpu_env_override_ = false;
+            bool vision_gpu_env_override_ = false;
             Rml::String current_dir_display_;
             Rml::String sac_folder_display_;
             // empty while no folder is chosen; otherwise success or error text
@@ -955,10 +1056,10 @@ namespace arenai::desktop::gui {
     std::unique_ptr<AbstractGui> make_gui(
         const std::shared_ptr<view::AbstractWindowedGraphicBackend> &backend,
         const std::shared_ptr<utils::AbstractResourceFileReader> &asset_reader,
-        const GameSettings &initial_settings, const int window_width, const int window_height,
-        SacFolderValidator sac_validator) {
+        const GameSettings &initial_settings, const std::vector<std::string> &gpus,
+        const int window_width, const int window_height, SacFolderValidator sac_validator) {
         return std::make_unique<RmlGui>(
-            backend, asset_reader, initial_settings, window_width, window_height,
+            backend, asset_reader, initial_settings, gpus, window_width, window_height,
             std::move(sac_validator));
     }
 

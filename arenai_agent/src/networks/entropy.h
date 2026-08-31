@@ -62,27 +62,6 @@ namespace arenai::agent {
     };
 
     /*
-     * Warmup
-     */
-
-    class CosineAnnealingTargetEntropy final : public AbstractTargetEntropy {
-    public:
-        // warmup_env_step: number of environment steps to go from initial_value to final_value
-        CosineAnnealingTargetEntropy(
-            float initial_value, float final_value, int64_t warmup_env_step);
-
-        torch::Tensor target_entropy() const override;
-        void step(int64_t nb_env_steps) override;
-
-    private:
-        float initial;
-        float final;
-        int64_t warmup_env_step;
-
-        torch::Tensor current_step;
-    };
-
-    /*
      * Lagrangian
      */
 

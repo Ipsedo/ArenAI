@@ -64,33 +64,6 @@ namespace arenai::agent {
     torch::Tensor ConstantTargetEntropy::target_entropy() const { return initial_target; }
 
     /*
-     * Target entropy cosine annealing
-     */
-
-    CosineAnnealingTargetEntropy::CosineAnnealingTargetEntropy(
-        const float initial_value, const float final_value, const int64_t warmup_env_step)
-        : initial(initial_value), final(final_value),
-          warmup_env_step(std::max<int64_t>(1, warmup_env_step)),
-          current_step(register_buffer(
-              "current_step", torch::zeros({1}, torch::TensorOptions().dtype(torch::kLong)))) {}
-
-    torch::Tensor CosineAnnealingTargetEntropy::target_entropy() const {
-        const float progress = std::min(
-            1.f,
-            static_cast<float>(current_step.item<int64_t>()) / static_cast<float>(warmup_env_step));
-        const float cosine = 0.5f * (1.f - std::cos(std::numbers::pi_v<float> * progress));
-
-        return torch::tensor(
-            {initial + (final - initial) * cosine},
-            torch::TensorOptions().device(current_step.device()));
-    }
-
-    void CosineAnnealingTargetEntropy::step(const int64_t nb_env_steps) {
-        const torch::NoGradGuard no_grad;
-        current_step += nb_env_steps;
-    }
-
-    /*
      * PID Lagrangian
      */
 

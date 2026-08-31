@@ -26,11 +26,8 @@ namespace arenai::agent {
         std::vector<int> group_norm_nums = {1, 2, 3, 4, 6, 8};
         float initial_sigma = 0.5f;
         float initial_fire_proba = 0.5f;
-        float continuous_target_entropy_init = 0.5f;
-        float continuous_target_entropy_final = -1.f;
-        float discrete_target_factor_init = 0.98f;
-        float discrete_target_factor_final = 0.3f;
-        int target_entropy_warmup_steps = 3000000;
+        float continuous_target_entropy = -1.f;
+        float discrete_target_entropy_factor = 0.3f;
         int metric_window_size = 256;
         float tau = 0.005f;
         float gamma = 0.997f;

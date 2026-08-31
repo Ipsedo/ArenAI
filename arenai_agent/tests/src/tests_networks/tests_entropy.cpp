@@ -51,60 +51,6 @@ TEST_F(ConstantTargetEntropyTest, StepIsANoOp) {
     ASSERT_NEAR(target.target_entropy().item<float>(), 0.117f, 1e-6f);
 }
 
-TEST_F(CosineAnnealingTargetEntropyTest, StartsAtInitialValue) {
-    const CosineAnnealingTargetEntropy target(0.25f, -1.f, 1000);
-
-    ASSERT_NEAR(target.target_entropy().item<float>(), 0.25f, 1e-6f);
-}
-
-TEST_F(CosineAnnealingTargetEntropyTest, TargetEntropyDoesNotAdvanceSchedule) {
-    const CosineAnnealingTargetEntropy target(0.25f, -1.f, 1000);
-
-    for (int i = 0; i < 100; i++) target.target_entropy();
-
-    ASSERT_NEAR(target.target_entropy().item<float>(), 0.25f, 1e-6f);
-}
-
-// the schedule is driven by environment steps, not by the number of minibatches a rollout
-// happens to produce: reading the target several times per rollout must not shorten it
-TEST_F(CosineAnnealingTargetEntropyTest, ScheduleIsExpressedInEnvironmentSteps) {
-    constexpr int64_t ROLLOUT_SIZE = 900;
-    constexpr int64_t NB_ROLLOUTS = 100;
-
-    CosineAnnealingTargetEntropy target(0.25f, -1.f, ROLLOUT_SIZE * NB_ROLLOUTS);
-
-    for (int64_t i = 0; i < NB_ROLLOUTS; i++) {
-        for (int j = 0; j < 8; j++) target.target_entropy();
-        target.step(ROLLOUT_SIZE);
-    }
-
-    ASSERT_NEAR(target.target_entropy().item<float>(), -1.f, 1e-5f);
-}
-
-TEST_F(CosineAnnealingTargetEntropyTest, ClampsAfterWarmup) {
-    CosineAnnealingTargetEntropy target(0.25f, -1.f, 1000);
-
-    target.step(10000);
-
-    ASSERT_NEAR(target.target_entropy().item<float>(), -1.f, 1e-5f);
-}
-
-TEST_F(CosineAnnealingTargetEntropyTest, DecreasesMonotonically) {
-    CosineAnnealingTargetEntropy target(0.25f, -1.f, 1000);
-
-    auto previous = target.target_entropy().item<float>();
-
-    for (int i = 0; i < 20; i++) {
-        target.step(50);
-
-        const auto current = target.target_entropy().item<float>();
-        ASSERT_LE(current, previous + 1e-6f);
-        previous = current;
-    }
-
-    ASSERT_LT(previous, 0.25f);
-}
-
 /*
  * PID Lagrangian
  */

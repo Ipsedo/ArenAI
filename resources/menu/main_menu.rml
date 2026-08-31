@@ -9,7 +9,7 @@
         <div class="button primary" autofocus data-class-disabled="!can_play" data-event-click="play()"><div class="fill">Play</div></div>
         <div class="button" data-event-click="open_params()">Parameters</div>
         <div class="button" data-event-click="exit()">Exit</div>
-        <p class="hint" data-if="!can_play">Select a trained SAC folder in Parameters to play</p>
+        <p class="hint" data-if="!can_play">Select a trained AI model folder in Parameters to play</p>
     </div>
 </body>
 </rml>

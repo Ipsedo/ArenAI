@@ -6,8 +6,8 @@
 
 #include <fstream>
 
-#include "../../distributions/beta_law.h"
 #include "../../distributions/multinomial.h"
+#include "../../distributions/truncated_normal.h"
 #include "../../metrics/last_metric.h"
 #include "../../metrics/mean_metric.h"
 #include "../../metrics/std_metric.h"
@@ -111,11 +111,11 @@ namespace arenai::agent {
             {
                 torch::NoGradGuard no_grad;
 
-                const auto [next_alpha, next_beta, next_discrete_proba] =
+                const auto [next_mu, next_sigma, next_discrete_proba] =
                     actor->act(next_state.vision, next_state.proprioception);
 
-                const auto next_continuous_action = beta_law_sample(next_alpha, next_beta);
-                const auto next_continuous_entropy = beta_law_entropy(next_alpha, next_beta);
+                const auto next_continuous_action = truncated_normal_sample(next_mu, next_sigma);
+                const auto next_continuous_entropy = truncated_normal_entropy(next_mu, next_sigma);
 
                 const auto next_discrete_entropy = multinomial_entropy(next_discrete_proba);
 
@@ -166,11 +166,11 @@ namespace arenai::agent {
             soft_update(target_critic_2, critic_2, tau);
 
             // policy
-            const auto [curr_alpha, curr_beta, curr_discrete_proba] =
+            const auto [curr_mu, curr_sigma, curr_discrete_proba] =
                 actor->act(state.vision, state.proprioception);
 
-            const auto curr_continuous_action = beta_law_sample(curr_alpha, curr_beta);
-            const auto curr_continuous_entropy = beta_law_entropy(curr_alpha, curr_beta);
+            const auto curr_continuous_action = truncated_normal_sample(curr_mu, curr_sigma);
+            const auto curr_continuous_entropy = truncated_normal_entropy(curr_mu, curr_sigma);
 
             const auto curr_discrete_entropy = multinomial_entropy(curr_discrete_proba);
 

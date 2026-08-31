@@ -27,17 +27,19 @@ TEST_P(ActorTestParam, TestActorAct) {
         torch::TensorOptions().dtype(torch::kUInt8));
     const auto sensors = torch::randn({batch_size, sensors_nb});
 
-    const auto [alpha, beta, discrete] = actor.act(image, sensors);
+    const auto [mu, sigma, discrete] = actor.act(image, sensors);
 
-    ASSERT_EQ(alpha.ndimension(), 2);
-    ASSERT_EQ(alpha.size(0), batch_size);
-    ASSERT_EQ(alpha.size(1), cont_actions_nb);
-    ASSERT_TRUE(torch::all(torch::gt(alpha, 1.0)).item<bool>());
+    ASSERT_EQ(mu.ndimension(), 2);
+    ASSERT_EQ(mu.size(0), batch_size);
+    ASSERT_EQ(mu.size(1), cont_actions_nb);
+    ASSERT_TRUE(
+        torch::all(torch::logical_and(torch::ge(mu, -1.0), torch::le(mu, 1.0))).item<bool>());
 
-    ASSERT_EQ(beta.ndimension(), 2);
-    ASSERT_EQ(beta.size(0), batch_size);
-    ASSERT_EQ(beta.size(1), cont_actions_nb);
-    ASSERT_TRUE(torch::all(torch::gt(beta, 1.0)).item<bool>());
+    ASSERT_EQ(sigma.ndimension(), 2);
+    ASSERT_EQ(sigma.size(0), batch_size);
+    ASSERT_EQ(sigma.size(1), cont_actions_nb);
+    ASSERT_TRUE(
+        torch::all(torch::logical_and(torch::gt(sigma, 0.0), torch::le(sigma, 1.0))).item<bool>());
 
     ASSERT_EQ(discrete.ndimension(), 2);
     ASSERT_EQ(discrete.size(0), batch_size);

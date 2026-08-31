@@ -14,8 +14,8 @@
 namespace arenai::agent {
 
     struct ActorRawOutput {
-        torch::Tensor alpha;
-        torch::Tensor beta;
+        torch::Tensor mu;
+        torch::Tensor sigma;
         torch::Tensor discrete;
     };
 
@@ -36,8 +36,8 @@ namespace arenai::agent {
 
         torch::nn::Sequential head;
 
-        torch::nn::Sequential alpha;
-        torch::nn::Sequential beta;
+        torch::nn::Sequential mu;
+        torch::nn::Sequential sigma;
         torch::nn::Sequential discrete;
     };
 

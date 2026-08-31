@@ -36,11 +36,17 @@ namespace arenai::agent {
         void pretty_print(std::ostream &stream) override;
     };
 
-    class ConcentrationOutput : public AbstractFunctionModule {
+    class SigmaOutput : public AbstractFunctionModule {
     public:
+        SigmaOutput(float min_sigma, float max_sigma);
+
         torch::Tensor forward(const torch::Tensor &input) override;
 
         void pretty_print(std::ostream &stream) override;
+
+    private:
+        float min_log_sigma;
+        float max_log_sigma;
     };
 
 }// namespace arenai::agent

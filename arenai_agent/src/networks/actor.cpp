@@ -5,6 +5,7 @@
 #include "./actor.h"
 
 #include "../networks_utils/init.h"
+#include "./constants.h"
 #include "./misc.h"
 
 using namespace arenai;
@@ -30,14 +31,14 @@ namespace arenai::agent {
                   torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_sensors})),
                   torch::nn::SiLU()))),
           head(register_module("head", torch::nn::Sequential())),
-          alpha(register_module(
-              "alpha", torch::nn::Sequential(
+          mu(register_module(
+              "mu", torch::nn::Sequential(
+                        torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
+                        torch::nn::Tanh()))),
+          sigma(register_module(
+              "sigma", torch::nn::Sequential(
                            torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
-                           std::make_shared<ConcentrationOutput>()))),
-          beta(register_module(
-              "beta", torch::nn::Sequential(
-                          torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
-                          std::make_shared<ConcentrationOutput>()))),
+                           std::make_shared<SigmaOutput>(SIGMA_MIN, SIGMA_MAX)))),
           discrete(register_module(
               "discrete", torch::nn::Sequential(
                               torch::nn::Linear(hidden_sizes.back(), nb_discrete_actions),
@@ -63,10 +64,8 @@ namespace arenai::agent {
         sensors_encoder->apply(init_hidden_weights);
         head->apply(init_hidden_weights);
 
-        alpha->apply(
-            [initial_sigma](Module &m) { init_concentration_output_weights(m, initial_sigma); });
-        beta->apply(
-            [initial_sigma](Module &m) { init_concentration_output_weights(m, initial_sigma); });
+        mu->apply(init_mu_output_weights);
+        sigma->apply([initial_sigma](Module &m) { init_sigma_output_weights(m, initial_sigma); });
 
         discrete->apply([initial_fire_proba](Module &m) {
             init_discrete_output_weights(m, initial_fire_proba);
@@ -78,8 +77,8 @@ namespace arenai::agent {
         auto sensors_encoded = sensors_encoder->forward(sensors);
         auto encoded = head->forward(torch::cat({vision_encoded, sensors_encoded}, 1));
         return {
-            .alpha = alpha->forward(encoded),
-            .beta = beta->forward(encoded),
+            .mu = mu->forward(encoded),
+            .sigma = sigma->forward(encoded),
             .discrete = discrete->forward(encoded)};
     }
 

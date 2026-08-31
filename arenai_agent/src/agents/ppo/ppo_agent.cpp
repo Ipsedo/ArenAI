@@ -4,8 +4,8 @@
 
 #include "./ppo_agent.h"
 
-#include "../../distributions/beta_law.h"
 #include "../../distributions/multinomial.h"
+#include "../../distributions/truncated_normal.h"
 #include "../../networks/constants.h"
 #include "../../networks_utils/torch_converter.h"
 #include "../../networks_utils/torch_loader.h"
@@ -42,19 +42,19 @@ namespace arenai::agent {
             torch::NoGradGuard guard;
 
             const auto &[vision, sensors] = state;
-            const auto &[alpha, beta, discrete_proba] = actor->act(vision, sensors);
+            const auto &[mu, sigma, discrete_proba] = actor->act(vision, sensors);
 
             if (sample) {
-                action.continuous_action = beta_law_sample(alpha, beta);
+                action.continuous_action = truncated_normal_sample(mu, sigma);
                 action.discrete_action = multinomial_sample(discrete_proba);
             } else {
-                action.continuous_action = beta_law_mean_action(alpha, beta);
+                action.continuous_action = mu;
                 action.discrete_action = multinomial_max_action(discrete_proba);
             }
 
             // old log-probabilities, kept for the PPO importance ratio
             continuous_log_prob =
-                beta_law_log_proba(action.continuous_action, alpha, beta).sum(-1, true);
+                truncated_normal_log_pdf(action.continuous_action, mu, sigma).sum(-1, true);
 
             const auto clamped_proba = torch::clamp(discrete_proba, EPSILON, 1.0 - EPSILON);
             discrete_log_prob = (action.discrete_action * torch::log(clamped_proba)).sum(-1, true);

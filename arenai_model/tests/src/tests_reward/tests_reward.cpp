@@ -7,9 +7,8 @@
 #include <vector>
 
 #include <arenai_controller/inputs.h>
-#include <arenai_model_tests/tests_reward/tests_reward.h>
-
 #include <arenai_model/constants.h>
+#include <arenai_model_tests/tests_reward/tests_reward.h>
 
 using namespace arenai;
 using namespace arenai::model;

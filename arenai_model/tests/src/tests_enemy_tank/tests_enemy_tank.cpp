@@ -274,7 +274,8 @@ TEST_F(EnemyTankTest, ShellReserveRegeneratesOverTime) {
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
     const std::vector tanks{shared_tank};
 
-    ASSERT_FLOAT_EQ(shared_tank->get_proprioception()[proprioception_reserve_index], 1.f) << "the reserve should be full";
+    ASSERT_FLOAT_EQ(shared_tank->get_proprioception()[proprioception_reserve_index], 1.f)
+        << "the reserve should be full";
 
     // fire one shell: the reserve drops by one
     constexpr user_input fire_input{
@@ -285,13 +286,15 @@ TEST_F(EnemyTankTest, ShellReserveRegeneratesOverTime) {
     engine->step(1.f / 60.f);
     shared_tank->tick({});
 
-    const float reserve_after_fire = shared_tank->get_proprioception()[proprioception_reserve_index];
+    const float reserve_after_fire =
+        shared_tank->get_proprioception()[proprioception_reserve_index];
     ASSERT_FLOAT_EQ(reserve_after_fire, 1.f - 1.f / static_cast<float>(max_shells))
         << "firing should consume a shell";
 
     // after 1 s the period is not over yet: still nothing
     for (int i = 0; i < nb_frames_one_second / 2; i++) shared_tank->tick(tanks);
-    ASSERT_FLOAT_EQ(shared_tank->get_proprioception()[proprioception_reserve_index], reserve_after_fire)
+    ASSERT_FLOAT_EQ(
+        shared_tank->get_proprioception()[proprioception_reserve_index], reserve_after_fire)
         << "the reserve should not regenerate before the full period has elapsed";
 
     // after 2 s the shell is back

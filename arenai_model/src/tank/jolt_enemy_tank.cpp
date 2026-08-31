@@ -52,11 +52,17 @@ namespace arenai::model {
                 on_shell_contact(shell, info, item);
             },
             [this](const std::shared_ptr<ShellItem> &shell) { on_shell_fired(shell); },
-            [this] { return nb_shells > 0; }),
+            [this] {
+                const bool can_fire = nb_shells > 0 && curr_cooldown_frame == fire_cooldown_frames;
+                if (can_fire) curr_cooldown_frame = 0;
+                return can_fire;
+            }),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), miss_distance_scale(1.5f), miss_distance_exponent(1.f / 2.f),
           hit_reward_scale(0.1f), hit_received_cost(0.15f), initial_nb_shells(10),
-          nb_shells(initial_nb_shells), max_shells(30), shells_recharged_per_hit(5),
+          nb_shells(initial_nb_shells), max_shells(30),
+          fire_cooldown_frames(static_cast<int>(1.f / 6.f / wanted_frame_frequency)),
+          curr_cooldown_frame(fire_cooldown_frames), shells_recharged_per_hit(5),
           nb_frames_per_shell_regen(static_cast<int>(1.5f / wanted_frame_frequency)),
           curr_frame_shell_regen(0), is_dead_already_triggered(false), has_touch(false),
           has_kill(false), has_fired(false) {}
@@ -203,6 +209,9 @@ namespace arenai::model {
             // remove next tick => allow get_reward(...) to see it
             if (!in_flight) tracked.need_remove = true;
         }
+
+        // 4. fire cooldown
+        curr_cooldown_frame = std::min(fire_cooldown_frames, curr_cooldown_frame + 1);
     }
 
     void JoltEnemyTank::on_shell_fired(const std::shared_ptr<ShellItem> &shell) {
@@ -342,6 +351,8 @@ namespace arenai::model {
         }
 
         result.push_back(static_cast<float>(nb_shells) / static_cast<float>(max_shells));
+        result.push_back(
+            static_cast<float>(curr_cooldown_frame) / static_cast<float>(fire_cooldown_frames));
 
         return result;
     }

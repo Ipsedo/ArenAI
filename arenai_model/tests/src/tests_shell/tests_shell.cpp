@@ -246,7 +246,12 @@ TEST_F(ShellTest, TankSurvivesUntilAPartsHealthPointsAreSpent) {
     int shots = 0;
     while (!shared_b->is_dead() && shots < max_shots) {
         fire_once(shared_a);
-        for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
+        for (int i = 0; i < 60; i++) {
+            engine->step(1.f / 60.f);
+
+            shared_a->tick({shared_a, shared_b});
+            shared_b->tick({shared_b, shared_a});
+        }
 
         hits += consume_tank_hits(shared_b);
         shots++;

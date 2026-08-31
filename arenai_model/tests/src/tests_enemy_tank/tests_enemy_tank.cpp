@@ -9,6 +9,8 @@
 #include <arenai_model/item.h>
 #include <arenai_model_tests/tests_enemy_tank/tests_enemy_tank.h>
 
+#include "arenai_model/constants.h"
+
 using namespace arenai;
 using namespace arenai::model;
 using namespace arenai::utils;
@@ -248,10 +250,12 @@ TEST_F(EnemyTankTest, ShellReserveRegeneratesOverTime) {
     constexpr int initial_shells = 10;
     constexpr float seconds_per_regen = 1.5f;
 
+    constexpr int proprioception_reserve_index = ENEMY_PROPRIOCEPTION_SIZE - 2;
+
     add_ground();
     auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
 
-    float last_reserve = tank->get_proprioception().back();
+    float last_reserve = tank->get_proprioception()[proprioception_reserve_index];
     ASSERT_FLOAT_EQ(
         last_reserve, static_cast<float>(initial_shells) / static_cast<float>(max_shells))
         << "reserve start with initial shells";
@@ -261,7 +265,7 @@ TEST_F(EnemyTankTest, ShellReserveRegeneratesOverTime) {
         engine->step(1.f / static_cast<float>(nb_frames_one_second));
         tank->tick({});
 
-        const float curr_reserve = tank->get_proprioception().back();
+        const float curr_reserve = tank->get_proprioception()[proprioception_reserve_index];
         ASSERT_GE(curr_reserve, last_reserve) << "reserve should increase";
 
         last_reserve = curr_reserve;
@@ -270,7 +274,7 @@ TEST_F(EnemyTankTest, ShellReserveRegeneratesOverTime) {
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
     const std::vector tanks{shared_tank};
 
-    ASSERT_FLOAT_EQ(shared_tank->get_proprioception().back(), 1.f) << "the reserve should be full";
+    ASSERT_FLOAT_EQ(shared_tank->get_proprioception()[proprioception_reserve_index], 1.f) << "the reserve should be full";
 
     // fire one shell: the reserve drops by one
     constexpr user_input fire_input{
@@ -281,18 +285,18 @@ TEST_F(EnemyTankTest, ShellReserveRegeneratesOverTime) {
     engine->step(1.f / 60.f);
     shared_tank->tick({});
 
-    const float reserve_after_fire = shared_tank->get_proprioception().back();
+    const float reserve_after_fire = shared_tank->get_proprioception()[proprioception_reserve_index];
     ASSERT_FLOAT_EQ(reserve_after_fire, 1.f - 1.f / static_cast<float>(max_shells))
         << "firing should consume a shell";
 
     // after 1 s the period is not over yet: still nothing
     for (int i = 0; i < nb_frames_one_second / 2; i++) shared_tank->tick(tanks);
-    ASSERT_FLOAT_EQ(shared_tank->get_proprioception().back(), reserve_after_fire)
+    ASSERT_FLOAT_EQ(shared_tank->get_proprioception()[proprioception_reserve_index], reserve_after_fire)
         << "the reserve should not regenerate before the full period has elapsed";
 
     // after 2 s the shell is back
     for (int i = 0; i < nb_frames_one_second; i++) shared_tank->tick(tanks);
-    ASSERT_FLOAT_EQ(shared_tank->get_proprioception().back(), 1.f)
+    ASSERT_FLOAT_EQ(shared_tank->get_proprioception()[proprioception_reserve_index], 1.f)
         << "one shell should be given back after 1.5 s";
 }
 

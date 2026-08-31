@@ -82,6 +82,8 @@ namespace arenai::model {
         int initial_nb_shells;
         int nb_shells;
         int max_shells;
+        int fire_cooldown_frames;
+        int curr_cooldown_frame;
 
         int shells_recharged_per_hit;
 

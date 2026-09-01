@@ -65,9 +65,9 @@ namespace arenai::agent {
      * Lagrangian
      */
 
-    // Equality constraint H = target: alpha is a signed multiplier — a bonus while entropy
-    // sits under the target, a penalty once it overshoots — so the policy cannot silently
-    // re-inflate after a descent (train_375's collapse mode)
+    // Inequality constraint H >= target: alpha is a Lagrange multiplier, projected on
+    // [0, MAX_ALPHA] (Stooke et al. 2020) — a bonus while entropy sits under the target,
+    // inactive (0) once the constraint is satisfied
     class PidLagrangianAlphaParameters final : public torch::nn::Module {
     public:
         PidLagrangianAlphaParameters(
@@ -78,7 +78,7 @@ namespace arenai::agent {
         torch::Tensor alpha() const;
 
     private:
-        static constexpr float MAX_ALPHA_ABS = 1.f;
+        static constexpr float MAX_ALPHA = 1.f;
 
         float k_p, k_i, k_d;
 

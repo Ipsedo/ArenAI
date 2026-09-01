@@ -74,13 +74,9 @@ namespace arenai::agent {
           previous_entropy(register_buffer("previous_entropy", torch::zeros({1, nb_alphas}))),
           has_previous(register_buffer("has_previous", torch::zeros({1}))),
           integral(register_buffer(
-              "integral",
-              torch::full(
-                  {1, nb_alphas}, std::clamp(initial_alpha, -MAX_ALPHA_ABS, MAX_ALPHA_ABS)))),
+              "integral", torch::full({1, nb_alphas}, std::clamp(initial_alpha, 0.f, MAX_ALPHA)))),
           alpha_tensor(register_buffer(
-              "alpha",
-              torch::full(
-                  {1, nb_alphas}, std::clamp(initial_alpha, -MAX_ALPHA_ABS, MAX_ALPHA_ABS)))) {}
+              "alpha", torch::full({1, nb_alphas}, std::clamp(initial_alpha, 0.f, MAX_ALPHA)))) {}
 
     torch::Tensor PidLagrangianAlphaParameters::alpha() const { return alpha_tensor; }
 
@@ -92,15 +88,14 @@ namespace arenai::agent {
         const auto error =
             torch::mean(target_entropy.detach() - entropy.detach(), 0, true).view_as(integral);
 
-        integral.copy_(torch::clamp(integral + k_i * error, -MAX_ALPHA_ABS, MAX_ALPHA_ABS));
+        integral.copy_(torch::clamp(integral + k_i * error, 0.f, MAX_ALPHA));
 
         const auto derivative = has_previous * (previous_entropy - mean_entropy);
 
         previous_entropy.copy_(mean_entropy);
         has_previous.fill_(1.f);
 
-        alpha_tensor.copy_(
-            torch::clamp(k_p * error + integral + k_d * derivative, -MAX_ALPHA_ABS, MAX_ALPHA_ABS));
+        alpha_tensor.copy_(torch::clamp(k_p * error + integral + k_d * derivative, 0.f, MAX_ALPHA));
     }
 
 }// namespace arenai::agent

@@ -83,49 +83,51 @@ TEST_F(PidLagrangianAlphaParameterTest, EntropyBelowTargetRaisesAlpha) {
     ASSERT_GT(pid.alpha().item<float>(), before);
 }
 
-// equality constraint: a sustained overshoot turns alpha into a penalty instead of parking
-// it on a floor — the mechanism that lets the policy hold the target from above, which the
-// one-sided bonus could not do (train_375's re-inflation collapse)
-TEST_F(PidLagrangianAlphaParameterTest, EntropyAboveTargetTurnsAlphaNegative) {
+// inequality constraint H >= target: while the constraint is satisfied the multiplier is
+// inactive — a sustained overshoot parks alpha at exactly 0, never below (the Lagrangian
+// projection), so the bonus can never flip into a penalty
+TEST_F(PidLagrangianAlphaParameterTest, SustainedOvershootParksAlphaAtZero) {
     const PidLagrangianAlphaParameters pid(2e-1f, 5e-3f, 1.f, 1e-3f, 1);
 
     const auto target = torch::full({8, 1}, 0.7f);
 
     for (int i = 0; i < 1000; i++) pid.update(torch::full({8, 1}, 5.f), target);
 
-    ASSERT_LT(pid.alpha().item<float>(), 0.f);
+    ASSERT_FLOAT_EQ(pid.alpha().item<float>(), 0.f);
 }
 
-// both the integral and the output are clamped, so even an absurd sustained error keeps
-// alpha inside [-MAX_ALPHA_ABS, MAX_ALPHA_ABS] on either side
-TEST_F(PidLagrangianAlphaParameterTest, StaysBoundedOnBothSides) {
+// both the integral and the output are projected on [0, MAX_ALPHA], so even an absurd
+// sustained error keeps alpha inside the feasible dual space
+TEST_F(PidLagrangianAlphaParameterTest, StaysWithinZeroAndMax) {
     const PidLagrangianAlphaParameters pid(2e-1f, 5e-3f, 1.f, 1e-3f, 1);
 
     const auto target = torch::full({8, 1}, 0.7f);
 
     for (int i = 0; i < 10000; i++) {
         pid.update(torch::full({8, 1}, -50.f), target);
-        ASSERT_LE(std::abs(pid.alpha().item<float>()), 1.f + 1e-6f);
+        ASSERT_GE(pid.alpha().item<float>(), 0.f);
+        ASSERT_LE(pid.alpha().item<float>(), 1.f + 1e-6f);
     }
 
     for (int i = 0; i < 10000; i++) {
         pid.update(torch::full({8, 1}, 50.f), target);
-        ASSERT_LE(std::abs(pid.alpha().item<float>()), 1.f + 1e-6f);
+        ASSERT_GE(pid.alpha().item<float>(), 0.f);
+        ASSERT_LE(pid.alpha().item<float>(), 1.f + 1e-6f);
     }
 }
 
 // the failure mode this controller replaces: the log-space integral used to saturate at
 // log(1e-6), ~13 nats below zero, so alpha stayed pinned for thousands of updates after the
-// error flipped sign. The linear integral saturates at the output bound itself: recovery
-// takes (range) / (k_i * |error|) updates at most
+// error flipped sign. Here the integral saturates at the projection bound (0): the P term
+// acts on the first update after the flip and the integral only has to climb from 0
 TEST_F(PidLagrangianAlphaParameterTest, RecoversFromSaturationWithoutWindup) {
     const PidLagrangianAlphaParameters pid(2e-1f, 5e-3f, 1.f, 1e-3f, 1);
 
     const auto target = torch::full({8, 1}, 0.7f);
 
-    // long stretch above target: alpha saturates on the penalty side
+    // long stretch above target: alpha parks at the zero floor
     for (int i = 0; i < 5000; i++) pid.update(torch::full({8, 1}, 5.f), target);
-    ASSERT_NEAR(pid.alpha().item<float>(), -1.f, 1e-3f);
+    ASSERT_FLOAT_EQ(pid.alpha().item<float>(), 0.f);
 
     // entropy now under target: the bonus has to come back within the run, not after it
     for (int i = 0; i < 1000; i++) pid.update(torch::full({8, 1}, 0.2f), target);
@@ -143,9 +145,9 @@ TEST_F(PidLagrangianAlphaParameterTest, DiscreteGainRecoversAtItsOwnErrorScale) 
 
     const auto target = torch::full({8, 1}, 0.098039f);
 
-    // fire head still exploring: entropy above target, alpha goes to the penalty side
+    // fire head still exploring: entropy above target, alpha parks at the zero floor
     for (int i = 0; i < 3000; i++) pid.update(torch::full({8, 1}, 0.693f), target);
-    ASSERT_LT(pid.alpha().item<float>(), 0.f);
+    ASSERT_FLOAT_EQ(pid.alpha().item<float>(), 0.f);
 
     // entropy now under target: the bonus has to come back within the run, not after it
     for (int i = 0; i < 25000; i++) pid.update(torch::full({8, 1}, 0.068f), target);
@@ -165,5 +167,5 @@ TEST_F(PidLagrangianAlphaParameterTest, OneAlphaPerAction) {
     ASSERT_GT(alpha[0].item<float>(), 0.f);
     ASSERT_GT(alpha[0].item<float>(), alpha[1].item<float>());
     ASSERT_GT(alpha[1].item<float>(), alpha[2].item<float>());
-    ASSERT_LT(alpha[2].item<float>(), 0.f);
+    ASSERT_FLOAT_EQ(alpha[2].item<float>(), 0.f);
 }

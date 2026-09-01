@@ -30,9 +30,8 @@ namespace arenai::agent {
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
             float gamma, float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
-            float continuous_entropy_factor_init, float continuous_entropy_factor_final,
-            float discrete_entropy_factor_init, float discrete_entropy_factor_final,
-            int target_entropy_warmup_steps, int epochs, int rollout_size, int minibatch_size);
+            float continuous_target_entropy, float discrete_target_entropy_factor, int epochs,
+            int rollout_size, int minibatch_size);
 
         void step() override;
 
@@ -43,13 +42,14 @@ namespace arenai::agent {
         int count_parameters() override;
 
     private:
-        float discrete_maximal_entropy;
-
         std::shared_ptr<Actor> actor;
         std::shared_ptr<PpoRolloutBuffer> rollout_buffer;
 
-        std::unique_ptr<CosineAnnealing> continuous_entropy_factor;
-        std::unique_ptr<CosineAnnealing> discrete_entropy_factor;
+        std::unique_ptr<PidLagrangianAlphaParameters> continuous_alpha;
+        std::unique_ptr<PidLagrangianAlphaParameters> discrete_alpha;
+
+        float continuous_target_entropy;
+        float discrete_target_entropy;
 
         std::shared_ptr<ValueFunction> critic;
 
@@ -65,6 +65,9 @@ namespace arenai::agent {
         // both regulated by their constant entropy bonus
         std::shared_ptr<AbstractMetric> continuous_entropy_metric;
         std::shared_ptr<AbstractMetric> discrete_entropy_metric;
+
+        std::shared_ptr<AbstractMetric> continuous_alpha_metric;
+        std::shared_ptr<AbstractMetric> discrete_alpha_metric;
 
         // both recorded on every attempted minibatch, skipped ones included
         std::shared_ptr<AbstractMetric> clip_fraction_metric;

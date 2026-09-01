@@ -27,10 +27,8 @@ namespace arenai::agent {
               params.hidden_size_sensors, params.critic_hidden_sizes, params.vision_channels,
               params.group_norm_nums, device, params.metric_window_size, params.gamma,
               params.gae_lambda, params.clip_epsilon, params.target_kl, params.grad_norm_max,
-              params.continuous_entropy_factor_init, params.continuous_entropy_factor_final,
-              params.discrete_entropy_factor_init, params.discrete_entropy_factor_final,
-              params.target_entropy_warmup_steps, params.epochs, params.rollout_size,
-              params.minibatch_size)) {}
+              params.continuous_target_entropy, params.discrete_target_entropy_factor,
+              params.epochs, params.rollout_size, params.minibatch_size)) {}
 
     std::shared_ptr<AbstractTorchAgent> PpoTorchAgentFactory::get_agent() { return agent; }
 

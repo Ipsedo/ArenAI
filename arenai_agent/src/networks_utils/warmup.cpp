@@ -4,6 +4,8 @@
 
 #include "./warmup.h"
 
+#include <numbers>
+
 CosineAnnealing::CosineAnnealing(
     const float initial_value, const float final_value, const int64_t warmup_env_step)
     : initial(initial_value), final(final_value),

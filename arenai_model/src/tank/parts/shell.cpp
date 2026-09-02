@@ -28,8 +28,13 @@ namespace arenai::model {
     void ShellItem::on_contact(Item *other) {
         if (is_dead()) return;
 
-        if (const auto t = dynamic_cast<LifeItem *>(other)) t->receive_damages(1);
-        receive_damages(1);
+        const ImpactInfo impact{
+            .fire_position = get_fire_position(),
+            .impact_position = get_current_position(),
+            .damages = 1.f};
+
+        if (const auto t = dynamic_cast<LifeItem *>(other)) t->receive_damages(impact);
+        receive_damages(impact);
 
         Item::on_contact(other);
 

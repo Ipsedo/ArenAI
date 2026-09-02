@@ -23,6 +23,8 @@ namespace arenai::model {
 
         PlayerHits consume_hits() override;
 
+        std::vector<ImpactInfo> consume_received_impacts() override;
+
         void destroy() override;
 
     private:

@@ -19,12 +19,15 @@ namespace arenai::view {
 
     class GlfwVulkanBackend final : public VulkanBackend, public AbstractWindowedGraphicBackend {
     public:
-        GlfwVulkanBackend(int window_width, int window_height, const std::string &title);
+        GlfwVulkanBackend(
+            int window_width, int window_height, const std::string &title,
+            const std::string &gpu_name = "");
 
         std::shared_ptr<AbstractWindow> get_window() override;
 
         std::unique_ptr<AbstractPlayerRenderer> make_player_renderer(
-            glm::vec3 light_pos, const std::shared_ptr<AbstractCamera> &camera) override;
+            glm::vec3 light_pos, const std::shared_ptr<AbstractCamera> &camera,
+            const PlayerRendererSettings &settings) override;
 
         Rml::RenderInterface &ui_render_interface() override;
         void begin_ui_frame(int width, int height) override;
@@ -39,8 +42,11 @@ namespace arenai::view {
             std::shared_ptr<GlfwVulkanWindow> window;
             std::shared_ptr<VulkanInstance> instance;
             VkSurfaceKHR surface;
+            std::string gpu_name;
         };
-        static Bootstrap bootstrap(int window_width, int window_height, const std::string &title);
+        static Bootstrap bootstrap(
+            int window_width, int window_height, const std::string &title,
+            const std::string &gpu_name);
         explicit GlfwVulkanBackend(Bootstrap bootstrap);
 
         std::shared_ptr<GlfwVulkanWindow> window_;

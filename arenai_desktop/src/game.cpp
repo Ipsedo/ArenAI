@@ -38,10 +38,19 @@ namespace arenai::desktop {
 
         sac_agent->load(settings.sac_folder);
 
+        // route the pad input to the configured device when it is connected
+        // (also covers runs that skip the menu, e.g. ARENAI_DEBUG_AUTOPLAY)
+        if (settings.controller_kind == ControllerKind::Gamepad
+            && !settings.bindings.gamepad.device_guid.empty())
+            for (const auto &[id, name, guid]: window->list_gamepads())
+                if (guid == settings.bindings.gamepad.device_guid) {
+                    window->select_gamepad(id);
+                    break;
+                }
+
         const auto env = std::make_shared<DesktopGameEnvironment>(
-            game_options.resources_folder, graphics_backend, settings.nb_tanks,
-            model_options.vision_height, model_options.vision_width, game_options.wanted_frequency,
-            settings.controller_kind);
+            game_options.resources_folder, graphics_backend, settings, model_options.vision_height,
+            model_options.vision_width, game_options.wanted_frequency);
 
         auto states = env->reset(
             static_cast<float>(settings.spawn_side), static_cast<float>(settings.spawn_side));
@@ -52,7 +61,8 @@ namespace arenai::desktop {
 
         const auto router = std::make_shared<GameInputRouter>(
             env->keyboard_handler(), env->gamepad_handler(), gui->pause_input(),
-            gui->pause_gamepad_input(), [&toggle_requested] { toggle_requested = true; });
+            gui->pause_gamepad_input(), [&toggle_requested] { toggle_requested = true; },
+            settings.bindings.keyboard);
         window->set_keyboard_callback(router);
         window->set_gamepad_callback(router);
 
@@ -127,6 +137,9 @@ namespace arenai::desktop {
             if (const auto [hits, kills] = env->consume_player_hits(); kills > 0)
                 gui->notify_hit(gui::HitKind::Kill);
             else if (hits > 0) gui->notify_hit(gui::HitKind::Hit);
+
+            for (const float angle: env->consume_damage_screen_angles()) gui->notify_damage(angle);
+
             gui->set_aim_point(env->aim_point_on_screen());
             gui->render_hud_overlay();
 
@@ -156,8 +169,14 @@ namespace arenai::desktop {
     }
 
     void run_gui(const GameOptions &game_options, const ModelOptions &model_options) {
+        // loaded before the backend: the window GPU choice only applies at
+        // device creation, i.e. here
+        const auto initial_settings =
+            load_preferences({.sac_folder = model_options.state_dict_folder});
+
         const std::shared_ptr graphics_backend = view::make_glfw_vulkan_backend(
-            game_options.window_width, game_options.window_height, "ArenAI");
+            game_options.window_width, game_options.window_height, "ArenAI",
+            initial_settings.window_gpu);
         const auto window = graphics_backend->get_window();
 
         std::cout << "Vulkan : " << graphics_backend->renderer_info() << std::endl;
@@ -165,11 +184,10 @@ namespace arenai::desktop {
         const auto asset_reader =
             std::make_shared<agent::DesktopAssetFileReader>(game_options.resources_folder);
 
-        const auto initial_settings =
-            load_preferences({.sac_folder = model_options.state_dict_folder});
         const auto gui = gui::make_gui(
-            graphics_backend, asset_reader, initial_settings, game_options.window_width,
-            game_options.window_height, [&model_options](const std::filesystem::path &folder) {
+            graphics_backend, asset_reader, initial_settings, view::list_vulkan_gpus(),
+            game_options.window_width, game_options.window_height,
+            [&model_options](const std::filesystem::path &folder) {
                 return check_agent_folder(model_options, folder);
             });
 

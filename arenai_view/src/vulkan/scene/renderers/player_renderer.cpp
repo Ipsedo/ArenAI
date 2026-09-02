@@ -11,8 +11,11 @@ namespace arenai::view {
     VulkanPlayerRenderer::VulkanPlayerRenderer(
         const std::shared_ptr<VulkanDevice> &device,
         std::shared_ptr<WindowFrameContext> frame_context, const int width, const int height,
-        const glm::vec3 light_pos, const std::shared_ptr<AbstractCamera> &camera)
-        : VulkanRenderer(device, light_pos, camera, true), width_(width), height_(height),
+        const glm::vec3 light_pos, const std::shared_ptr<AbstractCamera> &camera,
+        const bool shadows, const int shadow_map_size, const int msaa_samples)
+        : VulkanRenderer(
+            device, light_pos, camera, shadows, ShadowSettings{.map_size = shadow_map_size}),
+          width_(width), height_(height), msaa_samples_(msaa_samples),
           frame_context_(std::move(frame_context)) {}
 
     void VulkanPlayerRenderer::add_hud_drawable(std::unique_ptr<AbstractHudDrawable> hud_drawable) {
@@ -26,7 +29,8 @@ namespace arenai::view {
         post_process_ = std::make_unique<VulkanPostProcess>(
             device(), &descriptors(), get_width(), get_height(),
             make_default_post_processing_effects(
-                device(), &descriptors(), get_width(), get_height()));
+                device(), &descriptors(), get_width(), get_height()),
+            msaa_samples_);
     }
 
     std::pair<VkCommandBuffer, int> VulkanPlayerRenderer::on_begin_frame() {

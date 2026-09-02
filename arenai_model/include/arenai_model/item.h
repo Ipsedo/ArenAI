@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include <glm/glm.hpp>
 
@@ -50,6 +51,12 @@ namespace arenai::model {
         virtual std::vector<std::shared_ptr<Item>> get_produced_items() = 0;
     };
 
+    struct ImpactInfo {
+        glm::vec3 fire_position;
+        glm::vec3 impact_position;
+        float damages;
+    };
+
     class LifeItem {
     public:
         virtual ~LifeItem() = default;
@@ -63,13 +70,13 @@ namespace arenai::model {
         // neither hit nor kill to whoever keeps shooting at it
         void kill();
 
-        float receive_damages(float damages);
-        int consume_hits_received();
+        float receive_damages(const ImpactInfo &impact);
+        std::vector<ImpactInfo> consume_hits_received();
 
     private:
         float health_points;
         bool already_dead;
-        int hits_received;
+        std::vector<ImpactInfo> hits_received;
     };
 
 }// namespace arenai::model

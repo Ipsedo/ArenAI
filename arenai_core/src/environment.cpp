@@ -55,9 +55,13 @@ namespace arenai::core {
         result.reserve(tanks.size());
 
         for (int i = 0; i < tanks.size(); i++) {
+            // tick
+            tanks[i]->tick(tanks);
+
+            // compute/get state
             result.emplace_back(
                 State(vision_pool_->read_vision(i), tanks[i]->get_proprioception()),
-                tanks[i]->get_reward(tanks), tanks[i]->is_dead());
+                tanks[i]->get_reward(), tanks[i]->is_dead());
         }
 
         return result;
@@ -75,8 +79,8 @@ namespace arenai::core {
             "height_map", file_reader, "heightmap/heightmap6.png", glm::vec3(0., 40., 0.),
             glm::vec3(10., 200., 10.));
 
-        std::uniform_real_distribution<float> x_pos_u_dist(-spawn_width / 2, spawn_width / 2);
-        std::uniform_real_distribution<float> y_pos_u_dist(-spawn_height / 2, spawn_height / 2);
+        std::uniform_real_distribution x_pos_u_dist(-spawn_width / 2, spawn_width / 2);
+        std::uniform_real_distribution y_pos_u_dist(-spawn_height / 2, spawn_height / 2);
 
         std::uniform_real_distribution<float> mass_u_dist(3, 100);
 
@@ -87,7 +91,7 @@ namespace arenai::core {
                 glm::vec3(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng))));
 
             tank_controller_handler.push_back(std::make_unique<EnemyControllerHandler>(
-                wanted_frequency, 1.f / 6.f, model::ENEMY_TURRET_RADIAL_VELOCITY));
+                wanted_frequency, model::ENEMY_TURRET_RADIAL_VELOCITY));
 
             for (const auto &controller: tanks.back()->get_controllers())
                 tank_controller_handler.back()->add_controller(controller);

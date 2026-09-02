@@ -9,6 +9,8 @@
 #include <arenai_model/item.h>
 #include <arenai_model_tests/tests_enemy_tank/tests_enemy_tank.h>
 
+#include "arenai_model/constants.h"
+
 using namespace arenai;
 using namespace arenai::model;
 using namespace arenai::utils;
@@ -30,7 +32,10 @@ TEST_F(EnemyTankTest, DeadWhenSingleWheelDestroyed) {
     for (const auto &item: items) {
         if (item->get_name().find("wheel") != std::string::npos) {
             if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
-                life->receive_damages(1e6f);
+                life->receive_damages(
+                    {.fire_position = glm::vec3(0.f),
+                     .impact_position = glm::vec3(0.f),
+                     .damages = 1e6f});
                 wheel_killed = true;
                 break;
             }
@@ -57,7 +62,7 @@ TEST_F(EnemyTankTest, OnDeathMultipleCallsDoNotCrash) {
     // kill the tank
     for (const auto &item: shared_tank->get_items()) {
         if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
-            life->receive_damages(1e6f);
+            life->receive_damages({.impact_position = glm::vec3(0.f), .damages = 1e6f});
             break;
         }
     }
@@ -98,7 +103,9 @@ TEST_F(EnemyTankTest, RewardWhenAllEnemiesDeadAndShellFired) {
 
     // kill tank_b before firing
     for (const auto &item: shared_b->get_items()) {
-        if (auto *life = dynamic_cast<LifeItem *>(item.get())) { life->receive_damages(1e6f); }
+        if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
+            life->receive_damages({.impact_position = glm::vec3(0.f), .damages = 1e6f});
+        }
     }
     ASSERT_TRUE(shared_b->is_dead());
 
@@ -115,7 +122,7 @@ TEST_F(EnemyTankTest, RewardWhenAllEnemiesDeadAndShellFired) {
 
     // get_nearest_enemy_index should return -1 (all dead)
     // reward should not crash and should be 0 (no valid target)
-    const float reward = shared_a->get_reward(tanks);
+    const float reward = shared_a->get_reward();
     ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN when all enemies are dead";
     ASSERT_FALSE(std::isinf(reward)) << "reward should not be Inf when all enemies are dead";
 }
@@ -137,9 +144,7 @@ TEST_F(EnemyTankTest, RewardNoNaNWhenAloneInTankList) {
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
-    const std::vector tanks{shared_tank};
-
-    const float reward = shared_tank->get_reward(tanks);
+    const float reward = shared_tank->get_reward();
     ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN when alone";
     ASSERT_FALSE(std::isinf(reward)) << "reward should not be Inf when alone";
 }
@@ -179,8 +184,7 @@ TEST_F(EnemyTankTest, ShellHitsGroundNoRewardNoCrash) {
         << "hitting the ground should not count as hitting another tank";
 
     // but last_shoot_info should still be set — reward should not crash
-    const std::vector tanks{shared_tank};
-    const float reward = shared_tank->get_reward(tanks);
+    const float reward = shared_tank->get_reward();
     ASSERT_FALSE(std::isnan(reward));
 }
 
@@ -242,17 +246,36 @@ TEST_F(EnemyTankTest, ShellReserveRegeneratesOverTime) {
     // the bounds stay a frame away from the period so the test does not depend on how the
     // period rounds to an integer number of frames
     constexpr int nb_frames_one_second = 60;
+    constexpr int max_shells = 30;
+    constexpr int initial_shells = 10;
+    constexpr float seconds_per_regen = 1.5f;
+
+    constexpr int proprioception_reserve_index = ENEMY_PROPRIOCEPTION_SIZE - 2;
 
     add_ground();
     auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
 
-    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+    float last_reserve = tank->get_proprioception()[proprioception_reserve_index];
+    ASSERT_FLOAT_EQ(
+        last_reserve, static_cast<float>(initial_shells) / static_cast<float>(max_shells))
+        << "reserve start with initial shells";
+
+    for (int i = 0; i < static_cast<int>(nb_frames_one_second * seconds_per_regen * max_shells);
+         i++) {
+        engine->step(1.f / static_cast<float>(nb_frames_one_second));
+        tank->tick({});
+
+        const float curr_reserve = tank->get_proprioception()[proprioception_reserve_index];
+        ASSERT_GE(curr_reserve, last_reserve) << "reserve should increase";
+
+        last_reserve = curr_reserve;
+    }
 
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
     const std::vector tanks{shared_tank};
 
-    ASSERT_FLOAT_EQ(shared_tank->get_proprioception().back(), 1.f)
-        << "the reserve should start full";
+    ASSERT_FLOAT_EQ(shared_tank->get_proprioception()[proprioception_reserve_index], 1.f)
+        << "the reserve should be full";
 
     // fire one shell: the reserve drops by one
     constexpr user_input fire_input{
@@ -261,35 +284,47 @@ TEST_F(EnemyTankTest, ShellReserveRegeneratesOverTime) {
         .fire_button = {true}};
     for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
     engine->step(1.f / 60.f);
+    shared_tank->tick({});
 
-    const float reserve_after_fire = shared_tank->get_proprioception().back();
-    ASSERT_LT(reserve_after_fire, 1.f) << "firing should consume a shell";
+    const float reserve_after_fire =
+        shared_tank->get_proprioception()[proprioception_reserve_index];
+    ASSERT_FLOAT_EQ(reserve_after_fire, 1.f - 1.f / static_cast<float>(max_shells))
+        << "firing should consume a shell";
 
     // after 1 s the period is not over yet: still nothing
-    for (int i = 0; i < nb_frames_one_second; i++) shared_tank->get_reward(tanks);
-    ASSERT_FLOAT_EQ(shared_tank->get_proprioception().back(), reserve_after_fire)
+    for (int i = 0; i < nb_frames_one_second / 2; i++) shared_tank->tick(tanks);
+    ASSERT_FLOAT_EQ(
+        shared_tank->get_proprioception()[proprioception_reserve_index], reserve_after_fire)
         << "the reserve should not regenerate before the full period has elapsed";
 
     // after 2 s the shell is back
-    for (int i = 0; i < nb_frames_one_second; i++) shared_tank->get_reward(tanks);
-    ASSERT_FLOAT_EQ(shared_tank->get_proprioception().back(), 1.f)
+    for (int i = 0; i < nb_frames_one_second; i++) shared_tank->tick(tanks);
+    ASSERT_FLOAT_EQ(shared_tank->get_proprioception()[proprioception_reserve_index], 1.f)
         << "one shell should be given back after 1.5 s";
 }
 
-TEST_F(EnemyTankTest, ShellReserveRegenerationIsCappedAtInitialReserve) {
+TEST_F(EnemyTankTest, ShellReserveRegenerationIsCappedAtMaximalReserve) {
     constexpr int nb_frames_one_second = 60;
+    constexpr int max_shells = 30;
+    constexpr float seconds_per_regen = 1.5f;
 
     add_ground();
     auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
 
-    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+    for (int i = 0; i < static_cast<int>(nb_frames_one_second * seconds_per_regen * max_shells);
+         i++) {
+        engine->step(1.f / static_cast<float>(nb_frames_one_second));
+        tank->tick({});
+    }
+
+    ASSERT_FLOAT_EQ(tank->get_proprioception().back(), 1.f) << "the reserve should be full";
 
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
     const std::vector tanks{shared_tank};
 
     // the reserve is already full: several periods must not push it above it
-    for (int i = 0; i < 5 * nb_frames_one_second; i++) shared_tank->get_reward(tanks);
+    for (int i = 0; i < 5 * nb_frames_one_second; i++) shared_tank->tick(tanks);
 
     ASSERT_FLOAT_EQ(shared_tank->get_proprioception().back(), 1.f)
-        << "regeneration should never take the reserve above its initial value";
+        << "regeneration should never take the reserve above its max value";
 }

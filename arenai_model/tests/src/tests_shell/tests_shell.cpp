@@ -154,14 +154,17 @@ TEST_F(ShellTest, ShellContactCallbackSetsReward) {
         .fire_button = {true}};
     for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
 
-    for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
-
     const std::vector tanks{shared_a, shared_b};
 
+    float max_reward = 0.f;
+    for (int i = 0; i < 60; i++) {
+        engine->step(1.f / 60.f);
+        shared_a->tick(tanks);
+        max_reward = std::max(max_reward, shared_a->get_reward());
+    }
     ASSERT_TRUE(shared_a->consume_has_hit()) << "shell must hit for reward test";
 
-    const float reward = shared_a->get_reward(tanks);
-    ASSERT_GT(reward, 0.f) << "reward should be positive after shell contact callback";
+    ASSERT_GT(max_reward, 0.f) << "reward should be positive after shell contact callback";
 }
 
 // ========================================================================
@@ -184,7 +187,7 @@ namespace {
         int hits = 0;
         for (const auto &item: tank->get_items())
             if (const auto life_item = dynamic_cast<LifeItem *>(item.get()); life_item)
-                hits += life_item->consume_hits_received();
+                hits += static_cast<int>(life_item->consume_hits_received().size());
         return hits;
     }
 
@@ -210,8 +213,10 @@ TEST_F(ShellTest, ShellImpactDealsExactlyOneDamage) {
     consume_tank_hits(shared_b);// drop whatever the settling produced
 
     fire_once(shared_a);
-    for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
-
+    for (int i = 0; i < 60; i++) {
+        engine->step(1.f / 60.f);
+        shared_a->tick({shared_a, shared_b});
+    }
     ASSERT_TRUE(shared_a->consume_has_hit()) << "shell must hit for this test to mean anything";
 
     ASSERT_EQ(consume_tank_hits(shared_b), 1)
@@ -241,7 +246,12 @@ TEST_F(ShellTest, TankSurvivesUntilAPartsHealthPointsAreSpent) {
     int shots = 0;
     while (!shared_b->is_dead() && shots < max_shots) {
         fire_once(shared_a);
-        for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
+        for (int i = 0; i < 60; i++) {
+            engine->step(1.f / 60.f);
+
+            shared_a->tick({shared_a, shared_b});
+            shared_b->tick({shared_b, shared_a});
+        }
 
         hits += consume_tank_hits(shared_b);
         shots++;
@@ -280,6 +290,6 @@ TEST_F(ShellTest, SpentShellDealsNoFurtherDamage) {
     shell->on_contact(target.get());
     shell->on_contact(target.get());
 
-    ASSERT_EQ(target_life->consume_hits_received(), 1)
+    ASSERT_EQ(target_life->consume_hits_received().size(), 1u)
         << "a spent shell must not damage anything again";
 }

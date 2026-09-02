@@ -82,8 +82,7 @@ namespace arenai::core {
         const std::shared_ptr<view::AbstractGraphicBackend> &get_graphics_backend() const;
 
         template<typename T>
-        T
-        apply_on_factories(std::function<T(const std::vector<std::shared_ptr<model::EnemyTank>> &)>
+        T apply_on_enemies(std::function<T(const std::vector<std::shared_ptr<model::EnemyTank>> &)>
                                apply_function) {
             return apply_function(tanks);
         }

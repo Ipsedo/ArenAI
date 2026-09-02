@@ -43,9 +43,13 @@ namespace arenai::agent {
             const auto &[vision, sensors] = state;
             const auto &[mu, sigma, discrete_proba] = actor->act(vision, sensors);
 
-            action.continuous_action = sample ? truncated_normal_sample(mu, sigma) : mu;
-            action.discrete_action = sample ? multinomial_sample(discrete_proba)
-                                            : multinomial_max_action(discrete_proba);
+            if (sample) {
+                action.continuous_action = truncated_normal_sample(mu, sigma);
+                action.discrete_action = multinomial_sample(discrete_proba);
+            } else {
+                action.continuous_action = mu;
+                action.discrete_action = multinomial_max_action(discrete_proba);
+            }
         }
 
         if (collector.has_value()) collector.value()->on_act(state, action);

@@ -53,9 +53,9 @@ TEST_F(ThreadLimiterTest, ConcurrencyNeverExceedsK) {
 
     ThreadLimiter limiter(k);
 
-    std::atomic<int> concurrent_count{0};
-    std::atomic<int> max_concurrent{0};
-    std::atomic<bool> violation{false};
+    std::atomic concurrent_count{0};
+    std::atomic max_concurrent{0};
+    std::atomic violation{false};
 
     std::vector<std::thread> threads;
     threads.reserve(num_threads);
@@ -96,8 +96,8 @@ TEST_F(ThreadLimiterTest, ConcurrencyLimitOneActsAsMutex) {
 
     ThreadLimiter limiter(k);
 
-    std::atomic<int> concurrent_count{0};
-    std::atomic<bool> violation{false};
+    std::atomic concurrent_count{0};
+    std::atomic violation{false};
 
     std::vector<std::thread> threads;
     threads.reserve(num_threads);
@@ -145,7 +145,7 @@ TEST_F(ThreadLimiterTest, FIFOOrdering) {
     std::vector<std::thread> threads;
     threads.reserve(num_threads);
 
-    std::atomic<int> ready_count{0};
+    std::atomic ready_count{0};
 
     for (int i = 0; i < num_threads; i++) {
         threads.emplace_back([&, i] {
@@ -184,8 +184,8 @@ TEST_F(ThreadLimiterTest, LargeKAllThreadsProceedImmediately) {
     constexpr int num_threads = 8;
     ThreadLimiter limiter(num_threads);
 
-    std::atomic<int> concurrent_count{0};
-    std::atomic<int> max_concurrent{0};
+    std::atomic concurrent_count{0};
+    std::atomic max_concurrent{0};
     std::barrier sync_point(num_threads);
 
     std::vector<std::thread> threads;

@@ -19,8 +19,6 @@ namespace arenai::agent {
     public:
         virtual ~AbstractTrainer() = default;
 
-        // Called after each environment step; each algorithm decides on its own
-        // cadence (warmup / train_every for SAC, full rollout for PPO).
         virtual void step() = 0;
 
         virtual std::vector<std::shared_ptr<AbstractMetric>> get_metrics() = 0;

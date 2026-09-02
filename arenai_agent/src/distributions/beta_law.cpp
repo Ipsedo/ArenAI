@@ -11,53 +11,52 @@ using namespace arenai::agent;
 
 namespace arenai::agent {
 
-    // Kumaraswamy
+    // the log-proba and entropy carry the log(2) change of scale from [0, 1] to [-1, 1]
 
-    static torch::Tensor clamp_pos(const torch::Tensor &t) { return torch::clamp(t, EPSILON); }
+    static torch::Tensor clamp_pos(const torch::Tensor &t) { return torch::clamp_min(t, EPSILON); }
 
-    static torch::Tensor clamp_unit_open(const torch::Tensor &x) {
-        return torch::clamp(x, EPSILON, 1.0 - EPSILON);
+    static torch::Tensor log_beta_function(const torch::Tensor &alpha, const torch::Tensor &beta) {
+        return torch::lgamma(alpha) + torch::lgamma(beta) - torch::lgamma(alpha + beta);
     }
 
     torch::Tensor beta_law_sample(const torch::Tensor &alpha, const torch::Tensor &beta) {
-        const auto clamped_alpha = clamp_pos(alpha);
-        const auto clamped_beta = clamp_pos(beta);
+        // Beta(α, β) = X / (X + Y) with X ~ Gamma(α, 1) and Y ~ Gamma(β, 1),
+        // differentiable w.r.t. α and β through the implicit gradients of _standard_gamma
+        const auto x = at::_standard_gamma(clamp_pos(alpha));
+        const auto y = at::_standard_gamma(clamp_pos(beta));
 
-        const auto u =
-            torch::clamp(torch::rand_like(clamped_alpha + clamped_beta), EPSILON, 1.0 - EPSILON);
-        const auto inner =
-            torch::clamp(1.0 - torch::pow(1.0 - u, 1.0 / clamped_beta), EPSILON, 1.0);
-
-        return clamp_unit_open(torch::pow(inner, 1.0 / clamped_alpha)) * 2.f - 1.f;
+        const auto u = torch::clamp(x / clamp_pos(x + y), EPSILON, 1.0 - EPSILON);
+        return u * 2.f - 1.f;
     }
 
     torch::Tensor beta_law_log_proba(
         const torch::Tensor &x, const torch::Tensor &alpha, const torch::Tensor &beta) {
-        const auto clamped_alpha = torch::clamp_min(alpha, EPSILON);
-        const auto clamped_beta = torch::clamp_min(beta, EPSILON);
+        const auto clamped_alpha = clamp_pos(alpha);
+        const auto clamped_beta = clamp_pos(beta);
 
         constexpr float eps = 1e-6f;
         const auto y = torch::clamp((x + 1.f) / 2.f, eps, 1.f - eps);
-        const auto ya = torch::clamp(torch::pow(y, clamped_alpha), eps, 1.f - eps);
 
-        const auto logp = torch::log(clamped_alpha) + torch::log(clamped_beta)
-                          + (clamped_alpha - 1.0) * torch::log(y)
-                          + (clamped_beta - 1.0) * torch::log1p(-ya);
-
-        return logp - std::log(2.0);
+        return (clamped_alpha - 1.0) * torch::log(y) + (clamped_beta - 1.0) * torch::log1p(-y)
+               - log_beta_function(clamped_alpha, clamped_beta) - std::log(2.0);
     }
 
     torch::Tensor beta_law_entropy(const torch::Tensor &alpha, const torch::Tensor &beta) {
         const auto clamped_alpha = clamp_pos(alpha);
         const auto clamped_beta = clamp_pos(beta);
 
-        // Euler–Mascheroni constant
-        constexpr double EULER_GAMMA = 0.57721566490153286060651209;
+        return log_beta_function(clamped_alpha, clamped_beta)
+               - (clamped_alpha - 1.0) * torch::digamma(clamped_alpha)
+               - (clamped_beta - 1.0) * torch::digamma(clamped_beta)
+               + (clamped_alpha + clamped_beta - 2.0) * torch::digamma(clamped_alpha + clamped_beta)
+               + std::log(2.0);
+    }
 
-        const auto H_b =
-            torch::digamma(clamped_beta + 1.0) + EULER_GAMMA;// harmonic number extension
-        return 1.0 - 1.0 / clamped_alpha + (1.0 - 1.0 / clamped_beta) * H_b
-               - torch::log(clamped_alpha * clamped_beta);
+    torch::Tensor beta_law_mean_action(const torch::Tensor &alpha, const torch::Tensor &beta) {
+        const auto clamped_alpha = clamp_pos(alpha);
+        const auto clamped_beta = clamp_pos(beta);
+
+        return 2.f * clamped_alpha / (clamped_alpha + clamped_beta) - 1.f;
     }
 
     float beta_law_target_entropy(const int &nb_actions) {

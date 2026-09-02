@@ -34,7 +34,8 @@ namespace arenai::view {
 
         VulkanRenderer(
             std::shared_ptr<VulkanDevice> device, glm::vec3 light_pos,
-            std::shared_ptr<AbstractCamera> camera, bool with_shadows);
+            std::shared_ptr<AbstractCamera> camera, bool with_shadows,
+            const ShadowSettings &shadow_settings = {});
         ~VulkanRenderer() override;
 
         void

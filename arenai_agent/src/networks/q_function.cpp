@@ -26,7 +26,8 @@ namespace arenai::agent {
           sensors_encoder(register_module(
               "sensors_encoder",
               torch::nn::Sequential(
-                  torch::nn::Linear(nb_sensors, hidden_size_sensors),
+                  torch::nn::Linear(
+                      torch::nn::LinearOptions(nb_sensors, hidden_size_sensors).bias(false)),
                   torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_sensors})),
                   torch::nn::SiLU()))),
           continuous_action_encoder(register_module(

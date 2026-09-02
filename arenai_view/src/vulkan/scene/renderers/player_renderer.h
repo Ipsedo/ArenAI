@@ -22,7 +22,8 @@ namespace arenai::view {
         VulkanPlayerRenderer(
             const std::shared_ptr<VulkanDevice> &device,
             std::shared_ptr<WindowFrameContext> frame_context, int width, int height,
-            glm::vec3 light_pos, const std::shared_ptr<AbstractCamera> &camera);
+            glm::vec3 light_pos, const std::shared_ptr<AbstractCamera> &camera, bool shadows,
+            int shadow_map_size, int msaa_samples);
 
         void add_hud_drawable(std::unique_ptr<AbstractHudDrawable> hud_drawable) override;
 
@@ -50,6 +51,7 @@ namespace arenai::view {
 
         int width_;
         int height_;
+        int msaa_samples_;
 
         std::shared_ptr<WindowFrameContext> frame_context_;
 

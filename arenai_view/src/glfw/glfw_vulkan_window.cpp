@@ -5,22 +5,82 @@
 #include "./glfw_vulkan_window.h"
 
 #include <algorithm>
+#include <cctype>
 #include <iostream>
 #include <stdexcept>
+
+#include <arenai_controller/input_names.h>
 
 namespace arenai::view {
 
     namespace {
+        // both directions rely on A..Z, 0..9 and F1..F12 being contiguous in
+        // GLFW and in controller::Key
+        constexpr std::pair<int, controller::Key> SPECIAL_KEYS[] = {
+            {GLFW_KEY_UP, controller::Key::Up},
+            {GLFW_KEY_DOWN, controller::Key::Down},
+            {GLFW_KEY_LEFT, controller::Key::Left},
+            {GLFW_KEY_RIGHT, controller::Key::Right},
+            {GLFW_KEY_SPACE, controller::Key::Space},
+            {GLFW_KEY_ESCAPE, controller::Key::Escape},
+            {GLFW_KEY_ENTER, controller::Key::Enter},
+            {GLFW_KEY_TAB, controller::Key::Tab},
+            {GLFW_KEY_BACKSPACE, controller::Key::Backspace},
+            {GLFW_KEY_INSERT, controller::Key::Insert},
+            {GLFW_KEY_DELETE, controller::Key::Delete},
+            {GLFW_KEY_HOME, controller::Key::Home},
+            {GLFW_KEY_END, controller::Key::End},
+            {GLFW_KEY_PAGE_UP, controller::Key::PageUp},
+            {GLFW_KEY_PAGE_DOWN, controller::Key::PageDown},
+            {GLFW_KEY_LEFT_SHIFT, controller::Key::LeftShift},
+            {GLFW_KEY_RIGHT_SHIFT, controller::Key::RightShift},
+            {GLFW_KEY_LEFT_CONTROL, controller::Key::LeftControl},
+            {GLFW_KEY_RIGHT_CONTROL, controller::Key::RightControl},
+            {GLFW_KEY_LEFT_ALT, controller::Key::LeftAlt},
+            {GLFW_KEY_RIGHT_ALT, controller::Key::RightAlt},
+            {GLFW_KEY_COMMA, controller::Key::Comma},
+            {GLFW_KEY_PERIOD, controller::Key::Period},
+            {GLFW_KEY_SEMICOLON, controller::Key::Semicolon},
+            {GLFW_KEY_APOSTROPHE, controller::Key::Apostrophe},
+            {GLFW_KEY_SLASH, controller::Key::Slash},
+            {GLFW_KEY_BACKSLASH, controller::Key::Backslash},
+            {GLFW_KEY_MINUS, controller::Key::Minus},
+            {GLFW_KEY_EQUAL, controller::Key::Equal},
+            {GLFW_KEY_LEFT_BRACKET, controller::Key::LeftBracket},
+            {GLFW_KEY_RIGHT_BRACKET, controller::Key::RightBracket},
+            {GLFW_KEY_GRAVE_ACCENT, controller::Key::Grave},
+        };
+
+        controller::Key shift_key(const controller::Key base, const int offset) {
+            return static_cast<controller::Key>(static_cast<int>(base) + offset);
+        }
+
         controller::Key to_key(const int glfw_key) {
-            switch (glfw_key) {
-                case GLFW_KEY_W: return controller::Key::W;
-                case GLFW_KEY_A: return controller::Key::A;
-                case GLFW_KEY_S: return controller::Key::S;
-                case GLFW_KEY_D: return controller::Key::D;
-                case GLFW_KEY_SPACE: return controller::Key::Space;
-                case GLFW_KEY_ESCAPE: return controller::Key::Escape;
-                default: return controller::Key::Unknown;
-            }
+            if (glfw_key >= GLFW_KEY_A && glfw_key <= GLFW_KEY_Z)
+                return shift_key(controller::Key::A, glfw_key - GLFW_KEY_A);
+            if (glfw_key >= GLFW_KEY_0 && glfw_key <= GLFW_KEY_9)
+                return shift_key(controller::Key::Num0, glfw_key - GLFW_KEY_0);
+            if (glfw_key >= GLFW_KEY_F1 && glfw_key <= GLFW_KEY_F12)
+                return shift_key(controller::Key::F1, glfw_key - GLFW_KEY_F1);
+            for (const auto &[glfw, key]: SPECIAL_KEYS)
+                if (glfw == glfw_key) return key;
+            return controller::Key::Unknown;
+        }
+
+        int to_glfw_key(const controller::Key key) {
+            const auto index = static_cast<int>(key);
+            const auto offset = [index](const controller::Key base) {
+                return index - static_cast<int>(base);
+            };
+            if (key >= controller::Key::A && key <= controller::Key::Z)
+                return GLFW_KEY_A + offset(controller::Key::A);
+            if (key >= controller::Key::Num0 && key <= controller::Key::Num9)
+                return GLFW_KEY_0 + offset(controller::Key::Num0);
+            if (key >= controller::Key::F1 && key <= controller::Key::F12)
+                return GLFW_KEY_F1 + offset(controller::Key::F1);
+            for (const auto &[glfw, special]: SPECIAL_KEYS)
+                if (special == key) return glfw;
+            return GLFW_KEY_UNKNOWN;
         }
 
         controller::MouseButton to_mouse_button(const int glfw_button) {
@@ -155,7 +215,10 @@ namespace arenai::view {
         if (!gamepad_callback_) return;
 
         GLFWgamepadstate state;
-        bool found = false;
+        // the selected pad first; unplugged or never selected falls back to
+        // the first connected one
+        bool found = selected_gamepad_ >= 0 && glfwJoystickIsGamepad(selected_gamepad_)
+                     && glfwGetGamepadState(selected_gamepad_, &state);
         for (int jid = GLFW_JOYSTICK_1; jid <= GLFW_JOYSTICK_LAST && !found; jid++)
             found = glfwJoystickIsGamepad(jid) && glfwGetGamepadState(jid, &state);
         if (!found) {
@@ -276,6 +339,36 @@ namespace arenai::view {
                 return {mode->width, mode->height};
 
         return framebuffer_size();
+    }
+
+    std::vector<GamepadInfo> GlfwVulkanWindow::list_gamepads() const {
+        std::vector<GamepadInfo> gamepads;
+        for (int jid = GLFW_JOYSTICK_1; jid <= GLFW_JOYSTICK_LAST; jid++) {
+            if (!glfwJoystickIsGamepad(jid)) continue;
+            const char *name = glfwGetGamepadName(jid);
+            const char *guid = glfwGetJoystickGUID(jid);
+            gamepads.push_back(
+                {.id = jid,
+                 .name = name != nullptr ? name : "Gamepad",
+                 .guid = guid != nullptr ? guid : ""});
+        }
+        return gamepads;
+    }
+
+    void GlfwVulkanWindow::select_gamepad(const int id) { selected_gamepad_ = id; }
+
+    std::string GlfwVulkanWindow::key_label(const controller::Key key) const {
+        // layout-aware name for printable keys (Key::Q reads "A" on AZERTY);
+        // GLFW returns nullptr for the non-printable ones
+        if (const int glfw_key = to_glfw_key(key); glfw_key != GLFW_KEY_UNKNOWN)
+            if (const char *name = glfwGetKeyName(glfw_key, 0); name != nullptr && *name != '\0') {
+                std::string label(name);
+                std::ranges::transform(label, label.begin(), [](const unsigned char c) {
+                    return static_cast<char>(std::toupper(c));
+                });
+                return label;
+            }
+        return controller::to_string(key);
     }
 
     std::vector<const char *> GlfwVulkanWindow::required_instance_extensions() const {

@@ -64,33 +64,6 @@ namespace arenai::agent {
     torch::Tensor ConstantTargetEntropy::target_entropy() const { return initial_target; }
 
     /*
-     * Target entropy cosine annealing
-     */
-
-    CosineAnnealingTargetEntropy::CosineAnnealingTargetEntropy(
-        const float initial_value, const float final_value, const int64_t warmup_env_step)
-        : initial(initial_value), final(final_value),
-          warmup_env_step(std::max<int64_t>(1, warmup_env_step)),
-          current_step(register_buffer(
-              "current_step", torch::zeros({1}, torch::TensorOptions().dtype(torch::kLong)))) {}
-
-    torch::Tensor CosineAnnealingTargetEntropy::target_entropy() const {
-        const float progress = std::min(
-            1.f,
-            static_cast<float>(current_step.item<int64_t>()) / static_cast<float>(warmup_env_step));
-        const float cosine = 0.5f * (1.f - std::cos(std::numbers::pi_v<float> * progress));
-
-        return torch::tensor(
-            {initial + (final - initial) * cosine},
-            torch::TensorOptions().device(current_step.device()));
-    }
-
-    void CosineAnnealingTargetEntropy::step(const int64_t nb_env_steps) {
-        const torch::NoGradGuard no_grad;
-        current_step += nb_env_steps;
-    }
-
-    /*
      * PID Lagrangian
      */
 
@@ -101,15 +74,11 @@ namespace arenai::agent {
           previous_entropy(register_buffer("previous_entropy", torch::zeros({1, nb_alphas}))),
           has_previous(register_buffer("has_previous", torch::zeros({1}))),
           integral(register_buffer(
-              "integral",
-              torch::full(
-                  {1, nb_alphas}, std::log(std::clamp(initial_alpha, MIN_ALPHA, MAX_ALPHA))))),
-          log_alpha_tensor(register_buffer(
-              "log_alpha",
-              torch::full(
-                  {1, nb_alphas}, std::log(std::clamp(initial_alpha, MIN_ALPHA, MAX_ALPHA))))) {}
+              "integral", torch::full({1, nb_alphas}, std::clamp(initial_alpha, 0.f, MAX_ALPHA)))),
+          alpha_tensor(register_buffer(
+              "alpha", torch::full({1, nb_alphas}, std::clamp(initial_alpha, 0.f, MAX_ALPHA)))) {}
 
-    torch::Tensor PidLagrangianAlphaParameters::alpha() const { return log_alpha_tensor.exp(); }
+    torch::Tensor PidLagrangianAlphaParameters::alpha() const { return alpha_tensor; }
 
     void PidLagrangianAlphaParameters::update(
         const torch::Tensor &entropy, const torch::Tensor &target_entropy) const {
@@ -119,16 +88,14 @@ namespace arenai::agent {
         const auto error =
             torch::mean(target_entropy.detach() - entropy.detach(), 0, true).view_as(integral);
 
-        integral.copy_(
-            torch::clamp(integral + k_i * error, std::log(MIN_ALPHA), std::log(MAX_ALPHA)));
+        integral.copy_(torch::clamp(integral + k_i * error, 0.f, MAX_ALPHA));
 
-        const auto derivative =
-            has_previous * torch::clamp_min(previous_entropy - mean_entropy, 0.f);
+        const auto derivative = has_previous * (previous_entropy - mean_entropy);
 
         previous_entropy.copy_(mean_entropy);
         has_previous.fill_(1.f);
 
-        log_alpha_tensor.copy_(k_p * error + integral + k_d * derivative);
+        alpha_tensor.copy_(torch::clamp(k_p * error + integral + k_d * derivative, 0.f, MAX_ALPHA));
     }
 
 }// namespace arenai::agent

@@ -7,8 +7,6 @@
 
 #include <torch/torch.h>
 
-#include "../networks/constants.h"
-
 namespace arenai::agent {
 
     void init_hidden_weights(torch::nn::Module &module);

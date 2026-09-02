@@ -13,22 +13,28 @@ namespace arenai::desktop {
         std::shared_ptr<AbstractGamepadCallback> game_gamepad,
         std::shared_ptr<AbstractKeyboardCallback> pause_input,
         std::shared_ptr<AbstractGamepadCallback> pause_gamepad_input,
-        std::function<void()> on_pause_toggle)
+        std::function<void()> on_pause_toggle, const KeyboardBindings &keyboard_bindings)
         : game_keyboard_(std::move(game_keyboard)), game_gamepad_(std::move(game_gamepad)),
           pause_input_(std::move(pause_input)),
           pause_gamepad_input_(std::move(pause_gamepad_input)),
-          on_pause_toggle_(std::move(on_pause_toggle)) {}
+          on_pause_toggle_(std::move(on_pause_toggle)), keyboard_bindings_(keyboard_bindings) {}
 
     void GameInputRouter::set_paused(const bool paused) {
         paused_ = paused;
 
-        // keys held when the popup opens would otherwise stay "pressed" for
+        // inputs held when the popup opens would otherwise stay "pressed" for
         // the whole pause (their release goes to the menu): zero the movement
-        // state with synthetic releases
+        // state with synthetic releases of the bound inputs
         if (paused_ && game_keyboard_)
-            for (const auto key:
-                 {controller::Key::W, controller::Key::A, controller::Key::S, controller::Key::D})
-                game_keyboard_->on_key(key, controller::InputAction::Release);
+            for (const auto &slot:
+                 {keyboard_bindings_.forward, keyboard_bindings_.backward,
+                  keyboard_bindings_.turn_left, keyboard_bindings_.turn_right}) {
+                if (!slot) continue;
+                if (const auto *key = std::get_if<controller::Key>(&*slot))
+                    game_keyboard_->on_key(*key, controller::InputAction::Release);
+                else if (const auto *button = std::get_if<controller::MouseButton>(&*slot))
+                    game_keyboard_->on_mouse_button(*button, controller::InputAction::Release);
+            }
     }
 
     const std::shared_ptr<controller::AbstractKeyboardCallback> &

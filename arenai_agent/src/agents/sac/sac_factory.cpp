@@ -13,10 +13,11 @@ namespace arenai::agent {
         const int vision_height, const int vision_width, const int nb_sensors,
         const int nb_continuous_actions, const int nb_discrete_actions, const torch::Device device,
         const SacHyperParams &params)
-        : actor(std::make_shared<Actor>(
-            vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_actions,
-            params.hidden_size_sensors, params.actor_hidden_sizes, params.vision_channels,
-            params.group_norm_nums, params.initial_sigma, params.initial_fire_proba)),
+        : config(cli_fields_to_map(sac_cli_fields(), params)),
+          actor(std::make_shared<Actor>(
+              vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_actions,
+              params.hidden_size_sensors, params.actor_hidden_sizes, params.vision_channels,
+              params.group_norm_nums, params.initial_sigma, params.initial_fire_proba)),
           replay_buffer(std::make_shared<SacReplayBuffer>(params.replay_buffer_size)),
           collector(std::make_shared<SacStepCollector>(replay_buffer)),
           agent(std::make_shared<TorchSacAgent>(actor, device, collector)),
@@ -26,9 +27,8 @@ namespace arenai::agent {
               params.alpha_learning_rate, params.hidden_size_sensors, params.hidden_size_actions,
               params.critic_hidden_sizes, params.vision_channels, params.group_norm_nums, device,
               params.metric_window_size, params.tau, params.gamma, params.train_every,
-              params.epochs, params.batch_size, params.target_entropy_init,
-              params.target_entropy_final, params.target_entropy_warmup_steps,
-              params.target_fire_proba)) {}
+              params.epochs, params.batch_size, params.continuous_target_entropy,
+              params.discrete_target_entropy_factor)) {}
 
     std::shared_ptr<AbstractTorchAgent> SacTorchAgentFactory::get_agent() { return agent; }
 
@@ -37,5 +37,7 @@ namespace arenai::agent {
     }
 
     std::shared_ptr<AbstractTrainer> SacTorchAgentFactory::get_trainer() { return trainer; }
+
+    std::map<std::string, std::string> SacTorchAgentFactory::get_config() const { return config; }
 
 }// namespace arenai::agent

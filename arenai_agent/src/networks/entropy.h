@@ -62,30 +62,12 @@ namespace arenai::agent {
     };
 
     /*
-     * Warmup
-     */
-
-    class CosineAnnealingTargetEntropy final : public AbstractTargetEntropy {
-    public:
-        // warmup_env_step: number of environment steps to go from initial_value to final_value
-        CosineAnnealingTargetEntropy(
-            float initial_value, float final_value, int64_t warmup_env_step);
-
-        torch::Tensor target_entropy() const override;
-        void step(int64_t nb_env_steps) override;
-
-    private:
-        float initial;
-        float final;
-        int64_t warmup_env_step;
-
-        torch::Tensor current_step;
-    };
-
-    /*
      * Lagrangian
      */
 
+    // Inequality constraint H >= target: alpha is a Lagrange multiplier, projected on
+    // [0, MAX_ALPHA] (Stooke et al. 2020) — a bonus while entropy sits under the target,
+    // inactive (0) once the constraint is satisfied
     class PidLagrangianAlphaParameters final : public torch::nn::Module {
     public:
         PidLagrangianAlphaParameters(
@@ -96,7 +78,6 @@ namespace arenai::agent {
         torch::Tensor alpha() const;
 
     private:
-        static constexpr float MIN_ALPHA = 1e-8f;
         static constexpr float MAX_ALPHA = 1.f;
 
         float k_p, k_i, k_d;
@@ -105,7 +86,7 @@ namespace arenai::agent {
         torch::Tensor has_previous;
 
         torch::Tensor integral;
-        torch::Tensor log_alpha_tensor;
+        torch::Tensor alpha_tensor;
     };
 
 }// namespace arenai::agent

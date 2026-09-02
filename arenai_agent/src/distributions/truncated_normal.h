@@ -31,6 +31,10 @@ namespace arenai::agent {
     float truncated_normal_target_entropy(
         int nb_actions, float sigma, float min_value = MIN_VALUE, float max_value = MAX_VALUE);
 
+    torch::Tensor truncated_normal_mean(
+        const torch::Tensor &mu, const torch::Tensor &sigma, float min_value = MIN_VALUE,
+        float max_value = MAX_VALUE);
+
 }// namespace arenai::agent
 
 #endif//ARENAI_AGENT_HOST_TRUNCATED_NORMAL_H

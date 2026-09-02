@@ -10,12 +10,14 @@ find_package(GTest REQUIRED)
 file(GLOB_RECURSE SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
 # arenai_desktop is an executable, not a library: the sources under test are
-# compiled straight into the test binary. gui/ (RmlUi) and the executable
-# entry points (main.cpp, game.cpp) stay out.
+# compiled straight into the test binary
 set(ARENAI_DESKTOP_TESTED_SRC
         "${CMAKE_CURRENT_SOURCE_DIR}/../src/core/game_environment.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../src/core/user_preferences.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../src/controller/bindings.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../src/controller/gamepad.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../src/controller/mouse_keyboard.cpp")
+        "${CMAKE_CURRENT_SOURCE_DIR}/../src/controller/mouse_keyboard.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../src/gui/rml/input.cpp")
 
 add_executable(arenai_desktop_tests "${SRC}" ${ARENAI_DESKTOP_TESTED_SRC})
 
@@ -30,6 +32,7 @@ target_link_libraries(
         arenai_utils
         arenai_core
         arenai_agent
+        RmlUi::Core
 )
 target_include_directories(arenai_desktop_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 

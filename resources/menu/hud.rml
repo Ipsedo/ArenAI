@@ -4,6 +4,14 @@
     <link type="text/rcss" href="hud.rcss"/>
 </head>
 <body>
+    <!-- fixed screen-center anchor: code rotates one arc child toward each
+         impact the player suffers and fades it out -->
+    <div id="damage-arcs">
+        <div class="damage-arc"></div>
+        <div class="damage-arc"></div>
+        <div class="damage-arc"></div>
+        <div class="damage-arc"></div>
+    </div>
     <!-- anchor moved from code to the projected aim point; the crosshair
          and the hit marker are both centered on it -->
     <div id="reticle">

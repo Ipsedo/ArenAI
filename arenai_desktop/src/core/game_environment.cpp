@@ -5,6 +5,7 @@
 #include "./game_environment.h"
 
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 
 #include <arenai_agent/file_reader.h>
@@ -19,16 +20,16 @@ namespace arenai::desktop {
     DesktopGameEnvironment::DesktopGameEnvironment(
         const std::filesystem::path &asset_folder_path,
         const std::shared_ptr<view::AbstractWindowedGraphicBackend> &graphics_backend,
-        const int nb_tanks, const int vision_height, const int vision_width,
-        const float wanted_frequency, const ControllerKind &controller_kind)
+        const gui::GameSettings &settings, const int vision_height, const int vision_width,
+        const float wanted_frequency)
         : BaseTanksEnvironment(
             std::make_shared<agent::DesktopAssetFileReader>(asset_folder_path),
-            view::make_vulkan_backend(), nb_tanks, wanted_frequency, vision_height, vision_width, 8,
-            true),
+            view::make_vulkan_backend(settings.vision_gpu), settings.nb_tanks, wanted_frequency,
+            vision_height, vision_width, 8, true),
           windowed_backend(graphics_backend),
           asset_file_reader(std::make_shared<agent::DesktopAssetFileReader>(asset_folder_path)),
           player_tank(std::nullptr_t()), player_renderer(std::nullptr_t()),
-          wanted_frequency(wanted_frequency), controller_kind(controller_kind) {}
+          wanted_frequency(wanted_frequency), settings(settings) {}
 
     void DesktopGameEnvironment::on_draw(
         const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
@@ -87,6 +88,41 @@ namespace arenai::desktop {
         return player_tank->consume_hits();
     }
 
+    std::vector<float> DesktopGameEnvironment::consume_damage_screen_angles() const {
+        std::vector<float> angles;
+        if (!player_tank) return angles;
+
+        const auto impacts = player_tank->consume_received_impacts();
+        if (impacts.empty()) return angles;
+
+        constexpr float minimal_length = 1e-4f;
+
+        const auto camera = player_tank->get_camera();
+        const glm::vec3 up = glm::normalize(camera->up());
+        const glm::vec3 view = camera->look() - camera->pos();
+        const glm::vec3 forward_flat = view - up * glm::dot(view, up);
+        if (glm::length(forward_flat) < minimal_length) return angles;
+
+        const glm::vec3 forward = glm::normalize(forward_flat);
+        const glm::vec3 right = glm::normalize(glm::cross(forward, up));
+
+        const glm::vec3 chassis_center =
+            player_tank->get_chassis()->get_model_matrix() * glm::vec4(0.f, 0.f, 0.f, 1.f);
+
+        for (const auto &[fire_position, impact_position, damages]: impacts) {
+            // the impact lies on the face exposed to the shooter: its offset
+            // from the chassis center points at where the shot came from
+            const glm::vec3 direction = fire_position - chassis_center;
+            const glm::vec3 direction_flat = direction - up * glm::dot(direction, up);
+            if (glm::length(direction_flat) < minimal_length) continue;
+
+            angles.push_back(
+                std::atan2(glm::dot(direction_flat, right), glm::dot(direction_flat, forward)));
+        }
+
+        return angles;
+    }
+
     std::shared_ptr<controller::AbstractKeyboardCallback>
     DesktopGameEnvironment::keyboard_handler() const {
         return keyboard_handler_;
@@ -106,18 +142,22 @@ namespace arenai::desktop {
     void DesktopGameEnvironment::on_reset_drawables(
         const std::unique_ptr<model::AbstractPhysicEngine> &engine) {
         player_renderer = windowed_backend->make_player_renderer(
-            glm::vec3(200, 300, 200), player_tank->get_camera());
+            glm::vec3(200, 300, 200), player_tank->get_camera(),
+            {.shadows = settings.shadow_quality != gui::ShadowQuality::Off,
+             .shadow_map_size = gui::shadow_map_size(settings.shadow_quality),
+             .msaa_samples = settings.msaa_samples});
 
-        if (controller_kind == ControllerKind::Gamepad) {
-            const auto player_controller_handler = std::make_shared<PlayerGamepadHandler>();
+        if (settings.controller_kind == ControllerKind::Gamepad) {
+            const auto player_controller_handler =
+                std::make_shared<PlayerGamepadHandler>(settings.bindings.gamepad);
 
             for (auto &ctrl: player_tank->get_controllers())
                 player_controller_handler->add_controller(ctrl);
 
             gamepad_handler_ = player_controller_handler;
-        } else if (controller_kind == ControllerKind::Keyboard) {
+        } else if (settings.controller_kind == ControllerKind::Keyboard) {
             const auto player_controller_handler = std::make_shared<PlayerMouseKeyboardHandler>(
-                windowed_backend->get_window(), *player_renderer);
+                windowed_backend->get_window(), *player_renderer, settings.bindings.keyboard);
 
             for (auto &ctrl: player_tank->get_controllers())
                 player_controller_handler->add_controller(ctrl);

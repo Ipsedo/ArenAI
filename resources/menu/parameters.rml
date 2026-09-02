@@ -22,9 +22,10 @@
 
         <div class="param-row">
             <span class="param-label">Controls</span>
-            <div class="toggle-group">
+            <div class="toggle-group controls-row">
                 <div class="toggle" data-class-selected="controller=='keyboard'" data-event-click="set_controller('keyboard')"><div class="fill">Mouse + Keyboard</div></div>
                 <div class="toggle" data-class-selected="controller=='gamepad'" data-event-click="set_controller('gamepad')"><div class="fill">Gamepad</div></div>
+                <div class="button configure" data-event-click="open_controls()">Configure</div>
             </div>
         </div>
 
@@ -36,7 +37,12 @@
             </div>
         </div>
 
-        <h2>Trained SAC folder</h2>
+        <div class="param-row">
+            <span class="param-label">Graphics</span>
+            <div class="button configure left" id="graphics-configure" data-event-click="open_graphics()">Configure</div>
+        </div>
+
+        <h2>Trained AI model folder</h2>
         <div class="current-dir">{{current_dir}}</div>
         <div class="file-list" id="file-list">
             <div class="file-entry" data-for="entries" data-event-click="enter_dir(it_index)">{{it}}</div>

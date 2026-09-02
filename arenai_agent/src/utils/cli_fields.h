@@ -5,6 +5,9 @@
 #ifndef ARENAI_AGENT_HOST_CLI_FIELDS_H
 #define ARENAI_AGENT_HOST_CLI_FIELDS_H
 
+#include <iomanip>
+#include <map>
+#include <sstream>
 #include <string>
 #include <tuple>
 #include <variant>
@@ -85,6 +88,37 @@ namespace arenai::agent {
     }
 
     /*
+     * Format fields
+     */
+
+    inline std::string format_cli_value(const int value) { return std::to_string(value); }
+
+    inline std::string format_cli_value(const float value) {
+        std::ostringstream stream;
+        stream << std::setprecision(6) << value;
+        return stream.str();
+    }
+
+    inline std::string format_cli_value(const std::vector<int> &value) {
+        std::ostringstream stream;
+        stream << "[";
+        for (int i = 0; i < value.size(); i++) stream << (i ? ", " : "") << value[i];
+        stream << "]";
+        return stream.str();
+    }
+
+    inline std::string format_cli_value(const std::vector<std::tuple<int, int>> &value) {
+        std::ostringstream stream;
+        stream << "[";
+        for (int i = 0; i < value.size(); i++) {
+            const auto &[in_channels, out_channels] = value[i];
+            stream << (i ? ", " : "") << "(" << in_channels << ", " << out_channels << ")";
+        }
+        stream << "]";
+        return stream.str();
+    }
+
+    /*
      * Add & read cli arg
      */
 
@@ -97,6 +131,22 @@ namespace arenai::agent {
                     add_cli_field(parser, field.name, default_params.*member);
                 },
                 field.member);
+    }
+
+    // the resolved hyper-parameters keyed by option name, dashes stripped: what the
+    // run was actually launched with
+    template<typename S>
+    std::map<std::string, std::string>
+    cli_fields_to_map(const std::vector<CliField<S>> &fields, const S &params) {
+        std::map<std::string, std::string> config;
+        for (const auto &field: fields)
+            std::visit(
+                [&](const auto member) {
+                    config[field.name.substr(field.name.find_first_not_of('-'))] =
+                        format_cli_value(params.*member);
+                },
+                field.member);
+        return config;
     }
 
     template<typename S>

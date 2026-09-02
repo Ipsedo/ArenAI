@@ -10,6 +10,8 @@
 
 #include <arenai_controller/callback.h>
 
+#include "./bindings.h"
+
 namespace arenai::desktop {
 
     // Single owner of the window's input slots during a game: forwards events
@@ -25,7 +27,7 @@ namespace arenai::desktop {
             std::shared_ptr<AbstractGamepadCallback> game_gamepad,
             std::shared_ptr<AbstractKeyboardCallback> pause_input,
             std::shared_ptr<AbstractGamepadCallback> pause_gamepad_input,
-            std::function<void()> on_pause_toggle);
+            std::function<void()> on_pause_toggle, const KeyboardBindings &keyboard_bindings);
 
         void set_paused(bool paused);
 
@@ -51,6 +53,8 @@ namespace arenai::desktop {
         std::shared_ptr<AbstractKeyboardCallback> pause_input_;
         std::shared_ptr<AbstractGamepadCallback> pause_gamepad_input_;
         std::function<void()> on_pause_toggle_;
+        // movement slots to zero with synthetic releases when the pause opens
+        KeyboardBindings keyboard_bindings_;
 
         bool paused_ = false;
     };

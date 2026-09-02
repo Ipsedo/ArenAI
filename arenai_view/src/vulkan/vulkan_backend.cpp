@@ -16,12 +16,13 @@ namespace arenai::view {
      * VulkanBackend (headless)
      */
 
-    VulkanBackend::VulkanBackend()
+    VulkanBackend::VulkanBackend(const std::string &gpu_name)
         : VulkanBackend(
             std::make_shared<VulkanInstance>(), DeviceCriteria{
                                                     .prefer_integrated = true,
                                                     .surface = VK_NULL_HANDLE,
-                                                    .device_env_var = "ARENAI_VK_DEVICE"}) {}
+                                                    .device_env_var = "ARENAI_VK_DEVICE",
+                                                    .preferred_device = gpu_name}) {}
 
     VulkanBackend::VulkanBackend(
         const std::shared_ptr<VulkanInstance> &instance, const DeviceCriteria &criteria)
@@ -57,8 +58,13 @@ namespace arenai::view {
      * VulkanViewFactory (headless part; windowed part in src/glfw)
      */
 
-    std::unique_ptr<AbstractGraphicBackend> make_vulkan_backend() {
-        return std::make_unique<VulkanBackend>();
+    std::unique_ptr<AbstractGraphicBackend> make_vulkan_backend(const std::string &gpu_name) {
+        return std::make_unique<VulkanBackend>(gpu_name);
+    }
+
+    std::vector<std::string> list_vulkan_gpus() {
+        const VulkanInstance instance;
+        return list_device_names(instance.handle());
     }
 
 }// namespace arenai::view

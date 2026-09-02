@@ -155,11 +155,11 @@ namespace arenai::model {
         engine.add_jolt_item_producer([c = canon_item] { return c->produce_jolt_items(); });
     }
 
-    std::shared_ptr<view::AbstractCamera> JoltTank::get_camera() { return camera; }
+    std::shared_ptr<view::AbstractCamera> JoltTank::get_camera() const { return camera; }
 
-    std::vector<std::shared_ptr<Item>> JoltTank::get_items() { return items; }
+    std::vector<std::shared_ptr<Item>> JoltTank::get_items() const { return items; }
 
-    std::vector<std::shared_ptr<controller::Controller>> JoltTank::get_controllers() {
+    std::vector<std::shared_ptr<controller::Controller>> JoltTank::get_controllers() const {
         return controllers;
     }
 
@@ -167,19 +167,22 @@ namespace arenai::model {
         return {{ShellItem::NAME, ShellItem::load_shape(file_reader)}};
     }
 
-    bool JoltTank::is_dead() {
+    bool JoltTank::is_dead() const {
         return std::ranges::any_of(life_items, [](const LifeItem *li) { return li->is_dead(); });
     }
 
-    int JoltTank::get_received_hits() const {
-        int hits = 0;
-        for (const auto life_item: life_items) hits += life_item->consume_hits_received();
-        return hits;
+    std::vector<ImpactInfo> JoltTank::consume_received_impacts() const {
+        std::vector<ImpactInfo> impacts;
+        for (const auto life_item: life_items) {
+            auto item_impacts = life_item->consume_hits_received();
+            impacts.insert(impacts.end(), item_impacts.begin(), item_impacts.end());
+        }
+        return impacts;
     }
 
-    std::shared_ptr<Item> JoltTank::get_chassis() { return chassis; }
+    std::shared_ptr<Item> JoltTank::get_chassis() const { return chassis; }
 
-    std::shared_ptr<Item> JoltTank::get_canon() { return canon; }
+    std::shared_ptr<Item> JoltTank::get_canon() const { return canon; }
 
     void JoltTank::kill_life_items() const {
         for (const auto life_item: life_items) life_item->kill();

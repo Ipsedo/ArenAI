@@ -24,8 +24,7 @@ namespace arenai::agent {
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
             float tau, float gamma, int train_every, int epochs, int batch_size,
-            float target_entropy_init, float target_entropy_final, int target_entropy_warmup_step,
-            float target_fire_proba);
+            float continuous_target_entropy, float discrete_target_entropy_factor);
 
         void step() override;
 

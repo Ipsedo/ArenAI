@@ -7,14 +7,25 @@
 
 #include <functional>
 #include <memory>
+#include <string>
 #include <tuple>
 #include <utility>
+#include <vector>
 
 #include <arenai_controller/callback.h>
 
 using namespace arenai;
 
 namespace arenai::view {
+
+    // a connected, mapped gamepad as the window exposes it: `id` is the
+    // backend's device slot (stable while the pad stays connected), `guid`
+    // identifies the pad model across reconnections
+    struct GamepadInfo {
+        int id;
+        std::string name;
+        std::string guid;
+    };
 
     class AbstractWindow {
     public:
@@ -42,6 +53,18 @@ namespace arenai::view {
         // showing most of it), so UI scale can follow the physical display
         // rather than the window size
         virtual std::tuple<int, int> screen_size() const = 0;
+
+        // connected gamepads, in the backend's slot order
+        virtual std::vector<GamepadInfo> list_gamepads() const = 0;
+        // routes the gamepad callback to this device (an `id` from
+        // list_gamepads); a disconnected or invalid id falls back to the
+        // first connected gamepad
+        virtual void select_gamepad(int id) = 0;
+
+        // user-facing label of the key on the current keyboard layout (e.g.
+        // Key::Q reads "A" on an AZERTY layout); canonical name when the
+        // layout gives none
+        virtual std::string key_label(controller::Key key) const = 0;
     };
 
 }// namespace arenai::view

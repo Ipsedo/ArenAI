@@ -6,15 +6,16 @@
 #define ARENAI_DESKTOP_GAME_ENVIRONMENT_H
 
 #include <optional>
+#include <vector>
 
 #include <arenai_core/environment.h>
 #include <arenai_model/tank.h>
 #include <arenai_view/backend.h>
 #include <arenai_view/renderer.h>
 
-#include "../controller/control_kind.h"
 #include "../controller/gamepad.h"
 #include "../controller/mouse_keyboard.h"
+#include "../gui/menu.h"
 
 namespace arenai::desktop {
 
@@ -23,8 +24,8 @@ namespace arenai::desktop {
         DesktopGameEnvironment(
             const std::filesystem::path &asset_folder_path,
             const std::shared_ptr<view::AbstractWindowedGraphicBackend> &graphics_backend,
-            int nb_tanks, int vision_height, int vision_width, float wanted_frequency,
-            const ControllerKind &controller_kind);
+            const gui::GameSettings &settings, int vision_height, int vision_width,
+            float wanted_frequency);
 
         ~DesktopGameEnvironment() override;
 
@@ -40,6 +41,7 @@ namespace arenai::desktop {
         int get_score() const;
 
         model::PlayerHits consume_player_hits() const;
+        std::vector<float> consume_damage_screen_angles() const;
 
         static constexpr float AIM_DISTANCE = 100.f;
 
@@ -68,7 +70,7 @@ namespace arenai::desktop {
 
         float wanted_frequency;
 
-        ControllerKind controller_kind;
+        gui::GameSettings settings;
     };
 
 }// namespace arenai::desktop

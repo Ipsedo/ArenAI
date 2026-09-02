@@ -2,6 +2,8 @@
 // Created by samuel on 19/03/2023.
 //
 
+#include <utility>
+
 #include <arenai_model/item.h>
 
 using namespace arenai;
@@ -30,7 +32,7 @@ namespace arenai::model {
      */
 
     LifeItem::LifeItem(const float health_points)
-        : health_points(std::max(health_points, 0.f)), already_dead(false), hits_received(0) {}
+        : health_points(std::max(health_points, 0.f)), already_dead(false) {}
 
     bool LifeItem::is_dead() const { return health_points <= 0.f; }
 
@@ -47,21 +49,19 @@ namespace arenai::model {
         already_dead = true;
     }
 
-    float LifeItem::receive_damages(const float damages) {
-        const float new_health_point = std::max(health_points - damages, 0.f);
+    float LifeItem::receive_damages(const ImpactInfo &impact) {
+        const float new_health_point = std::max(health_points - impact.damages, 0.f);
         const float received_damages = health_points - new_health_point;
 
-        if (received_damages > 0.f) hits_received++;
+        if (received_damages > 0.f) hits_received.push_back(impact);
 
         health_points = new_health_point;
 
         return received_damages;
     }
 
-    int LifeItem::consume_hits_received() {
-        const int hits = hits_received;
-        hits_received = 0;
-        return hits;
+    std::vector<ImpactInfo> LifeItem::consume_hits_received() {
+        return std::exchange(hits_received, {});
     }
 
 }// namespace arenai::model

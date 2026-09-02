@@ -11,16 +11,22 @@
 namespace arenai::view {
 
     GlfwVulkanBackend::Bootstrap GlfwVulkanBackend::bootstrap(
-        const int window_width, const int window_height, const std::string &title) {
+        const int window_width, const int window_height, const std::string &title,
+        const std::string &gpu_name) {
         auto window = std::make_shared<GlfwVulkanWindow>(window_width, window_height, title);
         auto instance = std::make_shared<VulkanInstance>(window->required_instance_extensions());
         const VkSurfaceKHR &surface = window->create_surface(instance->handle());
-        return {.window = std::move(window), .instance = std::move(instance), .surface = surface};
+        return {
+            .window = std::move(window),
+            .instance = std::move(instance),
+            .surface = surface,
+            .gpu_name = gpu_name};
     }
 
     GlfwVulkanBackend::GlfwVulkanBackend(
-        const int window_width, const int window_height, const std::string &title)
-        : GlfwVulkanBackend(bootstrap(window_width, window_height, title)) {}
+        const int window_width, const int window_height, const std::string &title,
+        const std::string &gpu_name)
+        : GlfwVulkanBackend(bootstrap(window_width, window_height, title, gpu_name)) {}
 
     GlfwVulkanBackend::GlfwVulkanBackend(Bootstrap bootstrap)
         : VulkanBackend(
@@ -28,7 +34,8 @@ namespace arenai::view {
             DeviceCriteria{
                 .prefer_integrated = false,
                 .surface = bootstrap.surface,
-                .device_env_var = "ARENAI_VK_DEVICE_WINDOW"}),
+                .device_env_var = "ARENAI_VK_DEVICE_WINDOW",
+                .preferred_device = bootstrap.gpu_name}),
           window_(std::move(bootstrap.window)), surface_(bootstrap.surface) {
         frame_context_ =
             std::make_shared<WindowFrameContext>(context()->device(), surface_, [window = window_] {
@@ -43,11 +50,13 @@ namespace arenai::view {
     std::shared_ptr<AbstractWindow> GlfwVulkanBackend::get_window() { return window_; }
 
     std::unique_ptr<AbstractPlayerRenderer> GlfwVulkanBackend::make_player_renderer(
-        const glm::vec3 light_pos, const std::shared_ptr<AbstractCamera> &camera) {
+        const glm::vec3 light_pos, const std::shared_ptr<AbstractCamera> &camera,
+        const PlayerRendererSettings &settings) {
 
         const auto [width, height] = window_->framebuffer_size();
         return std::make_unique<VulkanPlayerRenderer>(
-            context()->device(), frame_context_, width, height, light_pos, camera);
+            context()->device(), frame_context_, width, height, light_pos, camera, settings.shadows,
+            settings.shadow_map_size, settings.msaa_samples);
     }
 
     Rml::RenderInterface &GlfwVulkanBackend::ui_render_interface() {
@@ -88,8 +97,9 @@ namespace arenai::view {
      */
 
     std::unique_ptr<AbstractWindowedGraphicBackend> make_glfw_vulkan_backend(
-        const int window_width, const int window_height, const std::string &title) {
-        return std::make_unique<GlfwVulkanBackend>(window_width, window_height, title);
+        const int window_width, const int window_height, const std::string &title,
+        const std::string &gpu_name) {
+        return std::make_unique<GlfwVulkanBackend>(window_width, window_height, title, gpu_name);
     }
 
 }// namespace arenai::view

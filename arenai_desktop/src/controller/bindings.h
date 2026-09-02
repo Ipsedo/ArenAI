@@ -24,7 +24,7 @@ namespace arenai::desktop {
         std::optional<KeyboardBinding> backward = controller::Key::S;
         std::optional<KeyboardBinding> turn_left = controller::Key::A;
         std::optional<KeyboardBinding> turn_right = controller::Key::D;
-        std::optional<KeyboardBinding> fire = controller::Key::Space;
+        std::optional<KeyboardBinding> fire = controller::MouseButton::Left;
     };
 
     // the six analog channels a pad exposes through the window's callbacks
@@ -51,12 +51,16 @@ namespace arenai::desktop {
 
     struct GamepadBindings {
         std::optional<controller::GamepadButton> fire = controller::GamepadButton::RB;
-        std::optional<GamepadAxisBinding> steer = GamepadAxisBinding{GamepadAxis::LeftStickX};
-        std::optional<GamepadAxisBinding> aim_x = GamepadAxisBinding{GamepadAxis::RightStickX};
-        std::optional<GamepadAxisBinding> aim_y = GamepadAxisBinding{GamepadAxis::RightStickY};
+        std::optional<GamepadAxisBinding> steer =
+            GamepadAxisBinding{.axis = GamepadAxis::LeftStickX};
+        std::optional<GamepadAxisBinding> aim_x =
+            GamepadAxisBinding{.axis = GamepadAxis::RightStickX};
+        std::optional<GamepadAxisBinding> aim_y =
+            GamepadAxisBinding{.axis = GamepadAxis::RightStickY};
         std::optional<GamepadAxisBinding> accelerate =
-            GamepadAxisBinding{GamepadAxis::RightTrigger};
-        std::optional<GamepadAxisBinding> reverse = GamepadAxisBinding{GamepadAxis::LeftTrigger};
+            GamepadAxisBinding{.axis = GamepadAxis::RightTrigger};
+        std::optional<GamepadAxisBinding> reverse =
+            GamepadAxisBinding{.axis = GamepadAxis::LeftTrigger};
         // preferred pad across reconnections; empty = first connected
         std::string device_guid;
         // display only, shown while the preferred pad is unplugged

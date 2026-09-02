@@ -19,7 +19,7 @@ namespace arenai::agent {
     std::shared_ptr<AbstractAgent> ActorAgentFactory::get_agent_impl(
         const int &vision_height, const int &vision_width, const int &nb_sensors,
         const int &nb_continuous_actions, const int &nb_discrete_action) {
-        return std::make_shared<TorchSacAgent>(
+        return std::make_shared<TorchPpoAgent>(
             std::make_shared<Actor>(
                 vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_action,
                 get_value("hidden_size_sensors", 128),

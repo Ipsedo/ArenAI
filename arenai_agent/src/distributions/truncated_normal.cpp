@@ -88,4 +88,13 @@ namespace arenai::agent {
             .item<float>();
     }
 
+    torch::Tensor truncated_normal_mean(
+        const torch::Tensor &mu, const torch::Tensor &sigma, const float min_value,
+        const float max_value) {
+        const auto alpha = (min_value - mu) / sigma;
+        const auto beta = (max_value - mu) / sigma;
+        const auto Z = torch::clamp_min(theta(beta) - theta(alpha), 1e-4f);
+        return mu + sigma * (phi(alpha) - phi(beta)) / Z;
+    }
+
 }// namespace arenai::agent

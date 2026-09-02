@@ -48,7 +48,7 @@ namespace arenai::agent {
                 action.continuous_action = truncated_normal_sample(mu, sigma);
                 action.discrete_action = multinomial_sample(discrete_proba);
             } else {
-                action.continuous_action = mu;
+                action.continuous_action = truncated_normal_mean(mu, sigma);
                 action.discrete_action = multinomial_max_action(discrete_proba);
             }
 

@@ -50,4 +50,18 @@ namespace arenai::agent {
                << ", max=" << std::exp(max_log_sigma) << ")";
     }
 
+    /*
+     * Range sigmoid
+     */
+
+    RangeSigmoidOutput::RangeSigmoidOutput(const float min_value, const float max_value)
+        : min_value(min_value), max_value(max_value) {}
+
+    torch::Tensor RangeSigmoidOutput::forward(const torch::Tensor &input) {
+        return torch::sigmoid(input) * (max_value - min_value) + min_value;
+    }
+
+    void RangeSigmoidOutput::pretty_print(std::ostream &stream) {
+        stream << name() << "(min=" << min_value << ", max=" << max_value << ")";
+    }
 }// namespace arenai::agent

@@ -4,6 +4,7 @@
 
 #include "./init.h"
 
+#include "../distributions/beta_law.h"
 #include "../networks/constants.h"
 
 using namespace arenai;
@@ -38,18 +39,18 @@ namespace arenai::agent {
         }
     }
 
-    void init_sigma_output_weights(torch::nn::Module &module, const float wanted_sigma) {
-        const float min_log_sigma = std::log(SIGMA_MIN);
-        const float max_log_sigma = std::log(SIGMA_MAX);
+    void init_kappa_output_weights(torch::nn::Module &module, const float init_kappa) {
+        // must mirror the kappa head's RangeSigmoidOutput(MIN_KAPPA_SIGMOID, 1) bounds
+        constexpr float min_kappa = MIN_KAPPA_SIGMOID;
+        constexpr float max_kappa = 1.f;
 
-        const auto initial_sigma_sigmoid =
-            (std::log(wanted_sigma) - min_log_sigma) / (max_log_sigma - min_log_sigma);
-        const auto initial_sigma_logit =
-            std::log(initial_sigma_sigmoid / (1.f - initial_sigma_sigmoid));
+        const auto initial_kappa_sigmoid = (init_kappa - min_kappa) / (max_kappa - min_kappa);
+        const auto initial_kappa_logit =
+            std::log(initial_kappa_sigmoid / (1.f - initial_kappa_sigmoid));
 
         if (auto *lin = module.as<torch::nn::Linear>()) {
             torch::nn::init::orthogonal_(lin->weight, 0.01f);
-            if (lin->options.bias()) torch::nn::init::constant_(lin->bias, initial_sigma_logit);
+            if (lin->options.bias()) torch::nn::init::constant_(lin->bias, initial_kappa_logit);
         }
     }
 

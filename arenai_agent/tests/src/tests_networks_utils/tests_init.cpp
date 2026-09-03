@@ -2,6 +2,7 @@
 // Created by samuel on 30/06/2026.
 //
 
+#include <distributions/beta_law.h>
 #include <networks_utils/init.h>
 
 #include <arenai_agent_tests/tests_networks_utils/tests_init.h>
@@ -58,25 +59,26 @@ TEST_F(InitWeightsTest, MuOutputBiasZero) {
     ASSERT_TRUE(torch::allclose(linear->bias, torch::zeros_like(linear->bias)));
 }
 
-TEST_F(InitWeightsTest, SigmaOutputWeightsOrthogonal) {
+TEST_F(InitWeightsTest, KappaOutputWeightsOrthogonal) {
     torch::nn::Linear linear(32, 4);
-    init_sigma_output_weights(*linear, 0.f);
+    init_kappa_output_weights(*linear, 0.05f);
 
     assert_orthogonal(linear->weight, 0.01f);
 }
 
-TEST_F(InitWeightsTest, SigmaOutputIsEqualToWantedOne) {
+TEST_F(InitWeightsTest, KappaOutputIsEqualToWantedOne) {
+    // same output activation as the actor's kappa head
     torch::nn::Sequential sequential(
-        torch::nn::Linear(32, 4), std::make_shared<SigmaOutput>(SIGMA_MIN, SIGMA_MAX));
+        torch::nn::Linear(32, 4), std::make_shared<RangeSigmoidOutput>(MIN_KAPPA_SIGMOID, 1.f));
 
-    constexpr float wanted_sigma = 0.5f;
+    constexpr float wanted_kappa = 0.5f;
 
-    sequential->apply([](torch::nn::Module &m) { init_sigma_output_weights(m, wanted_sigma); });
+    sequential->apply([](torch::nn::Module &m) { init_kappa_output_weights(m, wanted_kappa); });
 
     const auto x = torch::zeros({3, 32});
     const auto out = sequential->forward(x);
 
-    ASSERT_NEAR(out.mean().item<float>(), wanted_sigma, 1e-3);
+    ASSERT_NEAR(out.mean().item<float>(), wanted_kappa, 1e-3);
 }
 
 TEST_F(InitWeightsTest, DiscreteOutputWeightsOrthogonal) {

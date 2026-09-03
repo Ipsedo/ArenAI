@@ -49,6 +49,19 @@ namespace arenai::agent {
         float max_log_sigma;
     };
 
+    class RangeSigmoidOutput : public AbstractFunctionModule {
+    public:
+        RangeSigmoidOutput(float min_value, float max_value);
+
+        torch::Tensor forward(const torch::Tensor &input) override;
+
+        void pretty_print(std::ostream &stream) override;
+
+    private:
+        float min_value;
+        float max_value;
+    };
+
 }// namespace arenai::agent
 
 #endif//ARENAI_AGENT_HOST_MISC_H

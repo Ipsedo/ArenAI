@@ -4,6 +4,7 @@
 
 #include "./actor.h"
 
+#include "../distributions/beta_law.h"
 #include "../networks_utils/init.h"
 #include "./constants.h"
 #include "./misc.h"
@@ -18,7 +19,7 @@ namespace arenai::agent {
         const int &nb_continuous_actions, const int &nb_discrete_actions,
         const int &hidden_size_sensors, const std::vector<int> &hidden_sizes,
         const std::vector<std::tuple<int, int>> &vision_channels,
-        const std::vector<int> &group_norm_nums, const float &initial_sigma,
+        const std::vector<int> &group_norm_nums, const float &initial_concentration,
         const float &initial_fire_proba)
         : vision_encoder(register_module(
             "vision_encoder", std::make_shared<ConvolutionNetwork>(
@@ -34,11 +35,11 @@ namespace arenai::agent {
           mu(register_module(
               "mu", torch::nn::Sequential(
                         torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
-                        torch::nn::Tanh()))),
-          sigma(register_module(
-              "sigma", torch::nn::Sequential(
+                        std::make_shared<RangeSigmoidOutput>(EPSILON, 1.f - EPSILON)))),
+          kappa(register_module(
+              "kappa", torch::nn::Sequential(
                            torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
-                           std::make_shared<SigmaOutput>(SIGMA_MIN, SIGMA_MAX)))),
+                           std::make_shared<RangeSigmoidOutput>(MIN_KAPPA_SIGMOID, 1.f)))),
           discrete(register_module(
               "discrete", torch::nn::Sequential(
                               torch::nn::Linear(hidden_sizes.back(), nb_discrete_actions),
@@ -65,7 +66,9 @@ namespace arenai::agent {
         head->apply(init_hidden_weights);
 
         mu->apply(init_mu_output_weights);
-        sigma->apply([initial_sigma](Module &m) { init_sigma_output_weights(m, initial_sigma); });
+        kappa->apply([initial_concentration](Module &m) {
+            init_kappa_output_weights(m, initial_concentration);
+        });
 
         discrete->apply([initial_fire_proba](Module &m) {
             init_discrete_output_weights(m, initial_fire_proba);
@@ -78,7 +81,7 @@ namespace arenai::agent {
         auto encoded = head->forward(torch::cat({vision_encoded, sensors_encoded}, 1));
         return {
             .mu = mu->forward(encoded),
-            .sigma = sigma->forward(encoded),
+            .kappa = kappa->forward(encoded),
             .discrete = discrete->forward(encoded)};
     }
 

@@ -11,6 +11,16 @@ using namespace arenai::agent;
 
 namespace arenai::agent {
 
+    namespace {
+        torch::Tensor to_alpha(const torch::Tensor &mu, const torch::Tensor &kappa) {
+            return mu * kappa * KAPPA_SCALE;
+        }
+
+        torch::Tensor to_beta(const torch::Tensor &mu, const torch::Tensor &kappa) {
+            return (1.f - mu) * kappa * KAPPA_SCALE;
+        }
+    }// namespace
+
     // the log-proba and entropy carry the log(2) change of scale from [0, 1] to [-1, 1]
 
     static torch::Tensor clamp_pos(const torch::Tensor &t) { return torch::clamp_min(t, EPSILON); }
@@ -19,7 +29,10 @@ namespace arenai::agent {
         return torch::lgamma(alpha) + torch::lgamma(beta) - torch::lgamma(alpha + beta);
     }
 
-    torch::Tensor beta_law_sample(const torch::Tensor &alpha, const torch::Tensor &beta) {
+    torch::Tensor beta_law_sample(const torch::Tensor &mu, const torch::Tensor &kappa) {
+        const auto alpha = to_alpha(mu, kappa);
+        const auto beta = to_beta(mu, kappa);
+
         // Beta(α, β) = X / (X + Y) with X ~ Gamma(α, 1) and Y ~ Gamma(β, 1),
         // differentiable w.r.t. α and β through the implicit gradients of _standard_gamma
         const auto x = at::_standard_gamma(clamp_pos(alpha));
@@ -30,7 +43,10 @@ namespace arenai::agent {
     }
 
     torch::Tensor beta_law_log_proba(
-        const torch::Tensor &x, const torch::Tensor &alpha, const torch::Tensor &beta) {
+        const torch::Tensor &x, const torch::Tensor &mu, const torch::Tensor &kappa) {
+        const auto alpha = to_alpha(mu, kappa);
+        const auto beta = to_beta(mu, kappa);
+
         const auto clamped_alpha = clamp_pos(alpha);
         const auto clamped_beta = clamp_pos(beta);
 
@@ -41,7 +57,10 @@ namespace arenai::agent {
                - log_beta_function(clamped_alpha, clamped_beta) - std::log(2.0);
     }
 
-    torch::Tensor beta_law_entropy(const torch::Tensor &alpha, const torch::Tensor &beta) {
+    torch::Tensor beta_law_entropy(const torch::Tensor &mu, const torch::Tensor &kappa) {
+        const auto alpha = to_alpha(mu, kappa);
+        const auto beta = to_beta(mu, kappa);
+
         const auto clamped_alpha = clamp_pos(alpha);
         const auto clamped_beta = clamp_pos(beta);
 
@@ -52,15 +71,19 @@ namespace arenai::agent {
                + std::log(2.0);
     }
 
-    torch::Tensor beta_law_mean_action(const torch::Tensor &alpha, const torch::Tensor &beta) {
+    torch::Tensor beta_law_mean_action(const torch::Tensor &mu, const torch::Tensor &kappa) {
+        const auto alpha = to_alpha(mu, kappa);
+        const auto beta = to_beta(mu, kappa);
+
         const auto clamped_alpha = clamp_pos(alpha);
         const auto clamped_beta = clamp_pos(beta);
 
         return 2.f * clamped_alpha / (clamped_alpha + clamped_beta) - 1.f;
     }
 
-    float beta_law_target_entropy(const int &nb_actions) {
-        return beta_law_entropy(torch::tensor(1.f), torch::tensor(1.f)).item<float>()
+    float beta_law_target_entropy(const int &nb_actions, const float target_concentration) {
+        return beta_law_entropy(torch::tensor(0.5f), torch::tensor(target_concentration))
+                   .item<float>()
                * static_cast<float>(nb_actions);
     }
 

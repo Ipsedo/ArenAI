@@ -14,16 +14,17 @@ using namespace arenai::agent;
 // ========================================================================
 
 TEST_F(BetaLawTest, UniformEntropyIsMaximal) {
-    // alpha=1, beta=1 → uniform → maximal entropy
-    const auto entropy_uniform = beta_law_entropy(torch::tensor({1.0f}), torch::tensor({1.0f}));
-    const auto entropy_peaked = beta_law_entropy(torch::tensor({5.0f}), torch::tensor({5.0f}));
+    // kappa * KAPPA_SCALE = 2 → alpha = beta = 1 → uniform → maximal entropy
+    const auto entropy_uniform =
+        beta_law_entropy(torch::tensor({0.5f}), torch::tensor({MIN_KAPPA_SIGMOID}));
+    const auto entropy_peaked = beta_law_entropy(torch::tensor({0.5f}), torch::tensor({0.1f}));
 
     ASSERT_GT(entropy_uniform.item<float>(), entropy_peaked.item<float>());
 }
 
 TEST_F(BetaLawTest, TargetEntropyProportionalToActions) {
-    const auto t1 = beta_law_target_entropy(1);
-    const auto t3 = beta_law_target_entropy(3);
+    const auto t1 = beta_law_target_entropy(1, 0.05f);
+    const auto t3 = beta_law_target_entropy(3, 0.05f);
 
     ASSERT_NEAR(t3, 3.0f * t1, 1e-5f);
 }

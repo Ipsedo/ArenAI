@@ -59,7 +59,7 @@ namespace arenai::model {
             }),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), miss_distance_scale(1.5f), miss_distance_exponent(1.f / 2.f),
-          hit_reward_scale(0.1f), hit_received_cost(0.15f), initial_nb_shells(10),
+          hit_reward_scale(0.1f), hit_received_cost(0.3f), initial_nb_shells(10),
           nb_shells(initial_nb_shells), max_shells(30),
           fire_cooldown_frames(static_cast<int>(1.f / 6.f / wanted_frame_frequency)),
           curr_cooldown_frame(fire_cooldown_frames), shells_recharged_per_hit(5),

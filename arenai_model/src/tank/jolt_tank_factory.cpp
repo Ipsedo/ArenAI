@@ -17,9 +17,11 @@ namespace arenai::model {
 
     std::unique_ptr<EnemyTank> JoltTankFactory::make_enemy_tank(
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
-        const std::string &tank_prefix_name, glm::vec3 chassis_pos) {
+        const std::string &tank_prefix_name, glm::vec3 chassis_pos, bool apply_timeout,
+        float max_episode_seconds) {
         return std::make_unique<JoltEnemyTank>(
-            engine, file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency);
+            engine, file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency,
+            apply_timeout, max_episode_seconds);
     }
 
     std::unique_ptr<PlayerTank> JoltTankFactory::make_player_tank(

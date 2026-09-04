@@ -22,7 +22,8 @@ using namespace arenai::controller;
 
 TEST_F(EnemyTankTest, DeadWhenSingleWheelDestroyed) {
     add_ground();
-    const auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f});
+    const auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, false, 60.f);
 
     engine->step(1.f / 60.f);
 
@@ -53,7 +54,7 @@ TEST_F(EnemyTankTest, DeadWhenSingleWheelDestroyed) {
 
 TEST_F(EnemyTankTest, OnDeathMultipleCallsDoNotCrash) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f});
+    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, false, 60.f);
 
     engine->step(1.f / 60.f);
 
@@ -77,7 +78,7 @@ TEST_F(EnemyTankTest, OnDeathMultipleCallsDoNotCrash) {
 
 TEST_F(EnemyTankTest, OnDeathBeforeDeathDoesNothing) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f});
+    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, false, 60.f);
 
     engine->step(1.f / 60.f);
 
@@ -93,8 +94,10 @@ TEST_F(EnemyTankTest, OnDeathBeforeDeathDoesNothing) {
 
 TEST_F(EnemyTankTest, RewardWhenAllEnemiesDeadAndShellFired) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f});
+    auto tank_a =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false, 60.f);
+    auto tank_b =
+        tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, false, 60.f);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -129,7 +132,7 @@ TEST_F(EnemyTankTest, RewardWhenAllEnemiesDeadAndShellFired) {
 
 TEST_F(EnemyTankTest, RewardNoNaNWhenAloneInTankList) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
+    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false, 60.f);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -156,7 +159,7 @@ TEST_F(EnemyTankTest, RewardNoNaNWhenAloneInTankList) {
 TEST_F(EnemyTankTest, ShellHitsGroundNoRewardNoCrash) {
     add_ground();
     // point the tank away from any enemy so the shell hits the ground
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
+    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false, 60.f);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -194,7 +197,7 @@ TEST_F(EnemyTankTest, ShellHitsGroundNoRewardNoCrash) {
 
 TEST_F(EnemyTankTest, SuicideDetectionWhenFlipped) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f});
+    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, false, 60.f);
 
     engine->step(1.f / 60.f);
 
@@ -214,8 +217,10 @@ TEST_F(EnemyTankTest, SuicideDetectionWhenFlipped) {
 
 TEST_F(EnemyTankTest, HasHitOtherTankResetsAfterCall) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f});
+    auto tank_a =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false, 60.f);
+    auto tank_b =
+        tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, false, 60.f);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -250,10 +255,11 @@ TEST_F(EnemyTankTest, ShellReserveRegeneratesOverTime) {
     constexpr int initial_shells = 10;
     constexpr float seconds_per_regen = 1.5f;
 
-    constexpr int proprioception_reserve_index = ENEMY_PROPRIOCEPTION_SIZE - 2;
+    // proprioception ends with (reserve, cooldown, timeout) ratios
+    constexpr int proprioception_reserve_index = ENEMY_PROPRIOCEPTION_SIZE - 3;
 
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
+    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false, 60.f);
 
     float last_reserve = tank->get_proprioception()[proprioception_reserve_index];
     ASSERT_FLOAT_EQ(
@@ -308,8 +314,11 @@ TEST_F(EnemyTankTest, ShellReserveRegenerationIsCappedAtMaximalReserve) {
     constexpr int max_shells = 30;
     constexpr float seconds_per_regen = 1.5f;
 
+    // proprioception ends with (reserve, cooldown, timeout) ratios
+    constexpr int proprioception_reserve_index = ENEMY_PROPRIOCEPTION_SIZE - 3;
+
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f});
+    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false, 60.f);
 
     for (int i = 0; i < static_cast<int>(nb_frames_one_second * seconds_per_regen * max_shells);
          i++) {
@@ -317,7 +326,8 @@ TEST_F(EnemyTankTest, ShellReserveRegenerationIsCappedAtMaximalReserve) {
         tank->tick({});
     }
 
-    ASSERT_FLOAT_EQ(tank->get_proprioception().back(), 1.f) << "the reserve should be full";
+    ASSERT_FLOAT_EQ(tank->get_proprioception()[proprioception_reserve_index], 1.f)
+        << "the reserve should be full";
 
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
     const std::vector tanks{shared_tank};
@@ -325,6 +335,6 @@ TEST_F(EnemyTankTest, ShellReserveRegenerationIsCappedAtMaximalReserve) {
     // the reserve is already full: several periods must not push it above it
     for (int i = 0; i < 5 * nb_frames_one_second; i++) shared_tank->tick(tanks);
 
-    ASSERT_FLOAT_EQ(shared_tank->get_proprioception().back(), 1.f)
+    ASSERT_FLOAT_EQ(shared_tank->get_proprioception()[proprioception_reserve_index], 1.f)
         << "regeneration should never take the reserve above its max value";
 }

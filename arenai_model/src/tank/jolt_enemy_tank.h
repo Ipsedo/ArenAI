@@ -77,7 +77,6 @@ namespace arenai::model {
         float miss_distance_scale;
         float miss_distance_exponent;
         float hit_reward_scale;
-        float aim_quality_baseline;
 
         float hit_received_cost;
 

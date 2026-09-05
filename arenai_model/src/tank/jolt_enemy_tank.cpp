@@ -59,8 +59,8 @@ namespace arenai::model {
             }),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), miss_distance_scale(1.5f), miss_distance_exponent(1.f / 2.f),
-          hit_reward_scale(0.1f), hit_received_cost(0.3f), initial_nb_shells(10),
-          nb_shells(initial_nb_shells), max_shells(30),
+          hit_reward_scale(0.1f), aim_quality_baseline(0.5f), hit_received_cost(0.3f),
+          initial_nb_shells(10), nb_shells(initial_nb_shells), max_shells(30),
           fire_cooldown_frames(static_cast<int>(1.f / 6.f / wanted_frame_frequency)),
           curr_cooldown_frame(fire_cooldown_frames), shells_recharged_per_hit(5),
           nb_frames_per_shell_regen(static_cast<int>(1.5f / wanted_frame_frequency)),
@@ -137,8 +137,9 @@ namespace arenai::model {
     float JoltEnemyTank::get_reward() const {
         RewardDetail detail;
 
-        // 1. dead / suicide penalty
-        detail.death = is_dead() ? -1.f : 0.f;
+        // 1. death penalty — starving out is the worst outcome: dying by hiding must cost
+        // more than dying in a fight (which already accumulates received-hit penalties)
+        detail.death = is_dead() ? (is_timeout() ? -2.f : -1.f) : 0.f;
 
         // 2. fired shells reward
         for (int i = static_cast<int>(tracked_shells.size()) - 1; i >= 0; i--) {
@@ -152,7 +153,9 @@ namespace arenai::model {
                 const float aim_quality = compute_hit_reward(
                     tracked.fire_pos, tracked.enemy_pos_at_t, tracked.shell_pos_at_t);
 
-                detail.aim += hit_reward_scale * aim_quality;
+                // centered on the baseline: a shell landing further than the tolerated
+                // miss costs, so firing is only subsidized when roughly on target
+                detail.aim += hit_reward_scale * (aim_quality - aim_quality_baseline);
 
                 detail.nb_landed_shells++;
                 detail.sum_aim_quality += aim_quality;
@@ -369,8 +372,9 @@ namespace arenai::model {
         result.push_back(static_cast<float>(nb_shells) / static_cast<float>(max_shells));
         result.push_back(
             static_cast<float>(curr_cooldown_frame) / static_cast<float>(fire_cooldown_frames));
+        // hit/kill bonuses can push remaining_frames above the base window, hence the clamp
         result.push_back(std::clamp(
-            static_cast<float>(remaining_frames) / static_cast<float>(max_episode_frames), 0.f,
+            static_cast<float>(remaining_frames) / static_cast<float>(max_frames_without_hit), 0.f,
             1.f));
 
         return result;

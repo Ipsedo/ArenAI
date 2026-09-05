@@ -140,7 +140,7 @@ namespace arenai::agent {
 
             const auto &[state, reward, is_done] = step_result[winner_index];
 
-            constexpr float win_reward = 2.f;
+            const float win_reward = nb_kills_per_tanks[winner_index] > 0 ? 2.f : 0.f;
             step_result[winner_index] = {state, reward + win_reward, true};
             done[winner_index] = true;
         }

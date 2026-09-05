@@ -93,8 +93,8 @@ TEST_F(RewardTest, DeathPenaltyIsMinusOne) {
     const float death_reward = tanks[1]->get_reward();
 
     // death and suicide share the same penalty so early termination is never an escape;
-    // the fatal hit also counts as a received hit (-0.15)
-    ASSERT_FLOAT_EQ(death_reward, -1.15f);
+    // the fatal hit also counts as a received hit (-0.3)
+    ASSERT_FLOAT_EQ(death_reward, -1.3f);
 }
 
 // ========================================================================

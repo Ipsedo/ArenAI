@@ -43,7 +43,8 @@ namespace arenai::agent {
           episode_step_mean_nb_metric(std::make_shared<MeanMetric>("s", 32, 1)),
           fire_metric(std::make_shared<MeanMetric>("fire", 256, 2)),
           hit_metric(std::make_shared<MeanMetric>("hit", 256, 2, true)),
-          kill_metric(std::make_shared<MeanMetric>("kill", 16, 1)), nb_kills_episode(0) {}
+          kill_metric(std::make_shared<MeanMetric>("kill", 16, 1)), nb_kills_episode(0),
+          nb_fires_episode(0), nb_hits_episode(0) {}
 
     std::vector<std::tuple<core::State, core::Reward, core::IsDone>>
     TrainTankEnvironment::step(const float time_delta, const std::vector<core::Action> &actions) {
@@ -117,6 +118,9 @@ namespace arenai::agent {
                 static_cast<float>(nb_hits) / (static_cast<float>(nb_acting) * wanted_frequency));
         }
 
+        nb_fires_episode += nb_fires;
+        nb_hits_episode += nb_hits;
+
         // step over tanks (hits and kills counters)
         for (int i = 0; i < step_result.size(); i++) {
 
@@ -189,7 +193,14 @@ namespace arenai::agent {
 
         nb_hits_per_tanks = std::vector(nb_tanks, 0);
         nb_kills_per_tanks = std::vector(nb_tanks, 0);
+
+        nb_fires_episode = 0;
+        nb_hits_episode = 0;
     }
+
+    int TrainTankEnvironment::episode_nb_fires() const { return nb_fires_episode; }
+
+    int TrainTankEnvironment::episode_nb_hits() const { return nb_hits_episode; }
 
     bool TrainTankEnvironment::are_all_done() {
         return std::accumulate(

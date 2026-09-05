@@ -30,6 +30,11 @@ namespace arenai::agent {
         float initial_spawn_height;
         float final_spawn_width;
         float final_spawn_height;
+        float curriculum_delta;
+        float curriculum_ratio_low;
+        float curriculum_ratio_high;
+        int curriculum_probe_window;
+        float curriculum_boundary_proba;
         int num_threads;
     };
 

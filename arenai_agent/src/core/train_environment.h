@@ -25,6 +25,10 @@ namespace arenai::agent {
 
         bool is_episode_terminated();
 
+        // totals across every tank since the last reset, for the spawn curriculum
+        int episode_nb_fires() const;
+        int episode_nb_hits() const;
+
         static void reset_singleton();
 
     protected:
@@ -67,6 +71,8 @@ namespace arenai::agent {
         std::shared_ptr<AbstractMetric> kill_metric;
 
         int nb_kills_episode;
+        int nb_fires_episode;
+        int nb_hits_episode;
 
         bool are_all_done();
     };

@@ -6,6 +6,9 @@
 
 #include <arenai_agent_tests/tests_networks/tests_liquid_recurrent.h>
 
+using namespace arenai;
+using namespace arenai::agent;
+
 namespace {
     constexpr float DELTA_T = 1.f;
 

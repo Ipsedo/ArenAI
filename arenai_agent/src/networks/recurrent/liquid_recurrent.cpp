@@ -4,6 +4,11 @@
 
 #include "./liquid_recurrent.h"
 
+#include "../../networks_utils/init.h"
+
+using namespace arenai;
+using namespace arenai::agent;
+
 /*
  * Cell model
  */
@@ -19,7 +24,9 @@ CellModel::CellModel(
           torch::nn::Linear(torch::nn::LinearOptions(neuron_number, neuron_number).bias(false)))),
       biases(register_parameter("biases", torch::zeros({1, neuron_number}))),
       activation_function(activation_function) {
-    // TODO init here
+
+    weights->apply(init_liquid_weights);
+    recurrent_weights->apply(init_liquid_weights);
 }
 
 torch::Tensor CellModel::forward(const torch::Tensor &x_t, const torch::Tensor &input_t) {

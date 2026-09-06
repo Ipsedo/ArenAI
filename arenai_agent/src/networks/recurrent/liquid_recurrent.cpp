@@ -87,14 +87,21 @@ torch::Tensor LiquidRecurrent::forward(const torch::Tensor &inputs) {
     results.reserve(nb_steps);
 
     for (long t = 0; t < nb_steps; t++) {
-        x_t = cell->forward(x_t, inputs.index({at::indexing::Slice(), t, at::indexing::Slice()}));
+        auto [output, x_t_next] =
+            forward_step(x_t, inputs.index({at::indexing::Slice(), t, at::indexing::Slice()}));
 
-        const auto output = to_output->forward(x_t);
+        x_t = x_t_next;
         results.push_back(output);
     }
 
     // (batch, time, output_features)
     return torch::stack(results, 1);
+}
+
+std::tuple<torch::Tensor, torch::Tensor>
+LiquidRecurrent::forward_step(const torch::Tensor &x_t, const torch::Tensor &input_t) {
+    const auto x_t_next = cell->forward(x_t, input_t);
+    return {to_output->forward(x_t_next), x_t_next};
 }
 
 torch::Tensor LiquidRecurrent::get_first_x(int batch_size) {

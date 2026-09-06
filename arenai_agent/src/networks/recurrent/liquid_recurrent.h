@@ -53,13 +53,17 @@ public:
 
     torch::Tensor forward(const torch::Tensor &inputs);
 
+    // one recurrent step, the state is handled by the caller: (output, x_t_next)
+    std::tuple<torch::Tensor, torch::Tensor>
+    forward_step(const torch::Tensor &x_t, const torch::Tensor &input_t);
+
+    torch::Tensor get_first_x(int batch_size);
+
 private:
     std::shared_ptr<LiquidCell> cell;
     int neuron_number;
 
     torch::nn::Sequential to_output;
-
-    torch::Tensor get_first_x(int batch_size);
 };
 
 #endif//ARENAI_LIQUID_RECURRENT_H

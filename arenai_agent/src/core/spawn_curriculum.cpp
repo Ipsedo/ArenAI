@@ -16,7 +16,7 @@ namespace arenai::agent {
           nb_probe_episodes(0), sum_fires(0), sum_hits(0), rng(seed) {}
 
     float SpawnCurriculum::sample_progress() {
-        std::uniform_real_distribution<float> unif(0.f, 1.f);
+        std::uniform_real_distribution unif(0.f, 1.f);
 
         last_was_probe = unif(rng) < boundary_proba;
         if (last_was_probe) return upper;

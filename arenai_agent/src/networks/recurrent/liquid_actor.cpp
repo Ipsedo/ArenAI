@@ -103,7 +103,7 @@ namespace arenai::agent {
             .next_x = x};
     }
 
-    torch::Tensor LiquidActor::initial_state(const int batch_size) {
+    torch::Tensor LiquidActor::initial_state(const int batch_size) const {
         return liquid->get_first_x(batch_size);
     }
 

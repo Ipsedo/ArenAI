@@ -44,7 +44,7 @@ namespace arenai::agent {
         LiquidActorOutput act_sequence(
             const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &x_t);
 
-        torch::Tensor initial_state(int batch_size);
+        torch::Tensor initial_state(int batch_size) const;
 
     private:
         std::shared_ptr<ConvolutionNetwork> vision_encoder;

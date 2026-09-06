@@ -20,7 +20,7 @@ namespace arenai::agent {
         std::vector<std::tuple<int, int>> vision_channels = {{3, 8},   {8, 16},  {16, 24},
                                                              {24, 32}, {32, 48}, {48, 64}};
         std::vector<int> group_norm_nums = {1, 2, 3, 4, 6, 8};
-        int neuron_number = 512;
+        int neuron_number = 128;
         int unfolding_steps = 6;
         float delta_t = 1.f / 30.f;
         // TBPTT window: length of the contiguous sequences the updates run on

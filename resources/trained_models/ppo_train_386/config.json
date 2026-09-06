@@ -1,0 +1,43 @@
+{
+    "agent": {
+        "actor_hidden_sizes": "[1024, 512]",
+        "actor_learning_rate": "0.0001",
+        "clip_epsilon": "0.2",
+        "continuous_target_entropy": "0.4",
+        "critic_hidden_sizes": "[1024, 512]",
+        "critic_learning_rate": "0.0003",
+        "discrete_target_entropy_factor": "0.2",
+        "epochs": "2",
+        "gae_lambda": "0.99",
+        "gamma": "0.997",
+        "grad_norm_max": "0.5",
+        "group_norm_nums": "[1, 2, 3, 4, 6, 8]",
+        "hidden_size_sensors": "128",
+        "initial_fire_proba": "0.4",
+        "initial_sigma": "0.5",
+        "metric_window_size": "256",
+        "minibatch_size": "1024",
+        "rollout_size": "900",
+        "target_kl": "0.05",
+        "vision_channels": "[(3, 8), (8, 16), (16, 24), (24, 32), (32, 48), (48, 64)]"
+    },
+    "environment": {
+        "final_spawn_height": 500.0,
+        "final_spawn_width": 500.0,
+        "initial_spawn_height": 500.0,
+        "initial_spawn_width": 500.0,
+        "nb_tanks": 32,
+        "vision_height": 128,
+        "vision_num_threads": 16,
+        "vision_width": 256,
+        "wanted_frequency": 0.03333333507180214
+    },
+    "train": {
+        "cuda": true,
+        "max_episode_steps": 5400,
+        "nb_episodes": 6000,
+        "output_folder": "./outputs/train_386_ppo",
+        "resources_folder": "/home/samuel/CLionProjects/ArenAI/resources",
+        "save_every": 108000
+    }
+}

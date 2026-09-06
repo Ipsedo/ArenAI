@@ -38,7 +38,7 @@ int main(const int argc, char **argv) {
     parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(250.f);
     parser.add_argument("--final_spawn_width").scan<'g', float>().default_value(1000.f);
     parser.add_argument("--final_spawn_height").scan<'g', float>().default_value(1000.f);
-    parser.add_argument("--curriculum_delta").scan<'g', float>().default_value(25.f);
+    parser.add_argument("--curriculum_delta").scan<'g', float>().default_value(50.f);
     parser.add_argument("--curriculum_ratio_low").scan<'g', float>().default_value(0.02f);
     parser.add_argument("--curriculum_ratio_high").scan<'g', float>().default_value(0.04f);
     parser.add_argument("--curriculum_probe_window").scan<'i', int>().default_value(24);

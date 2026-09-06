@@ -70,4 +70,6 @@ arenai_copy_runtime_dlls(arenai_agent_train TORCH)
 # Library
 add_library(arenai_agent SHARED ${ARENAI_AGENT_SRC})
 target_link_libraries(arenai_agent PRIVATE ${ARENAI_AGENT_LINK_LIBS} "${stb_SOURCE_DIR}")
+# nlohmann::json appears in the public factory.h contract
+target_link_libraries(arenai_agent PUBLIC nlohmann_json::nlohmann_json)
 target_include_directories(arenai_agent PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")

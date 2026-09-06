@@ -24,7 +24,7 @@
 
 // The gui/ folder is a hexagon of its own: this header is its only public
 // port, and it exposes no RmlUi type — the library stays an implementation
-// detail of rml_menu.cpp and the rml/ subfolder, exactly like GL stays
+// detail of the rml/ subfolder, exactly like GL stays
 // inside arenai_view.
 namespace arenai::desktop::gui {
 
@@ -61,6 +61,25 @@ namespace arenai::desktop::gui {
         }
     }
 
+    // the RL algorithms the enemy agent can be built from; mirrors
+    // agent::AgentAlgorithm without leaking arenai_agent into the gui port
+    enum class AiAlgorithm { Sac, Ppo, PpoLiquid };
+
+    // canonical names, shared by the JSON preferences and the menu bindings
+    constexpr const char *to_string(const AiAlgorithm algorithm) {
+        switch (algorithm) {
+            case AiAlgorithm::Sac: return "sac";
+            case AiAlgorithm::Ppo: return "ppo";
+            default: return "ppo_liquid";
+        }
+    }
+
+    constexpr std::optional<AiAlgorithm> ai_algorithm_from_string(std::string_view name) {
+        for (const auto algorithm: {AiAlgorithm::Sac, AiAlgorithm::Ppo, AiAlgorithm::PpoLiquid})
+            if (name == to_string(algorithm)) return algorithm;
+        return std::nullopt;
+    }
+
     // what the player can tune in the menu before launching a game
     struct GameSettings {
         int nb_tanks = 16;
@@ -77,7 +96,12 @@ namespace arenai::desktop::gui {
         std::string window_gpu;
         std::string vision_gpu;
 
-        std::filesystem::path sac_folder;
+        // the trained enemy agent: its state-dict folder, the config.json of
+        // its training run (empty = looked up next to the state dicts) and
+        // the algorithm to rebuild the networks with
+        std::filesystem::path agent_folder;
+        std::filesystem::path agent_config;
+        AiAlgorithm agent_algorithm = AiAlgorithm::PpoLiquid;
     };
 
     enum class MenuOutcome { Play, Quit };
@@ -115,14 +139,21 @@ namespace arenai::desktop::gui {
         virtual void on_window_resized(int width, int height) = 0;
     };
 
-    using SacFolderValidator =
-        std::function<std::optional<std::string>(const std::filesystem::path &)>;
+    // what the AI page hands to the dry-run loader: nullopt = the model
+    // loaded and answered a forward pass, else the message to display
+    struct AgentSelection {
+        std::filesystem::path config;// empty = auto-resolved config.json
+        std::filesystem::path folder;
+        AiAlgorithm algorithm;
+    };
+
+    using AgentValidator = std::function<std::optional<std::string>(const AgentSelection &)>;
 
     std::unique_ptr<AbstractGui> make_gui(
         const std::shared_ptr<view::AbstractWindowedGraphicBackend> &backend,
         const std::shared_ptr<utils::AbstractResourceFileReader> &asset_reader,
         const GameSettings &initial_settings, const std::vector<std::string> &gpus,
-        int window_width, int window_height, SacFolderValidator sac_validator);
+        int window_width, int window_height, AgentValidator agent_validator);
 
 }// namespace arenai::desktop::gui
 

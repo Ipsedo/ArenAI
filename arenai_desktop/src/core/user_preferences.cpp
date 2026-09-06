@@ -182,11 +182,19 @@ namespace arenai::desktop {
                 bindings.is_object())
                 load_bindings(bindings, settings.bindings);
 
-            // a stale folder (moved, deleted, unplugged drive) falls back to
+            // a stale path (moved, deleted, unplugged drive) falls back to
             // the default so the menu never starts on an unplayable selection
-            if (const std::filesystem::path sac_folder = json.value("sac_folder", std::string());
-                !sac_folder.empty() && std::filesystem::is_directory(sac_folder))
-                settings.sac_folder = sac_folder;
+            if (const std::filesystem::path agent_folder =
+                    json.value("agent_folder", std::string());
+                !agent_folder.empty() && std::filesystem::is_directory(agent_folder))
+                settings.agent_folder = agent_folder;
+            if (const std::filesystem::path agent_config =
+                    json.value("agent_config", std::string());
+                !agent_config.empty() && std::filesystem::is_regular_file(agent_config))
+                settings.agent_config = agent_config;
+            if (const auto algorithm =
+                    gui::ai_algorithm_from_string(json.value("algorithm", std::string())))
+                settings.agent_algorithm = *algorithm;
         } catch (const std::exception &e) {
             std::cerr << "Cannot load preferences " << path << ": " << e.what() << std::endl;
             return defaults;
@@ -210,7 +218,9 @@ namespace arenai::desktop {
                 {"window_gpu", settings.window_gpu},
                 {"vision_gpu", settings.vision_gpu},
                 {"bindings", bindings_to_json(settings.bindings)},
-                {"sac_folder", settings.sac_folder.string()},
+                {"agent_folder", settings.agent_folder.string()},
+                {"agent_config", settings.agent_config.string()},
+                {"algorithm", gui::to_string(settings.agent_algorithm)},
             };
 
             std::filesystem::create_directories(path.parent_path());

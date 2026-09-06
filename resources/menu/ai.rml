@@ -1,0 +1,42 @@
+<rml>
+<head>
+    <title>AI</title>
+    <link type="text/rcss" href="menu.rcss"/>
+</head>
+<body data-model="settings">
+    <div id="ai-panel" class="panel">
+        <div class="params-header">
+            <div class="back-arrow" autofocus data-event-click="ai_back()">←</div>
+            <h1>Configure AI</h1>
+        </div>
+
+        <div class="param-row">
+            <span class="param-label">Algorithm</span>
+            <div class="toggle-group">
+                <div class="toggle" data-class-selected="algorithm=='sac'" data-event-click="set_algorithm('sac')"><div class="fill">SAC</div></div>
+                <div class="toggle" data-class-selected="algorithm=='ppo'" data-event-click="set_algorithm('ppo')"><div class="fill">PPO</div></div>
+                <div class="toggle" data-class-selected="algorithm=='ppo_liquid'" data-event-click="set_algorithm('ppo_liquid')"><div class="fill">PPO Liquid</div></div>
+            </div>
+        </div>
+
+        <h2>Trained AI model</h2>
+        <div class="current-dir">{{current_dir}}</div>
+        <div class="file-list" id="file-list">
+            <div class="file-entry" data-for="entries" data-event-click="select_entry(it_index)">{{it}}</div>
+        </div>
+        <div class="selected-folder" data-if="agent_folder != ''">State dicts: {{agent_folder}}</div>
+        <div class="selected-folder">Config: {{agent_config}}</div>
+        <p class="hint status-ok" data-if="agent_valid">{{agent_status}}</p>
+        <p class="hint status-error" data-if="!agent_valid && agent_status != ''">{{agent_status}}</p>
+        <p class="hint" data-if="agent_status == ''">No folder selected yet</p>
+
+        <div class="row-buttons">
+            <div class="button" id="use-folder" data-event-click="select_folder()">Use this folder</div>
+        </div>
+
+        <div class="row-buttons back-row">
+            <div class="button primary" data-event-click="ai_back()"><div class="fill">Back</div></div>
+        </div>
+    </div>
+</body>
+</rml>

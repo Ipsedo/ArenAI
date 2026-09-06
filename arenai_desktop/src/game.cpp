@@ -5,7 +5,10 @@
 #include "./game.h"
 
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
+
+#include <nlohmann/json.hpp>
 
 #include <arenai_agent/factory.h>
 #include <arenai_agent/file_reader.h>
@@ -29,14 +32,30 @@ namespace arenai::desktop {
         const std::unique_ptr<gui::AbstractGui> &gui) {
         const auto window = graphics_backend->get_window();
 
-        const std::shared_ptr<agent::AbstractAgent> sac_agent =
-            agent::AgentFactory(model_options.hyper_parameters)
-                .get_agent(
-                    agent::PPO_LIQUID, model_options.vision_height, model_options.vision_width,
-                    model::ENEMY_PROPRIOCEPTION_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
-                    model::ENEMY_NB_DISCRETE_ACTION);
+        // the menu only lets Play through once check_agent() validated the
+        // selection, so the config.json is there and the load succeeds
+        const gui::AgentSelection selection = {
+            .config = settings.agent_config,
+            .folder = settings.agent_folder,
+            .algorithm = settings.agent_algorithm};
+        const auto config_path = resolve_agent_config(selection);
+        if (!config_path)
+            throw std::runtime_error(
+                "config.json not found in " + selection.folder.string() + " or its parent");
 
-        sac_agent->load(settings.sac_folder);
+        std::ifstream config_stream(*config_path);
+        const auto config = nlohmann::json::parse(config_stream);
+
+        agent::AgentFactory factory(config);
+        const int vision_height = factory.get_vision_height();
+        const int vision_width = factory.get_vision_width();
+        const float wanted_frequency = factory.get_wanted_frequency();
+
+        const std::shared_ptr<agent::AbstractAgent> enemy_agent = factory.get_agent(
+            to_agent_algorithm(settings.agent_algorithm), model::ENEMY_PROPRIOCEPTION_SIZE,
+            model::ENEMY_NB_CONTINUOUS_ACTION, model::ENEMY_NB_DISCRETE_ACTION, model_options.cuda);
+
+        enemy_agent->load(settings.agent_folder);
 
         // route the pad input to the configured device when it is connected
         // (also covers runs that skip the menu, e.g. ARENAI_DEBUG_AUTOPLAY)
@@ -49,8 +68,8 @@ namespace arenai::desktop {
                 }
 
         const auto env = std::make_shared<DesktopGameEnvironment>(
-            game_options.resources_folder, graphics_backend, settings, model_options.vision_height,
-            model_options.vision_width, game_options.wanted_frequency);
+            game_options.resources_folder, graphics_backend, settings, vision_height, vision_width,
+            wanted_frequency);
 
         auto states = env->reset(
             static_cast<float>(settings.spawn_side), static_cast<float>(settings.spawn_side));
@@ -98,7 +117,7 @@ namespace arenai::desktop {
         auto outcome = InGameOutcome::ExitGame;
 
         const auto frame_dt =
-            std::chrono::milliseconds(static_cast<int>(game_options.wanted_frequency * 1000.f));
+            std::chrono::milliseconds(static_cast<int>(wanted_frequency * 1000.f));
 
         while (!window->should_close()) {
             window->poll_events();
@@ -129,10 +148,9 @@ namespace arenai::desktop {
 
             auto last_time = std::chrono::steady_clock::now();
 
-            const auto action =
-                sac_agent->act(states, model_options.vision_height, model_options.vision_width);
+            const auto action = enemy_agent->act(states, vision_height, vision_width);
 
-            const auto steps = env->step(game_options.wanted_frequency, action);
+            const auto steps = env->step(wanted_frequency, action);
 
             if (const auto [hits, kills] = env->consume_player_hits(); kills > 0)
                 gui->notify_hit(gui::HitKind::Kill);
@@ -172,7 +190,7 @@ namespace arenai::desktop {
         // loaded before the backend: the window GPU choice only applies at
         // device creation, i.e. here
         const auto initial_settings =
-            load_preferences({.sac_folder = model_options.state_dict_folder});
+            load_preferences({.agent_folder = model_options.state_dict_folder});
 
         const std::shared_ptr graphics_backend = view::make_glfw_vulkan_backend(
             game_options.window_width, game_options.window_height, "ArenAI",
@@ -187,9 +205,7 @@ namespace arenai::desktop {
         const auto gui = gui::make_gui(
             graphics_backend, asset_reader, initial_settings, view::list_vulkan_gpus(),
             game_options.window_width, game_options.window_height,
-            [&model_options](const std::filesystem::path &folder) {
-                return check_agent_folder(model_options, folder);
-            });
+            [](const gui::AgentSelection &selection) { return check_agent(selection); });
 
         window->set_resize_callback(
             [&gui](const int width, const int height) { gui->on_window_resized(width, height); });

@@ -6,9 +6,10 @@
 #define ARENAI_AGENT_HOST_FACTORY_H
 
 #include <format>
-#include <map>
 #include <memory>
 #include <string>
+
+#include <nlohmann/json.hpp>
 
 #include "./agent.h"
 
@@ -18,59 +19,67 @@ namespace arenai::agent {
 
     class AgentFactory {
     public:
-        explicit AgentFactory(const std::map<std::string, std::string> &arguments);
+        // config: the content of a training run's config.json — the network
+        // hyper-parameters come from its "agent" section, the vision size and
+        // the control frequency from its "environment" section
+        explicit AgentFactory(const nlohmann::json &config);
 
         std::shared_ptr<AbstractAgent> get_agent(
-            AgentAlgorithm algorithm, const int &vision_height, const int &vision_width,
-            const int &nb_sensors, const int &nb_continuous_actions,
-            const int &nb_discrete_actions);
+            AgentAlgorithm algorithm, const int &nb_sensors, const int &nb_continuous_actions,
+            const int &nb_discrete_actions, bool cuda);
+
+        int get_vision_height() const;
+        int get_vision_width() const;
+        float get_wanted_frequency() const;
 
     private:
         template<typename T>
         T get_value(const std::string &argument_name, T default_value) {
-            if (!arguments.contains(argument_name)) return default_value;
+            if (!agent_arguments.contains(argument_name)) return default_value;
 
-            const std::string value_as_string = arguments[argument_name];
+            const auto &value = agent_arguments[argument_name];
+            if (!value.is_string()) return value.get<T>();
+
+            // runs dumped before the json migration stored every value as the
+            // CLI string it came from
+            const auto value_as_string = value.get<std::string>();
             std::stringstream ss(value_as_string);
-            T value;
-            ss >> value;
+            T parsed_value;
+            ss >> parsed_value;
 
             if (ss.fail() || !ss.eof())
                 throw std::runtime_error(std::format(
                     R"(Wrong value for "{}" : "{}", example : "{}")", argument_name,
                     value_as_string, default_value));
 
-            arguments.erase(arguments.find(argument_name));
-
-            return value;
+            return parsed_value;
         }
 
         template<typename T>
         T get_value(
             const std::string &argument_name, const std::function<T(std::string)> &parse_fn,
             T default_value) {
-            if (!arguments.contains(argument_name)) return default_value;
+            if (!agent_arguments.contains(argument_name)) return default_value;
 
-            const std::string value_as_string = arguments[argument_name];
-
-            arguments.erase(arguments.find(argument_name));
-
-            return parse_fn(value_as_string);
+            return parse_fn(agent_arguments[argument_name].get<std::string>());
         }
 
         std::shared_ptr<AbstractAgent> create_sac_agent(
-            const int &vision_height, const int &vision_width, const int &nb_sensors,
-            const int &nb_continuous_actions, const int &nb_discrete_action);
+            const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_action,
+            bool cuda);
 
         std::shared_ptr<AbstractAgent> create_ppo_agent(
-            const int &vision_height, const int &vision_width, const int &nb_sensors,
-            const int &nb_continuous_actions, const int &nb_discrete_action);
+            const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_action,
+            bool cuda);
 
         std::shared_ptr<AbstractAgent> create_liquid_ppo_agent(
-            const int &vision_height, const int &vision_width, const int &nb_sensors,
-            const int &nb_continuous_actions, const int &nb_discrete_action);
+            const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_action,
+            bool cuda);
 
-        std::map<std::string, std::string> arguments;
+        nlohmann::json agent_arguments;
+        int vision_height;
+        int vision_width;
+        float wanted_frequency;
     };
 
 }// namespace arenai::agent

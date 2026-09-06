@@ -6,23 +6,19 @@
 #define ARENAI_DESKTOP_GAME_H
 
 #include <filesystem>
-#include <map>
-#include <string>
 
 #include "./gui/menu.h"
 
 namespace arenai::desktop {
 
+    // everything else about the model (vision size, control frequency,
+    // hyper-parameters) comes from the selected training run's config.json
     struct ModelOptions {
-        int vision_height;
-        int vision_width;
-        std::map<std::string, std::string> hyper_parameters;
         std::filesystem::path state_dict_folder;
         bool cuda;
     };
 
     struct GameOptions {
-        float wanted_frequency;
         int window_width;
         int window_height;
         std::filesystem::path resources_folder;

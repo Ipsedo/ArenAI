@@ -207,6 +207,15 @@ h2 {
     margin-top: 14dp;
 }
 
+/* dry-run load verdict of the AI page */
+.hint.status-ok {
+    color: #35D0A5;
+}
+
+.hint.status-error {
+    color: #FF6B6B;
+}
+
 .param-row {
     display: block;
     margin: 16dp 0;
@@ -331,31 +340,22 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     border-color: #00A6FB;
 }
 
-/* Controls and Graphics pages — same design width as the parameters panel */
-#controls-panel, #graphics-panel {
+/* Controls, Graphics and AI pages — same design width as the parameters panel */
+#controls-panel, #graphics-panel, #ai-panel {
     width: 560dp;
 }
 
-/* the Controls row lays its toggles out as a flex line so Configure can
-   ride its auto margin to the right edge */
-.toggle-group.controls-row {
-    display: flex;
-    align-items: center;
+/* the three sub-page buttons of the parameters panel: centered by the base
+   .button auto margins, and the same visible size as the Back button below
+   (220dp content + 40dp padding + 2dp border) — plain, only Back keeps the
+   primary highlight. The group stands clear of the sliders above it. */
+.configure-group {
+    display: block;
+    margin-top: 32dp;
 }
 
-/* opens the controls page from the Controls row: chip-sized, pushed to the
-   right edge by its auto margin */
 .button.configure {
-    display: inline-block;
-    width: auto;
-    margin: 0 0 0 auto;
-    padding: 9dp 18dp;
-    font-size: 13dp;
-}
-
-/* the Graphics row's Configure sits flush left under its label */
-.button.configure.left {
-    margin-left: 0;
+    width: 220dp;
 }
 
 /* binding rows: a dark inset list, like the file explorer */

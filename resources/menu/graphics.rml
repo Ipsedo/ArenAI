@@ -11,6 +11,14 @@
         </div>
 
         <div class="param-row">
+            <span class="param-label">Display</span>
+            <div class="toggle-group" id="display-row">
+                <div class="toggle" data-class-selected="display=='windowed'" data-event-click="set_display('windowed')"><div class="fill">Windowed</div></div>
+                <div class="toggle" data-class-selected="display=='fullscreen'" data-event-click="set_display('fullscreen')"><div class="fill">Fullscreen</div></div>
+            </div>
+        </div>
+
+        <div class="param-row">
             <span class="param-label">Shadows</span>
             <div class="toggle-group">
                 <div class="toggle" data-class-selected="shadow_quality=='off'" data-event-click="set_shadow_quality('off')"><div class="fill">Off</div></div>

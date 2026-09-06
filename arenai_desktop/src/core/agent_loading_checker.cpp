@@ -4,7 +4,7 @@
 
 #include "./agent_loading_checker.h"
 
-#include <arenai_agent/factory_set.h>
+#include <arenai_agent/factory.h>
 #include <arenai_model/constants.h>
 #include <arenai_utils/exceptions.h>
 
@@ -15,9 +15,9 @@ namespace arenai::desktop {
         try {
 
             const auto agent =
-                agent::ActorAgentFactory(model_options.hyper_parameters)
+                agent::AgentFactory(model_options.hyper_parameters)
                     .get_agent(
-                        model_options.vision_height, model_options.vision_width,
+                        agent::PPO_LIQUID, model_options.vision_height, model_options.vision_width,
                         model::ENEMY_PROPRIOCEPTION_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
                         model::ENEMY_NB_DISCRETE_ACTION);
 

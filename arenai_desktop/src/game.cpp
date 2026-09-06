@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <arenai_agent/factory_set.h>
+#include <arenai_agent/factory.h>
 #include <arenai_agent/file_reader.h>
 #include <arenai_model/constants.h>
 #include <arenai_view/backend.h>
@@ -30,9 +30,9 @@ namespace arenai::desktop {
         const auto window = graphics_backend->get_window();
 
         const std::shared_ptr<agent::AbstractAgent> sac_agent =
-            agent::ActorAgentFactory(model_options.hyper_parameters)
+            agent::AgentFactory(model_options.hyper_parameters)
                 .get_agent(
-                    model_options.vision_height, model_options.vision_width,
+                    agent::PPO_LIQUID, model_options.vision_height, model_options.vision_width,
                     model::ENEMY_PROPRIOCEPTION_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
                     model::ENEMY_NB_DISCRETE_ACTION);
 

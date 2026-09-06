@@ -14,17 +14,18 @@
 
 namespace arenai::agent {
 
+    enum AgentAlgorithm { SAC, PPO, PPO_LIQUID };
+
     class AgentFactory {
     public:
-        virtual ~AgentFactory() = default;
-
         explicit AgentFactory(const std::map<std::string, std::string> &arguments);
 
         std::shared_ptr<AbstractAgent> get_agent(
-            const int &vision_height, const int &vision_width, const int &nb_sensors,
-            const int &nb_continuous_actions, const int &nb_discrete_actions);
+            AgentAlgorithm algorithm, const int &vision_height, const int &vision_width,
+            const int &nb_sensors, const int &nb_continuous_actions,
+            const int &nb_discrete_actions);
 
-    protected:
+    private:
         template<typename T>
         T get_value(const std::string &argument_name, T default_value) {
             if (!arguments.contains(argument_name)) return default_value;
@@ -57,11 +58,18 @@ namespace arenai::agent {
             return parse_fn(value_as_string);
         }
 
-        virtual std::shared_ptr<AbstractAgent> get_agent_impl(
+        std::shared_ptr<AbstractAgent> create_sac_agent(
             const int &vision_height, const int &vision_width, const int &nb_sensors,
-            const int &nb_continuous_actions, const int &nb_discrete_action) = 0;
+            const int &nb_continuous_actions, const int &nb_discrete_action);
 
-    private:
+        std::shared_ptr<AbstractAgent> create_ppo_agent(
+            const int &vision_height, const int &vision_width, const int &nb_sensors,
+            const int &nb_continuous_actions, const int &nb_discrete_action);
+
+        std::shared_ptr<AbstractAgent> create_liquid_ppo_agent(
+            const int &vision_height, const int &vision_width, const int &nb_sensors,
+            const int &nb_continuous_actions, const int &nb_discrete_action);
+
         std::map<std::string, std::string> arguments;
     };
 

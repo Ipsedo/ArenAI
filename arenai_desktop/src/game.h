@@ -15,6 +15,7 @@ namespace arenai::desktop {
     // hyper-parameters) comes from the selected training run's config.json
     struct ModelOptions {
         std::filesystem::path state_dict_folder;
+        std::filesystem::path config_json;
         bool cuda;
     };
 

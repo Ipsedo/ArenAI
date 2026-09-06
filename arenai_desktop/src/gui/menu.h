@@ -101,7 +101,7 @@ namespace arenai::desktop::gui {
         // the algorithm to rebuild the networks with
         std::filesystem::path agent_folder;
         std::filesystem::path agent_config;
-        AiAlgorithm agent_algorithm = AiAlgorithm::PpoLiquid;
+        AiAlgorithm agent_algorithm = AiAlgorithm::Ppo;
     };
 
     enum class MenuOutcome { Play, Quit };

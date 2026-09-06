@@ -189,8 +189,9 @@ namespace arenai::desktop {
     void run_gui(const GameOptions &game_options, const ModelOptions &model_options) {
         // loaded before the backend: the window GPU choice only applies at
         // device creation, i.e. here
-        const auto initial_settings =
-            load_preferences({.agent_folder = model_options.state_dict_folder});
+        const auto initial_settings = load_preferences(
+            {.agent_folder = model_options.state_dict_folder,
+             .agent_config = model_options.config_json});
 
         const std::shared_ptr graphics_backend = view::make_glfw_vulkan_backend(
             game_options.window_width, game_options.window_height, "ArenAI",

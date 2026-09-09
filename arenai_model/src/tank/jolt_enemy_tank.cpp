@@ -153,7 +153,6 @@ namespace arenai::model {
                 const float aim_quality = compute_hit_reward(
                     tracked.fire_pos, tracked.enemy_pos_at_t, tracked.shell_pos_at_t);
 
-                // pure bonus: firing must never be penalized, only rewarded when on target
                 detail.aim += hit_reward_scale * aim_quality;
 
                 detail.nb_landed_shells++;
@@ -172,7 +171,7 @@ namespace arenai::model {
         // 4. total reward, kept split for the metrics
         last_reward_detail = detail;
 
-        return detail.aim + detail.hit + detail.received + detail.death;
+        return detail.hit + detail.received + detail.death;
     }
 
     RewardDetail JoltEnemyTank::get_last_reward_detail() const { return last_reward_detail; }

@@ -34,10 +34,8 @@ TEST_F(RewardTest, RewardZeroWhenAliveNoShot) {
     const float reward_a = tanks[0]->get_reward();
     const float reward_b = tanks[1]->get_reward();
 
-    // the dense aim shaping leaves a negligible residue when the canon points ~90°
-    // away from the enemy, so the reward is near zero rather than exactly zero
-    ASSERT_NEAR(reward_a, 0.f, 1e-3f);
-    ASSERT_NEAR(reward_b, 0.f, 1e-3f);
+    ASSERT_FLOAT_EQ(reward_a, 0.f);
+    ASSERT_FLOAT_EQ(reward_b, 0.f);
 }
 
 TEST_F(RewardTest, RewardNegativeWhenDead) {
@@ -179,7 +177,6 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
     ASSERT_GE(max_reward_on_hit, 0.2f)
         << "reward should be greater than or equal to the hit bonus after hitting an enemy";
 
-    // no fire, reward under the hit bonus
     constexpr user_input no_fire_input{
         .left_joystick = {.x = 0.f, .y = 0.f},
         .right_joystick = {.x = 0.f, .y = 0.f},
@@ -198,8 +195,44 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
     ASSERT_FALSE(std::isnan(max_reward_on_no_hit)) << "reward should never be NaN";
     ASSERT_FALSE(std::isinf(max_reward_on_no_hit)) << "reward should never be Inf";
 
-    ASSERT_LE(max_reward_on_no_hit, 0.2f)
-        << "reward should stay under the hit bonus when no shell hit an enemy";
+    ASSERT_FLOAT_EQ(max_reward_on_no_hit, 0.f)
+        << "reward should be exactly zero when no shell hit an enemy";
+}
+
+TEST_F(RewardTest, MissedShellPaysNothing) {
+    add_ground();
+    auto tank_a =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false, 60.f);
+    auto tank_b =
+        tank_factory->make_enemy_tank(file_reader, "tank_b", {15.f, 5.f, 30.f}, false, 60.f);
+
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+
+    const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
+    const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
+
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
+    for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
+
+    const std::vector tanks{shared_a, shared_b};
+
+    float total_reward = 0.f;
+    int max_landed_shells = 0;
+    for (int i = 0; i < 180; i++) {
+        engine->step(1.f / 60.f);
+        shared_a->tick(tanks);
+
+        total_reward += shared_a->get_reward();
+        max_landed_shells =
+            std::max(shared_a->get_last_reward_detail().nb_landed_shells, max_landed_shells);
+    }
+
+    ASSERT_FALSE(shared_a->consume_has_hit()) << "shell should have missed the enemy tank";
+    ASSERT_GT(max_landed_shells, 0) << "the shell tracker should have sampled a landed shell";
+    ASSERT_FLOAT_EQ(total_reward, 0.f) << "a shell that lands without hitting must pay nothing";
 }
 
 // ========================================================================

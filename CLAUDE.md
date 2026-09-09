@@ -9,7 +9,7 @@ En cas de doute ou d'alternative de design : **poser la question d'abord**, prop
 options, attendre la réponse. Les corrections de bugs internes (fichiers `src/`) qui ne
 changent ni contrat ni comportement voulu restent autorisées.
 
-A neural network (SAC) trained to play a tank-arena game.
+A neural network (PPO) trained to play a tank-arena game.
 Jolt physics, offscreen Vulkan rendering (the agent's vision), NN via LibTorch.
 
 ## Architecture (CMake modules)

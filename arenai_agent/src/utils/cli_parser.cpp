@@ -13,7 +13,7 @@ namespace arenai::agent {
 
     vision_channels parse_cli_vision_channels(const std::string &value) {
         const std::regex regex_match(
-            R"(^ *\[(?: *\( *\d+ *, *\d+ *\) *,)* *\( *\d+ *, *\d+ *\) *] *$)");
+            R"(^ *\[(?: *\( *\d+ *, *\d+ *\) *,)* *\( *\d+ *, *\d+ *\) *\] *$)");
         const std::regex regex_layer(R"(\( *\d+ *, *\d+ *\))");
         const std::regex regex_channel(R"(\d+)");
 
@@ -44,7 +44,7 @@ namespace arenai::agent {
     std::vector<int> parse_int_vector(
         const std::string &value, const std::string &cli_arg_name,
         const std::string &cli_arg_value_suggestion) {
-        const std::regex regex_match(R"(^ *\[(?: *\d+ *,)* *\d+ *] *$)");
+        const std::regex regex_match(R"(^ *\[(?: *\d+ *,)* *\d+ *\] *$)");
         const std::regex regex_groups(R"(\d+)");
 
         if (!std::regex_match(value.begin(), value.end(), regex_match))

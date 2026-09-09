@@ -87,7 +87,7 @@ namespace arenai::agent {
         std::vector<torch::Tensor> outputs;
         outputs.reserve(nb_steps);
 
-        for (long t = 0; t < nb_steps; t++) {
+        for (auto t = 0; t < nb_steps; t++) {
             auto [output, next_x] = liquid->forward_step(
                 x, encoded.index({at::indexing::Slice(), t, at::indexing::Slice()}));
 

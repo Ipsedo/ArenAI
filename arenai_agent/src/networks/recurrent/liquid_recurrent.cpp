@@ -85,15 +85,15 @@ torch::Tensor LiquidRecurrent::forward(const torch::Tensor &inputs) {
         inputs.sizes().size() == 3,
         "Processed input needs to have 3 dimensions (Batch, Time, Features)");
 
-    const long batch_size = inputs.size(0);
-    const long nb_steps = inputs.size(1);
+    const auto batch_size = inputs.size(0);
+    const auto nb_steps = inputs.size(1);
 
     auto x_t = get_first_x(static_cast<int>(batch_size));
 
     std::vector<torch::Tensor> results;
     results.reserve(nb_steps);
 
-    for (long t = 0; t < nb_steps; t++) {
+    for (auto t = 0; t < nb_steps; t++) {
         auto [output, x_t_next] =
             forward_step(x_t, inputs.index({at::indexing::Slice(), t, at::indexing::Slice()}));
 

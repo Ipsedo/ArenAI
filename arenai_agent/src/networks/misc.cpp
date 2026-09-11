@@ -50,4 +50,24 @@ namespace arenai::agent {
                << ", max=" << std::exp(max_log_sigma) << ")";
     }
 
+    /*
+     * Concentration of Beta distribution output layer
+     */
+
+    ConcentrationOutput::ConcentrationOutput(
+        const float min_concentration, const float max_concentration)
+        : min_log_excess(std::log(min_concentration - 2.f)),
+          max_log_excess(std::log(max_concentration - 2.f)) {}
+
+    torch::Tensor ConcentrationOutput::forward(const torch::Tensor &input) {
+        const auto log_excess =
+            min_log_excess + (max_log_excess - min_log_excess) * torch::sigmoid(input);
+        return 2.f + torch::exp(log_excess);
+    }
+
+    void ConcentrationOutput::pretty_print(std::ostream &stream) {
+        stream << name() << "(min=" << 2.f + std::exp(min_log_excess)
+               << ", max=" << 2.f + std::exp(max_log_excess) << ")";
+    }
+
 }// namespace arenai::agent

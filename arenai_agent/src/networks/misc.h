@@ -49,6 +49,20 @@ namespace arenai::agent {
         float max_log_sigma;
     };
 
+    // Beta concentration κ, log-scale on the excess κ - 2 bounded between min and max
+    class ConcentrationOutput : public AbstractFunctionModule {
+    public:
+        ConcentrationOutput(float min_concentration, float max_concentration);
+
+        torch::Tensor forward(const torch::Tensor &input) override;
+
+        void pretty_print(std::ostream &stream) override;
+
+    private:
+        float min_log_excess;
+        float max_log_excess;
+    };
+
 }// namespace arenai::agent
 
 #endif//ARENAI_AGENT_HOST_MISC_H

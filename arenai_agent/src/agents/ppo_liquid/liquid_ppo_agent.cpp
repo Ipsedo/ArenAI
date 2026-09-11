@@ -4,8 +4,8 @@
 
 #include "./liquid_ppo_agent.h"
 
+#include "../../distributions/beta_law.h"
 #include "../../distributions/multinomial.h"
-#include "../../distributions/truncated_normal.h"
 #include "../../networks/constants.h"
 #include "../../networks_utils/torch_converter.h"
 #include "../../networks_utils/torch_loader.h"
@@ -46,20 +46,21 @@ namespace arenai::agent {
             const auto &[vision, sensors] = state;
 
             x_t = hidden_state->get(vision.size(0));
-            const auto &[mu, sigma, discrete_proba, next_x] = actor->act(vision, sensors, x_t);
+            const auto &[mode, concentration, discrete_proba, next_x] =
+                actor->act(vision, sensors, x_t);
             hidden_state->set(next_x);
 
             if (sample) {
-                action.continuous_action = truncated_normal_sample(mu, sigma);
+                action.continuous_action = beta_law_sample(mode, concentration);
                 action.discrete_action = multinomial_sample(discrete_proba);
             } else {
-                action.continuous_action = truncated_normal_mean(mu, sigma);
+                action.continuous_action = beta_law_mean_action(mode, concentration);
                 action.discrete_action = multinomial_max_action(discrete_proba);
             }
 
             // old log-probabilities, kept for the PPO importance ratio
             continuous_log_prob =
-                truncated_normal_log_pdf(action.continuous_action, mu, sigma).sum(-1, true);
+                beta_law_log_proba(action.continuous_action, mode, concentration).sum(-1, true);
 
             const auto clamped_proba = torch::clamp(discrete_proba, EPSILON, 1.0 - EPSILON);
             discrete_log_prob = (action.discrete_action * torch::log(clamped_proba)).sum(-1, true);

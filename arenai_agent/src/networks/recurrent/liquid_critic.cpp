@@ -63,7 +63,7 @@ namespace arenai::agent {
         std::vector<torch::Tensor> outputs;
         outputs.reserve(nb_steps);
 
-        for (long t = 0; t < nb_steps; t++) {
+        for (auto t = 0; t < nb_steps; t++) {
             auto [output, next_x] = liquid->forward_step(
                 x, encoded.index({at::indexing::Slice(), t, at::indexing::Slice()}));
 
@@ -74,7 +74,7 @@ namespace arenai::agent {
         return {.value = to_value->forward(torch::stack(outputs, 1)), .next_x = x};
     }
 
-    torch::Tensor LiquidCritic::initial_state(const int batch_size) {
+    torch::Tensor LiquidCritic::initial_state(const int batch_size) const {
         return liquid->get_first_x(batch_size);
     }
 

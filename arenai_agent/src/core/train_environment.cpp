@@ -42,7 +42,7 @@ namespace arenai::agent {
           miss_distance_metric(std::make_shared<MeanMetric>("miss", 1024 * nb_tanks, 1)),
           episode_step_mean_nb_metric(std::make_shared<MeanMetric>("s", 32, 1)),
           fire_metric(std::make_shared<MeanMetric>("fire", 256, 2)),
-          hit_metric(std::make_shared<MeanMetric>("hit", 256, 2, true)),
+          hit_metric(std::make_shared<MeanMetric>("hit", 16, 2, true)),
           kill_metric(std::make_shared<MeanMetric>("kill", 16, 1)), nb_kills_episode(0),
           nb_fires_episode(0), nb_hits_episode(0) {}
 
@@ -102,7 +102,7 @@ namespace arenai::agent {
             return is_timeout_result;
         });
 
-        // fire / hit frequencies (per second, per tank that acted this step)
+        // fire frequency (per second, per tank that acted this step)
         int nb_acting = 0, nb_fires = 0, nb_hits = 0;
         for (int i = 0; i < nb_tanks; i++) {
             if (already_done[i]) continue;
@@ -111,12 +111,9 @@ namespace arenai::agent {
             nb_hits += has_hit[i] ? 1 : 0;
         }
 
-        if (nb_acting > 0) {
+        if (nb_acting > 0)
             fire_metric->add(
                 static_cast<float>(nb_fires) / (static_cast<float>(nb_acting) * wanted_frequency));
-            hit_metric->add(
-                static_cast<float>(nb_hits) / (static_cast<float>(nb_acting) * wanted_frequency));
-        }
 
         nb_fires_episode += nb_fires;
         nb_hits_episode += nb_hits;
@@ -182,8 +179,15 @@ namespace arenai::agent {
     void TrainTankEnvironment::on_reset_physics(
         const std::unique_ptr<model::AbstractPhysicEngine> &engine) {
 
-        // close the previous episode's counter (skip the very first reset)
-        if (nb_steps > 0) kill_metric->add(static_cast<float>(nb_kills_episode));
+        // close the previous episode's counters (skip the very first reset)
+        if (nb_steps > 0) {
+            kill_metric->add(static_cast<float>(nb_kills_episode));
+
+            // hit accuracy is undefined on an episode without a single fire
+            if (nb_fires_episode > 0)
+                hit_metric->add(
+                    static_cast<float>(nb_hits_episode) / static_cast<float>(nb_fires_episode));
+        }
         nb_kills_episode = 0;
 
         nb_steps = 0;

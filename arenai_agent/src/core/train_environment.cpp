@@ -27,7 +27,7 @@ namespace arenai::agent {
         : BaseTanksEnvironment(
             std::make_shared<DesktopAssetFileReader>(android_assets_path), graphics_backend,
             nb_tanks, wanted_frequency, vision_height, vision_width, vision_num_threads, false,
-            true, static_cast<float>(max_episode_steps) * wanted_frequency),
+            true),
           wanted_frequency(wanted_frequency), nb_tanks(nb_tanks), nb_steps(0),
           done(nb_tanks, false), already_done(nb_tanks, false),
           max_episode_steps(max_episode_steps), nb_hits_per_tanks(nb_tanks, 0),

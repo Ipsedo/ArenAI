@@ -45,7 +45,7 @@ namespace arenai::model {
         JoltPhysicEngine &engine,
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::string &tank_prefix_name, const glm::vec3 chassis_pos,
-        const float wanted_frame_frequency, const bool apply_timeout, float max_episode_seconds)
+        const float wanted_frame_frequency, const bool apply_timeout)
         : JoltTank(
             engine, file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency,
             [this](const ShellItem *shell, const ShellContactInfo &info, Item *item) {
@@ -69,8 +69,7 @@ namespace arenai::model {
           remaining_frames(max_frames_without_hit),
           nb_frames_added_when_hit(static_cast<int>(3.f / wanted_frame_frequency)),
           nb_frames_added_when_kill(static_cast<int>(15.f / wanted_frame_frequency)),
-          has_hit(false), has_kill(false), has_fired(false),
-          max_episode_frames(static_cast<int>(max_episode_seconds / wanted_frame_frequency)) {}
+          has_hit(false), has_kill(false), has_fired(false) {}
 
     float JoltEnemyTank::compute_hit_reward(
         const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos, const glm::vec3 &shell_pos) const {
@@ -370,10 +369,6 @@ namespace arenai::model {
         result.push_back(static_cast<float>(nb_shells) / static_cast<float>(max_shells));
         result.push_back(
             static_cast<float>(curr_cooldown_frame) / static_cast<float>(fire_cooldown_frames));
-        // hit/kill bonuses can push remaining_frames above the base window, hence the clamp
-        result.push_back(std::clamp(
-            static_cast<float>(remaining_frames) / static_cast<float>(max_frames_without_hit), 0.f,
-            1.f));
 
         return result;
     }

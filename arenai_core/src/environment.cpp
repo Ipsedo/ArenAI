@@ -18,8 +18,7 @@ namespace arenai::core {
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, const int nb_tanks,
         float wanted_frequency, const int vision_height, const int vision_width,
-        const int vision_num_threads, const bool vision_thread_sleep, const bool apply_timeout,
-        const float max_episode_seconds)
+        const int vision_num_threads, const bool vision_thread_sleep, const bool apply_timeout)
         : wanted_frequency(wanted_frequency), nb_tanks(nb_tanks), vision_height(vision_height),
           vision_width(vision_width), vision_num_threads(vision_num_threads),
           vision_thread_sleep(vision_thread_sleep),
@@ -29,8 +28,7 @@ namespace arenai::core {
           physic_engine(model::make_physic_engine(wanted_frequency)),
           nb_reset_frames(static_cast<int>(4.f / wanted_frequency)), drawing_started_(false),
           apply_timeout(apply_timeout), graphics_backend(graphics_backend),
-          gl_context(graphics_backend->render_context()), rng(dev()), file_reader(file_reader),
-          max_episode_seconds(max_episode_seconds) {}
+          gl_context(graphics_backend->render_context()), rng(dev()), file_reader(file_reader) {}
 
     std::vector<std::tuple<State, Reward, IsDone>>
     BaseTanksEnvironment::step(const float time_delta, const std::vector<Action> &actions) {
@@ -90,8 +88,7 @@ namespace arenai::core {
         for (int i = 0; i < nb_tanks; i++) {
             tanks.push_back(tank_factory->make_enemy_tank(
                 file_reader, "enemy_" + std::to_string(i),
-                glm::vec3(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng)), apply_timeout,
-                max_episode_seconds));
+                glm::vec3(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng)), apply_timeout));
 
             tank_controller_handler.push_back(std::make_unique<EnemyControllerHandler>(
                 wanted_frequency, model::ENEMY_TURRET_RADIAL_VELOCITY));

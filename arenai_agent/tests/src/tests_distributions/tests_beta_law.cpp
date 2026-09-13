@@ -57,6 +57,16 @@ TEST_F(BetaLawTest, MeanActionMatchesModeWhenCentered) {
     ASSERT_TRUE(torch::allclose(mean, torch::zeros({10}), 1e-5, 1e-5));
 }
 
+TEST_F(BetaLawTest, ModeActionSpansActionRange) {
+    // mode in [0, 1] maps linearly to [-1, 1], independent of concentration
+    const auto mode = torch::tensor({0.0f, 0.25f, 0.5f, 0.75f, 1.0f});
+
+    const auto action = beta_law_mode_action(mode);
+
+    ASSERT_TRUE(
+        torch::allclose(action, torch::tensor({-1.0f, -0.5f, 0.0f, 0.5f, 1.0f}), 1e-5, 1e-5));
+}
+
 // ========================================================================
 // Parameterized: shape variations
 // ========================================================================

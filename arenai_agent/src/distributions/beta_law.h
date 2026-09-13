@@ -22,6 +22,8 @@ namespace arenai::agent {
     torch::Tensor
     beta_law_mean_action(const torch::Tensor &mode, const torch::Tensor &concentration);
 
+    torch::Tensor beta_law_mode_action(const torch::Tensor &mode);
+
     float beta_law_target_entropy(const int &nb_actions);
 
 }// namespace arenai::agent

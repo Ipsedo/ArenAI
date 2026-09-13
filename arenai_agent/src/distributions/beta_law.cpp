@@ -80,6 +80,8 @@ namespace arenai::agent {
         return 2.f * clamped_alpha / (clamped_alpha + clamped_beta) - 1.f;
     }
 
+    torch::Tensor beta_law_mode_action(const torch::Tensor &mode) { return mode * 2.f - 1.f; }
+
     float beta_law_target_entropy(const int &nb_actions) {
         return beta_law_entropy(torch::tensor(0.5f), torch::tensor(2.f)).item<float>()
                * static_cast<float>(nb_actions);

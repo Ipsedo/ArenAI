@@ -54,7 +54,7 @@ namespace arenai::agent {
                 action.continuous_action = beta_law_sample(mode, concentration);
                 action.discrete_action = multinomial_sample(discrete_proba);
             } else {
-                action.continuous_action = beta_law_mean_action(mode, concentration);
+                action.continuous_action = beta_law_mode_action(mode);
                 action.discrete_action = multinomial_max_action(discrete_proba);
             }
 

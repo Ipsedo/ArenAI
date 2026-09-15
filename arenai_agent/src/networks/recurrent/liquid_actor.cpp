@@ -34,7 +34,7 @@ namespace arenai::agent {
               "liquid", std::make_shared<LiquidRecurrent>(
                             neuron_number, hidden_size_sensors + vision_encoder->get_output_size(),
                             neuron_number, unfolding_steps,
-                            [](const torch::Tensor &t) { return torch::tanh(t); }, delta_t))),
+                            [](const torch::Tensor &t) { return torch::silu(t); }, delta_t))),
           mode(register_module(
               "mode",
               torch::nn::Sequential(

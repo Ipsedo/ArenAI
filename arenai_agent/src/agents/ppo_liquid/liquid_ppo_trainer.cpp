@@ -355,9 +355,13 @@ namespace arenai::agent {
 
         const auto rewards = rollout.rewards.to(torch::kFloat);
         const auto dones = rollout.dones.to(torch::kFloat);
+        const auto truncateds = rollout.truncateds.to(torch::kFloat);
         const auto valids = rollout.valids.to(torch::kFloat);
 
-        const auto deltas = rewards + gamma * next_values * (1.f - dones) - values;
+        // a truncated step bootstraps on its own value (the last alive observation):
+        // the post-mortem next state is not a state the counterfactual life would reach
+        const auto deltas =
+            rewards + gamma * (next_values * (1.f - dones) + values * truncateds) - values;
 
         auto advantages = torch::zeros_like(deltas);
         auto gae = torch::zeros({nb_tanks, 1}, deltas.options());

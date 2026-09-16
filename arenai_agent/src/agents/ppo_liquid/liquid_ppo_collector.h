@@ -26,7 +26,9 @@ namespace arenai::agent {
             const torch::Tensor &continuous_log_prob, const torch::Tensor &discrete_log_prob,
             const torch::Tensor &actor_hidden);
 
-        void on_transition(const torch::Tensor &rewards, const torch::Tensor &done) override;
+        void on_transition(
+            const torch::Tensor &rewards, const torch::Tensor &done,
+            const torch::Tensor &truncated) override;
 
         void on_episode_end(const TorchState &final_state) override;
 

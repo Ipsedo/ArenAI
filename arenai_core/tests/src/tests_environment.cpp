@@ -222,7 +222,7 @@ TEST_F(EnvironmentTest, StepRewardAndDoneAreValid) {
                    .fire_button = {false}});
 
     for (const auto results = env.step(frequency, actions);
-         const auto &[state, reward, is_done]: results) {
+         const auto &[state, reward, is_done, is_truncated]: results) {
         ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN";
         ASSERT_FALSE(std::isinf(reward)) << "reward should not be Inf";
     }

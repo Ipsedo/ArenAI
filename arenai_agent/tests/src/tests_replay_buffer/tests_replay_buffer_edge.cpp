@@ -60,6 +60,7 @@ namespace {
         step.action.discrete_action[0][0] = 1.0f;
         step.reward = torch::full({1, 1}, reward);
         step.done = torch::zeros({1, 1});
+        step.truncated = torch::zeros({1, 1});
         return step;
     }
 }// namespace

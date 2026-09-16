@@ -106,7 +106,8 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
         constexpr int nb_tanks = 2;
 
         agent->act(make_state(cfg, nb_tanks), true);
-        collector->on_transition(torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+        collector->on_transition(
+            torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
         trainer->step();
     }
 

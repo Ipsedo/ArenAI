@@ -67,7 +67,7 @@ TEST(ProbeActSample, PpoLogProbs) {
     const auto state = probe_state(3, h, w, nb_sensors);
 
     const auto [continuous_action, discrete_action] = agent->act(state, true);
-    collector->on_transition(torch::randn({3, 1}), torch::zeros({3, 1}));
+    collector->on_transition(torch::randn({3, 1}), torch::zeros({3, 1}), torch::zeros({3, 1}));
     collector->on_episode_end(state);
 
     torch::NoGradGuard guard;

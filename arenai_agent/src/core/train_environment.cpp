@@ -46,7 +46,7 @@ namespace arenai::agent {
           kill_metric(std::make_shared<MeanMetric>("kill", 16, 1)), nb_kills_episode(0),
           nb_fires_episode(0), nb_hits_episode(0) {}
 
-    std::vector<std::tuple<core::State, core::Reward, core::IsDone>>
+    std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
     TrainTankEnvironment::step(const float time_delta, const std::vector<core::Action> &actions) {
 
         // tanks flagged done on a previous step already emitted their terminal transition:
@@ -125,7 +125,7 @@ namespace arenai::agent {
             if (has_kill[i]) { nb_kills_per_tanks[i] += 1; }
 
             // detect death (kill, suicide or timeout)
-            if (const auto &[state, reward, is_done] = step_result[i]; is_done) {
+            if (const auto &[state, reward, is_done, is_truncated] = step_result[i]; is_done) {
                 if (!already_done[i] && !is_suicide[i] && !is_timeout[i]) nb_kills_episode++;
                 done[i] = true;
             }
@@ -139,10 +139,11 @@ namespace arenai::agent {
         if (tanks_not_done_indexes.size() == 1) {
             const auto winner_index = tanks_not_done_indexes[0];
 
-            const auto &[state, reward, is_done] = step_result[winner_index];
+            const auto &[state, reward, is_done, is_truncated] = step_result[winner_index];
 
             const float win_reward = nb_kills_per_tanks[winner_index] > 0 ? 2.f : 0.f;
-            step_result[winner_index] = {state, reward + win_reward, true};
+            // winning is a genuine termination, never a truncation
+            step_result[winner_index] = {state, reward + win_reward, true, false};
             done[winner_index] = true;
         }
 

@@ -200,11 +200,12 @@ namespace arenai::agent {
                 // step environment
                 const auto steps = env->step(environment_options.wanted_frequency, actions_for_env);
 
-                const auto [torch_next_states, torch_rewards, torch_are_done] = steps_to_tensor(
-                    steps, environment_options.vision_height, environment_options.vision_width);
+                const auto [torch_next_states, torch_rewards, torch_are_done, torch_are_truncated] =
+                    steps_to_tensor(
+                        steps, environment_options.vision_height, environment_options.vision_width);
 
                 // complete the pending transition - maybe train
-                collector->on_transition(torch_rewards, torch_are_done);
+                collector->on_transition(torch_rewards, torch_are_done, torch_are_truncated);
                 trainer->step();
 
                 // step ending stuff

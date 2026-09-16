@@ -30,7 +30,7 @@ namespace arenai::agent {
         float clip_epsilon = 0.2f;
         float target_kl = 0.05f;
         float grad_norm_max = 0.5f;
-        float continuous_target_entropy = 0.4f;
+        float continuous_target_entropy = -0.88f;
         float discrete_target_entropy_factor = 0.2f;
         int epochs = 2;
         int rollout_size = 30 * 30;

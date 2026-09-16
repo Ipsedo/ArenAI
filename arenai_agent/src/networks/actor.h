@@ -14,8 +14,10 @@
 namespace arenai::agent {
 
     struct ActorRawOutput {
-        torch::Tensor mu;
-        torch::Tensor sigma;
+        // Beta distribution on [-1, 1]: mode in [0, 1] (on the underlying [0, 1]
+        // support) and concentration κ = α + β
+        torch::Tensor mode;
+        torch::Tensor concentration;
         torch::Tensor discrete;
     };
 
@@ -36,8 +38,8 @@ namespace arenai::agent {
 
         torch::nn::Sequential head;
 
-        torch::nn::Sequential mu;
-        torch::nn::Sequential sigma;
+        torch::nn::Sequential mode;
+        torch::nn::Sequential concentration;
         torch::nn::Sequential discrete;
     };
 

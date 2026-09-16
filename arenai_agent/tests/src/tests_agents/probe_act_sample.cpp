@@ -3,7 +3,7 @@
 
 #include <agents/ppo/ppo_agent.h>
 #include <agents/sac/sac_agent.h>
-#include <distributions/truncated_normal.h>
+#include <distributions/beta_law.h>
 #include <gtest/gtest.h>
 
 using namespace arenai;
@@ -28,21 +28,21 @@ TEST(ProbeActSample, SacStatsBiasedMu) {
         h, w, nb_sensors, nb_cont, nb_disc, 8, std::vector{16},
         std::vector<std::tuple<int, int>>{{3, 4}}, std::vector{2}, 0.3f, 0.1f);
 
-    // push mu away from 0 : mu ~ tanh(bias)
+    // push the mode away from the center : mode ~ sigmoid(bias)
     {
         torch::NoGradGuard guard;
         for (auto &p: actor->named_parameters())
-            if (p.key().find("mu") != std::string::npos
+            if (p.key().find("mode") != std::string::npos
                 && p.key().find("bias") != std::string::npos)
-                p.value().copy_(torch::tensor({std::atanh(0.7f), std::atanh(-0.4f)}));
+                p.value().copy_(torch::tensor({std::log(0.85f / 0.15f), std::log(0.3f / 0.7f)}));
     }
 
     const auto agent = std::make_shared<TorchSacAgent>(actor, torch::Device(torch::kCPU));
     const auto state = probe_state(1, h, w, nb_sensors);
 
     torch::NoGradGuard guard;
-    const auto [mu, sigma, disc] = actor->act(state.vision, state.proprioception);
-    std::cout << "mu: " << mu << "\nsigma: " << sigma << std::endl;
+    const auto [mode, concentration, disc] = actor->act(state.vision, state.proprioception);
+    std::cout << "mode: " << mode << "\nconcentration: " << concentration << std::endl;
 
     constexpr int N = 4000;
     std::vector<torch::Tensor> conts;
@@ -71,8 +71,9 @@ TEST(ProbeActSample, PpoLogProbs) {
     collector->on_episode_end(state);
 
     torch::NoGradGuard guard;
-    const auto [mu, sigma, disc] = actor->act(state.vision, state.proprioception);
-    const auto expected_cont = truncated_normal_log_pdf(continuous_action, mu, sigma).sum(-1, true);
+    const auto [mode, concentration, disc] = actor->act(state.vision, state.proprioception);
+    const auto expected_cont =
+        beta_law_log_proba(continuous_action, mode, concentration).sum(-1, true);
     const auto expected_disc =
         (discrete_action * torch::log(torch::clamp(disc, 1e-8, 1.0 - 1e-8))).sum(-1, true);
 
@@ -96,14 +97,16 @@ TEST(ProbeActSample, SacStats) {
 
     // raw actor output
     torch::NoGradGuard guard;
-    const auto [mu, sigma, disc] = actor->act(state.vision, state.proprioception);
-    std::cout << "mu: " << mu << "\nsigma: " << sigma << "\ndisc_proba: " << disc << std::endl;
+    const auto [mode, concentration, disc] = actor->act(state.vision, state.proprioception);
+    std::cout << "mode: " << mode << "\nconcentration: " << concentration
+              << "\ndisc_proba: " << disc << std::endl;
 
     // deterministic
     const auto [continuous_action, discrete_action] = agent->act(state, false);
     std::cout << "act(false) cont: " << continuous_action
               << "\nact(false) disc: " << discrete_action << std::endl;
-    std::cout << "cont == mu ? " << torch::allclose(continuous_action, mu) << std::endl;
+    std::cout << "cont == mode action ? "
+              << torch::allclose(continuous_action, beta_law_mode_action(mode)) << std::endl;
 
     // stochastic stats
     constexpr int N = 2000;

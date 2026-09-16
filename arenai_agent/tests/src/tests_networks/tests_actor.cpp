@@ -3,6 +3,7 @@
 //
 
 #include <networks/actor.h>
+#include <networks/constants.h>
 
 #include <arenai_agent_tests/tests_networks/tests_actor.h>
 
@@ -27,19 +28,21 @@ TEST_P(ActorTestParam, TestActorAct) {
         torch::TensorOptions().dtype(torch::kUInt8));
     const auto sensors = torch::randn({batch_size, sensors_nb});
 
-    const auto [mu, sigma, discrete] = actor.act(image, sensors);
+    const auto [mode, concentration, discrete] = actor.act(image, sensors);
 
-    ASSERT_EQ(mu.ndimension(), 2);
-    ASSERT_EQ(mu.size(0), batch_size);
-    ASSERT_EQ(mu.size(1), cont_actions_nb);
+    ASSERT_EQ(mode.ndimension(), 2);
+    ASSERT_EQ(mode.size(0), batch_size);
+    ASSERT_EQ(mode.size(1), cont_actions_nb);
     ASSERT_TRUE(
-        torch::all(torch::logical_and(torch::ge(mu, -1.0), torch::le(mu, 1.0))).item<bool>());
+        torch::all(torch::logical_and(torch::ge(mode, 0.0), torch::le(mode, 1.0))).item<bool>());
 
-    ASSERT_EQ(sigma.ndimension(), 2);
-    ASSERT_EQ(sigma.size(0), batch_size);
-    ASSERT_EQ(sigma.size(1), cont_actions_nb);
-    ASSERT_TRUE(
-        torch::all(torch::logical_and(torch::gt(sigma, 0.0), torch::le(sigma, 1.0))).item<bool>());
+    ASSERT_EQ(concentration.ndimension(), 2);
+    ASSERT_EQ(concentration.size(0), batch_size);
+    ASSERT_EQ(concentration.size(1), cont_actions_nb);
+    ASSERT_TRUE(torch::all(torch::logical_and(
+                               torch::ge(concentration, CONCENTRATION_MIN),
+                               torch::le(concentration, CONCENTRATION_MAX)))
+                    .item<bool>());
 
     ASSERT_EQ(discrete.ndimension(), 2);
     ASSERT_EQ(discrete.size(0), batch_size);

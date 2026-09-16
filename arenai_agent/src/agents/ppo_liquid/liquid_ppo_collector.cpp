@@ -25,8 +25,8 @@ namespace arenai::agent {
         last_actor_hidden = actor_hidden;
     }
 
-    void
-    LiquidPpoStepCollector::on_transition(const torch::Tensor &rewards, const torch::Tensor &done) {
+    void LiquidPpoStepCollector::on_transition(
+        const torch::Tensor &rewards, const torch::Tensor &done, const torch::Tensor &truncated) {
         rollout_buffer->add(
             {.state = last_state,
              .action = last_action,
@@ -34,6 +34,7 @@ namespace arenai::agent {
              .discrete_log_prob = last_discrete_log_prob,
              .reward = rewards,
              .done = done,
+             .truncated = truncated,
              .actor_hidden = last_actor_hidden,
              .episode_start = next_episode_start});
 

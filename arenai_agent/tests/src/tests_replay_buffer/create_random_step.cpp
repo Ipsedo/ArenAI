@@ -23,5 +23,6 @@ SacInputStep create_random_step(
             {.continuous_action = torch::rand({1, nb_cont_actions}) * 2.f - 1.f,
              .discrete_action = torch::softmax(torch::randn({1, nb_discrete_actions}), -1)},
         .reward = torch::randn({1, 1}),
-        .done = torch::full({1, 1}, done, torch::kBool)};
+        .done = torch::full({1, 1}, done, torch::kBool),
+        .truncated = torch::zeros({1, 1}, torch::kBool)};
 }

@@ -20,6 +20,10 @@ namespace arenai::core {
 
     typedef bool IsDone;
 
+    // done from starving out: the episode ends for the tank, but the value target must
+    // bootstrap instead of cutting the return (truncation, not termination)
+    typedef bool IsTruncated;
+
     typedef controller::user_input Action;
 }// namespace arenai::core
 

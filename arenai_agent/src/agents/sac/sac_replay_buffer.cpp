@@ -38,6 +38,7 @@ namespace arenai::agent {
         store_disc_action_ = make_storage(first_step.action.discrete_action);
         store_reward_ = make_storage(first_step.reward);
         store_done_ = make_storage(first_step.done);
+        store_truncated_ = make_storage(first_step.truncated);
 
         const auto bool_cpu = torch::TensorOptions().dtype(torch::kBool).device(cpu);
         store_sampleable_ = torch::zeros({mem, nb_tanks_}, bool_cpu);
@@ -59,6 +60,7 @@ namespace arenai::agent {
         store_disc_action_[idx].copy_(step.action.discrete_action.detach());
         store_reward_[idx].copy_(step.reward);
         store_done_[idx].copy_(done_bool);
+        store_truncated_[idx].copy_(step.truncated.to(torch::kBool));
 
         // tanks already terminated before this step have no valid transition to store
         store_sampleable_[idx].copy_(already_terminated_.logical_not());
@@ -80,6 +82,7 @@ namespace arenai::agent {
         store_disc_action_[idx].zero_();
         store_reward_[idx].zero_();
         store_done_[idx].zero_();
+        store_truncated_[idx].zero_();
 
         store_sampleable_[idx].fill_(false);
         already_terminated_.fill_(false);
@@ -124,6 +127,7 @@ namespace arenai::agent {
                  .discrete_action = take(store_disc_action_, step_idx)},
             .reward = take(store_reward_, step_idx),
             .done = take(store_done_, step_idx),
+            .truncated = take(store_truncated_, step_idx),
             .next_state = {
                 .vision = take(store_vision_, next_idx),
                 .proprioception = take(store_proprioception_, next_idx)}};

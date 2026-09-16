@@ -16,6 +16,8 @@ namespace arenai::agent {
         TorchAction action;
         torch::Tensor reward;
         torch::Tensor done;
+        // done whose value target must bootstrap instead of cutting the return (famine)
+        torch::Tensor truncated;
     };
 
     struct SacTrainStep {
@@ -23,6 +25,7 @@ namespace arenai::agent {
         TorchAction action;
         torch::Tensor reward;
         torch::Tensor done;
+        torch::Tensor truncated;
         TorchState next_state;
     };
 
@@ -59,6 +62,7 @@ namespace arenai::agent {
         torch::Tensor store_disc_action_;
         torch::Tensor store_reward_;
         torch::Tensor store_done_;
+        torch::Tensor store_truncated_;
 
         // [mem, nb_tanks] whether the (step, tank) pair can start a sampled transition
         torch::Tensor store_sampleable_;

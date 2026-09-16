@@ -32,6 +32,7 @@ LiquidPpoInputStep LiquidPpoRolloutBufferTest::make_step(
         .discrete_log_prob = torch::randn({NB_TANKS, 1}),
         .reward = torch::randn({NB_TANKS, 1}),
         .done = done,
+        .truncated = torch::zeros({NB_TANKS, 1}),
         .actor_hidden = torch::randn({NB_TANKS, NEURON_NUMBER}),
         .episode_start = episode_start};
 }
@@ -218,6 +219,32 @@ TEST_F(LiquidPpoRolloutBufferTest, TerminatedTankInvalidatesFollowingSteps) {
     ASSERT_TRUE(valids[0][1].item<bool>());
     ASSERT_TRUE(valids[1][1].item<bool>());
     ASSERT_TRUE(valids[2][1].item<bool>());
+}
+
+TEST_F(LiquidPpoRolloutBufferTest, TruncatedStepIsStackedAndStaysValid) {
+    LiquidPpoRolloutBuffer buffer;
+
+    // tank 0 starves at the first step: done and truncated together
+    const auto done = torch::cat({torch::ones({1, 1}), torch::zeros({1, 1})}, 0);
+
+    auto step_0 = make_step(make_state(), done, false);
+    step_0.truncated = done.clone();
+
+    buffer.add(step_0);
+    buffer.add(make_step(make_state()));
+    buffer.finish_episode(make_state());
+
+    const auto rollout = buffer.get_rollout();
+    const auto truncateds = rollout.truncateds.squeeze(-1);
+    const auto valids = rollout.valids.squeeze(-1);
+
+    ASSERT_TRUE(truncateds[0][0].item<bool>());
+    ASSERT_FALSE(truncateds[0][1].item<bool>());
+    ASSERT_FALSE(truncateds[1][0].item<bool>());
+
+    // the truncated (dying) transition itself is valid, the following one is not
+    ASSERT_TRUE(valids[0][0].item<bool>());
+    ASSERT_FALSE(valids[1][0].item<bool>());
 }
 
 TEST_F(LiquidPpoRolloutBufferTest, FinishEpisodeResetsTermination) {

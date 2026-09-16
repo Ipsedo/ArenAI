@@ -4,6 +4,9 @@
 
 #include "./init.h"
 
+#include <algorithm>
+#include <cmath>
+
 #include "../networks/constants.h"
 
 using namespace arenai;
@@ -56,6 +59,25 @@ namespace arenai::agent {
         if (auto *lin = module.as<torch::nn::Linear>()) {
             torch::nn::init::orthogonal_(lin->weight, 0.01f);
             if (lin->options.bias()) torch::nn::init::constant_(lin->bias, initial_sigma_logit);
+        }
+    }
+
+    void init_concentration_output_weights(torch::nn::Module &module, const float wanted_sigma) {
+        // Beta on [-1, 1]: var = 4 μ(1-μ) / (κ+1), so at μ = 0.5 a wanted action
+        // std σ maps to κ = 1/σ² - 1
+        const auto wanted_concentration = std::clamp(
+            1.f / (wanted_sigma * wanted_sigma) - 1.f, CONCENTRATION_MIN, CONCENTRATION_MAX);
+
+        const float min_log_excess = std::log(CONCENTRATION_MIN - 2.f);
+        const float max_log_excess = std::log(CONCENTRATION_MAX - 2.f);
+
+        const auto initial_sigmoid = (std::log(wanted_concentration - 2.f) - min_log_excess)
+                                     / (max_log_excess - min_log_excess);
+        const auto initial_logit = std::log(initial_sigmoid / (1.f - initial_sigmoid));
+
+        if (auto *lin = module.as<torch::nn::Linear>()) {
+            torch::nn::init::orthogonal_(lin->weight, 0.01f);
+            if (lin->options.bias()) torch::nn::init::constant_(lin->bias, initial_logit);
         }
     }
 

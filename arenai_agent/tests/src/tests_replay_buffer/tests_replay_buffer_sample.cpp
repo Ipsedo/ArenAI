@@ -17,7 +17,7 @@ namespace {
     constexpr int SENSORS_NB = 5;
 
     void assert_sample_shapes(const SacTrainStep &output, const int expected_batch_size) {
-        const auto &[state, action, reward, done, next_state] = output;
+        const auto &[state, action, reward, done, truncated, next_state] = output;
 
         ASSERT_EQ(state.vision.ndimension(), 4);
         ASSERT_EQ(state.vision.size(0), expected_batch_size);

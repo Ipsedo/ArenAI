@@ -27,7 +27,7 @@ namespace arenai::agent {
         : BaseTanksEnvironment(
             std::make_shared<DesktopAssetFileReader>(android_assets_path), graphics_backend,
             nb_tanks, wanted_frequency, vision_height, vision_width, vision_num_threads, false,
-            true, static_cast<float>(max_episode_steps) * wanted_frequency),
+            true),
           wanted_frequency(wanted_frequency), nb_tanks(nb_tanks), nb_steps(0),
           done(nb_tanks, false), already_done(nb_tanks, false),
           max_episode_steps(max_episode_steps), nb_hits_per_tanks(nb_tanks, 0),
@@ -42,11 +42,11 @@ namespace arenai::agent {
           miss_distance_metric(std::make_shared<MeanMetric>("miss", 1024 * nb_tanks, 1)),
           episode_step_mean_nb_metric(std::make_shared<MeanMetric>("s", 32, 1)),
           fire_metric(std::make_shared<MeanMetric>("fire", 256, 2)),
-          hit_metric(std::make_shared<MeanMetric>("hit", 256, 2, true)),
+          hit_metric(std::make_shared<MeanMetric>("hit", 16, 2, true)),
           kill_metric(std::make_shared<MeanMetric>("kill", 16, 1)), nb_kills_episode(0),
           nb_fires_episode(0), nb_hits_episode(0) {}
 
-    std::vector<std::tuple<core::State, core::Reward, core::IsDone>>
+    std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
     TrainTankEnvironment::step(const float time_delta, const std::vector<core::Action> &actions) {
 
         // tanks flagged done on a previous step already emitted their terminal transition:
@@ -102,7 +102,7 @@ namespace arenai::agent {
             return is_timeout_result;
         });
 
-        // fire / hit frequencies (per second, per tank that acted this step)
+        // fire frequency (per second, per tank that acted this step)
         int nb_acting = 0, nb_fires = 0, nb_hits = 0;
         for (int i = 0; i < nb_tanks; i++) {
             if (already_done[i]) continue;
@@ -111,12 +111,9 @@ namespace arenai::agent {
             nb_hits += has_hit[i] ? 1 : 0;
         }
 
-        if (nb_acting > 0) {
+        if (nb_acting > 0)
             fire_metric->add(
                 static_cast<float>(nb_fires) / (static_cast<float>(nb_acting) * wanted_frequency));
-            hit_metric->add(
-                static_cast<float>(nb_hits) / (static_cast<float>(nb_acting) * wanted_frequency));
-        }
 
         nb_fires_episode += nb_fires;
         nb_hits_episode += nb_hits;
@@ -128,7 +125,7 @@ namespace arenai::agent {
             if (has_kill[i]) { nb_kills_per_tanks[i] += 1; }
 
             // detect death (kill, suicide or timeout)
-            if (const auto &[state, reward, is_done] = step_result[i]; is_done) {
+            if (const auto &[state, reward, is_done, is_truncated] = step_result[i]; is_done) {
                 if (!already_done[i] && !is_suicide[i] && !is_timeout[i]) nb_kills_episode++;
                 done[i] = true;
             }
@@ -142,10 +139,11 @@ namespace arenai::agent {
         if (tanks_not_done_indexes.size() == 1) {
             const auto winner_index = tanks_not_done_indexes[0];
 
-            const auto &[state, reward, is_done] = step_result[winner_index];
+            const auto &[state, reward, is_done, is_truncated] = step_result[winner_index];
 
             const float win_reward = nb_kills_per_tanks[winner_index] > 0 ? 2.f : 0.f;
-            step_result[winner_index] = {state, reward + win_reward, true};
+            // winning is a genuine termination, never a truncation
+            step_result[winner_index] = {state, reward + win_reward, true, false};
             done[winner_index] = true;
         }
 
@@ -182,8 +180,15 @@ namespace arenai::agent {
     void TrainTankEnvironment::on_reset_physics(
         const std::unique_ptr<model::AbstractPhysicEngine> &engine) {
 
-        // close the previous episode's counter (skip the very first reset)
-        if (nb_steps > 0) kill_metric->add(static_cast<float>(nb_kills_episode));
+        // close the previous episode's counters (skip the very first reset)
+        if (nb_steps > 0) {
+            kill_metric->add(static_cast<float>(nb_kills_episode));
+
+            // hit accuracy is undefined on an episode without a single fire
+            if (nb_fires_episode > 0)
+                hit_metric->add(
+                    static_cast<float>(nb_hits_episode) / static_cast<float>(nb_fires_episode));
+        }
         nb_kills_episode = 0;
 
         nb_steps = 0;

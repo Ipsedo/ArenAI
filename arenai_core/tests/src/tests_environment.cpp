@@ -26,8 +26,7 @@ TEST_F(EnvironmentTest, ResetReturnsCorrectNumberOfStates) {
     constexpr int vision_w = 16;
 
     TestTanksEnvironment env(
-        file_reader, graphics_backend, nb_tanks, frequency, vision_h, vision_w, 1, false, false,
-        60.f);
+        file_reader, graphics_backend, nb_tanks, frequency, vision_h, vision_w, 1, false, false);
 
     const auto states = env.reset(100.f, 100.f);
 
@@ -47,8 +46,7 @@ TEST_F(EnvironmentTest, ResetInitialVisionIsNotBlack) {
     constexpr int vision_w = 16;
 
     TestTanksEnvironment env(
-        file_reader, graphics_backend, nb_tanks, frequency, vision_h, vision_w, 1, false, false,
-        60.f);
+        file_reader, graphics_backend, nb_tanks, frequency, vision_h, vision_w, 1, false, false);
 
     for (const auto states = env.reset(100.f, 100.f);
          const auto &[vision, proprioception]: states) {
@@ -85,8 +83,7 @@ TEST_F(EnvironmentTest, ResetGoldenImage) {
     constexpr int vision_w = 16;
 
     TestTanksEnvironment env(
-        file_reader, graphics_backend, nb_tanks, frequency, vision_h, vision_w, 1, false, false,
-        60.f);
+        file_reader, graphics_backend, nb_tanks, frequency, vision_h, vision_w, 1, false, false);
 
     env.seed(42);
 
@@ -151,7 +148,7 @@ TEST_F(EnvironmentTest, ResetProprioceptionNonEmpty) {
     constexpr float frequency = 1.f / 60.f;
 
     TestTanksEnvironment env(
-        file_reader, graphics_backend, nb_tanks, frequency, 8, 8, 1, false, false, 60.f);
+        file_reader, graphics_backend, nb_tanks, frequency, 8, 8, 1, false, false);
 
     for (const auto states = env.reset(100.f, 100.f);
          const auto &[vision, proprioception]: states) {
@@ -170,7 +167,7 @@ TEST_F(EnvironmentTest, ResetCallsOnResetPhysics) {
     constexpr float frequency = 1.f / 60.f;
 
     TestTanksEnvironment env(
-        file_reader, graphics_backend, nb_tanks, frequency, 8, 8, 1, false, false, 60.f);
+        file_reader, graphics_backend, nb_tanks, frequency, 8, 8, 1, false, false);
 
     env.reset(100.f, 100.f);
 
@@ -190,8 +187,7 @@ TEST_F(EnvironmentTest, StepReturnsCorrectNumberOfTuples) {
     constexpr int vision_w = 16;
 
     TestTanksEnvironment env(
-        file_reader, graphics_backend, nb_tanks, frequency, vision_h, vision_w, 1, false, false,
-        60.f);
+        file_reader, graphics_backend, nb_tanks, frequency, vision_h, vision_w, 1, false, false);
 
     env.reset(100.f, 100.f);
 
@@ -216,7 +212,7 @@ TEST_F(EnvironmentTest, StepRewardAndDoneAreValid) {
     constexpr float frequency = 1.f / 60.f;
 
     TestTanksEnvironment env(
-        file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false, false, 60.f);
+        file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false, false);
 
     env.reset(100.f, 100.f);
 
@@ -226,7 +222,7 @@ TEST_F(EnvironmentTest, StepRewardAndDoneAreValid) {
                    .fire_button = {false}});
 
     for (const auto results = env.step(frequency, actions);
-         const auto &[state, reward, is_done]: results) {
+         const auto &[state, reward, is_done, is_truncated]: results) {
         ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN";
         ASSERT_FALSE(std::isinf(reward)) << "reward should not be Inf";
     }
@@ -243,7 +239,7 @@ TEST_F(EnvironmentTest, StepCallsOnDraw) {
     constexpr float frequency = 1.f / 60.f;
 
     TestTanksEnvironment env(
-        file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false, false, 60.f);
+        file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false, false);
 
     env.reset(100.f, 100.f);
 
@@ -272,7 +268,7 @@ TEST_F(EnvironmentTest, MultipleStepsDoNotCrash) {
     constexpr float frequency = 1.f / 60.f;
 
     TestTanksEnvironment env(
-        file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false, false, 60.f);
+        file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false, false);
 
     env.reset(100.f, 100.f);
 
@@ -298,7 +294,7 @@ TEST_F(EnvironmentTest, ResetCallsOnResetDrawables) {
     constexpr float frequency = 1.f / 60.f;
 
     TestTanksEnvironment env(
-        file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false, false, 60.f);
+        file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false, false);
 
     env.reset(100.f, 100.f);
 
@@ -316,7 +312,7 @@ TEST_F(EnvironmentTest, FullLifecycle) {
     constexpr float frequency = 1.f / 60.f;
 
     TestTanksEnvironment env(
-        file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false, false, 60.f);
+        file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false, false);
 
     // First episode
     const auto initial_states = env.reset(100.f, 100.f);
@@ -346,7 +342,7 @@ TEST_F(EnvironmentTest, StopDrawingDoubleCallDoesNotCrash) {
     constexpr float frequency = 1.f / 60.f;
 
     TestTanksEnvironment env(
-        file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false, false, 60.f);
+        file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false, false);
 
     env.reset(100.f, 100.f);
 

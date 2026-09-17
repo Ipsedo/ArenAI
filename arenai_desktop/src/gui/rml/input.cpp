@@ -27,7 +27,7 @@ namespace arenai::desktop::gui {
         Rml::ElementDocument *document = focus->GetOwnerDocument();
         if (document == nullptr) return;
         const Rml::Element *list = document->GetElementById("file-list");
-        Rml::Element *above = document->GetElementById("graphics-configure");
+        Rml::Element *above = document->GetElementById("algorithm-toggles");
         Rml::Element *below = document->GetElementById("use-folder");
         if (list == nullptr || above == nullptr || below == nullptr) return;
 
@@ -36,9 +36,13 @@ namespace arenai::desktop::gui {
 
         Rml::Element *target = nullptr;
         if (focus->GetParentNode() == list) {
-            if (key == Rml::Input::KI_UP && focus == entries.front()) target = above;
-            else if (key == Rml::Input::KI_DOWN && focus == entries.back()) target = below;
-        } else if (key == Rml::Input::KI_DOWN && focus == above) target = entries.front();
+            if (key == Rml::Input::KI_UP && focus == entries.front()) {
+                // land on the algorithm currently in use, not a corner of the row
+                target = above->QuerySelector(".toggle.selected");
+                if (target == nullptr && above->GetNumChildren() > 0) target = above->GetChild(0);
+            } else if (key == Rml::Input::KI_DOWN && focus == entries.back()) target = below;
+        } else if (key == Rml::Input::KI_DOWN && focus->GetParentNode() == above)
+            target = entries.front();
         else if (key == Rml::Input::KI_UP && focus == below) target = entries.back();
 
         if (target != nullptr && target->Focus(true)) {

@@ -10,7 +10,7 @@
 #include <torch/torch.h>
 
 #include "../vision.h"
-#include "./liquid_recurrent.h"
+#include "./liquid_cell.h"
 
 namespace arenai::agent {
 
@@ -45,7 +45,7 @@ namespace arenai::agent {
         std::shared_ptr<ConvolutionNetwork> vision_encoder;
         torch::nn::Sequential sensors_encoder;
 
-        std::shared_ptr<LiquidRecurrent> liquid;
+        std::shared_ptr<LiquidCell> liquid;
 
         torch::nn::Linear to_value;
 

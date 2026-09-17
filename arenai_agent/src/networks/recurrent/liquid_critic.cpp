@@ -27,7 +27,7 @@ namespace arenai::agent {
                   torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_sensors})),
                   torch::nn::SiLU()))),
           liquid(register_module(
-              "liquid", std::make_shared<LiquidRecurrent>(
+              "liquid", std::make_shared<LiquidCell>(
                             neuron_number, hidden_size_sensors + vision_encoder->get_output_size(),
                             neuron_number, unfolding_steps,
                             [](const torch::Tensor &t) { return torch::silu(t); }, delta_t))),

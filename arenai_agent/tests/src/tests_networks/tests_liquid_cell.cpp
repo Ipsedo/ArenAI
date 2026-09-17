@@ -2,9 +2,9 @@
 // Created by samuel on 06/09/2026.
 //
 
-#include <networks/recurrent/liquid_recurrent.h>
+#include <networks/recurrent/liquid_cell.h>
 
-#include <arenai_agent_tests/tests_networks/tests_liquid_recurrent.h>
+#include <arenai_agent_tests/tests_networks/tests_liquid_cell.h>
 
 using namespace arenai;
 using namespace arenai::agent;
@@ -71,59 +71,37 @@ INSTANTIATE_TEST_SUITE_P(
  * Liquid cell
  */
 
-TEST_P(LiquidCellTestParam, OutputShape) {
-    const auto [neuron_number, input_size, unfolding_steps, batch_size] = GetParam();
+TEST_P(LiquidCellTestParam, StepOutputShape) {
+    const auto [neuron_number, input_size, output_size, unfolding_steps, batch_size, time_steps] =
+        GetParam();
 
-    LiquidCell liquid_cell(neuron_number, input_size, unfolding_steps, tanh_activation, DELTA_T);
+    LiquidCell liquid_cell(
+        neuron_number, input_size, output_size, unfolding_steps, tanh_activation, DELTA_T);
 
     const auto x_t = torch::randn({batch_size, neuron_number});
     const auto input_t = torch::randn({batch_size, input_size});
 
-    const auto output = liquid_cell.forward(x_t, input_t);
+    const auto [output, x_t_next] = liquid_cell.forward_step(x_t, input_t);
 
     ASSERT_EQ(output.ndimension(), 2);
     ASSERT_EQ(output.size(0), batch_size);
-    ASSERT_EQ(output.size(1), neuron_number);
+    ASSERT_EQ(output.size(1), output_size);
+
+    ASSERT_EQ(x_t_next.ndimension(), 2);
+    ASSERT_EQ(x_t_next.size(0), batch_size);
+    ASSERT_EQ(x_t_next.size(1), neuron_number);
 }
 
-TEST_P(LiquidCellTestParam, GradientFlows) {
-    const auto [neuron_number, input_size, unfolding_steps, batch_size] = GetParam();
-
-    LiquidCell liquid_cell(neuron_number, input_size, unfolding_steps, tanh_activation, DELTA_T);
-
-    const auto x_t = torch::randn({batch_size, neuron_number}, torch::requires_grad());
-    const auto input_t = torch::randn({batch_size, input_size}, torch::requires_grad());
-
-    liquid_cell.forward(x_t, input_t).sum().backward();
-
-    assert_all_parameters_receive_gradient(liquid_cell);
-
-    ASSERT_TRUE(x_t.grad().defined());
-    ASSERT_GT(x_t.grad().abs().sum().item<float>(), 0.f);
-    ASSERT_TRUE(input_t.grad().defined());
-    ASSERT_GT(input_t.grad().abs().sum().item<float>(), 0.f);
-}
-
-INSTANTIATE_TEST_SUITE_P(
-    TestLiquidCell, LiquidCellTestParam,
-    testing::Combine(
-        testing::Values(2, 8, 16), testing::Values(1, 3, 12), testing::Values(1, 2, 6),
-        testing::Values(1, 4)));
-
-/*
- * Liquid recurrent
- */
-
-TEST_P(LiquidRecurrentTestParam, OutputShape) {
+TEST_P(LiquidCellTestParam, OutputShape) {
     const auto [neuron_number, input_size, output_size, unfolding_steps, batch_size, time_steps] =
         GetParam();
 
-    LiquidRecurrent liquid_recurrent(
+    LiquidCell liquid_cell(
         neuron_number, input_size, output_size, unfolding_steps, tanh_activation, DELTA_T);
 
     const auto inputs = torch::randn({batch_size, time_steps, input_size});
 
-    const auto output = liquid_recurrent.forward(inputs);
+    const auto output = liquid_cell.forward(inputs);
 
     ASSERT_EQ(output.ndimension(), 3);
     ASSERT_EQ(output.size(0), batch_size);
@@ -131,7 +109,7 @@ TEST_P(LiquidRecurrentTestParam, OutputShape) {
     ASSERT_EQ(output.size(2), output_size);
 }
 
-TEST_P(LiquidRecurrentTestParam, GradientFlows) {
+TEST_P(LiquidCellTestParam, GradientFlows) {
     const auto [neuron_number, input_size, output_size, unfolding_steps, batch_size, time_steps] =
         GetParam();
 
@@ -139,14 +117,14 @@ TEST_P(LiquidRecurrentTestParam, GradientFlows) {
     // which blocks any gradient from reaching the layers before it
     if (output_size == 1) GTEST_SKIP() << "LayerNorm({1}) zeroes the signal, no gradient flows";
 
-    LiquidRecurrent liquid_recurrent(
+    LiquidCell liquid_cell(
         neuron_number, input_size, output_size, unfolding_steps, tanh_activation, DELTA_T);
 
     const auto inputs = torch::randn({batch_size, time_steps, input_size}, torch::requires_grad());
 
-    liquid_recurrent.forward(inputs).sum().backward();
+    liquid_cell.forward(inputs).sum().backward();
 
-    assert_all_parameters_receive_gradient(liquid_recurrent);
+    assert_all_parameters_receive_gradient(liquid_cell);
 
     ASSERT_TRUE(inputs.grad().defined());
     ASSERT_TRUE(torch::all(torch::isfinite(inputs.grad())).item<bool>());
@@ -156,15 +134,15 @@ TEST_P(LiquidRecurrentTestParam, GradientFlows) {
         << "Some time steps received no gradient: " << per_step_grad;
 }
 
-TEST(LiquidRecurrentEdge, RejectsNon3DInput) {
-    LiquidRecurrent liquid_recurrent(4, 3, 2, 2, tanh_activation, DELTA_T);
+TEST(LiquidCellEdge, RejectsNon3DInput) {
+    LiquidCell liquid_cell(4, 3, 2, 2, tanh_activation, DELTA_T);
 
-    EXPECT_THROW(liquid_recurrent.forward(torch::randn({2, 3})), c10::Error);
-    EXPECT_THROW(liquid_recurrent.forward(torch::randn({2, 5, 3, 1})), c10::Error);
+    EXPECT_THROW(liquid_cell.forward(torch::randn({2, 3})), c10::Error);
+    EXPECT_THROW(liquid_cell.forward(torch::randn({2, 5, 3, 1})), c10::Error);
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    TestLiquidRecurrent, LiquidRecurrentTestParam,
+    TestLiquidCell, LiquidCellTestParam,
     testing::Combine(
         testing::Values(2, 8, 16), testing::Values(1, 3, 12), testing::Values(1, 2, 6),
         testing::Values(1, 3), testing::Values(1, 4), testing::Values(1, 2, 5)));

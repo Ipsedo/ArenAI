@@ -99,7 +99,7 @@ namespace arenai::core {
 
         // add basic shapes
         std::uniform_real_distribution<float> scale_u_dist(2.5, 10);
-        constexpr int nb_shapes = 5;
+        constexpr int nb_shapes = 30;
 
         for (int i = 0; i < nb_shapes; i++) {
             glm::vec3 pos(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng));

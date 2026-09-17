@@ -284,11 +284,11 @@ namespace arenai::agent {
         const torch::Tensor &vision, const torch::Tensor &proprioception,
         const torch::Tensor &hidden, const torch::Tensor &returns,
         const torch::Tensor &valids) const {
-        const auto out = critic->value_sequence(vision, proprioception, hidden);
+        const auto [value, next_x] = critic->value_sequence(vision, proprioception, hidden);
 
         // recurrence done: fold time into rows and keep the live transitions only
         const auto valid_idx = torch::nonzero(valids.flatten(0, 1).squeeze(-1)).squeeze(-1);
-        const auto values = out.value.flatten(0, 1).index_select(0, valid_idx);
+        const auto values = value.flatten(0, 1).index_select(0, valid_idx);
         const auto valid_returns = returns.flatten(0, 1).index_select(0, valid_idx);
 
         const auto critic_loss = torch::mse_loss(values, valid_returns, at::Reduction::Mean);

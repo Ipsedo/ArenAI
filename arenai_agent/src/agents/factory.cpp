@@ -2,11 +2,11 @@
 // Created by samuel on 22/01/2026.
 //
 
-#include <string>
+#include <tuple>
+#include <vector>
 
 #include <arenai_agent/factory.h>
 
-#include "../utils/cli_parser.h"
 #include "./ppo/ppo_agent.h"
 #include "./ppo_liquid/liquid_ppo_agent.h"
 #include "./sac/sac_agent.h"
@@ -49,17 +49,10 @@ namespace arenai::agent {
         return std::make_shared<TorchSacAgent>(
             std::make_shared<Actor>(
                 vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_action,
-                get_value("hidden_size_sensors", 128),
-                get_value<hidden_layers>("hidden_sizes", parse_cli_hidden_layer, {{1024, 512}})
-                    .layers,
-                get_value<vision_channels>(
-                    "vision_channels", parse_cli_vision_channels,
-                    {{{3, 8}, {8, 16}, {16, 24}, {24, 32}, {32, 48}, {48, 64}}})
-                    .channels,
-                get_value<group_norm_nums>(
-                    "group_norm_nums", parse_cli_group_norms, {{{1, 2, 3, 4, 6, 8}}})
-                    .groups,
-                0.f, 0.f),
+                get_value<int>("hidden_size_sensors"),
+                get_value<std::vector<int>>("actor_hidden_sizes"),
+                get_value<std::vector<std::tuple<int, int>>>("vision_channels"),
+                get_value<std::vector<int>>("group_norm_nums"), 0.f, 0.f),
             cuda ? torch::kCUDA : torch::kCPU);
     }
 
@@ -69,17 +62,10 @@ namespace arenai::agent {
         return std::make_shared<TorchPpoAgent>(
             std::make_shared<Actor>(
                 vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_action,
-                get_value("hidden_size_sensors", 128),
-                get_value<hidden_layers>("hidden_sizes", parse_cli_hidden_layer, {{1024, 512}})
-                    .layers,
-                get_value<vision_channels>(
-                    "vision_channels", parse_cli_vision_channels,
-                    {{{3, 8}, {8, 16}, {16, 24}, {24, 32}, {32, 48}, {48, 64}}})
-                    .channels,
-                get_value<group_norm_nums>(
-                    "group_norm_nums", parse_cli_group_norms, {{{1, 2, 3, 4, 6, 8}}})
-                    .groups,
-                0.f, 0.f),
+                get_value<int>("hidden_size_sensors"),
+                get_value<std::vector<int>>("actor_hidden_sizes"),
+                get_value<std::vector<std::tuple<int, int>>>("vision_channels"),
+                get_value<std::vector<int>>("group_norm_nums"), 0.f, 0.f),
             cuda ? torch::kCUDA : torch::kCPU);
     }
 
@@ -88,16 +74,10 @@ namespace arenai::agent {
         const bool cuda) {
         const auto actor = std::make_shared<LiquidActor>(
             vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_action,
-            get_value("hidden_size_sensors", 128),
-            get_value<vision_channels>(
-                "vision_channels", parse_cli_vision_channels,
-                {{{3, 8}, {8, 16}, {16, 24}, {24, 32}, {32, 48}, {48, 64}}})
-                .channels,
-            get_value<group_norm_nums>(
-                "group_norm_nums", parse_cli_group_norms, {{{1, 2, 3, 4, 6, 8}}})
-                .groups,
-            get_value("neuron_number", 128), get_value("unfolding_steps", 6),
-            get_value("delta_t", 1.f / 30.f), 0.f, 0.f);
+            get_value<int>("hidden_size_sensors"),
+            get_value<std::vector<std::tuple<int, int>>>("vision_channels"),
+            get_value<std::vector<int>>("group_norm_nums"), get_value<int>("neuron_number"),
+            get_value<int>("unfolding_steps"), get_value<float>("delta_t"), 0.f, 0.f);
 
         return std::make_shared<TorchLiquidPpoAgent>(
             actor, std::make_shared<LiquidHiddenState>(actor), cuda ? torch::kCUDA : torch::kCPU);

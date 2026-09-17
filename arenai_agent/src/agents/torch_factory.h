@@ -5,9 +5,9 @@
 #ifndef ARENAI_TORCH_FACTORY_H
 #define ARENAI_TORCH_FACTORY_H
 
-#include <map>
 #include <memory>
-#include <string>
+
+#include <nlohmann/json.hpp>
 
 #include "./step_collector.h"
 #include "./torch_agent.h"
@@ -27,7 +27,7 @@ namespace arenai::agent {
 
         // the algorithm's resolved hyper-parameters, keyed by CLI option name:
         // dumped next to the metrics so a run stays identifiable afterwards
-        virtual std::map<std::string, std::string> get_config() const = 0;
+        virtual nlohmann::json get_config() const = 0;
     };
 
 }// namespace arenai::agent

@@ -8,7 +8,6 @@
 #include <cstdint>
 #include <fstream>
 #include <future>
-#include <map>
 #include <string>
 
 #include <indicators/cursor_control.hpp>
@@ -34,7 +33,7 @@ namespace arenai::agent {
         // identifiable once its command line is forgotten
         void save_run_config(
             const EnvironmentOptions &environment_options, const TrainOptions &train_options,
-            const std::map<std::string, std::string> &agent_config) {
+            const nlohmann::json &agent_config) {
 
             const nlohmann::json config = {
                 {"train",

@@ -13,7 +13,7 @@ namespace arenai::agent {
         const int vision_height, const int vision_width, const int nb_sensors,
         const int nb_continuous_actions, const int nb_discrete_actions, const torch::Device device,
         const LiquidPpoHyperParams &params)
-        : config(cli_fields_to_map(liquid_ppo_cli_fields(), params)),
+        : config(cli_fields_to_json(liquid_ppo_cli_fields(), params)),
           actor(std::make_shared<LiquidActor>(
               vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_actions,
               params.hidden_size_sensors, params.vision_channels, params.group_norm_nums,
@@ -41,8 +41,6 @@ namespace arenai::agent {
 
     std::shared_ptr<AbstractTrainer> LiquidPpoTorchAgentFactory::get_trainer() { return trainer; }
 
-    std::map<std::string, std::string> LiquidPpoTorchAgentFactory::get_config() const {
-        return config;
-    }
+    nlohmann::json LiquidPpoTorchAgentFactory::get_config() const { return config; }
 
 }// namespace arenai::agent

@@ -5,7 +5,6 @@
 #ifndef ARENAI_AGENT_HOST_FACTORY_H
 #define ARENAI_AGENT_HOST_FACTORY_H
 
-#include <format>
 #include <memory>
 #include <string>
 
@@ -33,35 +32,11 @@ namespace arenai::agent {
         float get_wanted_frequency() const;
 
     private:
+        // every hyper-parameter is required: a config.json that misses one
+        // does not describe the run it claims to (at() throws on a missing key)
         template<typename T>
-        T get_value(const std::string &argument_name, T default_value) {
-            if (!agent_arguments.contains(argument_name)) return default_value;
-
-            const auto &value = agent_arguments[argument_name];
-            if (!value.is_string()) return value.get<T>();
-
-            // runs dumped before the json migration stored every value as the
-            // CLI string it came from
-            const auto value_as_string = value.get<std::string>();
-            std::stringstream ss(value_as_string);
-            T parsed_value;
-            ss >> parsed_value;
-
-            if (ss.fail() || !ss.eof())
-                throw std::runtime_error(std::format(
-                    R"(Wrong value for "{}" : "{}", example : "{}")", argument_name,
-                    value_as_string, default_value));
-
-            return parsed_value;
-        }
-
-        template<typename T>
-        T get_value(
-            const std::string &argument_name, const std::function<T(std::string)> &parse_fn,
-            T default_value) {
-            if (!agent_arguments.contains(argument_name)) return default_value;
-
-            return parse_fn(agent_arguments[argument_name].get<std::string>());
+        T get_value(const std::string &argument_name) {
+            return agent_arguments.at(argument_name).get<T>();
         }
 
         std::shared_ptr<AbstractAgent> create_sac_agent(

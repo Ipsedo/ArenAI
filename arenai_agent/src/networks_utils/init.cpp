@@ -81,18 +81,19 @@ namespace arenai::agent {
         }
     }
 
-    void
-    init_discrete_output_weights(torch::nn::Module &module, const float initial_fire_probability) {
+    void init_discrete_output_weights(
+        torch::nn::Module &module, const std::vector<float> &initial_probabilities) {
         if (auto *lin = module.as<torch::nn::Linear>()) {
             torch::nn::init::orthogonal_(lin->weight, 0.01f);
 
             if (lin->options.bias()) {
-                torch::nn::init::zeros_(lin->bias);
+                // sigmoid head: the bias is the logit of the wanted probability
+                std::vector<float> logits;
+                logits.reserve(initial_probabilities.size());
+                for (const auto probability: initial_probabilities)
+                    logits.push_back(std::log(probability / (1.f - probability)));
 
-                lin->bias.data().index_fill_(
-                    0, torch::tensor({0}), std::log(initial_fire_probability));
-                lin->bias.data().index_fill_(
-                    0, torch::tensor({1}), std::log(1.f - initial_fire_probability));
+                lin->bias.data().copy_(torch::tensor(logits));
             }
         }
     }

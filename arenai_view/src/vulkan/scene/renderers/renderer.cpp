@@ -146,8 +146,7 @@ namespace arenai::view {
         // zero-to-one depth projection (Vulkan clip space); the y flip is
         // handled by the negative-height viewport, not by the matrix
         const glm::mat4 proj_matrix = glm::perspectiveRH_ZO(
-            static_cast<float>(M_PI) / 4.f,
-            static_cast<float>(get_width()) / static_cast<float>(get_height()), 1.f,
+            camera_->fov(), static_cast<float>(get_width()) / static_cast<float>(get_height()), 1.f,
             10000.f * std::sqrt(3.f));
         last_view_proj_matrix_ = proj_matrix * view_matrix;
 

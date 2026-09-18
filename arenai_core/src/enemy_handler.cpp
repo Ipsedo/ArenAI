@@ -19,7 +19,8 @@ namespace arenai::core {
             .right_joystick =
                 {.x = event.right_joystick.x * turret_scale_per_frame,
                  .y = event.right_joystick.y * turret_scale_per_frame},
-            .fire_button = event.fire_button};
+            .fire_button = event.fire_button,
+            .zoom_button = event.zoom_button};
 
         return {true, action};
     }

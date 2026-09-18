@@ -10,6 +10,10 @@
 
 namespace arenai::view {
 
+    float AbstractCamera::fov() { return DEFAULT_FOV; }
+
+    glm::vec3 AbstractCamera::pivot() { return look(); }
+
     StaticCamera::StaticCamera(const glm::vec3 pos, const glm::vec3 look, const glm::vec3 up)
         : pos_vec(pos), look_vec(look), up_vec(up) {}
 
@@ -27,7 +31,7 @@ namespace arenai::view {
           current_distance(std::numeric_limits<float>::max()) {}
 
     glm::vec3 CollisionCamera::pos() {
-        const glm::vec3 pivot = inner->look();
+        const glm::vec3 pivot = inner->pivot();
         const glm::vec3 desired = inner->pos();
 
         const glm::vec3 offset = desired - pivot;
@@ -51,5 +55,9 @@ namespace arenai::view {
     glm::vec3 CollisionCamera::look() { return inner->look(); }
 
     glm::vec3 CollisionCamera::up() { return inner->up(); }
+
+    float CollisionCamera::fov() { return inner->fov(); }
+
+    glm::vec3 CollisionCamera::pivot() { return inner->pivot(); }
 
 }// namespace arenai::view

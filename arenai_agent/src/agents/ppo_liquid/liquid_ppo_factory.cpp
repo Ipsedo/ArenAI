@@ -18,7 +18,7 @@ namespace arenai::agent {
               vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_actions,
               params.hidden_size_sensors, params.vision_channels, params.group_norm_nums,
               params.neuron_number, params.unfolding_steps, params.delta_t, params.initial_sigma,
-              params.initial_fire_proba)),
+              std::vector{params.initial_fire_proba, params.initial_zoom_proba})),
           hidden_state(std::make_shared<LiquidHiddenState>(actor)),
           rollout_buffer(std::make_shared<LiquidPpoRolloutBuffer>()),
           collector(std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state)),

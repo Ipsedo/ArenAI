@@ -122,7 +122,7 @@ namespace arenai::agent {
 
         // metrics
 
-        const auto sac_metrics = trainer->get_metrics();
+        const auto trainer_metrics = trainer->get_metrics();
         const auto env_metrics = env->get_metrics();
 
         // curriculum observability: the side played this episode and the current bound
@@ -133,7 +133,7 @@ namespace arenai::agent {
         metrics.insert(metrics.end(), env_metrics.begin(), env_metrics.end());
         metrics.push_back(spawn_side_metric);
         metrics.push_back(spawn_bound_metric);
-        metrics.insert(metrics.end(), sac_metrics.begin(), sac_metrics.end());
+        metrics.insert(metrics.end(), trainer_metrics.begin(), trainer_metrics.end());
 
         MetricCsvSaver metric_csv_saver(
             train_options.output_folder, metrics,

@@ -43,8 +43,6 @@ namespace arenai::desktop {
         model::PlayerHits consume_player_hits() const;
         std::vector<float> consume_damage_screen_angles() const;
 
-        static constexpr float AIM_DISTANCE = 100.f;
-
         std::optional<glm::vec2> aim_point_on_screen() const;
 
     protected:

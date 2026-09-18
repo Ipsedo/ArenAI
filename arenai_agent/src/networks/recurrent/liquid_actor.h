@@ -19,6 +19,7 @@ namespace arenai::agent {
         // support) and concentration κ = α + β
         torch::Tensor mode;
         torch::Tensor concentration;
+        // independent Bernoulli probabilities, one per discrete action
         torch::Tensor discrete;
         // liquid state after the last processed step
         torch::Tensor next_x;
@@ -35,7 +36,7 @@ namespace arenai::agent {
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, const int &neuron_number,
             const int &unfolding_steps, const float &delta_t, const float &initial_sigma,
-            const float &initial_fire_proba);
+            const std::vector<float> &initial_discrete_probas);
 
         // one env step: vision [B, C, H, W], sensors [B, S], x_t [B, neuron_number]
         LiquidActorOutput

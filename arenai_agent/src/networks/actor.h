@@ -6,6 +6,7 @@
 #define ARENAI_AGENT_HOST_ACTOR_H
 
 #include <memory>
+#include <vector>
 
 #include <torch/torch.h>
 
@@ -14,8 +15,6 @@
 namespace arenai::agent {
 
     struct ActorRawOutput {
-        // Beta distribution on [-1, 1]: mode in [0, 1] (on the underlying [0, 1]
-        // support) and concentration κ = α + β
         torch::Tensor mode;
         torch::Tensor concentration;
         torch::Tensor discrete;
@@ -29,7 +28,7 @@ namespace arenai::agent {
             const int &hidden_size_sensors, const std::vector<int> &hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, const float &initial_sigma,
-            const float &initial_fire_proba);
+            const std::vector<float> &initial_discrete_probas);
         ActorRawOutput act(const torch::Tensor &vision, const torch::Tensor &sensors);
 
     private:

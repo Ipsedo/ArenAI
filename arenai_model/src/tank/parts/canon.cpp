@@ -5,13 +5,19 @@
 #include "./canon.h"
 
 #include <algorithm>
+#include <cmath>
 
 #include <glm/gtc/type_ptr.hpp>
+
+#include <arenai_model/constants.h>
 
 using namespace arenai;
 using namespace arenai::model;
 
 namespace {
+
+    const float ZOOMED_FOV =
+        2.f * std::atan(std::tan(arenai::view::DEFAULT_FOV / 2.f) / ZOOM_MAGNIFICATION);
 
     glm::mat4 to_glm(const JPH::RMat44 &m) {
         glm::mat4 result;
@@ -39,9 +45,9 @@ namespace arenai::model {
                            std::make_shared<ObjShape>(
                                file_reader, std::filesystem::path("obj") / "anubis_canon.obj"),
                            pos, scale, mass),
-          angle(0.f), file_reader(file_reader), will_fire(false), on_contact(on_contact),
-          on_shell_fired(on_shell_fired), can_fire(can_fire),
-          wanted_frame_frequency(wanted_frame_frequency) {
+          angle(0.f), zoom_engaged(false), current_fov(view::DEFAULT_FOV), file_reader(file_reader),
+          will_fire(false), on_contact(on_contact), on_shell_fired(on_shell_fired),
+          can_fire(can_fire), wanted_frame_frequency(wanted_frame_frequency) {
 
         JPH::HingeConstraintSettings settings;
         settings.mSpace = JPH::EConstraintSpace::LocalToBodyCOM;
@@ -106,6 +112,8 @@ namespace arenai::model {
         hinge->SetTargetAngle(angle);
 
         if (input.fire_button.pressed && can_fire()) will_fire = true;
+
+        zoom_engaged.store(input.zoom_button.pressed, std::memory_order_relaxed);
     }
 
     glm::vec3 CanonItem::pos() {
@@ -117,7 +125,22 @@ namespace arenai::model {
     glm::vec3 CanonItem::look() {
         const glm::mat4 model_mat = to_glm(ConvexItem::get_body()->GetWorldTransform());
 
+        return model_mat * glm::vec4(0, 0, CANON_AIM_DISTANCE, 1);
+    }
+
+    glm::vec3 CanonItem::pivot() {
+        const glm::mat4 model_mat = to_glm(ConvexItem::get_body()->GetWorldTransform());
+
         return model_mat * glm::vec4(0, 0, 1, 1);
+    }
+
+    float CanonItem::fov() {
+        const float target =
+            zoom_engaged.load(std::memory_order_relaxed) ? ZOOMED_FOV : view::DEFAULT_FOV;
+        const float step =
+            (view::DEFAULT_FOV - ZOOMED_FOV) * wanted_frame_frequency / ZOOM_TRANSITION_SECONDS;
+        current_fov += std::clamp(target - current_fov, -step, step);
+        return current_fov;
     }
 
     glm::vec3 CanonItem::up() {

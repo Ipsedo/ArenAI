@@ -7,8 +7,8 @@
 #include <algorithm>
 #include <fstream>
 
+#include "../../distributions/bernoulli.h"
 #include "../../distributions/beta_law.h"
-#include "../../distributions/multinomial.h"
 #include "../../metrics/mean_metric.h"
 #include "../../networks/constants.h"
 #include "../../networks_utils/print_module.h"
@@ -61,10 +61,11 @@ namespace arenai::agent {
               CONTINUOUS_ALPHA_K_P, CONTINUOUS_ALPHA_K_I, CONTINUOUS_ALPHA_K_D, ALPHA_INITIAL,
               nb_continuous_actions)),
           discrete_alpha(std::make_unique<PidLagrangianAlphaParameters>(
-              DISCRETE_ALPHA_K_P, DISCRETE_ALPHA_K_I, DISCRETE_ALPHA_K_D, ALPHA_INITIAL, 1)),
+              DISCRETE_ALPHA_K_P, DISCRETE_ALPHA_K_I, DISCRETE_ALPHA_K_D, ALPHA_INITIAL,
+              nb_discrete_action)),
           continuous_target_entropy(continuous_target_entropy),
-          discrete_target_entropy(
-              discrete_target_entropy_factor * multinomial_maximum_entropy(nb_discrete_action)),
+          // per-action target: each discrete action is an independent Bernoulli
+          discrete_target_entropy(discrete_target_entropy_factor * bernoulli_maximum_entropy()),
           critic(std::make_shared<LiquidCritic>(
               vision_height, vision_width, nb_sensors, hidden_size_sensors, vision_channels,
               group_norm_nums, neuron_number, unfolding_steps, delta_t)),
@@ -212,9 +213,8 @@ namespace arenai::agent {
         const auto curr_continuous_log_probs =
             beta_law_log_proba(rows(continuous_actions), mode, concentration).sum(-1, true);
 
-        const auto clamped_proba = torch::clamp(discrete_proba, EPSILON, 1.0 - EPSILON);
         const auto curr_discrete_log_probs =
-            torch::sum(rows(discrete_actions) * torch::log(clamped_proba), -1, true);
+            bernoulli_log_proba(rows(discrete_actions), discrete_proba).sum(-1, true);
 
         const auto log_ratio = torch::clamp(
             curr_continuous_log_probs + curr_discrete_log_probs - rows(old_log_probs),
@@ -223,7 +223,7 @@ namespace arenai::agent {
         const auto ratio = torch::exp(log_ratio);
 
         const auto continuous_entropy = beta_law_entropy(mode, concentration);
-        const auto discrete_entropy = multinomial_entropy(discrete_proba);
+        const auto discrete_entropy = bernoulli_entropy(discrete_proba);
 
         const auto kl_per_row = (ratio - 1.f - log_ratio).flatten();
 
@@ -239,7 +239,7 @@ namespace arenai::agent {
 
         const auto entropy_bonus =
             torch::sum(continuous_alpha->alpha().detach() * continuous_entropy, -1)
-            + discrete_alpha->alpha().squeeze(1).detach() * discrete_entropy;
+            + torch::sum(discrete_alpha->alpha().detach() * discrete_entropy, -1);
 
         if (!kl_exceeded) {
             const auto clipped_ratio = torch::clamp(ratio, 1.f - clip_epsilon, 1.f + clip_epsilon);

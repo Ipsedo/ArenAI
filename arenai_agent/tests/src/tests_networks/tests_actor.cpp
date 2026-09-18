@@ -21,7 +21,8 @@ TEST_P(ActorTestParam, TestActorAct) {
 
     Actor actor(
         height, width, sensors_nb, cont_actions_nb, discrete_actions_nb, sensors_hidden_size,
-        layers, {{input_channels, 4}, {4, 8}}, {2, 4}, 0.1f, 0.2f);
+        layers, {{input_channels, 4}, {4, 8}}, {2, 4}, 0.1f,
+        std::vector(discrete_actions_nb, 0.2f));
 
     const auto image = torch::randint(
         255, {batch_size, input_channels, height, width},
@@ -47,7 +48,9 @@ TEST_P(ActorTestParam, TestActorAct) {
     ASSERT_EQ(discrete.ndimension(), 2);
     ASSERT_EQ(discrete.size(0), batch_size);
     ASSERT_EQ(discrete.size(1), discrete_actions_nb);
-    ASSERT_TRUE(torch::all(torch::abs(torch::sum(discrete, -1) - 1.0) < 1e-6).item<bool>());
+    // independent Bernoulli probabilities: each in (0, 1), no sum constraint
+    ASSERT_TRUE(torch::all(torch::logical_and(torch::gt(discrete, 0.0), torch::lt(discrete, 1.0)))
+                    .item<bool>());
 }
 
 INSTANTIATE_TEST_SUITE_P(

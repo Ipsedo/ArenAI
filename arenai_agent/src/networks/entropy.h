@@ -10,58 +10,6 @@
 namespace arenai::agent {
 
     /*
-     * Base class
-     */
-
-    class AlphaParameters : public torch::nn::Module {
-    public:
-        explicit AlphaParameters(float initial_alpha, int nb_alphas);
-
-        virtual torch::Tensor log_alpha();
-        torch::Tensor alpha();
-
-    private:
-        torch::Tensor log_alpha_tensor;
-    };
-
-    class ClampedAlphaParameters final : public AlphaParameters {
-    public:
-        explicit ClampedAlphaParameters(
-            float initial_alpha, float min_alpha, float max_alpha, int nb_alphas);
-
-        torch::Tensor log_alpha() override;
-
-    private:
-        float min_log_alpha;
-        float max_log_alpha;
-    };
-
-    class AbstractTargetEntropy : public torch::nn::Module {
-    public:
-        // the current target: pure, safe to call several times inside the same rollout
-        virtual torch::Tensor target_entropy() const = 0;
-
-        // advances the schedule by nb_env_steps environment steps. Called once per rollout,
-        // so a schedule is expressed in the same unit as the training progress reported in
-        // metrics.csv — independent of minibatch_size, epochs, nb_tanks and tank mortality.
-        virtual void step(int64_t nb_env_steps);
-    };
-
-    /*
-     * Constants
-     */
-
-    class ConstantTargetEntropy : public AbstractTargetEntropy {
-    public:
-        explicit ConstantTargetEntropy(float initial_target);
-
-        torch::Tensor target_entropy() const override;
-
-    private:
-        torch::Tensor initial_target;
-    };
-
-    /*
      * Lagrangian
      */
 

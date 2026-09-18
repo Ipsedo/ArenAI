@@ -17,6 +17,7 @@ namespace arenai::agent {
             {.name = "--group_norm_nums", .member = &PpoHyperParams::group_norm_nums},
             {.name = "--initial_sigma", .member = &PpoHyperParams::initial_sigma},
             {.name = "--initial_fire_proba", .member = &PpoHyperParams::initial_fire_proba},
+            {.name = "--initial_zoom_proba", .member = &PpoHyperParams::initial_zoom_proba},
             {.name = "--metric_window_size", .member = &PpoHyperParams::metric_window_size},
             {.name = "--gamma", .member = &PpoHyperParams::gamma},
             {.name = "--gae_lambda", .member = &PpoHyperParams::gae_lambda},

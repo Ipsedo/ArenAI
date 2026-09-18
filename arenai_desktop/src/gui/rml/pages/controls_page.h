@@ -29,31 +29,22 @@ namespace arenai::desktop::gui {
         bool bound = true;
     };
 
-    // The Controls screen: the input-kind toggle, the gamepad device list and
-    // the keyboard / gamepad binding rows with their capture state machine.
-    // Registers its slice of the shared "settings" data model and writes
-    // straight into the GameSettings it was built around.
     class ControlsPage {
     public:
         ControlsPage(GameSettings &settings, std::shared_ptr<view::AbstractWindow> window);
 
-        // registers the page's variables and callbacks into the shared model
         void bind(Rml::DataModelConstructor &constructor);
         void set_model_handle(Rml::DataModelHandle handle);
-        // captures route the raw input through the menu input adapter, which
-        // only exists once the documents are loaded
         void set_input_adapter(std::shared_ptr<MenuInputAdapter> adapter);
 
         void on_open();
         void on_close();
 
-        // per-tick upkeep of the main-menu loop: gamepad hot-(un)plug while
-        // the page is on screen, and the capture timeout
         void update(bool page_visible);
 
     private:
-        std::array<std::optional<KeyboardBinding> *, 5> kb_slots();
-        // gamepad slots 1..5 (0 is the fire button)
+        std::array<std::optional<KeyboardBinding> *, 6> kb_slots();
+        std::array<std::optional<controller::GamepadButton> *, 2> gp_button_slots();
         std::array<std::optional<GamepadAxisBinding> *, 5> gp_axis_slots();
 
         Rml::String keyboard_slot_label(const std::optional<KeyboardBinding> &slot) const;
@@ -69,7 +60,7 @@ namespace arenai::desktop::gui {
 
         void unbind_conflict(const Rml::String &new_label, const Rml::String &old_label);
         void assign_keyboard(const KeyboardBinding &binding);
-        void assign_gamepad_fire(controller::GamepadButton button);
+        void assign_gamepad_button(controller::GamepadButton button);
         void assign_gamepad_axis(GamepadAxis axis, double value);
 
         void refresh_gamepad_list();
@@ -84,12 +75,11 @@ namespace arenai::desktop::gui {
         std::vector<BindingRow> gp_rows_;
         std::vector<view::GamepadInfo> gamepads_;
         std::vector<Rml::String> gamepad_names_;
-        // index into gamepads_ of the pad feeding the game, -1 when none
-        // is connected
+
         int selected_gamepad_ = -1;
         Rml::String bind_status_;
         bool bind_warning_ = false;
-        // slot being captured (-1 = idle) and which page it belongs to
+
         int capture_slot_ = -1;
         bool capture_keyboard_page_ = false;
         std::chrono::steady_clock::time_point capture_deadline_;

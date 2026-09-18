@@ -14,7 +14,6 @@ namespace arenai::desktop {
 
     agent::AgentAlgorithm to_agent_algorithm(const gui::AiAlgorithm algorithm) {
         switch (algorithm) {
-            case gui::AiAlgorithm::Sac: return agent::SAC;
             case gui::AiAlgorithm::Ppo: return agent::PPO;
             default: return agent::PPO_LIQUID;
         }

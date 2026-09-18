@@ -63,19 +63,18 @@ namespace arenai::desktop::gui {
 
     // the RL algorithms the enemy agent can be built from; mirrors
     // agent::AgentAlgorithm without leaking arenai_agent into the gui port
-    enum class AiAlgorithm { Sac, Ppo, PpoLiquid };
+    enum class AiAlgorithm { Ppo, PpoLiquid };
 
     // canonical names, shared by the JSON preferences and the menu bindings
     constexpr const char *to_string(const AiAlgorithm algorithm) {
         switch (algorithm) {
-            case AiAlgorithm::Sac: return "sac";
             case AiAlgorithm::Ppo: return "ppo";
             default: return "ppo_liquid";
         }
     }
 
     constexpr std::optional<AiAlgorithm> ai_algorithm_from_string(std::string_view name) {
-        for (const auto algorithm: {AiAlgorithm::Sac, AiAlgorithm::Ppo, AiAlgorithm::PpoLiquid})
+        for (const auto algorithm: {AiAlgorithm::Ppo, AiAlgorithm::PpoLiquid})
             if (name == to_string(algorithm)) return algorithm;
         return std::nullopt;
     }

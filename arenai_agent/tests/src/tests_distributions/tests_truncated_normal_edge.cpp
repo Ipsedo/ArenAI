@@ -67,7 +67,7 @@ TEST_F(TruncatedNormalEdgeTest, LogPdfAndPdfConsistent) {
 }
 
 // ========================================================================
-// Gradient flow tests — critical for SAC training
+// Gradient flow tests — critical for gradient-based training
 // ========================================================================
 
 TEST_F(TruncatedNormalGradientTest, LogPdfGradientFlowsThroughMu) {

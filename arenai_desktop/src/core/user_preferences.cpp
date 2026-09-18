@@ -77,6 +77,16 @@ namespace arenai::desktop {
                 slot = GamepadAxisBinding{.axis = *axis, .sign = sign};
         }
 
+        void load_gamepad_button_binding(
+            const nlohmann::json &json, const char *field,
+            std::optional<controller::GamepadButton> &slot) {
+            if (!json.contains(field)) return;
+            const auto name = json.value(field, std::string());
+            if (name.empty()) slot = std::nullopt;
+            else if (const auto button = controller::gamepad_button_from_string(name))
+                slot = *button;
+        }
+
         void load_bindings(const nlohmann::json &json, ControlBindings &bindings) {
             if (const auto keyboard = json.value("keyboard", nlohmann::json::object());
                 keyboard.is_object()) {
@@ -85,16 +95,13 @@ namespace arenai::desktop {
                 load_keyboard_binding(keyboard, "turn_left", bindings.keyboard.turn_left);
                 load_keyboard_binding(keyboard, "turn_right", bindings.keyboard.turn_right);
                 load_keyboard_binding(keyboard, "fire", bindings.keyboard.fire);
+                load_keyboard_binding(keyboard, "zoom", bindings.keyboard.zoom);
             }
 
             if (const auto gamepad = json.value("gamepad", nlohmann::json::object());
                 gamepad.is_object()) {
-                if (gamepad.contains("fire")) {
-                    const auto name = gamepad.value("fire", std::string());
-                    if (name.empty()) bindings.gamepad.fire = std::nullopt;
-                    else if (const auto button = controller::gamepad_button_from_string(name))
-                        bindings.gamepad.fire = *button;
-                }
+                load_gamepad_button_binding(gamepad, "fire", bindings.gamepad.fire);
+                load_gamepad_button_binding(gamepad, "zoom", bindings.gamepad.zoom);
                 load_axis_binding(gamepad, "steer", bindings.gamepad.steer);
                 load_axis_binding(gamepad, "aim_x", bindings.gamepad.aim_x);
                 load_axis_binding(gamepad, "aim_y", bindings.gamepad.aim_y);
@@ -114,10 +121,13 @@ namespace arenai::desktop {
                   {"backward", keyboard_binding_to_string(bindings.keyboard.backward)},
                   {"turn_left", keyboard_binding_to_string(bindings.keyboard.turn_left)},
                   {"turn_right", keyboard_binding_to_string(bindings.keyboard.turn_right)},
-                  {"fire", keyboard_binding_to_string(bindings.keyboard.fire)}}},
+                  {"fire", keyboard_binding_to_string(bindings.keyboard.fire)},
+                  {"zoom", keyboard_binding_to_string(bindings.keyboard.zoom)}}},
                 {"gamepad",
                  {{"fire",
                    bindings.gamepad.fire ? controller::to_string(*bindings.gamepad.fire) : ""},
+                  {"zoom",
+                   bindings.gamepad.zoom ? controller::to_string(*bindings.gamepad.zoom) : ""},
                   {"steer", axis_binding_to_string(bindings.gamepad.steer)},
                   {"aim_x", axis_binding_to_string(bindings.gamepad.aim_x)},
                   {"aim_y", axis_binding_to_string(bindings.gamepad.aim_y)},

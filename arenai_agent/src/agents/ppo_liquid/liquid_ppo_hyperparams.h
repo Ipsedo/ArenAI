@@ -27,6 +27,7 @@ namespace arenai::agent {
         int chunk_size = 30;
         float initial_sigma = 0.5f;
         float initial_fire_proba = 0.4f;
+        float initial_zoom_proba = 0.25f;
         int metric_window_size = 256;
         float gamma = 0.997f;
         float gae_lambda = 0.99f;

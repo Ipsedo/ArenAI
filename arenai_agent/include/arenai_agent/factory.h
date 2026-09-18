@@ -14,7 +14,7 @@
 
 namespace arenai::agent {
 
-    enum AgentAlgorithm { SAC, PPO, PPO_LIQUID };
+    enum AgentAlgorithm { PPO, PPO_LIQUID };
 
     class AgentFactory {
     public:
@@ -38,10 +38,6 @@ namespace arenai::agent {
         T get_value(const std::string &argument_name) {
             return agent_arguments.at(argument_name).get<T>();
         }
-
-        std::shared_ptr<AbstractAgent> create_sac_agent(
-            const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_action,
-            bool cuda);
 
         std::shared_ptr<AbstractAgent> create_ppo_agent(
             const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_action,

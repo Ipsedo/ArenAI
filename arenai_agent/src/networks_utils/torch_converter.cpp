@@ -28,12 +28,15 @@ namespace arenai::agent {
         for (int i = 0; i < batch_size; i++) {
             const controller::joystick joystick_direction{.x = cont_acc[i][0], .y = cont_acc[i][1]};
             const controller::joystick joystick_canon{.x = cont_acc[i][2], .y = cont_acc[i][3]};
-            const controller::button fire_button(disc_acc[i][0] > disc_acc[i][1]);
+            // binary Bernoulli actions: one neuron per discrete action
+            const controller::button fire_button(disc_acc[i][0] > 0.5f);
+            const controller::button zoom_button(disc_acc[i][1] > 0.5f);
 
             actions.push_back(
                 {.left_joystick = joystick_direction,
                  .right_joystick = joystick_canon,
-                 .fire_button = fire_button});
+                 .fire_button = fire_button,
+                 .zoom_button = zoom_button});
         }
 
         return actions;

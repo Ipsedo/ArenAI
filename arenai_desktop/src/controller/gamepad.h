@@ -42,13 +42,14 @@ namespace arenai::desktop {
 
         PlayerGamepadInput state;
 
+        // held state: true between the press and the release of the zoom button
+        bool zoom_held = false;
+
         static float apply_dead_zone(double value);
 
-        // deflection of a two-way slot (steer, aim), 0 when unbound
         float
         axis_value(const std::optional<GamepadAxisBinding> &slot, const PlayerGamepadInput &event);
-        // deflection of a one-way slot (accelerate, reverse): the captured
-        // direction reads positive, the other way is ignored
+
         float one_way_axis_value(
             const std::optional<GamepadAxisBinding> &slot, const PlayerGamepadInput &event);
     };

@@ -19,7 +19,7 @@ namespace arenai::agent {
         const int &hidden_size_sensors, const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, const int &neuron_number,
         const int &unfolding_steps, const float &delta_t, const float &initial_sigma,
-        const float &initial_fire_proba)
+        const std::vector<float> &initial_discrete_probas)
         : vision_encoder(register_module(
             "vision_encoder", std::make_shared<ConvolutionNetwork>(
                                   vision_height, vision_width, vision_channels, group_norm_nums))),
@@ -47,7 +47,7 @@ namespace arenai::agent {
           discrete(register_module(
               "discrete",
               torch::nn::Sequential(
-                  torch::nn::Linear(neuron_number, nb_discrete_actions), torch::nn::Softmax(-1)))) {
+                  torch::nn::Linear(neuron_number, nb_discrete_actions), torch::nn::Sigmoid()))) {
 
         vision_encoder->apply(init_hidden_weights);
         sensors_encoder->apply(init_hidden_weights);
@@ -57,8 +57,8 @@ namespace arenai::agent {
         concentration->apply(
             [initial_sigma](Module &m) { init_concentration_output_weights(m, initial_sigma); });
 
-        discrete->apply([initial_fire_proba](Module &m) {
-            init_discrete_output_weights(m, initial_fire_proba);
+        discrete->apply([&initial_discrete_probas](Module &m) {
+            init_discrete_output_weights(m, initial_discrete_probas);
         });
     }
 

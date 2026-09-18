@@ -15,25 +15,18 @@ namespace arenai::desktop::gui {
 
     namespace {
 
-        // slot order of the two pages; the gamepad page puts its button slot
-        // (fire) first, then the five axis slots
-        constexpr const char *KB_SLOT_LABELS[] = {
-            "FORWARD", "BACKWARD", "TURN LEFT", "TURN RIGHT", "FIRE"};
-        constexpr const char *GP_SLOT_LABELS[] = {"FIRE",  "STEER",      "AIM X",
+        constexpr const char *KB_SLOT_LABELS[] = {"FORWARD",    "BACKWARD", "TURN LEFT",
+                                                  "TURN RIGHT", "FIRE",     "ZOOM"};
+        constexpr const char *GP_SLOT_LABELS[] = {"FIRE",  "ZOOM",       "STEER",  "AIM X",
                                                   "AIM Y", "ACCELERATE", "REVERSE"};
-        constexpr int NB_KB_SLOTS = 5;
-        constexpr int NB_GP_SLOTS = 6;
-        // accelerate / reverse read a single direction of their axis
-        constexpr bool gp_slot_is_one_way(const int slot) { return slot >= 4; }
+        constexpr int NB_KB_SLOTS = 6;
+        constexpr int NB_GP_SLOTS = 7;
+        constexpr int NB_GP_BUTTON_SLOTS = 2;
 
-        // an axis must come back to rest before it can be captured: without
-        // this the stick still deflected from navigating the menu (or the A
-        // press bound to a trigger) would bind itself instantly
+        constexpr bool gp_slot_is_one_way(const int slot) { return slot >= 5; }
+
         constexpr double CAPTURE_ENGAGE = 0.6, CAPTURE_REST = 0.3;
 
-        // a capture nobody feeds cancels itself: Escape is the only cancel
-        // input (every pad button stays bindable), so a pad-only player
-        // needs the timeout
         constexpr auto CAPTURE_TIMEOUT = std::chrono::seconds(15);
 
         constexpr const char *GAMEPAD_AXIS_LABELS[] = {"L-STICK X", "L-STICK Y", "R-STICK X",
@@ -152,11 +145,15 @@ namespace arenai::desktop::gui {
         }
     }
 
-    std::array<std::optional<KeyboardBinding> *, 5> ControlsPage::kb_slots() {
+    std::array<std::optional<KeyboardBinding> *, 6> ControlsPage::kb_slots() {
         auto &keyboard = settings_.bindings.keyboard;
-        return {
-            &keyboard.forward, &keyboard.backward, &keyboard.turn_left, &keyboard.turn_right,
-            &keyboard.fire};
+        return {&keyboard.forward,    &keyboard.backward, &keyboard.turn_left,
+                &keyboard.turn_right, &keyboard.fire,     &keyboard.zoom};
+    }
+
+    std::array<std::optional<controller::GamepadButton> *, 2> ControlsPage::gp_button_slots() {
+        auto &gamepad = settings_.bindings.gamepad;
+        return {&gamepad.fire, &gamepad.zoom};
     }
 
     std::array<std::optional<GamepadAxisBinding> *, 5> ControlsPage::gp_axis_slots() {
@@ -202,23 +199,24 @@ namespace arenai::desktop::gui {
         }
 
         gp_rows_.resize(NB_GP_SLOTS);
+        const auto button_slots = gp_button_slots();
         const auto axis_slots = gp_axis_slots();
         for (int i = 0; i < NB_GP_SLOTS; i++) {
             const bool listening = !capture_keyboard_page_ && capture_slot_ == i;
-            const bool fire_slot = i == 0;
+            const bool button_slot = i < NB_GP_BUTTON_SLOTS;
             Rml::String binding;
-            if (listening) binding = fire_slot ? "PRESS A BUTTON..." : "MOVE AN AXIS...";
-            else if (fire_slot)
-                binding = settings_.bindings.gamepad.fire
-                              ? controller::to_string(*settings_.bindings.gamepad.fire)
-                              : "UNBOUND";
-            else binding = axis_slot_label(*axis_slots[i - 1], gp_slot_is_one_way(i));
+            if (listening) binding = button_slot ? "PRESS A BUTTON..." : "MOVE AN AXIS...";
+            else if (button_slot)
+                binding = *button_slots[i] ? controller::to_string(**button_slots[i]) : "UNBOUND";
+            else
+                binding =
+                    axis_slot_label(*axis_slots[i - NB_GP_BUTTON_SLOTS], gp_slot_is_one_way(i));
             gp_rows_[i] = {
                 .label = GP_SLOT_LABELS[i],
                 .binding = std::move(binding),
                 .listening = listening,
-                .bound = fire_slot ? settings_.bindings.gamepad.fire.has_value()
-                                   : axis_slots[i - 1]->has_value()};
+                .bound = button_slot ? button_slots[i]->has_value()
+                                     : axis_slots[i - NB_GP_BUTTON_SLOTS]->has_value()};
         }
 
         if (model_handle_) {
@@ -280,11 +278,11 @@ namespace arenai::desktop::gui {
             return;
         }
 
-        if (capture_slot_ == 0) {
+        if (capture_slot_ < NB_GP_BUTTON_SLOTS) {
             // Start stays the in-game pause toggle, never a binding
             if (const auto *button = std::get_if<controller::GamepadButton>(&input);
                 button != nullptr && *button != controller::GamepadButton::Start)
-                assign_gamepad_fire(*button);
+                assign_gamepad_button(*button);
             return;
         }
 
@@ -316,9 +314,17 @@ namespace arenai::desktop::gui {
         rebuild_binding_rows();
     }
 
-    void ControlsPage::assign_gamepad_fire(const controller::GamepadButton button) {
-        // single button slot: no conflict possible
-        settings_.bindings.gamepad.fire = button;
+    void ControlsPage::assign_gamepad_button(const controller::GamepadButton button) {
+        const auto slots = gp_button_slots();
+        *slots[capture_slot_] = button;
+
+        // the other button slot loses a conflicting assignment
+        for (int slot = 0; slot < NB_GP_BUTTON_SLOTS; slot++)
+            if (slot != capture_slot_ && *slots[slot] == button) {
+                *slots[slot] = std::nullopt;
+                unbind_conflict(controller::to_string(button), GP_SLOT_LABELS[slot]);
+            }
+
         end_capture();
         rebuild_binding_rows();
     }
@@ -327,14 +333,14 @@ namespace arenai::desktop::gui {
         const bool one_way = gp_slot_is_one_way(capture_slot_);
         const auto slots = gp_axis_slots();
         const GamepadAxisBinding binding{.axis = axis, .sign = one_way && value < 0. ? -1.f : 1.f};
-        *slots[capture_slot_ - 1] = binding;
+        *slots[capture_slot_ - NB_GP_BUTTON_SLOTS] = binding;
 
         // two slots clash when they read the same range of an axis: a
         // two-way slot owns the whole axis, one-way slots only their
         // captured side
-        for (int slot = 1; slot < NB_GP_SLOTS; slot++) {
+        for (int slot = NB_GP_BUTTON_SLOTS; slot < NB_GP_SLOTS; slot++) {
             if (slot == capture_slot_) continue;
-            auto &other = *slots[slot - 1];
+            auto &other = *slots[slot - NB_GP_BUTTON_SLOTS];
             if (!other || other->axis != axis) continue;
             if (one_way && gp_slot_is_one_way(slot) && other->sign != binding.sign) continue;
             other = std::nullopt;

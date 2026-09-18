@@ -108,7 +108,7 @@ TEST_P(PpoActShapeParamTest, ActContinuousFinite) {
     ASSERT_TRUE(torch::all(torch::isfinite(continuous_action)).item<bool>());
 }
 
-TEST_P(PpoActShapeParamTest, ActDiscreteIsOneHot) {
+TEST_P(PpoActShapeParamTest, ActDiscreteIsBinary) {
     const auto cfg = GetParam();
     const auto factory = make_factory(cfg);
 
@@ -116,9 +116,7 @@ TEST_P(PpoActShapeParamTest, ActDiscreteIsOneHot) {
     const auto [continuous_action, discrete_action] =
         factory->get_agent()->act(make_state(cfg, batch), true);
 
-    const auto row_sums = torch::sum(discrete_action, -1);
-    ASSERT_TRUE(torch::allclose(row_sums, torch::ones({batch})));
-
+    // independent Bernoulli actions: each entry is 0 or 1, no one-hot constraint
     const auto is_binary =
         torch::logical_or(torch::eq(discrete_action, 0.0f), torch::eq(discrete_action, 1.0f));
     ASSERT_TRUE(torch::all(is_binary).item<bool>());
@@ -127,8 +125,8 @@ TEST_P(PpoActShapeParamTest, ActDiscreteIsOneHot) {
 INSTANTIATE_TEST_SUITE_P(
     PpoAgent, PpoActShapeParamTest,
     testing::Values(
-        PpoTestConfig{8, 8, 10, 4, 2}, PpoTestConfig{8, 8, 5, 2, 3},
-        PpoTestConfig{16, 16, 20, 6, 4}, PpoTestConfig{8, 12, 10, 4, 2}));
+        PpoTestConfig{8, 8, 10, 4, 2}, PpoTestConfig{8, 8, 5, 2, 2},
+        PpoTestConfig{16, 16, 20, 6, 2}, PpoTestConfig{8, 12, 10, 4, 2}));
 
 // ========================================================================
 // Parameterized: save / load tests
@@ -170,5 +168,5 @@ TEST_P(PpoSaveLoadParamTest, SavedFilesNonEmpty) {
 INSTANTIATE_TEST_SUITE_P(
     PpoAgent, PpoSaveLoadParamTest,
     testing::Values(
-        PpoTestConfig{8, 8, 10, 4, 2}, PpoTestConfig{8, 8, 5, 2, 3},
-        PpoTestConfig{16, 16, 20, 6, 4}));
+        PpoTestConfig{8, 8, 10, 4, 2}, PpoTestConfig{8, 8, 5, 2, 2},
+        PpoTestConfig{16, 16, 20, 6, 2}));

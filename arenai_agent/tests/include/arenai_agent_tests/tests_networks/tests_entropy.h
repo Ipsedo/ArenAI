@@ -7,12 +7,6 @@
 
 #include <gtest/gtest.h>
 
-class AlphaParameterTest : public testing::Test {};
-
-class ConstantTargetEntropyTest : public testing::Test {};
-
-class CosineAnnealingTargetEntropyTest : public testing::Test {};
-
 class PidLagrangianAlphaParameterTest : public testing::Test {};
 
 #endif//ARENAI_TESTS_ENTROPY_H

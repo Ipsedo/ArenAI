@@ -20,6 +20,7 @@ namespace arenai::agent {
             {.name = "--chunk_size", .member = &LiquidPpoHyperParams::chunk_size},
             {.name = "--initial_sigma", .member = &LiquidPpoHyperParams::initial_sigma},
             {.name = "--initial_fire_proba", .member = &LiquidPpoHyperParams::initial_fire_proba},
+            {.name = "--initial_zoom_proba", .member = &LiquidPpoHyperParams::initial_zoom_proba},
             {.name = "--metric_window_size", .member = &LiquidPpoHyperParams::metric_window_size},
             {.name = "--gamma", .member = &LiquidPpoHyperParams::gamma},
             {.name = "--gae_lambda", .member = &LiquidPpoHyperParams::gae_lambda},

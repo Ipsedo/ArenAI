@@ -20,7 +20,7 @@ namespace arenai::model {
 
     constexpr float CANON_AIM_DISTANCE = 100.f;
 
-    constexpr float ZOOM_MAGNIFICATION = 4.f;
+    constexpr float ZOOM_MAGNIFICATION = 2.f;
     constexpr float ZOOM_TRANSITION_SECONDS = 0.25f;
 
 }// namespace arenai::model

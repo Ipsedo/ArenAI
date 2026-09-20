@@ -98,26 +98,30 @@ namespace arenai::core {
         }
 
         // add basic shapes
+        constexpr float item_spawn_size = 2000.f;
+        std::uniform_real_distribution item_x_pos_u_dist(-item_spawn_size / 2, item_spawn_size / 2);
+        std::uniform_real_distribution item_y_pos_u_dist(-item_spawn_size / 2, item_spawn_size / 2);
+
         std::uniform_real_distribution<float> scale_u_dist(2.5, 10);
         constexpr int nb_shapes = 30;
 
         for (int i = 0; i < nb_shapes; i++) {
-            glm::vec3 pos(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng));
+            glm::vec3 pos(item_x_pos_u_dist(rng), 0.f, item_y_pos_u_dist(rng));
             glm::vec3 scale(scale_u_dist(rng));
             item_factory->make_sphere_item(
                 "sphere_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng));
 
-            pos = glm::vec3(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng));
+            pos = glm::vec3(item_x_pos_u_dist(rng), 0.f, item_y_pos_u_dist(rng));
             scale = glm::vec3(scale_u_dist(rng));
             item_factory->make_cube_item(
                 "cube_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng));
 
-            pos = glm::vec3(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng));
+            pos = glm::vec3(item_x_pos_u_dist(rng), 0.f, item_y_pos_u_dist(rng));
             scale = glm::vec3(scale_u_dist(rng));
             item_factory->make_tetra_item(
                 "tetra_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng));
 
-            pos = glm::vec3(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng));
+            pos = glm::vec3(item_x_pos_u_dist(rng), 0.f, item_y_pos_u_dist(rng));
             scale = glm::vec3(scale_u_dist(rng));
             item_factory->make_cylinder_item(
                 "cylinder_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng));

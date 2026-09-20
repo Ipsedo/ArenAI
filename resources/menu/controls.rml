@@ -13,8 +13,8 @@
         <div class="param-row">
             <span class="param-label">Input</span>
             <div class="toggle-group">
-                <div class="toggle" data-class-selected="controller=='keyboard'" data-event-click="set_controller('keyboard')"><div class="fill">Mouse + Keyboard</div></div>
-                <div class="toggle" data-class-selected="controller=='gamepad'" data-event-click="set_controller('gamepad')"><div class="fill">Gamepad</div></div>
+                <div class="toggle" data-class-selected="controller=='keyboard'" data-event-click="set_controller('keyboard')">Mouse + Keyboard</div>
+                <div class="toggle" data-class-selected="controller=='gamepad'" data-event-click="set_controller('gamepad')">Gamepad</div>
             </div>
         </div>
 
@@ -56,7 +56,7 @@
 
         <div class="row-buttons back-row">
             <div class="button" data-event-click="reset_bindings()">Reset to defaults</div>
-            <div class="button primary" data-event-click="controls_back()"><div class="fill">Back</div></div>
+            <div class="button primary" data-event-click="controls_back()">Back</div>
         </div>
     </div>
 </body>

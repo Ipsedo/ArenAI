@@ -28,7 +28,7 @@
         <p class="hint status-error" data-if="!agent_valid">The AI model is not loaded yet — configure it before playing.</p>
 
         <div class="row-buttons back-row">
-            <div class="button primary" data-event-click="back()"><div class="fill">Back</div></div>
+            <div class="button primary" data-event-click="back()">Back</div>
         </div>
     </div>
 </body>

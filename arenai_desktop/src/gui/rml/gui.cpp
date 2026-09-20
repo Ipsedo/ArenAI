@@ -14,7 +14,7 @@
 
 #include "../menu.h"
 #include "./adapters.h"
-#include "./cursor_ring.h"
+#include "./corner_reticle.h"
 #include "./damage_arc.h"
 #include "./hit_marker.h"
 #include "./hud.h"
@@ -48,14 +48,14 @@ namespace arenai::desktop::gui {
                 Rml::SetRenderInterface(&backend_->ui_render_interface());
                 Rml::Initialise();
 
-                // menu.rcss draws the slider knob's detached cursor ring with
-                // this gui-local decorator. Built only now: its property
-                // registration needs the style-sheet specification that
-                // Rml::Initialise() just created, so it cannot be a plain
+                // menu.rcss frames the focused control (and paints the slider
+                // knob) with this gui-local decorator. Built only now: its
+                // property registration needs the style-sheet specification
+                // that Rml::Initialise() just created, so it cannot be a plain
                 // member (members are constructed before this body runs).
-                cursor_ring_instancer_ = std::make_unique<CursorRingDecoratorInstancer>();
+                corner_reticle_instancer_ = std::make_unique<CornerReticleDecoratorInstancer>();
                 Rml::Factory::RegisterDecoratorInstancer(
-                    "cursor-ring", cursor_ring_instancer_.get());
+                    "corner-reticle", corner_reticle_instancer_.get());
                 hit_marker_instancer_ = std::make_unique<HitMarkerDecoratorInstancer>();
                 Rml::Factory::RegisterDecoratorInstancer("hit-marker", hit_marker_instancer_.get());
                 reticle_instancer_ = std::make_unique<ReticleDecoratorInstancer>();
@@ -423,7 +423,7 @@ namespace arenai::desktop::gui {
             // unique_ptr: created after Rml::Initialise(), and member
             // destruction keeps it alive until after Rml::Shutdown() as
             // RmlUi requires of registered instancers
-            std::unique_ptr<CursorRingDecoratorInstancer> cursor_ring_instancer_;
+            std::unique_ptr<CornerReticleDecoratorInstancer> corner_reticle_instancer_;
             std::unique_ptr<HitMarkerDecoratorInstancer> hit_marker_instancer_;
             std::unique_ptr<ReticleDecoratorInstancer> reticle_instancer_;
             std::unique_ptr<DamageArcDecoratorInstancer> damage_arc_instancer_;

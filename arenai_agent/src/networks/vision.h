@@ -24,6 +24,30 @@ namespace arenai::agent {
         int output_size;
     };
 
+    class ResidualBlock final : public torch::nn::Module {
+    public:
+        explicit ResidualBlock(int channels);
+
+        torch::Tensor forward(const torch::Tensor &input);
+
+    private:
+        torch::nn::Sequential conv_block{nullptr};
+    };
+
+    class ImpalaConvolutionNetwork final : public torch::nn::Module {
+    public:
+        ImpalaConvolutionNetwork(
+            int vision_height, int vision_width, const std::vector<std::tuple<int, int>> &channels);
+
+        torch::Tensor forward(const torch::Tensor &input);
+
+        int get_output_size() const;
+
+    private:
+        torch::nn::Sequential cnn{nullptr};
+        int output_size;
+    };
+
 }// namespace arenai::agent
 
 #endif// ARENAI_AGENT_HOST_VISION_H

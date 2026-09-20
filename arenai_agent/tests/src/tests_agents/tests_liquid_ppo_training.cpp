@@ -14,7 +14,6 @@ LiquidPpoTrainingTest::make_factory(const LiquidPpoTrainingTestConfig &cfg) cons
         .critic_learning_rate = 1e-3f,
         .hidden_size_sensors = 8,
         .vision_channels = {{3, 4}},
-        .group_norm_nums = {2},
         .neuron_number = NEURON_NUMBER,
         .unfolding_steps = UNFOLDING_STEPS,
         .delta_t = DELTA_T,
@@ -85,12 +84,11 @@ TEST_F(LiquidPpoTrainingTest, HiddenStateAdvancesAndResetsAcrossEpisodes) {
 
     constexpr int nb_tanks = 2;
     const std::vector<std::tuple<int, int>> vision_channels{{3, 4}};
-    const std::vector group_norm_nums{2};
 
     const auto actor = std::make_shared<LiquidActor>(
         cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, 8, vision_channels, group_norm_nums, NEURON_NUMBER,
-        UNFOLDING_STEPS, DELTA_T, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
+        cfg.nb_discrete_actions, 8, vision_channels, NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T, 0.1f,
+        std::vector(cfg.nb_discrete_actions, 0.2f));
     const auto hidden_state = std::make_shared<LiquidHiddenState>(actor);
     const auto rollout_buffer = std::make_shared<LiquidPpoRolloutBuffer>();
     const auto collector = std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state);
@@ -133,12 +131,11 @@ TEST_F(LiquidPpoTrainingTest, TrainingUpdatesActorParameters) {
         .nb_discrete_actions = 3};
 
     const std::vector<std::tuple<int, int>> vision_channels{{3, 4}};
-    const std::vector group_norm_nums{2};
 
     const auto actor = std::make_shared<LiquidActor>(
         cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, 8, vision_channels, group_norm_nums, NEURON_NUMBER,
-        UNFOLDING_STEPS, DELTA_T, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
+        cfg.nb_discrete_actions, 8, vision_channels, NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T, 0.1f,
+        std::vector(cfg.nb_discrete_actions, 0.2f));
     const auto hidden_state = std::make_shared<LiquidHiddenState>(actor);
     const auto rollout_buffer = std::make_shared<LiquidPpoRolloutBuffer>();
     const auto collector = std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state);
@@ -148,8 +145,8 @@ TEST_F(LiquidPpoTrainingTest, TrainingUpdatesActorParameters) {
     const auto trainer = std::make_shared<LiquidPpoTrainer>(
         actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_sensors,
         cfg.nb_continuous_actions, cfg.nb_discrete_actions, 1e-3f, 1e-3f, 8, vision_channels,
-        group_norm_nums, NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T, device, 10, 0.99f, 0.95f, 0.2f,
-        0.f, 1.f, 0.25f, 0.98f, 2, ROLLOUT_SIZE, MINIBATCH_SIZE, CHUNK_SIZE);
+        NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.25f,
+        0.98f, 2, ROLLOUT_SIZE, MINIBATCH_SIZE, CHUNK_SIZE);
 
     std::vector<torch::Tensor> initial_parameters;
     for (const auto &parameter: actor->parameters())

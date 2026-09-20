@@ -17,12 +17,11 @@ namespace arenai::agent {
         const int &vision_height, const int &vision_width, const int &nb_sensors,
         const int &nb_continuous_actions, const int &nb_discrete_actions,
         const int &hidden_size_sensors, const std::vector<std::tuple<int, int>> &vision_channels,
-        const std::vector<int> &group_norm_nums, const int &neuron_number,
-        const int &unfolding_steps, const float &delta_t, const float &initial_sigma,
-        const std::vector<float> &initial_discrete_probas)
+        const int &neuron_number, const int &unfolding_steps, const float &delta_t,
+        const float &initial_sigma, const std::vector<float> &initial_discrete_probas)
         : vision_encoder(register_module(
-            "vision_encoder", std::make_shared<ConvolutionNetwork>(
-                                  vision_height, vision_width, vision_channels, group_norm_nums))),
+            "vision_encoder", std::make_shared<ImpalaConvolutionNetwork>(
+                                  vision_height, vision_width, vision_channels))),
           sensors_encoder(register_module(
               "sensors_encoder",
               torch::nn::Sequential(

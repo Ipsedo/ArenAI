@@ -26,8 +26,7 @@ namespace arenai::agent {
         explicit LiquidCritic(
             const int &vision_height, const int &vision_width, const int &nb_sensors,
             const int &hidden_size_sensors,
-            const std::vector<std::tuple<int, int>> &vision_channels,
-            const std::vector<int> &group_norm_nums, const int &neuron_number,
+            const std::vector<std::tuple<int, int>> &vision_channels, const int &neuron_number,
             const int &unfolding_steps, const float &delta_t);
 
         // one env step: vision [B, C, H, W], sensors [B, S], x_t [B, neuron_number]
@@ -42,7 +41,7 @@ namespace arenai::agent {
         torch::Tensor initial_state(int batch_size) const;
 
     private:
-        std::shared_ptr<ConvolutionNetwork> vision_encoder;
+        std::shared_ptr<ImpalaConvolutionNetwork> vision_encoder;
         torch::nn::Sequential sensors_encoder;
 
         std::shared_ptr<LiquidCell> liquid;

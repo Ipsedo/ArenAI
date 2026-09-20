@@ -13,7 +13,6 @@ namespace arenai::agent {
              .member = &LiquidPpoHyperParams::critic_learning_rate},
             {.name = "--hidden_size_sensors", .member = &LiquidPpoHyperParams::hidden_size_sensors},
             {.name = "--vision_channels", .member = &LiquidPpoHyperParams::vision_channels},
-            {.name = "--group_norm_nums", .member = &LiquidPpoHyperParams::group_norm_nums},
             {.name = "--neuron_number", .member = &LiquidPpoHyperParams::neuron_number},
             {.name = "--unfolding_steps", .member = &LiquidPpoHyperParams::unfolding_steps},
             {.name = "--delta_t", .member = &LiquidPpoHyperParams::delta_t},

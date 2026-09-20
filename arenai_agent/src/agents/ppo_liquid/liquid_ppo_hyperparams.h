@@ -17,13 +17,11 @@ namespace arenai::agent {
         float actor_learning_rate = 1e-4f;
         float critic_learning_rate = 3e-4f;
         int hidden_size_sensors = 128;
-        std::vector<std::tuple<int, int>> vision_channels = {{3, 8},   {8, 16},  {16, 24},
-                                                             {24, 32}, {32, 48}, {48, 64}};
-        std::vector<int> group_norm_nums = {1, 2, 3, 4, 6, 8};
+        std::vector<std::tuple<int, int>> vision_channels = {{3, 16},  {16, 24}, {24, 32}, {32, 48},
+                                                             {48, 64}, {64, 96}, {96, 128}};
         int neuron_number = 128;
         int unfolding_steps = 6;
         float delta_t = 1.f / 30.f;
-        // TBPTT window: length of the contiguous sequences the updates run on
         int chunk_size = 30;
         float initial_sigma = 0.5f;
         float initial_fire_proba = 0.4f;

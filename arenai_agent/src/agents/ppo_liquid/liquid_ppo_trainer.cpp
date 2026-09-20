@@ -49,13 +49,12 @@ namespace arenai::agent {
         const int vision_width, const int nb_sensors, const int nb_continuous_actions,
         const int nb_discrete_action, const float actor_learning_rate,
         const float critic_learning_rate, const int hidden_size_sensors,
-        const std::vector<std::tuple<int, int>> &vision_channels,
-        const std::vector<int> &group_norm_nums, const int neuron_number, const int unfolding_steps,
-        const float delta_t, const torch::Device device, const int metric_window_size,
-        const float gamma, const float gae_lambda, const float clip_epsilon, const float target_kl,
-        const float grad_norm_max, const float continuous_target_entropy,
-        const float discrete_target_entropy_factor, const int epochs, const int rollout_size,
-        const int minibatch_size, const int chunk_size)
+        const std::vector<std::tuple<int, int>> &vision_channels, const int neuron_number,
+        const int unfolding_steps, const float delta_t, const torch::Device device,
+        const int metric_window_size, const float gamma, const float gae_lambda,
+        const float clip_epsilon, const float target_kl, const float grad_norm_max,
+        const float continuous_target_entropy, const float discrete_target_entropy_factor,
+        const int epochs, const int rollout_size, const int minibatch_size, const int chunk_size)
         : actor(actor), rollout_buffer(rollout_buffer),
           continuous_alpha(std::make_unique<PidLagrangianAlphaParameters>(
               CONTINUOUS_ALPHA_K_P, CONTINUOUS_ALPHA_K_I, CONTINUOUS_ALPHA_K_D, ALPHA_INITIAL,
@@ -68,7 +67,7 @@ namespace arenai::agent {
           discrete_target_entropy(discrete_target_entropy_factor * bernoulli_maximum_entropy()),
           critic(std::make_shared<LiquidCritic>(
               vision_height, vision_width, nb_sensors, hidden_size_sensors, vision_channels,
-              group_norm_nums, neuron_number, unfolding_steps, delta_t)),
+              neuron_number, unfolding_steps, delta_t)),
           actor_optim(
               std::make_unique<torch::optim::Adam>(this->actor->parameters(), actor_learning_rate)),
           critic_optim(

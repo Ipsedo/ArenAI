@@ -17,8 +17,7 @@ TEST_F(EngineTestFixture, RayCastHitsGroundWithoutStep) {
     add_ground();
 
     // no engine->step: spawn code casts rays right after adding bodies
-    const auto hit =
-        engine->ray_cast(glm::vec3(10.f, 100.f, 10.f), glm::vec3(10.f, -100.f, 10.f));
+    const auto hit = engine->ray_cast(glm::vec3(10.f, 100.f, 10.f), glm::vec3(10.f, -100.f, 10.f));
 
     ASSERT_TRUE(hit.has_value());
     EXPECT_NEAR(hit->x, 10.f, 1e-3f);

@@ -30,8 +30,9 @@ namespace arenai::agent {
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
             float gamma, float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
-            float continuous_target_entropy, float discrete_target_entropy_factor, int epochs,
-            int rollout_size, int minibatch_size);
+            const std::vector<float> &continuous_target_entropy,
+            const std::vector<float> &discrete_target_entropy_factors, int epochs, int rollout_size,
+            int minibatch_size);
 
         void step() override;
 
@@ -48,8 +49,8 @@ namespace arenai::agent {
         std::unique_ptr<PidLagrangianAlphaParameters> continuous_alpha;
         std::unique_ptr<PidLagrangianAlphaParameters> discrete_alpha;
 
-        float continuous_target_entropy;
-        float discrete_target_entropy;
+        std::vector<float> continuous_target_entropy;
+        std::vector<float> discrete_target_entropy;
 
         std::shared_ptr<ValueFunction> critic;
 

@@ -19,9 +19,9 @@ namespace arenai::agent {
         int hidden_size_sensors = 128;
         std::vector<int> actor_hidden_sizes = {256, 128};
         std::vector<int> critic_hidden_sizes = {256, 128};
-        std::vector<std::tuple<int, int>> vision_channels = {{3, 8},   {8, 16},  {16, 24},
-                                                             {24, 32}, {32, 48}, {48, 64}};
-        std::vector<int> group_norm_nums = {1, 2, 3, 4, 6, 8};
+        std::vector<std::tuple<int, int>> vision_channels = {{3, 16},  {16, 24}, {24, 32}, {32, 48},
+                                                             {48, 64}, {64, 96}, {96, 128}};
+        std::vector<int> group_norm_nums = {2, 3, 4, 6, 8, 12, 16};
         float initial_sigma = 0.5f;
         float initial_fire_proba = 0.4f;
         float initial_zoom_proba = 0.25f;

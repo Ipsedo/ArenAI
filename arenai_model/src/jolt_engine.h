@@ -45,6 +45,8 @@ namespace arenai::model {
 
         void step(float delta) override;
 
+        std::optional<glm::vec3> ray_cast(glm::vec3 from, glm::vec3 to) const override;
+
         std::vector<std::shared_ptr<Item>> get_items() override;
 
         void remove_bodies_and_constraints() override;

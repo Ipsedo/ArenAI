@@ -11,6 +11,7 @@
 
 #include <arenai_controller/inputs.h>
 #include <arenai_core_tests/tests_environment.h>
+#include <arenai_model/item_factory.h>
 
 using namespace arenai;
 using namespace arenai::core;
@@ -348,4 +349,45 @@ TEST_F(EnvironmentTest, StopDrawingDoubleCallDoesNotCrash) {
 
     env.stop_drawing();
     ASSERT_NO_THROW(env.stop_drawing());
+}
+
+// ========================================================================
+// reset — every body spawns above the terrain surface
+// ========================================================================
+
+TEST_F(EnvironmentTest, SpawnedBodiesStartAboveTerrain) {
+    constexpr int nb_tanks = 4;
+    constexpr int nb_shapes_per_kind = 30;
+    constexpr float frequency = 1.f / 60.f;
+
+    TestTanksEnvironment env(
+        file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false, false);
+
+    // wide spawn zone so tanks land on varied terrain heights
+    env.reset(2000.f, 2000.f);
+    env.stop_drawing();
+
+    // terrain-only world (the fixture's engine) to measure the ground height at each (x, z)
+    engine->get_item_factory()->make_height_map_item(
+        "height_map", file_reader, "heightmap/heightmap6.png", glm::vec3(0., 40., 0.),
+        glm::vec3(10., 200., 10.));
+
+    ASSERT_FALSE(env.spawn_positions.empty());
+
+    int checked = 0;
+    for (const auto &[name, pos]: env.spawn_positions) {
+        // only bodies created at the spawn (x, z) itself: props and tank chassis;
+        // wheels/turret/canon are laterally offset so the local ground height does not apply
+        const bool is_prop = name.starts_with("sphere_") || name.starts_with("cube_")
+                             || name.starts_with("tetra_") || name.starts_with("cylinder_");
+        if (!is_prop && !name.ends_with("_chassis")) continue;
+
+        const auto ground =
+            engine->ray_cast(glm::vec3(pos.x, 300.f, pos.z), glm::vec3(pos.x, -300.f, pos.z));
+        ASSERT_TRUE(ground.has_value()) << name;
+        EXPECT_GT(pos.y, ground->y) << name;
+        checked++;
+    }
+
+    EXPECT_EQ(checked, nb_tanks + 4 * nb_shapes_per_kind);
 }

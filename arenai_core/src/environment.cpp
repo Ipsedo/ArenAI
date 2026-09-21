@@ -79,6 +79,15 @@ namespace arenai::core {
             "height_map", file_reader, "heightmap/heightmap6.png", glm::vec3(0., 40., 0.),
             glm::vec3(10., 200., 10.));
 
+        // terrain surface lies in [40 - 200/2, 40 + 200/2] = [-60, 140]: a vertical
+        // segment from 300 to -300 always crosses it inside the map
+        constexpr float terrain_max_y = 40.f + 200.f / 2.f;
+        const auto ground_height = [this](const float x, const float z) {
+            const auto hit =
+                physic_engine->ray_cast(glm::vec3(x, 300.f, z), glm::vec3(x, -300.f, z));
+            return hit.has_value() ? hit->y : terrain_max_y;
+        };
+
         std::uniform_real_distribution x_pos_u_dist(-spawn_width / 2, spawn_width / 2);
         std::uniform_real_distribution y_pos_u_dist(-spawn_height / 2, spawn_height / 2);
 
@@ -86,9 +95,10 @@ namespace arenai::core {
 
         // add tanks
         for (int i = 0; i < nb_tanks; i++) {
+            const float x = x_pos_u_dist(rng), z = y_pos_u_dist(rng);
             tanks.push_back(tank_factory->make_enemy_tank(
                 file_reader, "enemy_" + std::to_string(i),
-                glm::vec3(x_pos_u_dist(rng), 0.f, y_pos_u_dist(rng)), apply_timeout));
+                glm::vec3(x, ground_height(x, z) + 3.f, z), apply_timeout));
 
             tank_controller_handler.push_back(std::make_unique<EnemyControllerHandler>(
                 wanted_frequency, model::ENEMY_TURRET_RADIAL_VELOCITY));
@@ -105,26 +115,35 @@ namespace arenai::core {
         std::uniform_real_distribution<float> scale_u_dist(2.5, 10);
         constexpr int nb_shapes = 30;
 
+        // unit meshes scaled by scale.y: spawn the item's half-height (+1 margin) above the ground
+        const auto item_pos = [&](const float x, const float z, const glm::vec3 &scale) {
+            return glm::vec3(x, ground_height(x, z) + scale.y + 1.f, z);
+        };
+
         for (int i = 0; i < nb_shapes; i++) {
-            glm::vec3 pos(item_x_pos_u_dist(rng), 0.f, item_y_pos_u_dist(rng));
+            float x = item_x_pos_u_dist(rng), z = item_y_pos_u_dist(rng);
             glm::vec3 scale(scale_u_dist(rng));
             item_factory->make_sphere_item(
-                "sphere_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng));
+                "sphere_" + std::to_string(i), file_reader, item_pos(x, z, scale), scale,
+                mass_u_dist(rng));
 
-            pos = glm::vec3(item_x_pos_u_dist(rng), 0.f, item_y_pos_u_dist(rng));
+            x = item_x_pos_u_dist(rng), z = item_y_pos_u_dist(rng);
             scale = glm::vec3(scale_u_dist(rng));
             item_factory->make_cube_item(
-                "cube_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng));
+                "cube_" + std::to_string(i), file_reader, item_pos(x, z, scale), scale,
+                mass_u_dist(rng));
 
-            pos = glm::vec3(item_x_pos_u_dist(rng), 0.f, item_y_pos_u_dist(rng));
+            x = item_x_pos_u_dist(rng), z = item_y_pos_u_dist(rng);
             scale = glm::vec3(scale_u_dist(rng));
             item_factory->make_tetra_item(
-                "tetra_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng));
+                "tetra_" + std::to_string(i), file_reader, item_pos(x, z, scale), scale,
+                mass_u_dist(rng));
 
-            pos = glm::vec3(item_x_pos_u_dist(rng), 0.f, item_y_pos_u_dist(rng));
+            x = item_x_pos_u_dist(rng), z = item_y_pos_u_dist(rng);
             scale = glm::vec3(scale_u_dist(rng));
             item_factory->make_cylinder_item(
-                "cylinder_" + std::to_string(i), file_reader, pos, scale, mass_u_dist(rng));
+                "cylinder_" + std::to_string(i), file_reader, item_pos(x, z, scale), scale,
+                mass_u_dist(rng));
         }
 
         on_reset_physics(physic_engine);

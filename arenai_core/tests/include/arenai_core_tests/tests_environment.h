@@ -19,6 +19,9 @@ public:
     int reset_physics_call_count = 0;
     int reset_drawables_call_count = 0;
 
+    // item name → position right after spawn, before the settle steps
+    std::vector<std::pair<std::string, glm::vec3>> spawn_positions;
+
 protected:
     void on_draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) override {
         draw_call_count++;
@@ -26,6 +29,10 @@ protected:
 
     void on_reset_physics(const std::unique_ptr<model::AbstractPhysicEngine> &engine) override {
         reset_physics_call_count++;
+
+        spawn_positions.clear();
+        for (const auto &item: engine->get_items())
+            spawn_positions.emplace_back(item->get_name(), glm::vec3(item->get_model_matrix()[3]));
     }
 
     void on_reset_drawables(const std::unique_ptr<model::AbstractPhysicEngine> &engine) override {

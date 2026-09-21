@@ -30,11 +30,13 @@ namespace arenai::agent {
             const std::shared_ptr<LiquidPpoRolloutBuffer> &rollout_buffer, int vision_height,
             int vision_width, int nb_sensors, int nb_continuous_actions, int nb_discrete_action,
             float actor_learning_rate, float critic_learning_rate, int hidden_size_sensors,
-            const std::vector<std::tuple<int, int>> &vision_channels, int neuron_number,
-            int unfolding_steps, float delta_t, torch::Device device, int metric_window_size,
-            float gamma, float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
-            float continuous_target_entropy, float discrete_target_entropy_factor, int epochs,
-            int rollout_size, int minibatch_size, int chunk_size);
+            const std::vector<std::tuple<int, int>> &vision_channels,
+            const std::vector<int> &group_norm_nums, int neuron_number, int unfolding_steps,
+            float delta_t, torch::Device device, int metric_window_size, float gamma,
+            float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
+            const std::vector<float> &continuous_target_entropy,
+            const std::vector<float> &discrete_target_entropy_factors, int epochs, int rollout_size,
+            int minibatch_size, int chunk_size);
 
         void step() override;
 
@@ -51,8 +53,9 @@ namespace arenai::agent {
         std::unique_ptr<PidLagrangianAlphaParameters> continuous_alpha;
         std::unique_ptr<PidLagrangianAlphaParameters> discrete_alpha;
 
-        float continuous_target_entropy;
-        float discrete_target_entropy;
+        // per-dimension targets, aligned with the per-dimension alphas
+        std::vector<float> continuous_target_entropy;
+        std::vector<float> discrete_target_entropy;
 
         std::shared_ptr<LiquidCritic> critic;
 

@@ -23,7 +23,8 @@ namespace arenai::agent {
     struct CliField {
         std::string name;
         std::variant<
-            int S::*, float S::*, std::vector<int> S::*, std::vector<std::tuple<int, int>> S::*>
+            int S::*, float S::*, std::vector<int> S::*, std::vector<float> S::*,
+            std::vector<std::tuple<int, int>> S::*>
             member;
     };
 
@@ -72,6 +73,12 @@ namespace arenai::agent {
 
     inline void add_cli_field(
         argparse::ArgumentParser &parser, const std::string &name,
+        const std::vector<float> &default_value) {
+        add_cli_json_field(parser, name, default_value);
+    }
+
+    inline void add_cli_field(
+        argparse::ArgumentParser &parser, const std::string &name,
         const std::vector<std::tuple<int, int>> &default_value) {
         add_cli_json_field(parser, name, default_value);
     }
@@ -93,6 +100,12 @@ namespace arenai::agent {
     inline void read_cli_field(
         const argparse::ArgumentParser &parser, const std::string &name, std::vector<int> &output) {
         output = parser.get<CliJsonValue<std::vector<int>>>(name).value;
+    }
+
+    inline void read_cli_field(
+        const argparse::ArgumentParser &parser, const std::string &name,
+        std::vector<float> &output) {
+        output = parser.get<CliJsonValue<std::vector<float>>>(name).value;
     }
 
     inline void read_cli_field(

@@ -49,12 +49,13 @@ namespace arenai::agent {
         const int vision_width, const int nb_sensors, const int nb_continuous_actions,
         const int nb_discrete_action, const float actor_learning_rate,
         const float critic_learning_rate, const int hidden_size_sensors,
-        const std::vector<std::tuple<int, int>> &vision_channels, const int neuron_number,
-        const int unfolding_steps, const float delta_t, const torch::Device device,
-        const int metric_window_size, const float gamma, const float gae_lambda,
-        const float clip_epsilon, const float target_kl, const float grad_norm_max,
-        const float continuous_target_entropy, const float discrete_target_entropy_factor,
-        const int epochs, const int rollout_size, const int minibatch_size, const int chunk_size)
+        const std::vector<std::tuple<int, int>> &vision_channels,
+        const std::vector<int> &group_norm_nums, const int neuron_number, const int unfolding_steps,
+        const float delta_t, const torch::Device device, const int metric_window_size,
+        const float gamma, const float gae_lambda, const float clip_epsilon, const float target_kl,
+        const float grad_norm_max, const std::vector<float> &continuous_target_entropy,
+        const std::vector<float> &discrete_target_entropy_factors, const int epochs,
+        const int rollout_size, const int minibatch_size, const int chunk_size)
         : actor(actor), rollout_buffer(rollout_buffer),
           continuous_alpha(std::make_unique<PidLagrangianAlphaParameters>(
               CONTINUOUS_ALPHA_K_P, CONTINUOUS_ALPHA_K_I, CONTINUOUS_ALPHA_K_D, ALPHA_INITIAL,
@@ -64,10 +65,14 @@ namespace arenai::agent {
               nb_discrete_action)),
           continuous_target_entropy(continuous_target_entropy),
           // per-action target: each discrete action is an independent Bernoulli
-          discrete_target_entropy(discrete_target_entropy_factor * bernoulli_maximum_entropy()),
+          discrete_target_entropy([&discrete_target_entropy_factors] {
+              std::vector<float> targets = discrete_target_entropy_factors;
+              for (auto &target: targets) target *= bernoulli_maximum_entropy();
+              return targets;
+          }()),
           critic(std::make_shared<LiquidCritic>(
               vision_height, vision_width, nb_sensors, hidden_size_sensors, vision_channels,
-              neuron_number, unfolding_steps, delta_t)),
+              group_norm_nums, neuron_number, unfolding_steps, delta_t)),
           actor_optim(
               std::make_unique<torch::optim::Adam>(this->actor->parameters(), actor_learning_rate)),
           critic_optim(
@@ -85,6 +90,13 @@ namespace arenai::agent {
           gamma(gamma), gae_lambda(gae_lambda), clip_epsilon(clip_epsilon), target_kl(target_kl),
           grad_norm_max(grad_norm_max), epochs(epochs), rollout_size(rollout_size),
           minibatch_size(minibatch_size), chunk_size(chunk_size) {
+        TORCH_CHECK(
+            static_cast<int>(continuous_target_entropy.size()) == nb_continuous_actions,
+            "continuous_target_entropy needs one target per continuous action");
+        TORCH_CHECK(
+            static_cast<int>(discrete_target_entropy_factors.size()) == nb_discrete_action,
+            "discrete_target_entropy_factors needs one factor per discrete action");
+
         to(device);
 
         set_train(false);

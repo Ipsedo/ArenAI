@@ -1,0 +1,96 @@
+{
+    "agent": {
+        "actor_learning_rate": 9.999999747378752e-05,
+        "chunk_size": 30,
+        "clip_epsilon": 0.20000000298023224,
+        "continuous_target_entropy": [
+            -0.20000000298023224,
+            -0.20000000298023224,
+            -0.8799999952316284,
+            -0.8799999952316284
+        ],
+        "critic_learning_rate": 0.0003000000142492354,
+        "delta_t": 0.03333333507180214,
+        "discrete_target_entropy_factors": [
+            0.4000000059604645,
+            0.4000000059604645
+        ],
+        "epochs": 2,
+        "gae_lambda": 0.9900000095367432,
+        "gamma": 0.996999979019165,
+        "grad_norm_max": 0.5,
+        "group_norm_nums": [
+            2,
+            3,
+            4,
+            6,
+            8,
+            12,
+            16
+        ],
+        "hidden_size_sensors": 128,
+        "initial_fire_proba": 0.4000000059604645,
+        "initial_sigma": 0.5,
+        "initial_zoom_proba": 0.25,
+        "metric_window_size": 256,
+        "minibatch_size": 1024,
+        "neuron_number": 128,
+        "rollout_size": 900,
+        "target_kl": 0.05000000074505806,
+        "unfolding_steps": 6,
+        "vision_channels": [
+            [
+                3,
+                16
+            ],
+            [
+                16,
+                24
+            ],
+            [
+                24,
+                32
+            ],
+            [
+                32,
+                48
+            ],
+            [
+                48,
+                64
+            ],
+            [
+                64,
+                96
+            ],
+            [
+                96,
+                128
+            ]
+        ]
+    },
+    "environment": {
+        "curriculum_boundary_proba": 0.20000000298023224,
+        "curriculum_delta": 50.0,
+        "curriculum_probe_window": 24,
+        "curriculum_ratio_high": 0.05999999865889549,
+        "curriculum_ratio_low": 0.029999999329447746,
+        "final_spawn_height": 1000.0,
+        "final_spawn_width": 1000.0,
+        "initial_spawn_height": 250.0,
+        "initial_spawn_width": 250.0,
+        "nb_tanks": 32,
+        "vision_height": 128,
+        "vision_num_threads": 16,
+        "vision_width": 256,
+        "wanted_frequency": 0.03333333507180214
+    },
+    "train": {
+        "cuda": true,
+        "max_episode_steps": 5400,
+        "nb_episodes": 6000,
+        "output_folder": "./outputs/train_409_ppo_liquid_separated-target-entropy",
+        "resources_folder": "/home/samuel/CLionProjects/ArenAI/resources",
+        "save_every": 108000
+    }
+}

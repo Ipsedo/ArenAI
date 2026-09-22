@@ -20,14 +20,19 @@ namespace arenai::model {
         TurretItem(
             const std::string &prefix_name, JoltPhysicEngine &engine,
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, glm::vec3 pos,
-            glm::vec3 rel_pos, glm::vec3 scale, float mass, JPH::Body *chassis);
+            glm::vec3 rel_pos, glm::vec3 scale, float mass, JPH::Body *chassis,
+            float max_rad_per_frame);
 
+        // the input carries an absolute aim target in [-1, 1], mapped onto [-pi, pi]
         void apply_input(const controller::user_input &input) override;
+
+        float get_angle() const;
 
         std::vector<JPH::Ref<JPH::TwoBodyConstraint>> get_constraints() override;
 
     private:
         float angle;
+        float max_rad_per_frame;
         JPH::Ref<JPH::HingeConstraint> hinge;
     };
 

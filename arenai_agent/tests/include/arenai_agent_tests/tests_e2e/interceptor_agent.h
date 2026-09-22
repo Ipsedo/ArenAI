@@ -25,6 +25,8 @@ public:
         last_vision_height = vision_height;
         last_vision_width = vision_width;
 
+        // a zero aim target reads as "point dead ahead": from the initial pose that
+        // leaves the turret and the canon where they are
         return std::vector<core::Action>(
             states.size(), {.left_joystick = {.x = 0.f, .y = 0.f},
                             .right_joystick = {.x = 0.f, .y = 0.f},

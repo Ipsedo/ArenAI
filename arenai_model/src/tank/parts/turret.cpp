@@ -5,17 +5,17 @@
 #include "./turret.h"
 
 #include <algorithm>
+#include <cmath>
 #include <memory>
+#include <numbers>
 
 using namespace arenai;
 using namespace arenai::model;
 
 namespace {
 
-    // Jolt's default position motor is a soft 2 Hz spring: the turret needs ~10 frames
-    // to reach a new target angle, a lag the aim loop cannot compensate
-    constexpr float MOTOR_FREQUENCY = 8.f;
-    constexpr float MOTOR_DAMPING = 1.f;
+    constexpr float PI = std::numbers::pi_v<float>;
+    constexpr float TWO_PI = 2.f * PI;
 
 }// namespace
 
@@ -24,13 +24,14 @@ namespace arenai::model {
     TurretItem::TurretItem(
         const std::string &prefix_name, JoltPhysicEngine &engine,
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, const glm::vec3 pos,
-        const glm::vec3 rel_pos, const glm::vec3 scale, const float mass, JPH::Body *chassis)
+        const glm::vec3 rel_pos, const glm::vec3 scale, const float mass, JPH::Body *chassis,
+        const float max_rad_per_frame)
         : LifeItem(5), ConvexItem(
                            prefix_name + "_turret", engine,
                            std::make_shared<ObjShape>(
                                file_reader, std::filesystem::path("obj") / "anubis_turret.obj"),
                            pos, scale, mass),
-          angle(0.f) {
+          angle(0.f), max_rad_per_frame(max_rad_per_frame) {
 
         JPH::HingeConstraintSettings settings;
         settings.mSpace = JPH::EConstraintSpace::LocalToBodyCOM;
@@ -43,8 +44,6 @@ namespace arenai::model {
         settings.mHingeAxis2 = JPH::Vec3::sAxisY();
         settings.mNormalAxis2 = JPH::Vec3::sAxisX();
 
-        settings.mMotorSettings = JPH::MotorSettings(MOTOR_FREQUENCY, MOTOR_DAMPING);
-
         auto *constraint = settings.Create(*chassis, *ConvexItem::get_body());
 
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
@@ -52,15 +51,20 @@ namespace arenai::model {
     }
 
     void TurretItem::apply_input(const controller::user_input &input) {
-        angle += -input.right_joystick.x;
+        const float target = input.right_joystick.x * PI;
 
-        if (angle < -static_cast<float>(M_PI)) angle += 2.f * static_cast<float>(M_PI);
-        else if (angle > static_cast<float>(M_PI)) angle -= 2.f * static_cast<float>(M_PI);
-        angle = std::clamp(angle, -static_cast<float>(M_PI), static_cast<float>(M_PI));
+        // std::remainder keeps the error in [-pi, pi]: the turret always takes the shortest
+        // way around, so crossing the back stays a small move
+        const float delta = std::clamp(
+            std::remainder(target - angle, TWO_PI), -max_rad_per_frame, max_rad_per_frame);
+
+        angle = std::remainder(angle + delta, TWO_PI);
 
         hinge->SetMotorState(JPH::EMotorState::Position);
         hinge->SetTargetAngle(angle);
     }
+
+    float TurretItem::get_angle() const { return angle; }
 
     std::vector<JPH::Ref<JPH::TwoBodyConstraint>> TurretItem::get_constraints() {
         auto constraints = JoltItem::get_constraints();

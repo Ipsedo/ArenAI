@@ -11,7 +11,8 @@ file(GLOB_RECURSE SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
 add_executable(arenai_model_tests "${SRC}")
 
-target_link_libraries(arenai_model_tests GTest::gtest GTest::gtest_main arenai_model)
+# Jolt is PRIVATE to arenai_model: the tests reaching into src/ for the tank parts need it
+target_link_libraries(arenai_model_tests GTest::gtest GTest::gtest_main arenai_model Jolt)
 target_include_directories(arenai_model_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 target_include_directories(arenai_model_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../src")

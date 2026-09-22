@@ -47,7 +47,7 @@ int main(const int argc, char **argv) {
          .window_height = parser.get<int>("--window_height"),
          .resources_folder = resources_folder},
         {.state_dict_folder = resources_folder / "trained_models" / "ppo_liquid_409" / "save_57",
-         .config_json = resources_folder / "trained_models" / "ppo_train_409" / "config.json",
+         .config_json = resources_folder / "trained_models" / "ppo_liquid_409" / "config.json",
          .cuda = parser.get<bool>("--cuda")});
 
     return 0;

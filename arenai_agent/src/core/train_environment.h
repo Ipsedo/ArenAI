@@ -18,12 +18,16 @@ namespace arenai::agent {
             const std::filesystem::path &android_assets_path, float wanted_frequency,
             int max_episode_steps, int vision_height, int vision_width, int vision_num_threads);
 
-        std::vector<std::tuple<core::State, core::Reward, core::IsDone>>
+        std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
         step(float time_delta, const std::vector<core::Action> &actions) override;
 
         std::vector<std::shared_ptr<AbstractMetric>> get_metrics() const;
 
         bool is_episode_terminated();
+
+        // totals across every tank since the last reset, for the spawn curriculum
+        int episode_nb_fires() const;
+        int episode_nb_hits() const;
 
         static void reset_singleton();
 
@@ -38,10 +42,6 @@ namespace arenai::agent {
 
     private:
         float wanted_frequency;
-        int max_frames_without_hit;
-        std::vector<int> remaining_frames;
-        int nb_frames_added_when_hit;
-        int nb_frames_added_when_kill;
         int nb_tanks;
 
         int nb_steps;
@@ -71,6 +71,8 @@ namespace arenai::agent {
         std::shared_ptr<AbstractMetric> kill_metric;
 
         int nb_kills_episode;
+        int nb_fires_episode;
+        int nb_hits_episode;
 
         bool are_all_done();
     };

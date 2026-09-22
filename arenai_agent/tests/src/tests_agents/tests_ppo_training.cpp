@@ -21,6 +21,8 @@ PpoTrainingTest::make_factory(const PpoTrainingTestConfig &cfg) const {
         .gamma = 0.99f,
         .gae_lambda = 0.95f,
         .clip_epsilon = 0.2f,
+        .continuous_target_entropy = std::vector(cfg.nb_continuous_actions, -0.88f),
+        .discrete_target_entropy_factors = std::vector(cfg.nb_discrete_actions, 0.5f),
         .epochs = 2,
         .rollout_size = ROLLOUT_SIZE,
         .minibatch_size = MINIBATCH_SIZE};
@@ -43,7 +45,7 @@ TEST_F(PpoTrainingTest, ActProducesValidOutput) {
         .vision_width = 8,
         .nb_sensors = 3,
         .nb_continuous_actions = 2,
-        .nb_discrete_actions = 3};
+        .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
     const auto [continuous_action, discrete_action] =
@@ -52,7 +54,7 @@ TEST_F(PpoTrainingTest, ActProducesValidOutput) {
     ASSERT_EQ(continuous_action.size(0), 1);
     ASSERT_EQ(continuous_action.size(1), 2);
     ASSERT_EQ(discrete_action.size(0), 1);
-    ASSERT_EQ(discrete_action.size(1), 3);
+    ASSERT_EQ(discrete_action.size(1), 2);
 
     ASSERT_TRUE(torch::all(torch::isfinite(continuous_action)).item<bool>());
     ASSERT_TRUE(torch::all(torch::isfinite(discrete_action)).item<bool>());
@@ -64,7 +66,7 @@ TEST_F(PpoTrainingTest, CountParametersPositive) {
         .vision_width = 8,
         .nb_sensors = 3,
         .nb_continuous_actions = 2,
-        .nb_discrete_actions = 3};
+        .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
     ASSERT_GT(factory->get_trainer()->count_parameters(), 0)
@@ -85,7 +87,8 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
 
     const auto actor = std::make_shared<Actor>(
         cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, 8, std::vector{16}, vision_channels, group_norm_nums, 0.1f, 0.2f);
+        cfg.nb_discrete_actions, 8, std::vector{16}, vision_channels, group_norm_nums, 0.1f,
+        std::vector(cfg.nb_discrete_actions, 0.2f));
     const auto rollout_buffer = std::make_shared<PpoRolloutBuffer>();
     const auto collector = std::make_shared<PpoStepCollector>(rollout_buffer);
     const auto agent = std::make_shared<TorchPpoAgent>(actor, device, collector);
@@ -93,8 +96,9 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
     const auto trainer = std::make_shared<PpoTrainer>(
         actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_sensors,
         cfg.nb_continuous_actions, cfg.nb_discrete_actions, 1e-3f, 1e-3f, 8, std::vector{16},
-        vision_channels, group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.25f, 0.98f, 2,
-        ROLLOUT_SIZE, MINIBATCH_SIZE);
+        vision_channels, group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f,
+        std::vector(cfg.nb_continuous_actions, 0.25f), std::vector(cfg.nb_discrete_actions, 0.98f),
+        2, ROLLOUT_SIZE, MINIBATCH_SIZE);
 
     std::vector<torch::Tensor> initial_parameters;
     for (const auto &parameter: actor->parameters())
@@ -106,7 +110,8 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
         constexpr int nb_tanks = 2;
 
         agent->act(make_state(cfg, nb_tanks), true);
-        collector->on_transition(torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+        collector->on_transition(
+            torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
         trainer->step();
     }
 

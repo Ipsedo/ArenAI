@@ -10,6 +10,15 @@
 using namespace arenai;
 using namespace arenai::model;
 
+namespace {
+
+    // Jolt's default position motor is a soft 2 Hz spring: the turret needs ~10 frames
+    // to reach a new target angle, a lag the aim loop cannot compensate
+    constexpr float MOTOR_FREQUENCY = 8.f;
+    constexpr float MOTOR_DAMPING = 1.f;
+
+}// namespace
+
 namespace arenai::model {
 
     TurretItem::TurretItem(
@@ -33,6 +42,8 @@ namespace arenai::model {
         settings.mPoint2 = JPH::RVec3::sZero();
         settings.mHingeAxis2 = JPH::Vec3::sAxisY();
         settings.mNormalAxis2 = JPH::Vec3::sAxisX();
+
+        settings.mMotorSettings = JPH::MotorSettings(MOTOR_FREQUENCY, MOTOR_DAMPING);
 
         auto *constraint = settings.Create(*chassis, *ConvexItem::get_body());
 

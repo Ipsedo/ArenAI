@@ -5,6 +5,7 @@
 #ifndef ARENAI_CANON_H
 #define ARENAI_CANON_H
 
+#include <atomic>
 #include <functional>
 
 #include <Jolt/Jolt.h>
@@ -40,6 +41,8 @@ namespace arenai::model {
         glm::vec3 pos() override;
         glm::vec3 look() override;
         glm::vec3 up() override;
+        float fov() override;
+        glm::vec3 pivot() override;
 
         std::vector<JPH::Ref<JPH::TwoBodyConstraint>> get_constraints() override;
 
@@ -48,6 +51,8 @@ namespace arenai::model {
 
     private:
         float angle;
+        std::atomic<bool> zoom_engaged;
+        float current_fov;
         JPH::Ref<JPH::HingeConstraint> hinge;
         std::shared_ptr<utils::AbstractResourceFileReader> file_reader;
         bool will_fire;

@@ -77,6 +77,16 @@ namespace arenai::desktop {
                 slot = GamepadAxisBinding{.axis = *axis, .sign = sign};
         }
 
+        void load_gamepad_button_binding(
+            const nlohmann::json &json, const char *field,
+            std::optional<controller::GamepadButton> &slot) {
+            if (!json.contains(field)) return;
+            const auto name = json.value(field, std::string());
+            if (name.empty()) slot = std::nullopt;
+            else if (const auto button = controller::gamepad_button_from_string(name))
+                slot = *button;
+        }
+
         void load_bindings(const nlohmann::json &json, ControlBindings &bindings) {
             if (const auto keyboard = json.value("keyboard", nlohmann::json::object());
                 keyboard.is_object()) {
@@ -85,16 +95,13 @@ namespace arenai::desktop {
                 load_keyboard_binding(keyboard, "turn_left", bindings.keyboard.turn_left);
                 load_keyboard_binding(keyboard, "turn_right", bindings.keyboard.turn_right);
                 load_keyboard_binding(keyboard, "fire", bindings.keyboard.fire);
+                load_keyboard_binding(keyboard, "zoom", bindings.keyboard.zoom);
             }
 
             if (const auto gamepad = json.value("gamepad", nlohmann::json::object());
                 gamepad.is_object()) {
-                if (gamepad.contains("fire")) {
-                    const auto name = gamepad.value("fire", std::string());
-                    if (name.empty()) bindings.gamepad.fire = std::nullopt;
-                    else if (const auto button = controller::gamepad_button_from_string(name))
-                        bindings.gamepad.fire = *button;
-                }
+                load_gamepad_button_binding(gamepad, "fire", bindings.gamepad.fire);
+                load_gamepad_button_binding(gamepad, "zoom", bindings.gamepad.zoom);
                 load_axis_binding(gamepad, "steer", bindings.gamepad.steer);
                 load_axis_binding(gamepad, "aim_x", bindings.gamepad.aim_x);
                 load_axis_binding(gamepad, "aim_y", bindings.gamepad.aim_y);
@@ -114,10 +121,13 @@ namespace arenai::desktop {
                   {"backward", keyboard_binding_to_string(bindings.keyboard.backward)},
                   {"turn_left", keyboard_binding_to_string(bindings.keyboard.turn_left)},
                   {"turn_right", keyboard_binding_to_string(bindings.keyboard.turn_right)},
-                  {"fire", keyboard_binding_to_string(bindings.keyboard.fire)}}},
+                  {"fire", keyboard_binding_to_string(bindings.keyboard.fire)},
+                  {"zoom", keyboard_binding_to_string(bindings.keyboard.zoom)}}},
                 {"gamepad",
                  {{"fire",
                    bindings.gamepad.fire ? controller::to_string(*bindings.gamepad.fire) : ""},
+                  {"zoom",
+                   bindings.gamepad.zoom ? controller::to_string(*bindings.gamepad.zoom) : ""},
                   {"steer", axis_binding_to_string(bindings.gamepad.steer)},
                   {"aim_x", axis_binding_to_string(bindings.gamepad.aim_x)},
                   {"aim_y", axis_binding_to_string(bindings.gamepad.aim_y)},
@@ -182,11 +192,19 @@ namespace arenai::desktop {
                 bindings.is_object())
                 load_bindings(bindings, settings.bindings);
 
-            // a stale folder (moved, deleted, unplugged drive) falls back to
+            // a stale path (moved, deleted, unplugged drive) falls back to
             // the default so the menu never starts on an unplayable selection
-            if (const std::filesystem::path sac_folder = json.value("sac_folder", std::string());
-                !sac_folder.empty() && std::filesystem::is_directory(sac_folder))
-                settings.sac_folder = sac_folder;
+            if (const std::filesystem::path agent_folder =
+                    json.value("agent_folder", std::string());
+                !agent_folder.empty() && std::filesystem::is_directory(agent_folder))
+                settings.agent_folder = agent_folder;
+            if (const std::filesystem::path agent_config =
+                    json.value("agent_config", std::string());
+                !agent_config.empty() && std::filesystem::is_regular_file(agent_config))
+                settings.agent_config = agent_config;
+            if (const auto algorithm =
+                    gui::ai_algorithm_from_string(json.value("algorithm", std::string())))
+                settings.agent_algorithm = *algorithm;
         } catch (const std::exception &e) {
             std::cerr << "Cannot load preferences " << path << ": " << e.what() << std::endl;
             return defaults;
@@ -210,7 +228,9 @@ namespace arenai::desktop {
                 {"window_gpu", settings.window_gpu},
                 {"vision_gpu", settings.vision_gpu},
                 {"bindings", bindings_to_json(settings.bindings)},
-                {"sac_folder", settings.sac_folder.string()},
+                {"agent_folder", settings.agent_folder.string()},
+                {"agent_config", settings.agent_config.string()},
+                {"algorithm", gui::to_string(settings.agent_algorithm)},
             };
 
             std::filesystem::create_directories(path.parent_path());

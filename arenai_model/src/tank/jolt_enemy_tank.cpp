@@ -45,7 +45,7 @@ namespace arenai::model {
         JoltPhysicEngine &engine,
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::string &tank_prefix_name, const glm::vec3 chassis_pos,
-        const float wanted_frame_frequency)
+        const float wanted_frame_frequency, const bool apply_timeout)
         : JoltTank(
             engine, file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency,
             [this](const ShellItem *shell, const ShellContactInfo &info, Item *item) {
@@ -59,13 +59,17 @@ namespace arenai::model {
             }),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), miss_distance_scale(1.5f), miss_distance_exponent(1.f / 2.f),
-          hit_reward_scale(0.1f), hit_received_cost(0.15f), initial_nb_shells(10),
+          hit_reward_scale(0.1f), hit_received_cost(0.3f), initial_nb_shells(10),
           nb_shells(initial_nb_shells), max_shells(30),
           fire_cooldown_frames(static_cast<int>(1.f / 6.f / wanted_frame_frequency)),
           curr_cooldown_frame(fire_cooldown_frames), shells_recharged_per_hit(5),
           nb_frames_per_shell_regen(static_cast<int>(1.5f / wanted_frame_frequency)),
-          curr_frame_shell_regen(0), is_dead_already_triggered(false), has_touch(false),
-          has_kill(false), has_fired(false) {}
+          curr_frame_shell_regen(0), is_dead_already_triggered(false), apply_timeout(apply_timeout),
+          starved(false), max_frames_without_hit(static_cast<int>(30.f / wanted_frame_frequency)),
+          remaining_frames(max_frames_without_hit),
+          nb_frames_added_when_hit(static_cast<int>(3.f / wanted_frame_frequency)),
+          nb_frames_added_when_kill(static_cast<int>(15.f / wanted_frame_frequency)),
+          has_hit(false), has_kill(false), has_fired(false) {}
 
     float JoltEnemyTank::compute_hit_reward(
         const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos, const glm::vec3 &shell_pos) const {
@@ -132,8 +136,9 @@ namespace arenai::model {
     float JoltEnemyTank::get_reward() const {
         RewardDetail detail;
 
-        // 1. dead / suicide penalty
-        detail.death = is_dead() ? -1.f : 0.f;
+        // 1. death penalty — starving out is a pure truncation: any penalty there is an
+        // unpredictable shock for the critic (the timer is not observable)
+        detail.death = is_dead() && !is_timeout() ? -1.f : 0.f;
 
         // 2. fired shells reward
         for (int i = static_cast<int>(tracked_shells.size()) - 1; i >= 0; i--) {
@@ -165,7 +170,7 @@ namespace arenai::model {
         // 4. total reward, kept split for the metrics
         last_reward_detail = detail;
 
-        return detail.aim + detail.hit + detail.received + detail.death;
+        return detail.hit + detail.received + detail.death;
     }
 
     RewardDetail JoltEnemyTank::get_last_reward_detail() const { return last_reward_detail; }
@@ -212,6 +217,19 @@ namespace arenai::model {
 
         // 4. fire cooldown
         curr_cooldown_frame = std::min(fire_cooldown_frames, curr_cooldown_frame + 1);
+
+        // 5. timeout
+        remaining_frames--;
+
+        if (has_hit) remaining_frames += nb_frames_added_when_hit;
+        if (has_kill) remaining_frames += nb_frames_added_when_kill;
+
+        // starving out (no hit for too long) ends the tank: reported as a truncation to
+        // the learner — only when the timer is what killed it
+        if (apply_timeout && remaining_frames <= 0) {
+            if (!is_dead()) starved = true;
+            kill_life_items();
+        }
     }
 
     void JoltEnemyTank::on_shell_fired(const std::shared_ptr<ShellItem> &shell) {
@@ -246,11 +264,11 @@ namespace arenai::model {
                 hit = true;
                 killed = true;
 
-                has_touch = true;
+                has_hit = true;
                 has_kill = true;
             } else if (!life_item->is_dead()) {
                 hit = true;
-                has_touch = true;
+                has_hit = true;
             }
         }
 
@@ -276,8 +294,8 @@ namespace arenai::model {
     }
 
     bool JoltEnemyTank::consume_has_hit() {
-        if (has_touch) {
-            has_touch = false;
+        if (has_hit) {
+            has_hit = false;
             return true;
         }
         return false;
@@ -301,6 +319,8 @@ namespace arenai::model {
     bool JoltEnemyTank::is_suicide() const {
         return curr_frame_upside_down > max_frames_upside_down;
     }
+
+    bool JoltEnemyTank::is_timeout() const { return starved; }
 
     void JoltEnemyTank::on_death() {
         if (is_dead() && !is_dead_already_triggered) {

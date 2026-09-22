@@ -13,7 +13,7 @@ namespace arenai::desktop {
         const KeyboardBindings &bindings)
         : window(std::move(window)), renderer(renderer), bindings(bindings), last_mouse_x(0.),
           last_mouse_y(0.), current_dir(0.f), current_speed(0.f), current_turret_rotation(0.f),
-          current_canon_rotation(0.f), cursor_captured(true) {
+          current_canon_rotation(0.f), current_zoom(false), cursor_captured(true) {
 
         const auto center_x = static_cast<double>(renderer.get_width()) / 2.,
                    center_y = static_cast<double>(renderer.get_height()) / 2.;
@@ -57,9 +57,11 @@ namespace arenai::desktop {
             else if (input == bindings.turn_left) current_dir = -1.f;
             else if (input == bindings.turn_right) current_dir = 1.f;
             else if (input == bindings.fire) need_fire = true;
+            else if (input == bindings.zoom) current_zoom = true;
         } else if (action == controller::InputAction::Release) {
             if (input == bindings.forward || input == bindings.backward) current_speed = 0.f;
             if (input == bindings.turn_left || input == bindings.turn_right) current_dir = 0.f;
+            if (input == bindings.zoom) current_zoom = false;
         }
     }
 
@@ -118,7 +120,8 @@ namespace arenai::desktop {
             true,
             {.left_joystick = {.x = current_dir, .y = current_speed},
              .right_joystick = {.x = current_turret_rotation, .y = current_canon_rotation},
-             .fire_button = {need_fire}}};
+             .fire_button = {need_fire},
+             .zoom_button = {current_zoom}}};
     }
 
 }// namespace arenai::desktop

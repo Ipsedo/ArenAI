@@ -27,9 +27,9 @@ namespace arenai::core {
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, int nb_tanks,
             float wanted_frequency, int vision_height, int vision_width, int vision_num_threads,
-            bool vision_thread_sleep);
+            bool vision_thread_sleep, bool apply_timeout);
 
-        virtual std::vector<std::tuple<State, Reward, IsDone>>
+        virtual std::vector<std::tuple<State, Reward, IsDone, IsTruncated>>
         step(float time_delta, const std::vector<Action> &actions);
 
         std::vector<State> reset(float spawn_width, float spawn_height);
@@ -59,6 +59,8 @@ namespace arenai::core {
         int nb_reset_frames;
 
         bool drawing_started_;
+
+        bool apply_timeout;
 
         std::shared_ptr<view::AbstractGraphicBackend> graphics_backend;
         std::shared_ptr<view::AbstractRenderContext> gl_context;

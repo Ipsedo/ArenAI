@@ -5,17 +5,14 @@
 #ifndef ARENAI_AGENT_HOST_CLI_FIELDS_H
 #define ARENAI_AGENT_HOST_CLI_FIELDS_H
 
-#include <iomanip>
-#include <map>
-#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <variant>
 #include <vector>
 
 #include <argparse/argparse.hpp>
-
-#include "./cli_parser.h"
+#include <nlohmann/json.hpp>
 
 namespace arenai::agent {
 
@@ -26,8 +23,16 @@ namespace arenai::agent {
     struct CliField {
         std::string name;
         std::variant<
-            int S::*, float S::*, std::vector<int> S::*, std::vector<std::tuple<int, int>> S::*>
+            int S::*, float S::*, std::vector<int> S::*, std::vector<float> S::*,
+            std::vector<std::tuple<int, int>> S::*>
             member;
+    };
+
+    // argparse's get<T> unpacks container types element-wise, so a
+    // vector produced by an action must travel boxed in a scalar type
+    template<typename T>
+    struct CliJsonValue {
+        T value;
     };
 
     /*
@@ -44,22 +49,38 @@ namespace arenai::agent {
         parser.add_argument(name).scan<'g', float>().default_value(default_value);
     }
 
-    inline void add_cli_field(
-        argparse::ArgumentParser &parser, const std::string &name,
-        const std::vector<int> &default_value) {
+    template<typename T>
+    void add_cli_json_field(
+        argparse::ArgumentParser &parser, const std::string &name, const T &default_value) {
         parser.add_argument(name)
-            .default_value<hidden_layers>({default_value})
+            .default_value(CliJsonValue<T>{default_value})
             .action([name](const std::string &value) {
-                return hidden_layers{parse_int_vector(value, name, "[256, 128, ..., 64]")};
+                try {
+                    return CliJsonValue<T>{nlohmann::json::parse(value).get<T>()};
+                } catch (const nlohmann::json::exception &) {
+                    throw std::invalid_argument(
+                        "invalid " + name + " value, usage : " + nlohmann::json(T{}).dump()
+                        + " (JSON), actual value = \"" + value + "\"");
+                }
             });
     }
 
     inline void add_cli_field(
         argparse::ArgumentParser &parser, const std::string &name,
+        const std::vector<int> &default_value) {
+        add_cli_json_field(parser, name, default_value);
+    }
+
+    inline void add_cli_field(
+        argparse::ArgumentParser &parser, const std::string &name,
+        const std::vector<float> &default_value) {
+        add_cli_json_field(parser, name, default_value);
+    }
+
+    inline void add_cli_field(
+        argparse::ArgumentParser &parser, const std::string &name,
         const std::vector<std::tuple<int, int>> &default_value) {
-        parser.add_argument(name)
-            .default_value<vision_channels>({default_value})
-            .action(parse_cli_vision_channels);
+        add_cli_json_field(parser, name, default_value);
     }
 
     /*
@@ -78,44 +99,19 @@ namespace arenai::agent {
 
     inline void read_cli_field(
         const argparse::ArgumentParser &parser, const std::string &name, std::vector<int> &output) {
-        output = parser.get<hidden_layers>(name).layers;
+        output = parser.get<CliJsonValue<std::vector<int>>>(name).value;
+    }
+
+    inline void read_cli_field(
+        const argparse::ArgumentParser &parser, const std::string &name,
+        std::vector<float> &output) {
+        output = parser.get<CliJsonValue<std::vector<float>>>(name).value;
     }
 
     inline void read_cli_field(
         const argparse::ArgumentParser &parser, const std::string &name,
         std::vector<std::tuple<int, int>> &output) {
-        output = parser.get<vision_channels>(name).channels;
-    }
-
-    /*
-     * Format fields
-     */
-
-    inline std::string format_cli_value(const int value) { return std::to_string(value); }
-
-    inline std::string format_cli_value(const float value) {
-        std::ostringstream stream;
-        stream << std::setprecision(6) << value;
-        return stream.str();
-    }
-
-    inline std::string format_cli_value(const std::vector<int> &value) {
-        std::ostringstream stream;
-        stream << "[";
-        for (int i = 0; i < value.size(); i++) stream << (i ? ", " : "") << value[i];
-        stream << "]";
-        return stream.str();
-    }
-
-    inline std::string format_cli_value(const std::vector<std::tuple<int, int>> &value) {
-        std::ostringstream stream;
-        stream << "[";
-        for (int i = 0; i < value.size(); i++) {
-            const auto &[in_channels, out_channels] = value[i];
-            stream << (i ? ", " : "") << "(" << in_channels << ", " << out_channels << ")";
-        }
-        stream << "]";
-        return stream.str();
+        output = parser.get<CliJsonValue<std::vector<std::tuple<int, int>>>>(name).value;
     }
 
     /*
@@ -134,16 +130,14 @@ namespace arenai::agent {
     }
 
     // the resolved hyper-parameters keyed by option name, dashes stripped: what the
-    // run was actually launched with
+    // run was actually launched with, as native JSON values
     template<typename S>
-    std::map<std::string, std::string>
-    cli_fields_to_map(const std::vector<CliField<S>> &fields, const S &params) {
-        std::map<std::string, std::string> config;
+    nlohmann::json cli_fields_to_json(const std::vector<CliField<S>> &fields, const S &params) {
+        nlohmann::json config;
         for (const auto &field: fields)
             std::visit(
                 [&](const auto member) {
-                    config[field.name.substr(field.name.find_first_not_of('-'))] =
-                        format_cli_value(params.*member);
+                    config[field.name.substr(field.name.find_first_not_of('-'))] = params.*member;
                 },
                 field.member);
         return config;

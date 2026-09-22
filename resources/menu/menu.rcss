@@ -4,7 +4,16 @@
    Light tints derived from the accent (the palette has no light value):
    ink #EAF7FF, muted #8AC4E0, selection #7FD3FF, disabled #6FA3BF.
    Sharp corners (2–3dp), 3dp accent stripe on panels, uppercase display.
-   Display font Sora, technical labels IBM Plex Mono. */
+   Display font Sora, technical labels IBM Plex Mono.
+
+   One cursor mark for every control, mouse hover and gamepad focus alike:
+   the corner reticle (gui-registered corner-reticle decorator) — accent
+   ticks on dark chrome, night ticks on the accent-filled primary, ink
+   ticks on a selected surface. State cycle: normal → cursor (ticks +
+   #00a6fb17 wash) → pressed (#4DC0FC ticks + #00a6fb33 wash); selection
+   speaks through tint #00a6fb24 + accent text, never through the mark.
+   Sora controls answer with their surface only; IBM Plex Mono controls
+   (back arrow, keychips, list entries) also turn their text accent. */
 
 body {
     font-family: "Sora";
@@ -109,8 +118,14 @@ h1 {
 
 .back-arrow:hover, body.gamepad-nav .back-arrow:focus {
     color: #00A6FB;
-    border-color: #00A6FB;
     background-color: #00a6fb17;
+    decorator: corner-reticle(#00A6FB);
+}
+
+.back-arrow:active {
+    color: #00A6FB;
+    background-color: #00a6fb33;
+    decorator: corner-reticle(#4DC0FC);
 }
 
 h2 {
@@ -147,41 +162,33 @@ h2 {
    documents with .gamepad-nav (mouse hover is cleared on that switch, and
    the first mouse move flips back). */
 .button:hover, body.gamepad-nav .button:focus {
-    border-color: #00A6FB;
     background-color: #00a6fb17;
+    decorator: corner-reticle(#00A6FB);
 }
 
-/* Primary buttons carry a detached cursor ring: RCSS cannot paint outside
-   an element, so the outer .button.primary is a 2dp ring + 2dp gap
-   (reserved in transparent — nothing shifts) around an inner .fill that
-   owns the accent background. The outer element keeps the focus, the
-   navigation and the click bindings. */
+.button:active {
+    background-color: #00a6fb33;
+    decorator: corner-reticle(#4DC0FC);
+}
+
 .button.primary {
-    width: 302dp;
-    margin: 6dp auto;
-    padding: 2dp;
-    border: 2dp transparent;
-    /* concentric with the 2dp fill corners: 2dp + 2dp ring + 2dp gap */
-    border-radius: 6dp;
-}
-
-.button.primary .fill {
-    display: block;
-    padding: 12dp 20dp;
-    border: 1dp #00A6FB;
-    border-radius: 2dp;
     background-color: #00A6FB;
+    border-color: #00A6FB;
     color: #051923;
 }
 
+/* night ticks: the mark keeps its contrast on the accent-filled surface */
 .button.primary:hover, body.gamepad-nav .button.primary:focus {
-    border-color: #EAF7FF;
-    background-color: transparent;
-}
-
-.button.primary:hover .fill, body.gamepad-nav .button.primary:focus .fill {
     background-color: #4DC0FC;
     border-color: #4DC0FC;
+    decorator: corner-reticle(#051923);
+}
+
+.button.primary:active {
+    background-color: #0582CA;
+    border-color: #0582CA;
+    color: #EAF7FF;
+    decorator: corner-reticle(#EAF7FF);
 }
 
 .button.disabled {
@@ -190,13 +197,14 @@ h2 {
     border-color: #006494;
 }
 
-/* after the cursor rules, and restated under .gamepad-nav, so a disabled
-   Play keeps its greyed fill under either cursor (the ring still shows,
-   marking the position without promising a click) */
-.button.primary.disabled .fill, body.gamepad-nav .button.primary.disabled:focus .fill {
+/* after the cursor rules, so a disabled Play keeps its greyed fill under
+   either cursor (the ticks still show, marking the position without
+   promising a click) */
+.button.disabled:hover, body.gamepad-nav .button.disabled:focus, .button.disabled:active {
     color: #6FA3BF;
     background-color: #003554;
     border-color: #006494;
+    decorator: corner-reticle(#00A6FB);
 }
 
 .hint {
@@ -205,6 +213,15 @@ h2 {
     font-size: 12dp;
     color: #8AC4E0;
     margin-top: 14dp;
+}
+
+/* dry-run load verdict of the AI page */
+.hint.status-ok {
+    color: #35D0A5;
+}
+
+.hint.status-error {
+    color: #FF6B6B;
 }
 
 .param-row {
@@ -258,19 +275,18 @@ input.range sliderbar {
     border-radius: 2dp;
 }
 
-/* Detached cursor ring, as on the primary button. The knob is a
-   widget-internal element that cannot be wrapped, so the ring + gap + fill
-   are drawn by the gui-registered cursor-ring decorator; the box grows to
-   2dp ring + 2dp gap around the 16dp fill and recenters on the track.
-   Ring and fill reuse the base rule's 2dp border-radius (the decorator
-   follows the element's radius), so the ring stays square like the knob. */
+/* The knob is a widget-internal element that cannot host children, so the
+   decorator draws both the corner ticks and the 14dp fill: the box grows
+   to 24dp around the fill and recenters on the track. The fill reuses the
+   base rule's 2dp border-radius (the decorator follows the element's
+   radius), so it stays square like the idle knob. */
 input.range sliderbar:hover, input.range sliderbar:active,
 body.gamepad-nav input.range:focus sliderbar {
     width: 24dp;
     height: 24dp;
     margin-top: -4dp;
     background-color: transparent;
-    decorator: cursor-ring(#EAF7FF #4DC0FC 2dp 2dp);
+    decorator: corner-reticle(#00A6FB #00A6FB 7dp 2dp 0dp 5dp);
 }
 
 input.range sliderarrowdec, input.range sliderarrowinc {
@@ -282,15 +298,14 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     display: block;
 }
 
-/* same detached-ring structure as .button.primary: the outer .toggle is the
-   ring slot (2dp ring + 2dp gap, transparent when idle — its 4dp per side
-   also supply the old 8dp gap between neighbours), the inner .fill draws
-   the actual chip */
+/* the 4dp margin keeps the old 8dp gap between neighbours (previously
+   supplied by the transparent ring slot around each chip) */
 .toggle {
     display: inline-block;
-    padding: 2dp;
-    border: 2dp transparent;
-    border-radius: 6dp;
+    margin: 4dp;
+    padding: 8dp 18dp;
+    border: 1dp #0582CA;
+    border-radius: 2dp;
     font-size: 13dp;
     font-weight: 600;
     text-transform: uppercase;
@@ -301,61 +316,50 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     nav: auto;
 }
 
-.toggle .fill {
-    display: block;
-    padding: 8dp 18dp;
-    border: 1dp #0582CA;
-    border-radius: 2dp;
-}
-
-/* unselected under the cursor: the plain-button feedback */
-.toggle:hover .fill, body.gamepad-nav .toggle:focus .fill {
+.toggle:hover, body.gamepad-nav .toggle:focus {
     background-color: #00a6fb17;
-    border-color: #00A6FB;
+    decorator: corner-reticle(#00A6FB);
 }
 
-.toggle.selected .fill {
+.toggle:active {
+    background-color: #00a6fb33;
+    decorator: corner-reticle(#4DC0FC);
+}
+
+.toggle.selected {
     background-color: #00a6fb24;
     border-color: #00A6FB;
     color: #00A6FB;
 }
 
-/* selected under the cursor: the detached ink ring, as on Play, and the
+/* selected under the cursor: ink ticks over the accent-tinted chip, the
    selected tint restated so the cursor rules above cannot wash it out */
 .toggle.selected:hover, body.gamepad-nav .toggle.selected:focus {
-    border-color: #EAF7FF;
-}
-
-.toggle.selected:hover .fill, body.gamepad-nav .toggle.selected:focus .fill {
     background-color: #00a6fb24;
-    border-color: #00A6FB;
+    decorator: corner-reticle(#EAF7FF);
 }
 
-/* Controls and Graphics pages — same design width as the parameters panel */
-#controls-panel, #graphics-panel {
+.toggle.selected:active {
+    background-color: #00a6fb33;
+    decorator: corner-reticle(#EAF7FF);
+}
+
+/* Controls, Graphics and AI pages — same design width as the parameters panel */
+#controls-panel, #graphics-panel, #ai-panel {
     width: 560dp;
 }
 
-/* the Controls row lays its toggles out as a flex line so Configure can
-   ride its auto margin to the right edge */
-.toggle-group.controls-row {
-    display: flex;
-    align-items: center;
+/* the three sub-page buttons of the parameters panel: centered by the base
+   .button auto margins, and the same visible size as the Back button below
+   (220dp content + 40dp padding + 2dp border) — plain, only Back keeps the
+   primary highlight. The group stands clear of the sliders above it. */
+.configure-group {
+    display: block;
+    margin-top: 32dp;
 }
 
-/* opens the controls page from the Controls row: chip-sized, pushed to the
-   right edge by its auto margin */
 .button.configure {
-    display: inline-block;
-    width: auto;
-    margin: 0 0 0 auto;
-    padding: 9dp 18dp;
-    font-size: 13dp;
-}
-
-/* the Graphics row's Configure sits flush left under its label */
-.button.configure.left {
-    margin-left: 0;
+    width: 220dp;
 }
 
 /* binding rows: a dark inset list, like the file explorer */
@@ -406,9 +410,15 @@ input.range sliderarrowdec, input.range sliderarrowinc {
 }
 
 .keychip:hover, body.gamepad-nav .keychip:focus {
-    border-color: #00A6FB;
     background-color: #00a6fb17;
     color: #00A6FB;
+    decorator: corner-reticle(#00A6FB);
+}
+
+.keychip:active {
+    background-color: #00a6fb33;
+    color: #00A6FB;
+    decorator: corner-reticle(#4DC0FC);
 }
 
 @keyframes chip-pulse {
@@ -441,6 +451,8 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     cursor: default;
     tab-index: none;
     nav: none;
+    /* inert: the cursor mark of .keychip:hover must not land here */
+    decorator: none;
 }
 
 .fixed-tag {
@@ -476,14 +488,27 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     nav: auto;
 }
 
+/* dense list rows: smaller ticks (5dp), tighter inset (2dp) */
 .device-entry:hover, body.gamepad-nav .device-entry:focus {
     background-color: #00a6fb17;
     color: #00A6FB;
+    decorator: corner-reticle(#00A6FB transparent 5dp 2dp 2dp);
+}
+
+.device-entry:active {
+    background-color: #00a6fb33;
+    color: #00A6FB;
+    decorator: corner-reticle(#4DC0FC transparent 5dp 2dp 2dp);
 }
 
 .device-entry.selected {
     background-color: #00a6fb24;
     color: #00A6FB;
+}
+
+.device-entry.selected:hover, body.gamepad-nav .device-entry.selected:focus {
+    background-color: #00a6fb24;
+    decorator: corner-reticle(#EAF7FF transparent 5dp 2dp 2dp);
 }
 
 .current-dir {
@@ -523,6 +548,13 @@ input.range sliderarrowdec, input.range sliderarrowinc {
 .file-entry:hover, body.gamepad-nav .file-entry:focus {
     background-color: #00a6fb17;
     color: #00A6FB;
+    decorator: corner-reticle(#00A6FB transparent 5dp 2dp 2dp);
+}
+
+.file-entry:active {
+    background-color: #00a6fb33;
+    color: #00A6FB;
+    decorator: corner-reticle(#4DC0FC transparent 5dp 2dp 2dp);
 }
 
 .selected-folder {
@@ -545,12 +577,6 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     display: inline-block;
     width: 220dp;
     margin: 0 8dp;
-}
-
-/* the primary Back keeps the same visible size as its plain neighbours:
-   220dp content + 40dp padding + 2dp border, carried by the ring wrapper */
-.row-buttons .button.primary {
-    width: 262dp;
 }
 
 /* wide gap above Back: visually detaches it from the explorer's

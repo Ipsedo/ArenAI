@@ -4,6 +4,9 @@
 
 #include "./init.h"
 
+#include <algorithm>
+#include <cmath>
+
 #include "../networks/constants.h"
 
 using namespace arenai;
@@ -38,6 +41,12 @@ namespace arenai::agent {
         }
     }
 
+    void init_liquid_weights(torch::nn::Module &module) {
+        if (const auto *lin = module.as<torch::nn::Linear>()) {
+            torch::nn::init::normal_(lin->weight, 0.f, 1e-2f);
+        }
+    }
+
     void init_sigma_output_weights(torch::nn::Module &module, const float wanted_sigma) {
         const float min_log_sigma = std::log(SIGMA_MIN);
         const float max_log_sigma = std::log(SIGMA_MAX);
@@ -53,18 +62,38 @@ namespace arenai::agent {
         }
     }
 
-    void
-    init_discrete_output_weights(torch::nn::Module &module, const float initial_fire_probability) {
+    void init_concentration_output_weights(torch::nn::Module &module, const float wanted_sigma) {
+        // Beta on [-1, 1]: var = 4 μ(1-μ) / (κ+1), so at μ = 0.5 a wanted action
+        // std σ maps to κ = 1/σ² - 1
+        const auto wanted_concentration = std::clamp(
+            1.f / (wanted_sigma * wanted_sigma) - 1.f, CONCENTRATION_MIN, CONCENTRATION_MAX);
+
+        const float min_log_excess = std::log(CONCENTRATION_MIN - 2.f);
+        const float max_log_excess = std::log(CONCENTRATION_MAX - 2.f);
+
+        const auto initial_sigmoid = (std::log(wanted_concentration - 2.f) - min_log_excess)
+                                     / (max_log_excess - min_log_excess);
+        const auto initial_logit = std::log(initial_sigmoid / (1.f - initial_sigmoid));
+
+        if (auto *lin = module.as<torch::nn::Linear>()) {
+            torch::nn::init::orthogonal_(lin->weight, 0.01f);
+            if (lin->options.bias()) torch::nn::init::constant_(lin->bias, initial_logit);
+        }
+    }
+
+    void init_discrete_output_weights(
+        torch::nn::Module &module, const std::vector<float> &initial_probabilities) {
         if (auto *lin = module.as<torch::nn::Linear>()) {
             torch::nn::init::orthogonal_(lin->weight, 0.01f);
 
             if (lin->options.bias()) {
-                torch::nn::init::zeros_(lin->bias);
+                // sigmoid head: the bias is the logit of the wanted probability
+                std::vector<float> logits;
+                logits.reserve(initial_probabilities.size());
+                for (const auto probability: initial_probabilities)
+                    logits.push_back(std::log(probability / (1.f - probability)));
 
-                lin->bias.data().index_fill_(
-                    0, torch::tensor({0}), std::log(initial_fire_probability));
-                lin->bias.data().index_fill_(
-                    0, torch::tensor({1}), std::log(1.f - initial_fire_probability));
+                lin->bias.data().copy_(torch::tensor(logits));
             }
         }
     }

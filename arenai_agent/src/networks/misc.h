@@ -13,7 +13,7 @@ namespace arenai::agent {
     public:
         virtual torch::Tensor forward(const torch::Tensor &input) = 0;
 
-        virtual void pretty_print(std::ostream &stream) = 0;
+        void pretty_print(std::ostream &stream) const override = 0;
     };
 
     class Clamp : public AbstractFunctionModule {
@@ -22,7 +22,7 @@ namespace arenai::agent {
 
         torch::Tensor forward(const torch::Tensor &x) override;
 
-        void pretty_print(std::ostream &stream) override;
+        void pretty_print(std::ostream &stream) const override;
 
     private:
         float lower_bound;
@@ -33,7 +33,7 @@ namespace arenai::agent {
     public:
         torch::Tensor forward(const torch::Tensor &x) override;
 
-        void pretty_print(std::ostream &stream) override;
+        void pretty_print(std::ostream &stream) const override;
     };
 
     class SigmaOutput : public AbstractFunctionModule {
@@ -42,11 +42,25 @@ namespace arenai::agent {
 
         torch::Tensor forward(const torch::Tensor &input) override;
 
-        void pretty_print(std::ostream &stream) override;
+        void pretty_print(std::ostream &stream) const override;
 
     private:
         float min_log_sigma;
         float max_log_sigma;
+    };
+
+    // Beta concentration κ, log-scale on the excess κ - 2 bounded between min and max
+    class ConcentrationOutput : public AbstractFunctionModule {
+    public:
+        ConcentrationOutput(float min_concentration, float max_concentration);
+
+        torch::Tensor forward(const torch::Tensor &input) override;
+
+        void pretty_print(std::ostream &stream) const override;
+
+    private:
+        float min_log_excess;
+        float max_log_excess;
     };
 
 }// namespace arenai::agent

@@ -65,6 +65,7 @@ namespace arenai::model {
 
         virtual bool is_first_frame_dead() const = 0;
         virtual bool is_suicide() const = 0;
+        virtual bool is_timeout() const = 0;
 
         virtual void on_death() = 0;
     };

@@ -246,6 +246,12 @@ namespace arenai::model {
         remove_dead_items();
     }
 
+    std::optional<glm::vec3>
+    JoltPhysicEngine::ray_cast(const glm::vec3 from, const glm::vec3 to) const {
+        if (const auto fraction = ray_test(from, to, {})) return from + *fraction * (to - from);
+        return std::nullopt;
+    }
+
     std::optional<float> JoltPhysicEngine::ray_test(
         const glm::vec3 from, const glm::vec3 to, const std::vector<JPH::BodyID> &excluded) const {
 

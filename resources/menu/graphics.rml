@@ -11,23 +11,31 @@
         </div>
 
         <div class="param-row">
+            <span class="param-label">Display</span>
+            <div class="toggle-group" id="display-row">
+                <div class="toggle" data-class-selected="display=='windowed'" data-event-click="set_display('windowed')">Windowed</div>
+                <div class="toggle" data-class-selected="display=='fullscreen'" data-event-click="set_display('fullscreen')">Fullscreen</div>
+            </div>
+        </div>
+
+        <div class="param-row">
             <span class="param-label">Shadows</span>
             <div class="toggle-group">
-                <div class="toggle" data-class-selected="shadow_quality=='off'" data-event-click="set_shadow_quality('off')"><div class="fill">Off</div></div>
-                <div class="toggle" data-class-selected="shadow_quality=='low'" data-event-click="set_shadow_quality('low')"><div class="fill">Low</div></div>
-                <div class="toggle" data-class-selected="shadow_quality=='medium'" data-event-click="set_shadow_quality('medium')"><div class="fill">Medium</div></div>
-                <div class="toggle" data-class-selected="shadow_quality=='high'" data-event-click="set_shadow_quality('high')"><div class="fill">High</div></div>
-                <div class="toggle" data-class-selected="shadow_quality=='ultra'" data-event-click="set_shadow_quality('ultra')"><div class="fill">Ultra</div></div>
+                <div class="toggle" data-class-selected="shadow_quality=='off'" data-event-click="set_shadow_quality('off')">Off</div>
+                <div class="toggle" data-class-selected="shadow_quality=='low'" data-event-click="set_shadow_quality('low')">Low</div>
+                <div class="toggle" data-class-selected="shadow_quality=='medium'" data-event-click="set_shadow_quality('medium')">Medium</div>
+                <div class="toggle" data-class-selected="shadow_quality=='high'" data-event-click="set_shadow_quality('high')">High</div>
+                <div class="toggle" data-class-selected="shadow_quality=='ultra'" data-event-click="set_shadow_quality('ultra')">Ultra</div>
             </div>
         </div>
 
         <div class="param-row">
             <span class="param-label">Anti-aliasing</span>
             <div class="toggle-group">
-                <div class="toggle" data-class-selected="msaa == 1" data-event-click="set_msaa(1)"><div class="fill">Off</div></div>
-                <div class="toggle" data-class-selected="msaa == 2" data-event-click="set_msaa(2)"><div class="fill">2x</div></div>
-                <div class="toggle" data-class-selected="msaa == 4" data-event-click="set_msaa(4)"><div class="fill">4x</div></div>
-                <div class="toggle" data-class-selected="msaa == 8" data-event-click="set_msaa(8)"><div class="fill">8x</div></div>
+                <div class="toggle" data-class-selected="msaa == 1" data-event-click="set_msaa(1)">Off</div>
+                <div class="toggle" data-class-selected="msaa == 2" data-event-click="set_msaa(2)">2x</div>
+                <div class="toggle" data-class-selected="msaa == 4" data-event-click="set_msaa(4)">4x</div>
+                <div class="toggle" data-class-selected="msaa == 8" data-event-click="set_msaa(8)">8x</div>
             </div>
         </div>
 
@@ -45,7 +53,7 @@
         <p class="hint warn" data-if="vision_gpu_env">Overridden by the ARENAI_VK_DEVICE environment variable.</p>
 
         <div class="row-buttons back-row">
-            <div class="button primary" data-event-click="graphics_back()"><div class="fill">Back</div></div>
+            <div class="button primary" data-event-click="graphics_back()">Back</div>
         </div>
     </div>
 </body>

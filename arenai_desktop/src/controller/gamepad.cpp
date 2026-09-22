@@ -92,9 +92,14 @@ namespace arenai::desktop {
         float canon_rotation = 0.f;
 
         if (event.button.has_value()) {
-            if (const auto &[button, action] = event.button.value();
-                action == controller::InputAction::Press && button == bindings.fire)
+            const auto &[button, action] = event.button.value();
+            if (action == controller::InputAction::Press && button == bindings.fire)
                 need_fire = true;
+
+            if (button == bindings.zoom) {
+                if (action == controller::InputAction::Press) zoom_held = true;
+                else if (action == controller::InputAction::Release) zoom_held = false;
+            }
         } else {
             // per-frame tick: controllers consume rad/frame deltas, so the stick
             // deflection is scaled into radians here (like the mouse handler)
@@ -113,7 +118,8 @@ namespace arenai::desktop {
             true,
             {.left_joystick = {.x = direction, .y = speed},
              .right_joystick = {.x = turret_rotation, .y = canon_rotation},
-             .fire_button = {need_fire}}};
+             .fire_button = {need_fire},
+             .zoom_button = {zoom_held}}};
     }
 
 }// namespace arenai::desktop

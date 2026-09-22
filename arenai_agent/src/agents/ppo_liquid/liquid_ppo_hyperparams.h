@@ -1,0 +1,49 @@
+//
+// Created by samuel on 06/09/2026.
+//
+
+#ifndef ARENAI_LIQUID_PPO_HYPERPARAMS_H
+#define ARENAI_LIQUID_PPO_HYPERPARAMS_H
+
+#include <tuple>
+#include <vector>
+
+#include "../../utils/cli_fields.h"
+
+namespace arenai::agent {
+
+    // Member initializers are the CLI defaults (single source of truth).
+    struct LiquidPpoHyperParams {
+        float actor_learning_rate = 1e-4f;
+        float critic_learning_rate = 3e-4f;
+        int hidden_size_sensors = 128;
+        std::vector<std::tuple<int, int>> vision_channels = {{3, 16},  {16, 24}, {24, 32}, {32, 48},
+                                                             {48, 64}, {64, 96}, {96, 128}};
+        std::vector<int> group_norm_nums = {2, 3, 4, 6, 8, 12, 16};
+        int neuron_number = 128;
+        int unfolding_steps = 6;
+        float delta_t = 1.f / 30.f;
+        int chunk_size = 30;
+        float initial_sigma = 0.5f;
+        float initial_fire_proba = 0.4f;
+        float initial_zoom_proba = 0.25f;
+        int metric_window_size = 256;
+        float gamma = 0.997f;
+        float gae_lambda = 0.99f;
+        float clip_epsilon = 0.2f;
+        float target_kl = 0.05f;
+        float grad_norm_max = 0.5f;
+        // per continuous action: direction x, direction y, canon x, canon y
+        std::vector<float> continuous_target_entropy = {-0.2f, -0.2f, -0.88f, -0.88f};
+        // factors of the Bernoulli maximum entropy, per discrete action: fire, zoom
+        std::vector<float> discrete_target_entropy_factors = {0.4f, 0.4f};
+        int epochs = 2;
+        int rollout_size = 30 * 30;
+        int minibatch_size = 1024;
+    };
+
+    std::vector<CliField<LiquidPpoHyperParams>> liquid_ppo_cli_fields();
+
+}// namespace arenai::agent
+
+#endif//ARENAI_LIQUID_PPO_HYPERPARAMS_H

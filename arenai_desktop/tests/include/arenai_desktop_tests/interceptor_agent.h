@@ -10,7 +10,7 @@
 #include <arenai_agent/agent.h>
 
 // Records every batch of states the game loop hands to the agent and answers
-// with neutral actions: what act() received is exactly what the SAC agent
+// with neutral actions: what act() received is exactly what the enemy agent
 // would have seen in run_game().
 class InterceptorAgent final : public agent::AbstractAgent {
 public:

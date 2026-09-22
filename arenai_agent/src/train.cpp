@@ -4,9 +4,10 @@
 
 #include "./train.h"
 
+#include <cmath>
+#include <cstdint>
 #include <fstream>
 #include <future>
-#include <map>
 #include <string>
 
 #include <indicators/cursor_control.hpp>
@@ -15,7 +16,9 @@
 
 #include <arenai_model/constants.h>
 
+#include "./core/spawn_curriculum.h"
 #include "./core/train_environment.h"
+#include "./metrics/last_metric.h"
 #include "./metrics/metric_saver.h"
 #include "./networks_utils/torch_converter.h"
 #include "./networks_utils/torch_saver.h"
@@ -30,7 +33,7 @@ namespace arenai::agent {
         // identifiable once its command line is forgotten
         void save_run_config(
             const EnvironmentOptions &environment_options, const TrainOptions &train_options,
-            const std::map<std::string, std::string> &agent_config) {
+            const nlohmann::json &agent_config) {
 
             const nlohmann::json config = {
                 {"train",
@@ -49,6 +52,11 @@ namespace arenai::agent {
                   {"initial_spawn_height", environment_options.initial_spawn_height},
                   {"final_spawn_width", environment_options.final_spawn_width},
                   {"final_spawn_height", environment_options.final_spawn_height},
+                  {"curriculum_delta", environment_options.curriculum_delta},
+                  {"curriculum_ratio_low", environment_options.curriculum_ratio_low},
+                  {"curriculum_ratio_high", environment_options.curriculum_ratio_high},
+                  {"curriculum_probe_window", environment_options.curriculum_probe_window},
+                  {"curriculum_boundary_proba", environment_options.curriculum_boundary_proba},
                   {"vision_num_threads", environment_options.num_threads}}},
                 {"agent", agent_config}};
 
@@ -84,15 +92,23 @@ namespace arenai::agent {
             train_options.max_episode_steps, environment_options.vision_height,
             environment_options.vision_width, environment_options.num_threads);
 
-        const float spawn_width_increase =
-            (environment_options.final_spawn_width - environment_options.initial_spawn_width)
-            / static_cast<float>(train_options.nb_episodes);
-        const float spawn_height_increase =
-            (environment_options.final_spawn_height - environment_options.initial_spawn_height)
-            / static_cast<float>(train_options.nb_episodes);
+        const float initial_spawn_side = std::sqrt(
+            environment_options.initial_spawn_width * environment_options.initial_spawn_height);
+        const float final_spawn_side = std::sqrt(
+            environment_options.final_spawn_width * environment_options.final_spawn_height);
 
-        float spawn_width = environment_options.initial_spawn_width;
-        float spawn_height = environment_options.initial_spawn_height;
+        // delta is given in meters on the spawn side; a non-growing range disables
+        // the curriculum (progress stays at 0, i.e. the initial spawn size)
+        const float curriculum_delta_progress =
+            final_spawn_side > initial_spawn_side
+                ? environment_options.curriculum_delta / (final_spawn_side - initial_spawn_side)
+                : 0.f;
+
+        constexpr std::uint64_t curriculum_seed = 1337;
+        SpawnCurriculum curriculum(
+            curriculum_delta_progress, environment_options.curriculum_ratio_low,
+            environment_options.curriculum_ratio_high, environment_options.curriculum_probe_window,
+            environment_options.curriculum_boundary_proba, curriculum_seed);
 
         const auto agent = agent_factory->get_agent();
         const auto collector = agent_factory->get_collector();
@@ -106,12 +122,18 @@ namespace arenai::agent {
 
         // metrics
 
-        const auto sac_metrics = trainer->get_metrics();
+        const auto trainer_metrics = trainer->get_metrics();
         const auto env_metrics = env->get_metrics();
+
+        // curriculum observability: the side played this episode and the current bound
+        const auto spawn_side_metric = std::make_shared<LastMetric>("side", 0);
+        const auto spawn_bound_metric = std::make_shared<LastMetric>("D", 0);
 
         std::vector<std::shared_ptr<AbstractMetric>> metrics;
         metrics.insert(metrics.end(), env_metrics.begin(), env_metrics.end());
-        metrics.insert(metrics.end(), sac_metrics.begin(), sac_metrics.end());
+        metrics.push_back(spawn_side_metric);
+        metrics.push_back(spawn_bound_metric);
+        metrics.insert(metrics.end(), trainer_metrics.begin(), trainer_metrics.end());
 
         MetricCsvSaver metric_csv_saver(
             train_options.output_folder, metrics,
@@ -139,7 +161,19 @@ namespace arenai::agent {
         int print_counter = 0;
 
         for (int episode_index = 0; episode_index < train_options.nb_episodes; episode_index++) {
+            const float progress = curriculum.sample_progress();
+
+            const float spawn_width = std::lerp(
+                environment_options.initial_spawn_width, environment_options.final_spawn_width,
+                progress);
+            const float spawn_height = std::lerp(
+                environment_options.initial_spawn_height, environment_options.final_spawn_height,
+                progress);
             const float spawn_side = std::sqrt(spawn_width * spawn_height);
+
+            spawn_side_metric->add(spawn_side);
+            spawn_bound_metric->add(
+                std::lerp(initial_spawn_side, final_spawn_side, curriculum.upper_bound()));
 
             // set variable for episode
             bool is_done = false;
@@ -165,11 +199,12 @@ namespace arenai::agent {
                 // step environment
                 const auto steps = env->step(environment_options.wanted_frequency, actions_for_env);
 
-                const auto [torch_next_states, torch_rewards, torch_are_done] = steps_to_tensor(
-                    steps, environment_options.vision_height, environment_options.vision_width);
+                const auto [torch_next_states, torch_rewards, torch_are_done, torch_are_truncated] =
+                    steps_to_tensor(
+                        steps, environment_options.vision_height, environment_options.vision_width);
 
                 // complete the pending transition - maybe train
-                collector->on_transition(torch_rewards, torch_are_done);
+                collector->on_transition(torch_rewards, torch_are_done, torch_are_truncated);
                 trainer->step();
 
                 // step ending stuff
@@ -200,8 +235,7 @@ namespace arenai::agent {
 
             env->stop_drawing();
 
-            spawn_width += spawn_width_increase;
-            spawn_height += spawn_height_increase;
+            curriculum.on_episode_end(env->episode_nb_fires(), env->episode_nb_hits());
 
             p_bar.tick();
         }

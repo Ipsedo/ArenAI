@@ -14,56 +14,6 @@ using namespace arenai::agent;
 namespace arenai::agent {
 
     /*
-     * Alpha parameters [0; +inf[
-     */
-
-    AlphaParameters::AlphaParameters(const float initial_alpha, const int nb_alphas)
-        : log_alpha_tensor(register_parameter(
-            "log_alpha",
-            torch::tensor(std::vector(nb_alphas, std::log(initial_alpha))).unsqueeze(0))) {}
-
-    torch::Tensor AlphaParameters::log_alpha() { return log_alpha_tensor; }
-
-    torch::Tensor AlphaParameters::alpha() { return log_alpha().exp(); }
-
-    /*
-     * Clamped alpha parameters
-     */
-
-    ClampedAlphaParameters::ClampedAlphaParameters(
-        const float initial_alpha, const float min_alpha, const float max_alpha,
-        const int nb_alphas)
-        : AlphaParameters(std::clamp(initial_alpha, min_alpha, max_alpha), nb_alphas),
-          min_log_alpha(std::log(min_alpha)), max_log_alpha(std::log(max_alpha)) {}
-
-    torch::Tensor ClampedAlphaParameters::log_alpha() {
-        auto curr_log_alpha = AlphaParameters::log_alpha();
-
-        {
-            const torch::NoGradGuard no_grad;
-            curr_log_alpha.data().clamp_(min_log_alpha, max_log_alpha);
-        }
-
-        return curr_log_alpha;
-    }
-
-    /*
-     * Abstract target entropy
-     */
-
-    // a schedule-less target ignores the progression
-    void AbstractTargetEntropy::step(int64_t) {}
-
-    /*
-     * Constant target entropy
-     */
-
-    ConstantTargetEntropy::ConstantTargetEntropy(const float initial_target)
-        : initial_target(register_buffer("initial_target", torch::tensor(initial_target))) {}
-
-    torch::Tensor ConstantTargetEntropy::target_entropy() const { return initial_target; }
-
-    /*
      * PID Lagrangian
      */
 

@@ -28,12 +28,15 @@ namespace arenai::agent {
         for (int i = 0; i < batch_size; i++) {
             const controller::joystick joystick_direction{.x = cont_acc[i][0], .y = cont_acc[i][1]};
             const controller::joystick joystick_canon{.x = cont_acc[i][2], .y = cont_acc[i][3]};
-            const controller::button fire_button(disc_acc[i][0] > disc_acc[i][1]);
+            // binary Bernoulli actions: one neuron per discrete action
+            const controller::button fire_button(disc_acc[i][0] > 0.5f);
+            const controller::button zoom_button(disc_acc[i][1] > 0.5f);
 
             actions.push_back(
                 {.left_joystick = joystick_direction,
                  .right_joystick = joystick_canon,
-                 .fire_button = fire_button});
+                 .fire_button = fire_button,
+                 .zoom_button = zoom_button});
         }
 
         return actions;
@@ -81,23 +84,28 @@ namespace arenai::agent {
     }
 
     TorchStep steps_to_tensor(
-        const std::vector<std::tuple<core::State, core::Reward, core::IsDone>> &steps,
+        const std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
+            &steps,
         const int vision_height, const int vision_width) {
         std::vector<core::State> states;
         std::vector<torch::Tensor> rewards;
         std::vector<torch::Tensor> are_done;
+        std::vector<torch::Tensor> are_truncated;
 
-        for (const auto &[state, reward, is_done]: steps) {
+        for (const auto &[state, reward, is_done, is_truncated]: steps) {
             states.push_back(state);
             rewards.push_back(torch::tensor({reward}, torch::TensorOptions().dtype(torch::kFloat)));
             are_done.push_back(
                 torch::tensor({is_done}, torch::TensorOptions().dtype(torch::kBool)));
+            are_truncated.push_back(
+                torch::tensor({is_truncated}, torch::TensorOptions().dtype(torch::kBool)));
         }
 
         return {
             .states = states_to_tensor(states, vision_height, vision_width),
             .rewards = torch::stack(rewards),
-            .is_done = torch::stack(are_done)};
+            .is_done = torch::stack(are_done),
+            .is_truncated = torch::stack(are_truncated)};
     }
 
 }// namespace arenai::agent

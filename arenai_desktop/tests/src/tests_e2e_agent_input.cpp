@@ -21,7 +21,7 @@ using namespace arenai::desktop;
 
 // ========================================================================
 // End-to-end: DesktopGameEnvironment -> AbstractAgent::act()
-// Mirrors run_game()'s loop with the interceptor in the SAC agent's seat;
+// Mirrors run_game()'s loop with the interceptor in the enemy agent's seat;
 // the player view goes to a headless no-op backend, the enemy visions are
 // rendered by the environment's real offscreen backend. The player tank is
 // part of the scene, hence desktop-specific golden images.
@@ -54,7 +54,7 @@ namespace {
             const auto steps = env.step(FREQUENCY, actions);
 
             states.clear();
-            for (const auto &[state, reward, done]: steps) states.push_back(state);
+            for (const auto &[state, reward, done, truncated]: steps) states.push_back(state);
 
             actions = agent.act(states, VISION_HEIGHT, VISION_WIDTH);
         }

@@ -6,7 +6,10 @@
 #define ARENAI_ENGINE_H
 
 #include <memory>
+#include <optional>
 #include <vector>
+
+#include <glm/glm.hpp>
 
 #include "./item.h"
 
@@ -20,6 +23,9 @@ namespace arenai::model {
         virtual ~AbstractPhysicEngine() = default;
 
         virtual void step(float delta) = 0;
+
+        // first hit position along the segment [from, to], or nullopt when nothing is hit
+        virtual std::optional<glm::vec3> ray_cast(glm::vec3 from, glm::vec3 to) const = 0;
 
         virtual std::vector<std::shared_ptr<Item>> get_items() = 0;
 

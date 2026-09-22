@@ -9,7 +9,7 @@ En cas de doute ou d'alternative de design : **poser la question d'abord**, prop
 options, attendre la réponse. Les corrections de bugs internes (fichiers `src/`) qui ne
 changent ni contrat ni comportement voulu restent autorisées.
 
-A neural network (SAC) trained to play a tank-arena game.
+A neural network (PPO) trained to play a tank-arena game.
 Jolt physics, offscreen Vulkan rendering (the agent's vision), NN via LibTorch.
 
 ## Architecture (CMake modules)
@@ -21,7 +21,9 @@ Dependency order: utils → model → view → core → agent / desktop
 - **arenai_view**   — Vulkan rendering; `offscreen_renderer` = offscreen render for the agent's vision
 - **arenai_core**   — `BaseTanksEnvironment`, enemy_handler, thread_pool (RL env loop)
 - **arenai_controller** — input handling
-- **arenai_agent**  — SAC: agents, networks, replay_buffer, reward_transforms + `main.cpp` (training executable)
+- **arenai_agent**  — agents (sac, ppo, ppo_liquid), networks, core (train env + spawn curriculum),
+  metrics + `main.cpp` (training executable). The reward is purely event-based
+  (hit/kill/received/death/win — no dense shaping).
 - **arenai_desktop** — the playable game executable. Its `src/` folders are hexagons of their own:
   `gui/` (RmlUi main menu — RmlUi types must never leak out of it, other code only includes
   `gui/menu.h`), `controller/`, `core/`. Menu assets live in `resources/menu/` + `resources/font/`.

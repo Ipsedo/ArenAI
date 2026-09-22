@@ -9,6 +9,7 @@
 #include <iostream>
 
 #include <arenai_agent/file_reader.h>
+#include <arenai_model/constants.h>
 #include <arenai_model/engine.h>
 #include <arenai_model/tank.h>
 #include <arenai_model/tank_factory.h>
@@ -25,7 +26,8 @@ namespace arenai::desktop {
         : BaseTanksEnvironment(
             std::make_shared<agent::DesktopAssetFileReader>(asset_folder_path),
             view::make_vulkan_backend(settings.vision_gpu), settings.nb_tanks, wanted_frequency,
-            vision_height, vision_width, 8, true),
+            // no starving timeout in the playable game
+            vision_height, vision_width, 8, true, false),
           windowed_backend(graphics_backend),
           asset_file_reader(std::make_shared<agent::DesktopAssetFileReader>(asset_folder_path)),
           player_tank(std::nullptr_t()), player_renderer(std::nullptr_t()),
@@ -73,7 +75,7 @@ namespace arenai::desktop {
         const glm::vec3 origin = canon_matrix * glm::vec4(0.f, 0.f, 0.f, 1.f);
         const glm::vec3 forward =
             glm::normalize(glm::mat3(canon_matrix) * glm::vec3(0.f, 0.f, 1.f));
-        const glm::vec3 aim = origin + forward * AIM_DISTANCE;
+        const glm::vec3 aim = origin + forward * model::CANON_AIM_DISTANCE;
 
         const glm::vec4 clip = player_renderer->last_view_projection() * glm::vec4(aim, 1.f);
         if (clip.w <= 0.f) return std::nullopt;

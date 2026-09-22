@@ -5,64 +5,52 @@
 #ifndef ARENAI_AGENT_HOST_FACTORY_H
 #define ARENAI_AGENT_HOST_FACTORY_H
 
-#include <format>
-#include <map>
 #include <memory>
 #include <string>
+
+#include <nlohmann/json.hpp>
 
 #include "./agent.h"
 
 namespace arenai::agent {
 
+    enum AgentAlgorithm { PPO, PPO_LIQUID };
+
     class AgentFactory {
     public:
-        virtual ~AgentFactory() = default;
-
-        explicit AgentFactory(const std::map<std::string, std::string> &arguments);
+        // config: the content of a training run's config.json — the network
+        // hyper-parameters come from its "agent" section, the vision size and
+        // the control frequency from its "environment" section
+        explicit AgentFactory(const nlohmann::json &config);
 
         std::shared_ptr<AbstractAgent> get_agent(
-            const int &vision_height, const int &vision_width, const int &nb_sensors,
-            const int &nb_continuous_actions, const int &nb_discrete_actions);
+            AgentAlgorithm algorithm, const int &nb_sensors, const int &nb_continuous_actions,
+            const int &nb_discrete_actions, bool cuda);
 
-    protected:
-        template<typename T>
-        T get_value(const std::string &argument_name, T default_value) {
-            if (!arguments.contains(argument_name)) return default_value;
-
-            const std::string value_as_string = arguments[argument_name];
-            std::stringstream ss(value_as_string);
-            T value;
-            ss >> value;
-
-            if (ss.fail() || !ss.eof())
-                throw std::runtime_error(std::format(
-                    R"(Wrong value for "{}" : "{}", example : "{}")", argument_name,
-                    value_as_string, default_value));
-
-            arguments.erase(arguments.find(argument_name));
-
-            return value;
-        }
-
-        template<typename T>
-        T get_value(
-            const std::string &argument_name, const std::function<T(std::string)> &parse_fn,
-            T default_value) {
-            if (!arguments.contains(argument_name)) return default_value;
-
-            const std::string value_as_string = arguments[argument_name];
-
-            arguments.erase(arguments.find(argument_name));
-
-            return parse_fn(value_as_string);
-        }
-
-        virtual std::shared_ptr<AbstractAgent> get_agent_impl(
-            const int &vision_height, const int &vision_width, const int &nb_sensors,
-            const int &nb_continuous_actions, const int &nb_discrete_action) = 0;
+        int get_vision_height() const;
+        int get_vision_width() const;
+        float get_wanted_frequency() const;
 
     private:
-        std::map<std::string, std::string> arguments;
+        // every hyper-parameter is required: a config.json that misses one
+        // does not describe the run it claims to (at() throws on a missing key)
+        template<typename T>
+        T get_value(const std::string &argument_name) {
+            return agent_arguments.at(argument_name).get<T>();
+        }
+
+        std::shared_ptr<AbstractAgent> create_ppo_agent(
+            const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_action,
+            bool cuda);
+
+        std::shared_ptr<AbstractAgent> create_liquid_ppo_agent(
+            const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_action,
+            bool cuda);
+
+        nlohmann::json agent_arguments;
+        int vision_height;
+        int vision_width;
+        float wanted_frequency;
     };
 
 }// namespace arenai::agent

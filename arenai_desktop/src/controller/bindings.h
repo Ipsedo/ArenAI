@@ -25,9 +25,9 @@ namespace arenai::desktop {
         std::optional<KeyboardBinding> turn_left = controller::Key::A;
         std::optional<KeyboardBinding> turn_right = controller::Key::D;
         std::optional<KeyboardBinding> fire = controller::MouseButton::Left;
+        std::optional<KeyboardBinding> zoom = controller::MouseButton::Right;
     };
 
-    // the six analog channels a pad exposes through the window's callbacks
     enum class GamepadAxis {
         LeftStickX,
         LeftStickY,
@@ -39,9 +39,6 @@ namespace arenai::desktop {
 
     inline constexpr int NB_GAMEPAD_AXES = 6;
 
-    // One analog slot. `sign` keeps the direction captured for the one-way
-    // actions (accelerate / reverse read max(0, sign * value)); the two-way
-    // actions (steer, aim) ignore it and stay at +1.
     struct GamepadAxisBinding {
         GamepadAxis axis;
         float sign = 1.f;
@@ -51,6 +48,7 @@ namespace arenai::desktop {
 
     struct GamepadBindings {
         std::optional<controller::GamepadButton> fire = controller::GamepadButton::RB;
+        std::optional<controller::GamepadButton> zoom = controller::GamepadButton::LB;
         std::optional<GamepadAxisBinding> steer =
             GamepadAxisBinding{.axis = GamepadAxis::LeftStickX};
         std::optional<GamepadAxisBinding> aim_x =
@@ -61,9 +59,7 @@ namespace arenai::desktop {
             GamepadAxisBinding{.axis = GamepadAxis::RightTrigger};
         std::optional<GamepadAxisBinding> reverse =
             GamepadAxisBinding{.axis = GamepadAxis::LeftTrigger};
-        // preferred pad across reconnections; empty = first connected
         std::string device_guid;
-        // display only, shown while the preferred pad is unplugged
         std::string device_name;
     };
 
@@ -72,7 +68,6 @@ namespace arenai::desktop {
         GamepadBindings gamepad;
     };
 
-    // canonical names for persistence ("" / nullopt on unknown)
     const char *to_string(GamepadAxis axis);
     std::optional<GamepadAxis> gamepad_axis_from_string(std::string_view name);
 

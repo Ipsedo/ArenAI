@@ -61,6 +61,9 @@ namespace arenai::desktop {
         float current_turret_rotation;
         float current_canon_rotation;
 
+        // held state: true between the press and the release of the zoom slot
+        bool current_zoom;
+
         bool cursor_captured;
     };
 

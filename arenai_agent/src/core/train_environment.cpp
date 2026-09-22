@@ -26,13 +26,10 @@ namespace arenai::agent {
         const int vision_num_threads)
         : BaseTanksEnvironment(
             std::make_shared<DesktopAssetFileReader>(android_assets_path), graphics_backend,
-            nb_tanks, wanted_frequency, vision_height, vision_width, vision_num_threads, false),
-          wanted_frequency(wanted_frequency),
-          max_frames_without_hit(static_cast<int>(30.f / wanted_frequency)),
-          remaining_frames(nb_tanks, max_frames_without_hit),
-          nb_frames_added_when_hit(static_cast<int>(3.f / wanted_frequency)),
-          nb_frames_added_when_kill(static_cast<int>(15.f / wanted_frequency)), nb_tanks(nb_tanks),
-          nb_steps(0), done(nb_tanks, false), already_done(nb_tanks, false),
+            nb_tanks, wanted_frequency, vision_height, vision_width, vision_num_threads, false,
+            true),
+          wanted_frequency(wanted_frequency), nb_tanks(nb_tanks), nb_steps(0),
+          done(nb_tanks, false), already_done(nb_tanks, false),
           max_episode_steps(max_episode_steps), nb_hits_per_tanks(nb_tanks, 0),
           nb_kills_per_tanks(nb_tanks, 0), reward_metric(std::make_shared<MeanMetric>(
                                                "r", 4 * nb_tanks * max_episode_steps, 1, true)),
@@ -45,10 +42,11 @@ namespace arenai::agent {
           miss_distance_metric(std::make_shared<MeanMetric>("miss", 1024 * nb_tanks, 1)),
           episode_step_mean_nb_metric(std::make_shared<MeanMetric>("s", 32, 1)),
           fire_metric(std::make_shared<MeanMetric>("fire", 256, 2)),
-          hit_metric(std::make_shared<MeanMetric>("hit", 256, 2, true)),
-          kill_metric(std::make_shared<MeanMetric>("kill", 16, 1)), nb_kills_episode(0) {}
+          hit_metric(std::make_shared<MeanMetric>("hit", 16, 2, true)),
+          kill_metric(std::make_shared<MeanMetric>("kill", 16, 1)), nb_kills_episode(0),
+          nb_fires_episode(0), nb_hits_episode(0) {}
 
-    std::vector<std::tuple<core::State, core::Reward, core::IsDone>>
+    std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
     TrainTankEnvironment::step(const float time_delta, const std::vector<core::Action> &actions) {
 
         // tanks flagged done on a previous step already emitted their terminal transition:
@@ -97,7 +95,14 @@ namespace arenai::agent {
             return is_suicide_result;
         });
 
-        // fire / hit frequencies (per second, per tank that acted this step)
+        const auto is_timeout = apply_on_enemies<std::vector<bool>>([&](const auto &factories) {
+            std::vector<bool> is_timeout_result;
+            is_timeout_result.reserve(nb_tanks);
+            for (const auto &factory: factories) is_timeout_result.push_back(factory->is_timeout());
+            return is_timeout_result;
+        });
+
+        // fire frequency (per second, per tank that acted this step)
         int nb_acting = 0, nb_fires = 0, nb_hits = 0;
         for (int i = 0; i < nb_tanks; i++) {
             if (already_done[i]) continue;
@@ -106,39 +111,22 @@ namespace arenai::agent {
             nb_hits += has_hit[i] ? 1 : 0;
         }
 
-        if (nb_acting > 0) {
+        if (nb_acting > 0)
             fire_metric->add(
                 static_cast<float>(nb_fires) / (static_cast<float>(nb_acting) * wanted_frequency));
-            hit_metric->add(
-                static_cast<float>(nb_hits) / (static_cast<float>(nb_acting) * wanted_frequency));
-        }
 
-        // step over tanks (remaining steps, hits and kills counters + detect and apply timeout + detect death)
+        nb_fires_episode += nb_fires;
+        nb_hits_episode += nb_hits;
+
+        // step over tanks (hits and kills counters)
         for (int i = 0; i < step_result.size(); i++) {
-            remaining_frames[i]--;
 
-            if (has_hit[i]) {
-                remaining_frames[i] += nb_frames_added_when_hit;
-                nb_hits_per_tanks[i] += 1;
-            }
-            if (has_kill[i]) {
-                remaining_frames[i] += nb_frames_added_when_kill;
-                nb_kills_per_tanks[i] += 1;
-            }
+            if (has_hit[i]) { nb_hits_per_tanks[i] += 1; }
+            if (has_kill[i]) { nb_kills_per_tanks[i] += 1; }
 
-            const auto &[state, reward, is_done] = step_result[i];
-
-            // detect death (kill or suicide)
-            if (is_done) {
-                if (!already_done[i] && !is_suicide[i]) nb_kills_episode++;
-                done[i] = true;
-            }
-
-            // starving out (no hit for too long) is a real death: penalized and terminal
-            if (!done[i] && remaining_frames[i] <= 0) {
-                constexpr float timeout_penalty = 1.f;
-
-                step_result[i] = {state, reward - timeout_penalty, true};
+            // detect death (kill, suicide or timeout)
+            if (const auto &[state, reward, is_done, is_truncated] = step_result[i]; is_done) {
+                if (!already_done[i] && !is_suicide[i] && !is_timeout[i]) nb_kills_episode++;
                 done[i] = true;
             }
         }
@@ -151,10 +139,11 @@ namespace arenai::agent {
         if (tanks_not_done_indexes.size() == 1) {
             const auto winner_index = tanks_not_done_indexes[0];
 
-            const auto &[state, reward, is_done] = step_result[winner_index];
+            const auto &[state, reward, is_done, is_truncated] = step_result[winner_index];
 
-            constexpr float win_reward = 2.f;
-            step_result[winner_index] = {state, reward + win_reward, true};
+            const float win_reward = nb_kills_per_tanks[winner_index] > 0 ? 2.f : 0.f;
+            // winning is a genuine termination, never a truncation
+            step_result[winner_index] = {state, reward + win_reward, true, false};
             done[winner_index] = true;
         }
 
@@ -190,10 +179,16 @@ namespace arenai::agent {
 
     void TrainTankEnvironment::on_reset_physics(
         const std::unique_ptr<model::AbstractPhysicEngine> &engine) {
-        remaining_frames = std::vector(nb_tanks, max_frames_without_hit);
 
-        // close the previous episode's counter (skip the very first reset)
-        if (nb_steps > 0) kill_metric->add(static_cast<float>(nb_kills_episode));
+        // close the previous episode's counters (skip the very first reset)
+        if (nb_steps > 0) {
+            kill_metric->add(static_cast<float>(nb_kills_episode));
+
+            // hit accuracy is undefined on an episode without a single fire
+            if (nb_fires_episode > 0)
+                hit_metric->add(
+                    static_cast<float>(nb_hits_episode) / static_cast<float>(nb_fires_episode));
+        }
         nb_kills_episode = 0;
 
         nb_steps = 0;
@@ -203,7 +198,14 @@ namespace arenai::agent {
 
         nb_hits_per_tanks = std::vector(nb_tanks, 0);
         nb_kills_per_tanks = std::vector(nb_tanks, 0);
+
+        nb_fires_episode = 0;
+        nb_hits_episode = 0;
     }
+
+    int TrainTankEnvironment::episode_nb_fires() const { return nb_fires_episode; }
+
+    int TrainTankEnvironment::episode_nb_hits() const { return nb_hits_episode; }
 
     bool TrainTankEnvironment::are_all_done() {
         return std::accumulate(

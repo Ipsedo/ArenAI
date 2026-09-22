@@ -25,6 +25,7 @@ namespace arenai::controller {
         joystick right_joystick;
 
         button fire_button;
+        button zoom_button;
     };
 
 }// namespace arenai::controller

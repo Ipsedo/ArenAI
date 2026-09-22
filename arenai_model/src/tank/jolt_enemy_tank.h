@@ -41,13 +41,14 @@ namespace arenai::model {
             JoltPhysicEngine &engine,
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::string &tank_prefix_name, glm::vec3 chassis_pos,
-            float wanted_frame_frequency);
+            float wanted_frame_frequency, bool apply_timeout);
 
         float get_reward() const override;
 
         bool is_dead() const override;
         bool is_first_frame_dead() const override;
         bool is_suicide() const override;
+        bool is_timeout() const override;
 
         bool consume_has_hit() override;
         bool consume_has_kill() override;
@@ -92,7 +93,16 @@ namespace arenai::model {
 
         bool is_dead_already_triggered;
 
-        bool has_touch;
+        bool apply_timeout;
+        // latched when the timer actually kills the tank: the timer keeps running after a
+        // combat death, so the live "remaining_frames <= 0" test would mislabel it later
+        bool starved;
+        int max_frames_without_hit;
+        int remaining_frames;
+        int nb_frames_added_when_hit;
+        int nb_frames_added_when_kill;
+
+        bool has_hit;
         bool has_kill;
         bool has_fired;
 

@@ -18,6 +18,11 @@ namespace arenai::model {
 
     constexpr float ENEMY_TURRET_RADIAL_VELOCITY = std::numbers::pi * 1.f;
 
+    constexpr float CANON_AIM_DISTANCE = 100.f;
+
+    constexpr float ZOOM_MAGNIFICATION = 2.f;
+    constexpr float ZOOM_TRANSITION_SECONDS = 0.25f;
+
 }// namespace arenai::model
 
 #endif//ARENAI_MODEL_CONSTANTS_H

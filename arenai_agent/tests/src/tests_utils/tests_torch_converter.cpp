@@ -17,7 +17,7 @@ using namespace arenai::agent;
 
 TEST_F(TorchConverterTest, SingleActionMapping) {
     const auto continuous = torch::tensor({{0.1f, -0.2f, 0.3f, -0.4f}});
-    const auto discrete = torch::tensor({{0.8f, 0.2f}});
+    const auto discrete = torch::tensor({{1.f, 0.f}});
 
     const auto actions = tensor_to_actions(continuous, discrete);
 
@@ -27,24 +27,27 @@ TEST_F(TorchConverterTest, SingleActionMapping) {
     ASSERT_FLOAT_EQ(actions[0].right_joystick.x, 0.3f);
     ASSERT_FLOAT_EQ(actions[0].right_joystick.y, -0.4f);
     ASSERT_TRUE(actions[0].fire_button.pressed);
+    ASSERT_FALSE(actions[0].zoom_button.pressed);
 }
 
-TEST_F(TorchConverterTest, FireButtonFalseWhenSecondLarger) {
+TEST_F(TorchConverterTest, IndependentFireAndZoom) {
     const auto continuous = torch::zeros({1, 4});
-    const auto discrete = torch::tensor({{0.2f, 0.8f}});
+    const auto discrete = torch::tensor({{0.f, 1.f}});
 
     const auto actions = tensor_to_actions(continuous, discrete);
 
     ASSERT_FALSE(actions[0].fire_button.pressed);
+    ASSERT_TRUE(actions[0].zoom_button.pressed);
 }
 
-TEST_F(TorchConverterTest, FireButtonFalseWhenEqual) {
+TEST_F(TorchConverterTest, BothActionsEngagedTogether) {
     const auto continuous = torch::zeros({1, 4});
-    const auto discrete = torch::tensor({{0.5f, 0.5f}});
+    const auto discrete = torch::tensor({{1.f, 1.f}});
 
     const auto actions = tensor_to_actions(continuous, discrete);
 
-    ASSERT_FALSE(actions[0].fire_button.pressed);
+    ASSERT_TRUE(actions[0].fire_button.pressed);
+    ASSERT_TRUE(actions[0].zoom_button.pressed);
 }
 
 TEST_F(TorchConverterTest, SingleStateToTensor) {
@@ -137,7 +140,7 @@ TEST_P(TensorToActionsParamTest, ContinuousValuesMatchTensor) {
     }
 }
 
-TEST_P(TensorToActionsParamTest, DiscreteFireButtonConsistent) {
+TEST_P(TensorToActionsParamTest, DiscreteButtonsConsistent) {
     const auto batch = GetParam();
 
     const auto discrete = torch::rand({batch, 2});
@@ -147,7 +150,8 @@ TEST_P(TensorToActionsParamTest, DiscreteFireButtonConsistent) {
 
     auto acc = discrete.accessor<float, 2>();
     for (int i = 0; i < batch; ++i) {
-        ASSERT_EQ(actions[i].fire_button.pressed, acc[i][0] > acc[i][1]);
+        ASSERT_EQ(actions[i].fire_button.pressed, acc[i][0] > 0.5f);
+        ASSERT_EQ(actions[i].zoom_button.pressed, acc[i][1] > 0.5f);
     }
 }
 

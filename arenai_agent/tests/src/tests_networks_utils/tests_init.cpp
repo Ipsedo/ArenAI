@@ -81,23 +81,24 @@ TEST_F(InitWeightsTest, SigmaOutputIsEqualToWantedOne) {
 
 TEST_F(InitWeightsTest, DiscreteOutputWeightsOrthogonal) {
     torch::nn::Linear linear(32, 6);
-    init_discrete_output_weights(*linear, 0.f);
+    init_discrete_output_weights(*linear, std::vector(6, 0.5f));
 
     assert_orthogonal(linear->weight, 0.01f);
 }
 
-TEST_F(InitWeightsTest, DiscreteOutputFireProbaIsEqualToWantedOne) {
-    constexpr float wanted_fire_proba = 0.2f;
+TEST_F(InitWeightsTest, DiscreteOutputProbasAreEqualToWantedOnes) {
+    const std::vector wanted_probas{0.2f, 0.35f};
 
     torch::nn::Sequential seq(
-        torch::nn::Linear(32, model::ENEMY_NB_DISCRETE_ACTION), torch::nn::Softmax(-1));
-    seq->apply([](torch::nn::Module &m) { init_discrete_output_weights(m, wanted_fire_proba); });
+        torch::nn::Linear(32, model::ENEMY_NB_DISCRETE_ACTION), torch::nn::Sigmoid());
+    seq->apply(
+        [&wanted_probas](torch::nn::Module &m) { init_discrete_output_weights(m, wanted_probas); });
 
     torch::Tensor x = torch::randn({1, 32});
     const auto out = seq->forward(x);
 
-    ASSERT_NEAR(out[0][0].item<float>(), wanted_fire_proba, 1e-2f);
-    ASSERT_NEAR(out[0][1].item<float>(), 1.f - wanted_fire_proba, 1e-2f);
+    ASSERT_NEAR(out[0][0].item<float>(), wanted_probas[0], 1e-2f);
+    ASSERT_NEAR(out[0][1].item<float>(), wanted_probas[1], 1e-2f);
 }
 
 TEST_F(InitWeightsTest, ValueOutputWeightsOrthogonal) {

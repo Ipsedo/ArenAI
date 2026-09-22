@@ -7,8 +7,8 @@
 #include <algorithm>
 #include <fstream>
 
-#include "../../distributions/multinomial.h"
-#include "../../distributions/truncated_normal.h"
+#include "../../distributions/bernoulli.h"
+#include "../../distributions/beta_law.h"
 #include "../../metrics/mean_metric.h"
 #include "../../networks/constants.h"
 #include "../../networks_utils/print_module.h"
@@ -54,17 +54,23 @@ namespace arenai::agent {
         const std::vector<int> &group_norm_nums, const torch::Device device,
         const int metric_window_size, const float gamma, const float gae_lambda,
         const float clip_epsilon, const float target_kl, const float grad_norm_max,
-        const float continuous_target_entropy, const float discrete_target_entropy_factor,
-        const int epochs, const int rollout_size, const int minibatch_size)
+        const std::vector<float> &continuous_target_entropy,
+        const std::vector<float> &discrete_target_entropy_factors, const int epochs,
+        const int rollout_size, const int minibatch_size)
         : actor(actor), rollout_buffer(rollout_buffer),
           continuous_alpha(std::make_unique<PidLagrangianAlphaParameters>(
               CONTINUOUS_ALPHA_K_P, CONTINUOUS_ALPHA_K_I, CONTINUOUS_ALPHA_K_D, ALPHA_INITIAL,
               nb_continuous_actions)),
           discrete_alpha(std::make_unique<PidLagrangianAlphaParameters>(
-              DISCRETE_ALPHA_K_P, DISCRETE_ALPHA_K_I, DISCRETE_ALPHA_K_D, ALPHA_INITIAL, 1)),
+              DISCRETE_ALPHA_K_P, DISCRETE_ALPHA_K_I, DISCRETE_ALPHA_K_D, ALPHA_INITIAL,
+              nb_discrete_action)),
           continuous_target_entropy(continuous_target_entropy),
-          discrete_target_entropy(
-              discrete_target_entropy_factor * multinomial_maximum_entropy(nb_discrete_action)),
+          // per-action target: each discrete action is an independent Bernoulli
+          discrete_target_entropy([&discrete_target_entropy_factors] {
+              std::vector<float> targets = discrete_target_entropy_factors;
+              for (auto &target: targets) target *= bernoulli_maximum_entropy();
+              return targets;
+          }()),
           critic(std::make_shared<ValueFunction>(
               vision_height, vision_width, nb_sensors, hidden_size_sensors, critic_hidden_sizes,
               vision_channels, group_norm_nums)),
@@ -85,6 +91,13 @@ namespace arenai::agent {
           gamma(gamma), gae_lambda(gae_lambda), clip_epsilon(clip_epsilon), target_kl(target_kl),
           grad_norm_max(grad_norm_max), epochs(epochs), rollout_size(rollout_size),
           minibatch_size(minibatch_size) {
+        TORCH_CHECK(
+            static_cast<int>(continuous_target_entropy.size()) == nb_continuous_actions,
+            "continuous_target_entropy needs one target per continuous action");
+        TORCH_CHECK(
+            static_cast<int>(discrete_target_entropy_factors.size()) == nb_discrete_action,
+            "discrete_target_entropy_factors needs one factor per discrete action");
+
         to(device);
 
         set_train(false);
@@ -152,14 +165,13 @@ namespace arenai::agent {
         const torch::Tensor &old_log_probs, const torch::Tensor &advantages) const {
         const auto device = actor->parameters().back().device();
 
-        const auto [mu, sigma, discrete_proba] = actor->act(vision, proprioception);
+        const auto [mode, concentration, discrete_proba] = actor->act(vision, proprioception);
 
         const auto curr_continuous_log_probs =
-            truncated_normal_log_pdf(continuous_actions, mu, sigma).sum(-1, true);
+            beta_law_log_proba(continuous_actions, mode, concentration).sum(-1, true);
 
-        const auto clamped_proba = torch::clamp(discrete_proba, EPSILON, 1.0 - EPSILON);
         const auto curr_discrete_log_probs =
-            torch::sum(discrete_actions * torch::log(clamped_proba), -1, true);
+            bernoulli_log_proba(discrete_actions, discrete_proba).sum(-1, true);
 
         const auto log_ratio = torch::clamp(
             curr_continuous_log_probs + curr_discrete_log_probs - old_log_probs, -LOG_RATIO_MAX_ABS,
@@ -167,8 +179,8 @@ namespace arenai::agent {
 
         const auto ratio = torch::exp(log_ratio);
 
-        const auto continuous_entropy = truncated_normal_entropy(mu, sigma);
-        const auto discrete_entropy = multinomial_entropy(discrete_proba);
+        const auto continuous_entropy = beta_law_entropy(mode, concentration);
+        const auto discrete_entropy = bernoulli_entropy(discrete_proba);
 
         const auto kl_per_row = (ratio - 1.f - log_ratio).flatten();
 
@@ -184,7 +196,7 @@ namespace arenai::agent {
 
         const auto entropy_bonus =
             torch::sum(continuous_alpha->alpha().detach() * continuous_entropy, -1)
-            + discrete_alpha->alpha().squeeze(1).detach() * discrete_entropy;
+            + torch::sum(discrete_alpha->alpha().detach() * discrete_entropy, -1);
 
         if (!kl_exceeded) {
             const auto clipped_ratio = torch::clamp(ratio, 1.f - clip_epsilon, 1.f + clip_epsilon);
@@ -276,9 +288,13 @@ namespace arenai::agent {
 
         const auto rewards = rollout.rewards.to(torch::kFloat);
         const auto dones = rollout.dones.to(torch::kFloat);
+        const auto truncateds = rollout.truncateds.to(torch::kFloat);
         const auto valids = rollout.valids.to(torch::kFloat);
 
-        const auto deltas = rewards + gamma * next_values * (1.f - dones) - values;
+        // a truncated step bootstraps on its own value (the last alive observation):
+        // the post-mortem next state is not a state the counterfactual life would reach
+        const auto deltas =
+            rewards + gamma * (next_values * (1.f - dones) + values * truncateds) - values;
 
         auto advantages = torch::zeros_like(deltas);
         auto gae = torch::zeros({nb_tanks, 1}, deltas.options());

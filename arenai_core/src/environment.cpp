@@ -33,10 +33,12 @@ namespace arenai::core {
     std::vector<std::tuple<State, Reward, IsDone, IsTruncated>>
     BaseTanksEnvironment::step(const float time_delta, const std::vector<Action> &actions) {
 
-        // 1. apply action
+        // 1. apply action: the parts read it as an absolute aim target
         for (int i = 0; i < tanks.size(); i++) {
-            if (!tanks[i]->is_dead()) tank_controller_handler[i]->on_event(actions[i]);
-            else tanks[i]->on_death();
+            if (tanks[i]->is_dead()) tanks[i]->on_death();
+            else
+                for (const auto &controller: tanks[i]->get_controllers())
+                    controller->apply_input(actions[i]);
         }
 
         // 2. step physic
@@ -69,7 +71,6 @@ namespace arenai::core {
 
     void BaseTanksEnvironment::reset_physics(const float spawn_width, const float spawn_height) {
         physic_engine->remove_bodies_and_constraints();
-        tank_controller_handler.clear();
         tanks.clear();
 
         const auto item_factory = physic_engine->get_item_factory();
@@ -99,12 +100,6 @@ namespace arenai::core {
             tanks.push_back(tank_factory->make_enemy_tank(
                 file_reader, "enemy_" + std::to_string(i),
                 glm::vec3(x, ground_height(x, z) + 3.f, z), apply_timeout));
-
-            tank_controller_handler.push_back(std::make_unique<EnemyControllerHandler>(
-                wanted_frequency, model::ENEMY_TURRET_RADIAL_VELOCITY));
-
-            for (const auto &controller: tanks.back()->get_controllers())
-                tank_controller_handler.back()->add_controller(controller);
         }
 
         // add basic shapes

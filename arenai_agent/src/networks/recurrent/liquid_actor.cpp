@@ -35,15 +35,14 @@ namespace arenai::agent {
                             neuron_number, hidden_size_sensors + vision_encoder->get_output_size(),
                             neuron_number, unfolding_steps,
                             [](const torch::Tensor &t) { return torch::silu(t); }, delta_t))),
-          mode(register_module(
-              "mode",
+          mu(register_module(
+              "mu",
               torch::nn::Sequential(
-                  torch::nn::Linear(neuron_number, nb_continuous_actions), torch::nn::Sigmoid()))),
-          concentration(register_module(
-              "concentration",
-              torch::nn::Sequential(
-                  torch::nn::Linear(neuron_number, nb_continuous_actions),
-                  std::make_shared<ConcentrationOutput>(CONCENTRATION_MIN, CONCENTRATION_MAX)))),
+                  torch::nn::Linear(neuron_number, nb_continuous_actions), torch::nn::Tanh()))),
+          sigma(register_module(
+              "sigma", torch::nn::Sequential(
+                           torch::nn::Linear(neuron_number, nb_continuous_actions),
+                           std::make_shared<SigmaOutput>(SIGMA_MIN, SIGMA_MAX)))),
           discrete(register_module(
               "discrete",
               torch::nn::Sequential(
@@ -52,10 +51,9 @@ namespace arenai::agent {
         vision_encoder->apply(init_hidden_weights);
         sensors_encoder->apply(init_hidden_weights);
 
-        // zero bias + sigmoid puts the initial mode at the action-range center
-        mode->apply(init_mu_output_weights);
-        concentration->apply(
-            [initial_sigma](Module &m) { init_concentration_output_weights(m, initial_sigma); });
+        // zero bias + tanh puts the initial mode at the action-range center
+        mu->apply(init_mu_output_weights);
+        sigma->apply([initial_sigma](Module &m) { init_sigma_output_weights(m, initial_sigma); });
 
         discrete->apply([&initial_discrete_probas](Module &m) {
             init_discrete_output_weights(m, initial_discrete_probas);
@@ -70,8 +68,8 @@ namespace arenai::agent {
         const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &x_t) {
         const auto [output, next_x] = liquid->forward_step(x_t, encode(vision, sensors));
         return {
-            .mode = mode->forward(output),
-            .concentration = concentration->forward(output),
+            .mu = mu->forward(output),
+            .sigma = sigma->forward(output),
             .discrete = discrete->forward(output),
             .next_x = next_x};
     }
@@ -100,8 +98,8 @@ namespace arenai::agent {
 
         const auto output = torch::stack(outputs, 1);
         return {
-            .mode = mode->forward(output),
-            .concentration = concentration->forward(output),
+            .mu = mu->forward(output),
+            .sigma = sigma->forward(output),
             .discrete = discrete->forward(output),
             .next_x = x};
     }

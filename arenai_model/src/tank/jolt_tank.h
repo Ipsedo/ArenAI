@@ -23,7 +23,8 @@ namespace arenai::model {
             JoltPhysicEngine &engine,
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::string &tank_prefix_name, glm::vec3 chassis_pos,
-            float wanted_frame_frequency,
+            float wanted_frame_frequency, float aim_turret_rad_per_second,
+            float aim_canon_rad_per_second,
             const std::function<void(const ShellItem *, const ShellContactInfo &, Item *)>
                 &on_contact_callback,
             const std::function<void(const std::shared_ptr<ShellItem> &)> &on_shell_fired_callback =

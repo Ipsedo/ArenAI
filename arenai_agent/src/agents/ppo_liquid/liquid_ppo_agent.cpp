@@ -5,7 +5,7 @@
 #include "./liquid_ppo_agent.h"
 
 #include "../../distributions/bernoulli.h"
-#include "../../distributions/beta_law.h"
+#include "../../distributions/truncated_normal.h"
 #include "../../networks/constants.h"
 #include "../../networks_utils/torch_converter.h"
 #include "../../networks_utils/torch_loader.h"
@@ -46,21 +46,20 @@ namespace arenai::agent {
             const auto &[vision, sensors] = state;
 
             x_t = hidden_state->get(vision.size(0));
-            const auto &[mode, concentration, discrete_proba, next_x] =
-                actor->act(vision, sensors, x_t);
+            const auto &[mu, sigma, discrete_proba, next_x] = actor->act(vision, sensors, x_t);
             hidden_state->set(next_x);
 
             if (sample) {
-                action.continuous_action = beta_law_sample(mode, concentration);
+                action.continuous_action = truncated_normal_sample(mu, sigma);
                 action.discrete_action = bernoulli_sample(discrete_proba);
             } else {
-                action.continuous_action = beta_law_mode_action(mode);
+                action.continuous_action = mu;
                 action.discrete_action = bernoulli_max_action(discrete_proba);
             }
 
             // old log-probabilities, kept for the PPO importance ratio
             continuous_log_prob =
-                beta_law_log_proba(action.continuous_action, mode, concentration).sum(-1, true);
+                truncated_normal_log_pdf(action.continuous_action, mu, sigma).sum(-1, true);
 
             discrete_log_prob =
                 bernoulli_log_proba(action.discrete_action, discrete_proba).sum(-1, true);

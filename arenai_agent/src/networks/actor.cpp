@@ -31,15 +31,14 @@ namespace arenai::agent {
                   torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_sensors})),
                   torch::nn::SiLU()))),
           head(register_module("head", torch::nn::Sequential())),
-          mode(register_module(
-              "mode", torch::nn::Sequential(
-                          torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
-                          torch::nn::Sigmoid()))),
-          concentration(register_module(
-              "concentration",
-              torch::nn::Sequential(
-                  torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
-                  std::make_shared<ConcentrationOutput>(CONCENTRATION_MIN, CONCENTRATION_MAX)))),
+          mu(register_module(
+              "mu", torch::nn::Sequential(
+                        torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
+                        torch::nn::Tanh()))),
+          sigma(register_module(
+              "sigma", torch::nn::Sequential(
+                           torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
+                           std::make_shared<SigmaOutput>(SIGMA_MIN, SIGMA_MAX)))),
           discrete(register_module(
               "discrete", torch::nn::Sequential(
                               torch::nn::Linear(hidden_sizes.back(), nb_discrete_actions),
@@ -65,10 +64,9 @@ namespace arenai::agent {
         sensors_encoder->apply(init_hidden_weights);
         head->apply(init_hidden_weights);
 
-        // zero bias + sigmoid puts the initial mode at the action-range center
-        mode->apply(init_mu_output_weights);
-        concentration->apply(
-            [initial_sigma](Module &m) { init_concentration_output_weights(m, initial_sigma); });
+        // zero bias + tanh puts the initial mode at the action-range center
+        mu->apply(init_mu_output_weights);
+        sigma->apply([initial_sigma](Module &m) { init_sigma_output_weights(m, initial_sigma); });
 
         discrete->apply([&initial_discrete_probas](Module &m) {
             init_discrete_output_weights(m, initial_discrete_probas);
@@ -80,8 +78,8 @@ namespace arenai::agent {
         auto sensors_encoded = sensors_encoder->forward(sensors);
         auto encoded = head->forward(torch::cat({vision_encoded, sensors_encoded}, 1));
         return {
-            .mode = mode->forward(encoded),
-            .concentration = concentration->forward(encoded),
+            .mu = mu->forward(encoded),
+            .sigma = sigma->forward(encoded),
             .discrete = discrete->forward(encoded)};
     }
 

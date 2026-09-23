@@ -8,7 +8,7 @@
 #include <fstream>
 
 #include "../../distributions/bernoulli.h"
-#include "../../distributions/beta_law.h"
+#include "../../distributions/truncated_normal.h"
 #include "../../metrics/mean_metric.h"
 #include "../../networks/constants.h"
 #include "../../networks_utils/print_module.h"
@@ -165,10 +165,10 @@ namespace arenai::agent {
         const torch::Tensor &old_log_probs, const torch::Tensor &advantages) const {
         const auto device = actor->parameters().back().device();
 
-        const auto [mode, concentration, discrete_proba] = actor->act(vision, proprioception);
+        const auto [mu, sigma, discrete_proba] = actor->act(vision, proprioception);
 
         const auto curr_continuous_log_probs =
-            beta_law_log_proba(continuous_actions, mode, concentration).sum(-1, true);
+            truncated_normal_log_pdf(continuous_actions, mu, sigma).sum(-1, true);
 
         const auto curr_discrete_log_probs =
             bernoulli_log_proba(discrete_actions, discrete_proba).sum(-1, true);
@@ -179,7 +179,7 @@ namespace arenai::agent {
 
         const auto ratio = torch::exp(log_ratio);
 
-        const auto continuous_entropy = beta_law_entropy(mode, concentration);
+        const auto continuous_entropy = truncated_normal_entropy(mu, sigma);
         const auto discrete_entropy = bernoulli_entropy(discrete_proba);
 
         const auto kl_per_row = (ratio - 1.f - log_ratio).flatten();

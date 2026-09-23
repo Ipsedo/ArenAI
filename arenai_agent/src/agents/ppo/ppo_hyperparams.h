@@ -32,10 +32,10 @@ namespace arenai::agent {
         float target_kl = 0.05f;
         float grad_norm_max = 0.5f;
         // per continuous action: direction x, direction y, canon x, canon y.
-        // this agent keeps the Beta law, whose spread is capped by CONCENTRATION_MAX:
-        // the entropy cannot go under -2.38, so an aim target below that would leave
-        // its multiplier at zero forever. the truncated normal has no such floor
-        std::vector<float> continuous_target_entropy = {-0.2f, -0.2f, -0.88f, -0.88f};
+        // the aim actions are absolute angle targets, so their spread is an aim error:
+        // sigma ~ exp(h)/sqrt(12) of the action range. the yaw spans 180 degrees and the
+        // pitch only 36, hence the gap between the two
+        std::vector<float> continuous_target_entropy = {-0.2f, -0.2f, -3.0f, -1.4f};
         // factors of the Bernoulli maximum entropy, per discrete action: fire, zoom
         std::vector<float> discrete_target_entropy_factors = {0.4f, 0.4f};
         int epochs = 2;

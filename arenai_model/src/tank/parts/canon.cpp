@@ -19,11 +19,6 @@ namespace {
     const float ZOOMED_FOV =
         2.f * std::atan(std::tan(arenai::view::DEFAULT_FOV / 2.f) / ZOOM_MAGNIFICATION);
 
-    // Jolt's default position motor is a soft 2 Hz spring: the canon needs ~10 frames
-    // to reach a new target angle, a lag the aim loop cannot compensate
-    constexpr float MOTOR_FREQUENCY = 8.f;
-    constexpr float MOTOR_DAMPING = 1.f;
-
     glm::mat4 to_glm(const JPH::RMat44 &m) {
         glm::mat4 result;
         for (int c = 0; c < 4; c++) {
@@ -64,8 +59,6 @@ namespace arenai::model {
         settings.mPoint2 = JPH::RVec3::sZero();
         settings.mHingeAxis2 = JPH::Vec3::sAxisX();
         settings.mNormalAxis2 = JPH::Vec3::sAxisY();
-
-        settings.mMotorSettings = JPH::MotorSettings(MOTOR_FREQUENCY, MOTOR_DAMPING);
 
         auto *constraint = settings.Create(*turret, *ConvexItem::get_body());
 

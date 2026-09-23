@@ -33,12 +33,7 @@ namespace arenai::agent {
         float clip_epsilon = 0.2f;
         float target_kl = 0.05f;
         float grad_norm_max = 0.5f;
-        // per continuous action: direction x, direction y, canon x, canon y.
-        // the aim actions are absolute angle targets, so their spread is an aim error:
-        // sigma ~ exp(h)/sqrt(12) of the action range. the yaw spans 180 degrees and the
-        // pitch only 36, hence the gap between the two
         std::vector<float> continuous_target_entropy = {-0.2f, -0.2f, -3.0f, -1.4f};
-        // factors of the Bernoulli maximum entropy, per discrete action: fire, zoom
         std::vector<float> discrete_target_entropy_factors = {0.4f, 0.4f};
         int epochs = 2;
         int rollout_size = 30 * 30;

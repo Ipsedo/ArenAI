@@ -6,8 +6,6 @@
 
 #include <utility>
 
-#include <arenai_model/constants.h>
-
 #include "../jolt_engine.h"
 
 using namespace arenai;
@@ -22,8 +20,6 @@ namespace arenai::model {
         const float wanted_frame_frequency)
         : JoltTank(
             engine, file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency,
-            // the player aims with the mouse: no speed of its own to preserve
-            UNLIMITED_RADIAL_VELOCITY, UNLIMITED_RADIAL_VELOCITY,
             // the player only counts hits, it does not track individual shells
             [this](const ShellItem *, const ShellContactInfo &info, Item *item) {
                 on_fired_shell_contact(info, item);

@@ -31,15 +31,12 @@ namespace arenai::model {
             const std::string &prefix_name, JoltPhysicEngine &engine,
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, glm::vec3 pos,
             glm::vec3 rel_pos, glm::vec3 scale, float mass, JPH::Body *turret,
-            float wanted_frame_frequency, float max_rad_per_frame,
+            float wanted_frame_frequency,
             const std::function<void(const ShellItem *, glm::vec3, glm::vec3, Item *)> &on_contact,
             const std::function<void(const std::shared_ptr<ShellItem> &)> &on_shell_fired,
             const std::function<bool()> &can_fire);
 
-        // the input carries an absolute aim target in [-1, 1], mapped onto the canon travel
         void apply_input(const controller::user_input &input) override;
-
-        float get_angle() const;
 
         glm::vec3 pos() override;
         glm::vec3 look() override;
@@ -54,7 +51,6 @@ namespace arenai::model {
 
     private:
         float angle;
-        float max_rad_per_frame;
         std::atomic<bool> zoom_engaged;
         float current_fov;
         JPH::Ref<JPH::HingeConstraint> hinge;

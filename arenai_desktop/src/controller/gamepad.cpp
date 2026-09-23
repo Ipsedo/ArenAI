@@ -65,8 +65,8 @@ namespace arenai::desktop {
                 axis_slot(state, GamepadAxis::RightStickY) = y;
 
                 // the window dispatches the right stick once per frame, after every
-                // other gamepad callback: use it as the per-frame tick so the stick
-                // deflection is integrated into the aim exactly once per frame
+                // other gamepad callback: use it as the per-frame tick so the
+                // turret / canon deltas are applied exactly once per frame
                 on_event(state);
                 break;
         }
@@ -88,6 +88,9 @@ namespace arenai::desktop {
     PlayerGamepadHandler::to_output(const PlayerGamepadInput event) {
         bool need_fire = false;
 
+        float turret_rotation = 0.f;
+        float canon_rotation = 0.f;
+
         if (event.button.has_value()) {
             const auto &[button, action] = event.button.value();
             if (action == controller::InputAction::Press && button == bindings.fire)
@@ -98,21 +101,13 @@ namespace arenai::desktop {
                 else if (action == controller::InputAction::Release) zoom_held = false;
             }
         } else {
-            // per-frame tick: the stick deflection is a rotation speed, integrated here into
-            // the absolute aim the parts consume. the gains are the historical rad/frame
-            // factors expressed in the parts' normalized range, so the feel is unchanged
-            constexpr float turret_gain = 0.02f;
-            constexpr float canon_gain = 0.04f;
+            // per-frame tick: controllers consume rad/frame deltas, so the stick
+            // deflection is scaled into radians here (like the mouse handler)
+            constexpr float factor = 0.02f * static_cast<float>(M_PI);
 
-            // wrap like the turret, clamp like the canon: no windup past the parts' range
-            turret_norm =
-                std::remainder(turret_norm - turret_gain * axis_value(bindings.aim_x, event), 2.f);
-            canon_norm =
-                std::clamp(canon_norm + canon_gain * axis_value(bindings.aim_y, event), -1.f, 1.f);
+            turret_rotation = factor * axis_value(bindings.aim_x, event);
+            canon_rotation = factor * axis_value(bindings.aim_y, event);
         }
-
-        // button events carry no aim: they re-emit the held target untouched, zeroing it
-        // would snap the turret back to dead ahead on every shot
 
         const float direction = axis_value(bindings.steer, event);
         // one-way pair driving the tank: accelerate forward, reverse backward
@@ -122,7 +117,7 @@ namespace arenai::desktop {
         return {
             true,
             {.left_joystick = {.x = direction, .y = speed},
-             .right_joystick = {.x = turret_norm, .y = canon_norm},
+             .right_joystick = {.x = turret_rotation, .y = canon_rotation},
              .fire_button = {need_fire},
              .zoom_button = {zoom_held}}};
     }

@@ -25,8 +25,7 @@ namespace arenai::model {
         JoltPhysicEngine &engine,
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::string &tank_prefix_name, glm::vec3 chassis_pos,
-        const float wanted_frame_frequency, const float aim_turret_rad_per_second,
-        const float aim_canon_rad_per_second,
+        const float wanted_frame_frequency,
         const std::function<void(const ShellItem *, const ShellContactInfo &, Item *)>
             &on_contact_callback,
         const std::function<void(const std::shared_ptr<ShellItem> &)> &on_shell_fired_callback,
@@ -91,8 +90,7 @@ namespace arenai::model {
         glm::vec3 turret_scale(1.2f);
         auto turret = std::make_shared<TurretItem>(
             tank_prefix_name, engine, file_reader, chassis_pos + turret_pos, turret_pos,
-            scale * turret_scale, 300, chassis_item->get_body(),
-            aim_turret_rad_per_second * wanted_frame_frequency);
+            scale * turret_scale, 300, chassis_item->get_body());
         jolt_items.push_back(turret);
         items.push_back(turret);
         controllers.push_back(turret);
@@ -104,7 +102,6 @@ namespace arenai::model {
         auto canon_item = std::make_shared<CanonItem>(
             tank_prefix_name, engine, file_reader, chassis_pos + turret_pos + canon_pos, canon_pos,
             scale * canon_scale, 100, turret->get_body(), wanted_frame_frequency,
-            aim_canon_rad_per_second * wanted_frame_frequency,
             [on_contact_callback](
                 const ShellItem *shell, const glm::vec3 fire_pos, const glm::vec3 hit_pos,
                 Item *item) {

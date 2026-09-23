@@ -45,11 +45,6 @@ namespace arenai::desktop {
         // held state: true between the press and the release of the zoom button
         bool zoom_held = false;
 
-        // held aim target in [-1, 1], integrated from the stick deflection: the stick stays
-        // a rate for the player, but the tank parts consume an absolute aim
-        float turret_norm = 0.f;
-        float canon_norm = 0.f;
-
         static float apply_dead_zone(double value);
 
         float

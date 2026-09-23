@@ -6,7 +6,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <numbers>
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -20,7 +19,10 @@ namespace {
     const float ZOOMED_FOV =
         2.f * std::atan(std::tan(arenai::view::DEFAULT_FOV / 2.f) / ZOOM_MAGNIFICATION);
 
-    constexpr float MAX_ANGLE = 0.2f * std::numbers::pi_v<float>;
+    // Jolt's default position motor is a soft 2 Hz spring: the canon needs ~10 frames
+    // to reach a new target angle, a lag the aim loop cannot compensate
+    constexpr float MOTOR_FREQUENCY = 8.f;
+    constexpr float MOTOR_DAMPING = 1.f;
 
     glm::mat4 to_glm(const JPH::RMat44 &m) {
         glm::mat4 result;
@@ -39,7 +41,7 @@ namespace arenai::model {
         const std::string &prefix_name, JoltPhysicEngine &engine,
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, glm::vec3 pos,
         glm::vec3 rel_pos, glm::vec3 scale, float mass, JPH::Body *turret,
-        const float wanted_frame_frequency, const float max_rad_per_frame,
+        const float wanted_frame_frequency,
         const std::function<void(const ShellItem *, glm::vec3, glm::vec3, Item *)> &on_contact,
         const std::function<void(const std::shared_ptr<ShellItem> &)> &on_shell_fired,
         const std::function<bool()> &can_fire)
@@ -48,10 +50,9 @@ namespace arenai::model {
                            std::make_shared<ObjShape>(
                                file_reader, std::filesystem::path("obj") / "anubis_canon.obj"),
                            pos, scale, mass),
-          angle(0.f), max_rad_per_frame(max_rad_per_frame), zoom_engaged(false),
-          current_fov(view::DEFAULT_FOV), file_reader(file_reader), will_fire(false),
-          on_contact(on_contact), on_shell_fired(on_shell_fired), can_fire(can_fire),
-          wanted_frame_frequency(wanted_frame_frequency) {
+          angle(0.f), zoom_engaged(false), current_fov(view::DEFAULT_FOV), file_reader(file_reader),
+          will_fire(false), on_contact(on_contact), on_shell_fired(on_shell_fired),
+          can_fire(can_fire), wanted_frame_frequency(wanted_frame_frequency) {
 
         JPH::HingeConstraintSettings settings;
         settings.mSpace = JPH::EConstraintSpace::LocalToBodyCOM;
@@ -63,6 +64,8 @@ namespace arenai::model {
         settings.mPoint2 = JPH::RVec3::sZero();
         settings.mHingeAxis2 = JPH::Vec3::sAxisX();
         settings.mNormalAxis2 = JPH::Vec3::sAxisY();
+
+        settings.mMotorSettings = JPH::MotorSettings(MOTOR_FREQUENCY, MOTOR_DAMPING);
 
         auto *constraint = settings.Create(*turret, *ConvexItem::get_body());
 
@@ -108,11 +111,10 @@ namespace arenai::model {
     }
 
     void CanonItem::apply_input(const controller::user_input &input) {
-        const float target = std::clamp(input.right_joystick.y, -1.f, 1.f) * MAX_ANGLE;
+        angle += input.right_joystick.y * 0.4f;
 
-        const float delta = std::clamp(target - angle, -max_rad_per_frame, max_rad_per_frame);
-
-        angle = std::clamp(angle + delta, -MAX_ANGLE, MAX_ANGLE);
+        angle =
+            std::clamp(angle, -0.2f * static_cast<float>(M_PI), 0.2f * static_cast<float>(M_PI));
 
         hinge->SetTargetAngle(angle);
 
@@ -120,8 +122,6 @@ namespace arenai::model {
 
         zoom_engaged.store(input.zoom_button.pressed, std::memory_order_relaxed);
     }
-
-    float CanonItem::get_angle() const { return angle; }
 
     glm::vec3 CanonItem::pos() {
         const glm::mat4 model_mat = to_glm(ConvexItem::get_body()->GetWorldTransform());

@@ -36,7 +36,7 @@ namespace arenai::model {
             const std::function<void(const std::shared_ptr<ShellItem> &)> &on_shell_fired,
             const std::function<bool()> &can_fire);
 
-        // the input carries an absolute aim target in [-1, 1], mapped onto the canon travel
+        // the input carries an aim rate in [-1, 1], a fraction of max_rad_per_frame
         void apply_input(const controller::user_input &input) override;
 
         float get_angle() const;

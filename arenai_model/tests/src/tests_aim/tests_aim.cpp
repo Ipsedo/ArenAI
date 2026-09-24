@@ -17,7 +17,7 @@ using namespace arenai::model;
 using namespace arenai::controller;
 
 // ========================================================================
-// Helpers — the parts read right_joystick as an absolute aim target
+// Helpers — the parts read right_joystick as an aim rate in [-1, 1]
 // ========================================================================
 
 namespace {
@@ -28,6 +28,7 @@ namespace {
     constexpr float FREQUENCY = 1.f / 60.f;
     constexpr float TURRET_STEP = ENEMY_TURRET_RADIAL_VELOCITY * FREQUENCY;
     constexpr float CANON_STEP = ENEMY_CANON_RADIAL_VELOCITY * FREQUENCY;
+    constexpr float PLAYER_TURRET_STEP = PLAYER_TURRET_RADIAL_VELOCITY * FREQUENCY;
 
     // mirrors the travel limit held by canon.cpp
     constexpr float CANON_MAX_ANGLE = 0.2f * PI;
@@ -46,53 +47,23 @@ namespace {
 }// namespace
 
 // ========================================================================
-// Absolute aim — a held target settles on an angle instead of drifting
+// Rate — one call moves the aim by one step, a held input keeps moving it
 // ========================================================================
 
-TEST_F(AimTest, HeldTurretTargetConvergesAndStops) {
+TEST_F(AimTest, FullDeflectionMovesTheTurretByOneStep) {
     const auto tank = tank_factory->make_enemy_tank(file_reader, "tank", {0.f, 5.f, 0.f}, false);
     auto *turret = find_part<TurretItem>(*tank);
     ASSERT_NE(turret, nullptr);
 
-    for (int i = 0; i < 200; i++) turret->apply_input(aim(0.5f, 0.f));
-    const float settled = turret->get_angle();
+    turret->apply_input(aim(1.f, 0.f));
 
-    ASSERT_NEAR(settled, 0.5f * PI, 1e-4f);
-
-    turret->apply_input(aim(0.5f, 0.f));
-    ASSERT_NEAR(turret->get_angle(), settled, 1e-6f) << "a held target must leave the turret still";
+    ASSERT_NEAR(turret->get_angle(), -TURRET_STEP, 1e-6f);
 }
 
-TEST_F(AimTest, HeldCanonTargetConvergesAndStops) {
+TEST_F(AimTest, FullDeflectionMovesTheCanonBySlowerStep) {
     const auto tank = tank_factory->make_enemy_tank(file_reader, "tank", {0.f, 5.f, 0.f}, false);
     auto *canon = find_part<CanonItem>(*tank);
     ASSERT_NE(canon, nullptr);
-
-    for (int i = 0; i < 200; i++) canon->apply_input(aim(0.f, -0.5f));
-    const float settled = canon->get_angle();
-
-    ASSERT_NEAR(settled, -0.5f * CANON_MAX_ANGLE, 1e-4f);
-
-    canon->apply_input(aim(0.f, -0.5f));
-    ASSERT_NEAR(canon->get_angle(), settled, 1e-6f);
-}
-
-// ========================================================================
-// Rate limit — the enemy keeps its own slew speed on each axis
-// ========================================================================
-
-TEST_F(AimTest, TurretSlewIsRateLimited) {
-    const auto tank = tank_factory->make_enemy_tank(file_reader, "tank", {0.f, 5.f, 0.f}, false);
-    auto *turret = find_part<TurretItem>(*tank);
-
-    turret->apply_input(aim(1.f, 0.f));
-
-    ASSERT_NEAR(turret->get_angle(), TURRET_STEP, 1e-6f);
-}
-
-TEST_F(AimTest, CanonSlewIsRateLimitedAndSlowerThanTheTurret) {
-    const auto tank = tank_factory->make_enemy_tank(file_reader, "tank", {0.f, 5.f, 0.f}, false);
-    auto *canon = find_part<CanonItem>(*tank);
 
     canon->apply_input(aim(0.f, 1.f));
 
@@ -100,28 +71,48 @@ TEST_F(AimTest, CanonSlewIsRateLimitedAndSlowerThanTheTurret) {
     ASSERT_LT(CANON_STEP, TURRET_STEP) << "the canon aims slower than the turret rotates";
 }
 
-// ========================================================================
-// Shortest path — crossing the back stays a small move
-// ========================================================================
-
-TEST_F(AimTest, TurretCrossesTheBackInsteadOfUnwinding) {
+TEST_F(AimTest, HeldTurretInputKeepsRotating) {
     const auto tank = tank_factory->make_enemy_tank(file_reader, "tank", {0.f, 5.f, 0.f}, false);
     auto *turret = find_part<TurretItem>(*tank);
 
-    for (int i = 0; i < 200; i++) turret->apply_input(aim(1.f, 0.f));
-    const float before = turret->get_angle();
-    ASSERT_NEAR(before, PI, 1e-4f);
+    for (int i = 0; i < 10; i++) turret->apply_input(aim(0.5f, 0.f));
 
-    // a target 0.02 * PI past the back: a full turn away the other way round
-    turret->apply_input(aim(-0.98f, 0.f));
+    ASSERT_NEAR(turret->get_angle(), -10.f * 0.5f * TURRET_STEP, 1e-5f);
+}
 
-    const float travelled = std::remainder(turret->get_angle() - before, 2.f * PI);
-    ASSERT_GT(travelled, 0.f) << "the turret must cross the back, not sweep all the way round";
-    ASSERT_NEAR(travelled, TURRET_STEP, 1e-5f);
+TEST_F(AimTest, CenteredInputLeavesTheTurretStill) {
+    const auto tank = tank_factory->make_enemy_tank(file_reader, "tank", {0.f, 5.f, 0.f}, false);
+    auto *turret = find_part<TurretItem>(*tank);
+
+    for (int i = 0; i < 10; i++) turret->apply_input(aim(1.f, 0.f));
+    const float held = turret->get_angle();
+
+    turret->apply_input(aim(0.f, 0.f));
+
+    ASSERT_NEAR(turret->get_angle(), held, 1e-6f) << "a centered input must not move the turret";
 }
 
 // ========================================================================
-// Travel limit — the canon stops at its mechanical range
+// The turret rotates freely: crossing the back is just another step
+// ========================================================================
+
+TEST_F(AimTest, TurretWrapsAroundTheBack) {
+    const auto tank = tank_factory->make_enemy_tank(file_reader, "tank", {0.f, 5.f, 0.f}, false);
+    auto *turret = find_part<TurretItem>(*tank);
+
+    // one full turn minus a step: the next call must land just past the back, not stall
+    const int nb_steps = static_cast<int>(2.f * PI / TURRET_STEP);
+    for (int i = 0; i < nb_steps; i++) turret->apply_input(aim(1.f, 0.f));
+
+    const float before = turret->get_angle();
+    turret->apply_input(aim(1.f, 0.f));
+
+    ASSERT_LE(std::abs(turret->get_angle()), PI) << "the angle must stay wrapped in [-pi, pi]";
+    ASSERT_NEAR(std::remainder(turret->get_angle() - before, 2.f * PI), -TURRET_STEP, 1e-5f);
+}
+
+// ========================================================================
+// Travel limit — the canon stops at its mechanical range, without windup
 // ========================================================================
 
 TEST_F(AimTest, CanonStopsAtItsTravelLimit) {
@@ -130,26 +121,27 @@ TEST_F(AimTest, CanonStopsAtItsTravelLimit) {
 
     for (int i = 0; i < 200; i++) canon->apply_input(aim(0.f, 1.f));
 
-    ASSERT_NEAR(canon->get_angle(), CANON_MAX_ANGLE, 1e-4f);
+    ASSERT_NEAR(canon->get_angle(), CANON_MAX_ANGLE, 1e-6f);
 
     canon->apply_input(aim(0.f, 1.f));
     ASSERT_NEAR(canon->get_angle(), CANON_MAX_ANGLE, 1e-6f);
+
+    canon->apply_input(aim(0.f, -1.f));
+    ASSERT_NEAR(canon->get_angle(), CANON_MAX_ANGLE - CANON_STEP, 1e-5f)
+        << "the canon must come back immediately, not after unwinding";
 }
 
 // ========================================================================
-// The player tank is not rate limited: the mouse keeps its flick aim
+// The player aims far faster: the mouse sets its slew speed
 // ========================================================================
 
-TEST_F(AimTest, PlayerTurretReachesItsTargetInASingleCall) {
+TEST_F(AimTest, PlayerTurretSlewsFasterThanTheEnemy) {
     const auto tank = tank_factory->make_player_tank(file_reader, "player", {0.f, 5.f, 0.f});
     auto *turret = find_part<TurretItem>(*tank);
-    auto *canon = find_part<CanonItem>(*tank);
     ASSERT_NE(turret, nullptr);
-    ASSERT_NE(canon, nullptr);
 
-    turret->apply_input(aim(0.5f, 1.f));
-    canon->apply_input(aim(0.5f, 1.f));
+    turret->apply_input(aim(1.f, 0.f));
 
-    ASSERT_NEAR(turret->get_angle(), 0.5f * PI, 1e-5f);
-    ASSERT_NEAR(canon->get_angle(), CANON_MAX_ANGLE, 1e-5f);
+    ASSERT_NEAR(turret->get_angle(), -PLAYER_TURRET_STEP, 1e-5f);
+    ASSERT_GT(PLAYER_TURRET_STEP, TURRET_STEP);
 }

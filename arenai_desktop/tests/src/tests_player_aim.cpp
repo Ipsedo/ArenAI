@@ -14,14 +14,13 @@ using namespace arenai;
 using namespace arenai::desktop;
 
 // ========================================================================
-// Helpers — the handler integrates the stick into an absolute aim target
+// Helpers — the handler hands the parts an aim rate, not a target
 // ========================================================================
 
 namespace {
 
-    // the gains held by PlayerGamepadHandler::to_output
-    constexpr float TURRET_GAIN = 0.02f;
-    constexpr float CANON_GAIN = 0.04f;
+    // the sensitivity held by PlayerGamepadHandler::to_output
+    constexpr float STICK_SENSITIVITY = 0.05f;
 
     class RecordingController final : public controller::Controller {
     public:
@@ -55,64 +54,44 @@ namespace {
 class PlayerAimTest : public testing::Test {};
 
 // ========================================================================
-// The stick stays a rate: deflection integrates into the held target
+// The stick is a rate: full deflection asks for a share of the slew speed
 // ========================================================================
 
-TEST_F(PlayerAimTest, OneTickMovesTheAimByOneGain) {
+TEST_F(PlayerAimTest, FullDeflectionAsksForTheStickSensitivity) {
     const auto rig = make_rig();
 
     rig.tick(1., 0.);
 
-    ASSERT_FLOAT_EQ(rig.aim().x, -TURRET_GAIN);
+    ASSERT_FLOAT_EQ(rig.aim().x, STICK_SENSITIVITY);
 }
 
-TEST_F(PlayerAimTest, TicksAccumulateIntoTheHeldTarget) {
+TEST_F(PlayerAimTest, TicksDoNotAccumulate) {
     const auto rig = make_rig();
 
     for (int i = 0; i < 10; i++) rig.tick(1., 0.);
 
-    ASSERT_NEAR(rig.aim().x, -10.f * TURRET_GAIN, 1e-5f);
+    ASSERT_FLOAT_EQ(rig.aim().x, STICK_SENSITIVITY) << "the stick is a rate, not a target";
 }
 
-TEST_F(PlayerAimTest, CenteredStickHoldsTheAimStill) {
+TEST_F(PlayerAimTest, CenteredStickStopsTheAim) {
     const auto rig = make_rig();
 
     for (int i = 0; i < 10; i++) rig.tick(1., 0.);
-    const float held = rig.aim().x;
+    rig.tick(0., 0.);
 
-    for (int i = 0; i < 10; i++) rig.tick(0., 0.);
-
-    ASSERT_FLOAT_EQ(rig.aim().x, held) << "a centered stick must not move the aim";
+    ASSERT_FLOAT_EQ(rig.aim().x, 0.f) << "a centered stick must ask for no rotation";
 }
 
 // ========================================================================
-// Button events carry no aim: they must re-emit the held target
+// Button events carry no aim
 // ========================================================================
 
-TEST_F(PlayerAimTest, ButtonEventKeepsTheHeldAim) {
+TEST_F(PlayerAimTest, ButtonEventCarriesNoAim) {
     const auto rig = make_rig();
 
-    for (int i = 0; i < 10; i++) rig.tick(1., 0.);
-    const float held = rig.aim().x;
-
+    rig.tick(1., 0.);
     rig.handler->on_gamepad_button(controller::GamepadButton::RB, controller::InputAction::Press);
 
     ASSERT_TRUE(rig.controller->last_input.fire_button.pressed);
-    ASSERT_FLOAT_EQ(rig.aim().x, held) << "firing must not snap the turret back to dead ahead";
-}
-
-// ========================================================================
-// Anti-windup — the held target never runs past what the parts accept
-// ========================================================================
-
-TEST_F(PlayerAimTest, CanonTargetSaturatesWithoutWindup) {
-    const auto rig = make_rig();
-
-    for (int i = 0; i < 100; i++) rig.tick(0., 1.);
-    ASSERT_FLOAT_EQ(rig.aim().y, 1.f);
-
-    rig.tick(0., -1.);
-
-    ASSERT_NEAR(rig.aim().y, 1.f - CANON_GAIN, 1e-5f)
-        << "the aim must come back immediately, not after unwinding";
+    ASSERT_FLOAT_EQ(rig.aim().x, 0.f);
 }

@@ -14,8 +14,7 @@ using namespace arenai::model;
 
 namespace {
 
-    constexpr float PI = std::numbers::pi_v<float>;
-    constexpr float TWO_PI = 2.f * PI;
+    constexpr float TWO_PI = 2.f * std::numbers::pi_v<float>;
 
 }// namespace
 
@@ -51,14 +50,11 @@ namespace arenai::model {
     }
 
     void TurretItem::apply_input(const controller::user_input &input) {
-        const float target = input.right_joystick.x * PI;
+        const float delta = std::clamp(input.right_joystick.x, -1.f, 1.f) * max_rad_per_frame;
 
-        // std::remainder keeps the error in [-pi, pi]: the turret always takes the shortest
-        // way around, so crossing the back stays a small move
-        const float delta = std::clamp(
-            std::remainder(target - angle, TWO_PI), -max_rad_per_frame, max_rad_per_frame);
-
-        angle = std::remainder(angle + delta, TWO_PI);
+        // std::remainder keeps the angle in [-pi, pi]: the turret rotates freely, crossing
+        // the back is just another step
+        angle = std::remainder(angle - delta, TWO_PI);
 
         hinge->SetMotorState(JPH::EMotorState::Position);
         hinge->SetTargetAngle(angle);

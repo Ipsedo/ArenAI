@@ -33,7 +33,7 @@ namespace arenai::core {
     std::vector<std::tuple<State, Reward, IsDone, IsTruncated>>
     BaseTanksEnvironment::step(const float time_delta, const std::vector<Action> &actions) {
 
-        // 1. apply action: the parts read it as an absolute aim target
+        // 1. apply action: the parts read the aim axes as a rate
         for (int i = 0; i < tanks.size(); i++) {
             if (tanks[i]->is_dead()) tanks[i]->on_death();
             else

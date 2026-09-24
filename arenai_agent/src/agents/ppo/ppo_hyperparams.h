@@ -31,7 +31,9 @@ namespace arenai::agent {
         float clip_epsilon = 0.2f;
         float target_kl = 0.05f;
         float grad_norm_max = 0.5f;
-        std::vector<float> continuous_target_entropy = {-0.2f, -0.2f, -3.0f, -1.4f};
+        // per continuous action: direction x, direction y, canon x, canon y
+        std::vector<float> continuous_target_entropy = {-0.2f, -0.2f, -0.88f, -0.88f};
+        // factors of the Bernoulli maximum entropy, per discrete action: fire, zoom
         std::vector<float> discrete_target_entropy_factors = {0.4f, 0.4f};
         int epochs = 2;
         int rollout_size = 30 * 30;

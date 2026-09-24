@@ -23,7 +23,7 @@ namespace arenai::model {
             glm::vec3 rel_pos, glm::vec3 scale, float mass, JPH::Body *chassis,
             float max_rad_per_frame);
 
-        // the input carries an absolute aim target in [-1, 1], mapped onto [-pi, pi]
+        // the input carries an aim rate in [-1, 1], a fraction of max_rad_per_frame
         void apply_input(const controller::user_input &input) override;
 
         float get_angle() const;

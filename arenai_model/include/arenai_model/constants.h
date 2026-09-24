@@ -5,7 +5,6 @@
 #ifndef ARENAI_MODEL_CONSTANTS_H
 #define ARENAI_MODEL_CONSTANTS_H
 
-#include <limits>
 #include <numbers>
 
 namespace arenai::model {
@@ -21,9 +20,10 @@ namespace arenai::model {
     // the canon travels a much shorter range than the turret: it aims 2.5 times slower
     constexpr float ENEMY_CANON_RADIAL_VELOCITY = 0.4f * ENEMY_TURRET_RADIAL_VELOCITY;
 
-    // a tank aiming at this speed reaches any target angle in a single frame: the player
-    // aims with the mouse, which has no speed of its own to preserve
-    constexpr float UNLIMITED_RADIAL_VELOCITY = std::numeric_limits<float>::infinity();
+    // the player aims with the mouse, whose sensitivity was always a per-frame gain:
+    // 0.4 pi per frame on the turret, expressed here as the slew speed it means at 30 Hz
+    constexpr float PLAYER_TURRET_RADIAL_VELOCITY = std::numbers::pi * 12.f;
+    constexpr float PLAYER_CANON_RADIAL_VELOCITY = 0.4f * PLAYER_TURRET_RADIAL_VELOCITY;
 
     constexpr float CANON_AIM_DISTANCE = 100.f;
 

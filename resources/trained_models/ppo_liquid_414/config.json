@@ -89,7 +89,7 @@
         "cuda": true,
         "max_episode_steps": 5400,
         "nb_episodes": 6000,
-        "output_folder": "./outputs/train_409_ppo_liquid_separated-target-entropy",
+        "output_folder": "./outputs/train_414_ppo_liquid_normal-delta-control",
         "resources_folder": "/home/samuel/CLionProjects/ArenAI/resources",
         "save_every": 108000
     }

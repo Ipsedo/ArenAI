@@ -46,6 +46,7 @@ namespace arenai::agent {
         torch::nn::Sequential sensors_encoder;
 
         std::shared_ptr<LiquidCell> liquid;
+        torch::nn::Sequential skip;
 
         torch::nn::Linear to_value;
 

@@ -35,21 +35,31 @@ namespace arenai::agent {
                             neuron_number, hidden_size_sensors + vision_encoder->get_output_size(),
                             neuron_number, unfolding_steps,
                             [](const torch::Tensor &t) { return torch::silu(t); }, delta_t))),
+          skip(register_module(
+              "skip",
+              torch::nn::Sequential(
+                  torch::nn::Linear(
+                      torch::nn::LinearOptions(
+                          hidden_size_sensors + vision_encoder->get_output_size(), neuron_number)
+                          .bias(false)),
+                  torch::nn::LayerNorm(torch::nn::LayerNormOptions({neuron_number})),
+                  torch::nn::SiLU()))),
           mu(register_module(
               "mu",
               torch::nn::Sequential(
-                  torch::nn::Linear(neuron_number, nb_continuous_actions), torch::nn::Tanh()))),
+                  torch::nn::Linear(2 * neuron_number, nb_continuous_actions), torch::nn::Tanh()))),
           sigma(register_module(
               "sigma", torch::nn::Sequential(
-                           torch::nn::Linear(neuron_number, nb_continuous_actions),
+                           torch::nn::Linear(2 * neuron_number, nb_continuous_actions),
                            std::make_shared<SigmaOutput>(SIGMA_MIN, SIGMA_MAX)))),
           discrete(register_module(
-              "discrete",
-              torch::nn::Sequential(
-                  torch::nn::Linear(neuron_number, nb_discrete_actions), torch::nn::Sigmoid()))) {
+              "discrete", torch::nn::Sequential(
+                              torch::nn::Linear(2 * neuron_number, nb_discrete_actions),
+                              torch::nn::Sigmoid()))) {
 
         vision_encoder->apply(init_hidden_weights);
         sensors_encoder->apply(init_hidden_weights);
+        skip->apply(init_hidden_weights);
 
         // zero bias + tanh puts the initial mode at the action-range center
         mu->apply(init_mu_output_weights);
@@ -66,7 +76,9 @@ namespace arenai::agent {
 
     LiquidActorOutput LiquidActor::act(
         const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &x_t) {
-        const auto [output, next_x] = liquid->forward_step(x_t, encode(vision, sensors));
+        const auto encoded = encode(vision, sensors);
+        const auto [liquid_output, next_x] = liquid->forward_step(x_t, encoded);
+        const auto output = torch::cat({liquid_output, skip->forward(encoded)}, -1);
         return {
             .mu = mu->forward(output),
             .sigma = sigma->forward(output),
@@ -96,7 +108,7 @@ namespace arenai::agent {
             outputs.push_back(output);
         }
 
-        const auto output = torch::stack(outputs, 1);
+        const auto output = torch::cat({torch::stack(outputs, 1), skip->forward(encoded)}, -1);
         return {
             .mu = mu->forward(output),
             .sigma = sigma->forward(output),

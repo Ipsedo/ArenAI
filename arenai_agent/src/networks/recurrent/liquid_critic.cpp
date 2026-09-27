@@ -31,10 +31,20 @@ namespace arenai::agent {
                             neuron_number, hidden_size_sensors + vision_encoder->get_output_size(),
                             neuron_number, unfolding_steps,
                             [](const torch::Tensor &t) { return torch::silu(t); }, delta_t))),
-          to_value(register_module("to_value", torch::nn::Linear(neuron_number, 1))) {
+          skip(register_module(
+              "skip",
+              torch::nn::Sequential(
+                  torch::nn::Linear(
+                      torch::nn::LinearOptions(
+                          hidden_size_sensors + vision_encoder->get_output_size(), neuron_number)
+                          .bias(false)),
+                  torch::nn::LayerNorm(torch::nn::LayerNormOptions({neuron_number})),
+                  torch::nn::SiLU()))),
+          to_value(register_module("to_value", torch::nn::Linear(2 * neuron_number, 1))) {
 
         vision_encoder->apply(init_hidden_weights);
         sensors_encoder->apply(init_hidden_weights);
+        skip->apply(init_hidden_weights);
 
         to_value->apply(init_value_output_weights);
     }
@@ -45,8 +55,11 @@ namespace arenai::agent {
 
     LiquidCriticOutput LiquidCritic::value(
         const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &x_t) {
-        const auto [output, next_x] = liquid->forward_step(x_t, encode(vision, sensors));
-        return {.value = to_value->forward(output), .next_x = next_x};
+        const auto encoded = encode(vision, sensors);
+        const auto [output, next_x] = liquid->forward_step(x_t, encoded);
+        return {
+            .value = to_value->forward(torch::cat({output, skip->forward(encoded)}, -1)),
+            .next_x = next_x};
     }
 
     LiquidCriticOutput LiquidCritic::value_sequence(
@@ -71,7 +84,10 @@ namespace arenai::agent {
             outputs.push_back(output);
         }
 
-        return {.value = to_value->forward(torch::stack(outputs, 1)), .next_x = x};
+        return {
+            .value = to_value->forward(
+                torch::cat({torch::stack(outputs, 1), skip->forward(encoded)}, -1)),
+            .next_x = x};
     }
 
     torch::Tensor LiquidCritic::initial_state(const int batch_size) const {

@@ -17,10 +17,10 @@ namespace arenai::agent {
         float actor_learning_rate = 1e-4f;
         float critic_learning_rate = 3e-4f;
         int hidden_size_sensors = 128;
-        std::vector<std::tuple<int, int>> vision_channels = {{3, 16},  {16, 24}, {24, 32}, {32, 48},
-                                                             {48, 64}, {64, 96}, {96, 128}};
-        std::vector<int> group_norm_nums = {2, 3, 4, 6, 8, 12, 16};
-        int neuron_number = 128;
+        std::vector<std::tuple<int, int>> vision_channels = {{3, 8},   {8, 16},   {16, 32},
+                                                             {32, 64}, {64, 128}, {128, 256}};
+        std::vector<int> group_norm_nums = {2, 4, 8, 16, 32, 64};
+        int neuron_number = 512;
         int unfolding_steps = 6;
         float delta_t = 1.f / 30.f;
         int chunk_size = 30;
@@ -37,7 +37,7 @@ namespace arenai::agent {
         std::vector<float> continuous_target_entropy = {-0.2f, -0.2f, -0.88f, -0.88f};
         // factors of the Bernoulli maximum entropy, per discrete action: fire, zoom
         std::vector<float> discrete_target_entropy_factors = {0.4f, 0.4f};
-        int epochs = 2;
+        int epochs = 4;
         int rollout_size = 30 * 30;
         int minibatch_size = 1024;
     };

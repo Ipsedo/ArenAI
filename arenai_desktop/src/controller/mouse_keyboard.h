@@ -58,8 +58,9 @@ namespace arenai::desktop {
         float current_dir;
         float current_speed;
 
-        float current_turret_rotation;
-        float current_canon_rotation;
+        // aim rate in [-1, 1] handed to the tank parts: the normalized mouse displacement
+        float current_turret_rate;
+        float current_canon_rate;
 
         // held state: true between the press and the release of the zoom slot
         bool current_zoom;

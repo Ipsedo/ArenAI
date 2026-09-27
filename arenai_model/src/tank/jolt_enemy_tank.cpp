@@ -48,6 +48,7 @@ namespace arenai::model {
         const float wanted_frame_frequency, const bool apply_timeout)
         : JoltTank(
             engine, file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency,
+            ENEMY_TURRET_RADIAL_VELOCITY, ENEMY_CANON_RADIAL_VELOCITY,
             [this](const ShellItem *shell, const ShellContactInfo &info, Item *item) {
                 on_shell_contact(shell, info, item);
             },

@@ -17,6 +17,13 @@ namespace arenai::model {
     constexpr int ENEMY_NB_DISCRETE_ACTION = 2;
 
     constexpr float ENEMY_TURRET_RADIAL_VELOCITY = std::numbers::pi * 1.f;
+    // the canon travels a much shorter range than the turret: it aims 2.5 times slower
+    constexpr float ENEMY_CANON_RADIAL_VELOCITY = 0.4f * ENEMY_TURRET_RADIAL_VELOCITY;
+
+    // the player aims with the mouse, whose sensitivity was always a per-frame gain:
+    // 0.4 pi per frame on the turret, expressed here as the slew speed it means at 30 Hz
+    constexpr float PLAYER_TURRET_RADIAL_VELOCITY = std::numbers::pi * 12.f;
+    constexpr float PLAYER_CANON_RADIAL_VELOCITY = 0.4f * PLAYER_TURRET_RADIAL_VELOCITY;
 
     constexpr float CANON_AIM_DISTANCE = 100.f;
 

@@ -12,8 +12,8 @@ namespace arenai::desktop {
         std::shared_ptr<view::AbstractWindow> window, const view::AbstractRenderer &renderer,
         const KeyboardBindings &bindings)
         : window(std::move(window)), renderer(renderer), bindings(bindings), last_mouse_x(0.),
-          last_mouse_y(0.), current_dir(0.f), current_speed(0.f), current_turret_rotation(0.f),
-          current_canon_rotation(0.f), current_zoom(false), cursor_captured(true) {
+          last_mouse_y(0.), current_dir(0.f), current_speed(0.f), current_turret_rate(0.f),
+          current_canon_rate(0.f), current_zoom(false), cursor_captured(true) {
 
         const auto center_x = static_cast<double>(renderer.get_width()) / 2.,
                    center_y = static_cast<double>(renderer.get_height()) / 2.;
@@ -88,21 +88,17 @@ namespace arenai::desktop {
         if (cursor_captured) {
             window->set_cursor_mode(controller::CursorMode::Disabled);
 
-            // controllers consume rad/frame deltas, so the normalized mouse
-            // displacement is scaled into radians here.
-            constexpr float factor = 0.4f * static_cast<float>(M_PI);
-
-            current_turret_rotation =
-                factor * static_cast<float>((event.mouse_x - center_x) / center_x);
-            current_canon_rotation =
-                factor * static_cast<float>((event.mouse_y - center_y) / center_y);
+            // the parts consume an aim rate in [-1, 1]: the normalized mouse displacement
+            // is that rate, the player's slew speed being set to match the mouse
+            current_turret_rate = static_cast<float>((event.mouse_x - center_x) / center_x);
+            current_canon_rate = static_cast<float>((event.mouse_y - center_y) / center_y);
 
             window->set_cursor_position(center_x, center_y);
         } else {
             window->set_cursor_mode(controller::CursorMode::Normal);
 
-            current_turret_rotation = 0.f;
-            current_canon_rotation = 0.f;
+            current_turret_rate = 0.f;
+            current_canon_rate = 0.f;
         }
 
         // mouse buttons
@@ -119,7 +115,7 @@ namespace arenai::desktop {
         return {
             true,
             {.left_joystick = {.x = current_dir, .y = current_speed},
-             .right_joystick = {.x = current_turret_rotation, .y = current_canon_rotation},
+             .right_joystick = {.x = current_turret_rate, .y = current_canon_rate},
              .fire_button = {need_fire},
              .zoom_button = {current_zoom}}};
     }

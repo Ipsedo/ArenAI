@@ -162,14 +162,14 @@ TEST_F(EnemyTankTest, ShellHitsGroundNoRewardNoCrash) {
 
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
 
-    // tilt canon downward to ensure it hits the ground
+    // tilt canon downward to ensure it hits the ground: the aim is a rate, so it takes
+    // several frames of held input to reach the travel limit
     constexpr user_input aim_down{
         .left_joystick = {.x = 0.f, .y = 0.f},
         .right_joystick = {.x = 0.f, .y = 1.f},
         .fire_button = {false}};
-    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(aim_down);
-    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(aim_down);
-    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(aim_down);
+    for (int i = 0; i < 40; i++)
+        for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(aim_down);
 
     constexpr user_input fire_input{
         .left_joystick = {.x = 0.f, .y = 0.f},

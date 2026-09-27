@@ -101,12 +101,13 @@ namespace arenai::desktop {
                 else if (action == controller::InputAction::Release) zoom_held = false;
             }
         } else {
-            // per-frame tick: controllers consume rad/frame deltas, so the stick
-            // deflection is scaled into radians here (like the mouse handler)
-            constexpr float factor = 0.02f * static_cast<float>(M_PI);
+            // per-frame tick: the parts consume an aim rate in [-1, 1], a fraction of the
+            // tank's slew speed. that speed is set for the mouse, so the stick asks for a
+            // small share of it -- the ratio of the two historical rad/frame gains
+            constexpr float stick_sensitivity = 0.05f;
 
-            turret_rotation = factor * axis_value(bindings.aim_x, event);
-            canon_rotation = factor * axis_value(bindings.aim_y, event);
+            turret_rotation = stick_sensitivity * axis_value(bindings.aim_x, event);
+            canon_rotation = stick_sensitivity * axis_value(bindings.aim_y, event);
         }
 
         const float direction = axis_value(bindings.steer, event);

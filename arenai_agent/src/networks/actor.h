@@ -15,8 +15,10 @@
 namespace arenai::agent {
 
     struct ActorRawOutput {
-        torch::Tensor mode;
-        torch::Tensor concentration;
+        // truncated normal on [-1, 1]: mu is the mode, sigma the spread. sigma is
+        // parameterised in log-scale, so the aim precision has no ceiling
+        torch::Tensor mu;
+        torch::Tensor sigma;
         torch::Tensor discrete;
     };
 
@@ -37,8 +39,8 @@ namespace arenai::agent {
 
         torch::nn::Sequential head;
 
-        torch::nn::Sequential mode;
-        torch::nn::Sequential concentration;
+        torch::nn::Sequential mu;
+        torch::nn::Sequential sigma;
         torch::nn::Sequential discrete;
     };
 

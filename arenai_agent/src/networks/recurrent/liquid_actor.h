@@ -15,10 +15,10 @@
 namespace arenai::agent {
 
     struct LiquidActorOutput {
-        // Beta distribution on [-1, 1]: mode in [0, 1] (on the underlying [0, 1]
-        // support) and concentration κ = α + β
-        torch::Tensor mode;
-        torch::Tensor concentration;
+        // truncated normal on [-1, 1]: mu is the mode, sigma the spread. sigma is
+        // parameterised in log-scale, so the aim precision has no ceiling
+        torch::Tensor mu;
+        torch::Tensor sigma;
         // independent Bernoulli probabilities, one per discrete action
         torch::Tensor discrete;
         // liquid state after the last processed step
@@ -55,8 +55,8 @@ namespace arenai::agent {
 
         std::shared_ptr<LiquidCell> liquid;
 
-        torch::nn::Sequential mode;
-        torch::nn::Sequential concentration;
+        torch::nn::Sequential mu;
+        torch::nn::Sequential sigma;
         torch::nn::Sequential discrete;
 
         // [rows, features] recurrent input: encoded vision and sensors, concatenated

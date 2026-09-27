@@ -16,7 +16,6 @@
 #include <arenai_view/backend.h>
 #include <arenai_view/renderer.h>
 
-#include "./enemy_handler.h"
 #include "./thread_pool.h"
 #include "./types.h"
 
@@ -52,7 +51,6 @@ namespace arenai::core {
         std::unique_ptr<EnemyVisionThreadPool> vision_pool_;
 
         std::vector<std::shared_ptr<model::EnemyTank>> tanks;
-        std::vector<std::unique_ptr<EnemyControllerHandler>> tank_controller_handler;
 
         std::unique_ptr<model::AbstractPhysicEngine> physic_engine;
 

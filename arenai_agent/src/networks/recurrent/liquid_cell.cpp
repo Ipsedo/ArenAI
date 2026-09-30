@@ -2,6 +2,8 @@
 // Created by samuel on 06/09/2026.
 //
 
+#include <utility>
+
 #include "./liquid_cell.h"
 
 #include "../../networks_utils/init.h"
@@ -15,7 +17,7 @@ using namespace arenai::agent;
 
 CellModel::CellModel(
     const int neuron_number, const int input_size,
-    const std::function<torch::Tensor(const torch::Tensor &)> &activation_function)
+    torch::nn::AnyModule activation_function)
     : weights(register_module(
         "weights",
         torch::nn::Linear(torch::nn::LinearOptions(input_size, neuron_number).bias(false)))),
@@ -23,14 +25,16 @@ CellModel::CellModel(
           "recurrent_weights",
           torch::nn::Linear(torch::nn::LinearOptions(neuron_number, neuron_number).bias(false)))),
       biases(register_parameter("biases", torch::zeros({1, neuron_number}))),
-      activation_function(activation_function) {
+      activation(std::move(activation_function)) {
+
+    register_module("activation", activation.ptr());
 
     weights->apply(init_liquid_weights);
     recurrent_weights->apply(init_liquid_weights);
 }
 
 torch::Tensor CellModel::forward(const torch::Tensor &x_t, const torch::Tensor &input_t) {
-    return activation_function(recurrent_weights(x_t) + weights(input_t) + biases);
+    return activation.forward(recurrent_weights(x_t) + weights(input_t) + biases);
 }
 
 /*
@@ -39,7 +43,7 @@ torch::Tensor CellModel::forward(const torch::Tensor &x_t, const torch::Tensor &
 
 LiquidCell::LiquidCell(
     const int neuron_number, const int input_size, const int output_size, const int unfolding_steps,
-    const std::function<torch::Tensor(const torch::Tensor &)> &activation_function,
+    const torch::nn::AnyModule &activation_function,
     const float delta_t)
     : a(register_parameter("a", torch::ones({1, neuron_number}))),
       raw_tau(register_parameter("raw_tau", torch::zeros({1, neuron_number}))),

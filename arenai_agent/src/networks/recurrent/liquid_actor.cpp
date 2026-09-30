@@ -34,7 +34,7 @@ namespace arenai::agent {
               "liquid", std::make_shared<LiquidCell>(
                             neuron_number, hidden_size_sensors + vision_encoder->get_output_size(),
                             neuron_number, unfolding_steps,
-                            [](const torch::Tensor &t) { return torch::silu(t); }, delta_t))),
+                            torch::nn::AnyModule(torch::nn::SiLU()), delta_t))),
           skip(register_module(
               "skip",
               torch::nn::Sequential(

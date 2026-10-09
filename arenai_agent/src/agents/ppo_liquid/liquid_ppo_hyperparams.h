@@ -15,12 +15,12 @@ namespace arenai::agent {
     // Member initializers are the CLI defaults (single source of truth).
     struct LiquidPpoHyperParams {
         float actor_learning_rate = 1e-4f;
-        float critic_learning_rate = 3e-4f;
-        int hidden_size_sensors = 128;
-        std::vector<std::tuple<int, int>> vision_channels = {{3, 8},   {8, 16},   {16, 32},
-                                                             {32, 64}, {64, 128}, {128, 256}};
-        std::vector<int> group_norm_nums = {2, 4, 8, 16, 32, 64};
-        int neuron_number = 512;
+        float critic_learning_rate = 1e-4f;
+        int hidden_size_sensors = 64;
+        std::vector<std::tuple<int, int>> vision_channels =
+            {{3, 8}, {8, 16}, {16, 32}, {32, 64}, {64, 128}};
+        std::vector<int> group_norm_nums = {2, 4, 8, 16, 32};
+        int neuron_number = 128;
         int unfolding_steps = 6;
         float delta_t = 1.f / 30.f;
         int chunk_size = 30;
@@ -39,7 +39,7 @@ namespace arenai::agent {
         std::vector<float> discrete_target_entropy_factors = {0.4f, 0.4f};
         int epochs = 2;
         int rollout_size = 30 * 30;
-        int minibatch_size = 1024;
+        int minibatch_size = 8192;
     };
 
     std::vector<CliField<LiquidPpoHyperParams>> liquid_ppo_cli_fields();

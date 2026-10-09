@@ -185,8 +185,26 @@ namespace arenai::view {
         if (keyboard_callback_) keyboard_callback_->on_key(to_key(key), to_action(action));
     }
 
+    // GLFW reports the cursor in window (logical) coordinates while the rest
+    // of the game reasons in framebuffer pixels: both match everywhere except
+    // on HiDPI Wayland, where the framebuffer is the window scaled by the
+    // monitor factor (2 on a 4K display, 1.25 with fractional scaling). The
+    // ratio of the two sizes is the exact mapping the compositor applies, so
+    // it is used rather than the content scale GLFW advertises.
+    std::tuple<double, double> GlfwVulkanWindow::cursor_scale() const {
+        int window_width, window_height, framebuffer_width, framebuffer_height;
+        glfwGetWindowSize(window_, &window_width, &window_height);
+        glfwGetFramebufferSize(window_, &framebuffer_width, &framebuffer_height);
+        if (window_width <= 0 || window_height <= 0) return {1.0, 1.0};
+        return {
+            static_cast<double>(framebuffer_width) / window_width,
+            static_cast<double>(framebuffer_height) / window_height};
+    }
+
     void GlfwVulkanWindow::on_cursor(const double x, const double y) const {
-        if (keyboard_callback_) keyboard_callback_->on_mouse_move(x, y);
+        if (!keyboard_callback_) return;
+        const auto [scale_x, scale_y] = cursor_scale();
+        keyboard_callback_->on_mouse_move(x * scale_x, y * scale_y);
     }
 
     void GlfwVulkanWindow::on_mouse_button(const int button, const int action) const {
@@ -281,7 +299,8 @@ namespace arenai::view {
     }
 
     void GlfwVulkanWindow::set_cursor_position(const double x, const double y) {
-        glfwSetCursorPos(window_, x, y);
+        const auto [scale_x, scale_y] = cursor_scale();
+        glfwSetCursorPos(window_, x / scale_x, y / scale_y);
     }
 
     void GlfwVulkanWindow::set_fullscreen(const bool fullscreen) {

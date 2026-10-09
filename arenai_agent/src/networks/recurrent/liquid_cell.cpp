@@ -2,9 +2,9 @@
 // Created by samuel on 06/09/2026.
 //
 
-#include <utility>
-
 #include "./liquid_cell.h"
+
+#include <utility>
 
 #include "../../networks_utils/init.h"
 
@@ -16,8 +16,7 @@ using namespace arenai::agent;
  */
 
 CellModel::CellModel(
-    const int neuron_number, const int input_size,
-    torch::nn::AnyModule activation_function)
+    const int neuron_number, const int input_size, torch::nn::AnyModule activation_function)
     : weights(register_module(
         "weights",
         torch::nn::Linear(torch::nn::LinearOptions(input_size, neuron_number).bias(false)))),
@@ -43,8 +42,7 @@ torch::Tensor CellModel::forward(const torch::Tensor &x_t, const torch::Tensor &
 
 LiquidCell::LiquidCell(
     const int neuron_number, const int input_size, const int output_size, const int unfolding_steps,
-    const torch::nn::AnyModule &activation_function,
-    const float delta_t)
+    const torch::nn::AnyModule &activation_function, const float delta_t)
     : a(register_parameter("a", torch::ones({1, neuron_number}))),
       raw_tau(register_parameter("raw_tau", torch::zeros({1, neuron_number}))),
       f(register_module(

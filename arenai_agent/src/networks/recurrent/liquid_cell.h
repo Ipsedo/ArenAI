@@ -10,9 +10,7 @@
 namespace arenai::agent {
     class CellModel : public torch::nn::Module {
     public:
-        CellModel(
-            int neuron_number, int input_size,
-            torch::nn::AnyModule activation_function);
+        CellModel(int neuron_number, int input_size, torch::nn::AnyModule activation_function);
 
         torch::Tensor forward(const torch::Tensor &x_t, const torch::Tensor &input_t);
 
@@ -28,8 +26,7 @@ namespace arenai::agent {
     public:
         LiquidCell(
             int neuron_number, int input_size, int output_size, int unfolding_steps,
-            const torch::nn::AnyModule &activation_function,
-            float delta_t);
+            const torch::nn::AnyModule &activation_function, float delta_t);
 
         torch::Tensor forward(const torch::Tensor &inputs);
 

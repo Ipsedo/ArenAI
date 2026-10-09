@@ -59,9 +59,9 @@ namespace arenai::model {
                 return can_fire;
             }),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-          curr_frame_upside_down(0), miss_distance_scale(1.5f), miss_distance_exponent(1.f / 2.f),
-          hit_reward_scale(0.1f), hit_received_cost(0.3f), initial_nb_shells(10),
-          nb_shells(initial_nb_shells), max_shells(30),
+          curr_frame_upside_down(0), miss_distance_scale(1.5f), hit_reward_scale(0.1f),
+          hit_received_cost(0.3f), initial_nb_shells(10), nb_shells(initial_nb_shells),
+          max_shells(30),
           fire_cooldown_frames(static_cast<int>(1.f / 6.f / wanted_frame_frequency)),
           curr_cooldown_frame(fire_cooldown_frames), shells_recharged_per_hit(5),
           nb_frames_per_shell_regen(static_cast<int>(1.5f / wanted_frame_frequency)),
@@ -81,10 +81,9 @@ namespace arenai::model {
         const float ideal_trajectory_distance = glm::length(ideal_trajectory);
         const float miss_distance = glm::length(miss_trajectory);
 
-        const float ratio = miss_distance_scale * miss_distance
-                            / std::pow(ideal_trajectory_distance, miss_distance_exponent);
+        const float ratio = miss_distance_scale * miss_distance / ideal_trajectory_distance;
 
-        return 1.f / (1.f + std::pow(ratio, 2.f));
+        return 1.f / (1.f + std::log(1.f + ratio));
     }
 
     void JoltEnemyTank::update_closest_approach(
@@ -156,7 +155,7 @@ namespace arenai::model {
                 detail.aim += hit_reward_scale * aim_quality;
 
                 detail.nb_landed_shells++;
-                detail.sum_aim_quality += aim_quality;
+                detail.sum_aim_quality += 0.1f * aim_quality;
                 detail.sum_miss_distance +=
                     glm::length(tracked.shell_pos_at_t - tracked.enemy_pos_at_t);
 
@@ -171,7 +170,7 @@ namespace arenai::model {
         // 4. total reward, kept split for the metrics
         last_reward_detail = detail;
 
-        return detail.hit + detail.received + detail.death;
+        return detail.aim + detail.hit + detail.received + detail.death;
     }
 
     RewardDetail JoltEnemyTank::get_last_reward_detail() const { return last_reward_detail; }

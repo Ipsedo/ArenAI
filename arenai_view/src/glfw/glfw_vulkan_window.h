@@ -71,6 +71,7 @@ namespace arenai::view {
         int windowed_width_ = 0, windowed_height_ = 0;
 
         void on_key(int key, int action) const;
+        std::tuple<double, double> cursor_scale() const;
         void on_cursor(double x, double y) const;
         void on_mouse_button(int button, int action) const;
         void on_scroll(double x_offset, double y_offset) const;

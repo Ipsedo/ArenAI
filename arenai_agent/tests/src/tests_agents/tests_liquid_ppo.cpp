@@ -34,8 +34,8 @@ LiquidPpoAgentTest::make_factory(const LiquidPpoTestConfig &cfg) const {
         .gae_lambda = 0.95f,
         .clip_epsilon = 0.2f,
         .grad_norm_max = 1.f,
-        .continuous_target_entropy = std::vector(cfg.nb_continuous_actions, -0.88f),
-        .discrete_target_entropy_factors = std::vector(cfg.nb_discrete_actions, 0.2f),
+        .continuous_entropy_factor = 0.001f,
+        .discrete_entropy_factor = 0.001f,
         .epochs = 1,
         .rollout_size = 8,
         .minibatch_size = 10};
@@ -79,7 +79,7 @@ TEST_F(LiquidPpoAgentTest, MetricsNotEmpty) {
 
     const auto metrics = factory->get_trainer()->get_metrics();
 
-    ASSERT_EQ(metrics.size(), 10);
+    ASSERT_EQ(metrics.size(), 8);
 }
 
 // ========================================================================

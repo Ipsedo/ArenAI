@@ -24,13 +24,13 @@ namespace arenai::agent {
           collector(std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state)),
           agent(std::make_shared<TorchLiquidPpoAgent>(actor, hidden_state, device, collector)),
           trainer(std::make_shared<LiquidPpoTrainer>(
-              actor, rollout_buffer, vision_height, vision_width, nb_sensors, nb_continuous_actions,
-              nb_discrete_actions, params.actor_learning_rate, params.critic_learning_rate,
-              params.hidden_size_sensors, params.vision_channels, params.group_norm_nums,
-              params.neuron_number, params.unfolding_steps, params.delta_t, device,
-              params.metric_window_size, params.gamma, params.gae_lambda, params.clip_epsilon,
-              params.target_kl, params.grad_norm_max, params.continuous_target_entropy,
-              params.discrete_target_entropy_factors, params.epochs, params.rollout_size,
+              actor, rollout_buffer, vision_height, vision_width, nb_sensors,
+              params.actor_learning_rate, params.critic_learning_rate, params.hidden_size_sensors,
+              params.vision_channels, params.group_norm_nums, params.neuron_number,
+              params.unfolding_steps, params.delta_t, device, params.metric_window_size,
+              params.gamma, params.gae_lambda, params.clip_epsilon, params.target_kl,
+              params.grad_norm_max, params.continuous_entropy_factor,
+              params.discrete_entropy_factor, params.epochs, params.rollout_size,
               params.minibatch_size, params.chunk_size)) {}
 
     std::shared_ptr<AbstractTorchAgent> LiquidPpoTorchAgentFactory::get_agent() { return agent; }

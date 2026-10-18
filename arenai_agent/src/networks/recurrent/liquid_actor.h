@@ -9,6 +9,7 @@
 
 #include <torch/torch.h>
 
+#include "../misc.h"
 #include "../vision.h"
 #include "./liquid_cell.h"
 
@@ -16,6 +17,7 @@ namespace arenai::agent {
 
     struct LiquidActorOutput {
         // truncated normal on [-1, 1]: mu is the mode, sigma the spread. sigma is
+        // state-independent (one learned value per action, broadcast to mu's shape) and
         // parameterised in log-scale, so the aim precision has no ceiling
         torch::Tensor mu;
         torch::Tensor sigma;
@@ -50,14 +52,16 @@ namespace arenai::agent {
         torch::Tensor initial_state(int batch_size) const;
 
     private:
-        std::shared_ptr<ConvolutionNetwork> vision_encoder;
+        std::shared_ptr<BigVisionNetwork> vision_encoder;
         torch::nn::Sequential sensors_encoder;
 
         std::shared_ptr<LiquidCell> liquid;
         torch::nn::Sequential skip;
 
         torch::nn::Sequential mu;
-        torch::nn::Sequential sigma;
+        // state-independent: one logit per continuous action, mapped by sigma
+        torch::Tensor sigma_logit;
+        std::shared_ptr<SigmaOutput> sigma;
         torch::nn::Sequential discrete;
 
         // [rows, features] recurrent input: encoded vision and sensors, concatenated

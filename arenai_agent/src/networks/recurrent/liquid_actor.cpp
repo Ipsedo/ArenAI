@@ -21,7 +21,7 @@ namespace arenai::agent {
         const int &unfolding_steps, const float &delta_t, const float &initial_sigma,
         const std::vector<float> &initial_discrete_probas)
         : vision_encoder(register_module(
-            "vision_encoder", std::make_shared<ConvolutionNetwork>(
+            "vision_encoder", std::make_shared<BigVisionNetwork>(
                                   vision_height, vision_width, vision_channels, group_norm_nums))),
           sensors_encoder(register_module(
               "sensors_encoder",
@@ -48,10 +48,10 @@ namespace arenai::agent {
               "mu",
               torch::nn::Sequential(
                   torch::nn::Linear(2 * neuron_number, nb_continuous_actions), torch::nn::Tanh()))),
-          sigma(register_module(
-              "sigma", torch::nn::Sequential(
-                           torch::nn::Linear(2 * neuron_number, nb_continuous_actions),
-                           std::make_shared<SigmaOutput>(SIGMA_MIN, SIGMA_MAX)))),
+          sigma_logit(register_parameter(
+              "sigma_logit",
+              torch::full({nb_continuous_actions}, sigma_output_logit(initial_sigma)))),
+          sigma(register_module("sigma", std::make_shared<SigmaOutput>(SIGMA_MIN, SIGMA_MAX))),
           discrete(register_module(
               "discrete", torch::nn::Sequential(
                               torch::nn::Linear(2 * neuron_number, nb_discrete_actions),
@@ -63,7 +63,6 @@ namespace arenai::agent {
 
         // zero bias + tanh puts the initial mode at the action-range center
         mu->apply(init_mu_output_weights);
-        sigma->apply([initial_sigma](Module &m) { init_sigma_output_weights(m, initial_sigma); });
 
         discrete->apply([&initial_discrete_probas](Module &m) {
             init_discrete_output_weights(m, initial_discrete_probas);
@@ -79,9 +78,10 @@ namespace arenai::agent {
         const auto encoded = encode(vision, sensors);
         const auto [liquid_output, next_x] = liquid->forward_step(x_t, encoded);
         const auto output = torch::cat({liquid_output, skip->forward(encoded)}, -1);
+        const auto mu_output = mu->forward(output);
         return {
-            .mu = mu->forward(output),
-            .sigma = sigma->forward(output),
+            .mu = mu_output,
+            .sigma = sigma->forward(sigma_logit).expand_as(mu_output),
             .discrete = discrete->forward(output),
             .next_x = next_x};
     }
@@ -109,9 +109,10 @@ namespace arenai::agent {
         }
 
         const auto output = torch::cat({torch::stack(outputs, 1), skip->forward(encoded)}, -1);
+        const auto mu_output = mu->forward(output);
         return {
-            .mu = mu->forward(output),
-            .sigma = sigma->forward(output),
+            .mu = mu_output,
+            .sigma = sigma->forward(sigma_logit).expand_as(mu_output),
             .discrete = discrete->forward(output),
             .next_x = x};
     }

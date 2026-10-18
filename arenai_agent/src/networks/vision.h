@@ -48,6 +48,21 @@ namespace arenai::agent {
         int output_size;
     };
 
+    class BigVisionNetwork final : public torch::nn::Module {
+    public:
+        BigVisionNetwork(
+            int vision_height, int vision_width, const std::vector<std::tuple<int, int>> &channels,
+            const std::vector<int> &group_norm_nums);
+
+        torch::Tensor forward(const torch::Tensor &input);
+
+        int get_output_size() const;
+
+    private:
+        torch::nn::Sequential cnn{nullptr};
+        int output_size;
+    };
+
 }// namespace arenai::agent
 
 #endif// ARENAI_AGENT_HOST_VISION_H

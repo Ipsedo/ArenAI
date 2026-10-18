@@ -18,8 +18,8 @@ namespace arenai::agent {
         float critic_learning_rate = 1e-4f;
         int hidden_size_sensors = 64;
         std::vector<std::tuple<int, int>> vision_channels =
-            {{3, 8}, {8, 16}, {16, 32}, {32, 64}, {64, 128}};
-        std::vector<int> group_norm_nums = {2, 4, 8, 16, 32};
+            {{3, 8}, {8, 16}, {16, 32}, {32, 48}, {48, 64}};
+        std::vector<int> group_norm_nums = {2, 4, 8, 12, 16};
         int neuron_number = 128;
         int unfolding_steps = 6;
         float delta_t = 1.f / 30.f;
@@ -33,11 +33,11 @@ namespace arenai::agent {
         float clip_epsilon = 0.2f;
         float target_kl = 0.05f;
         float grad_norm_max = 0.5f;
-        float continuous_entropy_factor = 0.001f;
-        float discrete_entropy_factor = 0.001f;
+        float continuous_entropy_factor = 0.01f;
+        float discrete_entropy_factor = 0.01f;
         int epochs = 2;
         int rollout_size = 30 * 30;
-        int minibatch_size = 8192;
+        int minibatch_size = 2048;
     };
 
     std::vector<CliField<LiquidPpoHyperParams>> liquid_ppo_cli_fields();

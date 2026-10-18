@@ -47,18 +47,20 @@ namespace arenai::agent {
         }
     }
 
-    void init_sigma_output_weights(torch::nn::Module &module, const float wanted_sigma) {
+    float sigma_output_logit(const float wanted_sigma) {
         const float min_log_sigma = std::log(SIGMA_MIN);
         const float max_log_sigma = std::log(SIGMA_MAX);
 
         const auto initial_sigma_sigmoid =
             (std::log(wanted_sigma) - min_log_sigma) / (max_log_sigma - min_log_sigma);
-        const auto initial_sigma_logit =
-            std::log(initial_sigma_sigmoid / (1.f - initial_sigma_sigmoid));
+        return std::log(initial_sigma_sigmoid / (1.f - initial_sigma_sigmoid));
+    }
 
+    void init_sigma_output_weights(torch::nn::Module &module, const float wanted_sigma) {
         if (auto *lin = module.as<torch::nn::Linear>()) {
             torch::nn::init::orthogonal_(lin->weight, 0.01f);
-            if (lin->options.bias()) torch::nn::init::constant_(lin->bias, initial_sigma_logit);
+            if (lin->options.bias())
+                torch::nn::init::constant_(lin->bias, sigma_output_logit(wanted_sigma));
         }
     }
 

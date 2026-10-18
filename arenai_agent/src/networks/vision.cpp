@@ -101,4 +101,56 @@ namespace arenai::agent {
     }
 
     int ImpalaConvolutionNetwork::get_output_size() const { return output_size; }
+
+    /*
+     * Big image CNN : first conv has 4 stride
+     */
+
+    BigVisionNetwork::BigVisionNetwork(
+        const int vision_height, const int vision_width,
+        const std::vector<std::tuple<int, int>> &channels, const std::vector<int> &group_norm_nums)
+        : cnn(register_module("cnn", torch::nn::Sequential())) {
+
+        int w = vision_width, h = vision_height;
+
+        const auto &[first_c_i, first_c_o] = channels.front();
+        const auto first_groups = group_norm_nums.front();
+
+        cnn->push_back(torch::nn::Conv2d(
+            torch::nn::Conv2dOptions(first_c_i, first_c_o, 5).stride(4).padding(2).bias(false)));
+        cnn->push_back(torch::nn::GroupNorm(torch::nn::GroupNormOptions(first_groups, first_c_o)));
+        cnn->push_back(torch::nn::SiLU());
+
+        w = (w - 5 + 2 * 2) / 4 + 1;
+        h = (h - 5 + 2 * 2) / 4 + 1;
+
+        for (int i = 1; i < channels.size(); i++) {
+            const auto &[c_i, c_o] = channels[i];
+            const auto groups = group_norm_nums[i];
+
+            constexpr int padding = 1, stride = 2, kernel = 3;
+
+            w = (w - kernel + 2 * padding) / stride + 1;
+            h = (h - kernel + 2 * padding) / stride + 1;
+
+            cnn->push_back(torch::nn::Conv2d(torch::nn::Conv2dOptions(c_i, c_o, kernel)
+                                                 .stride(stride)
+                                                 .padding(padding)
+                                                 .bias(false)));
+            cnn->push_back(torch::nn::GroupNorm(torch::nn::GroupNormOptions(groups, c_o)));
+            cnn->push_back(torch::nn::SiLU());
+        }
+
+        output_size = w * h * std::get<1>(channels.back());
+
+        cnn->push_back(torch::nn::Flatten(torch::nn::FlattenOptions().start_dim(1).end_dim(-1)));
+    }
+
+    torch::Tensor BigVisionNetwork::forward(const torch::Tensor &input) {
+        TORCH_CHECK(input.dtype() == torch::kUInt8, "Input must be UInt8");
+
+        return cnn->forward(input.to(torch::kFloat).mul_(2.0f / 255.0f).add_(-1.0f));
+    }
+
+    int BigVisionNetwork::get_output_size() const { return output_size; }
 }// namespace arenai::agent

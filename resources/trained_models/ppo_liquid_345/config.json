@@ -3,37 +3,27 @@
         "actor_learning_rate": 9.999999747378752e-05,
         "chunk_size": 30,
         "clip_epsilon": 0.20000000298023224,
-        "continuous_target_entropy": [
-            -0.20000000298023224,
-            -0.20000000298023224,
-            -0.8799999952316284,
-            -0.8799999952316284
-        ],
-        "critic_learning_rate": 0.0003000000142492354,
+        "continuous_entropy_factor": 0.009999999776482582,
+        "critic_learning_rate": 9.999999747378752e-05,
         "delta_t": 0.03333333507180214,
-        "discrete_target_entropy_factors": [
-            0.4000000059604645,
-            0.4000000059604645
-        ],
+        "discrete_entropy_factor": 0.009999999776482582,
         "epochs": 2,
         "gae_lambda": 0.9900000095367432,
         "gamma": 0.996999979019165,
         "grad_norm_max": 0.5,
         "group_norm_nums": [
             2,
-            3,
             4,
-            6,
             8,
             12,
             16
         ],
-        "hidden_size_sensors": 128,
+        "hidden_size_sensors": 64,
         "initial_fire_proba": 0.4000000059604645,
         "initial_sigma": 0.5,
         "initial_zoom_proba": 0.25,
         "metric_window_size": 256,
-        "minibatch_size": 1024,
+        "minibatch_size": 2048,
         "neuron_number": 128,
         "rollout_size": 900,
         "target_kl": 0.05000000074505806,
@@ -41,14 +31,14 @@
         "vision_channels": [
             [
                 3,
+                8
+            ],
+            [
+                8,
                 16
             ],
             [
                 16,
-                24
-            ],
-            [
-                24,
                 32
             ],
             [
@@ -58,14 +48,6 @@
             [
                 48,
                 64
-            ],
-            [
-                64,
-                96
-            ],
-            [
-                96,
-                128
             ]
         ]
     },
@@ -79,7 +61,7 @@
         "final_spawn_width": 1000.0,
         "initial_spawn_height": 250.0,
         "initial_spawn_width": 250.0,
-        "nb_tanks": 32,
+        "nb_tanks": 16,
         "vision_height": 128,
         "vision_num_threads": 16,
         "vision_width": 256,
@@ -88,9 +70,9 @@
     "train": {
         "cuda": true,
         "max_episode_steps": 5400,
-        "nb_episodes": 6000,
-        "output_folder": "./outputs/train_414_ppo_liquid_normal-delta-control",
-        "resources_folder": "/home/samuel/CLionProjects/ArenAI/resources",
+        "nb_episodes": 30000,
+        "output_folder": "./outputs/train_345_ppo-liquid_independant-std",
+        "resources_folder": "./resources",
         "save_every": 108000
     }
 }

@@ -94,8 +94,9 @@ namespace arenai::agent {
         bool train_actor(
             const torch::Tensor &vision, const torch::Tensor &proprioception,
             const torch::Tensor &hidden, const torch::Tensor &continuous_actions,
-            const torch::Tensor &discrete_actions, const torch::Tensor &old_log_probs,
-            const torch::Tensor &advantages, const torch::Tensor &valids) const;
+            const torch::Tensor &discrete_actions, const torch::Tensor &fire_masks,
+            const torch::Tensor &old_log_probs, const torch::Tensor &advantages,
+            const torch::Tensor &valids) const;
 
         void train_critic(
             const torch::Tensor &vision, const torch::Tensor &proprioception,

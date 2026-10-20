@@ -62,7 +62,9 @@ namespace arenai::core {
 
             // compute/get state
             result.emplace_back(
-                State(vision_pool_->read_vision(i), tanks[i]->get_proprioception()),
+                State(
+                    vision_pool_->read_vision(i), tanks[i]->get_proprioception(),
+                    tanks[i]->get_can_fire()),
                 tanks[i]->get_reward(), tanks[i]->is_dead(), tanks[i]->is_timeout());
         }
 
@@ -166,7 +168,9 @@ namespace arenai::core {
         std::vector<State> states;
         states.reserve(tanks.size());
         for (int i = 0; i < static_cast<int>(tanks.size()); i++)
-            states.emplace_back(vision_pool_->read_vision(i), tanks[i]->get_proprioception());
+            states.emplace_back(
+                vision_pool_->read_vision(i), tanks[i]->get_proprioception(),
+                tanks[i]->get_can_fire());
 
         return states;
     }

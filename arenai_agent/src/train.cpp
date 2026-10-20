@@ -178,7 +178,7 @@ namespace arenai::agent {
             // set variable for episode
             bool is_done = false;
 
-            auto [vision, proprioception] = states_to_tensor(
+            auto state = states_to_tensor(
                 env->reset(spawn_width, spawn_height), environment_options.vision_height,
                 environment_options.vision_width);
 
@@ -187,8 +187,9 @@ namespace arenai::agent {
                 std::vector<core::Action> actions_for_env;
 
                 const auto [continuous_action, discrete_action] = agent->act(
-                    {.vision = vision.to(torch_device),
-                     .proprioception = proprioception.to(torch_device)},
+                    {.vision = state.vision.to(torch_device),
+                     .proprioception = state.proprioception.to(torch_device),
+                     .fire_mask = state.fire_mask.to(torch_device)},
                     true);
 
                 TorchAction torch_action = {
@@ -210,8 +211,7 @@ namespace arenai::agent {
                 // step ending stuff
                 is_done = env->is_episode_terminated();
 
-                vision = torch_next_states.vision;
-                proprioception = torch_next_states.proprioception;
+                state = torch_next_states;
 
                 print_counter = (print_counter + 1) % print_tqdm_bar_every;
 
@@ -231,7 +231,7 @@ namespace arenai::agent {
             }
 
             // close episode
-            collector->on_episode_end({.vision = vision, .proprioception = proprioception});
+            collector->on_episode_end(state);
 
             env->stop_drawing();
 

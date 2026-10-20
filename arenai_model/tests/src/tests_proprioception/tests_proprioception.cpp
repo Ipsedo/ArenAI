@@ -4,7 +4,9 @@
 
 #include <cmath>
 #include <memory>
+#include <vector>
 
+#include <arenai_controller/inputs.h>
 #include <arenai_model/constants.h>
 #include <arenai_model_tests/tests_proprioception/tests_proprioception.h>
 
@@ -129,4 +131,37 @@ TEST_F(ProprioceptionTest, ProprioceptionForwardAndUpVectorsValid) {
     // the Y component is scaled by 0.5 (tank scale), so check relative magnitude
     ASSERT_GT(uy, std::abs(ux)) << "chassis up Y should dominate X";
     ASSERT_GT(uy, std::abs(uz)) << "chassis up Y should dominate Z";
+}
+
+// ========================================================================
+// get_can_fire
+// ========================================================================
+
+TEST_F(ProprioceptionTest, CanFireFollowsCooldownWithoutConsumingIt) {
+    add_ground();
+    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
+
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
+
+    // a pure query: asking twice does not start the cooldown
+    ASSERT_TRUE(shared_tank->get_can_fire());
+    ASSERT_TRUE(shared_tank->get_can_fire());
+
+    constexpr controller::user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
+    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
+
+    ASSERT_FALSE(shared_tank->get_can_fire()) << "the shot just fired starts the cooldown";
+
+    const std::vector tanks{shared_tank};
+    for (int i = 0; i < 60; i++) {
+        engine->step(1.f / 60.f);
+        shared_tank->tick(tanks);
+    }
+
+    ASSERT_TRUE(shared_tank->get_can_fire()) << "the cooldown is over and shells remain";
 }

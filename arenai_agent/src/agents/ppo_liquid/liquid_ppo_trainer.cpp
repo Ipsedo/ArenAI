@@ -12,6 +12,7 @@
 #include "../../metrics/mean_metric.h"
 #include "../../networks/constants.h"
 #include "../../networks_utils/print_module.h"
+#include "../../networks_utils/torch_converter.h"
 #include "../../networks_utils/torch_saver.h"
 
 using namespace arenai;
@@ -104,6 +105,7 @@ namespace arenai::agent {
         const auto flat_proprioception = flat(rollout.states.proprioception);
         const auto flat_continuous_actions = flat(rollout.actions.continuous_action);
         const auto flat_discrete_actions = flat(rollout.actions.discrete_action);
+        const auto flat_fire_masks = flat(rollout.states.fire_mask);
         const auto flat_old_log_probs =
             flat(rollout.continuous_log_probs) + flat(rollout.discrete_log_probs);
         const auto flat_advantages = flat(advantages);
@@ -160,7 +162,8 @@ namespace arenai::agent {
                 train_actor(
                     mb_vision, mb_proprioception, select_hiddens(flat_actor_hiddens),
                     select_chunks(flat_continuous_actions), select_chunks(flat_discrete_actions),
-                    select_chunks(flat_old_log_probs), select_chunks(flat_advantages), mb_valids);
+                    select_chunks(flat_fire_masks), select_chunks(flat_old_log_probs),
+                    select_chunks(flat_advantages), mb_valids);
 
                 train_critic(
                     mb_vision, mb_proprioception, select_hiddens(flat_critic_hiddens),
@@ -174,8 +177,9 @@ namespace arenai::agent {
     bool LiquidPpoTrainer::train_actor(
         const torch::Tensor &vision, const torch::Tensor &proprioception,
         const torch::Tensor &hidden, const torch::Tensor &continuous_actions,
-        const torch::Tensor &discrete_actions, const torch::Tensor &old_log_probs,
-        const torch::Tensor &advantages, const torch::Tensor &valids) const {
+        const torch::Tensor &discrete_actions, const torch::Tensor &fire_masks,
+        const torch::Tensor &old_log_probs, const torch::Tensor &advantages,
+        const torch::Tensor &valids) const {
 
         const auto out = actor->act_sequence(vision, proprioception, hidden);
 
@@ -188,12 +192,16 @@ namespace arenai::agent {
         const auto mu = rows(out.mu);
         const auto sigma = rows(out.sigma);
         const auto discrete_proba = rows(out.discrete);
+        // the fire action is a decision only when it would shoot: masked out of the
+        // log-probabilities (as at collection) and of the entropy
+        const auto discrete_mask = discrete_action_mask(rows(fire_masks), discrete_proba.size(-1));
 
         const auto curr_continuous_log_probs =
             truncated_normal_log_pdf(rows(continuous_actions), mu, sigma).sum(-1, true);
 
         const auto curr_discrete_log_probs =
-            bernoulli_log_proba(rows(discrete_actions), discrete_proba).sum(-1, true);
+            (bernoulli_log_proba(rows(discrete_actions), discrete_proba) * discrete_mask)
+                .sum(-1, true);
 
         const auto log_ratio = torch::clamp(
             curr_continuous_log_probs + curr_discrete_log_probs - rows(old_log_probs),
@@ -202,7 +210,7 @@ namespace arenai::agent {
         const auto ratio = torch::exp(log_ratio);
 
         const auto continuous_entropy = truncated_normal_entropy(mu, sigma);
-        const auto discrete_entropy = bernoulli_entropy(discrete_proba);
+        const auto discrete_entropy = bernoulli_entropy(discrete_proba) * discrete_mask;
 
         const auto kl_per_row = (ratio - 1.f - log_ratio).flatten();
 
@@ -238,7 +246,9 @@ namespace arenai::agent {
 
         // metrics
         continuous_entropy_metric->add(continuous_entropy.mean().item<float>());
-        discrete_entropy_metric->add(discrete_entropy.mean().item<float>());
+        // mean over the discrete actions that had an effect
+        discrete_entropy_metric->add(
+            (discrete_entropy.sum() / discrete_mask.sum().clamp_min(1.f)).item<float>());
 
         kl_metric->add(approx_kl);
 

@@ -11,6 +11,8 @@ namespace arenai::agent {
     struct TorchState {
         torch::Tensor vision;
         torch::Tensor proprioception;
+        // [N, 1] float, 1 when a fire input would shoot, 0 when it has no effect
+        torch::Tensor fire_mask;
     };
 
     struct TorchAction {

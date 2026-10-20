@@ -39,7 +39,8 @@ LiquidPpoTrainingTest::make_state(const LiquidPpoTrainingTestConfig &cfg, const 
     return {
         .vision = torch::randint(
             0, 255, {nb_tanks, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
-        .proprioception = torch::randn({nb_tanks, cfg.nb_sensors})};
+        .proprioception = torch::randn({nb_tanks, cfg.nb_sensors}),
+        .fire_mask = torch::randint(0, 2, {nb_tanks, 1}).to(torch::kFloat)};
 }
 
 TEST_F(LiquidPpoTrainingTest, ActProducesValidOutput) {
@@ -181,4 +182,58 @@ TEST_F(LiquidPpoTrainingTest, TrainingUpdatesActorParameters) {
         }
 
     ASSERT_TRUE(any_changed) << "Training should update the actor's parameters";
+}
+
+TEST_F(LiquidPpoTrainingTest, MaskedFireReceivesNoUpdate) {
+    // fire never possible: its head row must stay untouched while zoom keeps learning
+    constexpr LiquidPpoTrainingTestConfig cfg{
+        .vision_height = 8,
+        .vision_width = 8,
+        .nb_sensors = 3,
+        .nb_continuous_actions = 2,
+        .nb_discrete_actions = 2};
+
+    const std::vector<std::tuple<int, int>> vision_channels{{3, 4}};
+    const std::vector group_norm_nums{2};
+
+    const auto actor = std::make_shared<LiquidActor>(
+        cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
+        cfg.nb_discrete_actions, 8, vision_channels, group_norm_nums, NEURON_NUMBER,
+        UNFOLDING_STEPS, DELTA_T, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
+    const auto hidden_state = std::make_shared<LiquidHiddenState>(actor);
+    const auto rollout_buffer = std::make_shared<LiquidPpoRolloutBuffer>();
+    const auto collector = std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state);
+    const auto agent =
+        std::make_shared<TorchLiquidPpoAgent>(actor, hidden_state, device, collector);
+    // target_kl = 0 : early stop disabled so every minibatch applies its update
+    const auto trainer = std::make_shared<LiquidPpoTrainer>(
+        actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_sensors, 1e-3f, 1e-3f, 8,
+        vision_channels, group_norm_nums, NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T, device, 10,
+        0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 0.001f, 2, ROLLOUT_SIZE, MINIBATCH_SIZE, CHUNK_SIZE);
+
+    auto named_parameters = actor->named_parameters();
+    const auto weight = named_parameters["discrete.0.weight"];
+    const auto bias = named_parameters["discrete.0.bias"];
+    const auto initial_weight = weight.detach().clone();
+    const auto initial_bias = bias.detach().clone();
+
+    for (int t = 0; t < ROLLOUT_SIZE + 2; t++) {
+        constexpr int nb_tanks = 2;
+
+        auto state = make_state(cfg, nb_tanks);
+        state.fire_mask = torch::zeros({nb_tanks, 1});
+
+        agent->act(state, true);
+        collector->on_transition(
+            torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+        trainer->step();
+    }
+
+    // the rollout has been consumed by the training
+    ASSERT_LT(rollout_buffer->nb_complete_steps(), static_cast<size_t>(ROLLOUT_SIZE));
+
+    // row 0 = fire, row 1 = zoom
+    ASSERT_TRUE(torch::equal(weight[0], initial_weight[0]));
+    ASSERT_TRUE(torch::equal(bias[0], initial_bias[0]));
+    ASSERT_FALSE(torch::equal(weight[1], initial_weight[1]));
 }

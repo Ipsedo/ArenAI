@@ -122,7 +122,7 @@ TEST(DesktopAgentInputEndToEnd, AgentReceivesValidStates) {
     for (const auto &states: agent.received_states) {
         ASSERT_EQ(static_cast<int>(states.size()), NB_TANKS);
 
-        for (const auto &[vision, proprioception]: states) {
+        for (const auto &[vision, proprioception, can_fire]: states) {
             ASSERT_EQ(static_cast<int>(vision.pixels.size()), 3 * VISION_HEIGHT * VISION_WIDTH);
 
             const int pixel_sum = std::accumulate(

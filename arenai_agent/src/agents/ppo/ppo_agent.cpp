@@ -41,8 +41,8 @@ namespace arenai::agent {
         {
             torch::NoGradGuard guard;
 
-            const auto &[vision, sensors] = state;
-            const auto &[mu, sigma, discrete_proba] = actor->act(vision, sensors);
+            const auto &[mu, sigma, discrete_proba] =
+                actor->act(state.vision, state.proprioception);
 
             if (sample) {
                 action.continuous_action = truncated_normal_sample(mu, sigma);

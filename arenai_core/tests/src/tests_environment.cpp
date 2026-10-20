@@ -50,7 +50,7 @@ TEST_F(EnvironmentTest, ResetInitialVisionIsNotBlack) {
         file_reader, graphics_backend, nb_tanks, frequency, vision_h, vision_w, 1, false, false);
 
     for (const auto states = env.reset(100.f, 100.f);
-         const auto &[vision, proprioception]: states) {
+         const auto &[vision, proprioception, can_fire]: states) {
         ASSERT_EQ(static_cast<int>(vision.pixels.size()), 3 * vision_h * vision_w);
 
         const int pixel_sum = std::accumulate(
@@ -91,7 +91,7 @@ TEST_F(EnvironmentTest, ResetGoldenImage) {
     const auto states = env.reset(100.f, 100.f);
 
     for (int tank_idx = 0; tank_idx < nb_tanks; tank_idx++) {
-        const auto &[vision, proprioception] = states[tank_idx];
+        const auto &[vision, proprioception, can_fire] = states[tank_idx];
 
         const auto golden_image_path =
             std::filesystem::path(__FILE__).parent_path().parent_path() / "resources"
@@ -152,7 +152,7 @@ TEST_F(EnvironmentTest, ResetProprioceptionNonEmpty) {
         file_reader, graphics_backend, nb_tanks, frequency, 8, 8, 1, false, false);
 
     for (const auto states = env.reset(100.f, 100.f);
-         const auto &[vision, proprioception]: states) {
+         const auto &[vision, proprioception, can_fire]: states) {
         ASSERT_FALSE(proprioception.empty());
     }
 

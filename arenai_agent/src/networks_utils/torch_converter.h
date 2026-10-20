@@ -22,6 +22,10 @@ namespace arenai::agent {
     states_to_tensor(const std::vector<core::State> &states, int vision_height, int vision_width);
     TorchState state_to_tensor(const core::State &state, int vision_height, int vision_width);
 
+    // [N, 1] fire mask -> [N, nb_discrete_actions] mask of the discrete actions that have an
+    // effect
+    torch::Tensor discrete_action_mask(const torch::Tensor &fire_mask, int64_t nb_discrete_actions);
+
     TorchStep steps_to_tensor(
         const std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
             &steps,

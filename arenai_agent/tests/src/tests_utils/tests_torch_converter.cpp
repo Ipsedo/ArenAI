@@ -53,11 +53,11 @@ TEST_F(TorchConverterTest, BothActionsEngagedTogether) {
 TEST_F(TorchConverterTest, SingleStateToTensor) {
     constexpr int H = 4, W = 6;
 
-    State state;
+    State state{.can_fire = true};
     state.vision.pixels.resize(3 * H * W, 128);
     state.proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE, 1.0f);
 
-    const auto [vision, proprioception] = state_to_tensor(state, H, W);
+    const auto [vision, proprioception, fire_mask] = state_to_tensor(state, H, W);
 
     ASSERT_EQ(vision.dim(), 3);
     ASSERT_EQ(vision.size(0), 3);
@@ -73,7 +73,7 @@ TEST_F(TorchConverterTest, SingleStateToTensor) {
 TEST_F(TorchConverterTest, StateVisionPixelsPreserved) {
     constexpr int H = 2, W = 2;
 
-    State state;
+    State state{.can_fire = true};
     state.vision.pixels = {
         10, 20,  30,  40,// C=0
         50, 60,  70,  80,// C=1
@@ -81,7 +81,7 @@ TEST_F(TorchConverterTest, StateVisionPixelsPreserved) {
     };
     state.proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE, 0.0f);
 
-    const auto [vision, proprioception] = state_to_tensor(state, H, W);
+    const auto [vision, proprioception, fire_mask] = state_to_tensor(state, H, W);
 
     auto acc = vision.accessor<uint8_t, 3>();
     ASSERT_EQ(acc[0][0][0], 10);
@@ -95,13 +95,13 @@ TEST_F(TorchConverterTest, StateVisionPixelsPreserved) {
 TEST_F(TorchConverterTest, StateProprioceptionPreserved) {
     constexpr int H = 2, W = 2;
 
-    State state;
+    State state{.can_fire = true};
     state.vision.pixels.resize(3 * H * W, 0);
     state.proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE);
     for (int i = 0; i < model::ENEMY_PROPRIOCEPTION_SIZE; ++i)
         state.proprioception[i] = static_cast<float>(i) * 0.1f;
 
-    const auto [vision, proprioception] = state_to_tensor(state, H, W);
+    const auto [vision, proprioception, fire_mask] = state_to_tensor(state, H, W);
 
     auto acc = proprioception.accessor<float, 1>();
     for (int i = 0; i < model::ENEMY_PROPRIOCEPTION_SIZE; ++i)
@@ -182,12 +182,12 @@ TEST_P(StatesToTensorParamTest, OutputShapeCorrect) {
     const auto [batch, height, width] = GetParam();
 
     std::vector<State> states(batch);
-    for (auto &[vision, proprioception]: states) {
+    for (auto &[vision, proprioception, can_fire]: states) {
         vision.pixels.resize(3 * height * width, 0);
         proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE, 0.0f);
     }
 
-    const auto [vision, proprioception] = states_to_tensor(states, height, width);
+    const auto [vision, proprioception, fire_mask] = states_to_tensor(states, height, width);
 
     ASSERT_EQ(vision.size(0), batch);
     ASSERT_EQ(vision.size(1), 3);
@@ -204,12 +204,12 @@ TEST_P(StatesToTensorParamTest, NoGradient) {
     const auto [batch, height, width] = GetParam();
 
     std::vector<State> states(batch);
-    for (auto &[vision, proprioception]: states) {
+    for (auto &[vision, proprioception, can_fire]: states) {
         vision.pixels.resize(3 * height * width, 0);
         proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE, 0.0f);
     }
 
-    const auto [vision, proprioception] = states_to_tensor(states, height, width);
+    const auto [vision, proprioception, fire_mask] = states_to_tensor(states, height, width);
 
     ASSERT_FALSE(vision.requires_grad());
     ASSERT_FALSE(proprioception.requires_grad());
@@ -226,7 +226,7 @@ TEST_P(StatesToTensorParamTest, PixelDataPreserved) {
         states[b].proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE, 0.0f);
     }
 
-    const auto [vision, proprioception] = states_to_tensor(states, height, width);
+    const auto [vision, proprioception, fire_mask] = states_to_tensor(states, height, width);
 
     auto acc = vision.accessor<uint8_t, 4>();
     for (int b = 0; b < batch; ++b) {
@@ -242,3 +242,28 @@ INSTANTIATE_TEST_SUITE_P(
     TorchConverter, StatesToTensorParamTest,
     testing::Combine(
         testing::Values(1, 2, 4, 8), testing::Values(2, 4, 8), testing::Values(2, 4, 8)));
+
+TEST_F(TorchConverterTest, FireMaskFollowsCanFire) {
+    constexpr int H = 2, W = 2;
+
+    std::vector<State> states(2);
+    for (auto &state: states) {
+        state.vision.pixels.resize(3 * H * W, 0);
+        state.proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE, 0.0f);
+    }
+    states[0].can_fire = true;
+    states[1].can_fire = false;
+
+    const auto fire_mask = states_to_tensor(states, H, W).fire_mask;
+
+    ASSERT_EQ(fire_mask.sizes().vec(), (std::vector<int64_t>{2, 1}));
+    ASSERT_EQ(fire_mask.dtype(), torch::kFloat);
+    ASSERT_FLOAT_EQ(fire_mask[0][0].item<float>(), 1.f);
+    ASSERT_FLOAT_EQ(fire_mask[1][0].item<float>(), 0.f);
+}
+
+TEST_F(TorchConverterTest, DiscreteActionMaskMasksFireOnly) {
+    const auto mask = discrete_action_mask(torch::tensor({{1.f}, {0.f}}), 2);
+
+    ASSERT_TRUE(torch::equal(mask, torch::tensor({{1.f, 1.f}, {0.f, 1.f}})));
+}

@@ -14,7 +14,8 @@ using namespace arenai::agent;
 TorchState LiquidPpoRolloutBufferTest::make_state() {
     return {
         .vision = torch::randn({NB_TANKS, 3, VISION_SIZE, VISION_SIZE}),
-        .proprioception = torch::randn({NB_TANKS, NB_SENSORS})};
+        .proprioception = torch::randn({NB_TANKS, NB_SENSORS}),
+        .fire_mask = torch::randint(0, 2, {NB_TANKS, 1}).to(torch::kFloat)};
 }
 
 LiquidPpoInputStep LiquidPpoRolloutBufferTest::make_step(
@@ -115,6 +116,7 @@ TEST_F(LiquidPpoRolloutBufferTest, RolloutShapes) {
     ASSERT_EQ(rollout.continuous_log_probs.sizes().vec(), expected_scalar);
     ASSERT_EQ(rollout.discrete_log_probs.sizes().vec(), expected_scalar);
     ASSERT_EQ(rollout.valids.sizes().vec(), expected_scalar);
+    ASSERT_EQ(rollout.states.fire_mask.sizes().vec(), expected_scalar);
 
     ASSERT_EQ(
         rollout.actions.continuous_action.sizes().vec(),
@@ -142,6 +144,22 @@ TEST_F(LiquidPpoRolloutBufferTest, ActorHiddenRoundTrip) {
 
     ASSERT_TRUE(torch::allclose(rollout.actor_hiddens[0], step_0.actor_hidden));
     ASSERT_TRUE(torch::allclose(rollout.actor_hiddens[1], step_1.actor_hidden));
+}
+
+TEST_F(LiquidPpoRolloutBufferTest, FireMaskRoundTrip) {
+    LiquidPpoRolloutBuffer buffer;
+
+    const auto step_0 = make_step(make_state());
+    const auto step_1 = make_step(make_state());
+
+    buffer.add(step_0);
+    buffer.add(step_1);
+    buffer.finish_episode(make_state());
+
+    const auto rollout = buffer.get_rollout();
+
+    ASSERT_TRUE(torch::equal(rollout.states.fire_mask[0], step_0.state.fire_mask));
+    ASSERT_TRUE(torch::equal(rollout.states.fire_mask[1], step_1.state.fire_mask));
 }
 
 TEST_F(LiquidPpoRolloutBufferTest, EpisodeStartFlagsRoundTrip) {

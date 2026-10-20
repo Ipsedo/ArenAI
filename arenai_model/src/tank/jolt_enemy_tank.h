@@ -61,6 +61,7 @@ namespace arenai::model {
         RewardDetail get_last_reward_detail() const override;
 
         std::vector<float> get_proprioception() const override;
+        bool get_can_fire() const override;
 
         // Tank methods resolved via JoltTank
         using JoltTank::get_camera;

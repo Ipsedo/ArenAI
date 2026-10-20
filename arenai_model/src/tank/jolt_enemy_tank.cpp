@@ -54,7 +54,7 @@ namespace arenai::model {
             },
             [this](const std::shared_ptr<ShellItem> &shell) { on_shell_fired(shell); },
             [this] {
-                const bool can_fire = nb_shells > 0 && curr_cooldown_frame == fire_cooldown_frames;
+                const bool can_fire = get_can_fire();
                 if (can_fire) curr_cooldown_frame = 0;
                 return can_fire;
             }),
@@ -283,6 +283,10 @@ namespace arenai::model {
             tracked.has_killed = killed;
             break;
         }
+    }
+
+    bool JoltEnemyTank::get_can_fire() const {
+        return nb_shells > 0 && curr_cooldown_frame == fire_cooldown_frames;
     }
 
     bool JoltEnemyTank::consume_has_fire() {

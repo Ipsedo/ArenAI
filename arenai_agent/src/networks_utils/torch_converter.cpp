@@ -56,8 +56,12 @@ namespace arenai::agent {
         const torch::Tensor proprioceptions =
             torch::zeros({N, P}, torch::TensorOptions().dtype(torch::kFloat).requires_grad(false));
 
+        const torch::Tensor fire_masks =
+            torch::zeros({N, 1}, torch::TensorOptions().dtype(torch::kFloat).requires_grad(false));
+
         auto *vision_ptr = visions_u8.data_ptr<uint8_t>();
         auto *proprioception_ptr = proprioceptions.data_ptr<float>();
+        auto *fire_mask_ptr = fire_masks.data_ptr<float>();
 
         const size_t vision_bytes = static_cast<size_t>(C * H * W) * sizeof(uint8_t);
         constexpr size_t proprioception_bytes = static_cast<size_t>(P) * sizeof(float);
@@ -70,17 +74,29 @@ namespace arenai::agent {
                 std::memcpy(
                     proprioception_ptr + n * P, states[n].proprioception.data(),
                     proprioception_bytes);
+
+                fire_mask_ptr[n] = states[n].can_fire ? 1.f : 0.f;
             }
         });
 
-        return {.vision = visions_u8, .proprioception = proprioceptions};
+        return {.vision = visions_u8, .proprioception = proprioceptions, .fire_mask = fire_masks};
     }
 
     TorchState
     state_to_tensor(const core::State &state, const int vision_height, const int vision_width) {
-        const auto [vision, proprioception] =
+        const auto [vision, proprioception, fire_mask] =
             states_to_tensor({state}, vision_height, vision_width);
-        return {.vision = vision[0], .proprioception = proprioception[0]};
+        return {
+            .vision = vision[0], .proprioception = proprioception[0], .fire_mask = fire_mask[0]};
+    }
+
+    torch::Tensor
+    discrete_action_mask(const torch::Tensor &fire_mask, const int64_t nb_discrete_actions) {
+        // same layout as tensor_to_actions: fire first, the others (zoom) always have an effect
+        return torch::cat(
+            {fire_mask,
+             torch::ones({fire_mask.size(0), nb_discrete_actions - 1}, fire_mask.options())},
+            -1);
     }
 
     TorchStep steps_to_tensor(

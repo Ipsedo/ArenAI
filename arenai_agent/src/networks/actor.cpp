@@ -35,10 +35,10 @@ namespace arenai::agent {
               "mu", torch::nn::Sequential(
                         torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
                         torch::nn::Tanh()))),
-          sigma(register_module(
-              "sigma", torch::nn::Sequential(
-                           torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
-                           std::make_shared<SigmaOutput>(SIGMA_MIN, SIGMA_MAX)))),
+          sigma_logit(register_parameter(
+              "sigma_logit",
+              torch::full({nb_continuous_actions}, sigma_output_logit(initial_sigma)))),
+          sigma(register_module("sigma", std::make_shared<SigmaOutput>(SIGMA_MIN, SIGMA_MAX))),
           discrete(register_module(
               "discrete", torch::nn::Sequential(
                               torch::nn::Linear(hidden_sizes.back(), nb_discrete_actions),
@@ -66,7 +66,6 @@ namespace arenai::agent {
 
         // zero bias + tanh puts the initial mode at the action-range center
         mu->apply(init_mu_output_weights);
-        sigma->apply([initial_sigma](Module &m) { init_sigma_output_weights(m, initial_sigma); });
 
         discrete->apply([&initial_discrete_probas](Module &m) {
             init_discrete_output_weights(m, initial_discrete_probas);
@@ -77,9 +76,10 @@ namespace arenai::agent {
         auto vision_encoded = vision_encoder->forward(vision);
         auto sensors_encoded = sensors_encoder->forward(sensors);
         auto encoded = head->forward(torch::cat({vision_encoded, sensors_encoded}, 1));
+        const auto mu_output = mu->forward(encoded);
         return {
-            .mu = mu->forward(encoded),
-            .sigma = sigma->forward(encoded),
+            .mu = mu_output,
+            .sigma = sigma->forward(sigma_logit).expand_as(mu_output),
             .discrete = discrete->forward(encoded)};
     }
 

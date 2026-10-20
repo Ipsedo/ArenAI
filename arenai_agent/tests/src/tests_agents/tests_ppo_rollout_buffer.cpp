@@ -14,7 +14,8 @@ using namespace arenai::agent;
 TorchState PpoRolloutBufferTest::make_state() {
     return {
         .vision = torch::randn({NB_TANKS, 3, VISION_SIZE, VISION_SIZE}),
-        .proprioception = torch::randn({NB_TANKS, NB_SENSORS})};
+        .proprioception = torch::randn({NB_TANKS, NB_SENSORS}),
+        .fire_mask = torch::randint(0, 2, {NB_TANKS, 1}).to(torch::kFloat)};
 }
 
 PpoInputStep PpoRolloutBufferTest::make_step(const TorchState &state, const torch::Tensor &done) {
@@ -112,6 +113,7 @@ TEST_F(PpoRolloutBufferTest, RolloutShapes) {
     ASSERT_EQ(rollout.continuous_log_probs.sizes().vec(), expected_scalar);
     ASSERT_EQ(rollout.discrete_log_probs.sizes().vec(), expected_scalar);
     ASSERT_EQ(rollout.valids.sizes().vec(), expected_scalar);
+    ASSERT_EQ(rollout.states.fire_mask.sizes().vec(), expected_scalar);
 
     ASSERT_EQ(
         rollout.actions.continuous_action.sizes().vec(),

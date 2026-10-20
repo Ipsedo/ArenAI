@@ -56,8 +56,10 @@ namespace arenai::agent {
             continuous_log_prob =
                 truncated_normal_log_pdf(action.continuous_action, mu, sigma).sum(-1, true);
 
-            discrete_log_prob =
-                bernoulli_log_proba(action.discrete_action, discrete_proba).sum(-1, true);
+            // a fire without effect is not a decision: no log-probability, no gradient
+            discrete_log_prob = (bernoulli_log_proba(action.discrete_action, discrete_proba)
+                                 * discrete_action_mask(state.fire_mask, discrete_proba.size(-1)))
+                                    .sum(-1, true);
         }
 
         if (collector.has_value())

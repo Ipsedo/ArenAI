@@ -32,8 +32,8 @@ std::unique_ptr<PpoTorchAgentFactory> PpoAgentTest::make_factory(const PpoTestCo
         .gae_lambda = 0.95f,
         .clip_epsilon = 0.2f,
         .grad_norm_max = 1.f,
-        .continuous_target_entropy = std::vector(cfg.nb_continuous_actions, -0.88f),
-        .discrete_target_entropy_factors = std::vector(cfg.nb_discrete_actions, 0.5f),
+        .continuous_entropy_factor = 0.001f,
+        .discrete_entropy_factor = 0.001f,
         .epochs = 1,
         .rollout_size = 8,
         .minibatch_size = 10};
@@ -47,7 +47,8 @@ TorchState PpoAgentTest::make_state(const PpoTestConfig &cfg, const int batch) {
     return {
         .vision =
             torch::randint(0, 255, {batch, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
-        .proprioception = torch::randn({batch, cfg.nb_sensors})};
+        .proprioception = torch::randn({batch, cfg.nb_sensors}),
+        .fire_mask = torch::ones({batch, 1})};
 }
 
 // ========================================================================
@@ -77,7 +78,7 @@ TEST_F(PpoAgentTest, MetricsNotEmpty) {
 
     const auto metrics = factory->get_trainer()->get_metrics();
 
-    ASSERT_EQ(metrics.size(), 10);
+    ASSERT_EQ(metrics.size(), 8);
 }
 
 // ========================================================================

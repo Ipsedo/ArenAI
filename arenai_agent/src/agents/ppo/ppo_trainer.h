@@ -6,7 +6,6 @@
 #define ARENAI_PPO_TRAINER_H
 
 #include "../../networks/actor.h"
-#include "../../networks/entropy.h"
 #include "../../networks/value_function.h"
 #include "../../networks_utils/warmup.h"
 #include "../trainer.h"
@@ -24,15 +23,13 @@ namespace arenai::agent {
         PpoTrainer(
             const std::shared_ptr<Actor> &actor,
             const std::shared_ptr<PpoRolloutBuffer> &rollout_buffer, int vision_height,
-            int vision_width, int nb_sensors, int nb_continuous_actions, int nb_discrete_action,
-            float actor_learning_rate, float critic_learning_rate, int hidden_size_sensors,
-            const std::vector<int> &critic_hidden_sizes,
+            int vision_width, int nb_sensors, float actor_learning_rate, float critic_learning_rate,
+            int hidden_size_sensors, const std::vector<int> &critic_hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
             float gamma, float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
-            const std::vector<float> &continuous_target_entropy,
-            const std::vector<float> &discrete_target_entropy_factors, int epochs, int rollout_size,
-            int minibatch_size);
+            float continuous_entropy_factor, float discrete_entropy_factor, int epochs,
+            int rollout_size, int minibatch_size);
 
         void step() override;
 
@@ -46,11 +43,8 @@ namespace arenai::agent {
         std::shared_ptr<Actor> actor;
         std::shared_ptr<PpoRolloutBuffer> rollout_buffer;
 
-        std::unique_ptr<PidLagrangianAlphaParameters> continuous_alpha;
-        std::unique_ptr<PidLagrangianAlphaParameters> discrete_alpha;
-
-        std::vector<float> continuous_target_entropy;
-        std::vector<float> discrete_target_entropy;
+        float continuous_entropy_factor;
+        float discrete_entropy_factor;
 
         std::shared_ptr<ValueFunction> critic;
 
@@ -66,9 +60,6 @@ namespace arenai::agent {
         // both regulated by their constant entropy bonus
         std::shared_ptr<AbstractMetric> continuous_entropy_metric;
         std::shared_ptr<AbstractMetric> discrete_entropy_metric;
-
-        std::shared_ptr<AbstractMetric> continuous_alpha_metric;
-        std::shared_ptr<AbstractMetric> discrete_alpha_metric;
 
         // both recorded on every attempted minibatch, skipped ones included
         std::shared_ptr<AbstractMetric> clip_fraction_metric;
@@ -93,7 +84,8 @@ namespace arenai::agent {
         bool train_actor(
             const torch::Tensor &vision, const torch::Tensor &proprioception,
             const torch::Tensor &continuous_actions, const torch::Tensor &discrete_actions,
-            const torch::Tensor &old_log_probs, const torch::Tensor &advantages) const;
+            const torch::Tensor &fire_masks, const torch::Tensor &old_log_probs,
+            const torch::Tensor &advantages) const;
 
         void train_critic(
             const torch::Tensor &vision, const torch::Tensor &proprioception,

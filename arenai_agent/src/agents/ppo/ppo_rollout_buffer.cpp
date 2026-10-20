@@ -13,7 +13,8 @@ namespace arenai::agent {
         TorchState to_cpu(const TorchState &state) {
             return {
                 .vision = state.vision.detach().cpu(),
-                .proprioception = state.proprioception.detach().cpu()};
+                .proprioception = state.proprioception.detach().cpu(),
+                .fire_mask = state.fire_mask.detach().cpu()};
         }
     }// namespace
 
@@ -77,7 +78,8 @@ namespace arenai::agent {
             .states =
                 {.vision = stack([](const StoredStep &s) { return s.step.state.vision; }),
                  .proprioception =
-                     stack([](const StoredStep &s) { return s.step.state.proprioception; })},
+                     stack([](const StoredStep &s) { return s.step.state.proprioception; }),
+                 .fire_mask = stack([](const StoredStep &s) { return s.step.state.fire_mask; })},
             .actions =
                 {.continuous_action =
                      stack([](const StoredStep &s) { return s.step.action.continuous_action; }),

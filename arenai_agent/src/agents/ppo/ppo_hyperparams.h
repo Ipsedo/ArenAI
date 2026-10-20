@@ -15,13 +15,13 @@ namespace arenai::agent {
     // Member initializers are the CLI defaults (single source of truth).
     struct PpoHyperParams {
         float actor_learning_rate = 1e-4f;
-        float critic_learning_rate = 3e-4f;
-        int hidden_size_sensors = 128;
+        float critic_learning_rate = 1e-4f;
+        int hidden_size_sensors = 64;
         std::vector<int> actor_hidden_sizes = {256, 128};
         std::vector<int> critic_hidden_sizes = {256, 128};
-        std::vector<std::tuple<int, int>> vision_channels = {{3, 16},  {16, 24}, {24, 32}, {32, 48},
-                                                             {48, 64}, {64, 96}, {96, 128}};
-        std::vector<int> group_norm_nums = {2, 3, 4, 6, 8, 12, 16};
+        std::vector<std::tuple<int, int>> vision_channels =
+            {{3, 16}, {16, 32}, {32, 64}, {64, 128}};
+        std::vector<int> group_norm_nums = {2, 4, 8, 16};
         float initial_sigma = 0.5f;
         float initial_fire_proba = 0.4f;
         float initial_zoom_proba = 0.25f;
@@ -31,13 +31,11 @@ namespace arenai::agent {
         float clip_epsilon = 0.2f;
         float target_kl = 0.05f;
         float grad_norm_max = 0.5f;
-        // per continuous action: direction x, direction y, canon x, canon y
-        std::vector<float> continuous_target_entropy = {-0.2f, -0.2f, -0.88f, -0.88f};
-        // factors of the Bernoulli maximum entropy, per discrete action: fire, zoom
-        std::vector<float> discrete_target_entropy_factors = {0.4f, 0.4f};
+        float continuous_entropy_factor = 0.f;
+        float discrete_entropy_factor = 0.01f;
         int epochs = 2;
         int rollout_size = 30 * 30;
-        int minibatch_size = 1024;
+        int minibatch_size = 512;
     };
 
     std::vector<CliField<PpoHyperParams>> ppo_cli_fields();

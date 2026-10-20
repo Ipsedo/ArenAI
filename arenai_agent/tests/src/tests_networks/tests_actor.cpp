@@ -52,6 +52,24 @@ TEST_P(ActorTestParam, TestActorAct) {
                     .item<bool>());
 }
 
+TEST(ActorTest, SigmaIsStateIndependentAndStartsAtInitialSigma) {
+    constexpr int height = 32, width = 32, nb_sensors = 5, nb_continuous = 4, batch_size = 3;
+    constexpr float initial_sigma = 0.5f;
+
+    Actor actor(
+        height, width, nb_sensors, nb_continuous, 2, 8, {16}, {{3, 4}, {4, 8}}, {2, 4},
+        initial_sigma, std::vector(2, 0.2f));
+
+    const auto image = torch::randint(
+        255, {batch_size, 3, height, width}, torch::TensorOptions().dtype(torch::kUInt8));
+    const auto sensors = torch::randn({batch_size, nb_sensors});
+
+    const auto sigma = actor.act(image, sensors).sigma;
+
+    ASSERT_TRUE(torch::allclose(sigma, torch::full_like(sigma, initial_sigma), 1e-4, 1e-5));
+    ASSERT_TRUE(torch::equal(sigma[0], sigma[1]));
+}
+
 INSTANTIATE_TEST_SUITE_P(
     TestActor, ActorTestParam,
     testing::Combine(

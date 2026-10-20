@@ -63,6 +63,18 @@ namespace arenai::agent {
         float max_log_excess;
     };
 
+    class SpatialSoftmax : public torch::nn::Module {
+    public:
+        SpatialSoftmax();
+
+        torch::Tensor forward(const torch::Tensor &input);
+
+        void pretty_print(std::ostream &stream) const override;
+
+    private:
+        torch::Tensor log_temperature;
+    };
+
 }// namespace arenai::agent
 
 #endif//ARENAI_AGENT_HOST_MISC_H

@@ -52,7 +52,7 @@ namespace arenai::agent {
         torch::Tensor initial_state(int batch_size) const;
 
     private:
-        std::shared_ptr<BigVisionNetwork> vision_encoder;
+        std::shared_ptr<ConvolutionNetwork> vision_encoder;
         torch::nn::Sequential sensors_encoder;
 
         std::shared_ptr<LiquidCell> liquid;

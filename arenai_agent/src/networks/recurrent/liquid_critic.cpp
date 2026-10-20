@@ -17,7 +17,7 @@ namespace arenai::agent {
         const std::vector<int> &group_norm_nums, const int &neuron_number,
         const int &unfolding_steps, const float &delta_t)
         : vision_encoder(register_module(
-            "vision_encoder", std::make_shared<BigVisionNetwork>(
+            "vision_encoder", std::make_shared<ConvolutionNetwork>(
                                   vision_height, vision_width, vision_channels, group_norm_nums))),
           sensors_encoder(register_module(
               "sensors_encoder",

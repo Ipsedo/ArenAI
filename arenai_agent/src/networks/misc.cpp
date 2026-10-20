@@ -70,4 +70,32 @@ namespace arenai::agent {
                << ", max=" << 2.f + std::exp(max_log_excess) << ")";
     }
 
+    SpatialSoftmax::SpatialSoftmax()
+        : log_temperature(register_parameter("log_temperature", torch::zeros({1}))) {}
+
+    torch::Tensor SpatialSoftmax::forward(const torch::Tensor &input) {
+        const auto batch_size = input.size(0);
+        const auto channels = input.size(1);
+        const auto height = input.size(2);
+        const auto width = input.size(3);
+
+        const auto flat_input = input.flatten(2);
+
+        const auto weights = torch::softmax(flat_input / log_temperature.exp(), -1)
+                                 .view({batch_size, channels, height, width});
+
+        const auto xs = torch::linspace(-1.f, 1.f, width, input.options());
+        const auto ys = torch::linspace(-1.f, 1.f, height, input.options());
+
+        const auto expected_x = (weights.sum(2) * xs).sum(-1);
+        const auto expected_y = (weights.sum(3) * ys).sum(-1);
+        const auto presence = flat_input.amax(-1);
+
+        return torch::cat({expected_x, expected_y, presence}, 1);
+    }
+
+    void SpatialSoftmax::pretty_print(std::ostream &stream) const {
+        stream << name() << "(temperature=" << log_temperature.exp().item<float>() << ")";
+    }
+
 }// namespace arenai::agent

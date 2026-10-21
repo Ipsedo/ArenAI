@@ -8,6 +8,7 @@
 #include "../../networks/actor.h"
 #include "../../networks/value_function.h"
 #include "../../networks_utils/warmup.h"
+#include "../return_scaler.h"
 #include "../trainer.h"
 #include "./ppo_rollout_buffer.h"
 
@@ -51,6 +52,9 @@ namespace arenai::agent {
         std::unique_ptr<torch::optim::Adam> actor_optim;
         std::unique_ptr<torch::optim::Adam> critic_optim;
 
+        // rewards scaled by the running std of the discounted return before the GAE
+        std::shared_ptr<ReturnScaler> return_scaler;
+
         std::shared_ptr<AbstractMetric> actor_mean_loss_metric;
         std::shared_ptr<AbstractMetric> critic_mean_loss_metric;
 
@@ -79,7 +83,7 @@ namespace arenai::agent {
         int rollout_size;
         int minibatch_size;
 
-        void train() const;
+        void train();
 
         bool train_actor(
             const torch::Tensor &vision, const torch::Tensor &proprioception,
@@ -91,7 +95,7 @@ namespace arenai::agent {
             const torch::Tensor &vision, const torch::Tensor &proprioception,
             const torch::Tensor &returns) const;
 
-        GaeResult compute_gae(const PpoRollout &rollout, torch::Device device) const;
+        GaeResult compute_gae(const PpoRollout &rollout, torch::Device device);
 
         void set_train(bool train) const;
         void to(torch::Device device) const;

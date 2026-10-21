@@ -57,7 +57,8 @@ namespace arenai::agent {
                   {"curriculum_ratio_high", environment_options.curriculum_ratio_high},
                   {"curriculum_probe_window", environment_options.curriculum_probe_window},
                   {"curriculum_boundary_proba", environment_options.curriculum_boundary_proba},
-                  {"vision_num_threads", environment_options.num_threads}}},
+                  {"vision_num_threads", environment_options.num_threads},
+                  {"action_repeat", environment_options.action_repeat}}},
                 {"agent", agent_config}};
 
             std::filesystem::create_directories(train_options.output_folder);
@@ -90,7 +91,8 @@ namespace arenai::agent {
             std::move(graphics_backend), environment_options.nb_tanks,
             train_options.resources_folder, environment_options.wanted_frequency,
             train_options.max_episode_steps, environment_options.vision_height,
-            environment_options.vision_width, environment_options.num_threads);
+            environment_options.vision_width, environment_options.num_threads,
+            environment_options.action_repeat);
 
         const float initial_spawn_side = std::sqrt(
             environment_options.initial_spawn_width * environment_options.initial_spawn_height);

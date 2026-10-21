@@ -32,6 +32,11 @@ namespace arenai::desktop {
         std::shared_ptr<controller::AbstractKeyboardCallback> keyboard_handler() const;
         std::shared_ptr<controller::AbstractGamepadCallback> gamepad_handler() const;
 
+        // one physics frame, the player's view drawn every time; the agents' visions are
+        // rendered and returned only when observe is set (the frame before a decision)
+        std::optional<std::vector<core::State>>
+        play_frame(float time_delta, const std::vector<core::Action> &actions, bool observe);
+
         void redraw() const;
 
         void resize(int width, int height) const;

@@ -50,6 +50,7 @@ namespace arenai::desktop {
         const int vision_height = factory.get_vision_height();
         const int vision_width = factory.get_vision_width();
         const float wanted_frequency = factory.get_wanted_frequency();
+        const int action_repeat = factory.get_action_repeat();
 
         const std::shared_ptr<agent::AbstractAgent> enemy_agent = factory.get_agent(
             to_agent_algorithm(settings.agent_algorithm), model::ENEMY_PROPRIOCEPTION_SIZE,
@@ -116,6 +117,9 @@ namespace arenai::desktop {
 
         auto outcome = InGameOutcome::ExitGame;
 
+        int frame = 0;
+        std::vector<core::Action> held_actions;
+
         const auto frame_dt =
             std::chrono::milliseconds(static_cast<int>(wanted_frequency * 1000.f));
 
@@ -148,9 +152,19 @@ namespace arenai::desktop {
 
             auto last_time = std::chrono::steady_clock::now();
 
-            const auto action = enemy_agent->act(states, vision_height, vision_width);
+            // the agents decide every action_repeat frames, as in training: their
+            // actions are held in between (fire on the decision frame only) and their
+            // visions rendered on the frame before the next decision
+            const bool decide = frame % action_repeat == 0;
+            const bool observe = (frame + 1) % action_repeat == 0;
+            frame++;
 
-            const auto steps = env->step(wanted_frequency, action);
+            if (decide) held_actions = enemy_agent->act(states, vision_height, vision_width);
+
+            if (auto next_states = env->play_frame(
+                    wanted_frequency, decide ? held_actions : core::release_fire(held_actions),
+                    observe))
+                states = std::move(*next_states);
 
             if (const auto [hits, kills] = env->consume_player_hits(); kills > 0)
                 gui->notify_hit(gui::HitKind::Kill);
@@ -164,10 +178,6 @@ namespace arenai::desktop {
             graphics_backend->present();
 
             if (env->is_player_dead()) set_game_over();
-
-            states.clear();
-
-            for (const auto &[state, reward, done, truncated]: steps) states.push_back(state);
 
             auto now = std::chrono::steady_clock::now();
             auto dt = now - last_time;

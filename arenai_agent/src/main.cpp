@@ -43,6 +43,7 @@ int main(const int argc, char **argv) {
     parser.add_argument("--curriculum_ratio_high").scan<'g', float>().default_value(0.06f);
     parser.add_argument("--curriculum_probe_window").scan<'i', int>().default_value(24);
     parser.add_argument("--curriculum_boundary_proba").scan<'g', float>().default_value(0.2f);
+    parser.add_argument("--action_repeat").scan<'i', int>().default_value(3);
     parser.add_argument("--vision_num_threads")
         .scan<'i', int>()
         .default_value(static_cast<int>(std::thread::hardware_concurrency()));
@@ -83,7 +84,8 @@ int main(const int argc, char **argv) {
          .curriculum_ratio_high = parser.get<float>("--curriculum_ratio_high"),
          .curriculum_probe_window = parser.get<int>("--curriculum_probe_window"),
          .curriculum_boundary_proba = parser.get<float>("--curriculum_boundary_proba"),
-         .num_threads = parser.get<int>("--vision_num_threads")},
+         .num_threads = parser.get<int>("--vision_num_threads"),
+         .action_repeat = parser.get<int>("--action_repeat")},
         {.output_folder = std::filesystem::path(parser.get<std::string>("--output_folder")),
          .resources_folder = std::filesystem::path(parser.get<std::string>("--resources_folder")),
          .max_episode_steps = parser.get<int>("--max_episode_steps"),

@@ -27,6 +27,13 @@ namespace arenai::core {
     typedef bool IsTruncated;
 
     typedef controller::user_input Action;
+
+    // the actions held on the frames that follow an agent decision (action repeat): the
+    // fire is a single pulse sent on the decision frame only, the axes and zoom stay held
+    inline std::vector<Action> release_fire(std::vector<Action> actions) {
+        for (auto &action: actions) action.fire_button.pressed = false;
+        return actions;
+    }
 }// namespace arenai::core
 
 #endif//ARENAI_TYPES_H

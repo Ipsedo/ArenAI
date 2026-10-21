@@ -36,7 +36,7 @@ namespace {
     std::unique_ptr<TrainTankEnvironment> make_environment() {
         auto env = std::make_unique<TrainTankEnvironment>(
             view::make_vulkan_backend(), NB_TANKS, ARENAI_ASSETS_DIR, FREQUENCY, 1000,
-            VISION_HEIGHT, VISION_WIDTH, 1);
+            VISION_HEIGHT, VISION_WIDTH, 1, 1);
         env->seed(42);
         return env;
     }

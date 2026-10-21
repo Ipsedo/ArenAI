@@ -19,11 +19,14 @@ namespace arenai::agent {
         : agent_arguments(config.at("agent")),
           vision_height(config.at("environment").at("vision_height").get<int>()),
           vision_width(config.at("environment").at("vision_width").get<int>()),
-          wanted_frequency(config.at("environment").at("wanted_frequency").get<float>()) {}
+          wanted_frequency(config.at("environment").at("wanted_frequency").get<float>()),
+          // runs prior to the action repeat decided on every frame
+          action_repeat(config.at("environment").value("action_repeat", 1)) {}
 
     int AgentFactory::get_vision_height() const { return vision_height; }
     int AgentFactory::get_vision_width() const { return vision_width; }
     float AgentFactory::get_wanted_frequency() const { return wanted_frequency; }
+    int AgentFactory::get_action_repeat() const { return action_repeat; }
 
     std::shared_ptr<AbstractAgent> AgentFactory::get_agent(
         const AgentAlgorithm algorithm, const int &nb_sensors, const int &nb_continuous_actions,

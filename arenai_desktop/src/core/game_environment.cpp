@@ -41,6 +41,16 @@ namespace arenai::desktop {
         player_renderer->draw(model_matrices);
     }
 
+    std::optional<std::vector<core::State>> DesktopGameEnvironment::play_frame(
+        const float time_delta, const std::vector<core::Action> &actions, const bool observe) {
+        advance_frame(time_delta, actions);
+        render_frame(observe);
+        tick_frame();
+
+        if (!observe) return std::nullopt;
+        return read_states();
+    }
+
     void DesktopGameEnvironment::redraw() const {
         if (!player_renderer || last_model_matrices_.empty()) return;
 

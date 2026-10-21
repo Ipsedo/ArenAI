@@ -16,7 +16,11 @@ namespace arenai::agent {
         TrainTankEnvironment(
             const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, int nb_tanks,
             const std::filesystem::path &android_assets_path, float wanted_frequency,
-            int max_episode_steps, int vision_height, int vision_width, int vision_num_threads);
+            int max_episode_steps, int vision_height, int vision_width, int vision_num_threads,
+            int action_repeat);
+
+        // one call = one agent decision: the actions are held action_repeat physics frames
+        // (fire on the first one only), the visions rendered once at the end
 
         std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
         step(float time_delta, const std::vector<core::Action> &actions) override;
@@ -42,8 +46,10 @@ namespace arenai::agent {
 
     private:
         float wanted_frequency;
+        int action_repeat;
         int nb_tanks;
 
+        // physics frames since the reset (max_episode_steps is in frames too)
         int nb_steps;
 
         std::vector<bool> done;

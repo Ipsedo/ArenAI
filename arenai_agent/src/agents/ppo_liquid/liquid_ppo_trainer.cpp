@@ -56,6 +56,7 @@ namespace arenai::agent {
               std::make_unique<torch::optim::Adam>(this->actor->parameters(), actor_learning_rate)),
           critic_optim(
               std::make_unique<torch::optim::Adam>(critic->parameters(), critic_learning_rate)),
+          return_scaler(std::make_shared<ReturnScaler>(gamma)),
           actor_mean_loss_metric(std::make_shared<MeanMetric>("π", metric_window_size)),
           critic_mean_loss_metric(std::make_shared<MeanMetric>("v", metric_window_size)),
           explained_variance_metric(std::make_shared<MeanMetric>("ev", metric_window_size)),
@@ -333,7 +334,7 @@ namespace arenai::agent {
         // next values are the values shifted by one step, closed by the bootstrap state
         const auto next_values = torch::cat({values.slice(0, 1), bootstrap_value}, 0);
 
-        const auto rewards = rollout.rewards.to(torch::kFloat);
+        const auto rewards = return_scaler->scale(rollout.rewards, rollout.dones, rollout.valids);
         const auto dones = rollout.dones.to(torch::kFloat);
         const auto truncateds = rollout.truncateds.to(torch::kFloat);
         const auto valids = rollout.valids.to(torch::kFloat);
@@ -381,6 +382,7 @@ namespace arenai::agent {
         // Optimizers
         save_torch(output_folder, actor_optim, "actor_optim.pt");
         save_torch(output_folder, critic_optim, "critic_optim.pt");
+        save_torch(output_folder, return_scaler, "return_scaler.pt");
 
         // string repr
         std::ostringstream actor_repr_oss;

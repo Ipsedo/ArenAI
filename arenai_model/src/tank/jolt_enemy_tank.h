@@ -75,7 +75,10 @@ namespace arenai::model {
         int max_frames_upside_down;
         int curr_frame_upside_down;
 
-        float miss_distance_scale;
+        // aim reward tolerance (in world units) grows with the shot distance:
+        // aim_tolerance_min + aim_tolerance_angle * distance
+        float aim_tolerance_min;
+        float aim_tolerance_angle;
         float hit_reward_scale;
 
         float hit_received_cost;
@@ -122,7 +125,7 @@ namespace arenai::model {
             TrackedShell &tracked, const glm::vec3 &shell_pos,
             const std::vector<std::shared_ptr<EnemyTank>> &tanks) const;
 
-        float compute_hit_reward(
+        float compute_aim_reward(
             const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos,
             const glm::vec3 &shell_pos) const;
     };

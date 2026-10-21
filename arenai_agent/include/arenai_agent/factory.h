@@ -30,6 +30,9 @@ namespace arenai::agent {
         int get_vision_height() const;
         int get_vision_width() const;
         float get_wanted_frequency() const;
+        // physics frames per agent decision the run was trained with: the agent acts
+        // once every action_repeat frames and its actions are held in between
+        int get_action_repeat() const;
 
     private:
         // every hyper-parameter is required: a config.json that misses one
@@ -51,6 +54,7 @@ namespace arenai::agent {
         int vision_height;
         int vision_width;
         float wanted_frequency;
+        int action_repeat;
     };
 
 }// namespace arenai::agent

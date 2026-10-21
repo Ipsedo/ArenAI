@@ -8,6 +8,7 @@
 #include "../../networks/entropy.h"
 #include "../../networks/recurrent/liquid_actor.h"
 #include "../../networks/recurrent/liquid_critic.h"
+#include "../return_scaler.h"
 #include "../trainer.h"
 #include "./liquid_ppo_rollout_buffer.h"
 
@@ -55,6 +56,9 @@ namespace arenai::agent {
 
         std::unique_ptr<torch::optim::Adam> actor_optim;
         std::unique_ptr<torch::optim::Adam> critic_optim;
+
+        // rewards scaled by the running std of the discounted return before the GAE
+        std::shared_ptr<ReturnScaler> return_scaler;
 
         std::shared_ptr<AbstractMetric> actor_mean_loss_metric;
         std::shared_ptr<AbstractMetric> critic_mean_loss_metric;

@@ -32,8 +32,26 @@ namespace arenai::core {
 
     std::vector<std::tuple<State, Reward, IsDone, IsTruncated>>
     BaseTanksEnvironment::step(const float time_delta, const std::vector<Action> &actions) {
+        advance_frame(time_delta, actions);
+        render_frame(true);
 
-        // 1. apply action: the parts read the aim axes as a rate
+        const auto frame_results = tick_frame();
+        auto states = read_states();
+
+        std::vector<std::tuple<State, Reward, IsDone, IsTruncated>> result;
+        result.reserve(tanks.size());
+
+        for (int i = 0; i < tanks.size(); i++) {
+            const auto &[reward, is_done, is_truncated] = frame_results[i];
+            result.emplace_back(std::move(states[i]), reward, is_done, is_truncated);
+        }
+
+        return result;
+    }
+
+    void BaseTanksEnvironment::advance_frame(
+        const float time_delta, const std::vector<Action> &actions) {
+        // the parts read the aim axes as a rate
         for (int i = 0; i < tanks.size(); i++) {
             if (tanks[i]->is_dead()) tanks[i]->on_death();
             else
@@ -41,34 +59,44 @@ namespace arenai::core {
                     controller->apply_input(actions[i]);
         }
 
-        // 2. step physic
         physic_engine->step(time_delta);
+    }
 
-        // 3. set model matrices double buffer and draw scene
+    void BaseTanksEnvironment::render_frame(const bool with_visions) {
         const auto curr_model_matrices = get_model_matrices();
-        vision_pool_->set_model_matrices(curr_model_matrices);
-        vision_pool_->begin_frame();
+
+        if (with_visions) {
+            vision_pool_->set_model_matrices(curr_model_matrices);
+            vision_pool_->begin_frame();
+        }
 
         on_draw(curr_model_matrices);
-        vision_pool_->loop_wait();
 
-        // 4. build State
-        std::vector<std::tuple<State, Reward, IsDone, IsTruncated>> result;
+        if (with_visions) vision_pool_->loop_wait();
+    }
+
+    std::vector<std::tuple<Reward, IsDone, IsTruncated>> BaseTanksEnvironment::tick_frame() {
+        std::vector<std::tuple<Reward, IsDone, IsTruncated>> result;
         result.reserve(tanks.size());
 
-        for (int i = 0; i < tanks.size(); i++) {
-            // tick
-            tanks[i]->tick(tanks);
-
-            // compute/get state
-            result.emplace_back(
-                State(
-                    vision_pool_->read_vision(i), tanks[i]->get_proprioception(),
-                    tanks[i]->get_can_fire()),
-                tanks[i]->get_reward(), tanks[i]->is_dead(), tanks[i]->is_timeout());
+        for (const auto &tank: tanks) {
+            tank->tick(tanks);
+            result.emplace_back(tank->get_reward(), tank->is_dead(), tank->is_timeout());
         }
 
         return result;
+    }
+
+    std::vector<State> BaseTanksEnvironment::read_states() const {
+        std::vector<State> states;
+        states.reserve(tanks.size());
+
+        for (int i = 0; i < static_cast<int>(tanks.size()); i++)
+            states.emplace_back(
+                vision_pool_->read_vision(i), tanks[i]->get_proprioception(),
+                tanks[i]->get_can_fire());
+
+        return states;
     }
 
     void BaseTanksEnvironment::reset_physics(const float spawn_width, const float spawn_height) {
@@ -165,14 +193,7 @@ namespace arenai::core {
             vision_pool_->loop_wait();
         }
 
-        std::vector<State> states;
-        states.reserve(tanks.size());
-        for (int i = 0; i < static_cast<int>(tanks.size()); i++)
-            states.emplace_back(
-                vision_pool_->read_vision(i), tanks[i]->get_proprioception(),
-                tanks[i]->get_can_fire());
-
-        return states;
+        return read_states();
     }
 
     void BaseTanksEnvironment::reset_drawables() {

@@ -36,6 +36,8 @@ namespace arenai::agent {
         int curriculum_probe_window;
         float curriculum_boundary_proba;
         int num_threads;
+        // physics frames per agent decision
+        int action_repeat;
     };
 
     void train_main(

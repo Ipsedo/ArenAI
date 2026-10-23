@@ -238,17 +238,13 @@ TEST_F(EnemyTankTest, HasHitOtherTankResetsAfterCall) {
 }
 
 // ========================================================================
-// Shell reserve — passive regeneration
+// Shell reserve — no passive regeneration
 // ========================================================================
 
-TEST_F(EnemyTankTest, ShellReserveRegeneratesOverTime) {
-    // the fixture engine runs at 60 Hz: one reward call per frame, one shell every 1.5 s.
-    // the bounds stay a frame away from the period so the test does not depend on how the
-    // period rounds to an integer number of frames
+TEST_F(EnemyTankTest, ShellReserveDoesNotRegenerateOverTime) {
     constexpr int nb_frames_one_second = 60;
     constexpr int max_shells = 30;
-    constexpr int initial_shells = 10;
-    constexpr float seconds_per_regen = 1.5f;
+    constexpr int initial_shells = 20;
 
     // proprioception ends with (reserve, cooldown) ratios
     constexpr int proprioception_reserve_index = ENEMY_PROPRIOCEPTION_SIZE - 2;
@@ -256,27 +252,14 @@ TEST_F(EnemyTankTest, ShellReserveRegeneratesOverTime) {
     add_ground();
     auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
 
-    float last_reserve = tank->get_proprioception()[proprioception_reserve_index];
-    ASSERT_FLOAT_EQ(
-        last_reserve, static_cast<float>(initial_shells) / static_cast<float>(max_shells))
+    const float initial_reserve =
+        static_cast<float>(initial_shells) / static_cast<float>(max_shells);
+
+    ASSERT_FLOAT_EQ(tank->get_proprioception()[proprioception_reserve_index], initial_reserve)
         << "reserve start with initial shells";
-
-    for (int i = 0; i < static_cast<int>(nb_frames_one_second * seconds_per_regen * max_shells);
-         i++) {
-        engine->step(1.f / static_cast<float>(nb_frames_one_second));
-        tank->tick({});
-
-        const float curr_reserve = tank->get_proprioception()[proprioception_reserve_index];
-        ASSERT_GE(curr_reserve, last_reserve) << "reserve should increase";
-
-        last_reserve = curr_reserve;
-    }
 
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
     const std::vector tanks{shared_tank};
-
-    ASSERT_FLOAT_EQ(shared_tank->get_proprioception()[proprioception_reserve_index], 1.f)
-        << "the reserve should be full";
 
     // fire one shell: the reserve drops by one
     constexpr user_input fire_input{
@@ -284,52 +267,18 @@ TEST_F(EnemyTankTest, ShellReserveRegeneratesOverTime) {
         .right_joystick = {.x = 0.f, .y = 0.f},
         .fire_button = {true}};
     for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
-    engine->step(1.f / 60.f);
-    shared_tank->tick({});
+    engine->step(1.f / static_cast<float>(nb_frames_one_second));
+    shared_tank->tick(tanks);
 
     const float reserve_after_fire =
         shared_tank->get_proprioception()[proprioception_reserve_index];
-    ASSERT_FLOAT_EQ(reserve_after_fire, 1.f - 1.f / static_cast<float>(max_shells))
+    ASSERT_FLOAT_EQ(reserve_after_fire, initial_reserve - 1.f / static_cast<float>(max_shells))
         << "firing should consume a shell";
 
-    // after 1 s the period is not over yet: still nothing
-    for (int i = 0; i < nb_frames_one_second / 2; i++) shared_tank->tick(tanks);
+    // a long wait gives nothing back: only hits recharge the reserve
+    for (int i = 0; i < 30 * nb_frames_one_second; i++) shared_tank->tick(tanks);
+
     ASSERT_FLOAT_EQ(
         shared_tank->get_proprioception()[proprioception_reserve_index], reserve_after_fire)
-        << "the reserve should not regenerate before the full period has elapsed";
-
-    // after 2 s the shell is back
-    for (int i = 0; i < nb_frames_one_second; i++) shared_tank->tick(tanks);
-    ASSERT_FLOAT_EQ(shared_tank->get_proprioception()[proprioception_reserve_index], 1.f)
-        << "one shell should be given back after 1.5 s";
-}
-
-TEST_F(EnemyTankTest, ShellReserveRegenerationIsCappedAtMaximalReserve) {
-    constexpr int nb_frames_one_second = 60;
-    constexpr int max_shells = 30;
-    constexpr float seconds_per_regen = 1.5f;
-
-    // proprioception ends with (reserve, cooldown) ratios
-    constexpr int proprioception_reserve_index = ENEMY_PROPRIOCEPTION_SIZE - 2;
-
-    add_ground();
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
-
-    for (int i = 0; i < static_cast<int>(nb_frames_one_second * seconds_per_regen * max_shells);
-         i++) {
-        engine->step(1.f / static_cast<float>(nb_frames_one_second));
-        tank->tick({});
-    }
-
-    ASSERT_FLOAT_EQ(tank->get_proprioception()[proprioception_reserve_index], 1.f)
-        << "the reserve should be full";
-
-    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
-    const std::vector tanks{shared_tank};
-
-    // the reserve is already full: several periods must not push it above it
-    for (int i = 0; i < 5 * nb_frames_one_second; i++) shared_tank->tick(tanks);
-
-    ASSERT_FLOAT_EQ(shared_tank->get_proprioception()[proprioception_reserve_index], 1.f)
-        << "regeneration should never take the reserve above its max value";
+        << "the reserve should never regenerate over time";
 }

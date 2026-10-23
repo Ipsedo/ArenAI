@@ -61,12 +61,11 @@ namespace arenai::model {
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), aim_tolerance_min(3.25f),
           aim_tolerance_angle(glm::radians(2.f)), hit_reward_scale(0.1f), hit_received_cost(0.3f),
-          initial_nb_shells(10), nb_shells(initial_nb_shells), max_shells(30),
+          initial_nb_shells(20), nb_shells(initial_nb_shells), max_shells(30),
           fire_cooldown_frames(static_cast<int>(1.f / 6.f / wanted_frame_frequency)),
           curr_cooldown_frame(fire_cooldown_frames), shells_recharged_per_hit(5),
-          nb_frames_per_shell_regen(static_cast<int>(1.5f / wanted_frame_frequency)),
-          curr_frame_shell_regen(0), is_dead_already_triggered(false), apply_timeout(apply_timeout),
-          starved(false), max_frames_without_hit(static_cast<int>(30.f / wanted_frame_frequency)),
+          is_dead_already_triggered(false), apply_timeout(apply_timeout), starved(false),
+          max_frames_without_hit(static_cast<int>(30.f / wanted_frame_frequency)),
           remaining_frames(max_frames_without_hit),
           nb_frames_added_when_hit(static_cast<int>(3.f / wanted_frame_frequency)),
           nb_frames_added_when_kill(static_cast<int>(15.f / wanted_frame_frequency)),
@@ -184,16 +183,9 @@ namespace arenai::model {
             curr_frame_upside_down++;
         else curr_frame_upside_down = 0;
 
-        // 2. passive shell regeneration, capped at the initial reserve: the hit recharge
-        // may push the reserve above it, regeneration never does
-        if (++curr_frame_shell_regen >= nb_frames_per_shell_regen) {
-            curr_frame_shell_regen = 0;
-            nb_shells++;
-        }
-
         nb_shells = std::min(nb_shells, max_shells);
 
-        // 3. track shells
+        // 2. track shells
         for (int i = static_cast<int>(tracked_shells.size()) - 1; i >= 0; i--) {
             auto &tracked = tracked_shells[i];
 
@@ -214,10 +206,10 @@ namespace arenai::model {
             if (!in_flight) tracked.need_remove = true;
         }
 
-        // 4. fire cooldown
+        // 3. fire cooldown
         curr_cooldown_frame = std::min(fire_cooldown_frames, curr_cooldown_frame + 1);
 
-        // 5. timeout
+        // 4. timeout
         remaining_frames--;
 
         if (has_hit) remaining_frames += nb_frames_added_when_hit;

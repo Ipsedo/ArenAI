@@ -8,6 +8,9 @@
 #include <agents/ppo_liquid/liquid_ppo_rollout_buffer.h>
 #include <gtest/gtest.h>
 
+// test code: the arenai sub-namespaces are used unqualified
+using namespace arenai;
+
 class LiquidPpoRolloutBufferTest : public testing::Test {
 protected:
     static constexpr int NB_TANKS = 2;

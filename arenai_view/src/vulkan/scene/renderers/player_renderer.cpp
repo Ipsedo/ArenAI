@@ -18,12 +18,6 @@ namespace arenai::view {
           width_(width), height_(height), msaa_samples_(msaa_samples),
           frame_context_(std::move(frame_context)) {}
 
-    void VulkanPlayerRenderer::add_hud_drawable(std::unique_ptr<AbstractHudDrawable> hud_drawable) {
-        if (auto *vulkan_hud = dynamic_cast<VulkanHudDrawable *>(hud_drawable.get()))
-            vulkan_hud->attach(this);
-        hud_drawables_.push_back(std::move(hud_drawable));
-    }
-
     void VulkanPlayerRenderer::ensure_post_process() {
         if (post_process_) return;
         post_process_ = std::make_unique<VulkanPostProcess>(
@@ -56,18 +50,6 @@ namespace arenai::view {
             cmd, frame_context_->swapchain_format(), frame_context_->width(),
             frame_context_->height());
 
-        const VkViewport viewport{
-            .x = 0.f,
-            .y = static_cast<float>(frame_context_->height()),
-            .width = static_cast<float>(frame_context_->width()),
-            .height = -static_cast<float>(frame_context_->height()),
-            .minDepth = 0.f,
-            .maxDepth = 1.f};
-        vkCmdSetViewport(cmd, 0, 1, &viewport);
-
-        for (const auto &hud_drawable: hud_drawables_)
-            hud_drawable->draw(get_width(), get_height());
-
         frame_context_->end_swapchain_pass();
     }
 
@@ -97,18 +79,8 @@ namespace arenai::view {
         return post_process_->scene_samples();
     }
 
-    HudFrame VulkanPlayerRenderer::hud_frame() {
-        return {
-            .cmd = frame_context_->cmd(),
-            .color_format = frame_context_->swapchain_format(),
-            .device = device(),
-            .upload_pool = upload_pool(),
-            .descriptors = &descriptors()};
-    }
-
     VulkanPlayerRenderer::~VulkanPlayerRenderer() {
         VulkanRenderer::device()->wait_idle();
-        hud_drawables_.clear();
         post_process_.reset();
     }
 

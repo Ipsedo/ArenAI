@@ -16,6 +16,9 @@
 #include <arenai_utils/file_reader.h>
 #include <arenai_view/backend.h>
 
+// test code: the arenai sub-namespaces are used unqualified
+using namespace arenai;
+
 class EngineTestFixture : public testing::Test {
 protected:
     void SetUp() override;

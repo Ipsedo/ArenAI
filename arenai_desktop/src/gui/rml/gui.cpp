@@ -2,221 +2,100 @@
 // Created by samuel on 17/07/2026.
 //
 
+#include "../gui.h"
+
+#include <algorithm>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <utility>
 #include <vector>
 
 #include <RmlUi/Core.h>
 
-#include <arenai_controller/callback.h>
 #include <arenai_view/window.h>
 
-#include "../menu.h"
+#include "../../controller/gamepad_selection.h"
 #include "./adapters.h"
-#include "./corner_reticle.h"
-#include "./damage_arc.h"
-#include "./hit_marker.h"
+#include "./decorators/decorator_registry.h"
+#include "./fonts.h"
 #include "./hud.h"
 #include "./input.h"
+#include "./menu_state.h"
+#include "./navigator.h"
 #include "./pages/ai_page.h"
 #include "./pages/controls_page.h"
 #include "./pages/graphics_page.h"
-#include "./reticle.h"
+#include "./pages/main_page.h"
+#include "./pages/parameters_page.h"
+#include "./popup_page.h"
 
 namespace arenai::desktop::gui {
 
     namespace {
 
-        // Orchestrates the RmlUi machinery: library lifecycle, the loaded
-        // documents and the navigation between them, the main-menu loop and
-        // the pause / game-over popups. Everything page-specific lives in the
-        // pages/ classes, the in-game overlay in Hud.
-        class RmlGui final : public AbstractGui {
+        // The composition root of the RmlUi implementation: library
+        // lifecycle, the context, and the wiring of the pages, popups and
+        // HUD. Each role of the port is served by a small object below;
+        // everything page-specific lives in the pages.
+        class RmlGui final : public AbstractGui, public AbstractOverlayRenderer {
         public:
             RmlGui(
                 const std::shared_ptr<view::AbstractWindowedGraphicBackend> &backend,
                 const std::shared_ptr<utils::AbstractResourceFileReader> &asset_reader,
-                const GameSettings &initial_settings, const std::vector<std::string> &gpus,
-                const int window_width, const int window_height, AgentValidator agent_validator)
-                : backend_(backend), window_(backend->get_window()), settings_(initial_settings),
-                  width_(window_width), height_(window_height), file_interface_(asset_reader),
-                  graphics_page_(settings_, window_, gpus), controls_page_(settings_, window_),
-                  ai_page_(settings_, std::move(agent_validator)) {
+                GuiOptions options)
+                : backend_(backend), window_(backend->get_window()),
+                  state_{.settings = std::move(options.initial_settings)},
+                  width_(options.window_width), height_(options.window_height),
+                  file_interface_(asset_reader), main_menu_(*this), popups_(*this) {
                 Rml::SetSystemInterface(&system_interface_);
                 Rml::SetFileInterface(&file_interface_);
                 Rml::SetRenderInterface(&backend_->ui_render_interface());
                 Rml::Initialise();
 
-                // menu.rcss frames the focused control (and paints the slider
-                // knob) with this gui-local decorator. Built only now: its
-                // property registration needs the style-sheet specification
-                // that Rml::Initialise() just created, so it cannot be a plain
-                // member (members are constructed before this body runs).
-                corner_reticle_instancer_ = std::make_unique<CornerReticleDecoratorInstancer>();
-                Rml::Factory::RegisterDecoratorInstancer(
-                    "corner-reticle", corner_reticle_instancer_.get());
-                hit_marker_instancer_ = std::make_unique<HitMarkerDecoratorInstancer>();
-                Rml::Factory::RegisterDecoratorInstancer("hit-marker", hit_marker_instancer_.get());
-                reticle_instancer_ = std::make_unique<ReticleDecoratorInstancer>();
-                Rml::Factory::RegisterDecoratorInstancer("reticle", reticle_instancer_.get());
-                damage_arc_instancer_ = std::make_unique<DamageArcDecoratorInstancer>();
-                Rml::Factory::RegisterDecoratorInstancer("damage-arc", damage_arc_instancer_.get());
-
-                load_fonts(asset_reader);
+                // built only now: property registration needs the style-sheet
+                // specification Rml::Initialise() just created
+                decorators_ = std::make_unique<DecoratorRegistry>();
+                register_menu_decorators(*decorators_);
+                font_buffers_ = load_menu_fonts(asset_reader);
 
                 context_ = Rml::CreateContext("menu", Rml::Vector2i(width_, height_));
                 if (!context_) throw std::runtime_error("RmlUi context creation failed");
                 update_dp_ratio();
 
-                bind_data_model();
-                ai_page_.refresh_explorer();
-
-                main_document_ = context_->LoadDocument("menu/main_menu.rml");
-                params_document_ = context_->LoadDocument("menu/parameters.rml");
-                controls_document_ = context_->LoadDocument("menu/controls.rml");
-                graphics_document_ = context_->LoadDocument("menu/graphics.rml");
-                ai_document_ = context_->LoadDocument("menu/ai.rml");
-                pause_document_ = context_->LoadDocument("menu/pause.rml");
-                game_over_document_ = context_->LoadDocument("menu/game_over.rml");
-                hud_document_ = context_->LoadDocument("menu/hud.rml");
-                if (!main_document_ || !params_document_ || !controls_document_
-                    || !graphics_document_ || !ai_document_ || !pause_document_
-                    || !game_over_document_ || !hud_document_)
-                    throw std::runtime_error("RmlUi menu documents failed to load");
-
-                hud_ = std::make_unique<Hud>(*hud_document_);
-                hud_document_->Show(Rml::ModalFlag::None, Rml::FocusFlag::None);
-
-                // D-pad bridge across the file explorer's scroll container
-                ai_page_.attach(*ai_document_);
-
+                // the adapter is wired before the pages (the controls page
+                // captures bindings through it); navigator_ is only read when
+                // input arrives, after construction
                 input_adapter_ = std::make_shared<MenuInputAdapter>(
-                    context_,
-                    [this] {
-                        // Escape / gamepad B back out of the controls and
-                        // parameters screens; while paused B resumes the game
-                        // (the application intercepts Escape itself before
-                        // this adapter); the game-over popup cannot be backed
-                        // out of
-                        if (game_over_document_->IsVisible()) return;
-                        if (pause_document_->IsVisible())
-                            pending_pause_action_ = PauseAction::Continue;
-                        else if (controls_document_->IsVisible()) close_controls();
-                        else if (graphics_document_->IsVisible()) close_graphics();
-                        else if (ai_document_->IsVisible()) close_ai();
-                        else if (params_document_->IsVisible()) close_params();
-                    },
-                    [this](const bool gamepad) {
-                        // menu.rcss shows the :focus highlight only under
-                        // .gamepad-nav, so the mouse hover and the gamepad
-                        // cursor are never visible together
-                        for (auto *document:
-                             {main_document_, params_document_, controls_document_,
-                              graphics_document_, ai_document_, pause_document_,
-                              game_over_document_})
-                            document->SetClass("gamepad-nav", gamepad);
-                    });
-                controls_page_.set_input_adapter(input_adapter_);
+                    context_, [this] { on_escape(); },
+                    [this](const bool gamepad) { navigator_->set_gamepad_nav(gamepad); });
+
+                std::vector<std::unique_ptr<MenuPage>> pages;
+                pages.push_back(std::make_unique<MainPage>(
+                    state_, [this](const MenuOutcome outcome) { main_menu_.finish(outcome); }));
+                pages.push_back(std::make_unique<ParametersPage>(state_));
+                pages.push_back(std::make_unique<GraphicsPage>(state_, window_, options.gpus));
+                pages.push_back(std::make_unique<ControlsPage>(state_, window_, *input_adapter_));
+                pages.push_back(std::make_unique<AiPage>(
+                    state_, std::move(options.presets), std::move(options.agent_validator)));
+                navigator_ = std::make_unique<Navigator>(*context_, std::move(pages), PageId::Main);
+
+                pause_ = std::make_unique<PopupPage>(PopupKind::Pause, state_);
+                pause_->load(*context_);
+                game_over_ = std::make_unique<PopupPage>(PopupKind::GameOver, state_);
+                game_over_->load(*context_);
+
+                hud_ = std::make_unique<HudOverlay>(*this);
+                hud_->load(*context_);
 
                 // route the pad input to the pad persisted from the previous
                 // session, when it is connected
-                controls_page_.on_open();
+                select_configured_gamepad(*window_, state_.settings);
             }
 
-            MenuOutcome run_main_menu() override {
-                play_clicked_ = false;
-                quit_clicked_ = false;
-
-                window_->set_keyboard_callback(input_adapter_);
-                window_->set_gamepad_callback(input_adapter_);
-                window_->set_cursor_mode(controller::CursorMode::Normal);
-                main_document_->Show();
-
-                while (!window_->should_close() && !play_clicked_ && !quit_clicked_) {
-                    window_->poll_events();
-
-                    controls_page_.update(controls_document_->IsVisible());
-
-                    context_->Update();
-
-                    ai_page_.update_after_context();
-
-                    backend_->begin_ui_frame(width_, height_);
-                    context_->Render();
-                    backend_->end_ui_frame();
-                    backend_->present();
-                }
-
-                main_document_->Hide();
-                params_document_->Hide();
-                graphics_document_->Hide();
-                ai_document_->Hide();
-                controls_page_.on_close();
-                controls_document_->Hide();
-                window_->set_keyboard_callback(nullptr);
-                window_->set_gamepad_callback(nullptr);
-
-                return play_clicked_ ? MenuOutcome::Play : MenuOutcome::Quit;
-            }
-
-            GameSettings settings() const override { return settings_; }
-
-            void open_pause(const int score) override {
-                pending_pause_action_ = PauseAction::None;
-                score_ = score;
-                model_handle_.DirtyVariable("score");
-                pause_document_->Show();
-            }
-
-            void close_pause() override { pause_document_->Hide(); }
-
-            void open_game_over(const int score) override {
-                pending_pause_action_ = PauseAction::None;
-                score_ = score;
-                model_handle_.DirtyVariable("score");
-                game_over_document_->Show();
-            }
-
-            void close_game_over() override { game_over_document_->Hide(); }
-
-            void render_pause_overlay() override {
-                context_->Update();
-
-                backend_->begin_ui_overlay(width_, height_);
-                context_->Render();
-                backend_->end_ui_frame();
-            }
-
-            PauseAction poll_pause_action() override {
-                return std::exchange(pending_pause_action_, PauseAction::None);
-            }
-
-            void notify_hit(const HitKind kind) override { hud_->notify_hit(kind); }
-
-            void notify_damage(const float screen_angle) override {
-                hud_->notify_damage(screen_angle);
-            }
-
-            void set_aim_point(const std::optional<glm::vec2> normalized) override {
-                hud_->set_aim_point(normalized, width_, height_);
-            }
-
-            void render_hud_overlay() override {
-                context_->Update();
-
-                backend_->begin_ui_overlay(width_, height_);
-                context_->Render();
-                backend_->end_ui_frame();
-            }
-
-            std::shared_ptr<controller::AbstractKeyboardCallback> pause_input() override {
-                return input_adapter_;
-            }
-
-            std::shared_ptr<controller::AbstractGamepadCallback> pause_gamepad_input() override {
-                return input_adapter_;
-            }
+            AbstractMainMenu &main_menu() override { return main_menu_; }
+            AbstractPopupMenu &popups() override { return popups_; }
+            AbstractHudOverlay &hud() override { return *hud_; }
 
             void on_window_resized(const int width, const int height) override {
                 width_ = width;
@@ -231,12 +110,108 @@ namespace arenai::desktop::gui {
                 window_->set_gamepad_callback(nullptr);
                 window_->set_resize_callback(nullptr);
 
-                // releases the GL resources through the backend's render
-                // interface, whose context is still current on this thread
+                // releases the GPU resources through the backend's render
+                // interface; the instancers (decorators_) and font buffers
+                // are members, hence destroyed after this call as RmlUi needs
                 Rml::Shutdown();
             }
 
         private:
+            // the blocking main-menu loop, owning the window input meanwhile
+            class MainMenu final : public AbstractMainMenu {
+            public:
+                explicit MainMenu(RmlGui &gui) : gui_(gui) {}
+
+                MenuOutcome run() override {
+                    outcome_.reset();
+
+                    gui_.window_->set_keyboard_callback(gui_.input_adapter_);
+                    gui_.window_->set_gamepad_callback(gui_.input_adapter_);
+                    gui_.window_->set_cursor_mode(controller::CursorMode::Normal);
+                    gui_.navigator_->show_root();
+
+                    while (!gui_.window_->should_close() && !outcome_) {
+                        gui_.window_->poll_events();
+
+                        gui_.navigator_->update();
+                        gui_.context_->Update();
+                        gui_.navigator_->after_context_update();
+
+                        gui_.backend_->begin_ui_pass(
+                            view::UiPass::Clear, gui_.width_, gui_.height_);
+                        gui_.context_->Render();
+                        gui_.backend_->end_ui_pass();
+                        gui_.backend_->present();
+                    }
+
+                    gui_.navigator_->hide_all();
+                    gui_.window_->set_keyboard_callback(nullptr);
+                    gui_.window_->set_gamepad_callback(nullptr);
+
+                    return outcome_.value_or(MenuOutcome::Quit);
+                }
+
+                const GameSettings &settings() const override { return gui_.state_.settings; }
+
+                void finish(const MenuOutcome outcome) { outcome_ = outcome; }
+
+            private:
+                RmlGui &gui_;
+                std::optional<MenuOutcome> outcome_;
+            };
+
+            class PopupMenu final : public AbstractPopupMenu {
+            public:
+                explicit PopupMenu(RmlGui &gui) : gui_(gui) {}
+
+                void open(const PopupKind kind, const int score, PopupListener on_action) override {
+                    close();
+                    gui_.popup(kind).open(score, std::move(on_action));
+                }
+
+                void close() override {
+                    gui_.pause_->close();
+                    gui_.game_over_->close();
+                }
+
+                void render() override { gui_.render_overlay(); }
+
+                std::shared_ptr<controller::AbstractKeyboardCallback> keyboard_input() override {
+                    return gui_.input_adapter_;
+                }
+
+                std::shared_ptr<controller::AbstractGamepadCallback> gamepad_input() override {
+                    return gui_.input_adapter_;
+                }
+
+            private:
+                RmlGui &gui_;
+            };
+
+            PopupPage &popup(const PopupKind kind) const {
+                return kind == PopupKind::Pause ? *pause_ : *game_over_;
+            }
+
+            // Escape / gamepad B: an open popup first (the application
+            // intercepts Escape itself in-game, this covers the gamepad),
+            // else the menu stack
+            void on_escape() {
+                for (PopupPage *popup: {pause_.get(), game_over_.get()})
+                    if (popup->visible()) {
+                        popup->on_escape();
+                        return;
+                    }
+                navigator_->on_escape();
+            }
+
+            void render_overlay() override {
+                context_->Update();
+
+                backend_->begin_ui_pass(view::UiPass::Overlay, width_, height_);
+                context_->Render();
+                backend_->end_ui_pass();
+            }
+
             // Every dp length in menu.rcss is mapped to pixels relative to a
             // 1080p design baseline, measured against the monitor the window
             // sits on — not the window itself — so the menu keeps the same
@@ -252,203 +227,30 @@ namespace arenai::desktop::gui {
                               static_cast<float>(screen_height) / 1080.0f)));
             }
 
-            // Registered with an explicit family/weight (the static TTFs carry
-            // per-weight legacy family names that would not match the RCSS
-            // font-family otherwise). The buffers must outlive Rml::Shutdown().
-            void
-            load_fonts(const std::shared_ptr<utils::AbstractResourceFileReader> &asset_reader) {
-                struct FontSpec {
-                    const char *path;
-                    const char *family;
-                    int weight;
-                };
-                constexpr FontSpec MENU_FONTS[] = {
-                    {.path = "font/Sora-Regular.ttf", .family = "Sora", .weight = 400},
-                    {.path = "font/Sora-SemiBold.ttf", .family = "Sora", .weight = 600},
-                    {.path = "font/Sora-Bold.ttf", .family = "Sora", .weight = 700},
-                    {.path = "font/IBMPlexMono-Regular.ttf",
-                     .family = "IBM Plex Mono",
-                     .weight = 400},
-                    {.path = "font/IBMPlexMono-Medium.ttf",
-                     .family = "IBM Plex Mono",
-                     .weight = 500},
-                    {.path = "font/IBMPlexMono-SemiBold.ttf",
-                     .family = "IBM Plex Mono",
-                     .weight = 600},
-                };
-
-                font_buffers_.reserve(std::size(MENU_FONTS));
-                for (const auto &[path, family, weight]: MENU_FONTS) {
-                    font_buffers_.push_back(asset_reader->read_text(path));
-                    const auto &buffer = font_buffers_.back();
-                    Rml::LoadFontFace(
-                        Rml::Span(
-                            reinterpret_cast<const Rml::byte *>(buffer.data()), buffer.size()),
-                        family, Rml::Style::FontStyle::Normal,
-                        static_cast<Rml::Style::FontWeight>(weight));
-                }
-            }
-
-            void bind_data_model() {
-                Rml::DataModelConstructor constructor = context_->CreateDataModel("settings");
-                if (!constructor) throw std::runtime_error("RmlUi data model creation failed");
-
-                constructor.RegisterArray<std::vector<Rml::String>>();
-
-                constructor.Bind("nb_tanks", &settings_.nb_tanks);
-                constructor.Bind("spawn_side", &settings_.spawn_side);
-                constructor.Bind("score", &score_);
-
-                graphics_page_.bind(constructor);
-                controls_page_.bind(constructor);
-                ai_page_.bind(constructor);
-
-                constructor.BindEventCallback(
-                    "play", [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &) {
-                        if (ai_page_.can_play()) play_clicked_ = true;
-                    });
-                constructor.BindEventCallback(
-                    "exit", [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &) {
-                        quit_clicked_ = true;
-                    });
-                constructor.BindEventCallback(
-                    "open_params",
-                    [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &) {
-                        main_document_->Hide();
-                        params_document_->Show();
-                    });
-                constructor.BindEventCallback(
-                    "back", [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &) {
-                        close_params();
-                    });
-                constructor.BindEventCallback(
-                    "open_graphics",
-                    [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &) {
-                        params_document_->Hide();
-                        graphics_document_->Show();
-                    });
-                constructor.BindEventCallback(
-                    "graphics_back",
-                    [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &) {
-                        close_graphics();
-                    });
-                constructor.BindEventCallback(
-                    "open_controls",
-                    [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &) {
-                        params_document_->Hide();
-                        controls_page_.on_open();
-                        controls_document_->Show();
-                    });
-                constructor.BindEventCallback(
-                    "controls_back",
-                    [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &) {
-                        close_controls();
-                    });
-                constructor.BindEventCallback(
-                    "open_ai",
-                    [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &) {
-                        params_document_->Hide();
-                        ai_document_->Show();
-                    });
-                constructor.BindEventCallback(
-                    "ai_back",
-                    [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &) {
-                        close_ai();
-                    });
-
-                constructor.BindEventCallback(
-                    "pause_continue",
-                    [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &) {
-                        pending_pause_action_ = PauseAction::Continue;
-                    });
-                constructor.BindEventCallback(
-                    "pause_main_menu",
-                    [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &) {
-                        pending_pause_action_ = PauseAction::MainMenu;
-                    });
-                constructor.BindEventCallback(
-                    "pause_exit",
-                    [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &) {
-                        pending_pause_action_ = PauseAction::ExitGame;
-                    });
-                constructor.BindEventCallback(
-                    "game_over_retry",
-                    [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &) {
-                        pending_pause_action_ = PauseAction::Retry;
-                    });
-
-                model_handle_ = constructor.GetModelHandle();
-                graphics_page_.set_model_handle(model_handle_);
-                controls_page_.set_model_handle(model_handle_);
-                ai_page_.set_model_handle(model_handle_);
-            }
-
-            void close_params() const {
-                params_document_->Hide();
-                main_document_->Show();
-            }
-
-            void close_ai() const {
-                ai_document_->Hide();
-                params_document_->Show();
-            }
-
-            void close_graphics() const {
-                graphics_document_->Hide();
-                params_document_->Show();
-            }
-
-            void close_controls() {
-                controls_page_.on_close();
-                controls_document_->Hide();
-                params_document_->Show();
-            }
-
             std::shared_ptr<view::AbstractWindowedGraphicBackend> backend_;
             std::shared_ptr<view::AbstractWindow> window_;
 
-            GameSettings settings_;
+            MenuState state_;
             int width_;
             int height_;
 
             MenuSystemInterface system_interface_;
             ReaderBackedFileInterface file_interface_;
 
-            // the pages register their slice of the "settings" data model and
-            // write straight into settings_
-            GraphicsPage graphics_page_;
-            ControlsPage controls_page_;
-            AiPage ai_page_;
-
-            // unique_ptr: created after Rml::Initialise(), and member
-            // destruction keeps it alive until after Rml::Shutdown() as
-            // RmlUi requires of registered instancers
-            std::unique_ptr<CornerReticleDecoratorInstancer> corner_reticle_instancer_;
-            std::unique_ptr<HitMarkerDecoratorInstancer> hit_marker_instancer_;
-            std::unique_ptr<ReticleDecoratorInstancer> reticle_instancer_;
-            std::unique_ptr<DamageArcDecoratorInstancer> damage_arc_instancer_;
+            // created after Rml::Initialise(), destroyed after Rml::Shutdown()
+            std::unique_ptr<DecoratorRegistry> decorators_;
             std::vector<std::string> font_buffers_;
 
             Rml::Context *context_ = nullptr;
-            Rml::ElementDocument *main_document_ = nullptr;
-            Rml::ElementDocument *params_document_ = nullptr;
-            Rml::ElementDocument *controls_document_ = nullptr;
-            Rml::ElementDocument *graphics_document_ = nullptr;
-            Rml::ElementDocument *ai_document_ = nullptr;
-            Rml::ElementDocument *pause_document_ = nullptr;
-            Rml::ElementDocument *game_over_document_ = nullptr;
-            Rml::ElementDocument *hud_document_ = nullptr;
-            // built once hud_document_ is loaded
-            std::unique_ptr<Hud> hud_;
-            Rml::DataModelHandle model_handle_;
 
             std::shared_ptr<MenuInputAdapter> input_adapter_;
+            std::unique_ptr<Navigator> navigator_;
+            std::unique_ptr<PopupPage> pause_;
+            std::unique_ptr<PopupPage> game_over_;
+            std::unique_ptr<HudOverlay> hud_;
 
-            // score shown by the pause and game-over popups
-            int score_ = 0;
-            bool play_clicked_ = false;
-            bool quit_clicked_ = false;
-            PauseAction pending_pause_action_ = PauseAction::None;
+            MainMenu main_menu_;
+            PopupMenu popups_;
         };
 
     }// namespace
@@ -456,11 +258,8 @@ namespace arenai::desktop::gui {
     std::unique_ptr<AbstractGui> make_gui(
         const std::shared_ptr<view::AbstractWindowedGraphicBackend> &backend,
         const std::shared_ptr<utils::AbstractResourceFileReader> &asset_reader,
-        const GameSettings &initial_settings, const std::vector<std::string> &gpus,
-        const int window_width, const int window_height, AgentValidator agent_validator) {
-        return std::make_unique<RmlGui>(
-            backend, asset_reader, initial_settings, gpus, window_width, window_height,
-            std::move(agent_validator));
+        GuiOptions options) {
+        return std::make_unique<RmlGui>(backend, asset_reader, std::move(options));
     }
 
 }// namespace arenai::desktop::gui

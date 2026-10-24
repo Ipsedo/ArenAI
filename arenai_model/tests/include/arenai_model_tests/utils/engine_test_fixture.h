@@ -14,6 +14,9 @@
 #include <arenai_model/tank_factory.h>
 #include <arenai_utils/file_reader.h>
 
+// test code: the arenai sub-namespaces are used unqualified
+using namespace arenai;
+
 class EngineTestFixture : public testing::Test {
 protected:
     void SetUp() override;

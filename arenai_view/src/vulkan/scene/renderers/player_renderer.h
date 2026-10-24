@@ -10,22 +10,17 @@
 
 #include "../../post/post_process.h"
 #include "../../present/window_frame.h"
-#include "../drawables/hud_drawables.h"
 #include "./renderer.h"
 
 namespace arenai::view {
 
-    class VulkanPlayerRenderer final : public VulkanRenderer,
-                                       public AbstractPlayerRenderer,
-                                       public AbstractHudFrameProvider {
+    class VulkanPlayerRenderer final : public VulkanRenderer, public AbstractPlayerRenderer {
     public:
         VulkanPlayerRenderer(
             const std::shared_ptr<VulkanDevice> &device,
             std::shared_ptr<WindowFrameContext> frame_context, int width, int height,
             glm::vec3 light_pos, const std::shared_ptr<AbstractCamera> &camera, bool shadows,
             int shadow_map_size, int msaa_samples);
-
-        void add_hud_drawable(std::unique_ptr<AbstractHudDrawable> hud_drawable) override;
 
         int get_width() const override;
         int get_height() const override;
@@ -36,8 +31,6 @@ namespace arenai::view {
         VkFormat scene_color_format() const override;
         VkFormat scene_depth_format() const override;
         VkSampleCountFlagBits scene_samples() const override;
-
-        HudFrame hud_frame() override;
 
         ~VulkanPlayerRenderer() override;
 
@@ -56,8 +49,6 @@ namespace arenai::view {
         std::shared_ptr<WindowFrameContext> frame_context_;
 
         std::unique_ptr<VulkanPostProcess> post_process_;
-
-        std::vector<std::unique_ptr<AbstractHudDrawable>> hud_drawables_;
     };
 
 }// namespace arenai::view

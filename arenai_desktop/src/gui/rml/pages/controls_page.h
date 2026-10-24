@@ -11,13 +11,12 @@
 #include <optional>
 #include <vector>
 
-#include <RmlUi/Core.h>
-
 #include <arenai_view/window.h>
 
 #include "../../../controller/bindings.h"
-#include "../../menu.h"
 #include "../input.h"
+#include "../menu_page.h"
+#include "../menu_state.h"
 
 namespace arenai::desktop::gui {
 
@@ -29,18 +28,20 @@ namespace arenai::desktop::gui {
         bool bound = true;
     };
 
-    class ControlsPage {
+    // The Controls screen: input kind, gamepad device, and the binding slots
+    // captured through the menu input adapter's raw sink.
+    class ControlsPage final : public MenuPage {
     public:
-        ControlsPage(GameSettings &settings, std::shared_ptr<view::AbstractWindow> window);
+        ControlsPage(
+            MenuState &state, std::shared_ptr<view::AbstractWindow> window,
+            MenuInputAdapter &input_adapter);
 
-        void bind(Rml::DataModelConstructor &constructor);
-        void set_model_handle(Rml::DataModelHandle handle);
-        void set_input_adapter(std::shared_ptr<MenuInputAdapter> adapter);
+        void update() override;
 
-        void on_open();
-        void on_close();
-
-        void update(bool page_visible);
+    protected:
+        void bind_controls(DataModel &model) override;
+        void on_show() override;
+        void on_hide() override;
 
     private:
         std::array<std::optional<KeyboardBinding> *, 6> kb_slots();
@@ -67,8 +68,7 @@ namespace arenai::desktop::gui {
 
         GameSettings &settings_;
         std::shared_ptr<view::AbstractWindow> window_;
-        std::shared_ptr<MenuInputAdapter> input_adapter_;
-        Rml::DataModelHandle model_handle_;
+        MenuInputAdapter &input_adapter_;
 
         Rml::String controller_display_;
         std::vector<BindingRow> kb_rows_;

@@ -15,7 +15,7 @@
 
 // RmlUi ↔ arenai bridges (clock, asset access). Internal to the gui/ hexagon:
 // only gui/ sources may include this header, everything else goes through
-// gui/menu.h.
+// gui/gui.h.
 namespace arenai::desktop::gui {
 
     class MenuSystemInterface final : public Rml::SystemInterface {

@@ -9,6 +9,9 @@
 
 #include <arenai_agent/agent.h>
 
+// test code: the arenai sub-namespaces are used unqualified
+using namespace arenai;
+
 // Records every batch of states the game loop hands to the agent and answers
 // with neutral actions: what act() received is exactly what the enemy agent
 // would have seen in run_game().

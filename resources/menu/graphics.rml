@@ -3,10 +3,10 @@
     <title>Graphics</title>
     <link type="text/rcss" href="menu.rcss"/>
 </head>
-<body data-model="settings">
+<body data-model="graphics">
     <div id="graphics-panel" class="panel">
         <div class="params-header">
-            <div class="back-arrow" autofocus data-event-click="graphics_back()">←</div>
+            <div class="back-arrow" autofocus data-event-click="back()">←</div>
             <h1>Graphics</h1>
         </div>
 
@@ -53,7 +53,7 @@
         <p class="hint warn" data-if="vision_gpu_env">Overridden by the ARENAI_VK_DEVICE environment variable.</p>
 
         <div class="row-buttons back-row">
-            <div class="button primary" data-event-click="graphics_back()">Back</div>
+            <div class="button primary" data-event-click="back()">Back</div>
         </div>
     </div>
 </body>

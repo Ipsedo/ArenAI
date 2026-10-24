@@ -9,7 +9,10 @@
 
 namespace arenai::desktop::gui {
 
-    Hud::Hud(Rml::ElementDocument &document) {
+    HudOverlay::HudOverlay(AbstractOverlayRenderer &renderer)
+        : DocumentView("menu/hud.rml", nullptr), renderer_(renderer) {}
+
+    void HudOverlay::on_attached(Rml::ElementDocument &document) {
         reticle_ = document.GetElementById("reticle");
         hit_marker_ = document.GetElementById("hit-marker");
         if (reticle_ == nullptr || hit_marker_ == nullptr)
@@ -20,9 +23,12 @@ namespace arenai::desktop::gui {
                 damage_arcs_.push_back(arcs->GetChild(i));
         if (damage_arcs_.empty())
             throw std::runtime_error("hud.rml misses its #damage-arcs elements");
+
+        // always on, never focused: the pages and popups own the input
+        show(Rml::ModalFlag::None, Rml::FocusFlag::None);
     }
 
-    void Hud::notify_hit(const HitKind kind) const {
+    void HudOverlay::notify_hit(const HitKind kind) {
         const bool kill = kind == HitKind::Kill;
         hit_marker_->SetClass("kill", kill);
 
@@ -45,7 +51,7 @@ namespace arenai::desktop::gui {
             duration, tween, 1, false, 0.f, &start_scale);
     }
 
-    void Hud::notify_damage(const float screen_angle) {
+    void HudOverlay::notify_damage(const float screen_angle) {
         // oldest-slot reuse: a burst of impacts shows as many arcs as
         // the pool holds, each rotated toward its own shooter
         Rml::Element *arc = damage_arcs_[next_damage_arc_];
@@ -63,21 +69,23 @@ namespace arenai::desktop::gui {
             false, 0.f, &opaque);
     }
 
-    void Hud::set_aim_point(
-        const std::optional<glm::vec2> normalized, const int width, const int height) const {
+    void HudOverlay::set_aim_point(const std::optional<glm::vec2> normalized) {
         if (!normalized) {
             reticle_->SetProperty(
                 Rml::PropertyId::Visibility, Rml::Property(Rml::Style::Visibility::Hidden));
             return;
         }
+        const Rml::Vector2i dimensions = context().GetDimensions();
         reticle_->SetProperty(
             Rml::PropertyId::Visibility, Rml::Property(Rml::Style::Visibility::Visible));
         reticle_->SetProperty(
             Rml::PropertyId::Left,
-            Rml::Property(normalized->x * static_cast<float>(width), Rml::Unit::PX));
+            Rml::Property(normalized->x * static_cast<float>(dimensions.x), Rml::Unit::PX));
         reticle_->SetProperty(
             Rml::PropertyId::Top,
-            Rml::Property(normalized->y * static_cast<float>(height), Rml::Unit::PX));
+            Rml::Property(normalized->y * static_cast<float>(dimensions.y), Rml::Unit::PX));
     }
+
+    void HudOverlay::render() { renderer_.render_overlay(); }
 
 }// namespace arenai::desktop::gui

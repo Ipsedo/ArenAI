@@ -34,108 +34,92 @@ namespace arenai::desktop::gui {
 
     }// namespace
 
-    ControlsPage::ControlsPage(GameSettings &settings, std::shared_ptr<view::AbstractWindow> window)
-        : settings_(settings), window_(std::move(window)),
+    ControlsPage::ControlsPage(
+        MenuState &state, std::shared_ptr<view::AbstractWindow> window,
+        MenuInputAdapter &input_adapter)
+        : MenuPage(PageId::Controls, PageId::Parameters, "menu/controls.rml", "controls"),
+          settings_(state.settings), window_(std::move(window)), input_adapter_(input_adapter),
           controller_display_(
-              settings.controller_kind == ControllerKind::Gamepad ? "gamepad" : "keyboard") {}
+              settings_.controller_kind == ControllerKind::Gamepad ? "gamepad" : "keyboard") {}
 
-    void ControlsPage::bind(Rml::DataModelConstructor &constructor) {
-        if (auto row_handle = constructor.RegisterStruct<BindingRow>()) {
+    void ControlsPage::bind_controls(DataModel &model) {
+        if (auto row_handle = model.register_struct<BindingRow>()) {
             row_handle.RegisterMember("label", &BindingRow::label);
             row_handle.RegisterMember("binding", &BindingRow::binding);
             row_handle.RegisterMember("listening", &BindingRow::listening);
             row_handle.RegisterMember("bound", &BindingRow::bound);
         }
-        constructor.RegisterArray<std::vector<BindingRow>>();
+        model.register_array<std::vector<BindingRow>>();
+        model.register_array<std::vector<Rml::String>>();
 
-        constructor.Bind("kb_rows", &kb_rows_);
-        constructor.Bind("gp_rows", &gp_rows_);
-        constructor.Bind("gamepads", &gamepad_names_);
-        constructor.Bind("selected_gamepad", &selected_gamepad_);
-        constructor.Bind("bind_status", &bind_status_);
-        constructor.Bind("bind_warning", &bind_warning_);
-        constructor.Bind("controller", &controller_display_);
+        model.bind("kb_rows", &kb_rows_);
+        model.bind("gp_rows", &gp_rows_);
+        model.bind("gamepads", &gamepad_names_);
+        model.bind("selected_gamepad", &selected_gamepad_);
+        model.bind("bind_status", &bind_status_);
+        model.bind("bind_warning", &bind_warning_);
+        model.bind("controller", &controller_display_);
 
-        constructor.BindEventCallback(
-            "set_controller",
-            [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &arguments) {
-                if (arguments.empty()) return;
-                controller_display_ = arguments[0].Get<Rml::String>();
-                settings_.controller_kind = controller_display_ == "gamepad"
-                                                ? ControllerKind::Gamepad
-                                                : ControllerKind::Keyboard;
-                model_handle_.DirtyVariable("controller");
-                // the toggle lives on the controls page: switching the
-                // kind swaps the visible bindings, so a running capture
-                // and the status text follow along
-                end_capture();
-                set_default_bind_status();
-                rebuild_binding_rows();
-            });
-        constructor.BindEventCallback(
-            "capture_kb",
-            [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &arguments) {
-                if (!arguments.empty()) begin_capture(true, arguments[0].Get<int>());
-            });
-        constructor.BindEventCallback(
-            "capture_gp",
-            [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &arguments) {
-                if (!arguments.empty()) begin_capture(false, arguments[0].Get<int>());
-            });
-        constructor.BindEventCallback(
-            "select_pad",
-            [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &arguments) {
-                if (arguments.empty()) return;
-                const auto index = static_cast<size_t>(arguments[0].Get<int>());
-                if (index >= gamepads_.size()) return;
+        model.on_event("set_controller", [this](const Rml::VariantList &arguments) {
+            if (arguments.empty()) return;
+            controller_display_ = arguments[0].Get<Rml::String>();
+            settings_.controller_kind = controller_display_ == "gamepad" ? ControllerKind::Gamepad
+                                                                         : ControllerKind::Keyboard;
+            this->model().dirty("controller");
+            // switching the kind swaps the visible bindings, so a running
+            // capture and the status text follow along
+            end_capture();
+            set_default_bind_status();
+            rebuild_binding_rows();
+        });
+        model.on_event("capture_kb", [this](const Rml::VariantList &arguments) {
+            if (!arguments.empty()) begin_capture(true, arguments[0].Get<int>());
+        });
+        model.on_event("capture_gp", [this](const Rml::VariantList &arguments) {
+            if (!arguments.empty()) begin_capture(false, arguments[0].Get<int>());
+        });
+        model.on_event("select_pad", [this](const Rml::VariantList &arguments) {
+            if (arguments.empty()) return;
+            const auto index = static_cast<size_t>(arguments[0].Get<int>());
+            if (index >= gamepads_.size()) return;
 
-                settings_.bindings.gamepad.device_guid = gamepads_[index].guid;
-                settings_.bindings.gamepad.device_name = gamepads_[index].name;
-                window_->select_gamepad(gamepads_[index].id);
-                selected_gamepad_ = static_cast<int>(index);
-                model_handle_.DirtyVariable("selected_gamepad");
-            });
-        constructor.BindEventCallback(
-            "reset_bindings", [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &) {
-                end_capture();
-                if (settings_.controller_kind == ControllerKind::Keyboard)
-                    settings_.bindings.keyboard = {};
-                else {
-                    // the device choice is not a binding: keep it
-                    auto gamepad = GamepadBindings{};
-                    gamepad.device_guid = std::move(settings_.bindings.gamepad.device_guid);
-                    gamepad.device_name = std::move(settings_.bindings.gamepad.device_name);
-                    settings_.bindings.gamepad = std::move(gamepad);
-                }
-                set_default_bind_status();
-                rebuild_binding_rows();
-            });
+            settings_.bindings.gamepad.device_guid = gamepads_[index].guid;
+            settings_.bindings.gamepad.device_name = gamepads_[index].name;
+            window_->select_gamepad(gamepads_[index].id);
+            selected_gamepad_ = static_cast<int>(index);
+            this->model().dirty("selected_gamepad");
+        });
+        model.on_event("reset_bindings", [this](const Rml::VariantList &) {
+            end_capture();
+            if (settings_.controller_kind == ControllerKind::Keyboard)
+                settings_.bindings.keyboard = {};
+            else {
+                // the device choice is not a binding: keep it
+                auto gamepad = GamepadBindings{};
+                gamepad.device_guid = std::move(settings_.bindings.gamepad.device_guid);
+                gamepad.device_name = std::move(settings_.bindings.gamepad.device_name);
+                settings_.bindings.gamepad = std::move(gamepad);
+            }
+            set_default_bind_status();
+            rebuild_binding_rows();
+        });
     }
 
-    void ControlsPage::set_model_handle(const Rml::DataModelHandle handle) {
-        model_handle_ = handle;
-    }
-
-    void ControlsPage::set_input_adapter(std::shared_ptr<MenuInputAdapter> adapter) {
-        input_adapter_ = std::move(adapter);
-    }
-
-    void ControlsPage::on_open() {
+    void ControlsPage::on_show() {
         refresh_gamepad_list();
         set_default_bind_status();
         rebuild_binding_rows();
     }
 
-    void ControlsPage::on_close() {
+    void ControlsPage::on_hide() {
         end_capture();
         rebuild_binding_rows();
     }
 
-    void ControlsPage::update(const bool page_visible) {
+    void ControlsPage::update() {
         // pads can be (un)plugged while the device list is on screen; the
         // refresh is a no-op while nothing changed
-        if (page_visible && settings_.controller_kind == ControllerKind::Gamepad)
-            refresh_gamepad_list();
+        if (settings_.controller_kind == ControllerKind::Gamepad) refresh_gamepad_list();
 
         // a forgotten capture ends on its own (a pad-only player has no
         // Escape at hand)
@@ -219,12 +203,7 @@ namespace arenai::desktop::gui {
                                      : axis_slots[i - NB_GP_BUTTON_SLOTS]->has_value()};
         }
 
-        if (model_handle_) {
-            model_handle_.DirtyVariable("kb_rows");
-            model_handle_.DirtyVariable("gp_rows");
-            model_handle_.DirtyVariable("bind_status");
-            model_handle_.DirtyVariable("bind_warning");
-        }
+        model().dirty({"kb_rows", "gp_rows", "bind_status", "bind_warning"});
     }
 
     void ControlsPage::set_default_bind_status() {
@@ -249,14 +228,14 @@ namespace arenai::desktop::gui {
         axis_armed_.fill(false);
         set_default_bind_status();
 
-        input_adapter_->set_capture_sink(
+        input_adapter_.set_capture_sink(
             [this](const RawMenuInput &input) { on_capture_input(input); });
         rebuild_binding_rows();
     }
 
     void ControlsPage::end_capture() {
         capture_slot_ = -1;
-        if (input_adapter_) input_adapter_->set_capture_sink(nullptr);
+        input_adapter_.set_capture_sink(nullptr);
     }
 
     void ControlsPage::on_capture_input(const RawMenuInput &input) {
@@ -376,10 +355,7 @@ namespace arenai::desktop::gui {
             }
         window_->select_gamepad(selected_gamepad_ >= 0 ? gamepads_[selected_gamepad_].id : -1);
 
-        if (model_handle_) {
-            model_handle_.DirtyVariable("gamepads");
-            model_handle_.DirtyVariable("selected_gamepad");
-        }
+        model().dirty({"gamepads", "selected_gamepad"});
     }
 
 }// namespace arenai::desktop::gui

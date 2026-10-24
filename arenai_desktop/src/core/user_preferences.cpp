@@ -4,6 +4,7 @@
 
 #include "./user_preferences.h"
 
+#include <algorithm>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -156,7 +157,8 @@ namespace arenai::desktop {
 
     std::filesystem::path preferences_path() { return user_cache_dir() / "preferences.json"; }
 
-    gui::GameSettings load_preferences(const gui::GameSettings &defaults) {
+    GameSettings
+    load_preferences(const GameSettings &defaults, const std::vector<AgentPreset> &presets) {
         auto settings = defaults;
 
         const auto path = preferences_path();
@@ -180,7 +182,7 @@ namespace arenai::desktop {
             settings.fullscreen = json.value("fullscreen", settings.fullscreen);
 
             if (const auto quality =
-                    gui::shadow_quality_from_string(json.value("shadow_quality", std::string())))
+                    shadow_quality_from_string(json.value("shadow_quality", std::string())))
                 settings.shadow_quality = *quality;
             if (const int msaa = json.value("msaa", settings.msaa_samples);
                 msaa == 1 || msaa == 2 || msaa == 4 || msaa == 8)
@@ -192,19 +194,38 @@ namespace arenai::desktop {
                 bindings.is_object())
                 load_bindings(bindings, settings.bindings);
 
-            // a stale path (moved, deleted, unplugged drive) falls back to
-            // the default so the menu never starts on an unplayable selection
-            if (const std::filesystem::path agent_folder =
-                    json.value("agent_folder", std::string());
-                !agent_folder.empty() && std::filesystem::is_directory(agent_folder))
-                settings.agent_folder = agent_folder;
-            if (const std::filesystem::path agent_config =
-                    json.value("agent_config", std::string());
-                !agent_config.empty() && std::filesystem::is_regular_file(agent_config))
-                settings.agent_config = agent_config;
-            if (const auto algorithm =
-                    gui::ai_algorithm_from_string(json.value("algorithm", std::string())))
-                settings.agent_algorithm = *algorithm;
+            // null = a custom selection was saved
+            const auto preset_json = json.value("agent_preset", nlohmann::json());
+            const auto preset_name =
+                preset_json.is_string() ? preset_json.get<std::string>() : std::string();
+            const auto preset = std::find_if(
+                presets.begin(), presets.end(), [&preset_name](const AgentPreset &candidate) {
+                    return candidate.name == preset_name;
+                });
+            if (preset != presets.end()) apply_preset(*preset, settings);
+            else {
+                // a stale path (moved, deleted, unplugged drive) falls back to
+                // the default so the menu never starts on an unplayable selection
+                bool custom = false;
+                if (const std::filesystem::path agent_folder =
+                        json.value("agent_folder", std::string());
+                    !agent_folder.empty() && std::filesystem::is_directory(agent_folder)) {
+                    settings.agent_folder = agent_folder;
+                    custom = true;
+                }
+                if (const std::filesystem::path agent_config =
+                        json.value("agent_config", std::string());
+                    !agent_config.empty() && std::filesystem::is_regular_file(agent_config)) {
+                    settings.agent_config = agent_config;
+                    custom = true;
+                }
+                if (const auto algorithm =
+                        ai_algorithm_from_string(json.value("algorithm", std::string()))) {
+                    settings.agent_algorithm = *algorithm;
+                    custom = true;
+                }
+                if (custom) settings.agent_preset = std::nullopt;
+            }
         } catch (const std::exception &e) {
             std::cerr << "Cannot load preferences " << path << ": " << e.what() << std::endl;
             return defaults;
@@ -213,7 +234,7 @@ namespace arenai::desktop {
         return settings;
     }
 
-    void save_preferences(const gui::GameSettings &settings) {
+    void save_preferences(const GameSettings &settings) {
         const auto path = preferences_path();
 
         try {
@@ -223,14 +244,16 @@ namespace arenai::desktop {
                 {"controller",
                  settings.controller_kind == ControllerKind::Gamepad ? "gamepad" : "keyboard"},
                 {"fullscreen", settings.fullscreen},
-                {"shadow_quality", gui::to_string(settings.shadow_quality)},
+                {"shadow_quality", to_string(settings.shadow_quality)},
                 {"msaa", settings.msaa_samples},
                 {"window_gpu", settings.window_gpu},
                 {"vision_gpu", settings.vision_gpu},
                 {"bindings", bindings_to_json(settings.bindings)},
                 {"agent_folder", settings.agent_folder.string()},
                 {"agent_config", settings.agent_config.string()},
-                {"algorithm", gui::to_string(settings.agent_algorithm)},
+                {"algorithm", to_string(settings.agent_algorithm)},
+                {"agent_preset",
+                 settings.agent_preset ? nlohmann::json(*settings.agent_preset) : nullptr},
             };
 
             std::filesystem::create_directories(path.parent_path());

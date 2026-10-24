@@ -9,7 +9,6 @@
 #include <functional>
 #include <utility>
 #include <variant>
-#include <vector>
 
 #include <RmlUi/Core.h>
 
@@ -22,13 +21,6 @@ namespace arenai::desktop::gui {
     using RawMenuInput = std::variant<
         controller::Key, controller::MouseButton, controller::GamepadButton,
         std::pair<GamepadAxis, double>>;
-
-    class ExplorerNavListener final : public Rml::EventListener {
-    public:
-        static std::vector<Rml::Element *> visible_file_entries(const Rml::Element *file_list);
-
-        void ProcessEvent(Rml::Event &event) override;
-    };
 
     class MenuInputAdapter final : public controller::AbstractKeyboardCallback,
                                    public controller::AbstractGamepadCallback {

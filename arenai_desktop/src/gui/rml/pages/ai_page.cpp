@@ -10,9 +10,91 @@
 
 namespace arenai::desktop::gui {
 
-    AiPage::AiPage(GameSettings &settings, AgentValidator validator)
-        : settings_(settings), agent_validator_(std::move(validator)),
-          algorithm_display_(to_string(settings.agent_algorithm)) {
+    namespace {
+        constexpr const char *CUSTOM_PRESET = "Custom";
+
+        // element ids of ai.rml the page drives from code
+        constexpr const char *FILE_LIST_ID = "file-list";
+        constexpr const char *PRESET_HEAD_ID = "preset-head";
+        constexpr const char *PRESET_LIST_ID = "preset-list";
+        constexpr const char *ALGORITHM_HEAD_ID = "algorithm-head";
+        constexpr const char *ALGORITHM_LIST_ID = "algorithm-list";
+        constexpr const char *USE_FOLDER_ID = "use-folder";
+
+        bool inside_dropdown(const Rml::Element *element) {
+            for (; element != nullptr; element = element->GetParentNode())
+                if (element->IsClassSet("dropdown")) return true;
+            return false;
+        }
+
+        // the data-for clones currently shown in the explorer
+        std::vector<Rml::Element *> visible_file_entries(const Rml::Element *file_list) {
+            std::vector<Rml::Element *> entries;
+            for (int i = 0; i < file_list->GetNumChildren(); i++)
+                if (Rml::Element *child = file_list->GetChild(i); child->IsVisible())
+                    entries.push_back(child);
+            return entries;
+        }
+    }// namespace
+
+    AiPage::ClickOutsideListener::ClickOutsideListener(std::function<void()> on_outside)
+        : on_outside_(std::move(on_outside)) {}
+
+    void AiPage::ClickOutsideListener::ProcessEvent(Rml::Event &event) {
+        if (!inside_dropdown(event.GetTargetElement())) on_outside_();
+    }
+
+    void AiPage::ExplorerNavListener::ProcessEvent(Rml::Event &event) {
+        const auto key = static_cast<Rml::Input::KeyIdentifier>(
+            event.GetParameter<int>("key_identifier", Rml::Input::KI_UNKNOWN));
+        if (key != Rml::Input::KI_UP && key != Rml::Input::KI_DOWN) return;
+
+        const Rml::Element *focus = event.GetTargetElement();
+        Rml::ElementDocument *document = focus->GetOwnerDocument();
+        if (document == nullptr) return;
+        const Rml::Element *list = document->GetElementById(FILE_LIST_ID);
+        Rml::Element *above = document->GetElementById(ALGORITHM_HEAD_ID);
+        const Rml::Element *above_list = document->GetElementById(ALGORITHM_LIST_ID);
+        Rml::Element *below = document->GetElementById(USE_FOLDER_ID);
+        if (list == nullptr || above == nullptr || below == nullptr) return;
+
+        const auto entries = visible_file_entries(list);
+        if (entries.empty()) return;
+
+        Rml::Element *target = nullptr;
+        if (focus->GetParentNode() == list) {
+            if (key == Rml::Input::KI_UP && focus == entries.front()) target = above;
+            else if (key == Rml::Input::KI_DOWN && focus == entries.back()) target = below;
+        } else if (key == Rml::Input::KI_DOWN && focus == above) {
+            // an open dropdown keeps Down for its own items
+            const bool list_open = above_list != nullptr && above_list->IsVisible();
+            if (!list_open) target = entries.front();
+        } else if (key == Rml::Input::KI_UP && focus == below) target = entries.back();
+
+        if (target != nullptr && target->Focus(true)) {
+            target->ScrollIntoView(Rml::ScrollAlignment::Nearest);
+            event.StopPropagation();
+        }
+    }
+
+    AiPage::AiPage(MenuState &state, std::vector<AgentPreset> presets, AgentValidator validator)
+        : MenuPage(PageId::Ai, PageId::Parameters, "menu/ai.rml", "ai"), state_(state),
+          settings_(state.settings), presets_(std::move(presets)),
+          agent_validator_(std::move(validator)),
+          click_outside_listener_([this] { close_dropdowns(); }),
+          algorithm_display_(to_string(settings_.agent_algorithm)) {
+        for (const auto &preset: presets_) preset_names_.push_back(preset.name);
+
+        // the preset persisted from the previous run, matched by name; an
+        // unknown name (or none) means a hand-picked selection
+        if (settings_.agent_preset)
+            if (const auto found =
+                    std::find(preset_names_.begin(), preset_names_.end(), *settings_.agent_preset);
+                found != preset_names_.end())
+                selected_preset_ = static_cast<size_t>(found - preset_names_.begin());
+        if (!selected_preset_) settings_.agent_preset = std::nullopt;
+        preset_display_ = selected_preset_ ? preset_names_[*selected_preset_] : CUSTOM_PRESET;
+
         current_dir_ = std::filesystem::exists(settings_.agent_folder)
                            ? std::filesystem::canonical(settings_.agent_folder)
                            : std::filesystem::current_path();
@@ -22,64 +104,90 @@ namespace arenai::desktop::gui {
         validate_agent();
     }
 
-    void AiPage::bind(Rml::DataModelConstructor &constructor) {
-        constructor.Bind("algorithm", &algorithm_display_);
-        constructor.Bind("agent_folder", &agent_folder_display_);
-        constructor.Bind("agent_config", &agent_config_display_);
-        constructor.Bind("agent_status", &agent_status_);
-        constructor.Bind("agent_valid", &agent_valid_);
-        constructor.Bind("current_dir", &current_dir_display_);
-        constructor.Bind("entries", &entries_);
-        constructor.Bind("can_play", &can_play_);
+    void AiPage::bind_controls(DataModel &model) {
+        model.register_array<std::vector<Rml::String>>();
 
-        constructor.BindEventCallback(
-            "select_entry",
-            [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &arguments) {
-                if (arguments.empty()) return;
-                const auto index = static_cast<size_t>(arguments[0].Get<int>());
-                if (index >= entries_.size()) return;
+        model.bind("presets", &preset_names_);
+        model.bind("preset", &preset_display_);
+        model.bind("preset_open", &preset_open_);
+        model.bind("algorithm", &algorithm_display_);
+        model.bind("algorithm_open", &algorithm_open_);
+        model.bind("agent_folder", &agent_folder_display_);
+        model.bind("agent_config", &agent_config_display_);
+        model.bind("agent_status", &agent_status_);
+        model.bind("agent_valid", &state_.agent_valid);
+        model.bind("current_dir", &current_dir_display_);
+        model.bind("entries", &entries_);
 
-                const std::string &entry = entries_[index];
-                if (entry == "..") current_dir_ = current_dir_.parent_path();
-                else if (const auto path = current_dir_ / entry;
-                         std::filesystem::is_directory(path))
-                    current_dir_ = path;
-                else {
-                    // a listed file is a config.json candidate
-                    settings_.agent_config = path;
-                    validate_agent();
-                    refresh_explorer();
-                    return;
-                }
-                refresh_explorer();
-                focus_explorer_pending_ = true;
-            });
-        constructor.BindEventCallback(
-            "set_algorithm",
-            [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &arguments) {
-                if (arguments.empty()) return;
-                const auto algorithm = ai_algorithm_from_string(arguments[0].Get<Rml::String>());
-                if (!algorithm) return;
+        model.on_event("toggle_preset", [this](const Rml::VariantList &) {
+            preset_open_ = !preset_open_;
+            algorithm_open_ = false;
+            pending_focus_ = preset_open_ ? PendingFocus::PresetList : PendingFocus::PresetHead;
+            dirty_dropdowns();
+        });
+        model.on_event("set_preset", [this](const Rml::VariantList &arguments) {
+            if (arguments.empty()) return;
+            const auto index = static_cast<size_t>(arguments[0].Get<int>());
+            if (index >= presets_.size()) return;
+            select_preset(index);
+            preset_open_ = false;
+            pending_focus_ = PendingFocus::PresetHead;
+            refresh_explorer();
+        });
+        model.on_event("toggle_algorithm", [this](const Rml::VariantList &) {
+            algorithm_open_ = !algorithm_open_;
+            preset_open_ = false;
+            pending_focus_ =
+                algorithm_open_ ? PendingFocus::AlgorithmList : PendingFocus::AlgorithmHead;
+            dirty_dropdowns();
+        });
+        model.on_event("set_algorithm", [this](const Rml::VariantList &arguments) {
+            if (arguments.empty()) return;
+            const auto algorithm = ai_algorithm_from_string(arguments[0].Get<Rml::String>());
+            if (!algorithm) return;
+            algorithm_open_ = false;
+            pending_focus_ = PendingFocus::AlgorithmHead;
+            if (settings_.agent_algorithm != *algorithm) {
                 settings_.agent_algorithm = *algorithm;
                 algorithm_display_ = to_string(*algorithm);
-                model_handle_.DirtyVariable("algorithm");
+                mark_custom();
                 // the networks are rebuilt differently: re-run the check
                 validate_agent();
-                refresh_explorer();
-            });
-        constructor.BindEventCallback(
-            "select_folder", [this](Rml::DataModelHandle, Rml::Event &, const Rml::VariantList &) {
-                settings_.agent_folder = current_dir_;
+            }
+            refresh_explorer();
+        });
+        model.on_event("select_entry", [this](const Rml::VariantList &arguments) {
+            if (arguments.empty()) return;
+            const auto index = static_cast<size_t>(arguments[0].Get<int>());
+            if (index >= entries_.size()) return;
+
+            const std::string &entry = entries_[index];
+            if (entry == "..") current_dir_ = current_dir_.parent_path();
+            else if (const auto path = current_dir_ / entry; std::filesystem::is_directory(path))
+                current_dir_ = path;
+            else {
+                // a listed file is a config.json candidate
+                settings_.agent_config = path;
+                mark_custom();
                 validate_agent();
                 refresh_explorer();
-            });
+                return;
+            }
+            refresh_explorer();
+            pending_focus_ = PendingFocus::FirstEntry;
+        });
+        model.on_event("select_folder", [this](const Rml::VariantList &) {
+            settings_.agent_folder = current_dir_;
+            mark_custom();
+            validate_agent();
+            refresh_explorer();
+        });
     }
 
-    void AiPage::set_model_handle(const Rml::DataModelHandle handle) { model_handle_ = handle; }
-
-    void AiPage::attach(Rml::ElementDocument &document) {
-        document_ = &document;
+    void AiPage::on_attached(Rml::ElementDocument &document) {
         document.AddEventListener(Rml::EventId::Keydown, &explorer_nav_listener_);
+        document.AddEventListener(Rml::EventId::Click, &click_outside_listener_);
+        refresh_explorer();
     }
 
     void AiPage::refresh_explorer() {
@@ -112,50 +220,96 @@ namespace arenai::desktop::gui {
                                     ? "auto (config.json next to the state dicts)"
                                     : settings_.agent_config.string();
 
-        if (model_handle_) {
-            model_handle_.DirtyVariable("entries");
-            model_handle_.DirtyVariable("current_dir");
-            model_handle_.DirtyVariable("agent_folder");
-            model_handle_.DirtyVariable("agent_config");
-            model_handle_.DirtyVariable("agent_status");
-            model_handle_.DirtyVariable("agent_valid");
-            model_handle_.DirtyVariable("can_play");
+        model().dirty(
+            {"entries", "current_dir", "agent_folder", "agent_config", "agent_status",
+             "agent_valid", "algorithm"});
+        dirty_dropdowns();
+    }
+
+    void AiPage::after_context_update() {
+        // the data-if / data-for clones were rebuilt during Update, dropping
+        // the focused one: put the cursor back where the action leads —
+        // invisible for the mouse, the :focus highlight only shows under
+        // .gamepad-nav
+        switch (std::exchange(pending_focus_, PendingFocus::None)) {
+            case PendingFocus::FirstEntry: focus_first_entry(); break;
+            case PendingFocus::PresetHead: focus_by_id(PRESET_HEAD_ID); break;
+            case PendingFocus::PresetList: focus_in_list(PRESET_LIST_ID); break;
+            case PendingFocus::AlgorithmHead: focus_by_id(ALGORITHM_HEAD_ID); break;
+            case PendingFocus::AlgorithmList: focus_in_list(ALGORITHM_LIST_ID); break;
+            case PendingFocus::None: break;
         }
     }
 
-    void AiPage::update_after_context() {
-        // entering a directory rebuilt the entry clones during Update
-        // (dropping the focused one): put the cursor back on the first entry
-        // of the fresh listing so the gamepad walk resumes there — invisible
-        // for the mouse, the :focus highlight only shows under .gamepad-nav
-        if (std::exchange(focus_explorer_pending_, false)) focus_first_entry();
+    bool AiPage::on_back() { return close_dropdowns(); }
+
+    bool AiPage::close_dropdowns() {
+        if (!preset_open_ && !algorithm_open_) return false;
+        pending_focus_ = preset_open_ ? PendingFocus::PresetHead : PendingFocus::AlgorithmHead;
+        preset_open_ = false;
+        algorithm_open_ = false;
+        dirty_dropdowns();
+        return true;
     }
+
+    // copies the preset's tuple into the settings and moves the explorer
+    // onto its state-dict folder
+    void AiPage::select_preset(const size_t index) {
+        apply_preset(presets_[index], settings_);
+        selected_preset_ = index;
+        preset_display_ = preset_names_[index];
+        algorithm_display_ = to_string(settings_.agent_algorithm);
+        if (std::filesystem::is_directory(settings_.agent_folder))
+            current_dir_ = std::filesystem::canonical(settings_.agent_folder);
+        validate_agent();
+    }
+
+    // any hand edit of the agent fields detaches the selection from the preset
+    void AiPage::mark_custom() {
+        selected_preset_ = std::nullopt;
+        settings_.agent_preset = std::nullopt;
+        preset_display_ = CUSTOM_PRESET;
+    }
+
+    void AiPage::dirty_dropdowns() { model().dirty({"preset", "preset_open", "algorithm_open"}); }
 
     // runs the injected dry-run load and turns its outcome into the
     // tri-state the AI screen displays (nothing chosen yet / model
-    // loaded / error message); can_play_ follows the real load
+    // loaded / error message); the Play gate follows the real load
     void AiPage::validate_agent() {
         if (settings_.agent_folder.empty()) {
-            agent_valid_ = false;
+            state_.agent_valid = false;
             agent_status_ = "";
-        } else {
-            const auto error = agent_validator_(
-                {.config = settings_.agent_config,
-                 .folder = settings_.agent_folder,
-                 .algorithm = settings_.agent_algorithm});
-            agent_valid_ = !error.has_value();
-            agent_status_ = error.value_or("AI model loaded");
+            return;
         }
-        can_play_ = agent_valid_;
+        const auto error = agent_validator_(agent_selection(settings_));
+        state_.agent_valid = !error.has_value();
+        agent_status_ = error.value_or("AI model loaded");
     }
 
     void AiPage::focus_first_entry() const {
-        const Rml::Element *list = document_->GetElementById("file-list");
+        const Rml::Element *list = document().GetElementById(FILE_LIST_ID);
         if (list == nullptr) return;
-        const auto entries = ExplorerNavListener::visible_file_entries(list);
+        const auto entries = visible_file_entries(list);
         if (entries.empty()) return;
         if (entries.front()->Focus(true))
             entries.front()->ScrollIntoView(Rml::ScrollAlignment::Nearest);
+    }
+
+    void AiPage::focus_by_id(const char *id) const {
+        if (Rml::Element *element = document().GetElementById(id)) element->Focus(true);
+    }
+
+    void AiPage::focus_in_list(const char *list_id) const {
+        const Rml::Element *list = document().GetElementById(list_id);
+        if (list == nullptr || list->GetNumChildren() == 0) return;
+        Rml::Element *target = list->GetChild(0);
+        for (int i = 0; i < list->GetNumChildren(); ++i)
+            if (Rml::Element *child = list->GetChild(i); child->IsClassSet("selected")) {
+                target = child;
+                break;
+            }
+        target->Focus(true);
     }
 
 }// namespace arenai::desktop::gui

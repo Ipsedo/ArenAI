@@ -13,7 +13,6 @@
 
 #include "./camera.h"
 #include "./drawable.h"
-#include "./hud.h"
 #include "./renderer.h"
 #include "./window.h"
 
@@ -34,12 +33,13 @@ namespace arenai::view {
             const std::shared_ptr<AbstractCamera> &camera) = 0;
 
         virtual std::shared_ptr<AbstractDrawableFactory> drawable_factory() = 0;
-        virtual std::shared_ptr<AbstractHudFactory> hud_factory() = 0;
 
         virtual std::string renderer_info() = 0;
 
         virtual void release_thread() = 0;
     };
+
+    enum class UiPass { Clear, Overlay };
 
     struct PlayerRendererSettings {
         bool shadows = true;
@@ -57,9 +57,11 @@ namespace arenai::view {
 
         virtual Rml::RenderInterface &ui_render_interface() = 0;
 
-        virtual void begin_ui_frame(int width, int height) = 0;
-        virtual void begin_ui_overlay(int width, int height) = 0;
-        virtual void end_ui_frame() = 0;
+        // a UI pass on the swapchain image: Clear starts from a cleared
+        // image (the UI is the whole frame), Overlay draws over the frame
+        // already rendered
+        virtual void begin_ui_pass(UiPass pass, int width, int height) = 0;
+        virtual void end_ui_pass() = 0;
 
         virtual void present() = 0;
     };

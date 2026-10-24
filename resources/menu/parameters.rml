@@ -3,7 +3,7 @@
     <title>Parameters</title>
     <link type="text/rcss" href="menu.rcss"/>
 </head>
-<body data-model="settings">
+<body data-model="parameters">
     <div id="params-panel" class="panel">
         <div class="params-header">
             <div class="back-arrow" data-event-click="back()">←</div>
@@ -21,9 +21,9 @@
         </div>
 
         <div class="configure-group">
-            <div class="button configure" data-event-click="open_graphics()">Configure Graphics</div>
-            <div class="button configure" data-event-click="open_controls()">Configure Controls</div>
-            <div class="button configure" data-event-click="open_ai()">Configure AI</div>
+            <div class="button configure" data-event-click="navigate('graphics')">Configure Graphics</div>
+            <div class="button configure" data-event-click="navigate('controls')">Configure Controls</div>
+            <div class="button configure" data-event-click="navigate('ai')">Configure AI</div>
         </div>
         <p class="hint status-error" data-if="!agent_valid">The AI model is not loaded yet — configure it before playing.</p>
 

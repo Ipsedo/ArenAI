@@ -10,24 +10,37 @@
 #include <vector>
 
 #include <glm/glm.hpp>
-#include <RmlUi/Core.h>
 
-#include "../menu.h"
+#include "../gui.h"
+#include "./document_view.h"
 
 namespace arenai::desktop::gui {
 
-    // The in-game overlay elements of hud.rml: the aim reticle, the
-    // Battlefield-style hit marker and the incoming-damage arc pool.
-    class Hud {
+    // what draws a UI pass over the frame already rendered
+    class AbstractOverlayRenderer {
     public:
-        // grabs the overlay elements from the loaded hud document
-        explicit Hud(Rml::ElementDocument &document);
+        virtual ~AbstractOverlayRenderer() = default;
+        virtual void render_overlay() = 0;
+    };
 
-        void notify_hit(HitKind kind) const;
-        void notify_damage(float screen_angle);
-        void set_aim_point(std::optional<glm::vec2> normalized, int width, int height) const;
+    // The in-game overlay of hud.rml: the aim reticle, the Battlefield-style
+    // hit marker and the incoming-damage arc pool.
+    class HudOverlay final : public DocumentView, public AbstractHudOverlay {
+    public:
+        explicit HudOverlay(AbstractOverlayRenderer &renderer);
+
+        void notify_hit(HitKind kind) override;
+        void notify_damage(float screen_angle) override;
+        void set_aim_point(std::optional<glm::vec2> normalized) override;
+        void render() override;
+
+    protected:
+        // grabs the overlay elements; throws when hud.rml misses one
+        void on_attached(Rml::ElementDocument &document) override;
 
     private:
+        AbstractOverlayRenderer &renderer_;
+
         Rml::Element *reticle_ = nullptr;
         Rml::Element *hit_marker_ = nullptr;
         std::vector<Rml::Element *> damage_arcs_;

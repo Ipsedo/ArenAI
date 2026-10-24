@@ -31,9 +31,9 @@ static std::filesystem::path executable_dir(const char *argv0) {
 int main(const int argc, char **argv) {
     argparse::ArgumentParser parser("arenai game");
 
-    // everything about the AI model (vision size, frequency, hyper-parameters)
-    // comes from the config.json selected in the menu; the command line only
-    // keeps what belongs to the player's machine
+    // everything about the AI model (which one, vision size, frequency,
+    // hyper-parameters) comes from the preset or folder selected in the
+    // menu; the command line only keeps what belongs to the player's machine
     parser.add_argument("--window_width").scan<'i', int>().default_value(1920);
     parser.add_argument("--window_height").scan<'i', int>().default_value(1080);
     parser.add_argument("--cuda").implicit_value(true).default_value(false);
@@ -45,9 +45,7 @@ int main(const int argc, char **argv) {
     run_gui(
         {.window_width = parser.get<int>("--window_width"),
          .window_height = parser.get<int>("--window_height"),
-         .resources_folder = resources_folder},
-        {.state_dict_folder = resources_folder / "trained_models" / "ppo_liquid_345" / "save_210",
-         .config_json = resources_folder / "trained_models" / "ppo_liquid_345" / "config.json",
+         .resources_folder = resources_folder,
          .cuda = parser.get<bool>("--cuda")});
 
     return 0;

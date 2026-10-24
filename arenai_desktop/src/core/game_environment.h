@@ -15,7 +15,7 @@
 
 #include "../controller/gamepad.h"
 #include "../controller/mouse_keyboard.h"
-#include "../gui/menu.h"
+#include "./settings.h"
 
 namespace arenai::desktop {
 
@@ -24,7 +24,7 @@ namespace arenai::desktop {
         DesktopGameEnvironment(
             const std::filesystem::path &asset_folder_path,
             const std::shared_ptr<view::AbstractWindowedGraphicBackend> &graphics_backend,
-            const gui::GameSettings &settings, int vision_height, int vision_width,
+            const GameSettings &settings, int vision_height, int vision_width,
             float wanted_frequency);
 
         ~DesktopGameEnvironment() override;
@@ -73,7 +73,7 @@ namespace arenai::desktop {
 
         float wanted_frequency;
 
-        gui::GameSettings settings;
+        GameSettings settings;
     };
 
 }// namespace arenai::desktop

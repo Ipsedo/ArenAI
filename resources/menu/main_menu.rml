@@ -3,11 +3,11 @@
     <title>ArenAI</title>
     <link type="text/rcss" href="menu.rcss"/>
 </head>
-<body data-model="settings">
+<body data-model="main">
     <div id="main-panel" class="panel">
         <h1>ArenAI</h1>
         <div class="button primary" autofocus data-class-disabled="!can_play" data-event-click="play()">Play</div>
-        <div class="button" data-event-click="open_params()">Parameters</div>
+        <div class="button" data-event-click="navigate('parameters')">Parameters</div>
         <div class="button" data-event-click="exit()">Exit</div>
         <p class="hint" data-if="!can_play">Select a trained AI model folder in Parameters to play</p>
     </div>

@@ -17,7 +17,6 @@
 namespace arenai::view {
 
     class VulkanDrawableFactory;
-    class VulkanHudFactory;
 
     class VulkanBackend : public virtual AbstractGraphicBackend {
     public:
@@ -30,7 +29,6 @@ namespace arenai::view {
             const std::shared_ptr<AbstractCamera> &camera) override;
 
         std::shared_ptr<AbstractDrawableFactory> drawable_factory() override;
-        std::shared_ptr<AbstractHudFactory> hud_factory() override;
 
         std::string renderer_info() override;
 
@@ -45,7 +43,6 @@ namespace arenai::view {
     private:
         std::shared_ptr<VulkanRenderContext> context_;
         std::shared_ptr<VulkanDrawableFactory> drawable_factory_;
-        std::shared_ptr<VulkanHudFactory> hud_factory_;
     };
 
 }// namespace arenai::view

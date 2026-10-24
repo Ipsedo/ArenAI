@@ -14,8 +14,6 @@
 
 #include <arenai_controller/callback.h>
 
-using namespace arenai;
-
 namespace arenai::view {
 
     // a connected, mapped gamepad as the window exposes it: `id` is the

@@ -9,26 +9,23 @@
 #include <string>
 #include <vector>
 
-#include <RmlUi/Core.h>
-
 #include <arenai_view/window.h>
 
-#include "../../menu.h"
+#include "../menu_page.h"
+#include "../menu_state.h"
 
 namespace arenai::desktop::gui {
 
     // The Graphics screen: display mode, shadow quality, MSAA and the two GPU
-    // pickers. Registers its slice of the shared "settings" data model and
-    // writes straight into the GameSettings it was built around.
-    class GraphicsPage {
+    // pickers, written straight into the shared settings.
+    class GraphicsPage final : public MenuPage {
     public:
         GraphicsPage(
-            GameSettings &settings, std::shared_ptr<view::AbstractWindow> window,
+            MenuState &state, std::shared_ptr<view::AbstractWindow> window,
             const std::vector<std::string> &gpus);
 
-        // registers the page's variables and callbacks into the shared model
-        void bind(Rml::DataModelConstructor &constructor);
-        void set_model_handle(Rml::DataModelHandle handle);
+    protected:
+        void bind_controls(DataModel &model) override;
 
     private:
         // "Auto" rides index 0 of gpu_names_, the actual devices follow
@@ -44,8 +41,6 @@ namespace arenai::desktop::gui {
         int selected_vision_gpu_ = 0;
         bool window_gpu_env_override_ = false;
         bool vision_gpu_env_override_ = false;
-
-        Rml::DataModelHandle model_handle_;
     };
 
 }// namespace arenai::desktop::gui

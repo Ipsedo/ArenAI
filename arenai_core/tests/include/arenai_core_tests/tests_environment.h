@@ -11,6 +11,9 @@
 
 #include "./utils/engine_test_fixture.h"
 
+// test code: the arenai sub-namespaces are used unqualified
+using namespace arenai;
+
 class TestTanksEnvironment final : public core::BaseTanksEnvironment {
 public:
     using BaseTanksEnvironment::BaseTanksEnvironment;

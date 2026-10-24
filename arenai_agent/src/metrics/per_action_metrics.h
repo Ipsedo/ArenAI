@@ -18,8 +18,8 @@ namespace arenai::agent {
     // one metric per action dimension, named "<prefix>_<action name>", absent from the
     // progress bar (CSV only)
     std::vector<std::shared_ptr<AbstractMetric>> make_per_action_metrics(
-        const std::string &prefix, const std::vector<std::string> &action_names,
-        int nb_actions, int window_size);
+        const std::string &prefix, const std::vector<std::string> &action_names, int nb_actions,
+        int window_size);
 
     // adds values[i] (a 1-D tensor, one entry per action dimension) to metrics[i]
     void add_per_action_values(

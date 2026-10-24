@@ -6,8 +6,9 @@
 #define ARENAI_DESKTOP_CORE_USER_PREFERENCES_H
 
 #include <filesystem>
+#include <vector>
 
-#include "../gui/menu.h"
+#include "./settings.h"
 
 namespace arenai::desktop {
 
@@ -18,12 +19,16 @@ namespace arenai::desktop {
     std::filesystem::path preferences_path();
 
     // returns `defaults` when the file is missing or unreadable; individual
-    // fields fall back to `defaults` when absent or invalid
-    gui::GameSettings load_preferences(const gui::GameSettings &defaults);
+    // fields fall back to `defaults` when absent or invalid. A saved preset
+    // name found in `presets` wins over the saved agent paths (the install
+    // folder may have moved); an unknown name is ignored and the saved
+    // paths stand as a custom selection.
+    GameSettings
+    load_preferences(const GameSettings &defaults, const std::vector<AgentPreset> &presets);
 
     // best-effort: a failure is logged, never fatal (the cache directory
     // itself may be unwritable)
-    void save_preferences(const gui::GameSettings &settings);
+    void save_preferences(const GameSettings &settings);
 
 }// namespace arenai::desktop
 

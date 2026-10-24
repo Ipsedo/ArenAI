@@ -38,7 +38,7 @@ namespace {
     std::unique_ptr<DesktopGameEnvironment> make_environment() {
         auto env = std::make_unique<DesktopGameEnvironment>(
             ARENAI_ASSETS_DIR, std::make_shared<HeadlessWindowedBackend>(),
-            gui::GameSettings{.nb_tanks = NB_TANKS, .controller_kind = ControllerKind::Gamepad},
+            GameSettings{.nb_tanks = NB_TANKS, .controller_kind = ControllerKind::Gamepad},
             VISION_HEIGHT, VISION_WIDTH, FREQUENCY);
         env->seed(42);
         return env;

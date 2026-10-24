@@ -2,10 +2,10 @@
 // Created by samuel on 02/08/2026.
 //
 
-#ifndef ARENAI_DESKTOP_GUI_RML_CORNER_RETICLE_H
-#define ARENAI_DESKTOP_GUI_RML_CORNER_RETICLE_H
+#ifndef ARENAI_DESKTOP_GUI_RML_DECORATORS_CORNER_RETICLE_H
+#define ARENAI_DESKTOP_GUI_RML_DECORATORS_CORNER_RETICLE_H
 
-#include <RmlUi/Core.h>
+#include "./geometry_decorator.h"
 
 namespace arenai::desktop::gui {
 
@@ -16,17 +16,14 @@ namespace arenai::desktop::gui {
     // only thing the Vulkan backend renders (no box-shadow, no textures).
     // RCSS: decorator: corner-reticle(
     //           <tick-color> <fill-color> <tick-length> <thickness> <inset> <fill-inset>);
-    class CornerReticleDecorator final : public Rml::Decorator {
+    class CornerReticleDecorator final : public GeometryDecorator {
     public:
         CornerReticleDecorator(
             Rml::Colourb tick_color, Rml::Colourb fill_color, Rml::NumericValue tick_length,
             Rml::NumericValue thickness, Rml::NumericValue inset, Rml::NumericValue fill_inset);
 
-        Rml::DecoratorDataHandle
-        GenerateElementData(Rml::Element *element, Rml::BoxArea) const override;
-        void ReleaseElementData(Rml::DecoratorDataHandle element_data) const override;
-        void
-        RenderElement(Rml::Element *element, Rml::DecoratorDataHandle element_data) const override;
+    protected:
+        Rml::Mesh build_mesh(Rml::Element &element) const override;
 
     private:
         Rml::Colourb tick_color_;
@@ -37,7 +34,7 @@ namespace arenai::desktop::gui {
         Rml::NumericValue fill_inset_;
     };
 
-    class CornerReticleDecoratorInstancer final : public Rml::DecoratorInstancer {
+    class CornerReticleDecoratorInstancer final : public GeometryDecoratorInstancer {
     public:
         CornerReticleDecoratorInstancer();
 
@@ -46,14 +43,14 @@ namespace arenai::desktop::gui {
             const Rml::DecoratorInstancerInterface &) override;
 
     private:
-        Rml::PropertyId id_tick_color_{};
-        Rml::PropertyId id_fill_color_{};
-        Rml::PropertyId id_tick_length_{};
-        Rml::PropertyId id_thickness_{};
-        Rml::PropertyId id_inset_{};
-        Rml::PropertyId id_fill_inset_{};
+        Rml::PropertyId id_tick_color_;
+        Rml::PropertyId id_fill_color_;
+        Rml::PropertyId id_tick_length_;
+        Rml::PropertyId id_thickness_;
+        Rml::PropertyId id_inset_;
+        Rml::PropertyId id_fill_inset_;
     };
 
 }// namespace arenai::desktop::gui
 
-#endif// ARENAI_DESKTOP_GUI_RML_CORNER_RETICLE_H
+#endif// ARENAI_DESKTOP_GUI_RML_DECORATORS_CORNER_RETICLE_H

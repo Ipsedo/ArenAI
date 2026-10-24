@@ -344,6 +344,120 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     decorator: corner-reticle(#EAF7FF);
 }
 
+/* Dropdown (AI page): a toggle-styled head, the list unfolding over the
+   content below it (absolute, above the explorer) so the panel keeps its
+   height. Items reuse the dense list-row look of .device-entry. */
+.dropdown {
+    display: block;
+    position: relative;
+    margin: 4dp;
+}
+
+.dropdown-head {
+    display: block;
+    padding: 8dp 18dp;
+    border: 1dp #0582CA;
+    border-radius: 2dp;
+    font-size: 13dp;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1dp;
+    color: #EAF7FF;
+    cursor: pointer;
+    tab-index: auto;
+    nav: auto;
+}
+
+.dropdown-head:hover, body.gamepad-nav .dropdown-head:focus {
+    background-color: #00a6fb17;
+    decorator: corner-reticle(#00A6FB);
+}
+
+.dropdown-head:active {
+    background-color: #00a6fb33;
+    decorator: corner-reticle(#4DC0FC);
+}
+
+.dropdown-head.open {
+    background-color: #00a6fb24;
+    border-color: #00A6FB;
+    color: #00A6FB;
+}
+
+.dropdown-head.open:hover, body.gamepad-nav .dropdown-head.open:focus {
+    background-color: #00a6fb24;
+    decorator: corner-reticle(#EAF7FF);
+}
+
+.dropdown-value {
+    display: inline-block;
+}
+
+/* the fonts ship no triangle glyph: a rotated chevron stands in, pointing
+   down when folded and up when the list is open */
+.dropdown-caret {
+    display: inline-block;
+    position: absolute;
+    right: 14dp;
+    top: 4dp;
+    font-family: "IBM Plex Mono";
+    font-size: 20dp;
+    font-weight: 600;
+    transform: rotate(90deg);
+}
+
+.dropdown-head.open .dropdown-caret {
+    transform: rotate(-90deg);
+}
+
+.dropdown-list {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    z-index: 10;
+    margin-top: 2dp;
+    background-color: #051923;
+    border: 1dp #006494;
+    border-radius: 2dp;
+}
+
+.dropdown-item {
+    display: block;
+    padding: 7dp 18dp;
+    font-size: 13dp;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1dp;
+    color: #8AC4E0;
+    cursor: pointer;
+    tab-index: auto;
+    nav: auto;
+}
+
+.dropdown-item:hover, body.gamepad-nav .dropdown-item:focus {
+    background-color: #00a6fb17;
+    color: #00A6FB;
+    decorator: corner-reticle(#00A6FB transparent 5dp 2dp 2dp);
+}
+
+.dropdown-item:active {
+    background-color: #00a6fb33;
+    color: #00A6FB;
+    decorator: corner-reticle(#4DC0FC transparent 5dp 2dp 2dp);
+}
+
+.dropdown-item.selected {
+    background-color: #00a6fb24;
+    color: #00A6FB;
+}
+
+.dropdown-item.selected:hover, body.gamepad-nav .dropdown-item.selected:focus {
+    background-color: #00a6fb24;
+    decorator: corner-reticle(#EAF7FF transparent 5dp 2dp 2dp);
+}
+
 /* Controls, Graphics and AI pages — same design width as the parameters panel */
 #controls-panel, #graphics-panel, #ai-panel {
     width: 560dp;

@@ -10,6 +10,9 @@
 #include <agents/ppo/ppo_factory.h>
 #include <gtest/gtest.h>
 
+// test code: the arenai sub-namespaces are used unqualified
+using namespace arenai;
+
 struct PpoTrainingTestConfig {
     int vision_height;
     int vision_width;

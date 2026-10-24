@@ -9,48 +9,6 @@
 
 namespace arenai::desktop::gui {
 
-    std::vector<Rml::Element *>
-    ExplorerNavListener::visible_file_entries(const Rml::Element *file_list) {
-        std::vector<Rml::Element *> entries;
-        for (int i = 0; i < file_list->GetNumChildren(); i++)
-            if (Rml::Element *child = file_list->GetChild(i); child->IsVisible())
-                entries.push_back(child);
-        return entries;
-    }
-
-    void ExplorerNavListener::ProcessEvent(Rml::Event &event) {
-        const auto key = static_cast<Rml::Input::KeyIdentifier>(
-            event.GetParameter<int>("key_identifier", Rml::Input::KI_UNKNOWN));
-        if (key != Rml::Input::KI_UP && key != Rml::Input::KI_DOWN) return;
-
-        const Rml::Element *focus = event.GetTargetElement();
-        Rml::ElementDocument *document = focus->GetOwnerDocument();
-        if (document == nullptr) return;
-        const Rml::Element *list = document->GetElementById("file-list");
-        Rml::Element *above = document->GetElementById("algorithm-toggles");
-        Rml::Element *below = document->GetElementById("use-folder");
-        if (list == nullptr || above == nullptr || below == nullptr) return;
-
-        const auto entries = visible_file_entries(list);
-        if (entries.empty()) return;
-
-        Rml::Element *target = nullptr;
-        if (focus->GetParentNode() == list) {
-            if (key == Rml::Input::KI_UP && focus == entries.front()) {
-                // land on the algorithm currently in use, not a corner of the row
-                target = above->QuerySelector(".toggle.selected");
-                if (target == nullptr && above->GetNumChildren() > 0) target = above->GetChild(0);
-            } else if (key == Rml::Input::KI_DOWN && focus == entries.back()) target = below;
-        } else if (key == Rml::Input::KI_DOWN && focus->GetParentNode() == above)
-            target = entries.front();
-        else if (key == Rml::Input::KI_UP && focus == below) target = entries.back();
-
-        if (target != nullptr && target->Focus(true)) {
-            target->ScrollIntoView(Rml::ScrollAlignment::Nearest);
-            event.StopPropagation();
-        }
-    }
-
     MenuInputAdapter::MenuInputAdapter(
         Rml::Context *context, std::function<void()> on_escape,
         std::function<void(bool)> on_gamepad_nav)

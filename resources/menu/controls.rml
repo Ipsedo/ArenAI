@@ -3,10 +3,10 @@
     <title>Controls</title>
     <link type="text/rcss" href="menu.rcss"/>
 </head>
-<body data-model="settings">
+<body data-model="controls">
     <div id="controls-panel" class="panel">
         <div class="params-header">
-            <div class="back-arrow" autofocus data-event-click="controls_back()">←</div>
+            <div class="back-arrow" autofocus data-event-click="back()">←</div>
             <h1>Controls</h1>
         </div>
 
@@ -56,7 +56,7 @@
 
         <div class="row-buttons back-row">
             <div class="button" data-event-click="reset_bindings()">Reset to defaults</div>
-            <div class="button primary" data-event-click="controls_back()">Back</div>
+            <div class="button primary" data-event-click="back()">Back</div>
         </div>
     </div>
 </body>

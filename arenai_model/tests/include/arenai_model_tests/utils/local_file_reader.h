@@ -9,6 +9,9 @@
 
 #include <arenai_utils/file_reader.h>
 
+// test code: the arenai sub-namespaces are used unqualified
+using namespace arenai;
+
 class LocalAssetFileReader final : public arenai::utils::AbstractResourceFileReader {
 public:
     explicit LocalAssetFileReader(const std::filesystem::path &path_to_assets);

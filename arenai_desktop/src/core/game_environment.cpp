@@ -18,10 +18,32 @@ using namespace arenai;
 
 namespace arenai::desktop {
 
+    namespace {
+
+        // shadow atlas side per quality preset (Off disables the pass)
+        constexpr int shadow_map_size(const ShadowQuality quality) {
+            switch (quality) {
+                case ShadowQuality::Low: return 2048;
+                case ShadowQuality::Medium: return 4096;
+                case ShadowQuality::High: return 8192;
+                default: return 16384;
+            }
+        }
+
+        // the renderer-side reading of the player's graphics choices
+        view::PlayerRendererSettings player_renderer_settings(const GameSettings &settings) {
+            return {
+                .shadows = settings.shadow_quality != ShadowQuality::Off,
+                .shadow_map_size = shadow_map_size(settings.shadow_quality),
+                .msaa_samples = settings.msaa_samples};
+        }
+
+    }// namespace
+
     DesktopGameEnvironment::DesktopGameEnvironment(
         const std::filesystem::path &asset_folder_path,
         const std::shared_ptr<view::AbstractWindowedGraphicBackend> &graphics_backend,
-        const gui::GameSettings &settings, const int vision_height, const int vision_width,
+        const GameSettings &settings, const int vision_height, const int vision_width,
         const float wanted_frequency)
         : BaseTanksEnvironment(
             std::make_shared<agent::DesktopAssetFileReader>(asset_folder_path),
@@ -155,9 +177,7 @@ namespace arenai::desktop {
         const std::unique_ptr<model::AbstractPhysicEngine> &engine) {
         player_renderer = windowed_backend->make_player_renderer(
             glm::vec3(200, 300, 200), player_tank->get_camera(),
-            {.shadows = settings.shadow_quality != gui::ShadowQuality::Off,
-             .shadow_map_size = gui::shadow_map_size(settings.shadow_quality),
-             .msaa_samples = settings.msaa_samples});
+            player_renderer_settings(settings));
 
         if (settings.controller_kind == ControllerKind::Gamepad) {
             const auto player_controller_handler =

@@ -26,7 +26,7 @@ Dependency order: utils → model → view → core → agent / desktop
   (hit/kill/received/death/win — no dense shaping).
 - **arenai_desktop** — the playable game executable. Its `src/` folders are hexagons of their own:
   `gui/` (RmlUi main menu — RmlUi types must never leak out of it, other code only includes
-  `gui/menu.h`), `controller/`, `core/`. Menu assets live in `resources/menu/` + `resources/font/`.
+  `gui/gui.h`), `controller/`, `core/`. Menu assets live in `resources/menu/` + `resources/font/`.
 
 ## Build
 

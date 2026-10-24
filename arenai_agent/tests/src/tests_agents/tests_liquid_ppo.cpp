@@ -34,8 +34,8 @@ LiquidPpoAgentTest::make_factory(const LiquidPpoTestConfig &cfg) const {
         .gae_lambda = 0.95f,
         .clip_epsilon = 0.2f,
         .grad_norm_max = 1.f,
-        .continuous_entropy_factor = 0.001f,
-        .discrete_entropy_factor = 0.001f,
+        .continuous_entropy_factor = std::vector(cfg.nb_continuous_actions, 0.001f),
+        .discrete_entropy_factor = std::vector(cfg.nb_discrete_actions, 0.001f),
         .epochs = 1,
         .rollout_size = 8,
         .minibatch_size = 10};

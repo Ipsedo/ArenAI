@@ -6,6 +6,9 @@
 #define ARENAI_TORCH_FACTORY_H
 
 #include <memory>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 #include <nlohmann/json.hpp>
 
@@ -29,6 +32,14 @@ namespace arenai::agent {
         // dumped next to the metrics so a run stays identifiable afterwards
         virtual nlohmann::json get_config() const = 0;
     };
+
+    inline void check_entropy_factors(
+        const std::string &name, const std::vector<float> &factors, const int nb_actions) {
+        if (static_cast<int>(factors.size()) != nb_actions)
+            throw std::invalid_argument(
+                name + " expects " + std::to_string(nb_actions) + " values, got "
+                + std::to_string(factors.size()));
+    }
 
 }// namespace arenai::agent
 

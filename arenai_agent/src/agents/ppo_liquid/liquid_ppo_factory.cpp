@@ -31,7 +31,12 @@ namespace arenai::agent {
               params.gamma, params.gae_lambda, params.clip_epsilon, params.target_kl,
               params.grad_norm_max, params.continuous_entropy_factor,
               params.discrete_entropy_factor, params.epochs, params.rollout_size,
-              params.minibatch_size, params.chunk_size)) {}
+              params.minibatch_size, params.chunk_size)) {
+        check_entropy_factors(
+            "continuous_entropy_factor", params.continuous_entropy_factor, nb_continuous_actions);
+        check_entropy_factors(
+            "discrete_entropy_factor", params.discrete_entropy_factor, nb_discrete_actions);
+    }
 
     std::shared_ptr<AbstractTorchAgent> LiquidPpoTorchAgentFactory::get_agent() { return agent; }
 

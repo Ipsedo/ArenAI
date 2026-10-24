@@ -23,8 +23,8 @@ LiquidPpoTrainingTest::make_factory(const LiquidPpoTrainingTestConfig &cfg) cons
         .gamma = 0.99f,
         .gae_lambda = 0.95f,
         .clip_epsilon = 0.2f,
-        .continuous_entropy_factor = 0.001f,
-        .discrete_entropy_factor = 0.001f,
+        .continuous_entropy_factor = std::vector(cfg.nb_continuous_actions, 0.001f),
+        .discrete_entropy_factor = std::vector(cfg.nb_discrete_actions, 0.001f),
         .epochs = 2,
         .rollout_size = ROLLOUT_SIZE,
         .minibatch_size = MINIBATCH_SIZE};
@@ -151,7 +151,8 @@ TEST_F(LiquidPpoTrainingTest, TrainingUpdatesActorParameters) {
     const auto trainer = std::make_shared<LiquidPpoTrainer>(
         actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_sensors, 1e-3f, 1e-3f, 8,
         vision_channels, group_norm_nums, NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T, device, 10,
-        0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 0.001f, 2, ROLLOUT_SIZE, MINIBATCH_SIZE, CHUNK_SIZE);
+        0.99f, 0.95f, 0.2f, 0.f, 1.f, std::vector(cfg.nb_continuous_actions, 0.001f),
+        std::vector(cfg.nb_discrete_actions, 0.001f), 2, ROLLOUT_SIZE, MINIBATCH_SIZE, CHUNK_SIZE);
 
     std::vector<torch::Tensor> initial_parameters;
     for (const auto &parameter: actor->parameters())
@@ -209,7 +210,8 @@ TEST_F(LiquidPpoTrainingTest, MaskedFireReceivesNoUpdate) {
     const auto trainer = std::make_shared<LiquidPpoTrainer>(
         actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_sensors, 1e-3f, 1e-3f, 8,
         vision_channels, group_norm_nums, NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T, device, 10,
-        0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 0.001f, 2, ROLLOUT_SIZE, MINIBATCH_SIZE, CHUNK_SIZE);
+        0.99f, 0.95f, 0.2f, 0.f, 1.f, std::vector(cfg.nb_continuous_actions, 0.001f),
+        std::vector(cfg.nb_discrete_actions, 0.001f), 2, ROLLOUT_SIZE, MINIBATCH_SIZE, CHUNK_SIZE);
 
     auto named_parameters = actor->named_parameters();
     const auto weight = named_parameters["discrete.0.weight"];

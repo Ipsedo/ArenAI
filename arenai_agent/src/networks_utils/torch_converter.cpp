@@ -42,6 +42,16 @@ namespace arenai::agent {
         return actions;
     }
 
+    const std::vector<std::string> &continuous_action_names() {
+        static const std::vector<std::string> names{"dir_x", "dir_y", "canon_x", "canon_y"};
+        return names;
+    }
+
+    const std::vector<std::string> &discrete_action_names() {
+        static const std::vector<std::string> names{"fire", "zoom"};
+        return names;
+    }
+
     TorchState states_to_tensor(
         const std::vector<core::State> &states, const int vision_height, const int vision_width) {
         const auto N = static_cast<int64_t>(states.size());

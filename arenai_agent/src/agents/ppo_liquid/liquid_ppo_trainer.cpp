@@ -10,6 +10,7 @@
 #include "../../distributions/bernoulli.h"
 #include "../../distributions/truncated_normal.h"
 #include "../../metrics/mean_metric.h"
+#include "../../metrics/per_action_metrics.h"
 #include "../../networks/constants.h"
 #include "../../networks_utils/print_module.h"
 #include "../../networks_utils/torch_converter.h"
@@ -62,6 +63,12 @@ namespace arenai::agent {
           explained_variance_metric(std::make_shared<MeanMetric>("ev", metric_window_size)),
           continuous_entropy_metric(std::make_shared<MeanMetric>("Hc", metric_window_size)),
           discrete_entropy_metric(std::make_shared<MeanMetric>("Hd", metric_window_size)),
+          continuous_entropy_dim_metrics(make_per_action_metrics(
+              "Hc", continuous_action_names(), static_cast<int>(continuous_entropy_factor.size()),
+              metric_window_size)),
+          discrete_entropy_dim_metrics(make_per_action_metrics(
+              "Hd", discrete_action_names(), static_cast<int>(discrete_entropy_factor.size()),
+              metric_window_size)),
           clip_fraction_metric(std::make_shared<MeanMetric>("clip", metric_window_size)),
           kl_metric(std::make_shared<MeanMetric>("kl", metric_window_size, 2, true)),
           skip_fraction_metric(std::make_shared<MeanMetric>("skip", metric_window_size)),
@@ -251,6 +258,11 @@ namespace arenai::agent {
         discrete_entropy_metric->add(
             (discrete_entropy.sum() / discrete_mask.sum().clamp_min(1.f)).item<float>());
 
+        add_per_action_values(continuous_entropy_dim_metrics, continuous_entropy.mean(0));
+        add_per_action_values(
+            discrete_entropy_dim_metrics,
+            discrete_entropy.sum(0) / discrete_mask.sum(0).clamp_min(1.f));
+
         kl_metric->add(approx_kl);
 
         clip_fraction_metric->add(
@@ -363,7 +375,7 @@ namespace arenai::agent {
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> LiquidPpoTrainer::get_metrics() {
-        return {
+        std::vector<std::shared_ptr<AbstractMetric>> metrics{
             actor_mean_loss_metric,
             critic_mean_loss_metric,
             explained_variance_metric,
@@ -372,6 +384,15 @@ namespace arenai::agent {
             clip_fraction_metric,
             kl_metric,
             skip_fraction_metric};
+
+        metrics.insert(
+            metrics.end(), continuous_entropy_dim_metrics.begin(),
+            continuous_entropy_dim_metrics.end());
+        metrics.insert(
+            metrics.end(), discrete_entropy_dim_metrics.begin(),
+            discrete_entropy_dim_metrics.end());
+
+        return metrics;
     }
 
     void LiquidPpoTrainer::save(const std::filesystem::path &output_folder) {

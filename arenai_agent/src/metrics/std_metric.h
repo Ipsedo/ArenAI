@@ -12,7 +12,7 @@ namespace arenai::agent {
 
     class StdMetric : public AbstractMetric {
     public:
-        StdMetric(const std::string &name, int window_size);
+        StdMetric(const std::string &name, int window_size, bool print_in_progress_bar = true);
 
     protected:
         float to_stored_value(float value) override;

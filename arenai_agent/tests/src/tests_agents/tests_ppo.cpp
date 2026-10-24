@@ -78,7 +78,16 @@ TEST_F(PpoAgentTest, MetricsNotEmpty) {
 
     const auto metrics = factory->get_trainer()->get_metrics();
 
-    ASSERT_EQ(metrics.size(), 8);
+    // 8 trainer metrics + one entropy per action dimension
+    ASSERT_EQ(metrics.size(), 8 + cfg.nb_continuous_actions + cfg.nb_discrete_actions);
+
+    int hidden = 0;
+    for (const auto &m: metrics)
+        if (!m->is_printed_in_progress_bar()) hidden++;
+    ASSERT_EQ(hidden, cfg.nb_continuous_actions + cfg.nb_discrete_actions);
+
+    ASSERT_EQ(metrics[8]->get_name(), "Hc_dir_x");
+    ASSERT_EQ(metrics[8 + cfg.nb_continuous_actions]->get_name(), "Hd_fire");
 }
 
 // ========================================================================

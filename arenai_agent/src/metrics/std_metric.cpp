@@ -12,8 +12,10 @@ using namespace arenai::agent;
 
 namespace arenai::agent {
 
-    StdMetric::StdMetric(const std::string &name, const int window_size)
-        : AbstractMetric(name, window_size, 2, true), mean_metric(name + "_mean", window_size) {}
+    StdMetric::StdMetric(
+        const std::string &name, const int window_size, const bool print_in_progress_bar)
+        : AbstractMetric(name, window_size, 2, true, print_in_progress_bar),
+          mean_metric(name + "_mean", window_size) {}
 
     float StdMetric::compute_metric_impl(const std::vector<float> &curr_values) {
         const auto curr_mean = mean_metric.compute_metric();

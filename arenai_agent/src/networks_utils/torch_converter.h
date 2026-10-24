@@ -5,7 +5,9 @@
 #ifndef ARENAI_AGENT_HOST_TORCH_CONVERTER_H
 #define ARENAI_AGENT_HOST_TORCH_CONVERTER_H
 
+#include <string>
 #include <tuple>
+#include <vector>
 
 #include <torch/torch.h>
 
@@ -17,6 +19,10 @@ namespace arenai::agent {
 
     std::vector<core::Action> tensor_to_actions(
         const torch::Tensor &continuous_actions, const torch::Tensor &discrete_actions);
+
+    // names of the action dimensions, in the order tensor_to_actions reads them
+    const std::vector<std::string> &continuous_action_names();
+    const std::vector<std::string> &discrete_action_names();
 
     TorchState
     states_to_tensor(const std::vector<core::State> &states, int vision_height, int vision_width);

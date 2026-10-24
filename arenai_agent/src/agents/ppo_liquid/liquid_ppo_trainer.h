@@ -71,6 +71,10 @@ namespace arenai::agent {
         std::shared_ptr<AbstractMetric> continuous_entropy_metric;
         std::shared_ptr<AbstractMetric> discrete_entropy_metric;
 
+        // the same entropies split per action dimension, CSV only
+        std::vector<std::shared_ptr<AbstractMetric>> continuous_entropy_dim_metrics;
+        std::vector<std::shared_ptr<AbstractMetric>> discrete_entropy_dim_metrics;
+
         // both recorded on every attempted minibatch, skipped ones included
         std::shared_ptr<AbstractMetric> clip_fraction_metric;
         std::shared_ptr<AbstractMetric> kl_metric;

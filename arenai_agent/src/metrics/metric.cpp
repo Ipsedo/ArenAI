@@ -14,9 +14,10 @@ using namespace arenai::agent;
 namespace arenai::agent {
 
     AbstractMetric::AbstractMetric(
-        const std::string &name, const int window_size, const int precision, const bool scientific)
+        const std::string &name, const int window_size, const int precision, const bool scientific,
+        const bool print_in_progress_bar)
         : name(name), window_size(window_size), float_display_scientific(scientific),
-          float_display_precision(precision) {}
+          float_display_precision(precision), print_in_progress_bar(print_in_progress_bar) {}
 
     void AbstractMetric::add(const float value) {
         values.push_back(to_stored_value(value));
@@ -34,6 +35,8 @@ namespace arenai::agent {
 
     std::string AbstractMetric::get_name() const { return name; }
 
+    bool AbstractMetric::is_printed_in_progress_bar() const { return print_in_progress_bar; }
+
     std::string AbstractMetric::to_string() {
         const auto float_display_format = float_display_scientific ? std::scientific : std::fixed;
         std::stringstream stream;
@@ -47,9 +50,12 @@ namespace arenai::agent {
     AbstractMetric::metrics_to_string(const std::vector<std::shared_ptr<AbstractMetric>> &metrics) {
         std::stringstream stream;
 
-        for (int i = 0; i < metrics.size(); i++) {
-            if (i > 0) stream << ", ";
-            stream << metrics[i]->to_string();
+        bool first = true;
+        for (const auto &metric: metrics) {
+            if (!metric->is_printed_in_progress_bar()) continue;
+            if (!first) stream << ", ";
+            stream << metric->to_string();
+            first = false;
         }
 
         stream << " ";

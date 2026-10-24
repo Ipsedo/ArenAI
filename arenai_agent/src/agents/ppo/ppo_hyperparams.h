@@ -16,12 +16,11 @@ namespace arenai::agent {
     struct PpoHyperParams {
         float actor_learning_rate = 1e-4f;
         float critic_learning_rate = 1e-4f;
-        int hidden_size_sensors = 64;
-        std::vector<int> actor_hidden_sizes = {256, 128};
-        std::vector<int> critic_hidden_sizes = {256, 128};
-        std::vector<std::tuple<int, int>> vision_channels =
-            {{3, 16}, {16, 32}, {32, 64}, {64, 128}};
-        std::vector<int> group_norm_nums = {2, 4, 8, 16};
+        int hidden_size_sensors = 32;
+        std::vector<int> actor_hidden_sizes = {128, 64};
+        std::vector<int> critic_hidden_sizes = {128, 64};
+        std::vector<std::tuple<int, int>> vision_channels = {{3, 8}, {8, 16}, {16, 32}, {32, 64}};
+        std::vector<int> group_norm_nums = {1, 2, 4, 8};
         float initial_sigma = 0.5f;
         float initial_fire_proba = 0.25f;
         float initial_zoom_proba = 0.25f;
@@ -34,9 +33,9 @@ namespace arenai::agent {
         float grad_norm_max = 0.5f;
         std::vector<float> continuous_entropy_factor = {0.f, 0.f, 0.f, 0.f};
         std::vector<float> discrete_entropy_factor = {0.001f, 0.001f};
-        int epochs = 2;
+        int epochs = 4;
         int rollout_size = 30 * 30;
-        int minibatch_size = 512;
+        int minibatch_size = 1024;
     };
 
     std::vector<CliField<PpoHyperParams>> ppo_cli_fields();

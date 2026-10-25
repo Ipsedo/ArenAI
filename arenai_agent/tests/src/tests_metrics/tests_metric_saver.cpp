@@ -46,7 +46,7 @@ TEST_F(MetricCsvSaverTest, CreatesFileWithHeader) {
 
     auto m1 = std::make_shared<MeanMetric>("loss", 5);
     auto m2 = std::make_shared<MeanMetric>("reward", 5);
-    auto hidden = std::make_shared<MeanMetric>("hidden", 5, 3, false, false);
+    auto hidden = std::make_shared<MeanMetric>("hidden", 5, 3, false);
 
     MetricCsvSaver saver(dir, {m1, m2, hidden}, 1);
 

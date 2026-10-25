@@ -32,8 +32,6 @@ std::unique_ptr<PpoTorchAgentFactory> PpoAgentTest::make_factory(const PpoTestCo
         .gae_lambda = 0.95f,
         .clip_epsilon = 0.2f,
         .grad_norm_max = 1.f,
-        .continuous_entropy_factor = std::vector(cfg.nb_continuous_actions, 0.001f),
-        .discrete_entropy_factor = std::vector(cfg.nb_discrete_actions, 0.001f),
         .epochs = 1,
         .rollout_size = 8,
         .minibatch_size = 10};
@@ -79,15 +77,7 @@ TEST_F(PpoAgentTest, MetricsNotEmpty) {
     const auto metrics = factory->get_trainer()->get_metrics();
 
     // 8 trainer metrics + one entropy per action dimension
-    ASSERT_EQ(metrics.size(), 8 + cfg.nb_continuous_actions + cfg.nb_discrete_actions);
-
-    int hidden = 0;
-    for (const auto &m: metrics)
-        if (!m->is_printed_in_progress_bar()) hidden++;
-    ASSERT_EQ(hidden, cfg.nb_continuous_actions + cfg.nb_discrete_actions);
-
-    ASSERT_EQ(metrics[8]->get_name(), "Hc_dir_x");
-    ASSERT_EQ(metrics[8 + cfg.nb_continuous_actions]->get_name(), "Hd_fire");
+    ASSERT_EQ(metrics.size(), 8);
 }
 
 // ========================================================================

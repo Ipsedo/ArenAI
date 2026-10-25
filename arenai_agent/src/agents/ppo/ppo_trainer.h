@@ -29,9 +29,7 @@ namespace arenai::agent {
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
             float gamma, float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
-            const std::vector<float> &continuous_entropy_factor,
-            const std::vector<float> &discrete_entropy_factor, int epochs, int rollout_size,
-            int minibatch_size);
+            int epochs, int rollout_size, int minibatch_size);
 
         void step() override;
 
@@ -44,9 +42,6 @@ namespace arenai::agent {
     private:
         std::shared_ptr<Actor> actor;
         std::shared_ptr<PpoRolloutBuffer> rollout_buffer;
-
-        torch::Tensor continuous_entropy_factor;
-        torch::Tensor discrete_entropy_factor;
 
         std::shared_ptr<ValueFunction> critic;
 
@@ -65,10 +60,6 @@ namespace arenai::agent {
         // both regulated by their constant entropy bonus
         std::shared_ptr<AbstractMetric> continuous_entropy_metric;
         std::shared_ptr<AbstractMetric> discrete_entropy_metric;
-
-        // the same entropies split per action dimension, CSV only
-        std::vector<std::shared_ptr<AbstractMetric>> continuous_entropy_dim_metrics;
-        std::vector<std::shared_ptr<AbstractMetric>> discrete_entropy_dim_metrics;
 
         // both recorded on every attempted minibatch, skipped ones included
         std::shared_ptr<AbstractMetric> clip_fraction_metric;
@@ -100,7 +91,7 @@ namespace arenai::agent {
             const torch::Tensor &vision, const torch::Tensor &proprioception,
             const torch::Tensor &returns) const;
 
-        GaeResult compute_gae(const PpoRollout &rollout, torch::Device device);
+        GaeResult compute_gae(const PpoRollout &rollout, torch::Device device) const;
 
         void set_train(bool train) const;
         void to(torch::Device device) const;

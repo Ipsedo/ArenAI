@@ -12,8 +12,7 @@ namespace arenai::agent {
     class MeanMetric : public AbstractMetric {
     public:
         MeanMetric(
-            const std::string &name, int window_size, int precision = 3, bool scientific = false,
-            bool print_in_progress_bar = true);
+            const std::string &name, int window_size, int precision = 3, bool scientific = false);
 
     protected:
         float compute_metric_impl(const std::vector<float> &curr_values) override;

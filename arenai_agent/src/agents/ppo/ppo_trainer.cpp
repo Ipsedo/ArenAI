@@ -10,7 +10,6 @@
 #include "../../distributions/bernoulli.h"
 #include "../../distributions/truncated_normal.h"
 #include "../../metrics/mean_metric.h"
-#include "../../metrics/per_action_metrics.h"
 #include "../../networks/constants.h"
 #include "../../networks_utils/print_module.h"
 #include "../../networks_utils/torch_converter.h"
@@ -45,12 +44,8 @@ namespace arenai::agent {
         const std::vector<int> &group_norm_nums, const torch::Device device,
         const int metric_window_size, const float gamma, const float gae_lambda,
         const float clip_epsilon, const float target_kl, const float grad_norm_max,
-        const std::vector<float> &continuous_entropy_factor,
-        const std::vector<float> &discrete_entropy_factor, const int epochs, const int rollout_size,
-        const int minibatch_size)
+        const int epochs, const int rollout_size, const int minibatch_size)
         : actor(actor), rollout_buffer(rollout_buffer),
-          continuous_entropy_factor(torch::tensor(continuous_entropy_factor).to(device)),
-          discrete_entropy_factor(torch::tensor(discrete_entropy_factor).to(device)),
           critic(std::make_shared<ValueFunction>(
               vision_height, vision_width, nb_sensors, hidden_size_sensors, critic_hidden_sizes,
               vision_channels, group_norm_nums)),
@@ -64,12 +59,6 @@ namespace arenai::agent {
           explained_variance_metric(std::make_shared<MeanMetric>("ev", metric_window_size)),
           continuous_entropy_metric(std::make_shared<MeanMetric>("Hc", metric_window_size)),
           discrete_entropy_metric(std::make_shared<MeanMetric>("Hd", metric_window_size)),
-          continuous_entropy_dim_metrics(make_per_action_metrics(
-              "Hc", continuous_action_names(), static_cast<int>(continuous_entropy_factor.size()),
-              metric_window_size)),
-          discrete_entropy_dim_metrics(make_per_action_metrics(
-              "Hd", discrete_action_names(), static_cast<int>(discrete_entropy_factor.size()),
-              metric_window_size)),
           clip_fraction_metric(std::make_shared<MeanMetric>("clip", metric_window_size)),
           kl_metric(std::make_shared<MeanMetric>("kl", metric_window_size, 2, true)),
           skip_fraction_metric(std::make_shared<MeanMetric>("skip", metric_window_size)),
@@ -175,14 +164,11 @@ namespace arenai::agent {
 
         const bool kl_exceeded = target_kl > 0.f && approx_kl > 1.5f * target_kl;
 
-        const auto entropy_bonus = torch::sum(continuous_entropy_factor * continuous_entropy, -1)
-                                   + torch::sum(discrete_entropy_factor * discrete_entropy, -1);
-
         if (!kl_exceeded) {
             const auto clipped_ratio = torch::clamp(ratio, 1.f - clip_epsilon, 1.f + clip_epsilon);
             const auto surrogate = torch::min(ratio * advantages, clipped_ratio * advantages);
 
-            const auto actor_loss = -torch::mean(surrogate + entropy_bonus);
+            const auto actor_loss = -torch::mean(surrogate);
 
             actor_optim->zero_grad();
             actor_loss.backward();
@@ -198,11 +184,6 @@ namespace arenai::agent {
         // mean over the discrete actions that had an effect
         discrete_entropy_metric->add(
             (discrete_entropy.sum() / discrete_mask.sum().clamp_min(1.f)).item<float>());
-
-        add_per_action_values(continuous_entropy_dim_metrics, continuous_entropy.mean(0));
-        add_per_action_values(
-            discrete_entropy_dim_metrics,
-            discrete_entropy.sum(0) / discrete_mask.sum(0).clamp_min(1.f));
 
         kl_metric->add(approx_kl);
 
@@ -233,7 +214,7 @@ namespace arenai::agent {
             (1.f - residual_var / returns_var.clamp_min(EPSILON)).item<float>());
     }
 
-    GaeResult PpoTrainer::compute_gae(const PpoRollout &rollout, const torch::Device device) {
+    GaeResult PpoTrainer::compute_gae(const PpoRollout &rollout, const torch::Device device) const {
         torch::NoGradGuard no_grad;
 
         const auto nb_steps = rollout.rewards.size(0);
@@ -294,7 +275,7 @@ namespace arenai::agent {
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> PpoTrainer::get_metrics() {
-        std::vector<std::shared_ptr<AbstractMetric>> metrics{
+        return {
             actor_mean_loss_metric,
             critic_mean_loss_metric,
             explained_variance_metric,
@@ -303,15 +284,6 @@ namespace arenai::agent {
             clip_fraction_metric,
             kl_metric,
             skip_fraction_metric};
-
-        metrics.insert(
-            metrics.end(), continuous_entropy_dim_metrics.begin(),
-            continuous_entropy_dim_metrics.end());
-        metrics.insert(
-            metrics.end(), discrete_entropy_dim_metrics.begin(),
-            discrete_entropy_dim_metrics.end());
-
-        return metrics;
     }
 
     void PpoTrainer::save(const std::filesystem::path &output_folder) {

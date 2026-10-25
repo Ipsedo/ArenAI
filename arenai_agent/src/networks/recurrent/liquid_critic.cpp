@@ -13,7 +13,8 @@ namespace arenai::agent {
 
     LiquidCritic::LiquidCritic(
         const int &vision_height, const int &vision_width, const int &nb_sensors,
-        const int &hidden_size_sensors, const std::vector<std::tuple<int, int>> &vision_channels,
+        const int &hidden_size_sensors, const int &skip_hidden_size, const int &hidden_size,
+        const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, const int &neuron_number,
         const int &unfolding_steps, const float &delta_t)
         : vision_encoder(register_module(
@@ -36,11 +37,17 @@ namespace arenai::agent {
               torch::nn::Sequential(
                   torch::nn::Linear(
                       torch::nn::LinearOptions(
-                          hidden_size_sensors + vision_encoder->get_output_size(), neuron_number)
+                          hidden_size_sensors + vision_encoder->get_output_size(), skip_hidden_size)
                           .bias(false)),
-                  torch::nn::LayerNorm(torch::nn::LayerNormOptions({neuron_number})),
+                  torch::nn::LayerNorm(torch::nn::LayerNormOptions({skip_hidden_size})),
                   torch::nn::SiLU()))),
-          to_value(register_module("to_value", torch::nn::Linear(2 * neuron_number, 1))) {
+          to_value(register_module(
+              "to_value", torch::nn::Sequential(
+                              torch::nn::Linear(torch::nn::LinearOptions(
+                                                    neuron_number + skip_hidden_size, hidden_size)
+                                                    .bias(false)),
+                              torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})),
+                              torch::nn::SiLU(), torch::nn::Linear(hidden_size, 1)))) {
 
         vision_encoder->apply(init_hidden_weights);
         sensors_encoder->apply(init_hidden_weights);

@@ -16,7 +16,8 @@ namespace arenai::agent {
     LiquidActor::LiquidActor(
         const int &vision_height, const int &vision_width, const int &nb_sensors,
         const int &nb_continuous_actions, const int &nb_discrete_actions,
-        const int &hidden_size_sensors, const std::vector<std::tuple<int, int>> &vision_channels,
+        const int &hidden_size_sensors, const int &skip_hidden_size, const int &hidden_size,
+        const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, const int &neuron_number,
         const int &unfolding_steps, const float &delta_t, const float &initial_sigma,
         const std::vector<float> &initial_discrete_probas)
@@ -40,22 +41,28 @@ namespace arenai::agent {
               torch::nn::Sequential(
                   torch::nn::Linear(
                       torch::nn::LinearOptions(
-                          hidden_size_sensors + vision_encoder->get_output_size(), neuron_number)
+                          hidden_size_sensors + vision_encoder->get_output_size(), skip_hidden_size)
                           .bias(false)),
-                  torch::nn::LayerNorm(torch::nn::LayerNormOptions({neuron_number})),
+                  torch::nn::LayerNorm(torch::nn::LayerNormOptions({skip_hidden_size})),
                   torch::nn::SiLU()))),
+          to_hidden(register_module(
+              "to_hidden", torch::nn::Sequential(
+                               torch::nn::Linear(torch::nn::LinearOptions(
+                                                     neuron_number + skip_hidden_size, hidden_size)
+                                                     .bias(false)),
+                               torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})),
+                               torch::nn::SiLU()))),
           mu(register_module(
-              "mu",
-              torch::nn::Sequential(
-                  torch::nn::Linear(2 * neuron_number, nb_continuous_actions), torch::nn::Tanh()))),
+              "mu", torch::nn::Sequential(
+                        torch::nn::Linear(hidden_size, nb_continuous_actions), torch::nn::Tanh()))),
           sigma_logit(register_parameter(
               "sigma_logit",
               torch::full({nb_continuous_actions}, sigma_output_logit(initial_sigma)))),
           sigma(register_module("sigma", std::make_shared<SigmaOutput>(SIGMA_MIN, SIGMA_MAX))),
           discrete(register_module(
-              "discrete", torch::nn::Sequential(
-                              torch::nn::Linear(2 * neuron_number, nb_discrete_actions),
-                              torch::nn::Sigmoid()))) {
+              "discrete",
+              torch::nn::Sequential(
+                  torch::nn::Linear(hidden_size, nb_discrete_actions), torch::nn::Sigmoid()))) {
 
         vision_encoder->apply(init_hidden_weights);
         sensors_encoder->apply(init_hidden_weights);
@@ -76,13 +83,17 @@ namespace arenai::agent {
     LiquidActorOutput LiquidActor::act(
         const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &x_t) {
         const auto encoded = encode(vision, sensors);
+
         const auto [liquid_output, next_x] = liquid->forward_step(x_t, encoded);
+
         const auto output = torch::cat({liquid_output, skip->forward(encoded)}, -1);
-        const auto mu_output = mu->forward(output);
+        const auto hidden = to_hidden->forward(output);
+
+        const auto mu_output = mu->forward(hidden);
         return {
             .mu = mu_output,
             .sigma = sigma->forward(sigma_logit).expand_as(mu_output),
-            .discrete = discrete->forward(output),
+            .discrete = discrete->forward(hidden),
             .next_x = next_x};
     }
 
@@ -109,11 +120,13 @@ namespace arenai::agent {
         }
 
         const auto output = torch::cat({torch::stack(outputs, 1), skip->forward(encoded)}, -1);
-        const auto mu_output = mu->forward(output);
+        const auto hidden = to_hidden->forward(output);
+
+        const auto mu_output = mu->forward(hidden);
         return {
             .mu = mu_output,
             .sigma = sigma->forward(sigma_logit).expand_as(mu_output),
-            .discrete = discrete->forward(output),
+            .discrete = discrete->forward(hidden),
             .next_x = x};
     }
 

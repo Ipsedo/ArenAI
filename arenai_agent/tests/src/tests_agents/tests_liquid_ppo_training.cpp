@@ -13,6 +13,8 @@ LiquidPpoTrainingTest::make_factory(const LiquidPpoTrainingTestConfig &cfg) cons
         .actor_learning_rate = 1e-3f,
         .critic_learning_rate = 1e-3f,
         .hidden_size_sensors = 8,
+        .skip_hidden_size = 4,
+        .hidden_size = 4,
         .vision_channels = {{3, 4}},
         .group_norm_nums = {2},
         .neuron_number = NEURON_NUMBER,
@@ -23,8 +25,6 @@ LiquidPpoTrainingTest::make_factory(const LiquidPpoTrainingTestConfig &cfg) cons
         .gamma = 0.99f,
         .gae_lambda = 0.95f,
         .clip_epsilon = 0.2f,
-        .continuous_entropy_factor = std::vector(cfg.nb_continuous_actions, 0.001f),
-        .discrete_entropy_factor = std::vector(cfg.nb_discrete_actions, 0.001f),
         .epochs = 2,
         .rollout_size = ROLLOUT_SIZE,
         .minibatch_size = MINIBATCH_SIZE};
@@ -92,7 +92,7 @@ TEST_F(LiquidPpoTrainingTest, HiddenStateAdvancesAndResetsAcrossEpisodes) {
 
     const auto actor = std::make_shared<LiquidActor>(
         cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, 8, vision_channels, group_norm_nums, NEURON_NUMBER,
+        cfg.nb_discrete_actions, 8, 4, 4, vision_channels, group_norm_nums, NEURON_NUMBER,
         UNFOLDING_STEPS, DELTA_T, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
     const auto hidden_state = std::make_shared<LiquidHiddenState>(actor);
     const auto rollout_buffer = std::make_shared<LiquidPpoRolloutBuffer>();
@@ -140,7 +140,7 @@ TEST_F(LiquidPpoTrainingTest, TrainingUpdatesActorParameters) {
 
     const auto actor = std::make_shared<LiquidActor>(
         cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, 8, vision_channels, group_norm_nums, NEURON_NUMBER,
+        cfg.nb_discrete_actions, 8, 4, 4, vision_channels, group_norm_nums, NEURON_NUMBER,
         UNFOLDING_STEPS, DELTA_T, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
     const auto hidden_state = std::make_shared<LiquidHiddenState>(actor);
     const auto rollout_buffer = std::make_shared<LiquidPpoRolloutBuffer>();
@@ -150,9 +150,8 @@ TEST_F(LiquidPpoTrainingTest, TrainingUpdatesActorParameters) {
     // target_kl = 0 : early stop disabled so every minibatch applies its update
     const auto trainer = std::make_shared<LiquidPpoTrainer>(
         actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_sensors, 1e-3f, 1e-3f, 8,
-        vision_channels, group_norm_nums, NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T, device, 10,
-        0.99f, 0.95f, 0.2f, 0.f, 1.f, std::vector(cfg.nb_continuous_actions, 0.001f),
-        std::vector(cfg.nb_discrete_actions, 0.001f), 2, ROLLOUT_SIZE, MINIBATCH_SIZE, CHUNK_SIZE);
+        4, 4, vision_channels, group_norm_nums, NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T, device, 10,
+        0.99f, 0.95f, 0.2f, 0.f, 1.f, 2, ROLLOUT_SIZE, MINIBATCH_SIZE, CHUNK_SIZE);
 
     std::vector<torch::Tensor> initial_parameters;
     for (const auto &parameter: actor->parameters())
@@ -199,7 +198,7 @@ TEST_F(LiquidPpoTrainingTest, MaskedFireReceivesNoUpdate) {
 
     const auto actor = std::make_shared<LiquidActor>(
         cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, 8, vision_channels, group_norm_nums, NEURON_NUMBER,
+        cfg.nb_discrete_actions, 8, 4, 4, vision_channels, group_norm_nums, NEURON_NUMBER,
         UNFOLDING_STEPS, DELTA_T, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
     const auto hidden_state = std::make_shared<LiquidHiddenState>(actor);
     const auto rollout_buffer = std::make_shared<LiquidPpoRolloutBuffer>();
@@ -209,9 +208,8 @@ TEST_F(LiquidPpoTrainingTest, MaskedFireReceivesNoUpdate) {
     // target_kl = 0 : early stop disabled so every minibatch applies its update
     const auto trainer = std::make_shared<LiquidPpoTrainer>(
         actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_sensors, 1e-3f, 1e-3f, 8,
-        vision_channels, group_norm_nums, NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T, device, 10,
-        0.99f, 0.95f, 0.2f, 0.f, 1.f, std::vector(cfg.nb_continuous_actions, 0.001f),
-        std::vector(cfg.nb_discrete_actions, 0.001f), 2, ROLLOUT_SIZE, MINIBATCH_SIZE, CHUNK_SIZE);
+        4, 4, vision_channels, group_norm_nums, NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T, device, 10,
+        0.99f, 0.95f, 0.2f, 0.f, 1.f, 2, ROLLOUT_SIZE, MINIBATCH_SIZE, CHUNK_SIZE);
 
     auto named_parameters = actor->named_parameters();
     const auto weight = named_parameters["discrete.0.weight"];

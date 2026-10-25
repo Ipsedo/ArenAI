@@ -10,9 +10,7 @@
 namespace arenai::agent {
     class LastMetric final : public AbstractMetric {
     public:
-        explicit LastMetric(
-            const std::string &name, int precision = 4, bool scientific = false,
-            bool print_in_progress_bar = true);
+        explicit LastMetric(const std::string &name, int precision = 4, bool scientific = false);
         ~LastMetric() override = default;
 
     protected:

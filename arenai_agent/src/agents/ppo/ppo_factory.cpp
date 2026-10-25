@@ -27,14 +27,8 @@ namespace arenai::agent {
               params.actor_learning_rate, params.critic_learning_rate, params.hidden_size_sensors,
               params.critic_hidden_sizes, params.vision_channels, params.group_norm_nums, device,
               params.metric_window_size, params.gamma, params.gae_lambda, params.clip_epsilon,
-              params.target_kl, params.grad_norm_max, params.continuous_entropy_factor,
-              params.discrete_entropy_factor, params.epochs, params.rollout_size,
-              params.minibatch_size)) {
-        check_entropy_factors(
-            "continuous_entropy_factor", params.continuous_entropy_factor, nb_continuous_actions);
-        check_entropy_factors(
-            "discrete_entropy_factor", params.discrete_entropy_factor, nb_discrete_actions);
-    }
+              params.target_kl, params.grad_norm_max, params.epochs, params.rollout_size,
+              params.minibatch_size)) {}
 
     std::shared_ptr<AbstractTorchAgent> PpoTorchAgentFactory::get_agent() { return agent; }
 

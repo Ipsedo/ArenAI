@@ -22,17 +22,15 @@ namespace arenai::agent {
         std::vector<std::tuple<int, int>> vision_channels = {{3, 8}, {8, 16}, {16, 32}, {32, 64}};
         std::vector<int> group_norm_nums = {1, 2, 4, 8};
         float initial_sigma = 0.5f;
-        float initial_fire_proba = 0.25f;
-        float initial_zoom_proba = 0.25f;
-        int metric_window_size = 256;
+        float initial_fire_proba = 0.01f;
+        float initial_zoom_proba = 0.05f;
+        int metric_window_size = 4096;
         // per agent decision (action repeat 3 at 30 Hz): 0.997^3, same ~11 s horizon
-        float gamma = 0.991f;
-        float gae_lambda = 0.97f;
+        float gamma = 0.994f;
+        float gae_lambda = 0.99f;
         float clip_epsilon = 0.2f;
         float target_kl = 0.05f;
         float grad_norm_max = 0.5f;
-        std::vector<float> continuous_entropy_factor = {0.f, 0.f, 0.f, 0.f};
-        std::vector<float> discrete_entropy_factor = {0.001f, 0.001f};
         int epochs = 3;
         int rollout_size = 30 * 30;
         int minibatch_size = 1024;

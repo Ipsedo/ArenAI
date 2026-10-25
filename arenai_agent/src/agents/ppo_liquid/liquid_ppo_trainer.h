@@ -30,13 +30,12 @@ namespace arenai::agent {
             const std::shared_ptr<LiquidActor> &actor,
             const std::shared_ptr<LiquidPpoRolloutBuffer> &rollout_buffer, int vision_height,
             int vision_width, int nb_sensors, float actor_learning_rate, float critic_learning_rate,
-            int hidden_size_sensors, const std::vector<std::tuple<int, int>> &vision_channels,
+            int hidden_size_sensors, int skip_hidden_size, int hidden_size,
+            const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, int neuron_number, int unfolding_steps,
             float delta_t, torch::Device device, int metric_window_size, float gamma,
-            float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
-            const std::vector<float> &continuous_entropy_factor,
-            const std::vector<float> &discrete_entropy_factor, int epochs, int rollout_size,
-            int minibatch_size, int chunk_size);
+            float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max, int epochs,
+            int rollout_size, int minibatch_size, int chunk_size);
 
         void step() override;
 
@@ -49,9 +48,6 @@ namespace arenai::agent {
     private:
         std::shared_ptr<LiquidActor> actor;
         std::shared_ptr<LiquidPpoRolloutBuffer> rollout_buffer;
-
-        torch::Tensor continuous_entropy_factor;
-        torch::Tensor discrete_entropy_factor;
 
         std::shared_ptr<LiquidCritic> critic;
 
@@ -70,10 +66,6 @@ namespace arenai::agent {
         // both regulated by their constant entropy bonus
         std::shared_ptr<AbstractMetric> continuous_entropy_metric;
         std::shared_ptr<AbstractMetric> discrete_entropy_metric;
-
-        // the same entropies split per action dimension, CSV only
-        std::vector<std::shared_ptr<AbstractMetric>> continuous_entropy_dim_metrics;
-        std::vector<std::shared_ptr<AbstractMetric>> discrete_entropy_dim_metrics;
 
         // both recorded on every attempted minibatch, skipped ones included
         std::shared_ptr<AbstractMetric> clip_fraction_metric;

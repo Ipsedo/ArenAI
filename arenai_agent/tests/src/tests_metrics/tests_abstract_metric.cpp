@@ -67,26 +67,6 @@ TEST_F(AbstractMetricTest, MetricsToStringMultiple) {
     ASSERT_TRUE(str.find(',') != std::string::npos);
 }
 
-TEST_F(AbstractMetricTest, MetricsToStringSkipsHiddenMetrics) {
-    auto shown = std::make_shared<MeanMetric>("shown", 5);
-    auto hidden = std::make_shared<MeanMetric>("hidden", 5, 3, false, false);
-    auto shown_too = std::make_shared<MeanMetric>("shown_too", 5);
-
-    shown->add(1.0f);
-    hidden->add(2.0f);
-    shown_too->add(3.0f);
-
-    ASSERT_TRUE(shown->is_printed_in_progress_bar());
-    ASSERT_FALSE(hidden->is_printed_in_progress_bar());
-
-    const auto str = AbstractMetric::metrics_to_string({shown, hidden, shown_too});
-
-    ASSERT_TRUE(str.find("shown = ") != std::string::npos);
-    ASSERT_TRUE(str.find("shown_too = ") != std::string::npos);
-    ASSERT_TRUE(str.find("hidden") == std::string::npos);
-    ASSERT_EQ(str, "shown = 1.000, shown_too = 3.000 ");
-}
-
 // ========================================================================
 // Parameterized: window size behavior
 // ========================================================================

@@ -68,7 +68,7 @@ namespace arenai::desktop {
                          static_cast<size_t>(3) * factory.get_vision_height()
                              * factory.get_vision_width(),
                          0)},
-                .proprioception = std::vector<float>(model::ENEMY_PROPRIOCEPTION_SIZE, 0.f),
+                .proprioception = std::vector(model::ENEMY_PROPRIOCEPTION_SIZE, 0.f),
                 .can_fire = true};
             agent->act({blank_state}, factory.get_vision_height(), factory.get_vision_width());
 

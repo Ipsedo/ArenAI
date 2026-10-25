@@ -198,8 +198,8 @@ namespace arenai::desktop {
             const auto preset_json = json.value("agent_preset", nlohmann::json());
             const auto preset_name =
                 preset_json.is_string() ? preset_json.get<std::string>() : std::string();
-            const auto preset = std::find_if(
-                presets.begin(), presets.end(), [&preset_name](const AgentPreset &candidate) {
+            const auto preset =
+                std::ranges::find_if(presets, [&preset_name](const AgentPreset &candidate) {
                     return candidate.name == preset_name;
                 });
             if (preset != presets.end()) apply_preset(*preset, settings);

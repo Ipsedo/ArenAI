@@ -282,3 +282,86 @@ TEST_F(EnemyTankTest, ShellReserveDoesNotRegenerateOverTime) {
         shared_tank->get_proprioception()[proprioception_reserve_index], reserve_after_fire)
         << "the reserve should never regenerate over time";
 }
+
+// ========================================================================
+// Shell reserve — empty reserve death (training only)
+// ========================================================================
+
+namespace {
+
+    constexpr user_input AIM_DOWN{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 1.f},
+        .fire_button = {false}};
+
+    constexpr user_input HOLD_FIRE{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
+
+    constexpr int PROPRIOCEPTION_RESERVE_INDEX = ENEMY_PROPRIOCEPTION_SIZE - 2;
+
+}// namespace
+
+TEST_F(EnemyTankTest, DiesOnceReserveEmptyAndShellsLandedInTraining) {
+    add_ground();
+    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, true);
+
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
+    const std::vector tanks{shared_tank};
+
+    for (int i = 0; i < 40; i++)
+        for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(AIM_DOWN);
+
+    bool reserve_seen_empty = false;
+    float death_reward = 0.f;
+
+    for (int i = 0; i < 60 * 60 && !shared_tank->is_dead(); i++) {
+        for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(HOLD_FIRE);
+        engine->step(1.f / 60.f);
+        shared_tank->tick(tanks);
+        shared_tank->get_reward();
+        death_reward = shared_tank->get_last_reward_detail().death;
+
+        if (!reserve_seen_empty
+            && shared_tank->get_proprioception()[PROPRIOCEPTION_RESERVE_INDEX] <= 0.f) {
+            reserve_seen_empty = true;
+            ASSERT_FALSE(shared_tank->is_dead())
+                << "the last shell is still in flight: death must wait for it to land";
+        }
+
+        if (shared_tank->is_dead()) shared_tank->on_death();
+    }
+
+    ASSERT_TRUE(reserve_seen_empty) << "the tank should have emptied its reserve";
+    ASSERT_TRUE(shared_tank->is_dead()) << "an empty reserve should kill the tank in training";
+    ASSERT_TRUE(shared_tank->is_suicide()) << "the death is self-inflicted";
+    ASSERT_FALSE(shared_tank->is_timeout()) << "the death is not a truncation";
+    ASSERT_FLOAT_EQ(death_reward, -1.f) << "the death is penalised like a kill";
+}
+
+TEST_F(EnemyTankTest, EmptyReserveDoesNotKillOutsideTraining) {
+    add_ground();
+    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
+
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
+    const std::vector tanks{shared_tank};
+
+    for (int i = 0; i < 40; i++)
+        for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(AIM_DOWN);
+
+    for (int i = 0; i < 60 * 60; i++) {
+        for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(HOLD_FIRE);
+        engine->step(1.f / 60.f);
+        shared_tank->tick(tanks);
+    }
+
+    ASSERT_FLOAT_EQ(shared_tank->get_proprioception()[PROPRIOCEPTION_RESERVE_INDEX], 0.f)
+        << "the tank should have emptied its reserve";
+    ASSERT_FALSE(shared_tank->is_dead()) << "an empty reserve is harmless outside training";
+    ASSERT_FALSE(shared_tank->is_suicide());
+}

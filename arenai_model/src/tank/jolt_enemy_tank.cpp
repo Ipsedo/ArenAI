@@ -65,6 +65,7 @@ namespace arenai::model {
           fire_cooldown_frames(static_cast<int>(1.f / 6.f / wanted_frame_frequency)),
           curr_cooldown_frame(fire_cooldown_frames), shells_recharged_per_hit(5),
           is_dead_already_triggered(false), apply_timeout(apply_timeout), starved(false),
+          out_of_shells(false),
           max_frames_without_hit(static_cast<int>(30.f / wanted_frame_frequency)),
           remaining_frames(max_frames_without_hit),
           nb_frames_added_when_hit(static_cast<int>(3.f / wanted_frame_frequency)),
@@ -186,6 +187,8 @@ namespace arenai::model {
         nb_shells = std::min(nb_shells, max_shells);
 
         // 2. track shells
+        bool shell_in_flight = false;
+
         for (int i = static_cast<int>(tracked_shells.size()) - 1; i >= 0; i--) {
             auto &tracked = tracked_shells[i];
 
@@ -197,6 +200,7 @@ namespace arenai::model {
 
             const auto shell = tracked.shell.lock();
             const bool in_flight = shell && !shell->need_destroy();
+            shell_in_flight |= in_flight;
 
             if (shell) update_closest_approach(tracked, shell->get_current_position(), tanks);
             else if (tracked.has_final_pos)
@@ -221,6 +225,8 @@ namespace arenai::model {
             if (!is_dead()) starved = true;
             kill_life_items();
         }
+
+        if (apply_timeout && nb_shells <= 0 && !shell_in_flight && !is_dead()) out_of_shells = true;
     }
 
     void JoltEnemyTank::on_shell_fired(const std::shared_ptr<ShellItem> &shell) {
@@ -312,7 +318,7 @@ namespace arenai::model {
     }
 
     bool JoltEnemyTank::is_suicide() const {
-        return curr_frame_upside_down > max_frames_upside_down;
+        return curr_frame_upside_down > max_frames_upside_down || out_of_shells;
     }
 
     bool JoltEnemyTank::is_timeout() const { return starved; }

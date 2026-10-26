@@ -68,7 +68,7 @@ namespace arenai::agent {
         const std::vector<std::tuple<int, int>> &channels)
         : cnn(register_module("cnn", torch::nn::Sequential())) {
 
-        for (auto [c_i, c_o]: channels) {
+        for (const auto &[c_i, c_o]: channels) {
             constexpr int padding = 1, stride = 2, kernel = 3;
 
             cnn->push_back(torch::nn::Conv2d(

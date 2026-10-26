@@ -6,10 +6,10 @@
         "continuous_entropy_factor": 0.0010000000474974513,
         "critic_learning_rate": 9.999999747378752e-05,
         "delta_t": 0.10000000149011612,
-        "discrete_entropy_factor": 0.0010000000474974513,
-        "epochs": 2,
-        "gae_lambda": 0.9700000286102295,
-        "gamma": 0.9909999966621399,
+        "discrete_entropy_factor": 0.0,
+        "epochs": 4,
+        "gae_lambda": 0.9900000095367432,
+        "gamma": 0.9940000176429749,
         "grad_norm_max": 0.5,
         "group_norm_nums": [
             2,
@@ -17,14 +17,16 @@
             8,
             16
         ],
+        "hidden_size": 128,
         "hidden_size_sensors": 64,
-        "initial_fire_proba": 0.4000000059604645,
+        "initial_fire_proba": 0.5,
         "initial_sigma": 0.5,
-        "initial_zoom_proba": 0.25,
+        "initial_zoom_proba": 0.5,
         "metric_window_size": 256,
         "minibatch_size": 1536,
         "neuron_number": 128,
         "rollout_size": 900,
+        "skip_hidden_size": 256,
         "target_kl": 0.05000000074505806,
         "unfolding_steps": 6,
         "vision_channels": [
@@ -67,7 +69,7 @@
         "cuda": true,
         "max_episode_steps": 5400,
         "nb_episodes": 30000,
-        "output_folder": "./outputs/train_430_ppo_liquid_no-shell-regen",
+        "output_folder": "./outputs/train_441_ppo_liquid",
         "resources_folder": "/home/samuel/CLionProjects/ArenAI/resources",
         "save_every": 108000
     }

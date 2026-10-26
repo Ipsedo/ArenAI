@@ -12,10 +12,10 @@
             128
         ],
         "critic_learning_rate": 9.999999747378752e-05,
-        "discrete_entropy_factor": 0.0010000000474974513,
+        "discrete_entropy_factor": 0.0,
         "epochs": 2,
-        "gae_lambda": 0.9700000286102295,
-        "gamma": 0.9909999966621399,
+        "gae_lambda": 0.9900000095367432,
+        "gamma": 0.9940000176429749,
         "grad_norm_max": 0.5,
         "group_norm_nums": [
             2,
@@ -24,9 +24,9 @@
             16
         ],
         "hidden_size_sensors": 64,
-        "initial_fire_proba": 0.4000000059604645,
+        "initial_fire_proba": 0.5,
         "initial_sigma": 0.5,
-        "initial_zoom_proba": 0.25,
+        "initial_zoom_proba": 0.5,
         "metric_window_size": 256,
         "minibatch_size": 512,
         "rollout_size": 900,
@@ -71,7 +71,7 @@
         "cuda": true,
         "max_episode_steps": 5400,
         "nb_episodes": 30000,
-        "output_folder": "./outputs/train_351_ppo_no-shell-regen",
+        "output_folder": "./outputs/train_362_ppo",
         "resources_folder": "./resources",
         "save_every": 108000
     }

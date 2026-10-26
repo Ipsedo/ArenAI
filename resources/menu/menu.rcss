@@ -351,19 +351,72 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     decorator: corner-reticle(#EAF7FF);
 }
 
-/* no CUDA device: the chip stays visible but greyed and inert */
-.toggle.disabled {
+/* Segmented control (AI page device row): one bordered frame, the options
+   fused inside it — reads as "one choice among two". Quiet muted labels,
+   the selection speaking through tint + accent text like everywhere else. */
+.segmented {
+    display: inline-block;
+    margin: 4dp;
+    border: 1dp #0582CA;
+    border-radius: 2dp;
+}
+
+.segment {
+    display: inline-block;
+    padding: 8dp 22dp;
+    font-size: 13dp;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1dp;
+    color: #8AC4E0;
+    cursor: pointer;
+}
+
+.segment:last-child {
+    border-left: 1dp #0582CA;
+}
+
+.segment:hover, body.gamepad-nav .segment:focus {
+    background-color: #00a6fb17;
+    color: #EAF7FF;
+    decorator: corner-reticle(#00A6FB);
+}
+
+.segment:active {
+    background-color: #00a6fb33;
+    color: #EAF7FF;
+    decorator: corner-reticle(#4DC0FC);
+}
+
+.segment.selected {
+    background-color: #00a6fb24;
+    color: #00A6FB;
+}
+
+/* selected under the cursor: ink ticks, the selected tint restated */
+.segment.selected:hover, body.gamepad-nav .segment.selected:focus {
+    background-color: #00a6fb24;
+    color: #00A6FB;
+    decorator: corner-reticle(#EAF7FF);
+}
+
+.segment.selected:active {
+    background-color: #00a6fb33;
+    color: #00A6FB;
+    decorator: corner-reticle(#EAF7FF);
+}
+
+/* no CUDA device: the segment stays visible but greyed and inert */
+.segment.disabled {
     color: #6FA3BF;
     background-color: #003554;
-    border-color: #006494;
 }
 
 /* as .button.disabled: the ticks still mark the cursor position without
    promising a click */
-.toggle.disabled:hover, body.gamepad-nav .toggle.disabled:focus, .toggle.disabled:active {
+.segment.disabled:hover, body.gamepad-nav .segment.disabled:focus, .segment.disabled:active {
     color: #6FA3BF;
     background-color: #003554;
-    border-color: #006494;
     decorator: corner-reticle(#00A6FB);
 }
 

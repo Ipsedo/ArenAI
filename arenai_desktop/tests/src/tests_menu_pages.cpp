@@ -252,7 +252,7 @@ TEST_F(MenuPagesTest, switching_algorithm_reruns_the_check_and_detaches_the_pres
     EXPECT_EQ(checked.back(), AiAlgorithm::PpoLiquid);
 }
 
-TEST_F(MenuPagesTest, dpad_reaches_the_cuda_toggle_and_crosses_the_explorer) {
+TEST_F(MenuPagesTest, dpad_reaches_the_device_toggles_and_crosses_the_explorer) {
     build_menu(accepting_validator());
     show(gui::PageId::Ai);
 
@@ -265,13 +265,14 @@ TEST_F(MenuPagesTest, dpad_reaches_the_cuda_toggle_and_crosses_the_explorer) {
         return focus != nullptr ? focus->GetId() : "<none>";
     };
 
-    // the toggle sits between the algorithm dropdown and the explorer: the
-    // spatial navigation must stop on it on the way down
+    // the device toggles sit between the algorithm dropdown and the explorer:
+    // the spatial navigation must stop on them on the way down
     ASSERT_TRUE(document.GetElementById("algorithm-head")->Focus(true));
     press(controller::GamepadButton::DPadDown);
-    EXPECT_EQ(focused_id(), "cuda-toggle");
+    EXPECT_EQ(focused_id(), "cpu-toggle");
 
-    // the explorer bridge hops over the scroll container, and back out of it
+    // the explorer bridge hops over the scroll container from either
+    // toggle, and lands back on the CUDA one on the way out
     press(controller::GamepadButton::DPadDown);
     const Rml::Element *entry = context().GetFocusElement();
     ASSERT_NE(entry, nullptr);

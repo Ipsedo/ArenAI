@@ -19,6 +19,7 @@ namespace arenai::desktop::gui {
         constexpr const char *PRESET_LIST_ID = "preset-list";
         constexpr const char *ALGORITHM_HEAD_ID = "algorithm-head";
         constexpr const char *ALGORITHM_LIST_ID = "algorithm-list";
+        constexpr const char *CPU_TOGGLE_ID = "cpu-toggle";
         constexpr const char *CUDA_TOGGLE_ID = "cuda-toggle";
         constexpr const char *USE_FOLDER_ID = "use-folder";
 
@@ -55,8 +56,10 @@ namespace arenai::desktop::gui {
         if (document == nullptr) return;
         const Rml::Element *list = document->GetElementById(FILE_LIST_ID);
         Rml::Element *above = document->GetElementById(CUDA_TOGGLE_ID);
+        const Rml::Element *above_cpu = document->GetElementById(CPU_TOGGLE_ID);
         Rml::Element *below = document->GetElementById(USE_FOLDER_ID);
-        if (list == nullptr || above == nullptr || below == nullptr) return;
+        if (list == nullptr || above == nullptr || above_cpu == nullptr || below == nullptr)
+            return;
 
         const auto entries = visible_file_entries(list);
         if (entries.empty()) return;
@@ -65,7 +68,8 @@ namespace arenai::desktop::gui {
         if (focus->GetParentNode() == list) {
             if (key == Rml::Input::KI_UP && focus == entries.front()) target = above;
             else if (key == Rml::Input::KI_DOWN && focus == entries.back()) target = below;
-        } else if (key == Rml::Input::KI_DOWN && focus == above) target = entries.front();
+        } else if (key == Rml::Input::KI_DOWN && (focus == above || focus == above_cpu))
+            target = entries.front();
         else if (key == Rml::Input::KI_UP && focus == below) target = entries.back();
 
         if (target != nullptr && target->Focus(true)) {
@@ -181,9 +185,12 @@ namespace arenai::desktop::gui {
             refresh_explorer();
             pending_focus_ = PendingFocus::FirstEntry;
         });
-        model.on_event("toggle_cuda", [this](const Rml::VariantList &) {
-            if (!cuda_available_) return;
-            settings_.cuda = !settings_.cuda;
+        model.on_event("set_device", [this](const Rml::VariantList &arguments) {
+            if (arguments.empty()) return;
+            const bool cuda = arguments[0].Get<Rml::String>() == "cuda";
+            if (cuda && !cuda_available_) return;
+            if (settings_.cuda == cuda) return;
+            settings_.cuda = cuda;
             this->model().dirty("cuda");
         });
         model.on_event("select_folder", [this](const Rml::VariantList &) {

@@ -41,9 +41,7 @@
 
         <div class="param-row">
             <span class="param-label">Device</span>
-            <div class="toggle-group">
-                <div class="toggle" id="cuda-toggle" data-class-selected="cuda" data-class-disabled="!cuda_available" data-event-click="toggle_cuda()">CUDA</div>
-            </div>
+            <div class="segmented"><div class="segment" id="cpu-toggle" data-class-selected="!cuda" data-event-click="set_device('cpu')">CPU</div><div class="segment" id="cuda-toggle" data-class-selected="cuda" data-class-disabled="!cuda_available" data-event-click="set_device('cuda')">CUDA</div></div>
         </div>
 
         <h2>Trained AI model</h2>

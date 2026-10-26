@@ -55,10 +55,10 @@ namespace arenai::agent {
           mu(register_module(
               "mu", torch::nn::Sequential(
                         torch::nn::Linear(hidden_size, nb_continuous_actions), torch::nn::Tanh()))),
-          sigma_logit(register_parameter(
-              "sigma_logit",
-              torch::full({nb_continuous_actions}, sigma_output_logit(initial_sigma)))),
-          sigma(register_module("sigma", std::make_shared<SigmaOutput>(SIGMA_MIN, SIGMA_MAX))),
+          sigma(register_module(
+              "sigma", torch::nn::Sequential(
+                           torch::nn::Linear(hidden_size, nb_continuous_actions),
+                           std::make_shared<SigmaOutput>(SIGMA_MIN, SIGMA_MAX)))),
           discrete(register_module(
               "discrete",
               torch::nn::Sequential(
@@ -70,6 +70,7 @@ namespace arenai::agent {
 
         // zero bias + tanh puts the initial mode at the action-range center
         mu->apply(init_mu_output_weights);
+        sigma->apply([initial_sigma](Module &m) { init_sigma_output_weights(m, initial_sigma); });
 
         discrete->apply([&initial_discrete_probas](Module &m) {
             init_discrete_output_weights(m, initial_discrete_probas);
@@ -89,10 +90,9 @@ namespace arenai::agent {
         const auto output = torch::cat({liquid_output, skip->forward(encoded)}, -1);
         const auto hidden = to_hidden->forward(output);
 
-        const auto mu_output = mu->forward(hidden);
         return {
-            .mu = mu_output,
-            .sigma = sigma->forward(sigma_logit).expand_as(mu_output),
+            .mu = mu->forward(hidden),
+            .sigma = sigma->forward(hidden),
             .discrete = discrete->forward(hidden),
             .next_x = next_x};
     }
@@ -122,10 +122,9 @@ namespace arenai::agent {
         const auto output = torch::cat({torch::stack(outputs, 1), skip->forward(encoded)}, -1);
         const auto hidden = to_hidden->forward(output);
 
-        const auto mu_output = mu->forward(hidden);
         return {
-            .mu = mu_output,
-            .sigma = sigma->forward(sigma_logit).expand_as(mu_output),
+            .mu = mu->forward(hidden),
+            .sigma = sigma->forward(hidden),
             .discrete = discrete->forward(hidden),
             .next_x = x};
     }

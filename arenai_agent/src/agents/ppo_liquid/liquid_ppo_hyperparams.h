@@ -24,14 +24,12 @@ namespace arenai::agent {
         std::vector<int> group_norm_nums = {2, 4, 8, 16};
         int neuron_number = 128;
         int unfolding_steps = 6;
-        // seconds between two agent decisions (action repeat 3 at 30 Hz)
         float delta_t = 1.f / 10.f;
         int chunk_size = 30;
         float initial_sigma = 0.5f;
-        float initial_fire_proba = 0.01f;
-        float initial_zoom_proba = 0.05f;
+        float initial_fire_proba = 0.5f;
+        float initial_zoom_proba = 0.5f;
         int metric_window_size = 256;
-        // per agent decision (action repeat 3 at 30 Hz): 0.997^3, same ~11 s horizon
         float gamma = 0.994f;
         float gae_lambda = 0.99f;
         float clip_epsilon = 0.2f;

@@ -41,9 +41,7 @@ namespace arenai::agent {
         torch::nn::Sequential head;
 
         torch::nn::Sequential mu;
-        // state-independent: one logit per continuous action, mapped by sigma
-        torch::Tensor sigma_logit;
-        std::shared_ptr<SigmaOutput> sigma;
+        torch::nn::Sequential sigma;
         torch::nn::Sequential discrete;
     };
 

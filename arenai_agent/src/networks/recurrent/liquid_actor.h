@@ -17,7 +17,6 @@ namespace arenai::agent {
 
     struct LiquidActorOutput {
         // truncated normal on [-1, 1]: mu is the mode, sigma the spread. sigma is
-        // state-independent (one learned value per action, broadcast to mu's shape) and
         // parameterised in log-scale, so the aim precision has no ceiling
         torch::Tensor mu;
         torch::Tensor sigma;
@@ -61,9 +60,7 @@ namespace arenai::agent {
         torch::nn::Sequential to_hidden;
 
         torch::nn::Sequential mu;
-        // state-independent: one logit per continuous action, mapped by sigma
-        torch::Tensor sigma_logit;
-        std::shared_ptr<SigmaOutput> sigma;
+        torch::nn::Sequential sigma;
         torch::nn::Sequential discrete;
 
         // [rows, features] recurrent input: encoded vision and sensors, concatenated

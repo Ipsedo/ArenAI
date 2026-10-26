@@ -22,8 +22,8 @@ namespace arenai::agent {
         std::vector<std::tuple<int, int>> vision_channels = {{3, 8}, {8, 16}, {16, 32}, {32, 64}};
         std::vector<int> group_norm_nums = {1, 2, 4, 8};
         float initial_sigma = 0.5f;
-        float initial_fire_proba = 0.01f;
-        float initial_zoom_proba = 0.05f;
+        float initial_fire_proba = 0.5f;
+        float initial_zoom_proba = 0.5f;
         int metric_window_size = 256;
         // per agent decision (action repeat 3 at 30 Hz): 0.997^3, same ~11 s horizon
         float gamma = 0.994f;
@@ -33,9 +33,9 @@ namespace arenai::agent {
         float grad_norm_max = 0.5f;
         float continuous_entropy_factor = 0.001f;
         float discrete_entropy_factor = 0.f;
-        int epochs = 3;
+        int epochs = 2;
         int rollout_size = 30 * 30;
-        int minibatch_size = 1024;
+        int minibatch_size = 512;
     };
 
     std::vector<CliField<PpoHyperParams>> ppo_cli_fields();

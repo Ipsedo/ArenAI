@@ -310,12 +310,12 @@ namespace arenai::agent {
 
             hidden_list.push_back(critic_carry.cpu());
 
-            const auto out = critic->value(
+            const auto [value, next_x] = critic->value(
                 rollout.states.vision[t].to(device), rollout.states.proprioception[t].to(device),
                 critic_carry);
 
-            value_list.push_back(out.value.cpu());
-            critic_carry = out.next_x;
+            value_list.push_back(value.cpu());
+            critic_carry = next_x;
         }
 
         const auto values = torch::stack(value_list, 0);

@@ -36,7 +36,7 @@ namespace arenai::agent {
 
     class ImpalaConvolutionNetwork final : public torch::nn::Module {
     public:
-        ImpalaConvolutionNetwork(const std::vector<std::tuple<int, int>> &channels);
+        explicit ImpalaConvolutionNetwork(const std::vector<std::tuple<int, int>> &channels);
 
         torch::Tensor forward(const torch::Tensor &input);
 

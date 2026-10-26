@@ -74,7 +74,7 @@ namespace arenai::agent {
         if (rollout_buffer->nb_complete_steps() >= static_cast<size_t>(rollout_size)) train();
     }
 
-    void ImpalaPpoTrainer::train() {
+    void ImpalaPpoTrainer::train() const {
         const auto device = actor->parameters().back().device();
 
         const auto rollout = rollout_buffer->get_rollout();

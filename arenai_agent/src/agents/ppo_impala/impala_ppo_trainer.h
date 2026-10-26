@@ -83,7 +83,7 @@ namespace arenai::agent {
         int rollout_size;
         int minibatch_size;
 
-        void train();
+        void train() const;
 
         bool train_actor(
             const torch::Tensor &vision, const torch::Tensor &proprioception,

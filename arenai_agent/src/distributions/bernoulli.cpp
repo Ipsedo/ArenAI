@@ -18,7 +18,7 @@ namespace {
     constexpr float PROBA_MAX = 1.f - 1e-6f;
 
     torch::Tensor clamp_proba(const torch::Tensor &probabilities) {
-        return torch::clamp(probabilities, agent::EPSILON, PROBA_MAX);
+        return torch::clamp(probabilities, EPSILON, PROBA_MAX);
     }
 
 }// namespace

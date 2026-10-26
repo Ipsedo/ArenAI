@@ -194,9 +194,6 @@ namespace arenai::agent {
                      .fire_mask = state.fire_mask.to(torch_device)},
                     true);
 
-                TorchAction torch_action = {
-                    .continuous_action = continuous_action, .discrete_action = discrete_action};
-
                 actions_for_env = tensor_to_actions(continuous_action, discrete_action);
 
                 // step environment

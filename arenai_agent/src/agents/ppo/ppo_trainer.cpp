@@ -36,10 +36,9 @@ namespace arenai::agent {
 
     PpoTrainer::PpoTrainer(
         const std::shared_ptr<Actor> &actor,
-        const std::shared_ptr<PpoRolloutBuffer> &rollout_buffer, const int vision_height,
-        const int vision_width, const int nb_sensors, const float actor_learning_rate,
-        const float critic_learning_rate, const int hidden_size_sensors,
-        const std::vector<int> &critic_hidden_sizes,
+        const std::shared_ptr<PpoRolloutBuffer> &rollout_buffer, const int nb_sensors,
+        const float actor_learning_rate, const float critic_learning_rate,
+        const int hidden_size_sensors, const std::vector<int> &critic_hidden_sizes,
         const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, const torch::Device device,
         const int metric_window_size, const float gamma, const float gae_lambda,
@@ -50,8 +49,8 @@ namespace arenai::agent {
           continuous_entropy_factor(continuous_entropy_factor),
           discrete_entropy_factor(discrete_entropy_factor),
           critic(std::make_shared<ValueFunction>(
-              vision_height, vision_width, nb_sensors, hidden_size_sensors, critic_hidden_sizes,
-              vision_channels, group_norm_nums)),
+              nb_sensors, hidden_size_sensors, critic_hidden_sizes, vision_channels,
+              group_norm_nums)),
           actor_optim(
               std::make_unique<torch::optim::Adam>(this->actor->parameters(), actor_learning_rate)),
           critic_optim(

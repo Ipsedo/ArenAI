@@ -20,14 +20,17 @@ namespace arenai::agent {
           vision_height(config.at("environment").at("vision_height").get<int>()),
           vision_width(config.at("environment").at("vision_width").get<int>()),
           wanted_frequency(config.at("environment").at("wanted_frequency").get<float>()),
-          // runs prior to the action repeat decided on every frame
-          action_repeat(config.at("environment").value("action_repeat", 1)) {}
+          action_repeat(config.at("environment").at("action_repeat").get<int>()) {}
 
+    // needed for game
     int AgentFactory::get_vision_height() const { return vision_height; }
     int AgentFactory::get_vision_width() const { return vision_width; }
+
     float AgentFactory::get_wanted_frequency() const { return wanted_frequency; }
+
     int AgentFactory::get_action_repeat() const { return action_repeat; }
 
+    // factory method
     std::shared_ptr<AbstractAgent> AgentFactory::get_agent(
         const AgentAlgorithm algorithm, const int &nb_sensors, const int &nb_continuous_actions,
         const int &nb_discrete_actions, const bool cuda) {
@@ -47,7 +50,7 @@ namespace arenai::agent {
         const bool cuda) {
         return std::make_shared<TorchPpoAgent>(
             std::make_shared<Actor>(
-                vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_action,
+                nb_sensors, nb_continuous_actions, nb_discrete_action,
                 get_value<int>("hidden_size_sensors"),
                 get_value<std::vector<int>>("actor_hidden_sizes"),
                 get_value<std::vector<std::tuple<int, int>>>("vision_channels"),
@@ -59,7 +62,7 @@ namespace arenai::agent {
         const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_action,
         const bool cuda) {
         const auto actor = std::make_shared<LiquidActor>(
-            vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_action,
+            nb_sensors, nb_continuous_actions, nb_discrete_action,
             get_value<int>("hidden_size_sensors"), get_value<int>("skip_hidden_size"),
             get_value<int>("hidden_size"),
             get_value<std::vector<std::tuple<int, int>>>("vision_channels"),

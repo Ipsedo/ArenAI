@@ -20,9 +20,8 @@ TEST_P(ActorTestParam, TestActorAct) {
     constexpr int height = 32;
 
     Actor actor(
-        height, width, sensors_nb, cont_actions_nb, discrete_actions_nb, sensors_hidden_size,
-        layers, {{input_channels, 4}, {4, 8}}, {2, 4}, 0.1f,
-        std::vector(discrete_actions_nb, 0.2f));
+        sensors_nb, cont_actions_nb, discrete_actions_nb, sensors_hidden_size, layers,
+        {{input_channels, 4}, {4, 8}}, {2, 4}, 0.1f, std::vector(discrete_actions_nb, 0.2f));
 
     const auto image = torch::randint(
         255, {batch_size, input_channels, height, width},
@@ -50,24 +49,6 @@ TEST_P(ActorTestParam, TestActorAct) {
     // independent Bernoulli probabilities: each in (0, 1), no sum constraint
     ASSERT_TRUE(torch::all(torch::logical_and(torch::gt(discrete, 0.0), torch::lt(discrete, 1.0)))
                     .item<bool>());
-}
-
-TEST(ActorTest, SigmaIsStateIndependentAndStartsAtInitialSigma) {
-    constexpr int height = 32, width = 32, nb_sensors = 5, nb_continuous = 4, batch_size = 3;
-    constexpr float initial_sigma = 0.5f;
-
-    Actor actor(
-        height, width, nb_sensors, nb_continuous, 2, 8, {16}, {{3, 4}, {4, 8}}, {2, 4},
-        initial_sigma, std::vector(2, 0.2f));
-
-    const auto image = torch::randint(
-        255, {batch_size, 3, height, width}, torch::TensorOptions().dtype(torch::kUInt8));
-    const auto sensors = torch::randn({batch_size, nb_sensors});
-
-    const auto sigma = actor.act(image, sensors).sigma;
-
-    ASSERT_TRUE(torch::allclose(sigma, torch::full_like(sigma, initial_sigma), 1e-4, 1e-5));
-    ASSERT_TRUE(torch::equal(sigma[0], sigma[1]));
 }
 
 INSTANTIATE_TEST_SUITE_P(

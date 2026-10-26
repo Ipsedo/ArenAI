@@ -20,7 +20,7 @@ TEST_P(ImpalaVisionTestParam, TestImpalaVisionForward) {
         curr_channels = c_o;
     }
 
-    ImpalaConvolutionNetwork conv(height, width, conv_layers);
+    ImpalaConvolutionNetwork conv(conv_layers);
 
     const auto images = torch::randint(
         255, {batch_size, channels, height, width}, torch::TensorOptions().dtype(torch::kUInt8));
@@ -47,7 +47,7 @@ INSTANTIATE_TEST_SUITE_P(
 // Edge cases
 
 TEST_F(ImpalaVisionEdgeTest, RejectsNonUint8Input) {
-    ImpalaConvolutionNetwork conv(8, 8, {{3, 4}});
+    ImpalaConvolutionNetwork conv({{3, 4}});
 
     const auto float_input = torch::randn({1, 3, 8, 8});
 
@@ -55,7 +55,7 @@ TEST_F(ImpalaVisionEdgeTest, RejectsNonUint8Input) {
 }
 
 TEST_F(ImpalaVisionEdgeTest, NormalizesToExpectedRange) {
-    ImpalaConvolutionNetwork conv(8, 8, {{3, 4}});
+    ImpalaConvolutionNetwork conv({{3, 4}});
 
     const auto zeros = torch::zeros({1, 3, 8, 8}, torch::kUInt8);
     const auto result_zeros = conv.forward(zeros);
@@ -72,7 +72,7 @@ TEST_F(ImpalaVisionEdgeTest, OutputSizeMatchesGetOutputSize) {
     constexpr int h = 16, w = 16;
     constexpr int batch_size = 2;
 
-    ImpalaConvolutionNetwork conv(h, w, channels);
+    ImpalaConvolutionNetwork conv(channels);
 
     const auto input = torch::randint(255, {batch_size, 3, h, w}, torch::kUInt8);
     const auto output = conv.forward(input);

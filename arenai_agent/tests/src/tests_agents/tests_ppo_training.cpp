@@ -85,17 +85,16 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
     const std::vector group_norm_nums{2};
 
     const auto actor = std::make_shared<Actor>(
-        cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, 8, std::vector{16}, vision_channels, group_norm_nums, 0.1f,
-        std::vector(cfg.nb_discrete_actions, 0.2f));
+        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 8, std::vector{16},
+        vision_channels, group_norm_nums, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
     const auto rollout_buffer = std::make_shared<PpoRolloutBuffer>();
     const auto collector = std::make_shared<PpoStepCollector>(rollout_buffer);
     const auto agent = std::make_shared<TorchPpoAgent>(actor, device, collector);
     // target_kl = 0 : early stop disabled so every minibatch applies its update
     const auto trainer = std::make_shared<PpoTrainer>(
-        actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_sensors, 1e-3f, 1e-3f, 8,
-        std::vector{16}, vision_channels, group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f,
-        0.001f, 0.001f, 2, ROLLOUT_SIZE, MINIBATCH_SIZE);
+        actor, rollout_buffer, cfg.nb_sensors, 1e-3f, 1e-3f, 8, std::vector{16}, vision_channels,
+        group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 0.001f, 2, ROLLOUT_SIZE,
+        MINIBATCH_SIZE);
 
     std::vector<torch::Tensor> initial_parameters;
     for (const auto &parameter: actor->parameters())
@@ -141,17 +140,16 @@ TEST_F(PpoTrainingTest, MaskedFireReceivesNoUpdate) {
     const std::vector group_norm_nums{2};
 
     const auto actor = std::make_shared<Actor>(
-        cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, 8, std::vector{16}, vision_channels, group_norm_nums, 0.1f,
-        std::vector(cfg.nb_discrete_actions, 0.2f));
+        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 8, std::vector{16},
+        vision_channels, group_norm_nums, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
     const auto rollout_buffer = std::make_shared<PpoRolloutBuffer>();
     const auto collector = std::make_shared<PpoStepCollector>(rollout_buffer);
     const auto agent = std::make_shared<TorchPpoAgent>(actor, device, collector);
     // target_kl = 0 : early stop disabled so every minibatch applies its update
     const auto trainer = std::make_shared<PpoTrainer>(
-        actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_sensors, 1e-3f, 1e-3f, 8,
-        std::vector{16}, vision_channels, group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f,
-        0.001f, 0.001f, 2, ROLLOUT_SIZE, MINIBATCH_SIZE);
+        actor, rollout_buffer, cfg.nb_sensors, 1e-3f, 1e-3f, 8, std::vector{16}, vision_channels,
+        group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 0.001f, 2, ROLLOUT_SIZE,
+        MINIBATCH_SIZE);
 
     auto named_parameters = actor->named_parameters();
     const auto weight = named_parameters["discrete.0.weight"];

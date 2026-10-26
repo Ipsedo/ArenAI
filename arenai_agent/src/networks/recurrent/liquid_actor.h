@@ -31,8 +31,7 @@ namespace arenai::agent {
     class LiquidActor final : public torch::nn::Module {
     public:
         explicit LiquidActor(
-            const int &vision_height, const int &vision_width, const int &nb_sensors,
-            const int &nb_continuous_actions, const int &nb_discrete_actions,
+            const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_actions,
             const int &hidden_size_sensors, const int &skip_hidden_size, const int &hidden_size,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, const int &neuron_number,

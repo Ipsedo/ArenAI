@@ -12,7 +12,7 @@ namespace arenai::agent {
     class ConvolutionNetwork final : public torch::nn::Module {
     public:
         explicit ConvolutionNetwork(
-            int vision_height, int vision_width, const std::vector<std::tuple<int, int>> &channels,
+            const std::vector<std::tuple<int, int>> &channels,
             const std::vector<int> &group_norm_nums);
 
         torch::Tensor forward(const torch::Tensor &input);
@@ -36,8 +36,7 @@ namespace arenai::agent {
 
     class ImpalaConvolutionNetwork final : public torch::nn::Module {
     public:
-        ImpalaConvolutionNetwork(
-            int vision_height, int vision_width, const std::vector<std::tuple<int, int>> &channels);
+        ImpalaConvolutionNetwork(const std::vector<std::tuple<int, int>> &channels);
 
         torch::Tensor forward(const torch::Tensor &input);
 

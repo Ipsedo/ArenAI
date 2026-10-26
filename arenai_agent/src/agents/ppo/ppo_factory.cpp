@@ -15,19 +15,19 @@ namespace arenai::agent {
         const PpoHyperParams &params)
         : config(cli_fields_to_json(ppo_cli_fields(), params)),
           actor(std::make_shared<Actor>(
-              vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_actions,
-              params.hidden_size_sensors, params.actor_hidden_sizes, params.vision_channels,
-              params.group_norm_nums, params.initial_sigma,
+              nb_sensors, nb_continuous_actions, nb_discrete_actions, params.hidden_size_sensors,
+              params.actor_hidden_sizes, params.vision_channels, params.group_norm_nums,
+              params.initial_sigma,
               std::vector{params.initial_fire_proba, params.initial_zoom_proba})),
           rollout_buffer(std::make_shared<PpoRolloutBuffer>()),
           collector(std::make_shared<PpoStepCollector>(rollout_buffer)),
           agent(std::make_shared<TorchPpoAgent>(actor, device, collector)),
           trainer(std::make_shared<PpoTrainer>(
-              actor, rollout_buffer, vision_height, vision_width, nb_sensors,
-              params.actor_learning_rate, params.critic_learning_rate, params.hidden_size_sensors,
-              params.critic_hidden_sizes, params.vision_channels, params.group_norm_nums, device,
-              params.metric_window_size, params.gamma, params.gae_lambda, params.clip_epsilon,
-              params.target_kl, params.grad_norm_max, params.continuous_entropy_factor,
+              actor, rollout_buffer, nb_sensors, params.actor_learning_rate,
+              params.critic_learning_rate, params.hidden_size_sensors, params.critic_hidden_sizes,
+              params.vision_channels, params.group_norm_nums, device, params.metric_window_size,
+              params.gamma, params.gae_lambda, params.clip_epsilon, params.target_kl,
+              params.grad_norm_max, params.continuous_entropy_factor,
               params.discrete_entropy_factor, params.epochs, params.rollout_size,
               params.minibatch_size)) {}
 

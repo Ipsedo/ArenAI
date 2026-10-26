@@ -64,11 +64,11 @@ namespace arenai::desktop::gui {
                 update_dp_ratio();
 
                 // the adapter is wired before the pages (the controls page
-                // captures bindings through it); navigator_ is only read when
-                // input arrives, after construction
+                // captures bindings through it); input only arrives after
+                // construction, once the documents are loaded
                 input_adapter_ = std::make_shared<MenuInputAdapter>(
                     context_, [this] { on_escape(); },
-                    [this](const bool gamepad) { navigator_->set_gamepad_nav(gamepad); });
+                    [this](const bool gamepad) { set_gamepad_nav(gamepad); });
 
                 std::vector<std::unique_ptr<MenuPage>> pages;
                 pages.push_back(std::make_unique<MainPage>(
@@ -203,6 +203,14 @@ namespace arenai::desktop::gui {
                         return;
                     }
                 navigator_->on_escape();
+            }
+
+            // the .gamepad-nav class on every document of the context — pages,
+            // popups and HUD alike (menu.rcss shows the :focus highlight only
+            // under it)
+            void set_gamepad_nav(const bool gamepad) const {
+                for (int i = 0; i < context_->GetNumDocuments(); ++i)
+                    context_->GetDocument(i)->SetClass("gamepad-nav", gamepad);
             }
 
             void render_overlay() override {

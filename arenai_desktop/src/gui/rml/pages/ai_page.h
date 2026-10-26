@@ -62,8 +62,8 @@ namespace arenai::desktop::gui {
 
         // D-pad bridge across the file explorer: RmlUi's spatial navigation
         // stops at the scroll container, so Up from the first entry lands on
-        // the algorithm dropdown head, Down from the last one on the "Use
-        // this folder" button, and back
+        // the CUDA toggle (the control right above the explorer), Down from
+        // the last one on the "Use this folder" button, and back
         class ExplorerNavListener final : public Rml::EventListener {
         public:
             void ProcessEvent(Rml::Event &event) override;

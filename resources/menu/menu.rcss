@@ -32,11 +32,24 @@ body {
     display: flex;
     overflow-x: auto;
     overflow-y: auto;
+    /* focus recovery: when the focused element vanishes (a data-if folding,
+       a data-for rebuild), the next direction key falls back to the document
+       and this nav restarts the spatial search from here */
+    nav: auto;
 }
 
 /* pause popup: the body is a translucent veil over the frozen game frame */
 body.overlay {
     background-color: #051923d9;
+}
+
+/* Every control declaring a click in the RML is reachable with the keyboard
+   and the gamepad, no per-class opt-in; an element without a click stays
+   inert (fixed keychips). Form controls carry their own tab-index but still
+   need a local nav (input.range below). */
+[data-event-click] {
+    tab-index: auto;
+    nav: auto;
 }
 
 .panel {
@@ -112,8 +125,6 @@ h1 {
     border: 1dp #0582CA;
     border-radius: 2dp;
     cursor: pointer;
-    tab-index: auto;
-    nav: auto;
 }
 
 .back-arrow:hover, body.gamepad-nav .back-arrow:focus {
@@ -153,8 +164,6 @@ h2 {
     border: 1dp #0582CA;
     border-radius: 2dp;
     cursor: pointer;
-    tab-index: auto;
-    nav: auto;
 }
 
 /* One pointing device at a time: the gamepad cursor is the RmlUi focus and
@@ -312,8 +321,6 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     letter-spacing: 1dp;
     color: #EAF7FF;
     cursor: pointer;
-    tab-index: auto;
-    nav: auto;
 }
 
 .toggle:hover, body.gamepad-nav .toggle:focus {
@@ -380,8 +387,6 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     letter-spacing: 1dp;
     color: #EAF7FF;
     cursor: pointer;
-    tab-index: auto;
-    nav: auto;
 }
 
 .dropdown-head:hover, body.gamepad-nav .dropdown-head:focus {
@@ -448,8 +453,6 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     letter-spacing: 1dp;
     color: #8AC4E0;
     cursor: pointer;
-    tab-index: auto;
-    nav: auto;
 }
 
 .dropdown-item:hover, body.gamepad-nav .dropdown-item:focus {
@@ -535,8 +538,6 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     border-radius: 2dp;
     color: #EAF7FF;
     cursor: pointer;
-    tab-index: auto;
-    nav: auto;
 }
 
 .keychip:hover, body.gamepad-nav .keychip:focus {
@@ -569,7 +570,9 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     background-color: #b97e2f14;
 }
 
-/* non-remappable rows: visible so the full scheme reads, but inert */
+/* non-remappable rows: visible so the full scheme reads, but inert — they
+   declare no click in the RML, so the [data-event-click] rule leaves them
+   out of the navigation by itself */
 .bind-row.fixed .bind-action {
     color: #4C7A94;
 }
@@ -579,8 +582,6 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     border-color: #006494;
     background-color: #003554;
     cursor: default;
-    tab-index: none;
-    nav: none;
     /* inert: the cursor mark of .keychip:hover must not land here */
     decorator: none;
 }
@@ -614,8 +615,6 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     font-size: 13dp;
     color: #8AC4E0;
     cursor: pointer;
-    tab-index: auto;
-    nav: auto;
 }
 
 /* dense list rows: smaller ticks (5dp), tighter inset (2dp) */
@@ -671,8 +670,6 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     font-family: "IBM Plex Mono";
     font-size: 13dp;
     cursor: pointer;
-    tab-index: auto;
-    nav: auto;
 }
 
 .file-entry:hover, body.gamepad-nav .file-entry:focus {

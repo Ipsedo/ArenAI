@@ -65,7 +65,7 @@ namespace {
                 state_, window_, std::vector<std::string>{"GPU A", "GPU B"}));
             pages.push_back(std::make_unique<gui::ControlsPage>(state_, window_, *adapter_));
             pages.push_back(std::make_unique<gui::AiPage>(
-                state_, std::vector<AgentPreset>{}, std::move(validator)));
+                state_, std::vector<AgentPreset>{}, std::move(validator), true));
             navigator_ =
                 std::make_unique<gui::Navigator>(context(), std::move(pages), gui::PageId::Main);
             navigator_->show_root();
@@ -250,6 +250,38 @@ TEST_F(MenuPagesTest, switching_algorithm_reruns_the_check_and_detaches_the_pres
     EXPECT_FALSE(state_.settings.agent_preset.has_value());
     ASSERT_EQ(checked.size(), 2u);
     EXPECT_EQ(checked.back(), AiAlgorithm::PpoLiquid);
+}
+
+TEST_F(MenuPagesTest, dpad_reaches_the_cuda_toggle_and_crosses_the_explorer) {
+    build_menu(accepting_validator());
+    show(gui::PageId::Ai);
+
+    Rml::ElementDocument &document = navigator_->page(gui::PageId::Ai).document();
+    const auto press = [this](const controller::GamepadButton button) {
+        adapter_->on_gamepad_button(button, controller::InputAction::Press);
+    };
+    const auto focused_id = [this]() -> Rml::String {
+        const Rml::Element *focus = context().GetFocusElement();
+        return focus != nullptr ? focus->GetId() : "<none>";
+    };
+
+    // the toggle sits between the algorithm dropdown and the explorer: the
+    // spatial navigation must stop on it on the way down
+    ASSERT_TRUE(document.GetElementById("algorithm-head")->Focus(true));
+    press(controller::GamepadButton::DPadDown);
+    EXPECT_EQ(focused_id(), "cuda-toggle");
+
+    // the explorer bridge hops over the scroll container, and back out of it
+    press(controller::GamepadButton::DPadDown);
+    const Rml::Element *entry = context().GetFocusElement();
+    ASSERT_NE(entry, nullptr);
+    EXPECT_TRUE(entry->IsClassSet("file-entry")) << "focus on: " << focused_id();
+    press(controller::GamepadButton::DPadUp);
+    EXPECT_EQ(focused_id(), "cuda-toggle");
+
+    // and the way up leaves the toggle towards the dropdown
+    press(controller::GamepadButton::DPadUp);
+    EXPECT_EQ(focused_id(), "algorithm-head");
 }
 
 TEST_F(MenuPagesTest, escape_folds_an_open_dropdown_before_leaving_the_page) {

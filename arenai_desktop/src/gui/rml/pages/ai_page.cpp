@@ -19,6 +19,7 @@ namespace arenai::desktop::gui {
         constexpr const char *PRESET_LIST_ID = "preset-list";
         constexpr const char *ALGORITHM_HEAD_ID = "algorithm-head";
         constexpr const char *ALGORITHM_LIST_ID = "algorithm-list";
+        constexpr const char *CUDA_TOGGLE_ID = "cuda-toggle";
         constexpr const char *USE_FOLDER_ID = "use-folder";
 
         bool inside_dropdown(const Rml::Element *element) {
@@ -53,8 +54,7 @@ namespace arenai::desktop::gui {
         Rml::ElementDocument *document = focus->GetOwnerDocument();
         if (document == nullptr) return;
         const Rml::Element *list = document->GetElementById(FILE_LIST_ID);
-        Rml::Element *above = document->GetElementById(ALGORITHM_HEAD_ID);
-        const Rml::Element *above_list = document->GetElementById(ALGORITHM_LIST_ID);
+        Rml::Element *above = document->GetElementById(CUDA_TOGGLE_ID);
         Rml::Element *below = document->GetElementById(USE_FOLDER_ID);
         if (list == nullptr || above == nullptr || below == nullptr) return;
 
@@ -65,11 +65,8 @@ namespace arenai::desktop::gui {
         if (focus->GetParentNode() == list) {
             if (key == Rml::Input::KI_UP && focus == entries.front()) target = above;
             else if (key == Rml::Input::KI_DOWN && focus == entries.back()) target = below;
-        } else if (key == Rml::Input::KI_DOWN && focus == above) {
-            // an open dropdown keeps Down for its own items
-            const bool list_open = above_list != nullptr && above_list->IsVisible();
-            if (!list_open) target = entries.front();
-        } else if (key == Rml::Input::KI_UP && focus == below) target = entries.back();
+        } else if (key == Rml::Input::KI_DOWN && focus == above) target = entries.front();
+        else if (key == Rml::Input::KI_UP && focus == below) target = entries.back();
 
         if (target != nullptr && target->Focus(true)) {
             target->ScrollIntoView(Rml::ScrollAlignment::Nearest);

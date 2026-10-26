@@ -35,7 +35,6 @@ namespace arenai::desktop::gui {
         bool visible() const;
 
         Rml::ElementDocument &document() const;
-        void set_class(const Rml::String &class_name, bool activate) const;
 
         // once per frame while visible, before the context update
         virtual void update() {}

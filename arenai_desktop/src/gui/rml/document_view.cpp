@@ -42,10 +42,6 @@ namespace arenai::desktop::gui {
 
     Rml::ElementDocument &DocumentView::document() const { return *document_; }
 
-    void DocumentView::set_class(const Rml::String &class_name, const bool activate) const {
-        document_->SetClass(class_name, activate);
-    }
-
     DataModel &DocumentView::model() const { return *model_; }
 
     Rml::Context &DocumentView::context() const { return *document_->GetContext(); }

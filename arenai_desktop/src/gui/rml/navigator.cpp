@@ -58,10 +58,6 @@ namespace arenai::desktop::gui {
         if (current_ != nullptr) current_->after_context_update();
     }
 
-    void Navigator::set_gamepad_nav(const bool gamepad) const {
-        for (const auto &[id, page]: pages_) page->set_class("gamepad-nav", gamepad);
-    }
-
     MenuPage &Navigator::page(const PageId id) const {
         const auto found = pages_.find(id);
         if (found == pages_.end())

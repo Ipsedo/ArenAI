@@ -35,10 +35,6 @@ namespace arenai::desktop::gui {
         void update() const;
         void after_context_update() const;
 
-        // the .gamepad-nav class on every page (menu.rcss shows the :focus
-        // highlight only under it)
-        void set_gamepad_nav(bool gamepad) const;
-
         MenuPage &page(PageId page) const;
         MenuPage *current() const { return current_; }
 

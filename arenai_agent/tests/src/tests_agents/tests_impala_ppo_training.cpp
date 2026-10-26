@@ -1,0 +1,175 @@
+//
+// Created by claude on 26/10/2026.
+//
+
+#include <arenai_agent_tests/tests_agents/tests_impala_ppo_training.h>
+
+using namespace arenai;
+using namespace arenai::agent;
+
+std::unique_ptr<ImpalaPpoTorchAgentFactory>
+ImpalaPpoTrainingTest::make_factory(const ImpalaPpoTrainingTestConfig &cfg) const {
+    const ImpalaPpoHyperParams params{
+        .actor_learning_rate = 1e-3f,
+        .critic_learning_rate = 1e-3f,
+        .hidden_size_sensors = 8,
+        .actor_hidden_sizes = {16},
+        .critic_hidden_sizes = {16},
+        .vision_channels = {{3, 4}},
+        .metric_window_size = 10,
+        .gamma = 0.99f,
+        .gae_lambda = 0.95f,
+        .clip_epsilon = 0.2f,
+        .epochs = 2,
+        .rollout_size = ROLLOUT_SIZE,
+        .minibatch_size = MINIBATCH_SIZE};
+
+    return std::make_unique<ImpalaPpoTorchAgentFactory>(
+        cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
+        cfg.nb_discrete_actions, device, params);
+}
+
+TorchState
+ImpalaPpoTrainingTest::make_state(const ImpalaPpoTrainingTestConfig &cfg, const int nb_tanks) {
+    return {
+        .vision = torch::randint(
+            0, 255, {nb_tanks, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
+        .proprioception = torch::randn({nb_tanks, cfg.nb_sensors}),
+        .fire_mask = torch::randint(0, 2, {nb_tanks, 1}).to(torch::kFloat)};
+}
+
+TEST_F(ImpalaPpoTrainingTest, ActProducesValidOutput) {
+    constexpr ImpalaPpoTrainingTestConfig cfg{
+        .vision_height = 8,
+        .vision_width = 8,
+        .nb_sensors = 3,
+        .nb_continuous_actions = 2,
+        .nb_discrete_actions = 2};
+    const auto factory = make_factory(cfg);
+
+    const auto [continuous_action, discrete_action] =
+        factory->get_agent()->act(make_state(cfg, 1), true);
+
+    ASSERT_EQ(continuous_action.size(0), 1);
+    ASSERT_EQ(continuous_action.size(1), 2);
+    ASSERT_EQ(discrete_action.size(0), 1);
+    ASSERT_EQ(discrete_action.size(1), 2);
+
+    ASSERT_TRUE(torch::all(torch::isfinite(continuous_action)).item<bool>());
+    ASSERT_TRUE(torch::all(torch::isfinite(discrete_action)).item<bool>());
+}
+
+TEST_F(ImpalaPpoTrainingTest, CountParametersPositive) {
+    constexpr ImpalaPpoTrainingTestConfig cfg{
+        .vision_height = 8,
+        .vision_width = 8,
+        .nb_sensors = 3,
+        .nb_continuous_actions = 2,
+        .nb_discrete_actions = 2};
+    const auto factory = make_factory(cfg);
+
+    ASSERT_GT(factory->get_trainer()->count_parameters(), 0)
+        << "Agent should have a positive number of parameters";
+}
+
+TEST_F(ImpalaPpoTrainingTest, TrainingUpdatesActorParameters) {
+    // build the triad by hand to keep a handle on the actor's parameters
+    constexpr ImpalaPpoTrainingTestConfig cfg{
+        .vision_height = 8,
+        .vision_width = 8,
+        .nb_sensors = 3,
+        .nb_continuous_actions = 2,
+        .nb_discrete_actions = 3};
+
+    const std::vector<std::tuple<int, int>> vision_channels{{3, 4}};
+
+    const auto actor = std::make_shared<ImpalaActor>(
+        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 8, std::vector{16},
+        vision_channels, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
+    const auto rollout_buffer = std::make_shared<PpoRolloutBuffer>();
+    const auto collector = std::make_shared<PpoStepCollector>(rollout_buffer);
+    const auto agent = std::make_shared<TorchImpalaPpoAgent>(actor, device, collector);
+    // target_kl = 0 : early stop disabled so every minibatch applies its update
+    const auto trainer = std::make_shared<ImpalaPpoTrainer>(
+        actor, rollout_buffer, cfg.nb_sensors, 1e-3f, 1e-3f, 8, std::vector{16}, vision_channels,
+        device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 0.001f, 2, ROLLOUT_SIZE, MINIBATCH_SIZE);
+
+    std::vector<torch::Tensor> initial_parameters;
+    for (const auto &parameter: actor->parameters())
+        initial_parameters.push_back(parameter.detach().clone());
+
+    // env loop: act -> transition -> maybe train, one more step than the rollout
+    // horizon so that the batch is complete when the trainer checks
+    for (int t = 0; t < ROLLOUT_SIZE + 2; t++) {
+        constexpr int nb_tanks = 2;
+
+        agent->act(make_state(cfg, nb_tanks), true);
+        collector->on_transition(
+            torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+        trainer->step();
+    }
+
+    // the rollout has been consumed by the training
+    ASSERT_LT(rollout_buffer->nb_complete_steps(), static_cast<size_t>(ROLLOUT_SIZE));
+
+    const auto parameters = actor->parameters();
+    ASSERT_EQ(parameters.size(), initial_parameters.size());
+
+    bool any_changed = false;
+    for (size_t i = 0; i < parameters.size(); i++)
+        if (!torch::allclose(parameters[i], initial_parameters[i])) {
+            any_changed = true;
+            break;
+        }
+
+    ASSERT_TRUE(any_changed) << "Training should update the actor's parameters";
+}
+
+TEST_F(ImpalaPpoTrainingTest, MaskedFireReceivesNoUpdate) {
+    // fire never possible: its head row must stay untouched while zoom keeps learning
+    constexpr ImpalaPpoTrainingTestConfig cfg{
+        .vision_height = 8,
+        .vision_width = 8,
+        .nb_sensors = 3,
+        .nb_continuous_actions = 2,
+        .nb_discrete_actions = 2};
+
+    const std::vector<std::tuple<int, int>> vision_channels{{3, 4}};
+
+    const auto actor = std::make_shared<ImpalaActor>(
+        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 8, std::vector{16},
+        vision_channels, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
+    const auto rollout_buffer = std::make_shared<PpoRolloutBuffer>();
+    const auto collector = std::make_shared<PpoStepCollector>(rollout_buffer);
+    const auto agent = std::make_shared<TorchImpalaPpoAgent>(actor, device, collector);
+    // target_kl = 0 : early stop disabled so every minibatch applies its update
+    const auto trainer = std::make_shared<ImpalaPpoTrainer>(
+        actor, rollout_buffer, cfg.nb_sensors, 1e-3f, 1e-3f, 8, std::vector{16}, vision_channels,
+        device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 0.001f, 2, ROLLOUT_SIZE, MINIBATCH_SIZE);
+
+    auto named_parameters = actor->named_parameters();
+    const auto weight = named_parameters["discrete.0.weight"];
+    const auto bias = named_parameters["discrete.0.bias"];
+    const auto initial_weight = weight.detach().clone();
+    const auto initial_bias = bias.detach().clone();
+
+    for (int t = 0; t < ROLLOUT_SIZE + 2; t++) {
+        constexpr int nb_tanks = 2;
+
+        auto state = make_state(cfg, nb_tanks);
+        state.fire_mask = torch::zeros({nb_tanks, 1});
+
+        agent->act(state, true);
+        collector->on_transition(
+            torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+        trainer->step();
+    }
+
+    // the rollout has been consumed by the training
+    ASSERT_LT(rollout_buffer->nb_complete_steps(), static_cast<size_t>(ROLLOUT_SIZE));
+
+    // row 0 = fire, row 1 = zoom
+    ASSERT_TRUE(torch::equal(weight[0], initial_weight[0]));
+    ASSERT_TRUE(torch::equal(bias[0], initial_bias[0]));
+    ASSERT_FALSE(torch::equal(weight[1], initial_weight[1]));
+}

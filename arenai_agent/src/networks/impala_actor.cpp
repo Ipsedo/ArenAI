@@ -1,0 +1,83 @@
+//
+// Created by claude on 26/10/2026.
+//
+
+#include "./impala_actor.h"
+
+#include "../networks_utils/init.h"
+#include "./constants.h"
+#include "./misc.h"
+
+using namespace arenai;
+using namespace arenai::agent;
+
+namespace arenai::agent {
+
+    ImpalaActor::ImpalaActor(
+        const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_actions,
+        const int &hidden_size_sensors, const std::vector<int> &hidden_sizes,
+        const std::vector<std::tuple<int, int>> &vision_channels, const float &initial_sigma,
+        const std::vector<float> &initial_discrete_probas)
+        : vision_encoder(register_module(
+            "vision_encoder", std::make_shared<ImpalaConvolutionNetwork>(vision_channels))),
+          sensors_encoder(register_module(
+              "sensors_encoder",
+              torch::nn::Sequential(
+                  torch::nn::Linear(
+                      torch::nn::LinearOptions(nb_sensors, hidden_size_sensors).bias(false)),
+                  torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_sensors})),
+                  torch::nn::SiLU()))),
+          head(register_module("head", torch::nn::Sequential())),
+          mu(register_module(
+              "mu", torch::nn::Sequential(
+                        torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
+                        torch::nn::Tanh()))),
+          sigma(register_module(
+              "sigma", torch::nn::Sequential(
+                           torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
+                           std::make_shared<SigmaOutput>(SIGMA_MIN, SIGMA_MAX)))),
+          discrete(register_module(
+              "discrete", torch::nn::Sequential(
+                              torch::nn::Linear(hidden_sizes.back(), nb_discrete_actions),
+                              torch::nn::Sigmoid()))) {
+
+        head->push_back(torch::nn::Linear(
+            torch::nn::LinearOptions(
+                hidden_size_sensors + vision_encoder->get_output_size(), hidden_sizes.front())
+                .bias(false)));
+        head->push_back(torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_sizes.front()})));
+        head->push_back(torch::nn::SiLU());
+
+        for (int i = 1; i < hidden_sizes.size(); i++) {
+            const auto curr_size = hidden_sizes[i - 1];
+            const auto next_size = hidden_sizes[i];
+            head->push_back(
+                torch::nn::Linear(torch::nn::LinearOptions(curr_size, next_size).bias(false)));
+            head->push_back(torch::nn::LayerNorm(torch::nn::LayerNormOptions({next_size})));
+            head->push_back(torch::nn::SiLU());
+        }
+
+        vision_encoder->apply(init_hidden_weights);
+        sensors_encoder->apply(init_hidden_weights);
+        head->apply(init_hidden_weights);
+
+        // zero bias + tanh puts the initial mode at the action-range center
+        mu->apply(init_mu_output_weights);
+        sigma->apply([initial_sigma](Module &m) { init_sigma_output_weights(m, initial_sigma); });
+
+        discrete->apply([&initial_discrete_probas](Module &m) {
+            init_discrete_output_weights(m, initial_discrete_probas);
+        });
+    }
+
+    ActorRawOutput ImpalaActor::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
+        auto vision_encoded = vision_encoder->forward(vision);
+        auto sensors_encoded = sensors_encoder->forward(sensors);
+        auto encoded = head->forward(torch::cat({vision_encoded, sensors_encoded}, 1));
+        return {
+            .mu = mu->forward(encoded),
+            .sigma = sigma->forward(encoded),
+            .discrete = discrete->forward(encoded)};
+    }
+
+}// namespace arenai::agent

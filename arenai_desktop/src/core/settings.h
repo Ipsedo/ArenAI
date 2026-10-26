@@ -41,18 +41,20 @@ namespace arenai::desktop {
 
     // the RL algorithms the enemy agent can be built from; mirrors
     // agent::AgentAlgorithm without pulling arenai_agent into the settings
-    enum class AiAlgorithm { Ppo, PpoLiquid };
+    enum class AiAlgorithm { Ppo, PpoLiquid, PpoImpala };
 
     // canonical names, shared by the JSON preferences and the menu bindings
     constexpr const char *to_string(const AiAlgorithm algorithm) {
         switch (algorithm) {
             case AiAlgorithm::Ppo: return "ppo";
+            case AiAlgorithm::PpoImpala: return "ppo_impala";
             default: return "ppo_liquid";
         }
     }
 
     constexpr std::optional<AiAlgorithm> ai_algorithm_from_string(std::string_view name) {
-        for (const auto algorithm: {AiAlgorithm::Ppo, AiAlgorithm::PpoLiquid})
+        for (const auto algorithm:
+             {AiAlgorithm::Ppo, AiAlgorithm::PpoLiquid, AiAlgorithm::PpoImpala})
             if (name == to_string(algorithm)) return algorithm;
         return std::nullopt;
     }

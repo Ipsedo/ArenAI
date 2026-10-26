@@ -39,6 +39,7 @@ namespace arenai::desktop {
     agent::AgentAlgorithm to_agent_algorithm(const AiAlgorithm algorithm) {
         switch (algorithm) {
             case AiAlgorithm::Ppo: return agent::PPO;
+            case AiAlgorithm::PpoImpala: return agent::PPO_IMPALA;
             default: return agent::PPO_LIQUID;
         }
     }

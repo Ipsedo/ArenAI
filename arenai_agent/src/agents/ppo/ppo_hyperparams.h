@@ -24,7 +24,7 @@ namespace arenai::agent {
         float initial_sigma = 0.5f;
         float initial_fire_proba = 0.01f;
         float initial_zoom_proba = 0.05f;
-        int metric_window_size = 4096;
+        int metric_window_size = 256;
         // per agent decision (action repeat 3 at 30 Hz): 0.997^3, same ~11 s horizon
         float gamma = 0.994f;
         float gae_lambda = 0.99f;

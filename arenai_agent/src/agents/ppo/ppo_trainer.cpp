@@ -44,8 +44,11 @@ namespace arenai::agent {
         const std::vector<int> &group_norm_nums, const torch::Device device,
         const int metric_window_size, const float gamma, const float gae_lambda,
         const float clip_epsilon, const float target_kl, const float grad_norm_max,
+        const float continuous_entropy_factor, const float discrete_entropy_factor,
         const int epochs, const int rollout_size, const int minibatch_size)
         : actor(actor), rollout_buffer(rollout_buffer),
+          continuous_entropy_factor(continuous_entropy_factor),
+          discrete_entropy_factor(discrete_entropy_factor),
           critic(std::make_shared<ValueFunction>(
               vision_height, vision_width, nb_sensors, hidden_size_sensors, critic_hidden_sizes,
               vision_channels, group_norm_nums)),
@@ -164,11 +167,14 @@ namespace arenai::agent {
 
         const bool kl_exceeded = target_kl > 0.f && approx_kl > 1.5f * target_kl;
 
+        const auto entropy_bonus = continuous_entropy_factor * continuous_entropy.sum(-1)
+                                   + discrete_entropy_factor * discrete_entropy.sum(-1);
+
         if (!kl_exceeded) {
             const auto clipped_ratio = torch::clamp(ratio, 1.f - clip_epsilon, 1.f + clip_epsilon);
             const auto surrogate = torch::min(ratio * advantages, clipped_ratio * advantages);
 
-            const auto actor_loss = -torch::mean(surrogate);
+            const auto actor_loss = -torch::mean(surrogate + entropy_bonus);
 
             actor_optim->zero_grad();
             actor_loss.backward();

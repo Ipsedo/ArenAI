@@ -34,7 +34,8 @@ namespace arenai::agent {
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, int neuron_number, int unfolding_steps,
             float delta_t, torch::Device device, int metric_window_size, float gamma,
-            float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max, int epochs,
+            float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
+            float continuous_entropy_factor, float discrete_entropy_factor, int epochs,
             int rollout_size, int minibatch_size, int chunk_size);
 
         void step() override;
@@ -48,6 +49,9 @@ namespace arenai::agent {
     private:
         std::shared_ptr<LiquidActor> actor;
         std::shared_ptr<LiquidPpoRolloutBuffer> rollout_buffer;
+
+        float continuous_entropy_factor;
+        float discrete_entropy_factor;
 
         std::shared_ptr<LiquidCritic> critic;
 

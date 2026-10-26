@@ -21,7 +21,7 @@ namespace arenai::desktop {
           // the menu only lets Play through once the dry-run check passed, so
           // the load succeeds here; a direct launch (ARENAI_DEBUG_AUTOPLAY)
           // surfaces its failure as an exception
-          enemy_(load_agent(agent_selection(settings_), options_.cuda)) {
+          enemy_(load_agent(agent_selection(settings_), settings_.cuda)) {
         env_ = std::make_shared<DesktopGameEnvironment>(
             options_.resources_folder, backend_, settings_, enemy_.vision_height,
             enemy_.vision_width, enemy_.wanted_frequency);

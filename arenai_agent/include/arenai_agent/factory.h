@@ -16,6 +16,8 @@ namespace arenai::agent {
 
     enum AgentAlgorithm { PPO, PPO_LIQUID, PPO_IMPALA };
 
+    bool cuda_available();
+
     class AgentFactory {
     public:
         explicit AgentFactory(const nlohmann::json &config);

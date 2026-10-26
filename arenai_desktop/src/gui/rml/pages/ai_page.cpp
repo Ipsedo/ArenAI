@@ -77,13 +77,19 @@ namespace arenai::desktop::gui {
         }
     }
 
-    AiPage::AiPage(MenuState &state, std::vector<AgentPreset> presets, AgentValidator validator)
+    AiPage::AiPage(
+        MenuState &state, std::vector<AgentPreset> presets, AgentValidator validator,
+        const bool cuda_available)
         : MenuPage(PageId::Ai, PageId::Parameters, "menu/ai.rml", "ai"), state_(state),
           settings_(state.settings), presets_(std::move(presets)),
-          agent_validator_(std::move(validator)),
+          agent_validator_(std::move(validator)), cuda_available_(cuda_available),
           click_outside_listener_([this] { close_dropdowns(); }),
           algorithm_display_(to_string(settings_.agent_algorithm)) {
         for (const auto &preset: presets_) preset_names_.push_back(preset.name);
+
+        // a preference saved on a machine that had CUDA never reaches the
+        // loader on one that does not
+        if (!cuda_available_) settings_.cuda = false;
 
         // the preset persisted from the previous run, matched by name; an
         // unknown name (or none) means a hand-picked selection
@@ -116,6 +122,8 @@ namespace arenai::desktop::gui {
         model.bind("agent_config", &agent_config_display_);
         model.bind("agent_status", &agent_status_);
         model.bind("agent_valid", &state_.agent_valid);
+        model.bind("cuda", &settings_.cuda);
+        model.bind("cuda_available", &cuda_available_);
         model.bind("current_dir", &current_dir_display_);
         model.bind("entries", &entries_);
 
@@ -175,6 +183,11 @@ namespace arenai::desktop::gui {
             }
             refresh_explorer();
             pending_focus_ = PendingFocus::FirstEntry;
+        });
+        model.on_event("toggle_cuda", [this](const Rml::VariantList &) {
+            if (!cuda_available_) return;
+            settings_.cuda = !settings_.cuda;
+            this->model().dirty("cuda");
         });
         model.on_event("select_folder", [this](const Rml::VariantList &) {
             settings_.agent_folder = current_dir_;

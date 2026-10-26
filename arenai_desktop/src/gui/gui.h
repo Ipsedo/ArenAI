@@ -95,6 +95,9 @@ namespace arenai::desktop::gui {
         int window_width;
         int window_height;
         AgentValidator agent_validator;
+        // whether the machine has a CUDA device: off, the AI page's CUDA
+        // toggle is disabled and the setting forced to false
+        bool cuda_available;
     };
 
     std::unique_ptr<AbstractGui> make_gui(

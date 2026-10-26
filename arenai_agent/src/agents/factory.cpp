@@ -16,6 +16,8 @@ using namespace arenai::agent;
 
 namespace arenai::agent {
 
+    bool cuda_available() { return torch::cuda::is_available(); }
+
     AgentFactory::AgentFactory(const nlohmann::json &config)
         : agent_arguments(config.at("agent")),
           vision_height(config.at("environment").at("vision_height").get<int>()),

@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <iostream>
 
+#include <arenai_agent/factory.h>
 #include <arenai_agent/file_reader.h>
 #include <arenai_view/backend.h>
 
@@ -45,9 +46,9 @@ namespace arenai::desktop {
              .gpus = view::list_vulkan_gpus(),
              .window_width = game_options.window_width,
              .window_height = game_options.window_height,
-             .agent_validator = [](const AgentSelection &selection) {
-                 return check_agent(selection);
-             }});
+             .agent_validator =
+                 [](const AgentSelection &selection) { return check_agent(selection); },
+             .cuda_available = agent::cuda_available()});
 
         window->set_resize_callback(
             [&gui](const int width, const int height) { gui->on_window_resized(width, height); });

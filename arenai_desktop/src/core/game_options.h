@@ -16,7 +16,6 @@ namespace arenai::desktop {
         int window_width;
         int window_height;
         std::filesystem::path resources_folder;
-        bool cuda;
     };
 
 }// namespace arenai::desktop

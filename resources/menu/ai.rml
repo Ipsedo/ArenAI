@@ -39,6 +39,13 @@
             </div>
         </div>
 
+        <div class="param-row">
+            <span class="param-label">Device</span>
+            <div class="toggle-group">
+                <div class="toggle" id="cuda-toggle" data-class-selected="cuda" data-class-disabled="!cuda_available" data-event-click="toggle_cuda()">CUDA</div>
+            </div>
+        </div>
+
         <h2>Trained AI model</h2>
         <div class="current-dir">{{current_dir}}</div>
         <div class="file-list" id="file-list">

@@ -22,7 +22,9 @@ namespace arenai::desktop::gui {
     // shared settings and the agent_valid flag the other screens display.
     class AiPage final : public MenuPage {
     public:
-        AiPage(MenuState &state, std::vector<AgentPreset> presets, AgentValidator validator);
+        AiPage(
+            MenuState &state, std::vector<AgentPreset> presets, AgentValidator validator,
+            bool cuda_available);
 
         // after the context Update rebuilt the data-bound clones, put the
         // gamepad cursor back where the last action left it (the fresh
@@ -84,6 +86,8 @@ namespace arenai::desktop::gui {
         GameSettings &settings_;
         std::vector<AgentPreset> presets_;
         AgentValidator agent_validator_;
+        // no CUDA device on this machine: the toggle shows disabled and off
+        bool cuda_available_;
 
         // removed from the document when Rml::Shutdown() destroys it, before
         // the members are torn down

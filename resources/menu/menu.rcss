@@ -344,6 +344,22 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     decorator: corner-reticle(#EAF7FF);
 }
 
+/* no CUDA device: the chip stays visible but greyed and inert */
+.toggle.disabled {
+    color: #6FA3BF;
+    background-color: #003554;
+    border-color: #006494;
+}
+
+/* as .button.disabled: the ticks still mark the cursor position without
+   promising a click */
+.toggle.disabled:hover, body.gamepad-nav .toggle.disabled:focus, .toggle.disabled:active {
+    color: #6FA3BF;
+    background-color: #003554;
+    border-color: #006494;
+    decorator: corner-reticle(#00A6FB);
+}
+
 /* Dropdown (AI page): a toggle-styled head, the list unfolding over the
    content below it (absolute, above the explorer) so the panel keeps its
    height. Items reuse the dense list-row look of .device-entry. */

@@ -36,7 +36,6 @@ int main(const int argc, char **argv) {
     // menu; the command line only keeps what belongs to the player's machine
     parser.add_argument("--window_width").scan<'i', int>().default_value(1920);
     parser.add_argument("--window_height").scan<'i', int>().default_value(1080);
-    parser.add_argument("--cuda").implicit_value(true).default_value(false);
 
     parser.parse_args(argc, argv);
 
@@ -45,8 +44,7 @@ int main(const int argc, char **argv) {
     run_gui(
         {.window_width = parser.get<int>("--window_width"),
          .window_height = parser.get<int>("--window_height"),
-         .resources_folder = resources_folder,
-         .cuda = parser.get<bool>("--cuda")});
+         .resources_folder = resources_folder});
 
     return 0;
 }

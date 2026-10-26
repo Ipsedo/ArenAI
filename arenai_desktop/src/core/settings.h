@@ -75,6 +75,10 @@ namespace arenai::desktop {
         std::string window_gpu;
         std::string vision_gpu;
 
+        // run the enemy agent's networks on CUDA; forced back to false when
+        // no CUDA device is available on this machine
+        bool cuda = false;
+
         // the trained enemy agent: its state-dict folder, the config.json of
         // its training run (empty = looked up next to the state dicts) and
         // the algorithm to rebuild the networks with

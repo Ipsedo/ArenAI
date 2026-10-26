@@ -189,6 +189,8 @@ namespace arenai::desktop {
                 settings.msaa_samples = msaa;
             settings.window_gpu = json.value("window_gpu", settings.window_gpu);
             settings.vision_gpu = json.value("vision_gpu", settings.vision_gpu);
+            // the AI page forces it back to false when CUDA is unavailable
+            settings.cuda = json.value("cuda", settings.cuda);
 
             if (const auto bindings = json.value("bindings", nlohmann::json::object());
                 bindings.is_object())
@@ -248,6 +250,7 @@ namespace arenai::desktop {
                 {"msaa", settings.msaa_samples},
                 {"window_gpu", settings.window_gpu},
                 {"vision_gpu", settings.vision_gpu},
+                {"cuda", settings.cuda},
                 {"bindings", bindings_to_json(settings.bindings)},
                 {"agent_folder", settings.agent_folder.string()},
                 {"agent_config", settings.agent_config.string()},

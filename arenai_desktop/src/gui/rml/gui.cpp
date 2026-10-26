@@ -77,7 +77,8 @@ namespace arenai::desktop::gui {
                 pages.push_back(std::make_unique<GraphicsPage>(state_, window_, options.gpus));
                 pages.push_back(std::make_unique<ControlsPage>(state_, window_, *input_adapter_));
                 pages.push_back(std::make_unique<AiPage>(
-                    state_, std::move(options.presets), std::move(options.agent_validator)));
+                    state_, std::move(options.presets), std::move(options.agent_validator),
+                    options.cuda_available));
                 navigator_ = std::make_unique<Navigator>(*context_, std::move(pages), PageId::Main);
 
                 pause_ = std::make_unique<PopupPage>(PopupKind::Pause, state_);

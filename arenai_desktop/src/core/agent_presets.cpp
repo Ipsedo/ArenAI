@@ -11,7 +11,7 @@ namespace arenai::desktop {
             {.name = "PPO Liquid (save 44)",
              .algorithm = AiAlgorithm::PpoLiquid,
              .config = resources_folder / "trained_models" / "ppo_liquid" / "config.json",
-             .folder = resources_folder / "trained_models" / "ppo_liquid" / "save_44"},
+             .folder = resources_folder / "trained_models" / "ppo_liquid" / "save_3"},
             {.name = "PPO (save 26)",
              .algorithm = AiAlgorithm::Ppo,
              .config = resources_folder / "trained_models" / "ppo" / "config.json",

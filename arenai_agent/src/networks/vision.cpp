@@ -68,20 +68,28 @@ namespace arenai::agent {
         const std::vector<std::tuple<int, int>> &channels)
         : cnn(register_module("cnn", torch::nn::Sequential())) {
 
-        for (const auto &[c_i, c_o]: channels) {
-            constexpr int padding = 1, stride = 2, kernel = 3;
+        constexpr int padding = 1, kernel = 3;
 
+        for (const auto &[c_i, c_o]: channels) {
             cnn->push_back(torch::nn::Conv2d(
                 torch::nn::Conv2dOptions(c_i, c_o, kernel).stride(1).padding(padding)));
             cnn->push_back(torch::nn::MaxPool2d(
-                torch::nn::MaxPool2dOptions(kernel).stride(stride).padding(padding)));
+                torch::nn::MaxPool2dOptions(kernel).stride(2).padding(padding)));
             cnn->push_back(std::make_shared<ResidualBlock>(c_o));
         }
 
+        const auto last_channels = std::get<1>(channels.back());
+
         cnn->push_back(torch::nn::SiLU());
+        cnn->push_back(
+            torch::nn::Conv2d(torch::nn::Conv2dOptions(last_channels, last_channels, kernel)
+                                  .stride(1)
+                                  .padding(padding)));
+        cnn->push_back(torch::nn::SiLU());
+
         cnn->push_back(std::make_shared<SpatialSoftmax>());
 
-        output_size = 3 * std::get<1>(channels.back());
+        output_size = 3 * last_channels;
     }
 
     torch::Tensor ImpalaConvolutionNetwork::forward(const torch::Tensor &input) {

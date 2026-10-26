@@ -12,9 +12,6 @@
 
 namespace arenai::agent {
 
-    // Same algorithm and defaults as PpoHyperParams; the IMPALA vision encoder
-    // has no group normalisation, so no group_norm_nums.
-    // Member initializers are the CLI defaults (single source of truth).
     struct ImpalaPpoHyperParams {
         float actor_learning_rate = 1e-4f;
         float critic_learning_rate = 1e-4f;
@@ -27,7 +24,6 @@ namespace arenai::agent {
         float initial_fire_proba = 0.5f;
         float initial_zoom_proba = 0.5f;
         int metric_window_size = 256;
-        // per agent decision (action repeat 3 at 30 Hz): 0.997^3, same ~11 s horizon
         float gamma = 0.994f;
         float gae_lambda = 0.99f;
         float clip_epsilon = 0.2f;

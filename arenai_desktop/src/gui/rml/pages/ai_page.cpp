@@ -58,8 +58,7 @@ namespace arenai::desktop::gui {
         Rml::Element *above = document->GetElementById(CUDA_TOGGLE_ID);
         const Rml::Element *above_cpu = document->GetElementById(CPU_TOGGLE_ID);
         Rml::Element *below = document->GetElementById(USE_FOLDER_ID);
-        if (list == nullptr || above == nullptr || above_cpu == nullptr || below == nullptr)
-            return;
+        if (list == nullptr || above == nullptr || above_cpu == nullptr || below == nullptr) return;
 
         const auto entries = visible_file_entries(list);
         if (entries.empty()) return;

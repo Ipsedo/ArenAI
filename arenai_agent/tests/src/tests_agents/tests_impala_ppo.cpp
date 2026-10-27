@@ -32,7 +32,8 @@ ImpalaPpoAgentTest::make_factory(const ImpalaPpoTestConfig &cfg) const {
         .gae_lambda = 0.95f,
         .clip_epsilon = 0.2f,
         .grad_norm_max = 1.f,
-        .epochs = 1,
+        .actor_epochs = 1,
+        .critic_epochs = 1,
         .rollout_size = 8,
         .minibatch_size = 10};
 

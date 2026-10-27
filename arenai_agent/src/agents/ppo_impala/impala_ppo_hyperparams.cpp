@@ -28,7 +28,8 @@ namespace arenai::agent {
              .member = &ImpalaPpoHyperParams::continuous_entropy_factor},
             {.name = "--discrete_entropy_factor",
              .member = &ImpalaPpoHyperParams::discrete_entropy_factor},
-            {.name = "--epochs", .member = &ImpalaPpoHyperParams::epochs},
+            {.name = "--actor_epochs", .member = &ImpalaPpoHyperParams::actor_epochs},
+            {.name = "--critic_epochs", .member = &ImpalaPpoHyperParams::critic_epochs},
             {.name = "--rollout_size", .member = &ImpalaPpoHyperParams::rollout_size},
             {.name = "--minibatch_size", .member = &ImpalaPpoHyperParams::minibatch_size},
         };

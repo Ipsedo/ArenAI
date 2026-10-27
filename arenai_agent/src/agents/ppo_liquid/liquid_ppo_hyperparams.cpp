@@ -31,7 +31,8 @@ namespace arenai::agent {
              .member = &LiquidPpoHyperParams::continuous_entropy_factor},
             {.name = "--discrete_entropy_factor",
              .member = &LiquidPpoHyperParams::discrete_entropy_factor},
-            {.name = "--epochs", .member = &LiquidPpoHyperParams::epochs},
+            {.name = "--actor_epochs", .member = &LiquidPpoHyperParams::actor_epochs},
+            {.name = "--critic_epochs", .member = &LiquidPpoHyperParams::critic_epochs},
             {.name = "--rollout_size", .member = &LiquidPpoHyperParams::rollout_size},
             {.name = "--minibatch_size", .member = &LiquidPpoHyperParams::minibatch_size},
         };

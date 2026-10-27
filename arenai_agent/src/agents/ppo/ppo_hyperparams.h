@@ -32,7 +32,8 @@ namespace arenai::agent {
         float grad_norm_max = 0.5f;
         float continuous_entropy_factor = 0.001f;
         float discrete_entropy_factor = 0.f;
-        int epochs = 8;
+        int actor_epochs = 8;
+        int critic_epochs = 16;
         int rollout_size = 30 * 30;
         int minibatch_size = 512;
     };

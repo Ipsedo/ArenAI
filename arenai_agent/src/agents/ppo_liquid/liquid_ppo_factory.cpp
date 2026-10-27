@@ -29,8 +29,9 @@ namespace arenai::agent {
               params.group_norm_nums, params.neuron_number, params.unfolding_steps, params.delta_t,
               device, params.metric_window_size, params.gamma, params.gae_lambda,
               params.clip_epsilon, params.target_kl, params.grad_norm_max,
-              params.continuous_entropy_factor, params.discrete_entropy_factor, params.epochs,
-              params.rollout_size, params.minibatch_size, params.chunk_size)) {}
+              params.continuous_entropy_factor, params.discrete_entropy_factor, params.actor_epochs,
+              params.critic_epochs, params.rollout_size, params.minibatch_size,
+              params.chunk_size)) {}
 
     std::shared_ptr<AbstractTorchAgent> LiquidPpoTorchAgentFactory::get_agent() { return agent; }
 

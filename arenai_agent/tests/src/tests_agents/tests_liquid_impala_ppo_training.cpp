@@ -22,7 +22,8 @@ LiquidImpalaPpoTrainingTest::make_factory(const LiquidImpalaPpoTrainingTestConfi
         .gamma = 0.99f,
         .gae_lambda = 0.95f,
         .clip_epsilon = 0.2f,
-        .epochs = 2,
+        .actor_epochs = 2,
+        .critic_epochs = 2,
         .rollout_size = ROLLOUT_SIZE,
         .minibatch_size = MINIBATCH_SIZE};
 
@@ -145,7 +146,7 @@ TEST_F(LiquidImpalaPpoTrainingTest, TrainingUpdatesActorParameters) {
     // target_kl = 0 : early stop disabled so every minibatch applies its update
     const auto trainer = std::make_shared<LiquidImpalaPpoTrainer>(
         actor, rollout_buffer, cfg.nb_sensors, 1e-3f, 1e-3f, 8, vision_channels, NEURON_NUMBER,
-        UNFOLDING_STEPS, DELTA_T, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 0.001f, 2,
+        UNFOLDING_STEPS, DELTA_T, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 0.001f, 2, 2,
         ROLLOUT_SIZE, MINIBATCH_SIZE, CHUNK_SIZE);
 
     std::vector<torch::Tensor> initial_parameters;
@@ -202,7 +203,7 @@ TEST_F(LiquidImpalaPpoTrainingTest, MaskedFireReceivesNoUpdate) {
     // target_kl = 0 : early stop disabled so every minibatch applies its update
     const auto trainer = std::make_shared<LiquidImpalaPpoTrainer>(
         actor, rollout_buffer, cfg.nb_sensors, 1e-3f, 1e-3f, 8, vision_channels, NEURON_NUMBER,
-        UNFOLDING_STEPS, DELTA_T, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 0.001f, 2,
+        UNFOLDING_STEPS, DELTA_T, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 0.001f, 2, 2,
         ROLLOUT_SIZE, MINIBATCH_SIZE, CHUNK_SIZE);
 
     auto named_parameters = actor->named_parameters();

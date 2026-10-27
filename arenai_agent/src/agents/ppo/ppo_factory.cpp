@@ -28,8 +28,8 @@ namespace arenai::agent {
               params.vision_channels, params.group_norm_nums, device, params.metric_window_size,
               params.gamma, params.gae_lambda, params.clip_epsilon, params.target_kl,
               params.grad_norm_max, params.continuous_entropy_factor,
-              params.discrete_entropy_factor, params.epochs, params.rollout_size,
-              params.minibatch_size)) {}
+              params.discrete_entropy_factor, params.actor_epochs, params.critic_epochs,
+              params.rollout_size, params.minibatch_size)) {}
 
     std::shared_ptr<AbstractTorchAgent> PpoTorchAgentFactory::get_agent() { return agent; }
 

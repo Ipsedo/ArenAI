@@ -42,8 +42,8 @@ namespace arenai::agent {
         const float delta_t, const torch::Device device, const int metric_window_size,
         const float gamma, const float gae_lambda, const float clip_epsilon, const float target_kl,
         const float grad_norm_max, const float continuous_entropy_factor,
-        const float discrete_entropy_factor, const int epochs, const int rollout_size,
-        const int minibatch_size, const int chunk_size)
+        const float discrete_entropy_factor, const int actor_epochs, const int critic_epochs,
+        const int rollout_size, const int minibatch_size, const int chunk_size)
         : actor(actor), rollout_buffer(rollout_buffer),
           continuous_entropy_factor(continuous_entropy_factor),
           discrete_entropy_factor(discrete_entropy_factor),
@@ -64,8 +64,8 @@ namespace arenai::agent {
           kl_metric(std::make_shared<MeanMetric>("kl", metric_window_size, 2, true)),
           skip_fraction_metric(std::make_shared<MeanMetric>("skip", metric_window_size)),
           gamma(gamma), gae_lambda(gae_lambda), clip_epsilon(clip_epsilon), target_kl(target_kl),
-          grad_norm_max(grad_norm_max), epochs(epochs), rollout_size(rollout_size),
-          minibatch_size(minibatch_size), chunk_size(chunk_size) {
+          grad_norm_max(grad_norm_max), actor_epochs(actor_epochs), critic_epochs(critic_epochs),
+          rollout_size(rollout_size), minibatch_size(minibatch_size), chunk_size(chunk_size) {
         to(device);
 
         set_train(false);
@@ -129,9 +129,12 @@ namespace arenai::agent {
 
         // one update per epoch: the minibatches' gradients are accumulated over the whole
         // rollout, minibatch_size only bounds the device memory of a forward / backward pass
-        for (int e = 0; e < epochs; e++) {
-            actor_optim->zero_grad();
-            critic_optim->zero_grad();
+        for (int e = 0; e < std::max(actor_epochs, critic_epochs); e++) {
+            const bool train_actor = e < actor_epochs;
+            const bool train_critic = e < critic_epochs;
+
+            if (train_actor) actor_optim->zero_grad();
+            if (train_critic) critic_optim->zero_grad();
 
             std::vector<torch::Tensor> kl_per_rows;
 
@@ -166,31 +169,38 @@ namespace arenai::agent {
                 const auto mb_proprioception = select_chunks(flat_proprioception);
                 const auto mb_valids = select_chunks(flat_valids);
 
-                kl_per_rows.push_back(backward_actor(
-                    mb_vision, mb_proprioception, select_hiddens(flat_actor_hiddens),
-                    select_chunks(flat_continuous_actions), select_chunks(flat_discrete_actions),
-                    select_chunks(flat_fire_masks), select_chunks(flat_old_log_probs),
-                    select_chunks(flat_advantages), mb_valids, rollout_fraction));
+                if (train_actor)
+                    kl_per_rows.push_back(backward_actor(
+                        mb_vision, mb_proprioception, select_hiddens(flat_actor_hiddens),
+                        select_chunks(flat_continuous_actions),
+                        select_chunks(flat_discrete_actions), select_chunks(flat_fire_masks),
+                        select_chunks(flat_old_log_probs), select_chunks(flat_advantages),
+                        mb_valids, rollout_fraction));
 
-                backward_critic(
-                    mb_vision, mb_proprioception, select_hiddens(flat_critic_hiddens),
-                    select_chunks(flat_returns), mb_valids, rollout_fraction);
+                if (train_critic)
+                    backward_critic(
+                        mb_vision, mb_proprioception, select_hiddens(flat_critic_hiddens),
+                        select_chunks(flat_returns), mb_valids, rollout_fraction);
             }
 
-            // KL of the policy the epoch starts from: past the threshold, only the critic moves
-            const auto approx_kl = trimmed_kl(kl_per_rows);
-            const bool kl_exceeded = target_kl > 0.f && approx_kl > 1.5f * target_kl;
+            if (train_actor) {
+                // KL of the policy the epoch starts from: past the threshold, the actor stays
+                const auto approx_kl = trimmed_kl(kl_per_rows);
+                const bool kl_exceeded = target_kl > 0.f && approx_kl > 1.5f * target_kl;
 
-            if (!kl_exceeded) {
-                torch::nn::utils::clip_grad_norm_(actor->parameters(), grad_norm_max);
-                actor_optim->step();
+                if (!kl_exceeded) {
+                    torch::nn::utils::clip_grad_norm_(actor->parameters(), grad_norm_max);
+                    actor_optim->step();
+                }
+
+                kl_metric->add(approx_kl);
+                skip_fraction_metric->add(kl_exceeded ? 1.f : 0.f);
             }
 
-            torch::nn::utils::clip_grad_norm_(critic->parameters(), grad_norm_max);
-            critic_optim->step();
-
-            kl_metric->add(approx_kl);
-            skip_fraction_metric->add(kl_exceeded ? 1.f : 0.f);
+            if (train_critic) {
+                torch::nn::utils::clip_grad_norm_(critic->parameters(), grad_norm_max);
+                critic_optim->step();
+            }
         }
 
         set_train(false);

@@ -40,6 +40,7 @@ namespace arenai::desktop {
         switch (algorithm) {
             case AiAlgorithm::Ppo: return agent::PPO;
             case AiAlgorithm::PpoImpala: return agent::PPO_IMPALA;
+            case AiAlgorithm::PpoLiquidImpala: return agent::PPO_LIQUID_IMPALA;
             default: return agent::PPO_LIQUID;
         }
     }

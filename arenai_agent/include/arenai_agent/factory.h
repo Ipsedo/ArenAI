@@ -14,7 +14,7 @@
 
 namespace arenai::agent {
 
-    enum AgentAlgorithm { PPO, PPO_LIQUID, PPO_IMPALA };
+    enum AgentAlgorithm { PPO, PPO_LIQUID, PPO_IMPALA, PPO_LIQUID_IMPALA };
 
     bool cuda_available();
 
@@ -48,6 +48,10 @@ namespace arenai::agent {
             bool cuda);
 
         std::shared_ptr<AbstractAgent> create_impala_ppo_agent(
+            const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_action,
+            bool cuda);
+
+        std::shared_ptr<AbstractAgent> create_liquid_impala_ppo_agent(
             const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_action,
             bool cuda);
 

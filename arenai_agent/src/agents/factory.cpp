@@ -10,6 +10,7 @@
 #include "./ppo/ppo_agent.h"
 #include "./ppo_impala/impala_ppo_agent.h"
 #include "./ppo_liquid/liquid_ppo_agent.h"
+#include "./ppo_liquid_impala/liquid_impala_ppo_agent.h"
 
 using namespace arenai;
 using namespace arenai::agent;
@@ -46,6 +47,9 @@ namespace arenai::agent {
                     nb_sensors, nb_continuous_actions, nb_discrete_actions, cuda);
             case PPO_IMPALA:
                 return create_impala_ppo_agent(
+                    nb_sensors, nb_continuous_actions, nb_discrete_actions, cuda);
+            case PPO_LIQUID_IMPALA:
+                return create_liquid_impala_ppo_agent(
                     nb_sensors, nb_continuous_actions, nb_discrete_actions, cuda);
             default: throw std::runtime_error("Unknown agent algorithm");
         }
@@ -90,6 +94,22 @@ namespace arenai::agent {
                 get_value<std::vector<int>>("actor_hidden_sizes"),
                 get_value<std::vector<std::tuple<int, int>>>("vision_channels"), 0.f,
                 std::vector{0.5f, 0.5f}),
+            cuda ? torch::kCUDA : torch::kCPU);
+    }
+
+    std::shared_ptr<AbstractAgent> AgentFactory::create_liquid_impala_ppo_agent(
+        const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_action,
+        const bool cuda) {
+        const auto actor = std::make_shared<LiquidImpalaActor>(
+            nb_sensors, nb_continuous_actions, nb_discrete_action,
+            get_value<int>("hidden_size_sensors"), get_value<int>("skip_hidden_size"),
+            get_value<int>("hidden_size"),
+            get_value<std::vector<std::tuple<int, int>>>("vision_channels"),
+            get_value<int>("neuron_number"), get_value<int>("unfolding_steps"),
+            get_value<float>("delta_t"), 0.f, std::vector{0.5f, 0.5f});
+
+        return std::make_shared<TorchLiquidImpalaPpoAgent>(
+            actor, std::make_shared<LiquidImpalaHiddenState>(actor),
             cuda ? torch::kCUDA : torch::kCPU);
     }
 

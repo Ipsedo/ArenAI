@@ -13,6 +13,8 @@
 #include "./ppo_impala/impala_ppo_hyperparams.h"
 #include "./ppo_liquid/liquid_ppo_factory.h"
 #include "./ppo_liquid/liquid_ppo_hyperparams.h"
+#include "./ppo_liquid_impala/liquid_impala_ppo_factory.h"
+#include "./ppo_liquid_impala/liquid_impala_ppo_hyperparams.h"
 
 namespace arenai::agent {
 
@@ -47,6 +49,9 @@ namespace arenai::agent {
             "ppo_liquid", liquid_ppo_cli_fields()));
         algorithms.push_back(make_agent_cli<ImpalaPpoHyperParams, ImpalaPpoTorchAgentFactory>(
             "ppo_impala", impala_ppo_cli_fields()));
+        algorithms.push_back(
+            make_agent_cli<LiquidImpalaPpoHyperParams, LiquidImpalaPpoTorchAgentFactory>(
+                "ppo_liquid_impala", liquid_impala_ppo_cli_fields()));
 
         return algorithms;
     }

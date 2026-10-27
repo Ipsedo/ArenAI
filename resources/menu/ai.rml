@@ -29,12 +29,14 @@
                     <span class="dropdown-value" data-if="algorithm=='ppo'">PPO</span>
                     <span class="dropdown-value" data-if="algorithm=='ppo_liquid'">PPO Liquid</span>
                     <span class="dropdown-value" data-if="algorithm=='ppo_impala'">PPO Impala</span>
+                    <span class="dropdown-value" data-if="algorithm=='ppo_liquid_impala'">PPO Liquid Impala</span>
                     <span class="dropdown-caret">›</span>
                 </div>
                 <div class="dropdown-list" id="algorithm-list" data-if="algorithm_open">
                     <div class="dropdown-item" data-class-selected="algorithm=='ppo'" data-event-click="set_algorithm('ppo')">PPO</div>
                     <div class="dropdown-item" data-class-selected="algorithm=='ppo_liquid'" data-event-click="set_algorithm('ppo_liquid')">PPO Liquid</div>
                     <div class="dropdown-item" data-class-selected="algorithm=='ppo_impala'" data-event-click="set_algorithm('ppo_impala')">PPO Impala</div>
+                    <div class="dropdown-item" data-class-selected="algorithm=='ppo_liquid_impala'" data-event-click="set_algorithm('ppo_liquid_impala')">PPO Liquid Impala</div>
                 </div>
             </div>
         </div>

@@ -14,6 +14,7 @@
 #include "../../networks_utils/print_module.h"
 #include "../../networks_utils/torch_converter.h"
 #include "../../networks_utils/torch_saver.h"
+#include "../ppo_update.h"
 
 using namespace arenai;
 using namespace arenai::agent;
@@ -29,8 +30,6 @@ namespace arenai::agent {
         }
 
         constexpr float LOG_RATIO_MAX_ABS = 3.f;
-
-        constexpr float KL_TRIM_FRACTION = 0.01f;
 
     }// namespace
 
@@ -124,16 +123,24 @@ namespace arenai::agent {
         const auto valid_chunk_idx = torch::nonzero(chunk_valid_counts > 0).squeeze(-1);
         const auto nb_valid_chunks = valid_chunk_idx.size(0);
         if (nb_valid_chunks == 0) return;
+        const auto nb_valid_rows = chunk_valid_counts.sum().item<float>();
 
         const auto chunks_per_minibatch = std::max<int64_t>(1, minibatch_size / chunk_size);
         const auto step_offsets = torch::arange(chunk_size);
 
+        // one update per epoch: the minibatches' gradients are accumulated over the whole
+        // rollout, minibatch_size only bounds the device memory of a forward / backward pass
         for (int e = 0; e < epochs; e++) {
-            const auto perm = valid_chunk_idx.index_select(0, torch::randperm(nb_valid_chunks));
+            actor_optim->zero_grad();
+            critic_optim->zero_grad();
+
+            std::vector<torch::Tensor> kl_per_rows;
 
             for (int64_t start = 0; start < nb_valid_chunks; start += chunks_per_minibatch) {
-                const auto idx = perm.slice(
+                const auto idx = valid_chunk_idx.slice(
                     0, start, std::min<int64_t>(start + chunks_per_minibatch, nb_valid_chunks));
+                const auto rollout_fraction =
+                    chunk_valid_counts.index_select(0, idx).sum().item<float>() / nb_valid_rows;
 
                 const auto tank = idx.remainder(nb_tanks);
                 const auto start_step = idx.div(nb_tanks, "floor") * chunk_size;
@@ -160,27 +167,37 @@ namespace arenai::agent {
                 const auto mb_proprioception = select_chunks(flat_proprioception);
                 const auto mb_valids = select_chunks(flat_valids);
 
-                train_actor(
+                kl_per_rows.push_back(backward_actor(
                     mb_vision, mb_proprioception, select_hiddens(flat_actor_hiddens),
                     select_chunks(flat_continuous_actions), select_chunks(flat_discrete_actions),
                     select_chunks(flat_fire_masks), select_chunks(flat_old_log_probs),
-                    select_chunks(flat_advantages), mb_valids);
+                    select_chunks(flat_advantages), mb_valids, rollout_fraction));
 
-                train_critic(
+                backward_critic(
                     mb_vision, mb_proprioception, select_hiddens(flat_critic_hiddens),
-                    select_chunks(flat_returns), mb_valids);
+                    select_chunks(flat_returns), mb_valids, rollout_fraction);
             }
+
+            // KL of the policy the epoch starts from: past the threshold, only the critic moves
+            const auto approx_kl = trimmed_kl(kl_per_rows);
+            const bool kl_exceeded = target_kl > 0.f && approx_kl > 1.5f * target_kl;
+
+            if (!kl_exceeded) clipped_step(*actor_optim, actor->parameters(), grad_norm_max);
+            clipped_step(*critic_optim, critic->parameters(), grad_norm_max);
+
+            kl_metric->add(approx_kl);
+            skip_fraction_metric->add(kl_exceeded ? 1.f : 0.f);
         }
 
         set_train(false);
     }
 
-    bool LiquidPpoTrainer::train_actor(
+    torch::Tensor LiquidPpoTrainer::backward_actor(
         const torch::Tensor &vision, const torch::Tensor &proprioception,
         const torch::Tensor &hidden, const torch::Tensor &continuous_actions,
         const torch::Tensor &discrete_actions, const torch::Tensor &fire_masks,
         const torch::Tensor &old_log_probs, const torch::Tensor &advantages,
-        const torch::Tensor &valids) const {
+        const torch::Tensor &valids, const float rollout_fraction) const {
 
         const auto out = actor->act_sequence(vision, proprioception, hidden);
 
@@ -213,58 +230,36 @@ namespace arenai::agent {
         const auto continuous_entropy = truncated_normal_entropy(mu, sigma);
         const auto discrete_entropy = bernoulli_entropy(discrete_proba) * discrete_mask;
 
-        const auto kl_per_row = (ratio - 1.f - log_ratio).flatten();
-
-        const auto nb_kept = std::max<int64_t>(
-            1, static_cast<int64_t>(
-                   static_cast<float>(kl_per_row.size(0)) * (1.f - KL_TRIM_FRACTION)));
-
-        // per-row KL is non-negative: sorting ascending puts the outliers past nb_kept
-        const auto approx_kl =
-            std::get<0>(torch::sort(kl_per_row)).slice(0, 0, nb_kept).mean().item<float>();
-
-        const bool kl_exceeded = target_kl > 0.f && approx_kl > 1.5f * target_kl;
-
         const auto entropy_bonus = continuous_entropy_factor * continuous_entropy.sum(-1)
                                    + discrete_entropy_factor * discrete_entropy.sum(-1);
 
-        if (!kl_exceeded) {
-            const auto clipped_ratio = torch::clamp(ratio, 1.f - clip_epsilon, 1.f + clip_epsilon);
-            const auto valid_advantages = rows(advantages);
-            const auto surrogate =
-                torch::min(ratio * valid_advantages, clipped_ratio * valid_advantages);
+        const auto clipped_ratio = torch::clamp(ratio, 1.f - clip_epsilon, 1.f + clip_epsilon);
+        const auto valid_advantages = rows(advantages);
+        const auto surrogate =
+            torch::min(ratio * valid_advantages, clipped_ratio * valid_advantages);
 
-            const auto actor_loss = -torch::mean(surrogate + entropy_bonus);
+        const auto actor_loss = -torch::mean(surrogate + entropy_bonus);
 
-            actor_optim->zero_grad();
-            actor_loss.backward();
-            torch::nn::utils::clip_grad_norm_(actor->parameters(), grad_norm_max);
-            actor_optim->step();
-
-            // actor metrics
-            actor_mean_loss_metric->add(actor_loss.cpu().item<float>());
-        }
+        // weighted so that the accumulated gradient is the one of the whole rollout's mean
+        (actor_loss * rollout_fraction).backward();
 
         // metrics
+        actor_mean_loss_metric->add(actor_loss.cpu().item<float>());
         continuous_entropy_metric->add(continuous_entropy.mean().item<float>());
         // mean over the discrete actions that had an effect
         discrete_entropy_metric->add(
             (discrete_entropy.sum() / discrete_mask.sum().clamp_min(1.f)).item<float>());
 
-        kl_metric->add(approx_kl);
-
         clip_fraction_metric->add(
             ((ratio - 1.f).abs() > clip_epsilon).to(torch::kFloat).mean().item<float>());
 
-        skip_fraction_metric->add(kl_exceeded ? 1.f : 0.f);
-
-        return kl_exceeded;
+        return (ratio - 1.f - log_ratio).detach().flatten();
     }
 
-    void LiquidPpoTrainer::train_critic(
+    void LiquidPpoTrainer::backward_critic(
         const torch::Tensor &vision, const torch::Tensor &proprioception,
-        const torch::Tensor &hidden, const torch::Tensor &returns,
-        const torch::Tensor &valids) const {
+        const torch::Tensor &hidden, const torch::Tensor &returns, const torch::Tensor &valids,
+        const float rollout_fraction) const {
         const auto [value, next_x] = critic->value_sequence(vision, proprioception, hidden);
 
         // recurrence done: fold time into rows and keep the live transitions only
@@ -274,10 +269,7 @@ namespace arenai::agent {
 
         const auto critic_loss = torch::mse_loss(values, valid_returns, at::Reduction::Mean);
 
-        critic_optim->zero_grad();
-        critic_loss.backward();
-        torch::nn::utils::clip_grad_norm_(critic->parameters(), grad_norm_max);
-        critic_optim->step();
+        (critic_loss * rollout_fraction).backward();
 
         critic_mean_loss_metric->add(critic_loss.cpu().item<float>());
 

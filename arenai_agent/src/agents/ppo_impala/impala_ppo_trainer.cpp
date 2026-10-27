@@ -14,6 +14,7 @@
 #include "../../networks_utils/print_module.h"
 #include "../../networks_utils/torch_converter.h"
 #include "../../networks_utils/torch_saver.h"
+#include "../ppo_update.h"
 
 using namespace arenai;
 using namespace arenai::agent;
@@ -29,8 +30,6 @@ namespace arenai::agent {
         }
 
         constexpr float LOG_RATIO_MAX_ABS = 3.f;
-
-        constexpr float KL_TRIM_FRACTION = 0.01f;
 
     }// namespace
 
@@ -95,7 +94,7 @@ namespace arenai::agent {
         const auto flat_advantages = flatten_steps(advantages);
         const auto flat_returns = flatten_steps(returns);
 
-        // live (step, tank) pairs; minibatches are drawn from these rows only
+        // live (step, tank) pairs; the minibatches split these rows only
         const auto valid_idx =
             torch::nonzero(flatten_steps(rollout.valids).squeeze(-1)).squeeze(-1);
         const auto nb_valid_rows = valid_idx.size(0);
@@ -105,33 +104,52 @@ namespace arenai::agent {
             return tensor.index_select(0, idx).to(device);
         };
 
+        // one update per epoch: the minibatches' gradients are accumulated over the whole
+        // rollout, minibatch_size only bounds the device memory of a forward / backward pass
         for (int e = 0; e < epochs; e++) {
-            const auto perm = valid_idx.index_select(0, torch::randperm(nb_valid_rows));
+            actor_optim->zero_grad();
+            critic_optim->zero_grad();
+
+            std::vector<torch::Tensor> kl_per_rows;
 
             for (int64_t start = 0; start < nb_valid_rows; start += minibatch_size) {
-                const auto idx =
-                    perm.slice(0, start, std::min<int64_t>(start + minibatch_size, nb_valid_rows));
+                const auto idx = valid_idx.slice(
+                    0, start, std::min<int64_t>(start + minibatch_size, nb_valid_rows));
+                const auto rollout_fraction =
+                    static_cast<float>(idx.size(0)) / static_cast<float>(nb_valid_rows);
 
                 const auto mb_vision = select(flat_vision, idx);
                 const auto mb_proprioception = select(flat_proprioception, idx);
 
-                train_actor(
+                kl_per_rows.push_back(backward_actor(
                     mb_vision, mb_proprioception, select(flat_continuous_actions, idx),
                     select(flat_discrete_actions, idx), select(flat_fire_masks, idx),
-                    select(flat_old_log_probs, idx), select(flat_advantages, idx));
+                    select(flat_old_log_probs, idx), select(flat_advantages, idx),
+                    rollout_fraction));
 
-                train_critic(mb_vision, mb_proprioception, select(flat_returns, idx));
+                backward_critic(
+                    mb_vision, mb_proprioception, select(flat_returns, idx), rollout_fraction);
             }
+
+            // KL of the policy the epoch starts from: past the threshold, only the critic moves
+            const auto approx_kl = trimmed_kl(kl_per_rows);
+            const bool kl_exceeded = target_kl > 0.f && approx_kl > 1.5f * target_kl;
+
+            if (!kl_exceeded) clipped_step(*actor_optim, actor->parameters(), grad_norm_max);
+            clipped_step(*critic_optim, critic->parameters(), grad_norm_max);
+
+            kl_metric->add(approx_kl);
+            skip_fraction_metric->add(kl_exceeded ? 1.f : 0.f);
         }
 
         set_train(false);
     }
 
-    bool ImpalaPpoTrainer::train_actor(
+    torch::Tensor ImpalaPpoTrainer::backward_actor(
         const torch::Tensor &vision, const torch::Tensor &proprioception,
         const torch::Tensor &continuous_actions, const torch::Tensor &discrete_actions,
         const torch::Tensor &fire_masks, const torch::Tensor &old_log_probs,
-        const torch::Tensor &advantages) const {
+        const torch::Tensor &advantages, const float rollout_fraction) const {
         const auto [mu, sigma, discrete_proba] = actor->act(vision, proprioception);
         // the fire action is a decision only when it would shoot: masked out of the
         // log-probabilities (as at collection) and of the entropy
@@ -152,62 +170,37 @@ namespace arenai::agent {
         const auto continuous_entropy = truncated_normal_entropy(mu, sigma);
         const auto discrete_entropy = bernoulli_entropy(discrete_proba) * discrete_mask;
 
-        const auto kl_per_row = (ratio - 1.f - log_ratio).flatten();
-
-        const auto nb_kept = std::max<int64_t>(
-            1, static_cast<int64_t>(
-                   static_cast<float>(kl_per_row.size(0)) * (1.f - KL_TRIM_FRACTION)));
-
-        // per-row KL is non-negative: sorting ascending puts the outliers past nb_kept
-        const auto approx_kl =
-            std::get<0>(torch::sort(kl_per_row)).slice(0, 0, nb_kept).mean().item<float>();
-
-        const bool kl_exceeded = target_kl > 0.f && approx_kl > 1.5f * target_kl;
-
         const auto entropy_bonus = continuous_entropy_factor * continuous_entropy.sum(-1)
                                    + discrete_entropy_factor * discrete_entropy.sum(-1);
 
-        if (!kl_exceeded) {
-            const auto clipped_ratio = torch::clamp(ratio, 1.f - clip_epsilon, 1.f + clip_epsilon);
-            const auto surrogate = torch::min(ratio * advantages, clipped_ratio * advantages);
+        const auto clipped_ratio = torch::clamp(ratio, 1.f - clip_epsilon, 1.f + clip_epsilon);
+        const auto surrogate = torch::min(ratio * advantages, clipped_ratio * advantages);
 
-            const auto actor_loss = -torch::mean(surrogate + entropy_bonus);
+        const auto actor_loss = -torch::mean(surrogate + entropy_bonus);
 
-            actor_optim->zero_grad();
-            actor_loss.backward();
-            torch::nn::utils::clip_grad_norm_(actor->parameters(), grad_norm_max);
-            actor_optim->step();
-
-            // actor metrics
-            actor_mean_loss_metric->add(actor_loss.cpu().item<float>());
-        }
+        // weighted so that the accumulated gradient is the one of the whole rollout's mean
+        (actor_loss * rollout_fraction).backward();
 
         // metrics
+        actor_mean_loss_metric->add(actor_loss.cpu().item<float>());
         continuous_entropy_metric->add(continuous_entropy.mean().item<float>());
         // mean over the discrete actions that had an effect
         discrete_entropy_metric->add(
             (discrete_entropy.sum() / discrete_mask.sum().clamp_min(1.f)).item<float>());
 
-        kl_metric->add(approx_kl);
-
         clip_fraction_metric->add(
             ((ratio - 1.f).abs() > clip_epsilon).to(torch::kFloat).mean().item<float>());
 
-        skip_fraction_metric->add(kl_exceeded ? 1.f : 0.f);
-
-        return kl_exceeded;
+        return (ratio - 1.f - log_ratio).detach().flatten();
     }
 
-    void ImpalaPpoTrainer::train_critic(
+    void ImpalaPpoTrainer::backward_critic(
         const torch::Tensor &vision, const torch::Tensor &proprioception,
-        const torch::Tensor &returns) const {
+        const torch::Tensor &returns, const float rollout_fraction) const {
         const auto values = critic->value(vision, proprioception);
         const auto critic_loss = torch::mse_loss(values, returns, at::Reduction::Mean);
 
-        critic_optim->zero_grad();
-        critic_loss.backward();
-        torch::nn::utils::clip_grad_norm_(critic->parameters(), grad_norm_max);
-        critic_optim->step();
+        (critic_loss * rollout_fraction).backward();
 
         critic_mean_loss_metric->add(critic_loss.cpu().item<float>());
 

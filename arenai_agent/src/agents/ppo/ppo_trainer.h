@@ -65,11 +65,12 @@ namespace arenai::agent {
         std::shared_ptr<AbstractMetric> continuous_entropy_metric;
         std::shared_ptr<AbstractMetric> discrete_entropy_metric;
 
-        // both recorded on every attempted minibatch, skipped ones included
+        // recorded on every minibatch
         std::shared_ptr<AbstractMetric> clip_fraction_metric;
+        // recorded once per update (epoch), skipped ones included
         std::shared_ptr<AbstractMetric> kl_metric;
 
-        // fraction of minibatches the KL threshold skipped
+        // fraction of actor updates the KL threshold skipped
         std::shared_ptr<AbstractMetric> skip_fraction_metric;
 
         float gamma;
@@ -85,15 +86,16 @@ namespace arenai::agent {
 
         void train() const;
 
-        bool train_actor(
+        // accumulates the minibatch's share of the update gradient; returns its per-row KL
+        torch::Tensor backward_actor(
             const torch::Tensor &vision, const torch::Tensor &proprioception,
             const torch::Tensor &continuous_actions, const torch::Tensor &discrete_actions,
             const torch::Tensor &fire_masks, const torch::Tensor &old_log_probs,
-            const torch::Tensor &advantages) const;
+            const torch::Tensor &advantages, float rollout_fraction) const;
 
-        void train_critic(
+        void backward_critic(
             const torch::Tensor &vision, const torch::Tensor &proprioception,
-            const torch::Tensor &returns) const;
+            const torch::Tensor &returns, float rollout_fraction) const;
 
         GaeResult compute_gae(const PpoRollout &rollout, torch::Device device) const;
 

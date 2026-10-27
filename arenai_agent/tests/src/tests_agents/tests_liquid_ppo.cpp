@@ -24,8 +24,6 @@ LiquidPpoAgentTest::make_factory(const LiquidPpoTestConfig &cfg) const {
         .actor_learning_rate = 1e-3f,
         .critic_learning_rate = 1e-3f,
         .hidden_size_sensors = 16,
-        .skip_hidden_size = 4,
-        .hidden_size = 4,
         .vision_channels = {{3, 8}},
         .group_norm_nums = {4},
         .neuron_number = 16,

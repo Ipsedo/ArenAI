@@ -37,8 +37,7 @@ namespace arenai::agent {
         const std::shared_ptr<LiquidActor> &actor,
         const std::shared_ptr<LiquidPpoRolloutBuffer> &rollout_buffer, const int nb_sensors,
         const float actor_learning_rate, const float critic_learning_rate,
-        const int hidden_size_sensors, const int skip_hidden_size, const int hidden_size,
-        const std::vector<std::tuple<int, int>> &vision_channels,
+        const int hidden_size_sensors, const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, const int neuron_number, const int unfolding_steps,
         const float delta_t, const torch::Device device, const int metric_window_size,
         const float gamma, const float gae_lambda, const float clip_epsilon, const float target_kl,
@@ -49,8 +48,8 @@ namespace arenai::agent {
           continuous_entropy_factor(continuous_entropy_factor),
           discrete_entropy_factor(discrete_entropy_factor),
           critic(std::make_shared<LiquidCritic>(
-              nb_sensors, hidden_size_sensors, skip_hidden_size, hidden_size, vision_channels,
-              group_norm_nums, neuron_number, unfolding_steps, delta_t)),
+              nb_sensors, hidden_size_sensors, vision_channels, group_norm_nums, neuron_number,
+              unfolding_steps, delta_t)),
           actor_optim(
               std::make_unique<torch::optim::Adam>(this->actor->parameters(), actor_learning_rate)),
           critic_optim(

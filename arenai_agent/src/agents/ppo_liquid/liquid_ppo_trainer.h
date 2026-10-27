@@ -30,7 +30,6 @@ namespace arenai::agent {
             const std::shared_ptr<LiquidActor> &actor,
             const std::shared_ptr<LiquidPpoRolloutBuffer> &rollout_buffer, int nb_sensors,
             float actor_learning_rate, float critic_learning_rate, int hidden_size_sensors,
-            int skip_hidden_size, int hidden_size,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, int neuron_number, int unfolding_steps,
             float delta_t, torch::Device device, int metric_window_size, float gamma,

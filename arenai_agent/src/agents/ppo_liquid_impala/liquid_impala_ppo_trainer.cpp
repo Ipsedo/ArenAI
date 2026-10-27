@@ -14,7 +14,7 @@
 #include "../../networks_utils/print_module.h"
 #include "../../networks_utils/torch_converter.h"
 #include "../../networks_utils/torch_saver.h"
-#include "../ppo_update.h"
+#include "../update_utils.h"
 
 using namespace arenai;
 using namespace arenai::agent;

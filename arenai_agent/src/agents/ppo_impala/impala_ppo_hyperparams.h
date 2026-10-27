@@ -33,7 +33,7 @@ namespace arenai::agent {
         float discrete_entropy_factor = 0.f;
         int epochs = 2;
         int rollout_size = 30 * 30;
-        int minibatch_size = 256;
+        int minibatch_size = 128;
     };
 
     std::vector<CliField<ImpalaPpoHyperParams>> impala_ppo_cli_fields();

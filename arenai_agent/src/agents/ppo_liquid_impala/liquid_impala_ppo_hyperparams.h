@@ -14,8 +14,8 @@ namespace arenai::agent {
 
     // Member initializers are the CLI defaults (single source of truth).
     struct LiquidImpalaPpoHyperParams {
-        float actor_learning_rate = 1e-3f;
-        float critic_learning_rate = 1e-3f;
+        float actor_learning_rate = 3e-4f;
+        float critic_learning_rate = 3e-4f;
         int hidden_size_sensors = 64;
         std::vector<std::tuple<int, int>> vision_channels =
             {{3, 16}, {16, 32}, {32, 64}, {64, 128}};
@@ -34,7 +34,7 @@ namespace arenai::agent {
         float grad_norm_max = 0.5f;
         float continuous_entropy_factor = 0.001f;
         float discrete_entropy_factor = 0.f;
-        int epochs = 4;
+        int epochs = 8;
         int rollout_size = 30 * 30;
         int minibatch_size = 512;
     };

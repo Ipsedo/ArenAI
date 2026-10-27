@@ -13,8 +13,8 @@
 namespace arenai::agent {
 
     struct ImpalaPpoHyperParams {
-        float actor_learning_rate = 1e-3f;
-        float critic_learning_rate = 1e-3f;
+        float actor_learning_rate = 3e-4f;
+        float critic_learning_rate = 3e-4f;
         int hidden_size_sensors = 64;
         std::vector<int> actor_hidden_sizes = {256, 128};
         std::vector<int> critic_hidden_sizes = {256, 128};
@@ -31,7 +31,7 @@ namespace arenai::agent {
         float grad_norm_max = 0.5f;
         float continuous_entropy_factor = 0.001f;
         float discrete_entropy_factor = 0.f;
-        int epochs = 4;
+        int epochs = 8;
         int rollout_size = 30 * 30;
         int minibatch_size = 128;
     };

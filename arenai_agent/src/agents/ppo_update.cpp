@@ -22,11 +22,4 @@ namespace arenai::agent {
         return std::get<0>(torch::sort(kl_per_row)).slice(0, 0, nb_kept).mean().item<float>();
     }
 
-    void clipped_step(
-        torch::optim::Optimizer &optim, const std::vector<torch::Tensor> &parameters,
-        const float grad_norm_max) {
-        torch::nn::utils::clip_grad_norm_(parameters, grad_norm_max);
-        optim.step();
-    }
-
 }// namespace arenai::agent

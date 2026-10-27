@@ -181,8 +181,13 @@ namespace arenai::agent {
             const auto approx_kl = trimmed_kl(kl_per_rows);
             const bool kl_exceeded = target_kl > 0.f && approx_kl > 1.5f * target_kl;
 
-            if (!kl_exceeded) clipped_step(*actor_optim, actor->parameters(), grad_norm_max);
-            clipped_step(*critic_optim, critic->parameters(), grad_norm_max);
+            if (!kl_exceeded) {
+                torch::nn::utils::clip_grad_norm_(actor->parameters(), grad_norm_max);
+                actor_optim->step();
+            }
+
+            torch::nn::utils::clip_grad_norm_(critic->parameters(), grad_norm_max);
+            critic_optim->step();
 
             kl_metric->add(approx_kl);
             skip_fraction_metric->add(kl_exceeded ? 1.f : 0.f);

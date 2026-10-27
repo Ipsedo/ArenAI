@@ -17,17 +17,9 @@ namespace arenai::desktop::gui {
         constexpr const char *FILE_LIST_ID = "file-list";
         constexpr const char *PRESET_HEAD_ID = "preset-head";
         constexpr const char *PRESET_LIST_ID = "preset-list";
-        constexpr const char *ALGORITHM_HEAD_ID = "algorithm-head";
-        constexpr const char *ALGORITHM_LIST_ID = "algorithm-list";
         constexpr const char *CPU_TOGGLE_ID = "cpu-toggle";
         constexpr const char *CUDA_TOGGLE_ID = "cuda-toggle";
         constexpr const char *USE_FOLDER_ID = "use-folder";
-
-        bool inside_dropdown(const Rml::Element *element) {
-            for (; element != nullptr; element = element->GetParentNode())
-                if (element->IsClassSet("dropdown")) return true;
-            return false;
-        }
 
         // the data-for clones currently shown in the explorer
         std::vector<Rml::Element *> visible_file_entries(const Rml::Element *file_list) {
@@ -38,13 +30,6 @@ namespace arenai::desktop::gui {
             return entries;
         }
     }// namespace
-
-    AiPage::ClickOutsideListener::ClickOutsideListener(std::function<void()> on_outside)
-        : on_outside_(std::move(on_outside)) {}
-
-    void AiPage::ClickOutsideListener::ProcessEvent(Rml::Event &event) {
-        if (!inside_dropdown(event.GetTargetElement())) on_outside_();
-    }
 
     void AiPage::ExplorerNavListener::ProcessEvent(Rml::Event &event) {
         const auto key = static_cast<Rml::Input::KeyIdentifier>(
@@ -83,7 +68,7 @@ namespace arenai::desktop::gui {
         : MenuPage(PageId::Ai, PageId::Parameters, "menu/ai.rml", "ai"), state_(state),
           settings_(state.settings), presets_(std::move(presets)),
           agent_validator_(std::move(validator)), cuda_available_(cuda_available),
-          click_outside_listener_([this] { close_dropdowns(); }),
+          click_outside_listener_([this] { close_dropdown(); }),
           algorithm_display_(to_string(settings_.agent_algorithm)) {
         for (const auto &preset: presets_) preset_names_.push_back(preset.name);
 
@@ -117,7 +102,6 @@ namespace arenai::desktop::gui {
         model.bind("preset", &preset_display_);
         model.bind("preset_open", &preset_open_);
         model.bind("algorithm", &algorithm_display_);
-        model.bind("algorithm_open", &algorithm_open_);
         model.bind("agent_folder", &agent_folder_display_);
         model.bind("agent_config", &agent_config_display_);
         model.bind("agent_status", &agent_status_);
@@ -129,9 +113,8 @@ namespace arenai::desktop::gui {
 
         model.on_event("toggle_preset", [this](const Rml::VariantList &) {
             preset_open_ = !preset_open_;
-            algorithm_open_ = false;
             pending_focus_ = preset_open_ ? PendingFocus::PresetList : PendingFocus::PresetHead;
-            dirty_dropdowns();
+            dirty_dropdown();
         });
         model.on_event("set_preset", [this](const Rml::VariantList &arguments) {
             if (arguments.empty()) return;
@@ -142,19 +125,10 @@ namespace arenai::desktop::gui {
             pending_focus_ = PendingFocus::PresetHead;
             refresh_explorer();
         });
-        model.on_event("toggle_algorithm", [this](const Rml::VariantList &) {
-            algorithm_open_ = !algorithm_open_;
-            preset_open_ = false;
-            pending_focus_ =
-                algorithm_open_ ? PendingFocus::AlgorithmList : PendingFocus::AlgorithmHead;
-            dirty_dropdowns();
-        });
         model.on_event("set_algorithm", [this](const Rml::VariantList &arguments) {
             if (arguments.empty()) return;
             const auto algorithm = ai_algorithm_from_string(arguments[0].Get<Rml::String>());
             if (!algorithm) return;
-            algorithm_open_ = false;
-            pending_focus_ = PendingFocus::AlgorithmHead;
             if (settings_.agent_algorithm != *algorithm) {
                 settings_.agent_algorithm = *algorithm;
                 algorithm_display_ = to_string(*algorithm);
@@ -239,7 +213,7 @@ namespace arenai::desktop::gui {
         model().dirty(
             {"entries", "current_dir", "agent_folder", "agent_config", "agent_status",
              "agent_valid", "algorithm"});
-        dirty_dropdowns();
+        dirty_dropdown();
     }
 
     void AiPage::after_context_update() {
@@ -251,20 +225,17 @@ namespace arenai::desktop::gui {
             case PendingFocus::FirstEntry: focus_first_entry(); break;
             case PendingFocus::PresetHead: focus_by_id(PRESET_HEAD_ID); break;
             case PendingFocus::PresetList: focus_in_list(PRESET_LIST_ID); break;
-            case PendingFocus::AlgorithmHead: focus_by_id(ALGORITHM_HEAD_ID); break;
-            case PendingFocus::AlgorithmList: focus_in_list(ALGORITHM_LIST_ID); break;
             case PendingFocus::None: break;
         }
     }
 
-    bool AiPage::on_back() { return close_dropdowns(); }
+    bool AiPage::on_back() { return close_dropdown(); }
 
-    bool AiPage::close_dropdowns() {
-        if (!preset_open_ && !algorithm_open_) return false;
-        pending_focus_ = preset_open_ ? PendingFocus::PresetHead : PendingFocus::AlgorithmHead;
+    bool AiPage::close_dropdown() {
+        if (!preset_open_) return false;
+        pending_focus_ = PendingFocus::PresetHead;
         preset_open_ = false;
-        algorithm_open_ = false;
-        dirty_dropdowns();
+        dirty_dropdown();
         return true;
     }
 
@@ -287,7 +258,7 @@ namespace arenai::desktop::gui {
         preset_display_ = CUSTOM_PRESET;
     }
 
-    void AiPage::dirty_dropdowns() { model().dirty({"preset", "preset_open", "algorithm_open"}); }
+    void AiPage::dirty_dropdown() { model().dirty({"preset", "preset_open"}); }
 
     // runs the injected dry-run load and turns its outcome into the
     // tri-state the AI screen displays (nothing chosen yet / model

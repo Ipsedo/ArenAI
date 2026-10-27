@@ -3,13 +3,32 @@
     <title>Paused</title>
     <link type="text/rcss" href="menu.rcss"/>
 </head>
-<body class="overlay" data-model="pause">
-    <div id="pause-panel" class="panel">
-        <h1>Paused</h1>
-        <div class="game-over-score">Score {{score}}</div>
-        <div class="button primary" autofocus data-event-click="popup_continue()">Continue</div>
-        <div class="button" data-event-click="popup_main_menu()">Main menu</div>
-        <div class="button" data-event-click="popup_exit()">Exit game</div>
+<body id="pause-body" class="overlay" data-model="pause">
+    <div class="topbar">
+        <span class="side-player">◆ Player · {{score}}</span>
+        <span id="pause-clock" class="crumb">{{clock}}</span>
+        <span class="side-ai">{{enemies_alive}} opponents left ◆</span>
+    </div>
+
+    <div id="pause-panel" class="popup">
+        <span class="eyebrow">Match on hold</span>
+        <h1 class="popup-title">Paused</h1>
+        <div class="versus">
+            <div class="versus-side left">
+                <span class="score-label side-player">You</span>
+                <span class="game-over-score side-player">{{score}}</span>
+            </div>
+            <div class="versus-rule"></div>
+            <div class="versus-side right">
+                <span class="score-label side-ai">Machine</span>
+                <span id="pause-machine-score" class="game-over-score side-ai">{{machine_score}}</span>
+            </div>
+        </div>
+        <div class="popup-buttons">
+            <div class="button primary" autofocus data-event-click="popup_continue()">Continue</div>
+            <div class="button" data-event-click="popup_main_menu()">Main menu</div>
+            <div class="button exit" data-event-click="popup_exit()">Exit game</div>
+        </div>
     </div>
 </body>
 </rml>

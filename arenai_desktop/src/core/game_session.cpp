@@ -81,12 +81,12 @@ namespace arenai::desktop {
             case Phase::Playing: gui_.popups().close(); break;
             case Phase::Paused:
                 gui_.popups().open(
-                    gui::PopupKind::Pause, env_->get_score(),
+                    gui::PopupKind::Pause, match_status(),
                     [this](const gui::PopupAction action) { on_popup_action(action); });
                 break;
             case Phase::GameOver:
                 gui_.popups().open(
-                    gui::PopupKind::GameOver, env_->get_score(),
+                    gui::PopupKind::GameOver, match_status(),
                     [this](const gui::PopupAction action) { on_popup_action(action); });
                 break;
         }
@@ -115,6 +115,19 @@ namespace arenai::desktop {
         backend_->present();
     }
 
+    gui::MatchStatus GameSession::match_status() {
+        const int nb_enemies = env_->nb_enemies();
+        return {
+            .elapsed_seconds = static_cast<float>(frame_) * enemy_.wanted_frequency,
+            .player_score = env_->get_score(),
+            .player_health = env_->player_health_ratio(),
+            .enemies_mean_score = nb_enemies > 0 ? static_cast<float>(env_->enemies_total_score())
+                                                       / static_cast<float>(nb_enemies)
+                                                 : 0.f,
+            .enemies_alive = env_->nb_enemies_alive(),
+            .enemies_total = nb_enemies};
+    }
+
     void GameSession::play_frame() {
         const auto frame_start = std::chrono::steady_clock::now();
         const auto frame_dt =
@@ -136,6 +149,7 @@ namespace arenai::desktop {
             states_ = std::move(*next_states);
 
         auto &hud = gui_.hud();
+        hud.set_status(match_status());
         if (const auto [hits, kills] = env_->consume_player_hits(); kills > 0)
             hud.notify_hit(gui::HitKind::Kill);
         else if (hits > 0) hud.notify_hit(gui::HitKind::Hit);

@@ -50,6 +50,8 @@ namespace arenai::desktop {
 
         void play_frame();
         void render_frozen() const;
+        // the figures the HUD and the popups display
+        gui::MatchStatus match_status();
 
         GameOptions options_;
         GameSettings settings_;

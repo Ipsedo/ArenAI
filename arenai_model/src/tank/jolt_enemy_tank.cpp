@@ -70,7 +70,9 @@ namespace arenai::model {
           remaining_frames(max_frames_without_hit),
           nb_frames_added_when_hit(static_cast<int>(3.f / wanted_frame_frequency)),
           nb_frames_added_when_kill(static_cast<int>(15.f / wanted_frame_frequency)),
-          has_hit(false), has_kill(false), has_fired(false) {}
+          has_hit(false), has_kill(false), has_fired(false), killed_nb(0), hit_nb(0) {}
+
+    int JoltEnemyTank::get_score() const { return killed_nb * 10 + hit_nb; }
 
     float JoltEnemyTank::compute_aim_reward(
         const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos, const glm::vec3 &shell_pos) const {
@@ -263,9 +265,11 @@ namespace arenai::model {
 
                 has_hit = true;
                 has_kill = true;
+                killed_nb++;
             } else if (!life_item->is_dead()) {
                 hit = true;
                 has_hit = true;
+                hit_nb++;
             }
         }
 

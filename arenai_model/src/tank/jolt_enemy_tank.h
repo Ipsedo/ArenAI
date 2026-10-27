@@ -44,6 +44,7 @@ namespace arenai::model {
             float wanted_frame_frequency, bool apply_timeout);
 
         float get_reward() const override;
+        int get_score() const override;
 
         bool is_dead() const override;
         bool is_first_frame_dead() const override;
@@ -106,6 +107,10 @@ namespace arenai::model {
         bool has_hit;
         bool has_kill;
         bool has_fired;
+        // lifetime counters behind get_score (the has_* flags above are
+        // per-frame and consumed by the environment)
+        int killed_nb;
+        int hit_nb;
 
         // written by get_reward(), which stays const: the split is a read of the same
         // computation, not a second one

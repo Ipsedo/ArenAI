@@ -76,6 +76,11 @@ namespace arenai::desktop::gui {
         return add(name, default_value, "number");
     }
 
+    Rml::PropertyId
+    GeometryDecoratorInstancer::add_string(const char *name, const char *default_value) {
+        return add(name, default_value, "string");
+    }
+
     void GeometryDecoratorInstancer::register_shorthand() {
         Rml::String names;
         for (const auto &name: property_names_) names += (names.empty() ? "" : ", ") + name;
@@ -90,6 +95,11 @@ namespace arenai::desktop::gui {
     Rml::Colourb GeometryDecoratorInstancer::color_of(
         const Rml::PropertyDictionary &properties, const Rml::PropertyId id) {
         return properties.GetProperty(id)->Get<Rml::Colourb>();
+    }
+
+    Rml::String GeometryDecoratorInstancer::string_of(
+        const Rml::PropertyDictionary &properties, const Rml::PropertyId id) {
+        return properties.GetProperty(id)->Get<Rml::String>();
     }
 
     float GeometryDecoratorInstancer::number_of(

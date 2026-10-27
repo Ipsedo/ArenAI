@@ -44,6 +44,8 @@ namespace arenai::desktop::gui {
         Rml::PropertyId add_length(const char *name, const char *default_value);
         Rml::PropertyId add_color(const char *name, const char *default_value);
         Rml::PropertyId add_number(const char *name, const char *default_value);
+        // a quoted free-form value ("..." in the RCSS shorthand)
+        Rml::PropertyId add_string(const char *name, const char *default_value);
         // call once every property is declared
         void register_shorthand();
 
@@ -51,6 +53,7 @@ namespace arenai::desktop::gui {
         length_of(const Rml::PropertyDictionary &properties, Rml::PropertyId id);
         static Rml::Colourb color_of(const Rml::PropertyDictionary &properties, Rml::PropertyId id);
         static float number_of(const Rml::PropertyDictionary &properties, Rml::PropertyId id);
+        static Rml::String string_of(const Rml::PropertyDictionary &properties, Rml::PropertyId id);
 
     private:
         Rml::PropertyId add(const char *name, const char *default_value, const char *parser);

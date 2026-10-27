@@ -4,7 +4,10 @@
 
 #include "./popup_page.h"
 
+#include <cmath>
 #include <utility>
+
+#include "./labels.h"
 
 namespace arenai::desktop::gui {
 
@@ -24,7 +27,10 @@ namespace arenai::desktop::gui {
         : DocumentView(document_path(kind), model_name(kind)), kind_(kind), state_(state) {}
 
     void PopupPage::bind(DataModel &model) {
-        model.bind("score", &state_.score);
+        model.bind("score", &state_.match.player_score);
+        model.bind("machine_score", &machine_score_);
+        model.bind("enemies_alive", &state_.match.enemies_alive);
+        model.bind("clock", &clock_);
 
         model.on_event(
             "popup_continue", [this](const Rml::VariantList &) { report(PopupAction::Continue); });
@@ -36,8 +42,10 @@ namespace arenai::desktop::gui {
             "popup_retry", [this](const Rml::VariantList &) { report(PopupAction::Retry); });
     }
 
-    void PopupPage::open(const int score, PopupListener on_action) {
-        state_.score = score;
+    void PopupPage::open(const MatchStatus &status, PopupListener on_action) {
+        state_.match = status;
+        clock_ = clock_label(status.elapsed_seconds);
+        machine_score_ = static_cast<int>(std::lround(status.enemies_mean_score));
         on_action_ = std::move(on_action);
         show();
     }

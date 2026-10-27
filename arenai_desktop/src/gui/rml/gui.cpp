@@ -165,9 +165,10 @@ namespace arenai::desktop::gui {
             public:
                 explicit PopupMenu(RmlGui &gui) : gui_(gui) {}
 
-                void open(const PopupKind kind, const int score, PopupListener on_action) override {
+                void open(const PopupKind kind, const MatchStatus &status, PopupListener on_action)
+                    override {
                     close();
-                    gui_.popup(kind).open(score, std::move(on_action));
+                    gui_.popup(kind).open(status, std::move(on_action));
                 }
 
                 void close() override {
@@ -221,19 +222,16 @@ namespace arenai::desktop::gui {
                 backend_->end_ui_pass();
             }
 
-            // Every dp length in menu.rcss is mapped to pixels relative to a
-            // 1080p design baseline, measured against the monitor the window
-            // sits on — not the window itself — so the menu keeps the same
-            // physical size on the display whether the game is fullscreen or
-            // in a small window (a 4K TV renders it twice as large either
-            // way). The min of both axes keeps the design fitting on unusual
-            // ratios.
+            // Every dp length in menu.rcss is mapped to pixels so that the
+            // 1280×720 design canvas of the mockups fills the window: the
+            // menu scales with the window itself (a fullscreen 1080p shows
+            // it 1.5× the mockup, a 4K display 3×). The min of both axes
+            // keeps the whole design visible on unusual ratios.
             void update_dp_ratio() const {
-                const auto [screen_width, screen_height] = window_->screen_size();
                 context_->SetDensityIndependentPixelRatio(std::max(
                     0.5f, std::min(
-                              static_cast<float>(screen_width) / 1920.0f,
-                              static_cast<float>(screen_height) / 1080.0f)));
+                              static_cast<float>(width_) / 1280.0f,
+                              static_cast<float>(height_) / 720.0f)));
             }
 
             std::shared_ptr<view::AbstractWindowedGraphicBackend> backend_;

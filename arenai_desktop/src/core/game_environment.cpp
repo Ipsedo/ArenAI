@@ -100,6 +100,34 @@ namespace arenai::desktop {
 
     int DesktopGameEnvironment::get_score() const { return player_tank->get_score(); }
 
+    float DesktopGameEnvironment::player_health_ratio() const {
+        float ratio = 1.f;
+        for (const auto &item: player_tank->get_items())
+            if (const auto &life_item = std::dynamic_pointer_cast<model::LifeItem>(item); life_item)
+                ratio = std::min(ratio, life_item->health_ratio());
+        return ratio;
+    }
+
+    int DesktopGameEnvironment::nb_enemies() {
+        return apply_on_enemies<int>(
+            [](const auto &tanks) { return static_cast<int>(tanks.size()); });
+    }
+
+    int DesktopGameEnvironment::nb_enemies_alive() {
+        return apply_on_enemies<int>([](const auto &tanks) {
+            return static_cast<int>(
+                std::ranges::count_if(tanks, [](const auto &tank) { return !tank->is_dead(); }));
+        });
+    }
+
+    int DesktopGameEnvironment::enemies_total_score() {
+        return apply_on_enemies<int>([](const auto &tanks) {
+            int total = 0;
+            for (const auto &tank: tanks) total += tank->get_score();
+            return total;
+        });
+    }
+
     std::optional<glm::vec2> DesktopGameEnvironment::aim_point_on_screen() const {
         if (!player_tank || !player_renderer) return std::nullopt;
 

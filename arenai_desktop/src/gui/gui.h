@@ -42,6 +42,19 @@ namespace arenai::desktop::gui {
         virtual const GameSettings &settings() const = 0;
     };
 
+    // the match figures the HUD displays every frame and the popups show
+    // when they open
+    struct MatchStatus {
+        float elapsed_seconds = 0.f;
+        int player_score = 0;
+        // in [0, 1]
+        float player_health = 1.f;
+        // the enemies' total score over their number (dead ones included)
+        float enemies_mean_score = 0.f;
+        int enemies_alive = 0;
+        int enemies_total = 0;
+    };
+
     enum class PopupKind { Pause, GameOver };
     enum class PopupAction { Continue, MainMenu, ExitGame, Retry };
     using PopupListener = std::function<void(PopupAction)>;
@@ -53,7 +66,7 @@ namespace arenai::desktop::gui {
     public:
         virtual ~AbstractPopupMenu() = default;
 
-        virtual void open(PopupKind kind, int score, PopupListener on_action) = 0;
+        virtual void open(PopupKind kind, const MatchStatus &status, PopupListener on_action) = 0;
         virtual void close() = 0;
         virtual void render() = 0;
 
@@ -64,11 +77,13 @@ namespace arenai::desktop::gui {
 
     enum class HitKind { Hit, Kill };
 
-    // the in-game overlay: aim reticle, hit marker, incoming-damage arcs
+    // the in-game overlay: aim reticle, hit marker, incoming-damage arcs and
+    // the match status (clock, both sides' scores, hull, enemies left)
     class AbstractHudOverlay {
     public:
         virtual ~AbstractHudOverlay() = default;
 
+        virtual void set_status(const MatchStatus &status) = 0;
         virtual void notify_hit(HitKind kind) = 0;
         virtual void notify_damage(float screen_angle) = 0;
         // normalized window coordinates; nullopt hides the reticle

@@ -27,7 +27,8 @@ namespace arenai::desktop::gui {
         std::vector<std::unique_ptr<Rml::DecoratorInstancer>> instancers_;
     };
 
-    // the decorators menu.rcss and hud.rcss rely on
+    // the decorators menu.rcss and hud.rcss rely on (corner-reticle, slant,
+    // facets, reticle, hit-marker, damage-arc)
     void register_menu_decorators(DecoratorRegistry &registry);
 
 }// namespace arenai::desktop::gui

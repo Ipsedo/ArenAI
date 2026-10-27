@@ -11,12 +11,13 @@
 #include <vector>
 
 #include "../../../core/agent_validator.h"
+#include "../click_outside_listener.h"
 #include "../menu_page.h"
 #include "../menu_state.h"
 
 namespace arenai::desktop::gui {
 
-    // The AI screen: the preset dropdown, the algorithm dropdown and the
+    // The AI screen: the preset dropdown, the algorithm toggles and the
     // file explorer picking the trained model's folder, dry-run validated
     // through the injected AgentValidator. Writes the agent fields of the
     // shared settings and the agent_valid flag the other screens display.
@@ -31,7 +32,7 @@ namespace arenai::desktop::gui {
         // explorer listing, the just-opened list, the closed dropdown head)
         void after_context_update() override;
 
-        // Escape / gamepad B folds an open dropdown first
+        // Escape / gamepad B folds the open preset dropdown first
         bool on_back() override;
 
     protected:
@@ -42,23 +43,7 @@ namespace arenai::desktop::gui {
 
     private:
         // which element the gamepad cursor lands on after the next Update
-        enum class PendingFocus {
-            None,
-            FirstEntry,
-            PresetHead,
-            PresetList,
-            AlgorithmHead,
-            AlgorithmList
-        };
-
-        class ClickOutsideListener final : public Rml::EventListener {
-        public:
-            explicit ClickOutsideListener(std::function<void()> on_outside);
-            void ProcessEvent(Rml::Event &event) override;
-
-        private:
-            std::function<void()> on_outside_;
-        };
+        enum class PendingFocus { None, FirstEntry, PresetHead, PresetList };
 
         // D-pad bridge across the file explorer: RmlUi's spatial navigation
         // stops at the scroll container, so Up from the first entry lands on
@@ -70,12 +55,12 @@ namespace arenai::desktop::gui {
         };
 
         void refresh_explorer();
-        bool close_dropdowns();
+        bool close_dropdown();
 
         void select_preset(size_t index);
         void mark_custom();
         void validate_agent();
-        void dirty_dropdowns();
+        void dirty_dropdown();
 
         void focus_first_entry() const;
         void focus_by_id(const char *id) const;
@@ -100,7 +85,6 @@ namespace arenai::desktop::gui {
         std::vector<Rml::String> preset_names_;
         Rml::String preset_display_;
         bool preset_open_ = false;
-        bool algorithm_open_ = false;
 
         std::filesystem::path current_dir_;
         Rml::String algorithm_display_;

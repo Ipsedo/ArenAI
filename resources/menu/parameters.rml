@@ -3,32 +3,45 @@
     <title>Parameters</title>
     <link type="text/rcss" href="menu.rcss"/>
 </head>
-<body data-model="parameters">
-    <div id="params-panel" class="panel">
-        <div class="params-header">
-            <div class="back-arrow" data-event-click="back()">←</div>
-            <h1>Parameters</h1>
+<body id="parameters-body" data-model="parameters">
+    <div class="topbar">
+        <div class="back-arrow" data-event-click="back()">‹ Back</div>
+        <span class="crumb">Parameters</span>
+    </div>
+
+    <div id="params-panel" class="page">
+        <div class="page-head">
+            <h1>Match <span class="side-player">setup</span></h1>
+            <span class="page-sub">arena, opponents, systems</span>
         </div>
 
-        <div class="param-row">
-            <span class="param-label">Enemy tanks: {{nb_tanks}}</span>
-            <input type="range" autofocus min="1" max="32" step="1" data-value="nb_tanks"/>
+        <div class="columns">
+            <div class="col">
+                <div class="param-row">
+                    <div class="param-label split"><span>Enemy tanks</span><span class="param-value ai">{{nb_tanks}}</span></div>
+                    <input type="range" autofocus min="1" max="32" step="1" data-value="nb_tanks"/>
+                    <div class="ticks"><span>1</span><span>8</span><span>16</span><span>24</span><span>32</span></div>
+                </div>
+
+                <div class="param-row">
+                    <div class="param-label split"><span>Spawn area side</span><span class="param-value">{{spawn_side}} m</span></div>
+                    <input type="range" min="100" max="2000" step="50" data-value="spawn_side"/>
+                    <div class="ticks"><span>100</span><span>500</span><span>1000</span><span>1500</span><span>2000</span></div>
+                </div>
+
+                <div class="callout ai" data-if="!agent_valid"><span class="bang">!</span>The AI model is not loaded yet — configure it before playing.</div>
+            </div>
+
+            <div class="col">
+                <h2>Systems</h2>
+                <div class="button wide" data-event-click="navigate('graphics')"><span>Graphics</span><span class="meta">{{graphics_summary}} ›</span></div>
+                <div class="button wide" data-event-click="navigate('controls')"><span>Controls</span><span class="meta">{{controls_summary}} ›</span></div>
+                <div class="button wide ai-side" data-event-click="navigate('ai')"><span>Opponent AI</span><span class="meta">{{ai_summary}} ›</span></div>
+            </div>
         </div>
 
-        <div class="param-row">
-            <span class="param-label">Spawn area side: {{spawn_side}} m</span>
-            <input type="range" min="100" max="2000" step="50" data-value="spawn_side"/>
-        </div>
-
-        <div class="configure-group">
-            <div class="button configure" data-event-click="navigate('graphics')">Configure Graphics</div>
-            <div class="button configure" data-event-click="navigate('controls')">Configure Controls</div>
-            <div class="button configure" data-event-click="navigate('ai')">Configure AI</div>
-        </div>
-        <p class="hint status-error" data-if="!agent_valid">The AI model is not loaded yet — configure it before playing.</p>
-
-        <div class="row-buttons back-row">
-            <div class="button primary" data-event-click="back()">Back</div>
+        <div class="actions">
+            <div class="button" data-event-click="back()">Back</div>
         </div>
     </div>
 </body>

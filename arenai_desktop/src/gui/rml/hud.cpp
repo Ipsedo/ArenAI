@@ -4,13 +4,42 @@
 
 #include "./hud.h"
 
+#include <algorithm>
+#include <cmath>
 #include <numbers>
 #include <stdexcept>
+
+#include "./labels.h"
 
 namespace arenai::desktop::gui {
 
     HudOverlay::HudOverlay(AbstractOverlayRenderer &renderer)
-        : DocumentView("menu/hud.rml", nullptr), renderer_(renderer) {}
+        : DocumentView("menu/hud.rml", "hud"), renderer_(renderer), clock_("00:00") {}
+
+    void HudOverlay::bind(DataModel &model) {
+        model.bind("clock", &clock_);
+        model.bind("player_score", &player_score_);
+        model.bind("hull_segments", &hull_segments_);
+        model.bind("enemies_mean_score", &enemies_mean_score_);
+        model.bind("enemies_alive", &enemies_alive_);
+        model.bind("enemies_total", &enemies_total_);
+    }
+
+    void HudOverlay::set_status(const MatchStatus &status) {
+        clock_ = clock_label(status.elapsed_seconds);
+
+        player_score_ = status.player_score;
+        // ceil: the bar only empties completely once the hull is gone
+        hull_segments_ = std::clamp(
+            static_cast<int>(std::ceil(status.player_health * HULL_SEGMENTS)), 0, HULL_SEGMENTS);
+        enemies_mean_score_ = static_cast<int>(std::lround(status.enemies_mean_score));
+        enemies_total_ = std::max(0, status.enemies_total);
+        enemies_alive_ = std::clamp(status.enemies_alive, 0, enemies_total_);
+
+        model().dirty(
+            {"clock", "player_score", "hull_segments", "enemies_mean_score", "enemies_alive",
+             "enemies_total"});
+    }
 
     void HudOverlay::on_attached(Rml::ElementDocument &document) {
         reticle_ = document.GetElementById("reticle");

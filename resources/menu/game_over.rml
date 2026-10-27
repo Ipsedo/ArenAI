@@ -3,13 +3,33 @@
     <title>Game Over</title>
     <link type="text/rcss" href="menu.rcss"/>
 </head>
-<body class="overlay" data-model="game_over">
-    <div id="game-over-panel" class="panel">
-        <h1>Game Over</h1>
-        <div class="game-over-score">Score {{score}}</div>
-        <div class="button primary" autofocus data-event-click="popup_retry()">Retry</div>
-        <div class="button" data-event-click="popup_main_menu()">Main menu</div>
-        <div class="button" data-event-click="popup_exit()">Exit game</div>
+<body id="game-over-body" class="overlay" data-model="game_over">
+    <div class="topbar">
+        <span class="crumb">◆ Player · down</span>
+        <span class="crumb">{{clock}}</span>
+        <span class="side-ai">Machine wins ◆</span>
+    </div>
+
+    <div id="game-over-panel" class="popup">
+        <span class="eyebrow side-ai">The machine takes this round</span>
+        <h1 class="popup-title">Game Over</h1>
+        <div class="versus">
+            <div class="versus-side left">
+                <span class="score-label">You</span>
+                <span class="game-over-score dim">{{score}}</span>
+            </div>
+            <div class="versus-badge">vs</div>
+            <div class="versus-side right">
+                <span class="score-label side-ai">Machine</span>
+                <span class="game-over-score side-ai">{{machine_score}}</span>
+                <span class="score-note">{{enemies_alive}} tanks left</span>
+            </div>
+        </div>
+        <div class="popup-buttons">
+            <div class="button primary" autofocus data-event-click="popup_retry()">Retry</div>
+            <div class="button" data-event-click="popup_main_menu()">Main menu</div>
+            <div class="button exit" data-event-click="popup_exit()">Exit game</div>
+        </div>
     </div>
 </body>
 </rml>

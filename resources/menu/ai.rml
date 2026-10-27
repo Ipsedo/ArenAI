@@ -3,66 +3,69 @@
     <title>AI</title>
     <link type="text/rcss" href="menu.rcss"/>
 </head>
-<body data-model="ai">
-    <div id="ai-panel" class="panel">
-        <div class="params-header">
-            <div class="back-arrow" autofocus data-event-click="back()">←</div>
-            <h1>Configure AI</h1>
+<body id="ai-body" data-model="ai">
+    <div class="topbar">
+        <div class="back-arrow" autofocus data-event-click="back()">‹ Back</div>
+        <span class="side-ai">Neural opponent ◆</span>
+    </div>
+
+    <div id="ai-panel" class="page">
+        <div class="page-head">
+            <h1>Configure <span class="side-ai">AI</span></h1>
+            <span class="page-sub">the brain you will face</span>
         </div>
 
-        <div class="param-row">
-            <span class="param-label">Preset</span>
-            <div class="dropdown" id="preset-dropdown">
-                <div class="dropdown-head" id="preset-head" data-class-open="preset_open" data-event-click="toggle_preset()">
-                    <span class="dropdown-value">{{preset}}</span><span class="dropdown-caret">›</span>
+        <div class="columns">
+            <div class="col">
+                <div class="param-row">
+                    <span class="param-label">Preset</span>
+                    <div class="dropdown" id="preset-dropdown">
+                        <div class="dropdown-head" id="preset-head" data-class-open="preset_open" data-event-click="toggle_preset()">
+                            <span class="dropdown-value">{{preset}}</span><span class="dropdown-caret">›</span>
+                        </div>
+                        <div class="dropdown-list" id="preset-list" data-if="preset_open">
+                            <div class="dropdown-item" data-for="presets" data-class-selected="it == preset" data-event-click="set_preset(it_index)">{{it}}</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="dropdown-list" id="preset-list" data-if="preset_open">
-                    <div class="dropdown-item" data-for="presets" data-class-selected="it == preset" data-event-click="set_preset(it_index)">{{it}}</div>
+
+                <div class="param-row">
+                    <span class="param-label">Algorithm</span>
+                    <div class="toggle-grid">
+                        <div class="toggle half" id="algo-ppo" data-class-selected="algorithm=='ppo'" data-event-click="set_algorithm('ppo')">PPO</div>
+                        <div class="toggle half" id="algo-ppo-liquid" data-class-selected="algorithm=='ppo_liquid'" data-event-click="set_algorithm('ppo_liquid')">PPO Liquid</div>
+                        <div class="toggle half" id="algo-ppo-impala" data-class-selected="algorithm=='ppo_impala'" data-event-click="set_algorithm('ppo_impala')">PPO Impala</div>
+                        <div class="toggle half" id="algo-ppo-liquid-impala" data-class-selected="algorithm=='ppo_liquid_impala'" data-event-click="set_algorithm('ppo_liquid_impala')">PPO Liquid Impala</div>
+                    </div>
+                </div>
+
+                <div class="param-row">
+                    <span class="param-label">Device</span>
+                    <div class="toggle-grid">
+                        <div class="toggle half" id="cpu-toggle" data-class-selected="!cuda" data-event-click="set_device('cpu')">CPU</div>
+                        <div class="toggle half" id="cuda-toggle" data-class-selected="cuda" data-class-disabled="!cuda_available" data-event-click="set_device('cuda')">CUDA</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="param-label split"><span>Trained AI model</span><span class="param-value plain">{{current_dir}}</span></div>
+                <div class="file-list" id="file-list">
+                    <div class="file-entry" data-for="entries" data-event-click="select_entry(it_index)">{{it}}</div>
+                </div>
+                <div class="status-block">
+                    <div class="selected-folder" data-if="agent_folder != ''">State dicts: {{agent_folder}}</div>
+                    <div class="selected-folder">Config: {{agent_config}}</div>
+                    <p class="hint status-ok" data-if="agent_valid">✓ {{agent_status}}</p>
+                    <p class="hint status-error" data-if="!agent_valid && agent_status != ''">{{agent_status}}</p>
+                    <p class="hint" data-if="agent_status == ''">No folder selected yet</p>
                 </div>
             </div>
         </div>
 
-        <div class="param-row">
-            <span class="param-label">Algorithm</span>
-            <div class="dropdown" id="algorithm-dropdown">
-                <div class="dropdown-head" id="algorithm-head" data-class-open="algorithm_open" data-event-click="toggle_algorithm()">
-                    <span class="dropdown-value" data-if="algorithm=='ppo'">PPO</span>
-                    <span class="dropdown-value" data-if="algorithm=='ppo_liquid'">PPO Liquid</span>
-                    <span class="dropdown-value" data-if="algorithm=='ppo_impala'">PPO Impala</span>
-                    <span class="dropdown-value" data-if="algorithm=='ppo_liquid_impala'">PPO Liquid Impala</span>
-                    <span class="dropdown-caret">›</span>
-                </div>
-                <div class="dropdown-list" id="algorithm-list" data-if="algorithm_open">
-                    <div class="dropdown-item" data-class-selected="algorithm=='ppo'" data-event-click="set_algorithm('ppo')">PPO</div>
-                    <div class="dropdown-item" data-class-selected="algorithm=='ppo_liquid'" data-event-click="set_algorithm('ppo_liquid')">PPO Liquid</div>
-                    <div class="dropdown-item" data-class-selected="algorithm=='ppo_impala'" data-event-click="set_algorithm('ppo_impala')">PPO Impala</div>
-                    <div class="dropdown-item" data-class-selected="algorithm=='ppo_liquid_impala'" data-event-click="set_algorithm('ppo_liquid_impala')">PPO Liquid Impala</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="param-row">
-            <span class="param-label">Device</span>
-            <div class="segmented"><div class="segment" id="cpu-toggle" data-class-selected="!cuda" data-event-click="set_device('cpu')">CPU</div><div class="segment" id="cuda-toggle" data-class-selected="cuda" data-class-disabled="!cuda_available" data-event-click="set_device('cuda')">CUDA</div></div>
-        </div>
-
-        <h2>Trained AI model</h2>
-        <div class="current-dir">{{current_dir}}</div>
-        <div class="file-list" id="file-list">
-            <div class="file-entry" data-for="entries" data-event-click="select_entry(it_index)">{{it}}</div>
-        </div>
-        <div class="selected-folder" data-if="agent_folder != ''">State dicts: {{agent_folder}}</div>
-        <div class="selected-folder">Config: {{agent_config}}</div>
-        <p class="hint status-ok" data-if="agent_valid">{{agent_status}}</p>
-        <p class="hint status-error" data-if="!agent_valid && agent_status != ''">{{agent_status}}</p>
-        <p class="hint" data-if="agent_status == ''">No folder selected yet</p>
-
-        <div class="row-buttons">
-            <div class="button" id="use-folder" data-event-click="select_folder()">Use this folder</div>
-        </div>
-
-        <div class="row-buttons back-row">
-            <div class="button primary" data-event-click="back()">Back</div>
+        <div class="actions">
+            <div class="button" data-event-click="back()">Back</div>
+            <div class="button primary" id="use-folder" data-event-click="select_folder()">Use this folder</div>
         </div>
     </div>
 </body>

@@ -44,6 +44,16 @@ namespace arenai::desktop {
         bool is_player_dead() const;
 
         int get_score() const;
+        // the weakest of the player's life items, in [0, 1] (is_player_dead
+        // triggers as soon as one of them dies)
+        float player_health_ratio() const;
+
+        // the enemy roster: all of them, the ones still fighting, and the sum
+        // of their scores (kills * 10 + hits, as the player's). Non-const:
+        // they go through the base class's enemy visitor.
+        int nb_enemies();
+        int nb_enemies_alive();
+        int enemies_total_score();
 
         model::PlayerHits consume_player_hits() const;
         std::vector<float> consume_damage_screen_angles() const;

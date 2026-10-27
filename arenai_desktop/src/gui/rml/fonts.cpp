@@ -19,12 +19,11 @@ namespace arenai::desktop::gui {
         };
 
         constexpr FontSpec MENU_FONTS[] = {
-            {.path = "font/Sora-Regular.ttf", .family = "Sora", .weight = 400},
-            {.path = "font/Sora-SemiBold.ttf", .family = "Sora", .weight = 600},
-            {.path = "font/Sora-Bold.ttf", .family = "Sora", .weight = 700},
-            {.path = "font/IBMPlexMono-Regular.ttf", .family = "IBM Plex Mono", .weight = 400},
-            {.path = "font/IBMPlexMono-Medium.ttf", .family = "IBM Plex Mono", .weight = 500},
-            {.path = "font/IBMPlexMono-SemiBold.ttf", .family = "IBM Plex Mono", .weight = 600},
+            {.path = "font/ChakraPetch-SemiBold.ttf", .family = "Chakra Petch", .weight = 600},
+            {.path = "font/ChakraPetch-Bold.ttf", .family = "Chakra Petch", .weight = 700},
+            {.path = "font/JetBrainsMono-Regular.ttf", .family = "JetBrains Mono", .weight = 400},
+            {.path = "font/JetBrainsMono-Medium.ttf", .family = "JetBrains Mono", .weight = 500},
+            {.path = "font/JetBrainsMono-SemiBold.ttf", .family = "JetBrains Mono", .weight = 600},
         };
 
     }// namespace

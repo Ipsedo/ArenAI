@@ -278,3 +278,22 @@ TEST_F(ItemBaseTest, DoubleDestroyDoesNotCrash) {
     ASSERT_NO_THROW(item.destroy());
     ASSERT_TRUE(item.need_destroy());
 }
+
+TEST_F(LifeItemTest, HealthRatioFollowsTheDamages) {
+    LifeItem item(80.f);
+    ASSERT_FLOAT_EQ(item.health_ratio(), 1.f);
+
+    item.receive_damages(impact_of(20.f));
+    ASSERT_FLOAT_EQ(item.health_ratio(), 0.75f);
+
+    item.receive_damages(impact_of(100.f));
+    ASSERT_FLOAT_EQ(item.health_ratio(), 0.f);
+}
+
+TEST_F(LifeItemTest, KilledItemHasNoHealthLeft) {
+    LifeItem item(30.f);
+
+    item.kill();
+
+    ASSERT_FLOAT_EQ(item.health_ratio(), 0.f);
+}

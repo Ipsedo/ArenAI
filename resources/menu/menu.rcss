@@ -1,35 +1,44 @@
-/* "Blindage" design tokens — deep-blue palette (coolors 00A6FB→051923):
-   bg/night #051923, panel #003554, line #006494, line-strong #0582CA,
-   accent #00A6FB (hover #4DC0FC) on accent-ink #051923, progress #0582CA.
-   Light tints derived from the accent (the palette has no light value):
-   ink #EAF7FF, muted #8AC4E0, selection #7FD3FF, disabled #6FA3BF.
-   Sharp corners (2–3dp), 3dp accent stripe on panels, uppercase display.
-   Display font Sora, technical labels IBM Plex Mono.
+/* "Duel néon" design tokens — an e-sport arena where the player faces the
+   machine. Two sides, two accents:
+     player / action  #FF7A2F (hover #FF9A5C, pressed #D9621F)
+     machine / AI     #2FE6FF (hover #6FF0FF, pressed #1FB8CC)
+   Ground night #0E0A1C (player half #140C22, machine half #0A1420), control
+   surface #121C2C, button surface #1C1836, list ground #0A1420, lines
+   #2A3A52 / strong #4A4670, row seams #1C2A3C, AI tint #0F2A36.
+   Ink #F2F4FF, dim #C8CBE0, muted #8C8FA8, disabled #5C5F7A.
+   Display font Chakra Petch (600/700, uppercase, wide tracking), technical
+   labels JetBrains Mono.
 
-   One cursor mark for every control, mouse hover and gamepad focus alike:
-   the corner reticle (gui-registered corner-reticle decorator) — accent
-   ticks on dark chrome, night ticks on the accent-filled primary, ink
-   ticks on a selected surface. State cycle: normal → cursor (ticks +
-   #00a6fb17 wash) → pressed (#4DC0FC ticks + #00a6fb33 wash); selection
-   speaks through tint #00a6fb24 + accent text, never through the mark.
-   Sora controls answer with their surface only; IBM Plex Mono controls
-   (back arrow, keychips, list entries) also turn their text accent. */
+   Layout (the 1280×720 mockups, in dp): a top bar across the window, a
+   1120dp page column holding the heading row, two columns and a
+   right-aligned action row. The low-poly backdrops are drawn on the body
+   by the gui-registered facets decorator (polygons authored on the
+   1280×720 design canvas and stretched to the window); RmlUi paints a
+   decorator list back to front, the first declared on top, so each list
+   reads top layer first (marks, outlines, fills, then the ground).
+
+   Shapes: buttons, toggles and keychips are parallelograms drawn by the
+   gui-registered slant decorator (fill + outline; the element itself keeps a
+   transparent background and no border). The cursor (mouse hover and
+   gamepad focus alike) speaks through the surface only: an accent outline
+   and a wash pre-blended into an opaque fill (surface + accent at 9%,
+   pressed 20%); no corner mark. The AI page (#ai-panel) answers in cyan where the rest of the
+   menu answers in orange: selection, primary, status and cursor alike. */
 
 body {
-    font-family: "Sora";
+    font-family: "Chakra Petch";
     font-size: 16dp;
-    color: #EAF7FF;
-    background-color: #051923;
+    font-weight: 600;
+    color: #F2F4FF;
+    background-color: #0E0A1C;
     box-sizing: border-box;
     width: 100%;
     height: 100%;
-    /* guaranteed breathing room around the panel, whatever the window size */
-    padding: 24dp 48dp;
-    /* the panel centers itself through its auto margins (not align/justify
-       center): when the window is smaller than the menu, auto margins
-       collapse to zero so the whole content stays reachable through the
-       per-axis scrollbars below */
+    padding: 22dp 40dp;
     display: flex;
+    flex-direction: column;
+    /* when the window is smaller than the page, the per-axis scrollbars
+       keep the whole content reachable */
     overflow-x: auto;
     overflow-y: auto;
     /* focus recovery: when the focused element vanishes (a data-if folding,
@@ -38,9 +47,44 @@ body {
     nav: auto;
 }
 
-/* pause popup: the body is a translucent veil over the frozen game frame */
+/* the backdrops, one per screen */
+#main-body {
+    decorator: facets(transparent #FFFFFF 2dp "640 0 640 6@0.25|640 16 640 22@0.25|640 32 640 38@0.25|640 48 640 54@0.25|640 64 640 70@0.25|640 80 640 86@0.25|640 96 640 102@0.25|640 112 640 118@0.25|640 128 640 134@0.25|640 144 640 150@0.25|640 160 640 166@0.25|640 176 640 182@0.25|640 192 640 198@0.25|640 208 640 214@0.25|640 224 640 230@0.25|640 240 640 246@0.25|640 256 640 262@0.25|640 272 640 278@0.25|640 288 640 294@0.25|640 304 640 310@0.25|640 320 640 326@0.25|640 336 640 342@0.25|640 352 640 358@0.25|640 368 640 374@0.25|640 384 640 390@0.25|640 400 640 406@0.25|640 416 640 422@0.25|640 432 640 438@0.25|640 448 640 454@0.25|640 464 640 470@0.25|640 480 640 486@0.25|640 496 640 502@0.25|640 512 640 518@0.25|640 528 640 534@0.25|640 544 640 550@0.25|640 560 640 566@0.25|640 576 640 582@0.25|640 592 640 598@0.25|640 608 640 614@0.25|640 624 640 630@0.25|640 640 640 646@0.25|640 656 640 662@0.25|640 672 640 678@0.25|640 688 640 694@0.25|640 704 640 710@0.25|640 520 520 560 640 600 760 560@0.12|640 480 460 540 640 640 820 540@0.12"),
+               facets(transparent #2FE6FF 1dp "640 720 1060 500 860 440@0.45|1060 500 1280 330 1100 360 860 440@0.3|860 440 640 420@0.3|1220 330 1130 180 1040 330@0.35|1130 180 1040 330 950 300@0.2"),
+               facets(transparent #FF7A2F 1dp "640 720 220 500 420 440@0.45|220 500 0 330 180 360 420 440@0.3|420 440 640 420@0.3|60 330 150 180 240 330@0.35|150 180 240 330 330 300@0.2"),
+               facets(#2FE6FF transparent 1dp "640 720 1280 720 1280 560 1060 500@0.22|640 720 1060 500 860 440@0.16|640 720 860 440 640 420@0.10|1280 560 1280 330 1060 500@0.12|1060 500 1280 330 1100 360 860 440@0.08|860 440 1100 360 640 340 640 420@0.05"),
+               facets(#FF7A2F transparent 1dp "640 720 0 720 0 560 220 500@0.22|640 720 220 500 420 440@0.16|640 720 420 440 640 420@0.10|0 560 0 330 220 500@0.12|220 500 0 330 180 360 420 440@0.08|420 440 180 360 640 340 640 420@0.05"),
+               facets(#0A1420 transparent 1dp "640 0 1280 0 1280 720 640 720"),
+               facets(#140C22 transparent 1dp "0 0 640 0 640 720 0 720");
+}
+
+#ai-body {
+    background-color: #0A1420;
+    decorator: facets(transparent #2FE6FF 1dp "1120 160 1000 0 880 200@0.4|1280 300 1120 160 1040 400@0.4|1280 560 1040 400 1120 720@0.4"),
+               facets(#2FE6FF transparent 1dp "1280 0 1000 0 1120 160@0.12|1120 160 1000 0 880 200@0.12|1280 0 1120 160 1280 300@0.12|1280 300 1120 160 1040 400@0.12|1280 300 1040 400 1280 560@0.12|1280 560 1040 400 1120 720 1280 720@0.12");
+}
+
+#parameters-body {
+    decorator: facets(transparent #2FE6FF 1dp "1120 160 1000 0 880 200@0.35"),
+               facets(transparent #FF7A2F 1dp "160 560 0 440 240 400 320 720@0.35"),
+               facets(#2FE6FF transparent 1dp "1280 0 1000 0 1120 160@0.10|1120 160 1000 0 880 200@0.10|1280 0 1120 160 1280 300@0.10"),
+               facets(#FF7A2F transparent 1dp "0 720 0 440 160 560@0.10|0 720 160 560 320 720@0.10|160 560 0 440 240 400 320 720@0.10");
+}
+
+#graphics-body, #controls-body {
+    decorator: facets(transparent #FF7A2F 1dp "160 560 0 440 240 400 320 720@0.35"),
+               facets(#FF7A2F transparent 1dp "0 720 0 440 160 560@0.10|0 720 160 560 320 720@0.10|160 560 0 440 240 400 320 720@0.10");
+}
+
+/* pause / game-over popup: the body is a translucent veil over the frozen
+   game frame */
 body.overlay {
-    background-color: #051923d9;
+    background-color: #080614b8;
+}
+
+#game-over-body {
+    decorator: facets(transparent #2FE6FF 1dp "1120 160 1000 0 880 200@0.4|0 720 160 560 320 720@0.4"),
+               facets(#2FE6FF transparent 1dp "1280 0 1000 0 1120 160@0.12|1120 160 1000 0 880 200@0.12|1280 0 1120 160 1280 300@0.12|0 720 0 440 160 560@0.12|0 720 160 560 320 720@0.12");
 }
 
 /* Every control declaring a click in the RML is reachable with the keyboard
@@ -52,118 +96,321 @@ body.overlay {
     nav: auto;
 }
 
-.panel {
-    margin: auto;
-    /* never shrink below the design size: a too-small window overflows
-       the body and triggers its scrollbars instead of crushing the panel */
-    flex-shrink: 0;
-    padding: 40dp;
-    background-color: #003554;
-    border: 1dp #006494;
-    /* the accent stripe carries the "Blindage" identity */
-    border-left: 3dp #00A6FB;
-    border-radius: 3dp;
+/* ---- the two sides ---- */
+
+.side-player {
+    color: #FF7A2F;
 }
 
-#pause-panel, #game-over-panel {
-    width: 340dp;
-    text-align: center;
+.side-ai {
+    color: #2FE6FF;
 }
 
-/* score between the popup title and the buttons (pause and Game Over
-   alike), in the technical-label voice (mono, uppercase, accent) */
-.game-over-score {
-    display: block;
-    font-family: "IBM Plex Mono";
-    font-size: 16dp;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 2dp;
-    color: #00A6FB;
-    margin-bottom: 24dp;
+.dim {
+    color: #8C8FA8;
 }
 
-#main-panel {
-    width: 380dp;
-    text-align: center;
-}
+/* ---- chrome: top bar, bottom bar ---- */
 
-#params-panel {
-    /* fixed design width (side-by-side buttons need almost all of it);
-       side breathing room comes from the body padding */
-    width: 560dp;
-}
-
-h1 {
-    display: block;
-    font-size: 32dp;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 3dp;
-    color: #EAF7FF;
-    margin-bottom: 28dp;
-}
-
-.params-header {
+.topbar, .bottombar {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    margin-bottom: 28dp;
+    flex-shrink: 0;
+    font-family: "JetBrains Mono";
+    font-size: 12dp;
+    font-weight: 400;
+    letter-spacing: 2dp;
+    text-transform: uppercase;
+    color: #8C8FA8;
 }
 
-.params-header h1 {
-    margin-bottom: 0;
+.bottombar {
+    margin-top: auto;
+    letter-spacing: 1dp;
+    text-transform: none;
 }
 
-/* IBM Plex Mono: the only menu font that ships the U+2190 arrow glyph */
+.crumb {
+    color: #8C8FA8;
+}
+
+/* the quiet top-bar link of the mockups: mono, dim, the cursor mark alone
+   framing it */
 .back-arrow {
-    font-family: "IBM Plex Mono";
-    font-size: 18dp;
-    font-weight: 600;
-    color: #8AC4E0;
-    padding: 5dp 12dp;
-    margin-right: 16dp;
-    border: 1dp #0582CA;
-    border-radius: 2dp;
+    font-family: "JetBrains Mono";
+    font-size: 12dp;
+    font-weight: 400;
+    letter-spacing: 2dp;
+    text-transform: uppercase;
+    color: #C8CBE0;
+    padding: 6dp 10dp;
+    margin-left: -10dp;
     cursor: pointer;
 }
 
 .back-arrow:hover, body.gamepad-nav .back-arrow:focus {
-    color: #00A6FB;
-    background-color: #00a6fb17;
-    decorator: corner-reticle(#00A6FB);
+    color: #FF7A2F;
 }
 
 .back-arrow:active {
-    color: #00A6FB;
-    background-color: #00a6fb33;
-    decorator: corner-reticle(#4DC0FC);
+    color: #FF9A5C;
+}
+
+/* ---- the page column ---- */
+
+.page {
+    width: 1120dp;
+    /* never shrink below the design size: a too-small window overflows
+       the body and triggers its scrollbars instead of crushing the page */
+    flex-shrink: 0;
+    margin: 28dp auto 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.page-head {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 22dp;
+}
+
+h1 {
+    display: block;
+    font-size: 48dp;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2dp;
+    color: #F2F4FF;
+}
+
+.page-sub {
+    font-family: "JetBrains Mono";
+    font-size: 13dp;
+    font-weight: 400;
+    color: #8C8FA8;
+    margin-left: 18dp;
+}
+
+.columns {
+    display: flex;
+    align-items: flex-start;
+}
+
+.col {
+    flex: 1;
+    display: block;
+    box-sizing: border-box;
+}
+
+.col:first-child {
+    margin-right: 32dp;
+}
+
+.col.narrow {
+    flex: 0 0 320dp;
+    width: 320dp;
+}
+
+/* the right-aligned action row at the foot of a page */
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 22dp;
+}
+
+.actions .button {
+    width: auto;
+    min-width: 120dp;
+    margin: 0 0 0 12dp;
 }
 
 h2 {
     display: block;
-    font-family: "IBM Plex Mono";
-    font-size: 13dp;
-    font-weight: 600;
+    font-family: "JetBrains Mono";
+    font-size: 12dp;
+    font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 2dp;
-    color: #8AC4E0;
-    margin: 22dp 0 8dp 0;
+    color: #8C8FA8;
+    margin: 0 0 10dp 0;
 }
 
+.param-row {
+    display: block;
+    margin-bottom: 20dp;
+}
+
+.param-label {
+    display: block;
+    font-family: "JetBrains Mono";
+    font-size: 12dp;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 2dp;
+    color: #8C8FA8;
+    margin-bottom: 8dp;
+}
+
+/* side-colored labels (the GPU rows of the Graphics page): restated after
+   .param-label so the cascade keeps the side color */
+.param-label.side-player {
+    color: #FF7A2F;
+}
+
+.param-label.side-ai {
+    color: #2FE6FF;
+}
+
+/* a label row with a value on its right: both sides are spans (RmlUi draws
+   no bare text inside a flex container, so a plain label stays a block) */
+.param-label.split {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.param-value {
+    font-family: "Chakra Petch";
+    font-size: 18dp;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: none;
+    color: #FF7A2F;
+}
+
+.param-value.ai {
+    color: #2FE6FF;
+}
+
+.param-value.plain {
+    font-family: "JetBrains Mono";
+    font-size: 12dp;
+    font-weight: 400;
+    color: #C8CBE0;
+    word-break: break-all;
+}
+
+.ticks {
+    display: flex;
+    justify-content: space-between;
+    font-family: "JetBrains Mono";
+    font-size: 11dp;
+    font-weight: 400;
+    color: #4A4670;
+    margin-top: 4dp;
+}
+
+/* ---- callouts, hints, status ---- */
+
+/* the bordered one-line notice of the mockups (cyan: the machine's, orange:
+   the player's) */
+.callout {
+    display: block;
+    padding: 10dp 16dp;
+    margin-top: 10dp;
+    font-family: "JetBrains Mono";
+    font-size: 13dp;
+    font-weight: 400;
+    line-height: 1.5;
+    background-color: #0A1420cc;
+}
+
+.callout.ai {
+    border: 1dp #2FE6FF;
+    color: #2FE6FF;
+}
+
+.callout.player {
+    border: 1dp #FF7A2F;
+    background-color: #2a1a14;
+    color: #FF7A2F;
+}
+
+.callout.player.warn {
+    border-color: #F5B356;
+    color: #F5B356;
+}
+
+.bang {
+    margin-right: 12dp;
+}
+
+.hint {
+    display: block;
+    font-family: "JetBrains Mono";
+    font-size: 12dp;
+    font-weight: 400;
+    line-height: 1.6;
+    color: #8C8FA8;
+    margin-top: 8dp;
+}
+
+/* dry-run load verdict of the AI page: the machine speaks in cyan */
+.hint.status-ok {
+    color: #2FE6FF;
+}
+
+.hint.status-error {
+    color: #FF5C7A;
+}
+
+.hint.warn {
+    color: #F5B356;
+}
+
+/* the AI page's result block under the explorer, on the AI tint */
+.status-block {
+    display: block;
+    padding: 12dp 16dp;
+    margin-top: 8dp;
+    background-color: #0F2A36;
+}
+
+.status-block .hint {
+    margin-top: 2dp;
+}
+
+.selected-folder {
+    display: block;
+    font-family: "JetBrains Mono";
+    font-size: 13dp;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #C8CBE0;
+    word-break: break-all;
+}
+
+.status-box {
+    display: block;
+    padding: 12dp 16dp;
+    background-color: #121C2C;
+    border: 1dp #2A3A52;
+    font-family: "JetBrains Mono";
+    font-size: 13dp;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #8C8FA8;
+}
+
+/* ---- buttons ---- */
+
+/* Parallelogram button: the slant decorator paints surface and outline,
+   the element only sizes and holds the label. */
 .button {
     display: block;
     margin: 10dp auto;
-    padding: 12dp 20dp;
+    padding: 15dp 30dp;
     width: 260dp;
+    box-sizing: border-box;
     text-align: center;
-    font-size: 14dp;
+    font-size: 20dp;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 1dp;
-    color: #EAF7FF;
-    border: 1dp #0582CA;
-    border-radius: 2dp;
+    letter-spacing: 3dp;
+    color: #F2F4FF;
     cursor: pointer;
+    decorator: slant(#1C1836 #4A4670 14dp 1dp);
 }
 
 /* One pointing device at a time: the gamepad cursor is the RmlUi focus and
@@ -171,83 +418,147 @@ h2 {
    documents with .gamepad-nav (mouse hover is cleared on that switch, and
    the first mouse move flips back). */
 .button:hover, body.gamepad-nav .button:focus {
-    background-color: #00a6fb17;
-    decorator: corner-reticle(#00A6FB);
+    decorator: slant(#302135 #FF7A2F 14dp 1dp);
 }
 
 .button:active {
-    background-color: #00a6fb33;
-    decorator: corner-reticle(#4DC0FC);
+    decorator: slant(#492C35 #FF9A5C 14dp 1dp);
 }
 
 .button.primary {
-    background-color: #00A6FB;
-    border-color: #00A6FB;
-    color: #051923;
+    color: #0E0A1C;
+    font-weight: 700;
+    decorator: slant(#FF7A2F #FF7A2F 14dp 1dp);
 }
 
 /* night ticks: the mark keeps its contrast on the accent-filled surface */
 .button.primary:hover, body.gamepad-nav .button.primary:focus {
-    background-color: #4DC0FC;
-    border-color: #4DC0FC;
-    decorator: corner-reticle(#051923);
+    decorator: slant(#FF9A5C #FF9A5C 14dp 1dp);
 }
 
 .button.primary:active {
-    background-color: #0582CA;
-    border-color: #0582CA;
-    color: #EAF7FF;
-    decorator: corner-reticle(#EAF7FF);
+    color: #F2F4FF;
+    decorator: slant(#D9621F #D9621F 14dp 1dp);
+}
+
+/* the muted third option of a row (Exit) */
+.button.exit {
+    color: #8C8FA8;
+}
+
+/* a control that belongs to the machine's side (Opponent AI): at rest it
+   looks like its neighbours; under the cursor it answers in cyan, the AI
+   tint lit and the summary turning cyan too */
+.button.ai-side:hover, body.gamepad-nav .button.ai-side:focus {
+    decorator: slant(#0F2A36 #2FE6FF 14dp 1dp);
+}
+
+.button.ai-side:active {
+    decorator: slant(#20415E #6FF0FF 14dp 1dp);
+}
+
+.button.ai-side:hover .meta, body.gamepad-nav .button.ai-side:focus .meta,
+.button.ai-side:active .meta {
+    color: #2FE6FF;
 }
 
 .button.disabled {
-    color: #6FA3BF;
-    background-color: #003554;
-    border-color: #006494;
+    color: #5C5F7A;
+    decorator: slant(#1C1836 #2A3A52 14dp 1dp);
 }
 
 /* after the cursor rules, so a disabled Play keeps its greyed fill under
    either cursor (the ticks still show, marking the position without
    promising a click) */
 .button.disabled:hover, body.gamepad-nav .button.disabled:focus, .button.disabled:active {
-    color: #6FA3BF;
-    background-color: #003554;
-    border-color: #006494;
-    decorator: corner-reticle(#00A6FB);
+    color: #5C5F7A;
+    decorator: slant(#1C1836 #2A3A52 14dp 1dp);
 }
 
-.hint {
-    display: block;
-    font-family: "IBM Plex Mono";
-    font-size: 12dp;
-    color: #8AC4E0;
-    margin-top: 14dp;
-}
-
-/* dry-run load verdict of the AI page */
-.hint.status-ok {
-    color: #35D0A5;
-}
-
-.hint.status-error {
-    color: #FF6B6B;
-}
-
-.param-row {
-    display: block;
-    margin: 16dp 0;
-}
-
-.param-label {
-    display: block;
-    font-family: "IBM Plex Mono";
-    font-size: 13dp;
-    font-weight: 500;
-    text-transform: uppercase;
+/* the system doors of the Parameters page: full width, label left, the
+   current choice right in mono */
+.button.wide {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin: 0 0 10dp 0;
+    padding: 0 22dp;
+    height: 64dp;
+    text-align: left;
+    font-size: 20dp;
     letter-spacing: 2dp;
-    color: #8AC4E0;
-    margin-bottom: 8dp;
 }
+
+.button .meta {
+    font-family: "JetBrains Mono";
+    font-size: 12dp;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    color: #8C8FA8;
+}
+
+/* ---- the main menu ---- */
+
+.hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    margin: 60dp auto 0 auto;
+}
+
+.title {
+    font-size: 140dp;
+    line-height: 0.9;
+    letter-spacing: 3dp;
+    margin-bottom: 14dp;
+}
+
+.tagline {
+    display: block;
+    font-size: 20dp;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 6dp;
+    color: #C8CBE0;
+    margin-bottom: 52dp;
+}
+
+.tagline .vs {
+    font-family: "JetBrains Mono";
+    font-weight: 400;
+    letter-spacing: 0;
+    color: #8C8FA8;
+    margin: 0 18dp;
+}
+
+.hero-buttons {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 26dp;
+}
+
+.hero-buttons .button {
+    margin: 0 8dp;
+    padding: 0;
+    height: 64dp;
+    line-height: 64dp;
+    width: 200dp;
+    font-size: 22dp;
+}
+
+.hero-buttons .button.wide-play {
+    width: 260dp;
+    font-size: 26dp;
+}
+
+.hero .callout {
+    margin-top: 0;
+}
+
+/* ---- sliders ---- */
 
 input.range {
     display: block;
@@ -258,21 +569,18 @@ input.range {
     nav: auto;
 }
 
-
 /* the knob's vertical offset is its own margin-top measured from the input's
    top, NOT from the track (RmlUi WidgetSlider::PositionBar): with a 16dp-high
    input, a 16dp knob at margin-top 0 and a 4dp track pushed down by 6dp share
    the same 8dp center line */
 input.range slidertrack {
-    background-color: #006494;
-    border-radius: 2dp;
+    background-color: #2A3A52;
     height: 4dp;
     margin-top: 6dp;
 }
 
 input.range sliderprogress {
-    background-color: #0582CA;
-    border-radius: 2dp;
+    background-color: #FF7A2F;
     height: 4dp;
 }
 
@@ -280,22 +588,17 @@ input.range sliderbar {
     width: 16dp;
     height: 16dp;
     margin-top: 0;
-    background-color: #00A6FB;
-    border-radius: 2dp;
+    background-color: #FF7A2F;
 }
 
-/* The knob is a widget-internal element that cannot host children, so the
-   decorator draws both the corner ticks and the 14dp fill: the box grows
-   to 24dp around the fill and recenters on the track. The fill reuses the
-   base rule's 2dp border-radius (the decorator follows the element's
-   radius), so it stays square like the idle knob. */
+/* under the cursor the knob grows to 20dp and lightens, recentered on the
+   track */
 input.range sliderbar:hover, input.range sliderbar:active,
 body.gamepad-nav input.range:focus sliderbar {
-    width: 24dp;
-    height: 24dp;
-    margin-top: -4dp;
-    background-color: transparent;
-    decorator: corner-reticle(#00A6FB #00A6FB 7dp 2dp 0dp 5dp);
+    width: 20dp;
+    height: 20dp;
+    margin-top: -2dp;
+    background-color: #FF9A5C;
 }
 
 input.range sliderarrowdec, input.range sliderarrowinc {
@@ -303,180 +606,155 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     height: 0;
 }
 
-.toggle-group {
-    display: block;
+/* ---- toggles ---- */
+
+/* a wrapping row of option chips, the gutters carried by the chips */
+.toggle-grid {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -4dp;
 }
 
-/* the 4dp margin keeps the old 8dp gap between neighbours (previously
-   supplied by the transparent ring slot around each chip) */
+/* option chips: parallelograms; the selected one fills with the accent and
+   turns its label night, like a primary button */
 .toggle {
-    display: inline-block;
+    display: block;
+    box-sizing: border-box;
     margin: 4dp;
-    padding: 8dp 18dp;
-    border: 1dp #0582CA;
-    border-radius: 2dp;
-    font-size: 13dp;
+    padding: 0 12dp;
+    height: 48dp;
+    line-height: 48dp;
+    text-align: center;
+    font-size: 17dp;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1dp;
-    color: #EAF7FF;
+    color: #C8CBE0;
     cursor: pointer;
+    decorator: slant(#121C2C #2A3A52 10dp 1dp);
+}
+
+/* chip widths: a half, a quarter, a fifth of the row, gutters included */
+.toggle.half {
+    width: 48.4%;
+}
+
+.toggle.quarter {
+    width: 23.4%;
+}
+
+.toggle.fifth {
+    width: 18.4%;
+    padding: 0 4dp;
+    font-size: 16dp;
+}
+
+/* stacked full-width chips (Controls input kind), label left */
+.toggle.stack {
+    width: 100%;
+    margin: 0 0 8dp 0;
+    padding: 0 18dp;
+    text-align: left;
 }
 
 .toggle:hover, body.gamepad-nav .toggle:focus {
-    background-color: #00a6fb17;
-    decorator: corner-reticle(#00A6FB);
+    color: #F2F4FF;
+    decorator: slant(#27242B #FF7A2F 10dp 1dp);
 }
 
 .toggle:active {
-    background-color: #00a6fb33;
-    decorator: corner-reticle(#4DC0FC);
+    color: #F2F4FF;
+    decorator: slant(#412F2C #FF9A5C 10dp 1dp);
 }
 
 .toggle.selected {
-    background-color: #00a6fb24;
-    border-color: #00A6FB;
-    color: #00A6FB;
+    color: #0E0A1C;
+    font-weight: 700;
+    decorator: slant(#FF7A2F #FF7A2F 10dp 1dp);
 }
 
-/* selected under the cursor: ink ticks over the accent-tinted chip, the
-   selected tint restated so the cursor rules above cannot wash it out */
+/* selected under the cursor: night ticks over the accent-filled chip */
 .toggle.selected:hover, body.gamepad-nav .toggle.selected:focus {
-    background-color: #00a6fb24;
-    decorator: corner-reticle(#EAF7FF);
+    color: #0E0A1C;
+    decorator: slant(#FF9A5C #FF9A5C 10dp 1dp);
 }
 
 .toggle.selected:active {
-    background-color: #00a6fb33;
-    decorator: corner-reticle(#EAF7FF);
+    color: #F2F4FF;
+    decorator: slant(#D9621F #D9621F 10dp 1dp);
 }
 
-/* Segmented control (AI page device row): one bordered frame, the options
-   fused inside it — reads as "one choice among two". Quiet muted labels,
-   the selection speaking through tint + accent text like everywhere else. */
-.segmented {
-    display: inline-block;
-    margin: 4dp;
-    border: 1dp #0582CA;
-    border-radius: 2dp;
-}
-
-.segment {
-    display: inline-block;
-    padding: 8dp 22dp;
-    font-size: 13dp;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1dp;
-    color: #8AC4E0;
-    cursor: pointer;
-}
-
-.segment:last-child {
-    border-left: 1dp #0582CA;
-}
-
-.segment:hover, body.gamepad-nav .segment:focus {
-    background-color: #00a6fb17;
-    color: #EAF7FF;
-    decorator: corner-reticle(#00A6FB);
-}
-
-.segment:active {
-    background-color: #00a6fb33;
-    color: #EAF7FF;
-    decorator: corner-reticle(#4DC0FC);
-}
-
-.segment.selected {
-    background-color: #00a6fb24;
-    color: #00A6FB;
-}
-
-/* selected under the cursor: ink ticks, the selected tint restated */
-.segment.selected:hover, body.gamepad-nav .segment.selected:focus {
-    background-color: #00a6fb24;
-    color: #00A6FB;
-    decorator: corner-reticle(#EAF7FF);
-}
-
-.segment.selected:active {
-    background-color: #00a6fb33;
-    color: #00A6FB;
-    decorator: corner-reticle(#EAF7FF);
-}
-
-/* no CUDA device: the segment stays visible but greyed and inert */
-.segment.disabled {
-    color: #6FA3BF;
-    background-color: #003554;
+/* no CUDA device: the chip stays visible but greyed and inert */
+.toggle.disabled {
+    color: #5C5F7A;
+    decorator: slant(#121C2C #2A3A52 10dp 1dp);
 }
 
 /* as .button.disabled: the ticks still mark the cursor position without
    promising a click */
-.segment.disabled:hover, body.gamepad-nav .segment.disabled:focus, .segment.disabled:active {
-    color: #6FA3BF;
-    background-color: #003554;
-    decorator: corner-reticle(#00A6FB);
+.toggle.disabled:hover, body.gamepad-nav .toggle.disabled:focus, .toggle.disabled:active {
+    color: #5C5F7A;
+    decorator: slant(#121C2C #2A3A52 10dp 1dp);
 }
 
-/* Dropdown (AI page): a toggle-styled head, the list unfolding over the
-   content below it (absolute, above the explorer) so the panel keeps its
+/* ---- dropdowns ---- */
+
+/* a rectangular head carrying a 3dp accent stripe on its left, the list
+   unfolding over the content below it (absolute) so the page keeps its
    height. Items reuse the dense list-row look of .device-entry. */
 .dropdown {
     display: block;
     position: relative;
-    margin: 4dp;
 }
 
 .dropdown-head {
     display: block;
-    padding: 8dp 18dp;
-    border: 1dp #0582CA;
-    border-radius: 2dp;
-    font-size: 13dp;
+    padding: 0 18dp;
+    height: 50dp;
+    line-height: 50dp;
+    background-color: #121C2C;
+    border: 1dp #2A3A52;
+    border-left: 3dp #2FE6FF;
+    font-size: 20dp;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1dp;
-    color: #EAF7FF;
+    color: #F2F4FF;
     cursor: pointer;
 }
 
+.dropdown-head.player {
+    border-left-color: #FF7A2F;
+}
+
 .dropdown-head:hover, body.gamepad-nav .dropdown-head:focus {
-    background-color: #00a6fb17;
-    decorator: corner-reticle(#00A6FB);
+    background-color: #27242B;
 }
 
 .dropdown-head:active {
-    background-color: #00a6fb33;
-    decorator: corner-reticle(#4DC0FC);
+    background-color: #412F2C;
 }
 
 .dropdown-head.open {
-    background-color: #00a6fb24;
-    border-color: #00A6FB;
-    color: #00A6FB;
+    background-color: #33292B;
+    color: #FF7A2F;
 }
 
 .dropdown-head.open:hover, body.gamepad-nav .dropdown-head.open:focus {
-    background-color: #00a6fb24;
-    decorator: corner-reticle(#EAF7FF);
+    background-color: #33292B;
 }
 
 .dropdown-value {
     display: inline-block;
 }
 
-/* the fonts ship no triangle glyph: a rotated chevron stands in, pointing
-   down when folded and up when the list is open */
+/* the caret: a chevron pointing down when folded and up when the list
+   is open */
 .dropdown-caret {
     display: inline-block;
     position: absolute;
-    right: 14dp;
-    top: 4dp;
-    font-family: "IBM Plex Mono";
-    font-size: 20dp;
+    right: 16dp;
+    top: 0;
+    font-family: "JetBrains Mono";
+    font-size: 22dp;
     font-weight: 600;
+    color: #FF7A2F;
     transform: rotate(90deg);
 }
 
@@ -492,282 +770,451 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     top: 100%;
     z-index: 10;
     margin-top: 2dp;
-    background-color: #051923;
-    border: 1dp #006494;
-    border-radius: 2dp;
+    background-color: #0A1420;
+    border: 1dp #2A3A52;
 }
 
 .dropdown-item {
     display: block;
-    padding: 7dp 18dp;
-    font-size: 13dp;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1dp;
-    color: #8AC4E0;
+    padding: 9dp 18dp;
+    font-family: "JetBrains Mono";
+    font-size: 14dp;
+    font-weight: 400;
+    color: #C8CBE0;
     cursor: pointer;
 }
 
 .dropdown-item:hover, body.gamepad-nav .dropdown-item:focus {
-    background-color: #00a6fb17;
-    color: #00A6FB;
-    decorator: corner-reticle(#00A6FB transparent 5dp 2dp 2dp);
+    background-color: #201D21;
+    color: #FF7A2F;
 }
 
 .dropdown-item:active {
-    background-color: #00a6fb33;
-    color: #00A6FB;
-    decorator: corner-reticle(#4DC0FC transparent 5dp 2dp 2dp);
+    background-color: #3B2623;
+    color: #FF7A2F;
 }
 
 .dropdown-item.selected {
-    background-color: #00a6fb24;
-    color: #00A6FB;
+    background-color: #2B2122;
+    border-left: 3dp #FF7A2F;
+    padding-left: 15dp;
+    color: #FF7A2F;
 }
 
 .dropdown-item.selected:hover, body.gamepad-nav .dropdown-item.selected:focus {
-    background-color: #00a6fb24;
-    decorator: corner-reticle(#EAF7FF transparent 5dp 2dp 2dp);
+    background-color: #2B2122;
 }
 
-/* Controls, Graphics and AI pages — same design width as the parameters panel */
-#controls-panel, #graphics-panel, #ai-panel {
-    width: 560dp;
+/* ---- lists: bindings, devices, the file explorer ---- */
+
+/* binding rows in two columns, each row a seam-separated line */
+.bind-grid {
+    display: flex;
+    flex-wrap: wrap;
+    border-top: 1dp #2A3A52;
 }
 
-/* the three sub-page buttons of the parameters panel: centered by the base
-   .button auto margins, and the same visible size as the Back button below
-   (220dp content + 40dp padding + 2dp border) — plain, only Back keeps the
-   primary highlight. The group stands clear of the sliders above it. */
-.configure-group {
-    display: block;
-    margin-top: 32dp;
-}
-
-.button.configure {
-    width: 220dp;
-}
-
-/* binding rows: a dark inset list, like the file explorer */
-.bind-list {
-    display: block;
-    background-color: #051923;
-    border: 1dp #006494;
-    border-radius: 2dp;
-    margin-bottom: 10dp;
-}
-
+/* symmetric gutters (no nth-child alternation: the hidden data-for
+   template counts as a child and would flip the parity) */
 .bind-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8dp 14dp;
-    border-bottom: 1dp #062b3d;
-}
-
-.bind-row:last-child {
-    border-bottom-width: 0;
+    box-sizing: border-box;
+    width: 50%;
+    height: 46dp;
+    padding: 0 14dp 0 0;
+    border-bottom: 1dp #2A3A52;
 }
 
 .bind-action {
-    font-family: "IBM Plex Mono";
-    font-size: 13dp;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 2dp;
-    color: #8AC4E0;
+    font-size: 18dp;
+    font-weight: 600;
+    color: #F2F4FF;
 }
 
-/* the clickable slot showing the current binding */
+/* the clickable slot showing the current binding: a small parallelogram */
 .keychip {
-    font-family: "IBM Plex Mono";
+    font-family: "JetBrains Mono";
     font-size: 13dp;
-    font-weight: 600;
-    min-width: 74dp;
+    font-weight: 400;
+    min-width: 56dp;
+    box-sizing: border-box;
     text-align: center;
-    padding: 6dp 14dp;
-    background-color: #051923;
-    border: 1dp #0582CA;
-    border-radius: 2dp;
-    color: #EAF7FF;
+    padding: 0 10dp;
+    height: 30dp;
+    line-height: 30dp;
+    color: #F2F4FF;
     cursor: pointer;
+    decorator: slant(#121C2C #4A4670 6dp 1dp);
 }
 
 .keychip:hover, body.gamepad-nav .keychip:focus {
-    background-color: #00a6fb17;
-    color: #00A6FB;
-    decorator: corner-reticle(#00A6FB);
+    color: #FF7A2F;
+    decorator: slant(#27242B #FF7A2F 6dp 1dp);
 }
 
 .keychip:active {
-    background-color: #00a6fb33;
-    color: #00A6FB;
-    decorator: corner-reticle(#4DC0FC);
+    color: #FF9A5C;
+    decorator: slant(#412F2C #FF9A5C 6dp 1dp);
 }
 
+/* capture in progress: the chip's outline lights up and its label blinks
+   between the accent and the ink (a geometry decorator cannot be
+   interpolated, so the pulse lives on the text color alone) */
 @keyframes chip-pulse {
-    from { background-color: #00a6fb17; }
-    to { background-color: #00a6fb33; }
+    from { color: #FF7A2F; }
+    to { color: #F2F4FF; }
 }
 
 .keychip.listening {
-    border-color: #00A6FB;
-    color: #00A6FB;
+    decorator: slant(#27242B #FF7A2F 6dp 1dp);
     animation: 0.55s cubic-in-out infinite alternate chip-pulse;
 }
 
 /* conflict fallout: the action lost its input, amber until rebound */
 .keychip.unbound {
     color: #F5B356;
-    border-color: #B97E2F;
-    background-color: #b97e2f14;
+    decorator: slant(#2A2318 #B97E2F 6dp 1dp);
 }
 
 /* non-remappable rows: visible so the full scheme reads, but inert — they
    declare no click in the RML, so the [data-event-click] rule leaves them
-   out of the navigation by itself */
+   out of the navigation by itself. Dim label, outline-only chip. */
 .bind-row.fixed .bind-action {
-    color: #4C7A94;
+    color: #8C8FA8;
 }
 
 .bind-row.fixed .keychip {
-    color: #6FA3BF;
-    border-color: #006494;
-    background-color: #003554;
+    color: #8C8FA8;
     cursor: default;
-    /* inert: the cursor mark of .keychip:hover must not land here */
-    decorator: none;
-}
-
-.fixed-tag {
-    font-family: "IBM Plex Mono";
-    font-size: 10dp;
-    letter-spacing: 1dp;
-    text-transform: uppercase;
-    color: #4C7A94;
-    margin-left: 10dp;
-}
-
-.hint.warn {
-    color: #F5B356;
+    /* inert (no click in the RML, so no hover rule lands here): the same
+       slant as its neighbours, outline only */
+    decorator: slant(transparent #4A4670 6dp 1dp);
 }
 
 /* gamepad device picker, in the file-explorer visual vocabulary */
 .device-list {
     display: block;
-    background-color: #051923;
-    border: 1dp #006494;
-    border-radius: 2dp;
-    margin-bottom: 10dp;
+    background-color: #0A1420;
+    border: 1dp #2A3A52;
 }
 
 .device-entry {
     display: block;
     padding: 7dp 12dp;
-    font-family: "IBM Plex Mono";
+    font-family: "JetBrains Mono";
     font-size: 13dp;
-    color: #8AC4E0;
+    font-weight: 400;
+    color: #C8CBE0;
     cursor: pointer;
 }
 
 /* dense list rows: smaller ticks (5dp), tighter inset (2dp) */
 .device-entry:hover, body.gamepad-nav .device-entry:focus {
-    background-color: #00a6fb17;
-    color: #00A6FB;
-    decorator: corner-reticle(#00A6FB transparent 5dp 2dp 2dp);
+    background-color: #201D21;
+    color: #FF7A2F;
 }
 
 .device-entry:active {
-    background-color: #00a6fb33;
-    color: #00A6FB;
-    decorator: corner-reticle(#4DC0FC transparent 5dp 2dp 2dp);
+    background-color: #3B2623;
+    color: #FF7A2F;
 }
 
 .device-entry.selected {
-    background-color: #00a6fb24;
-    color: #00A6FB;
+    background-color: #2B2122;
+    border-left: 3dp #FF7A2F;
+    padding-left: 9dp;
+    color: #FF7A2F;
 }
 
 .device-entry.selected:hover, body.gamepad-nav .device-entry.selected:focus {
-    background-color: #00a6fb24;
-    decorator: corner-reticle(#EAF7FF transparent 5dp 2dp 2dp);
-}
-
-.current-dir {
-    display: block;
-    padding: 8dp 10dp;
-    background-color: #051923;
-    border: 1dp #006494;
-    border-radius: 2dp 2dp 0 0;
-    font-family: "IBM Plex Mono";
-    font-size: 13dp;
-    color: #8AC4E0;
-    /* long paths wrap instead of being clipped (RCSS has no text-overflow) */
-    word-break: break-all;
+    background-color: #2B2122;
 }
 
 .file-list {
     display: block;
-    height: 220dp;
+    height: 232dp;
     overflow-y: auto;
-    background-color: #051923;
-    border: 1dp #006494;
-    border-top-width: 0;
-    border-radius: 0 0 2dp 2dp;
-    margin-bottom: 10dp;
+    background-color: #121C2C;
+    border: 1dp #2A3A52;
 }
 
 .file-entry {
     display: block;
-    padding: 6dp 10dp;
-    font-family: "IBM Plex Mono";
-    font-size: 13dp;
+    padding: 9dp 16dp;
+    border-bottom: 1dp #1C2A3C;
+    font-family: "JetBrains Mono";
+    font-size: 14dp;
+    font-weight: 400;
+    color: #C8CBE0;
     cursor: pointer;
 }
 
 .file-entry:hover, body.gamepad-nav .file-entry:focus {
-    background-color: #00a6fb17;
-    color: #00A6FB;
-    decorator: corner-reticle(#00A6FB transparent 5dp 2dp 2dp);
+    background-color: #0D2734;
+    color: #2FE6FF;
 }
 
 .file-entry:active {
-    background-color: #00a6fb33;
-    color: #00A6FB;
-    decorator: corner-reticle(#4DC0FC transparent 5dp 2dp 2dp);
+    background-color: #113E4D;
+    color: #2FE6FF;
 }
 
-.selected-folder {
-    display: block;
-    font-family: "IBM Plex Mono";
-    font-size: 13dp;
-    font-weight: 600;
-    color: #7FD3FF;
-    margin: 8dp 0;
-    word-break: break-all;
-}
+/* ---- pause / game over ---- */
 
-.row-buttons {
-    display: block;
+.popup {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    margin: 100dp auto 0 auto;
     text-align: center;
-    margin-top: 20dp;
 }
 
-.row-buttons .button {
-    display: inline-block;
-    width: 220dp;
-    margin: 0 8dp;
+.eyebrow {
+    display: block;
+    font-family: "JetBrains Mono";
+    font-size: 13dp;
+    font-weight: 400;
+    letter-spacing: 5dp;
+    text-transform: uppercase;
+    color: #8C8FA8;
+    margin-bottom: 6dp;
 }
 
-/* wide gap above Back: visually detaches it from the explorer's
-   "Use this folder" action right above */
-.row-buttons.back-row {
-    margin-top: 36dp;
+.popup-title {
+    font-size: 96dp;
+    line-height: 1;
+    letter-spacing: 5dp;
+    margin-bottom: 28dp;
 }
 
-/* thin 8px scrollbars, invisible track, line-strong rounded thumb turning
-   accent on hover — shared by the file explorer and the whole menu when
-   the window is too small for it */
+#game-over-panel .popup-title {
+    font-size: 110dp;
+}
+
+/* the two sides face to face: the player's figure on the left, the
+   machine's on the right, a rule (pause) or a "vs" lozenge (game over)
+   between them */
+.versus {
+    display: flex;
+    align-items: center;
+    margin-bottom: 28dp;
+}
+
+.versus-side {
+    display: flex;
+    flex-direction: column;
+    width: 200dp;
+}
+
+.versus-side.left {
+    align-items: flex-end;
+}
+
+.versus-side.right {
+    align-items: flex-start;
+}
+
+.versus-rule {
+    width: 1dp;
+    height: 60dp;
+    margin: 0 24dp;
+    background-color: #4A4670;
+}
+
+.versus-badge {
+    width: 56dp;
+    height: 56dp;
+    line-height: 56dp;
+    margin: 0 24dp;
+    text-align: center;
+    font-family: "JetBrains Mono";
+    font-size: 14dp;
+    font-weight: 400;
+    color: #8C8FA8;
+    decorator: facets(transparent #4A4670 1dp "640 0 1280 360 640 720 0 360");
+}
+
+.score-label {
+    font-family: "JetBrains Mono";
+    font-size: 12dp;
+    font-weight: 400;
+    letter-spacing: 2dp;
+    text-transform: uppercase;
+    color: #8C8FA8;
+}
+
+.score-note {
+    font-family: "JetBrains Mono";
+    font-size: 12dp;
+    font-weight: 400;
+    color: #8C8FA8;
+}
+
+/* a side's number, in its side's color */
+.game-over-score {
+    display: block;
+    font-size: 52dp;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #FF7A2F;
+}
+
+.game-over-score.dim {
+    color: #C8CBE0;
+}
+
+/* the side colors restated after the two rules above, which would
+   otherwise win the cascade at equal specificity */
+.score-label.side-player, .game-over-score.side-player {
+    color: #FF7A2F;
+}
+
+.score-label.side-ai, .game-over-score.side-ai {
+    color: #2FE6FF;
+}
+
+.popup-buttons {
+    display: flex;
+    justify-content: center;
+}
+
+.popup-buttons .button {
+    margin: 0 7dp;
+    padding: 0;
+    height: 60dp;
+    line-height: 60dp;
+    width: 240dp;
+    font-size: 20dp;
+}
+
+.popup-buttons .button.exit {
+    width: 200dp;
+}
+
+/* ---- the AI page answers in cyan: the machine's side of the arena ---- */
+
+#ai-body .back-arrow:hover, body.gamepad-nav #ai-body .back-arrow:focus {
+    color: #2FE6FF;
+}
+
+#ai-body .back-arrow:active {
+    color: #6FF0FF;
+}
+
+#ai-panel .button:hover, body.gamepad-nav #ai-panel .button:focus {
+    decorator: slant(#1E2A48 #2FE6FF 14dp 1dp);
+}
+
+#ai-panel .button:active {
+    decorator: slant(#20415E #6FF0FF 14dp 1dp);
+}
+
+#ai-panel .button.primary {
+    decorator: slant(#2FE6FF #2FE6FF 14dp 1dp);
+}
+
+#ai-panel .button.primary:hover, body.gamepad-nav #ai-panel .button.primary:focus {
+    decorator: slant(#6FF0FF #6FF0FF 14dp 1dp);
+}
+
+#ai-panel .button.primary:active {
+    decorator: slant(#1FB8CC #1FB8CC 14dp 1dp);
+}
+
+#ai-panel .toggle:hover, body.gamepad-nav #ai-panel .toggle:focus {
+    decorator: slant(#152E3F #2FE6FF 10dp 1dp);
+}
+
+#ai-panel .toggle:active {
+    decorator: slant(#184456 #6FF0FF 10dp 1dp);
+}
+
+#ai-panel .toggle.selected {
+    decorator: slant(#2FE6FF #2FE6FF 10dp 1dp);
+}
+
+#ai-panel .toggle.selected:hover, body.gamepad-nav #ai-panel .toggle.selected:focus {
+    decorator: slant(#6FF0FF #6FF0FF 10dp 1dp);
+}
+
+#ai-panel .toggle.selected:active {
+    decorator: slant(#1FB8CC #1FB8CC 10dp 1dp);
+}
+
+#ai-panel .toggle.disabled:hover, body.gamepad-nav #ai-panel .toggle.disabled:focus,
+#ai-panel .toggle.disabled:active {
+    decorator: slant(#121C2C #2A3A52 10dp 1dp);
+}
+
+#ai-panel .dropdown-head:hover, body.gamepad-nav #ai-panel .dropdown-head:focus {
+    background-color: #152E3F;
+}
+
+#ai-panel .dropdown-head:active {
+    background-color: #184456;
+}
+
+#ai-panel .dropdown-head.open {
+    background-color: #0F2A36;
+    color: #2FE6FF;
+}
+
+#ai-panel .dropdown-head.open:hover, body.gamepad-nav #ai-panel .dropdown-head.open:focus {
+    background-color: #0F2A36;
+}
+
+#ai-panel .dropdown-caret {
+    color: #2FE6FF;
+}
+
+#ai-panel .dropdown-item:hover, body.gamepad-nav #ai-panel .dropdown-item:focus {
+    background-color: #0D2734;
+    color: #2FE6FF;
+}
+
+#ai-panel .dropdown-item:active {
+    background-color: #113E4D;
+    color: #2FE6FF;
+}
+
+#ai-panel .dropdown-item.selected {
+    background-color: #0F2A36;
+    border-left-color: #2FE6FF;
+    color: #2FE6FF;
+}
+
+#ai-panel .dropdown-item.selected:hover, body.gamepad-nav #ai-panel .dropdown-item.selected:focus {
+    background-color: #0F2A36;
+}
+
+/* the Graphics page's AI vision dropdown lights its list in cyan too */
+#vision-gpu-dropdown .dropdown-caret {
+    color: #2FE6FF;
+}
+
+#vision-gpu-dropdown .dropdown-head:hover, body.gamepad-nav #vision-gpu-dropdown .dropdown-head:focus {
+    background-color: #152E3F;
+}
+
+#vision-gpu-dropdown .dropdown-head.open {
+    background-color: #0F2A36;
+    color: #2FE6FF;
+}
+
+#vision-gpu-dropdown .dropdown-item.selected {
+    background-color: #0F2A36;
+    border-left-color: #2FE6FF;
+    color: #2FE6FF;
+}
+
+/* ---- scrollbars ---- */
+
+/* thin 8px scrollbars, invisible track, strong-line thumb turning accent
+   on hover — shared by the file explorer and the whole menu when the
+   window is too small for it */
 scrollbarvertical {
     width: 8dp;
 }
@@ -781,8 +1228,7 @@ scrollbarvertical slidertrack, scrollbarhorizontal slidertrack {
 }
 
 scrollbarvertical sliderbar, scrollbarhorizontal sliderbar {
-    background-color: #0582ca8c;
-    border-radius: 2dp;
+    background-color: #4A4670;
 }
 
 scrollbarvertical sliderbar {
@@ -795,7 +1241,7 @@ scrollbarhorizontal sliderbar {
 
 scrollbarvertical sliderbar:hover, scrollbarvertical sliderbar:active,
 scrollbarhorizontal sliderbar:hover, scrollbarhorizontal sliderbar:active {
-    background-color: #00a6fb8c;
+    background-color: #FF7A2F;
 }
 
 /* both scrollbars visible at once: keep their meeting corner invisible */

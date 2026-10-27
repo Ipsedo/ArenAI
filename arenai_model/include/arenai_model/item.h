@@ -66,6 +66,9 @@ namespace arenai::model {
         bool is_dead() const;
         bool is_already_dead();
 
+        // remaining health over the initial one, in [0, 1]
+        float health_ratio() const;
+
         // zeroes the health and flags the item as already dead: a wreck pays
         // neither hit nor kill to whoever keeps shooting at it
         void kill();
@@ -74,6 +77,7 @@ namespace arenai::model {
         std::vector<ImpactInfo> consume_hits_received();
 
     private:
+        float initial_health_points;
         float health_points;
         bool already_dead;
         std::vector<ImpactInfo> hits_received;

@@ -11,7 +11,7 @@
 
 namespace arenai::desktop::gui {
 
-    // One in-game popup (pause or game over): shows the score and reports
+    // One in-game popup (pause or game over): shows the match status and reports
     // the player's choice to the listener given at open time.
     class PopupPage final : public DocumentView {
     public:
@@ -19,7 +19,7 @@ namespace arenai::desktop::gui {
 
         PopupKind kind() const { return kind_; }
 
-        void open(int score, PopupListener on_action);
+        void open(const MatchStatus &status, PopupListener on_action);
         void close();
 
         // Escape / gamepad B: resumes a paused game; the game-over popup
@@ -34,6 +34,9 @@ namespace arenai::desktop::gui {
 
         PopupKind kind_;
         MenuState &state_;
+        // the status in the shapes the RML binds
+        Rml::String clock_;
+        int machine_score_ = 0;
         PopupListener on_action_;
     };
 

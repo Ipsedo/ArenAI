@@ -6,6 +6,7 @@
 #define ARENAI_DESKTOP_GUI_RML_MENU_STATE_H
 
 #include "../../core/settings.h"
+#include "../gui.h"
 
 namespace arenai::desktop::gui {
 
@@ -17,7 +18,7 @@ namespace arenai::desktop::gui {
         // the dry-run load of the selected agent succeeded (the Play gate)
         bool agent_valid = false;
         // shown by the pause and game-over popups
-        int score = 0;
+        MatchStatus match;
     };
 
 }// namespace arenai::desktop::gui

@@ -9,6 +9,8 @@
 #include <vector>
 
 #include <gtest/gtest.h>
+#include <gui/rml/decorators/facets.h>
+#include <gui/rml/hud.h>
 #include <gui/rml/input.h>
 #include <gui/rml/menu_state.h>
 #include <gui/rml/navigator.h>
@@ -193,13 +195,25 @@ TEST_F(MenuPagesTest, graphics_gpu_picker_maps_index_zero_to_auto) {
     // the saved name is still listed: it stays
     EXPECT_EQ(state_.settings.window_gpu, "GPU B");
 
-    // the data-for clones carry it_index: the window GPU list comes first
-    // and reads Auto, GPU A, GPU B
-    const auto entries = visible_elements(gui::PageId::Graphics, ".device-entry");
-    ASSERT_GE(entries.size(), 3u);
+    // unfold the window GPU dropdown: its data-for clones carry it_index and
+    // read Auto, GPU A, GPU B (IsVisible ignores the ancestors, so the query
+    // stays inside this list: the folded vision one keeps its clones)
+    Rml::ElementDocument &document = navigator_->page(gui::PageId::Graphics).document();
+    const Rml::Element *list = document.GetElementById("window-gpu-list");
+    ASSERT_NE(list, nullptr);
+    click(gui::PageId::Graphics, "toggle_window_gpu()");
+    EXPECT_TRUE(list->IsVisible());
+    const auto entries = visible_elements(gui::PageId::Graphics, "#window-gpu-list .dropdown-item");
+    ASSERT_EQ(entries.size(), 3u);
     entries[1]->DispatchEvent(Rml::EventId::Click, Rml::Dictionary());
+    context().Update();
     EXPECT_EQ(state_.settings.window_gpu, "GPU A");
+    // picking an entry folds the list
+    EXPECT_FALSE(list->IsVisible());
+
+    click(gui::PageId::Graphics, "toggle_window_gpu()");
     entries[0]->DispatchEvent(Rml::EventId::Click, Rml::Dictionary());
+    context().Update();
     EXPECT_TRUE(state_.settings.window_gpu.empty());
 }
 
@@ -265,9 +279,9 @@ TEST_F(MenuPagesTest, dpad_reaches_the_device_toggles_and_crosses_the_explorer) 
         return focus != nullptr ? focus->GetId() : "<none>";
     };
 
-    // the device toggles sit between the algorithm dropdown and the explorer:
-    // the spatial navigation must stop on them on the way down
-    ASSERT_TRUE(document.GetElementById("algorithm-head")->Focus(true));
+    // the device toggles sit right under the algorithm grid: the spatial
+    // navigation must stop on them on the way down from its bottom-left chip
+    ASSERT_TRUE(document.GetElementById("algo-ppo-impala")->Focus(true));
     press(controller::GamepadButton::DPadDown);
     EXPECT_EQ(focused_id(), "cpu-toggle");
 
@@ -280,16 +294,16 @@ TEST_F(MenuPagesTest, dpad_reaches_the_device_toggles_and_crosses_the_explorer) 
     press(controller::GamepadButton::DPadUp);
     EXPECT_EQ(focused_id(), "cuda-toggle");
 
-    // and the way up leaves the toggle towards the dropdown
+    // and the way up leaves the toggle towards the algorithm grid
     press(controller::GamepadButton::DPadUp);
-    EXPECT_EQ(focused_id(), "algorithm-head");
+    EXPECT_EQ(focused_id(), "algo-ppo-liquid-impala");
 }
 
 TEST_F(MenuPagesTest, escape_folds_an_open_dropdown_before_leaving_the_page) {
     build_menu(accepting_validator());
     show(gui::PageId::Ai);
 
-    click(gui::PageId::Ai, "toggle_algorithm()");
+    click(gui::PageId::Ai, "toggle_preset()");
     EXPECT_TRUE(navigator_->on_escape());
     EXPECT_TRUE(only_visible(gui::PageId::Ai));
 
@@ -342,9 +356,17 @@ TEST_F(MenuPagesTest, popup_reports_actions_to_its_listener) {
     pause.load(context());
 
     std::vector<gui::PopupAction> received;
-    pause.open(42, [&received](const gui::PopupAction action) { received.push_back(action); });
+    pause.open(
+        {.elapsed_seconds = 61.f,
+         .player_score = 42,
+         .enemies_mean_score = 7.6f,
+         .enemies_alive = 3},
+        [&received](const gui::PopupAction action) { received.push_back(action); });
+    context().Update();
     EXPECT_TRUE(pause.visible());
-    EXPECT_EQ(state_.score, 42);
+    EXPECT_EQ(state_.match.player_score, 42);
+    EXPECT_EQ(pause.document().GetElementById("pause-clock")->GetInnerRML(), "01:01");
+    EXPECT_EQ(pause.document().GetElementById("pause-machine-score")->GetInnerRML(), "8");
 
     Rml::Element *main_menu = find_event_element(pause.document(), "popup_main_menu()");
     ASSERT_NE(main_menu, nullptr);
@@ -364,7 +386,82 @@ TEST_F(MenuPagesTest, game_over_popup_ignores_escape) {
     game_over.load(context());
 
     int nb_actions = 0;
-    game_over.open(7, [&nb_actions](gui::PopupAction) { nb_actions++; });
+    game_over.open({.player_score = 7}, [&nb_actions](gui::PopupAction) { nb_actions++; });
     game_over.on_escape();
     EXPECT_EQ(nb_actions, 0);
+}
+
+// ========================================================================
+// Backdrops: the facets declarations survive the RCSS shorthand parsing
+// (quoted polygon strings inside a decorator list)
+// ========================================================================
+
+TEST_F(MenuPagesTest, main_menu_backdrop_declares_its_facets) {
+    build_menu(accepting_validator());
+
+    Rml::Element *body = &navigator_->page(gui::PageId::Main).document();
+    const Rml::Property *property = body->GetProperty(Rml::PropertyId::Decorator);
+    ASSERT_NE(property, nullptr);
+    const auto decorators = property->Get<Rml::DecoratorsPtr>();
+    ASSERT_NE(decorators, nullptr);
+    // two ground halves, two fill passes, two line passes, the white marks
+    ASSERT_EQ(decorators->list.size(), 7u);
+
+    for (const Rml::DecoratorDeclaration &declaration: decorators->list) {
+        EXPECT_EQ(declaration.type, "facets");
+        ASSERT_NE(declaration.instancer, nullptr);
+        const Rml::PropertyDefinition *polygons =
+            declaration.instancer->GetPropertySpecification().GetProperty("polygons");
+        ASSERT_NE(polygons, nullptr);
+        const Rml::Property *value = declaration.properties.GetProperty(polygons->GetId());
+        ASSERT_NE(value, nullptr);
+        const auto parsed = gui::FacetsDecorator::parse(value->Get<Rml::String>());
+        EXPECT_FALSE(parsed.empty()) << "polygons: " << value->Get<Rml::String>();
+    }
+}
+
+TEST_F(MenuPagesTest, facets_parse_reads_points_and_opacity) {
+    const auto polygons = gui::FacetsDecorator::parse("0 0 10 0 10 10@0.5|640 0 640 6|bogus");
+    ASSERT_EQ(polygons.size(), 2u);
+    EXPECT_EQ(polygons[0].points.size(), 3u);
+    EXPECT_FLOAT_EQ(polygons[0].opacity, 0.5f);
+    EXPECT_EQ(polygons[1].points.size(), 2u);
+    EXPECT_FLOAT_EQ(polygons[1].opacity, 1.f);
+}
+
+// ========================================================================
+// HUD: the match status lands in the bound elements
+// ========================================================================
+
+namespace {
+    class NoopOverlayRenderer final : public gui::AbstractOverlayRenderer {
+    public:
+        void render_overlay() override {}
+    };
+}// namespace
+
+TEST_F(MenuPagesTest, hud_status_fills_clock_scores_hull_and_enemy_slots) {
+    NoopOverlayRenderer renderer;
+    gui::HudOverlay hud(renderer);
+    hud.load(context());
+
+    hud.set_status(
+        {.elapsed_seconds = 252.6f,
+         .player_score = 1240,
+         .player_health = 0.7f,
+         .enemies_mean_score = 859.6f,
+         .enemies_alive = 3,
+         .enemies_total = 4});
+    context().Update();
+
+    Rml::ElementDocument &document = hud.document();
+    EXPECT_EQ(document.GetElementById("hud-clock")->GetInnerRML(), "04:12");
+    EXPECT_EQ(document.GetElementById("hud-player-score")->GetInnerRML(), "1240");
+    EXPECT_EQ(document.GetElementById("hud-ai-score")->GetInnerRML(), "860");
+    EXPECT_EQ(document.GetElementById("hud-enemies-left")->GetInnerRML(), "3 / 4");
+
+    // 0.7 of 8 segments: 6 kept (ceil), 2 lost
+    Rml::ElementList lost;
+    document.QuerySelectorAll(lost, ".hull-segment.lost");
+    EXPECT_EQ(lost.size(), 2u);
 }

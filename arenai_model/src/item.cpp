@@ -32,9 +32,14 @@ namespace arenai::model {
      */
 
     LifeItem::LifeItem(const float health_points)
-        : health_points(std::max(health_points, 0.f)), already_dead(false) {}
+        : initial_health_points(std::max(health_points, 0.f)), health_points(initial_health_points),
+          already_dead(false) {}
 
     bool LifeItem::is_dead() const { return health_points <= 0.f; }
+
+    float LifeItem::health_ratio() const {
+        return initial_health_points > 0.f ? health_points / initial_health_points : 0.f;
+    }
 
     bool LifeItem::is_already_dead() {
         if (is_dead() && !already_dead) {

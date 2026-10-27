@@ -35,6 +35,9 @@ namespace arenai::model {
 
         virtual bool is_dead() const = 0;
 
+        // kills * 10 + hits landed on the other tanks, player and enemies alike
+        virtual int get_score() const = 0;
+
         virtual std::shared_ptr<Item> get_chassis() const = 0;
         virtual std::shared_ptr<Item> get_canon() const = 0;
     };
@@ -79,8 +82,6 @@ namespace arenai::model {
 
     class PlayerTank : virtual public Tank {
     public:
-        virtual int get_score() const = 0;
-
         virtual PlayerHits consume_hits() = 0;
         virtual std::vector<ImpactInfo> consume_received_impacts() = 0;
 

@@ -63,7 +63,7 @@ namespace arenai::model {
           aim_tolerance_angle(glm::radians(2.f)), hit_reward_scale(0.1f), hit_received_cost(0.3f),
           initial_nb_shells(20), nb_shells(initial_nb_shells), max_shells(30),
           fire_cooldown_frames(static_cast<int>(1.f / 6.f / wanted_frame_frequency)),
-          curr_cooldown_frame(fire_cooldown_frames), shells_recharged_per_hit(5),
+          curr_cooldown_frame(fire_cooldown_frames), shells_recharged_per_hit(15),
           is_dead_already_triggered(false), apply_timeout(apply_timeout), starved(false),
           out_of_shells(false),
           max_frames_without_hit(static_cast<int>(30.f / wanted_frame_frequency)),

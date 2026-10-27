@@ -4,12 +4,27 @@
 
 #include "./liquid_cell.h"
 
+#include <cmath>
 #include <utility>
 
 #include "../../networks_utils/init.h"
+#include "../constants.h"
 
 using namespace arenai;
 using namespace arenai::agent;
+
+namespace {
+    torch::Tensor initial_tau(const int neuron_number) {
+        return torch::exp(
+                   torch::linspace(
+                       std::log(LIQUID_TAU_INIT_MIN), std::log(LIQUID_TAU_INIT_MAX), neuron_number))
+            .reshape({1, neuron_number});
+    }
+
+    torch::Tensor initial_raw_tau(const int neuron_number) {
+        return torch::log(torch::exp(initial_tau(neuron_number) - 1e-3) - 1.);
+    }
+}// namespace
 
 /*
  * Cell model
@@ -43,8 +58,8 @@ torch::Tensor CellModel::forward(const torch::Tensor &x_t, const torch::Tensor &
 LiquidCell::LiquidCell(
     const int neuron_number, const int input_size, const int output_size, const int unfolding_steps,
     const torch::nn::AnyModule &activation_function, const float delta_t)
-    : a(register_parameter("a", torch::ones({1, neuron_number}))),
-      raw_tau(register_parameter("raw_tau", torch::zeros({1, neuron_number}))),
+    : a(register_parameter("a", 1. / initial_tau(neuron_number))),
+      raw_tau(register_parameter("raw_tau", initial_raw_tau(neuron_number))),
       f(register_module(
           "f", std::make_shared<CellModel>(neuron_number, input_size, activation_function))),
       unfolding_steps(unfolding_steps), delta_t(delta_t), neuron_number(neuron_number),
@@ -54,7 +69,9 @@ LiquidCell::LiquidCell(
               torch::nn::Linear(torch::nn::LinearOptions(neuron_number, output_size).bias(false)),
               torch::nn::LayerNorm(
                   torch::nn::LayerNormOptions({output_size}).elementwise_affine(true)),
-              torch::nn::SiLU()))) {}
+              torch::nn::SiLU()))) {
+    to_output->apply(init_hidden_weights);
+}
 
 torch::Tensor LiquidCell::forward(const torch::Tensor &inputs) {
     TORCH_CHECK(

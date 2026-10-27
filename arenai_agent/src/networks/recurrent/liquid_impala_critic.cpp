@@ -12,9 +12,9 @@ using namespace arenai::agent;
 namespace arenai::agent {
 
     LiquidImpalaCritic::LiquidImpalaCritic(
-        const int &nb_sensors, const int &hidden_size_sensors, const int &skip_hidden_size,
-        const int &hidden_size, const std::vector<std::tuple<int, int>> &vision_channels,
-        const int &neuron_number, const int &unfolding_steps, const float &delta_t)
+        const int &nb_sensors, const int &hidden_size_sensors, const int &hidden_size,
+        const std::vector<std::tuple<int, int>> &vision_channels, const int &neuron_number,
+        const int &unfolding_steps, const float &delta_t)
         : vision_encoder(register_module(
             "vision_encoder", std::make_shared<ImpalaConvolutionNetwork>(vision_channels))),
           sensors_encoder(register_module(
@@ -29,26 +29,15 @@ namespace arenai::agent {
                             neuron_number, hidden_size_sensors + vision_encoder->get_output_size(),
                             neuron_number, unfolding_steps, torch::nn::AnyModule(torch::nn::SiLU()),
                             delta_t))),
-          skip(register_module(
-              "skip",
-              torch::nn::Sequential(
-                  torch::nn::Linear(
-                      torch::nn::LinearOptions(
-                          hidden_size_sensors + vision_encoder->get_output_size(), skip_hidden_size)
-                          .bias(false)),
-                  torch::nn::LayerNorm(torch::nn::LayerNormOptions({skip_hidden_size})),
-                  torch::nn::SiLU()))),
           to_value(register_module(
               "to_value", torch::nn::Sequential(
-                              torch::nn::Linear(torch::nn::LinearOptions(
-                                                    neuron_number + skip_hidden_size, hidden_size)
-                                                    .bias(false)),
+                              torch::nn::Linear(
+                                  torch::nn::LinearOptions(neuron_number, hidden_size).bias(false)),
                               torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})),
                               torch::nn::SiLU(), torch::nn::Linear(hidden_size, 1)))) {
 
         vision_encoder->apply(init_hidden_weights);
         sensors_encoder->apply(init_hidden_weights);
-        skip->apply(init_hidden_weights);
 
         to_value->apply(init_value_output_weights);
     }
@@ -62,9 +51,7 @@ namespace arenai::agent {
         const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &x_t) {
         const auto encoded = encode(vision, sensors);
         const auto [output, next_x] = liquid->forward_step(x_t, encoded);
-        return {
-            .value = to_value->forward(torch::cat({output, skip->forward(encoded)}, -1)),
-            .next_x = next_x};
+        return {.value = to_value->forward(output), .next_x = next_x};
     }
 
     LiquidCriticOutput LiquidImpalaCritic::value_sequence(
@@ -89,10 +76,7 @@ namespace arenai::agent {
             outputs.push_back(output);
         }
 
-        return {
-            .value = to_value->forward(
-                torch::cat({torch::stack(outputs, 1), skip->forward(encoded)}, -1)),
-            .next_x = x};
+        return {.value = to_value->forward(torch::stack(outputs, 1)), .next_x = x};
     }
 
     torch::Tensor LiquidImpalaCritic::initial_state(const int batch_size) const {

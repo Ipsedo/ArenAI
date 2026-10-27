@@ -15,7 +15,7 @@ namespace arenai::agent {
 
     LiquidImpalaActor::LiquidImpalaActor(
         const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_actions,
-        const int &hidden_size_sensors, const int &skip_hidden_size, const int &hidden_size,
+        const int &hidden_size_sensors, const int &hidden_size,
         const std::vector<std::tuple<int, int>> &vision_channels, const int &neuron_number,
         const int &unfolding_steps, const float &delta_t, const float &initial_sigma,
         const std::vector<float> &initial_discrete_probas)
@@ -33,22 +33,13 @@ namespace arenai::agent {
                             neuron_number, hidden_size_sensors + vision_encoder->get_output_size(),
                             neuron_number, unfolding_steps, torch::nn::AnyModule(torch::nn::SiLU()),
                             delta_t))),
-          skip(register_module(
-              "skip",
+          to_hidden(register_module(
+              "to_hidden",
               torch::nn::Sequential(
                   torch::nn::Linear(
-                      torch::nn::LinearOptions(
-                          hidden_size_sensors + vision_encoder->get_output_size(), skip_hidden_size)
-                          .bias(false)),
-                  torch::nn::LayerNorm(torch::nn::LayerNormOptions({skip_hidden_size})),
+                      torch::nn::LinearOptions(neuron_number, hidden_size).bias(false)),
+                  torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})),
                   torch::nn::SiLU()))),
-          to_hidden(register_module(
-              "to_hidden", torch::nn::Sequential(
-                               torch::nn::Linear(torch::nn::LinearOptions(
-                                                     neuron_number + skip_hidden_size, hidden_size)
-                                                     .bias(false)),
-                               torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})),
-                               torch::nn::SiLU()))),
           mu(register_module(
               "mu", torch::nn::Sequential(
                         torch::nn::Linear(hidden_size, nb_continuous_actions), torch::nn::Tanh()))),
@@ -63,7 +54,7 @@ namespace arenai::agent {
 
         vision_encoder->apply(init_hidden_weights);
         sensors_encoder->apply(init_hidden_weights);
-        skip->apply(init_hidden_weights);
+        to_hidden->apply(init_hidden_weights);
 
         // zero bias + tanh puts the initial mode at the action-range center
         mu->apply(init_mu_output_weights);
@@ -85,8 +76,7 @@ namespace arenai::agent {
 
         const auto [liquid_output, next_x] = liquid->forward_step(x_t, encoded);
 
-        const auto output = torch::cat({liquid_output, skip->forward(encoded)}, -1);
-        const auto hidden = to_hidden->forward(output);
+        const auto hidden = to_hidden->forward(liquid_output);
 
         return {
             .mu = mu->forward(hidden),
@@ -117,8 +107,7 @@ namespace arenai::agent {
             outputs.push_back(output);
         }
 
-        const auto output = torch::cat({torch::stack(outputs, 1), skip->forward(encoded)}, -1);
-        const auto hidden = to_hidden->forward(output);
+        const auto hidden = to_hidden->forward(torch::stack(outputs, 1));
 
         return {
             .mu = mu->forward(hidden),

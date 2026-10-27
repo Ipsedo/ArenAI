@@ -22,7 +22,7 @@ namespace arenai::agent {
     public:
         explicit LiquidImpalaActor(
             const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_actions,
-            const int &hidden_size_sensors, const int &skip_hidden_size, const int &hidden_size,
+            const int &hidden_size_sensors, const int &hidden_size,
             const std::vector<std::tuple<int, int>> &vision_channels, const int &neuron_number,
             const int &unfolding_steps, const float &delta_t, const float &initial_sigma,
             const std::vector<float> &initial_discrete_probas);
@@ -43,7 +43,6 @@ namespace arenai::agent {
         torch::nn::Sequential sensors_encoder;
 
         std::shared_ptr<LiquidCell> liquid;
-        torch::nn::Sequential skip;
 
         torch::nn::Sequential to_hidden;
 

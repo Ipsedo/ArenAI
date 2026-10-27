@@ -65,6 +65,7 @@ namespace arenai::agent {
 
         vision_encoder->apply(init_hidden_weights);
         sensors_encoder->apply(init_hidden_weights);
+        to_hidden->apply(init_hidden_weights);
         skip->apply(init_hidden_weights);
 
         // zero bias + tanh puts the initial mode at the action-range center

@@ -30,12 +30,11 @@ namespace arenai::agent {
             const std::shared_ptr<LiquidImpalaActor> &actor,
             const std::shared_ptr<LiquidPpoRolloutBuffer> &rollout_buffer, int nb_sensors,
             float actor_learning_rate, float critic_learning_rate, int hidden_size_sensors,
-            int hidden_size, const std::vector<std::tuple<int, int>> &vision_channels,
-            int neuron_number, int unfolding_steps, float delta_t, torch::Device device,
-            int metric_window_size, float gamma, float gae_lambda, float clip_epsilon,
-            float target_kl, float grad_norm_max, float continuous_entropy_factor,
-            float discrete_entropy_factor, int epochs, int rollout_size, int minibatch_size,
-            int chunk_size);
+            const std::vector<std::tuple<int, int>> &vision_channels, int neuron_number,
+            int unfolding_steps, float delta_t, torch::Device device, int metric_window_size,
+            float gamma, float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
+            float continuous_entropy_factor, float discrete_entropy_factor, int epochs,
+            int rollout_size, int minibatch_size, int chunk_size);
 
         void step() override;
 

@@ -12,7 +12,7 @@ using namespace arenai::agent;
 namespace arenai::agent {
 
     LiquidImpalaCritic::LiquidImpalaCritic(
-        const int &nb_sensors, const int &hidden_size_sensors, const int &hidden_size,
+        const int &nb_sensors, const int &hidden_size_sensors,
         const std::vector<std::tuple<int, int>> &vision_channels, const int &neuron_number,
         const int &unfolding_steps, const float &delta_t)
         : vision_encoder(register_module(
@@ -29,12 +29,7 @@ namespace arenai::agent {
                             neuron_number, hidden_size_sensors + vision_encoder->get_output_size(),
                             neuron_number, unfolding_steps, torch::nn::AnyModule(torch::nn::SiLU()),
                             delta_t))),
-          to_value(register_module(
-              "to_value", torch::nn::Sequential(
-                              torch::nn::Linear(
-                                  torch::nn::LinearOptions(neuron_number, hidden_size).bias(false)),
-                              torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size})),
-                              torch::nn::SiLU(), torch::nn::Linear(hidden_size, 1)))) {
+          to_value(register_module("to_value", torch::nn::Linear(neuron_number, 1))) {
 
         vision_encoder->apply(init_hidden_weights);
         sensors_encoder->apply(init_hidden_weights);

@@ -19,7 +19,7 @@ namespace arenai::agent {
     class LiquidImpalaCritic final : public torch::nn::Module {
     public:
         explicit LiquidImpalaCritic(
-            const int &nb_sensors, const int &hidden_size_sensors, const int &hidden_size,
+            const int &nb_sensors, const int &hidden_size_sensors,
             const std::vector<std::tuple<int, int>> &vision_channels, const int &neuron_number,
             const int &unfolding_steps, const float &delta_t);
 
@@ -40,7 +40,7 @@ namespace arenai::agent {
 
         std::shared_ptr<LiquidCell> liquid;
 
-        torch::nn::Sequential to_value;
+        torch::nn::Linear to_value;
 
         // [rows, features] recurrent input: encoded vision and sensors, concatenated
         torch::Tensor encode(const torch::Tensor &vision, const torch::Tensor &sensors);

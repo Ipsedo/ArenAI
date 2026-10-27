@@ -24,7 +24,6 @@ LiquidImpalaPpoAgentTest::make_factory(const LiquidImpalaPpoTestConfig &cfg) con
         .actor_learning_rate = 1e-3f,
         .critic_learning_rate = 1e-3f,
         .hidden_size_sensors = 16,
-        .hidden_size = 4,
         .vision_channels = {{3, 8}},
         .neuron_number = 16,
         .unfolding_steps = 2,

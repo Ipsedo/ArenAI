@@ -102,7 +102,7 @@ namespace arenai::agent {
         const bool cuda) {
         const auto actor = std::make_shared<LiquidImpalaActor>(
             nb_sensors, nb_continuous_actions, nb_discrete_action,
-            get_value<int>("hidden_size_sensors"), get_value<int>("hidden_size"),
+            get_value<int>("hidden_size_sensors"),
             get_value<std::vector<std::tuple<int, int>>>("vision_channels"),
             get_value<int>("neuron_number"), get_value<int>("unfolding_steps"),
             get_value<float>("delta_t"), 0.f, std::vector{0.5f, 0.5f});

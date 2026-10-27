@@ -14,7 +14,6 @@ namespace arenai::agent {
              .member = &LiquidImpalaPpoHyperParams::critic_learning_rate},
             {.name = "--hidden_size_sensors",
              .member = &LiquidImpalaPpoHyperParams::hidden_size_sensors},
-            {.name = "--hidden_size", .member = &LiquidImpalaPpoHyperParams::hidden_size},
             {.name = "--vision_channels", .member = &LiquidImpalaPpoHyperParams::vision_channels},
             {.name = "--neuron_number", .member = &LiquidImpalaPpoHyperParams::neuron_number},
             {.name = "--unfolding_steps", .member = &LiquidImpalaPpoHyperParams::unfolding_steps},

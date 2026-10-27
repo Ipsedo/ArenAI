@@ -13,7 +13,6 @@ LiquidImpalaPpoTrainingTest::make_factory(const LiquidImpalaPpoTrainingTestConfi
         .actor_learning_rate = 1e-3f,
         .critic_learning_rate = 1e-3f,
         .hidden_size_sensors = 8,
-        .hidden_size = 4,
         .vision_channels = {{3, 4}},
         .neuron_number = NEURON_NUMBER,
         .unfolding_steps = UNFOLDING_STEPS,
@@ -88,7 +87,7 @@ TEST_F(LiquidImpalaPpoTrainingTest, HiddenStateAdvancesAndResetsAcrossEpisodes) 
     const std::vector<std::tuple<int, int>> vision_channels{{3, 4}};
 
     const auto actor = std::make_shared<LiquidImpalaActor>(
-        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 8, 4, vision_channels,
+        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 8, vision_channels,
         NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
     const auto hidden_state = std::make_shared<LiquidImpalaHiddenState>(actor);
     const auto rollout_buffer = std::make_shared<LiquidPpoRolloutBuffer>();
@@ -135,7 +134,7 @@ TEST_F(LiquidImpalaPpoTrainingTest, TrainingUpdatesActorParameters) {
     const std::vector<std::tuple<int, int>> vision_channels{{3, 4}};
 
     const auto actor = std::make_shared<LiquidImpalaActor>(
-        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 8, 4, vision_channels,
+        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 8, vision_channels,
         NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
     const auto hidden_state = std::make_shared<LiquidImpalaHiddenState>(actor);
     const auto rollout_buffer = std::make_shared<LiquidPpoRolloutBuffer>();
@@ -145,7 +144,7 @@ TEST_F(LiquidImpalaPpoTrainingTest, TrainingUpdatesActorParameters) {
         std::make_shared<TorchLiquidImpalaPpoAgent>(actor, hidden_state, device, collector);
     // target_kl = 0 : early stop disabled so every minibatch applies its update
     const auto trainer = std::make_shared<LiquidImpalaPpoTrainer>(
-        actor, rollout_buffer, cfg.nb_sensors, 1e-3f, 1e-3f, 8, 4, vision_channels, NEURON_NUMBER,
+        actor, rollout_buffer, cfg.nb_sensors, 1e-3f, 1e-3f, 8, vision_channels, NEURON_NUMBER,
         UNFOLDING_STEPS, DELTA_T, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 0.001f, 2,
         ROLLOUT_SIZE, MINIBATCH_SIZE, CHUNK_SIZE);
 
@@ -192,7 +191,7 @@ TEST_F(LiquidImpalaPpoTrainingTest, MaskedFireReceivesNoUpdate) {
     const std::vector<std::tuple<int, int>> vision_channels{{3, 4}};
 
     const auto actor = std::make_shared<LiquidImpalaActor>(
-        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 8, 4, vision_channels,
+        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 8, vision_channels,
         NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
     const auto hidden_state = std::make_shared<LiquidImpalaHiddenState>(actor);
     const auto rollout_buffer = std::make_shared<LiquidPpoRolloutBuffer>();
@@ -202,7 +201,7 @@ TEST_F(LiquidImpalaPpoTrainingTest, MaskedFireReceivesNoUpdate) {
         std::make_shared<TorchLiquidImpalaPpoAgent>(actor, hidden_state, device, collector);
     // target_kl = 0 : early stop disabled so every minibatch applies its update
     const auto trainer = std::make_shared<LiquidImpalaPpoTrainer>(
-        actor, rollout_buffer, cfg.nb_sensors, 1e-3f, 1e-3f, 8, 4, vision_channels, NEURON_NUMBER,
+        actor, rollout_buffer, cfg.nb_sensors, 1e-3f, 1e-3f, 8, vision_channels, NEURON_NUMBER,
         UNFOLDING_STEPS, DELTA_T, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 0.001f, 2,
         ROLLOUT_SIZE, MINIBATCH_SIZE, CHUNK_SIZE);
 

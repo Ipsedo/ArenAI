@@ -38,7 +38,12 @@ namespace arenai::agent {
         int actor_epochs = 4;
         int critic_epochs = 8;
         int rollout_size = 30 * 10;
-        int minibatch_size = 1536;
+        // one optimizer step per batch_size rows, accumulated over gpu_batch_size-row
+        // forward / backward passes (the device memory bound)
+        int actor_batch_size = 512;
+        int actor_gpu_batch_size = 128;
+        int critic_batch_size = 512;
+        int critic_gpu_batch_size = 128;
     };
 
     std::vector<CliField<LiquidPpoHyperParams>> liquid_ppo_cli_fields();

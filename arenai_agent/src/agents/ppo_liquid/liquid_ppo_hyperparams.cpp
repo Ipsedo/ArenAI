@@ -34,7 +34,12 @@ namespace arenai::agent {
             {.name = "--actor_epochs", .member = &LiquidPpoHyperParams::actor_epochs},
             {.name = "--critic_epochs", .member = &LiquidPpoHyperParams::critic_epochs},
             {.name = "--rollout_size", .member = &LiquidPpoHyperParams::rollout_size},
-            {.name = "--minibatch_size", .member = &LiquidPpoHyperParams::minibatch_size},
+            {.name = "--actor_batch_size", .member = &LiquidPpoHyperParams::actor_batch_size},
+            {.name = "--actor_gpu_batch_size",
+             .member = &LiquidPpoHyperParams::actor_gpu_batch_size},
+            {.name = "--critic_batch_size", .member = &LiquidPpoHyperParams::critic_batch_size},
+            {.name = "--critic_gpu_batch_size",
+             .member = &LiquidPpoHyperParams::critic_gpu_batch_size},
         };
     }
 

@@ -26,7 +26,10 @@ LiquidPpoTrainingTest::make_factory(const LiquidPpoTrainingTestConfig &cfg) cons
         .actor_epochs = 2,
         .critic_epochs = 2,
         .rollout_size = ROLLOUT_SIZE,
-        .minibatch_size = MINIBATCH_SIZE};
+        .actor_batch_size = MINIBATCH_SIZE,
+        .actor_gpu_batch_size = MINIBATCH_SIZE,
+        .critic_batch_size = MINIBATCH_SIZE,
+        .critic_gpu_batch_size = MINIBATCH_SIZE};
 
     return std::make_unique<LiquidPpoTorchAgentFactory>(
         cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
@@ -146,11 +149,12 @@ TEST_F(LiquidPpoTrainingTest, TrainingUpdatesActorParameters) {
     const auto collector = std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state);
     const auto agent =
         std::make_shared<TorchLiquidPpoAgent>(actor, hidden_state, device, collector);
-    // target_kl = 0 : early stop disabled so every minibatch applies its update
+    // target_kl = 0 : early stop disabled so every optimizer batch applies its update
     const auto trainer = std::make_shared<LiquidPpoTrainer>(
         actor, rollout_buffer, cfg.nb_sensors, 1e-3f, 1e-3f, 8, vision_channels, group_norm_nums,
         NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f,
-        0.001f, 2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE, CHUNK_SIZE);
+        0.001f, 2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE,
+        CHUNK_SIZE);
 
     std::vector<torch::Tensor> initial_parameters;
     for (const auto &parameter: actor->parameters())
@@ -204,11 +208,12 @@ TEST_F(LiquidPpoTrainingTest, MaskedFireReceivesNoUpdate) {
     const auto collector = std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state);
     const auto agent =
         std::make_shared<TorchLiquidPpoAgent>(actor, hidden_state, device, collector);
-    // target_kl = 0 : early stop disabled so every minibatch applies its update
+    // target_kl = 0 : early stop disabled so every optimizer batch applies its update
     const auto trainer = std::make_shared<LiquidPpoTrainer>(
         actor, rollout_buffer, cfg.nb_sensors, 1e-3f, 1e-3f, 8, vision_channels, group_norm_nums,
         NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f,
-        0.001f, 2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE, CHUNK_SIZE);
+        0.001f, 2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE,
+        CHUNK_SIZE);
 
     auto named_parameters = actor->named_parameters();
     const auto weight = named_parameters["discrete.0.weight"];

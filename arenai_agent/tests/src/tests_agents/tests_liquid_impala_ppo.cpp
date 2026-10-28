@@ -36,7 +36,10 @@ LiquidImpalaPpoAgentTest::make_factory(const LiquidImpalaPpoTestConfig &cfg) con
         .actor_epochs = 1,
         .critic_epochs = 1,
         .rollout_size = 8,
-        .minibatch_size = 10};
+        .actor_batch_size = 10,
+        .actor_gpu_batch_size = 10,
+        .critic_batch_size = 10,
+        .critic_gpu_batch_size = 10};
 
     return std::make_unique<LiquidImpalaPpoTorchAgentFactory>(
         cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,

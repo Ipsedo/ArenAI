@@ -35,7 +35,8 @@ namespace arenai::agent {
             float delta_t, torch::Device device, int metric_window_size, float gamma,
             float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
             float continuous_entropy_factor, float discrete_entropy_factor, int actor_epochs,
-            int critic_epochs, int rollout_size, int minibatch_size, int chunk_size);
+            int critic_epochs, int rollout_size, int actor_batch_size, int actor_gpu_batch_size,
+            int critic_batch_size, int critic_gpu_batch_size, int chunk_size);
 
         void step() override;
 
@@ -72,10 +73,10 @@ namespace arenai::agent {
 
         // recorded on every minibatch
         std::shared_ptr<AbstractMetric> clip_fraction_metric;
-        // recorded once per update (epoch), skipped ones included
+        // recorded on every actor optimizer step taken or refused
         std::shared_ptr<AbstractMetric> kl_metric;
 
-        // fraction of actor updates the KL threshold skipped
+        // share of the planned actor steps the KL threshold cut, once per rollout
         std::shared_ptr<AbstractMetric> skip_fraction_metric;
 
         float gamma;
@@ -88,7 +89,10 @@ namespace arenai::agent {
         int actor_epochs;
         int critic_epochs;
         int rollout_size;
-        int minibatch_size;
+        int actor_batch_size;
+        int actor_gpu_batch_size;
+        int critic_batch_size;
+        int critic_gpu_batch_size;
         int chunk_size;
 
         // critic liquid state opening the next rollout's first step, carried
@@ -97,18 +101,18 @@ namespace arenai::agent {
 
         void train();
 
-        // accumulates the minibatch's share of the update gradient; returns its per-row KL
+        // accumulates a device block's share of its optimizer batch gradient; returns its per-row KL
         torch::Tensor backward_actor(
             const torch::Tensor &vision, const torch::Tensor &proprioception,
             const torch::Tensor &hidden, const torch::Tensor &continuous_actions,
             const torch::Tensor &discrete_actions, const torch::Tensor &fire_masks,
             const torch::Tensor &old_log_probs, const torch::Tensor &advantages,
-            const torch::Tensor &valids, float rollout_fraction) const;
+            const torch::Tensor &valids, float batch_fraction) const;
 
         void backward_critic(
             const torch::Tensor &vision, const torch::Tensor &proprioception,
             const torch::Tensor &hidden, const torch::Tensor &returns, const torch::Tensor &valids,
-            float rollout_fraction) const;
+            float batch_fraction) const;
 
         // sequential critic pass over the rollout, advancing critic_carry
         LiquidGaeResult compute_gae(const LiquidPpoRollout &rollout, torch::Device device);

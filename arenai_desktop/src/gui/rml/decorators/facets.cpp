@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <charconv>
+#include <cmath>
 #include <string_view>
 #include <system_error>
 
@@ -17,8 +18,16 @@ namespace arenai::desktop::gui {
         constexpr float DESIGN_WIDTH = 1280.f;
         constexpr float DESIGN_HEIGHT = 720.f;
 
+        // the swell's silent line: the arena floor starts under it
+        constexpr float HORIZON = 395.f;
+
         Rml::ColourbPremultiplied scaled(const Rml::Colourb color, const float opacity) {
             return color.ToPremultiplied(std::clamp(opacity, 0.f, 1.f));
+        }
+
+        float smooth01(const float value) {
+            const float v = std::clamp(value, 0.f, 1.f);
+            return v * v * (3.f - 2.f * v);
         }
 
         // convex (or single-reflex) polygon as a triangle fan from its first
@@ -45,9 +54,37 @@ namespace arenai::desktop::gui {
 
     FacetsDecorator::FacetsDecorator(
         const Rml::Colourb fill_color, const Rml::Colourb line_color,
-        const Rml::NumericValue thickness, const Rml::String &polygons)
+        const Rml::NumericValue thickness, const Rml::String &polygons,
+        const Rml::String &animation)
         : fill_color_(fill_color), line_color_(line_color), thickness_(thickness),
-          polygons_(parse(polygons)) {}
+          polygons_(parse(polygons)), houle_(animation == "houle") {}
+
+    float FacetsDecorator::swell_offset(const Rml::Vector2f point, const double time) {
+        if (point.y >= 719.5f) return 0.f;// the screen's foot stays anchored
+
+        float weight;
+        if (point.y >= HORIZON) {
+            // the floor: silent at the horizon, full at the screen's foot
+            weight = std::pow(std::min((point.y - HORIZON) / 325.f, 1.f), 1.1f);
+        } else {
+            // above the horizon the shards only sway, anchored at both the
+            // horizon and the screen's top edge
+            const float u = point.y / HORIZON;
+            weight = 0.35f * smooth01((u - 0.02f) / 0.23f) * smooth01((1.f - u) / 0.2f);
+        }
+
+        const auto t = static_cast<float>(time);
+        // the player's half: long, slow, rounded waves; the machine's half:
+        // shorter, quicker ripples running the other way
+        const float player = 11.f * std::sin(point.x * 0.0038f + t * 0.42f)
+                             + 5.f * std::sin(point.x * 0.009f - t * 0.27f + 2.f);
+        const float machine = 8.f * std::sin(point.x * 0.0062f - t * 0.62f + 1.f)
+                              + 4.f * std::sin(point.x * 0.013f + t * 0.45f);
+        const float blend = smooth01((point.x - 440.f) / 400.f);
+        return -weight * (player * (1.f - blend) + machine * blend);
+    }
+
+    bool FacetsDecorator::animated() const { return houle_; }
 
     std::vector<FacetsDecorator::Polygon> FacetsDecorator::parse(const Rml::String &polygons) {
         // std::from_chars throughout: locale-independent, unlike strtof and
@@ -94,12 +131,16 @@ namespace arenai::desktop::gui {
         const bool fills = fill_color_.alpha > 0;
         const bool lines = line_color_.alpha > 0 && thickness > 0.f;
 
+        const double time = houle_ ? Rml::GetSystemInterface()->GetElapsedTime() : 0.0;
+
         Rml::Mesh mesh;
         std::vector<Rml::Vector2f> points;
         for (const auto &polygon: polygons_) {
             points.clear();
-            for (const Rml::Vector2f point: polygon.points)
-                points.emplace_back(point.x * scale.x, point.y * scale.y);
+            for (const Rml::Vector2f point: polygon.points) {
+                const float y = houle_ ? point.y + swell_offset(point, time) : point.y;
+                points.emplace_back(point.x * scale.x, y * scale.y);
+            }
             const float alpha = opacity * polygon.opacity;
 
             if (points.size() == 2) {
@@ -124,7 +165,8 @@ namespace arenai::desktop::gui {
     FacetsDecoratorInstancer::FacetsDecoratorInstancer()
         : id_fill_color_(add_color("fill-color", "transparent")),
           id_line_color_(add_color("line-color", "transparent")),
-          id_thickness_(add_length("thickness", "1dp")), id_polygons_(add_string("polygons", "")) {
+          id_thickness_(add_length("thickness", "1dp")), id_polygons_(add_string("polygons", "")),
+          id_animation_(add_string("animation", "")) {
         register_shorthand();
     }
 
@@ -133,7 +175,8 @@ namespace arenai::desktop::gui {
         const Rml::DecoratorInstancerInterface &) {
         return Rml::MakeShared<FacetsDecorator>(
             color_of(properties, id_fill_color_), color_of(properties, id_line_color_),
-            length_of(properties, id_thickness_), string_of(properties, id_polygons_));
+            length_of(properties, id_thickness_), string_of(properties, id_polygons_),
+            string_of(properties, id_animation_));
     }
 
 }// namespace arenai::desktop::gui

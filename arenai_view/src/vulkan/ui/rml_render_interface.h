@@ -49,9 +49,13 @@ namespace arenai::view {
         void SetTransform(const Rml::Matrix4f *transform) override;
 
     private:
+        // host-visible buffers: UI meshes are small and the animated menu
+        // backdrops recompile theirs every frame, so the upload must not
+        // block on a GPU submit (retirement already outlives frames in
+        // flight)
         struct CompiledGeometry {
-            std::unique_ptr<VulkanBuffer> vertices;
-            std::unique_ptr<VulkanBuffer> indices;
+            std::unique_ptr<HostVisibleBuffer> vertices;
+            std::unique_ptr<HostVisibleBuffer> indices;
             uint32_t nb_indices;
         };
 

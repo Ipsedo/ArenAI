@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstring>
 #include <iostream>
 #include <utility>
 
@@ -121,12 +122,15 @@ namespace arenai::view {
 
         auto *geometry = new CompiledGeometry{};
         geometry->nb_indices = static_cast<uint32_t>(indices.size());
-        geometry->vertices = std::make_unique<VulkanBuffer>(
-            device_, upload_pool_, vertices.data(), vertices.size() * sizeof(Rml::Vertex),
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-        geometry->indices = std::make_unique<VulkanBuffer>(
-            device_, upload_pool_, indices.data(), indices.size() * sizeof(int),
-            VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+        geometry->vertices = std::make_unique<HostVisibleBuffer>(
+            device_, vertices.size() * sizeof(Rml::Vertex), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+        std::memcpy(
+            geometry->vertices->data(), vertices.data(), vertices.size() * sizeof(Rml::Vertex));
+        geometry->vertices->flush();
+        geometry->indices = std::make_unique<HostVisibleBuffer>(
+            device_, indices.size() * sizeof(int), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+        std::memcpy(geometry->indices->data(), indices.data(), indices.size() * sizeof(int));
+        geometry->indices->flush();
 
         return reinterpret_cast<Rml::CompiledGeometryHandle>(geometry);
     }

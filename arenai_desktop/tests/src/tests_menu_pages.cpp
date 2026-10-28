@@ -2,6 +2,8 @@
 // Created by samuel on 25/10/2026.
 //
 
+#include <algorithm>
+#include <cmath>
 #include <filesystem>
 #include <memory>
 #include <optional>
@@ -9,6 +11,7 @@
 #include <vector>
 
 #include <gtest/gtest.h>
+#include <gui/rml/decorators/crystals.h>
 #include <gui/rml/decorators/facets.h>
 #include <gui/rml/hud.h>
 #include <gui/rml/input.h>
@@ -404,20 +407,55 @@ TEST_F(MenuPagesTest, main_menu_backdrop_declares_its_facets) {
     ASSERT_NE(property, nullptr);
     const auto decorators = property->Get<Rml::DecoratorsPtr>();
     ASSERT_NE(decorators, nullptr);
-    // two ground halves, two fill passes, two line passes, the white marks
-    ASSERT_EQ(decorators->list.size(), 7u);
+    // two ground halves, two fill passes, two line passes, the seam dashes,
+    // the center lozenges, two crystal camps
+    ASSERT_EQ(decorators->list.size(), 10u);
 
+    int nb_houle = 0, nb_crystals = 0;
     for (const Rml::DecoratorDeclaration &declaration: decorators->list) {
-        EXPECT_EQ(declaration.type, "facets");
         ASSERT_NE(declaration.instancer, nullptr);
-        const Rml::PropertyDefinition *polygons =
-            declaration.instancer->GetPropertySpecification().GetProperty("polygons");
+        const Rml::PropertySpecification &spec = declaration.instancer->GetPropertySpecification();
+
+        if (declaration.type == "crystals") {
+            ++nb_crystals;
+            const Rml::PropertyDefinition *instances = spec.GetProperty("instances");
+            ASSERT_NE(instances, nullptr);
+            const Rml::Property *value = declaration.properties.GetProperty(instances->GetId());
+            ASSERT_NE(value, nullptr);
+            EXPECT_FALSE(gui::CrystalsDecorator::parse(value->Get<Rml::String>()).empty())
+                << "instances: " << value->Get<Rml::String>();
+            continue;
+        }
+
+        EXPECT_EQ(declaration.type, "facets");
+        const Rml::PropertyDefinition *polygons = spec.GetProperty("polygons");
         ASSERT_NE(polygons, nullptr);
         const Rml::Property *value = declaration.properties.GetProperty(polygons->GetId());
         ASSERT_NE(value, nullptr);
         const auto parsed = gui::FacetsDecorator::parse(value->Get<Rml::String>());
         EXPECT_FALSE(parsed.empty()) << "polygons: " << value->Get<Rml::String>();
+
+        const Rml::PropertyDefinition *animation = spec.GetProperty("animation");
+        ASSERT_NE(animation, nullptr);
+        const Rml::Property *mode = declaration.properties.GetProperty(animation->GetId());
+        if (mode != nullptr && mode->Get<Rml::String>() == "houle") ++nb_houle;
     }
+    // the colored layers and the lozenges swell; grounds and dashes stay
+    // still; each camp tumbles its own crystals
+    EXPECT_EQ(nb_houle, 5);
+    EXPECT_EQ(nb_crystals, 2);
+}
+
+TEST_F(MenuPagesTest, crystals_parse_reads_instances) {
+    const auto instances =
+        gui::CrystalsDecorator::parse("165 255 82 1 1 0|985 300 38 2 -1.3 1.3|bogus");
+    ASSERT_EQ(instances.size(), 2u);
+    EXPECT_FLOAT_EQ(instances[0].center.x, 165.f);
+    EXPECT_FLOAT_EQ(instances[0].size, 82.f);
+    EXPECT_EQ(instances[0].shape, 1);
+    EXPECT_EQ(instances[1].shape, 2);
+    EXPECT_FLOAT_EQ(instances[1].spin, -1.3f);
+    EXPECT_FLOAT_EQ(instances[1].phase, 1.3f);
 }
 
 TEST_F(MenuPagesTest, facets_parse_reads_points_and_opacity) {
@@ -427,6 +465,41 @@ TEST_F(MenuPagesTest, facets_parse_reads_points_and_opacity) {
     EXPECT_FLOAT_EQ(polygons[0].opacity, 0.5f);
     EXPECT_EQ(polygons[1].points.size(), 2u);
     EXPECT_FLOAT_EQ(polygons[1].opacity, 1.f);
+}
+
+// ========================================================================
+// The asymmetric swell: anchored at the horizon and the screen edges,
+// different on the two halves of the arena, and alive over time
+// ========================================================================
+
+TEST_F(MenuPagesTest, facets_swell_is_anchored_at_horizon_and_edges) {
+    for (const double t: {0.0, 1.7, 42.0}) {
+        EXPECT_FLOAT_EQ(gui::FacetsDecorator::swell_offset({320.f, 720.f}, t), 0.f);
+        EXPECT_NEAR(gui::FacetsDecorator::swell_offset({320.f, 395.f}, t), 0.f, 1e-3f);
+        EXPECT_NEAR(gui::FacetsDecorator::swell_offset({320.f, 0.f}, t), 0.f, 1e-3f);
+    }
+}
+
+TEST_F(MenuPagesTest, facets_swell_moves_the_floor_over_time) {
+    const Rml::Vector2f mid_floor{320.f, 650.f};
+    const float at_rest = gui::FacetsDecorator::swell_offset(mid_floor, 0.0);
+    float max_travel = 0.f;
+    for (const double t: {1.0, 2.0, 3.0})
+        max_travel = std::max(
+            max_travel, std::abs(gui::FacetsDecorator::swell_offset(mid_floor, t) - at_rest));
+    EXPECT_GT(max_travel, 1.f);
+}
+
+TEST_F(MenuPagesTest, facets_swell_is_asymmetric_between_the_two_sides) {
+    // mirrored probes: were the two halves driven by one symmetric field,
+    // these would stay equal at every time
+    float max_difference = 0.f;
+    for (const double t: {0.0, 0.5, 1.0, 1.5}) {
+        const float player = gui::FacetsDecorator::swell_offset({320.f, 650.f}, t);
+        const float machine = gui::FacetsDecorator::swell_offset({960.f, 650.f}, t);
+        max_difference = std::max(max_difference, std::abs(player - machine));
+    }
+    EXPECT_GT(max_difference, 1.f);
 }
 
 // ========================================================================

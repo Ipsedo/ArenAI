@@ -5,6 +5,7 @@
 #include "./decorator_registry.h"
 
 #include "./corner_reticle.h"
+#include "./crystals.h"
 #include "./damage_arc.h"
 #include "./facets.h"
 #include "./gradient_bar.h"
@@ -25,6 +26,7 @@ namespace arenai::desktop::gui {
         registry.add("corner-reticle", std::make_unique<CornerReticleDecoratorInstancer>());
         registry.add("slant", std::make_unique<SlantDecoratorInstancer>());
         registry.add("facets", std::make_unique<FacetsDecoratorInstancer>());
+        registry.add("crystals", std::make_unique<CrystalsDecoratorInstancer>());
         registry.add("reticle", std::make_unique<ReticleDecoratorInstancer>());
         registry.add("hit-marker", std::make_unique<HitMarkerDecoratorInstancer>());
         registry.add("damage-arc", std::make_unique<DamageArcDecoratorInstancer>());

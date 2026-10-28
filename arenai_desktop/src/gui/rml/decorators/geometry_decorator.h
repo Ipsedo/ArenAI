@@ -26,6 +26,10 @@ namespace arenai::desktop::gui {
     protected:
         virtual Rml::Mesh build_mesh(Rml::Element &element) const = 0;
 
+        // an animated decorator's mesh depends on the clock: it is rebuilt at
+        // every render instead of being compiled once
+        virtual bool animated() const { return false; }
+
         // the element's `color` premultiplied by its opacity
         static Rml::ColourbPremultiplied element_color(const Rml::Element &element);
         // the element's border-box size, the decorator's drawing area

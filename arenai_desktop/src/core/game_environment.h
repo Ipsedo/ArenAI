@@ -29,6 +29,12 @@ namespace arenai::desktop {
 
         ~DesktopGameEnvironment() override;
 
+        // the window-backend half of the reset — the player renderer, its
+        // drawable uploads and the input handlers. reset() leaves it out so
+        // it can run on a worker thread while the loading screen presents;
+        // this must then be called on the main thread, before any frame.
+        void create_player_renderer();
+
         std::shared_ptr<controller::AbstractKeyboardCallback> keyboard_handler() const;
         std::shared_ptr<controller::AbstractGamepadCallback> gamepad_handler() const;
 
@@ -71,6 +77,10 @@ namespace arenai::desktop {
 
     private:
         std::shared_ptr<view::AbstractWindowedGraphicBackend> windowed_backend;
+
+        // kept from on_reset_drawables for create_player_renderer; owned by
+        // the base class, which outlives it
+        model::AbstractPhysicEngine *engine_ = nullptr;
 
         std::shared_ptr<utils::AbstractResourceFileReader> asset_file_reader;
         std::unique_ptr<model::PlayerTank> player_tank;

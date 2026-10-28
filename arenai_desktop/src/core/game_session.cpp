@@ -29,6 +29,8 @@ namespace arenai::desktop {
             static_cast<float>(settings_.spawn_side), static_cast<float>(settings_.spawn_side));
     }
 
+    void GameSession::finish_loading() const { env_->create_player_renderer(); }
+
     void GameSession::install_input() {
         // also covers runs that skip the menu (ARENAI_DEBUG_AUTOPLAY)
         select_configured_gamepad(*window_, settings_);

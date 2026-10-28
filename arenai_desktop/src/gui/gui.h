@@ -24,8 +24,8 @@
 // port, and it exposes no RmlUi type — the library stays an implementation
 // detail of the rml/ subfolder, exactly like Vulkan stays inside arenai_view.
 // The port is split by role so each consumer depends on the slice it uses:
-// the application loop on the main menu, the game session on the popups
-// and the HUD.
+// the application loop on the main menu and the loading screen, the game
+// session on the popups and the HUD.
 namespace arenai::desktop::gui {
 
     enum class MenuOutcome { Play, Quit };
@@ -75,6 +75,20 @@ namespace arenai::desktop::gui {
         virtual std::shared_ptr<controller::AbstractGamepadCallback> gamepad_input() = 0;
     };
 
+    // the loading screen shown while a match is being built: the
+    // application loop (main thread) renders one animation frame at a time
+    // while the heavy loading runs on a worker thread
+    class AbstractLoadingScreen {
+    public:
+        virtual ~AbstractLoadingScreen() = default;
+
+        virtual void show() = 0;
+        // one frame: polls the window events, updates and renders the
+        // document, presents — main thread only
+        virtual void render_frame() = 0;
+        virtual void hide() = 0;
+    };
+
     enum class HitKind { Hit, Kill };
 
     // the in-game overlay: aim reticle, hit marker, incoming-damage arcs and
@@ -97,6 +111,7 @@ namespace arenai::desktop::gui {
         virtual ~AbstractGui() = default;
 
         virtual AbstractMainMenu &main_menu() = 0;
+        virtual AbstractLoadingScreen &loading() = 0;
         virtual AbstractPopupMenu &popups() = 0;
         virtual AbstractHudOverlay &hud() = 0;
 

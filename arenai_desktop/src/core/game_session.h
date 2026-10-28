@@ -34,6 +34,11 @@ namespace arenai::desktop {
             const GameOptions &options, const GameSettings &settings,
             std::shared_ptr<view::AbstractWindowedGraphicBackend> backend, gui::AbstractGui &gui);
 
+        // the constructor may run on a worker thread while the loading
+        // screen presents; this finishes the window-backend half (player
+        // renderer, GPU uploads) and must run on the main thread, before run()
+        void finish_loading() const;
+
         InGameOutcome run();
 
     private:

@@ -54,7 +54,7 @@ body {
    The seam dashes and the ground halves stay still. On the main menu the
    horizon shards are wireframe tetrahedra tumbling in 3D (the crystals
    decorator), one large and one small per camp. */
-#main-body {
+#main-body, #loading-body {
     decorator: facets(transparent #FFFFFF 2dp "640 0 640 6@0.25|640 16 640 22@0.25|640 32 640 38@0.25|640 48 640 54@0.25|640 64 640 70@0.25|640 80 640 86@0.25|640 96 640 102@0.25|640 112 640 118@0.25|640 128 640 134@0.25|640 144 640 150@0.25|640 160 640 166@0.25|640 176 640 182@0.25|640 192 640 198@0.25|640 208 640 214@0.25|640 224 640 230@0.25|640 240 640 246@0.25|640 256 640 262@0.25|640 272 640 278@0.25|640 288 640 294@0.25|640 304 640 310@0.25|640 320 640 326@0.25|640 336 640 342@0.25|640 352 640 358@0.25|640 368 640 374@0.25|640 384 640 390@0.25|640 400 640 406@0.25|640 416 640 422@0.25|640 432 640 438@0.25|640 448 640 454@0.25|640 464 640 470@0.25|640 480 640 486@0.25|640 496 640 502@0.25|640 512 640 518@0.25|640 528 640 534@0.25|640 544 640 550@0.25|640 560 640 566@0.25|640 576 640 582@0.25|640 592 640 598@0.25|640 608 640 614@0.25|640 624 640 630@0.25|640 640 640 646@0.25|640 656 640 662@0.25|640 672 640 678@0.25|640 688 640 694@0.25|640 704 640 710@0.25"),
                facets(transparent #FFFFFF 2dp "640 520 520 560 640 600 760 560@0.12|640 480 460 540 640 640 820 540@0.12" houle),
                crystals(#2FE6FF 1dp "1115 255 82 2 -1 4.2|985 300 38 1 -1.3 1.3"),
@@ -1289,4 +1289,68 @@ scrollbarhorizontal sliderbar:hover, scrollbarhorizontal sliderbar:active {
 /* both scrollbars visible at once: keep their meeting corner invisible */
 scrollbarcorner {
     background-color: transparent;
+}
+
+/* ---- loading screen: the arena being built after Play ---- */
+
+/* no progress bar: the label breathes and the diamonds ripple toward it,
+   orange from the player's camp, cyan from the machine's. The backdrop is
+   the main menu's (shared selector above); the document sits over the
+   always-on HUD. Geometry decorators cannot be interpolated, so all the
+   motion lives on color, opacity and transform. */
+#loading-body {
+    z-index: 1;
+}
+
+.loading-eyebrow {
+    margin: 46dp 0 20dp 0;
+}
+
+.loading-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@keyframes loading-pulse {
+    from { color: #8C8FA8; }
+    to { color: #F2F4FF; }
+}
+
+.loading-label {
+    font-size: 26dp;
+    font-weight: 700;
+    letter-spacing: 8dp;
+    text-transform: uppercase;
+    margin: 0 22dp;
+    color: #8C8FA8;
+    animation: 1.1s cubic-in-out infinite alternate loading-pulse;
+}
+
+@keyframes diamond-step {
+    0% { opacity: 0.15; transform: translateY(0dp); }
+    45% { opacity: 1; transform: translateY(-3dp); }
+    100% { opacity: 0.15; transform: translateY(0dp); }
+}
+
+/* same period, stepped delays: a wave converging on the label from both
+   camps (the pre-delay state equals frame 0, so nothing pops) */
+.loading-diamond {
+    font-size: 18dp;
+    opacity: 0.15;
+    margin: 0 5dp;
+}
+
+.loading-diamond.d1 { animation: 1.4s 0.45s cubic-in-out infinite diamond-step; }
+.loading-diamond.d2 { animation: 1.4s 0.3s cubic-in-out infinite diamond-step; }
+.loading-diamond.d3 { animation: 1.4s 0.15s cubic-in-out infinite diamond-step; }
+.loading-diamond.d4 { animation: 1.4s 0s cubic-in-out infinite diamond-step; }
+
+.loading-sub {
+    font-family: "JetBrains Mono";
+    font-size: 12dp;
+    font-weight: 400;
+    letter-spacing: 2dp;
+    color: #8C8FA8;
+    margin-top: 26dp;
 }

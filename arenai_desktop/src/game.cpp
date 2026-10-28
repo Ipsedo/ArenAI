@@ -4,8 +4,11 @@
 
 #include "./game.h"
 
+#include <chrono>
 #include <cstdlib>
+#include <future>
 #include <iostream>
+#include <memory>
 
 #include <arenai_agent/factory.h>
 #include <arenai_agent/file_reader.h>
@@ -18,6 +21,52 @@
 #include "./gui/gui.h"
 
 namespace arenai::desktop {
+
+    namespace {
+
+        // Builds a session behind the loading screen: the heavy work (agent,
+        // physics, vision threads) runs on a worker while the main thread
+        // keeps presenting animation frames, then the window-backend half
+        // (finish_loading) runs here, the one place it may touch the
+        // swapchain. Returns nullptr when the window closed meanwhile.
+        std::unique_ptr<GameSession> load_session(
+            const GameOptions &options, const GameSettings &settings,
+            const std::shared_ptr<view::AbstractWindowedGraphicBackend> &backend,
+            gui::AbstractGui &gui) {
+            auto &loading = gui.loading();
+            const auto window = backend->get_window();
+
+            loading.show();
+            loading.render_frame();
+
+            auto future = std::async(std::launch::async, [&] {
+                return std::make_unique<GameSession>(options, settings, backend, gui);
+            });
+
+            try {
+                while (future.wait_for(std::chrono::seconds(0)) != std::future_status::ready
+                       && !window->should_close())
+                    loading.render_frame();
+
+                // joins the worker in every case; rethrows its exception, the
+                // same surfacing a synchronous construction had
+                auto session = future.get();
+
+                if (window->should_close()) {
+                    loading.hide();
+                    return nullptr;
+                }
+
+                session->finish_loading();
+                loading.hide();
+                return session;
+            } catch (...) {
+                loading.hide();
+                throw;
+            }
+        }
+
+    }// namespace
 
     void run_gui(const GameOptions &game_options) {
         // the first shipped preset is the out-of-the-box selection
@@ -65,11 +114,12 @@ namespace arenai::desktop {
 
             if (menu_outcome == gui::MenuOutcome::Quit) break;
 
-            InGameOutcome game_outcome;
+            auto game_outcome = InGameOutcome::ExitGame;
             do {
-                GameSession session(
-                    game_options, gui->main_menu().settings(), graphics_backend, *gui);
-                game_outcome = session.run();
+                const auto session =
+                    load_session(game_options, gui->main_menu().settings(), graphics_backend, *gui);
+                if (!session) break;
+                game_outcome = session->run();
             } while (game_outcome == InGameOutcome::Retry);
 
             if (game_outcome == InGameOutcome::ExitGame || dbg_autoplay) break;

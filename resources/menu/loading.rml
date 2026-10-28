@@ -1,0 +1,31 @@
+<rml>
+<head>
+    <title>Loading</title>
+    <link type="text/rcss" href="menu.rcss"/>
+</head>
+<body id="loading-body">
+    <div class="topbar">
+        <span class="side-player">◆ Player</span>
+        <span class="side-ai">Neural opponent ◆</span>
+    </div>
+
+    <div class="hero">
+        <h1 class="title">ArenAI</h1>
+        <div class="title-rule"></div>
+        <span class="eyebrow loading-eyebrow">Preparing the arena</span>
+        <div class="loading-row">
+            <span class="loading-diamond d1 side-player">◆</span>
+            <span class="loading-diamond d2 side-player">◆</span>
+            <span class="loading-label">Loading</span>
+            <span class="loading-diamond d3 side-ai">◆</span>
+            <span class="loading-diamond d4 side-ai">◆</span>
+        </div>
+        <span class="loading-sub">spawning tanks · waking the neural opponent</span>
+    </div>
+
+    <div class="bottombar">
+        <span>match setup</span>
+        <span>neural opponent initializing</span>
+    </div>
+</body>
+</rml>

@@ -21,6 +21,7 @@
 #include "./fonts.h"
 #include "./hud.h"
 #include "./input.h"
+#include "./loading_page.h"
 #include "./menu_state.h"
 #include "./navigator.h"
 #include "./pages/ai_page.h"
@@ -47,7 +48,8 @@ namespace arenai::desktop::gui {
                 : backend_(backend), window_(backend->get_window()),
                   state_{.settings = std::move(options.initial_settings)},
                   width_(options.window_width), height_(options.window_height),
-                  file_interface_(asset_reader), main_menu_(*this), popups_(*this) {
+                  file_interface_(asset_reader), main_menu_(*this), loading_(*this),
+                  popups_(*this) {
                 Rml::SetSystemInterface(&system_interface_);
                 Rml::SetFileInterface(&file_interface_);
                 Rml::SetRenderInterface(&backend_->ui_render_interface());
@@ -89,12 +91,16 @@ namespace arenai::desktop::gui {
                 hud_ = std::make_unique<HudOverlay>(*this);
                 hud_->load(*context_);
 
+                loading_page_ = std::make_unique<LoadingPage>();
+                loading_page_->load(*context_);
+
                 // route the pad input to the pad persisted from the previous
                 // session, when it is connected
                 select_configured_gamepad(*window_, state_.settings);
             }
 
             AbstractMainMenu &main_menu() override { return main_menu_; }
+            AbstractLoadingScreen &loading() override { return loading_; }
             AbstractPopupMenu &popups() override { return popups_; }
             AbstractHudOverlay &hud() override { return *hud_; }
 
@@ -159,6 +165,34 @@ namespace arenai::desktop::gui {
             private:
                 RmlGui &gui_;
                 std::optional<MenuOutcome> outcome_;
+            };
+
+            // one animation frame per call while the application loop waits
+            // for the match to finish building on its worker thread; same
+            // frame sequence as the menu loop, without the navigator (the
+            // document holds no interactive element)
+            class LoadingScreen final : public AbstractLoadingScreen {
+            public:
+                explicit LoadingScreen(RmlGui &gui) : gui_(gui) {}
+
+                void show() override {
+                    gui_.loading_page_->show(Rml::ModalFlag::None, Rml::FocusFlag::None);
+                }
+
+                void render_frame() override {
+                    gui_.window_->poll_events();
+                    gui_.context_->Update();
+
+                    gui_.backend_->begin_ui_pass(view::UiPass::Clear, gui_.width_, gui_.height_);
+                    gui_.context_->Render();
+                    gui_.backend_->end_ui_pass();
+                    gui_.backend_->present();
+                }
+
+                void hide() override { gui_.loading_page_->hide(); }
+
+            private:
+                RmlGui &gui_;
             };
 
             class PopupMenu final : public AbstractPopupMenu {
@@ -255,8 +289,10 @@ namespace arenai::desktop::gui {
             std::unique_ptr<PopupPage> pause_;
             std::unique_ptr<PopupPage> game_over_;
             std::unique_ptr<HudOverlay> hud_;
+            std::unique_ptr<LoadingPage> loading_page_;
 
             MainMenu main_menu_;
+            LoadingScreen loading_;
             PopupMenu popups_;
         };
 

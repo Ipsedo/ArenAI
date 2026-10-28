@@ -59,6 +59,10 @@ namespace arenai::desktop {
         const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
         last_model_matrices_ = model_matrices;
 
+        // during the reset warm-up the player renderer does not exist yet:
+        // create_player_renderer builds it afterwards, on the main thread
+        if (!player_renderer) return;
+
         player_renderer->make_current();
         player_renderer->draw(model_matrices);
     }
@@ -203,6 +207,10 @@ namespace arenai::desktop {
 
     void DesktopGameEnvironment::on_reset_drawables(
         const std::unique_ptr<model::AbstractPhysicEngine> &engine) {
+        engine_ = engine.get();
+    }
+
+    void DesktopGameEnvironment::create_player_renderer() {
         player_renderer = windowed_backend->make_player_renderer(
             glm::vec3(200, 300, 200), player_tank->get_camera(),
             player_renderer_settings(settings));
@@ -241,7 +249,7 @@ namespace arenai::desktop {
                 name, drawable_factory->make_diffuse(file_reader, shape->get_vertices(), color));
         }
 
-        for (const auto &item: engine->get_items()) {
+        for (const auto &item: engine_->get_items()) {
             const glm::vec4 color(u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, 1.f);
 
             player_renderer->add_drawable(

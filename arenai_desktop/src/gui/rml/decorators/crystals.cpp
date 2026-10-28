@@ -25,10 +25,14 @@ namespace arenai::desktop::gui {
 
         // the two authored irregular tetrahedra, in unit crystal space
         constexpr std::array<Vec3, 4> SHAPE_1{
-            {{0.f, -1.7f, 0.15f}, {1.05f, 0.6f, 0.6f}, {-0.8f, 0.75f, 0.55f},
+            {{0.f, -1.7f, 0.15f},
+             {1.05f, 0.6f, 0.6f},
+             {-0.8f, 0.75f, 0.55f},
              {-0.15f, 0.5f, -1.05f}}};
         constexpr std::array<Vec3, 4> SHAPE_2{
-            {{0.f, -1.35f, -0.3f}, {0.95f, 0.8f, 0.4f}, {-1.15f, 0.45f, 0.3f},
+            {{0.f, -1.35f, -0.3f},
+             {0.95f, 0.8f, 0.4f},
+             {-1.15f, 0.45f, 0.3f},
              {0.2f, 0.35f, 1.05f}}};
         constexpr std::array<std::array<int, 2>, 6> EDGES{
             {{0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 3}, {2, 3}}};
@@ -40,7 +44,8 @@ namespace arenai::desktop::gui {
         const Rml::String &instances)
         : line_color_(line_color), thickness_(thickness), instances_(parse(instances)) {}
 
-    std::vector<CrystalsDecorator::Instance> CrystalsDecorator::parse(const Rml::String &instances) {
+    std::vector<CrystalsDecorator::Instance>
+    CrystalsDecorator::parse(const Rml::String &instances) {
         // std::from_chars: locale-independent, like the facets parser
         const auto read_float = [](std::string_view text, float &value) -> std::string_view {
             while (!text.empty() && text.front() == ' ') text.remove_prefix(1);

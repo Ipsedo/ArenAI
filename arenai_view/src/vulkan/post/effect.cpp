@@ -82,8 +82,10 @@ namespace arenai::view {
         create_targets(new_width, new_height);
     }
 
-    VkPipeline VulkanPostEffect::pipeline_for(const VkFormat color_format) {
-        if (const auto cached = pipelines_.find(color_format); cached != pipelines_.end())
+    VkPipeline VulkanPostEffect::pipeline_for(
+        const VkFormat color_format, const VkSampleCountFlagBits samples) {
+        const auto key = std::make_pair(color_format, samples);
+        if (const auto cached = pipelines_.find(key); cached != pipelines_.end())
             return cached->second;
 
         const VkPipeline &pipeline = PipelineBuilder()
@@ -91,8 +93,9 @@ namespace arenai::view {
                                          .cull_mode(VK_CULL_MODE_NONE)
                                          .depth(false, false)
                                          .color_format(color_format)
+                                         .samples(samples)
                                          .build(device_, pipeline_layout_);
-        pipelines_.insert({color_format, pipeline});
+        pipelines_.insert({key, pipeline});
         return pipeline;
     }
 
@@ -118,10 +121,12 @@ namespace arenai::view {
 
     void VulkanPostEffect::record_draw(
         const FrameContext &context, const VkFormat color_format,
-        const std::vector<const Target *> &inputs, const void *push_data) {
+        const VkSampleCountFlagBits samples, const std::vector<const Target *> &inputs,
+        const void *push_data) {
         const VkCommandBuffer &cmd = context.cmd;
 
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_for(color_format));
+        vkCmdBindPipeline(
+            cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_for(color_format, samples));
 
         const VkDescriptorSet &set = set_for(inputs);
         vkCmdBindDescriptorSets(
@@ -184,7 +189,7 @@ namespace arenai::view {
                 .height = static_cast<uint32_t>(out.height())}};
         vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-        record_draw(context, out.format(), inputs, push_data);
+        record_draw(context, out.format(), VK_SAMPLE_COUNT_1_BIT, inputs, push_data);
 
         vkCmdEndRendering(cmd);
 
@@ -209,7 +214,7 @@ namespace arenai::view {
             .maxDepth = 1.f};
         vkCmdSetViewport(context.cmd, 0, 1, &viewport);
 
-        record_draw(context, context.output_format, inputs, push_data);
+        record_draw(context, context.output_format, context.output_samples, inputs, push_data);
     }
 
     void VulkanPostEffect::ensure_target_readable(

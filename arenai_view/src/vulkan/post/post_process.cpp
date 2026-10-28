@@ -210,6 +210,7 @@ namespace arenai::view {
             .textures = {},
             .scalars = {},
             .output_format = VK_FORMAT_UNDEFINED,
+            .output_samples = VK_SAMPLE_COUNT_1_BIT,
             .output_width = 0,
             .output_height = 0};
 
@@ -219,9 +220,10 @@ namespace arenai::view {
 
     void VulkanPostProcess::composite_within(
         const VkCommandBuffer &cmd, const VkFormat output_format, const int output_width,
-        const int output_height) {
+        const int output_height, const VkSampleCountFlagBits output_samples) {
         context_.cmd = cmd;
         context_.output_format = output_format;
+        context_.output_samples = output_samples;
         context_.output_width = output_width;
         context_.output_height = output_height;
         ordered_effects_.back()->render(context_);

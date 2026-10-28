@@ -66,6 +66,7 @@ namespace arenai::view {
                         .depth(false, false)
                         .blend_premultiplied()
                         .color_format(frame_context_->swapchain_format())
+                        .samples(frame_context_->samples())
                         .build(device_, pipeline_layout_);
 
         white_texture_ = std::make_unique<RmlTexture>();

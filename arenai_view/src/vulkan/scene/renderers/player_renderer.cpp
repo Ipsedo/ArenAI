@@ -48,7 +48,7 @@ namespace arenai::view {
         frame_context_->begin_swapchain_pass(false, false);
         post_process_->composite_within(
             cmd, frame_context_->swapchain_format(), frame_context_->width(),
-            frame_context_->height());
+            frame_context_->height(), frame_context_->samples());
 
         frame_context_->end_swapchain_pass();
     }

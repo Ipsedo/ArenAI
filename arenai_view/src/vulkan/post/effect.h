@@ -9,6 +9,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include <glm/glm.hpp>
@@ -49,6 +50,7 @@ namespace arenai::view {
             std::unordered_map<PostScalar, float> scalars;
 
             VkFormat output_format;
+            VkSampleCountFlagBits output_samples;
             int output_width;
             int output_height;
         };
@@ -86,10 +88,10 @@ namespace arenai::view {
 
     private:
         void create_targets(int width, int height);
-        VkPipeline pipeline_for(VkFormat color_format);
+        VkPipeline pipeline_for(VkFormat color_format, VkSampleCountFlagBits samples);
         VkDescriptorSet set_for(const std::vector<const Target *> &inputs);
         void record_draw(
-            const FrameContext &context, VkFormat color_format,
+            const FrameContext &context, VkFormat color_format, VkSampleCountFlagBits samples,
             const std::vector<const Target *> &inputs, const void *push_data);
 
         DescriptorAllocator *descriptors_;
@@ -107,7 +109,9 @@ namespace arenai::view {
         VkDescriptorSetLayout empty_layout_ = VK_NULL_HANDLE;
         VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
 
-        std::map<VkFormat, VkPipeline> pipelines_;
+        // one pipeline per (color format, sample count) drawn into: the
+        // effects' own targets and the multisampled window pass differ
+        std::map<std::pair<VkFormat, VkSampleCountFlagBits>, VkPipeline> pipelines_;
 
         std::map<std::vector<const Target *>, VkDescriptorSet> input_sets_;
     };

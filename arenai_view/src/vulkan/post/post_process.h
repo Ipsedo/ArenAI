@@ -39,9 +39,12 @@ namespace arenai::view {
             const VkCommandBuffer &cmd, const glm::mat4 &proj_matrix,
             const glm::vec3 &sun_dir_view);
 
+        // records the final composite inside the caller's already begun
+        // render pass, whose color attachment has `output_format` and
+        // `output_samples`
         void composite_within(
-            const VkCommandBuffer &cmd, VkFormat output_format, int output_width,
-            int output_height);
+            const VkCommandBuffer &cmd, VkFormat output_format, int output_width, int output_height,
+            VkSampleCountFlagBits output_samples = VK_SAMPLE_COUNT_1_BIT);
 
         ~VulkanPostProcess() = default;
 

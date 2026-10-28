@@ -17,7 +17,10 @@ namespace arenai::view {
         : device_(std::move(device)),
           swapchain_(std::make_unique<SwapChain>(device_, surface, std::move(framebuffer_extent))),
           swapchain_valid_(swapchain_->handle() != VK_NULL_HANDLE),
+          samples_(device_->clamp_sample_count(WINDOW_MSAA_SAMPLES)),
           pool_(device_->make_command_pool()) {
+        create_msaa_target();
+
         VkCommandBufferAllocateInfo alloc_info{};
         alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         alloc_info.commandPool = pool_;
@@ -54,8 +57,7 @@ namespace arenai::view {
 
         if (!swapchain_valid_ || !swapchain_->matches_framebuffer()) {
             device_->wait_idle();
-            swapchain_valid_ = swapchain_->recreate();
-            if (!swapchain_valid_) return false;
+            if (!recreate_swapchain()) return false;
         }
 
         auto &[cmd, in_flight, image_acquired, submitted] = slots_[slot_index_];
@@ -73,8 +75,7 @@ namespace arenai::view {
             if (result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR) break;
             if (result == VK_ERROR_OUT_OF_DATE_KHR) {
                 device_->wait_idle();
-                swapchain_valid_ = swapchain_->recreate();
-                if (!swapchain_valid_) return false;
+                if (!recreate_swapchain()) return false;
                 continue;
             }
             vk_check(result, "vkAcquireNextImageKHR");
@@ -90,6 +91,12 @@ namespace arenai::view {
             VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0,
             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+        if (msaa_color_)
+            record_image_barrier(
+                cmd, msaa_color_->image(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
+                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 
         frame_active_ = true;
         image_written_ = false;
@@ -108,16 +115,27 @@ namespace arenai::view {
 
     VkFormat WindowFrameContext::swapchain_format() const { return swapchain_->format(); }
 
+    VkSampleCountFlagBits WindowFrameContext::samples() const { return samples_; }
+
     int WindowFrameContext::width() const { return swapchain_->width(); }
 
     int WindowFrameContext::height() const { return swapchain_->height(); }
 
     void
     WindowFrameContext::begin_swapchain_pass(const bool load_existing, const bool clear) const {
+        // the pass renders into the multisampled target (loaded from the
+        // previous pass of this frame when asked, since the resolve leaves it
+        // intact) and resolves into the swapchain image as it ends
         VkRenderingAttachmentInfo color_attachment{};
         color_attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
         color_attachment.imageView = swapchain_->view(image_index_);
         color_attachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        if (msaa_color_) {
+            color_attachment.imageView = msaa_color_->view();
+            color_attachment.resolveMode = VK_RESOLVE_MODE_AVERAGE_BIT;
+            color_attachment.resolveImageView = swapchain_->view(image_index_);
+            color_attachment.resolveImageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        }
         color_attachment.loadOp = load_existing && image_written_ ? VK_ATTACHMENT_LOAD_OP_LOAD
                                   : clear                         ? VK_ATTACHMENT_LOAD_OP_CLEAR
                                                                   : VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -137,13 +155,17 @@ namespace arenai::view {
 
         const VkCommandBuffer &command_buffer = cmd();
         if (image_written_) {
-            record_image_barrier(
-                command_buffer, swapchain_->image(image_index_), VK_IMAGE_ASPECT_COLOR_BIT,
-                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+            const auto written_again = [&](const VkImage &image) {
+                record_image_barrier(
+                    command_buffer, image, VK_IMAGE_ASPECT_COLOR_BIT,
+                    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                    VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+            };
+            written_again(swapchain_->image(image_index_));
+            if (msaa_color_) written_again(msaa_color_->image());
         }
 
         vkCmdBeginRendering(command_buffer, &rendering_info);
@@ -203,7 +225,7 @@ namespace arenai::view {
 
     void WindowFrameContext::handle_resize() {
         device_->wait_idle();
-        swapchain_valid_ = swapchain_->recreate();
+        recreate_swapchain();
 
         if (swapchain_valid_ && render_finished_.size() != swapchain_->image_count()) {
             for (const auto semaphore: render_finished_)
@@ -219,6 +241,20 @@ namespace arenai::view {
                     vkCreateSemaphore(device_->handle(), &semaphore_info, nullptr, &semaphore),
                     "vkCreateSemaphore (render finished)");
         }
+    }
+
+    bool WindowFrameContext::recreate_swapchain() {
+        swapchain_valid_ = swapchain_->recreate();
+        create_msaa_target();
+        return swapchain_valid_;
+    }
+
+    void WindowFrameContext::create_msaa_target() {
+        msaa_color_.reset();
+        if (!swapchain_valid_ || samples_ == VK_SAMPLE_COUNT_1_BIT) return;
+        msaa_color_ = std::make_unique<Target>(
+            device_, swapchain_->width(), swapchain_->height(), swapchain_->format(),
+            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT, samples_);
     }
 
     void WindowFrameContext::wait_all_fences() {
@@ -241,6 +277,7 @@ namespace arenai::view {
 
         vkDestroyCommandPool(device_->handle(), pool_, nullptr);
 
+        msaa_color_.reset();
         swapchain_.reset();
     }
 

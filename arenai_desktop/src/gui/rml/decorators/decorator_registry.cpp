@@ -7,9 +7,11 @@
 #include "./corner_reticle.h"
 #include "./damage_arc.h"
 #include "./facets.h"
+#include "./gradient_bar.h"
 #include "./hit_marker.h"
 #include "./reticle.h"
 #include "./slant.h"
+#include "./text_gradient.h"
 
 namespace arenai::desktop::gui {
 
@@ -26,6 +28,8 @@ namespace arenai::desktop::gui {
         registry.add("reticle", std::make_unique<ReticleDecoratorInstancer>());
         registry.add("hit-marker", std::make_unique<HitMarkerDecoratorInstancer>());
         registry.add("damage-arc", std::make_unique<DamageArcDecoratorInstancer>());
+        registry.add("text-gradient", std::make_unique<TextGradientDecoratorInstancer>());
+        registry.add("gradient-bar", std::make_unique<GradientBarDecoratorInstancer>());
     }
 
 }// namespace arenai::desktop::gui

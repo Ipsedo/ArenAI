@@ -6,13 +6,23 @@
 <body id="main-body" data-model="main">
     <div class="topbar">
         <span class="side-player">◆ Player</span>
-        <span class="crumb">ArenAI · season 0</span>
         <span class="side-ai">Neural opponent ◆</span>
     </div>
 
     <div id="main-panel" class="hero">
-        <h1 class="title"><span class="side-player">Aren</span><span class="side-ai">AI</span></h1>
-        <p class="tagline"><span class="side-player">You</span><span class="vs">vs</span><span class="side-ai">the machine</span></p>
+        <h1 class="title">ArenAI</h1>
+        <div class="title-rule"></div>
+        <div class="versus-intro">
+            <div class="versus-side left">
+                <span class="who side-player">You</span>
+                <span class="who-sub">player · human</span>
+            </div>
+            <div class="versus-badge">VS</div>
+            <div class="versus-side right">
+                <span class="who side-ai">The machine</span>
+                <span class="who-sub">neural opponent</span>
+            </div>
+        </div>
 
         <div class="hero-buttons">
             <div class="button primary wide-play" autofocus data-class-disabled="!can_play" data-event-click="play()">Play</div>

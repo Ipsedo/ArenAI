@@ -50,10 +50,10 @@ body {
 /* the backdrops, one per screen */
 #main-body {
     decorator: facets(transparent #FFFFFF 2dp "640 0 640 6@0.25|640 16 640 22@0.25|640 32 640 38@0.25|640 48 640 54@0.25|640 64 640 70@0.25|640 80 640 86@0.25|640 96 640 102@0.25|640 112 640 118@0.25|640 128 640 134@0.25|640 144 640 150@0.25|640 160 640 166@0.25|640 176 640 182@0.25|640 192 640 198@0.25|640 208 640 214@0.25|640 224 640 230@0.25|640 240 640 246@0.25|640 256 640 262@0.25|640 272 640 278@0.25|640 288 640 294@0.25|640 304 640 310@0.25|640 320 640 326@0.25|640 336 640 342@0.25|640 352 640 358@0.25|640 368 640 374@0.25|640 384 640 390@0.25|640 400 640 406@0.25|640 416 640 422@0.25|640 432 640 438@0.25|640 448 640 454@0.25|640 464 640 470@0.25|640 480 640 486@0.25|640 496 640 502@0.25|640 512 640 518@0.25|640 528 640 534@0.25|640 544 640 550@0.25|640 560 640 566@0.25|640 576 640 582@0.25|640 592 640 598@0.25|640 608 640 614@0.25|640 624 640 630@0.25|640 640 640 646@0.25|640 656 640 662@0.25|640 672 640 678@0.25|640 688 640 694@0.25|640 704 640 710@0.25|640 520 520 560 640 600 760 560@0.12|640 480 460 540 640 640 820 540@0.12"),
-               facets(transparent #2FE6FF 1dp "640 720 1060 500 860 440@0.45|1060 500 1280 330 1100 360 860 440@0.3|860 440 640 420@0.3|1220 330 1130 180 1040 330@0.35|1130 180 1040 330 950 300@0.2"),
-               facets(transparent #FF7A2F 1dp "640 720 220 500 420 440@0.45|220 500 0 330 180 360 420 440@0.3|420 440 640 420@0.3|60 330 150 180 240 330@0.35|150 180 240 330 330 300@0.2"),
-               facets(#2FE6FF transparent 1dp "640 720 1280 720 1280 560 1060 500@0.22|640 720 1060 500 860 440@0.16|640 720 860 440 640 420@0.10|1280 560 1280 330 1060 500@0.12|1060 500 1280 330 1100 360 860 440@0.08|860 440 1100 360 640 340 640 420@0.05"),
-               facets(#FF7A2F transparent 1dp "640 720 0 720 0 560 220 500@0.22|640 720 220 500 420 440@0.16|640 720 420 440 640 420@0.10|0 560 0 330 220 500@0.12|220 500 0 330 180 360 420 440@0.08|420 440 180 360 640 340 640 420@0.05"),
+               facets(transparent #2FE6FF 1dp "640 720 1060 500 880 510@0.45|1060 500 1280 330 1120 440 880 510@0.3|880 510 640 490@0.3|1220 330 1130 180 1040 330@0.35|1130 180 1040 330 950 300@0.2"),
+               facets(transparent #FF7A2F 1dp "640 720 220 500 400 510@0.45|220 500 0 330 160 440 400 510@0.3|400 510 640 490@0.3|60 330 150 180 240 330@0.35|150 180 240 330 330 300@0.2"),
+               facets(#2FE6FF transparent 1dp "640 720 1280 720 1280 560 1060 500@0.22|640 720 1060 500 880 510@0.16|640 720 880 510 640 490@0.10|1280 560 1280 330 1060 500@0.12|1060 500 1280 330 1120 440 880 510@0.08|880 510 1120 440 640 420 640 490@0.05"),
+               facets(#FF7A2F transparent 1dp "640 720 0 720 0 560 220 500@0.22|640 720 220 500 400 510@0.16|640 720 400 510 640 490@0.10|0 560 0 330 220 500@0.12|220 500 0 330 160 440 400 510@0.08|400 510 160 440 640 420 640 490@0.05"),
                facets(#0A1420 transparent 1dp "640 0 1280 0 1280 720 640 720"),
                facets(#140C22 transparent 1dp "0 0 640 0 640 720 0 720");
 }
@@ -509,29 +509,62 @@ h2 {
     margin: 60dp auto 0 auto;
 }
 
+/* the wordmark's orange → cyan fade is painted inside the glyphs by the
+   gui-registered text-gradient decorator (the transition centered on the
+   word, hence on the arena's seam); the native text keeps the layout,
+   invisible */
 .title {
     font-size: 140dp;
     line-height: 0.9;
     letter-spacing: 3dp;
-    margin-bottom: 14dp;
+    color: transparent;
+    decorator: text-gradient(#FF7A2F #2FE6FF 36 64);
 }
 
-.tagline {
+/* the thin rule under the wordmark: transparent → orange → cyan →
+   transparent, vertex-colored by the gui-registered gradient-bar decorator */
+.title-rule {
     display: block;
-    font-size: 20dp;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 6dp;
-    color: #C8CBE0;
-    margin-bottom: 52dp;
+    width: 760dp;
+    height: 2dp;
+    margin-top: 18dp;
+    decorator: gradient-bar(#FF7A2F #2FE6FF 30);
 }
 
-.tagline .vs {
+/* the two camps face to face under the title, equal fixed wings around the
+   versus lozenge so the VS sits on the arena's seam */
+.versus-intro {
+    display: flex;
+    align-items: center;
+    margin: 34dp 0 44dp 0;
+}
+
+.versus-intro .versus-side {
+    width: 320dp;
+}
+
+/* the seam line runs behind the lozenge: a ground fill under the outline */
+.versus-intro .versus-badge {
+    margin: 0 30dp;
+    decorator: facets(transparent #4A4670 1dp "640 0 1280 360 640 720 0 360"),
+               facets(#0E0A1C transparent 1dp "640 0 1280 360 640 720 0 360@0.8");
+}
+
+.who {
+    font-size: 26dp;
+    font-weight: 700;
+    letter-spacing: 4dp;
+    text-transform: uppercase;
+}
+
+.who-sub {
     font-family: "JetBrains Mono";
+    font-size: 11dp;
     font-weight: 400;
-    letter-spacing: 0;
+    letter-spacing: 2dp;
+    text-transform: uppercase;
     color: #8C8FA8;
-    margin: 0 18dp;
+    margin-top: 6dp;
 }
 
 .hero-buttons {

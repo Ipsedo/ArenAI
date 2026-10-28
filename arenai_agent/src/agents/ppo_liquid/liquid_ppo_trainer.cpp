@@ -78,7 +78,12 @@ namespace arenai::agent {
     void LiquidPpoTrainer::train() {
         const auto device = actor->parameters().back().device();
 
-        const auto rollout = rollout_buffer->get_rollout();
+        auto rollout = rollout_buffer->get_rollout();
+
+        // the observations go to the device once, for the GAE and every epoch: a
+        // per-minibatch transfer would resend the whole rollout's visions on each epoch
+        rollout.states.vision = rollout.states.vision.to(device);
+        rollout.states.proprioception = rollout.states.proprioception.to(device);
 
         set_train(false);
         const auto [advantages, returns, critic_hiddens] = compute_gae(rollout, device);
@@ -94,10 +99,9 @@ namespace arenai::agent {
         if (nb_chunks_per_tank == 0) return;
         const auto nb_kept_steps = nb_chunks_per_tank * chunk_size;
 
-        // the rollout stays on CPU as flat [T * nb_tanks, ...] views; only the
-        // minibatches hit the device
+        // flat [T * nb_tanks, ...] rows, all on the device
         const auto flat = [&](const torch::Tensor &tensor) {
-            return flatten_steps(tensor.slice(0, 0, nb_kept_steps));
+            return flatten_steps(tensor.slice(0, 0, nb_kept_steps)).to(device);
         };
 
         const auto flat_vision = flat(rollout.states.vision);
@@ -150,19 +154,20 @@ namespace arenai::agent {
                 // flat rows of the minibatch's chunks and of their first steps
                 const auto rows = ((start_step.unsqueeze(1) + step_offsets.unsqueeze(0)) * nb_tanks
                                    + tank.unsqueeze(1))
-                                      .flatten();
-                const auto start_rows = start_step * nb_tanks + tank;
+                                      .flatten()
+                                      .to(device);
+                const auto start_rows = (start_step * nb_tanks + tank).to(device);
 
                 // [nb_chunks, chunk_size, ...]
                 const auto select_chunks = [&](const torch::Tensor &flat_tensor) {
                     auto sizes = flat_tensor.sizes().vec();
                     sizes[0] = idx.size(0);
                     sizes.insert(sizes.begin() + 1, chunk_size);
-                    return flat_tensor.index_select(0, rows).reshape(sizes).to(device);
+                    return flat_tensor.index_select(0, rows).reshape(sizes);
                 };
                 // [nb_chunks, neuron_number]
                 const auto select_hiddens = [&](const torch::Tensor &flat_hiddens) {
-                    return flat_hiddens.index_select(0, start_rows).to(device);
+                    return flat_hiddens.index_select(0, start_rows);
                 };
 
                 const auto mb_vision = select_chunks(flat_vision);

@@ -77,32 +77,41 @@ namespace arenai::agent {
     void ImpalaPpoTrainer::train() const {
         const auto device = actor->parameters().back().device();
 
-        const auto rollout = rollout_buffer->get_rollout();
+        auto rollout = rollout_buffer->get_rollout();
+
+        // the observations go to the device once, for the GAE and every epoch: a
+        // per-minibatch transfer would resend the whole rollout's visions on each epoch
+        rollout.states.vision = rollout.states.vision.to(device);
+        rollout.states.proprioception = rollout.states.proprioception.to(device);
 
         set_train(false);
         const auto [advantages, returns] = compute_gae(rollout, device);
 
         set_train(true);
 
-        // the rollout stays on CPU; only the minibatches hit the device
-        const auto flat_vision = flatten_steps(rollout.states.vision);
-        const auto flat_proprioception = flatten_steps(rollout.states.proprioception);
-        const auto flat_continuous_actions = flatten_steps(rollout.actions.continuous_action);
-        const auto flat_discrete_actions = flatten_steps(rollout.actions.discrete_action);
-        const auto flat_fire_masks = flatten_steps(rollout.states.fire_mask);
+        // flat [T * nb_tanks, ...] rows, all on the device
+        const auto flat = [&](const torch::Tensor &tensor) {
+            return flatten_steps(tensor).to(device);
+        };
+
+        const auto flat_vision = flat(rollout.states.vision);
+        const auto flat_proprioception = flat(rollout.states.proprioception);
+        const auto flat_continuous_actions = flat(rollout.actions.continuous_action);
+        const auto flat_discrete_actions = flat(rollout.actions.discrete_action);
+        const auto flat_fire_masks = flat(rollout.states.fire_mask);
         const auto flat_old_log_probs =
-            flatten_steps(rollout.continuous_log_probs) + flatten_steps(rollout.discrete_log_probs);
-        const auto flat_advantages = flatten_steps(advantages);
-        const auto flat_returns = flatten_steps(returns);
+            flat(rollout.continuous_log_probs) + flat(rollout.discrete_log_probs);
+        const auto flat_advantages = flat(advantages);
+        const auto flat_returns = flat(returns);
 
         // live (step, tank) pairs; the minibatches split these rows only
         const auto valid_idx =
-            torch::nonzero(flatten_steps(rollout.valids).squeeze(-1)).squeeze(-1);
+            torch::nonzero(flatten_steps(rollout.valids).squeeze(-1)).squeeze(-1).to(device);
         const auto nb_valid_rows = valid_idx.size(0);
         if (nb_valid_rows == 0) return;
 
-        const auto select = [&](const torch::Tensor &tensor, const torch::Tensor &idx) {
-            return tensor.index_select(0, idx).to(device);
+        const auto select = [](const torch::Tensor &tensor, const torch::Tensor &idx) {
+            return tensor.index_select(0, idx);
         };
 
         // one update per epoch: the minibatches' gradients are accumulated over the whole
@@ -232,7 +241,7 @@ namespace arenai::agent {
         const auto nb_steps = rollout.rewards.size(0);
         const auto nb_tanks = rollout.rewards.size(1);
 
-        // critic forward in minibatch-sized chunks: the full rollout does not fit on the device
+        // critic forward in minibatch-sized chunks: the whole rollout's activations do not fit
         const auto eval_values = [&](const torch::Tensor &vision,
                                      const torch::Tensor &proprioception) {
             std::vector<torch::Tensor> chunks;

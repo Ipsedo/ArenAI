@@ -19,7 +19,7 @@
             <div class="col">
                 <div class="param-row">
                     <div class="param-label split"><span>Enemy tanks</span><span class="param-value ai">{{nb_tanks}}</span></div>
-                    <input type="range" autofocus min="1" max="32" step="1" data-value="nb_tanks"/>
+                    <input type="range" class="ai-side" autofocus min="1" max="32" step="1" data-value="nb_tanks"/>
                     <div class="ticks"><span>1</span><span>8</span><span>16</span><span>24</span><span>32</span></div>
                 </div>
 

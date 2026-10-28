@@ -648,6 +648,17 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     height: 0;
 }
 
+/* a slider that belongs to the machine's side (the enemy count): progress
+   and knob in cyan, matching the .param-value.ai it drives */
+input.range.ai-side sliderprogress, input.range.ai-side sliderbar {
+    background-color: #2FE6FF;
+}
+
+input.range.ai-side sliderbar:hover, input.range.ai-side sliderbar:active,
+body.gamepad-nav input.range.ai-side:focus sliderbar {
+    background-color: #6FF0FF;
+}
+
 /* ---- toggles ---- */
 
 /* a wrapping row of option chips, the gutters carried by the chips */

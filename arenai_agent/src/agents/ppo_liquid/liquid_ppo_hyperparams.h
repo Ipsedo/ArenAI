@@ -31,19 +31,19 @@ namespace arenai::agent {
         float gamma = 0.994f;
         float gae_lambda = 0.99f;
         float clip_epsilon = 0.2f;
-        float target_kl = 0.02f;
+        float target_kl = 0.05f;
         float grad_norm_max = 0.5f;
-        float continuous_entropy_factor = 0.001f;
-        float discrete_entropy_factor = 0.f;
-        int actor_epochs = 8;
+        float continuous_entropy_factor = 0.01f;
+        float discrete_entropy_factor = 0.001f;
+        int actor_epochs = 4;
         int critic_epochs = 8;
         int rollout_size = 30 * 10;
         // one optimizer step per batch_size rows, accumulated over gpu_batch_size-row
         // forward / backward passes (the device memory bound)
         int actor_batch_size = 512;
-        int actor_gpu_batch_size = 128;
+        int actor_gpu_batch_size = 512;
         int critic_batch_size = 512;
-        int critic_gpu_batch_size = 128;
+        int critic_gpu_batch_size = 512;
     };
 
     std::vector<CliField<LiquidPpoHyperParams>> liquid_ppo_cli_fields();

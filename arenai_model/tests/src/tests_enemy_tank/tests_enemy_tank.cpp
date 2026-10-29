@@ -243,8 +243,8 @@ TEST_F(EnemyTankTest, HasHitOtherTankResetsAfterCall) {
 
 TEST_F(EnemyTankTest, ShellReserveDoesNotRegenerateOverTime) {
     constexpr int nb_frames_one_second = 60;
-    constexpr int max_shells = 30;
-    constexpr int initial_shells = 20;
+    constexpr int max_shells = 50;
+    constexpr int initial_shells = 40;
 
     // proprioception ends with (reserve, cooldown) ratios
     constexpr int proprioception_reserve_index = ENEMY_PROPRIOCEPTION_SIZE - 2;
@@ -337,9 +337,9 @@ TEST_F(EnemyTankTest, DiesOnceReserveEmptyAndShellsLandedInTraining) {
 
     ASSERT_TRUE(reserve_seen_empty) << "the tank should have emptied its reserve";
     ASSERT_TRUE(shared_tank->is_dead()) << "an empty reserve should kill the tank in training";
-    ASSERT_TRUE(shared_tank->is_suicide()) << "the death is self-inflicted";
-    ASSERT_FALSE(shared_tank->is_timeout()) << "the death is not a truncation";
-    ASSERT_FLOAT_EQ(death_reward, -1.f) << "the death is penalised like a kill";
+    ASSERT_FALSE(shared_tank->is_suicide()) << "the death is not self-inflicted";
+    ASSERT_TRUE(shared_tank->is_timeout()) << "the death is a truncation, like starving out";
+    ASSERT_FLOAT_EQ(death_reward, 0.f) << "a truncation carries no death penalty";
 }
 
 TEST_F(EnemyTankTest, EmptyReserveDoesNotKillOutsideTraining) {

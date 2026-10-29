@@ -59,9 +59,9 @@ namespace arenai::model {
                 return can_fire;
             }),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-          curr_frame_upside_down(0), aim_tolerance_min(3.25f),
-          aim_tolerance_angle(glm::radians(2.f)), hit_reward_scale(0.1f), hit_received_cost(0.3f),
-          initial_nb_shells(20), nb_shells(initial_nb_shells), max_shells(30),
+          curr_frame_upside_down(0), aim_tolerance_min(10.f),
+          aim_tolerance_angle(glm::radians(6.f)), hit_reward_scale(0.1f), hit_received_cost(0.3f),
+          initial_nb_shells(40), nb_shells(initial_nb_shells), max_shells(50),
           fire_cooldown_frames(static_cast<int>(1.f / 6.f / wanted_frame_frequency)),
           curr_cooldown_frame(fire_cooldown_frames), shells_recharged_per_hit(15),
           is_dead_already_triggered(false), apply_timeout(apply_timeout), starved(false),
@@ -221,14 +221,18 @@ namespace arenai::model {
         if (has_hit) remaining_frames += nb_frames_added_when_hit;
         if (has_kill) remaining_frames += nb_frames_added_when_kill;
 
-        // starving out (no hit for too long) ends the tank: reported as a truncation to
-        // the learner — only when the timer is what killed it
+        // starving out (no hit for too long) or an empty reserve once every shell has
+        // landed ends the tank: reported as a truncation to the learner — only when
+        // that is what killed it
         if (apply_timeout && remaining_frames <= 0) {
             if (!is_dead()) starved = true;
             kill_life_items();
         }
 
-        if (apply_timeout && nb_shells <= 0 && !shell_in_flight && !is_dead()) out_of_shells = true;
+        if (apply_timeout && nb_shells <= 0 && !shell_in_flight && !is_dead()) {
+            out_of_shells = true;
+            kill_life_items();
+        }
     }
 
     void JoltEnemyTank::on_shell_fired(const std::shared_ptr<ShellItem> &shell) {
@@ -322,10 +326,10 @@ namespace arenai::model {
     }
 
     bool JoltEnemyTank::is_suicide() const {
-        return curr_frame_upside_down > max_frames_upside_down || out_of_shells;
+        return curr_frame_upside_down > max_frames_upside_down;
     }
 
-    bool JoltEnemyTank::is_timeout() const { return starved; }
+    bool JoltEnemyTank::is_timeout() const { return starved || out_of_shells; }
 
     void JoltEnemyTank::on_death() {
         if (is_dead() && !is_dead_already_triggered) {

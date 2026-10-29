@@ -1,0 +1,127 @@
+//
+// Created by samuel on 22/07/2026.
+//
+
+#ifndef ARENAI_PPG_TRAINER_H
+#define ARENAI_PPG_TRAINER_H
+
+#include "../../networks/actor.h"
+#include "../../networks/value_function.h"
+#include "../../networks_utils/warmup.h"
+#include "../return_scaler.h"
+#include "../trainer.h"
+#include "./ppg_rollout_buffer.h"
+
+namespace arenai::agent {
+
+    struct PpgGaeResult {
+        torch::Tensor advantages;
+        torch::Tensor returns;
+    };
+
+    class PpgTrainer final : public AbstractTrainer {
+    public:
+        PpgTrainer(
+            const std::shared_ptr<DistillationActor> &actor,
+            const std::shared_ptr<PpgRolloutBuffer> &rollout_buffer, int nb_sensors,
+            float actor_learning_rate, float critic_learning_rate, int hidden_size_sensors,
+            const std::vector<int> &critic_hidden_sizes,
+            const std::vector<std::tuple<int, int>> &vision_channels,
+            const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
+            float gamma, float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
+            float continuous_entropy_factor, float discrete_entropy_factor, int actor_epochs,
+            int critic_epochs, int rollout_size, int actor_batch_size, int actor_gpu_batch_size,
+            int critic_batch_size, int critic_gpu_batch_size, int actor_aux_epochs,
+            int critic_aux_epochs, float beta_clone);
+
+        void step() override;
+
+        std::vector<std::shared_ptr<AbstractMetric>> get_metrics() override;
+
+        void save(const std::filesystem::path &output_folder) override;
+
+        int count_parameters() override;
+
+    private:
+        std::shared_ptr<DistillationActor> actor;
+        std::shared_ptr<PpgRolloutBuffer> rollout_buffer;
+
+        float continuous_entropy_factor;
+        float discrete_entropy_factor;
+
+        std::shared_ptr<ValueFunction> critic;
+
+        std::unique_ptr<torch::optim::Adam> actor_optim;
+        std::unique_ptr<torch::optim::Adam> critic_optim;
+
+        // rewards scaled by the running std of the discounted return before the GAE
+        std::shared_ptr<ReturnScaler> return_scaler;
+
+        std::shared_ptr<AbstractMetric> actor_mean_loss_metric;
+        std::shared_ptr<AbstractMetric> critic_mean_loss_metric;
+
+        // share of the return variance the critic explains, per critic minibatch
+        std::shared_ptr<AbstractMetric> explained_variance_metric;
+
+        // both regulated by their constant entropy bonus
+        std::shared_ptr<AbstractMetric> continuous_entropy_metric;
+        std::shared_ptr<AbstractMetric> discrete_entropy_metric;
+
+        // recorded on every minibatch
+        std::shared_ptr<AbstractMetric> clip_fraction_metric;
+        // recorded on every actor optimizer step taken or refused
+        std::shared_ptr<AbstractMetric> kl_metric;
+
+        // share of the planned actor steps the KL threshold cut, once per rollout
+        std::shared_ptr<AbstractMetric> skip_fraction_metric;
+
+        float gamma;
+        float gae_lambda;
+        float clip_epsilon;
+        float target_kl;
+
+        float grad_norm_max;
+
+        int actor_epochs;
+        int critic_epochs;
+        int rollout_size;
+        int actor_batch_size;
+        int actor_gpu_batch_size;
+        int critic_batch_size;
+        int critic_gpu_batch_size;
+
+        int actor_aux_epochs;
+        int critic_aux_epochs;
+
+        float beta_clone;
+
+        void train() const;
+
+        // accumulates a device block's share of its optimizer batch gradient; returns its per-row KL
+        torch::Tensor backward_actor(
+            const torch::Tensor &vision, const torch::Tensor &proprioception,
+            const torch::Tensor &continuous_actions, const torch::Tensor &discrete_actions,
+            const torch::Tensor &fire_masks, const torch::Tensor &old_log_probs,
+            const torch::Tensor &advantages, float batch_fraction) const;
+
+        // value distillation + policy clone loss of the auxiliary phase
+        void backward_actor_aux(
+            const torch::Tensor &vision, const torch::Tensor &proprioception,
+            const torch::Tensor &fire_masks, const torch::Tensor &target_values,
+            const torch::Tensor &old_continuous_actions,
+            const torch::Tensor &old_continuous_log_probs, const torch::Tensor &old_discrete_probas,
+            float batch_fraction) const;
+
+        void backward_critic(
+            const torch::Tensor &vision, const torch::Tensor &proprioception,
+            const torch::Tensor &returns, float batch_fraction) const;
+
+        PpgGaeResult compute_gae(const PpgRollout &rollout, torch::Device device) const;
+
+        void set_train(bool train) const;
+        void to(torch::Device device) const;
+    };
+
+}// namespace arenai::agent
+
+#endif//ARENAI_PPG_TRAINER_H

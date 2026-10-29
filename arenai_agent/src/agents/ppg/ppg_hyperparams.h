@@ -33,14 +33,14 @@ namespace arenai::agent {
         float continuous_entropy_factor = 0.01f;
         float discrete_entropy_factor = 0.001f;
         int actor_epochs = 4;
-        int critic_epochs = 8;
+        int critic_epochs = 4;
         int rollout_size = 30 * 10;
         // one optimizer step per batch_size rows, accumulated over gpu_batch_size-row
         // forward / backward passes (the device memory bound)
         int actor_batch_size = 512;
-        int actor_gpu_batch_size = 512;
+        int actor_gpu_batch_size = 256;
         int critic_batch_size = 512;
-        int critic_gpu_batch_size = 512;
+        int critic_gpu_batch_size = 256;
         // PPG
         int actor_aux_epochs = 4;
         int critic_aux_epochs = 4;

@@ -31,11 +31,11 @@ int main(const int argc, char **argv) {
     // env
     parser.add_group("environment");
     parser.add_argument("--wanted_frequency").scan<'g', float>().default_value(1.f / 30.f);
-    parser.add_argument("--nb_tanks").scan<'i', int>().default_value(16);
+    parser.add_argument("--nb_tanks").scan<'i', int>().default_value(32);
     parser.add_argument("--vision_height").scan<'i', int>().default_value(128);
     parser.add_argument("--vision_width").scan<'i', int>().default_value(256);
-    parser.add_argument("--initial_spawn_width").scan<'g', float>().default_value(175.f);
-    parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(175.f);
+    parser.add_argument("--initial_spawn_width").scan<'g', float>().default_value(250.f);
+    parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(250.f);
     parser.add_argument("--final_spawn_width").scan<'g', float>().default_value(1000.f);
     parser.add_argument("--final_spawn_height").scan<'g', float>().default_value(1000.f);
     parser.add_argument("--curriculum_delta").scan<'g', float>().default_value(50.f);

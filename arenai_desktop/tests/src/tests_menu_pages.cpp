@@ -284,7 +284,7 @@ TEST_F(MenuPagesTest, dpad_reaches_the_device_toggles_and_crosses_the_explorer) 
 
     // the device toggles sit right under the algorithm grid: the spatial
     // navigation must stop on them on the way down from its bottom-left chip
-    ASSERT_TRUE(document.GetElementById("algo-ppo-impala")->Focus(true));
+    ASSERT_TRUE(document.GetElementById("algo-ppg")->Focus(true));
     press(controller::GamepadButton::DPadDown);
     EXPECT_EQ(focused_id(), "cpu-toggle");
 
@@ -299,7 +299,7 @@ TEST_F(MenuPagesTest, dpad_reaches_the_device_toggles_and_crosses_the_explorer) 
 
     // and the way up leaves the toggle towards the algorithm grid
     press(controller::GamepadButton::DPadUp);
-    EXPECT_EQ(focused_id(), "algo-ppo-liquid-impala");
+    EXPECT_EQ(focused_id(), "algo-ppo-liquid");
 }
 
 TEST_F(MenuPagesTest, escape_folds_an_open_dropdown_before_leaving_the_page) {

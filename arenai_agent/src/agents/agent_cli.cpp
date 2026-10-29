@@ -7,14 +7,12 @@
 #include <arenai_model/constants.h>
 
 #include "../utils/cli_fields.h"
+#include "./ppg/ppg_factory.h"
+#include "./ppg/ppg_hyperparams.h"
 #include "./ppo/ppo_factory.h"
 #include "./ppo/ppo_hyperparams.h"
-#include "./ppo_impala/impala_ppo_factory.h"
-#include "./ppo_impala/impala_ppo_hyperparams.h"
 #include "./ppo_liquid/liquid_ppo_factory.h"
 #include "./ppo_liquid/liquid_ppo_hyperparams.h"
-#include "./ppo_liquid_impala/liquid_impala_ppo_factory.h"
-#include "./ppo_liquid_impala/liquid_impala_ppo_hyperparams.h"
 
 namespace arenai::agent {
 
@@ -47,11 +45,8 @@ namespace arenai::agent {
             make_agent_cli<PpoHyperParams, PpoTorchAgentFactory>("ppo", ppo_cli_fields()));
         algorithms.push_back(make_agent_cli<LiquidPpoHyperParams, LiquidPpoTorchAgentFactory>(
             "ppo_liquid", liquid_ppo_cli_fields()));
-        algorithms.push_back(make_agent_cli<ImpalaPpoHyperParams, ImpalaPpoTorchAgentFactory>(
-            "ppo_impala", impala_ppo_cli_fields()));
         algorithms.push_back(
-            make_agent_cli<LiquidImpalaPpoHyperParams, LiquidImpalaPpoTorchAgentFactory>(
-                "ppo_liquid_impala", liquid_impala_ppo_cli_fields()));
+            make_agent_cli<PpgHyperParams, PpgTorchAgentFactory>("ppg", ppg_cli_fields()));
 
         return algorithms;
     }

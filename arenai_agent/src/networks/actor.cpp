@@ -72,14 +72,45 @@ namespace arenai::agent {
         });
     }
 
-    ActorRawOutput Actor::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
+    torch::Tensor Actor::trunc_forward(const torch::Tensor &vision, const torch::Tensor &sensors) {
         auto vision_encoded = vision_encoder->forward(vision);
         auto sensors_encoded = sensors_encoder->forward(sensors);
-        auto encoded = head->forward(torch::cat({vision_encoded, sensors_encoded}, 1));
+
+        return head->forward(torch::cat({vision_encoded, sensors_encoded}, 1));
+    }
+
+    ActorRawOutput Actor::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
+        const auto encoded = trunc_forward(vision, sensors);
+
         return {
             .mu = mu->forward(encoded),
             .sigma = sigma->forward(encoded),
             .discrete = discrete->forward(encoded)};
+    }
+
+    /*
+     * Distillation Actor
+     */
+
+    DistillationActor::DistillationActor(
+        const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_actions,
+        const int &hidden_size_sensors, const std::vector<int> &hidden_sizes,
+        const std::vector<std::tuple<int, int>> &vision_channels,
+        const std::vector<int> &group_norm_nums, const float &initial_sigma,
+        const std::vector<float> &initial_discrete_probas)
+        : Actor(
+            nb_sensors, nb_continuous_actions, nb_discrete_actions, hidden_size_sensors,
+            hidden_sizes, vision_channels, group_norm_nums, initial_sigma, initial_discrete_probas),
+          to_value(register_module("value", torch::nn::Linear(hidden_sizes.back(), 1))) {
+
+        to_value->apply(init_value_output_weights);
+    }
+
+    torch::Tensor
+    DistillationActor::value(const torch::Tensor &vision, const torch::Tensor &sensors) {
+        const auto encoded = trunc_forward(vision, sensors);
+
+        return to_value->forward(encoded);
     }
 
 }// namespace arenai::agent

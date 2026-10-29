@@ -20,8 +20,7 @@ namespace arenai::desktop::gui {
         switch (algorithm) {
             case AiAlgorithm::Ppo: return "PPO";
             case AiAlgorithm::PpoLiquid: return "PPO Liquid";
-            case AiAlgorithm::PpoImpala: return "PPO Impala";
-            case AiAlgorithm::PpoLiquidImpala: return "PPO Liquid Impala";
+            case AiAlgorithm::Ppg: return "PPG";
         }
         return "PPO";
     }

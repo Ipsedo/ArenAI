@@ -243,8 +243,8 @@ TEST_F(EnemyTankTest, HasHitOtherTankResetsAfterCall) {
 
 TEST_F(EnemyTankTest, ShellReserveDoesNotRegenerateOverTime) {
     constexpr int nb_frames_one_second = 60;
-    constexpr int max_shells = 50;
-    constexpr int initial_shells = 40;
+    constexpr int max_shells = 30;
+    constexpr int initial_shells = 10;
 
     // proprioception ends with (reserve, cooldown) ratios
     constexpr int proprioception_reserve_index = ENEMY_PROPRIOCEPTION_SIZE - 2;

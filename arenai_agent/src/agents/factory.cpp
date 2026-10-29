@@ -7,10 +7,9 @@
 
 #include <arenai_agent/factory.h>
 
+#include "./ppg/ppg_agent.h"
 #include "./ppo/ppo_agent.h"
-#include "./ppo_impala/impala_ppo_agent.h"
 #include "./ppo_liquid/liquid_ppo_agent.h"
-#include "./ppo_liquid_impala/liquid_impala_ppo_agent.h"
 
 using namespace arenai;
 using namespace arenai::agent;
@@ -45,11 +44,8 @@ namespace arenai::agent {
             case PPO_LIQUID:
                 return create_liquid_ppo_agent(
                     nb_sensors, nb_continuous_actions, nb_discrete_actions, cuda);
-            case PPO_IMPALA:
-                return create_impala_ppo_agent(
-                    nb_sensors, nb_continuous_actions, nb_discrete_actions, cuda);
-            case PPO_LIQUID_IMPALA:
-                return create_liquid_impala_ppo_agent(
+            case PPG:
+                return create_ppg_agent(
                     nb_sensors, nb_continuous_actions, nb_discrete_actions, cuda);
             default: throw std::runtime_error("Unknown agent algorithm");
         }
@@ -83,31 +79,16 @@ namespace arenai::agent {
             actor, std::make_shared<LiquidHiddenState>(actor), cuda ? torch::kCUDA : torch::kCPU);
     }
 
-    std::shared_ptr<AbstractAgent> AgentFactory::create_impala_ppo_agent(
+    std::shared_ptr<AbstractAgent> AgentFactory::create_ppg_agent(
         const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_action,
         const bool cuda) {
-        return std::make_shared<TorchImpalaPpoAgent>(
-            std::make_shared<ImpalaActor>(
+        return std::make_shared<TorchPpgAgent>(
+            std::make_shared<DistillationActor>(
                 nb_sensors, nb_continuous_actions, nb_discrete_action,
                 get_value<int>("hidden_size_sensors"),
                 get_value<std::vector<int>>("actor_hidden_sizes"),
-                get_value<std::vector<std::tuple<int, int>>>("vision_channels"), 0.f,
-                std::vector{0.5f, 0.5f}),
-            cuda ? torch::kCUDA : torch::kCPU);
-    }
-
-    std::shared_ptr<AbstractAgent> AgentFactory::create_liquid_impala_ppo_agent(
-        const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_action,
-        const bool cuda) {
-        const auto actor = std::make_shared<LiquidImpalaActor>(
-            nb_sensors, nb_continuous_actions, nb_discrete_action,
-            get_value<int>("hidden_size_sensors"),
-            get_value<std::vector<std::tuple<int, int>>>("vision_channels"),
-            get_value<int>("neuron_number"), get_value<int>("unfolding_steps"),
-            get_value<float>("delta_t"), 0.f, std::vector{0.5f, 0.5f});
-
-        return std::make_shared<TorchLiquidImpalaPpoAgent>(
-            actor, std::make_shared<LiquidImpalaHiddenState>(actor),
+                get_value<std::vector<std::tuple<int, int>>>("vision_channels"),
+                get_value<std::vector<int>>("group_norm_nums"), 0.f, std::vector{0.5f, 0.5f}),
             cuda ? torch::kCUDA : torch::kCPU);
     }
 

@@ -23,7 +23,7 @@ namespace arenai::agent {
         torch::Tensor discrete;
     };
 
-    class Actor final : public torch::nn::Module {
+    class Actor : public torch::nn::Module {
     public:
         explicit Actor(
             const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_actions,
@@ -42,6 +42,24 @@ namespace arenai::agent {
         torch::nn::Sequential mu;
         torch::nn::Sequential sigma;
         torch::nn::Sequential discrete;
+
+    protected:
+        torch::Tensor trunc_forward(const torch::Tensor &vision, const torch::Tensor &sensors);
+    };
+
+    class DistillationActor final : public Actor {
+    public:
+        explicit DistillationActor(
+            const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_actions,
+            const int &hidden_size_sensors, const std::vector<int> &hidden_sizes,
+            const std::vector<std::tuple<int, int>> &vision_channels,
+            const std::vector<int> &group_norm_nums, const float &initial_sigma,
+            const std::vector<float> &initial_discrete_probas);
+
+        torch::Tensor value(const torch::Tensor &vision, const torch::Tensor &sensors);
+
+    private:
+        torch::nn::Linear to_value;
     };
 
 }// namespace arenai::agent

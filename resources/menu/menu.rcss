@@ -67,22 +67,38 @@ body {
                facets(#140C22 transparent 1dp "0 0 640 0 640 720 0 720");
 }
 
+/* The sub-pages float one or two crystals of their own over the quiet band
+   under the content, in their facets' accent. */
 #ai-body {
     background-color: #0A1420;
-    decorator: facets(transparent #2FE6FF 1dp "1120 160 1000 0 880 200@0.4|1280 300 1120 160 1040 400@0.4|1280 560 1040 400 1120 720@0.4" houle),
+    decorator: crystals(#2FE6FF 1dp "230 600 48 2 -1.1 1.7|380 645 26 1 -1.4 3.8"),
+               facets(transparent #2FE6FF 1dp "1120 160 1000 0 880 200@0.4|1280 300 1120 160 1040 400@0.4|1280 560 1040 400 1120 720@0.4" houle),
                facets(#2FE6FF transparent 1dp "1280 0 1000 0 1120 160@0.12|1120 160 1000 0 880 200@0.12|1280 0 1120 160 1280 300@0.12|1280 300 1120 160 1040 400@0.12|1280 300 1040 400 1280 560@0.12|1280 560 1040 400 1120 720 1280 720@0.12" houle);
 }
 
 #parameters-body {
-    decorator: facets(transparent #2FE6FF 1dp "1120 160 1000 0 880 200@0.35" houle),
+    decorator: crystals(#2FE6FF 1dp "1080 600 46 2 -1.2 2.3"),
+               crystals(#FF7A2F 1dp "440 590 52 1 1.1 0.6"),
+               facets(transparent #2FE6FF 1dp "1120 160 1000 0 880 200@0.35" houle),
                facets(transparent #FF7A2F 1dp "160 560 0 440 240 400 320 720@0.35" houle),
                facets(#2FE6FF transparent 1dp "1280 0 1000 0 1120 160@0.10|1120 160 1000 0 880 200@0.10|1280 0 1120 160 1280 300@0.10" houle),
                facets(#FF7A2F transparent 1dp "0 720 0 440 160 560@0.10|0 720 160 560 320 720@0.10|160 560 0 440 240 400 320 720@0.10" houle);
 }
 
-#graphics-body, #controls-body {
-    decorator: facets(transparent #FF7A2F 1dp "160 560 0 440 240 400 320 720@0.35" houle),
-               facets(#FF7A2F transparent 1dp "0 720 0 440 160 560@0.10|0 720 160 560 320 720@0.10|160 560 0 440 240 400 320 720@0.10" houle);
+/* graphics: the orange wedge anchors the lower-right corner instead */
+#graphics-body {
+    decorator: crystals(#FF7A2F 1dp "300 590 54 2 0.9 1.9|470 650 26 1 1.5 4.0"),
+               facets(transparent #FF7A2F 1dp "1120 560 1280 440 1040 400 960 720@0.35" houle),
+               facets(#FF7A2F transparent 1dp "1280 720 1280 440 1120 560@0.10|1280 720 1120 560 960 720@0.10|1120 560 1280 440 1040 400 960 720@0.10" houle);
+}
+
+/* controls: a faceted massif burying the lower-left corner, fully under the
+   columns. Every anchor sits off-canvas, so the fills swallow the corner
+   while every visible edge runs off-screen instead of ending on it. */
+#controls-body {
+    decorator: crystals(#FF7A2F 1dp "910 615 50 1 1.25 2.9|1070 655 28 2 0.85 0.4"),
+               facets(transparent #FF7A2F 1dp "-120 490 150 555 -20 830@0.35|150 555 330 605 380 800@0.35|330 605 540 660 700 790@0.35" houle),
+               facets(#FF7A2F transparent 1dp "-120 490 150 555 -20 830@0.10|150 555 330 605 380 800 -20 830@0.10|330 605 540 660 700 790 380 800@0.10" houle);
 }
 
 /* pause / game-over popup: the body is a translucent veil over the frozen

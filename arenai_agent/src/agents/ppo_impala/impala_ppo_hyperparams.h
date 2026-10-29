@@ -37,9 +37,9 @@ namespace arenai::agent {
         // one optimizer step per batch_size rows, accumulated over gpu_batch_size-row
         // forward / backward passes (the device memory bound)
         int actor_batch_size = 512;
-        int actor_gpu_batch_size = 512;
+        int actor_gpu_batch_size = 128;
         int critic_batch_size = 512;
-        int critic_gpu_batch_size = 512;
+        int critic_gpu_batch_size = 128;
     };
 
     std::vector<CliField<ImpalaPpoHyperParams>> impala_ppo_cli_fields();

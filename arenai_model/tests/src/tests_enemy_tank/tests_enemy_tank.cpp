@@ -337,9 +337,9 @@ TEST_F(EnemyTankTest, DiesOnceReserveEmptyAndShellsLandedInTraining) {
 
     ASSERT_TRUE(reserve_seen_empty) << "the tank should have emptied its reserve";
     ASSERT_TRUE(shared_tank->is_dead()) << "an empty reserve should kill the tank in training";
-    ASSERT_FALSE(shared_tank->is_suicide()) << "the death is not self-inflicted";
-    ASSERT_TRUE(shared_tank->is_timeout()) << "the death is a truncation, like starving out";
-    ASSERT_FLOAT_EQ(death_reward, 0.f) << "a truncation carries no death penalty";
+    ASSERT_TRUE(shared_tank->is_suicide()) << "the death is self-inflicted, not a kill";
+    ASSERT_FALSE(shared_tank->is_timeout()) << "the death is a termination, not a truncation";
+    ASSERT_FLOAT_EQ(death_reward, -0.3f) << "an empty reserve carries its own death penalty";
 }
 
 TEST_F(EnemyTankTest, EmptyReserveDoesNotKillOutsideTraining) {

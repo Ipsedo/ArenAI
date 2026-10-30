@@ -138,8 +138,9 @@ namespace arenai::model {
         RewardDetail detail;
 
         // 1. death penalty — starving out is a pure truncation: any penalty there is an
-        // unpredictable shock for the critic (the timer is not observable)
-        detail.death = is_dead() && !is_timeout() ? -1.f : 0.f;
+        // unpredictable shock for the critic (the timer is not observable); an empty
+        // reserve is a genuine termination, with its own lighter penalty
+        if (is_dead() && !is_timeout()) detail.death = out_of_shells ? -0.3f : -1.f;
 
         // 2. fired shells reward
         for (int i = static_cast<int>(tracked_shells.size()) - 1; i >= 0; i--) {
@@ -221,14 +222,14 @@ namespace arenai::model {
         if (has_hit) remaining_frames += nb_frames_added_when_hit;
         if (has_kill) remaining_frames += nb_frames_added_when_kill;
 
-        // starving out (no hit for too long) or an empty reserve once every shell has
-        // landed ends the tank: reported as a truncation to the learner — only when
-        // that is what killed it
+        // starving out (no hit for too long) ends the tank: reported as a truncation to
+        // the learner — only when that is what killed it
         if (apply_timeout && remaining_frames <= 0) {
             if (!is_dead()) starved = true;
             kill_life_items();
         }
 
+        // an empty reserve once every shell has landed ends the tank: a termination
         if (apply_timeout && nb_shells <= 0 && !shell_in_flight && !is_dead()) {
             out_of_shells = true;
             kill_life_items();
@@ -326,10 +327,10 @@ namespace arenai::model {
     }
 
     bool JoltEnemyTank::is_suicide() const {
-        return curr_frame_upside_down > max_frames_upside_down;
+        return curr_frame_upside_down > max_frames_upside_down || out_of_shells;
     }
 
-    bool JoltEnemyTank::is_timeout() const { return starved || out_of_shells; }
+    bool JoltEnemyTank::is_timeout() const { return starved; }
 
     void JoltEnemyTank::on_death() {
         if (is_dead() && !is_dead_already_triggered) {

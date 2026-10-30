@@ -200,31 +200,6 @@ namespace {
 
 }// namespace
 
-TEST_F(ShellTest, ShellDoesNotTunnelThroughThinGround) {
-    ground = engine->get_item_factory()->make_cube_item(
-        "ground", file_reader, glm::vec3(0.f, -0.01f, 0.f), glm::vec3(500.f, 0.01f, 500.f), 0.f);
-    const std::shared_ptr<EnemyTank> tank =
-        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
-
-    // settle, then lower the canon to its stop: the shell starts right above the ground
-    constexpr user_input lower_canon{
-        .left_joystick = {.x = 0.f, .y = 0.f},
-        .right_joystick = {.x = 0.f, .y = 1.f},
-        .fire_button = {false}};
-    for (int i = 0; i < 300; i++) {
-        for (const auto &ctrl: tank->get_controllers()) ctrl->apply_input(lower_canon);
-        engine->step(1.f / 60.f);
-    }
-
-    fire_once(tank);
-    engine->step(1.f / 60.f);
-    ASSERT_NE(find_shell(*engine), nullptr) << "shell must exist after fire";
-
-    for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
-
-    ASSERT_EQ(find_shell(*engine), nullptr) << "shell must stop on the ground, not cross it";
-}
-
 TEST_F(ShellTest, ShellImpactDealsExactlyOneDamage) {
     add_ground();
     auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);

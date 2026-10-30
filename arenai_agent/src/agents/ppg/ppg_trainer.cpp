@@ -222,16 +222,17 @@ namespace arenai::agent {
         const auto old_sigmas = torch::cat(old_sigma_chunks, 0);
         const auto old_discretes = torch::cat(old_discrete_chunks, 0);
 
-        // the truncated normal KL has no closed form: Monte-Carlo estimate on actions drawn
-        // from the clone reference (the rollout actions come from the pre-phase-1 policy)
-        const auto old_continuous_actions = truncated_normal_sample(old_mus, old_sigmas);
-        const auto old_continuous_log_probs =
-            truncated_normal_log_pdf(old_continuous_actions, old_mus, old_sigmas).sum(-1, true);
-
         set_train(true);
 
         // value distillation in the actor, its policy held by the clone term
-        for (int e = 0; e < actor_aux_epochs; e++)
+        for (int e = 0; e < actor_aux_epochs; e++) {
+            // the truncated normal KL has no closed form: Monte-Carlo estimate on actions
+            // drawn from the clone reference, resampled each epoch — reusing one draw across
+            // epochs would pull the policy toward that fixed sample and collapse sigma
+            const auto old_continuous_actions = truncated_normal_sample(old_mus, old_sigmas);
+            const auto old_continuous_log_probs =
+                truncated_normal_log_pdf(old_continuous_actions, old_mus, old_sigmas).sum(-1, true);
+
             for (const auto &blocks:
                  shuffled_batches(valid_idx, actor_batch_size, actor_gpu_batch_size)) {
                 actor_optim->zero_grad();
@@ -251,6 +252,7 @@ namespace arenai::agent {
                 torch::nn::utils::clip_grad_norm_(actor->parameters(), grad_norm_max);
                 actor_optim->step();
             }
+        }
 
         // train critic
 

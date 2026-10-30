@@ -172,7 +172,7 @@ namespace arenai::model {
         // 4. total reward, kept split for the metrics
         last_reward_detail = detail;
 
-        return detail.aim + detail.hit + detail.received + detail.death;
+        return detail.hit + detail.received + detail.death;
     }
 
     RewardDetail JoltEnemyTank::get_last_reward_detail() const { return last_reward_detail; }

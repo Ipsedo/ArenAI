@@ -36,20 +36,25 @@ namespace arenai::agent {
 
     PpoTrainer::PpoTrainer(
         const std::shared_ptr<Actor> &actor,
-        const std::shared_ptr<PpoRolloutBuffer> &rollout_buffer, const int nb_sensors,
-        const float actor_learning_rate, const float critic_learning_rate,
-        const int hidden_size_sensors, const std::vector<int> &critic_hidden_sizes,
+        const std::shared_ptr<PpoRolloutBuffer> &rollout_buffer, const int nb_continuous_actions,
+        const int nb_discrete_actions, const int nb_sensors, const float actor_learning_rate,
+        const float critic_learning_rate, const int hidden_size_sensors,
+        const std::vector<int> &critic_hidden_sizes,
         const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, const torch::Device device,
         const int metric_window_size, const float gamma, const float gae_lambda,
         const float clip_epsilon, const float target_kl, const float grad_norm_max,
-        const float continuous_entropy_factor, const float discrete_entropy_factor,
-        const int actor_epochs, const int critic_epochs, const int rollout_size,
-        const int actor_batch_size, const int actor_gpu_batch_size, const int critic_batch_size,
-        const int critic_gpu_batch_size)
+        const float initial_alpha, const float alpha_learning_rate, const float target_sigma,
+        const float target_discrete_proba, const int actor_epochs, const int critic_epochs,
+        const int rollout_size, const int actor_batch_size, const int actor_gpu_batch_size,
+        const int critic_batch_size, const int critic_gpu_batch_size)
         : actor(actor), rollout_buffer(rollout_buffer),
-          continuous_entropy_factor(continuous_entropy_factor),
-          discrete_entropy_factor(discrete_entropy_factor),
+          continuous_alphas(
+              std::make_unique<AlphaParameters>(initial_alpha, nb_continuous_actions)),
+          discrete_alphas(std::make_unique<AlphaParameters>(initial_alpha, nb_discrete_actions)),
+          target_continuous_entropy(truncated_normal_target_entropy(1, target_sigma)),
+          target_discrete_entropy(
+              bernoulli_entropy(torch::tensor(target_discrete_proba)).item<float>()),
           critic(std::make_shared<ValueFunction>(
               nb_sensors, hidden_size_sensors, critic_hidden_sizes, vision_channels,
               group_norm_nums)),
@@ -57,6 +62,10 @@ namespace arenai::agent {
               std::make_unique<torch::optim::Adam>(this->actor->parameters(), actor_learning_rate)),
           critic_optim(
               std::make_unique<torch::optim::Adam>(critic->parameters(), critic_learning_rate)),
+          continuous_alphas_optim(std::make_unique<torch::optim::Adam>(
+              continuous_alphas->parameters(), alpha_learning_rate)),
+          discrete_alphas_optim(std::make_unique<torch::optim::Adam>(
+              discrete_alphas->parameters(), alpha_learning_rate)),
           return_scaler(std::make_shared<ReturnScaler>(gamma)),
           actor_mean_loss_metric(std::make_shared<MeanMetric>("π", metric_window_size)),
           critic_mean_loss_metric(std::make_shared<MeanMetric>("v", metric_window_size)),
@@ -135,6 +144,8 @@ namespace arenai::agent {
                 if (kl_exceeded) break;
 
                 actor_optim->zero_grad();
+                continuous_alphas_optim->zero_grad();
+                discrete_alphas_optim->zero_grad();
 
                 const auto nb_batch_rows = std::accumulate(
                     blocks.begin(), blocks.end(), int64_t{0},
@@ -158,6 +169,10 @@ namespace arenai::agent {
 
                 torch::nn::utils::clip_grad_norm_(actor->parameters(), grad_norm_max);
                 actor_optim->step();
+
+                continuous_alphas_optim->step();
+                discrete_alphas_optim->step();
+
                 nb_actor_steps++;
             }
         }
@@ -212,8 +227,10 @@ namespace arenai::agent {
         const auto continuous_entropy = truncated_normal_entropy(mu, sigma);
         const auto discrete_entropy = bernoulli_entropy(discrete_proba) * discrete_mask;
 
-        const auto entropy_bonus = continuous_entropy_factor * continuous_entropy.sum(-1)
-                                   + discrete_entropy_factor * discrete_entropy.sum(-1);
+        // alphas are constants for the actor: they only learn from their own loss below
+        const auto entropy_bonus =
+            (continuous_alphas->alpha().detach() * continuous_entropy).sum(-1, true)
+            + (discrete_alphas->alpha().detach() * discrete_entropy).sum(-1, true);
 
         const auto clipped_ratio = torch::clamp(ratio, 1.f - clip_epsilon, 1.f + clip_epsilon);
         const auto surrogate = torch::min(ratio * advantages, clipped_ratio * advantages);
@@ -222,6 +239,20 @@ namespace arenai::agent {
 
         // weighted so that the accumulated gradient is the one of the whole rollout's mean
         (actor_loss * batch_fraction).backward();
+
+        // backward alpha: per action entropy error, detached from the actor's graph
+        const auto continuous_error =
+            (continuous_entropy.detach() - target_continuous_entropy).mean(0);
+        const auto continuous_alpha_loss =
+            torch::sum(continuous_alphas->alpha() * continuous_error);
+        (continuous_alpha_loss * batch_fraction).backward();
+
+        // mean over the rows where the action had an effect
+        const auto discrete_error =
+            ((discrete_entropy.detach() - target_discrete_entropy) * discrete_mask).sum(0)
+            / discrete_mask.sum(0).clamp_min(1.f);
+        const auto discrete_alpha_loss = torch::sum(discrete_alphas->alpha() * discrete_error);
+        (discrete_alpha_loss * batch_fraction).backward();
 
         // metrics
         actor_mean_loss_metric->add(actor_loss.cpu().item<float>());
@@ -328,10 +359,14 @@ namespace arenai::agent {
         // Models
         save_torch(output_folder, actor, "actor.pt");
         save_torch(output_folder, critic, "critic.pt");
+        save_torch(output_folder, continuous_alphas, "continuous_alphas.pt");
+        save_torch(output_folder, discrete_alphas, "discrete_alphas.pt");
 
         // Optimizers
         save_torch(output_folder, actor_optim, "actor_optim.pt");
         save_torch(output_folder, critic_optim, "critic_optim.pt");
+        save_torch(output_folder, continuous_alphas_optim, "continuous_alphas_optim.pt");
+        save_torch(output_folder, discrete_alphas_optim, "discrete_alphas_optim.pt");
         save_torch(output_folder, return_scaler, "return_scaler.pt");
 
         // string repr
@@ -356,10 +391,14 @@ namespace arenai::agent {
     void PpoTrainer::to(const torch::Device device) const {
         actor->to(device);
         critic->to(device);
+        continuous_alphas->to(device);
+        discrete_alphas->to(device);
     }
 
     int PpoTrainer::count_parameters() {
         return count_parameters_impl(actor->parameters())
-               + count_parameters_impl(critic->parameters());
+               + count_parameters_impl(critic->parameters())
+               + count_parameters_impl(continuous_alphas->parameters())
+               + count_parameters_impl(discrete_alphas->parameters());
     }
 }// namespace arenai::agent

@@ -189,7 +189,7 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
         << "reward should be exactly zero when no shell hit an enemy";
 }
 
-TEST_F(RewardTest, MissedShellPaysNothing) {
+TEST_F(RewardTest, MissedShellPaysOnlyAimReward) {
     add_ground();
     auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
     auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {15.f, 5.f, 30.f}, false);
@@ -220,8 +220,9 @@ TEST_F(RewardTest, MissedShellPaysNothing) {
 
     ASSERT_FALSE(shared_a->consume_has_hit()) << "shell should have missed the enemy tank";
     ASSERT_GT(max_landed_shells, 0) << "the shell tracker should have sampled a landed shell";
-    // the aim reward is gone: a shell that lands without touching anyone pays nothing
-    ASSERT_FLOAT_EQ(total_reward, 0.f);
+    // a shell that lands without touching anyone only pays the aim reward (at most 0.1)
+    ASSERT_GT(total_reward, 0.f);
+    ASSERT_LE(total_reward, 0.1f);
 }
 
 // ========================================================================

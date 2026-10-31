@@ -6,8 +6,8 @@
 #define ARENAI_PPO_TRAINER_H
 
 #include "../../networks/actor.h"
+#include "../../networks/entropy.h"
 #include "../../networks/value_function.h"
-#include "../../networks_utils/warmup.h"
 #include "../return_scaler.h"
 #include "../trainer.h"
 #include "./ppo_rollout_buffer.h"
@@ -23,15 +23,17 @@ namespace arenai::agent {
     public:
         PpoTrainer(
             const std::shared_ptr<Actor> &actor,
-            const std::shared_ptr<PpoRolloutBuffer> &rollout_buffer, int nb_sensors,
-            float actor_learning_rate, float critic_learning_rate, int hidden_size_sensors,
+            const std::shared_ptr<PpoRolloutBuffer> &rollout_buffer, int nb_continuous_actions,
+            int nb_discrete_actions, int nb_sensors, float actor_learning_rate,
+            float critic_learning_rate, int hidden_size_sensors,
             const std::vector<int> &critic_hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
             float gamma, float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
-            float continuous_entropy_factor, float discrete_entropy_factor, int actor_epochs,
-            int critic_epochs, int rollout_size, int actor_batch_size, int actor_gpu_batch_size,
-            int critic_batch_size, int critic_gpu_batch_size);
+            float initial_alpha, float alpha_learning_rate, float target_sigma,
+            float target_discrete_proba, int actor_epochs, int critic_epochs, int rollout_size,
+            int actor_batch_size, int actor_gpu_batch_size, int critic_batch_size,
+            int critic_gpu_batch_size);
 
         void step() override;
 
@@ -45,13 +47,19 @@ namespace arenai::agent {
         std::shared_ptr<Actor> actor;
         std::shared_ptr<PpoRolloutBuffer> rollout_buffer;
 
-        float continuous_entropy_factor;
-        float discrete_entropy_factor;
+        std::unique_ptr<AlphaParameters> continuous_alphas;
+        std::unique_ptr<AlphaParameters> discrete_alphas;
+
+        float target_continuous_entropy;
+        float target_discrete_entropy;
 
         std::shared_ptr<ValueFunction> critic;
 
         std::unique_ptr<torch::optim::Adam> actor_optim;
         std::unique_ptr<torch::optim::Adam> critic_optim;
+
+        std::unique_ptr<torch::optim::Adam> continuous_alphas_optim;
+        std::unique_ptr<torch::optim::Adam> discrete_alphas_optim;
 
         // rewards scaled by the running std of the discounted return before the GAE
         std::shared_ptr<ReturnScaler> return_scaler;
@@ -62,7 +70,7 @@ namespace arenai::agent {
         // share of the return variance the critic explains, per critic minibatch
         std::shared_ptr<AbstractMetric> explained_variance_metric;
 
-        // both regulated by their constant entropy bonus
+        // both regulated towards their target by their learned alphas
         std::shared_ptr<AbstractMetric> continuous_entropy_metric;
         std::shared_ptr<AbstractMetric> discrete_entropy_metric;
 

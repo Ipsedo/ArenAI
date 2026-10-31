@@ -9,6 +9,16 @@
 
 namespace arenai::agent {
 
+    class AlphaParameters : public torch::nn::Module {
+    public:
+        AlphaParameters(float initial_alpha, int nb_alphas);
+
+        torch::Tensor alpha() const;
+
+    private:
+        torch::Tensor log_alpha;
+    };
+
     /*
      * Lagrangian
      */

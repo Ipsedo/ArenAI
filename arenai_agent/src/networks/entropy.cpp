@@ -13,6 +13,12 @@ using namespace arenai::agent;
 
 namespace arenai::agent {
 
+    AlphaParameters::AlphaParameters(const float initial_alpha, const int nb_alphas)
+        : log_alpha(
+            register_parameter("log_alpha", torch::full({nb_alphas}, std::log(initial_alpha)))) {}
+
+    torch::Tensor AlphaParameters::alpha() const { return torch::exp(log_alpha); }
+
     /*
      * PID Lagrangian
      */

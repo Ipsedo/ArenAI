@@ -16,9 +16,6 @@ namespace arenai::agent {
     void init_liquid_weights(torch::nn::Module &module);
 
     void init_mu_output_weights(torch::nn::Module &module);
-    // SigmaOutput input giving wanted_sigma
-    float sigma_output_logit(float wanted_sigma);
-    void init_sigma_output_weights(torch::nn::Module &module, float wanted_sigma);
     void init_concentration_output_weights(torch::nn::Module &module, float wanted_sigma);
     // sigmoid head: one initial engage probability per discrete action
     void init_discrete_output_weights(

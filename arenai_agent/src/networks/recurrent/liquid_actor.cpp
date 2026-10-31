@@ -4,8 +4,9 @@
 
 #include "./liquid_actor.h"
 
+#include <cmath>
+
 #include "../../networks_utils/init.h"
-#include "../constants.h"
 #include "../misc.h"
 
 using namespace arenai;
@@ -38,10 +39,8 @@ namespace arenai::agent {
               "mu",
               torch::nn::Sequential(
                   torch::nn::Linear(neuron_number, nb_continuous_actions), torch::nn::Tanh()))),
-          sigma(register_module(
-              "sigma", torch::nn::Sequential(
-                           torch::nn::Linear(neuron_number, nb_continuous_actions),
-                           std::make_shared<SigmaOutput>(SIGMA_MIN, SIGMA_MAX)))),
+          log_sigma(register_parameter(
+              "log_sigma", torch::full({nb_continuous_actions}, std::log(initial_sigma)))),
           discrete(register_module(
               "discrete",
               torch::nn::Sequential(
@@ -52,7 +51,6 @@ namespace arenai::agent {
 
         // zero bias + tanh puts the initial mode at the action-range center
         mu->apply(init_mu_output_weights);
-        sigma->apply([initial_sigma](Module &m) { init_sigma_output_weights(m, initial_sigma); });
 
         discrete->apply([&initial_discrete_probas](Module &m) {
             init_discrete_output_weights(m, initial_discrete_probas);
@@ -68,10 +66,11 @@ namespace arenai::agent {
         const auto encoded = encode(vision, sensors);
 
         const auto [liquid_output, next_x] = liquid->forward_step(x_t, encoded);
+        const auto mode = mu->forward(liquid_output);
 
         return {
-            .mu = mu->forward(liquid_output),
-            .sigma = sigma->forward(liquid_output),
+            .mu = mode,
+            .sigma = state_free_sigma(log_sigma, mode),
             .discrete = discrete->forward(liquid_output),
             .next_x = next_x};
     }
@@ -99,10 +98,11 @@ namespace arenai::agent {
         }
 
         const auto output = torch::stack(outputs, 1);
+        const auto mode = mu->forward(output);
 
         return {
-            .mu = mu->forward(output),
-            .sigma = sigma->forward(output),
+            .mu = mode,
+            .sigma = state_free_sigma(log_sigma, mode),
             .discrete = discrete->forward(output),
             .next_x = x};
     }

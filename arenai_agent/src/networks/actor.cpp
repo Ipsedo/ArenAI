@@ -4,8 +4,9 @@
 
 #include "./actor.h"
 
+#include <cmath>
+
 #include "../networks_utils/init.h"
-#include "./constants.h"
 #include "./misc.h"
 
 using namespace arenai;
@@ -34,10 +35,8 @@ namespace arenai::agent {
               "mu", torch::nn::Sequential(
                         torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
                         torch::nn::Tanh()))),
-          sigma(register_module(
-              "sigma", torch::nn::Sequential(
-                           torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
-                           std::make_shared<SigmaOutput>(SIGMA_MIN, SIGMA_MAX)))),
+          log_sigma(register_parameter(
+              "log_sigma", torch::full({nb_continuous_actions}, std::log(initial_sigma)))),
           discrete(register_module(
               "discrete", torch::nn::Sequential(
                               torch::nn::Linear(hidden_sizes.back(), nb_discrete_actions),
@@ -65,7 +64,6 @@ namespace arenai::agent {
 
         // zero bias + tanh puts the initial mode at the action-range center
         mu->apply(init_mu_output_weights);
-        sigma->apply([initial_sigma](Module &m) { init_sigma_output_weights(m, initial_sigma); });
 
         discrete->apply([&initial_discrete_probas](Module &m) {
             init_discrete_output_weights(m, initial_discrete_probas);
@@ -81,10 +79,11 @@ namespace arenai::agent {
 
     ActorRawOutput Actor::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
         const auto encoded = trunc_forward(vision, sensors);
+        const auto mode = mu->forward(encoded);
 
         return {
-            .mu = mu->forward(encoded),
-            .sigma = sigma->forward(encoded),
+            .mu = mode,
+            .sigma = state_free_sigma(log_sigma, mode),
             .discrete = discrete->forward(encoded)};
     }
 

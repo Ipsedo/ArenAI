@@ -13,7 +13,7 @@
 namespace arenai::agent {
 
     struct PpoHyperParams {
-        float actor_learning_rate = 3e-4f;
+        float actor_learning_rate = 1e-4f;
         float critic_learning_rate = 3e-4f;
         int hidden_size_sensors = 64;
         std::vector<int> actor_hidden_sizes = {256, 128};

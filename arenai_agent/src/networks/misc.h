@@ -36,18 +36,9 @@ namespace arenai::agent {
         void pretty_print(std::ostream &stream) const override;
     };
 
-    class SigmaOutput : public AbstractFunctionModule {
-    public:
-        SigmaOutput(float min_sigma, float max_sigma);
-
-        torch::Tensor forward(const torch::Tensor &input) override;
-
-        void pretty_print(std::ostream &stream) const override;
-
-    private:
-        float min_log_sigma;
-        float max_log_sigma;
-    };
+    // state-free spread of the truncated normal: the learned log-sigma (one per action)
+    // is kept in [SIGMA_MIN, SIGMA_MAX] and broadcast to the rows of mu
+    torch::Tensor state_free_sigma(const torch::Tensor &log_sigma, const torch::Tensor &mu);
 
     // Beta concentration κ, log-scale on the excess κ - 2 bounded between min and max
     class ConcentrationOutput : public AbstractFunctionModule {

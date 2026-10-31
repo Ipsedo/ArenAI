@@ -47,23 +47,6 @@ namespace arenai::agent {
         }
     }
 
-    float sigma_output_logit(const float wanted_sigma) {
-        const float min_log_sigma = std::log(SIGMA_MIN);
-        const float max_log_sigma = std::log(SIGMA_MAX);
-
-        const auto initial_sigma_sigmoid =
-            (std::log(wanted_sigma) - min_log_sigma) / (max_log_sigma - min_log_sigma);
-        return std::log(initial_sigma_sigmoid / (1.f - initial_sigma_sigmoid));
-    }
-
-    void init_sigma_output_weights(torch::nn::Module &module, const float wanted_sigma) {
-        if (auto *lin = module.as<torch::nn::Linear>()) {
-            torch::nn::init::orthogonal_(lin->weight, 0.01f);
-            if (lin->options.bias())
-                torch::nn::init::constant_(lin->bias, sigma_output_logit(wanted_sigma));
-        }
-    }
-
     void init_concentration_output_weights(torch::nn::Module &module, const float wanted_sigma) {
         // Beta on [-1, 1]: var = 4 μ(1-μ) / (κ+1), so at μ = 0.5 a wanted action
         // std σ maps to κ = 1/σ² - 1

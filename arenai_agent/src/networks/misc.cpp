@@ -4,6 +4,10 @@
 
 #include "./misc.h"
 
+#include <cmath>
+
+#include "./constants.h"
+
 using namespace arenai;
 using namespace arenai::agent;
 
@@ -36,18 +40,8 @@ namespace arenai::agent {
      * Sigma of normal distribution output layer
      */
 
-    SigmaOutput::SigmaOutput(const float min_sigma, const float max_sigma)
-        : min_log_sigma(std::log(min_sigma)), max_log_sigma(std::log(max_sigma)) {}
-
-    torch::Tensor SigmaOutput::forward(const torch::Tensor &input) {
-        const auto log_sigma =
-            min_log_sigma + (max_log_sigma - min_log_sigma) * torch::sigmoid(input);
-        return torch::exp(log_sigma);
-    }
-
-    void SigmaOutput::pretty_print(std::ostream &stream) const {
-        stream << name() << "(min=" << std::exp(min_log_sigma)
-               << ", max=" << std::exp(max_log_sigma) << ")";
+    torch::Tensor state_free_sigma(const torch::Tensor &log_sigma, const torch::Tensor &mu) {
+        return torch::exp(log_sigma.clamp(std::log(SIGMA_MIN), std::log(SIGMA_MAX))).expand_as(mu);
     }
 
     /*

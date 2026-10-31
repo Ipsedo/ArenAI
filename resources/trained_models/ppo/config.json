@@ -1,19 +1,24 @@
 {
     "agent": {
+        "actor_batch_size": 512,
+        "actor_epochs": 4,
+        "actor_gpu_batch_size": 256,
         "actor_hidden_sizes": [
             256,
             128
         ],
-        "actor_learning_rate": 9.999999747378752e-05,
+        "actor_learning_rate": 0.0003000000142492354,
         "clip_epsilon": 0.20000000298023224,
-        "continuous_entropy_factor": 0.0010000000474974513,
+        "continuous_entropy_factor": 0.009999999776482582,
+        "critic_batch_size": 512,
+        "critic_epochs": 4,
+        "critic_gpu_batch_size": 256,
         "critic_hidden_sizes": [
             256,
             128
         ],
-        "critic_learning_rate": 9.999999747378752e-05,
-        "discrete_entropy_factor": 0.0,
-        "epochs": 2,
+        "critic_learning_rate": 0.0003000000142492354,
+        "discrete_entropy_factor": 0.0010000000474974513,
         "gae_lambda": 0.9900000095367432,
         "gamma": 0.9940000176429749,
         "grad_norm_max": 0.5,
@@ -28,8 +33,7 @@
         "initial_sigma": 0.5,
         "initial_zoom_proba": 0.5,
         "metric_window_size": 256,
-        "minibatch_size": 512,
-        "rollout_size": 900,
+        "rollout_size": 300,
         "target_kl": 0.05000000074505806,
         "vision_channels": [
             [
@@ -61,7 +65,7 @@
         "final_spawn_width": 1000.0,
         "initial_spawn_height": 250.0,
         "initial_spawn_width": 250.0,
-        "nb_tanks": 16,
+        "nb_tanks": 32,
         "vision_height": 128,
         "vision_num_threads": 16,
         "vision_width": 256,
@@ -71,7 +75,7 @@
         "cuda": true,
         "max_episode_steps": 5400,
         "nb_episodes": 30000,
-        "output_folder": "./outputs/train_362_ppo",
+        "output_folder": "./outputs/train_382_ppo",
         "resources_folder": "./resources",
         "save_every": 108000
     }

@@ -121,11 +121,11 @@ namespace {
             {.name = "First",
              .algorithm = AiAlgorithm::PpoLiquid,
              .config = "/presets/first/config.json",
-             .folder = "/presets/first/save_1"},
+             .folder = "/presets/first/save_2"},
             {.name = "Second",
              .algorithm = AiAlgorithm::Ppo,
              .config = "/presets/second/config.json",
-             .folder = "/presets/second/save_7"},
+             .folder = "/presets/second/save_4"},
         };
     }
 
@@ -135,7 +135,7 @@ TEST_F(UserPreferencesTest, KnownPresetNameRestoresThePresetPaths) {
     GameSettings saved;
     apply_preset(two_presets()[1], saved);
     // the install moved: the paths on disk no longer match the saved ones
-    saved.agent_folder = "/old/install/save_7";
+    saved.agent_folder = "/old/install/save_4";
     saved.agent_config = "/old/install/config.json";
 
     save_preferences(saved);
@@ -144,7 +144,7 @@ TEST_F(UserPreferencesTest, KnownPresetNameRestoresThePresetPaths) {
     EXPECT_EQ(loaded.agent_preset, std::optional<std::string>("Second"));
     EXPECT_EQ(loaded.agent_algorithm, AiAlgorithm::Ppo);
     EXPECT_EQ(loaded.agent_config, std::filesystem::path("/presets/second/config.json"));
-    EXPECT_EQ(loaded.agent_folder, std::filesystem::path("/presets/second/save_7"));
+    EXPECT_EQ(loaded.agent_folder, std::filesystem::path("/presets/second/save_4"));
 }
 
 TEST_F(UserPreferencesTest, CustomSelectionRoundTripsWithoutPreset) {

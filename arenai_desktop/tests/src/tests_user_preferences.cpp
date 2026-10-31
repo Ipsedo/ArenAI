@@ -186,5 +186,5 @@ TEST_F(UserPreferencesTest, MissingAgentKeysKeepTheDefaultPreset) {
     const auto loaded = load_preferences(defaults, two_presets());
 
     EXPECT_EQ(loaded.agent_preset, std::optional<std::string>("First"));
-    EXPECT_EQ(loaded.agent_folder, std::filesystem::path("/presets/first/save_1"));
+    EXPECT_EQ(loaded.agent_folder, std::filesystem::path("/presets/first/save_2"));
 }

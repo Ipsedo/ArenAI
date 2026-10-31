@@ -24,7 +24,7 @@ namespace arenai::agent {
         int unfolding_steps = 6;
         float delta_t = 1.f / 10.f;
         int chunk_size = 30;
-        float initial_sigma = 0.5f;
+        float initial_sigma = 0.05f;
         float initial_fire_proba = 0.5f;
         float initial_zoom_proba = 0.5f;
         int metric_window_size = 256;
@@ -33,7 +33,7 @@ namespace arenai::agent {
         float clip_epsilon = 0.2f;
         float target_kl = 0.05f;
         float grad_norm_max = 0.5f;
-        float continuous_entropy_factor = 0.01f;
+        float continuous_entropy_factor = 0.001f;
         float discrete_entropy_factor = 0.001f;
         int actor_epochs = 4;
         int critic_epochs = 4;

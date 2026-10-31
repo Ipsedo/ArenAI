@@ -140,7 +140,7 @@ namespace arenai::model {
         // 1. death penalty — starving out is a pure truncation: any penalty there is an
         // unpredictable shock for the critic (the timer is not observable); an empty
         // reserve is a genuine termination, with its own lighter penalty
-        if (is_dead() && !is_timeout()) detail.death = out_of_shells ? -0.3f : -1.f;
+        if (is_dead() && !is_timeout()) detail.death = out_of_shells ? -0.1f : -1.f;
 
         // 2. fired shells reward
         for (int i = static_cast<int>(tracked_shells.size()) - 1; i >= 0; i--) {

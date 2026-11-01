@@ -1,0 +1,35 @@
+<rml>
+<head>
+    <title>Victory</title>
+    <link type="text/rcss" href="menu.rcss"/>
+</head>
+<body id="victory-body" class="overlay" data-model="victory">
+    <div class="topbar">
+        <span class="crumb">◆ Machine · down</span>
+        <span class="crumb">{{clock}}</span>
+        <span class="side-player">Player wins ◆</span>
+    </div>
+
+    <div id="victory-panel" class="popup">
+        <span class="eyebrow side-player">You take this round</span>
+        <h1 class="popup-title">Victory</h1>
+        <div class="versus">
+            <div class="versus-side left">
+                <span class="score-label side-player">You</span>
+                <span class="game-over-score side-player">{{score}}</span>
+            </div>
+            <div class="versus-badge">vs</div>
+            <div class="versus-side right">
+                <span class="score-label">Machine</span>
+                <span class="game-over-score dim">{{machine_score}}</span>
+                <span class="score-note">{{enemies_alive}} tanks left</span>
+            </div>
+        </div>
+        <div class="popup-buttons">
+            <div class="button primary" autofocus data-event-click="popup_retry()">Play again</div>
+            <div class="button" data-event-click="popup_main_menu()">Main menu</div>
+            <div class="button exit" data-event-click="popup_exit()">Exit game</div>
+        </div>
+    </div>
+</body>
+</rml>

@@ -55,7 +55,7 @@ namespace arenai::desktop::gui {
         int enemies_total = 0;
     };
 
-    enum class PopupKind { Pause, GameOver };
+    enum class PopupKind { Pause, GameOver, Victory };
     enum class PopupAction { Continue, MainMenu, ExitGame, Retry };
     using PopupListener = std::function<void(PopupAction)>;
 

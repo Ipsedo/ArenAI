@@ -25,7 +25,7 @@ namespace arenai::desktop {
 
     // One game, from the agent load to the player leaving: owns the
     // environment and the input routing, and drives the Playing / Paused /
-    // GameOver phases against the gui's popups and HUD.
+    // GameOver / Victory phases against the gui's popups and HUD.
     class GameSession {
     public:
         // loads the enemy agent (throws when the selection is unusable) and
@@ -42,7 +42,7 @@ namespace arenai::desktop {
         InGameOutcome run();
 
     private:
-        enum class Phase { Playing, Paused, GameOver };
+        enum class Phase { Playing, Paused, GameOver, Victory };
 
         void install_input();
         void release_input();

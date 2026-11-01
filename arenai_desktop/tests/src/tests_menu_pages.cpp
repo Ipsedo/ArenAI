@@ -394,6 +394,27 @@ TEST_F(MenuPagesTest, game_over_popup_ignores_escape) {
     EXPECT_EQ(nb_actions, 0);
 }
 
+TEST_F(MenuPagesTest, victory_popup_ignores_escape_and_reports_retry) {
+    gui::PopupPage victory(gui::PopupKind::Victory, state_);
+    victory.load(context());
+
+    std::vector<gui::PopupAction> received;
+    victory.open(
+        {.player_score = 14, .enemies_alive = 0},
+        [&received](const gui::PopupAction action) { received.push_back(action); });
+    context().Update();
+    EXPECT_TRUE(victory.visible());
+
+    victory.on_escape();
+    EXPECT_TRUE(received.empty());
+
+    Rml::Element *retry = find_event_element(victory.document(), "popup_retry()");
+    ASSERT_NE(retry, nullptr);
+    retry->DispatchEvent(Rml::EventId::Click, Rml::Dictionary());
+    ASSERT_EQ(received.size(), 1u);
+    EXPECT_EQ(received[0], gui::PopupAction::Retry);
+}
+
 // ========================================================================
 // Backdrops: the facets declarations survive the RCSS shorthand parsing
 // (quoted polygon strings inside a decorator list)

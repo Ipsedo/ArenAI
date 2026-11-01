@@ -64,7 +64,8 @@ namespace arenai::desktop {
         while (!window_->should_close() && !outcome_) {
             window_->poll_events();
 
-            if (std::exchange(pause_toggle_requested_, false) && phase_ != Phase::GameOver)
+            if (std::exchange(pause_toggle_requested_, false)
+                && (phase_ == Phase::Playing || phase_ == Phase::Paused))
                 set_phase(phase_ == Phase::Playing ? Phase::Paused : Phase::Playing);
 
             if (phase_ == Phase::Playing) play_frame();
@@ -89,6 +90,11 @@ namespace arenai::desktop {
             case Phase::GameOver:
                 gui_.popups().open(
                     gui::PopupKind::GameOver, match_status(),
+                    [this](const gui::PopupAction action) { on_popup_action(action); });
+                break;
+            case Phase::Victory:
+                gui_.popups().open(
+                    gui::PopupKind::Victory, match_status(),
                     [this](const gui::PopupAction action) { on_popup_action(action); });
                 break;
         }
@@ -161,7 +167,9 @@ namespace arenai::desktop {
 
         backend_->present();
 
+        // mutual destruction on the last frame stays a defeat
         if (env_->is_player_dead()) set_phase(Phase::GameOver);
+        else if (env_->nb_enemies_alive() == 0) set_phase(Phase::Victory);
 
         const auto elapsed = std::chrono::steady_clock::now() - frame_start;
         std::this_thread::sleep_for(

@@ -11,8 +11,8 @@
 
 namespace arenai::desktop::gui {
 
-    // One in-game popup (pause or game over): shows the match status and reports
-    // the player's choice to the listener given at open time.
+    // One in-game popup (pause, game over or victory): shows the match status
+    // and reports the player's choice to the listener given at open time.
     class PopupPage final : public DocumentView {
     public:
         PopupPage(PopupKind kind, MenuState &state);
@@ -22,7 +22,7 @@ namespace arenai::desktop::gui {
         void open(const MatchStatus &status, PopupListener on_action);
         void close();
 
-        // Escape / gamepad B: resumes a paused game; the game-over popup
+        // Escape / gamepad B: resumes a paused game; the end-of-match popups
         // cannot be backed out of
         void on_escape();
 

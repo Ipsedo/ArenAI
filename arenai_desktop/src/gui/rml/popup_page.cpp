@@ -14,11 +14,19 @@ namespace arenai::desktop::gui {
     namespace {
 
         constexpr const char *document_path(const PopupKind kind) {
-            return kind == PopupKind::Pause ? "menu/pause.rml" : "menu/game_over.rml";
+            switch (kind) {
+                case PopupKind::Pause: return "menu/pause.rml";
+                case PopupKind::Victory: return "menu/victory.rml";
+                default: return "menu/game_over.rml";
+            }
         }
 
         constexpr const char *model_name(const PopupKind kind) {
-            return kind == PopupKind::Pause ? "pause" : "game_over";
+            switch (kind) {
+                case PopupKind::Pause: return "pause";
+                case PopupKind::Victory: return "victory";
+                default: return "game_over";
+            }
         }
 
     }// namespace

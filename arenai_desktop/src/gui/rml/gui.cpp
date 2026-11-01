@@ -87,6 +87,8 @@ namespace arenai::desktop::gui {
                 pause_->load(*context_);
                 game_over_ = std::make_unique<PopupPage>(PopupKind::GameOver, state_);
                 game_over_->load(*context_);
+                victory_ = std::make_unique<PopupPage>(PopupKind::Victory, state_);
+                victory_->load(*context_);
 
                 hud_ = std::make_unique<HudOverlay>(*this);
                 hud_->load(*context_);
@@ -208,6 +210,7 @@ namespace arenai::desktop::gui {
                 void close() override {
                     gui_.pause_->close();
                     gui_.game_over_->close();
+                    gui_.victory_->close();
                 }
 
                 void render() override { gui_.render_overlay(); }
@@ -225,14 +228,18 @@ namespace arenai::desktop::gui {
             };
 
             PopupPage &popup(const PopupKind kind) const {
-                return kind == PopupKind::Pause ? *pause_ : *game_over_;
+                switch (kind) {
+                    case PopupKind::Pause: return *pause_;
+                    case PopupKind::Victory: return *victory_;
+                    default: return *game_over_;
+                }
             }
 
             // Escape / gamepad B: an open popup first (the application
             // intercepts Escape itself in-game, this covers the gamepad),
             // else the menu stack
             void on_escape() {
-                for (PopupPage *popup: {pause_.get(), game_over_.get()})
+                for (PopupPage *popup: {pause_.get(), game_over_.get(), victory_.get()})
                     if (popup->visible()) {
                         popup->on_escape();
                         return;
@@ -288,6 +295,7 @@ namespace arenai::desktop::gui {
             std::unique_ptr<Navigator> navigator_;
             std::unique_ptr<PopupPage> pause_;
             std::unique_ptr<PopupPage> game_over_;
+            std::unique_ptr<PopupPage> victory_;
             std::unique_ptr<HudOverlay> hud_;
             std::unique_ptr<LoadingPage> loading_page_;
 

@@ -112,6 +112,13 @@ body.overlay {
                facets(#2FE6FF transparent 1dp "1280 0 1000 0 1120 160@0.12|1120 160 1000 0 880 200@0.12|1280 0 1120 160 1280 300@0.12|0 720 0 440 160 560@0.12|0 720 160 560 320 720@0.12" houle);
 }
 
+/* victory: the game-over backdrop mirrored onto the player's side, in the
+   player accent */
+#victory-body {
+    decorator: facets(transparent #FF7A2F 1dp "160 160 280 0 400 200@0.4|1280 720 1120 560 960 720@0.4" houle),
+               facets(#FF7A2F transparent 1dp "0 0 280 0 160 160@0.12|160 160 280 0 400 200@0.12|0 0 160 160 0 300@0.12|1280 720 1280 440 1120 560@0.12|1280 720 1120 560 960 720@0.12" houle);
+}
+
 /* Every control declaring a click in the RML is reachable with the keyboard
    and the gamepad, no per-class opt-in; an element without a click stays
    inert (fixed keychips). Form controls carry their own tab-index but still
@@ -1059,7 +1066,7 @@ body.gamepad-nav input.range.ai-side:focus sliderbar {
     margin-bottom: 28dp;
 }
 
-#game-over-panel .popup-title {
+#game-over-panel .popup-title, #victory-panel .popup-title {
     font-size: 110dp;
 }
 

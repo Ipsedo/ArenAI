@@ -43,6 +43,7 @@ namespace arenai::agent {
         int actor_aux_epochs = 4;
         int critic_aux_epochs = 4;
         float beta_clone = 1.f;
+        int n_pi = 8;
     };
 
     std::vector<CliField<PpgHyperParams>> ppg_cli_fields();

@@ -32,7 +32,7 @@ namespace arenai::agent {
             float continuous_entropy_factor, float discrete_entropy_factor, int actor_epochs,
             int critic_epochs, int rollout_size, int actor_batch_size, int actor_gpu_batch_size,
             int critic_batch_size, int critic_gpu_batch_size, int actor_aux_epochs,
-            int critic_aux_epochs, float beta_clone);
+            int critic_aux_epochs, float beta_clone, int n_pi);
 
         void step() override;
 
@@ -95,7 +95,11 @@ namespace arenai::agent {
 
         float beta_clone;
 
-        void train() const;
+        // the auxiliary phase runs once every n_pi policy phases
+        int n_pi;
+        int nb_policy_phases = 0;
+
+        void train(bool run_aux) const;
 
         // accumulates a device block's share of its optimizer batch gradient; returns its per-row KL
         torch::Tensor backward_actor(

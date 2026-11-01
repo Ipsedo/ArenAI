@@ -31,7 +31,7 @@ namespace arenai::agent {
               params.discrete_entropy_factor, params.actor_epochs, params.critic_epochs,
               params.rollout_size, params.actor_batch_size, params.actor_gpu_batch_size,
               params.critic_batch_size, params.critic_gpu_batch_size, params.actor_aux_epochs,
-              params.critic_aux_epochs, params.beta_clone)) {}
+              params.critic_aux_epochs, params.beta_clone, params.n_pi)) {}
 
     std::shared_ptr<AbstractTorchAgent> PpgTorchAgentFactory::get_agent() { return agent; }
 

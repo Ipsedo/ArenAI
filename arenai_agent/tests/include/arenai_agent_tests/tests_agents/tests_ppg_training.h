@@ -45,7 +45,7 @@ protected:
     static arenai::agent::TorchState make_state(const PpgTrainingTestConfig &cfg, int nb_tanks);
 
     // target_kl = 0 : early stop disabled so every optimizer batch applies its update
-    PpgTriad make_triad(const PpgTrainingTestConfig &cfg) const;
+    PpgTriad make_triad(const PpgTrainingTestConfig &cfg, int n_pi = 1) const;
 
     // env loop: act -> transition -> maybe train
     static void run_env_loop(

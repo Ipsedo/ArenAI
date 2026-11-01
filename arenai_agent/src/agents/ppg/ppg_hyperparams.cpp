@@ -38,6 +38,7 @@ namespace arenai::agent {
             {.name = "--actor_aux_epochs", .member = &PpgHyperParams::actor_aux_epochs},
             {.name = "--critic_aux_epochs", .member = &PpgHyperParams::critic_aux_epochs},
             {.name = "--beta_clone", .member = &PpgHyperParams::beta_clone},
+            {.name = "--n_pi", .member = &PpgHyperParams::n_pi},
         };
     }
 

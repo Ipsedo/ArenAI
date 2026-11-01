@@ -47,7 +47,7 @@ namespace arenai::agent {
         const int actor_epochs, const int critic_epochs, const int rollout_size,
         const int actor_batch_size, const int actor_gpu_batch_size, const int critic_batch_size,
         const int critic_gpu_batch_size, const int actor_aux_epochs, const int critic_aux_epochs,
-        float beta_clone)
+        const float beta_clone, const int n_pi)
         : actor(actor), rollout_buffer(rollout_buffer),
           continuous_entropy_factor(continuous_entropy_factor),
           discrete_entropy_factor(discrete_entropy_factor),
@@ -72,17 +72,20 @@ namespace arenai::agent {
           rollout_size(rollout_size), actor_batch_size(actor_batch_size),
           actor_gpu_batch_size(actor_gpu_batch_size), critic_batch_size(critic_batch_size),
           critic_gpu_batch_size(critic_gpu_batch_size), actor_aux_epochs(actor_aux_epochs),
-          critic_aux_epochs(critic_aux_epochs), beta_clone(beta_clone) {
+          critic_aux_epochs(critic_aux_epochs), beta_clone(beta_clone), n_pi(std::max(1, n_pi)) {
         to(device);
 
         set_train(false);
     }
 
     void PpgTrainer::step() {
-        if (rollout_buffer->nb_complete_steps() >= static_cast<size_t>(rollout_size)) train();
+        if (rollout_buffer->nb_complete_steps() < static_cast<size_t>(rollout_size)) return;
+
+        nb_policy_phases++;
+        train(nb_policy_phases % n_pi == 0);
     }
 
-    void PpgTrainer::train() const {
+    void PpgTrainer::train(const bool run_aux) const {
         const auto device = actor->parameters().back().device();
 
         auto rollout = rollout_buffer->get_rollout();
@@ -191,9 +194,11 @@ namespace arenai::agent {
         // PPG //
         /////////
 
-        // Phase #2
+        // Phase #2, once every n_pi policy phases
 
         set_train(false);
+
+        if (!run_aux) return;
 
         // targets of the auxiliary phase, computed once over every flat row before any update:
         // the critic's values to distill and the policy to keep (the clone reference)

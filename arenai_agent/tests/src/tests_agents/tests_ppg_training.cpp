@@ -44,7 +44,7 @@ TorchState PpgTrainingTest::make_state(const PpgTrainingTestConfig &cfg, const i
         .fire_mask = torch::randint(0, 2, {nb_tanks, 1}).to(torch::kFloat)};
 }
 
-PpgTriad PpgTrainingTest::make_triad(const PpgTrainingTestConfig &cfg) const {
+PpgTriad PpgTrainingTest::make_triad(const PpgTrainingTestConfig &cfg, const int n_pi) const {
     const std::vector<std::tuple<int, int>> vision_channels{{3, 4}};
     const std::vector group_norm_nums{2};
 
@@ -59,7 +59,7 @@ PpgTriad PpgTrainingTest::make_triad(const PpgTrainingTestConfig &cfg) const {
         triad.actor, triad.rollout_buffer, cfg.nb_sensors, 1e-3f, 1e-3f, 8, std::vector{16},
         vision_channels, group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 0.001f,
         2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, 2, 2,
-        1.f);
+        1.f, n_pi);
     return triad;
 }
 
@@ -184,6 +184,29 @@ TEST_F(PpgTrainingTest, AuxiliaryPhaseUpdatesValueHead) {
     ASSERT_LT(triad.rollout_buffer->nb_complete_steps(), static_cast<size_t>(ROLLOUT_SIZE));
     ASSERT_FALSE(torch::equal(weight, initial_weight))
         << "The auxiliary phase should distill the value into the actor";
+}
+
+TEST_F(PpgTrainingTest, AuxiliaryPhaseWaitsForNPiPolicyPhases) {
+    constexpr PpgTrainingTestConfig cfg{
+        .vision_height = 8,
+        .vision_width = 8,
+        .nb_sensors = 3,
+        .nb_continuous_actions = 2,
+        .nb_discrete_actions = 2};
+    const auto triad = make_triad(cfg, 2);
+
+    auto named_parameters = triad.actor->named_parameters();
+    const auto weight = named_parameters["value.weight"];
+    const auto initial_weight = weight.detach().clone();
+
+    // first policy phase: not a multiple of n_pi, the value head stays untouched
+    run_env_loop(triad, cfg, ROLLOUT_SIZE + 2, true);
+    ASSERT_TRUE(torch::equal(weight, initial_weight))
+        << "The auxiliary phase should wait for n_pi policy phases";
+
+    // second policy phase: the auxiliary phase distills the value
+    run_env_loop(triad, cfg, ROLLOUT_SIZE + 2, true);
+    ASSERT_FALSE(torch::equal(weight, initial_weight));
 }
 
 TEST_F(PpgTrainingTest, TrainedActorStaysFinite) {

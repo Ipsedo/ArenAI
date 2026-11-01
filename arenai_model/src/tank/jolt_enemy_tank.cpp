@@ -61,7 +61,7 @@ namespace arenai::model {
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), aim_tolerance_min(10.f),
           aim_tolerance_angle(glm::radians(6.f)), hit_reward_scale(0.1f), hit_received_cost(0.3f),
-          initial_nb_shells(10), nb_shells(initial_nb_shells), max_shells(30),
+          fire_cost(0.03f), initial_nb_shells(10), nb_shells(initial_nb_shells), max_shells(30),
           fire_cooldown_frames(static_cast<int>(1.f / 6.f / wanted_frame_frequency)),
           curr_cooldown_frame(fire_cooldown_frames), shells_recharged_per_hit(10),
           is_dead_already_triggered(false), apply_timeout(apply_timeout), starved(false),
@@ -70,7 +70,8 @@ namespace arenai::model {
           remaining_frames(max_frames_without_hit),
           nb_frames_added_when_hit(static_cast<int>(3.f / wanted_frame_frequency)),
           nb_frames_added_when_kill(static_cast<int>(15.f / wanted_frame_frequency)),
-          has_hit(false), has_kill(false), has_fired(false), killed_nb(0), hit_nb(0) {}
+          has_hit(false), has_kill(false), has_fired(false), killed_nb(0), hit_nb(0),
+          nb_uncharged_shells(0) {}
 
     int JoltEnemyTank::get_score() const { return killed_nb * 10 + hit_nb; }
 
@@ -169,10 +170,14 @@ namespace arenai::model {
         detail.received =
             -hit_received_cost * static_cast<float>(consume_received_impacts().size());
 
-        // 4. total reward, kept split for the metrics
+        // 4. fired shells cost, charged when fired, not at landing
+        const float fired_cost = fire_cost * static_cast<float>(nb_uncharged_shells);
+        nb_uncharged_shells = 0;
+
+        // 5. total reward, kept split for the metrics
         last_reward_detail = detail;
 
-        return detail.aim + detail.hit + detail.received + detail.death;
+        return detail.aim + detail.hit + detail.received + detail.death - fired_cost;
     }
 
     RewardDetail JoltEnemyTank::get_last_reward_detail() const { return last_reward_detail; }
@@ -239,6 +244,7 @@ namespace arenai::model {
     void JoltEnemyTank::on_shell_fired(const std::shared_ptr<ShellItem> &shell) {
         nb_shells--;
         has_fired = true;
+        nb_uncharged_shells++;
 
         tracked_shells.push_back(
             {.shell = shell,

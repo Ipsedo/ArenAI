@@ -220,9 +220,38 @@ TEST_F(RewardTest, MissedShellPaysOnlyAimReward) {
 
     ASSERT_FALSE(shared_a->consume_has_hit()) << "shell should have missed the enemy tank";
     ASSERT_GT(max_landed_shells, 0) << "the shell tracker should have sampled a landed shell";
-    // a shell that lands without touching anyone only pays the aim reward (at most 0.1)
-    ASSERT_GT(total_reward, 0.f);
-    ASSERT_LE(total_reward, 0.1f);
+    // a shell that lands without touching anyone only pays the aim reward (at most 0.1),
+    // minus its fire cost
+    ASSERT_GT(total_reward, -0.03f);
+    ASSERT_LE(total_reward, 0.07f);
+}
+
+TEST_F(RewardTest, FireCostChargedOnceWhenFired) {
+    add_ground();
+    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
+    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {15.f, 5.f, 30.f}, false);
+
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+
+    const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
+    const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
+
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
+    for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
+
+    const std::vector tanks{shared_a, shared_b};
+
+    engine->step(1.f / 60.f);
+    shared_a->tick(tanks);
+
+    ASSERT_TRUE(shared_a->consume_has_fire());
+    ASSERT_FLOAT_EQ(shared_a->get_reward(), -0.03f);
+
+    // the same shell is not charged twice
+    ASSERT_FLOAT_EQ(shared_a->get_reward(), 0.f);
 }
 
 // ========================================================================
@@ -273,7 +302,7 @@ TEST_F(RewardTest, NoRewardWhenShootingAWreck) {
     const float reward = shared_a->get_reward();
 
     ASSERT_FALSE(shared_a->consume_has_hit()) << "a wreck must not count as a hit";
-    ASSERT_FLOAT_EQ(reward, 0.f) << "shooting a wreck must pay neither hit nor kill";
+    ASSERT_FLOAT_EQ(reward, -0.03f) << "shooting a wreck must pay neither hit nor kill";
 
     // the shell spent must not be given back: a wreck is not an ammo dump
     ASSERT_LT(shared_a->get_proprioception()[proprioception_reserve_index], shells_ratio_before)
@@ -325,7 +354,7 @@ TEST_F(RewardTest, NoKillRewardWhenHittingAnotherPartOfAWreck) {
     ASSERT_FALSE(shared_a->consume_has_hit()) << "a wreck part must not count as a hit";
     ASSERT_FALSE(shared_a->consume_has_kill())
         << "a part killed by on_death must not count as a fresh kill";
-    ASSERT_FLOAT_EQ(reward, 0.f) << "hitting any part of a wreck must pay neither hit nor kill";
+    ASSERT_FLOAT_EQ(reward, -0.03f) << "hitting any part of a wreck must pay neither hit nor kill";
 }
 
 // ========================================================================
@@ -357,6 +386,6 @@ TEST_F(RewardTest, ZeroRewardWithEmptyTankList) {
     ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN with empty tank list";
     ASSERT_FALSE(std::isinf(reward)) << "reward should not be Inf with empty tank list";
 
-    // firing is free and there is no enemy to sample, so no reward at all
-    ASSERT_FLOAT_EQ(reward, 0.f);
+    // there is no enemy to sample, so nothing but the fire cost
+    ASSERT_FLOAT_EQ(reward, -0.03f);
 }

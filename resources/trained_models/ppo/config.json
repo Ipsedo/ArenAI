@@ -7,9 +7,9 @@
             256,
             128
         ],
-        "actor_learning_rate": 0.0003000000142492354,
+        "actor_learning_rate": 9.999999747378752e-05,
         "clip_epsilon": 0.20000000298023224,
-        "continuous_entropy_factor": 0.009999999776482582,
+        "continuous_entropy_factor": 0.0010000000474974513,
         "critic_batch_size": 512,
         "critic_epochs": 4,
         "critic_gpu_batch_size": 256,
@@ -19,8 +19,8 @@
         ],
         "critic_learning_rate": 0.0003000000142492354,
         "discrete_entropy_factor": 0.0010000000474974513,
-        "gae_lambda": 0.9900000095367432,
-        "gamma": 0.9940000176429749,
+        "gae_lambda": 0.949999988079071,
+        "gamma": 0.9900000095367432,
         "grad_norm_max": 0.5,
         "group_norm_nums": [
             2,
@@ -30,7 +30,7 @@
         ],
         "hidden_size_sensors": 64,
         "initial_fire_proba": 0.5,
-        "initial_sigma": 0.5,
+        "initial_sigma": 0.30000001192092896,
         "initial_zoom_proba": 0.5,
         "metric_window_size": 256,
         "rollout_size": 300,
@@ -75,7 +75,7 @@
         "cuda": true,
         "max_episode_steps": 5400,
         "nb_episodes": 30000,
-        "output_folder": "./outputs/train_382_ppo",
+        "output_folder": "./outputs/train_389_ppo",
         "resources_folder": "./resources",
         "save_every": 108000
     }

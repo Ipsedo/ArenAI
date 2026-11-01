@@ -50,7 +50,7 @@ namespace arenai::desktop::gui {
         // in [0, 1]
         float player_health = 1.f;
         // the enemies' total score over their number (dead ones included)
-        float enemies_mean_score = 0.f;
+        int enemies_max_score = 0;
         int enemies_alive = 0;
         int enemies_total = 0;
     };

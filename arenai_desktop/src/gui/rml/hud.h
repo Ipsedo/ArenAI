@@ -52,7 +52,7 @@ namespace arenai::desktop::gui {
         Rml::String clock_;
         int player_score_ = 0;
         int hull_segments_ = HULL_SEGMENTS;
-        int enemies_mean_score_ = 0;
+        int enemies_max_score_ = 0;
         int enemies_alive_ = 0;
         int enemies_total_ = 0;
 

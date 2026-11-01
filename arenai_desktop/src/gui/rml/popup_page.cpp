@@ -53,7 +53,7 @@ namespace arenai::desktop::gui {
     void PopupPage::open(const MatchStatus &status, PopupListener on_action) {
         state_.match = status;
         clock_ = clock_label(status.elapsed_seconds);
-        machine_score_ = static_cast<int>(std::lround(status.enemies_mean_score));
+        machine_score_ = status.enemies_max_score;
         on_action_ = std::move(on_action);
         show();
     }

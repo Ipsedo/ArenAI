@@ -360,16 +360,13 @@ TEST_F(MenuPagesTest, popup_reports_actions_to_its_listener) {
 
     std::vector<gui::PopupAction> received;
     pause.open(
-        {.elapsed_seconds = 61.f,
-         .player_score = 42,
-         .enemies_mean_score = 7.6f,
-         .enemies_alive = 3},
+        {.elapsed_seconds = 61.f, .player_score = 42, .enemies_max_score = 7, .enemies_alive = 3},
         [&received](const gui::PopupAction action) { received.push_back(action); });
     context().Update();
     EXPECT_TRUE(pause.visible());
     EXPECT_EQ(state_.match.player_score, 42);
     EXPECT_EQ(pause.document().GetElementById("pause-clock")->GetInnerRML(), "01:01");
-    EXPECT_EQ(pause.document().GetElementById("pause-machine-score")->GetInnerRML(), "8");
+    EXPECT_EQ(pause.document().GetElementById("pause-machine-score")->GetInnerRML(), "7");
 
     Rml::Element *main_menu = find_event_element(pause.document(), "popup_main_menu()");
     ASSERT_NE(main_menu, nullptr);
@@ -543,7 +540,7 @@ TEST_F(MenuPagesTest, hud_status_fills_clock_scores_hull_and_enemy_slots) {
         {.elapsed_seconds = 252.6f,
          .player_score = 1240,
          .player_health = 0.7f,
-         .enemies_mean_score = 859.6f,
+         .enemies_max_score = 860,
          .enemies_alive = 3,
          .enemies_total = 4});
     context().Update();

@@ -124,11 +124,11 @@ namespace arenai::desktop {
         });
     }
 
-    int DesktopGameEnvironment::enemies_total_score() {
+    int DesktopGameEnvironment::enemies_max_score() {
         return apply_on_enemies<int>([](const auto &tanks) {
-            int total = 0;
-            for (const auto &tank: tanks) total += tank->get_score();
-            return total;
+            int max = 0;
+            for (const auto &tank: tanks) max = std::max(tank->get_score(), max);
+            return max;
         });
     }
 
@@ -260,8 +260,6 @@ namespace arenai::desktop {
         player_renderer->release_current();
     }
 
-    DesktopGameEnvironment::~DesktopGameEnvironment() {
-        std::cout << "Final score : " << player_tank->get_score() << std::endl;
-    }
+    DesktopGameEnvironment::~DesktopGameEnvironment() = default;
 
 }// namespace arenai::desktop

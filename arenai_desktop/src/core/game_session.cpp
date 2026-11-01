@@ -129,9 +129,7 @@ namespace arenai::desktop {
             .elapsed_seconds = static_cast<float>(frame_) * enemy_.wanted_frequency,
             .player_score = env_->get_score(),
             .player_health = env_->player_health_ratio(),
-            .enemies_mean_score = nb_enemies > 0 ? static_cast<float>(env_->enemies_total_score())
-                                                       / static_cast<float>(nb_enemies)
-                                                 : 0.f,
+            .enemies_max_score = nb_enemies > 0 ? env_->enemies_max_score() : 0,
             .enemies_alive = env_->nb_enemies_alive(),
             .enemies_total = nb_enemies};
     }

@@ -59,7 +59,7 @@ namespace arenai::desktop {
         // they go through the base class's enemy visitor.
         int nb_enemies();
         int nb_enemies_alive();
-        int enemies_total_score();
+        int enemies_max_score();
 
         model::PlayerHits consume_player_hits() const;
         std::vector<float> consume_damage_screen_angles() const;

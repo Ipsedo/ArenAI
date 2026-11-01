@@ -20,7 +20,7 @@ namespace arenai::desktop::gui {
         model.bind("clock", &clock_);
         model.bind("player_score", &player_score_);
         model.bind("hull_segments", &hull_segments_);
-        model.bind("enemies_mean_score", &enemies_mean_score_);
+        model.bind("enemies_mean_score", &enemies_max_score_);
         model.bind("enemies_alive", &enemies_alive_);
         model.bind("enemies_total", &enemies_total_);
     }
@@ -32,7 +32,7 @@ namespace arenai::desktop::gui {
         // ceil: the bar only empties completely once the hull is gone
         hull_segments_ = std::clamp(
             static_cast<int>(std::ceil(status.player_health * HULL_SEGMENTS)), 0, HULL_SEGMENTS);
-        enemies_mean_score_ = static_cast<int>(std::lround(status.enemies_mean_score));
+        enemies_max_score_ = status.enemies_max_score;
         enemies_total_ = std::max(0, status.enemies_total);
         enemies_alive_ = std::clamp(status.enemies_alive, 0, enemies_total_);
 

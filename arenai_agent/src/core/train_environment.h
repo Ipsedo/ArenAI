@@ -11,6 +11,15 @@
 
 namespace arenai::agent {
 
+    struct AimGeometry {
+        bool alive;
+        float distance;
+        float yaw;
+        float pitch;
+        float best_angle;
+        float best_distance;
+    };
+
     class TrainTankEnvironment final : public core::BaseTanksEnvironment {
     public:
         TrainTankEnvironment(
@@ -28,6 +37,8 @@ namespace arenai::agent {
         std::vector<std::shared_ptr<AbstractMetric>> get_metrics() const;
 
         bool is_episode_terminated();
+
+        std::vector<AimGeometry> aim_geometry();
 
         // totals across every tank since the last reset, for the spawn curriculum
         int episode_nb_fires() const;

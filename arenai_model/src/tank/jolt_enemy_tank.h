@@ -83,7 +83,6 @@ namespace arenai::model {
         float hit_reward_scale;
 
         float hit_received_cost;
-        float fire_cost;
 
         int initial_nb_shells;
         int nb_shells;
@@ -116,8 +115,6 @@ namespace arenai::model {
         // written by get_reward(), which stays const: the split is a read of the same
         // computation, not a second one
         mutable RewardDetail last_reward_detail;
-        // shells fired since the last get_reward(), which charges and clears them
-        mutable int nb_uncharged_shells;
         std::vector<TrackedShell> tracked_shells;
 
         void on_shell_fired(const std::shared_ptr<ShellItem> &shell);

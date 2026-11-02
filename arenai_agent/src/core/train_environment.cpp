@@ -5,6 +5,8 @@
 #include "./train_environment.h"
 
 #include <algorithm>
+#include <cmath>
+#include <numbers>
 #include <numeric>
 
 #include <arenai_agent/file_reader.h>
@@ -205,6 +207,66 @@ namespace arenai::agent {
 
         nb_fires_episode = 0;
         nb_hits_episode = 0;
+    }
+
+    std::vector<AimGeometry> TrainTankEnvironment::aim_geometry() {
+        return apply_on_enemies<std::vector<AimGeometry>>(
+            [](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
+                constexpr glm::vec4 origin(0.f, 0.f, 0.f, 1.f);
+
+                std::vector<glm::vec3> positions;
+                positions.reserve(tanks.size());
+                for (const auto &tank: tanks)
+                    positions.emplace_back(tank->get_chassis()->get_model_matrix() * origin);
+
+                std::vector<AimGeometry> result;
+                result.reserve(tanks.size());
+
+                for (int i = 0; i < tanks.size(); i++) {
+                    AimGeometry geometry{
+                        .alive = !tanks[i]->is_dead(),
+                        .distance = -1.f,
+                        .yaw = 0.f,
+                        .pitch = 0.f,
+                        .best_angle = std::numbers::pi_v<float>,
+                        .best_distance = -1.f};
+
+                    const auto canon_matrix = tanks[i]->get_canon()->get_model_matrix();
+                    const auto canon_pos = glm::vec3(canon_matrix * origin);
+                    const auto canon_inverse = glm::inverse(canon_matrix);
+
+                    int nearest = -1;
+                    for (int j = 0; j < tanks.size(); j++) {
+                        if (j == i || tanks[j]->is_dead()) continue;
+                        const float distance = glm::length(positions[j] - canon_pos);
+                        if (nearest == -1 || distance < geometry.distance) {
+                            nearest = j;
+                            geometry.distance = distance;
+                        }
+
+                        const auto relative =
+                            glm::normalize(glm::vec3(canon_inverse * glm::vec4(positions[j], 1.f)));
+                        if (const float angle = std::acos(std::clamp(relative.z, -1.f, 1.f));
+                            angle < geometry.best_angle) {
+                            geometry.best_angle = angle;
+                            geometry.best_distance = distance;
+                        }
+                    }
+
+                    if (nearest != -1) {
+                        const auto relative =
+                            glm::vec3(canon_inverse * glm::vec4(positions[nearest], 1.f));
+                        geometry.yaw = std::atan2(relative.x, relative.z);
+                        geometry.pitch = std::atan2(
+                            relative.y,
+                            std::sqrt(relative.x * relative.x + relative.z * relative.z));
+                    }
+
+                    result.push_back(geometry);
+                }
+
+                return result;
+            });
     }
 
     int TrainTankEnvironment::episode_nb_fires() const { return nb_fires_episode; }

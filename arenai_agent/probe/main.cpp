@@ -16,13 +16,13 @@
 #include <arenai_model/constants.h>
 #include <arenai_view/backend.h>
 
-#include "agents/ppo_liquid/liquid_hidden_state.h"
-#include "core/train_environment.h"
-#include "distributions/bernoulli.h"
-#include "distributions/truncated_normal.h"
-#include "networks/recurrent/liquid_actor.h"
-#include "networks_utils/torch_converter.h"
-#include "networks_utils/torch_loader.h"
+#include "./agents/ppo_liquid/liquid_hidden_state.h"
+#include "./core/train_environment.h"
+#include "./distributions/bernoulli.h"
+#include "./distributions/truncated_normal.h"
+#include "./networks/recurrent/liquid_actor.h"
+#include "./networks_utils/torch_converter.h"
+#include "./networks_utils/torch_loader.h"
 
 using namespace arenai;
 using namespace arenai::agent;

@@ -5,7 +5,6 @@
 #include "./jolt_enemy_tank.h"
 
 #include <algorithm>
-#include <cmath>
 #include <limits>
 #include <vector>
 
@@ -77,14 +76,16 @@ namespace arenai::model {
     float JoltEnemyTank::compute_aim_reward(
         const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos, const glm::vec3 &shell_pos) const {
 
-        // 3D: peaks at 1 on the enemy, decays exponentially with the miss distance; the
-        // iso-reward surfaces are spheres around the enemy, wider the farther the shot
+        // 3D: peaks at 1 on the enemy, Cauchy decay with the miss distance so the slope
+        // survives far from the target; the iso-reward surfaces are spheres around the
+        // enemy, wider the farther the shot
         const float shot_distance = glm::length(enemy_pos - fire_pos);
         const float miss_distance = glm::length(shell_pos - enemy_pos);
 
         const float tolerance = aim_tolerance_min + aim_tolerance_angle * shot_distance;
+        const float ratio = miss_distance / tolerance;
 
-        return std::exp(-miss_distance / tolerance);
+        return 1.f / (1.f + ratio * ratio);
     }
 
     void JoltEnemyTank::update_closest_approach(

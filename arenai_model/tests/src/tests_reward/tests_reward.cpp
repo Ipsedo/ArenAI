@@ -85,8 +85,8 @@ TEST_F(RewardTest, DeathPenaltyIsMinusOne) {
     const float death_reward = tanks[1]->get_reward();
 
     // death and suicide share the same penalty so early termination is never an escape;
-    // the fatal hit also counts as a received hit (-0.3)
-    ASSERT_FLOAT_EQ(death_reward, -1.3f);
+    // the fatal hit also counts as a received hit (-0.2)
+    ASSERT_FLOAT_EQ(death_reward, -1.2f);
 }
 
 // ========================================================================
@@ -127,7 +127,7 @@ TEST_F(RewardTest, RewardPositiveOnHit) {
     ASSERT_FALSE(std::isnan(max_reward)) << "reward should never be NaN";
     ASSERT_FALSE(std::isinf(max_reward)) << "reward should never be Inf";
 
-    ASSERT_GE(max_reward, 0.2f)
+    ASSERT_GE(max_reward, 0.3f)
         << "reward should be greater than or equal to the hit bonus after hitting an enemy";
 }
 
@@ -164,7 +164,7 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
     ASSERT_FALSE(std::isnan(max_reward_on_hit)) << "reward should never be NaN";
     ASSERT_FALSE(std::isinf(max_reward_on_hit)) << "reward should never be Inf";
 
-    ASSERT_GE(max_reward_on_hit, 0.2f)
+    ASSERT_GE(max_reward_on_hit, 0.3f)
         << "reward should be greater than or equal to the hit bonus after hitting an enemy";
 
     constexpr user_input no_fire_input{

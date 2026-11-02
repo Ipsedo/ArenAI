@@ -59,7 +59,7 @@ namespace arenai::model {
             }),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), aim_tolerance_min(2.5f),
-          aim_tolerance_angle(glm::radians(3.f)), hit_reward_scale(0.1f), hit_received_cost(0.3f),
+          aim_tolerance_angle(glm::radians(3.f)), hit_reward_scale(0.1f), hit_received_cost(0.2f),
           initial_nb_shells(10), nb_shells(initial_nb_shells), max_shells(30),
           fire_cooldown_frames(static_cast<int>(1.f / 6.f / wanted_frame_frequency)),
           curr_cooldown_frame(fire_cooldown_frames), shells_recharged_per_hit(10),
@@ -162,7 +162,7 @@ namespace arenai::model {
                 detail.sum_miss_distance +=
                     glm::length(tracked.shell_pos_at_t - tracked.enemy_pos_at_t);
 
-                if (tracked.has_hit) detail.hit += tracked.has_killed ? 2.f : 0.2f;
+                if (tracked.has_hit) detail.hit += tracked.has_killed ? 2.f : 0.3f;
             }
         }
 

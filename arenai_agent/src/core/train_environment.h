@@ -81,6 +81,8 @@ namespace arenai::agent {
         std::shared_ptr<AbstractMetric> reward_hit_metric;
         std::shared_ptr<AbstractMetric> reward_received_metric;
 
+        std::shared_ptr<AbstractMetric> aim_potential_metric;
+
         // miss distance of the shells that landed, one sample per step that resolved a shell
         std::shared_ptr<AbstractMetric> miss_distance_metric;
 

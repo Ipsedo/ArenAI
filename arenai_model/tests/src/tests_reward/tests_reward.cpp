@@ -127,8 +127,8 @@ TEST_F(RewardTest, RewardPositiveOnHit) {
     ASSERT_FALSE(std::isnan(max_reward)) << "reward should never be NaN";
     ASSERT_FALSE(std::isinf(max_reward)) << "reward should never be Inf";
 
-    ASSERT_GE(max_reward, 0.3f - 0.03f)
-        << "reward should be at least the hit bonus minus the shot cost after hitting an enemy";
+    ASSERT_GE(max_reward, 0.3f)
+        << "reward should be at least the hit bonus after hitting an enemy";
 }
 
 TEST_F(RewardTest, RewardUnderOneAfterHit) {
@@ -164,8 +164,8 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
     ASSERT_FALSE(std::isnan(max_reward_on_hit)) << "reward should never be NaN";
     ASSERT_FALSE(std::isinf(max_reward_on_hit)) << "reward should never be Inf";
 
-    ASSERT_GE(max_reward_on_hit, 0.3f - 0.03f)
-        << "reward should be at least the hit bonus minus the shot cost after hitting an enemy";
+    ASSERT_GE(max_reward_on_hit, 0.3f)
+        << "reward should be at least the hit bonus after hitting an enemy";
 
     constexpr user_input no_fire_input{
         .left_joystick = {.x = 0.f, .y = 0.f},
@@ -189,7 +189,7 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
         << "reward should be exactly zero when no shell hit an enemy";
 }
 
-TEST_F(RewardTest, MissedShellPaysOnlyItsCost) {
+TEST_F(RewardTest, MissedShellGivesNothing) {
     add_ground();
     auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
     auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {15.f, 5.f, 30.f}, false);
@@ -220,8 +220,8 @@ TEST_F(RewardTest, MissedShellPaysOnlyItsCost) {
 
     ASSERT_FALSE(shared_a->consume_has_hit()) << "shell should have missed the enemy tank";
     ASSERT_GT(max_landed_shells, 0) << "the shell tracker should have sampled a landed shell";
-    // a shell that lands without touching anyone only pays its cost
-    ASSERT_NEAR(total_reward, -0.03f, 1e-5f);
+    // a shell that lands without touching anyone is worth nothing
+    ASSERT_NEAR(total_reward, 0.f, 1e-5f);
 }
 
 // ========================================================================

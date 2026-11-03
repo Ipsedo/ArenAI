@@ -18,6 +18,11 @@
 using namespace arenai;
 using namespace arenai::model;
 
+namespace {
+    constexpr float AIM_POTENTIAL_TOLERANCE_MIN = 2.5f;
+    constexpr float AIM_POTENTIAL_TOLERANCE_DEGREES = 20.f;
+}// namespace
+
 namespace arenai::model {
 
     JoltEnemyTank::JoltEnemyTank(
@@ -40,8 +45,11 @@ namespace arenai::model {
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0),
           aim_potential(
-              engine, AimScorer(2.5f, glm::radians(3.f)), SHELL_SPEED, GRAVITY, 20.f, 0.1f),
-          shot_cost(0.03f), hit_received_cost(0.2f), initial_nb_shells(10),
+              engine,
+              AimScorer(
+                  AIM_POTENTIAL_TOLERANCE_MIN, glm::radians(AIM_POTENTIAL_TOLERANCE_DEGREES)),
+              SHELL_SPEED, GRAVITY, 20.f, 0.1f),
+          shot_cost(0.f), hit_received_cost(0.2f), initial_nb_shells(10),
           nb_shells(initial_nb_shells), max_shells(30),
           fire_cooldown_frames(static_cast<int>(1.f / 6.f / wanted_frame_frequency)),
           curr_cooldown_frame(fire_cooldown_frames), shells_recharged_per_hit(10),

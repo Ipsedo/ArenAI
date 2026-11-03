@@ -16,7 +16,8 @@ namespace arenai::agent {
         virtual ~AbstractMetric() = default;
 
         explicit AbstractMetric(
-            const std::string &name, int window_size, int precision = 4, bool scientific = false);
+            const std::string &name, int window_size, int precision = 4, bool scientific = false,
+            bool print_in_progress_bar = true);
 
         void add(float value);
         float last_value() const;
@@ -24,6 +25,7 @@ namespace arenai::agent {
         float compute_metric();
 
         std::string get_name() const;
+        bool is_printed_in_progress_bar() const;
         std::string to_string();
 
         static std::string
@@ -41,6 +43,8 @@ namespace arenai::agent {
 
         bool float_display_scientific;
         int float_display_precision;
+
+        bool print_in_progress_bar;
     };
 
 }// namespace arenai::agent

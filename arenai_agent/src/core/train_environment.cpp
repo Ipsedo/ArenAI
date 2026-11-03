@@ -45,6 +45,8 @@ namespace arenai::agent {
               std::make_shared<MeanMetric>("r_hit", 4 * nb_tanks * max_episode_steps, 1, true)),
           reward_received_metric(
               std::make_shared<MeanMetric>("r_rcv", 4 * nb_tanks * max_episode_steps, 1, true)),
+          aim_potential_metric(std::make_shared<MeanMetric>(
+              "phi", 4 * nb_tanks * max_episode_steps, 3, false, false)),
           miss_distance_metric(std::make_shared<MeanMetric>("miss", 1024 * nb_tanks, 1)),
           episode_step_mean_nb_metric(std::make_shared<MeanMetric>("s", 32, 1)),
           fire_metric(std::make_shared<MeanMetric>("fire", 256, 2)),
@@ -137,11 +139,13 @@ namespace arenai::agent {
         render_frame(true);
         auto states = read_states();
 
-        const auto shaping_rewards = aim_shaping.step(aim_potentials(), done);
+        const auto potentials = aim_potentials();
+        const auto shaping_rewards = aim_shaping.step(potentials, done);
         for (int i = 0; i < nb_tanks; i++) {
             if (already_done[i]) continue;
             rewards[i] += shaping_rewards[i];
             reward_details[i].aim += shaping_rewards[i];
+            if (!done[i]) aim_potential_metric->add(potentials[i]);
         }
 
         // fire frequency (per second, per tank that acted this step)
@@ -321,10 +325,15 @@ namespace arenai::agent {
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> TrainTankEnvironment::get_metrics() const {
-        return {reward_metric,        reward_aim_metric,
-                reward_hit_metric,    reward_received_metric,
-                miss_distance_metric, episode_step_mean_nb_metric,
-                fire_metric,          hit_metric,
+        return {reward_metric,
+                reward_aim_metric,
+                reward_hit_metric,
+                reward_received_metric,
+                aim_potential_metric,
+                miss_distance_metric,
+                episode_step_mean_nb_metric,
+                fire_metric,
+                hit_metric,
                 kill_metric};
     }
 

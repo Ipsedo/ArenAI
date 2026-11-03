@@ -44,9 +44,11 @@ namespace arenai::agent {
             torch::NoGradGuard guard;
 
             x_t = hidden_state->get(state.vision.size(0));
-            const auto &[mu, sigma, discrete_proba, next_x] =
-                actor->act(state.vision, state.proprioception, x_t);
-            hidden_state->set(next_x);
+            const auto out = actor->act(state.vision, state.proprioception, x_t);
+            const auto &mu = out.mu;
+            const auto &sigma = out.sigma;
+            const auto &discrete_proba = out.discrete;
+            hidden_state->set(out.next_x);
 
             if (sample) {
                 action.continuous_action = truncated_normal_sample(mu, sigma);

@@ -9,6 +9,7 @@
 
 #include <arenai_model/tank.h>
 
+#include "./aim_potential.h"
 #include "./jolt_tank.h"
 
 namespace arenai::model {
@@ -60,6 +61,8 @@ namespace arenai::model {
         void tick(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
 
         RewardDetail get_last_reward_detail() const override;
+        float
+        get_aim_potential(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const override;
 
         std::vector<float> get_proprioception() const override;
         bool get_can_fire() const override;
@@ -76,11 +79,7 @@ namespace arenai::model {
         int max_frames_upside_down;
         int curr_frame_upside_down;
 
-        // aim reward tolerance (in world units) grows with the shot distance:
-        // aim_tolerance_min + aim_tolerance_angle * distance
-        float aim_tolerance_min;
-        float aim_tolerance_angle;
-        float hit_reward_scale;
+        AimPotential aim_potential;
         float shot_cost;
 
         float hit_received_cost;
@@ -128,10 +127,6 @@ namespace arenai::model {
         void update_closest_approach(
             TrackedShell &tracked, const glm::vec3 &shell_pos,
             const std::vector<std::shared_ptr<EnemyTank>> &tanks) const;
-
-        float compute_aim_reward(
-            const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos,
-            const glm::vec3 &shell_pos) const;
     };
 
 }// namespace arenai::model

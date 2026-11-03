@@ -27,6 +27,9 @@ namespace arenai::model {
 
     constexpr float CANON_AIM_DISTANCE = 100.f;
 
+    constexpr float GRAVITY = 9.8f;
+    constexpr float SHELL_SPEED = 250.f;
+
     constexpr float ZOOM_MAGNIFICATION = 2.f;
     constexpr float ZOOM_TRANSITION_SECONDS = 0.25f;
 

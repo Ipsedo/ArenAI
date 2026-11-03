@@ -15,6 +15,8 @@
 #include <Jolt/Physics/Collision/RayCast.h>
 #include <Jolt/RegisterTypes.h>
 
+#include <arenai_model/constants.h>
+
 #include "./items/jolt_item_factory.h"
 #include "./tank/jolt_tank_factory.h"
 
@@ -131,7 +133,7 @@ namespace arenai::model {
             10240, 0, 65536, 10240, *broad_phase_layer_interface, *object_vs_broad_phase_filter,
             *object_layer_pair_filter);
 
-        physics_system->SetGravity(JPH::Vec3(0.f, -9.8f, 0.f));
+        physics_system->SetGravity(JPH::Vec3(0.f, -GRAVITY, 0.f));
         physics_system->SetContactListener(&contact_listener);
 
         physics_system->SetCombineFriction(

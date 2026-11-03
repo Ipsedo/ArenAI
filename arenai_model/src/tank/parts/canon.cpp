@@ -73,24 +73,26 @@ namespace arenai::model {
         hinge->SetTargetAngle(angle);
     }
 
+    FirePose CanonItem::get_fire_pose() {
+        const glm::mat4 m_matrix = to_glm(ConvexItem::get_body()->GetWorldTransform());
+
+        return {
+            .position = glm::vec3(m_matrix * glm::vec4(0.f, 0.f, 10.f, 1.f)),
+            .direction = glm::normalize(glm::vec3(m_matrix * glm::vec4(0.f, 0.f, 1.f, 0.f)))};
+    }
+
     std::vector<std::shared_ptr<JoltItem>> CanonItem::produce_jolt_items() {
         if (will_fire) {
             const glm::mat4 m_matrix = to_glm(ConvexItem::get_body()->GetWorldTransform());
-
-            glm::vec4 shell_pos(0.f, 0.f, 10.f, 1.f);
-            shell_pos = m_matrix * shell_pos;
+            const auto [position, direction] = get_fire_pose();
 
             will_fire = false;
 
             auto shell_item = std::make_shared<ShellItem>(
-                get_engine(), file_reader, glm::vec3(shell_pos), glm::toQuat(m_matrix),
-                glm::vec3(0.2f), 20.f, wanted_frame_frequency, on_contact);
+                get_engine(), file_reader, position, glm::toQuat(m_matrix), glm::vec3(0.2f), 20.f,
+                wanted_frame_frequency, on_contact);
 
-            glm::vec4 force_vec(0.f, 0.f, 1.f, 0.f);
-            force_vec = m_matrix * force_vec;
-
-            const glm::vec3 velocity =
-                glm::vec3(force_vec) * 1.5e5f * wanted_frame_frequency / 20.f;
+            const glm::vec3 velocity = direction * SHELL_SPEED;
             shell_item->get_body()->SetLinearVelocity(
                 JPH::Vec3(velocity.x, velocity.y, velocity.z));
 

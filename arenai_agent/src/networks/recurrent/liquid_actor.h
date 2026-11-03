@@ -24,6 +24,8 @@ namespace arenai::agent {
         torch::Tensor discrete;
         // liquid state after the last processed step
         torch::Tensor next_x;
+        torch::Tensor features;
+        torch::Tensor vision_features;
     };
 
     // CNN on the frames, MLP on the proprioception, both concatenated into the

@@ -63,7 +63,8 @@ namespace arenai::agent {
 
     LiquidActorOutput LiquidActor::act(
         const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &x_t) {
-        const auto encoded = encode(vision, sensors);
+        const auto vision_encoded = vision_encoder->forward(vision);
+        const auto encoded = torch::cat({vision_encoded, sensors_encoder->forward(sensors)}, 1);
 
         const auto [liquid_output, next_x] = liquid->forward_step(x_t, encoded);
         const auto mode = mu->forward(liquid_output);
@@ -72,7 +73,9 @@ namespace arenai::agent {
             .mu = mode,
             .sigma = state_free_sigma(log_sigma, mode),
             .discrete = discrete->forward(liquid_output),
-            .next_x = next_x};
+            .next_x = next_x,
+            .features = liquid_output,
+            .vision_features = vision_encoded};
     }
 
     LiquidActorOutput LiquidActor::act_sequence(
@@ -104,7 +107,9 @@ namespace arenai::agent {
             .mu = mode,
             .sigma = state_free_sigma(log_sigma, mode),
             .discrete = discrete->forward(output),
-            .next_x = x};
+            .next_x = x,
+            .features = output,
+            .vision_features = torch::Tensor()};
     }
 
     torch::Tensor LiquidActor::initial_state(const int batch_size) const {

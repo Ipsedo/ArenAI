@@ -47,9 +47,9 @@ namespace arenai::model {
         float hit = 0.f;
         float received = 0.f;
         float death = 0.f;
+        float shot = 0.f;
 
         int nb_landed_shells = 0;
-        float sum_aim_quality = 0.f;
         float sum_miss_distance = 0.f;
     };
 
@@ -58,6 +58,8 @@ namespace arenai::model {
         virtual float get_reward() const = 0;
 
         virtual RewardDetail get_last_reward_detail() const = 0;
+        virtual float
+        get_aim_potential(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const = 0;
         virtual std::vector<float> get_proprioception() const = 0;
         // whether a fire input applied now would shoot (shell reserve and cooldown)
         virtual bool get_can_fire() const = 0;

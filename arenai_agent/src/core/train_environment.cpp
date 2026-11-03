@@ -19,13 +19,17 @@
 using namespace arenai;
 using namespace arenai::agent;
 
+namespace {
+    constexpr float AIM_POTENTIAL_SCALE = 0.1f;
+}// namespace
+
 namespace arenai::agent {
 
     TrainTankEnvironment::TrainTankEnvironment(
         const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, const int nb_tanks,
         const std::filesystem::path &android_assets_path, const float wanted_frequency,
         const int max_episode_steps, const int vision_height, const int vision_width,
-        const int vision_num_threads, const int action_repeat)
+        const int vision_num_threads, const int action_repeat, const float gamma)
         : BaseTanksEnvironment(
             std::make_shared<DesktopAssetFileReader>(android_assets_path), graphics_backend,
             nb_tanks, wanted_frequency, vision_height, vision_width, vision_num_threads, false,
@@ -46,7 +50,8 @@ namespace arenai::agent {
           fire_metric(std::make_shared<MeanMetric>("fire", 256, 2)),
           hit_metric(std::make_shared<MeanMetric>("hit", 16, 2, true)),
           kill_metric(std::make_shared<MeanMetric>("kill", 16, 1)), nb_kills_episode(0),
-          nb_fires_episode(0), nb_hits_episode(0) {}
+          nb_fires_episode(0), nb_hits_episode(0),
+          aim_shaping(gamma, AIM_POTENTIAL_SCALE, nb_tanks) {}
 
     std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
     TrainTankEnvironment::step(const float time_delta, const std::vector<core::Action> &actions) {
@@ -94,8 +99,8 @@ namespace arenai::agent {
                     reward_details[i].hit += detail.hit;
                     reward_details[i].received += detail.received;
                     reward_details[i].death += detail.death;
+                    reward_details[i].shot += detail.shot;
                     reward_details[i].nb_landed_shells += detail.nb_landed_shells;
-                    reward_details[i].sum_aim_quality += detail.sum_aim_quality;
                     reward_details[i].sum_miss_distance += detail.sum_miss_distance;
 
                     if (has_hit) {
@@ -131,6 +136,13 @@ namespace arenai::agent {
 
         render_frame(true);
         auto states = read_states();
+
+        const auto shaping_rewards = aim_shaping.step(aim_potentials(), done);
+        for (int i = 0; i < nb_tanks; i++) {
+            if (already_done[i]) continue;
+            rewards[i] += shaping_rewards[i];
+            reward_details[i].aim += shaping_rewards[i];
+        }
 
         // fire frequency (per second, per tank that acted this step)
         int nb_acting = 0, nb_fires = 0, nb_hits = 0;
@@ -208,6 +220,18 @@ namespace arenai::agent {
 
         nb_fires_episode = 0;
         nb_hits_episode = 0;
+
+        aim_shaping.reset(aim_potentials());
+    }
+
+    std::vector<float> TrainTankEnvironment::aim_potentials() {
+        return apply_on_enemies<std::vector<float>>(
+            [](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
+                std::vector<float> potentials;
+                potentials.reserve(tanks.size());
+                for (const auto &tank: tanks) potentials.push_back(tank->get_aim_potential(tanks));
+                return potentials;
+            });
     }
 
     std::vector<model::RewardDetail> TrainTankEnvironment::last_step_reward_details() const {

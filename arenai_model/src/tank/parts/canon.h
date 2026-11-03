@@ -21,6 +21,11 @@
 
 namespace arenai::model {
 
+    struct FirePose {
+        glm::vec3 position;
+        glm::vec3 direction;
+    };
+
     class CanonItem final : public LifeItem,
                             public ConvexItem,
                             public ItemProducer,
@@ -40,6 +45,8 @@ namespace arenai::model {
         void apply_input(const controller::user_input &input) override;
 
         float get_angle() const;
+
+        FirePose get_fire_pose();
 
         glm::vec3 pos() override;
         glm::vec3 look() override;

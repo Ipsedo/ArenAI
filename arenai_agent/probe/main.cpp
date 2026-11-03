@@ -40,6 +40,7 @@ int main(const int argc, char **argv) {
     parser.add_argument("--spawn_side").scan<'g', float>().default_value(550.f);
     parser.add_argument("--cuda").default_value(false).implicit_value(true);
     parser.add_argument("--deterministic").default_value(false).implicit_value(true);
+    parser.add_argument("--features").default_value(std::string());
     parser.add_argument("--vision_num_threads")
         .scan<'i', int>()
         .default_value(static_cast<int>(std::thread::hardware_concurrency()));
@@ -92,7 +93,7 @@ int main(const int argc, char **argv) {
     const auto env = std::make_unique<TrainTankEnvironment>(
         std::move(graphics_backend), nb_tanks, resources_folder, wanted_frequency,
         max_episode_steps, vision_height, vision_width, parser.get<int>("--vision_num_threads"),
-        action_repeat);
+        action_repeat, agent_config.at("gamma").get<float>());
 
     std::ofstream csv(output);
     csv << "episode;step;tank;distance;yaw;pitch;best_angle;best_distance;can_fire;shells;cooldown;"
@@ -104,6 +105,10 @@ int main(const int argc, char **argv) {
     shots_csv
         << "episode;tank;fire_step;land_step;fire_best_angle;fire_best_distance;fire_distance;"
            "fire_yaw;fire_pitch;shells_at_fire;group_size;group_hits;group_miss\n";
+
+    const auto features_path = parser.get<std::string>("--features");
+    std::ofstream features_out;
+    if (!features_path.empty()) features_out.open(features_path, std::ios::binary);
 
     struct PendingShot {
         int step;
@@ -124,7 +129,8 @@ int main(const int argc, char **argv) {
         std::vector<std::deque<PendingShot>> pending(nb_tanks);
 
         while (!is_done) {
-            torch::Tensor continuous_action, discrete_action, mu, sigma, discrete;
+            torch::Tensor continuous_action, discrete_action, mu, sigma, discrete, features,
+                vision_features;
             {
                 torch::NoGradGuard guard;
 
@@ -136,6 +142,8 @@ int main(const int argc, char **argv) {
                 mu = out.mu.cpu();
                 sigma = out.sigma.cpu();
                 discrete = out.discrete.cpu();
+                features = out.features.cpu().contiguous();
+                vision_features = out.vision_features.cpu().contiguous();
 
                 if (deterministic) {
                     continuous_action = truncated_normal_mean(mu, sigma);
@@ -169,6 +177,19 @@ int main(const int argc, char **argv) {
                     << ';' << mu_acc[i][0] << ';' << mu_acc[i][1] << ';' << mu_acc[i][2] << ';'
                     << mu_acc[i][3] << ';' << sigma_acc[i][2] << ';' << sigma_acc[i][3] << ';'
                     << cont_acc[i][2] << ';' << cont_acc[i][3] << '\n';
+
+                if (features_out.is_open()) {
+                    const float header[3] = {
+                        static_cast<float>(episode), static_cast<float>(step),
+                        static_cast<float>(i)};
+                    features_out.write(reinterpret_cast<const char *>(header), sizeof(header));
+                    features_out.write(
+                        reinterpret_cast<const char *>(features[i].data_ptr<float>()),
+                        features.size(1) * sizeof(float));
+                    features_out.write(
+                        reinterpret_cast<const char *>(vision_features[i].data_ptr<float>()),
+                        vision_features.size(1) * sizeof(float));
+                }
 
                 if (mask_acc[i][0] > 0.5f && disc_acc[i][0] > 0.5f)
                     pending[i].push_back(

@@ -10,33 +10,13 @@
 
 #include <arenai_model/constants.h>
 
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/norm.hpp>
-#include <glm/gtx/vector_angle.hpp>
-
+#include "../geometry.h"
 #include "../jolt_engine.h"
+#include "./parts/canon.h"
 #include "./parts/shell.h"
 
 using namespace arenai;
 using namespace arenai::model;
-
-namespace {
-
-    // closest point of segment [a, b] to p, and its distance
-    float distance_to_segment(
-        const glm::vec3 &a, const glm::vec3 &b, const glm::vec3 &p, glm::vec3 &closest) {
-        const glm::vec3 ab = b - a;
-        const float length_squared = glm::length2(ab);
-
-        const float t =
-            length_squared > 0.f ? std::clamp(glm::dot(p - a, ab) / length_squared, 0.f, 1.f) : 0.f;
-
-        closest = a + t * ab;
-
-        return glm::length(p - closest);
-    }
-
-}// namespace
 
 namespace arenai::model {
 
@@ -58,10 +38,11 @@ namespace arenai::model {
                 return can_fire;
             }),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-          curr_frame_upside_down(0), aim_tolerance_min(2.5f),
-          aim_tolerance_angle(glm::radians(3.f)), hit_reward_scale(0.1f), shot_cost(0.03f),
-          hit_received_cost(0.2f), initial_nb_shells(10), nb_shells(initial_nb_shells),
-          max_shells(30),
+          curr_frame_upside_down(0),
+          aim_potential(
+              engine, AimScorer(2.5f, glm::radians(3.f)), SHELL_SPEED, GRAVITY, 20.f, 0.1f),
+          shot_cost(0.03f), hit_received_cost(0.2f), initial_nb_shells(10),
+          nb_shells(initial_nb_shells), max_shells(30),
           fire_cooldown_frames(static_cast<int>(1.f / 6.f / wanted_frame_frequency)),
           curr_cooldown_frame(fire_cooldown_frames), shells_recharged_per_hit(10),
           is_dead_already_triggered(false), apply_timeout(apply_timeout), starved(false),
@@ -73,21 +54,6 @@ namespace arenai::model {
           has_hit(false), has_kill(false), has_fired(false), killed_nb(0), hit_nb(0) {}
 
     int JoltEnemyTank::get_score() const { return killed_nb * 10 + hit_nb; }
-
-    float JoltEnemyTank::compute_aim_reward(
-        const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos, const glm::vec3 &shell_pos) const {
-
-        // 3D: peaks at 1 on the enemy, Cauchy decay with the miss distance so the slope
-        // survives far from the target; the iso-reward surfaces are spheres around the
-        // enemy, wider the farther the shot
-        const float shot_distance = glm::length(enemy_pos - fire_pos);
-        const float miss_distance = glm::length(shell_pos - enemy_pos);
-
-        const float tolerance = aim_tolerance_min + aim_tolerance_angle * shot_distance;
-        const float ratio = miss_distance / tolerance;
-
-        return 1.f / (1.f + ratio * ratio);
-    }
 
     void JoltEnemyTank::update_closest_approach(
         TrackedShell &tracked, const glm::vec3 &shell_pos,
@@ -144,7 +110,7 @@ namespace arenai::model {
         // reserve is a genuine termination, with its own lighter penalty
         if (is_dead() && !is_timeout()) detail.death = out_of_shells ? -0.5f : -1.f;
 
-        // 2. fired shells reward
+        // 2. landed shells: each one pays its cost, a touch its bonus
         for (int i = static_cast<int>(tracked_shells.size()) - 1; i >= 0; i--) {
             auto &tracked = tracked_shells[i];
 
@@ -153,13 +119,9 @@ namespace arenai::model {
             if (const bool in_flight = shell && !shell->need_destroy(); in_flight) continue;
 
             if (tracked.has_sample) {
-                const float aim_quality = compute_aim_reward(
-                    tracked.fire_pos, tracked.enemy_pos_at_t, tracked.shell_pos_at_t);
-
-                detail.aim += hit_reward_scale * aim_quality - shot_cost;
+                detail.shot -= shot_cost;
 
                 detail.nb_landed_shells++;
-                detail.sum_aim_quality += 0.1f * aim_quality;
                 detail.sum_miss_distance +=
                     glm::length(tracked.shell_pos_at_t - tracked.enemy_pos_at_t);
 
@@ -174,10 +136,28 @@ namespace arenai::model {
         // 4. total reward, kept split for the metrics
         last_reward_detail = detail;
 
-        return detail.aim + detail.hit + detail.received + detail.death;
+        return detail.hit + detail.received + detail.death + detail.shot;
     }
 
     RewardDetail JoltEnemyTank::get_last_reward_detail() const { return last_reward_detail; }
+
+    float
+    JoltEnemyTank::get_aim_potential(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const {
+        if (is_dead()) return 0.f;
+
+        const auto canon = std::dynamic_pointer_cast<CanonItem>(get_canon());
+        const auto [position, direction] = canon->get_fire_pose();
+
+        constexpr glm::vec4 origin(glm::vec3(0.f), 1.f);
+
+        std::vector<glm::vec3> targets;
+        for (const auto &tank: tanks) {
+            if (tank.get() == this || tank->is_dead()) continue;
+            targets.emplace_back(tank->get_chassis()->get_model_matrix() * origin);
+        }
+
+        return aim_potential.evaluate(position, direction, targets, get_body_ids());
+    }
 
     void JoltEnemyTank::tick(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
         // 1. flipped detection

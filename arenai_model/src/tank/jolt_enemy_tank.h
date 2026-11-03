@@ -81,6 +81,7 @@ namespace arenai::model {
         float aim_tolerance_min;
         float aim_tolerance_angle;
         float hit_reward_scale;
+        float shot_cost;
 
         float hit_received_cost;
 

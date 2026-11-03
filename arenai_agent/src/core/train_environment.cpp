@@ -148,6 +148,7 @@ namespace arenai::agent {
 
         nb_fires_episode += nb_fires;
         nb_hits_episode += nb_hits;
+        step_reward_details = reward_details;
 
         std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>> result;
         result.reserve(nb_tanks);
@@ -207,6 +208,10 @@ namespace arenai::agent {
 
         nb_fires_episode = 0;
         nb_hits_episode = 0;
+    }
+
+    std::vector<model::RewardDetail> TrainTankEnvironment::last_step_reward_details() const {
+        return step_reward_details;
     }
 
     std::vector<AimGeometry> TrainTankEnvironment::aim_geometry() {

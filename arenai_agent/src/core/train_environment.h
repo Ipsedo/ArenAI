@@ -40,6 +40,8 @@ namespace arenai::agent {
 
         std::vector<AimGeometry> aim_geometry();
 
+        std::vector<model::RewardDetail> last_step_reward_details() const;
+
         // totals across every tank since the last reset, for the spawn curriculum
         int episode_nb_fires() const;
         int episode_nb_hits() const;
@@ -90,6 +92,8 @@ namespace arenai::agent {
         int nb_kills_episode;
         int nb_fires_episode;
         int nb_hits_episode;
+
+        std::vector<model::RewardDetail> step_reward_details;
 
         bool are_all_done();
     };

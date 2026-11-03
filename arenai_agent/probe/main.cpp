@@ -2,6 +2,8 @@
 // Created by claude on 02/11/2026.
 //
 
+#include <cmath>
+#include <deque>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -98,6 +100,17 @@ int main(const int argc, char **argv) {
            "mu_dir_x;mu_dir_y;mu_canon_x;mu_canon_y;sigma_canon_x;sigma_canon_y;act_canon_x;"
            "act_canon_y\n";
 
+    std::ofstream shots_csv(output.parent_path() / (output.stem().string() + "_shots.csv"));
+    shots_csv
+        << "episode;tank;fire_step;land_step;fire_best_angle;fire_best_distance;fire_distance;"
+           "fire_yaw;fire_pitch;shells_at_fire;group_size;group_hits;group_miss\n";
+
+    struct PendingShot {
+        int step;
+        AimGeometry geometry;
+        float shells;
+    };
+
     constexpr float to_degrees = 180.f / std::numbers::pi_v<float>;
 
     for (int episode = 0; episode < nb_episodes; episode++) {
@@ -108,6 +121,7 @@ int main(const int argc, char **argv) {
 
         int step = 0;
         bool is_done = false;
+        std::vector<std::deque<PendingShot>> pending(nb_tanks);
 
         while (!is_done) {
             torch::Tensor continuous_action, discrete_action, mu, sigma, discrete;
@@ -155,12 +169,39 @@ int main(const int argc, char **argv) {
                     << ';' << mu_acc[i][0] << ';' << mu_acc[i][1] << ';' << mu_acc[i][2] << ';'
                     << mu_acc[i][3] << ';' << sigma_acc[i][2] << ';' << sigma_acc[i][3] << ';'
                     << cont_acc[i][2] << ';' << cont_acc[i][3] << '\n';
+
+                if (mask_acc[i][0] > 0.5f && disc_acc[i][0] > 0.5f)
+                    pending[i].push_back(
+                        {step, geometry[i], proprio_acc[i][model::ENEMY_PROPRIOCEPTION_SIZE - 2]});
             }
 
             const auto steps =
                 env->step(wanted_frequency, tensor_to_actions(continuous_action, discrete_action));
 
             state = steps_to_tensor(steps, vision_height, vision_width).states;
+
+            const auto details = env->last_step_reward_details();
+            for (int i = 0; i < nb_tanks; i++) {
+                const int landed = details[i].nb_landed_shells;
+                if (landed == 0) continue;
+
+                const float hit_sum = details[i].hit;
+                const int kills = static_cast<int>(hit_sum / 2.f);
+                const int hits =
+                    kills + static_cast<int>(std::round((hit_sum - 2.f * kills) / 0.3f));
+                const float miss = details[i].sum_miss_distance / static_cast<float>(landed);
+
+                for (int k = 0; k < landed && !pending[i].empty(); k++) {
+                    const auto &shot = pending[i].front();
+                    shots_csv << episode << ';' << i << ';' << shot.step << ';' << step << ';'
+                              << shot.geometry.best_angle * to_degrees << ';'
+                              << shot.geometry.best_distance << ';' << shot.geometry.distance << ';'
+                              << shot.geometry.yaw * to_degrees << ';'
+                              << shot.geometry.pitch * to_degrees << ';' << shot.shells << ';'
+                              << landed << ';' << hits << ';' << miss << '\n';
+                    pending[i].pop_front();
+                }
+            }
             is_done = env->is_episode_terminated();
             step++;
         }

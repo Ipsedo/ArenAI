@@ -59,8 +59,9 @@ namespace arenai::model {
             }),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), aim_tolerance_min(2.5f),
-          aim_tolerance_angle(glm::radians(3.f)), hit_reward_scale(0.1f), hit_received_cost(0.2f),
-          initial_nb_shells(10), nb_shells(initial_nb_shells), max_shells(30),
+          aim_tolerance_angle(glm::radians(3.f)), hit_reward_scale(0.1f), shot_cost(0.03f),
+          hit_received_cost(0.2f), initial_nb_shells(10), nb_shells(initial_nb_shells),
+          max_shells(30),
           fire_cooldown_frames(static_cast<int>(1.f / 6.f / wanted_frame_frequency)),
           curr_cooldown_frame(fire_cooldown_frames), shells_recharged_per_hit(10),
           is_dead_already_triggered(false), apply_timeout(apply_timeout), starved(false),
@@ -155,7 +156,7 @@ namespace arenai::model {
                 const float aim_quality = compute_aim_reward(
                     tracked.fire_pos, tracked.enemy_pos_at_t, tracked.shell_pos_at_t);
 
-                detail.aim += hit_reward_scale * aim_quality;
+                detail.aim += hit_reward_scale * aim_quality - shot_cost;
 
                 detail.nb_landed_shells++;
                 detail.sum_aim_quality += 0.1f * aim_quality;

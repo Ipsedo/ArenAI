@@ -45,7 +45,6 @@ namespace arenai::model {
     protected:
         void remove_constraints_from_engine() const;
         void kill_life_items() const;
-        std::vector<JPH::BodyID> get_body_ids() const;
         JoltPhysicEngine &engine;
 
     private:

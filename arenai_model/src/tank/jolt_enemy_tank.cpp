@@ -12,16 +12,10 @@
 
 #include "../geometry.h"
 #include "../jolt_engine.h"
-#include "./parts/canon.h"
 #include "./parts/shell.h"
 
 using namespace arenai;
 using namespace arenai::model;
-
-namespace {
-    constexpr float AIM_POTENTIAL_TOLERANCE_MIN = 2.5f;
-    constexpr float AIM_POTENTIAL_TOLERANCE_DEGREES = 20.f;
-}// namespace
 
 namespace arenai::model {
 
@@ -31,25 +25,19 @@ namespace arenai::model {
         const std::string &tank_prefix_name, const glm::vec3 chassis_pos,
         const float wanted_frame_frequency, const bool apply_timeout)
         : JoltTank(
-            engine, file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency,
-            ENEMY_TURRET_RADIAL_VELOCITY, ENEMY_CANON_RADIAL_VELOCITY,
-            [this](const ShellItem *shell, const ShellContactInfo &info, Item *item) {
-                on_shell_contact(shell, info, item);
-            },
-            [this](const std::shared_ptr<ShellItem> &shell) { on_shell_fired(shell); },
-            [this] {
-                const bool can_fire = get_can_fire();
-                if (can_fire) curr_cooldown_frame = 0;
-                return can_fire;
-            }),
+              engine, file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency,
+              ENEMY_TURRET_RADIAL_VELOCITY, ENEMY_CANON_RADIAL_VELOCITY,
+              [this](const ShellItem *shell, const ShellContactInfo &info, Item *item) {
+                  on_shell_contact(shell, info, item);
+              },
+              [this](const std::shared_ptr<ShellItem> &shell) { on_shell_fired(shell); },
+              [this] {
+                  const bool can_fire = get_can_fire();
+                  if (can_fire) curr_cooldown_frame = 0;
+                  return can_fire;
+              }),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-          curr_frame_upside_down(0),
-          aim_potential(
-              engine,
-              AimScorer(
-                  AIM_POTENTIAL_TOLERANCE_MIN, glm::radians(AIM_POTENTIAL_TOLERANCE_DEGREES)),
-              SHELL_SPEED, GRAVITY, 20.f, 0.1f),
-          shot_cost(0.f), hit_received_cost(0.2f), initial_nb_shells(10),
+          curr_frame_upside_down(0), shot_cost(0.f), hit_received_cost(0.2f), initial_nb_shells(10),
           nb_shells(initial_nb_shells), max_shells(30),
           fire_cooldown_frames(static_cast<int>(1.f / 6.f / wanted_frame_frequency)),
           curr_cooldown_frame(fire_cooldown_frames), shells_recharged_per_hit(10),
@@ -148,24 +136,6 @@ namespace arenai::model {
     }
 
     RewardDetail JoltEnemyTank::get_last_reward_detail() const { return last_reward_detail; }
-
-    float
-    JoltEnemyTank::get_aim_potential(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const {
-        if (is_dead()) return 0.f;
-
-        const auto canon = std::dynamic_pointer_cast<CanonItem>(get_canon());
-        const auto [position, direction] = canon->get_fire_pose();
-
-        constexpr glm::vec4 origin(glm::vec3(0.f), 1.f);
-
-        std::vector<glm::vec3> targets;
-        for (const auto &tank: tanks) {
-            if (tank.get() == this || tank->is_dead()) continue;
-            targets.emplace_back(tank->get_chassis()->get_model_matrix() * origin);
-        }
-
-        return aim_potential.evaluate(position, direction, targets, get_body_ids());
-    }
 
     void JoltEnemyTank::tick(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
         // 1. flipped detection

@@ -93,7 +93,7 @@ int main(const int argc, char **argv) {
     const auto env = std::make_unique<TrainTankEnvironment>(
         std::move(graphics_backend), nb_tanks, resources_folder, wanted_frequency,
         max_episode_steps, vision_height, vision_width, parser.get<int>("--vision_num_threads"),
-        action_repeat, agent_config.at("gamma").get<float>());
+        action_repeat);
 
     std::ofstream csv(output);
     csv << "episode;step;tank;distance;yaw;pitch;best_angle;best_distance;can_fire;shells;cooldown;"

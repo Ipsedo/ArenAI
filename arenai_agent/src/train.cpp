@@ -92,8 +92,7 @@ namespace arenai::agent {
             train_options.resources_folder, environment_options.wanted_frequency,
             train_options.max_episode_steps, environment_options.vision_height,
             environment_options.vision_width, environment_options.num_threads,
-            environment_options.action_repeat,
-            agent_factory->get_config().at("gamma").get<float>());
+            environment_options.action_repeat);
 
         const float initial_spawn_side = std::sqrt(
             environment_options.initial_spawn_width * environment_options.initial_spawn_height);

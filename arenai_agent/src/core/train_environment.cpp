@@ -19,41 +19,35 @@
 using namespace arenai;
 using namespace arenai::agent;
 
-namespace {
-    constexpr float AIM_POTENTIAL_SCALE = 0.1f;
-}// namespace
-
 namespace arenai::agent {
 
     TrainTankEnvironment::TrainTankEnvironment(
         const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, const int nb_tanks,
         const std::filesystem::path &android_assets_path, const float wanted_frequency,
         const int max_episode_steps, const int vision_height, const int vision_width,
-        const int vision_num_threads, const int action_repeat, const float gamma)
+        const int vision_num_threads, const int action_repeat)
         : BaseTanksEnvironment(
-            std::make_shared<DesktopAssetFileReader>(android_assets_path), graphics_backend,
-            nb_tanks, wanted_frequency, vision_height, vision_width, vision_num_threads, false,
-            true),
+              std::make_shared<DesktopAssetFileReader>(android_assets_path), graphics_backend,
+              nb_tanks, wanted_frequency, vision_height, vision_width, vision_num_threads, false,
+              true),
           wanted_frequency(wanted_frequency), action_repeat(action_repeat), nb_tanks(nb_tanks),
           nb_steps(0), done(nb_tanks, false), already_done(nb_tanks, false),
           max_episode_steps(max_episode_steps), nb_hits_per_tanks(nb_tanks, 0),
-          nb_kills_per_tanks(nb_tanks, 0), reward_metric(std::make_shared<MeanMetric>(
-                                               "r", 4 * nb_tanks * max_episode_steps, 1, true)),
+          nb_kills_per_tanks(nb_tanks, 0),
+          reward_metric(
+              std::make_shared<MeanMetric>("r", 4 * nb_tanks * max_episode_steps, 1, true)),
           reward_aim_metric(
               std::make_shared<MeanMetric>("r_aim", 4 * nb_tanks * max_episode_steps, 1, true)),
           reward_hit_metric(
               std::make_shared<MeanMetric>("r_hit", 4 * nb_tanks * max_episode_steps, 1, true)),
           reward_received_metric(
               std::make_shared<MeanMetric>("r_rcv", 4 * nb_tanks * max_episode_steps, 1, true)),
-          aim_potential_metric(std::make_shared<MeanMetric>(
-              "phi", 4 * nb_tanks * max_episode_steps, 3, false, false)),
           miss_distance_metric(std::make_shared<MeanMetric>("miss", 1024 * nb_tanks, 1)),
           episode_step_mean_nb_metric(std::make_shared<MeanMetric>("s", 32, 1)),
           fire_metric(std::make_shared<MeanMetric>("fire", 256, 2)),
           hit_metric(std::make_shared<MeanMetric>("hit", 16, 2, true)),
           kill_metric(std::make_shared<MeanMetric>("kill", 16, 1)), nb_kills_episode(0),
-          nb_fires_episode(0), nb_hits_episode(0),
-          aim_shaping(gamma, AIM_POTENTIAL_SCALE, nb_tanks) {}
+          nb_fires_episode(0), nb_hits_episode(0) {}
 
     std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
     TrainTankEnvironment::step(const float time_delta, const std::vector<core::Action> &actions) {
@@ -139,15 +133,6 @@ namespace arenai::agent {
         render_frame(true);
         auto states = read_states();
 
-        const auto potentials = aim_potentials();
-        const auto shaping_rewards = aim_shaping.step(potentials, done);
-        for (int i = 0; i < nb_tanks; i++) {
-            if (already_done[i]) continue;
-            rewards[i] += shaping_rewards[i];
-            reward_details[i].aim += shaping_rewards[i];
-            if (!done[i]) aim_potential_metric->add(potentials[i]);
-        }
-
         // fire frequency (per second, per tank that acted this step)
         int nb_acting = 0, nb_fires = 0, nb_hits = 0;
         for (int i = 0; i < nb_tanks; i++) {
@@ -224,18 +209,6 @@ namespace arenai::agent {
 
         nb_fires_episode = 0;
         nb_hits_episode = 0;
-
-        aim_shaping.reset(aim_potentials());
-    }
-
-    std::vector<float> TrainTankEnvironment::aim_potentials() {
-        return apply_on_enemies<std::vector<float>>(
-            [](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
-                std::vector<float> potentials;
-                potentials.reserve(tanks.size());
-                for (const auto &tank: tanks) potentials.push_back(tank->get_aim_potential(tanks));
-                return potentials;
-            });
     }
 
     std::vector<model::RewardDetail> TrainTankEnvironment::last_step_reward_details() const {
@@ -325,15 +298,10 @@ namespace arenai::agent {
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> TrainTankEnvironment::get_metrics() const {
-        return {reward_metric,
-                reward_aim_metric,
-                reward_hit_metric,
-                reward_received_metric,
-                aim_potential_metric,
-                miss_distance_metric,
-                episode_step_mean_nb_metric,
-                fire_metric,
-                hit_metric,
+        return {reward_metric,        reward_aim_metric,
+                reward_hit_metric,    reward_received_metric,
+                miss_distance_metric, episode_step_mean_nb_metric,
+                fire_metric,          hit_metric,
                 kill_metric};
     }
 

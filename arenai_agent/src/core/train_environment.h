@@ -8,7 +8,6 @@
 #include <arenai_core/environment.h>
 
 #include "../metrics/metric.h"
-#include "./potential_shaping.h"
 
 namespace arenai::agent {
 
@@ -27,7 +26,7 @@ namespace arenai::agent {
             const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, int nb_tanks,
             const std::filesystem::path &android_assets_path, float wanted_frequency,
             int max_episode_steps, int vision_height, int vision_width, int vision_num_threads,
-            int action_repeat, float gamma);
+            int action_repeat);
 
         // one call = one agent decision: the actions are held action_repeat physics frames
         // (fire on the first one only), the visions rendered once at the end
@@ -81,8 +80,6 @@ namespace arenai::agent {
         std::shared_ptr<AbstractMetric> reward_hit_metric;
         std::shared_ptr<AbstractMetric> reward_received_metric;
 
-        std::shared_ptr<AbstractMetric> aim_potential_metric;
-
         // miss distance of the shells that landed, one sample per step that resolved a shell
         std::shared_ptr<AbstractMetric> miss_distance_metric;
 
@@ -98,10 +95,7 @@ namespace arenai::agent {
 
         std::vector<model::RewardDetail> step_reward_details;
 
-        PotentialShaping aim_shaping;
-
         bool are_all_done();
-        std::vector<float> aim_potentials();
     };
 
 }// namespace arenai::agent

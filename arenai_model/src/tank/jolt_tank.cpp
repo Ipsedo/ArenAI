@@ -187,13 +187,6 @@ namespace arenai::model {
 
     std::shared_ptr<Item> JoltTank::get_canon() const { return canon; }
 
-    std::vector<JPH::BodyID> JoltTank::get_body_ids() const {
-        std::vector<JPH::BodyID> ids;
-        ids.reserve(jolt_items.size());
-        for (const auto &item: jolt_items) ids.push_back(item->get_body()->GetID());
-        return ids;
-    }
-
     void JoltTank::kill_life_items() const {
         for (const auto life_item: life_items) life_item->kill();
     }

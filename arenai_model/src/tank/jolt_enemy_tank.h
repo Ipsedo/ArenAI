@@ -9,7 +9,6 @@
 
 #include <arenai_model/tank.h>
 
-#include "./aim_potential.h"
 #include "./jolt_tank.h"
 
 namespace arenai::model {
@@ -61,8 +60,6 @@ namespace arenai::model {
         void tick(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
 
         RewardDetail get_last_reward_detail() const override;
-        float
-        get_aim_potential(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const override;
 
         std::vector<float> get_proprioception() const override;
         bool get_can_fire() const override;
@@ -79,7 +76,6 @@ namespace arenai::model {
         int max_frames_upside_down;
         int curr_frame_upside_down;
 
-        AimPotential aim_potential;
         float shot_cost;
 
         float hit_received_cost;

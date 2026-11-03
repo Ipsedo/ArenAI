@@ -243,8 +243,8 @@ TEST_F(EnemyTankTest, HasHitOtherTankResetsAfterCall) {
 
 TEST_F(EnemyTankTest, ShellReserveDoesNotRegenerateOverTime) {
     constexpr int nb_frames_one_second = 60;
-    constexpr int max_shells = 30;
-    constexpr int initial_shells = 10;
+    constexpr int max_shells = 60;
+    constexpr int initial_shells = 30;
 
     // proprioception ends with (reserve, cooldown) ratios
     constexpr int proprioception_reserve_index = ENEMY_PROPRIOCEPTION_SIZE - 2;
@@ -284,7 +284,7 @@ TEST_F(EnemyTankTest, ShellReserveDoesNotRegenerateOverTime) {
 }
 
 // ========================================================================
-// Shell reserve — empty reserve death (training only)
+// Shell reserve — an empty reserve never kills
 // ========================================================================
 
 namespace {
@@ -303,7 +303,7 @@ namespace {
 
 }// namespace
 
-TEST_F(EnemyTankTest, DiesOnceReserveEmptyAndShellsLandedInTraining) {
+TEST_F(EnemyTankTest, EmptyReserveDoesNotKillInTraining) {
     add_ground();
     auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, true);
 
@@ -315,31 +315,22 @@ TEST_F(EnemyTankTest, DiesOnceReserveEmptyAndShellsLandedInTraining) {
     for (int i = 0; i < 40; i++)
         for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(AIM_DOWN);
 
-    bool reserve_seen_empty = false;
-    float death_reward = 0.f;
-
-    for (int i = 0; i < 60 * 60 && !shared_tank->is_dead(); i++) {
+    // empty the reserve, then keep going long enough for every shell to land, but
+    // well before the 30 s starvation timer
+    for (int i = 0; i < 15 * 60; i++) {
         for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(HOLD_FIRE);
         engine->step(1.f / 60.f);
         shared_tank->tick(tanks);
         shared_tank->get_reward();
-        death_reward = shared_tank->get_last_reward_detail().death;
-
-        if (!reserve_seen_empty
-            && shared_tank->get_proprioception()[PROPRIOCEPTION_RESERVE_INDEX] <= 0.f) {
-            reserve_seen_empty = true;
-            ASSERT_FALSE(shared_tank->is_dead())
-                << "the last shell is still in flight: death must wait for it to land";
-        }
-
-        if (shared_tank->is_dead()) shared_tank->on_death();
     }
 
-    ASSERT_TRUE(reserve_seen_empty) << "the tank should have emptied its reserve";
-    ASSERT_TRUE(shared_tank->is_dead()) << "an empty reserve should kill the tank in training";
-    ASSERT_TRUE(shared_tank->is_suicide()) << "the death is self-inflicted, not a kill";
-    ASSERT_FALSE(shared_tank->is_timeout()) << "the death is a termination, not a truncation";
-    ASSERT_FLOAT_EQ(death_reward, -0.5f) << "an empty reserve carries its own death penalty";
+    ASSERT_FLOAT_EQ(shared_tank->get_proprioception()[PROPRIOCEPTION_RESERVE_INDEX], 0.f)
+        << "the tank should have emptied its reserve";
+    ASSERT_FALSE(shared_tank->is_dead()) << "a disarmed tank stays alive in training";
+    ASSERT_FALSE(shared_tank->is_suicide());
+    ASSERT_FALSE(shared_tank->is_timeout());
+    ASSERT_FLOAT_EQ(shared_tank->get_last_reward_detail().death, 0.f)
+        << "an empty reserve carries no penalty";
 }
 
 TEST_F(EnemyTankTest, EmptyReserveDoesNotKillOutsideTraining) {

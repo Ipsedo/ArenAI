@@ -37,12 +37,11 @@ namespace arenai::model {
                   return can_fire;
               }),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-          curr_frame_upside_down(0), shot_cost(0.f), hit_received_cost(0.2f), initial_nb_shells(10),
-          nb_shells(initial_nb_shells), max_shells(30),
+          curr_frame_upside_down(0), shot_cost(0.f), hit_received_cost(0.2f), initial_nb_shells(30),
+          nb_shells(initial_nb_shells), max_shells(60),
           fire_cooldown_frames(static_cast<int>(1.f / 6.f / wanted_frame_frequency)),
-          curr_cooldown_frame(fire_cooldown_frames), shells_recharged_per_hit(10),
+          curr_cooldown_frame(fire_cooldown_frames), shells_recharged_per_hit(20),
           is_dead_already_triggered(false), apply_timeout(apply_timeout), starved(false),
-          out_of_shells(false),
           max_frames_without_hit(static_cast<int>(30.f / wanted_frame_frequency)),
           remaining_frames(max_frames_without_hit),
           nb_frames_added_when_hit(static_cast<int>(3.f / wanted_frame_frequency)),
@@ -102,9 +101,8 @@ namespace arenai::model {
         RewardDetail detail;
 
         // 1. death penalty — starving out is a pure truncation: any penalty there is an
-        // unpredictable shock for the critic (the timer is not observable); an empty
-        // reserve is a genuine termination, with its own lighter penalty
-        if (is_dead() && !is_timeout()) detail.death = out_of_shells ? -0.5f : -1.f;
+        // unpredictable shock for the critic (the timer is not observable)
+        if (is_dead() && !is_timeout()) detail.death = -1.f;
 
         // 2. landed shells: each one pays its cost, a touch its bonus
         for (int i = static_cast<int>(tracked_shells.size()) - 1; i >= 0; i--) {
@@ -150,8 +148,6 @@ namespace arenai::model {
         nb_shells = std::min(nb_shells, max_shells);
 
         // 2. track shells
-        bool shell_in_flight = false;
-
         for (int i = static_cast<int>(tracked_shells.size()) - 1; i >= 0; i--) {
             auto &tracked = tracked_shells[i];
 
@@ -163,7 +159,6 @@ namespace arenai::model {
 
             const auto shell = tracked.shell.lock();
             const bool in_flight = shell && !shell->need_destroy();
-            shell_in_flight |= in_flight;
 
             if (shell) update_closest_approach(tracked, shell->get_current_position(), tanks);
             else if (tracked.has_final_pos)
@@ -186,12 +181,6 @@ namespace arenai::model {
         // the learner — only when that is what killed it
         if (apply_timeout && remaining_frames <= 0) {
             if (!is_dead()) starved = true;
-            kill_life_items();
-        }
-
-        // an empty reserve once every shell has landed ends the tank: a termination
-        if (apply_timeout && nb_shells <= 0 && !shell_in_flight && !is_dead()) {
-            out_of_shells = true;
             kill_life_items();
         }
     }
@@ -287,7 +276,7 @@ namespace arenai::model {
     }
 
     bool JoltEnemyTank::is_suicide() const {
-        return curr_frame_upside_down > max_frames_upside_down || out_of_shells;
+        return curr_frame_upside_down > max_frames_upside_down;
     }
 
     bool JoltEnemyTank::is_timeout() const { return starved; }

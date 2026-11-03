@@ -94,7 +94,6 @@ namespace arenai::model {
         // latched when the timer actually kills the tank: the timer keeps running after a
         // combat death, so the live "remaining_frames <= 0" test would mislabel it later
         bool starved;
-        bool out_of_shells;
         int max_frames_without_hit;
         int remaining_frames;
         int nb_frames_added_when_hit;

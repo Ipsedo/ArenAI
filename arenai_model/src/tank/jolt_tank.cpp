@@ -191,6 +191,8 @@ namespace arenai::model {
         for (const auto life_item: life_items) life_item->kill();
     }
 
+    std::vector<LifeItem *> JoltTank::get_life_items() const { return life_items; }
+
     void JoltTank::remove_constraints_from_engine() const {
         for (const auto &item: jolt_items) engine.remove_jolt_item_constraints(item);
     }

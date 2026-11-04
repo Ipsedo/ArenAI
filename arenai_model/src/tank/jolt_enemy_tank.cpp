@@ -348,6 +348,8 @@ namespace arenai::model {
                  item_forward.z, item_up.x, item_up.y, item_up.z, ang_vel.x, ang_vel.y, ang_vel.z});
         }
 
+        for (const auto &life_item: get_life_items()) result.push_back(life_item->health_ratio());
+
         result.push_back(static_cast<float>(nb_shells) / static_cast<float>(max_shells));
         result.push_back(
             static_cast<float>(curr_cooldown_frame) / static_cast<float>(fire_cooldown_frames));

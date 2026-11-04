@@ -254,6 +254,7 @@ TEST_F(EnemyTankTest, HasHitOtherTankResetsAfterCall) {
 TEST_F(EnemyTankTest, ShellReserveDoesNotRegenerateOverTime) {
     constexpr int nb_frames_one_second = 60;
     constexpr int initial_shells = GAME_SHELL_ECONOMY.initial_shells;
+    constexpr int max_shells = GAME_SHELL_ECONOMY.max_shells;
 
     // proprioception ends with (reserve, cooldown) ratios
     constexpr int proprioception_reserve_index = ENEMY_PROPRIOCEPTION_SIZE - 2;
@@ -263,7 +264,7 @@ TEST_F(EnemyTankTest, ShellReserveDoesNotRegenerateOverTime) {
         file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
 
     const float initial_reserve =
-        static_cast<float>(initial_shells) / static_cast<float>(PROPRIOCEPTION_SHELL_SCALE);
+        static_cast<float>(initial_shells) / static_cast<float>(max_shells);
 
     ASSERT_FLOAT_EQ(tank->get_proprioception()[proprioception_reserve_index], initial_reserve)
         << "reserve start with initial shells";
@@ -282,8 +283,7 @@ TEST_F(EnemyTankTest, ShellReserveDoesNotRegenerateOverTime) {
 
     const float reserve_after_fire =
         shared_tank->get_proprioception()[proprioception_reserve_index];
-    ASSERT_FLOAT_EQ(
-        reserve_after_fire, initial_reserve - 1.f / static_cast<float>(PROPRIOCEPTION_SHELL_SCALE))
+    ASSERT_FLOAT_EQ(reserve_after_fire, initial_reserve - 1.f / static_cast<float>(max_shells))
         << "firing should consume a shell";
 
     // a long wait gives nothing back: only hits recharge the reserve
@@ -298,14 +298,14 @@ TEST_F(EnemyTankTest, ShellEconomyParametersAreApplied) {
     constexpr int nb_frames_one_second = 60;
     constexpr ShellEconomy economy{.initial_shells = 3, .shells_per_hit = 2, .max_shells = 4};
     constexpr int proprioception_reserve_index = ENEMY_PROPRIOCEPTION_SIZE - 2;
-    constexpr float scale = static_cast<float>(PROPRIOCEPTION_SHELL_SCALE);
+    constexpr float scale = static_cast<float>(economy.max_shells);
 
     add_ground();
     auto tank =
         tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false, economy);
 
     ASSERT_FLOAT_EQ(tank->get_proprioception()[proprioception_reserve_index], 3.f / scale)
-        << "the reserve starts at the economy's initial shells, scaled by the fixed constant";
+        << "the reserve starts at the economy's initial shells over its maximum";
 
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
     const std::vector tanks{shared_tank};

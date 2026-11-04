@@ -38,7 +38,9 @@ namespace arenai::model {
                 return can_fire;
             }),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-          curr_frame_upside_down(0), hit_received_cost(0.2f),
+          curr_frame_upside_down(0), aim_tolerance_min(2.5f),
+          aim_tolerance_angle(glm::radians(3.f)), aim_reward_scale(0.1f), hit_reward(HIT_REWARD),
+          kill_reward(KILL_REWARD - HIT_REWARD), hit_received_cost(0.2f),
           initial_nb_shells(shell_economy.initial_shells), nb_shells(initial_nb_shells),
           max_shells(shell_economy.max_shells),
           fire_cooldown_frames(static_cast<int>(1.f / 6.f / wanted_frame_frequency)),
@@ -100,6 +102,17 @@ namespace arenai::model {
         return best_i;
     }
 
+    float JoltEnemyTank::compute_aim_reward(
+        const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos, const glm::vec3 &shell_pos) const {
+        const float shot_distance = glm::length(enemy_pos - fire_pos);
+        const float miss_distance = glm::length(shell_pos - enemy_pos);
+
+        const float tolerance = aim_tolerance_min + aim_tolerance_angle * shot_distance;
+        const float ratio = miss_distance / tolerance;
+
+        return 1.f / (1.f + ratio * ratio);
+    }
+
     float JoltEnemyTank::get_reward() const {
         RewardDetail detail;
 
@@ -107,7 +120,6 @@ namespace arenai::model {
         // unpredictable shock for the critic (the timer is not observable)
         if (is_dead() && !is_timeout()) detail.death = -1.f;
 
-        // 2. landed shells: a touch pays its bonus
         for (int i = static_cast<int>(tracked_shells.size()) - 1; i >= 0; i--) {
             auto &tracked = tracked_shells[i];
 
@@ -119,8 +131,14 @@ namespace arenai::model {
                 detail.nb_landed_shells++;
                 detail.sum_miss_distance +=
                     glm::length(tracked.shell_pos_at_t - tracked.enemy_pos_at_t);
+                detail.aim += aim_reward_scale
+                              * compute_aim_reward(
+                                  tracked.fire_pos, tracked.enemy_pos_at_t, tracked.shell_pos_at_t);
 
-                if (tracked.has_hit) detail.hit += tracked.has_killed ? 2.f : 0.3f;
+                if (tracked.has_hit) {
+                    detail.hit += hit_reward;
+                    if (tracked.has_killed) detail.kill += kill_reward;
+                }
             }
         }
 
@@ -131,7 +149,7 @@ namespace arenai::model {
         // 4. total reward, kept split for the metrics
         last_reward_detail = detail;
 
-        return detail.hit + detail.received + detail.death;
+        return detail.aim + detail.hit + detail.kill + detail.received + detail.death;
     }
 
     RewardDetail JoltEnemyTank::get_last_reward_detail() const { return last_reward_detail; }
@@ -330,8 +348,7 @@ namespace arenai::model {
                  item_forward.z, item_up.x, item_up.y, item_up.z, ang_vel.x, ang_vel.y, ang_vel.z});
         }
 
-        result.push_back(
-            static_cast<float>(nb_shells) / static_cast<float>(PROPRIOCEPTION_SHELL_SCALE));
+        result.push_back(static_cast<float>(nb_shells) / static_cast<float>(max_shells));
         result.push_back(
             static_cast<float>(curr_cooldown_frame) / static_cast<float>(fire_cooldown_frames));
 

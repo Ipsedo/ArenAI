@@ -8,6 +8,7 @@
 #include <arenai_core/environment.h>
 
 #include "../metrics/metric.h"
+#include "./shot_baseline.h"
 
 namespace arenai::agent {
 
@@ -26,7 +27,7 @@ namespace arenai::agent {
             const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, int nb_tanks,
             const std::filesystem::path &android_assets_path, float wanted_frequency,
             int max_episode_steps, int vision_height, int vision_width, int vision_num_threads,
-            int action_repeat);
+            int action_repeat, int shot_baseline_window);
 
         // one call = one agent decision: the actions are held action_repeat physics frames
         // (fire on the first one only), the visions rendered once at the end
@@ -35,6 +36,7 @@ namespace arenai::agent {
         step(float time_delta, const std::vector<core::Action> &actions) override;
 
         std::vector<std::shared_ptr<AbstractMetric>> get_metrics() const;
+        std::vector<std::shared_ptr<AbstractMetric>> get_csv_only_metrics() const;
 
         bool is_episode_terminated();
 
@@ -73,11 +75,15 @@ namespace arenai::agent {
         std::vector<int> nb_hits_per_tanks;
         std::vector<int> nb_kills_per_tanks;
 
+        ShotBaseline shot_baseline;
+
         std::shared_ptr<AbstractMetric> reward_metric;
 
         // the reward terms the policy trades off, split out of reward_metric
         std::shared_ptr<AbstractMetric> reward_hit_metric;
         std::shared_ptr<AbstractMetric> reward_received_metric;
+        std::shared_ptr<AbstractMetric> reward_aim_metric;
+        std::shared_ptr<AbstractMetric> shot_baseline_metric;
 
         // miss distance of the shells that landed, one sample per step that resolved a shell
         std::shared_ptr<AbstractMetric> miss_distance_metric;

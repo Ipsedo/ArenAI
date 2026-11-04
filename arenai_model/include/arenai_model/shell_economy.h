@@ -10,14 +10,12 @@ namespace arenai::model {
         int initial_shells;
         int shells_per_hit;
         int max_shells;
-
-        ShellEconomy interpolate(float progress, const ShellEconomy &final) const;
     };
 
     constexpr ShellEconomy GAME_SHELL_ECONOMY{
-        .initial_shells = 8,
-        .shells_per_hit = 5,
-        .max_shells = 16};
+        .initial_shells = 10,
+        .shells_per_hit = 10,
+        .max_shells = 30};
 
 }// namespace arenai::model
 

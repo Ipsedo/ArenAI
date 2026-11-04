@@ -77,6 +77,12 @@ namespace arenai::model {
         int max_frames_upside_down;
         int curr_frame_upside_down;
 
+        float aim_tolerance_min;
+        float aim_tolerance_angle;
+        float aim_reward_scale;
+        float hit_reward;
+        float kill_reward;
+
         float hit_received_cost;
 
         int initial_nb_shells;
@@ -117,6 +123,10 @@ namespace arenai::model {
 
         int get_nearest_enemy_index(
             const std::vector<std::shared_ptr<EnemyTank>> &tanks, const glm::vec3 &pos) const;
+
+        float compute_aim_reward(
+            const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos,
+            const glm::vec3 &shell_pos) const;
 
         void update_closest_approach(
             TrackedShell &tracked, const glm::vec3 &shell_pos,

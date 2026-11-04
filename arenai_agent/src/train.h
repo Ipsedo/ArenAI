@@ -32,8 +32,8 @@ namespace arenai::agent {
         float initial_spawn_height;
         float final_spawn_width;
         float final_spawn_height;
-        model::ShellEconomy initial_shell_economy;
-        model::ShellEconomy final_shell_economy;
+        model::ShellEconomy shell_economy;
+        int shot_baseline_window;
         float curriculum_delta;
         float curriculum_ratio_low;
         float curriculum_ratio_high;

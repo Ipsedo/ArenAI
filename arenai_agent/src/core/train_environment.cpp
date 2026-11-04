@@ -14,6 +14,7 @@
 #include <arenai_utils/singleton.h>
 #include <arenai_view/backend.h>
 
+#include "../metrics/last_metric.h"
 #include "../metrics/mean_metric.h"
 
 using namespace arenai;
@@ -25,7 +26,7 @@ namespace arenai::agent {
         const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, const int nb_tanks,
         const std::filesystem::path &android_assets_path, const float wanted_frequency,
         const int max_episode_steps, const int vision_height, const int vision_width,
-        const int vision_num_threads, const int action_repeat)
+        const int vision_num_threads, const int action_repeat, const int shot_baseline_window)
         : BaseTanksEnvironment(
             std::make_shared<DesktopAssetFileReader>(android_assets_path), graphics_backend,
             nb_tanks, wanted_frequency, vision_height, vision_width, vision_num_threads, false,
@@ -33,12 +34,16 @@ namespace arenai::agent {
           wanted_frequency(wanted_frequency), action_repeat(action_repeat), nb_tanks(nb_tanks),
           nb_steps(0), done(nb_tanks, false), already_done(nb_tanks, false),
           max_episode_steps(max_episode_steps), nb_hits_per_tanks(nb_tanks, 0),
-          nb_kills_per_tanks(nb_tanks, 0), reward_metric(std::make_shared<MeanMetric>(
-                                               "r", 4 * nb_tanks * max_episode_steps, 1, true)),
+          nb_kills_per_tanks(nb_tanks, 0), shot_baseline(shot_baseline_window),
+          reward_metric(
+              std::make_shared<MeanMetric>("r", 4 * nb_tanks * max_episode_steps, 1, true)),
           reward_hit_metric(
               std::make_shared<MeanMetric>("r_hit", 4 * nb_tanks * max_episode_steps, 1, true)),
           reward_received_metric(
               std::make_shared<MeanMetric>("r_rcv", 4 * nb_tanks * max_episode_steps, 1, true)),
+          reward_aim_metric(
+              std::make_shared<MeanMetric>("r_aim", 4 * nb_tanks * max_episode_steps, 1, true)),
+          shot_baseline_metric(std::make_shared<LastMetric>("b", 1, true)),
           miss_distance_metric(std::make_shared<MeanMetric>("miss", 1024 * nb_tanks, 1)),
           episode_step_mean_nb_metric(std::make_shared<MeanMetric>("s", 32, 1)),
           fire_metric(std::make_shared<MeanMetric>("fire", 256, 2)),
@@ -88,7 +93,9 @@ namespace arenai::agent {
                     truncated[i] = is_truncated;
 
                     const auto detail = tanks[i]->get_last_reward_detail();
+                    reward_details[i].aim += detail.aim;
                     reward_details[i].hit += detail.hit;
+                    reward_details[i].kill += detail.kill;
                     reward_details[i].received += detail.received;
                     reward_details[i].death += detail.death;
                     reward_details[i].nb_landed_shells += detail.nb_landed_shells;
@@ -125,6 +132,20 @@ namespace arenai::agent {
             }
         }
 
+        const float baseline = shot_baseline.value();
+        float shot_reward_sum = 0.f;
+        int nb_landed_shells = 0;
+        for (int i = 0; i < nb_tanks; i++) {
+            if (already_done[i]) continue;
+            const auto &detail = reward_details[i];
+
+            rewards[i] -= baseline * static_cast<float>(detail.nb_landed_shells);
+            shot_reward_sum += detail.aim + detail.hit;
+            nb_landed_shells += detail.nb_landed_shells;
+        }
+        shot_baseline.update(shot_reward_sum, nb_landed_shells);
+        shot_baseline_metric->add(shot_baseline.value());
+
         render_frame(true);
         auto states = read_states();
 
@@ -158,6 +179,7 @@ namespace arenai::agent {
 
                 reward_hit_metric->add(detail.hit);
                 reward_received_metric->add(detail.received);
+                reward_aim_metric->add(detail.aim);
 
                 // undefined on a step where no shell landed: averaging a zero in would
                 // measure the firing rate, not the aim
@@ -301,6 +323,11 @@ namespace arenai::agent {
             fire_metric,
             hit_metric,
             kill_metric};
+    }
+
+    std::vector<std::shared_ptr<AbstractMetric>>
+    TrainTankEnvironment::get_csv_only_metrics() const {
+        return {reward_aim_metric, shot_baseline_metric};
     }
 
 }// namespace arenai::agent

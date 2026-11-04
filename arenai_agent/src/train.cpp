@@ -52,13 +52,10 @@ namespace arenai::agent {
                   {"initial_spawn_height", environment_options.initial_spawn_height},
                   {"final_spawn_width", environment_options.final_spawn_width},
                   {"final_spawn_height", environment_options.final_spawn_height},
-                  {"initial_shells", environment_options.initial_shell_economy.initial_shells},
-                  {"initial_shells_per_hit",
-                   environment_options.initial_shell_economy.shells_per_hit},
-                  {"initial_max_shells", environment_options.initial_shell_economy.max_shells},
-                  {"final_shells", environment_options.final_shell_economy.initial_shells},
-                  {"final_shells_per_hit", environment_options.final_shell_economy.shells_per_hit},
-                  {"final_max_shells", environment_options.final_shell_economy.max_shells},
+                  {"shells", environment_options.shell_economy.initial_shells},
+                  {"shells_per_hit", environment_options.shell_economy.shells_per_hit},
+                  {"max_shells", environment_options.shell_economy.max_shells},
+                  {"shot_baseline_window", environment_options.shot_baseline_window},
                   {"curriculum_delta", environment_options.curriculum_delta},
                   {"curriculum_ratio_low", environment_options.curriculum_ratio_low},
                   {"curriculum_ratio_high", environment_options.curriculum_ratio_high},
@@ -99,7 +96,7 @@ namespace arenai::agent {
             train_options.resources_folder, environment_options.wanted_frequency,
             train_options.max_episode_steps, environment_options.vision_height,
             environment_options.vision_width, environment_options.num_threads,
-            environment_options.action_repeat);
+            environment_options.action_repeat, environment_options.shot_baseline_window);
 
         const float initial_spawn_side = std::sqrt(
             environment_options.initial_spawn_width * environment_options.initial_spawn_height);
@@ -144,8 +141,12 @@ namespace arenai::agent {
         metrics.push_back(spawn_bound_metric);
         metrics.insert(metrics.end(), trainer_metrics.begin(), trainer_metrics.end());
 
+        const auto csv_only_metrics = env->get_csv_only_metrics();
+        auto csv_metrics = metrics;
+        csv_metrics.insert(csv_metrics.end(), csv_only_metrics.begin(), csv_only_metrics.end());
+
         MetricCsvSaver metric_csv_saver(
-            train_options.output_folder, metrics,
+            train_options.output_folder, csv_metrics,
             static_cast<int>(30.f / environment_options.wanted_frequency));
 
         // progress bar
@@ -180,10 +181,6 @@ namespace arenai::agent {
                 progress);
             const float spawn_side = std::sqrt(spawn_width * spawn_height);
 
-            const model::ShellEconomy shell_economy =
-                environment_options.initial_shell_economy.interpolate(
-                    progress, environment_options.final_shell_economy);
-
             spawn_side_metric->add(spawn_side);
             spawn_bound_metric->add(
                 std::lerp(initial_spawn_side, final_spawn_side, curriculum.upper_bound()));
@@ -192,7 +189,7 @@ namespace arenai::agent {
             bool is_done = false;
 
             auto state = states_to_tensor(
-                env->reset(spawn_width, spawn_height, shell_economy),
+                env->reset(spawn_width, spawn_height, environment_options.shell_economy),
                 environment_options.vision_height, environment_options.vision_width);
 
             while (!is_done) {

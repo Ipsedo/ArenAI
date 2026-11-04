@@ -199,7 +199,7 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
         << "reward should be exactly zero when no shell hit an enemy";
 }
 
-TEST_F(RewardTest, MissedShellGivesNothing) {
+TEST_F(RewardTest, MissedShellPaysOnlyAimTerm) {
     add_ground();
     auto tank_a = tank_factory->make_enemy_tank(
         file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
@@ -220,20 +220,64 @@ TEST_F(RewardTest, MissedShellGivesNothing) {
     const std::vector tanks{shared_a, shared_b};
 
     float total_reward = 0.f;
-    int max_landed_shells = 0;
+    RewardDetail landed_detail;
     for (int i = 0; i < 180; i++) {
         engine->step(1.f / 60.f);
         shared_a->tick(tanks);
 
         total_reward += shared_a->get_reward();
-        max_landed_shells =
-            std::max(shared_a->get_last_reward_detail().nb_landed_shells, max_landed_shells);
+        if (const auto detail = shared_a->get_last_reward_detail(); detail.nb_landed_shells > 0)
+            landed_detail = detail;
     }
 
     ASSERT_FALSE(shared_a->consume_has_hit()) << "shell should have missed the enemy tank";
-    ASSERT_GT(max_landed_shells, 0) << "the shell tracker should have sampled a landed shell";
-    // a shell that lands without touching anyone is worth nothing
-    ASSERT_NEAR(total_reward, 0.f, 1e-5f);
+    ASSERT_EQ(landed_detail.nb_landed_shells, 1)
+        << "the shell tracker should have sampled a landed shell";
+    ASSERT_FLOAT_EQ(landed_detail.hit, 0.f);
+    ASSERT_FLOAT_EQ(landed_detail.kill, 0.f);
+    ASSERT_GT(landed_detail.aim, 0.f) << "a miss still pays its aim term";
+    ASSERT_LT(landed_detail.aim, 0.1f) << "the aim term peaks at 0.1 on the enemy";
+    ASSERT_FLOAT_EQ(total_reward, landed_detail.aim);
+}
+
+TEST_F(RewardTest, HitSplitsIntoAimHitAndNoKill) {
+    add_ground();
+    auto tank_a = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank_b = tank_factory->make_enemy_tank(
+        file_reader, "tank_b", {0.f, 5.f, 30.f}, false, GAME_SHELL_ECONOMY);
+
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+
+    const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
+    const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
+
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
+    for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
+
+    const std::vector tanks{shared_a, shared_b};
+
+    float total_reward = 0.f;
+    RewardDetail landed_detail;
+    for (int i = 0; i < 60; i++) {
+        engine->step(1.f / 60.f);
+        shared_a->tick(tanks);
+
+        total_reward += shared_a->get_reward();
+        if (const auto detail = shared_a->get_last_reward_detail(); detail.nb_landed_shells > 0)
+            landed_detail = detail;
+    }
+
+    ASSERT_TRUE(shared_a->consume_has_hit()) << "shell should have hit the enemy tank";
+    ASSERT_EQ(landed_detail.nb_landed_shells, 1);
+    ASSERT_FLOAT_EQ(landed_detail.hit, HIT_REWARD);
+    ASSERT_FLOAT_EQ(landed_detail.kill, 0.f) << "a single touch is not a kill";
+    ASSERT_GT(landed_detail.aim, 0.f);
+    ASSERT_LE(landed_detail.aim, 0.1f);
+    ASSERT_FLOAT_EQ(total_reward, landed_detail.aim + landed_detail.hit);
 }
 
 // ========================================================================

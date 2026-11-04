@@ -40,18 +40,16 @@ int main(const int argc, char **argv) {
     parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(250.f);
     parser.add_argument("--final_spawn_width").scan<'g', float>().default_value(1000.f);
     parser.add_argument("--final_spawn_height").scan<'g', float>().default_value(1000.f);
-    parser.add_argument("--initial_shells").scan<'i', int>().default_value(30);
-    parser.add_argument("--initial_shells_per_hit").scan<'i', int>().default_value(20);
-    parser.add_argument("--initial_max_shells").scan<'i', int>().default_value(60);
-    parser.add_argument("--final_shells")
+    parser.add_argument("--shells")
         .scan<'i', int>()
         .default_value(model::GAME_SHELL_ECONOMY.initial_shells);
-    parser.add_argument("--final_shells_per_hit")
+    parser.add_argument("--shells_per_hit")
         .scan<'i', int>()
         .default_value(model::GAME_SHELL_ECONOMY.shells_per_hit);
-    parser.add_argument("--final_max_shells")
+    parser.add_argument("--max_shells")
         .scan<'i', int>()
         .default_value(model::GAME_SHELL_ECONOMY.max_shells);
+    parser.add_argument("--shot_baseline_window").scan<'i', int>().default_value(4096);
     parser.add_argument("--curriculum_delta").scan<'g', float>().default_value(50.f);
     parser.add_argument("--curriculum_ratio_low").scan<'g', float>().default_value(0.05f);
     parser.add_argument("--curriculum_ratio_high").scan<'g', float>().default_value(0.08f);
@@ -93,14 +91,11 @@ int main(const int argc, char **argv) {
          .initial_spawn_height = parser.get<float>("--initial_spawn_height"),
          .final_spawn_width = parser.get<float>("--final_spawn_width"),
          .final_spawn_height = parser.get<float>("--final_spawn_height"),
-         .initial_shell_economy =
-             {.initial_shells = parser.get<int>("--initial_shells"),
-              .shells_per_hit = parser.get<int>("--initial_shells_per_hit"),
-              .max_shells = parser.get<int>("--initial_max_shells")},
-         .final_shell_economy =
-             {.initial_shells = parser.get<int>("--final_shells"),
-              .shells_per_hit = parser.get<int>("--final_shells_per_hit"),
-              .max_shells = parser.get<int>("--final_max_shells")},
+         .shell_economy =
+             {.initial_shells = parser.get<int>("--shells"),
+              .shells_per_hit = parser.get<int>("--shells_per_hit"),
+              .max_shells = parser.get<int>("--max_shells")},
+         .shot_baseline_window = parser.get<int>("--shot_baseline_window"),
          .curriculum_delta = parser.get<float>("--curriculum_delta"),
          .curriculum_ratio_low = parser.get<float>("--curriculum_ratio_low"),
          .curriculum_ratio_high = parser.get<float>("--curriculum_ratio_high"),

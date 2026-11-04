@@ -43,11 +43,9 @@ namespace arenai::model {
     };
 
     struct RewardDetail {
-        float aim = 0.f;
         float hit = 0.f;
         float received = 0.f;
         float death = 0.f;
-        float shot = 0.f;
 
         int nb_landed_shells = 0;
         float sum_miss_distance = 0.f;

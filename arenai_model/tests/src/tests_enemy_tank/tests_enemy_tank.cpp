@@ -6,10 +6,10 @@
 #include <memory>
 
 #include <arenai_controller/inputs.h>
+#include <arenai_model/constants.h>
 #include <arenai_model/item.h>
+#include <arenai_model/shell_economy.h>
 #include <arenai_model_tests/tests_enemy_tank/tests_enemy_tank.h>
-
-#include "arenai_model/constants.h"
 
 using namespace arenai;
 using namespace arenai::model;
@@ -22,7 +22,8 @@ using namespace arenai::controller;
 
 TEST_F(EnemyTankTest, DeadWhenSingleWheelDestroyed) {
     add_ground();
-    const auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, false);
+    const auto tank = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 0.f, 0.f}, false, GAME_SHELL_ECONOMY);
 
     engine->step(1.f / 60.f);
 
@@ -53,7 +54,8 @@ TEST_F(EnemyTankTest, DeadWhenSingleWheelDestroyed) {
 
 TEST_F(EnemyTankTest, OnDeathMultipleCallsDoNotCrash) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, false);
+    auto tank = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 0.f, 0.f}, false, GAME_SHELL_ECONOMY);
 
     engine->step(1.f / 60.f);
 
@@ -77,7 +79,8 @@ TEST_F(EnemyTankTest, OnDeathMultipleCallsDoNotCrash) {
 
 TEST_F(EnemyTankTest, OnDeathBeforeDeathDoesNothing) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, false);
+    auto tank = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 0.f, 0.f}, false, GAME_SHELL_ECONOMY);
 
     engine->step(1.f / 60.f);
 
@@ -93,8 +96,10 @@ TEST_F(EnemyTankTest, OnDeathBeforeDeathDoesNothing) {
 
 TEST_F(EnemyTankTest, RewardWhenAllEnemiesDeadAndShellFired) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, false);
+    auto tank_a = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank_b = tank_factory->make_enemy_tank(
+        file_reader, "tank_b", {0.f, 5.f, 30.f}, false, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -129,7 +134,8 @@ TEST_F(EnemyTankTest, RewardWhenAllEnemiesDeadAndShellFired) {
 
 TEST_F(EnemyTankTest, RewardNoNaNWhenAloneInTankList) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
+    auto tank = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -156,7 +162,8 @@ TEST_F(EnemyTankTest, RewardNoNaNWhenAloneInTankList) {
 TEST_F(EnemyTankTest, ShellHitsGroundNoRewardNoCrash) {
     add_ground();
     // point the tank away from any enemy so the shell hits the ground
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
+    auto tank = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -194,7 +201,8 @@ TEST_F(EnemyTankTest, ShellHitsGroundNoRewardNoCrash) {
 
 TEST_F(EnemyTankTest, SuicideDetectionWhenFlipped) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, false);
+    auto tank = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 0.f, 0.f}, false, GAME_SHELL_ECONOMY);
 
     engine->step(1.f / 60.f);
 
@@ -214,8 +222,10 @@ TEST_F(EnemyTankTest, SuicideDetectionWhenFlipped) {
 
 TEST_F(EnemyTankTest, HasHitOtherTankResetsAfterCall) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, false);
+    auto tank_a = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank_b = tank_factory->make_enemy_tank(
+        file_reader, "tank_b", {0.f, 5.f, 30.f}, false, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -243,17 +253,17 @@ TEST_F(EnemyTankTest, HasHitOtherTankResetsAfterCall) {
 
 TEST_F(EnemyTankTest, ShellReserveDoesNotRegenerateOverTime) {
     constexpr int nb_frames_one_second = 60;
-    constexpr int max_shells = 60;
-    constexpr int initial_shells = 30;
+    constexpr int initial_shells = GAME_SHELL_ECONOMY.initial_shells;
 
     // proprioception ends with (reserve, cooldown) ratios
     constexpr int proprioception_reserve_index = ENEMY_PROPRIOCEPTION_SIZE - 2;
 
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
+    auto tank = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
 
     const float initial_reserve =
-        static_cast<float>(initial_shells) / static_cast<float>(max_shells);
+        static_cast<float>(initial_shells) / static_cast<float>(PROPRIOCEPTION_SHELL_SCALE);
 
     ASSERT_FLOAT_EQ(tank->get_proprioception()[proprioception_reserve_index], initial_reserve)
         << "reserve start with initial shells";
@@ -272,7 +282,8 @@ TEST_F(EnemyTankTest, ShellReserveDoesNotRegenerateOverTime) {
 
     const float reserve_after_fire =
         shared_tank->get_proprioception()[proprioception_reserve_index];
-    ASSERT_FLOAT_EQ(reserve_after_fire, initial_reserve - 1.f / static_cast<float>(max_shells))
+    ASSERT_FLOAT_EQ(
+        reserve_after_fire, initial_reserve - 1.f / static_cast<float>(PROPRIOCEPTION_SHELL_SCALE))
         << "firing should consume a shell";
 
     // a long wait gives nothing back: only hits recharge the reserve
@@ -281,6 +292,47 @@ TEST_F(EnemyTankTest, ShellReserveDoesNotRegenerateOverTime) {
     ASSERT_FLOAT_EQ(
         shared_tank->get_proprioception()[proprioception_reserve_index], reserve_after_fire)
         << "the reserve should never regenerate over time";
+}
+
+TEST_F(EnemyTankTest, ShellEconomyParametersAreApplied) {
+    constexpr int nb_frames_one_second = 60;
+    constexpr ShellEconomy economy{.initial_shells = 3, .shells_per_hit = 2, .max_shells = 4};
+    constexpr int proprioception_reserve_index = ENEMY_PROPRIOCEPTION_SIZE - 2;
+    constexpr float scale = static_cast<float>(PROPRIOCEPTION_SHELL_SCALE);
+
+    add_ground();
+    auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false, economy);
+
+    ASSERT_FLOAT_EQ(tank->get_proprioception()[proprioception_reserve_index], 3.f / scale)
+        << "the reserve starts at the economy's initial shells, scaled by the fixed constant";
+
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
+    const std::vector tanks{shared_tank};
+
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
+    constexpr user_input no_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {false}};
+
+    for (int shot = 0; shot < 3; shot++) {
+        for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
+        engine->step(1.f / static_cast<float>(nb_frames_one_second));
+        shared_tank->tick(tanks);
+        for (int i = 0; i < nb_frames_one_second; i++) {
+            for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(no_input);
+            engine->step(1.f / static_cast<float>(nb_frames_one_second));
+            shared_tank->tick(tanks);
+        }
+    }
+
+    ASSERT_FLOAT_EQ(shared_tank->get_proprioception()[proprioception_reserve_index], 0.f)
+        << "three shells is the whole reserve of this economy";
+    ASSERT_FALSE(shared_tank->get_can_fire()) << "an empty reserve cannot fire";
 }
 
 // ========================================================================
@@ -305,7 +357,8 @@ namespace {
 
 TEST_F(EnemyTankTest, EmptyReserveDoesNotKillInTraining) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, true);
+    auto tank = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, true, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -335,7 +388,8 @@ TEST_F(EnemyTankTest, EmptyReserveDoesNotKillInTraining) {
 
 TEST_F(EnemyTankTest, EmptyReserveDoesNotKillOutsideTraining) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
+    auto tank = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 

@@ -27,17 +27,14 @@ namespace arenai::agent {
         const int max_episode_steps, const int vision_height, const int vision_width,
         const int vision_num_threads, const int action_repeat)
         : BaseTanksEnvironment(
-              std::make_shared<DesktopAssetFileReader>(android_assets_path), graphics_backend,
-              nb_tanks, wanted_frequency, vision_height, vision_width, vision_num_threads, false,
-              true),
+            std::make_shared<DesktopAssetFileReader>(android_assets_path), graphics_backend,
+            nb_tanks, wanted_frequency, vision_height, vision_width, vision_num_threads, false,
+            true),
           wanted_frequency(wanted_frequency), action_repeat(action_repeat), nb_tanks(nb_tanks),
           nb_steps(0), done(nb_tanks, false), already_done(nb_tanks, false),
           max_episode_steps(max_episode_steps), nb_hits_per_tanks(nb_tanks, 0),
-          nb_kills_per_tanks(nb_tanks, 0),
-          reward_metric(
-              std::make_shared<MeanMetric>("r", 4 * nb_tanks * max_episode_steps, 1, true)),
-          reward_aim_metric(
-              std::make_shared<MeanMetric>("r_aim", 4 * nb_tanks * max_episode_steps, 1, true)),
+          nb_kills_per_tanks(nb_tanks, 0), reward_metric(std::make_shared<MeanMetric>(
+                                               "r", 4 * nb_tanks * max_episode_steps, 1, true)),
           reward_hit_metric(
               std::make_shared<MeanMetric>("r_hit", 4 * nb_tanks * max_episode_steps, 1, true)),
           reward_received_metric(
@@ -91,11 +88,9 @@ namespace arenai::agent {
                     truncated[i] = is_truncated;
 
                     const auto detail = tanks[i]->get_last_reward_detail();
-                    reward_details[i].aim += detail.aim;
                     reward_details[i].hit += detail.hit;
                     reward_details[i].received += detail.received;
                     reward_details[i].death += detail.death;
-                    reward_details[i].shot += detail.shot;
                     reward_details[i].nb_landed_shells += detail.nb_landed_shells;
                     reward_details[i].sum_miss_distance += detail.sum_miss_distance;
 
@@ -161,7 +156,6 @@ namespace arenai::agent {
 
                 const auto &detail = reward_details[i];
 
-                reward_aim_metric->add(detail.aim);
                 reward_hit_metric->add(detail.hit);
                 reward_received_metric->add(detail.received);
 
@@ -298,11 +292,15 @@ namespace arenai::agent {
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> TrainTankEnvironment::get_metrics() const {
-        return {reward_metric,        reward_aim_metric,
-                reward_hit_metric,    reward_received_metric,
-                miss_distance_metric, episode_step_mean_nb_metric,
-                fire_metric,          hit_metric,
-                kill_metric};
+        return {
+            reward_metric,
+            reward_hit_metric,
+            reward_received_metric,
+            miss_distance_metric,
+            episode_step_mean_nb_metric,
+            fire_metric,
+            hit_metric,
+            kill_metric};
     }
 
 }// namespace arenai::agent

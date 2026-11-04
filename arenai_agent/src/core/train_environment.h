@@ -76,7 +76,6 @@ namespace arenai::agent {
         std::shared_ptr<AbstractMetric> reward_metric;
 
         // the reward terms the policy trades off, split out of reward_metric
-        std::shared_ptr<AbstractMetric> reward_aim_metric;
         std::shared_ptr<AbstractMetric> reward_hit_metric;
         std::shared_ptr<AbstractMetric> reward_received_metric;
 

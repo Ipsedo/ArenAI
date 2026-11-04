@@ -8,6 +8,7 @@
 
 #include <arenai_controller/inputs.h>
 #include <arenai_model/constants.h>
+#include <arenai_model/shell_economy.h>
 #include <arenai_model_tests/tests_reward/tests_reward.h>
 
 using namespace arenai;
@@ -21,8 +22,10 @@ using namespace arenai::controller;
 
 TEST_F(RewardTest, RewardZeroWhenAliveNoShot) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {20.f, 0.f, 0.f}, false);
+    auto tank_a = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 0.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank_b = tank_factory->make_enemy_tank(
+        file_reader, "tank_b", {20.f, 0.f, 0.f}, false, GAME_SHELL_ECONOMY);
 
     engine->step(1.f / 60.f);
 
@@ -38,8 +41,10 @@ TEST_F(RewardTest, RewardZeroWhenAliveNoShot) {
 
 TEST_F(RewardTest, RewardNegativeWhenDead) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {20.f, 0.f, 0.f}, false);
+    auto tank_a = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 0.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank_b = tank_factory->make_enemy_tank(
+        file_reader, "tank_b", {20.f, 0.f, 0.f}, false, GAME_SHELL_ECONOMY);
 
     engine->step(1.f / 60.f);
 
@@ -66,8 +71,10 @@ TEST_F(RewardTest, RewardNegativeWhenDead) {
 
 TEST_F(RewardTest, DeathPenaltyIsMinusOne) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {20.f, 0.f, 0.f}, false);
+    auto tank_a = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 0.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank_b = tank_factory->make_enemy_tank(
+        file_reader, "tank_b", {20.f, 0.f, 0.f}, false, GAME_SHELL_ECONOMY);
 
     engine->step(1.f / 60.f);
 
@@ -96,8 +103,10 @@ TEST_F(RewardTest, DeathPenaltyIsMinusOne) {
 TEST_F(RewardTest, RewardPositiveOnHit) {
     add_ground();
     // spawn tanks high enough so all parts start above ground and settle cleanly
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, false);
+    auto tank_a = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank_b = tank_factory->make_enemy_tank(
+        file_reader, "tank_b", {0.f, 5.f, 30.f}, false, GAME_SHELL_ECONOMY);
 
     // settle on ground (300 frames = 5s at 60fps)
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
@@ -127,15 +136,16 @@ TEST_F(RewardTest, RewardPositiveOnHit) {
     ASSERT_FALSE(std::isnan(max_reward)) << "reward should never be NaN";
     ASSERT_FALSE(std::isinf(max_reward)) << "reward should never be Inf";
 
-    ASSERT_GE(max_reward, 0.3f)
-        << "reward should be at least the hit bonus after hitting an enemy";
+    ASSERT_GE(max_reward, 0.3f) << "reward should be at least the hit bonus after hitting an enemy";
 }
 
 TEST_F(RewardTest, RewardUnderOneAfterHit) {
     add_ground();
     // spawn tanks high enough so all parts start above ground and settle cleanly
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, false);
+    auto tank_a = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank_b = tank_factory->make_enemy_tank(
+        file_reader, "tank_b", {0.f, 5.f, 30.f}, false, GAME_SHELL_ECONOMY);
 
     // settle on ground (300 frames = 5s at 60fps)
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
@@ -191,8 +201,10 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
 
 TEST_F(RewardTest, MissedShellGivesNothing) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {15.f, 5.f, 30.f}, false);
+    auto tank_a = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank_b = tank_factory->make_enemy_tank(
+        file_reader, "tank_b", {15.f, 5.f, 30.f}, false, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -235,8 +247,10 @@ TEST_F(RewardTest, NoRewardWhenShootingAWreck) {
 
     add_ground();
     // spawn tanks high enough so all parts start above ground and settle cleanly
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, false);
+    auto tank_a = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank_b = tank_factory->make_enemy_tank(
+        file_reader, "tank_b", {0.f, 5.f, 30.f}, false, GAME_SHELL_ECONOMY);
 
     // settle on ground (300 frames = 5s at 60fps)
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
@@ -282,8 +296,10 @@ TEST_F(RewardTest, NoRewardWhenShootingAWreck) {
 TEST_F(RewardTest, NoKillRewardWhenHittingAnotherPartOfAWreck) {
     add_ground();
     // spawn tanks high enough so all parts start above ground and settle cleanly
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, false);
+    auto tank_a = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank_b = tank_factory->make_enemy_tank(
+        file_reader, "tank_b", {0.f, 5.f, 30.f}, false, GAME_SHELL_ECONOMY);
 
     // settle on ground (300 frames = 5s at 60fps)
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
@@ -333,7 +349,8 @@ TEST_F(RewardTest, NoKillRewardWhenHittingAnotherPartOfAWreck) {
 
 TEST_F(RewardTest, ZeroRewardWithEmptyTankList) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
+    auto tank = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 

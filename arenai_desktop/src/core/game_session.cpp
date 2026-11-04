@@ -9,6 +9,8 @@
 #include <thread>
 #include <utility>
 
+#include <arenai_model/shell_economy.h>
+
 #include "../controller/gamepad_selection.h"
 
 namespace arenai::desktop {
@@ -26,7 +28,8 @@ namespace arenai::desktop {
             options_.resources_folder, backend_, settings_, enemy_.vision_height,
             enemy_.vision_width, enemy_.wanted_frequency);
         states_ = env_->reset(
-            static_cast<float>(settings_.spawn_side), static_cast<float>(settings_.spawn_side));
+            static_cast<float>(settings_.spawn_side), static_cast<float>(settings_.spawn_side),
+            model::GAME_SHELL_ECONOMY);
     }
 
     void GameSession::finish_loading() const { env_->create_player_renderer(); }

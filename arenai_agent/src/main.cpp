@@ -7,6 +7,8 @@
 #include <argparse/argparse.hpp>
 #include <ATen/Context.h>
 
+#include <arenai_model/shell_economy.h>
+
 #include "./agents/agent_cli.h"
 #include "./train.h"
 
@@ -38,9 +40,21 @@ int main(const int argc, char **argv) {
     parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(250.f);
     parser.add_argument("--final_spawn_width").scan<'g', float>().default_value(1000.f);
     parser.add_argument("--final_spawn_height").scan<'g', float>().default_value(1000.f);
+    parser.add_argument("--initial_shells").scan<'i', int>().default_value(30);
+    parser.add_argument("--initial_shells_per_hit").scan<'i', int>().default_value(20);
+    parser.add_argument("--initial_max_shells").scan<'i', int>().default_value(60);
+    parser.add_argument("--final_shells")
+        .scan<'i', int>()
+        .default_value(model::GAME_SHELL_ECONOMY.initial_shells);
+    parser.add_argument("--final_shells_per_hit")
+        .scan<'i', int>()
+        .default_value(model::GAME_SHELL_ECONOMY.shells_per_hit);
+    parser.add_argument("--final_max_shells")
+        .scan<'i', int>()
+        .default_value(model::GAME_SHELL_ECONOMY.max_shells);
     parser.add_argument("--curriculum_delta").scan<'g', float>().default_value(50.f);
-    parser.add_argument("--curriculum_ratio_low").scan<'g', float>().default_value(0.03f);
-    parser.add_argument("--curriculum_ratio_high").scan<'g', float>().default_value(0.06f);
+    parser.add_argument("--curriculum_ratio_low").scan<'g', float>().default_value(0.05f);
+    parser.add_argument("--curriculum_ratio_high").scan<'g', float>().default_value(0.08f);
     parser.add_argument("--curriculum_probe_window").scan<'i', int>().default_value(24);
     parser.add_argument("--curriculum_boundary_proba").scan<'g', float>().default_value(0.2f);
     parser.add_argument("--action_repeat").scan<'i', int>().default_value(3);
@@ -79,6 +93,14 @@ int main(const int argc, char **argv) {
          .initial_spawn_height = parser.get<float>("--initial_spawn_height"),
          .final_spawn_width = parser.get<float>("--final_spawn_width"),
          .final_spawn_height = parser.get<float>("--final_spawn_height"),
+         .initial_shell_economy =
+             {.initial_shells = parser.get<int>("--initial_shells"),
+              .shells_per_hit = parser.get<int>("--initial_shells_per_hit"),
+              .max_shells = parser.get<int>("--initial_max_shells")},
+         .final_shell_economy =
+             {.initial_shells = parser.get<int>("--final_shells"),
+              .shells_per_hit = parser.get<int>("--final_shells_per_hit"),
+              .max_shells = parser.get<int>("--final_max_shells")},
          .curriculum_delta = parser.get<float>("--curriculum_delta"),
          .curriculum_ratio_low = parser.get<float>("--curriculum_ratio_low"),
          .curriculum_ratio_high = parser.get<float>("--curriculum_ratio_high"),

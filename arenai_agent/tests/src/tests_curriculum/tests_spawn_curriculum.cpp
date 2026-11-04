@@ -2,7 +2,7 @@
 // Created by samuel on 05/09/2026.
 //
 
-#include <core/spawn_curriculum.h>
+#include <core/curriculum.h>
 #include <gtest/gtest.h>
 
 using namespace arenai;
@@ -16,7 +16,7 @@ namespace {
     constexpr std::uint64_t SEED = 42;
 
     // feed exactly one controller window of probe episodes with the given ratio
-    void run_probe_window(SpawnCurriculum &curriculum, const int nb_fires, const int nb_hits) {
+    void run_probe_window(ProgressCurriculum &curriculum, const int nb_fires, const int nb_hits) {
         int done = 0;
         while (done < PROBE_WINDOW) {
             curriculum.sample_progress();
@@ -29,13 +29,13 @@ namespace {
 }// namespace
 
 TEST(SpawnCurriculumTest, StartsAtZero) {
-    const SpawnCurriculum curriculum(DELTA, RATIO_LOW, RATIO_HIGH, PROBE_WINDOW, 0.2f, SEED);
+    const ProgressCurriculum curriculum(DELTA, RATIO_LOW, RATIO_HIGH, PROBE_WINDOW, 0.2f, SEED);
 
     ASSERT_FLOAT_EQ(curriculum.upper_bound(), 0.f);
 }
 
 TEST(SpawnCurriculumTest, SampleStaysWithinBound) {
-    SpawnCurriculum curriculum(DELTA, RATIO_LOW, RATIO_HIGH, PROBE_WINDOW, 0.2f, SEED);
+    ProgressCurriculum curriculum(DELTA, RATIO_LOW, RATIO_HIGH, PROBE_WINDOW, 0.2f, SEED);
 
     run_probe_window(curriculum, 100, 10);// grow once so the bound is not 0
 
@@ -48,7 +48,7 @@ TEST(SpawnCurriculumTest, SampleStaysWithinBound) {
 }
 
 TEST(SpawnCurriculumTest, GrowsAboveHighRatio) {
-    SpawnCurriculum curriculum(DELTA, RATIO_LOW, RATIO_HIGH, PROBE_WINDOW, 0.2f, SEED);
+    ProgressCurriculum curriculum(DELTA, RATIO_LOW, RATIO_HIGH, PROBE_WINDOW, 0.2f, SEED);
 
     run_probe_window(curriculum, 100, 10);// ratio 0.1 > high
 
@@ -56,7 +56,7 @@ TEST(SpawnCurriculumTest, GrowsAboveHighRatio) {
 }
 
 TEST(SpawnCurriculumTest, ShrinksBelowLowRatio) {
-    SpawnCurriculum curriculum(DELTA, RATIO_LOW, RATIO_HIGH, PROBE_WINDOW, 0.2f, SEED);
+    ProgressCurriculum curriculum(DELTA, RATIO_LOW, RATIO_HIGH, PROBE_WINDOW, 0.2f, SEED);
 
     run_probe_window(curriculum, 100, 10);
     run_probe_window(curriculum, 100, 10);
@@ -68,7 +68,7 @@ TEST(SpawnCurriculumTest, ShrinksBelowLowRatio) {
 }
 
 TEST(SpawnCurriculumTest, HoldsInsideHysteresisBand) {
-    SpawnCurriculum curriculum(DELTA, RATIO_LOW, RATIO_HIGH, PROBE_WINDOW, 0.2f, SEED);
+    ProgressCurriculum curriculum(DELTA, RATIO_LOW, RATIO_HIGH, PROBE_WINDOW, 0.2f, SEED);
 
     run_probe_window(curriculum, 100, 10);
     ASSERT_FLOAT_EQ(curriculum.upper_bound(), DELTA);
@@ -79,7 +79,7 @@ TEST(SpawnCurriculumTest, HoldsInsideHysteresisBand) {
 }
 
 TEST(SpawnCurriculumTest, NoFireCountsAsFailure) {
-    SpawnCurriculum curriculum(DELTA, RATIO_LOW, RATIO_HIGH, PROBE_WINDOW, 0.2f, SEED);
+    ProgressCurriculum curriculum(DELTA, RATIO_LOW, RATIO_HIGH, PROBE_WINDOW, 0.2f, SEED);
 
     run_probe_window(curriculum, 100, 10);
     ASSERT_FLOAT_EQ(curriculum.upper_bound(), DELTA);
@@ -90,7 +90,7 @@ TEST(SpawnCurriculumTest, NoFireCountsAsFailure) {
 }
 
 TEST(SpawnCurriculumTest, ClampsToUnitInterval) {
-    SpawnCurriculum curriculum(DELTA, RATIO_LOW, RATIO_HIGH, PROBE_WINDOW, 0.2f, SEED);
+    ProgressCurriculum curriculum(DELTA, RATIO_LOW, RATIO_HIGH, PROBE_WINDOW, 0.2f, SEED);
 
     // more than enough successful windows to reach the top
     for (int i = 0; i < 30; i++) run_probe_window(curriculum, 100, 10);
@@ -104,7 +104,7 @@ TEST(SpawnCurriculumTest, ClampsToUnitInterval) {
 TEST(SpawnCurriculumTest, NonProbeEpisodesDoNotFeedController) {
     // boundary_proba 0: no episode is a probe, the controller must never move
     // whatever the results
-    SpawnCurriculum curriculum(DELTA, RATIO_LOW, RATIO_HIGH, PROBE_WINDOW, 0.f, SEED);
+    ProgressCurriculum curriculum(DELTA, RATIO_LOW, RATIO_HIGH, PROBE_WINDOW, 0.f, SEED);
     for (int i = 0; i < 100; i++) {
         curriculum.sample_progress();
         curriculum.on_episode_end(100, 10);
@@ -114,7 +114,7 @@ TEST(SpawnCurriculumTest, NonProbeEpisodesDoNotFeedController) {
 }
 
 TEST(SpawnCurriculumTest, ZeroDeltaKeepsBoundFixed) {
-    SpawnCurriculum curriculum(0.f, RATIO_LOW, RATIO_HIGH, PROBE_WINDOW, 0.2f, SEED);
+    ProgressCurriculum curriculum(0.f, RATIO_LOW, RATIO_HIGH, PROBE_WINDOW, 0.2f, SEED);
 
     for (int i = 0; i < 10; i++) run_probe_window(curriculum, 100, 10);
 

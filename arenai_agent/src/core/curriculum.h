@@ -10,21 +10,12 @@
 
 namespace arenai::agent {
 
-    // ADR-style adaptive curriculum on the spawn-zone size. The difficulty is a
-    // progress fraction in [0, 1] mapped by the caller onto [initial, final] spawn
-    // sizes. Each episode either probes the current upper bound (probability
-    // boundary_proba) or draws uniformly below it — the mixture keeps easy episodes
-    // in the training data so long-range practice never erases short-range aim.
-    // Only probe episodes feed the controller: every probe_window of them, the
-    // aggregated hit/fire ratio moves the bound up past ratio_high, down below
-    // ratio_low, and not at all in between (hysteresis).
-    class SpawnCurriculum {
+    class ProgressCurriculum {
     public:
-        SpawnCurriculum(
+        ProgressCurriculum(
             float delta_progress, float ratio_low, float ratio_high, int probe_window,
             float boundary_proba, std::uint64_t seed);
 
-        // draws the difficulty of the next episode, in [0, 1]
         float sample_progress();
 
         // per-episode totals across every tank; ignored unless the last sampled

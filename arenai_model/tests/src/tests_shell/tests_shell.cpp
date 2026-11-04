@@ -6,6 +6,7 @@
 #include <memory>
 
 #include <arenai_controller/inputs.h>
+#include <arenai_model/shell_economy.h>
 #include <arenai_model_tests/tests_shell/tests_shell.h>
 
 using namespace arenai;
@@ -19,7 +20,8 @@ using namespace arenai::controller;
 
 TEST_F(ShellTest, FireCreatesShellItem) {
     add_ground();
-    const auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
+    const auto tank = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -40,7 +42,8 @@ TEST_F(ShellTest, FireCreatesShellItem) {
 
 TEST_F(ShellTest, ShellDestroyedAfterLifetime) {
     add_ground();
-    const auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
+    const auto tank = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -68,8 +71,10 @@ TEST_F(ShellTest, ShellDestroyedAfterLifetime) {
 
 TEST_F(ShellTest, ShellHitsEnemyTank) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, false);
+    auto tank_a = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank_b = tank_factory->make_enemy_tank(
+        file_reader, "tank_b", {0.f, 5.f, 30.f}, false, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -89,8 +94,10 @@ TEST_F(ShellTest, ShellHitsEnemyTank) {
 
 TEST_F(ShellTest, ShellDestroyedOnContact) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, false);
+    auto tank_a = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank_b = tank_factory->make_enemy_tank(
+        file_reader, "tank_b", {0.f, 5.f, 30.f}, false, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -119,7 +126,8 @@ TEST_F(ShellTest, ShellDestroyedOnContact) {
 
 TEST_F(ShellTest, NoFireNoNewItems) {
     add_ground();
-    const auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
+    const auto tank = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
 
     engine->step(1.f / 60.f);
 
@@ -140,8 +148,10 @@ TEST_F(ShellTest, NoFireNoNewItems) {
 
 TEST_F(ShellTest, ShellContactCallbackSetsReward) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, false);
+    auto tank_a = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank_b = tank_factory->make_enemy_tank(
+        file_reader, "tank_b", {0.f, 5.f, 30.f}, false, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -202,8 +212,10 @@ namespace {
 
 TEST_F(ShellTest, ShellImpactDealsExactlyOneDamage) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, false);
+    auto tank_a = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank_b = tank_factory->make_enemy_tank(
+        file_reader, "tank_b", {0.f, 5.f, 30.f}, false, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -226,8 +238,10 @@ TEST_F(ShellTest, ShellImpactDealsExactlyOneDamage) {
 
 TEST_F(ShellTest, TankSurvivesUntilAPartsHealthPointsAreSpent) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, false);
+    auto tank_a = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank_b = tank_factory->make_enemy_tank(
+        file_reader, "tank_b", {0.f, 5.f, 30.f}, false, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -265,8 +279,10 @@ TEST_F(ShellTest, TankSurvivesUntilAPartsHealthPointsAreSpent) {
 
 TEST_F(ShellTest, SpentShellDealsNoFurtherDamage) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, false);
+    auto tank_a = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank_b = tank_factory->make_enemy_tank(
+        file_reader, "tank_b", {0.f, 5.f, 30.f}, false, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 

@@ -23,25 +23,28 @@ namespace arenai::model {
         JoltPhysicEngine &engine,
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::string &tank_prefix_name, const glm::vec3 chassis_pos,
-        const float wanted_frame_frequency, const bool apply_timeout)
+        const float wanted_frame_frequency, const bool apply_timeout,
+        const ShellEconomy &shell_economy)
         : JoltTank(
-              engine, file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency,
-              ENEMY_TURRET_RADIAL_VELOCITY, ENEMY_CANON_RADIAL_VELOCITY,
-              [this](const ShellItem *shell, const ShellContactInfo &info, Item *item) {
-                  on_shell_contact(shell, info, item);
-              },
-              [this](const std::shared_ptr<ShellItem> &shell) { on_shell_fired(shell); },
-              [this] {
-                  const bool can_fire = get_can_fire();
-                  if (can_fire) curr_cooldown_frame = 0;
-                  return can_fire;
-              }),
+            engine, file_reader, tank_prefix_name, chassis_pos, wanted_frame_frequency,
+            ENEMY_TURRET_RADIAL_VELOCITY, ENEMY_CANON_RADIAL_VELOCITY,
+            [this](const ShellItem *shell, const ShellContactInfo &info, Item *item) {
+                on_shell_contact(shell, info, item);
+            },
+            [this](const std::shared_ptr<ShellItem> &shell) { on_shell_fired(shell); },
+            [this] {
+                const bool can_fire = get_can_fire();
+                if (can_fire) curr_cooldown_frame = 0;
+                return can_fire;
+            }),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-          curr_frame_upside_down(0), shot_cost(0.f), hit_received_cost(0.2f), initial_nb_shells(30),
-          nb_shells(initial_nb_shells), max_shells(60),
+          curr_frame_upside_down(0), hit_received_cost(0.2f),
+          initial_nb_shells(shell_economy.initial_shells), nb_shells(initial_nb_shells),
+          max_shells(shell_economy.max_shells),
           fire_cooldown_frames(static_cast<int>(1.f / 6.f / wanted_frame_frequency)),
-          curr_cooldown_frame(fire_cooldown_frames), shells_recharged_per_hit(20),
-          is_dead_already_triggered(false), apply_timeout(apply_timeout), starved(false),
+          curr_cooldown_frame(fire_cooldown_frames),
+          shells_recharged_per_hit(shell_economy.shells_per_hit), is_dead_already_triggered(false),
+          apply_timeout(apply_timeout), starved(false),
           max_frames_without_hit(static_cast<int>(30.f / wanted_frame_frequency)),
           remaining_frames(max_frames_without_hit),
           nb_frames_added_when_hit(static_cast<int>(3.f / wanted_frame_frequency)),
@@ -104,7 +107,7 @@ namespace arenai::model {
         // unpredictable shock for the critic (the timer is not observable)
         if (is_dead() && !is_timeout()) detail.death = -1.f;
 
-        // 2. landed shells: each one pays its cost, a touch its bonus
+        // 2. landed shells: a touch pays its bonus
         for (int i = static_cast<int>(tracked_shells.size()) - 1; i >= 0; i--) {
             auto &tracked = tracked_shells[i];
 
@@ -113,8 +116,6 @@ namespace arenai::model {
             if (const bool in_flight = shell && !shell->need_destroy(); in_flight) continue;
 
             if (tracked.has_sample) {
-                detail.shot -= shot_cost;
-
                 detail.nb_landed_shells++;
                 detail.sum_miss_distance +=
                     glm::length(tracked.shell_pos_at_t - tracked.enemy_pos_at_t);
@@ -130,7 +131,7 @@ namespace arenai::model {
         // 4. total reward, kept split for the metrics
         last_reward_detail = detail;
 
-        return detail.hit + detail.received + detail.death + detail.shot;
+        return detail.hit + detail.received + detail.death;
     }
 
     RewardDetail JoltEnemyTank::get_last_reward_detail() const { return last_reward_detail; }
@@ -329,7 +330,8 @@ namespace arenai::model {
                  item_forward.z, item_up.x, item_up.y, item_up.z, ang_vel.x, ang_vel.y, ang_vel.z});
         }
 
-        result.push_back(static_cast<float>(nb_shells) / static_cast<float>(max_shells));
+        result.push_back(
+            static_cast<float>(nb_shells) / static_cast<float>(PROPRIOCEPTION_SHELL_SCALE));
         result.push_back(
             static_cast<float>(curr_cooldown_frame) / static_cast<float>(fire_cooldown_frames));
 

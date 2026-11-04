@@ -15,6 +15,7 @@
 
 #include <arenai_desktop_tests/headless_windowed_backend.h>
 #include <arenai_desktop_tests/interceptor_agent.h>
+#include <arenai_model/shell_economy.h>
 
 using namespace arenai;
 using namespace arenai::desktop;
@@ -113,7 +114,7 @@ TEST(DesktopAgentInputEndToEnd, AgentReceivesValidStates) {
     const auto env = make_environment();
     InterceptorAgent agent;
 
-    run_act_step_loop(*env, agent, env->reset(100.f, 100.f));
+    run_act_step_loop(*env, agent, env->reset(100.f, 100.f, model::GAME_SHELL_ECONOMY));
 
     ASSERT_EQ(static_cast<int>(agent.received_states.size()), NB_STEPS + 1);
     ASSERT_EQ(agent.last_vision_height, VISION_HEIGHT);
@@ -154,7 +155,7 @@ TEST(DesktopAgentInputEndToEnd, AgentInputMatchesGoldenImages) {
     const auto env = make_environment();
     InterceptorAgent agent;
 
-    run_act_step_loop(*env, agent, env->reset(100.f, 100.f));
+    run_act_step_loop(*env, agent, env->reset(100.f, 100.f, model::GAME_SHELL_ECONOMY));
 
     for (int tank_idx = 0; tank_idx < NB_TANKS; tank_idx++) {
         const std::vector<std::pair<std::filesystem::path, const std::vector<uint8_t> *>> goldens =

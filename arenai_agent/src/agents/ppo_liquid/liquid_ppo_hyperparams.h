@@ -28,7 +28,7 @@ namespace arenai::agent {
         float initial_fire_proba = 0.1f;
         float initial_zoom_proba = 0.1f;
         int metric_window_size = 256;
-        float gamma = 0.99f;
+        float gamma = 0.995f;
         float gae_lambda = 0.95f;
         float clip_epsilon = 0.2f;
         float target_kl = 0.05f;

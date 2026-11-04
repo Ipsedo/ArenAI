@@ -16,7 +16,7 @@
 
 #include <arenai_model/constants.h>
 
-#include "./core/spawn_curriculum.h"
+#include "./core/curriculum.h"
 #include "./core/train_environment.h"
 #include "./metrics/last_metric.h"
 #include "./metrics/metric_saver.h"
@@ -52,6 +52,13 @@ namespace arenai::agent {
                   {"initial_spawn_height", environment_options.initial_spawn_height},
                   {"final_spawn_width", environment_options.final_spawn_width},
                   {"final_spawn_height", environment_options.final_spawn_height},
+                  {"initial_shells", environment_options.initial_shell_economy.initial_shells},
+                  {"initial_shells_per_hit",
+                   environment_options.initial_shell_economy.shells_per_hit},
+                  {"initial_max_shells", environment_options.initial_shell_economy.max_shells},
+                  {"final_shells", environment_options.final_shell_economy.initial_shells},
+                  {"final_shells_per_hit", environment_options.final_shell_economy.shells_per_hit},
+                  {"final_max_shells", environment_options.final_shell_economy.max_shells},
                   {"curriculum_delta", environment_options.curriculum_delta},
                   {"curriculum_ratio_low", environment_options.curriculum_ratio_low},
                   {"curriculum_ratio_high", environment_options.curriculum_ratio_high},
@@ -107,7 +114,7 @@ namespace arenai::agent {
                 : 0.f;
 
         constexpr std::uint64_t curriculum_seed = 1337;
-        SpawnCurriculum curriculum(
+        ProgressCurriculum curriculum(
             curriculum_delta_progress, environment_options.curriculum_ratio_low,
             environment_options.curriculum_ratio_high, environment_options.curriculum_probe_window,
             environment_options.curriculum_boundary_proba, curriculum_seed);
@@ -173,6 +180,10 @@ namespace arenai::agent {
                 progress);
             const float spawn_side = std::sqrt(spawn_width * spawn_height);
 
+            const model::ShellEconomy shell_economy =
+                environment_options.initial_shell_economy.interpolate(
+                    progress, environment_options.final_shell_economy);
+
             spawn_side_metric->add(spawn_side);
             spawn_bound_metric->add(
                 std::lerp(initial_spawn_side, final_spawn_side, curriculum.upper_bound()));
@@ -181,8 +192,8 @@ namespace arenai::agent {
             bool is_done = false;
 
             auto state = states_to_tensor(
-                env->reset(spawn_width, spawn_height), environment_options.vision_height,
-                environment_options.vision_width);
+                env->reset(spawn_width, spawn_height, shell_economy),
+                environment_options.vision_height, environment_options.vision_width);
 
             while (!is_done) {
 

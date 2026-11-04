@@ -8,6 +8,8 @@
 #include <filesystem>
 #include <memory>
 
+#include <arenai_model/shell_economy.h>
+
 #include "./agents/torch_factory.h"
 
 namespace arenai::agent {
@@ -30,6 +32,8 @@ namespace arenai::agent {
         float initial_spawn_height;
         float final_spawn_width;
         float final_spawn_height;
+        model::ShellEconomy initial_shell_economy;
+        model::ShellEconomy final_shell_economy;
         float curriculum_delta;
         float curriculum_ratio_low;
         float curriculum_ratio_high;

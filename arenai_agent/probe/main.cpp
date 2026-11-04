@@ -16,6 +16,7 @@
 #include <torch/torch.h>
 
 #include <arenai_model/constants.h>
+#include <arenai_model/shell_economy.h>
 #include <arenai_view/backend.h>
 
 #include "./agents/ppo_liquid/liquid_hidden_state.h"
@@ -38,6 +39,15 @@ int main(const int argc, char **argv) {
     parser.add_argument("--output").required();
     parser.add_argument("--nb_episodes").scan<'i', int>().default_value(4);
     parser.add_argument("--spawn_side").scan<'g', float>().default_value(550.f);
+    parser.add_argument("--shells")
+        .scan<'i', int>()
+        .default_value(model::GAME_SHELL_ECONOMY.initial_shells);
+    parser.add_argument("--shells_per_hit")
+        .scan<'i', int>()
+        .default_value(model::GAME_SHELL_ECONOMY.shells_per_hit);
+    parser.add_argument("--max_shells")
+        .scan<'i', int>()
+        .default_value(model::GAME_SHELL_ECONOMY.max_shells);
     parser.add_argument("--cuda").default_value(false).implicit_value(true);
     parser.add_argument("--deterministic").default_value(false).implicit_value(true);
     parser.add_argument("--features").default_value(std::string());
@@ -53,6 +63,10 @@ int main(const int argc, char **argv) {
     const std::filesystem::path output(parser.get<std::string>("--output"));
     const int nb_episodes = parser.get<int>("--nb_episodes");
     const float spawn_side = parser.get<float>("--spawn_side");
+    const model::ShellEconomy shell_economy{
+        .initial_shells = parser.get<int>("--shells"),
+        .shells_per_hit = parser.get<int>("--shells_per_hit"),
+        .max_shells = parser.get<int>("--max_shells")};
     const bool deterministic = parser.get<bool>("--deterministic");
 
     const torch::Device device =
@@ -121,8 +135,8 @@ int main(const int argc, char **argv) {
     for (int episode = 0; episode < nb_episodes; episode++) {
         hidden_state.reset();
 
-        auto state =
-            states_to_tensor(env->reset(spawn_side, spawn_side), vision_height, vision_width);
+        auto state = states_to_tensor(
+            env->reset(spawn_side, spawn_side, shell_economy), vision_height, vision_width);
 
         int step = 0;
         bool is_done = false;

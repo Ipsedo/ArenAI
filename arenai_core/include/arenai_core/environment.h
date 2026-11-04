@@ -11,6 +11,7 @@
 #include <vector>
 
 #include <arenai_model/engine.h>
+#include <arenai_model/shell_economy.h>
 #include <arenai_model/tank.h>
 #include <arenai_utils/file_reader.h>
 #include <arenai_view/backend.h>
@@ -31,7 +32,8 @@ namespace arenai::core {
         virtual std::vector<std::tuple<State, Reward, IsDone, IsTruncated>>
         step(float time_delta, const std::vector<Action> &actions);
 
-        std::vector<State> reset(float spawn_width, float spawn_height);
+        std::vector<State>
+        reset(float spawn_width, float spawn_height, const model::ShellEconomy &shell_economy);
 
         void seed(unsigned int seed);
         void stop_drawing() const;
@@ -63,7 +65,8 @@ namespace arenai::core {
         std::shared_ptr<view::AbstractGraphicBackend> graphics_backend;
         std::shared_ptr<view::AbstractRenderContext> gl_context;
 
-        void reset_physics(float spawn_width, float spawn_height);
+        void reset_physics(
+            float spawn_width, float spawn_height, const model::ShellEconomy &shell_economy);
         void reset_drawables();
 
     protected:

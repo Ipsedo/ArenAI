@@ -7,6 +7,7 @@
 
 #include <memory>
 
+#include <arenai_model/shell_economy.h>
 #include <arenai_model/tank.h>
 
 #include "./jolt_tank.h"
@@ -41,7 +42,7 @@ namespace arenai::model {
             JoltPhysicEngine &engine,
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::string &tank_prefix_name, glm::vec3 chassis_pos,
-            float wanted_frame_frequency, bool apply_timeout);
+            float wanted_frame_frequency, bool apply_timeout, const ShellEconomy &shell_economy);
 
         float get_reward() const override;
         int get_score() const override;
@@ -75,8 +76,6 @@ namespace arenai::model {
     private:
         int max_frames_upside_down;
         int curr_frame_upside_down;
-
-        float shot_cost;
 
         float hit_received_cost;
 

@@ -12,6 +12,7 @@
 #include <arenai_controller/inputs.h>
 #include <arenai_core_tests/tests_environment.h>
 #include <arenai_model/item_factory.h>
+#include <arenai_model/shell_economy.h>
 
 using namespace arenai;
 using namespace arenai::core;
@@ -29,7 +30,7 @@ TEST_F(EnvironmentTest, ResetReturnsCorrectNumberOfStates) {
     TestTanksEnvironment env(
         file_reader, graphics_backend, nb_tanks, frequency, vision_h, vision_w, 1, false, false);
 
-    const auto states = env.reset(100.f, 100.f);
+    const auto states = env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
 
     ASSERT_EQ(static_cast<int>(states.size()), nb_tanks);
 
@@ -49,7 +50,7 @@ TEST_F(EnvironmentTest, ResetInitialVisionIsNotBlack) {
     TestTanksEnvironment env(
         file_reader, graphics_backend, nb_tanks, frequency, vision_h, vision_w, 1, false, false);
 
-    for (const auto states = env.reset(100.f, 100.f);
+    for (const auto states = env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
          const auto &[vision, proprioception, can_fire]: states) {
         ASSERT_EQ(static_cast<int>(vision.pixels.size()), 3 * vision_h * vision_w);
 
@@ -88,7 +89,7 @@ TEST_F(EnvironmentTest, ResetGoldenImage) {
 
     env.seed(42);
 
-    const auto states = env.reset(100.f, 100.f);
+    const auto states = env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
 
     for (int tank_idx = 0; tank_idx < nb_tanks; tank_idx++) {
         const auto &[vision, proprioception, can_fire] = states[tank_idx];
@@ -151,7 +152,7 @@ TEST_F(EnvironmentTest, ResetProprioceptionNonEmpty) {
     TestTanksEnvironment env(
         file_reader, graphics_backend, nb_tanks, frequency, 8, 8, 1, false, false);
 
-    for (const auto states = env.reset(100.f, 100.f);
+    for (const auto states = env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
          const auto &[vision, proprioception, can_fire]: states) {
         ASSERT_FALSE(proprioception.empty());
     }
@@ -170,7 +171,7 @@ TEST_F(EnvironmentTest, ResetCallsOnResetPhysics) {
     TestTanksEnvironment env(
         file_reader, graphics_backend, nb_tanks, frequency, 8, 8, 1, false, false);
 
-    env.reset(100.f, 100.f);
+    env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
 
     ASSERT_EQ(env.reset_physics_call_count, 1);
 
@@ -190,7 +191,7 @@ TEST_F(EnvironmentTest, StepReturnsCorrectNumberOfTuples) {
     TestTanksEnvironment env(
         file_reader, graphics_backend, nb_tanks, frequency, vision_h, vision_w, 1, false, false);
 
-    env.reset(100.f, 100.f);
+    env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
 
     const std::vector<controller::user_input> actions(
         nb_tanks, {.left_joystick = {.x = 0.f, .y = 0.f},
@@ -215,7 +216,7 @@ TEST_F(EnvironmentTest, StepRewardAndDoneAreValid) {
     TestTanksEnvironment env(
         file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false, false);
 
-    env.reset(100.f, 100.f);
+    env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
 
     const std::vector<controller::user_input> actions(
         nb_tanks, {.left_joystick = {.x = 0.f, .y = 0.f},
@@ -242,7 +243,7 @@ TEST_F(EnvironmentTest, StepCallsOnDraw) {
     TestTanksEnvironment env(
         file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false, false);
 
-    env.reset(100.f, 100.f);
+    env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
 
     const std::vector<controller::user_input> actions(
         nb_tanks, {.left_joystick = {.x = 0.f, .y = 0.f},
@@ -271,7 +272,7 @@ TEST_F(EnvironmentTest, MultipleStepsDoNotCrash) {
     TestTanksEnvironment env(
         file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false, false);
 
-    env.reset(100.f, 100.f);
+    env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
 
     const std::vector<controller::user_input> actions(
         nb_tanks, {.left_joystick = {.x = 0.5f, .y = -0.5f},
@@ -297,7 +298,7 @@ TEST_F(EnvironmentTest, ResetCallsOnResetDrawables) {
     TestTanksEnvironment env(
         file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false, false);
 
-    env.reset(100.f, 100.f);
+    env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
 
     ASSERT_EQ(env.reset_drawables_call_count, 1);
 
@@ -316,7 +317,7 @@ TEST_F(EnvironmentTest, FullLifecycle) {
         file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false, false);
 
     // First episode
-    const auto initial_states = env.reset(100.f, 100.f);
+    const auto initial_states = env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
     ASSERT_EQ(static_cast<int>(initial_states.size()), nb_tanks);
 
     const std::vector<controller::user_input> actions(
@@ -326,7 +327,7 @@ TEST_F(EnvironmentTest, FullLifecycle) {
     for (int i = 0; i < 10; i++) env.step(frequency, actions);
 
     // Second episode (reset handles stop_drawing internally)
-    const auto new_states = env.reset(50.f, 50.f);
+    const auto new_states = env.reset(50.f, 50.f, model::GAME_SHELL_ECONOMY);
     ASSERT_EQ(static_cast<int>(new_states.size()), nb_tanks);
 
     for (int i = 0; i < 10; i++) env.step(frequency, actions);
@@ -345,7 +346,7 @@ TEST_F(EnvironmentTest, StopDrawingDoubleCallDoesNotCrash) {
     TestTanksEnvironment env(
         file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false, false);
 
-    env.reset(100.f, 100.f);
+    env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
 
     env.stop_drawing();
     ASSERT_NO_THROW(env.stop_drawing());
@@ -364,7 +365,7 @@ TEST_F(EnvironmentTest, SpawnedBodiesStartAboveTerrain) {
         file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false, false);
 
     // wide spawn zone so tanks land on varied terrain heights
-    env.reset(2000.f, 2000.f);
+    env.reset(2000.f, 2000.f, model::GAME_SHELL_ECONOMY);
     env.stop_drawing();
 
     // terrain-only world (the fixture's engine) to measure the ground height at each (x, z)

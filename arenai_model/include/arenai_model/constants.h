@@ -30,6 +30,8 @@ namespace arenai::model {
     constexpr float GRAVITY = 9.8f;
     constexpr float SHELL_SPEED = 250.f;
 
+    constexpr int PROPRIOCEPTION_SHELL_SCALE = 60;
+
     constexpr float ZOOM_MAGNIFICATION = 2.f;
     constexpr float ZOOM_TRANSITION_SECONDS = 0.25f;
 

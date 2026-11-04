@@ -99,7 +99,9 @@ namespace arenai::core {
         return states;
     }
 
-    void BaseTanksEnvironment::reset_physics(const float spawn_width, const float spawn_height) {
+    void BaseTanksEnvironment::reset_physics(
+        const float spawn_width, const float spawn_height,
+        const model::ShellEconomy &shell_economy) {
         physic_engine->remove_bodies_and_constraints();
         tanks.clear();
 
@@ -129,7 +131,7 @@ namespace arenai::core {
             const float x = x_pos_u_dist(rng), z = y_pos_u_dist(rng);
             tanks.push_back(tank_factory->make_enemy_tank(
                 file_reader, "enemy_" + std::to_string(i),
-                glm::vec3(x, ground_height(x, z) + 3.f, z), apply_timeout));
+                glm::vec3(x, ground_height(x, z) + 3.f, z), apply_timeout, shell_economy));
         }
 
         // add basic shapes
@@ -176,11 +178,12 @@ namespace arenai::core {
         for (int i = 0; i < nb_reset_frames; i++) physic_engine->step(wanted_frequency);
     }
 
-    std::vector<State>
-    BaseTanksEnvironment::reset(const float spawn_width, const float spawn_height) {
+    std::vector<State> BaseTanksEnvironment::reset(
+        const float spawn_width, const float spawn_height,
+        const model::ShellEconomy &shell_economy) {
         if (drawing_started_) stop_drawing();
 
-        reset_physics(spawn_width, spawn_height);
+        reset_physics(spawn_width, spawn_height, shell_economy);
         reset_drawables();
         drawing_started_ = true;
 

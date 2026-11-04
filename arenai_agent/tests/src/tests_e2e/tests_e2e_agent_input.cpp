@@ -14,6 +14,7 @@
 #include <nlohmann/json.hpp>
 
 #include <arenai_agent_tests/tests_e2e/interceptor_agent.h>
+#include <arenai_model/shell_economy.h>
 #include <arenai_view/backend.h>
 
 using namespace arenai;
@@ -114,7 +115,7 @@ TEST(AgentInputEndToEnd, AgentReceivesValidStates) {
     const auto env = make_environment();
     InterceptorAgent agent;
 
-    run_act_step_loop(*env, agent, env->reset(100.f, 100.f));
+    run_act_step_loop(*env, agent, env->reset(100.f, 100.f, model::GAME_SHELL_ECONOMY));
 
     ASSERT_EQ(static_cast<int>(agent.received_states.size()), NB_STEPS + 1);
     ASSERT_EQ(agent.last_vision_height, VISION_HEIGHT);
@@ -155,7 +156,7 @@ TEST(AgentInputEndToEnd, AgentInputMatchesGoldenImages) {
     const auto env = make_environment();
     InterceptorAgent agent;
 
-    run_act_step_loop(*env, agent, env->reset(100.f, 100.f));
+    run_act_step_loop(*env, agent, env->reset(100.f, 100.f, model::GAME_SHELL_ECONOMY));
 
     const auto root = repository_root();
 

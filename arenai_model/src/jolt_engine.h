@@ -61,6 +61,13 @@ namespace arenai::model {
         add_jolt_item_producer(std::function<std::vector<std::shared_ptr<JoltItem>>()> producer);
         void remove_jolt_item_constraints(const std::shared_ptr<JoltItem> &item);
 
+        struct RayHit {
+            float fraction;
+            JPH::BodyID body_id;
+        };
+
+        std::optional<RayHit>
+        ray_test_body(glm::vec3 from, glm::vec3 to, const std::vector<JPH::BodyID> &excluded) const;
         std::optional<float>
         ray_test(glm::vec3 from, glm::vec3 to, const std::vector<JPH::BodyID> &excluded) const;
 

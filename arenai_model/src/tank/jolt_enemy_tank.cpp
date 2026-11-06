@@ -115,7 +115,23 @@ namespace arenai::model {
         return 1.f / (1.f + ratio * ratio);
     }
 
-    float JoltEnemyTank::predict_aim(
+    bool JoltEnemyTank::is_living_enemy_body(
+        const JPH::BodyID &body_id, const std::vector<std::shared_ptr<EnemyTank>> &tanks) const {
+        for (const auto &tank: tanks) {
+            if (tank.get() == this) continue;
+            if (tank->is_dead() && !tank->is_first_frame_dead()) continue;
+
+            const auto enemy = std::dynamic_pointer_cast<JoltEnemyTank>(tank);
+            if (!enemy) continue;
+
+            if (const auto body_ids = enemy->get_body_ids();
+                std::ranges::find(body_ids, body_id) != body_ids.end())
+                return true;
+        }
+        return false;
+    }
+
+    JoltEnemyTank::ShotPrediction JoltEnemyTank::predict_shot(
         const TrackedShell &tracked, const std::vector<std::shared_ptr<EnemyTank>> &tanks) const {
         constexpr float time_step = 0.1f;
         constexpr float max_flight_time = 20.f;
@@ -132,36 +148,43 @@ namespace arenai::model {
 
         glm::vec3 pos = tracked.fire_pos;
         glm::vec3 velocity = tracked.fire_velocity;
+        bool hit = false;
 
         for (float t = 0.f; t < max_flight_time; t += time_step) {
             const glm::vec3 next = pos + velocity * time_step
                                    + glm::vec3(0.f, -0.5f * GRAVITY * time_step * time_step, 0.f);
             velocity.y -= GRAVITY * time_step;
 
-            const auto fraction = engine.ray_test(pos, next, excluded);
-            const glm::vec3 end = fraction ? pos + *fraction * (next - pos) : next;
+            const auto ray_hit = engine.ray_test_body(pos, next, excluded);
+            const glm::vec3 end = ray_hit ? pos + ray_hit->fraction * (next - pos) : next;
 
             update_closest_approach(predicted, end, tanks);
 
-            if (fraction) break;
+            if (ray_hit) {
+                hit = is_living_enemy_body(ray_hit->body_id, tanks);
+                break;
+            }
             pos = end;
         }
 
-        if (!predicted.has_sample) return 0.f;
+        if (!predicted.has_sample) return {.aim = 0.f, .hit = hit};
 
-        return compute_aim_reward(
-            predicted.fire_pos, predicted.enemy_pos_at_t, predicted.shell_pos_at_t);
+        return {
+            .aim = compute_aim_reward(
+                predicted.fire_pos, predicted.enemy_pos_at_t, predicted.shell_pos_at_t),
+            .hit = hit};
     }
 
-    float
-    JoltEnemyTank::get_aim_opportunity(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const {
+    ShotOpportunity JoltEnemyTank::get_shot_opportunity(
+        const std::vector<std::shared_ptr<EnemyTank>> &tanks) const {
         const auto canon = std::dynamic_pointer_cast<CanonItem>(get_canon());
         const auto [position, direction] = canon->get_fire_pose();
 
         const TrackedShell theoretical{
             .fire_pos = position, .fire_velocity = direction * SHELL_SPEED};
 
-        return aim_reward_scale * predict_aim(theoretical, tanks);
+        const auto [aim, hit] = predict_shot(theoretical, tanks);
+        return {.aim = aim_reward_scale * aim, .hit = hit ? hit_reward : 0.f};
     }
 
     float JoltEnemyTank::get_reward() const {
@@ -224,7 +247,7 @@ namespace arenai::model {
             auto &tracked = tracked_shells[i];
 
             if (tracked.aim_pending) {
-                aim_to_pay += aim_reward_scale * predict_aim(tracked, tanks);
+                aim_to_pay += aim_reward_scale * predict_shot(tracked, tanks).aim;
                 nb_fired_to_pay++;
                 tracked.aim_pending = false;
             }

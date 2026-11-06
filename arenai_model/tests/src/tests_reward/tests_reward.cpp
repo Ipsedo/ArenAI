@@ -307,12 +307,15 @@ TEST_F(RewardTest, AimOpportunityMatchesTheShotItPredicts) {
     const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
     const std::vector tanks{shared_a, shared_b};
 
-    ASSERT_FLOAT_EQ(shared_a->get_aim_opportunity({shared_a}), 0.f)
-        << "no enemy to aim at: no opportunity";
+    const auto alone = shared_a->get_shot_opportunity({shared_a});
+    ASSERT_FLOAT_EQ(alone.aim, 0.f) << "no enemy to aim at: no opportunity";
+    ASSERT_FLOAT_EQ(alone.hit, 0.f);
 
-    const float opportunity = shared_a->get_aim_opportunity(tanks);
+    const auto [opportunity, hit_opportunity] = shared_a->get_shot_opportunity(tanks);
     ASSERT_GT(opportunity, 0.05f) << "facing the enemy at 30 m is a good opportunity";
     ASSERT_LE(opportunity, 0.1f);
+    ASSERT_FLOAT_EQ(hit_opportunity, HIT_REWARD)
+        << "the theoretical shell lands on the enemy: the hit reward is the opportunity";
 
     constexpr user_input fire_input{
         .left_joystick = {.x = 0.f, .y = 0.f},
@@ -328,6 +331,23 @@ TEST_F(RewardTest, AimOpportunityMatchesTheShotItPredicts) {
     ASSERT_EQ(fire_detail.nb_fired_shells, 1);
     ASSERT_NEAR(fire_detail.aim, opportunity, 0.01f)
         << "the opportunity read before firing is the aim paid for the shot";
+}
+
+TEST_F(RewardTest, HitOpportunityIsZeroWhenTheShotWouldMiss) {
+    add_ground();
+    auto tank_a = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank_b = tank_factory->make_enemy_tank(
+        file_reader, "tank_b", {40.f, 5.f, 30.f}, false, GAME_SHELL_ECONOMY);
+
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+
+    const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
+    const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
+
+    const auto [aim, hit] = shared_a->get_shot_opportunity({shared_a, shared_b});
+    ASSERT_FLOAT_EQ(hit, 0.f) << "the enemy sits 53 degrees off the canon axis";
+    ASSERT_LT(aim, 0.01f);
 }
 
 // ========================================================================

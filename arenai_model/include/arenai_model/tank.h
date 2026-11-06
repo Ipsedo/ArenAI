@@ -54,6 +54,11 @@ namespace arenai::model {
         float sum_miss_distance = 0.f;
     };
 
+    struct ShotOpportunity {
+        float aim = 0.f;
+        float hit = 0.f;
+    };
+
     class EnemyTank : virtual public Tank {
     public:
         virtual float get_reward() const = 0;
@@ -65,8 +70,8 @@ namespace arenai::model {
 
         virtual void tick(const std::vector<std::shared_ptr<EnemyTank>> &tanks) = 0;
 
-        virtual float
-        get_aim_opportunity(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const = 0;
+        virtual ShotOpportunity
+        get_shot_opportunity(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const = 0;
 
         virtual bool consume_has_hit() = 0;
         virtual bool consume_has_kill() = 0;

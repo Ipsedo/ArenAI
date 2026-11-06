@@ -62,8 +62,8 @@ namespace arenai::model {
 
         void tick(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
 
-        float
-        get_aim_opportunity(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const override;
+        ShotOpportunity
+        get_shot_opportunity(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const override;
 
         RewardDetail get_last_reward_detail() const override;
 
@@ -132,9 +132,17 @@ namespace arenai::model {
         int get_nearest_enemy_index(
             const std::vector<std::shared_ptr<EnemyTank>> &tanks, const glm::vec3 &pos) const;
 
-        float predict_aim(
+        struct ShotPrediction {
+            float aim;
+            bool hit;
+        };
+
+        ShotPrediction predict_shot(
             const TrackedShell &tracked,
             const std::vector<std::shared_ptr<EnemyTank>> &tanks) const;
+
+        bool is_living_enemy_body(
+            const JPH::BodyID &body_id, const std::vector<std::shared_ptr<EnemyTank>> &tanks) const;
 
         float compute_aim_reward(
             const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos,

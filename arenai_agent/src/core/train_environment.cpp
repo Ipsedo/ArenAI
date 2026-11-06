@@ -35,8 +35,8 @@ namespace arenai::agent {
           nb_steps(0), done(nb_tanks, false), already_done(nb_tanks, false),
           max_episode_steps(max_episode_steps), nb_hits_per_tanks(nb_tanks, 0),
           nb_kills_per_tanks(nb_tanks, 0), aim_baseline(shot_baseline_window),
-          reward_metric(
-              std::make_shared<MeanMetric>("r", 4 * nb_tanks * max_episode_steps, 1, true)),
+          hit_baseline(shot_baseline_window), reward_metric(std::make_shared<MeanMetric>(
+                                                  "r", 4 * nb_tanks * max_episode_steps, 1, true)),
           reward_hit_metric(
               std::make_shared<MeanMetric>("r_hit", 4 * nb_tanks * max_episode_steps, 1, true)),
           reward_received_metric(
@@ -134,24 +134,31 @@ namespace arenai::agent {
         }
 
         const float aim_mean = aim_baseline.value();
+        const float hit_mean = hit_baseline.value();
         for (int i = 0; i < nb_tanks; i++) {
             if (already_done[i]) continue;
-            rewards[i] -= aim_mean * static_cast<float>(reward_details[i].nb_fired_shells);
+            const auto &detail = reward_details[i];
+            rewards[i] -= aim_mean * static_cast<float>(detail.nb_fired_shells)
+                          + hit_mean * static_cast<float>(detail.nb_landed_shells);
         }
 
-        const auto [opportunity_sum, nb_armed] = apply_on_enemies<std::pair<float, int>>(
-            [&](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
-                float sum = 0.f;
-                int nb = 0;
-                for (int i = 0; i < nb_tanks; i++) {
-                    if (done[i] || !tanks[i]->get_can_fire()) continue;
-                    sum += tanks[i]->get_aim_opportunity(tanks);
-                    nb++;
-                }
-                return std::pair{sum, nb};
-            });
-        aim_baseline.update(opportunity_sum, nb_armed);
-        shot_baseline_metric->add(aim_baseline.value());
+        const auto [opportunity_sum, nb_armed] =
+            apply_on_enemies<std::pair<model::ShotOpportunity, int>>(
+                [&](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
+                    model::ShotOpportunity sum;
+                    int nb = 0;
+                    for (int i = 0; i < nb_tanks; i++) {
+                        if (done[i] || !tanks[i]->get_can_fire()) continue;
+                        const auto opportunity = tanks[i]->get_shot_opportunity(tanks);
+                        sum.aim += opportunity.aim;
+                        sum.hit += opportunity.hit;
+                        nb++;
+                    }
+                    return std::pair{sum, nb};
+                });
+        aim_baseline.update(opportunity_sum.aim, nb_armed);
+        hit_baseline.update(opportunity_sum.hit, nb_armed);
+        shot_baseline_metric->add(aim_baseline.value() + hit_baseline.value());
 
         render_frame(true);
         auto states = read_states();

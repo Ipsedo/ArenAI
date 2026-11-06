@@ -256,6 +256,12 @@ namespace arenai::model {
 
     std::optional<float> JoltPhysicEngine::ray_test(
         const glm::vec3 from, const glm::vec3 to, const std::vector<JPH::BodyID> &excluded) const {
+        if (const auto hit = ray_test_body(from, to, excluded)) return hit->fraction;
+        return std::nullopt;
+    }
+
+    std::optional<JoltPhysicEngine::RayHit> JoltPhysicEngine::ray_test_body(
+        const glm::vec3 from, const glm::vec3 to, const std::vector<JPH::BodyID> &excluded) const {
 
         class ExcludingBodyFilter final : public JPH::BodyFilter {
         public:
@@ -279,7 +285,7 @@ namespace arenai::model {
 
         if (JPH::RayCastResult result;
             physics_system->GetNarrowPhaseQuery().CastRay(ray, result, {}, {}, body_filter))
-            return result.mFraction;
+            return RayHit{.fraction = result.mFraction, .body_id = result.mBodyID};
         return std::nullopt;
     }
 

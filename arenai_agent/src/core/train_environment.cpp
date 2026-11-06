@@ -14,11 +14,15 @@
 #include <arenai_utils/singleton.h>
 #include <arenai_view/backend.h>
 
-#include "../metrics/last_metric.h"
 #include "../metrics/mean_metric.h"
 
 using namespace arenai;
 using namespace arenai::agent;
+
+namespace {
+    // the aim potential is in [0, 1]: going from no aim to a perfect one is worth this much
+    constexpr float AIM_POTENTIAL_SCALE = 0.3f;
+}// namespace
 
 namespace arenai::agent {
 
@@ -26,30 +30,28 @@ namespace arenai::agent {
         const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, const int nb_tanks,
         const std::filesystem::path &android_assets_path, const float wanted_frequency,
         const int max_episode_steps, const int vision_height, const int vision_width,
-        const int vision_num_threads, const int action_repeat, const int shot_baseline_window)
+        const int vision_num_threads, const int action_repeat, const float gamma)
         : BaseTanksEnvironment(
             std::make_shared<DesktopAssetFileReader>(android_assets_path), graphics_backend,
-            nb_tanks, wanted_frequency, vision_height, vision_width, vision_num_threads, false,
-            true),
+            nb_tanks, wanted_frequency, vision_height, vision_width, vision_num_threads, false),
           wanted_frequency(wanted_frequency), action_repeat(action_repeat), nb_tanks(nb_tanks),
           nb_steps(0), done(nb_tanks, false), already_done(nb_tanks, false),
           max_episode_steps(max_episode_steps), nb_hits_per_tanks(nb_tanks, 0),
-          nb_kills_per_tanks(nb_tanks, 0), aim_baseline(shot_baseline_window),
-          hit_baseline(shot_baseline_window), reward_metric(std::make_shared<MeanMetric>(
-                                                  "r", 4 * nb_tanks * max_episode_steps, 1, true)),
+          nb_kills_per_tanks(nb_tanks, 0), reward_metric(std::make_shared<MeanMetric>(
+                                               "r", 4 * nb_tanks * max_episode_steps, 1, true)),
           reward_hit_metric(
               std::make_shared<MeanMetric>("r_hit", 4 * nb_tanks * max_episode_steps, 1, true)),
           reward_received_metric(
               std::make_shared<MeanMetric>("r_rcv", 4 * nb_tanks * max_episode_steps, 1, true)),
           reward_aim_metric(
               std::make_shared<MeanMetric>("r_aim", 4 * nb_tanks * max_episode_steps, 1, true)),
-          shot_baseline_metric(std::make_shared<LastMetric>("b", 1, true)),
           miss_distance_metric(std::make_shared<MeanMetric>("miss", 1024 * nb_tanks, 1)),
           episode_step_mean_nb_metric(std::make_shared<MeanMetric>("s", 32, 1)),
           fire_metric(std::make_shared<MeanMetric>("fire", 256, 2)),
           hit_metric(std::make_shared<MeanMetric>("hit", 16, 2, true)),
           kill_metric(std::make_shared<MeanMetric>("kill", 16, 1)), nb_kills_episode(0),
-          nb_fires_episode(0), nb_hits_episode(0) {}
+          nb_fires_episode(0), nb_hits_episode(0),
+          aim_shaping(gamma, AIM_POTENTIAL_SCALE, nb_tanks) {}
 
     std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
     TrainTankEnvironment::step(const float time_delta, const std::vector<core::Action> &actions) {
@@ -59,10 +61,11 @@ namespace arenai::agent {
         already_done = done;
 
         // one agent decision spans action_repeat physics frames; the window's rewards
-        // are summed, a death or a win on any of its frames ends the tank's transition
+        // are summed, a death on any of its frames ends the tank's transition
         std::vector rewards(nb_tanks, 0.f);
         std::vector truncated(nb_tanks, false);
         std::vector<model::RewardDetail> reward_details(nb_tanks);
+        std::vector shaping_details(nb_tanks, 0.f);
         std::vector nb_fires_per_tank(nb_tanks, 0);
         std::vector nb_hits_per_tank(nb_tanks, 0);
 
@@ -93,13 +96,14 @@ namespace arenai::agent {
                     truncated[i] = is_truncated;
 
                     const auto detail = tanks[i]->get_last_reward_detail();
-                    reward_details[i].aim += detail.aim;
                     reward_details[i].hit += detail.hit;
                     reward_details[i].kill += detail.kill;
                     reward_details[i].received += detail.received;
                     reward_details[i].death += detail.death;
+                    reward_details[i].fire += detail.fire;
                     reward_details[i].nb_fired_shells += detail.nb_fired_shells;
                     reward_details[i].nb_landed_shells += detail.nb_landed_shells;
+                    reward_details[i].nb_hits += detail.nb_hits;
                     reward_details[i].sum_miss_distance += detail.sum_miss_distance;
 
                     if (has_hit) {
@@ -109,56 +113,23 @@ namespace arenai::agent {
                     if (has_kill) nb_kills_per_tanks[i]++;
                     if (has_fired) nb_fires_per_tank[i]++;
 
-                    // detect death (kill, suicide or timeout)
+                    // detect death (kill or suicide)
                     if (is_done) {
-                        if (!tanks[i]->is_suicide() && !tanks[i]->is_timeout()) nb_kills_episode++;
+                        if (!tanks[i]->is_suicide()) nb_kills_episode++;
                         done[i] = true;
                     }
                 }
                 return 0;
             });
-
-            // detect winner
-            std::vector<int> tanks_not_done_indexes;
-            for (int i = 0; i < nb_tanks; i++)
-                if (!done[i]) tanks_not_done_indexes.push_back(i);
-
-            if (tanks_not_done_indexes.size() == 1) {
-                const auto winner_index = tanks_not_done_indexes[0];
-
-                rewards[winner_index] += nb_kills_per_tanks[winner_index] > 0 ? 2.f : 0.f;
-                // winning is a genuine termination, never a truncation
-                truncated[winner_index] = false;
-                done[winner_index] = true;
-            }
         }
 
-        const float aim_mean = aim_baseline.value();
-        const float hit_mean = hit_baseline.value();
+        // the aim potential is read once per decision, on the state the agent will see
+        const auto shaping_rewards = aim_shaping.step(aim_potentials(), done);
         for (int i = 0; i < nb_tanks; i++) {
             if (already_done[i]) continue;
-            const auto &detail = reward_details[i];
-            rewards[i] -= aim_mean * static_cast<float>(detail.nb_fired_shells)
-                          + hit_mean * static_cast<float>(detail.nb_landed_shells);
+            rewards[i] += shaping_rewards[i];
+            shaping_details[i] = shaping_rewards[i];
         }
-
-        const auto [opportunity_sum, nb_armed] =
-            apply_on_enemies<std::pair<model::ShotOpportunity, int>>(
-                [&](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
-                    model::ShotOpportunity sum;
-                    int nb = 0;
-                    for (int i = 0; i < nb_tanks; i++) {
-                        if (done[i] || !tanks[i]->get_can_fire()) continue;
-                        const auto opportunity = tanks[i]->get_shot_opportunity(tanks);
-                        sum.aim += opportunity.aim;
-                        sum.hit += opportunity.hit;
-                        nb++;
-                    }
-                    return std::pair{sum, nb};
-                });
-        aim_baseline.update(opportunity_sum.aim, nb_armed);
-        hit_baseline.update(opportunity_sum.hit, nb_armed);
-        shot_baseline_metric->add(aim_baseline.value() + hit_baseline.value());
 
         render_frame(true);
         auto states = read_states();
@@ -193,7 +164,7 @@ namespace arenai::agent {
 
                 reward_hit_metric->add(detail.hit);
                 reward_received_metric->add(detail.received);
-                reward_aim_metric->add(detail.aim);
+                reward_aim_metric->add(shaping_details[i]);
 
                 // undefined on a step where no shell landed: averaging a zero in would
                 // measure the firing rate, not the aim
@@ -239,6 +210,18 @@ namespace arenai::agent {
 
         nb_fires_episode = 0;
         nb_hits_episode = 0;
+
+        aim_shaping.reset(aim_potentials());
+    }
+
+    std::vector<float> TrainTankEnvironment::aim_potentials() {
+        return apply_on_enemies<std::vector<float>>(
+            [](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
+                std::vector<float> potentials;
+                potentials.reserve(tanks.size());
+                for (const auto &tank: tanks) potentials.push_back(tank->get_aim_potential(tanks));
+                return potentials;
+            });
     }
 
     std::vector<model::RewardDetail> TrainTankEnvironment::last_step_reward_details() const {
@@ -341,7 +324,7 @@ namespace arenai::agent {
 
     std::vector<std::shared_ptr<AbstractMetric>>
     TrainTankEnvironment::get_csv_only_metrics() const {
-        return {reward_aim_metric, shot_baseline_metric};
+        return {reward_aim_metric};
     }
 
 }// namespace arenai::agent

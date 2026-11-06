@@ -41,6 +41,8 @@ namespace arenai::model {
         return initial_health_points > 0.f ? health_points / initial_health_points : 0.f;
     }
 
+    float LifeItem::initial_health() const { return initial_health_points; }
+
     bool LifeItem::is_already_dead() {
         if (is_dead() && !already_dead) {
             already_dead = true;
@@ -58,7 +60,11 @@ namespace arenai::model {
         const float new_health_point = std::max(health_points - impact.damages, 0.f);
         const float received_damages = health_points - new_health_point;
 
-        if (received_damages > 0.f) hits_received.push_back(impact);
+        if (received_damages > 0.f) {
+            auto received = impact;
+            received.damages = received_damages;
+            hits_received.push_back(received);
+        }
 
         health_points = new_health_point;
 

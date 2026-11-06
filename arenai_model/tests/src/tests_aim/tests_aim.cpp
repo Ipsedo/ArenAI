@@ -52,8 +52,8 @@ namespace {
 // ========================================================================
 
 TEST_F(AimTest, FullDeflectionMovesTheTurretByOneStep) {
-    const auto tank = tank_factory->make_enemy_tank(
-        file_reader, "tank", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    const auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
     auto *turret = find_part<TurretItem>(*tank);
     ASSERT_NE(turret, nullptr);
 
@@ -63,8 +63,8 @@ TEST_F(AimTest, FullDeflectionMovesTheTurretByOneStep) {
 }
 
 TEST_F(AimTest, FullDeflectionMovesTheCanonBySlowerStep) {
-    const auto tank = tank_factory->make_enemy_tank(
-        file_reader, "tank", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    const auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
     auto *canon = find_part<CanonItem>(*tank);
     ASSERT_NE(canon, nullptr);
 
@@ -75,8 +75,8 @@ TEST_F(AimTest, FullDeflectionMovesTheCanonBySlowerStep) {
 }
 
 TEST_F(AimTest, HeldTurretInputKeepsRotating) {
-    const auto tank = tank_factory->make_enemy_tank(
-        file_reader, "tank", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    const auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
     auto *turret = find_part<TurretItem>(*tank);
 
     for (int i = 0; i < 10; i++) turret->apply_input(aim(0.5f, 0.f));
@@ -85,8 +85,8 @@ TEST_F(AimTest, HeldTurretInputKeepsRotating) {
 }
 
 TEST_F(AimTest, CenteredInputLeavesTheTurretStill) {
-    const auto tank = tank_factory->make_enemy_tank(
-        file_reader, "tank", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    const auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
     auto *turret = find_part<TurretItem>(*tank);
 
     for (int i = 0; i < 10; i++) turret->apply_input(aim(1.f, 0.f));
@@ -102,8 +102,8 @@ TEST_F(AimTest, CenteredInputLeavesTheTurretStill) {
 // ========================================================================
 
 TEST_F(AimTest, TurretWrapsAroundTheBack) {
-    const auto tank = tank_factory->make_enemy_tank(
-        file_reader, "tank", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    const auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
     auto *turret = find_part<TurretItem>(*tank);
 
     // one full turn minus a step: the next call must land just past the back, not stall
@@ -122,8 +122,8 @@ TEST_F(AimTest, TurretWrapsAroundTheBack) {
 // ========================================================================
 
 TEST_F(AimTest, CanonStopsAtItsTravelLimit) {
-    const auto tank = tank_factory->make_enemy_tank(
-        file_reader, "tank", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    const auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
     auto *canon = find_part<CanonItem>(*tank);
 
     for (int i = 0; i < 200; i++) canon->apply_input(aim(0.f, 1.f));

@@ -49,7 +49,6 @@ int main(const int argc, char **argv) {
     parser.add_argument("--max_shells")
         .scan<'i', int>()
         .default_value(model::GAME_SHELL_ECONOMY.max_shells);
-    parser.add_argument("--shot_baseline_window").scan<'i', int>().default_value(4096);
     parser.add_argument("--curriculum_delta").scan<'g', float>().default_value(50.f);
     parser.add_argument("--curriculum_ratio_low").scan<'g', float>().default_value(0.05f);
     parser.add_argument("--curriculum_ratio_high").scan<'g', float>().default_value(0.08f);
@@ -95,7 +94,6 @@ int main(const int argc, char **argv) {
              {.initial_shells = parser.get<int>("--shells"),
               .shells_per_hit = parser.get<int>("--shells_per_hit"),
               .max_shells = parser.get<int>("--max_shells")},
-         .shot_baseline_window = parser.get<int>("--shot_baseline_window"),
          .curriculum_delta = parser.get<float>("--curriculum_delta"),
          .curriculum_ratio_low = parser.get<float>("--curriculum_ratio_low"),
          .curriculum_ratio_high = parser.get<float>("--curriculum_ratio_high"),

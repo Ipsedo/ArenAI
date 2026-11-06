@@ -30,8 +30,8 @@ TEST_F(PlayerTankTest, ScoreZeroAtCreation) {
 TEST_F(PlayerTankTest, ScoreIncreasesOnHit) {
     add_ground();
     const auto player = tank_factory->make_player_tank(file_reader, "player", {0.f, 5.f, 0.f});
-    auto enemy = tank_factory->make_enemy_tank(
-        file_reader, "enemy", {0.f, 5.f, 30.f}, false, GAME_SHELL_ECONOMY);
+    auto enemy =
+        tank_factory->make_enemy_tank(file_reader, "enemy", {0.f, 5.f, 30.f}, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -49,8 +49,8 @@ TEST_F(PlayerTankTest, ScoreIncreasesOnHit) {
 TEST_F(PlayerTankTest, ScoreHigherOnKillThanHit) {
     add_ground();
     const auto player = tank_factory->make_player_tank(file_reader, "player", {0.f, 5.f, 0.f});
-    const auto enemy = tank_factory->make_enemy_tank(
-        file_reader, "enemy", {0.f, 5.f, 30.f}, false, GAME_SHELL_ECONOMY);
+    const auto enemy =
+        tank_factory->make_enemy_tank(file_reader, "enemy", {0.f, 5.f, 30.f}, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 

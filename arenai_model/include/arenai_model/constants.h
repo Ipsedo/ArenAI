@@ -30,8 +30,15 @@ namespace arenai::model {
     constexpr float GRAVITY = 9.8f;
     constexpr float SHELL_SPEED = 250.f;
 
-    constexpr float HIT_REWARD = 0.3f;
-    constexpr float KILL_REWARD = 2.f;
+    // reward of a landed shell: this many per unit of health fraction removed from the part
+    // it touched (a 5 HP wheel loses 0.2 per shell); the same scale charges the damage
+    // received
+    constexpr float DAMAGE_REWARD = 1.f;
+    constexpr float KILL_REWARD = 1.f;
+    constexpr float DEATH_PENALTY = 1.f;
+    // charged at the fire, above the expected damage of a shell fired at random (~0.02 at
+    // D=250): an unaimed shot is a loss, an aimed one stays a gain
+    constexpr float FIRE_COST = 0.03f;
 
     constexpr float ZOOM_MAGNIFICATION = 2.f;
     constexpr float ZOOM_TRANSITION_SECONDS = 0.25f;

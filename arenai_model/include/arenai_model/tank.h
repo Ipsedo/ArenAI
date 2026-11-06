@@ -21,6 +21,8 @@ namespace arenai::model {
     struct ShellContactInfo {
         glm::vec3 fire_position;
         glm::vec3 current_position;
+        // health actually removed from the touched item (0 on anything without health)
+        float damages;
     };
 
     class Tank {
@@ -43,20 +45,16 @@ namespace arenai::model {
     };
 
     struct RewardDetail {
-        float aim = 0.f;
         float hit = 0.f;
         float kill = 0.f;
         float received = 0.f;
         float death = 0.f;
+        float fire = 0.f;
 
         int nb_fired_shells = 0;
         int nb_landed_shells = 0;
+        int nb_hits = 0;
         float sum_miss_distance = 0.f;
-    };
-
-    struct ShotOpportunity {
-        float aim = 0.f;
-        float hit = 0.f;
     };
 
     class EnemyTank : virtual public Tank {
@@ -70,8 +68,12 @@ namespace arenai::model {
 
         virtual void tick(const std::vector<std::shared_ptr<EnemyTank>> &tanks) = 0;
 
-        virtual ShotOpportunity
-        get_shot_opportunity(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const = 0;
+        // aim quality of the shell the canon would fire now, in [0, 1]: 1 when its predicted
+        // trajectory reaches the nearest enemy, Cauchy decay with the predicted miss; 0 once
+        // dead or without a living enemy. The training environment turns it into a
+        // potential-based shaping term
+        virtual float
+        get_aim_potential(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const = 0;
 
         virtual bool consume_has_hit() = 0;
         virtual bool consume_has_kill() = 0;
@@ -79,7 +81,6 @@ namespace arenai::model {
 
         virtual bool is_first_frame_dead() const = 0;
         virtual bool is_suicide() const = 0;
-        virtual bool is_timeout() const = 0;
 
         virtual void on_death() = 0;
     };

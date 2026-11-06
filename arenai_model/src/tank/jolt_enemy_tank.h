@@ -16,9 +16,6 @@ namespace arenai::model {
 
     struct TrackedShell {
         std::weak_ptr<ShellItem> shell;
-        glm::vec3 fire_pos;
-        glm::vec3 fire_velocity;
-        bool aim_pending;
 
         // closest approach over the whole trajectory, measured against the segment
         // travelled each frame (last_shell_pos → current position)
@@ -32,6 +29,8 @@ namespace arenai::model {
         // from the engine when get_reward runs on the contact frame)
         glm::vec3 final_shell_pos;
         bool has_final_pos;
+        // health fraction removed from the enemy part touched, 0 on a miss
+        float damage_fraction;
         bool has_hit;
         bool has_killed;
 
@@ -44,7 +43,7 @@ namespace arenai::model {
             JoltPhysicEngine &engine,
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::string &tank_prefix_name, glm::vec3 chassis_pos,
-            float wanted_frame_frequency, bool apply_timeout, const ShellEconomy &shell_economy);
+            float wanted_frame_frequency, const ShellEconomy &shell_economy);
 
         float get_reward() const override;
         int get_score() const override;
@@ -52,7 +51,6 @@ namespace arenai::model {
         bool is_dead() const override;
         bool is_first_frame_dead() const override;
         bool is_suicide() const override;
-        bool is_timeout() const override;
 
         bool consume_has_hit() override;
         bool consume_has_kill() override;
@@ -62,8 +60,8 @@ namespace arenai::model {
 
         void tick(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
 
-        ShotOpportunity
-        get_shot_opportunity(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const override;
+        float
+        get_aim_potential(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const override;
 
         RewardDetail get_last_reward_detail() const override;
 
@@ -84,11 +82,6 @@ namespace arenai::model {
 
         float aim_tolerance_min;
         float aim_tolerance_angle;
-        float aim_reward_scale;
-        float hit_reward;
-        float kill_reward;
-
-        float hit_received_cost;
 
         int initial_nb_shells;
         int nb_shells;
@@ -99,15 +92,6 @@ namespace arenai::model {
         int shells_recharged_per_hit;
 
         bool is_dead_already_triggered;
-
-        bool apply_timeout;
-        // latched when the timer actually kills the tank: the timer keeps running after a
-        // combat death, so the live "remaining_frames <= 0" test would mislabel it later
-        bool starved;
-        int max_frames_without_hit;
-        int remaining_frames;
-        int nb_frames_added_when_hit;
-        int nb_frames_added_when_kill;
 
         bool has_hit;
         bool has_kill;
@@ -122,7 +106,7 @@ namespace arenai::model {
         mutable RewardDetail last_reward_detail;
         std::vector<TrackedShell> tracked_shells;
 
-        mutable float aim_to_pay;
+        // shells fired since the last get_reward(), each charged its fire cost there
         mutable int nb_fired_to_pay;
 
         void on_shell_fired(const std::shared_ptr<ShellItem> &shell);
@@ -132,19 +116,13 @@ namespace arenai::model {
         int get_nearest_enemy_index(
             const std::vector<std::shared_ptr<EnemyTank>> &tanks, const glm::vec3 &pos) const;
 
-        struct ShotPrediction {
-            float aim;
-            bool hit;
-        };
-
-        ShotPrediction predict_shot(
-            const TrackedShell &tracked,
+        // aim quality of a shell leaving fire_pos at fire_velocity: its trajectory is
+        // integrated against the world (ray tests, own bodies and shells excluded)
+        float predict_aim(
+            const glm::vec3 &fire_pos, const glm::vec3 &fire_velocity,
             const std::vector<std::shared_ptr<EnemyTank>> &tanks) const;
 
-        bool is_living_enemy_body(
-            const JPH::BodyID &body_id, const std::vector<std::shared_ptr<EnemyTank>> &tanks) const;
-
-        float compute_aim_reward(
+        float compute_aim_quality(
             const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos,
             const glm::vec3 &shell_pos) const;
 

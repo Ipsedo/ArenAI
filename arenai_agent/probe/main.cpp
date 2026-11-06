@@ -107,7 +107,7 @@ int main(const int argc, char **argv) {
     const auto env = std::make_unique<TrainTankEnvironment>(
         std::move(graphics_backend), nb_tanks, resources_folder, wanted_frequency,
         max_episode_steps, vision_height, vision_width, parser.get<int>("--vision_num_threads"),
-        action_repeat, 1);
+        action_repeat, agent_config.at("gamma").get<float>());
 
     std::ofstream csv(output);
     csv << "episode;step;tank;distance;yaw;pitch;best_angle;best_distance;can_fire;shells;cooldown;"
@@ -220,7 +220,7 @@ int main(const int argc, char **argv) {
                 const int landed = details[i].nb_landed_shells;
                 if (landed == 0) continue;
 
-                const int hits = static_cast<int>(std::round(details[i].hit / model::HIT_REWARD));
+                const int hits = details[i].nb_hits;
                 const float miss = details[i].sum_miss_distance / static_cast<float>(landed);
 
                 for (int k = 0; k < landed && !pending[i].empty(); k++) {

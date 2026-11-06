@@ -23,7 +23,7 @@ namespace arenai::model {
 
         virtual std::unique_ptr<EnemyTank> make_enemy_tank(
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
-            const std::string &tank_prefix_name, glm::vec3 chassis_pos, bool apply_timeout,
+            const std::string &tank_prefix_name, glm::vec3 chassis_pos,
             const ShellEconomy &shell_economy) = 0;
 
         virtual std::unique_ptr<PlayerTank> make_player_tank(

@@ -21,8 +21,8 @@ using namespace arenai::utils;
 
 TEST_F(ProprioceptionTest, ProprioceptionSizeCorrect) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(
-        file_reader, "tank_a", {0.f, 0.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, GAME_SHELL_ECONOMY);
 
     engine->step(1.f / 60.f);
 
@@ -34,8 +34,8 @@ TEST_F(ProprioceptionTest, ProprioceptionSizeCorrect) {
 
 TEST_F(ProprioceptionTest, ProprioceptionNoNaN) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(
-        file_reader, "tank_a", {0.f, 0.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, GAME_SHELL_ECONOMY);
 
     engine->step(1.f / 60.f);
 
@@ -50,8 +50,8 @@ TEST_F(ProprioceptionTest, ProprioceptionNoNaN) {
 
 TEST_F(ProprioceptionTest, ProprioceptionNoInfinity) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(
-        file_reader, "tank_a", {0.f, 0.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 10; i++) engine->step(1.f / 60.f);
 
@@ -65,8 +65,8 @@ TEST_F(ProprioceptionTest, ProprioceptionNoInfinity) {
 
 TEST_F(ProprioceptionTest, ProprioceptionContainsSubItemRelativePositions) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(
-        file_reader, "tank_a", {0.f, 0.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, GAME_SHELL_ECONOMY);
 
     engine->step(1.f / 60.f);
 
@@ -96,8 +96,8 @@ TEST_F(ProprioceptionTest, ProprioceptionContainsSubItemRelativePositions) {
 
 TEST_F(ProprioceptionTest, ProprioceptionConsistentSize) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(
-        file_reader, "tank_a", {0.f, 0.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, GAME_SHELL_ECONOMY);
 
     engine->step(1.f / 60.f);
 
@@ -114,8 +114,8 @@ TEST_F(ProprioceptionTest, ProprioceptionConsistentSize) {
 
 TEST_F(ProprioceptionTest, ProprioceptionForwardAndUpVectorsValid) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(
-        file_reader, "tank_a", {0.f, 0.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, GAME_SHELL_ECONOMY);
 
     engine->step(1.f / 60.f);
 
@@ -146,8 +146,8 @@ TEST_F(ProprioceptionTest, ProprioceptionForwardAndUpVectorsValid) {
 
 TEST_F(ProprioceptionTest, CanFireFollowsCooldownWithoutConsumingIt) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(
-        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 

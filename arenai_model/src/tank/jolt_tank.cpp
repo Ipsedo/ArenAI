@@ -107,9 +107,11 @@ namespace arenai::model {
             aim_canon_rad_per_second * wanted_frame_frequency,
             [on_contact_callback](
                 const ShellItem *shell, const glm::vec3 fire_pos, const glm::vec3 hit_pos,
-                Item *item) {
+                const float damages, Item *item) {
                 on_contact_callback(
-                    shell, {.fire_position = fire_pos, .current_position = hit_pos}, item);
+                    shell,
+                    {.fire_position = fire_pos, .current_position = hit_pos, .damages = damages},
+                    item);
             },
             on_shell_fired_callback, can_fire_callback);
 

@@ -18,7 +18,7 @@ namespace arenai::core {
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, const int nb_tanks,
         float wanted_frequency, const int vision_height, const int vision_width,
-        const int vision_num_threads, const bool vision_thread_sleep, const bool apply_timeout)
+        const int vision_num_threads, const bool vision_thread_sleep)
         : wanted_frequency(wanted_frequency), nb_tanks(nb_tanks), vision_height(vision_height),
           vision_width(vision_width), vision_num_threads(vision_num_threads),
           vision_thread_sleep(vision_thread_sleep),
@@ -27,8 +27,8 @@ namespace arenai::core {
               vision_thread_sleep)),
           physic_engine(model::make_physic_engine(wanted_frequency)),
           nb_reset_frames(static_cast<int>(4.f / wanted_frequency)), drawing_started_(false),
-          apply_timeout(apply_timeout), graphics_backend(graphics_backend),
-          gl_context(graphics_backend->render_context()), rng(dev()), file_reader(file_reader) {}
+          graphics_backend(graphics_backend), gl_context(graphics_backend->render_context()),
+          rng(dev()), file_reader(file_reader) {}
 
     std::vector<std::tuple<State, Reward, IsDone, IsTruncated>>
     BaseTanksEnvironment::step(const float time_delta, const std::vector<Action> &actions) {
@@ -81,7 +81,9 @@ namespace arenai::core {
 
         for (const auto &tank: tanks) {
             tank->tick(tanks);
-            result.emplace_back(tank->get_reward(), tank->is_dead(), tank->is_timeout());
+            // no tank is truncated on its own: the episode's fixed length truncates the
+            // survivors together, through the final state the collector bootstraps on
+            result.emplace_back(tank->get_reward(), tank->is_dead(), false);
         }
 
         return result;
@@ -131,7 +133,7 @@ namespace arenai::core {
             const float x = x_pos_u_dist(rng), z = y_pos_u_dist(rng);
             tanks.push_back(tank_factory->make_enemy_tank(
                 file_reader, "enemy_" + std::to_string(i),
-                glm::vec3(x, ground_height(x, z) + 3.f, z), apply_timeout, shell_economy));
+                glm::vec3(x, ground_height(x, z) + 3.f, z), shell_economy));
         }
 
         // add basic shapes

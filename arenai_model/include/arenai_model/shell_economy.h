@@ -14,8 +14,8 @@ namespace arenai::model {
 
     constexpr ShellEconomy GAME_SHELL_ECONOMY{
         .initial_shells = 10,
-        .shells_per_hit = 10,
-        .max_shells = 30};
+        .shells_per_hit = 2,
+        .max_shells = 20};
 
 }// namespace arenai::model
 

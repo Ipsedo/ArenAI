@@ -23,7 +23,7 @@ namespace arenai::model {
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, const glm::vec3 pos,
         const glm::quat rot, const glm::vec3 scale, const float mass,
         const float wanted_frame_frequency,
-        const std::function<void(const ShellItem *, glm::vec3, glm::vec3, Item *)>
+        const std::function<void(const ShellItem *, glm::vec3, glm::vec3, float, Item *)>
             &contact_callback)
         : LifeItem(1), ConvexItem(NAME, engine, load_shape(file_reader), pos, scale, mass, rot),
           contact_callback(contact_callback),
@@ -42,12 +42,13 @@ namespace arenai::model {
             .impact_position = get_current_position(),
             .damages = 1.f};
 
-        if (const auto t = dynamic_cast<LifeItem *>(other)) t->receive_damages(impact);
+        float dealt = 0.f;
+        if (const auto t = dynamic_cast<LifeItem *>(other)) dealt = t->receive_damages(impact);
         receive_damages(impact);
 
         Item::on_contact(other);
 
-        contact_callback(this, get_fire_position(), get_current_position(), other);
+        contact_callback(this, get_fire_position(), get_current_position(), dealt, other);
 
         if (is_dead()) destroy();
     }

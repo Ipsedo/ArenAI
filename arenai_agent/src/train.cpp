@@ -55,7 +55,6 @@ namespace arenai::agent {
                   {"shells", environment_options.shell_economy.initial_shells},
                   {"shells_per_hit", environment_options.shell_economy.shells_per_hit},
                   {"max_shells", environment_options.shell_economy.max_shells},
-                  {"shot_baseline_window", environment_options.shot_baseline_window},
                   {"curriculum_delta", environment_options.curriculum_delta},
                   {"curriculum_ratio_low", environment_options.curriculum_ratio_low},
                   {"curriculum_ratio_high", environment_options.curriculum_ratio_high},
@@ -96,7 +95,8 @@ namespace arenai::agent {
             train_options.resources_folder, environment_options.wanted_frequency,
             train_options.max_episode_steps, environment_options.vision_height,
             environment_options.vision_width, environment_options.num_threads,
-            environment_options.action_repeat, environment_options.shot_baseline_window);
+            environment_options.action_repeat,
+            agent_factory->get_config().at("gamma").get<float>());
 
         const float initial_spawn_side = std::sqrt(
             environment_options.initial_spawn_width * environment_options.initial_spawn_height);

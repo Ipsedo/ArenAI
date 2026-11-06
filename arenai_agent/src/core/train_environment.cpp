@@ -35,8 +35,8 @@ namespace arenai::agent {
           nb_steps(0), done(nb_tanks, false), already_done(nb_tanks, false),
           max_episode_steps(max_episode_steps), nb_hits_per_tanks(nb_tanks, 0),
           nb_kills_per_tanks(nb_tanks, 0), aim_baseline(shot_baseline_window),
-          hit_baseline(shot_baseline_window), reward_metric(std::make_shared<MeanMetric>(
-                                                  "r", 4 * nb_tanks * max_episode_steps, 1, true)),
+          reward_metric(
+              std::make_shared<MeanMetric>("r", 4 * nb_tanks * max_episode_steps, 1, true)),
           reward_hit_metric(
               std::make_shared<MeanMetric>("r_hit", 4 * nb_tanks * max_episode_steps, 1, true)),
           reward_received_metric(
@@ -134,19 +134,10 @@ namespace arenai::agent {
         }
 
         const float aim_mean = aim_baseline.value();
-        const float hit_mean = hit_baseline.value();
-        float hit_sum = 0.f;
-        int nb_landed_shells = 0;
         for (int i = 0; i < nb_tanks; i++) {
             if (already_done[i]) continue;
-            const auto &detail = reward_details[i];
-
-            rewards[i] -= aim_mean * static_cast<float>(detail.nb_fired_shells)
-                          + hit_mean * static_cast<float>(detail.nb_landed_shells);
-            hit_sum += detail.hit;
-            nb_landed_shells += detail.nb_landed_shells;
+            rewards[i] -= aim_mean * static_cast<float>(reward_details[i].nb_fired_shells);
         }
-        hit_baseline.update(hit_sum, nb_landed_shells);
 
         const auto [opportunity_sum, nb_armed] = apply_on_enemies<std::pair<float, int>>(
             [&](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
@@ -160,7 +151,7 @@ namespace arenai::agent {
                 return std::pair{sum, nb};
             });
         aim_baseline.update(opportunity_sum, nb_armed);
-        shot_baseline_metric->add(aim_baseline.value() + hit_baseline.value());
+        shot_baseline_metric->add(aim_baseline.value());
 
         render_frame(true);
         auto states = read_states();

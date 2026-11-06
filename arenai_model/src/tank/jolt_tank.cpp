@@ -174,6 +174,13 @@ namespace arenai::model {
         return std::ranges::any_of(life_items, [](const LifeItem *li) { return li->is_dead(); });
     }
 
+    std::vector<JPH::BodyID> JoltTank::get_body_ids() const {
+        std::vector<JPH::BodyID> ids;
+        ids.reserve(jolt_items.size());
+        for (const auto &item: jolt_items) ids.push_back(item->get_body()->GetID());
+        return ids;
+    }
+
     std::vector<ImpactInfo> JoltTank::consume_received_impacts() const {
         std::vector<ImpactInfo> impacts;
         for (const auto life_item: life_items) {

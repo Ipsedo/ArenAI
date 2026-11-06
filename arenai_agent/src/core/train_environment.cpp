@@ -34,9 +34,9 @@ namespace arenai::agent {
           wanted_frequency(wanted_frequency), action_repeat(action_repeat), nb_tanks(nb_tanks),
           nb_steps(0), done(nb_tanks, false), already_done(nb_tanks, false),
           max_episode_steps(max_episode_steps), nb_hits_per_tanks(nb_tanks, 0),
-          nb_kills_per_tanks(nb_tanks, 0), shot_baseline(shot_baseline_window),
-          reward_metric(
-              std::make_shared<MeanMetric>("r", 4 * nb_tanks * max_episode_steps, 1, true)),
+          nb_kills_per_tanks(nb_tanks, 0), aim_baseline(shot_baseline_window),
+          hit_baseline(shot_baseline_window), reward_metric(std::make_shared<MeanMetric>(
+                                                  "r", 4 * nb_tanks * max_episode_steps, 1, true)),
           reward_hit_metric(
               std::make_shared<MeanMetric>("r_hit", 4 * nb_tanks * max_episode_steps, 1, true)),
           reward_received_metric(
@@ -98,6 +98,7 @@ namespace arenai::agent {
                     reward_details[i].kill += detail.kill;
                     reward_details[i].received += detail.received;
                     reward_details[i].death += detail.death;
+                    reward_details[i].nb_fired_shells += detail.nb_fired_shells;
                     reward_details[i].nb_landed_shells += detail.nb_landed_shells;
                     reward_details[i].sum_miss_distance += detail.sum_miss_distance;
 
@@ -132,19 +133,24 @@ namespace arenai::agent {
             }
         }
 
-        const float baseline = shot_baseline.value();
-        float shot_reward_sum = 0.f;
-        int nb_landed_shells = 0;
+        const float aim_mean = aim_baseline.value();
+        const float hit_mean = hit_baseline.value();
+        float aim_sum = 0.f, hit_sum = 0.f;
+        int nb_fired_shells = 0, nb_landed_shells = 0;
         for (int i = 0; i < nb_tanks; i++) {
             if (already_done[i]) continue;
             const auto &detail = reward_details[i];
 
-            rewards[i] -= baseline * static_cast<float>(detail.nb_landed_shells);
-            shot_reward_sum += detail.aim + detail.hit;
+            rewards[i] -= aim_mean * static_cast<float>(detail.nb_fired_shells)
+                          + hit_mean * static_cast<float>(detail.nb_landed_shells);
+            aim_sum += detail.aim;
+            hit_sum += detail.hit;
+            nb_fired_shells += detail.nb_fired_shells;
             nb_landed_shells += detail.nb_landed_shells;
         }
-        shot_baseline.update(shot_reward_sum, nb_landed_shells);
-        shot_baseline_metric->add(shot_baseline.value());
+        aim_baseline.update(aim_sum, nb_fired_shells);
+        hit_baseline.update(hit_sum, nb_landed_shells);
+        shot_baseline_metric->add(aim_baseline.value() + hit_baseline.value());
 
         render_frame(true);
         auto states = read_states();

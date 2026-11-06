@@ -51,7 +51,8 @@ namespace arenai::model {
           remaining_frames(max_frames_without_hit),
           nb_frames_added_when_hit(static_cast<int>(3.f / wanted_frame_frequency)),
           nb_frames_added_when_kill(static_cast<int>(15.f / wanted_frame_frequency)),
-          has_hit(false), has_kill(false), has_fired(false), killed_nb(0), hit_nb(0) {}
+          has_hit(false), has_kill(false), has_fired(false), killed_nb(0), hit_nb(0),
+          aim_to_pay(0.f), nb_fired_to_pay(0) {}
 
     int JoltEnemyTank::get_score() const { return killed_nb * 10 + hit_nb; }
 
@@ -113,6 +114,44 @@ namespace arenai::model {
         return 1.f / (1.f + ratio * ratio);
     }
 
+    float JoltEnemyTank::predict_aim(
+        const TrackedShell &tracked, const std::vector<std::shared_ptr<EnemyTank>> &tanks) const {
+        constexpr float time_step = 0.1f;
+        constexpr float max_flight_time = 20.f;
+        auto excluded = get_body_ids();
+        for (const auto &other: tracked_shells)
+            if (const auto shell = other.shell.lock())
+                excluded.push_back(shell->get_body()->GetID());
+
+        TrackedShell predicted{
+            .fire_pos = tracked.fire_pos,
+            .last_shell_pos = tracked.fire_pos,
+            .min_distance = std::numeric_limits<float>::infinity(),
+            .has_sample = false};
+
+        glm::vec3 pos = tracked.fire_pos;
+        glm::vec3 velocity = tracked.fire_velocity;
+
+        for (float t = 0.f; t < max_flight_time; t += time_step) {
+            const glm::vec3 next = pos + velocity * time_step
+                                   + glm::vec3(0.f, -0.5f * GRAVITY * time_step * time_step, 0.f);
+            velocity.y -= GRAVITY * time_step;
+
+            const auto fraction = engine.ray_test(pos, next, excluded);
+            const glm::vec3 end = fraction ? pos + *fraction * (next - pos) : next;
+
+            update_closest_approach(predicted, end, tanks);
+
+            if (fraction) break;
+            pos = end;
+        }
+
+        if (!predicted.has_sample) return 0.f;
+
+        return compute_aim_reward(
+            predicted.fire_pos, predicted.enemy_pos_at_t, predicted.shell_pos_at_t);
+    }
+
     float JoltEnemyTank::get_reward() const {
         RewardDetail detail;
 
@@ -131,9 +170,6 @@ namespace arenai::model {
                 detail.nb_landed_shells++;
                 detail.sum_miss_distance +=
                     glm::length(tracked.shell_pos_at_t - tracked.enemy_pos_at_t);
-                detail.aim += aim_reward_scale
-                              * compute_aim_reward(
-                                  tracked.fire_pos, tracked.enemy_pos_at_t, tracked.shell_pos_at_t);
 
                 if (tracked.has_hit) {
                     detail.hit += hit_reward;
@@ -141,6 +177,11 @@ namespace arenai::model {
                 }
             }
         }
+
+        detail.aim = aim_to_pay;
+        detail.nb_fired_shells = nb_fired_to_pay;
+        aim_to_pay = 0.f;
+        nb_fired_to_pay = 0;
 
         // 3. hits received penalty
         detail.received =
@@ -169,6 +210,12 @@ namespace arenai::model {
         // 2. track shells
         for (int i = static_cast<int>(tracked_shells.size()) - 1; i >= 0; i--) {
             auto &tracked = tracked_shells[i];
+
+            if (tracked.aim_pending) {
+                aim_to_pay += aim_reward_scale * predict_aim(tracked, tanks);
+                nb_fired_to_pay++;
+                tracked.aim_pending = false;
+            }
 
             // reward already saw it, can remove
             if (tracked.need_remove) {
@@ -208,9 +255,13 @@ namespace arenai::model {
         nb_shells--;
         has_fired = true;
 
+        const auto velocity = shell->get_body()->GetLinearVelocity();
+
         tracked_shells.push_back(
             {.shell = shell,
              .fire_pos = shell->get_fire_position(),
+             .fire_velocity = glm::vec3(velocity.GetX(), velocity.GetY(), velocity.GetZ()),
+             .aim_pending = true,
              .last_shell_pos = shell->get_fire_position(),
              .min_distance = std::numeric_limits<float>::infinity(),
              .enemy_pos_at_t = glm::vec3(0.f),

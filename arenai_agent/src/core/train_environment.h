@@ -75,7 +75,8 @@ namespace arenai::agent {
         std::vector<int> nb_hits_per_tanks;
         std::vector<int> nb_kills_per_tanks;
 
-        ShotBaseline shot_baseline;
+        ShotBaseline aim_baseline;
+        ShotBaseline hit_baseline;
 
         std::shared_ptr<AbstractMetric> reward_metric;
 

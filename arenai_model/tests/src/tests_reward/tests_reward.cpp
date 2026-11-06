@@ -220,24 +220,32 @@ TEST_F(RewardTest, MissedShellPaysOnlyAimTerm) {
     const std::vector tanks{shared_a, shared_b};
 
     float total_reward = 0.f;
-    RewardDetail landed_detail;
+    RewardDetail fire_detail, landed_detail;
+    int fire_frame = -1;
     for (int i = 0; i < 180; i++) {
         engine->step(1.f / 60.f);
         shared_a->tick(tanks);
 
         total_reward += shared_a->get_reward();
-        if (const auto detail = shared_a->get_last_reward_detail(); detail.nb_landed_shells > 0)
-            landed_detail = detail;
+        const auto detail = shared_a->get_last_reward_detail();
+        if (detail.nb_fired_shells > 0) {
+            fire_detail = detail;
+            fire_frame = i;
+        }
+        if (detail.nb_landed_shells > 0) landed_detail = detail;
     }
 
     ASSERT_FALSE(shared_a->consume_has_hit()) << "shell should have missed the enemy tank";
+    ASSERT_EQ(fire_frame, 0) << "the aim is paid on the fire frame";
+    ASSERT_EQ(fire_detail.nb_fired_shells, 1);
+    ASSERT_GT(fire_detail.aim, 0.f) << "a miss still pays its aim term, at fire time";
+    ASSERT_LT(fire_detail.aim, 0.1f) << "the aim term peaks at 0.1 on the enemy";
     ASSERT_EQ(landed_detail.nb_landed_shells, 1)
         << "the shell tracker should have sampled a landed shell";
+    ASSERT_FLOAT_EQ(landed_detail.aim, 0.f) << "landing pays no aim term";
     ASSERT_FLOAT_EQ(landed_detail.hit, 0.f);
     ASSERT_FLOAT_EQ(landed_detail.kill, 0.f);
-    ASSERT_GT(landed_detail.aim, 0.f) << "a miss still pays its aim term";
-    ASSERT_LT(landed_detail.aim, 0.1f) << "the aim term peaks at 0.1 on the enemy";
-    ASSERT_FLOAT_EQ(total_reward, landed_detail.aim);
+    ASSERT_FLOAT_EQ(total_reward, fire_detail.aim);
 }
 
 TEST_F(RewardTest, HitSplitsIntoAimHitAndNoKill) {
@@ -261,23 +269,29 @@ TEST_F(RewardTest, HitSplitsIntoAimHitAndNoKill) {
     const std::vector tanks{shared_a, shared_b};
 
     float total_reward = 0.f;
-    RewardDetail landed_detail;
+    RewardDetail fire_detail, landed_detail;
     for (int i = 0; i < 60; i++) {
         engine->step(1.f / 60.f);
         shared_a->tick(tanks);
 
         total_reward += shared_a->get_reward();
-        if (const auto detail = shared_a->get_last_reward_detail(); detail.nb_landed_shells > 0)
-            landed_detail = detail;
+        const auto detail = shared_a->get_last_reward_detail();
+        if (detail.nb_fired_shells > 0) fire_detail = detail;
+        if (detail.nb_landed_shells > 0) landed_detail = detail;
     }
 
     ASSERT_TRUE(shared_a->consume_has_hit()) << "shell should have hit the enemy tank";
+    ASSERT_EQ(fire_detail.nb_fired_shells, 1);
+    ASSERT_GT(fire_detail.aim, 0.05f)
+        << "a shell fired straight at the enemy scores high: the predicted trajectory stops on "
+           "its hull, within the tolerance of its center";
+    ASSERT_LE(fire_detail.aim, 0.1f);
+    ASSERT_FLOAT_EQ(fire_detail.hit, 0.f) << "the hit is paid at the impact, not at the fire";
     ASSERT_EQ(landed_detail.nb_landed_shells, 1);
+    ASSERT_FLOAT_EQ(landed_detail.aim, 0.f);
     ASSERT_FLOAT_EQ(landed_detail.hit, HIT_REWARD);
     ASSERT_FLOAT_EQ(landed_detail.kill, 0.f) << "a single touch is not a kill";
-    ASSERT_GT(landed_detail.aim, 0.f);
-    ASSERT_LE(landed_detail.aim, 0.1f);
-    ASSERT_FLOAT_EQ(total_reward, landed_detail.aim + landed_detail.hit);
+    ASSERT_FLOAT_EQ(total_reward, fire_detail.aim + landed_detail.hit);
 }
 
 // ========================================================================

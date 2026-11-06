@@ -49,6 +49,7 @@ namespace arenai::model {
         float received = 0.f;
         float death = 0.f;
 
+        int nb_fired_shells = 0;
         int nb_landed_shells = 0;
         float sum_miss_distance = 0.f;
     };

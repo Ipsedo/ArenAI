@@ -17,6 +17,8 @@ namespace arenai::model {
     struct TrackedShell {
         std::weak_ptr<ShellItem> shell;
         glm::vec3 fire_pos;
+        glm::vec3 fire_velocity;
+        bool aim_pending;
 
         // closest approach over the whole trajectory, measured against the segment
         // travelled each frame (last_shell_pos → current position)
@@ -117,12 +119,19 @@ namespace arenai::model {
         mutable RewardDetail last_reward_detail;
         std::vector<TrackedShell> tracked_shells;
 
+        mutable float aim_to_pay;
+        mutable int nb_fired_to_pay;
+
         void on_shell_fired(const std::shared_ptr<ShellItem> &shell);
         void
         on_shell_contact(const ShellItem *shell, const ShellContactInfo &shell_info, Item *item);
 
         int get_nearest_enemy_index(
             const std::vector<std::shared_ptr<EnemyTank>> &tanks, const glm::vec3 &pos) const;
+
+        float predict_aim(
+            const TrackedShell &tracked,
+            const std::vector<std::shared_ptr<EnemyTank>> &tanks) const;
 
         float compute_aim_reward(
             const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos,

@@ -65,6 +65,9 @@ namespace arenai::model {
 
         virtual void tick(const std::vector<std::shared_ptr<EnemyTank>> &tanks) = 0;
 
+        virtual float
+        get_aim_opportunity(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const = 0;
+
         virtual bool consume_has_hit() = 0;
         virtual bool consume_has_kill() = 0;
         virtual bool consume_has_fire() = 0;

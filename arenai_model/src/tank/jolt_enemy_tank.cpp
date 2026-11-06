@@ -12,6 +12,7 @@
 
 #include "../geometry.h"
 #include "../jolt_engine.h"
+#include "./parts/canon.h"
 #include "./parts/shell.h"
 
 using namespace arenai;
@@ -150,6 +151,17 @@ namespace arenai::model {
 
         return compute_aim_reward(
             predicted.fire_pos, predicted.enemy_pos_at_t, predicted.shell_pos_at_t);
+    }
+
+    float
+    JoltEnemyTank::get_aim_opportunity(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const {
+        const auto canon = std::dynamic_pointer_cast<CanonItem>(get_canon());
+        const auto [position, direction] = canon->get_fire_pose();
+
+        const TrackedShell theoretical{
+            .fire_pos = position, .fire_velocity = direction * SHELL_SPEED};
+
+        return aim_reward_scale * predict_aim(theoretical, tanks);
     }
 
     float JoltEnemyTank::get_reward() const {

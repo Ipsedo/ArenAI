@@ -62,6 +62,9 @@ namespace arenai::model {
 
         void tick(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
 
+        float
+        get_aim_opportunity(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const override;
+
         RewardDetail get_last_reward_detail() const override;
 
         std::vector<float> get_proprioception() const override;

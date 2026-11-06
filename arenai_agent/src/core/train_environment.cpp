@@ -135,21 +135,31 @@ namespace arenai::agent {
 
         const float aim_mean = aim_baseline.value();
         const float hit_mean = hit_baseline.value();
-        float aim_sum = 0.f, hit_sum = 0.f;
-        int nb_fired_shells = 0, nb_landed_shells = 0;
+        float hit_sum = 0.f;
+        int nb_landed_shells = 0;
         for (int i = 0; i < nb_tanks; i++) {
             if (already_done[i]) continue;
             const auto &detail = reward_details[i];
 
             rewards[i] -= aim_mean * static_cast<float>(detail.nb_fired_shells)
                           + hit_mean * static_cast<float>(detail.nb_landed_shells);
-            aim_sum += detail.aim;
             hit_sum += detail.hit;
-            nb_fired_shells += detail.nb_fired_shells;
             nb_landed_shells += detail.nb_landed_shells;
         }
-        aim_baseline.update(aim_sum, nb_fired_shells);
         hit_baseline.update(hit_sum, nb_landed_shells);
+
+        const auto [opportunity_sum, nb_armed] = apply_on_enemies<std::pair<float, int>>(
+            [&](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
+                float sum = 0.f;
+                int nb = 0;
+                for (int i = 0; i < nb_tanks; i++) {
+                    if (done[i] || !tanks[i]->get_can_fire()) continue;
+                    sum += tanks[i]->get_aim_opportunity(tanks);
+                    nb++;
+                }
+                return std::pair{sum, nb};
+            });
+        aim_baseline.update(opportunity_sum, nb_armed);
         shot_baseline_metric->add(aim_baseline.value() + hit_baseline.value());
 
         render_frame(true);

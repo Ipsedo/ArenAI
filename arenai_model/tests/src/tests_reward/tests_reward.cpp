@@ -294,6 +294,42 @@ TEST_F(RewardTest, HitSplitsIntoAimHitAndNoKill) {
     ASSERT_FLOAT_EQ(total_reward, fire_detail.aim + landed_detail.hit);
 }
 
+TEST_F(RewardTest, AimOpportunityMatchesTheShotItPredicts) {
+    add_ground();
+    auto tank_a = tank_factory->make_enemy_tank(
+        file_reader, "tank_a", {0.f, 5.f, 0.f}, false, GAME_SHELL_ECONOMY);
+    auto tank_b = tank_factory->make_enemy_tank(
+        file_reader, "tank_b", {0.f, 5.f, 30.f}, false, GAME_SHELL_ECONOMY);
+
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+
+    const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
+    const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
+    const std::vector tanks{shared_a, shared_b};
+
+    ASSERT_FLOAT_EQ(shared_a->get_aim_opportunity({shared_a}), 0.f)
+        << "no enemy to aim at: no opportunity";
+
+    const float opportunity = shared_a->get_aim_opportunity(tanks);
+    ASSERT_GT(opportunity, 0.05f) << "facing the enemy at 30 m is a good opportunity";
+    ASSERT_LE(opportunity, 0.1f);
+
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
+    for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
+
+    engine->step(1.f / 60.f);
+    shared_a->tick(tanks);
+    shared_a->get_reward();
+    const auto fire_detail = shared_a->get_last_reward_detail();
+
+    ASSERT_EQ(fire_detail.nb_fired_shells, 1);
+    ASSERT_NEAR(fire_detail.aim, opportunity, 0.01f)
+        << "the opportunity read before firing is the aim paid for the shot";
+}
+
 // ========================================================================
 // get_reward — wrecks are not farmable
 // ========================================================================

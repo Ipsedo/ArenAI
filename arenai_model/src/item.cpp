@@ -56,6 +56,12 @@ namespace arenai::model {
         already_dead = true;
     }
 
+    void LifeItem::restore() {
+        health_points = initial_health_points;
+        already_dead = false;
+        hits_received.clear();
+    }
+
     float LifeItem::receive_damages(const ImpactInfo &impact) {
         const float new_health_point = std::max(health_points - impact.damages, 0.f);
         const float received_damages = health_points - new_health_point;

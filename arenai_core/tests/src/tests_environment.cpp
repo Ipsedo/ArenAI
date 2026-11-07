@@ -383,3 +383,42 @@ TEST_F(EnvironmentTest, SpawnedBodiesStartAboveTerrain) {
 
     EXPECT_EQ(checked, nb_tanks + 4 * nb_shapes_per_kind);
 }
+
+// ========================================================================
+// respawn_tank — fresh spawn inside the reset's box, above the terrain
+// ========================================================================
+
+TEST_F(EnvironmentTest, RespawnTankLandsInSpawnBoxAboveTerrain) {
+    constexpr int nb_tanks = 2;
+    constexpr float frequency = 1.f / 60.f;
+    constexpr float spawn_side = 200.f;
+
+    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false);
+    env.reset(spawn_side, spawn_side, model::GAME_SHELL_ECONOMY);
+
+    const std::vector<controller::user_input> no_input(
+        nb_tanks, {.left_joystick = {.x = 0.f, .y = 0.f},
+                   .right_joystick = {.x = 0.f, .y = 0.f},
+                   .fire_button = {false}});
+
+    env.step(frequency, no_input);
+    env.respawn_tank(0);
+    const auto respawn_pos = env.chassis_position(0);
+
+    for (int i = 0; i < 5; i++) env.step(frequency, no_input);
+    const auto settled_pos = env.chassis_position(0);
+    env.stop_drawing();
+
+    EXPECT_LE(std::abs(respawn_pos.x), spawn_side / 2.f + 1.f);
+    EXPECT_LE(std::abs(respawn_pos.z), spawn_side / 2.f + 1.f);
+    EXPECT_FALSE(env.out_of_shells(0));
+
+    engine->get_item_factory()->make_height_map_item(
+        "height_map", file_reader, "heightmap/heightmap6.png", glm::vec3(0., 40., 0.),
+        glm::vec3(10., 200., 10.));
+    const auto ground = engine->ray_cast(
+        glm::vec3(settled_pos.x, 300.f, settled_pos.z),
+        glm::vec3(settled_pos.x, -300.f, settled_pos.z));
+    ASSERT_TRUE(ground.has_value());
+    EXPECT_GT(settled_pos.y, ground->y);
+}

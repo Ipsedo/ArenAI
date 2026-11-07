@@ -97,7 +97,7 @@ namespace arenai::agent {
 
         std::vector<model::RewardDetail> step_reward_details;
 
-        // dense aim signal, paid on top of the tanks' own event rewards
+        // the learning term paid on top of the tanks' own event rewards: a dense aim signal
         PotentialShaping aim_shaping;
 
         bool are_all_done();

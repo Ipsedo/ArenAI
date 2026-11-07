@@ -183,9 +183,8 @@ namespace arenai::model {
             }
         }
 
-        // 3. fire cost, charged once per shell on its fire frame
+        // 3. shells fired, counted once on their fire frame
         detail.nb_fired_shells = nb_fired_to_pay;
-        detail.fire = -FIRE_COST * static_cast<float>(nb_fired_to_pay);
         nb_fired_to_pay = 0;
 
         // 4. damage received: the health fraction lost on each part
@@ -196,7 +195,7 @@ namespace arenai::model {
         // 5. total reward, kept split for the metrics
         last_reward_detail = detail;
 
-        return detail.hit + detail.kill + detail.received + detail.death + detail.fire;
+        return detail.hit + detail.kill + detail.received + detail.death;
     }
 
     RewardDetail JoltEnemyTank::get_last_reward_detail() const { return last_reward_detail; }
@@ -344,6 +343,26 @@ namespace arenai::model {
             remove_constraints_from_engine();
             kill_life_items();
         }
+    }
+
+    bool JoltEnemyTank::is_out_of_shells() const { return nb_shells <= 0; }
+
+    bool JoltEnemyTank::has_shells_in_flight() const {
+        return std::ranges::any_of(tracked_shells, [](const TrackedShell &tracked) {
+            const auto shell = tracked.shell.lock();
+            return shell && !shell->need_destroy();
+        });
+    }
+
+    void JoltEnemyTank::respawn(const glm::vec3 chassis_pos) {
+        teleport(chassis_pos);
+        restore_life_items();
+
+        curr_frame_upside_down = 0;
+        nb_shells = initial_nb_shells;
+        curr_cooldown_frame = fire_cooldown_frames;
+        tracked_shells.clear();
+        nb_fired_to_pay = 0;
     }
     std::vector<float> JoltEnemyTank::get_proprioception() const {
         const auto items = get_items();

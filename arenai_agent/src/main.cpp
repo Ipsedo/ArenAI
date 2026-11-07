@@ -27,7 +27,7 @@ int main(const int argc, char **argv) {
     parser.add_argument("--resources_folder").required();
     parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60 * 3);
     parser.add_argument("--nb_episodes").scan<'i', int>().default_value(30000);
-    parser.add_argument("--save_every").scan<'i', int>().default_value(30 * 60 * 3 * 20);
+    parser.add_argument("--save_every").scan<'i', int>().default_value(30 * 60 * 3 * 5);
     parser.add_argument("--cuda").default_value(false).implicit_value(true);
 
     // env
@@ -52,8 +52,8 @@ int main(const int argc, char **argv) {
     parser.add_argument("--curriculum_delta").scan<'g', float>().default_value(50.f);
     parser.add_argument("--curriculum_ratio_low").scan<'g', float>().default_value(0.05f);
     parser.add_argument("--curriculum_ratio_high").scan<'g', float>().default_value(0.08f);
-    parser.add_argument("--curriculum_probe_window").scan<'i', int>().default_value(24);
-    parser.add_argument("--curriculum_boundary_proba").scan<'g', float>().default_value(0.2f);
+    parser.add_argument("--curriculum_probe_window").scan<'i', int>().default_value(8);
+    parser.add_argument("--curriculum_boundary_proba").scan<'g', float>().default_value(0.5f);
     parser.add_argument("--action_repeat").scan<'i', int>().default_value(3);
     parser.add_argument("--vision_num_threads")
         .scan<'i', int>()

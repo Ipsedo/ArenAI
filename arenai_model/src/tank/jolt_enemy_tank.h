@@ -58,6 +58,10 @@ namespace arenai::model {
 
         void on_death() override;
 
+        bool is_out_of_shells() const override;
+        bool has_shells_in_flight() const override;
+        void respawn(glm::vec3 chassis_pos) override;
+
         void tick(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
 
         float
@@ -106,7 +110,7 @@ namespace arenai::model {
         mutable RewardDetail last_reward_detail;
         std::vector<TrackedShell> tracked_shells;
 
-        // shells fired since the last get_reward(), each charged its fire cost there
+        // shells fired since the last get_reward(), reported there once
         mutable int nb_fired_to_pay;
 
         void on_shell_fired(const std::shared_ptr<ShellItem> &shell);

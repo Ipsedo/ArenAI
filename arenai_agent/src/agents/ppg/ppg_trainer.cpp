@@ -410,20 +410,19 @@ namespace arenai::agent {
                 .unsqueeze(0);
         const auto next_values = torch::cat({values.slice(0, 1), bootstrap_value}, 0);
 
-        const auto rewards = return_scaler->scale(rollout.rewards, rollout.dones, rollout.valids);
+        const auto rewards = return_scaler->scale(
+            rollout.rewards, rollout.dones.logical_or(rollout.truncateds), rollout.valids);
         const auto dones = rollout.dones.to(torch::kFloat);
         const auto truncateds = rollout.truncateds.to(torch::kFloat);
         const auto valids = rollout.valids.to(torch::kFloat);
 
-        // a truncated step bootstraps on its own value (the last alive observation):
-        // the post-mortem next state is not a state the counterfactual life would reach
-        const auto deltas =
-            rewards + gamma * (next_values * (1.f - dones) + values * truncateds) - values;
+        const auto deltas = rewards + gamma * next_values * (1.f - dones) - values;
+        const auto cuts = torch::clamp_max(dones + truncateds, 1.f);
 
         auto advantages = torch::zeros_like(deltas);
         auto gae = torch::zeros({nb_tanks, 1}, deltas.options());
         for (int64_t t = nb_steps - 1; t >= 0; t--) {
-            gae = deltas[t] + gamma * gae_lambda * (1.f - dones[t]) * gae;
+            gae = deltas[t] + gamma * gae_lambda * (1.f - cuts[t]) * gae;
             advantages[t] = gae;
         }
 

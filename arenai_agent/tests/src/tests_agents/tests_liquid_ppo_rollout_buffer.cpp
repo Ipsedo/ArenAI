@@ -265,6 +265,28 @@ TEST_F(LiquidPpoRolloutBufferTest, TruncatedStepIsStackedAndStaysValid) {
     ASSERT_FALSE(valids[1][0].item<bool>());
 }
 
+TEST_F(LiquidPpoRolloutBufferTest, TruncatedWithoutDoneKeepsTheNextStepValid) {
+    LiquidPpoRolloutBuffer buffer;
+
+    auto step_0 = make_step(make_state());
+    step_0.truncated = torch::cat({torch::ones({1, 1}), torch::zeros({1, 1})}, 0);
+
+    buffer.add(step_0);
+    buffer.add(make_step(make_state()));
+    buffer.finish_episode(make_state());
+
+    const auto rollout = buffer.get_rollout();
+    const auto truncateds = rollout.truncateds.squeeze(-1);
+    const auto valids = rollout.valids.squeeze(-1);
+
+    ASSERT_TRUE(truncateds[0][0].item<bool>());
+    ASSERT_FALSE(truncateds[1][0].item<bool>());
+    ASSERT_FALSE(torch::any(rollout.dones).item<bool>());
+
+    ASSERT_TRUE(valids[0][0].item<bool>());
+    ASSERT_TRUE(valids[1][0].item<bool>());
+}
+
 TEST_F(LiquidPpoRolloutBufferTest, FinishEpisodeResetsTermination) {
     LiquidPpoRolloutBuffer buffer;
 

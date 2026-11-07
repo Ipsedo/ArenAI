@@ -32,8 +32,9 @@ namespace arenai::core {
         virtual std::vector<std::tuple<State, Reward, IsDone, IsTruncated>>
         step(float time_delta, const std::vector<Action> &actions);
 
-        std::vector<State>
-        reset(float spawn_width, float spawn_height, const model::ShellEconomy &shell_economy);
+        std::vector<State> reset(
+            float new_spawn_width, float new_spawn_height,
+            const model::ShellEconomy &shell_economy);
 
         void seed(unsigned int seed);
         void stop_drawing() const;
@@ -58,14 +59,20 @@ namespace arenai::core {
 
         int nb_reset_frames;
 
+        float spawn_width;
+        float spawn_height;
+
         bool drawing_started_;
 
         std::shared_ptr<view::AbstractGraphicBackend> graphics_backend;
         std::shared_ptr<view::AbstractRenderContext> gl_context;
 
         void reset_physics(
-            float spawn_width, float spawn_height, const model::ShellEconomy &shell_economy);
+            float new_spawn_width, float new_spawn_height,
+            const model::ShellEconomy &shell_economy);
         void reset_drawables();
+
+        float ground_height(float x, float z) const;
 
     protected:
         std::random_device dev;
@@ -97,6 +104,8 @@ namespace arenai::core {
 
         // the agents' observations: the visions of the last render_frame(true)
         std::vector<State> read_states() const;
+
+        void respawn_tank(int index);
 
         template<typename T>
         T apply_on_enemies(std::function<T(const std::vector<std::shared_ptr<model::EnemyTank>> &)>

@@ -26,9 +26,9 @@ namespace arenai::core {
               nb_tanks, vision_num_threads, vision_height, vision_width, wanted_frequency,
               vision_thread_sleep)),
           physic_engine(model::make_physic_engine(wanted_frequency)),
-          nb_reset_frames(static_cast<int>(4.f / wanted_frequency)), drawing_started_(false),
-          graphics_backend(graphics_backend), gl_context(graphics_backend->render_context()),
-          rng(dev()), file_reader(file_reader) {}
+          nb_reset_frames(static_cast<int>(4.f / wanted_frequency)), spawn_width(0.f),
+          spawn_height(0.f), drawing_started_(false), graphics_backend(graphics_backend),
+          gl_context(graphics_backend->render_context()), rng(dev()), file_reader(file_reader) {}
 
     std::vector<std::tuple<State, Reward, IsDone, IsTruncated>>
     BaseTanksEnvironment::step(const float time_delta, const std::vector<Action> &actions) {
@@ -102,10 +102,13 @@ namespace arenai::core {
     }
 
     void BaseTanksEnvironment::reset_physics(
-        const float spawn_width, const float spawn_height,
+        const float new_spawn_width, const float new_spawn_height,
         const model::ShellEconomy &shell_economy) {
         physic_engine->remove_bodies_and_constraints();
         tanks.clear();
+
+        spawn_width = new_spawn_width;
+        spawn_height = new_spawn_height;
 
         const auto item_factory = physic_engine->get_item_factory();
         const auto tank_factory = physic_engine->get_tank_factory();
@@ -114,17 +117,8 @@ namespace arenai::core {
             "height_map", file_reader, "heightmap/heightmap6.png", glm::vec3(0., 40., 0.),
             glm::vec3(10., 200., 10.));
 
-        // terrain surface lies in [40 - 200/2, 40 + 200/2] = [-60, 140]: a vertical
-        // segment from 300 to -300 always crosses it inside the map
-        constexpr float terrain_max_y = 40.f + 200.f / 2.f;
-        const auto ground_height = [this](const float x, const float z) {
-            const auto hit =
-                physic_engine->ray_cast(glm::vec3(x, 300.f, z), glm::vec3(x, -300.f, z));
-            return hit.has_value() ? hit->y : terrain_max_y;
-        };
-
-        std::uniform_real_distribution x_pos_u_dist(-spawn_width / 2, spawn_width / 2);
-        std::uniform_real_distribution y_pos_u_dist(-spawn_height / 2, spawn_height / 2);
+        std::uniform_real_distribution x_pos_u_dist(-new_spawn_width / 2, new_spawn_width / 2);
+        std::uniform_real_distribution y_pos_u_dist(-new_spawn_height / 2, new_spawn_height / 2);
 
         std::uniform_real_distribution<float> mass_u_dist(3, 100);
 
@@ -180,12 +174,28 @@ namespace arenai::core {
         for (int i = 0; i < nb_reset_frames; i++) physic_engine->step(wanted_frequency);
     }
 
+    float BaseTanksEnvironment::ground_height(const float x, const float z) const {
+        // terrain surface lies in [40 - 200/2, 40 + 200/2] = [-60, 140]: a vertical
+        // segment from 300 to -300 always crosses it inside the map
+        constexpr float terrain_max_y = 40.f + 200.f / 2.f;
+        const auto hit = physic_engine->ray_cast(glm::vec3(x, 300.f, z), glm::vec3(x, -300.f, z));
+        return hit.has_value() ? hit->y : terrain_max_y;
+    }
+
+    void BaseTanksEnvironment::respawn_tank(const int index) {
+        std::uniform_real_distribution x_pos_u_dist(-spawn_width / 2, spawn_width / 2);
+        std::uniform_real_distribution z_pos_u_dist(-spawn_height / 2, spawn_height / 2);
+
+        const float x = x_pos_u_dist(rng), z = z_pos_u_dist(rng);
+        tanks[index]->respawn(glm::vec3(x, ground_height(x, z) + 3.f, z));
+    }
+
     std::vector<State> BaseTanksEnvironment::reset(
-        const float spawn_width, const float spawn_height,
+        const float new_spawn_width, const float new_spawn_height,
         const model::ShellEconomy &shell_economy) {
         if (drawing_started_) stop_drawing();
 
-        reset_physics(spawn_width, spawn_height, shell_economy);
+        reset_physics(new_spawn_width, new_spawn_height, shell_economy);
         reset_drawables();
         drawing_started_ = true;
 

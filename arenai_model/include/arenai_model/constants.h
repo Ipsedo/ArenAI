@@ -36,9 +36,6 @@ namespace arenai::model {
     constexpr float DAMAGE_REWARD = 1.f;
     constexpr float KILL_REWARD = 1.f;
     constexpr float DEATH_PENALTY = 1.f;
-    // charged at the fire, above the expected damage of a shell fired at random (~0.02 at
-    // D=250): an unaimed shot is a loss, an aimed one stays a gain
-    constexpr float FIRE_COST = 0.03f;
 
     constexpr float ZOOM_MAGNIFICATION = 2.f;
     constexpr float ZOOM_TRANSITION_SECONDS = 0.25f;

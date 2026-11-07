@@ -74,6 +74,8 @@ namespace arenai::model {
         // neither hit nor kill to whoever keeps shooting at it
         void kill();
 
+        void restore();
+
         // returns the damage actually taken (capped by the remaining health); the impacts
         // kept for consume_hits_received() carry that same capped damage
         float receive_damages(const ImpactInfo &impact);

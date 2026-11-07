@@ -22,6 +22,7 @@ using namespace arenai::agent;
 namespace {
     // the aim potential is in [0, 1]: going from no aim to a perfect one is worth this much
     constexpr float AIM_POTENTIAL_SCALE = 0.3f;
+    constexpr float DAMAGE_REWARD_SCALE = 3.f;
 }// namespace
 
 namespace arenai::agent {
@@ -100,7 +101,6 @@ namespace arenai::agent {
                     reward_details[i].kill += detail.kill;
                     reward_details[i].received += detail.received;
                     reward_details[i].death += detail.death;
-                    reward_details[i].fire += detail.fire;
                     reward_details[i].nb_fired_shells += detail.nb_fired_shells;
                     reward_details[i].nb_landed_shells += detail.nb_landed_shells;
                     reward_details[i].nb_hits += detail.nb_hits;
@@ -123,11 +123,23 @@ namespace arenai::agent {
             });
         }
 
+        apply_on_enemies<int>([&](const auto &tanks) {
+            for (int i = 0; i < nb_tanks; i++) {
+                if (done[i] || !tanks[i]->is_out_of_shells() || tanks[i]->has_shells_in_flight())
+                    continue;
+                truncated[i] = true;
+                respawn_tank(i);
+            }
+            return 0;
+        });
+
         // the aim potential is read once per decision, on the state the agent will see
         const auto shaping_rewards = aim_shaping.step(aim_potentials(), done);
         for (int i = 0; i < nb_tanks; i++) {
             if (already_done[i]) continue;
-            rewards[i] += shaping_rewards[i];
+            rewards[i] += shaping_rewards[i]
+                          + (DAMAGE_REWARD_SCALE - 1.f)
+                                * (reward_details[i].hit + reward_details[i].received);
             shaping_details[i] = shaping_rewards[i];
         }
 
@@ -162,8 +174,8 @@ namespace arenai::agent {
 
                 const auto &detail = reward_details[i];
 
-                reward_hit_metric->add(detail.hit);
-                reward_received_metric->add(detail.received);
+                reward_hit_metric->add(DAMAGE_REWARD_SCALE * detail.hit);
+                reward_received_metric->add(DAMAGE_REWARD_SCALE * detail.received);
                 reward_aim_metric->add(shaping_details[i]);
 
                 // undefined on a step where no shell landed: averaging a zero in would

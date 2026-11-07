@@ -22,8 +22,6 @@ namespace arenai::core {
 
     typedef bool IsDone;
 
-    // the episode ends for the tank without a terminal state: the value target must
-    // bootstrap instead of cutting the return (truncation, not termination)
     typedef bool IsTruncated;
 
     typedef controller::user_input Action;

@@ -382,3 +382,98 @@ TEST_F(EnemyTankTest, EmptyReserveDoesNotKill) {
     ASSERT_FLOAT_EQ(shared_tank->get_last_reward_detail().death, 0.f)
         << "an empty reserve carries no penalty";
 }
+
+// ========================================================================
+// respawn — same tank, fresh trajectory
+// ========================================================================
+
+TEST_F(EnemyTankTest, RespawnMovesChassisAndRestoresReserveAndHealth) {
+    constexpr int proprioception_reserve_index = ENEMY_PROPRIOCEPTION_SIZE - 2;
+
+    add_ground();
+    auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
+    const std::vector tanks{shared_tank};
+
+    const float initial_reserve = shared_tank->get_proprioception()[proprioception_reserve_index];
+
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
+    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
+    engine->step(1.f / 60.f);
+    shared_tank->tick(tanks);
+
+    auto *chassis_life = dynamic_cast<LifeItem *>(shared_tank->get_chassis().get());
+    ASSERT_NE(chassis_life, nullptr);
+    chassis_life->receive_damages(
+        {.fire_position = glm::vec3(0.f), .impact_position = glm::vec3(0.f), .damages = 1.f});
+
+    ASSERT_LT(shared_tank->get_proprioception()[proprioception_reserve_index], initial_reserve);
+    ASSERT_LT(chassis_life->health_ratio(), 1.f);
+
+    constexpr glm::vec3 target(50.f, 8.f, -30.f);
+    shared_tank->respawn(target);
+
+    const auto chassis_pos = glm::vec3(shared_tank->get_chassis()->get_model_matrix()[3]);
+    EXPECT_NEAR(chassis_pos.x, target.x, 0.5f);
+    EXPECT_NEAR(chassis_pos.y, target.y, 0.5f);
+    EXPECT_NEAR(chassis_pos.z, target.z, 0.5f);
+
+    EXPECT_FLOAT_EQ(
+        shared_tank->get_proprioception()[proprioception_reserve_index], initial_reserve);
+    for (const auto &item: shared_tank->get_items())
+        if (const auto *life = dynamic_cast<LifeItem *>(item.get()))
+            EXPECT_FLOAT_EQ(life->health_ratio(), 1.f) << item->get_name();
+    EXPECT_FALSE(shared_tank->is_dead());
+    EXPECT_FALSE(shared_tank->has_shells_in_flight());
+
+    for (int i = 0; i < 60; i++) {
+        engine->step(1.f / 60.f);
+        shared_tank->tick(tanks);
+    }
+    EXPECT_FALSE(shared_tank->is_dead());
+    EXPECT_FALSE(std::isnan(shared_tank->get_reward()));
+}
+
+TEST_F(EnemyTankTest, OutOfShellsAndShellsInFlightFollowTheLastShell) {
+    constexpr ShellEconomy economy{.initial_shells = 1, .shells_per_hit = 0, .max_shells = 1};
+
+    add_ground();
+    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, economy);
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
+    const std::vector tanks{shared_tank};
+
+    ASSERT_FALSE(shared_tank->is_out_of_shells());
+    ASSERT_FALSE(shared_tank->has_shells_in_flight());
+
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
+    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
+    engine->step(1.f / 60.f);
+    shared_tank->tick(tanks);
+
+    ASSERT_TRUE(shared_tank->is_out_of_shells());
+    ASSERT_TRUE(shared_tank->has_shells_in_flight());
+
+    constexpr user_input no_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {false}};
+    for (int i = 0; i < 5 * 60; i++) {
+        for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(no_input);
+        engine->step(1.f / 60.f);
+        shared_tank->tick(tanks);
+        shared_tank->get_reward();
+    }
+
+    ASSERT_TRUE(shared_tank->is_out_of_shells());
+    ASSERT_FALSE(shared_tank->has_shells_in_flight());
+
+    shared_tank->respawn({10.f, 5.f, 10.f});
+    ASSERT_FALSE(shared_tank->is_out_of_shells());
+}

@@ -49,7 +49,6 @@ namespace arenai::model {
         float kill = 0.f;
         float received = 0.f;
         float death = 0.f;
-        float fire = 0.f;
 
         int nb_fired_shells = 0;
         int nb_landed_shells = 0;
@@ -83,6 +82,11 @@ namespace arenai::model {
         virtual bool is_suicide() const = 0;
 
         virtual void on_death() = 0;
+
+        virtual bool is_out_of_shells() const = 0;
+        virtual bool has_shells_in_flight() const = 0;
+
+        virtual void respawn(glm::vec3 chassis_pos) = 0;
     };
 
     struct PlayerHits {

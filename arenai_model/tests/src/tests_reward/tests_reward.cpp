@@ -203,7 +203,7 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
         << "reward should be exactly zero when no shell hit an enemy";
 }
 
-TEST_F(RewardTest, MissedShellPaysOnlyItsFireCost) {
+TEST_F(RewardTest, MissedShellPaysNothing) {
     add_ground();
     auto tank_a =
         tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
@@ -240,16 +240,14 @@ TEST_F(RewardTest, MissedShellPaysOnlyItsFireCost) {
     }
 
     ASSERT_FALSE(shared_a->consume_has_hit()) << "shell should have missed the enemy tank";
-    ASSERT_EQ(fire_frame, 0) << "the fire cost is charged on the fire frame";
+    ASSERT_EQ(fire_frame, 0) << "the fired shell is reported on the fire frame";
     ASSERT_EQ(fire_detail.nb_fired_shells, 1);
-    ASSERT_FLOAT_EQ(fire_detail.fire, -FIRE_COST);
     ASSERT_EQ(landed_detail.nb_landed_shells, 1)
         << "the shell tracker should have sampled a landed shell";
     ASSERT_EQ(landed_detail.nb_hits, 0);
-    ASSERT_FLOAT_EQ(landed_detail.fire, 0.f) << "landing charges nothing";
     ASSERT_FLOAT_EQ(landed_detail.hit, 0.f);
     ASSERT_FLOAT_EQ(landed_detail.kill, 0.f);
-    ASSERT_FLOAT_EQ(total_reward, -FIRE_COST);
+    ASSERT_FLOAT_EQ(total_reward, 0.f) << "the model's reward is the game's objective only";
 }
 
 TEST_F(RewardTest, HitPaysTheHealthFractionRemoved) {
@@ -286,7 +284,6 @@ TEST_F(RewardTest, HitPaysTheHealthFractionRemoved) {
 
     ASSERT_TRUE(shared_a->consume_has_hit()) << "shell should have hit the enemy tank";
     ASSERT_EQ(fire_detail.nb_fired_shells, 1);
-    ASSERT_FLOAT_EQ(fire_detail.fire, -FIRE_COST);
     ASSERT_FLOAT_EQ(fire_detail.hit, 0.f) << "the hit is paid at the impact, not at the fire";
 
     // the touched part is the one that lost health: the hit pays the fraction it lost
@@ -298,10 +295,9 @@ TEST_F(RewardTest, HitPaysTheHealthFractionRemoved) {
 
     ASSERT_EQ(landed_detail.nb_landed_shells, 1);
     ASSERT_EQ(landed_detail.nb_hits, 1);
-    ASSERT_FLOAT_EQ(landed_detail.fire, 0.f);
     ASSERT_FLOAT_EQ(landed_detail.hit, DAMAGE_REWARD * lost_fraction);
     ASSERT_FLOAT_EQ(landed_detail.kill, 0.f) << "a single touch is not a kill";
-    ASSERT_FLOAT_EQ(total_reward, fire_detail.fire + landed_detail.hit);
+    ASSERT_FLOAT_EQ(total_reward, landed_detail.hit);
 
     // the victim is charged the same fraction
     shared_b->get_reward();
@@ -414,7 +410,7 @@ TEST_F(RewardTest, NoRewardWhenShootingAWreck) {
     const float reward = shared_a->get_reward();
 
     ASSERT_FALSE(shared_a->consume_has_hit()) << "a wreck must not count as a hit";
-    ASSERT_FLOAT_EQ(reward, -FIRE_COST) << "shooting a wreck must pay neither hit nor kill";
+    ASSERT_FLOAT_EQ(reward, 0.f) << "shooting a wreck must pay neither hit nor kill";
 
     // the shell spent must not be given back: a wreck is not an ammo dump
     ASSERT_LT(shared_a->get_proprioception()[proprioception_reserve_index], shells_ratio_before)
@@ -468,8 +464,7 @@ TEST_F(RewardTest, NoKillRewardWhenHittingAnotherPartOfAWreck) {
     ASSERT_FALSE(shared_a->consume_has_hit()) << "a wreck part must not count as a hit";
     ASSERT_FALSE(shared_a->consume_has_kill())
         << "a part killed by on_death must not count as a fresh kill";
-    ASSERT_FLOAT_EQ(reward, -FIRE_COST)
-        << "hitting any part of a wreck must pay neither hit nor kill";
+    ASSERT_FLOAT_EQ(reward, 0.f) << "hitting any part of a wreck must pay neither hit nor kill";
 }
 
 // ========================================================================
@@ -502,6 +497,6 @@ TEST_F(RewardTest, ZeroRewardWithEmptyTankList) {
     ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN with empty tank list";
     ASSERT_FALSE(std::isinf(reward)) << "reward should not be Inf with empty tank list";
 
-    // there is no enemy to sample: only the fire cost
-    ASSERT_FLOAT_EQ(reward, -FIRE_COST);
+    // there is no enemy to sample: nothing is paid
+    ASSERT_FLOAT_EQ(reward, 0.f);
 }

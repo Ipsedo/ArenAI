@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <atomic>
 
+#include <Jolt/Physics/Body/BodyInterface.h>
 #include <Jolt/Physics/Collision/GroupFilterTable.h>
 
 #include "../jolt_engine.h"
@@ -198,6 +199,28 @@ namespace arenai::model {
 
     void JoltTank::kill_life_items() const {
         for (const auto life_item: life_items) life_item->kill();
+    }
+
+    void JoltTank::restore_life_items() const {
+        for (const auto life_item: life_items) life_item->restore();
+    }
+
+    void JoltTank::teleport(const glm::vec3 chassis_pos) const {
+        const auto *chassis_body = jolt_items.front()->get_body();
+        const JPH::RVec3 origin = chassis_body->GetPosition();
+        const JPH::Quat inverse_rotation = chassis_body->GetRotation().Conjugated();
+        const JPH::RVec3 target(chassis_pos.x, chassis_pos.y, chassis_pos.z);
+
+        auto &body_interface = engine.get_body_interface();
+        for (const auto &item: jolt_items) {
+            const auto *body = item->get_body();
+            const JPH::RVec3 relative = inverse_rotation * (body->GetPosition() - origin);
+            body_interface.SetPositionAndRotation(
+                body->GetID(), target + relative,
+                (inverse_rotation * body->GetRotation()).Normalized(), JPH::EActivation::Activate);
+            body_interface.SetLinearAndAngularVelocity(
+                body->GetID(), JPH::Vec3::sZero(), JPH::Vec3::sZero());
+        }
     }
 
     std::vector<LifeItem *> JoltTank::get_life_items() const { return life_items; }

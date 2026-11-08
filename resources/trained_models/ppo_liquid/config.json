@@ -23,9 +23,9 @@
             16
         ],
         "hidden_size_sensors": 64,
-        "initial_fire_proba": 0.10000000149011612,
+        "initial_fire_proba": 0.5,
         "initial_sigma": 0.30000001192092896,
-        "initial_zoom_proba": 0.10000000149011612,
+        "initial_zoom_proba": 0.5,
         "metric_window_size": 256,
         "neuron_number": 128,
         "rollout_size": 300,
@@ -52,20 +52,19 @@
     },
     "environment": {
         "action_repeat": 3,
-        "curriculum_boundary_proba": 0.20000000298023224,
+        "curriculum_boundary_proba": 0.5,
         "curriculum_delta": 50.0,
-        "curriculum_probe_window": 24,
+        "curriculum_probe_window": 8,
         "curriculum_ratio_high": 0.07999999821186066,
         "curriculum_ratio_low": 0.05000000074505806,
         "final_spawn_height": 1000.0,
         "final_spawn_width": 1000.0,
         "initial_spawn_height": 250.0,
         "initial_spawn_width": 250.0,
-        "max_shells": 30,
+        "max_shells": 20,
         "nb_tanks": 32,
         "shells": 10,
-        "shells_per_hit": 10,
-        "shot_baseline_window": 4096,
+        "shells_per_hit": 2,
         "vision_height": 128,
         "vision_num_threads": 16,
         "vision_width": 256,
@@ -75,8 +74,8 @@
         "cuda": true,
         "max_episode_steps": 5400,
         "nb_episodes": 30000,
-        "output_folder": "./outputs/train_478_ppo_liquid",
+        "output_folder": "./outputs/train_494_ppo_liquid",
         "resources_folder": "/home/samuel/CLionProjects/ArenAI/resources",
-        "save_every": 108000
+        "save_every": 27000
     }
 }

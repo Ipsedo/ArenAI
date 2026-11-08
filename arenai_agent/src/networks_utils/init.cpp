@@ -41,6 +41,13 @@ namespace arenai::agent {
         }
     }
 
+    void init_log_sigma_output_weights(torch::nn::Module &module, const float initial_sigma) {
+        if (auto *lin = module.as<torch::nn::Linear>()) {
+            torch::nn::init::orthogonal_(lin->weight, 0.01f);
+            if (lin->options.bias()) torch::nn::init::constant_(lin->bias, std::log(initial_sigma));
+        }
+    }
+
     void init_liquid_weights(torch::nn::Module &module) {
         if (const auto *lin = module.as<torch::nn::Linear>()) {
             torch::nn::init::normal_(lin->weight, 0.f, 1e-2f);

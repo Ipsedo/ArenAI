@@ -7,6 +7,7 @@
 
 #include "../../networks/actor.h"
 #include "../../networks/value_function.h"
+#include "../entropy_alphas.h"
 #include "../return_scaler.h"
 #include "../trainer.h"
 #include "./ppo_rollout_buffer.h"
@@ -22,19 +23,22 @@ namespace arenai::agent {
     public:
         PpoTrainer(
             const std::shared_ptr<Actor> &actor,
-            const std::shared_ptr<PpoRolloutBuffer> &rollout_buffer, int nb_sensors,
-            float actor_learning_rate, float critic_learning_rate, int hidden_size_sensors,
+            const std::shared_ptr<PpoRolloutBuffer> &rollout_buffer, int nb_continuous_actions,
+            int nb_discrete_actions, int nb_sensors, float actor_learning_rate,
+            float critic_learning_rate, int hidden_size_sensors,
             const std::vector<int> &critic_hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
             float gamma, float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
-            float continuous_entropy_factor, float discrete_entropy_factor, int actor_epochs,
-            int critic_epochs, int rollout_size, int actor_batch_size, int actor_gpu_batch_size,
-            int critic_batch_size, int critic_gpu_batch_size);
+            float initial_alpha, float alpha_learning_rate, float continuous_target_entropy,
+            float discrete_target_proba, int actor_epochs, int critic_epochs, int rollout_size,
+            int actor_batch_size, int actor_gpu_batch_size, int critic_batch_size,
+            int critic_gpu_batch_size);
 
         void step() override;
 
         std::vector<std::shared_ptr<AbstractMetric>> get_metrics() override;
+        std::vector<std::shared_ptr<AbstractMetric>> get_csv_only_metrics() override;
 
         void save(const std::filesystem::path &output_folder) override;
 
@@ -44,8 +48,8 @@ namespace arenai::agent {
         std::shared_ptr<Actor> actor;
         std::shared_ptr<PpoRolloutBuffer> rollout_buffer;
 
-        float continuous_entropy_factor;
-        float discrete_entropy_factor;
+        // one learned entropy temperature per action
+        std::unique_ptr<EntropyAlphas> alphas;
 
         std::shared_ptr<ValueFunction> critic;
 
@@ -61,7 +65,7 @@ namespace arenai::agent {
         // share of the return variance the critic explains, per critic minibatch
         std::shared_ptr<AbstractMetric> explained_variance_metric;
 
-        // both regulated by their constant entropy bonus
+        // both regulated by their learned alphas (CSV-only metrics)
         std::shared_ptr<AbstractMetric> continuous_entropy_metric;
         std::shared_ptr<AbstractMetric> discrete_entropy_metric;
 
@@ -93,7 +97,7 @@ namespace arenai::agent {
         // accumulates a device block's share of its optimizer batch gradient; returns its per-row KL
         torch::Tensor backward_actor(
             const torch::Tensor &vision, const torch::Tensor &proprioception,
-            const torch::Tensor &continuous_actions, const torch::Tensor &discrete_actions,
+            const torch::Tensor &continuous_pre_tanh, const torch::Tensor &discrete_actions,
             const torch::Tensor &fire_masks, const torch::Tensor &old_log_probs,
             const torch::Tensor &advantages, float batch_fraction) const;
 

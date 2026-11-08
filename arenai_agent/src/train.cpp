@@ -141,9 +141,13 @@ namespace arenai::agent {
         metrics.push_back(spawn_bound_metric);
         metrics.insert(metrics.end(), trainer_metrics.begin(), trainer_metrics.end());
 
-        const auto csv_only_metrics = env->get_csv_only_metrics();
+        const auto env_csv_only_metrics = env->get_csv_only_metrics();
+        const auto trainer_csv_only_metrics = trainer->get_csv_only_metrics();
         auto csv_metrics = metrics;
-        csv_metrics.insert(csv_metrics.end(), csv_only_metrics.begin(), csv_only_metrics.end());
+        csv_metrics.insert(
+            csv_metrics.end(), env_csv_only_metrics.begin(), env_csv_only_metrics.end());
+        csv_metrics.insert(
+            csv_metrics.end(), trainer_csv_only_metrics.begin(), trainer_csv_only_metrics.end());
 
         MetricCsvSaver metric_csv_saver(
             train_options.output_folder, csv_metrics,

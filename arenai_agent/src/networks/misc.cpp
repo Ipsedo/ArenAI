@@ -37,14 +37,6 @@ namespace arenai::agent {
     }
 
     /*
-     * Sigma of normal distribution output layer
-     */
-
-    torch::Tensor state_free_sigma(const torch::Tensor &log_sigma, const torch::Tensor &mu) {
-        return torch::exp(log_sigma.clamp(std::log(SIGMA_MIN), std::log(SIGMA_MAX))).expand_as(mu);
-    }
-
-    /*
      * Concentration of Beta distribution output layer
      */
 

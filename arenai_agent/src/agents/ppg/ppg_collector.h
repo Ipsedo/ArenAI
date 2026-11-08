@@ -20,7 +20,8 @@ namespace arenai::agent {
         // concrete act-time channel, called by TorchPpgAgent::act
         void on_act(
             const TorchState &state, const TorchAction &action,
-            const torch::Tensor &continuous_log_prob, const torch::Tensor &discrete_log_prob);
+            const torch::Tensor &continuous_pre_tanh, const torch::Tensor &continuous_log_prob,
+            const torch::Tensor &discrete_log_prob);
 
         void on_transition(
             const torch::Tensor &rewards, const torch::Tensor &done,
@@ -33,6 +34,7 @@ namespace arenai::agent {
 
         TorchState last_state;
         TorchAction last_action;
+        torch::Tensor last_continuous_pre_tanh;
         torch::Tensor last_continuous_log_prob;
         torch::Tensor last_discrete_log_prob;
     };

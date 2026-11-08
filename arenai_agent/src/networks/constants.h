@@ -8,8 +8,9 @@
 namespace arenai::agent {
     constexpr float EPSILON = 1e-8f;
 
-    constexpr float SIGMA_MIN = 1e-4f;
-    constexpr float SIGMA_MAX = 1.f;
+    // state-dependent log-sigma head of the squashed normal: Linear -> clamp -> exp
+    constexpr float LOG_SIGMA_MIN = -5.f;
+    constexpr float LOG_SIGMA_MAX = 2.f;
 
     constexpr float LIQUID_TAU_INIT_MIN = 0.1f;
     constexpr float LIQUID_TAU_INIT_MAX = 2.f;

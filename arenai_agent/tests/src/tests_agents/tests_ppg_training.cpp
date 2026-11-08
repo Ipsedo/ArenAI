@@ -56,10 +56,10 @@ PpgTriad PpgTrainingTest::make_triad(const PpgTrainingTestConfig &cfg, const int
     triad.collector = std::make_shared<PpgStepCollector>(triad.rollout_buffer);
     triad.agent = std::make_shared<TorchPpgAgent>(triad.actor, device, triad.collector);
     triad.trainer = std::make_shared<PpgTrainer>(
-        triad.actor, triad.rollout_buffer, cfg.nb_sensors, 1e-3f, 1e-3f, 8, std::vector{16},
-        vision_channels, group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 0.001f,
-        2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, 2, 2,
-        1.f, n_pi);
+        triad.actor, triad.rollout_buffer, cfg.nb_continuous_actions, cfg.nb_discrete_actions,
+        cfg.nb_sensors, 1e-3f, 1e-3f, 8, std::vector{16}, vision_channels, group_norm_nums, device,
+        10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 3e-4f, -1.f, 0.05f, 2, 2, ROLLOUT_SIZE,
+        MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, 2, 2, 1.f, n_pi);
     return triad;
 }
 

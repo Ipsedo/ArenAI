@@ -30,8 +30,12 @@ namespace arenai::agent {
         float clip_epsilon = 0.2f;
         float target_kl = 0.05f;
         float grad_norm_max = 0.5f;
-        float continuous_entropy_factor = 0.001f;
-        float discrete_entropy_factor = 0.001f;
+        float initial_alpha = 0.001f;
+        float alpha_learning_rate = 3e-4f;
+        // per continuous action, entropy of the squashed normal
+        float continuous_target_entropy = -1.f;
+        // per discrete action, the Bernoulli whose entropy is the target
+        float discrete_target_proba = 0.05f;
         int actor_epochs = 4;
         int critic_epochs = 4;
         int rollout_size = 30 * 10;

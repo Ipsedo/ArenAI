@@ -17,6 +17,8 @@ namespace arenai::agent {
     struct LiquidPpoInputStep {
         TorchState state;
         TorchAction action;
+        // pre-tanh draw of the squashed normal, what the log-probabilities are computed on
+        torch::Tensor continuous_pre_tanh;
         torch::Tensor continuous_log_prob;
         torch::Tensor discrete_log_prob;
         torch::Tensor reward;
@@ -32,6 +34,7 @@ namespace arenai::agent {
     struct LiquidPpoRollout {
         TorchState states;
         TorchAction actions;
+        torch::Tensor continuous_pre_tanhs;
         torch::Tensor continuous_log_probs;
         torch::Tensor discrete_log_probs;
         torch::Tensor rewards;

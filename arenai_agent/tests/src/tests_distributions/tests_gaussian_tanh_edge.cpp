@@ -46,17 +46,6 @@ TEST_F(GaussianTanhEdgeTest, LogPdfWithNegativeLargeUStaysFinite) {
         << "log_pdf should be finite with large negative u";
 }
 
-TEST_F(GaussianTanhEdgeTest, LogPdfWithZeroSigma) {
-    const auto mu = torch::zeros({10});
-    const auto sigma = torch::zeros({10});
-    const auto u = torch::randn({10}) * 0.1f;
-
-    const auto log_p = gaussian_tanh_log_pdf(u, mu, sigma);
-
-    ASSERT_TRUE(torch::all(torch::isfinite(log_p)).item<bool>())
-        << "log_pdf should handle zero sigma via clamping";
-}
-
 TEST_F(GaussianTanhEdgeTest, SampleWithVeryLargeMu) {
     const auto mu = torch::ones({100}) * 100.f;
     const auto sigma = torch::ones({100}) * 0.1f;
@@ -68,16 +57,6 @@ TEST_F(GaussianTanhEdgeTest, SampleWithVeryLargeMu) {
     ASSERT_TRUE(torch::all(torch::logical_and(torch::ge(action, -1.0f), torch::le(action, 1.0f)))
                     .item<bool>())
         << "Action should still be bounded by tanh";
-}
-
-TEST_F(GaussianTanhEdgeTest, SampleWithZeroSigma) {
-    const auto mu = torch::zeros({100});
-    const auto sigma = torch::zeros({100});
-
-    const auto [action, u] = gaussian_tanh_sample(mu, sigma);
-
-    ASSERT_TRUE(torch::all(torch::isfinite(action)).item<bool>())
-        << "Action should be finite with zero sigma (clamped)";
 }
 
 // ========================================================================

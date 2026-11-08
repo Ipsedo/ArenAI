@@ -5,7 +5,7 @@
 #include "./ppo_agent.h"
 
 #include "../../distributions/bernoulli.h"
-#include "../../distributions/truncated_normal.h"
+#include "../../distributions/gaussian_tanh.h"
 #include "../../networks/constants.h"
 #include "../../networks_utils/torch_converter.h"
 #include "../../networks_utils/torch_loader.h"
@@ -35,6 +35,7 @@ namespace arenai::agent {
 
     TorchAction TorchPpoAgent::act(const TorchState &state, const bool sample) {
         TorchAction action;
+        torch::Tensor continuous_pre_tanh;
         torch::Tensor continuous_log_prob;
         torch::Tensor discrete_log_prob;
 
@@ -45,16 +46,18 @@ namespace arenai::agent {
                 actor->act(state.vision, state.proprioception);
 
             if (sample) {
-                action.continuous_action = truncated_normal_sample(mu, sigma);
+                std::tie(action.continuous_action, continuous_pre_tanh) =
+                    gaussian_tanh_sample(mu, sigma);
                 action.discrete_action = bernoulli_sample(discrete_proba);
             } else {
-                action.continuous_action = truncated_normal_mean(mu, sigma);
+                continuous_pre_tanh = mu;
+                action.continuous_action = gaussian_tanh_mode(mu);
                 action.discrete_action = bernoulli_max_action(discrete_proba);
             }
 
             // old log-probabilities, kept for the PPO importance ratio
             continuous_log_prob =
-                truncated_normal_log_pdf(action.continuous_action, mu, sigma).sum(-1, true);
+                gaussian_tanh_log_pdf(continuous_pre_tanh, mu, sigma).sum(-1, true);
 
             // a fire without effect is not a decision: no log-probability, no gradient
             discrete_log_prob = (bernoulli_log_proba(action.discrete_action, discrete_proba)
@@ -63,7 +66,8 @@ namespace arenai::agent {
         }
 
         if (collector.has_value())
-            collector.value()->on_act(state, action, continuous_log_prob, discrete_log_prob);
+            collector.value()->on_act(
+                state, action, continuous_pre_tanh, continuous_log_prob, discrete_log_prob);
 
         return action;
     }

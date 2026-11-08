@@ -28,6 +28,7 @@ PpoInputStep PpoRolloutBufferTest::make_step(const TorchState &state, const torc
                                         0, torch::randint(
                                                NB_DISCRETE_ACTIONS, {NB_TANKS},
                                                torch::TensorOptions().dtype(torch::kInt64)))},
+        .continuous_pre_tanh = torch::randn({NB_TANKS, NB_CONTINUOUS_ACTIONS}),
         .continuous_log_prob = torch::randn({NB_TANKS, 1}),
         .discrete_log_prob = torch::randn({NB_TANKS, 1}),
         .reward = torch::randn({NB_TANKS, 1}),
@@ -117,6 +118,9 @@ TEST_F(PpoRolloutBufferTest, RolloutShapes) {
 
     ASSERT_EQ(
         rollout.actions.continuous_action.sizes().vec(),
+        (std::vector<int64_t>{nb_steps, NB_TANKS, NB_CONTINUOUS_ACTIONS}));
+    ASSERT_EQ(
+        rollout.continuous_pre_tanhs.sizes().vec(),
         (std::vector<int64_t>{nb_steps, NB_TANKS, NB_CONTINUOUS_ACTIONS}));
 }
 

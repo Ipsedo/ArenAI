@@ -2,12 +2,119 @@
 // Created by samuel on 30/06/2026.
 //
 
+#include <agents/entropy_alphas.h>
 #include <networks/entropy.h>
 
 #include <arenai_agent_tests/tests_networks/tests_entropy.h>
 
 using namespace arenai;
 using namespace arenai::agent;
+
+/*
+ * Learned alphas
+ */
+
+TEST_F(AlphaParametersTest, StartsAtInitialAlpha) {
+    const AlphaParameters alphas(1e-3f, 3);
+
+    ASSERT_TRUE(torch::allclose(alphas.alpha(), torch::full({3}, 1e-3f)));
+}
+
+// descending the dual loss raises the alpha of an action whose entropy sits under
+// its target and lowers the one of an action above it, each on its own
+TEST_F(AlphaParametersTest, DualStepMovesEachAlphaWithItsOwnError) {
+    AlphaParameters alphas(1e-3f, 2);
+    torch::optim::Adam optim(alphas.parameters(), 1e-2);
+
+    const auto before = alphas.alpha().detach().clone();
+
+    // H - H_target: the first action is under its target, the second above
+    const auto error = torch::tensor({-1.f, 1.f});
+    for (int i = 0; i < 10; i++) {
+        optim.zero_grad();
+        alphas.loss(error).backward();
+        optim.step();
+    }
+
+    const auto after = alphas.alpha().detach();
+    ASSERT_GT(after[0].item<float>(), before[0].item<float>());
+    ASSERT_LT(after[1].item<float>(), before[1].item<float>());
+}
+
+TEST_F(AlphaParametersTest, AlphaStaysPositiveUnderSustainedOvershoot) {
+    AlphaParameters alphas(1e-3f, 1);
+    torch::optim::Adam optim(alphas.parameters(), 1e-2);
+
+    for (int i = 0; i < 100; i++) {
+        optim.zero_grad();
+        alphas.loss(torch::tensor({10.f})).backward();
+        optim.step();
+    }
+
+    ASSERT_GT(alphas.alpha().item<float>(), 0.f);
+    ASSERT_LT(alphas.alpha().item<float>(), 1e-3f);
+}
+
+/*
+ * Per-action regulator
+ */
+
+TEST_F(EntropyAlphasTest, OneMetricPerActionNamedAfterIt) {
+    const EntropyAlphas alphas(4, 2, 1e-3f, 3e-4f, -1.f, 0.05f);
+
+    const auto metrics = alphas.get_metrics();
+
+    ASSERT_EQ(metrics.size(), 6);
+    ASSERT_EQ(metrics[0]->get_name(), "alpha_dir_x");
+    ASSERT_EQ(metrics[3]->get_name(), "alpha_canon_y");
+    ASSERT_EQ(metrics[4]->get_name(), "alpha_fire");
+    ASSERT_EQ(metrics[5]->get_name(), "alpha_zoom");
+    for (const auto &metric: metrics) ASSERT_NEAR(metric->compute_metric(), 1e-3f, 1e-7f);
+}
+
+TEST_F(EntropyAlphasTest, EntropyUnderTargetRaisesAlphaAboveLowersIt) {
+    const EntropyAlphas alphas(2, 2, 1e-3f, 1e-2f, -1.f, 0.05f);
+
+    // continuous: first action under -1, second above; discrete: fire under log 2 / 2 ≈ 0.2,
+    // zoom at the maximum entropy
+    const auto continuous_entropy = torch::tensor({{-2.f, 0.f}}).expand({8, 2});
+    const auto discrete_entropy = torch::tensor({{0.05f, 0.69f}}).expand({8, 2});
+    const auto mask = torch::ones({8, 2});
+
+    const auto continuous_before = alphas.continuous().detach().clone();
+    const auto discrete_before = alphas.discrete().detach().clone();
+
+    for (int i = 0; i < 10; i++) {
+        alphas.zero_grad();
+        alphas.backward(continuous_entropy, discrete_entropy, mask, 1.f);
+        alphas.step();
+    }
+
+    ASSERT_GT(alphas.continuous()[0].item<float>(), continuous_before[0].item<float>());
+    ASSERT_LT(alphas.continuous()[1].item<float>(), continuous_before[1].item<float>());
+    ASSERT_GT(alphas.discrete()[0].item<float>(), discrete_before[0].item<float>());
+    ASSERT_LT(alphas.discrete()[1].item<float>(), discrete_before[1].item<float>());
+}
+
+// a discrete action that never had an effect brings no row to its error: its alpha
+// stays put while the others move
+TEST_F(EntropyAlphasTest, MaskedDiscreteActionKeepsItsAlpha) {
+    const EntropyAlphas alphas(1, 2, 1e-3f, 1e-2f, -1.f, 0.05f);
+
+    const auto continuous_entropy = torch::full({8, 1}, -3.f);
+    const auto discrete_entropy = torch::full({8, 2}, 0.f);
+    const auto mask = torch::tensor({{0.f, 1.f}}).expand({8, 2});
+
+    for (int i = 0; i < 10; i++) {
+        alphas.zero_grad();
+        alphas.backward(continuous_entropy, discrete_entropy, mask, 1.f);
+        alphas.step();
+    }
+
+    ASSERT_FLOAT_EQ(alphas.discrete()[0].item<float>(), 1e-3f);
+    ASSERT_GT(alphas.discrete()[1].item<float>(), 1e-3f);
+    ASSERT_GT(alphas.continuous()[0].item<float>(), 1e-3f);
+}
 
 /*
  * PID Lagrangian

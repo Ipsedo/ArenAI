@@ -131,3 +131,100 @@ TEST_P(GaussianTanhTargetEntropyParamTest, TargetEntropyScalesWithActions) {
 INSTANTIATE_TEST_SUITE_P(
     GaussianTanhTarget, GaussianTanhTargetEntropyParamTest,
     testing::Combine(testing::Values(1, 2, 3, 5), testing::Values(0.1f, 0.5f, 1.0f)));
+
+TEST_F(GaussianTanhTest, ModeIsTanhOfMu) {
+    const auto mu = torch::randn({100}) * 3.f;
+
+    ASSERT_TRUE(torch::allclose(gaussian_tanh_mode(mu), torch::tanh(mu)));
+}
+
+TEST_P(GaussianTanhShapeParamTest, EntropyShapeAndFinite) {
+    const auto &shape = GetParam();
+
+    const auto mu = torch::randn(shape);
+    const auto sigma = torch::rand(shape) + 0.1f;
+
+    const auto entropy = gaussian_tanh_entropy(mu, sigma);
+
+    ASSERT_EQ(entropy.sizes(), mu.sizes());
+    ASSERT_TRUE(torch::all(torch::isfinite(entropy)).item<bool>());
+}
+
+// the one-sample estimator is unbiased: averaged over many rows it meets the
+// Monte-Carlo target entropy of the same squashed normal
+TEST_P(GaussianTanhTargetEntropyParamTest, EntropyEstimateMatchesTargetEntropy) {
+    const auto [nb_actions, target_sigma] = GetParam();
+
+    constexpr int nb_rows = 200000;
+    const auto mu = torch::zeros({nb_rows, nb_actions});
+    const auto sigma = torch::full({nb_rows, nb_actions}, target_sigma);
+
+    const auto estimate = gaussian_tanh_entropy(mu, sigma).sum(-1).mean().item<float>();
+    const auto target = gaussian_tanh_target_entropy(nb_actions, target_sigma);
+
+    ASSERT_NEAR(estimate, target, 0.02f * static_cast<float>(nb_actions));
+}
+
+TEST_F(GaussianTanhTest, EntropyGrowsWithSigma) {
+    constexpr int nb_rows = 100000;
+    const auto mu = torch::zeros({nb_rows});
+
+    const auto small = gaussian_tanh_entropy(mu, torch::full({nb_rows}, 0.1f)).mean().item<float>();
+    const auto large = gaussian_tanh_entropy(mu, torch::full({nb_rows}, 0.5f)).mean().item<float>();
+
+    ASSERT_LT(small, large);
+}
+
+// the squash compresses the density near the bounds: a mode far from the center
+// has less entropy than a centered one at equal sigma
+TEST_F(GaussianTanhTest, EntropyDropsNearTheBounds) {
+    constexpr int nb_rows = 100000;
+    const auto sigma = torch::full({nb_rows}, 0.3f);
+
+    const auto centered =
+        gaussian_tanh_entropy(torch::zeros({nb_rows}), sigma).mean().item<float>();
+    const auto saturated =
+        gaussian_tanh_entropy(torch::full({nb_rows}, 3.f), sigma).mean().item<float>();
+
+    ASSERT_LT(saturated, centered);
+}
+
+TEST_F(GaussianTanhTest, EntropyGradientFlowsThroughMuAndSigma) {
+    const auto mu = torch::full({64}, 0.5f, torch::TensorOptions().requires_grad(true));
+    const auto sigma = torch::full({64}, 0.3f, torch::TensorOptions().requires_grad(true));
+
+    gaussian_tanh_entropy(mu, sigma).mean().backward();
+
+    ASSERT_TRUE(torch::all(torch::isfinite(mu.grad())).item<bool>());
+    ASSERT_TRUE(torch::all(torch::isfinite(sigma.grad())).item<bool>());
+    // widening sigma raises the entropy: the gradient of the mean entropy is positive
+    ASSERT_GT(sigma.grad().sum().item<float>(), 0.f);
+}
+
+TEST_F(GaussianTanhTest, KlIsZeroBetweenIdenticalDistributions) {
+    const auto mu = torch::randn({100});
+    const auto sigma = torch::rand({100}) + 0.1f;
+
+    const auto kl = gaussian_tanh_kl(mu, sigma, mu, sigma);
+
+    ASSERT_TRUE(torch::allclose(kl, torch::zeros_like(kl), 1e-5, 1e-6));
+}
+
+TEST_F(GaussianTanhTest, KlIsPositiveBetweenDifferentDistributions) {
+    const auto mu_p = torch::randn({100});
+    const auto sigma_p = torch::rand({100}) + 0.1f;
+    const auto mu_q = mu_p + torch::randn({100});
+    const auto sigma_q = torch::rand({100}) + 0.1f;
+
+    const auto kl = gaussian_tanh_kl(mu_p, sigma_p, mu_q, sigma_q);
+
+    ASSERT_TRUE(torch::all(torch::gt(kl, 0.f)).item<bool>());
+}
+
+TEST_F(GaussianTanhTest, KlMatchesClosedForm) {
+    // KL(N(0, 1) || N(1, 2)) = log 2 + (1 + 1) / 8 - 1/2
+    const auto kl = gaussian_tanh_kl(
+        torch::zeros({1}), torch::ones({1}), torch::ones({1}), torch::full({1}, 2.f));
+
+    ASSERT_NEAR(kl.item<float>(), std::log(2.f) + 0.25f - 0.5f, 1e-5f);
+}

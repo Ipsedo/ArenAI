@@ -22,7 +22,7 @@
 #include "./agents/ppo_liquid/liquid_hidden_state.h"
 #include "./core/train_environment.h"
 #include "./distributions/bernoulli.h"
-#include "./distributions/truncated_normal.h"
+#include "./distributions/gaussian_tanh.h"
 #include "./networks/recurrent/liquid_actor.h"
 #include "./networks_utils/torch_converter.h"
 #include "./networks_utils/torch_loader.h"
@@ -160,10 +160,10 @@ int main(const int argc, char **argv) {
                 vision_features = out.vision_features.cpu().contiguous();
 
                 if (deterministic) {
-                    continuous_action = truncated_normal_mean(mu, sigma);
+                    continuous_action = gaussian_tanh_mode(mu);
                     discrete_action = bernoulli_max_action(discrete);
                 } else {
-                    continuous_action = truncated_normal_sample(mu, sigma);
+                    continuous_action = gaussian_tanh_sample(mu, sigma).first;
                     discrete_action = bernoulli_sample(discrete);
                 }
             }

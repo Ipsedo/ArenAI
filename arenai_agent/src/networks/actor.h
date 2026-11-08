@@ -16,8 +16,8 @@
 namespace arenai::agent {
 
     struct ActorRawOutput {
-        // truncated normal on [-1, 1]: mu is the mode, sigma the spread. sigma is a
-        // state-free parameter (one log-sigma per action), broadcast to the rows of mu
+        // squashed normal: the action is tanh(u), u ~ N(mu, sigma), mu unbounded and
+        // sigma state-dependent, both one per continuous action
         torch::Tensor mu;
         torch::Tensor sigma;
         torch::Tensor discrete;
@@ -40,8 +40,7 @@ namespace arenai::agent {
         torch::nn::Sequential head;
 
         torch::nn::Sequential mu;
-        // [nb_continuous_actions] learned log-sigma, independent of the state
-        torch::Tensor log_sigma;
+        torch::nn::Sequential sigma;
         torch::nn::Sequential discrete;
 
     protected:

@@ -36,6 +36,7 @@ namespace arenai::agent {
                   .action =
                       {.continuous_action = step.action.continuous_action.detach().cpu(),
                        .discrete_action = step.action.discrete_action.detach().cpu()},
+                  .continuous_pre_tanh = step.continuous_pre_tanh.detach().cpu(),
                   .continuous_log_prob = step.continuous_log_prob.detach().cpu(),
                   .discrete_log_prob = step.discrete_log_prob.detach().cpu(),
                   .reward = step.reward.detach().cpu(),
@@ -91,6 +92,8 @@ namespace arenai::agent {
                      stack([](const StoredStep &s) { return s.step.action.continuous_action; }),
                  .discrete_action =
                      stack([](const StoredStep &s) { return s.step.action.discrete_action; })},
+            .continuous_pre_tanhs =
+                stack([](const StoredStep &s) { return s.step.continuous_pre_tanh; }),
             .continuous_log_probs =
                 stack([](const StoredStep &s) { return s.step.continuous_log_prob; }),
             .discrete_log_probs =

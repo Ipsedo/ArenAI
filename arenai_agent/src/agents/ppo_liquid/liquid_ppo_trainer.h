@@ -8,6 +8,7 @@
 #include "../../networks/entropy.h"
 #include "../../networks/recurrent/liquid_actor.h"
 #include "../../networks/recurrent/liquid_critic.h"
+#include "../entropy_alphas.h"
 #include "../return_scaler.h"
 #include "../trainer.h"
 #include "./liquid_ppo_rollout_buffer.h"
@@ -28,19 +29,22 @@ namespace arenai::agent {
     public:
         LiquidPpoTrainer(
             const std::shared_ptr<LiquidActor> &actor,
-            const std::shared_ptr<LiquidPpoRolloutBuffer> &rollout_buffer, int nb_sensors,
+            const std::shared_ptr<LiquidPpoRolloutBuffer> &rollout_buffer,
+            int nb_continuous_actions, int nb_discrete_actions, int nb_sensors,
             float actor_learning_rate, float critic_learning_rate, int hidden_size_sensors,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, int neuron_number, int unfolding_steps,
             float delta_t, torch::Device device, int metric_window_size, float gamma,
             float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
-            float continuous_entropy_factor, float discrete_entropy_factor, int actor_epochs,
-            int critic_epochs, int rollout_size, int actor_batch_size, int actor_gpu_batch_size,
-            int critic_batch_size, int critic_gpu_batch_size, int chunk_size);
+            float initial_alpha, float alpha_learning_rate, float continuous_target_entropy,
+            float discrete_target_proba, int actor_epochs, int critic_epochs, int rollout_size,
+            int actor_batch_size, int actor_gpu_batch_size, int critic_batch_size,
+            int critic_gpu_batch_size, int chunk_size);
 
         void step() override;
 
         std::vector<std::shared_ptr<AbstractMetric>> get_metrics() override;
+        std::vector<std::shared_ptr<AbstractMetric>> get_csv_only_metrics() override;
 
         void save(const std::filesystem::path &output_folder) override;
 
@@ -50,8 +54,8 @@ namespace arenai::agent {
         std::shared_ptr<LiquidActor> actor;
         std::shared_ptr<LiquidPpoRolloutBuffer> rollout_buffer;
 
-        float continuous_entropy_factor;
-        float discrete_entropy_factor;
+        // one learned entropy temperature per action
+        std::unique_ptr<EntropyAlphas> alphas;
 
         std::shared_ptr<LiquidCritic> critic;
 
@@ -67,7 +71,7 @@ namespace arenai::agent {
         // share of the return variance the critic explains, per critic minibatch
         std::shared_ptr<AbstractMetric> explained_variance_metric;
 
-        // both regulated by their constant entropy bonus
+        // both regulated by their learned alphas (CSV-only metrics)
         std::shared_ptr<AbstractMetric> continuous_entropy_metric;
         std::shared_ptr<AbstractMetric> discrete_entropy_metric;
 
@@ -104,7 +108,7 @@ namespace arenai::agent {
         // accumulates a device block's share of its optimizer batch gradient; returns its per-row KL
         torch::Tensor backward_actor(
             const torch::Tensor &vision, const torch::Tensor &proprioception,
-            const torch::Tensor &hidden, const torch::Tensor &continuous_actions,
+            const torch::Tensor &hidden, const torch::Tensor &continuous_pre_tanh,
             const torch::Tensor &discrete_actions, const torch::Tensor &fire_masks,
             const torch::Tensor &old_log_probs, const torch::Tensor &advantages,
             const torch::Tensor &valids, float batch_fraction) const;

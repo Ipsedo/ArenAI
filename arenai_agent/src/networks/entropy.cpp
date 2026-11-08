@@ -19,6 +19,10 @@ namespace arenai::agent {
 
     torch::Tensor AlphaParameters::alpha() const { return torch::exp(log_alpha); }
 
+    torch::Tensor AlphaParameters::loss(const torch::Tensor &entropy_error) const {
+        return torch::sum(log_alpha * entropy_error.detach());
+    }
+
     /*
      * PID Lagrangian
      */

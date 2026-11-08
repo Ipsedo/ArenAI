@@ -80,10 +80,11 @@ TEST_F(LiquidPpoAgentTest, MetricsNotEmpty) {
         .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
-    const auto metrics = factory->get_trainer()->get_metrics();
-
-    // 8 trainer metrics + one entropy per action dimension
-    ASSERT_EQ(metrics.size(), 8);
+    ASSERT_EQ(factory->get_trainer()->get_metrics().size(), 8);
+    // one alpha per action, CSV only
+    ASSERT_EQ(
+        factory->get_trainer()->get_csv_only_metrics().size(),
+        cfg.nb_continuous_actions + cfg.nb_discrete_actions);
 }
 
 // ========================================================================
@@ -169,8 +170,9 @@ TEST_P(LiquidPpoSaveLoadParamTest, SaveCreatesExpectedFiles) {
     factory->get_trainer()->save(save_dir);
 
     const std::vector<std::string> expected_files = {
-        "actor.pt",        "critic.pt",      "actor_optim.pt",
-        "critic_optim.pt", "actor_repr.txt", "critic_repr.txt",
+        "actor.pt",       "critic.pt",       "actor_optim.pt",       "critic_optim.pt",
+        "actor_repr.txt", "critic_repr.txt", "continuous_alphas.pt", "discrete_alphas.pt",
+        "alpha_optim.pt",
     };
 
     for (const auto &f: expected_files)

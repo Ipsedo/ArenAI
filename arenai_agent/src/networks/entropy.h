@@ -9,11 +9,16 @@
 
 namespace arenai::agent {
 
+    // one learned temperature per action, alpha = exp(log_alpha) > 0 without any other bound
     class AlphaParameters : public torch::nn::Module {
     public:
         AlphaParameters(float initial_alpha, int nb_alphas);
 
         torch::Tensor alpha() const;
+
+        // dual ascent on log_alpha: entropy_error = H - H_target per action (detached);
+        // descending this loss raises the alphas whose entropy sits under its target
+        torch::Tensor loss(const torch::Tensor &entropy_error) const;
 
     private:
         torch::Tensor log_alpha;

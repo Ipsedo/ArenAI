@@ -16,8 +16,8 @@
 namespace arenai::agent {
 
     struct LiquidActorOutput {
-        // truncated normal on [-1, 1]: mu is the mode, sigma the spread. sigma is a
-        // state-free parameter (one log-sigma per action), broadcast to the rows of mu
+        // squashed normal: the action is tanh(u), u ~ N(mu, sigma), mu unbounded and
+        // sigma state-dependent, both one per continuous action
         torch::Tensor mu;
         torch::Tensor sigma;
         // independent Bernoulli probabilities, one per discrete action
@@ -58,8 +58,7 @@ namespace arenai::agent {
         std::shared_ptr<LiquidCell> liquid;
 
         torch::nn::Sequential mu;
-        // [nb_continuous_actions] learned log-sigma, independent of the state
-        torch::Tensor log_sigma;
+        torch::nn::Sequential sigma;
         torch::nn::Sequential discrete;
 
         // [rows, features] recurrent input: encoded vision and sensors, concatenated

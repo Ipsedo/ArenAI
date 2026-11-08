@@ -33,15 +33,17 @@ TEST_P(ActorTestParam, TestActorAct) {
     ASSERT_EQ(mu.ndimension(), 2);
     ASSERT_EQ(mu.size(0), batch_size);
     ASSERT_EQ(mu.size(1), cont_actions_nb);
-    ASSERT_TRUE(
-        torch::all(torch::logical_and(torch::ge(mu, -1.0), torch::le(mu, 1.0))).item<bool>());
+    ASSERT_TRUE(torch::all(torch::isfinite(mu)).item<bool>());
 
     ASSERT_EQ(sigma.ndimension(), 2);
     ASSERT_EQ(sigma.size(0), batch_size);
     ASSERT_EQ(sigma.size(1), cont_actions_nb);
-    ASSERT_TRUE(
-        torch::all(torch::logical_and(torch::ge(sigma, SIGMA_MIN), torch::le(sigma, SIGMA_MAX)))
-            .item<bool>());
+    ASSERT_TRUE(torch::all(torch::logical_and(
+                               torch::ge(sigma, std::exp(LOG_SIGMA_MIN)),
+                               torch::le(sigma, std::exp(LOG_SIGMA_MAX))))
+                    .item<bool>());
+    // the log-sigma head starts at the wanted initial sigma, whatever the state
+    ASSERT_TRUE(torch::all(torch::abs(sigma - 0.1f) < 0.02f).item<bool>());
 
     ASSERT_EQ(discrete.ndimension(), 2);
     ASSERT_EQ(discrete.size(0), batch_size);

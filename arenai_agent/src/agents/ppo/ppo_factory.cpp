@@ -23,12 +23,13 @@ namespace arenai::agent {
           collector(std::make_shared<PpoStepCollector>(rollout_buffer)),
           agent(std::make_shared<TorchPpoAgent>(actor, device, collector)),
           trainer(std::make_shared<PpoTrainer>(
-              actor, rollout_buffer, nb_sensors, params.actor_learning_rate,
-              params.critic_learning_rate, params.hidden_size_sensors, params.critic_hidden_sizes,
-              params.vision_channels, params.group_norm_nums, device, params.metric_window_size,
-              params.gamma, params.gae_lambda, params.clip_epsilon, params.target_kl,
-              params.grad_norm_max, params.continuous_entropy_factor,
-              params.discrete_entropy_factor, params.actor_epochs, params.critic_epochs,
+              actor, rollout_buffer, nb_continuous_actions, nb_discrete_actions, nb_sensors,
+              params.actor_learning_rate, params.critic_learning_rate, params.hidden_size_sensors,
+              params.critic_hidden_sizes, params.vision_channels, params.group_norm_nums, device,
+              params.metric_window_size, params.gamma, params.gae_lambda, params.clip_epsilon,
+              params.target_kl, params.grad_norm_max, params.initial_alpha,
+              params.alpha_learning_rate, params.continuous_target_entropy,
+              params.discrete_target_proba, params.actor_epochs, params.critic_epochs,
               params.rollout_size, params.actor_batch_size, params.actor_gpu_batch_size,
               params.critic_batch_size, params.critic_gpu_batch_size)) {}
 

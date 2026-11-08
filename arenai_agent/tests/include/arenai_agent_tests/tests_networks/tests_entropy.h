@@ -8,5 +8,7 @@
 #include <gtest/gtest.h>
 
 class PidLagrangianAlphaParameterTest : public testing::Test {};
+class AlphaParametersTest : public testing::Test {};
+class EntropyAlphasTest : public testing::Test {};
 
 #endif//ARENAI_TESTS_ENTROPY_H

@@ -21,7 +21,7 @@ namespace arenai::agent {
         torch::Tensor discrete_log_prob;
         torch::Tensor reward;
         torch::Tensor done;
-        // done whose value target must bootstrap instead of cutting the return (famine)
+        // segment end that is not a death: cuts the return like a done, the tank plays on
         torch::Tensor truncated;
     };
 
@@ -33,7 +33,7 @@ namespace arenai::agent {
         torch::Tensor discrete_log_probs;
         torch::Tensor rewards;
         torch::Tensor dones;
-        // dones whose value target must bootstrap instead of cutting the return
+        // segment ends that are not deaths: cut the return like dones, the tanks play on
         torch::Tensor truncateds;
         // [nb_tanks, ...] observation closing the last step, for the value bootstrap
         TorchState bootstrap_state;

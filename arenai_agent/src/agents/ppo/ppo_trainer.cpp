@@ -290,8 +290,8 @@ namespace arenai::agent {
         const auto truncateds = rollout.truncateds.to(torch::kFloat);
         const auto valids = rollout.valids.to(torch::kFloat);
 
-        const auto deltas = rewards + gamma * next_values * (1.f - dones) - values;
         const auto cuts = torch::clamp_max(dones + truncateds, 1.f);
+        const auto deltas = rewards + gamma * next_values * (1.f - cuts) - values;
 
         auto advantages = torch::zeros_like(deltas);
         auto gae = torch::zeros({nb_tanks, 1}, deltas.options());

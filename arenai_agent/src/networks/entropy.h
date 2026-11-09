@@ -9,9 +9,12 @@
 
 namespace arenai::agent {
 
-    // one learned temperature per action, alpha = exp(log_alpha) > 0 without any other bound
+    // one learned temperature per action, alpha = exp(log_alpha) kept in [MIN_ALPHA, MAX_ALPHA]
     class AlphaParameters : public torch::nn::Module {
     public:
+        static constexpr float MIN_ALPHA = 1e-3f;
+        static constexpr float MAX_ALPHA = 1.f;
+
         AlphaParameters(float initial_alpha, int nb_alphas);
 
         torch::Tensor alpha() const;
@@ -19,6 +22,10 @@ namespace arenai::agent {
         // dual ascent on log_alpha: entropy_error = H - H_target per action (detached);
         // descending this loss raises the alphas whose entropy sits under its target
         torch::Tensor loss(const torch::Tensor &entropy_error) const;
+
+        // projects log_alpha back on [log MIN_ALPHA, log MAX_ALPHA] after an optimizer step:
+        // no windup, a saturated alpha reacts as soon as its entropy error changes sign
+        void clamp() const;
 
     private:
         torch::Tensor log_alpha;

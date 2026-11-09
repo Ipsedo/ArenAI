@@ -41,18 +41,66 @@ TEST_F(AlphaParametersTest, DualStepMovesEachAlphaWithItsOwnError) {
     ASSERT_LT(after[1].item<float>(), before[1].item<float>());
 }
 
-TEST_F(AlphaParametersTest, AlphaStaysPositiveUnderSustainedOvershoot) {
-    AlphaParameters alphas(1e-3f, 1);
+TEST_F(AlphaParametersTest, SustainedOvershootParksAlphaAtTheFloor) {
+    AlphaParameters alphas(1e-2f, 1);
     torch::optim::Adam optim(alphas.parameters(), 1e-2);
 
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 1000; i++) {
         optim.zero_grad();
         alphas.loss(torch::tensor({10.f})).backward();
         optim.step();
+        alphas.clamp();
+        ASSERT_GE(alphas.alpha().item<float>(), AlphaParameters::MIN_ALPHA * (1.f - 1e-5f));
     }
 
-    ASSERT_GT(alphas.alpha().item<float>(), 0.f);
-    ASSERT_LT(alphas.alpha().item<float>(), 1e-3f);
+    ASSERT_NEAR(alphas.alpha().item<float>(), AlphaParameters::MIN_ALPHA, 1e-6f);
+}
+
+TEST_F(AlphaParametersTest, SustainedUndershootParksAlphaAtTheCeiling) {
+    AlphaParameters alphas(1e-2f, 1);
+    torch::optim::Adam optim(alphas.parameters(), 1e-1);
+
+    for (int i = 0; i < 1000; i++) {
+        optim.zero_grad();
+        alphas.loss(torch::tensor({-10.f})).backward();
+        optim.step();
+        alphas.clamp();
+        ASSERT_LE(alphas.alpha().item<float>(), AlphaParameters::MAX_ALPHA * (1.f + 1e-5f));
+    }
+
+    ASSERT_NEAR(alphas.alpha().item<float>(), AlphaParameters::MAX_ALPHA, 1e-5f);
+}
+
+// the floor removes the windup: after a long overshoot, a few steps of undershoot (the
+// span of Adam's momentum) are enough to leave it, where an unbounded log_alpha would first
+// have to climb all the way back
+TEST_F(AlphaParametersTest, AlphaLeavesTheFloorWithinAFewUndershootSteps) {
+    AlphaParameters alphas(1e-2f, 1);
+    torch::optim::Adam optim(alphas.parameters(), 1e-2);
+
+    for (int i = 0; i < 1000; i++) {
+        optim.zero_grad();
+        alphas.loss(torch::tensor({10.f})).backward();
+        optim.step();
+        alphas.clamp();
+    }
+    ASSERT_NEAR(alphas.alpha().item<float>(), AlphaParameters::MIN_ALPHA, 1e-6f);
+
+    for (int i = 0; i < 50; i++) {
+        optim.zero_grad();
+        alphas.loss(torch::tensor({-10.f})).backward();
+        optim.step();
+        alphas.clamp();
+    }
+    ASSERT_GT(alphas.alpha().item<float>(), AlphaParameters::MIN_ALPHA * 1.2f);
+}
+
+TEST_F(AlphaParametersTest, InitialAlphaIsProjectedOnTheBounds) {
+    const AlphaParameters below(1e-6f, 1);
+    const AlphaParameters above(10.f, 1);
+
+    ASSERT_NEAR(below.alpha().item<float>(), AlphaParameters::MIN_ALPHA, 1e-6f);
+    ASSERT_NEAR(above.alpha().item<float>(), AlphaParameters::MAX_ALPHA, 1e-5f);
 }
 
 /*
@@ -73,7 +121,7 @@ TEST_F(EntropyAlphasTest, OneMetricPerActionNamedAfterIt) {
 }
 
 TEST_F(EntropyAlphasTest, EntropyUnderTargetRaisesAlphaAboveLowersIt) {
-    const EntropyAlphas alphas(2, 2, 1e-3f, 1e-2f, -1.f, 0.05f);
+    const EntropyAlphas alphas(2, 2, 1e-2f, 1e-2f, -1.f, 0.05f);
 
     // continuous: first action under -1, second above; discrete: fire under log 2 / 2 ≈ 0.2,
     // zoom at the maximum entropy
@@ -114,6 +162,29 @@ TEST_F(EntropyAlphasTest, MaskedDiscreteActionKeepsItsAlpha) {
     ASSERT_FLOAT_EQ(alphas.discrete()[0].item<float>(), 1e-3f);
     ASSERT_GT(alphas.discrete()[1].item<float>(), 1e-3f);
     ASSERT_GT(alphas.continuous()[0].item<float>(), 1e-3f);
+}
+
+// the step projects every alpha back on its bounds: a sustained overshoot parks them at the
+// floor instead of driving log_alpha away
+TEST_F(EntropyAlphasTest, StepKeepsEveryAlphaAboveTheFloor) {
+    const EntropyAlphas alphas(2, 2, 1e-2f, 1e-1f, -1.f, 0.05f);
+
+    const auto continuous_entropy = torch::full({8, 2}, 5.f);
+    const auto discrete_entropy = torch::full({8, 2}, 0.69f);
+    const auto mask = torch::ones({8, 2});
+
+    for (int i = 0; i < 200; i++) {
+        alphas.zero_grad();
+        alphas.backward(continuous_entropy, discrete_entropy, mask, 1.f);
+        alphas.step();
+    }
+
+    ASSERT_TRUE(torch::allclose(
+        alphas.continuous(), torch::full({2}, AlphaParameters::MIN_ALPHA), 1e-4, 1e-7));
+    ASSERT_TRUE(torch::allclose(
+        alphas.discrete(), torch::full({2}, AlphaParameters::MIN_ALPHA), 1e-4, 1e-7));
+    for (const auto &metric: alphas.get_metrics())
+        ASSERT_NEAR(metric->compute_metric(), AlphaParameters::MIN_ALPHA, 1e-6f);
 }
 
 /*

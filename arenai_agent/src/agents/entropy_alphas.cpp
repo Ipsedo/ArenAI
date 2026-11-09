@@ -90,6 +90,8 @@ namespace arenai::agent {
 
     void EntropyAlphas::step() const {
         optim->step();
+        continuous_alphas->clamp();
+        discrete_alphas->clamp();
 
         record(continuous_metrics, continuous());
         record(discrete_metrics, discrete());

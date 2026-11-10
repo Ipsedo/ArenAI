@@ -22,7 +22,8 @@ using namespace arenai::agent;
 namespace {
     // the aim potential is in [0, 1]: going from no aim to a perfect one is worth this much
     constexpr float AIM_POTENTIAL_SCALE = 0.3f;
-    constexpr float DAMAGE_REWARD_SCALE = 3.f;
+    constexpr float HIT_REWARD_SCALE = 3.f;
+    constexpr float RECEIVED_REWARD_SCALE = 1.f;
 }// namespace
 
 namespace arenai::agent {
@@ -137,9 +138,8 @@ namespace arenai::agent {
         const auto shaping_rewards = aim_shaping.step(aim_potentials(), done);
         for (int i = 0; i < nb_tanks; i++) {
             if (already_done[i]) continue;
-            rewards[i] += shaping_rewards[i]
-                          + (DAMAGE_REWARD_SCALE - 1.f)
-                                * (reward_details[i].hit + reward_details[i].received);
+            rewards[i] += shaping_rewards[i] + (HIT_REWARD_SCALE - 1.f) * reward_details[i].hit
+                          + (RECEIVED_REWARD_SCALE - 1.f) * reward_details[i].received;
             shaping_details[i] = shaping_rewards[i];
         }
 
@@ -174,8 +174,8 @@ namespace arenai::agent {
 
                 const auto &detail = reward_details[i];
 
-                reward_hit_metric->add(DAMAGE_REWARD_SCALE * detail.hit);
-                reward_received_metric->add(DAMAGE_REWARD_SCALE * detail.received);
+                reward_hit_metric->add(HIT_REWARD_SCALE * detail.hit);
+                reward_received_metric->add(RECEIVED_REWARD_SCALE * detail.received);
                 reward_aim_metric->add(shaping_details[i]);
 
                 // undefined on a step where no shell landed: averaging a zero in would

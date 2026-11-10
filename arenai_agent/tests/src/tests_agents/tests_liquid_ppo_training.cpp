@@ -75,6 +75,7 @@ TEST_F(LiquidPpoTrainingTest, CountParametersPositive) {
 }
 
 TEST_F(LiquidPpoTrainingTest, HiddenStateAdvancesAndResetsAcrossEpisodes) {
+    // build the triad by hand to keep a handle on the rollout buffer
     constexpr LiquidPpoTrainingTestConfig cfg{
         .vision_height = 8,
         .vision_width = 8,
@@ -96,6 +97,7 @@ TEST_F(LiquidPpoTrainingTest, HiddenStateAdvancesAndResetsAcrossEpisodes) {
     const auto agent =
         std::make_shared<TorchLiquidPpoAgent>(actor, hidden_state, device, collector);
 
+    // first episode: two steps
     agent->act(make_state(cfg, nb_tanks), true);
     collector->on_transition(
         torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
@@ -104,6 +106,7 @@ TEST_F(LiquidPpoTrainingTest, HiddenStateAdvancesAndResetsAcrossEpisodes) {
         torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
     collector->on_episode_end(make_state(cfg, nb_tanks));
 
+    // second episode: one step
     agent->act(make_state(cfg, nb_tanks), true);
     collector->on_transition(
         torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
@@ -111,14 +114,17 @@ TEST_F(LiquidPpoTrainingTest, HiddenStateAdvancesAndResetsAcrossEpisodes) {
 
     const auto rollout = rollout_buffer->get_rollout();
 
+    // within the episode, the liquid state advanced between the steps
     ASSERT_FALSE(torch::allclose(rollout.actor_hiddens[1], rollout.actor_hiddens[0]));
 
+    // episode boundaries: first step of each episode is flagged
     ASSERT_TRUE(rollout.episode_starts[0].item<bool>());
     ASSERT_FALSE(rollout.episode_starts[1].item<bool>());
     ASSERT_TRUE(rollout.episode_starts[2].item<bool>());
 }
 
 TEST_F(LiquidPpoTrainingTest, TrainingUpdatesActorParameters) {
+    // build the triad by hand to keep a handle on the actor's parameters
     constexpr LiquidPpoTrainingTestConfig cfg{
         .vision_height = 8,
         .vision_width = 8,
@@ -138,6 +144,7 @@ TEST_F(LiquidPpoTrainingTest, TrainingUpdatesActorParameters) {
     const auto collector = std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state);
     const auto agent =
         std::make_shared<TorchLiquidPpoAgent>(actor, hidden_state, device, collector);
+    // target_kl = 0 : early stop disabled so every optimizer batch applies its update
     const auto trainer = std::make_shared<LiquidPpoTrainer>(
         actor, rollout_buffer, cfg.nb_continuous_actions, cfg.nb_discrete_actions, cfg.nb_sensors,
         1e-3f, 1e-3f, 8, vision_channels, group_norm_nums, NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T,
@@ -157,6 +164,7 @@ TEST_F(LiquidPpoTrainingTest, TrainingUpdatesActorParameters) {
         trainer->step();
     }
 
+    // the rollout has been consumed by the training
     ASSERT_LT(rollout_buffer->nb_complete_steps(), static_cast<size_t>(ROLLOUT_SIZE));
 
     const auto parameters = actor->parameters();
@@ -173,6 +181,7 @@ TEST_F(LiquidPpoTrainingTest, TrainingUpdatesActorParameters) {
 }
 
 TEST_F(LiquidPpoTrainingTest, MaskedFireReceivesNoUpdate) {
+    // fire never possible: its head row must stay untouched while zoom keeps learning
     constexpr LiquidPpoTrainingTestConfig cfg{
         .vision_height = 8,
         .vision_width = 8,
@@ -192,6 +201,7 @@ TEST_F(LiquidPpoTrainingTest, MaskedFireReceivesNoUpdate) {
     const auto collector = std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state);
     const auto agent =
         std::make_shared<TorchLiquidPpoAgent>(actor, hidden_state, device, collector);
+    // target_kl = 0 : early stop disabled so every optimizer batch applies its update
     const auto trainer = std::make_shared<LiquidPpoTrainer>(
         actor, rollout_buffer, cfg.nb_continuous_actions, cfg.nb_discrete_actions, cfg.nb_sensors,
         1e-3f, 1e-3f, 8, vision_channels, group_norm_nums, NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T,
@@ -216,6 +226,7 @@ TEST_F(LiquidPpoTrainingTest, MaskedFireReceivesNoUpdate) {
         trainer->step();
     }
 
+    // the rollout has been consumed by the training
     ASSERT_LT(rollout_buffer->nb_complete_steps(), static_cast<size_t>(ROLLOUT_SIZE));
 
     // row 0 = fire, row 1 = zoom

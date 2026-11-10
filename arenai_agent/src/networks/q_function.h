@@ -32,6 +32,7 @@ namespace arenai::agent {
         torch::nn::Linear to_q;
     };
 
+    // clipped double Q: two independent critics, the target takes their minimum
     class TwinQNetwork final : public torch::nn::Module {
     public:
         TwinQNetwork(

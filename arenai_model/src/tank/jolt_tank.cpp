@@ -33,6 +33,7 @@ namespace arenai::model {
 
         glm::vec3 scale(0.5);
 
+        // chassis
         constexpr float chassis_mass = 1e4f;
         auto chassis_item = std::make_shared<ChassisItem>(
             tank_prefix_name, engine, file_reader, chassis_pos, scale, chassis_mass);
@@ -42,6 +43,7 @@ namespace arenai::model {
         jolt_items.push_back(chassis_item);
         life_items.push_back(chassis_item.get());
 
+        // wheels
         constexpr float front_axle_z = 3.f;
 
         constexpr float wheel_mass = 150.f;
@@ -81,6 +83,7 @@ namespace arenai::model {
             life_items.push_back(wheel.get());
         }
 
+        // turret
         glm::vec3 turret_pos(0.f, 1.3f, 1.2f);
         glm::vec3 turret_scale(1.2f);
         auto turret = std::make_shared<TurretItem>(
@@ -92,6 +95,7 @@ namespace arenai::model {
         controllers.push_back(turret);
         life_items.push_back(turret.get());
 
+        // canon
         glm::vec3 canon_pos(0.f, 0.5f, 1.7f);
         glm::vec3 canon_scale = turret_scale;
         auto canon_item = std::make_shared<CanonItem>(
@@ -142,6 +146,7 @@ namespace arenai::model {
 
         for (auto &item: jolt_items) item->get_body()->SetAllowSleeping(false);
 
+        // register with engine
         for (const auto &item: jolt_items) engine.add_jolt_item(item);
 
         engine.add_jolt_item_producer([c = canon_item] { return c->produce_jolt_items(); });

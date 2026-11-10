@@ -133,6 +133,7 @@ TEST_F(ProprioceptionTest, CanFireFollowsCooldownWithoutConsumingIt) {
 
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
 
+    // a pure query: asking twice does not start the cooldown
     ASSERT_TRUE(shared_tank->get_can_fire());
     ASSERT_TRUE(shared_tank->get_can_fire());
 
@@ -175,6 +176,7 @@ TEST_F(ProprioceptionTest, ShellAndCooldownRatiosFollowAShot) {
     for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
     ASSERT_FLOAT_EQ(shared_tank->get_cooldown_ratio(), 0.f) << "the shot starts the cooldown";
 
+    // the shell leaves the canon on the next physics step
     engine->step(1.f / 60.f);
     shared_tank->tick(tanks);
 

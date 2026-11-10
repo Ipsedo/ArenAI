@@ -62,7 +62,7 @@ namespace arenai::model {
         bool is_dead() const;
         bool is_already_dead();
 
-        // in [0, 1]
+        // remaining health over the initial one, in [0, 1]
         float health_ratio() const;
         float initial_health() const;
 

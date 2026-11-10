@@ -26,6 +26,7 @@ namespace arenai::desktop::gui {
 
         PopupKind kind_;
         MenuState &state_;
+        // the status in the shapes the RML binds
         Rml::String clock_;
         int machine_score_ = 0;
         PopupListener on_action_;

@@ -9,6 +9,7 @@ namespace arenai::desktop::gui {
     namespace {
         constexpr const char *CUSTOM_PRESET = "Custom";
 
+        // element ids of ai.rml the page drives from code
         constexpr const char *FILE_LIST_ID = "file-list";
         constexpr const char *PRESET_HEAD_ID = "preset-head";
         constexpr const char *PRESET_LIST_ID = "preset-list";
@@ -16,6 +17,7 @@ namespace arenai::desktop::gui {
         constexpr const char *CUDA_TOGGLE_ID = "cuda-toggle";
         constexpr const char *USE_FOLDER_ID = "use-folder";
 
+        // the data-for clones currently shown in the explorer
         std::vector<Rml::Element *> visible_file_entries(const Rml::Element *file_list) {
             std::vector<Rml::Element *> entries;
             for (int i = 0; i < file_list->GetNumChildren(); i++)
@@ -121,6 +123,7 @@ namespace arenai::desktop::gui {
                 settings_.agent_algorithm = *algorithm;
                 algorithm_display_ = to_string(*algorithm);
                 mark_custom();
+                // the networks are rebuilt differently: re-run the check
                 validate_agent();
             }
             refresh_explorer();
@@ -135,6 +138,7 @@ namespace arenai::desktop::gui {
             else if (const auto path = current_dir_ / entry; std::filesystem::is_directory(path))
                 current_dir_ = path;
             else {
+                // a listed file is a config.json candidate
                 settings_.agent_config = path;
                 mark_custom();
                 validate_agent();
@@ -229,6 +233,7 @@ namespace arenai::desktop::gui {
         validate_agent();
     }
 
+    // any hand edit of the agent fields detaches the selection from the preset
     void AiPage::mark_custom() {
         selected_preset_ = std::nullopt;
         settings_.agent_preset = std::nullopt;

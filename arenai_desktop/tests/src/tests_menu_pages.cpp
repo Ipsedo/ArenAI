@@ -49,6 +49,7 @@ namespace {
             std::filesystem::remove_all(agent_dir_);
         }
 
+        // the real page set, with the dry-run validator replaced by `validator`
         void build_menu(AgentValidator validator) {
             std::vector<std::unique_ptr<gui::MenuPage>> pages;
             pages.push_back(std::make_unique<gui::MainPage>(
@@ -67,7 +68,7 @@ namespace {
 
         void show(const gui::PageId page) {
             navigator_->go(page);
-            context().Update();
+            context().Update();// builds the data-for clones
         }
 
         Rml::ElementList visible_elements(const gui::PageId page, const Rml::String &selector) {
@@ -173,6 +174,7 @@ TEST_F(MenuPagesTest, graphics_gpu_picker_maps_index_zero_to_auto) {
     build_menu(accepting_validator());
     show(gui::PageId::Graphics);
 
+    // the saved name is still listed: it stays
     EXPECT_EQ(state_.settings.window_gpu, "GPU B");
 
     Rml::ElementDocument &document = navigator_->page(gui::PageId::Graphics).document();
@@ -185,6 +187,7 @@ TEST_F(MenuPagesTest, graphics_gpu_picker_maps_index_zero_to_auto) {
     entries[1]->DispatchEvent(Rml::EventId::Click, Rml::Dictionary());
     context().Update();
     EXPECT_EQ(state_.settings.window_gpu, "GPU A");
+    // picking an entry folds the list
     EXPECT_FALSE(list->IsVisible());
 
     click(gui::PageId::Graphics, "toggle_window_gpu()");
@@ -262,6 +265,7 @@ TEST_F(MenuPagesTest, dpad_reaches_the_device_toggles_and_crosses_the_explorer) 
     press(controller::GamepadButton::DPadUp);
     EXPECT_EQ(focused_id(), "cuda-toggle");
 
+    // and the way up leaves the toggle towards the algorithm grid
     press(controller::GamepadButton::DPadUp);
     EXPECT_EQ(focused_id(), "algo-ppo-liquid");
 }
@@ -282,9 +286,11 @@ TEST_F(MenuPagesTest, keyboard_capture_rebinds_the_slot) {
     build_menu(accepting_validator());
     show(gui::PageId::Controls);
 
+    // the capturable chips, in slot order (the fixed rows have none)
     const auto chips = visible_elements(gui::PageId::Controls, ".keychip[data-event-click]");
     ASSERT_FALSE(chips.empty());
 
+    // slot 0 is FORWARD: click its chip, then press F
     chips[0]->DispatchEvent(Rml::EventId::Click, Rml::Dictionary());
     adapter_->on_key(controller::Key::F, controller::InputAction::Press);
 
@@ -302,6 +308,7 @@ TEST_F(MenuPagesTest, leaving_the_controls_page_cancels_a_pending_capture) {
     chips[0]->DispatchEvent(Rml::EventId::Click, Rml::Dictionary());
 
     navigator_->back();
+    // the capture sink is gone: the key reaches nobody and the slot keeps W
     adapter_->on_key(controller::Key::F, controller::InputAction::Press);
     EXPECT_EQ(
         std::get<controller::Key>(*state_.settings.bindings.keyboard.forward), controller::Key::W);
@@ -484,6 +491,7 @@ TEST_F(MenuPagesTest, hud_status_fills_clock_scores_hull_and_enemy_slots) {
     EXPECT_EQ(document.GetElementById("hud-ai-score")->GetInnerRML(), "860");
     EXPECT_EQ(document.GetElementById("hud-enemies-left")->GetInnerRML(), "3 / 4");
 
+    // 0.7 of 8 segments: 6 kept (ceil), 2 lost
     Rml::ElementList lost;
     document.QuerySelectorAll(lost, ".hull-segment.lost");
     EXPECT_EQ(lost.size(), 2u);

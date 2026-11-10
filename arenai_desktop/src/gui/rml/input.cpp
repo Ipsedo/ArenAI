@@ -18,6 +18,7 @@ namespace arenai::desktop::gui {
     void MenuInputAdapter::on_key(const controller::Key key, const controller::InputAction action) {
         if (action != controller::InputAction::Press) return;
 
+        // local copy: the sink uninstalls itself from inside the call
         if (const auto sink = capture_sink_) {
             sink(key);
             return;
@@ -34,6 +35,7 @@ namespace arenai::desktop::gui {
     void MenuInputAdapter::on_mouse_button(
         const controller::MouseButton button, const controller::InputAction action) {
         if (action == controller::InputAction::Press) {
+            // local copy: the sink uninstalls itself from inside the call
             if (const auto sink = capture_sink_) {
                 sink(button);
                 return;
@@ -59,6 +61,7 @@ namespace arenai::desktop::gui {
         const controller::GamepadButton button, const controller::InputAction action) {
         if (action != controller::InputAction::Press) return;
 
+        // local copy: the sink uninstalls itself from inside the call
         if (const auto sink = capture_sink_) {
             sink(button);
             return;
@@ -93,11 +96,13 @@ namespace arenai::desktop::gui {
         }
         if (stick != controller::GamepadJoystick::Left) return;
 
+        // GLFW stick y grows downwards, matching KI_DOWN
         axis_nav(x_nav_, x, Rml::Input::KI_LEFT, Rml::Input::KI_RIGHT);
         axis_nav(y_nav_, y, Rml::Input::KI_UP, Rml::Input::KI_DOWN);
     }
 
     void MenuInputAdapter::on_trigger(const double z, const controller::GamepadTrigger trigger) {
+        // local copy: the sink uninstalls itself from inside the call
         const auto sink = capture_sink_;
         if (!sink) return;
         sink(std::make_pair(
@@ -140,6 +145,7 @@ namespace arenai::desktop::gui {
                 break;
         if (element == nullptr) return;
 
+        // smooth ramp starting at the deadzone edge
         const double amount =
             (value > 0. ? 1. : -1.) * (std::abs(value) - DEADZONE) / (1. - DEADZONE);
         element->SetScrollTop(

@@ -56,6 +56,7 @@ TEST_P(BernoulliShapeParamTest, SampleIsBinary) {
     ASSERT_EQ(sample.size(0), batch_size);
     ASSERT_EQ(sample.size(1), nb_actions);
 
+    // each element is 0 or 1, independently of the others
     const auto is_binary = torch::logical_or(torch::eq(sample, 0.0f), torch::eq(sample, 1.0f));
     ASSERT_TRUE(torch::all(is_binary).item<bool>()) << "Sample should contain only 0s and 1s";
 }

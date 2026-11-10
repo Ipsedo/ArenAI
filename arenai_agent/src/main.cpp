@@ -12,10 +12,12 @@ using namespace arenai;
 using namespace arenai::agent;
 
 int main(const int argc, char **argv) {
+    // declared before the parser: add_subparser keeps references on the subparsers
     const auto algorithms = make_agent_clis();
 
     argparse::ArgumentParser parser("arenai train");
 
+    // train
     parser.add_group("train");
     parser.add_argument("--output_folder").required();
     parser.add_argument("--resources_folder").required();
@@ -24,6 +26,7 @@ int main(const int argc, char **argv) {
     parser.add_argument("--save_every").scan<'i', int>().default_value(30 * 60 * 3 * 5);
     parser.add_argument("--cuda").default_value(false).implicit_value(true);
 
+    // env
     parser.add_group("environment");
     parser.add_argument("--wanted_frequency").scan<'g', float>().default_value(1.f / 30.f);
     parser.add_argument("--nb_tanks").scan<'i', int>().default_value(32);
@@ -52,6 +55,7 @@ int main(const int argc, char **argv) {
         .scan<'i', int>()
         .default_value(static_cast<int>(std::thread::hardware_concurrency()));
 
+    // one subcommand per algorithm, carrying its own hyper-parameter options
     for (const auto &[name, subparser, create_agent]: algorithms) parser.add_subparser(*subparser);
 
     parser.parse_args(argc, argv);
@@ -61,6 +65,7 @@ int main(const int argc, char **argv) {
         if (parser.is_subcommand_used(algorithm.name)) selected_algorithm = &algorithm;
 
     const bool cuda = parser.get<bool>("--cuda");
+    // input sizes are constant, let the cuDNN autotuner pick the best conv algorithms
     if (cuda) at::globalContext().setBenchmarkCuDNN(true);
 
     const int vision_height = parser.get<int>("--vision_height");

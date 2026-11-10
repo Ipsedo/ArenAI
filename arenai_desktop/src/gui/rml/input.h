@@ -36,6 +36,7 @@ namespace arenai::desktop::gui {
         void on_gamepad_button(
             controller::GamepadButton button, controller::InputAction action) override;
         void on_joystick(double x, double y, controller::GamepadJoystick stick) override;
+        // triggers have no menu role outside binding capture
         void on_trigger(double z, controller::GamepadTrigger trigger) override;
 
     private:
@@ -47,7 +48,7 @@ namespace arenai::desktop::gui {
         void scroll_at_focus(double value);
 
         struct AxisNav {
-            int direction = 0;
+            int direction = 0;// -1 / 0 / +1 after hysteresis
             std::chrono::steady_clock::time_point next_repeat;
         };
 

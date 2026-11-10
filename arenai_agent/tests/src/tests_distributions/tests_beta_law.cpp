@@ -6,6 +6,7 @@ using namespace arenai;
 using namespace arenai::agent;
 
 TEST_F(BetaLawTest, UniformEntropyIsMaximal) {
+    // concentration=2 → alpha=beta=1 → uniform → maximal entropy
     const auto entropy_uniform = beta_law_entropy(torch::tensor({0.5f}), torch::tensor({2.0f}));
     const auto entropy_peaked = beta_law_entropy(torch::tensor({0.5f}), torch::tensor({10.0f}));
 
@@ -49,6 +50,7 @@ TEST_F(BetaLawTest, MeanActionMatchesModeWhenCentered) {
 }
 
 TEST_F(BetaLawTest, ModeActionSpansActionRange) {
+    // mode in [0, 1] maps linearly to [-1, 1], independent of concentration
     const auto mode = torch::tensor({0.0f, 0.25f, 0.5f, 0.75f, 1.0f});
 
     const auto action = beta_law_mode_action(mode);
@@ -98,6 +100,7 @@ TEST_P(BetaLawParamTest, EntropyShape) {
 TEST_P(BetaLawParamTest, SampleNoNaNBelowUniformConcentration) {
     const auto &shape = GetParam();
 
+    // concentration below the κ=2 floor → alpha/beta below the clamp, still finite
     const auto mode = torch::ones(shape) * 0.5f;
     const auto concentration = torch::ones(shape) * 0.1f;
 

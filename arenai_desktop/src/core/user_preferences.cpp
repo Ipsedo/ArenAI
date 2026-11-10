@@ -139,6 +139,7 @@ namespace arenai::desktop {
             if (const char *home = std::getenv("HOME"))
                 return std::filesystem::path(home) / ".cache" / "arenai";
 #endif
+            // no user profile at all (stripped-down service environment)
             return std::filesystem::temp_directory_path() / "arenai";
         }
 
@@ -154,7 +155,7 @@ namespace arenai::desktop {
 
         try {
             std::ifstream file(path);
-            if (!file.is_open()) return settings;
+            if (!file.is_open()) return settings;// first launch, nothing saved yet
 
             const auto json = nlohmann::json::parse(file);
 
@@ -178,12 +179,14 @@ namespace arenai::desktop {
                 settings.msaa_samples = msaa;
             settings.window_gpu = json.value("window_gpu", settings.window_gpu);
             settings.vision_gpu = json.value("vision_gpu", settings.vision_gpu);
+            // the AI page forces it back to false when CUDA is unavailable
             settings.cuda = json.value("cuda", settings.cuda);
 
             if (const auto bindings = json.value("bindings", nlohmann::json::object());
                 bindings.is_object())
                 load_bindings(bindings, settings.bindings);
 
+            // null = a custom selection was saved
             const auto preset_json = json.value("agent_preset", nlohmann::json());
             const auto preset_name =
                 preset_json.is_string() ? preset_json.get<std::string>() : std::string();

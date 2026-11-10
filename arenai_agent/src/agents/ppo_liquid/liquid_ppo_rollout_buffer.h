@@ -13,17 +13,20 @@ namespace arenai::agent {
     struct LiquidPpoInputStep {
         TorchState state;
         TorchAction action;
+        // pre-tanh draw of the squashed normal, what the log-probabilities are computed on
         torch::Tensor continuous_pre_tanh;
         torch::Tensor continuous_log_prob;
         torch::Tensor discrete_log_prob;
         torch::Tensor reward;
         torch::Tensor done;
         torch::Tensor truncated;
-        // [nb_tanks, neuron_number]
+        // [nb_tanks, neuron_number] actor liquid state opening the step
         torch::Tensor actor_hidden;
+        // the step opens a fresh episode (the liquid states were re-drawn)
         bool episode_start;
     };
 
+    // On-policy rollout stacked on the time dimension: every tensor is [T, nb_tanks, ...]
     struct LiquidPpoRollout {
         TorchState states;
         TorchAction actions;
@@ -33,13 +36,13 @@ namespace arenai::agent {
         torch::Tensor rewards;
         torch::Tensor dones;
         torch::Tensor truncateds;
-        // [nb_tanks, ...]
+        // [nb_tanks, ...] observation closing the last step, for the value bootstrap
         TorchState bootstrap_state;
-        // [T, nb_tanks, 1]
+        // [T, nb_tanks, 1] whether the (step, tank) pair is a live transition
         torch::Tensor valids;
-        // [T, nb_tanks, neuron_number]
+        // [T, nb_tanks, neuron_number] actor liquid state opening each step
         torch::Tensor actor_hiddens;
-        // [T]
+        // [T] bool, the step opens a fresh episode
         torch::Tensor episode_starts;
     };
 
@@ -50,6 +53,7 @@ namespace arenai::agent {
 
         size_t nb_complete_steps() const;
 
+        // stacks and removes every complete step; the pending one (if any) stays
         LiquidPpoRollout get_rollout();
 
     private:
@@ -60,9 +64,10 @@ namespace arenai::agent {
 
         std::vector<StoredStep> steps_;
 
+        // observation closing the last stored step, set by finish_episode()
         std::optional<TorchState> final_state_;
 
-        // [nb_tanks]
+        // [nb_tanks] tanks already done in the current episode
         torch::Tensor already_terminated_;
     };
 

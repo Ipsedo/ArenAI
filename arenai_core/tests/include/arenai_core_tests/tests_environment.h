@@ -7,6 +7,7 @@
 
 #include "./utils/engine_test_fixture.h"
 
+// test code: the arenai sub-namespaces are used unqualified
 using namespace arenai;
 
 class TestTanksEnvironment final : public core::BaseTanksEnvironment {
@@ -29,6 +30,7 @@ public:
     int reset_physics_call_count = 0;
     int reset_drawables_call_count = 0;
 
+    // item name → position right after spawn, before the settle steps
     std::vector<std::pair<std::string, glm::vec3>> spawn_positions;
 
 protected:

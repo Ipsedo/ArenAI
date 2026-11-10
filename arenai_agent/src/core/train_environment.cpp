@@ -16,6 +16,7 @@ using namespace arenai;
 using namespace arenai::agent;
 
 namespace {
+    // the aim potential is in [0, 1]: going from no aim to a perfect one is worth this much
     constexpr float AIM_POTENTIAL_SCALE = 0.3f;
     constexpr float HIT_REWARD_SCALE = 3.f;
     constexpr float RECEIVED_REWARD_SCALE = 1.f;
@@ -67,17 +68,20 @@ namespace arenai::agent {
         for (int frame = 0; frame < action_repeat && !is_episode_terminated(); frame++) {
             advance_frame(time_delta, frame == 0 ? actions : core::release_fire(actions));
 
+            // the agents' visions are rendered once, after the window
             const auto frame_results = tick_frame();
 
             nb_frames++;
             nb_steps++;
 
+            // the tanks' events are consumed every frame: tick() reads them
             apply_on_enemies<int>([&](const auto &tanks) {
                 for (int i = 0; i < nb_tanks; i++) {
                     const bool has_hit = tanks[i]->consume_has_hit();
                     const bool has_kill = tanks[i]->consume_has_kill();
                     const bool has_fired = tanks[i]->consume_has_fire();
 
+                    // a tank's rewards stop at its death frame
                     if (done[i]) continue;
 
                     const auto &[reward, is_done, is_truncated] = frame_results[i];
@@ -102,6 +106,7 @@ namespace arenai::agent {
                     if (has_kill) nb_kills_per_tanks[i]++;
                     if (has_fired) nb_fires_per_tank[i]++;
 
+                    // detect death (kill or suicide)
                     if (is_done) {
                         if (!tanks[i]->is_suicide()) nb_kills_episode++;
                         done[i] = true;
@@ -121,6 +126,7 @@ namespace arenai::agent {
             return 0;
         });
 
+        // the aim potential is read once per decision, on the state the agent will see
         const auto shaping_rewards = aim_shaping.step(aim_potentials(), done);
         for (int i = 0; i < nb_tanks; i++) {
             if (already_done[i]) continue;
@@ -132,7 +138,7 @@ namespace arenai::agent {
         render_frame(true);
         auto states = read_states();
 
-        // per second
+        // fire frequency (per second, per tank that acted this step)
         int nb_acting = 0, nb_fires = 0, nb_hits = 0;
         for (int i = 0; i < nb_tanks; i++) {
             if (already_done[i]) continue;
@@ -153,6 +159,7 @@ namespace arenai::agent {
         std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>> result;
         result.reserve(nb_tanks);
 
+        // log metrics
         for (int i = 0; i < nb_tanks; i++) {
             if (!already_done[i]) {
                 reward_metric->add(rewards[i]);
@@ -184,9 +191,11 @@ namespace arenai::agent {
     void TrainTankEnvironment::on_reset_physics(
         const std::unique_ptr<model::AbstractPhysicEngine> &engine) {
 
+        // close the previous episode's counters (skip the very first reset)
         if (nb_steps > 0) {
             kill_metric->add(static_cast<float>(nb_kills_episode));
 
+            // hit accuracy is undefined on an episode without a single fire
             if (nb_fires_episode > 0)
                 hit_metric->add(
                     static_cast<float>(nb_hits_episode) / static_cast<float>(nb_fires_episode));

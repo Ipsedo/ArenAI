@@ -178,6 +178,7 @@ namespace {
         for (const auto &ctrl: tank->get_controllers()) ctrl->apply_input(FIRE_INPUT);
     }
 
+    // a tank spreads its health over its parts: its damages are the sum over them
     int consume_tank_hits(const std::shared_ptr<EnemyTank> &tank) {
         int hits = 0;
         for (const auto &item: tank->get_items())
@@ -186,6 +187,7 @@ namespace {
         return hits;
     }
 
+    // ShellItem lives behind arenai_model's private Jolt headers: match it by name
     std::shared_ptr<Item> find_shell(AbstractPhysicEngine &engine) {
         for (const auto &item: engine.get_items())
             if (item->get_name() == "shell_item") return item;
@@ -206,7 +208,7 @@ TEST_F(ShellTest, ShellImpactDealsExactlyOneDamage) {
     const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
     const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
-    consume_tank_hits(shared_b);
+    consume_tank_hits(shared_b);// drop whatever the settling produced
 
     fire_once(shared_a);
     for (int i = 0; i < 60; i++) {
@@ -232,7 +234,7 @@ TEST_F(ShellTest, TankSurvivesUntilAPartsHealthPointsAreSpent) {
     const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
     const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
-    consume_tank_hits(shared_b);
+    consume_tank_hits(shared_b);// drop whatever the settling produced
 
     constexpr int cheapest_part_health_points = 5;
     constexpr int max_shots = 20;

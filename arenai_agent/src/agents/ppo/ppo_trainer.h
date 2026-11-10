@@ -44,6 +44,7 @@ namespace arenai::agent {
         std::shared_ptr<Actor> actor;
         std::shared_ptr<PpoRolloutBuffer> rollout_buffer;
 
+        // one learned entropy temperature per action
         std::unique_ptr<EntropyAlphas> alphas;
 
         std::shared_ptr<ValueFunction> critic;
@@ -51,19 +52,25 @@ namespace arenai::agent {
         std::unique_ptr<torch::optim::Adam> actor_optim;
         std::unique_ptr<torch::optim::Adam> critic_optim;
 
+        // rewards scaled by the running std of the discounted return before the GAE
         std::shared_ptr<ReturnScaler> return_scaler;
 
         std::shared_ptr<AbstractMetric> actor_mean_loss_metric;
         std::shared_ptr<AbstractMetric> critic_mean_loss_metric;
 
+        // share of the return variance the critic explains, per critic minibatch
         std::shared_ptr<AbstractMetric> explained_variance_metric;
 
+        // both regulated by their learned alphas (CSV-only metrics)
         std::shared_ptr<AbstractMetric> continuous_entropy_metric;
         std::shared_ptr<AbstractMetric> discrete_entropy_metric;
 
+        // recorded on every minibatch
         std::shared_ptr<AbstractMetric> clip_fraction_metric;
+        // recorded on every actor optimizer step taken or refused
         std::shared_ptr<AbstractMetric> kl_metric;
 
+        // share of the planned actor steps the KL threshold cut, once per rollout
         std::shared_ptr<AbstractMetric> skip_fraction_metric;
 
         float gamma;
@@ -81,6 +88,7 @@ namespace arenai::agent {
         int critic_batch_size;
         int critic_gpu_batch_size;
 
+        // the rollout flattened to [T * nb_tanks, ...] rows, all on the device
         struct FlatRows {
             torch::Tensor vision;
             torch::Tensor proprioception;
@@ -99,6 +107,7 @@ namespace arenai::agent {
         void run_actor_epochs(const FlatRows &rows, const torch::Tensor &valid_idx) const;
         void run_critic_epochs(const FlatRows &rows, const torch::Tensor &valid_idx) const;
 
+        // accumulates a device block's share of its optimizer batch gradient; returns its per-row KL
         torch::Tensor backward_actor(const FlatRows &block, float batch_fraction) const;
 
         void backward_critic(const FlatRows &block, float batch_fraction) const;

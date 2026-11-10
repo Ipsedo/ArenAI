@@ -11,8 +11,10 @@
 
 namespace arenai::desktop {
 
+    // shadow quality presets; Ultra matches the historical hardcoded rendering
     enum class ShadowQuality { Off, Low, Medium, High, Ultra };
 
+    // canonical names, shared by the JSON preferences and the menu bindings
     constexpr const char *to_string(const ShadowQuality quality) {
         switch (quality) {
             case ShadowQuality::Off: return "off";
@@ -33,6 +35,7 @@ namespace arenai::desktop {
 
     enum class AiAlgorithm { Ppo, PpoLiquid, Ppg };
 
+    // canonical names, shared by the JSON preferences and the menu bindings
     constexpr const char *to_string(const AiAlgorithm algorithm) {
         switch (algorithm) {
             case AiAlgorithm::Ppo: return "ppo";
@@ -47,6 +50,7 @@ namespace arenai::desktop {
         return std::nullopt;
     }
 
+    // what the player can tune in the menu before launching a game
     struct GameSettings {
         int nb_tanks = 16;
         int spawn_side = 500;
@@ -84,8 +88,9 @@ namespace arenai::desktop {
         settings.agent_preset = preset.name;
     }
 
+    // the agent fields of GameSettings, as handed to the loader
     struct AgentSelection {
-        std::filesystem::path config;
+        std::filesystem::path config;// empty = auto-resolved config.json
         std::filesystem::path folder;
         AiAlgorithm algorithm;
     };

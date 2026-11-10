@@ -14,7 +14,9 @@ namespace arenai::agent {
     struct LiquidActorOutput {
         torch::Tensor mu;
         torch::Tensor sigma;
+        // independent Bernoulli probabilities, one per discrete action
         torch::Tensor discrete;
+        // liquid state after the last processed step
         torch::Tensor next_x;
         torch::Tensor features;
         torch::Tensor vision_features;
@@ -30,7 +32,7 @@ namespace arenai::agent {
             const int &unfolding_steps, const float &delta_t, const float &initial_sigma,
             const std::vector<float> &initial_discrete_probas);
 
-        // vision [B, C, H, W], sensors [B, S], x_t [B, neuron_number]
+        // one env step: vision [B, C, H, W], sensors [B, S], x_t [B, neuron_number]
         LiquidActorOutput
         act(const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &x_t);
 
@@ -49,7 +51,7 @@ namespace arenai::agent {
         torch::nn::Sequential sigma;
         torch::nn::Sequential discrete;
 
-        // [rows, features]
+        // [rows, features] recurrent input: encoded vision and sensors, concatenated
         torch::Tensor encode(const torch::Tensor &vision, const torch::Tensor &sensors);
     };
 

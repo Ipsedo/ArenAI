@@ -87,6 +87,7 @@ namespace arenai::agent {
 
     torch::Tensor TorchState::discrete_action_mask(
         const torch::Tensor &fire_mask, const int64_t nb_discrete_actions) {
+        // same layout as TorchAction::to_actions: fire first, the others always have an effect
         auto ones_sizes = fire_mask.sizes().vec();
         ones_sizes.back() = nb_discrete_actions - 1;
         return torch::cat({fire_mask, torch::ones(ones_sizes, fire_mask.options())}, -1);

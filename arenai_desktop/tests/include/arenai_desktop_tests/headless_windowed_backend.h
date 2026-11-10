@@ -7,6 +7,7 @@
 
 #include <arenai_view/backend.h>
 
+// test code: the arenai sub-namespaces are used unqualified
 using namespace arenai;
 
 class NoopDrawable final : public view::AbstractDrawable {

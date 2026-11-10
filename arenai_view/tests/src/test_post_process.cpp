@@ -32,10 +32,12 @@ namespace {
 
         VulkanPostProcess &post_process() { return post_process_; }
 
+        // records one full frame and returns the sum of the output pixels
         long run_frame(const int width, const int height) {
             const glm::mat4 proj_matrix = glm::perspectiveRH_ZO(
                 glm::quarter_pi<float>(), static_cast<float>(width) / static_cast<float>(height),
                 1.f, 2000.f * std::sqrt(3.f));
+            // sun in front of the camera, so the god-rays pass runs too
             const glm::vec3 sun_dir_view = glm::normalize(glm::vec3(0.1f, 0.3f, -1.f));
 
             const Target output(
@@ -46,6 +48,7 @@ namespace {
                 device_, static_cast<size_t>(width) * height * 4, VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
             device_->immediate_submit(pool_, [&](const VkCommandBuffer &cmd) {
+                // scene pass: the red clear alone feeds the effect chain
                 post_process_.begin_scene_pass(cmd);
                 post_process_.run_effects(cmd, proj_matrix, sun_dir_view);
 
@@ -131,6 +134,7 @@ namespace {
 TEST(TestPostProcess, FullPipelineRuns) {
     PostProcessHarness harness;
 
+    // the cleared scene must reach the output through the composite pass
     ASSERT_GT(harness.run_frame(WIDTH, HEIGHT), 0L);
 }
 

@@ -16,6 +16,7 @@ namespace arenai::agent {
         torch::Tensor get(long batch_size);
         void set(const torch::Tensor &next_x);
 
+        // fresh episode: the next get() re-draws every tank's initial state
         void reset();
 
     private:

@@ -12,6 +12,7 @@
 
 namespace arenai::desktop::gui {
 
+    // what draws a UI pass over the frame already rendered
     class AbstractOverlayRenderer {
     public:
         virtual ~AbstractOverlayRenderer() = default;
@@ -28,15 +29,18 @@ namespace arenai::desktop::gui {
         void set_aim_point(std::optional<glm::vec2> normalized) override;
         void render() override;
 
+        // the hull bar's segment count
         static constexpr int HULL_SEGMENTS = 8;
 
     protected:
         void bind(DataModel &model) override;
+        // grabs the overlay elements; throws when hud.rml misses one
         void on_attached(Rml::ElementDocument &document) override;
 
     private:
         AbstractOverlayRenderer &renderer_;
 
+        // the status, in the shapes the RML binds
         Rml::String clock_;
         int player_score_ = 0;
         int hull_segments_ = HULL_SEGMENTS;

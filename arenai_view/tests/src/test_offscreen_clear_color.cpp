@@ -21,8 +21,10 @@ TEST_P(OffscreenClearColorParam, ClearColorNoDrawable) {
 
     constexpr auto model_matrices = std::vector<std::tuple<std::string, glm::mat4>>{};
 
+    // warmup frame (black)
     buffer_renderer->draw_and_get_frame(model_matrices);
 
+    // actual frame: should be the clear color (red = 1,0,0,0 in on_new_frame)
     const auto [pixels] = buffer_renderer->draw_and_get_frame(model_matrices);
 
     const int hw = width * height;

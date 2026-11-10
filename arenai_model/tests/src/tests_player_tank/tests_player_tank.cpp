@@ -46,6 +46,7 @@ TEST_F(PlayerTankTest, ScoreHigherOnKillThanHit) {
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
+    // weaken the enemy chassis so a single shell kills it
     for (const auto &item: enemy->get_items()) {
         if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
             life->receive_damages(
@@ -63,6 +64,7 @@ TEST_F(PlayerTankTest, ScoreHigherOnKillThanHit) {
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
+    // killed_nb * 10 + hit_nb — a kill gives 10 points vs 1 for a hit
     const int score = player->get_score();
     ASSERT_GE(score, 10) << "killing an enemy should give at least 10 points";
 }
@@ -73,6 +75,7 @@ TEST_F(PlayerTankTest, ScoreDoesNotIncreaseOnSelfHit) {
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
+    // fire without any enemy — shell should hit the ground or expire
     constexpr user_input fire_input{
         .left_joystick = {.x = 0.f, .y = 0.f},
         .right_joystick = {.x = 0.f, .y = 0.f},

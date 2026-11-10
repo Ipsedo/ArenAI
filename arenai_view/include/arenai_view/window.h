@@ -39,6 +39,7 @@ namespace arenai::view {
 
         virtual std::tuple<int, int> screen_size() const = 0;
 
+        // connected gamepads, in the backend's slot order
         virtual std::vector<GamepadInfo> list_gamepads() const = 0;
         virtual void select_gamepad(int id) = 0;
 

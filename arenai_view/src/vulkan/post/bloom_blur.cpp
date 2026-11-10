@@ -12,6 +12,7 @@ namespace arenai::view {
             width, height) {}
 
     void BloomBlurEffect::render(FrameContext &context) {
+        // separable gaussian: horizontal into target 0, vertical into target 1
         constexpr glm::vec2 horizontal(1.f, 0.f);
         run_pass(context, 0, {context.textures.at(PostTexture::bloom_bright)}, &horizontal);
 

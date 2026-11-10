@@ -18,15 +18,15 @@
 namespace arenai::view {
 
     enum class PostTexture {
-        ao_raw,
-        ao,
-        bloom_bright,
-        bloom,
-        god_rays,
+        ao_raw,      // SsaoEffect -> AoBlurEffect
+        ao,          // AoBlurEffect -> CompositeEffect
+        bloom_bright,// BloomBrightEffect -> BloomBlurEffect
+        bloom,       // BloomBlurEffect -> CompositeEffect
+        god_rays,    // GodRaysEffect -> CompositeEffect
     };
 
     enum class PostScalar {
-        god_ray_strength,
+        god_ray_strength,// GodRaysEffect -> CompositeEffect
     };
 
     class VulkanPostEffect {

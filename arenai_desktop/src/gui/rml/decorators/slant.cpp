@@ -31,11 +31,13 @@ namespace arenai::desktop::gui {
     Rml::Mesh SlantDecorator::build_mesh(Rml::Element &element) const {
         const float opacity = element.GetComputedValues().opacity();
         const Rml::Vector2f size = element_size(element);
+        // the lean can never exceed what the width leaves for the top edge
         const float slant = std::clamp(element.ResolveLength(slant_), 0.f, size.x * 0.5f);
         const float thickness = element.ResolveLength(thickness_);
 
         Rml::Mesh mesh;
 
+        // top-left, top-right, bottom-right, bottom-left
         const std::array<Rml::Vector2f, 4> outer = {
             Rml::Vector2f(slant, 0.f), Rml::Vector2f(size.x, 0.f),
             Rml::Vector2f(size.x - slant, size.y), Rml::Vector2f(0.f, size.y)};

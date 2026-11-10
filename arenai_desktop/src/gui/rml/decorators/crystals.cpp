@@ -11,6 +11,7 @@ namespace arenai::desktop::gui {
 
     namespace {
 
+        // the mockups' artboard: every coordinate is a fraction of it
         constexpr float DESIGN_WIDTH = 1280.f;
         constexpr float DESIGN_HEIGHT = 720.f;
 
@@ -18,6 +19,7 @@ namespace arenai::desktop::gui {
             float x, y, z;
         };
 
+        // the two authored irregular tetrahedra, in unit crystal space
         constexpr std::array<Vec3, 4> SHAPE_1{
             {{0.f, -1.7f, 0.15f},
              {1.05f, 0.6f, 0.6f},
@@ -40,6 +42,7 @@ namespace arenai::desktop::gui {
 
     std::vector<CrystalsDecorator::Instance>
     CrystalsDecorator::parse(const Rml::String &instances) {
+        // std::from_chars: locale-independent, like the facets parser
         const auto read_float = [](std::string_view text, float &value) -> std::string_view {
             while (!text.empty() && text.front() == ' ') text.remove_prefix(1);
             const auto [end, error] =
@@ -100,6 +103,7 @@ namespace arenai::desktop::gui {
                 const float z1 = v.y * sin_x + v.z * cos_x;
                 const float x2 = v.x * cos_y + z1 * sin_y;
                 const float z2 = -v.x * sin_y + z1 * cos_y;
+                // light perspective: the far half of the crystal shrinks
                 const float k = 1.f / (1.f + z2 * 0.17f);
                 projected[i] = {
                     (instance.center.x + x2 * instance.size * k) * scale.x,
@@ -108,6 +112,7 @@ namespace arenai::desktop::gui {
             }
 
             for (const auto &[from, to]: EDGES) {
+                // back edges fade: the wireframe reads as a volume
                 const float z = (depth[from] + depth[to]) * 0.5f;
                 const float alpha =
                     opacity * std::clamp(0.16f + 0.24f * (0.5f - z / 3.f), 0.f, 1.f);

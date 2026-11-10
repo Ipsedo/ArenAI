@@ -8,7 +8,9 @@ namespace arenai::desktop::gui {
 
     struct MenuState {
         GameSettings settings;
+        // the dry-run load of the selected agent succeeded (the Play gate)
         bool agent_valid = false;
+        // shown by the pause and game-over popups
         MatchStatus match;
     };
 

@@ -99,6 +99,7 @@ namespace arenai::desktop::gui {
             }
 
             ~RmlGui() override {
+                // nothing may keep pointing at this object through the window
                 window_->set_keyboard_callback(nullptr);
                 window_->set_gamepad_callback(nullptr);
                 window_->set_resize_callback(nullptr);
@@ -107,6 +108,7 @@ namespace arenai::desktop::gui {
             }
 
         private:
+            // the blocking main-menu loop, owning the window input meanwhile
             class MainMenu final : public AbstractMainMenu {
             public:
                 explicit MainMenu(RmlGui &gui) : gui_(gui) {}
@@ -250,6 +252,7 @@ namespace arenai::desktop::gui {
             MenuSystemInterface system_interface_;
             ReaderBackedFileInterface file_interface_;
 
+            // created after Rml::Initialise(), destroyed after Rml::Shutdown()
             std::unique_ptr<DecoratorRegistry> decorators_;
             std::vector<std::string> font_buffers_;
 

@@ -16,6 +16,7 @@ namespace arenai::agent {
             std::shared_ptr<LiquidPpoRolloutBuffer> rollout_buffer,
             std::shared_ptr<LiquidHiddenState> hidden_state);
 
+        // concrete act-time channel, called by TorchLiquidPpoAgent::act
         void on_act(
             const TorchState &state, const TorchAction &action,
             const torch::Tensor &continuous_pre_tanh, const torch::Tensor &continuous_log_prob,
@@ -38,6 +39,7 @@ namespace arenai::agent {
         torch::Tensor last_discrete_log_prob;
         torch::Tensor last_actor_hidden;
 
+        // raised at construction and by on_episode_end, consumed by the next on_transition
         bool next_episode_start = true;
     };
 

@@ -45,6 +45,7 @@ namespace arenai::agent {
         vision_encoder->apply(init_hidden_weights);
         sensors_encoder->apply(init_hidden_weights);
 
+        // zero bias puts the initial mode at the action-range center
         mu->apply(init_mu_output_weights);
         sigma->apply(
             [initial_sigma](Module &m) { init_log_sigma_output_weights(m, initial_sigma); });
@@ -79,6 +80,7 @@ namespace arenai::agent {
         const auto batch_size = vision.size(0);
         const auto nb_steps = vision.size(1);
 
+        // the encoders are step-wise: fold time into the row dimension
         const auto encoded =
             encode(vision.flatten(0, 1), sensors.flatten(0, 1)).reshape({batch_size, nb_steps, -1});
 

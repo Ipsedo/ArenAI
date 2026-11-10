@@ -7,6 +7,8 @@ using namespace arenai::agent;
 
 namespace arenai::agent {
 
+    // the log-proba and entropy carry the log(2) change of scale from [0, 1] to [-1, 1]
+
     torch::Tensor to_alpha(const torch::Tensor &mode, const torch::Tensor &concentration) {
         return mode * (concentration - 2.0) + 1.0;
     }

@@ -20,10 +20,13 @@ namespace arenai::desktop::gui {
 
         virtual bool animated() const { return false; }
 
+        // the element's `color` premultiplied by its opacity
         static Rml::ColourbPremultiplied element_color(const Rml::Element &element);
+        // the element's border-box size, the decorator's drawing area
         static Rml::Vector2f element_size(Rml::Element &element);
     };
 
+    // a bar of the given thickness between two points (any orientation)
     void append_bar(
         Rml::Mesh &mesh, Rml::Vector2f from, Rml::Vector2f to, float thickness,
         Rml::ColourbPremultiplied color);
@@ -33,7 +36,9 @@ namespace arenai::desktop::gui {
         Rml::PropertyId add_length(const char *name, const char *default_value);
         Rml::PropertyId add_color(const char *name, const char *default_value);
         Rml::PropertyId add_number(const char *name, const char *default_value);
+        // a quoted free-form value ("..." in the RCSS shorthand)
         Rml::PropertyId add_string(const char *name, const char *default_value);
+        // call once every property is declared
         void register_shorthand();
 
         static Rml::NumericValue

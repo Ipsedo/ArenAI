@@ -11,6 +11,7 @@ namespace arenai::desktop::gui {
 
     class Navigator final : public AbstractNavigator {
     public:
+        // loads every page into the context; throws when one fails
         Navigator(Rml::Context &context, std::vector<std::unique_ptr<MenuPage>> pages, PageId root);
 
         void go(PageId page) override;
@@ -21,6 +22,7 @@ namespace arenai::desktop::gui {
 
         bool on_escape();
 
+        // per-frame hooks forwarded to the visible page
         void update() const;
         void after_context_update() const;
 

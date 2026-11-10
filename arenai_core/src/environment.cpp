@@ -47,6 +47,7 @@ namespace arenai::core {
 
     void BaseTanksEnvironment::advance_frame(
         const float time_delta, const std::vector<Action> &actions) {
+        // the parts read the aim axes as a rate
         for (int i = 0; i < tanks.size(); i++) {
             if (tanks[i]->is_dead()) tanks[i]->on_death();
             else
@@ -116,6 +117,7 @@ namespace arenai::core {
 
         std::uniform_real_distribution<float> mass_u_dist(3, 100);
 
+        // add tanks
         for (int i = 0; i < nb_tanks; i++) {
             const float x = x_pos_u_dist(rng), z = y_pos_u_dist(rng);
             tanks.push_back(tank_factory->make_enemy_tank(
@@ -123,6 +125,7 @@ namespace arenai::core {
                 glm::vec3(x, ground_height(x, z) + 3.f, z), shell_economy));
         }
 
+        // add basic shapes
         constexpr float item_spawn_size = 2000.f;
         std::uniform_real_distribution item_x_pos_u_dist(-item_spawn_size / 2, item_spawn_size / 2);
         std::uniform_real_distribution item_y_pos_u_dist(-item_spawn_size / 2, item_spawn_size / 2);
@@ -130,6 +133,7 @@ namespace arenai::core {
         std::uniform_real_distribution<float> scale_u_dist(2.5, 10);
         constexpr int nb_shapes = 30;
 
+        // unit meshes scaled by scale.y: spawn the item's half-height (+1 margin) above the ground
         const auto item_pos = [&](const float x, const float z, const glm::vec3 &scale) {
             return glm::vec3(x, ground_height(x, z) + scale.y + 1.f, z);
         };
@@ -188,6 +192,7 @@ namespace arenai::core {
         reset_drawables();
         drawing_started_ = true;
 
+        // warm-up: 2 render loops to prime PBO double-buffering
         const auto model_matrices = get_model_matrices();
         for (int i = 0; i < 2; i++) {
             vision_pool_->set_model_matrices(model_matrices);

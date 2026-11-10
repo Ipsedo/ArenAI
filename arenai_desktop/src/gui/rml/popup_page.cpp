@@ -64,6 +64,7 @@ namespace arenai::desktop::gui {
     }
 
     void PopupPage::report(const PopupAction action) {
+        // local copy: the listener may close this popup from inside the call
         if (const auto listener = on_action_) listener(action);
     }
 

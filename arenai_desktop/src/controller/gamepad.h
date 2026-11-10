@@ -36,6 +36,7 @@ namespace arenai::desktop {
 
         PlayerGamepadInput state;
 
+        // held state: true between the press and the release of the zoom button
         bool zoom_held = false;
 
         static float apply_dead_zone(double value);

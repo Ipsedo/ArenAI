@@ -18,7 +18,7 @@ namespace arenai::agent {
             int nb_continuous_actions, int nb_discrete_actions, float initial_alpha,
             float learning_rate, float continuous_target_entropy, float discrete_target_proba);
 
-        // [nb_continuous_actions] and [nb_discrete_actions]
+        // [nb_continuous_actions] and [nb_discrete_actions], attached to log_alpha
         torch::Tensor continuous() const;
         torch::Tensor discrete() const;
 

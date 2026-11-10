@@ -38,11 +38,13 @@ TEST_P(ActorTestParam, TestActorAct) {
                                torch::ge(sigma, std::exp(LOG_SIGMA_MIN)),
                                torch::le(sigma, std::exp(LOG_SIGMA_MAX))))
                     .item<bool>());
+    // the log-sigma head starts at the wanted initial sigma, whatever the state
     ASSERT_TRUE(torch::all(torch::abs(sigma - 0.1f) < 0.02f).item<bool>());
 
     ASSERT_EQ(discrete.ndimension(), 2);
     ASSERT_EQ(discrete.size(0), batch_size);
     ASSERT_EQ(discrete.size(1), discrete_actions_nb);
+    // independent Bernoulli probabilities: each in (0, 1), no sum constraint
     ASSERT_TRUE(torch::all(torch::logical_and(torch::gt(discrete, 0.0), torch::lt(discrete, 1.0)))
                     .item<bool>());
 }

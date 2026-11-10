@@ -4,6 +4,7 @@
 #include <agents/ppg/ppg_rollout_buffer.h>
 #include <gtest/gtest.h>
 
+// test code: the arenai sub-namespaces are used unqualified
 using namespace arenai;
 
 class PpgRolloutBufferTest : public testing::Test {

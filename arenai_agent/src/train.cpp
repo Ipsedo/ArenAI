@@ -118,9 +118,12 @@ namespace arenai::agent {
 
         AgentSaver saver(trainer, train_options.output_folder, train_options.save_every);
 
+        // metrics
+
         const auto trainer_metrics = trainer->get_metrics();
         const auto env_metrics = env->get_metrics();
 
+        // curriculum observability: the side played this episode and the current bound
         const auto spawn_side_metric = std::make_shared<LastMetric>("side", 0);
         const auto spawn_bound_metric = std::make_shared<LastMetric>("D", 0);
 
@@ -142,6 +145,7 @@ namespace arenai::agent {
             train_options.output_folder, csv_metrics,
             static_cast<int>(30.f / environment_options.wanted_frequency));
 
+        // progress bar
         indicators::ProgressBar p_bar{
             indicators::option::MinProgress{0},
             indicators::option::MaxProgress{train_options.nb_episodes},
@@ -177,6 +181,7 @@ namespace arenai::agent {
             spawn_bound_metric->add(
                 std::lerp(initial_spawn_side, final_spawn_side, curriculum.upper_bound()));
 
+            // set variable for episode
             bool is_done = false;
 
             auto state = TorchState(
@@ -189,25 +194,30 @@ namespace arenai::agent {
 
                 actions_for_env = agent->act(state.to(torch_device), true).to_actions();
 
+                // step environment
                 const auto steps = env->step(environment_options.wanted_frequency, actions_for_env);
 
                 const TorchStep torch_step(
                     steps, environment_options.vision_height, environment_options.vision_width);
 
+                // complete the pending transition - maybe train
                 collector->on_transition(
                     torch_step.get_rewards(), torch_step.get_is_done(),
                     torch_step.get_is_truncated());
                 trainer->step();
 
+                // step ending stuff
                 is_done = env->is_episode_terminated();
 
                 state = torch_step.get_states();
 
                 print_counter = (print_counter + 1) % print_tqdm_bar_every;
 
+                // attempt to save
                 saver.attempt_save();
                 metric_csv_saver.attempt_append_to_csv();
 
+                // progress bar metrics display
                 if (print_counter == print_tqdm_bar_every - 1) {
                     std::stringstream stream;
                     stream << "- " << episode_index << " (" << static_cast<int>(spawn_side)
@@ -218,6 +228,7 @@ namespace arenai::agent {
                 }
             }
 
+            // close episode
             collector->on_episode_end(state);
 
             env->stop_drawing();

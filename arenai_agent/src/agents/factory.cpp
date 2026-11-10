@@ -21,6 +21,7 @@ namespace arenai::agent {
           wanted_frequency(config.at("environment").at("wanted_frequency").get<float>()),
           action_repeat(config.at("environment").at("action_repeat").get<int>()) {}
 
+    // needed for game
     int AgentFactory::get_vision_height() const { return vision_height; }
     int AgentFactory::get_vision_width() const { return vision_width; }
 
@@ -28,6 +29,7 @@ namespace arenai::agent {
 
     int AgentFactory::get_action_repeat() const { return action_repeat; }
 
+    // factory method
     std::shared_ptr<AbstractAgent> AgentFactory::get_agent(
         const AgentAlgorithm algorithm, const int &nb_sensors, const int &nb_continuous_actions,
         const int &nb_discrete_actions, const bool cuda) {

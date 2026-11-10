@@ -79,6 +79,7 @@ TEST_F(MetricCsvSaverTest, AppendsDataRows) {
     saver.attempt_append_to_csv();
     saver.attempt_append_to_csv();
 
+    // 1 header + 3 data rows
     ASSERT_EQ(count_lines(dir / "metrics.csv"), 4);
 
     std::filesystem::remove_all(dir);
@@ -97,7 +98,7 @@ TEST_P(MetricCsvSaverParamTest, SaveEveryRespected) {
     for (int i = 0; i < total_calls; i++) saver.attempt_append_to_csv();
 
     const int expected_data_rows = (total_calls + save_every - 1) / save_every;
-    const int total_lines = 1 + expected_data_rows;
+    const int total_lines = 1 + expected_data_rows;// header + data
 
     ASSERT_EQ(count_lines(dir / "metrics.csv"), total_lines);
 

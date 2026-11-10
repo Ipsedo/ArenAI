@@ -15,18 +15,22 @@ namespace arenai::view {
 
     class VulkanTexture {
     public:
+        // 2D texture from raw RGBA/RGB bytes
         VulkanTexture(
             const std::shared_ptr<VulkanDevice> &device, const VkCommandPool &pool, int width,
             int height, int channels, const uint8_t *pixels);
 
+        // 1x1 opaque white texture (untextured UI geometry)
         static std::unique_ptr<VulkanTexture>
         make_white(const std::shared_ptr<VulkanDevice> &device, const VkCommandPool &pool);
 
+        // 2D texture from a png resource
         static std::unique_ptr<VulkanTexture> from_png(
             const std::shared_ptr<VulkanDevice> &device, const VkCommandPool &pool,
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::filesystem::path &png_path);
 
+        // cube map from the 6 pngs (posx/negx/posy/negy/posz/negz.png) of a folder
         static std::unique_ptr<VulkanTexture> cube_from_pngs(
             const std::shared_ptr<VulkanDevice> &device, const VkCommandPool &pool,
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
@@ -36,6 +40,7 @@ namespace arenai::view {
         VulkanTexture &operator=(const VulkanTexture &) = delete;
 
         VkImageView view() const;
+        // linear filtering, clamp to edge (parity with the GL texture setup)
         VkSampler sampler() const;
 
         ~VulkanTexture();

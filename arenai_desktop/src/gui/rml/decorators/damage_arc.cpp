@@ -35,6 +35,7 @@ namespace arenai::desktop::gui {
         const float inner_radius = std::max(outer_radius - thickness, 0.f);
         const float span = span_degrees_ * (std::numbers::pi_v<float> / 180.f);
 
+        // the color fades quadratically toward both tips of the arc
         Rml::Mesh mesh;
         for (int i = 0; i <= NB_SEGMENTS; i++) {
             const float t = static_cast<float>(i) / static_cast<float>(NB_SEGMENTS);

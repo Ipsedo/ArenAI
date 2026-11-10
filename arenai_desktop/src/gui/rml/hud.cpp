@@ -25,6 +25,7 @@ namespace arenai::desktop::gui {
         clock_ = clock_label(status.elapsed_seconds);
 
         player_score_ = status.player_score;
+        // ceil: the bar only empties completely once the hull is gone
         hull_segments_ = std::clamp(
             static_cast<int>(std::ceil(status.player_health * HULL_SEGMENTS)), 0, HULL_SEGMENTS);
         enemies_max_score_ = status.enemies_max_score;
@@ -48,6 +49,7 @@ namespace arenai::desktop::gui {
         if (damage_arcs_.empty())
             throw std::runtime_error("hud.rml misses its #damage-arcs elements");
 
+        // always on, never focused: the pages and popups own the input
         show(Rml::ModalFlag::None, Rml::FocusFlag::None);
     }
 

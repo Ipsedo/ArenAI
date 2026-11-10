@@ -112,11 +112,13 @@ namespace arenai::agent {
                 {start, end, static_cast<float>(end - start) / static_cast<float>(batch_size)});
         }
 
+        // critics on the frozen target
         critic_optim->zero_grad();
         for (const auto &[start, end, fraction]: blocks)
             backward_critic(slice_batch(batch, start, end), fraction);
         critic_optim->step();
 
+        // actor through the fresh critics, temperatures on the actor's entropies
         actor_optim->zero_grad();
         alpha_optim->zero_grad();
         for (const auto &[start, end, fraction]: blocks)
@@ -143,6 +145,7 @@ namespace arenai::agent {
             const auto [mu, sigma, discrete_proba] =
                 actor->act(block.next_states.get_vision(), block.next_states.get_state());
             const auto [next_action, u] = gaussian_tanh_sample(mu, sigma);
+            // each axis' log-probability weighted by its own temperature
             const auto continuous_log_prob = gaussian_tanh_log_pdf(u, mu, sigma);
             const auto continuous_bonus = (continuous_alpha * continuous_log_prob).sum(-1, true);
 
@@ -155,6 +158,7 @@ namespace arenai::agent {
                 block.next_states.get_vision(), block.next_states.get_state(), next_action);
             const auto q_min = torch::min(q1, q2);
 
+            // soft value: exact over the discrete combinations, one sample on the continuous
             const auto next_value =
                 (joint.probas * (q_min - discrete_bonus)).sum(-1, true) - continuous_bonus;
 

@@ -19,15 +19,18 @@ namespace arenai::desktop::gui {
             MenuState &state, std::shared_ptr<view::AbstractWindow> window,
             const std::vector<std::string> &gpus);
 
+        // Escape / gamepad B folds an open GPU dropdown first
         bool on_back() override;
 
     protected:
         void bind_controls(DataModel &model) override;
+        // hooks the click-outside closing of the dropdowns
         void on_attached(Rml::ElementDocument &document) override;
 
     private:
         // "Auto" rides index 0 of gpu_names_, the actual devices follow
         void select_gpu(int index, int &selected, std::string &setting, const char *variable);
+        // folds both lists; true when one was open
         bool close_dropdowns();
         void dirty_dropdowns();
 
@@ -41,6 +44,7 @@ namespace arenai::desktop::gui {
         std::vector<Rml::String> gpu_names_;
         int selected_window_gpu_ = 0;
         int selected_vision_gpu_ = 0;
+        // the selected names, what the folded dropdown heads display
         Rml::String window_gpu_display_;
         Rml::String vision_gpu_display_;
         bool window_gpu_open_ = false;

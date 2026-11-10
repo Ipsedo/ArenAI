@@ -10,9 +10,11 @@ namespace arenai::desktop::gui {
 
     namespace {
 
+        // the mockups' artboard: every coordinate is a fraction of it
         constexpr float DESIGN_WIDTH = 1280.f;
         constexpr float DESIGN_HEIGHT = 720.f;
 
+        // the swell's silent line: the arena floor starts under it
         constexpr float HORIZON = 395.f;
 
         Rml::ColourbPremultiplied scaled(const Rml::Colourb color, const float opacity) {
@@ -52,10 +54,11 @@ namespace arenai::desktop::gui {
           polygons_(parse(polygons)), houle_(animation == "houle") {}
 
     float FacetsDecorator::swell_offset(const Rml::Vector2f point, const double time) {
-        if (point.y >= 719.5f) return 0.f;
+        if (point.y >= 719.5f) return 0.f;// the screen's foot stays anchored
 
         float weight;
         if (point.y >= HORIZON) {
+            // the floor: silent at the horizon, full at the screen's foot
             weight = std::pow(std::min((point.y - HORIZON) / 325.f, 1.f), 1.1f);
         } else {
             const float u = point.y / HORIZON;

@@ -23,6 +23,7 @@ namespace arenai::desktop::gui {
         };
         selected_window_gpu_ = gpu_index(settings_.window_gpu);
         selected_vision_gpu_ = gpu_index(settings_.vision_gpu);
+        // a saved GPU that disappeared falls back to Auto, re-saved as such
         if (selected_window_gpu_ == 0) settings_.window_gpu.clear();
         if (selected_vision_gpu_ == 0) settings_.vision_gpu.clear();
         window_gpu_display_ = gpu_names_[static_cast<size_t>(selected_window_gpu_)];
@@ -107,6 +108,7 @@ namespace arenai::desktop::gui {
         setting = index == 0 ? std::string() : std::string(gpu_names_[index]);
         window_gpu_display_ = gpu_names_[static_cast<size_t>(selected_window_gpu_)];
         vision_gpu_display_ = gpu_names_[static_cast<size_t>(selected_vision_gpu_)];
+        // picking an entry folds its list
         window_gpu_open_ = false;
         vision_gpu_open_ = false;
         model().dirty(variable);

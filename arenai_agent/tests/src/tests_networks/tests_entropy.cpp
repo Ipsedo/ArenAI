@@ -18,6 +18,7 @@ TEST_F(AlphaParametersTest, DualStepMovesEachAlphaWithItsOwnError) {
 
     const auto before = alphas.alpha().detach().clone();
 
+    // H - H_target: the first action is under its target, the second above
     const auto error = torch::tensor({-1.f, 1.f});
     for (int i = 0; i < 10; i++) {
         optim.zero_grad();
@@ -224,21 +225,26 @@ TEST_F(PidLagrangianAlphaParameterTest, RecoversFromSaturationWithoutWindup) {
 
     const auto target = torch::full({8, 1}, 0.7f);
 
+    // long stretch above target: alpha parks at the zero floor
     for (int i = 0; i < 5000; i++) pid.update(torch::full({8, 1}, 5.f), target);
     ASSERT_FLOAT_EQ(pid.alpha().item<float>(), 0.f);
 
+    // entropy now under target: the bonus has to come back within the run, not after it
     for (int i = 0; i < 1000; i++) pid.update(torch::full({8, 1}, 0.2f), target);
     ASSERT_GT(pid.alpha().item<float>(), 0.f);
 }
 
 TEST_F(PidLagrangianAlphaParameterTest, DiscreteGainRecoversAtItsOwnErrorScale) {
+    // DISCRETE_ALPHA_K_P / K_I / K_D and ALPHA_INITIAL, as set in ppo_trainer.cpp
     const PidLagrangianAlphaParameters pid(2e-1f, 1e-2f, 1.f, 1e-3f, 1);
 
     const auto target = torch::full({8, 1}, 0.098039f);
 
+    // fire head still exploring: entropy above target, alpha parks at the zero floor
     for (int i = 0; i < 3000; i++) pid.update(torch::full({8, 1}, 0.693f), target);
     ASSERT_FLOAT_EQ(pid.alpha().item<float>(), 0.f);
 
+    // entropy now under target: the bonus has to come back within the run, not after it
     for (int i = 0; i < 25000; i++) pid.update(torch::full({8, 1}, 0.068f), target);
     ASSERT_GT(pid.alpha().item<float>(), 1e-3f);
 }

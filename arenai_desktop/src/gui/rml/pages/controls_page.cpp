@@ -88,6 +88,7 @@ namespace arenai::desktop::gui {
             if (settings_.controller_kind == ControllerKind::Keyboard)
                 settings_.bindings.keyboard = {};
             else {
+                // the device choice is not a binding: keep it
                 auto gamepad = GamepadBindings{};
                 gamepad.device_guid = std::move(settings_.bindings.gamepad.device_guid);
                 gamepad.device_name = std::move(settings_.bindings.gamepad.device_name);
@@ -143,6 +144,7 @@ namespace arenai::desktop::gui {
                 case controller::MouseButton::Right: return "MOUSE R";
                 case controller::MouseButton::Middle: return "MOUSE M";
             }
+        // layout-aware label (Key::Q reads "A" on AZERTY)
         const auto label = window_->key_label(std::get<controller::Key>(*slot));
         return label.empty() ? "?" : Rml::String(label);
     }
@@ -151,6 +153,7 @@ namespace arenai::desktop::gui {
         const std::optional<GamepadAxisBinding> &slot, const bool one_way) {
         if (!slot) return "UNBOUND";
         Rml::String label = GAMEPAD_AXIS_LABELS[static_cast<int>(slot->axis)];
+        // a one-way action bound to a stick reads a single direction
         const bool on_stick =
             slot->axis != GamepadAxis::LeftTrigger && slot->axis != GamepadAxis::RightTrigger;
         if (one_way && on_stick) label += slot->sign > 0.f ? "+" : "-";
@@ -236,10 +239,12 @@ namespace arenai::desktop::gui {
                 assign_keyboard(KeyboardBinding(*key));
             else if (const auto *button = std::get_if<controller::MouseButton>(&input))
                 assign_keyboard(KeyboardBinding(*button));
+            // pad input has no meaning on the keyboard page
             return;
         }
 
         if (capture_slot_ < NB_GP_BUTTON_SLOTS) {
+            // Start stays the in-game pause toggle, never a binding
             if (const auto *button = std::get_if<controller::GamepadButton>(&input);
                 button != nullptr && *button != controller::GamepadButton::Start)
                 assign_gamepad_button(*button);
@@ -278,6 +283,7 @@ namespace arenai::desktop::gui {
         const auto slots = gp_button_slots();
         *slots[capture_slot_] = button;
 
+        // the other button slot loses a conflicting assignment
         for (int slot = 0; slot < NB_GP_BUTTON_SLOTS; slot++)
             if (slot != capture_slot_ && *slots[slot] == button) {
                 *slots[slot] = std::nullopt;

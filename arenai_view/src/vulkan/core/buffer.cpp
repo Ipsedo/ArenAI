@@ -25,6 +25,7 @@ namespace arenai::view {
                 device_->allocator(), &buffer_info, &alloc_info, &buffer_, &allocation_, nullptr),
             "vmaCreateBuffer (device local)");
 
+        // staging copy
         VkBufferCreateInfo staging_info{};
         staging_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         staging_info.size = size;

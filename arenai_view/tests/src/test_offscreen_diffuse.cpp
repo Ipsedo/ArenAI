@@ -38,6 +38,7 @@ TEST_P(OffscreenDiffuseParam, TestDiffuseRendering) {
     const auto model_matrices =
         std::vector<std::tuple<std::string, glm::mat4>>{{"cube", glm::mat4(1.f)}};
 
+    // warmup
     const auto [black_pixels] = buffer_renderer->draw_and_get_frame(model_matrices);
     ASSERT_EQ(black_pixels.size(), 3 * width * height);
     ASSERT_EQ(
@@ -46,6 +47,7 @@ TEST_P(OffscreenDiffuseParam, TestDiffuseRendering) {
             [](const int acc, const uint8_t p) { return static_cast<int>(p) + acc; }),
         0);
 
+    // actual frame
     const auto [pixels] = buffer_renderer->draw_and_get_frame(model_matrices);
     ASSERT_EQ(pixels.size(), 3 * width * height);
 
@@ -55,6 +57,7 @@ TEST_P(OffscreenDiffuseParam, TestDiffuseRendering) {
             [](const int acc, const uint8_t p) { return static_cast<int>(p) + acc; }),
         0);
 
+    // golden image
 #ifndef ARENAI_REGENERATE_GOLDEN_IMAGES
     ARENAI_SKIP_UNLESS_PINNED_RENDER_ENV();
 #endif
@@ -64,6 +67,7 @@ TEST_P(OffscreenDiffuseParam, TestDiffuseRendering) {
         / ("golden_diffuse_" + std::to_string(width) + "_" + std::to_string(height) + ".json");
 
 #ifdef ARENAI_REGENERATE_GOLDEN_IMAGES
+    // rebuild mode: always overwrite the golden below (see ARENAI_REGENERATE_GOLDEN_IMAGES)
     if (false) {
 #else
     if (std::filesystem::exists(golden_image_path)) {
@@ -79,6 +83,7 @@ TEST_P(OffscreenDiffuseParam, TestDiffuseRendering) {
             ASSERT_LE(std::abs(golden_pixels[i] - pixels[i]), tolerance);
         }
     } else {
+        // generate golden image for first run
         nlohmann::json output_json(pixels);
         std::ofstream output_file(golden_image_path);
         output_file << output_json;

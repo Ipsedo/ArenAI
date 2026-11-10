@@ -37,6 +37,7 @@ namespace arenai::agent {
 
         std::vector<model::RewardDetail> last_step_reward_details() const;
 
+        // totals across every tank since the last reset, for the spawn curriculum
         int episode_nb_fires() const;
         int episode_nb_hits() const;
 
@@ -56,7 +57,7 @@ namespace arenai::agent {
         int action_repeat;
         int nb_tanks;
 
-        // physics frames
+        // physics frames since the reset (max_episode_steps is in frames too)
         int nb_steps;
 
         std::vector<bool> done;
@@ -69,10 +70,12 @@ namespace arenai::agent {
 
         std::shared_ptr<AbstractMetric> reward_metric;
 
+        // the reward terms the policy trades off, split out of reward_metric
         std::shared_ptr<AbstractMetric> reward_hit_metric;
         std::shared_ptr<AbstractMetric> reward_received_metric;
         std::shared_ptr<AbstractMetric> reward_aim_metric;
 
+        // miss distance of the shells that landed, one sample per step that resolved a shell
         std::shared_ptr<AbstractMetric> miss_distance_metric;
 
         std::shared_ptr<AbstractMetric> episode_step_mean_nb_metric;
@@ -87,6 +90,7 @@ namespace arenai::agent {
 
         std::vector<model::RewardDetail> step_reward_details;
 
+        // the learning term paid on top of the tanks' own event rewards: a dense aim signal
         PotentialShaping aim_shaping;
 
         bool are_all_done();

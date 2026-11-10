@@ -34,6 +34,7 @@ namespace arenai::view {
         vk_check(
             vkCreateSampler(device_->handle(), &sampler_info, nullptr, &linear_sampler_),
             "vkCreateSampler (effect linear)");
+        // depth inputs must be sampled NEAREST, like the GL resolve texture
         sampler_info.magFilter = VK_FILTER_NEAREST;
         sampler_info.minFilter = VK_FILTER_NEAREST;
         vk_check(
@@ -140,6 +141,7 @@ namespace arenai::view {
         const VkCommandBuffer &cmd = context.cmd;
         const Target &out = *targets_[target_index];
 
+        // previous readers of this target are done before it is rewritten
         record_image_barrier(
             cmd, out.image(), VK_IMAGE_ASPECT_COLOR_BIT,
             target_initialized_[target_index] ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
@@ -167,6 +169,7 @@ namespace arenai::view {
 
         vkCmdBeginRendering(cmd, &rendering_info);
 
+        // regular viewport: image-space pass, rows map 1:1
         const VkViewport viewport{
             .x = 0.f,
             .y = 0.f,

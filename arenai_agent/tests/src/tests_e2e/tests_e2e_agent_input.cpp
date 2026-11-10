@@ -82,6 +82,7 @@ namespace {
     }
 
     std::filesystem::path repository_root() {
+        // arenai_agent/tests/src/tests_e2e/ -> repository root
         return std::filesystem::path(__FILE__)
             .parent_path()
             .parent_path()
@@ -148,6 +149,7 @@ TEST(AgentInputEndToEnd, AgentInputMatchesGoldenImages) {
     }
 #endif
 
+    // after NB_STEPS neutral steps: references owned by arenai_agent
     for (int tank_idx = 0; tank_idx < NB_TANKS; tank_idx++) {
         const auto golden_path = root / "arenai_agent" / "tests" / "resources" / "golden_images"
                                  / ("golden_agent_input_step" + std::to_string(NB_STEPS) + "_tank_"
@@ -156,6 +158,7 @@ TEST(AgentInputEndToEnd, AgentInputMatchesGoldenImages) {
         const auto &pixels = agent.received_states.back()[tank_idx].vision.pixels;
 
 #ifdef ARENAI_REGENERATE_GOLDEN_IMAGES
+        // rebuild mode: always overwrite the golden below
         if (false) {
 #else
         if (std::filesystem::exists(golden_path)) {

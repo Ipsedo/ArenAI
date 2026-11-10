@@ -46,6 +46,7 @@ namespace arenai::agent {
         std::shared_ptr<DistillationActor> actor;
         std::shared_ptr<PpgRolloutBuffer> rollout_buffer;
 
+        // one learned entropy temperature per action
         std::unique_ptr<EntropyAlphas> alphas;
 
         std::shared_ptr<ValueFunction> critic;
@@ -53,19 +54,25 @@ namespace arenai::agent {
         std::unique_ptr<torch::optim::Adam> actor_optim;
         std::unique_ptr<torch::optim::Adam> critic_optim;
 
+        // rewards scaled by the running std of the discounted return before the GAE
         std::shared_ptr<ReturnScaler> return_scaler;
 
         std::shared_ptr<AbstractMetric> actor_mean_loss_metric;
         std::shared_ptr<AbstractMetric> critic_mean_loss_metric;
 
+        // share of the return variance the critic explains, per critic minibatch
         std::shared_ptr<AbstractMetric> explained_variance_metric;
 
+        // both regulated by their learned alphas (CSV-only metrics)
         std::shared_ptr<AbstractMetric> continuous_entropy_metric;
         std::shared_ptr<AbstractMetric> discrete_entropy_metric;
 
+        // recorded on every minibatch
         std::shared_ptr<AbstractMetric> clip_fraction_metric;
+        // recorded on every actor optimizer step taken or refused
         std::shared_ptr<AbstractMetric> kl_metric;
 
+        // share of the planned actor steps the KL threshold cut, once per rollout
         std::shared_ptr<AbstractMetric> skip_fraction_metric;
 
         float gamma;
@@ -88,9 +95,11 @@ namespace arenai::agent {
 
         float beta_clone;
 
+        // the auxiliary phase runs once every n_pi policy phases
         int n_pi;
         int nb_policy_phases = 0;
 
+        // the rollout flattened to [T * nb_tanks, ...] rows, all on the device
         struct FlatRows {
             torch::Tensor vision;
             torch::Tensor proprioception;
@@ -104,6 +113,7 @@ namespace arenai::agent {
             FlatRows select(const torch::Tensor &idx) const;
         };
 
+        // the policy to keep through the auxiliary phase (the clone reference)
         struct CloneTargets {
             torch::Tensor mus;
             torch::Tensor sigmas;
@@ -118,14 +128,17 @@ namespace arenai::agent {
         void run_critic_epochs(
             int nb_epochs, const FlatRows &rows, const torch::Tensor &valid_idx) const;
 
+        // once every n_pi policy phases: value distillation in the actor + extra critic epochs
         void auxiliary_phase(const FlatRows &rows, const torch::Tensor &valid_idx) const;
         CloneTargets compute_clone_targets(const FlatRows &rows) const;
         void run_actor_aux_epochs(
             const FlatRows &rows, const CloneTargets &targets,
             const torch::Tensor &valid_idx) const;
 
+        // accumulates a device block's share of its optimizer batch gradient; returns its per-row KL
         torch::Tensor backward_actor(const FlatRows &block, float batch_fraction) const;
 
+        // value distillation + policy clone loss of the auxiliary phase
         void backward_actor_aux(
             const FlatRows &block, const CloneTargets &targets, float batch_fraction) const;
 

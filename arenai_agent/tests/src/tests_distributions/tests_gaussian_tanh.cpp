@@ -177,6 +177,7 @@ TEST_F(GaussianTanhTest, EntropyGradientFlowsThroughMuAndSigma) {
 
     ASSERT_TRUE(torch::all(torch::isfinite(mu.grad())).item<bool>());
     ASSERT_TRUE(torch::all(torch::isfinite(sigma.grad())).item<bool>());
+    // widening sigma raises the entropy: the gradient of the mean entropy is positive
     ASSERT_GT(sigma.grad().sum().item<float>(), 0.f);
 }
 

@@ -47,6 +47,7 @@ TEST_P(MeanMetricParamTest, WindowEviction) {
 
     MeanMetric metric("test", window_size);
 
+    // fill with 100s then overwrite with 1s
     for (int i = 0; i < window_size; i++) metric.add(100.0f);
     for (int i = 0; i < values_to_add; i++) metric.add(1.0f);
 

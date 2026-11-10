@@ -4,6 +4,7 @@
 namespace arenai::agent {
     constexpr float EPSILON = 1e-8f;
 
+    // state-dependent log-sigma head of the squashed normal: Linear -> clamp -> exp
     constexpr float LOG_SIGMA_MIN = -5.f;
     constexpr float LOG_SIGMA_MAX = -0.3567f;
 

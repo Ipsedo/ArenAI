@@ -82,8 +82,10 @@ int main(const int argc, char **argv) {
     const int action_repeat = env_config.at("action_repeat").get<int>();
     const int max_episode_steps = config.at("train").at("max_episode_steps").get<int>();
 
+    // what the probe needs from an actor, whatever its family (ppo_liquid or sac)
     struct ProbeActorOutput {
         torch::Tensor mu, sigma, discrete;
+        // empty for actors without an exposed feature layer (sac)
         torch::Tensor features, vision_features;
     };
     std::function<ProbeActorOutput(const torch::Tensor &, const torch::Tensor &)> act;

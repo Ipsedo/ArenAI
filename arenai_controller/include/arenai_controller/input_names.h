@@ -8,7 +8,9 @@
 
 namespace arenai::controller {
 
+    // "" for Key::Unknown
     const char *to_string(Key key);
+    // Key::Unknown when the name is not recognized
     Key key_from_string(std::string_view name);
 
     const char *to_string(GamepadButton button);

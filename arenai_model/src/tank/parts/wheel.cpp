@@ -62,6 +62,7 @@ namespace arenai::model {
 
         ConvexItem::get_body()->SetFriction(1.f);
 
+        // for differential
         wheel_center_pos_rel_to_chassis = rel_pos;
         this->front_axle_z = front_axle_z;
     }

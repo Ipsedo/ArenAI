@@ -82,6 +82,7 @@ torch::Tensor LiquidCell::forward(const torch::Tensor &inputs) {
         results.push_back(output);
     }
 
+    // (batch, time, output_features)
     return torch::stack(results, 1);
 }
 

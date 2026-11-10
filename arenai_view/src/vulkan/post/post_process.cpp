@@ -156,6 +156,7 @@ namespace arenai::view {
 
         vkCmdBeginRendering(cmd, &rendering_info);
 
+        // negative height: the scene keeps the GL orientation conventions
         const VkViewport viewport{
             .x = 0.f,
             .y = static_cast<float>(height_),

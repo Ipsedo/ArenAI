@@ -79,6 +79,7 @@ TEST_F(EnvironmentTest, ResetGoldenImage) {
             / "golden_images" / ("golden_env_reset_tank_" + std::to_string(tank_idx) + ".json");
 
 #ifdef ARENAI_REGENERATE_GOLDEN_IMAGES
+        // rebuild mode: always overwrite the golden below (see ARENAI_REGENERATE_GOLDEN_IMAGES)
         if (false) {
 #else
         if (std::filesystem::exists(golden_image_path)) {
@@ -253,6 +254,7 @@ TEST_F(EnvironmentTest, FullLifecycle) {
 
     TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false);
 
+    // First episode
     const auto initial_states = env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
     ASSERT_EQ(static_cast<int>(initial_states.size()), nb_tanks);
 
@@ -262,6 +264,7 @@ TEST_F(EnvironmentTest, FullLifecycle) {
                    .fire_button = {false}});
     for (int i = 0; i < 10; i++) env.step(frequency, actions);
 
+    // Second episode (reset handles stop_drawing internally)
     const auto new_states = env.reset(50.f, 50.f, model::GAME_SHELL_ECONOMY);
     ASSERT_EQ(static_cast<int>(new_states.size()), nb_tanks);
 
@@ -289,9 +292,11 @@ TEST_F(EnvironmentTest, SpawnedBodiesStartAboveTerrain) {
 
     TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false);
 
+    // wide spawn zone so tanks land on varied terrain heights
     env.reset(2000.f, 2000.f, model::GAME_SHELL_ECONOMY);
     env.stop_drawing();
 
+    // terrain-only world (the fixture's engine) to measure the ground height at each (x, z)
     engine->get_item_factory()->make_height_map_item(
         "height_map", file_reader, "heightmap/heightmap6.png", glm::vec3(0., 40., 0.),
         glm::vec3(10., 200., 10.));

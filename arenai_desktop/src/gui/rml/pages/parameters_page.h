@@ -12,6 +12,7 @@ namespace arenai::desktop::gui {
 
     protected:
         void bind_controls(DataModel &model) override;
+        // the summaries mirror what the sub-screens changed meanwhile
         void on_show() override;
 
     private:

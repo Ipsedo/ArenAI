@@ -15,7 +15,7 @@ namespace arenai::desktop::gui {
             if (!pages_.emplace(id, std::move(page)).second)
                 throw std::logic_error(std::string("menu page registered twice: ") + to_string(id));
         }
-        static_cast<void>(page(root_));
+        static_cast<void>(page(root_));// the root must exist
     }
 
     void Navigator::go(const PageId target) {

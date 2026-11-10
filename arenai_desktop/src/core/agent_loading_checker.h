@@ -26,6 +26,7 @@ namespace arenai::desktop {
         int action_repeat;
     };
 
+    // the real load (GPU when `cuda`); throws when the selection is unusable
     LoadedAgent load_agent(const AgentSelection &selection, bool cuda);
 
 }// namespace arenai::desktop

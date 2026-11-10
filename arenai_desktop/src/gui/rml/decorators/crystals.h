@@ -20,6 +20,7 @@ namespace arenai::desktop::gui {
         CrystalsDecorator(
             Rml::Colourb line_color, Rml::NumericValue thickness, const Rml::String &instances);
 
+        // the parsed form of the RCSS string (exposed for the unit tests)
         static std::vector<Instance> parse(const Rml::String &instances);
 
     protected:

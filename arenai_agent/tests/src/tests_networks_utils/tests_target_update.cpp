@@ -15,6 +15,7 @@ TEST_F(TargetUpdateTest, HardUpdateCopiesExact) {
     const auto from = make_linear(4, 2);
     const auto to = make_linear(4, 2);
 
+    // ensure they differ
     torch::nn::init::ones_(to->weight);
     torch::nn::init::uniform_(from->weight, -1.0, 1.0);
 
@@ -53,6 +54,7 @@ TEST_F(TargetUpdateTest, SoftUpdateTau0NoChange) {
     const auto from = make_linear(4, 2);
     const auto to = make_linear(4, 2);
 
+    // save original 'to' params
     std::map<std::string, torch::Tensor> original;
     for (auto n_p: to->named_parameters()) original[n_p.key()] = n_p.value().clone();
 
@@ -71,6 +73,7 @@ TEST_F(TargetUpdateTest, SoftUpdateInterpolation) {
 
     constexpr float tau = 0.5f;
 
+    // save original params
     std::map<std::string, torch::Tensor> to_orig;
     for (auto n_p: to->named_parameters()) to_orig[n_p.key()] = n_p.value().clone();
 

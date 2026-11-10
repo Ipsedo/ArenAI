@@ -15,6 +15,7 @@ namespace arenai::desktop::gui {
         DocumentView(const DocumentView &) = delete;
         DocumentView &operator=(const DocumentView &) = delete;
 
+        // throws when the document fails to load
         void load(Rml::Context &context);
 
         void show(
@@ -25,10 +26,12 @@ namespace arenai::desktop::gui {
 
         Rml::ElementDocument &document() const;
 
+        // once per frame while visible, before the context update
         virtual void update() {}
         virtual void after_context_update() {}
 
     protected:
+        // model_name nullptr = the document binds no data
         DocumentView(const char *document_path, const char *model_name);
 
         virtual void bind(DataModel &) {}
@@ -36,6 +39,7 @@ namespace arenai::desktop::gui {
         virtual void on_show() {}
         virtual void on_hide() {}
 
+        // valid once loaded, for views declaring a model
         DataModel &model() const;
         Rml::Context &context() const;
 

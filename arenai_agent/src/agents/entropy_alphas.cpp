@@ -70,9 +70,11 @@ namespace arenai::agent {
     void EntropyAlphas::backward(
         const torch::Tensor &continuous_entropy, const torch::Tensor &discrete_entropy,
         const torch::Tensor &discrete_mask, const float batch_fraction) const {
+        // per action entropy error, detached from the actor's graph
         const auto continuous_error =
             (continuous_entropy.detach() - continuous_target_entropy).mean(0);
 
+        // mean over the rows where the discrete action had an effect
         const auto discrete_error =
             ((discrete_entropy.detach() - discrete_target_entropy) * discrete_mask).sum(0)
             / discrete_mask.sum(0).clamp_min(1.f);
@@ -80,6 +82,7 @@ namespace arenai::agent {
         const auto loss =
             continuous_alphas->loss(continuous_error) + discrete_alphas->loss(discrete_error);
 
+        // weighted so that the accumulated gradient is the one of the whole batch's mean
         (loss * batch_fraction).backward();
     }
 

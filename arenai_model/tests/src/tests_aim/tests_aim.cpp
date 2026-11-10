@@ -17,11 +17,13 @@ namespace {
 
     constexpr float PI = std::numbers::pi_v<float>;
 
+    // the fixture builds its engine at 1/60 (see EngineTestFixture::SetUp)
     constexpr float FREQUENCY = 1.f / 60.f;
     constexpr float TURRET_STEP = ENEMY_TURRET_RADIAL_VELOCITY * FREQUENCY;
     constexpr float CANON_STEP = ENEMY_CANON_RADIAL_VELOCITY * FREQUENCY;
     constexpr float PLAYER_TURRET_STEP = PLAYER_TURRET_RADIAL_VELOCITY * FREQUENCY;
 
+    // mirrors the travel limit held by canon.cpp
     constexpr float CANON_MAX_ANGLE = 0.2f * PI;
 
     template<typename PartT>
@@ -88,6 +90,7 @@ TEST_F(AimTest, TurretWrapsAroundTheBack) {
         tank_factory->make_enemy_tank(file_reader, "tank", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
     auto *turret = find_part<TurretItem>(*tank);
 
+    // one full turn minus a step: the next call must land just past the back, not stall
     const int nb_steps = static_cast<int>(2.f * PI / TURRET_STEP);
     for (int i = 0; i < nb_steps; i++) turret->apply_input(aim(1.f, 0.f));
 

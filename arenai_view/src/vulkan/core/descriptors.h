@@ -38,6 +38,7 @@ namespace arenai::view {
         std::vector<VkDescriptorPool> pools_;
     };
 
+    // Descriptor write helpers (immediate vkUpdateDescriptorSets)
     void write_buffer_descriptor(
         const VkDevice &device, const VkDescriptorSet &set, uint32_t binding, VkDescriptorType type,
         const VkBuffer &buffer, VkDeviceSize offset, VkDeviceSize range);

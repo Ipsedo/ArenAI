@@ -8,6 +8,7 @@
 
 namespace arenai::agent {
 
+    // Member initializers are the CLI defaults (single source of truth).
     struct LiquidPpoHyperParams {
         float actor_learning_rate = 1e-4f;
         float critic_learning_rate = 3e-4f;
@@ -30,7 +31,9 @@ namespace arenai::agent {
         float grad_norm_max = 0.5f;
         float initial_alpha = 0.001f;
         float alpha_learning_rate = 3e-4f;
+        // per continuous action, entropy of the squashed normal
         float continuous_target_entropy = -1.f;
+        // per discrete action, the Bernoulli whose entropy is the target
         float discrete_target_proba = 0.05f;
         int actor_epochs = 4;
         int critic_epochs = 4;

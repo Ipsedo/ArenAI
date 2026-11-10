@@ -18,6 +18,7 @@ namespace arenai::agent {
 
         float upper_bound() const;
 
+        // whether the last sampled episode probes the upper bound
         bool is_probe() const;
 
     private:

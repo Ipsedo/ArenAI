@@ -9,6 +9,7 @@
 
 namespace arenai::view {
 
+    // One render target image (color or depth) with its view, VMA-allocated.
     class Target {
     public:
         Target(
@@ -36,6 +37,7 @@ namespace arenai::view {
         int width_, height_;
     };
 
+    // Records a full-image layout transition barrier.
     void record_image_barrier(
         const VkCommandBuffer &cmd, const VkImage &image, VkImageAspectFlags aspect,
         VkImageLayout old_layout, VkImageLayout new_layout, VkAccessFlags src_access,

@@ -85,12 +85,16 @@ namespace arenai::core {
 
         const std::shared_ptr<view::AbstractGraphicBackend> &get_graphics_backend() const;
 
+        // applies the actions and steps the physics (no rendering)
         void advance_frame(float time_delta, const std::vector<Action> &actions);
 
+        // draws the frame (on_draw, every frame); the agents' visions only when asked
         void render_frame(bool with_visions);
 
+        // ticks the tanks and reads each one's (reward, done, truncated) for this frame
         std::vector<std::tuple<Reward, IsDone, IsTruncated>> tick_frame();
 
+        // the agents' observations: the visions of the last render_frame(true)
         std::vector<State> read_states() const;
 
         void respawn_tank(int index);

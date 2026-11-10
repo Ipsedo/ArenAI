@@ -208,6 +208,7 @@ namespace arenai::view {
     void GlfwVulkanWindow::poll_events() {
         glfwPollEvents();
 
+        // gamepads have no GLFW event callbacks, their state has to be polled
         poll_gamepad();
     }
 

@@ -26,6 +26,7 @@ namespace {
         page.document().QuerySelectorAll(labels, ".loading-label");
         EXPECT_EQ(labels.size(), 1u);
 
+        // a few frames: the RCSS animations advance without tripping
         for (int i = 0; i < 5; ++i) context().Update();
 
         page.hide();

@@ -64,9 +64,11 @@ TEST_P(AbstractMetricWindowParamTest, WindowSizeRespected) {
 
     MeanMetric metric("test", window_size);
 
+    // add 2x window_size values: first half 0, second half 10
     for (int i = 0; i < window_size; i++) metric.add(0.0f);
     for (int i = 0; i < window_size; i++) metric.add(10.0f);
 
+    // window should contain only 10s now
     ASSERT_NEAR(metric.compute_metric(), 10.0f, 1e-6f);
 }
 

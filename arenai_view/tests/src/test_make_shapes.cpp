@@ -16,6 +16,7 @@ TEST_P(MakeCubeParam, VertexCount) {
     const auto [half_size] = GetParam();
     auto [vertices, normals] = make_cube(half_size);
 
+    // 6 faces * 2 triangles * 3 vertices = 36
     ASSERT_EQ(vertices.size(), 36);
     ASSERT_EQ(normals.size(), 36);
 }
@@ -50,6 +51,7 @@ TEST_P(MakeCubeParam, NormalsAreAxisAligned) {
     for (size_t i = 0; i < normals.size(); ++i) {
         auto [nx, ny, nz] = normals[i];
 
+        // each normal should have exactly one non-zero component
         int non_zero = 0;
         if (std::abs(nx) > 1e-6f) non_zero++;
         if (std::abs(ny) > 1e-6f) non_zero++;

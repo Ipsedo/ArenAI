@@ -5,6 +5,7 @@
 
 class CosineAnnealing {
 public:
+    // warmup_env_step: number of environment steps to go from initial_value to final_value
     CosineAnnealing(float initial_value, float final_value, int64_t warmup_env_step);
 
     float value() const;

@@ -33,6 +33,7 @@ public:
     void SetScissorRegion(Rml::Rectanglei) override {}
 };
 
+// a window the pages can talk to; records what they asked
 class FakeWindow final : public arenai::view::AbstractWindow {
 public:
     bool should_close() override { return false; }
@@ -62,6 +63,7 @@ public:
     int selected_gamepad = -2;
 };
 
+// process-wide RmlUi lifetime, registered once with gtest
 class HeadlessRmlEnvironment final : public testing::Environment {
 public:
     void SetUp() override;
@@ -75,6 +77,7 @@ private:
     std::vector<std::string> font_buffers_;
 };
 
+// one RmlUi context per test, named after the test
 class HeadlessRmlTest : public testing::Test {
 protected:
     void SetUp() override;
@@ -82,6 +85,7 @@ protected:
 
     Rml::Context &context() const { return *context_; }
 
+    // the first descendant whose data-event-click reads exactly `handler`
     static Rml::Element *find_event_element(Rml::Element &root, const Rml::String &handler);
 
 private:

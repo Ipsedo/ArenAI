@@ -68,6 +68,8 @@ namespace arenai::model {
 
     std::string ObjShape::get_id() { return shape_id; }
 
+    // FromMeshShape
+
     FromMeshShape::FromMeshShape(
         const std::string &shape_id, std::vector<std::tuple<float, float, float>> vertices,
         std::vector<std::tuple<float, float, float>> normals)

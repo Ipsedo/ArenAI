@@ -42,6 +42,7 @@ namespace arenai::agent {
     void LiquidPpoStepCollector::on_episode_end(const TorchState &final_state) {
         rollout_buffer->finish_episode(final_state);
 
+        // the environment resets every tank: re-draw the liquid states
         hidden_state->reset();
         next_episode_start = true;
     }

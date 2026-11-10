@@ -26,6 +26,7 @@ namespace arenai::agent {
     private:
         nlohmann::json config;
 
+        // triad built once, sharing actor + hidden state + rollout_buffer
         std::shared_ptr<LiquidActor> actor;
         std::shared_ptr<LiquidHiddenState> hidden_state;
 

@@ -16,6 +16,7 @@ namespace arenai::desktop {
 
     namespace {
 
+        // shadow atlas side per quality preset (Off disables the pass)
         constexpr int shadow_map_size(const ShadowQuality quality) {
             switch (quality) {
                 case ShadowQuality::Low: return 2048;
@@ -25,6 +26,7 @@ namespace arenai::desktop {
             }
         }
 
+        // the renderer-side reading of the player's graphics choices
         view::PlayerRendererSettings player_renderer_settings(const GameSettings &settings) {
             return {
                 .shadows = settings.shadow_quality != ShadowQuality::Off,

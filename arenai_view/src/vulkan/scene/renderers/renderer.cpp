@@ -105,6 +105,7 @@ namespace arenai::view {
     void
     VulkanRenderer::draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
         const auto [cmd, slot] = on_begin_frame();
+        // minimized window: the whole frame is skipped
         if (cmd == VK_NULL_HANDLE) return;
         frame_.cmd = cmd;
         frame_.slot = slot;
@@ -131,6 +132,7 @@ namespace arenai::view {
             shadow_pass_done = true;
         }
 
+        // on_draw
         const auto camera_pos = camera_->pos();
         const glm::mat4 view_matrix = glm::lookAt(camera_pos, camera_->look(), camera_->up());
 
@@ -202,6 +204,7 @@ namespace arenai::view {
     }
 
     VulkanRenderer::~VulkanRenderer() {
+        // the subclass destructor has already waited its frame fences
         retired_.drain_all();
         drawables_.clear();
         shadow_pass_.reset();

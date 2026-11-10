@@ -26,6 +26,7 @@ namespace arenai::desktop::gui {
 
         virtual MenuOutcome run() = 0;
 
+        // what the player tuned, valid after run() returned
         virtual const GameSettings &settings() const = 0;
     };
 
@@ -34,6 +35,7 @@ namespace arenai::desktop::gui {
         int player_score = 0;
         // in [0, 1]
         float player_health = 1.f;
+        // the enemies' total score over their number (dead ones included)
         int enemies_max_score = 0;
         int enemies_alive = 0;
         int enemies_total = 0;
@@ -51,6 +53,7 @@ namespace arenai::desktop::gui {
         virtual void close() = 0;
         virtual void render() = 0;
 
+        // the sinks to route the window input to while a popup is open
         virtual std::shared_ptr<controller::AbstractKeyboardCallback> keyboard_input() = 0;
         virtual std::shared_ptr<controller::AbstractGamepadCallback> gamepad_input() = 0;
     };
@@ -73,10 +76,12 @@ namespace arenai::desktop::gui {
         virtual void set_status(const MatchStatus &status) = 0;
         virtual void notify_hit(HitKind kind) = 0;
         virtual void notify_damage(float screen_angle) = 0;
+        // normalized window coordinates; nullopt hides the reticle
         virtual void set_aim_point(std::optional<glm::vec2> normalized) = 0;
         virtual void render() = 0;
     };
 
+    // the whole UI, as the composition root holds it
     class AbstractGui {
     public:
         virtual ~AbstractGui() = default;

@@ -15,6 +15,7 @@ namespace arenai::agent {
     private:
         float gamma;
 
+        // running statistics of the discounted return (saved with the checkpoint)
         torch::Tensor count;
         torch::Tensor mean;
         torch::Tensor var;

@@ -5,6 +5,7 @@ std::tuple<
 make_cube(const float half_size) {
     const float s = half_size;
 
+    // Les 8 coins
     const std::tuple<float, float, float> corners[8] = {
         {s, s, s},   // 0
         {-s, s, s},  // 1

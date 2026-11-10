@@ -68,7 +68,11 @@ TEST_F(TorchTypesTest, StateVisionPixelsPreserved) {
     constexpr int H = 2, W = 2;
 
     State state{.remaining_shells_ratio = 0.5f, .cooldown_ratio = 0.25f, .can_fire = true};
-    state.vision.pixels = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120};
+    state.vision.pixels = {
+        10, 20,  30,  40,// C=0
+        50, 60,  70,  80,// C=1
+        90, 100, 110, 120// C=2
+    };
     state.proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE, 0.0f);
 
     const TorchState torch_state({state}, H, W);
@@ -101,6 +105,7 @@ TEST_F(TorchTypesTest, StateProprioceptionPreserved) {
     for (int i = 0; i < model::ENEMY_PROPRIOCEPTION_SIZE; ++i)
         ASSERT_FLOAT_EQ(acc[i], static_cast<float>(i) * 0.1f);
 
+    // the two ratios close the state vector, in that order
     ASSERT_FLOAT_EQ(acc[model::ENEMY_PROPRIOCEPTION_SIZE], 0.5f);
     ASSERT_FLOAT_EQ(acc[model::ENEMY_PROPRIOCEPTION_SIZE + 1], 0.25f);
 }
@@ -127,6 +132,7 @@ TEST_F(TorchTypesTest, RatiosReadBackFromTheStateVector) {
         ASSERT_FLOAT_EQ(cooldown[i], 1.f - static_cast<float>(i) * 0.1f);
     }
 
+    // a tensor-built state (stacked rollout, replay sample) reads the same columns
     const TorchState rebuilt(
         torch_state.get_vision(), torch_state.get_state(), torch_state.get_fire_mask());
     ASSERT_EQ(rebuilt.get_remaining_shells_ratio(), shells);

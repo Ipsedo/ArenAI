@@ -32,6 +32,7 @@ namespace arenai::agent {
         void pretty_print(std::ostream &stream) const override;
     };
 
+    // Beta concentration κ, log-scale on the excess κ - 2 bounded between min and max
     class ConcentrationOutput : public AbstractFunctionModule {
     public:
         ConcentrationOutput(float min_concentration, float max_concentration);

@@ -32,6 +32,7 @@ namespace arenai::view {
 
         VkImageView swapchain_view() const;
         VkFormat swapchain_format() const;
+        // sample count every pipeline drawing inside a swapchain pass must use
         VkSampleCountFlagBits samples() const;
 
         int width() const;

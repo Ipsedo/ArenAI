@@ -6,6 +6,7 @@
 #include <agents/ppo/ppo_factory.h>
 #include <gtest/gtest.h>
 
+// test code: the arenai sub-namespaces are used unqualified
 using namespace arenai;
 
 struct PpoTrainingTestConfig {
@@ -18,7 +19,9 @@ struct PpoTrainingTestConfig {
 
 class PpoTrainingTest : public testing::Test {
 protected:
+    // small enough for the trainer to trigger during the test loop
     static constexpr int ROLLOUT_SIZE = 3;
+    // smaller than the number of valid rows so the loop exercises several minibatches
     static constexpr int MINIBATCH_SIZE = 4;
 
     torch::Device device{torch::kCPU};

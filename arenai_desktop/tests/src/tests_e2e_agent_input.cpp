@@ -83,6 +83,7 @@ namespace {
     }
 
     std::filesystem::path golden_image_path(const std::string &name) {
+        // arenai_desktop/tests/src/ -> arenai_desktop/tests/
         return std::filesystem::path(__FILE__).parent_path().parent_path() / "resources"
                / "golden_images" / (name + ".json");
     }
@@ -143,6 +144,7 @@ TEST(DesktopAgentInputEndToEnd, AgentInputMatchesGoldenImages) {
 
         for (const auto &[golden_path, pixels]: goldens) {
 #ifdef ARENAI_REGENERATE_GOLDEN_IMAGES
+            // rebuild mode: always overwrite the golden below
             if (false) {
 #else
             if (std::filesystem::exists(golden_path)) {

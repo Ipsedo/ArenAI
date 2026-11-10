@@ -73,6 +73,7 @@ namespace arenai::agent {
             torch::nn::init::orthogonal_(lin->weight, 0.01f);
 
             if (lin->options.bias()) {
+                // sigmoid head: the bias is the logit of the wanted probability
                 std::vector<float> logits;
                 logits.reserve(initial_probabilities.size());
                 for (const auto probability: initial_probabilities)

@@ -115,6 +115,7 @@ TEST_P(LiquidCellTestParam, GradientFlows) {
 
     ASSERT_TRUE(inputs.grad().defined());
     ASSERT_TRUE(torch::all(torch::isfinite(inputs.grad())).item<bool>());
+    // every time step must contribute to the loss
     const auto per_step_grad = inputs.grad().abs().sum(std::vector<int64_t>{0, 2});
     ASSERT_TRUE(torch::all(torch::gt(per_step_grad, 0.f)).item<bool>())
         << "Some time steps received no gradient: " << per_step_grad;

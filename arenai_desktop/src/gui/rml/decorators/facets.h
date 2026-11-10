@@ -18,6 +18,7 @@ namespace arenai::desktop::gui {
             Rml::Colourb fill_color, Rml::Colourb line_color, Rml::NumericValue thickness,
             const Rml::String &polygons, const Rml::String &animation);
 
+        // the parsed form of the RCSS string (exposed for the unit tests)
         static std::vector<Polygon> parse(const Rml::String &polygons);
 
         static float swell_offset(Rml::Vector2f point, double time);

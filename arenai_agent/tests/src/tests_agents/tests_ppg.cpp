@@ -67,6 +67,7 @@ TEST_F(PpgAgentTest, MetricsNotEmpty) {
     const auto factory = make_factory(cfg);
 
     ASSERT_EQ(factory->get_trainer()->get_metrics().size(), 8);
+    // one alpha per action, CSV only
     ASSERT_EQ(
         factory->get_trainer()->get_csv_only_metrics().size(),
         cfg.nb_continuous_actions + cfg.nb_discrete_actions);
@@ -137,6 +138,7 @@ TEST_P(PpgActShapeParamTest, ActDiscreteIsBinary) {
     const auto [continuous_action, discrete_action] =
         factory->get_agent()->act(make_state(cfg, batch), true);
 
+    // independent Bernoulli actions: each entry is 0 or 1, no one-hot constraint
     const auto is_binary =
         torch::logical_or(torch::eq(discrete_action, 0.0f), torch::eq(discrete_action, 1.0f));
     ASSERT_TRUE(torch::all(is_binary).item<bool>());
@@ -191,6 +193,7 @@ TEST_P(PpgSaveLoadParamTest, AgentLoadsSavedActor) {
 
     factory->get_trainer()->save(save_dir);
 
+    // a fresh agent reloads the saved actor and acts deterministically like it
     const auto other_factory = make_factory(cfg);
     const auto other_agent = std::dynamic_pointer_cast<AbstractAgent>(other_factory->get_agent());
     ASSERT_NE(other_agent, nullptr);

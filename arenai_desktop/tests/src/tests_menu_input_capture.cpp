@@ -10,6 +10,7 @@ using namespace arenai::desktop;
 
 namespace {
 
+    // no Rml::Context needed: the capture path never touches it
     gui::MenuInputAdapter make_adapter() {
         return gui::MenuInputAdapter(
             nullptr, [] {}, [](bool) {});
@@ -23,9 +24,11 @@ TEST(MenuInputCaptureTest, joystick_capture_completing_on_x_drops_y) {
     std::vector<gui::RawMenuInput> received;
     adapter.set_capture_sink([&](const gui::RawMenuInput &input) {
         received.push_back(input);
+        // what assign_gamepad_axis does when the deflection binds the slot
         adapter.set_capture_sink(nullptr);
     });
 
+    // full steer deflection on the left stick: X completes the capture
     adapter.on_joystick(1.0, 0.0, controller::GamepadJoystick::Left);
 
     ASSERT_EQ(received.size(), 1u);
@@ -41,6 +44,7 @@ TEST(MenuInputCaptureTest, joystick_capture_kept_installed_receives_both_axes) {
     std::vector<gui::RawMenuInput> received;
     adapter.set_capture_sink([&](const gui::RawMenuInput &input) { received.push_back(input); });
 
+    // small deflection: the capture stays armed, both axes flow through
     adapter.on_joystick(0.1, 0.2, controller::GamepadJoystick::Left);
 
     ASSERT_EQ(received.size(), 2u);

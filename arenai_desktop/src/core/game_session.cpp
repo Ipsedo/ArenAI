@@ -28,6 +28,7 @@ namespace arenai::desktop {
     void GameSession::finish_loading() const { env_->create_player_renderer(); }
 
     void GameSession::install_input() {
+        // also covers runs that skip the menu (ARENAI_DEBUG_AUTOPLAY)
         select_configured_gamepad(*window_, settings_);
 
         router_ = std::make_shared<GameInputRouter>(
@@ -157,6 +158,7 @@ namespace arenai::desktop {
 
         backend_->present();
 
+        // mutual destruction on the last frame stays a defeat
         if (env_->is_player_dead()) set_phase(Phase::GameOver);
         else if (env_->nb_enemies_alive() == 0) set_phase(Phase::Victory);
 

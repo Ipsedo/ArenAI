@@ -55,7 +55,9 @@ TEST_F(SacAgentTest, MetricsNotEmpty) {
         .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
+    // q, π, Q, Hc, Hd
     ASSERT_EQ(factory->get_trainer()->get_metrics().size(), 5);
+    // one α per action (4 continuous, 2 discrete), CSV only
     ASSERT_EQ(
         factory->get_trainer()->get_csv_only_metrics().size(),
         cfg.nb_continuous_actions + cfg.nb_discrete_actions);
@@ -70,6 +72,7 @@ TEST_F(SacAgentTest, ConfigCarriesGamma) {
         .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
+    // the training loop reads the agent's gamma for the potential shaping
     ASSERT_TRUE(factory->get_config().contains("gamma"));
     ASSERT_TRUE(factory->get_config().contains("buffer_size"));
 }
@@ -89,7 +92,7 @@ TEST_F(SacAgentTest, MaskedFireIsNeverEngaged) {
 
     const auto [continuous_action, discrete_action] = factory->get_agent()->act(state, true);
 
-    // column 0 = fire
+    // fire (column 0) cannot shoot: the stored action never says it did
     ASSERT_TRUE(torch::all(discrete_action.select(1, 0) == 0.f).item<bool>());
 }
 
@@ -118,6 +121,7 @@ TEST_P(SacActShapeParamTest, ActContinuousInRange) {
             factory->get_agent()->act(make_state(cfg, batch), sample);
 
         ASSERT_TRUE(torch::all(torch::isfinite(continuous_action)).item<bool>());
+        // tanh squash
         ASSERT_TRUE(torch::all(continuous_action.abs() <= 1.f).item<bool>());
     }
 }

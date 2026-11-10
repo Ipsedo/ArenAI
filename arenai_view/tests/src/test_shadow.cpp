@@ -18,6 +18,7 @@ namespace {
 
     constexpr int WIDTH = 64, HEIGHT = 64;
 
+    // floor of 200x2x200 units centered at the origin
     const auto FLOOR_MATRIX = glm::scale(glm::mat4(1.f), glm::vec3(100.f, 1.f, 100.f));
     const auto OCCLUDER_MATRIX =
         glm::scale(glm::translate(glm::mat4(1.f), glm::vec3(0.f, 100.f, 0.f)), glm::vec3(20.f));
@@ -57,6 +58,7 @@ namespace {
         const auto with_occluder = std::vector<std::tuple<std::string, glm::mat4>>{
             {"floor", FLOOR_MATRIX}, {"occluder", OCCLUDER_MATRIX}};
 
+        // async 2-slot readback: draw twice, keep the second frame
         renderer->draw_and_get_frame(floor_only);
         floor_only_sum = pixel_sum(renderer->draw_and_get_frame(floor_only).pixels);
 
@@ -74,7 +76,7 @@ TEST(ShadowRenderingTest, OccluderDarkensFloor) {
 
     ASSERT_GT(floor_only_sum, 0);
 
-    constexpr long margin = 3L * WIDTH * HEIGHT;
+    constexpr long margin = 3L * WIDTH * HEIGHT;// per-pixel tolerance
     ASSERT_LT(occluded_sum + margin, floor_only_sum);
 }
 
@@ -84,6 +86,7 @@ TEST(ShadowRenderingTest, NoShadowWhenDisabled) {
 
     ASSERT_GT(floor_only_sum, 0);
 
+    // without shadows, the out-of-frustum occluder must not change the image
     constexpr long tolerance = 3L * WIDTH * HEIGHT;
     ASSERT_NEAR(occluded_sum, floor_only_sum, tolerance);
 }

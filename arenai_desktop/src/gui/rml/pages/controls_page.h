@@ -16,6 +16,7 @@
 
 namespace arenai::desktop::gui {
 
+    // one row of the controls page: an action and its current binding
     struct BindingRow {
         Rml::String label;
         Rml::String binding;

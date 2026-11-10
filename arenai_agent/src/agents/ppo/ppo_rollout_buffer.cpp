@@ -16,6 +16,7 @@ namespace arenai::agent {
             already_terminated_ = torch::zeros(
                 {nb_tanks}, torch::TensorOptions().dtype(torch::kBool).device(torch::kCPU));
 
+        // tanks already terminated before this step have no valid transition to store
         const auto valid = already_terminated_.logical_not();
         already_terminated_.logical_or_(
             step.done.detach().cpu().to(torch::kBool).reshape({nb_tanks}));
@@ -34,6 +35,7 @@ namespace arenai::agent {
                   .truncated = step.truncated.detach().cpu()},
              .valid = valid});
 
+        // the freshly added step is pending: its closing observation is not known yet
         final_state_.reset();
     }
 

@@ -120,6 +120,7 @@ TEST_F(ThreadLimiterTest, FIFOOrdering) {
 
     ThreadLimiter limiter(k);
 
+    // Hold the limiter so all threads queue up
     limiter.acquire();
 
     std::vector<int> order;
@@ -143,10 +144,12 @@ TEST_F(ThreadLimiterTest, FIFOOrdering) {
             limiter.release();
         });
 
+        // Wait for the thread to be spawned and calling acquire
         while (ready_count.load(std::memory_order_acquire) <= i) std::this_thread::yield();
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
+    // Release the initial hold — threads should proceed in FIFO order
     limiter.release();
 
     for (auto &t: threads) t.join();

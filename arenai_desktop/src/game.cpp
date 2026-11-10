@@ -58,6 +58,7 @@ namespace arenai::desktop {
     }// namespace
 
     void run_gui(const GameOptions &game_options) {
+        // the first shipped preset is the out-of-the-box selection
         const auto presets = agent_presets(game_options.resources_folder);
         GameSettings defaults;
         if (!presets.empty()) apply_preset(presets.front(), defaults);

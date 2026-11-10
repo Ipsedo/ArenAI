@@ -54,6 +54,7 @@ namespace arenai::view {
             return dynamic_rendering.dynamicRendering == VK_TRUE;
         }
 
+        // ranks the device type according to the backend preference; lower is better
         int type_rank(const VkPhysicalDeviceType type, const bool prefer_integrated) {
             const auto order =
                 prefer_integrated
@@ -110,6 +111,7 @@ namespace arenai::view {
             throw std::runtime_error(
                 "no Vulkan device with graphics + dynamic rendering (1.2+) found");
 
+        // environment override: device index or deviceName substring
         if (criteria.device_env_var != nullptr) {
             if (const char *wanted = std::getenv(criteria.device_env_var)) {
                 char *end = nullptr;

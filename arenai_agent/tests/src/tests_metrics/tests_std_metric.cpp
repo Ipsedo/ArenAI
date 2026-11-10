@@ -18,6 +18,7 @@ TEST_F(StdMetricTest, ConstantValuesZeroStd) {
 TEST_F(StdMetricTest, KnownSequence) {
     StdMetric metric("test", 4);
 
+    // values: 2, 4, 4, 4 → mean = 3.5, var = (2.25+0.25+0.25+0.25)/4 = 0.75
     metric.add(2.0f);
     metric.add(4.0f);
     metric.add(4.0f);
@@ -33,6 +34,7 @@ TEST_F(StdMetricTest, TwoValues) {
     metric.add(0.0f);
     metric.add(10.0f);
 
+    // mean = 5, var = (25 + 25) / 2 = 25, std = 5
     ASSERT_NEAR(metric.compute_metric(), 5.0f, 1e-4f);
 }
 
@@ -51,6 +53,7 @@ TEST_P(StdMetricParamTest, WindowEvictionConverges) {
 
     StdMetric metric("test", window_size);
 
+    // fill with mixed values then overwrite entirely with constant
     for (int i = 0; i < window_size; i++) metric.add(static_cast<float>(i * 10));
     for (int i = 0; i < values_to_add; i++) metric.add(3.0f);
 

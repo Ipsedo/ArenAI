@@ -5,6 +5,7 @@
 
 namespace arenai::agent {
 
+    // {tanh(u), u}, reparameterized
     std::pair<torch::Tensor, torch::Tensor>
     gaussian_tanh_sample(const torch::Tensor &mu, const torch::Tensor &sigma);
 
@@ -15,6 +16,7 @@ namespace arenai::agent {
 
     torch::Tensor gaussian_tanh_entropy(const torch::Tensor &mu, const torch::Tensor &sigma);
 
+    // KL(p || q) per dimension: tanh is a bijection, the KL is the one of the pre-tanh normals
     torch::Tensor gaussian_tanh_kl(
         const torch::Tensor &mu_p, const torch::Tensor &sigma_p, const torch::Tensor &mu_q,
         const torch::Tensor &sigma_q);

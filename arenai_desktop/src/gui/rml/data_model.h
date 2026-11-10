@@ -12,6 +12,7 @@ namespace arenai::desktop::gui {
     public:
         using EventHandler = std::function<void(const Rml::VariantList &arguments)>;
 
+        // throws when RmlUi refuses the model (duplicate name)
         DataModel(Rml::Context &context, const Rml::String &name);
 
         template<typename T>

@@ -13,6 +13,7 @@ namespace arenai::agent {
     public:
         explicit SacStepCollector(std::shared_ptr<SacReplayBuffer> replay_buffer);
 
+        // concrete act-time channel, called by TorchSacAgent::act
         void on_act(const TorchState &state, const TorchAction &action);
 
         void on_transition(

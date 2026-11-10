@@ -14,6 +14,7 @@
 
 namespace arenai::agent {
     namespace {
+        // merges the [T, nb_tanks] leading dimensions into a single row dimension
         torch::Tensor flatten_steps(const torch::Tensor &tensor) {
             auto sizes = tensor.sizes().vec();
             sizes.erase(sizes.begin());
@@ -112,7 +113,7 @@ namespace arenai::agent {
         set_train(false);
         const auto [advantages, returns] = compute_gae(rollout, device);
 
-        // [T * nb_tanks, ...]
+        // flat [T * nb_tanks, ...] rows, all on the device
         const auto flat = [&](const torch::Tensor &tensor) {
             return flatten_steps(tensor).to(device);
         };
@@ -126,6 +127,7 @@ namespace arenai::agent {
             .advantages = flat(advantages),
             .returns = flat(returns)};
 
+        // live (step, tank) pairs; the optimizer batches split these rows only
         const auto valid_idx =
             torch::nonzero(flatten_steps(rollout.valids).squeeze(-1)).squeeze(-1).to(device);
         if (valid_idx.size(0) == 0) return;
@@ -159,6 +161,7 @@ namespace arenai::agent {
                     kl_per_rows.push_back(backward_actor(
                         rows.select(idx), static_cast<float>(idx.size(0)) / nb_batch_rows));
 
+                // KL of the policy this step starts from
                 const auto approx_kl = trimmed_kl(kl_per_rows);
                 kl_metric->add(approx_kl);
 
@@ -215,6 +218,7 @@ namespace arenai::agent {
         const auto continuous_entropy = gaussian_tanh_entropy(mu, sigma);
         const auto discrete_entropy = bernoulli_entropy(discrete_proba) * discrete_mask;
 
+        // the alphas are constants for the actor: they learn from their own dual loss
         const auto entropy_bonus =
             (alphas->continuous().detach() * continuous_entropy).sum(-1, true)
             + (alphas->discrete().detach() * discrete_entropy).sum(-1, true);
@@ -225,11 +229,14 @@ namespace arenai::agent {
 
         const auto actor_loss = -torch::mean(surrogate + entropy_bonus);
 
+        // weighted so that the accumulated gradient is the one of the whole rollout's mean
         (actor_loss * batch_fraction).backward();
         alphas->backward(continuous_entropy, discrete_entropy, discrete_mask, batch_fraction);
 
+        // metrics
         actor_mean_loss_metric->add(actor_loss.cpu().item<float>());
         continuous_entropy_metric->add(continuous_entropy.mean().item<float>());
+        // mean over the discrete actions that had an effect
         discrete_entropy_metric->add(
             (discrete_entropy.sum() / discrete_mask.sum().clamp_min(1.f)).item<float>());
 
@@ -259,6 +266,7 @@ namespace arenai::agent {
         const auto nb_steps = rollout.rewards.size(0);
         const auto nb_tanks = rollout.rewards.size(1);
 
+        // critic forward in device-sized chunks: the whole rollout's activations do not fit
         const auto eval_values = [&](const torch::Tensor &vision,
                                      const torch::Tensor &proprioception) {
             std::vector<torch::Tensor> chunks;
@@ -278,6 +286,7 @@ namespace arenai::agent {
                                 flatten_steps(rollout.states.get_state()))
                                 .reshape({nb_steps, nb_tanks, 1});
 
+        // next values are the values shifted by one step, closed by the bootstrap state
         const auto bootstrap_value =
             eval_values(rollout.bootstrap_state.get_vision(), rollout.bootstrap_state.get_state())
                 .unsqueeze(0);
@@ -327,14 +336,17 @@ namespace arenai::agent {
     }
 
     void PpoTrainer::save(const std::filesystem::path &output_folder) {
+        // Models
         save_torch(output_folder, actor, "actor.pt");
         save_torch(output_folder, critic, "critic.pt");
 
+        // Optimizers
         save_torch(output_folder, actor_optim, "actor_optim.pt");
         save_torch(output_folder, critic_optim, "critic_optim.pt");
         save_torch(output_folder, return_scaler, "return_scaler.pt");
         alphas->save(output_folder);
 
+        // string repr
         write_module_repr(output_folder, actor, "actor");
         write_module_repr(output_folder, critic, "critic");
     }

@@ -67,6 +67,7 @@ TEST_F(LiquidPpoAgentTest, MetricsNotEmpty) {
     const auto factory = make_factory(cfg);
 
     ASSERT_EQ(factory->get_trainer()->get_metrics().size(), 8);
+    // one alpha per action, CSV only
     ASSERT_EQ(
         factory->get_trainer()->get_csv_only_metrics().size(),
         cfg.nb_continuous_actions + cfg.nb_discrete_actions);
@@ -106,6 +107,7 @@ TEST_P(LiquidPpoActShapeParamTest, ActDiscreteIsBinary) {
     const auto [continuous_action, discrete_action] =
         factory->get_agent()->act(make_state(cfg, batch), true);
 
+    // independent Bernoulli actions: each entry is 0 or 1, no one-hot constraint
     const auto is_binary =
         torch::logical_or(torch::eq(discrete_action, 0.0f), torch::eq(discrete_action, 1.0f));
     ASSERT_TRUE(torch::all(is_binary).item<bool>());
@@ -115,6 +117,7 @@ TEST_P(LiquidPpoActShapeParamTest, ActKeepsShapesOverConsecutiveSteps) {
     const auto cfg = GetParam();
     const auto factory = make_factory(cfg);
 
+    // the liquid state is carried across the calls: every step must stay consistent
     constexpr int batch = 4;
     for (int t = 0; t < 3; t++) {
         const auto [continuous_action, discrete_action] =

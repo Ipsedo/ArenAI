@@ -16,6 +16,7 @@ namespace arenai::desktop::gui {
 
     namespace {
 
+        // one compiled glyph run per font texture page
         struct TextGradientData {
             struct Run {
                 Rml::Geometry geometry;

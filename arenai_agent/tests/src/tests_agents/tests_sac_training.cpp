@@ -45,6 +45,7 @@ TEST_F(SacTrainingTest, NoUpdateBeforeLearningStarts) {
     for (const auto &parameter: triad.actor->parameters())
         initial_parameters.push_back(parameter.detach().clone());
 
+    // 2 steps -> 2 sampleable transitions, under the threshold
     for (int t = 0; t < 2; t++) {
         triad.agent->act(make_state(cfg, NB_TANKS), true);
         triad.collector->on_transition(
@@ -95,6 +96,7 @@ TEST_F(SacTrainingTest, TrainingUpdatesActorParameters) {
 }
 
 TEST_F(SacTrainingTest, MaskedFireReceivesNoUpdate) {
+    // fire never possible: its head row must stay untouched while zoom keeps learning
     constexpr SacTrainingTestConfig cfg{
         .vision_height = 8,
         .vision_width = 8,
@@ -137,6 +139,7 @@ TEST_F(SacTrainingTest, EpisodeEndKeepsTraining) {
     for (int episode = 0; episode < 2; episode++) {
         for (int t = 0; t < 4; t++) {
             triad.agent->act(make_state(cfg, NB_TANKS), true);
+            // the last step kills one tank
             const auto done = t == 3 ? torch::tensor({{1.f}, {0.f}}) : torch::zeros({NB_TANKS, 1});
             triad.collector->on_transition(
                 torch::randn({NB_TANKS, 1}), done, torch::zeros({NB_TANKS, 1}));
@@ -145,6 +148,7 @@ TEST_F(SacTrainingTest, EpisodeEndKeepsTraining) {
         triad.collector->on_episode_end(make_state(cfg, NB_TANKS));
     }
 
+    // 2 episodes x 4 steps x 2 tanks, every step closed by its successor
     ASSERT_EQ(triad.replay_buffer->nb_transitions(), 16);
 
     for (const auto &metric: triad.trainer->get_metrics())

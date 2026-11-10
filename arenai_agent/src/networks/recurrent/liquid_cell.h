@@ -26,6 +26,7 @@ namespace arenai::agent {
 
         torch::Tensor forward(const torch::Tensor &inputs);
 
+        // one recurrent step, the state is handled by the caller: (output, x_t_next)
         std::tuple<torch::Tensor, torch::Tensor>
         forward_step(const torch::Tensor &x_t, const torch::Tensor &input_t);
 

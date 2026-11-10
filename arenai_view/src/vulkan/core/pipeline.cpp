@@ -131,6 +131,7 @@ namespace arenai::view {
         rasterization.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
         rasterization.polygonMode = VK_POLYGON_MODE_FILL;
         rasterization.cullMode = cull_mode_;
+        // the negative-viewport convention keeps the GL winding: CCW = front
         rasterization.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
         rasterization.lineWidth = 1.f;
         rasterization.depthBiasEnable = depth_bias_ ? VK_TRUE : VK_FALSE;

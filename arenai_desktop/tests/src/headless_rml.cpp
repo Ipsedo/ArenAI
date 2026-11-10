@@ -28,6 +28,7 @@ void HeadlessRmlEnvironment::TearDown() {
 }
 
 namespace {
+    // registered at static-init time, before main() runs the tests
     [[maybe_unused]] const auto *const RML_ENVIRONMENT =
         testing::AddGlobalTestEnvironment(new HeadlessRmlEnvironment);
 }// namespace

@@ -37,6 +37,7 @@ namespace arenai::desktop::gui {
         return kind == ControllerKind::Gamepad ? "Gamepad" : "Mouse + keyboard";
     }
 
+    // mm:ss of a match duration
     inline std::string clock_label(const float seconds) {
         const int whole = std::max(0, static_cast<int>(seconds));
         char text[16];

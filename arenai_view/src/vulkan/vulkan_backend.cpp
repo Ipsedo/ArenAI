@@ -36,7 +36,9 @@ namespace arenai::view {
 
     std::string VulkanBackend::renderer_info() { return context_->device()->renderer_info(); }
 
-    void VulkanBackend::release_thread() {}
+    void VulkanBackend::release_thread() {
+        // no thread-bound state in Vulkan
+    }
 
     const std::shared_ptr<VulkanRenderContext> &VulkanBackend::context() const { return context_; }
 

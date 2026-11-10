@@ -13,6 +13,7 @@ namespace arenai::agent {
     public:
         explicit PpgStepCollector(std::shared_ptr<PpgRolloutBuffer> rollout_buffer);
 
+        // concrete act-time channel, called by TorchPpgAgent::act
         void on_act(
             const TorchState &state, const TorchAction &action,
             const torch::Tensor &continuous_pre_tanh, const torch::Tensor &continuous_log_prob,

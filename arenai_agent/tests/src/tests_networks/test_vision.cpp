@@ -30,6 +30,8 @@ TEST_P(VisionTestParam, TestVisionForward) {
     ASSERT_EQ(encoded_images.size(1) % output_conv_channels.back(), 0);
 }
 
+// Create parametrized tests
+
 INSTANTIATE_TEST_SUITE_P(
     TestVision, VisionTestParam,
     testing::Combine(

@@ -11,6 +11,7 @@ using namespace arenai::desktop;
 
 namespace {
 
+    // the sensitivity held by PlayerGamepadHandler::to_output
     constexpr float STICK_SENSITIVITY = 0.05f;
 
     class RecordingController final : public controller::Controller {
@@ -24,6 +25,7 @@ namespace {
         std::unique_ptr<PlayerGamepadHandler> handler;
         std::shared_ptr<RecordingController> controller;
 
+        // one frame: the window dispatches the right stick last, which drives the tick
         void tick(const double x, const double y) const {
             handler->on_joystick(x, y, controller::GamepadJoystick::Right);
         }

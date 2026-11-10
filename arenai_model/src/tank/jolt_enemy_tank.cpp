@@ -153,8 +153,10 @@ namespace arenai::model {
     float JoltEnemyTank::get_reward() const {
         RewardDetail detail;
 
+        // 1. death penalty: killed or flipped over, the two ways a tank ends before the episode
         if (is_dead()) detail.death = -DEATH_PENALTY;
 
+        // 2. landed shells: the health fraction they removed, and the kill
         for (int i = static_cast<int>(tracked_shells.size()) - 1; i >= 0; i--) {
             auto &tracked = tracked_shells[i];
 
@@ -175,13 +177,16 @@ namespace arenai::model {
             }
         }
 
+        // 3. shells fired, counted once on their fire frame
         detail.nb_fired_shells = nb_fired_to_pay;
         nb_fired_to_pay = 0;
 
+        // 4. damage received: the health fraction lost on each part
         for (const auto life_item: get_life_items())
             for (const auto &impact: life_item->consume_hits_received())
                 detail.received -= DAMAGE_REWARD * impact.damages / life_item->initial_health();
 
+        // 5. total reward, kept split for the metrics
         last_reward_detail = detail;
 
         return detail.hit + detail.kill + detail.received + detail.death;
@@ -190,6 +195,7 @@ namespace arenai::model {
     RewardDetail JoltEnemyTank::get_last_reward_detail() const { return last_reward_detail; }
 
     void JoltEnemyTank::tick(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
+        // 1. flipped detection
         const auto chassis_model_mat = get_chassis()->get_model_matrix();
         constexpr glm::vec4 up(0.f, 1.f, 0.f, 0.f);
         const auto up_in_chassis = glm::normalize(glm::vec3(chassis_model_mat * up));
@@ -200,9 +206,11 @@ namespace arenai::model {
 
         nb_shells = std::min(nb_shells, max_shells);
 
+        // 2. track shells
         for (int i = static_cast<int>(tracked_shells.size()) - 1; i >= 0; i--) {
             auto &tracked = tracked_shells[i];
 
+            // reward already saw it, can remove
             if (tracked.need_remove) {
                 tracked_shells.erase(tracked_shells.begin() + i);
                 continue;
@@ -215,9 +223,11 @@ namespace arenai::model {
             else if (tracked.has_final_pos)
                 update_closest_approach(tracked, tracked.final_shell_pos, tanks);
 
+            // remove next tick => allow get_reward(...) to see it
             if (!in_flight) tracked.need_remove = true;
         }
 
+        // 3. fire cooldown
         curr_cooldown_frame = std::min(fire_cooldown_frames, curr_cooldown_frame + 1);
     }
 
@@ -309,6 +319,7 @@ namespace arenai::model {
         return false;
     }
 
+    // ReSharper disable once CppReferenceToOverriddenVirtualFunction
     bool JoltEnemyTank::is_dead() const { return JoltTank::is_dead() || is_suicide(); }
 
     bool JoltEnemyTank::is_first_frame_dead() const {

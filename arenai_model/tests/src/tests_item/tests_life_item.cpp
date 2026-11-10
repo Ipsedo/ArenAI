@@ -6,6 +6,7 @@ using namespace arenai::model;
 using namespace arenai::utils;
 
 namespace {
+    // damage-only impact: the position is irrelevant to health accounting
     ImpactInfo impact_of(const float damages) {
         return {
             .fire_position = glm::vec3(0.f), .impact_position = glm::vec3(0.f), .damages = damages};

@@ -14,6 +14,7 @@
 
 namespace arenai::agent {
     namespace {
+        // merges the [T, nb_tanks] leading dimensions into a single row dimension
         torch::Tensor flatten_steps(const torch::Tensor &tensor) {
             auto sizes = tensor.sizes().vec();
             sizes.erase(sizes.begin());
@@ -156,7 +157,7 @@ namespace arenai::agent {
         if (nb_chunks_per_tank == 0) return;
         const auto nb_kept_steps = nb_chunks_per_tank * chunk_size;
 
-        // [T_kept * nb_tanks, ...]
+        // flat [T_kept * nb_tanks, ...] rows, all on the device
         const auto flat = [&](const torch::Tensor &tensor) {
             return flatten_steps(tensor.slice(0, 0, nb_kept_steps)).to(device);
         };
@@ -211,6 +212,7 @@ namespace arenai::agent {
                         chunks.live_rows(units) / batch_rows));
                 }
 
+                // KL of the policy this step starts from
                 const auto approx_kl = trimmed_kl(kl_per_rows);
                 kl_metric->add(approx_kl);
 
@@ -254,6 +256,7 @@ namespace arenai::agent {
         const auto out =
             actor->act_sequence(block.vision, block.proprioception, block.actor_hiddens);
 
+        // recurrence done: fold time into rows and keep the live transitions only
         const auto valid_idx = torch::nonzero(block.valids.flatten(0, 1).squeeze(-1)).squeeze(-1);
         const auto rows = [&](const torch::Tensor &tensor) {
             return tensor.flatten(0, 1).index_select(0, valid_idx);
@@ -281,6 +284,7 @@ namespace arenai::agent {
         const auto continuous_entropy = gaussian_tanh_entropy(mu, sigma);
         const auto discrete_entropy = bernoulli_entropy(discrete_proba) * discrete_mask;
 
+        // the alphas are constants for the actor: they learn from their own dual loss
         const auto entropy_bonus =
             (alphas->continuous().detach() * continuous_entropy).sum(-1, true)
             + (alphas->discrete().detach() * discrete_entropy).sum(-1, true);
@@ -292,11 +296,14 @@ namespace arenai::agent {
 
         const auto actor_loss = -torch::mean(surrogate + entropy_bonus);
 
+        // weighted so that the accumulated gradient is the one of the whole rollout's mean
         (actor_loss * batch_fraction).backward();
         alphas->backward(continuous_entropy, discrete_entropy, discrete_mask, batch_fraction);
 
+        // metrics
         actor_mean_loss_metric->add(actor_loss.cpu().item<float>());
         continuous_entropy_metric->add(continuous_entropy.mean().item<float>());
+        // mean over the discrete actions that had an effect
         discrete_entropy_metric->add(
             (discrete_entropy.sum() / discrete_mask.sum().clamp_min(1.f)).item<float>());
 
@@ -311,6 +318,7 @@ namespace arenai::agent {
         const auto [value, next_x] =
             critic->value_sequence(block.vision, block.proprioception, block.critic_hiddens);
 
+        // recurrence done: fold time into rows and keep the live transitions only
         const auto valid_idx = torch::nonzero(block.valids.flatten(0, 1).squeeze(-1)).squeeze(-1);
         const auto values = value.flatten(0, 1).index_select(0, valid_idx);
         const auto valid_returns = block.returns.flatten(0, 1).index_select(0, valid_idx);
@@ -339,6 +347,7 @@ namespace arenai::agent {
         if (!critic_carry.defined() || critic_carry.size(0) != nb_tanks)
             critic_carry = critic->initial_state(static_cast<int>(nb_tanks));
 
+        // sequential critic pass: the values and the liquid state opening each step
         std::vector<torch::Tensor> value_list;
         std::vector<torch::Tensor> hidden_list;
         value_list.reserve(nb_steps);
@@ -368,6 +377,7 @@ namespace arenai::agent {
                 .value.cpu()
                 .unsqueeze(0);
 
+        // next values are the values shifted by one step, closed by the bootstrap state
         const auto next_values = torch::cat({values.slice(0, 1), bootstrap_value}, 0);
 
         const auto rewards = return_scaler->scale(
@@ -414,14 +424,17 @@ namespace arenai::agent {
     }
 
     void LiquidPpoTrainer::save(const std::filesystem::path &output_folder) {
+        // Models
         save_torch(output_folder, actor, "actor.pt");
         save_torch(output_folder, critic, "critic.pt");
 
+        // Optimizers
         save_torch(output_folder, actor_optim, "actor_optim.pt");
         save_torch(output_folder, critic_optim, "critic_optim.pt");
         save_torch(output_folder, return_scaler, "return_scaler.pt");
         alphas->save(output_folder);
 
+        // string repr
         write_module_repr(output_folder, actor, "actor");
         write_module_repr(output_folder, critic, "critic");
     }

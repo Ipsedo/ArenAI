@@ -21,6 +21,7 @@ namespace arenai::desktop::gui {
 
         void after_context_update() override;
 
+        // Escape / gamepad B folds the open preset dropdown first
         bool on_back() override;
 
     protected:
@@ -28,6 +29,7 @@ namespace arenai::desktop::gui {
         void on_attached(Rml::ElementDocument &document) override;
 
     private:
+        // which element the gamepad cursor lands on after the next Update
         enum class PendingFocus { None, FirstEntry, PresetHead, PresetList };
 
         class ExplorerNavListener final : public Rml::EventListener {
@@ -45,18 +47,21 @@ namespace arenai::desktop::gui {
 
         void focus_first_entry() const;
         void focus_by_id(const char *id) const;
+        // the selected item of an open list, else its first one
         void focus_in_list(const char *list_id) const;
 
         MenuState &state_;
         GameSettings &settings_;
         std::vector<AgentPreset> presets_;
         AgentValidator agent_validator_;
+        // no CUDA device on this machine: the toggle shows disabled and off
         bool cuda_available_;
 
         ExplorerNavListener explorer_nav_listener_;
         ClickOutsideListener click_outside_listener_;
         PendingFocus pending_focus_ = PendingFocus::None;
 
+        // nullopt = "Custom": the agent fields no longer match a preset
         std::optional<size_t> selected_preset_;
         std::vector<Rml::String> preset_names_;
         Rml::String preset_display_;
@@ -67,6 +72,7 @@ namespace arenai::desktop::gui {
         Rml::String current_dir_display_;
         Rml::String agent_folder_display_;
         Rml::String agent_config_display_;
+        // empty while no folder is chosen; otherwise success or error text
         Rml::String agent_status_;
         std::vector<Rml::String> entries_;
     };

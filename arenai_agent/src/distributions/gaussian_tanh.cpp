@@ -6,6 +6,7 @@ using namespace arenai::agent;
 namespace arenai::agent {
 
     namespace {
+        // log |d tanh(u) / du| = log(1 - tanh²(u)), in a form that stays finite for large |u|
         torch::Tensor log_tanh_derivative(const torch::Tensor &u) {
             return 2.0 * (std::log(2.0) - u - torch::softplus(-2.0 * u));
         }

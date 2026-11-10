@@ -34,7 +34,7 @@ namespace arenai::view {
         PipelineBuilder &blend_premultiplied();
         PipelineBuilder &blend_alpha();
 
-        PipelineBuilder &color_format(VkFormat format);
+        PipelineBuilder &color_format(VkFormat format);// none = depth-only pass
         PipelineBuilder &depth_format(VkFormat format);
 
         PipelineBuilder &samples(VkSampleCountFlagBits samples);

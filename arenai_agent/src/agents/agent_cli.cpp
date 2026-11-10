@@ -13,6 +13,8 @@
 #include "./ppo/ppo_hyperparams.h"
 #include "./ppo_liquid/liquid_ppo_factory.h"
 #include "./ppo_liquid/liquid_ppo_hyperparams.h"
+#include "./sac/sac_factory.h"
+#include "./sac/sac_hyperparams.h"
 
 namespace arenai::agent {
 
@@ -47,6 +49,8 @@ namespace arenai::agent {
             "ppo_liquid", liquid_ppo_cli_fields()));
         algorithms.push_back(
             make_agent_cli<PpgHyperParams, PpgTorchAgentFactory>("ppg", ppg_cli_fields()));
+        algorithms.push_back(
+            make_agent_cli<SacHyperParams, SacTorchAgentFactory>("sac", sac_cli_fields()));
 
         return algorithms;
     }

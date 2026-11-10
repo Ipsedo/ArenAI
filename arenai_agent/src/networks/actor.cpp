@@ -32,9 +32,7 @@ namespace arenai::agent {
                   torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_sensors})),
                   torch::nn::SiLU()))),
           head(register_module("head", torch::nn::Sequential())),
-          mu(register_module(
-              "mu", torch::nn::Sequential(
-                        torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions)))),
+          mu(register_module("mu", torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions))),
           sigma(register_module(
               "sigma", torch::nn::Sequential(
                            torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),

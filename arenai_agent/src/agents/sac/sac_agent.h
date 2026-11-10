@@ -10,7 +10,7 @@
 
 #include <arenai_agent/agent.h>
 
-#include "../../networks/sac_actor.h"
+#include "../../networks/actor.h"
 #include "../torch_agent.h"
 #include "./sac_collector.h"
 
@@ -19,7 +19,7 @@ namespace arenai::agent {
     class TorchSacAgent final : public virtual AbstractAgent, public virtual AbstractTorchAgent {
     public:
         TorchSacAgent(
-            const std::shared_ptr<SacActor> &actor, torch::Device device,
+            const std::shared_ptr<Actor> &actor, torch::Device device,
             std::optional<std::shared_ptr<SacStepCollector>> collector = std::nullopt);
 
         TorchAction act(const TorchState &state, bool sample) override;
@@ -29,7 +29,7 @@ namespace arenai::agent {
         void load(const std::filesystem::path &agent_folder) override;
 
     private:
-        std::shared_ptr<SacActor> actor;
+        std::shared_ptr<Actor> actor;
         std::optional<std::shared_ptr<SacStepCollector>> collector;
     };
 

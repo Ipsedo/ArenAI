@@ -48,9 +48,8 @@ namespace arenai::agent {
     }// namespace
 
     SacTrainer::SacTrainer(
-        const std::shared_ptr<SacActor> &actor,
-        const std::shared_ptr<SacReplayBuffer> &replay_buffer, const int nb_sensors,
-        const int nb_continuous_actions, const int nb_discrete_actions,
+        const std::shared_ptr<Actor> &actor, const std::shared_ptr<SacReplayBuffer> &replay_buffer,
+        const int nb_sensors, const int nb_continuous_actions, const int nb_discrete_actions,
         const float actor_learning_rate, const float critic_learning_rate,
         const float alpha_learning_rate, const int hidden_size_sensors,
         const std::vector<int> &critic_hidden_sizes,

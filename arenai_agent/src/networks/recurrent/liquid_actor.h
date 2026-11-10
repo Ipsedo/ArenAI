@@ -57,7 +57,7 @@ namespace arenai::agent {
 
         std::shared_ptr<LiquidCell> liquid;
 
-        torch::nn::Sequential mu;
+        torch::nn::Linear mu;
         torch::nn::Sequential sigma;
         torch::nn::Sequential discrete;
 

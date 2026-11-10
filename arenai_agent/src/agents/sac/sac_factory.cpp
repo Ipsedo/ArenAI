@@ -14,7 +14,7 @@ namespace arenai::agent {
         const int nb_continuous_actions, const int nb_discrete_actions, const torch::Device device,
         const SacHyperParams &params)
         : config(cli_fields_to_json(sac_cli_fields(), params)),
-          actor(std::make_shared<SacActor>(
+          actor(std::make_shared<Actor>(
               nb_sensors, nb_continuous_actions, nb_discrete_actions, params.hidden_size_sensors,
               params.actor_hidden_sizes, params.vision_channels, params.group_norm_nums,
               params.initial_sigma,

@@ -36,9 +36,7 @@ namespace arenai::agent {
                             neuron_number, hidden_size_sensors + vision_encoder->get_output_size(),
                             neuron_number, unfolding_steps, torch::nn::AnyModule(torch::nn::SiLU()),
                             delta_t))),
-          mu(register_module(
-              "mu",
-              torch::nn::Sequential(torch::nn::Linear(neuron_number, nb_continuous_actions)))),
+          mu(register_module("mu", torch::nn::Linear(neuron_number, nb_continuous_actions))),
           sigma(register_module(
               "sigma", torch::nn::Sequential(
                            torch::nn::Linear(neuron_number, nb_continuous_actions),

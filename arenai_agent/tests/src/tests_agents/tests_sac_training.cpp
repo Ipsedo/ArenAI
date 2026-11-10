@@ -14,7 +14,7 @@ SacTrainingTriad SacTrainingTest::make_triad(const SacTrainingTestConfig &cfg) c
     const std::vector group_norm_nums{2};
 
     SacTrainingTriad triad;
-    triad.actor = std::make_shared<SacActor>(
+    triad.actor = std::make_shared<Actor>(
         cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 8, std::vector{16},
         vision_channels, group_norm_nums, 0.3f, std::vector(cfg.nb_discrete_actions, 0.2f));
     triad.replay_buffer = std::make_shared<SacReplayBuffer>(64);

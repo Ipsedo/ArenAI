@@ -22,7 +22,7 @@ struct SacTrainingTestConfig {
 };
 
 struct SacTrainingTriad {
-    std::shared_ptr<arenai::agent::SacActor> actor;
+    std::shared_ptr<arenai::agent::Actor> actor;
     std::shared_ptr<arenai::agent::SacReplayBuffer> replay_buffer;
     std::shared_ptr<arenai::agent::SacStepCollector> collector;
     std::shared_ptr<arenai::agent::TorchSacAgent> agent;

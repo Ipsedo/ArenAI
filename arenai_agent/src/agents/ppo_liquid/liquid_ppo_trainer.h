@@ -103,20 +103,63 @@ namespace arenai::agent {
         // across train() calls; re-drawn at every episode start
         torch::Tensor critic_carry;
 
+        // the kept steps flattened to [T_kept * nb_tanks, ...] rows, all on the device
+        struct FlatRows {
+            torch::Tensor vision;
+            torch::Tensor proprioception;
+            torch::Tensor continuous_pre_tanh;
+            torch::Tensor discrete_actions;
+            torch::Tensor fire_masks;
+            torch::Tensor old_log_probs;
+            torch::Tensor advantages;
+            torch::Tensor returns;
+            torch::Tensor valids;
+            torch::Tensor actor_hiddens;
+            torch::Tensor critic_hiddens;
+
+            // [nb_chunks, chunk_size, ...] sequences of the given rows, the hidden
+            // states taken at the chunks' first steps
+            FlatRows select_chunks(
+                const torch::Tensor &rows, const torch::Tensor &start_rows,
+                int64_t chunk_size) const;
+        };
+
+        // chunk unit u = chunk * nb_tanks + tank over the kept steps; maps a unit to
+        // its flat rows and weighs it by its live transitions
+        struct ChunkIndex {
+            int64_t nb_tanks;
+            int64_t chunk_size;
+            torch::Device device;
+            torch::Tensor step_offsets;
+            // live transitions per chunk unit
+            torch::Tensor valid_counts;
+            // units with at least one live transition: the only ones worth training on
+            torch::Tensor valid_units;
+
+            ChunkIndex(
+                const torch::Tensor &valids, int64_t nb_tanks, int64_t nb_chunks_per_tank,
+                int64_t chunk_size, torch::Device device);
+
+            int64_t units_per_batch(int64_t batch_size) const;
+
+            // the device rows of the units' chunks and of their first steps, where the
+            // stored hidden states start each chunk
+            std::tuple<torch::Tensor, torch::Tensor> rows(const torch::Tensor &units) const;
+
+            // live rows of the units, the weight of a block in its optimizer batch
+            float live_rows(const torch::Tensor &units) const;
+            float batch_live_rows(const std::vector<torch::Tensor> &blocks) const;
+        };
+
         void train();
 
-        // accumulates a device block's share of its optimizer batch gradient; returns its per-row KL
-        torch::Tensor backward_actor(
-            const torch::Tensor &vision, const torch::Tensor &proprioception,
-            const torch::Tensor &hidden, const torch::Tensor &continuous_pre_tanh,
-            const torch::Tensor &discrete_actions, const torch::Tensor &fire_masks,
-            const torch::Tensor &old_log_probs, const torch::Tensor &advantages,
-            const torch::Tensor &valids, float batch_fraction) const;
+        void run_actor_epochs(const FlatRows &rows, const ChunkIndex &chunks) const;
+        void run_critic_epochs(const FlatRows &rows, const ChunkIndex &chunks) const;
 
-        void backward_critic(
-            const torch::Tensor &vision, const torch::Tensor &proprioception,
-            const torch::Tensor &hidden, const torch::Tensor &returns, const torch::Tensor &valids,
-            float batch_fraction) const;
+        // accumulates a device block's share of its optimizer batch gradient; returns its per-row KL
+        torch::Tensor backward_actor(const FlatRows &block, float batch_fraction) const;
+
+        void backward_critic(const FlatRows &block, float batch_fraction) const;
 
         // sequential critic pass over the rollout, advancing critic_carry
         LiquidGaeResult compute_gae(const LiquidPpoRollout &rollout, torch::Device device);

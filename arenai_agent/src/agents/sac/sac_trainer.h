@@ -89,6 +89,11 @@ namespace arenai::agent {
         void backward_critic(const SacBatch &block, float batch_fraction) const;
         void backward_actor_and_alphas(const SacBatch &block, float batch_fraction) const;
 
+        // dual loss of the temperatures over the actor's (detached) entropies
+        void backward_alphas(
+            const torch::Tensor &continuous_log_prob, const torch::Tensor &discrete_entropies,
+            const torch::Tensor &discrete_mask, float batch_fraction) const;
+
         // (continuous, discrete) detached temperatures
         std::pair<torch::Tensor, torch::Tensor> split_alphas() const;
 

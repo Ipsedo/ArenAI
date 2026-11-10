@@ -17,9 +17,6 @@
 #include "../../networks_utils/torch_saver.h"
 #include "../update_utils.h"
 
-using namespace arenai;
-using namespace arenai::agent;
-
 namespace arenai::agent {
     namespace {
         // merges the [T, nb_tanks] leading dimensions into a single row dimension
@@ -28,6 +25,21 @@ namespace arenai::agent {
             sizes.erase(sizes.begin());
             sizes[0] = tensor.size(0) * tensor.size(1);
             return tensor.reshape(sizes);
+        }
+
+        int64_t total_rows(const std::vector<torch::Tensor> &blocks) {
+            return std::accumulate(
+                blocks.begin(), blocks.end(), int64_t{0},
+                [](const int64_t sum, const torch::Tensor &idx) { return sum + idx.size(0); });
+        }
+
+        void write_module_repr(
+            const std::filesystem::path &output_folder,
+            const std::shared_ptr<torch::nn::Module> &module, const std::string &name) {
+            std::ostringstream oss;
+            dump_module_tree(module, oss, 0, name);
+            std::ofstream file(output_folder / (name + "_repr.txt"));
+            file << oss.str();
         }
 
         constexpr float LOG_RATIO_MAX_ABS = 3.f;
@@ -88,6 +100,26 @@ namespace arenai::agent {
         train(nb_policy_phases % n_pi == 0);
     }
 
+    PpgTrainer::FlatRows PpgTrainer::FlatRows::select(const torch::Tensor &idx) const {
+        const auto rows = [&](const torch::Tensor &tensor) { return tensor.index_select(0, idx); };
+        return {
+            .vision = rows(vision),
+            .proprioception = rows(proprioception),
+            .continuous_pre_tanh = rows(continuous_pre_tanh),
+            .discrete_actions = rows(discrete_actions),
+            .fire_masks = rows(fire_masks),
+            .old_log_probs = rows(old_log_probs),
+            .advantages = rows(advantages),
+            .returns = rows(returns)};
+    }
+
+    PpgTrainer::CloneTargets PpgTrainer::CloneTargets::select(const torch::Tensor &idx) const {
+        return {
+            .mus = mus.index_select(0, idx),
+            .sigmas = sigmas.index_select(0, idx),
+            .discrete_probas = discrete_probas.index_select(0, idx)};
+    }
+
     void PpgTrainer::train(const bool run_aux) const {
         const auto device = actor->parameters().back().device();
 
@@ -101,34 +133,35 @@ namespace arenai::agent {
         set_train(false);
         const auto [advantages, returns] = compute_gae(rollout, device);
 
-        set_train(true);
-
         // flat [T * nb_tanks, ...] rows, all on the device
         const auto flat = [&](const torch::Tensor &tensor) {
             return flatten_steps(tensor).to(device);
         };
-
-        const auto flat_vision = flat(rollout.states.vision);
-        const auto flat_proprioception = flat(rollout.states.proprioception);
-        const auto flat_continuous_pre_tanh = flat(rollout.continuous_pre_tanhs);
-        const auto flat_discrete_actions = flat(rollout.actions.discrete_action);
-        const auto flat_fire_masks = flat(rollout.states.fire_mask);
-        const auto flat_old_log_probs =
-            flat(rollout.continuous_log_probs) + flat(rollout.discrete_log_probs);
-        const auto flat_advantages = flat(advantages);
-        const auto flat_returns = flat(returns);
+        const FlatRows rows = {
+            .vision = flat(rollout.states.vision),
+            .proprioception = flat(rollout.states.proprioception),
+            .continuous_pre_tanh = flat(rollout.continuous_pre_tanhs),
+            .discrete_actions = flat(rollout.actions.discrete_action),
+            .fire_masks = flat(rollout.states.fire_mask),
+            .old_log_probs = flat(rollout.continuous_log_probs) + flat(rollout.discrete_log_probs),
+            .advantages = flat(advantages),
+            .returns = flat(returns)};
 
         // live (step, tank) pairs; the optimizer batches split these rows only
         const auto valid_idx =
             torch::nonzero(flatten_steps(rollout.valids).squeeze(-1)).squeeze(-1).to(device);
-        if (const auto nb_valid_rows = valid_idx.size(0); nb_valid_rows == 0) return;
+        if (valid_idx.size(0) == 0) return;
 
-        const auto select = [](const torch::Tensor &tensor, const torch::Tensor &idx) {
-            return tensor.index_select(0, idx);
-        };
+        set_train(true);
+        run_actor_epochs(rows, valid_idx);
+        run_critic_epochs(critic_epochs, rows, valid_idx);
 
-        // Phase #1
+        if (run_aux) auxiliary_phase(rows, valid_idx);
 
+        set_train(false);
+    }
+
+    void PpgTrainer::run_actor_epochs(const FlatRows &rows, const torch::Tensor &valid_idx) const {
         // the actor steps until its KL leaves the trust region: past the threshold it stays
         // for the rest of the rollout
         int nb_actor_steps = 0;
@@ -146,18 +179,12 @@ namespace arenai::agent {
                 actor_optim->zero_grad();
                 alphas->zero_grad();
 
-                const auto nb_batch_rows = std::accumulate(
-                    blocks.begin(), blocks.end(), int64_t{0},
-                    [](const int64_t sum, const torch::Tensor &idx) { return sum + idx.size(0); });
+                const auto nb_batch_rows = static_cast<float>(total_rows(blocks));
 
                 std::vector<torch::Tensor> kl_per_rows;
                 for (const auto &idx: blocks)
                     kl_per_rows.push_back(backward_actor(
-                        select(flat_vision, idx), select(flat_proprioception, idx),
-                        select(flat_continuous_pre_tanh, idx), select(flat_discrete_actions, idx),
-                        select(flat_fire_masks, idx), select(flat_old_log_probs, idx),
-                        select(flat_advantages, idx),
-                        static_cast<float>(idx.size(0)) / static_cast<float>(nb_batch_rows)));
+                        rows.select(idx), static_cast<float>(idx.size(0)) / nb_batch_rows));
 
                 // KL of the policy this step starts from
                 const auto approx_kl = trimmed_kl(kl_per_rows);
@@ -175,130 +202,98 @@ namespace arenai::agent {
 
         skip_fraction_metric->add(
             1.f - static_cast<float>(nb_actor_steps) / static_cast<float>(nb_planned_actor_steps));
+    }
 
-        for (int e = 0; e < critic_epochs; e++)
+    void PpgTrainer::run_critic_epochs(
+        const int nb_epochs, const FlatRows &rows, const torch::Tensor &valid_idx) const {
+        for (int e = 0; e < nb_epochs; e++)
             for (const auto &blocks:
                  shuffled_batches(valid_idx, critic_batch_size, critic_gpu_batch_size)) {
                 critic_optim->zero_grad();
 
-                const auto nb_batch_rows = std::accumulate(
-                    blocks.begin(), blocks.end(), int64_t{0},
-                    [](const int64_t sum, const torch::Tensor &idx) { return sum + idx.size(0); });
+                const auto nb_batch_rows = static_cast<float>(total_rows(blocks));
 
                 for (const auto &idx: blocks)
                     backward_critic(
-                        select(flat_vision, idx), select(flat_proprioception, idx),
-                        select(flat_returns, idx),
-                        static_cast<float>(idx.size(0)) / static_cast<float>(nb_batch_rows));
+                        rows.select(idx), static_cast<float>(idx.size(0)) / nb_batch_rows);
 
                 torch::nn::utils::clip_grad_norm_(critic->parameters(), grad_norm_max);
                 critic_optim->step();
             }
+    }
 
-        /////////
-        // PPG //
-        /////////
-
-        // Phase #2, once every n_pi policy phases
-
+    void PpgTrainer::auxiliary_phase(const FlatRows &rows, const torch::Tensor &valid_idx) const {
+        // targets computed once over every flat row before any update: the critic's
+        // values to distill and the policy to keep
         set_train(false);
-
-        if (!run_aux) return;
-
-        // targets of the auxiliary phase, computed once over every flat row before any update:
-        // the critic's values to distill and the policy to keep (the clone reference)
-        std::vector<torch::Tensor> old_mu_chunks;
-        std::vector<torch::Tensor> old_sigma_chunks;
-        std::vector<torch::Tensor> old_discrete_chunks;
-
-        {
-            torch::NoGradGuard no_grad;
-
-            for (int64_t i = 0; i < flat_vision.size(0); i += critic_gpu_batch_size) {
-                const auto end = std::min<int64_t>(i + critic_gpu_batch_size, flat_vision.size(0));
-
-                const auto chunk_vision = flat_vision.slice(0, i, end);
-                const auto chunk_proprioception = flat_proprioception.slice(0, i, end);
-
-                const auto [mu, sigma, discrete_proba] =
-                    actor->act(chunk_vision, chunk_proprioception);
-                old_mu_chunks.push_back(mu);
-                old_sigma_chunks.push_back(sigma);
-                old_discrete_chunks.push_back(discrete_proba);
-            }
-        }
-
-        const auto old_mus = torch::cat(old_mu_chunks, 0);
-        const auto old_sigmas = torch::cat(old_sigma_chunks, 0);
-        const auto old_discretes = torch::cat(old_discrete_chunks, 0);
-
+        const auto targets = compute_clone_targets(rows);
         set_train(true);
 
+        run_actor_aux_epochs(rows, targets, valid_idx);
+        run_critic_epochs(critic_aux_epochs, rows, valid_idx);
+    }
+
+    PpgTrainer::CloneTargets PpgTrainer::compute_clone_targets(const FlatRows &rows) const {
+        torch::NoGradGuard no_grad;
+
+        std::vector<torch::Tensor> mu_chunks;
+        std::vector<torch::Tensor> sigma_chunks;
+        std::vector<torch::Tensor> discrete_chunks;
+
+        for (int64_t i = 0; i < rows.vision.size(0); i += critic_gpu_batch_size) {
+            const auto end = std::min<int64_t>(i + critic_gpu_batch_size, rows.vision.size(0));
+
+            const auto [mu, sigma, discrete_proba] =
+                actor->act(rows.vision.slice(0, i, end), rows.proprioception.slice(0, i, end));
+            mu_chunks.push_back(mu);
+            sigma_chunks.push_back(sigma);
+            discrete_chunks.push_back(discrete_proba);
+        }
+
+        return {
+            .mus = torch::cat(mu_chunks, 0),
+            .sigmas = torch::cat(sigma_chunks, 0),
+            .discrete_probas = torch::cat(discrete_chunks, 0)};
+    }
+
+    void PpgTrainer::run_actor_aux_epochs(
+        const FlatRows &rows, const CloneTargets &targets, const torch::Tensor &valid_idx) const {
         // value distillation in the actor, its policy held by the clone term
         for (int e = 0; e < actor_aux_epochs; e++) {
             for (const auto &blocks:
                  shuffled_batches(valid_idx, actor_batch_size, actor_gpu_batch_size)) {
                 actor_optim->zero_grad();
 
-                const auto nb_batch_rows = std::accumulate(
-                    blocks.begin(), blocks.end(), int64_t{0},
-                    [](const int64_t sum, const torch::Tensor &idx) { return sum + idx.size(0); });
+                const auto nb_batch_rows = static_cast<float>(total_rows(blocks));
 
                 for (const auto &idx: blocks)
                     backward_actor_aux(
-                        select(flat_vision, idx), select(flat_proprioception, idx),
-                        select(flat_fire_masks, idx), select(flat_returns, idx),
-                        select(old_mus, idx), select(old_sigmas, idx), select(old_discretes, idx),
-                        static_cast<float>(idx.size(0)) / static_cast<float>(nb_batch_rows));
+                        rows.select(idx), targets.select(idx),
+                        static_cast<float>(idx.size(0)) / nb_batch_rows);
 
                 torch::nn::utils::clip_grad_norm_(actor->parameters(), grad_norm_max);
                 actor_optim->step();
             }
         }
-
-        // train critic
-
-        for (int e = 0; e < critic_aux_epochs; e++)
-            for (const auto &blocks:
-                 shuffled_batches(valid_idx, critic_batch_size, critic_gpu_batch_size)) {
-                critic_optim->zero_grad();
-
-                const auto nb_batch_rows = std::accumulate(
-                    blocks.begin(), blocks.end(), int64_t{0},
-                    [](const int64_t sum, const torch::Tensor &idx) { return sum + idx.size(0); });
-
-                for (const auto &idx: blocks)
-                    backward_critic(
-                        select(flat_vision, idx), select(flat_proprioception, idx),
-                        select(flat_returns, idx),
-                        static_cast<float>(idx.size(0)) / static_cast<float>(nb_batch_rows));
-
-                torch::nn::utils::clip_grad_norm_(critic->parameters(), grad_norm_max);
-                critic_optim->step();
-            }
-
-        set_train(false);
     }
 
-    torch::Tensor PpgTrainer::backward_actor(
-        const torch::Tensor &vision, const torch::Tensor &proprioception,
-        const torch::Tensor &continuous_pre_tanh, const torch::Tensor &discrete_actions,
-        const torch::Tensor &fire_masks, const torch::Tensor &old_log_probs,
-        const torch::Tensor &advantages, const float batch_fraction) const {
-        const auto [mu, sigma, discrete_proba] = actor->act(vision, proprioception);
+    torch::Tensor
+    PpgTrainer::backward_actor(const FlatRows &block, const float batch_fraction) const {
+        const auto [mu, sigma, discrete_proba] = actor->act(block.vision, block.proprioception);
         // the fire action is a decision only when it would shoot: masked out of the
         // log-probabilities (as at collection) and of the entropy
-        const auto discrete_mask = discrete_action_mask(fire_masks, discrete_proba.size(-1));
+        const auto discrete_mask = discrete_action_mask(block.fire_masks, discrete_proba.size(-1));
 
         const auto curr_continuous_log_probs =
-            gaussian_tanh_log_pdf(continuous_pre_tanh, mu, sigma).sum(-1, true);
+            gaussian_tanh_log_pdf(block.continuous_pre_tanh, mu, sigma).sum(-1, true);
 
         const auto curr_discrete_log_probs =
-            (bernoulli_log_proba(discrete_actions, discrete_proba) * discrete_mask).sum(-1, true);
+            (bernoulli_log_proba(block.discrete_actions, discrete_proba) * discrete_mask)
+                .sum(-1, true);
 
         const auto log_ratio = torch::clamp(
-            curr_continuous_log_probs + curr_discrete_log_probs - old_log_probs, -LOG_RATIO_MAX_ABS,
-            LOG_RATIO_MAX_ABS);
+            curr_continuous_log_probs + curr_discrete_log_probs - block.old_log_probs,
+            -LOG_RATIO_MAX_ABS, LOG_RATIO_MAX_ABS);
 
         const auto ratio = torch::exp(log_ratio);
 
@@ -311,7 +306,8 @@ namespace arenai::agent {
             + (alphas->discrete().detach() * discrete_entropy).sum(-1, true);
 
         const auto clipped_ratio = torch::clamp(ratio, 1.f - clip_epsilon, 1.f + clip_epsilon);
-        const auto surrogate = torch::min(ratio * advantages, clipped_ratio * advantages);
+        const auto surrogate =
+            torch::min(ratio * block.advantages, clipped_ratio * block.advantages);
 
         const auto actor_loss = -torch::mean(surrogate + entropy_bonus);
 
@@ -333,24 +329,22 @@ namespace arenai::agent {
     }
 
     void PpgTrainer::backward_actor_aux(
-        const torch::Tensor &vision, const torch::Tensor &proprioception,
-        const torch::Tensor &fire_masks, const torch::Tensor &target_values,
-        const torch::Tensor &old_mus, const torch::Tensor &old_sigmas,
-        const torch::Tensor &old_discrete_probas, const float batch_fraction) const {
-        const auto values = actor->value(vision, proprioception);
-        const auto [mu, sigma, discrete_proba] = actor->act(vision, proprioception);
+        const FlatRows &block, const CloneTargets &targets, const float batch_fraction) const {
+        const auto values = actor->value(block.vision, block.proprioception);
+        const auto [mu, sigma, discrete_proba] = actor->act(block.vision, block.proprioception);
 
-        const auto aux_loss = torch::mse_loss(values, target_values, at::Reduction::None);
+        const auto aux_loss = torch::mse_loss(values, block.returns, at::Reduction::None);
 
         // KL(old || new), closed form for both: the tanh squash leaves the normal's KL unchanged
-        const auto continuous_kl = gaussian_tanh_kl(old_mus, old_sigmas, mu, sigma).sum(-1, true);
+        const auto continuous_kl =
+            gaussian_tanh_kl(targets.mus, targets.sigmas, mu, sigma).sum(-1, true);
 
-        const auto old_p = old_discrete_probas.clamp(EPSILON, 1.f - EPSILON);
+        const auto old_p = targets.discrete_probas.clamp(EPSILON, 1.f - EPSILON);
         const auto new_p = discrete_proba.clamp(EPSILON, 1.f - EPSILON);
         // a masked fire is not a decision: kept out of the clone term as of the policy phase
         const auto discrete_kl = ((old_p * torch::log(old_p / new_p)
                                    + (1.f - old_p) * torch::log((1.f - old_p) / (1.f - new_p)))
-                                  * discrete_action_mask(fire_masks, discrete_proba.size(-1)))
+                                  * discrete_action_mask(block.fire_masks, discrete_proba.size(-1)))
                                      .sum(-1, true);
 
         const auto loss = torch::mean(aux_loss + beta_clone * (continuous_kl + discrete_kl));
@@ -359,18 +353,16 @@ namespace arenai::agent {
         (loss * batch_fraction).backward();
     }
 
-    void PpgTrainer::backward_critic(
-        const torch::Tensor &vision, const torch::Tensor &proprioception,
-        const torch::Tensor &returns, const float batch_fraction) const {
-        const auto values = critic->value(vision, proprioception);
-        const auto critic_loss = torch::mse_loss(values, returns, at::Reduction::Mean);
+    void PpgTrainer::backward_critic(const FlatRows &block, const float batch_fraction) const {
+        const auto values = critic->value(block.vision, block.proprioception);
+        const auto critic_loss = torch::mse_loss(values, block.returns, at::Reduction::Mean);
 
         (critic_loss * batch_fraction).backward();
 
         critic_mean_loss_metric->add(critic_loss.cpu().item<float>());
 
-        const auto residual_var = (returns - values.detach()).var(false);
-        const auto returns_var = returns.var(false);
+        const auto residual_var = (block.returns - values.detach()).var(false);
+        const auto returns_var = block.returns.var(false);
         explained_variance_metric->add(
             (1.f - residual_var / returns_var.clamp_min(EPSILON)).item<float>());
     }
@@ -463,17 +455,8 @@ namespace arenai::agent {
         alphas->save(output_folder);
 
         // string repr
-        std::ostringstream actor_repr_oss;
-        dump_module_tree(actor, actor_repr_oss, 0, "actor");
-        std::ofstream actor_repr_file(output_folder / "actor_repr.txt");
-        actor_repr_file << actor_repr_oss.str();
-        actor_repr_file.close();
-
-        std::ostringstream critic_repr_oss;
-        dump_module_tree(critic, critic_repr_oss, 0, "critic");
-        std::ofstream critic_repr_file(output_folder / "critic_repr.txt");
-        critic_repr_file << critic_repr_oss.str();
-        critic_repr_file.close();
+        write_module_repr(output_folder, actor, "actor");
+        write_module_repr(output_folder, critic, "critic");
     }
 
     void PpgTrainer::set_train(const bool train) const {

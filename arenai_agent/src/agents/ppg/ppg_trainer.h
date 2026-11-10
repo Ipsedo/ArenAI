@@ -103,25 +103,50 @@ namespace arenai::agent {
         int n_pi;
         int nb_policy_phases = 0;
 
+        // the rollout flattened to [T * nb_tanks, ...] rows, all on the device
+        struct FlatRows {
+            torch::Tensor vision;
+            torch::Tensor proprioception;
+            torch::Tensor continuous_pre_tanh;
+            torch::Tensor discrete_actions;
+            torch::Tensor fire_masks;
+            torch::Tensor old_log_probs;
+            torch::Tensor advantages;
+            torch::Tensor returns;
+
+            FlatRows select(const torch::Tensor &idx) const;
+        };
+
+        // the policy to keep through the auxiliary phase (the clone reference)
+        struct CloneTargets {
+            torch::Tensor mus;
+            torch::Tensor sigmas;
+            torch::Tensor discrete_probas;
+
+            CloneTargets select(const torch::Tensor &idx) const;
+        };
+
         void train(bool run_aux) const;
 
+        void run_actor_epochs(const FlatRows &rows, const torch::Tensor &valid_idx) const;
+        void run_critic_epochs(
+            int nb_epochs, const FlatRows &rows, const torch::Tensor &valid_idx) const;
+
+        // once every n_pi policy phases: value distillation in the actor + extra critic epochs
+        void auxiliary_phase(const FlatRows &rows, const torch::Tensor &valid_idx) const;
+        CloneTargets compute_clone_targets(const FlatRows &rows) const;
+        void run_actor_aux_epochs(
+            const FlatRows &rows, const CloneTargets &targets,
+            const torch::Tensor &valid_idx) const;
+
         // accumulates a device block's share of its optimizer batch gradient; returns its per-row KL
-        torch::Tensor backward_actor(
-            const torch::Tensor &vision, const torch::Tensor &proprioception,
-            const torch::Tensor &continuous_pre_tanh, const torch::Tensor &discrete_actions,
-            const torch::Tensor &fire_masks, const torch::Tensor &old_log_probs,
-            const torch::Tensor &advantages, float batch_fraction) const;
+        torch::Tensor backward_actor(const FlatRows &block, float batch_fraction) const;
 
         // value distillation + policy clone loss of the auxiliary phase
         void backward_actor_aux(
-            const torch::Tensor &vision, const torch::Tensor &proprioception,
-            const torch::Tensor &fire_masks, const torch::Tensor &target_values,
-            const torch::Tensor &old_mus, const torch::Tensor &old_sigmas,
-            const torch::Tensor &old_discrete_probas, float batch_fraction) const;
+            const FlatRows &block, const CloneTargets &targets, float batch_fraction) const;
 
-        void backward_critic(
-            const torch::Tensor &vision, const torch::Tensor &proprioception,
-            const torch::Tensor &returns, float batch_fraction) const;
+        void backward_critic(const FlatRows &block, float batch_fraction) const;
 
         PpgGaeResult compute_gae(const PpgRollout &rollout, torch::Device device) const;
 

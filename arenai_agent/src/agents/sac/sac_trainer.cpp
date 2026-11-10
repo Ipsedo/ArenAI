@@ -16,9 +16,6 @@
 #include "../../networks_utils/torch_saver.h"
 #include "./sac_discrete.h"
 
-using namespace arenai;
-using namespace arenai::agent;
-
 namespace arenai::agent {
 
     namespace {
@@ -38,6 +35,15 @@ namespace arenai::agent {
                 .rewards = batch.rewards.slice(0, start, end),
                 .cuts = batch.cuts.slice(0, start, end),
                 .next_states = slice_state(batch.next_states, start, end)};
+        }
+
+        void write_module_repr(
+            const std::filesystem::path &output_folder,
+            const std::shared_ptr<torch::nn::Module> &module, const std::string &name) {
+            std::ostringstream oss;
+            dump_module_tree(module, oss, 0, name);
+            std::ofstream file(output_folder / (name + "_repr.txt"));
+            file << oss.str();
         }
     }// namespace
 
@@ -107,26 +113,29 @@ namespace arenai::agent {
         const auto device = actor->parameters().back().device();
         const auto batch = replay_buffer->sample(batch_size, device);
 
-        std::vector<std::pair<int64_t, int64_t>> blocks;
-        for (int64_t start = 0; start < batch_size; start += gpu_batch_size)
-            blocks.emplace_back(start, std::min<int64_t>(start + gpu_batch_size, batch_size));
-
-        const auto fraction = [&](const std::pair<int64_t, int64_t> &block) {
-            return static_cast<float>(block.second - block.first) / static_cast<float>(batch_size);
+        struct Block {
+            int64_t start;
+            int64_t end;
+            float fraction;
         };
+        std::vector<Block> blocks;
+        for (int64_t start = 0; start < batch_size; start += gpu_batch_size) {
+            const auto end = std::min<int64_t>(start + gpu_batch_size, batch_size);
+            blocks.push_back(
+                {start, end, static_cast<float>(end - start) / static_cast<float>(batch_size)});
+        }
 
         // critics on the frozen target
         critic_optim->zero_grad();
-        for (const auto &block: blocks)
-            backward_critic(slice_batch(batch, block.first, block.second), fraction(block));
+        for (const auto &[start, end, fraction]: blocks)
+            backward_critic(slice_batch(batch, start, end), fraction);
         critic_optim->step();
 
         // actor through the fresh critics, temperatures on the actor's entropies
         actor_optim->zero_grad();
         alpha_optim->zero_grad();
-        for (const auto &block: blocks)
-            backward_actor_and_alphas(
-                slice_batch(batch, block.first, block.second), fraction(block));
+        for (const auto &[start, end, fraction]: blocks)
+            backward_actor_and_alphas(slice_batch(batch, start, end), fraction);
         actor_optim->step();
         alpha_optim->step();
 
@@ -207,9 +216,19 @@ namespace arenai::agent {
             + (joint.probas * (discrete_bonus - q_min)).sum(-1, true));
         (actor_loss * batch_fraction).backward();
 
+        const auto discrete_entropies = discrete_action_entropies(joint).detach();
+        backward_alphas(continuous_log_prob, discrete_entropies, discrete_mask, batch_fraction);
+
+        actor_loss_metric->add(actor_loss.item<float>());
+        continuous_entropy_metric->add(-continuous_log_prob.sum(-1).mean().item<float>());
+        discrete_entropy_metric->add(discrete_entropies.sum(-1).mean().item<float>());
+    }
+
+    void SacTrainer::backward_alphas(
+        const torch::Tensor &continuous_log_prob, const torch::Tensor &discrete_entropies,
+        const torch::Tensor &discrete_mask, const float batch_fraction) const {
         // temperatures: one per action, each pushed toward its own entropy target
         // (Lagrangian on log-alpha); a discrete action without effect has a zero target
-        const auto discrete_entropies = discrete_action_entropies(joint).detach();
         const auto discrete_target_entropies =
             discrete_target_entropy_ratio * bernoulli_maximum_entropy() * discrete_mask;
 
@@ -223,9 +242,6 @@ namespace arenai::agent {
             - (discrete_log_alpha * (discrete_target_entropies - discrete_entropies).mean(0)).sum();
         (alpha_loss * batch_fraction).backward();
 
-        actor_loss_metric->add(actor_loss.item<float>());
-        continuous_entropy_metric->add(-continuous_log_prob.sum(-1).mean().item<float>());
-        discrete_entropy_metric->add(discrete_entropies.sum(-1).mean().item<float>());
         const auto alpha = alphas->alpha().detach().cpu();
         for (size_t i = 0; i < alpha_metrics.size(); i++)
             alpha_metrics[i]->add(alpha[static_cast<int64_t>(i)].item<float>());
@@ -251,15 +267,8 @@ namespace arenai::agent {
         save_torch(output_folder, critic_optim, "critic_optim.pt");
         save_torch(output_folder, alpha_optim, "alpha_optim.pt");
 
-        std::ostringstream actor_repr_oss;
-        dump_module_tree(actor, actor_repr_oss, 0, "actor");
-        std::ofstream actor_repr_file(output_folder / "actor_repr.txt");
-        actor_repr_file << actor_repr_oss.str();
-
-        std::ostringstream critic_repr_oss;
-        dump_module_tree(critic, critic_repr_oss, 0, "critic");
-        std::ofstream critic_repr_file(output_folder / "critic_repr.txt");
-        critic_repr_file << critic_repr_oss.str();
+        write_module_repr(output_folder, actor, "actor");
+        write_module_repr(output_folder, critic, "critic");
     }
 
     void SacTrainer::set_train(const bool train) const {

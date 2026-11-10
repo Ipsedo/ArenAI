@@ -92,18 +92,29 @@ namespace arenai::agent {
         int critic_batch_size;
         int critic_gpu_batch_size;
 
+        // the rollout flattened to [T * nb_tanks, ...] rows, all on the device
+        struct FlatRows {
+            torch::Tensor vision;
+            torch::Tensor proprioception;
+            torch::Tensor continuous_pre_tanh;
+            torch::Tensor discrete_actions;
+            torch::Tensor fire_masks;
+            torch::Tensor old_log_probs;
+            torch::Tensor advantages;
+            torch::Tensor returns;
+
+            FlatRows select(const torch::Tensor &idx) const;
+        };
+
         void train() const;
 
-        // accumulates a device block's share of its optimizer batch gradient; returns its per-row KL
-        torch::Tensor backward_actor(
-            const torch::Tensor &vision, const torch::Tensor &proprioception,
-            const torch::Tensor &continuous_pre_tanh, const torch::Tensor &discrete_actions,
-            const torch::Tensor &fire_masks, const torch::Tensor &old_log_probs,
-            const torch::Tensor &advantages, float batch_fraction) const;
+        void run_actor_epochs(const FlatRows &rows, const torch::Tensor &valid_idx) const;
+        void run_critic_epochs(const FlatRows &rows, const torch::Tensor &valid_idx) const;
 
-        void backward_critic(
-            const torch::Tensor &vision, const torch::Tensor &proprioception,
-            const torch::Tensor &returns, float batch_fraction) const;
+        // accumulates a device block's share of its optimizer batch gradient; returns its per-row KL
+        torch::Tensor backward_actor(const FlatRows &block, float batch_fraction) const;
+
+        void backward_critic(const FlatRows &block, float batch_fraction) const;
 
         GaeResult compute_gae(const PpoRollout &rollout, torch::Device device) const;
 

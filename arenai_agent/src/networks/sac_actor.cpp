@@ -75,8 +75,7 @@ namespace arenai::agent {
 
         return {
             .mu = mu->forward(encoded),
-            .sigma = torch::exp(
-                log_sigma->forward(encoded).clamp(std::log(SIGMA_MIN), std::log(SIGMA_MAX))),
+            .sigma = torch::exp(log_sigma->forward(encoded).clamp(LOG_SIGMA_MIN, LOG_SIGMA_MAX)),
             .discrete = discrete->forward(encoded)};
     }
 

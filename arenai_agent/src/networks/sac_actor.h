@@ -17,7 +17,7 @@ namespace arenai::agent {
 
     struct SacActorOutput {
         // tanh-squashed gaussian: mu and sigma are the pre-squash mean and spread, both
-        // state-dependent (sigma is kept in [SIGMA_MIN, SIGMA_MAX])
+        // state-dependent (log-sigma is kept in [LOG_SIGMA_MIN, LOG_SIGMA_MAX])
         torch::Tensor mu;
         torch::Tensor sigma;
         // [N, nb_discrete_actions] independent Bernoulli probabilities

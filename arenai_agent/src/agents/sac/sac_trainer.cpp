@@ -232,11 +232,13 @@ namespace arenai::agent {
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> SacTrainer::get_metrics() {
-        std::vector<std::shared_ptr<AbstractMetric>> metrics{
+        return {
             critic_loss_metric, actor_loss_metric, q_value_metric, continuous_entropy_metric,
             discrete_entropy_metric};
-        metrics.insert(metrics.end(), alpha_metrics.begin(), alpha_metrics.end());
-        return metrics;
+    }
+
+    std::vector<std::shared_ptr<AbstractMetric>> SacTrainer::get_csv_only_metrics() {
+        return {alpha_metrics.begin(), alpha_metrics.end()};
     }
 
     void SacTrainer::save(const std::filesystem::path &output_folder) {

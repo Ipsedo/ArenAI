@@ -39,6 +39,7 @@ namespace arenai::agent {
         void step() override;
 
         std::vector<std::shared_ptr<AbstractMetric>> get_metrics() override;
+        std::vector<std::shared_ptr<AbstractMetric>> get_csv_only_metrics() override;
 
         void save(const std::filesystem::path &output_folder) override;
 

@@ -69,8 +69,12 @@ TEST_F(SacAgentTest, MetricsNotEmpty) {
         .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
-    // q, π, Q, Hc, Hd + one α per action (4 continuous, 2 discrete)
-    ASSERT_EQ(factory->get_trainer()->get_metrics().size(), 5 + 4 + 2);
+    // q, π, Q, Hc, Hd
+    ASSERT_EQ(factory->get_trainer()->get_metrics().size(), 5);
+    // one α per action (4 continuous, 2 discrete), CSV only
+    ASSERT_EQ(
+        factory->get_trainer()->get_csv_only_metrics().size(),
+        cfg.nb_continuous_actions + cfg.nb_discrete_actions);
 }
 
 TEST_F(SacAgentTest, ConfigCarriesGamma) {

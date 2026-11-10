@@ -9,9 +9,9 @@
 #include <tuple>
 #include <vector>
 
+#include "../../networks/entropy.h"
 #include "../../networks/q_function.h"
 #include "../../networks/sac_actor.h"
-#include "../../networks/sac_alpha.h"
 #include "../trainer.h"
 #include "./sac_replay_buffer.h"
 

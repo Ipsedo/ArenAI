@@ -366,9 +366,6 @@ TEST_F(RewardTest, AimPotentialIsLowWhenTheShotWouldMiss) {
 
 TEST_F(RewardTest, NoRewardWhenShootingAWreck) {
 
-    // proprioception ends with (reserve, cooldown) ratios
-    constexpr int proprioception_reserve_index = ENEMY_PROPRIOCEPTION_SIZE - 2;
-
     add_ground();
     // spawn tanks high enough so all parts start above ground and settle cleanly
     auto tank_a =
@@ -393,7 +390,7 @@ TEST_F(RewardTest, NoRewardWhenShootingAWreck) {
     ASSERT_TRUE(shared_b->is_dead());
     shared_b->on_death();
 
-    const auto shells_ratio_before = shared_a->get_proprioception()[proprioception_reserve_index];
+    const auto shells_ratio_before = shared_a->get_remaining_shells_ratio();
 
     // fire from tank_a toward the wreck (canon points +Z by default)
     constexpr user_input fire_input{
@@ -413,7 +410,7 @@ TEST_F(RewardTest, NoRewardWhenShootingAWreck) {
     ASSERT_FLOAT_EQ(reward, 0.f) << "shooting a wreck must pay neither hit nor kill";
 
     // the shell spent must not be given back: a wreck is not an ammo dump
-    ASSERT_LT(shared_a->get_proprioception()[proprioception_reserve_index], shells_ratio_before)
+    ASSERT_LT(shared_a->get_remaining_shells_ratio(), shells_ratio_before)
         << "a wreck must not recharge the shell reserve";
 }
 

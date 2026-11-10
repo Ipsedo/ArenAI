@@ -9,6 +9,13 @@ En cas de doute ou d'alternative de design : **poser la question d'abord**, prop
 options, attendre la réponse. Les corrections de bugs internes (fichiers `src/`) qui ne
 changent ni contrat ni comportement voulu restent autorisées.
 
+## Règle de travail — commentaires
+
+**Aucun commentaire de plus d'une ligne.** Un commentaire n'existe que pour désambiguïser la
+lecture du code là où le code seul ne peut pas le dire (une indication de shape de tenseur, une
+unité, un index). Pas de paraphrase du code, pas de justification, pas de prose : le code parle
+de lui-même. Les en-têtes de fonction/classe explicatifs sont interdits aussi.
+
 A neural network (PPO) trained to play a tank-arena game.
 Jolt physics, offscreen Vulkan rendering (the agent's vision), NN via LibTorch.
 

@@ -61,16 +61,17 @@ namespace arenai::model {
         virtual float get_reward() const = 0;
 
         virtual RewardDetail get_last_reward_detail() const = 0;
+
         virtual std::vector<float> get_proprioception() const = 0;
-        // whether a fire input applied now would shoot (shell reserve and cooldown)
+
+        virtual float get_remaining_shells_ratio() const = 0;
+
+        virtual float get_cooldown_ratio() const = 0;
+
         virtual bool get_can_fire() const = 0;
 
         virtual void tick(const std::vector<std::shared_ptr<EnemyTank>> &tanks) = 0;
 
-        // aim quality of the shell the canon would fire now, in [0, 1]: 1 when its predicted
-        // trajectory reaches the nearest enemy, Cauchy decay with the predicted miss; 0 once
-        // dead or without a living enemy. The training environment turns it into a
-        // potential-based shaping term
         virtual float
         get_aim_potential(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const = 0;
 

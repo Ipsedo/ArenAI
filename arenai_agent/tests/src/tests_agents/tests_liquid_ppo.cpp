@@ -48,11 +48,9 @@ LiquidPpoAgentTest::make_factory(const LiquidPpoTestConfig &cfg) const {
 }
 
 TorchState LiquidPpoAgentTest::make_state(const LiquidPpoTestConfig &cfg, const int batch) {
-    return {
-        .vision =
-            torch::randint(0, 255, {batch, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
-        .proprioception = torch::randn({batch, cfg.nb_sensors}),
-        .fire_mask = torch::ones({batch, 1})};
+    return TorchState(
+        torch::randint(0, 255, {batch, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
+        torch::randn({batch, cfg.nb_sensors}), torch::ones({batch, 1}));
 }
 
 // ========================================================================

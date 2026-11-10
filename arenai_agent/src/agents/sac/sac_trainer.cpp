@@ -12,29 +12,21 @@
 #include "../../metrics/mean_metric.h"
 #include "../../networks_utils/print_module.h"
 #include "../../networks_utils/target_update.h"
-#include "../../networks_utils/torch_converter.h"
 #include "../../networks_utils/torch_saver.h"
 #include "./sac_discrete.h"
 
 namespace arenai::agent {
 
     namespace {
-        TorchState slice_state(const TorchState &state, const int64_t start, const int64_t end) {
-            return {
-                .vision = state.vision.slice(0, start, end),
-                .proprioception = state.proprioception.slice(0, start, end),
-                .fire_mask = state.fire_mask.slice(0, start, end)};
-        }
-
         SacBatch slice_batch(const SacBatch &batch, const int64_t start, const int64_t end) {
             return {
-                .states = slice_state(batch.states, start, end),
+                .states = batch.states.slice(start, end),
                 .actions =
                     {.continuous_action = batch.actions.continuous_action.slice(0, start, end),
                      .discrete_action = batch.actions.discrete_action.slice(0, start, end)},
                 .rewards = batch.rewards.slice(0, start, end),
                 .cuts = batch.cuts.slice(0, start, end),
-                .next_states = slice_state(batch.next_states, start, end)};
+                .next_states = batch.next_states.slice(start, end)};
         }
 
         void write_module_repr(
@@ -155,19 +147,19 @@ namespace arenai::agent {
             torch::NoGradGuard no_grad;
 
             const auto [mu, sigma, discrete_proba] =
-                actor->act(block.next_states.vision, block.next_states.proprioception);
+                actor->act(block.next_states.get_vision(), block.next_states.get_state());
             const auto [next_action, u] = gaussian_tanh_sample(mu, sigma);
             // each axis' log-probability weighted by its own temperature
             const auto continuous_log_prob = gaussian_tanh_log_pdf(u, mu, sigma);
             const auto continuous_bonus = (continuous_alpha * continuous_log_prob).sum(-1, true);
 
             const auto joint = discrete_joint(
-                discrete_proba,
-                discrete_action_mask(block.next_states.fire_mask, nb_discrete_actions));
+                discrete_proba, TorchState::discrete_action_mask(
+                                    block.next_states.get_fire_mask(), nb_discrete_actions));
             const auto discrete_bonus = (discrete_alpha * joint.action_log_probas).sum(-1);
 
             const auto [q1, q2] = target_critic->q(
-                block.next_states.vision, block.next_states.proprioception, next_action);
+                block.next_states.get_vision(), block.next_states.get_state(), next_action);
             const auto q_min = torch::min(q1, q2);
 
             // soft value: exact over the discrete combinations, one sample on the continuous
@@ -178,7 +170,7 @@ namespace arenai::agent {
         }
 
         const auto [q1, q2] = critic->q(
-            block.states.vision, block.states.proprioception, block.actions.continuous_action);
+            block.states.get_vision(), block.states.get_state(), block.actions.continuous_action);
         const auto taken = combination_index(block.actions.discrete_action).unsqueeze(-1);
         const auto q1_taken = q1.gather(1, taken);
         const auto q2_taken = q2.gather(1, taken);
@@ -197,16 +189,17 @@ namespace arenai::agent {
         const auto nb_discrete_actions = block.actions.discrete_action.size(-1);
 
         const auto [mu, sigma, discrete_proba] =
-            actor->act(block.states.vision, block.states.proprioception);
+            actor->act(block.states.get_vision(), block.states.get_state());
         const auto [action, u] = gaussian_tanh_sample(mu, sigma);
         // [N, nb_continuous_actions]
         const auto continuous_log_prob = gaussian_tanh_log_pdf(u, mu, sigma);
 
         const auto discrete_mask =
-            discrete_action_mask(block.states.fire_mask, nb_discrete_actions);
+            TorchState::discrete_action_mask(block.states.get_fire_mask(), nb_discrete_actions);
         const auto joint = discrete_joint(discrete_proba, discrete_mask);
 
-        const auto [q1, q2] = critic->q(block.states.vision, block.states.proprioception, action);
+        const auto [q1, q2] =
+            critic->q(block.states.get_vision(), block.states.get_state(), action);
         const auto q_min = torch::min(q1, q2);
 
         const auto discrete_bonus = (discrete_alpha * joint.action_log_probas).sum(-1);

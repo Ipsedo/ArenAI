@@ -13,7 +13,6 @@
 #include "../../metrics/mean_metric.h"
 #include "../../networks/constants.h"
 #include "../../networks_utils/print_module.h"
-#include "../../networks_utils/torch_converter.h"
 #include "../../networks_utils/torch_saver.h"
 #include "../update_utils.h"
 
@@ -127,8 +126,7 @@ namespace arenai::agent {
 
         // the observations go to the device once, for the GAE and every epoch: a
         // per-block transfer would resend the whole rollout's visions on each epoch
-        rollout.states.vision = rollout.states.vision.to(device);
-        rollout.states.proprioception = rollout.states.proprioception.to(device);
+        rollout.states = rollout.states.to(device);
 
         set_train(false);
         const auto [advantages, returns] = compute_gae(rollout, device);
@@ -138,11 +136,11 @@ namespace arenai::agent {
             return flatten_steps(tensor).to(device);
         };
         const FlatRows rows = {
-            .vision = flat(rollout.states.vision),
-            .proprioception = flat(rollout.states.proprioception),
+            .vision = flat(rollout.states.get_vision()),
+            .proprioception = flat(rollout.states.get_state()),
             .continuous_pre_tanh = flat(rollout.continuous_pre_tanhs),
             .discrete_actions = flat(rollout.actions.discrete_action),
-            .fire_masks = flat(rollout.states.fire_mask),
+            .fire_masks = flat(rollout.states.get_fire_mask()),
             .old_log_probs = flat(rollout.continuous_log_probs) + flat(rollout.discrete_log_probs),
             .advantages = flat(advantages),
             .returns = flat(returns)};
@@ -282,7 +280,8 @@ namespace arenai::agent {
         const auto [mu, sigma, discrete_proba] = actor->act(block.vision, block.proprioception);
         // the fire action is a decision only when it would shoot: masked out of the
         // log-probabilities (as at collection) and of the entropy
-        const auto discrete_mask = discrete_action_mask(block.fire_masks, discrete_proba.size(-1));
+        const auto discrete_mask =
+            TorchState::discrete_action_mask(block.fire_masks, discrete_proba.size(-1));
 
         const auto curr_continuous_log_probs =
             gaussian_tanh_log_pdf(block.continuous_pre_tanh, mu, sigma).sum(-1, true);
@@ -342,10 +341,11 @@ namespace arenai::agent {
         const auto old_p = targets.discrete_probas.clamp(EPSILON, 1.f - EPSILON);
         const auto new_p = discrete_proba.clamp(EPSILON, 1.f - EPSILON);
         // a masked fire is not a decision: kept out of the clone term as of the policy phase
-        const auto discrete_kl = ((old_p * torch::log(old_p / new_p)
-                                   + (1.f - old_p) * torch::log((1.f - old_p) / (1.f - new_p)))
-                                  * discrete_action_mask(block.fire_masks, discrete_proba.size(-1)))
-                                     .sum(-1, true);
+        const auto discrete_kl =
+            ((old_p * torch::log(old_p / new_p)
+              + (1.f - old_p) * torch::log((1.f - old_p) / (1.f - new_p)))
+             * TorchState::discrete_action_mask(block.fire_masks, discrete_proba.size(-1)))
+                .sum(-1, true);
 
         const auto loss = torch::mean(aux_loss + beta_clone * (continuous_kl + discrete_kl));
 
@@ -389,14 +389,14 @@ namespace arenai::agent {
             return torch::cat(chunks, 0);
         };
 
-        const auto values =
-            eval_values(
-                flatten_steps(rollout.states.vision), flatten_steps(rollout.states.proprioception))
-                .reshape({nb_steps, nb_tanks, 1});
+        const auto values = eval_values(
+                                flatten_steps(rollout.states.get_vision()),
+                                flatten_steps(rollout.states.get_state()))
+                                .reshape({nb_steps, nb_tanks, 1});
 
         // next values are the values shifted by one step, closed by the bootstrap state
         const auto bootstrap_value =
-            eval_values(rollout.bootstrap_state.vision, rollout.bootstrap_state.proprioception)
+            eval_values(rollout.bootstrap_state.get_vision(), rollout.bootstrap_state.get_state())
                 .unsqueeze(0);
         const auto next_values = torch::cat({values.slice(0, 1), bootstrap_value}, 0);
 

@@ -173,3 +173,46 @@ TEST_F(ProprioceptionTest, CanFireFollowsCooldownWithoutConsumingIt) {
 
     ASSERT_TRUE(shared_tank->get_can_fire()) << "the cooldown is over and shells remain";
 }
+
+// ========================================================================
+// get_remaining_shells_ratio / get_cooldown_ratio
+// ========================================================================
+
+TEST_F(ProprioceptionTest, ShellAndCooldownRatiosFollowAShot) {
+    add_ground();
+    auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
+
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
+    const std::vector tanks{shared_tank};
+
+    constexpr float initial_reserve = static_cast<float>(GAME_SHELL_ECONOMY.initial_shells)
+                                      / static_cast<float>(GAME_SHELL_ECONOMY.max_shells);
+    ASSERT_FLOAT_EQ(shared_tank->get_remaining_shells_ratio(), initial_reserve);
+    ASSERT_FLOAT_EQ(shared_tank->get_cooldown_ratio(), 1.f) << "a fresh canon is ready";
+
+    constexpr controller::user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
+    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
+    ASSERT_FLOAT_EQ(shared_tank->get_cooldown_ratio(), 0.f) << "the shot starts the cooldown";
+
+    // the shell leaves the canon on the next physics step
+    engine->step(1.f / 60.f);
+    shared_tank->tick(tanks);
+
+    ASSERT_FLOAT_EQ(
+        shared_tank->get_remaining_shells_ratio(),
+        initial_reserve - 1.f / static_cast<float>(GAME_SHELL_ECONOMY.max_shells));
+    ASSERT_LT(shared_tank->get_cooldown_ratio(), 1.f) << "the canon is still cooling down";
+
+    for (int i = 0; i < 60; i++) {
+        engine->step(1.f / 60.f);
+        shared_tank->tick(tanks);
+    }
+
+    ASSERT_FLOAT_EQ(shared_tank->get_cooldown_ratio(), 1.f) << "the cooldown is over";
+}

@@ -256,9 +256,6 @@ TEST_F(EnemyTankTest, ShellReserveDoesNotRegenerateOverTime) {
     constexpr int initial_shells = GAME_SHELL_ECONOMY.initial_shells;
     constexpr int max_shells = GAME_SHELL_ECONOMY.max_shells;
 
-    // proprioception ends with (reserve, cooldown) ratios
-    constexpr int proprioception_reserve_index = ENEMY_PROPRIOCEPTION_SIZE - 2;
-
     add_ground();
     auto tank =
         tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
@@ -266,7 +263,7 @@ TEST_F(EnemyTankTest, ShellReserveDoesNotRegenerateOverTime) {
     const float initial_reserve =
         static_cast<float>(initial_shells) / static_cast<float>(max_shells);
 
-    ASSERT_FLOAT_EQ(tank->get_proprioception()[proprioception_reserve_index], initial_reserve)
+    ASSERT_FLOAT_EQ(tank->get_remaining_shells_ratio(), initial_reserve)
         << "reserve start with initial shells";
 
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
@@ -281,29 +278,26 @@ TEST_F(EnemyTankTest, ShellReserveDoesNotRegenerateOverTime) {
     engine->step(1.f / static_cast<float>(nb_frames_one_second));
     shared_tank->tick(tanks);
 
-    const float reserve_after_fire =
-        shared_tank->get_proprioception()[proprioception_reserve_index];
+    const float reserve_after_fire = shared_tank->get_remaining_shells_ratio();
     ASSERT_FLOAT_EQ(reserve_after_fire, initial_reserve - 1.f / static_cast<float>(max_shells))
         << "firing should consume a shell";
 
     // a long wait gives nothing back: only hits recharge the reserve
     for (int i = 0; i < 30 * nb_frames_one_second; i++) shared_tank->tick(tanks);
 
-    ASSERT_FLOAT_EQ(
-        shared_tank->get_proprioception()[proprioception_reserve_index], reserve_after_fire)
+    ASSERT_FLOAT_EQ(shared_tank->get_remaining_shells_ratio(), reserve_after_fire)
         << "the reserve should never regenerate over time";
 }
 
 TEST_F(EnemyTankTest, ShellEconomyParametersAreApplied) {
     constexpr int nb_frames_one_second = 60;
     constexpr ShellEconomy economy{.initial_shells = 3, .shells_per_hit = 2, .max_shells = 4};
-    constexpr int proprioception_reserve_index = ENEMY_PROPRIOCEPTION_SIZE - 2;
     constexpr float scale = static_cast<float>(economy.max_shells);
 
     add_ground();
     auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, economy);
 
-    ASSERT_FLOAT_EQ(tank->get_proprioception()[proprioception_reserve_index], 3.f / scale)
+    ASSERT_FLOAT_EQ(tank->get_remaining_shells_ratio(), 3.f / scale)
         << "the reserve starts at the economy's initial shells over its maximum";
 
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
@@ -329,7 +323,7 @@ TEST_F(EnemyTankTest, ShellEconomyParametersAreApplied) {
         }
     }
 
-    ASSERT_FLOAT_EQ(shared_tank->get_proprioception()[proprioception_reserve_index], 0.f)
+    ASSERT_FLOAT_EQ(shared_tank->get_remaining_shells_ratio(), 0.f)
         << "three shells is the whole reserve of this economy";
     ASSERT_FALSE(shared_tank->get_can_fire()) << "an empty reserve cannot fire";
 }
@@ -349,8 +343,6 @@ namespace {
         .left_joystick = {.x = 0.f, .y = 0.f},
         .right_joystick = {.x = 0.f, .y = 0.f},
         .fire_button = {true}};
-
-    constexpr int PROPRIOCEPTION_RESERVE_INDEX = ENEMY_PROPRIOCEPTION_SIZE - 2;
 
 }// namespace
 
@@ -375,7 +367,7 @@ TEST_F(EnemyTankTest, EmptyReserveDoesNotKill) {
         shared_tank->get_reward();
     }
 
-    ASSERT_FLOAT_EQ(shared_tank->get_proprioception()[PROPRIOCEPTION_RESERVE_INDEX], 0.f)
+    ASSERT_FLOAT_EQ(shared_tank->get_remaining_shells_ratio(), 0.f)
         << "the tank should have emptied its reserve";
     ASSERT_FALSE(shared_tank->is_dead()) << "a disarmed tank stays alive";
     ASSERT_FALSE(shared_tank->is_suicide());
@@ -388,7 +380,6 @@ TEST_F(EnemyTankTest, EmptyReserveDoesNotKill) {
 // ========================================================================
 
 TEST_F(EnemyTankTest, RespawnMovesChassisAndRestoresReserveAndHealth) {
-    constexpr int proprioception_reserve_index = ENEMY_PROPRIOCEPTION_SIZE - 2;
 
     add_ground();
     auto tank =
@@ -396,7 +387,7 @@ TEST_F(EnemyTankTest, RespawnMovesChassisAndRestoresReserveAndHealth) {
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
     const std::vector tanks{shared_tank};
 
-    const float initial_reserve = shared_tank->get_proprioception()[proprioception_reserve_index];
+    const float initial_reserve = shared_tank->get_remaining_shells_ratio();
 
     constexpr user_input fire_input{
         .left_joystick = {.x = 0.f, .y = 0.f},
@@ -411,7 +402,7 @@ TEST_F(EnemyTankTest, RespawnMovesChassisAndRestoresReserveAndHealth) {
     chassis_life->receive_damages(
         {.fire_position = glm::vec3(0.f), .impact_position = glm::vec3(0.f), .damages = 1.f});
 
-    ASSERT_LT(shared_tank->get_proprioception()[proprioception_reserve_index], initial_reserve);
+    ASSERT_LT(shared_tank->get_remaining_shells_ratio(), initial_reserve);
     ASSERT_LT(chassis_life->health_ratio(), 1.f);
 
     constexpr glm::vec3 target(50.f, 8.f, -30.f);
@@ -422,8 +413,7 @@ TEST_F(EnemyTankTest, RespawnMovesChassisAndRestoresReserveAndHealth) {
     EXPECT_NEAR(chassis_pos.y, target.y, 0.5f);
     EXPECT_NEAR(chassis_pos.z, target.z, 0.5f);
 
-    EXPECT_FLOAT_EQ(
-        shared_tank->get_proprioception()[proprioception_reserve_index], initial_reserve);
+    EXPECT_FLOAT_EQ(shared_tank->get_remaining_shells_ratio(), initial_reserve);
     for (const auto &item: shared_tank->get_items())
         if (const auto *life = dynamic_cast<LifeItem *>(item.get()))
             EXPECT_FLOAT_EQ(life->health_ratio(), 1.f) << item->get_name();

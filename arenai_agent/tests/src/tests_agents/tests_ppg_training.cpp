@@ -37,11 +37,10 @@ PpgTrainingTest::make_factory(const PpgTrainingTestConfig &cfg) const {
 }
 
 TorchState PpgTrainingTest::make_state(const PpgTrainingTestConfig &cfg, const int nb_tanks) {
-    return {
-        .vision = torch::randint(
-            0, 255, {nb_tanks, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
-        .proprioception = torch::randn({nb_tanks, cfg.nb_sensors}),
-        .fire_mask = torch::randint(0, 2, {nb_tanks, 1}).to(torch::kFloat)};
+    return TorchState(
+        torch::randint(0, 255, {nb_tanks, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
+        torch::randn({nb_tanks, cfg.nb_sensors}),
+        torch::randint(0, 2, {nb_tanks, 1}).to(torch::kFloat));
 }
 
 PpgTriad PpgTrainingTest::make_triad(const PpgTrainingTestConfig &cfg, const int n_pi) const {
@@ -70,7 +69,8 @@ void PpgTrainingTest::run_env_loop(
         constexpr int nb_tanks = 2;
 
         auto state = make_state(cfg, nb_tanks);
-        if (!fire_possible) state.fire_mask = torch::zeros({nb_tanks, 1});
+        if (!fire_possible)
+            state = TorchState(state.get_vision(), state.get_state(), torch::zeros({nb_tanks, 1}));
 
         triad.agent->act(state, true);
         triad.collector->on_transition(

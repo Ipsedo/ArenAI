@@ -37,11 +37,9 @@ std::unique_ptr<SacTorchAgentFactory> SacAgentTest::make_factory(const SacTestCo
 }
 
 TorchState SacAgentTest::make_state(const SacTestConfig &cfg, const int batch) {
-    return {
-        .vision =
-            torch::randint(0, 255, {batch, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
-        .proprioception = torch::randn({batch, cfg.nb_sensors}),
-        .fire_mask = torch::ones({batch, 1})};
+    return TorchState(
+        torch::randint(0, 255, {batch, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
+        torch::randn({batch, cfg.nb_sensors}), torch::ones({batch, 1}));
 }
 
 // ========================================================================
@@ -102,7 +100,7 @@ TEST_F(SacAgentTest, MaskedFireIsNeverEngaged) {
 
     constexpr int batch = 64;
     auto state = make_state(cfg, batch);
-    state.fire_mask = torch::zeros({batch, 1});
+    state = TorchState(state.get_vision(), state.get_state(), torch::zeros({batch, 1}));
 
     const auto [continuous_action, discrete_action] = factory->get_agent()->act(state, true);
 

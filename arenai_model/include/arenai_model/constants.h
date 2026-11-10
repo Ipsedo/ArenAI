@@ -11,8 +11,10 @@ namespace arenai::model {
 
     constexpr float WHEEL_RADIAL_VELOCITY = std::numbers::pi * 5.f;
 
-    // (pos, vel, forward, up, ang_vel, life_ratio) * (9 items: 6 wheels, 1 chassis, 1 turret, 1 canon) - chassis pos + remaining shells ratio + cooldown ratio
-    constexpr int ENEMY_PROPRIOCEPTION_SIZE = (3 + 3 + 3 + 3 + 3 + 1) * (6 + 3) - 3 + 1 + 1;
+    // body proprioception: (pos, vel, forward, up, ang_vel, life_ratio) * (9 items: 6 wheels, 1 chassis, 1 turret, 1 canon) - chassis pos
+    constexpr int ENEMY_PROPRIOCEPTION_SIZE = (3 + 3 + 3 + 3 + 3 + 1) * (6 + 3) - 3;
+    // the network's state vector: the proprioception followed by the remaining shells ratio and the cooldown ratio
+    constexpr int ENEMY_STATE_VECTOR_SIZE = ENEMY_PROPRIOCEPTION_SIZE + 2;
     constexpr int ENEMY_NB_CONTINUOUS_ACTION = 2 + 2;
     constexpr int ENEMY_NB_DISCRETE_ACTION = 2;
 

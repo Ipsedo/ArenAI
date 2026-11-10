@@ -70,6 +70,8 @@ namespace arenai::model {
         RewardDetail get_last_reward_detail() const override;
 
         std::vector<float> get_proprioception() const override;
+        float get_remaining_shells_ratio() const override;
+        float get_cooldown_ratio() const override;
         bool get_can_fire() const override;
 
         // Tank methods resolved via JoltTank

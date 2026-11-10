@@ -32,7 +32,7 @@ namespace arenai::agent {
                 [parser_ptr, fields = std::move(fields)](
                     const int vision_height, const int vision_width, const torch::Device device) {
                     return std::make_unique<Factory>(
-                        vision_height, vision_width, model::ENEMY_PROPRIOCEPTION_SIZE,
+                        vision_height, vision_width, model::ENEMY_STATE_VECTOR_SIZE,
                         model::ENEMY_NB_CONTINUOUS_ACTION, model::ENEMY_NB_DISCRETE_ACTION, device,
                         read_cli_fields(*parser_ptr, fields));
                 }};

@@ -13,7 +13,6 @@
 #include "../../metrics/mean_metric.h"
 #include "../../networks/constants.h"
 #include "../../networks_utils/print_module.h"
-#include "../../networks_utils/torch_converter.h"
 #include "../../networks_utils/torch_saver.h"
 #include "../update_utils.h"
 
@@ -152,8 +151,7 @@ namespace arenai::agent {
 
         // the observations go to the device once, for the GAE and every epoch: a
         // per-block transfer would resend the whole rollout's visions on each epoch
-        rollout.states.vision = rollout.states.vision.to(device);
-        rollout.states.proprioception = rollout.states.proprioception.to(device);
+        rollout.states = rollout.states.to(device);
 
         set_train(false);
         const auto [advantages, returns, critic_hiddens] = compute_gae(rollout, device);
@@ -172,11 +170,11 @@ namespace arenai::agent {
             return flatten_steps(tensor.slice(0, 0, nb_kept_steps)).to(device);
         };
         const FlatRows rows = {
-            .vision = flat(rollout.states.vision),
-            .proprioception = flat(rollout.states.proprioception),
+            .vision = flat(rollout.states.get_vision()),
+            .proprioception = flat(rollout.states.get_state()),
             .continuous_pre_tanh = flat(rollout.continuous_pre_tanhs),
             .discrete_actions = flat(rollout.actions.discrete_action),
-            .fire_masks = flat(rollout.states.fire_mask),
+            .fire_masks = flat(rollout.states.get_fire_mask()),
             .old_log_probs = flat(rollout.continuous_log_probs) + flat(rollout.discrete_log_probs),
             .advantages = flat(advantages),
             .returns = flat(returns),
@@ -280,7 +278,7 @@ namespace arenai::agent {
         // the fire action is a decision only when it would shoot: masked out of the
         // log-probabilities (as at collection) and of the entropy
         const auto discrete_mask =
-            discrete_action_mask(rows(block.fire_masks), discrete_proba.size(-1));
+            TorchState::discrete_action_mask(rows(block.fire_masks), discrete_proba.size(-1));
 
         const auto curr_continuous_log_probs =
             gaussian_tanh_log_pdf(rows(block.continuous_pre_tanh), mu, sigma).sum(-1, true);
@@ -373,7 +371,7 @@ namespace arenai::agent {
             hidden_list.push_back(critic_carry.cpu());
 
             const auto [value, next_x] = critic->value(
-                rollout.states.vision[t].to(device), rollout.states.proprioception[t].to(device),
+                rollout.states.get_vision()[t].to(device), rollout.states.get_state()[t].to(device),
                 critic_carry);
 
             value_list.push_back(value.cpu());
@@ -388,8 +386,8 @@ namespace arenai::agent {
         const auto bootstrap_value =
             critic
                 ->value(
-                    rollout.bootstrap_state.vision.to(device),
-                    rollout.bootstrap_state.proprioception.to(device), critic_carry)
+                    rollout.bootstrap_state.get_vision().to(device),
+                    rollout.bootstrap_state.get_state().to(device), critic_carry)
                 .value.cpu()
                 .unsqueeze(0);
 

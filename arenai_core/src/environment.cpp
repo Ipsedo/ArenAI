@@ -96,6 +96,7 @@ namespace arenai::core {
         for (int i = 0; i < static_cast<int>(tanks.size()); i++)
             states.emplace_back(
                 vision_pool_->read_vision(i), tanks[i]->get_proprioception(),
+                tanks[i]->get_remaining_shells_ratio(), tanks[i]->get_cooldown_ratio(),
                 tanks[i]->get_can_fire());
 
         return states;

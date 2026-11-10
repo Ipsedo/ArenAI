@@ -27,6 +27,7 @@ namespace arenai::agent {
             {.name = "--discrete_target_entropy_ratio",
              .member = &SacHyperParams::discrete_target_entropy_ratio},
             {.name = "--buffer_size", .member = &SacHyperParams::buffer_size},
+            {.name = "--armed_fraction", .member = &SacHyperParams::armed_fraction},
             {.name = "--learning_starts", .member = &SacHyperParams::learning_starts},
             {.name = "--gradient_steps", .member = &SacHyperParams::gradient_steps},
             {.name = "--batch_size", .member = &SacHyperParams::batch_size},

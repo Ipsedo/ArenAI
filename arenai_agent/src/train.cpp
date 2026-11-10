@@ -16,11 +16,11 @@
 
 #include <arenai_model/constants.h>
 
+#include "./agents/torch_types.h"
 #include "./core/curriculum.h"
 #include "./core/train_environment.h"
 #include "./metrics/last_metric.h"
 #include "./metrics/metric_saver.h"
-#include "./networks_utils/torch_converter.h"
 #include "./networks_utils/torch_saver.h"
 
 using namespace arenai;
@@ -85,7 +85,7 @@ namespace arenai::agent {
 
         std::cout << "Vision size : width=" << environment_options.vision_width
                   << ", height=" << environment_options.vision_height << std::endl;
-        std::cout << "Proprioception size : " << model::ENEMY_PROPRIOCEPTION_SIZE << std::endl;
+        std::cout << "State vector size : " << model::ENEMY_STATE_VECTOR_SIZE << std::endl;
         std::cout << "Action size (continuous) : " << model::ENEMY_NB_CONTINUOUS_ACTION
                   << std::endl;
         std::cout << "Action size (discrete) : " << model::ENEMY_NB_DISCRETE_ACTION << std::endl;
@@ -192,7 +192,7 @@ namespace arenai::agent {
             // set variable for episode
             bool is_done = false;
 
-            auto state = states_to_tensor(
+            auto state = TorchState(
                 env->reset(spawn_width, spawn_height, environment_options.shell_economy),
                 environment_options.vision_height, environment_options.vision_width);
 
@@ -200,29 +200,24 @@ namespace arenai::agent {
 
                 std::vector<core::Action> actions_for_env;
 
-                const auto [continuous_action, discrete_action] = agent->act(
-                    {.vision = state.vision.to(torch_device),
-                     .proprioception = state.proprioception.to(torch_device),
-                     .fire_mask = state.fire_mask.to(torch_device)},
-                    true);
-
-                actions_for_env = tensor_to_actions(continuous_action, discrete_action);
+                actions_for_env = agent->act(state.to(torch_device), true).to_actions();
 
                 // step environment
                 const auto steps = env->step(environment_options.wanted_frequency, actions_for_env);
 
-                const auto [torch_next_states, torch_rewards, torch_are_done, torch_are_truncated] =
-                    steps_to_tensor(
-                        steps, environment_options.vision_height, environment_options.vision_width);
+                const TorchStep torch_step(
+                    steps, environment_options.vision_height, environment_options.vision_width);
 
                 // complete the pending transition - maybe train
-                collector->on_transition(torch_rewards, torch_are_done, torch_are_truncated);
+                collector->on_transition(
+                    torch_step.get_rewards(), torch_step.get_is_done(),
+                    torch_step.get_is_truncated());
                 trainer->step();
 
                 // step ending stuff
                 is_done = env->is_episode_terminated();
 
-                state = torch_next_states;
+                state = torch_step.get_states();
 
                 print_counter = (print_counter + 1) % print_tqdm_bar_every;
 

@@ -39,6 +39,8 @@ namespace arenai::agent {
         float discrete_target_entropy_ratio = 0.3f;
         // replay transitions over all the tanks, observations stored once in uint8
         int buffer_size = 200000;
+        // share of every batch drawn among transitions where the tank still had shells
+        float armed_fraction = 0.7f;
         // sampleable transitions before the first gradient step
         int learning_starts = 5000;
         // gradient steps per environment step

@@ -14,7 +14,10 @@ namespace arenai::core {
     struct State {
         view::image<uint8_t> vision;
         std::vector<float> proprioception;
-        // a fire input on this state would shoot: when false, the fire action has no effect
+
+        float remaining_shells_ratio;
+        float cooldown_ratio;
+
         bool can_fire;
     };
 

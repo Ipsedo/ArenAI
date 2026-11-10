@@ -7,7 +7,6 @@
 #include "../../distributions/bernoulli.h"
 #include "../../distributions/gaussian_tanh.h"
 #include "../../networks/constants.h"
-#include "../../networks_utils/torch_converter.h"
 #include "../../networks_utils/torch_loader.h"
 
 using namespace arenai;
@@ -29,9 +28,7 @@ namespace arenai::agent {
 
     std::vector<core::Action> TorchLiquidPpoAgent::act(
         const std::vector<core::State> &states, const int vision_height, const int vision_width) {
-        const auto [continuous_action, discrete_action] =
-            act(states_to_tensor(states, vision_height, vision_width), false);
-        return tensor_to_actions(continuous_action, discrete_action);
+        return act(TorchState(states, vision_height, vision_width), false).to_actions();
     }
 
     TorchAction TorchLiquidPpoAgent::act(const TorchState &state, const bool sample) {
@@ -44,8 +41,8 @@ namespace arenai::agent {
         {
             torch::NoGradGuard guard;
 
-            x_t = hidden_state->get(state.vision.size(0));
-            const auto out = actor->act(state.vision, state.proprioception, x_t);
+            x_t = hidden_state->get(state.get_vision().size(0));
+            const auto out = actor->act(state.get_vision(), state.get_state(), x_t);
             const auto &mu = out.mu;
             const auto &sigma = out.sigma;
             const auto &discrete_proba = out.discrete;
@@ -67,7 +64,7 @@ namespace arenai::agent {
 
             // a fire without effect is not a decision: no log-probability, no gradient
             discrete_log_prob = (bernoulli_log_proba(action.discrete_action, discrete_proba)
-                                 * discrete_action_mask(state.fire_mask, discrete_proba.size(-1)))
+                                 * state.get_discrete_action_mask(discrete_proba.size(-1)))
                                     .sum(-1, true);
         }
 

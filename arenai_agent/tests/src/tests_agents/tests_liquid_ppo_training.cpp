@@ -38,11 +38,10 @@ LiquidPpoTrainingTest::make_factory(const LiquidPpoTrainingTestConfig &cfg) cons
 
 TorchState
 LiquidPpoTrainingTest::make_state(const LiquidPpoTrainingTestConfig &cfg, const int nb_tanks) {
-    return {
-        .vision = torch::randint(
-            0, 255, {nb_tanks, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
-        .proprioception = torch::randn({nb_tanks, cfg.nb_sensors}),
-        .fire_mask = torch::randint(0, 2, {nb_tanks, 1}).to(torch::kFloat)};
+    return TorchState(
+        torch::randint(0, 255, {nb_tanks, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
+        torch::randn({nb_tanks, cfg.nb_sensors}),
+        torch::randint(0, 2, {nb_tanks, 1}).to(torch::kFloat));
 }
 
 TEST_F(LiquidPpoTrainingTest, ActProducesValidOutput) {
@@ -225,7 +224,7 @@ TEST_F(LiquidPpoTrainingTest, MaskedFireReceivesNoUpdate) {
         constexpr int nb_tanks = 2;
 
         auto state = make_state(cfg, nb_tanks);
-        state.fire_mask = torch::zeros({nb_tanks, 1});
+        state = TorchState(state.get_vision(), state.get_state(), torch::zeros({nb_tanks, 1}));
 
         agent->act(state, true);
         collector->on_transition(

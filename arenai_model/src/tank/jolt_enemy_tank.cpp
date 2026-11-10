@@ -405,11 +405,15 @@ namespace arenai::model {
 
         for (const auto &life_item: get_life_items()) result.push_back(life_item->health_ratio());
 
-        result.push_back(static_cast<float>(nb_shells) / static_cast<float>(max_shells));
-        result.push_back(
-            static_cast<float>(curr_cooldown_frame) / static_cast<float>(fire_cooldown_frames));
-
         return result;
+    }
+
+    float JoltEnemyTank::get_remaining_shells_ratio() const {
+        return static_cast<float>(nb_shells) / static_cast<float>(max_shells);
+    }
+
+    float JoltEnemyTank::get_cooldown_ratio() const {
+        return static_cast<float>(curr_cooldown_frame) / static_cast<float>(fire_cooldown_frames);
     }
 
 }// namespace arenai::model

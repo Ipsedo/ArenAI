@@ -30,7 +30,7 @@ namespace arenai::desktop {
         std::shared_ptr<agent::AbstractAgent>
         build_agent(agent::AgentFactory &factory, const AiAlgorithm algorithm, const bool cuda) {
             return factory.get_agent(
-                to_agent_algorithm(algorithm), model::ENEMY_PROPRIOCEPTION_SIZE,
+                to_agent_algorithm(algorithm), model::ENEMY_STATE_VECTOR_SIZE,
                 model::ENEMY_NB_CONTINUOUS_ACTION, model::ENEMY_NB_DISCRETE_ACTION, cuda);
         }
 
@@ -70,6 +70,8 @@ namespace arenai::desktop {
                              * factory.get_vision_width(),
                          0)},
                 .proprioception = std::vector(model::ENEMY_PROPRIOCEPTION_SIZE, 0.f),
+                .remaining_shells_ratio = 1.f,
+                .cooldown_ratio = 1.f,
                 .can_fire = true};
             agent->act({blank_state}, factory.get_vision_height(), factory.get_vision_width());
 

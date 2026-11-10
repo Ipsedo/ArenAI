@@ -19,7 +19,8 @@ namespace arenai::agent {
               params.actor_hidden_sizes, params.vision_channels, params.group_norm_nums,
               params.initial_sigma,
               std::vector{params.initial_fire_proba, params.initial_zoom_proba})),
-          replay_buffer(std::make_shared<SacReplayBuffer>(params.buffer_size)),
+          replay_buffer(
+              std::make_shared<SacReplayBuffer>(params.buffer_size, params.armed_fraction)),
           collector(std::make_shared<SacStepCollector>(replay_buffer)),
           agent(std::make_shared<TorchSacAgent>(actor, device, collector)),
           trainer(std::make_shared<SacTrainer>(

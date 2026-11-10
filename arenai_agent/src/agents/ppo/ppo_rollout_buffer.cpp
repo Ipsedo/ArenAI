@@ -10,16 +10,11 @@ using namespace arenai::agent;
 namespace arenai::agent {
 
     namespace {
-        TorchState to_cpu(const TorchState &state) {
-            return {
-                .vision = state.vision.detach().cpu(),
-                .proprioception = state.proprioception.detach().cpu(),
-                .fire_mask = state.fire_mask.detach().cpu()};
-        }
+        TorchState to_cpu(const TorchState &state) { return state.detach().to(torch::kCPU); }
     }// namespace
 
     void PpoRolloutBuffer::add(const PpoInputStep &step) {
-        const auto nb_tanks = step.state.vision.size(0);
+        const auto nb_tanks = step.state.get_vision().size(0);
 
         if (!already_terminated_.defined())
             already_terminated_ = torch::zeros(
@@ -76,11 +71,10 @@ namespace arenai::agent {
         };
 
         PpoRollout rollout{
-            .states =
-                {.vision = stack([](const StoredStep &s) { return s.step.state.vision; }),
-                 .proprioception =
-                     stack([](const StoredStep &s) { return s.step.state.proprioception; }),
-                 .fire_mask = stack([](const StoredStep &s) { return s.step.state.fire_mask; })},
+            .states = TorchState(
+                stack([](const StoredStep &s) { return s.step.state.get_vision(); }),
+                stack([](const StoredStep &s) { return s.step.state.get_state(); }),
+                stack([](const StoredStep &s) { return s.step.state.get_fire_mask(); })),
             .actions =
                 {.continuous_action =
                      stack([](const StoredStep &s) { return s.step.action.continuous_action; }),

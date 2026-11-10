@@ -2,12 +2,12 @@
 // Created by samuel on 30/06/2026.
 //
 
-#ifndef ARENAI_TESTS_TORCH_CONVERTER_H
-#define ARENAI_TESTS_TORCH_CONVERTER_H
+#ifndef ARENAI_TESTS_TORCH_TYPES_H
+#define ARENAI_TESTS_TORCH_TYPES_H
 
 #include <gtest/gtest.h>
 
-class TorchConverterTest : public testing::Test {};
+class TorchTypesTest : public testing::Test {};
 
 typedef int BatchSize;
 typedef int VisionHeight;
@@ -17,4 +17,4 @@ class TensorToActionsParamTest : public testing::TestWithParam<BatchSize> {};
 class StatesToTensorParamTest
     : public testing::TestWithParam<std::tuple<BatchSize, VisionHeight, VisionWidth>> {};
 
-#endif//ARENAI_TESTS_TORCH_CONVERTER_H
+#endif//ARENAI_TESTS_TORCH_TYPES_H

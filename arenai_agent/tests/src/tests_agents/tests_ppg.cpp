@@ -48,11 +48,9 @@ std::unique_ptr<PpgTorchAgentFactory> PpgAgentTest::make_factory(const PpgTestCo
 }
 
 TorchState PpgAgentTest::make_state(const PpgTestConfig &cfg, const int batch) {
-    return {
-        .vision =
-            torch::randint(0, 255, {batch, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
-        .proprioception = torch::randn({batch, cfg.nb_sensors}),
-        .fire_mask = torch::ones({batch, 1})};
+    return TorchState(
+        torch::randint(0, 255, {batch, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
+        torch::randn({batch, cfg.nb_sensors}), torch::ones({batch, 1}));
 }
 
 // ========================================================================
@@ -101,7 +99,7 @@ TEST_F(PpgAgentTest, DistillationValueShape) {
 
     constexpr int batch = 4;
     const auto state = make_state(cfg, batch);
-    const auto value = actor.value(state.vision, state.proprioception);
+    const auto value = actor.value(state.get_vision(), state.get_state());
 
     ASSERT_EQ(value.sizes().vec(), (std::vector<int64_t>{batch, 1}));
     ASSERT_TRUE(torch::all(torch::isfinite(value)).item<bool>());

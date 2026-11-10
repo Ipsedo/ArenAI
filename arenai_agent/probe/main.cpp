@@ -21,12 +21,12 @@
 #include <arenai_view/backend.h>
 
 #include "./agents/ppo_liquid/liquid_hidden_state.h"
+#include "./agents/torch_types.h"
 #include "./core/train_environment.h"
 #include "./distributions/bernoulli.h"
 #include "./distributions/gaussian_tanh.h"
+#include "./networks/actor.h"
 #include "./networks/recurrent/liquid_actor.h"
-#include "./networks/sac_actor.h"
-#include "./networks_utils/torch_converter.h"
 #include "./networks_utils/torch_loader.h"
 
 using namespace arenai;
@@ -106,8 +106,8 @@ int main(const int argc, char **argv) {
     std::cout << "actor family : " << (is_sac ? "sac" : "ppo_liquid") << std::endl;
 
     if (is_sac) {
-        const auto actor = std::make_shared<SacActor>(
-            model::ENEMY_PROPRIOCEPTION_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
+        const auto actor = std::make_shared<Actor>(
+            model::ENEMY_STATE_VECTOR_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
             model::ENEMY_NB_DISCRETE_ACTION, agent_config.at("hidden_size_sensors").get<int>(),
             agent_config.at("actor_hidden_sizes").get<std::vector<int>>(), vision_channels,
             group_norm_nums, agent_config.at("initial_sigma").get<float>(),
@@ -122,7 +122,7 @@ int main(const int argc, char **argv) {
         };
     } else {
         const auto actor = std::make_shared<LiquidActor>(
-            model::ENEMY_PROPRIOCEPTION_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
+            model::ENEMY_STATE_VECTOR_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
             model::ENEMY_NB_DISCRETE_ACTION, agent_config.at("hidden_size_sensors").get<int>(),
             vision_channels, group_norm_nums, agent_config.at("neuron_number").get<int>(),
             agent_config.at("unfolding_steps").get<int>(), agent_config.at("delta_t").get<float>(),
@@ -176,7 +176,7 @@ int main(const int argc, char **argv) {
     for (int episode = 0; episode < nb_episodes; episode++) {
         reset_hidden();
 
-        auto state = states_to_tensor(
+        auto state = TorchState(
             env->reset(spawn_side, spawn_side, shell_economy), vision_height, vision_width);
 
         int step = 0;
@@ -189,7 +189,7 @@ int main(const int argc, char **argv) {
             {
                 torch::NoGradGuard guard;
 
-                auto out = act(state.vision.to(device), state.proprioception.to(device));
+                auto out = act(state.get_vision().to(device), state.get_state().to(device));
 
                 mu = out.mu.cpu();
                 sigma = out.sigma.cpu();
@@ -215,8 +215,9 @@ int main(const int argc, char **argv) {
             const auto discrete_acc = discrete.accessor<float, 2>();
             const auto cont_acc = continuous_action.accessor<float, 2>();
             const auto disc_acc = discrete_action.accessor<float, 2>();
-            const auto proprio_acc = state.proprioception.accessor<float, 2>();
-            const auto mask_acc = state.fire_mask.accessor<float, 2>();
+            const auto shells_ratio = state.get_remaining_shells_ratio();
+            const auto cooldown_ratio = state.get_cooldown_ratio();
+            const auto mask_acc = state.get_fire_mask().accessor<float, 2>();
 
             for (int i = 0; i < nb_tanks; i++) {
                 if (!geometry[i].alive) continue;
@@ -224,13 +225,11 @@ int main(const int argc, char **argv) {
                 csv << episode << ';' << step << ';' << i << ';' << geometry[i].distance << ';'
                     << geometry[i].yaw * to_degrees << ';' << geometry[i].pitch * to_degrees << ';'
                     << geometry[i].best_angle * to_degrees << ';' << geometry[i].best_distance
-                    << ';' << mask_acc[i][0] << ';'
-                    << proprio_acc[i][model::ENEMY_PROPRIOCEPTION_SIZE - 2] << ';'
-                    << proprio_acc[i][model::ENEMY_PROPRIOCEPTION_SIZE - 1] << ';'
-                    << discrete_acc[i][0] << ';' << discrete_acc[i][1] << ';' << disc_acc[i][0]
-                    << ';' << mu_acc[i][0] << ';' << mu_acc[i][1] << ';' << mu_acc[i][2] << ';'
-                    << mu_acc[i][3] << ';' << sigma_acc[i][2] << ';' << sigma_acc[i][3] << ';'
-                    << cont_acc[i][2] << ';' << cont_acc[i][3] << '\n';
+                    << ';' << mask_acc[i][0] << ';' << shells_ratio[i] << ';' << cooldown_ratio[i]
+                    << ';' << discrete_acc[i][0] << ';' << discrete_acc[i][1] << ';'
+                    << disc_acc[i][0] << ';' << mu_acc[i][0] << ';' << mu_acc[i][1] << ';'
+                    << mu_acc[i][2] << ';' << mu_acc[i][3] << ';' << sigma_acc[i][2] << ';'
+                    << sigma_acc[i][3] << ';' << cont_acc[i][2] << ';' << cont_acc[i][3] << '\n';
 
                 if (features_out.is_open() && features.defined()) {
                     const float header[3] = {
@@ -246,14 +245,13 @@ int main(const int argc, char **argv) {
                 }
 
                 if (mask_acc[i][0] > 0.5f && disc_acc[i][0] > 0.5f)
-                    pending[i].push_back(
-                        {step, geometry[i], proprio_acc[i][model::ENEMY_PROPRIOCEPTION_SIZE - 2]});
+                    pending[i].push_back({step, geometry[i], shells_ratio[i]});
             }
 
-            const auto steps =
-                env->step(wanted_frequency, tensor_to_actions(continuous_action, discrete_action));
+            const auto steps = env->step(
+                wanted_frequency, TorchAction{continuous_action, discrete_action}.to_actions());
 
-            state = steps_to_tensor(steps, vision_height, vision_width).states;
+            state = TorchStep(steps, vision_height, vision_width).get_states();
 
             const auto details = env->last_step_reward_details();
             for (int i = 0; i < nb_tanks; i++) {

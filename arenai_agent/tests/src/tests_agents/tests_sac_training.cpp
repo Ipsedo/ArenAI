@@ -5,6 +5,7 @@
 #include <cmath>
 
 #include <arenai_agent_tests/tests_agents/tests_sac_training.h>
+#include <arenai_model/constants.h>
 
 using namespace arenai;
 using namespace arenai::agent;
@@ -17,7 +18,7 @@ SacTrainingTriad SacTrainingTest::make_triad(const SacTrainingTestConfig &cfg) c
     triad.actor = std::make_shared<Actor>(
         cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 8, std::vector{16},
         vision_channels, group_norm_nums, 0.3f, std::vector(cfg.nb_discrete_actions, 0.2f));
-    triad.replay_buffer = std::make_shared<SacReplayBuffer>(64);
+    triad.replay_buffer = std::make_shared<SacReplayBuffer>(64, 0.f);
     triad.collector = std::make_shared<SacStepCollector>(triad.replay_buffer);
     triad.agent = std::make_shared<TorchSacAgent>(triad.actor, device, triad.collector);
     triad.trainer = std::make_shared<SacTrainer>(
@@ -29,18 +30,17 @@ SacTrainingTriad SacTrainingTest::make_triad(const SacTrainingTestConfig &cfg) c
 }
 
 TorchState SacTrainingTest::make_state(const SacTrainingTestConfig &cfg, const int nb_tanks) {
-    return {
-        .vision = torch::randint(
-            0, 255, {nb_tanks, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
-        .proprioception = torch::randn({nb_tanks, cfg.nb_sensors}),
-        .fire_mask = torch::randint(0, 2, {nb_tanks, 1}).to(torch::kFloat)};
+    return TorchState(
+        torch::randint(0, 255, {nb_tanks, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
+        torch::randn({nb_tanks, cfg.nb_sensors}),
+        torch::randint(0, 2, {nb_tanks, 1}).to(torch::kFloat));
 }
 
 TEST_F(SacTrainingTest, NoUpdateBeforeLearningStarts) {
     constexpr SacTrainingTestConfig cfg{
         .vision_height = 8,
         .vision_width = 8,
-        .nb_sensors = 3,
+        .nb_sensors = model::ENEMY_STATE_VECTOR_SIZE,
         .nb_continuous_actions = 2,
         .nb_discrete_actions = 2};
     const auto triad = make_triad(cfg);
@@ -66,7 +66,7 @@ TEST_F(SacTrainingTest, TrainingUpdatesActorParameters) {
     constexpr SacTrainingTestConfig cfg{
         .vision_height = 8,
         .vision_width = 8,
-        .nb_sensors = 3,
+        .nb_sensors = model::ENEMY_STATE_VECTOR_SIZE,
         .nb_continuous_actions = 2,
         .nb_discrete_actions = 3};
     const auto triad = make_triad(cfg);
@@ -104,7 +104,7 @@ TEST_F(SacTrainingTest, MaskedFireReceivesNoUpdate) {
     constexpr SacTrainingTestConfig cfg{
         .vision_height = 8,
         .vision_width = 8,
-        .nb_sensors = 3,
+        .nb_sensors = model::ENEMY_STATE_VECTOR_SIZE,
         .nb_continuous_actions = 2,
         .nb_discrete_actions = 2};
     const auto triad = make_triad(cfg);
@@ -117,7 +117,7 @@ TEST_F(SacTrainingTest, MaskedFireReceivesNoUpdate) {
 
     for (int t = 0; t < 6; t++) {
         auto state = make_state(cfg, NB_TANKS);
-        state.fire_mask = torch::zeros({NB_TANKS, 1});
+        state = TorchState(state.get_vision(), state.get_state(), torch::zeros({NB_TANKS, 1}));
 
         triad.agent->act(state, true);
         triad.collector->on_transition(
@@ -135,7 +135,7 @@ TEST_F(SacTrainingTest, EpisodeEndKeepsTraining) {
     constexpr SacTrainingTestConfig cfg{
         .vision_height = 8,
         .vision_width = 8,
-        .nb_sensors = 3,
+        .nb_sensors = model::ENEMY_STATE_VECTOR_SIZE,
         .nb_continuous_actions = 2,
         .nb_discrete_actions = 2};
     const auto triad = make_triad(cfg);

@@ -32,15 +32,9 @@ namespace arenai::agent {
         TorchState next_states;
     };
 
-    // Off-policy replay stored on the CPU as one ring per tank, the observations in uint8
-    // and written once: the next state of slot t is slot t + 1 of the same tank. A slot is
-    // sampleable when it holds a live transition and its successor has been written, so
-    // the newest slot never is. finish_episode() writes the closing observation in a slot
-    // of its own (no transition) so the last step of an episode gets its next state.
     class SacReplayBuffer {
     public:
-        // capacity: transitions over all the tanks, split evenly between them
-        explicit SacReplayBuffer(int64_t capacity);
+        SacReplayBuffer(int64_t capacity, float armed_fraction);
 
         void add(const SacInputStep &step);
         void finish_episode(const TorchState &final_state);
@@ -52,6 +46,7 @@ namespace arenai::agent {
 
     private:
         int64_t capacity;
+        float armed_fraction;
 
         int64_t nb_tanks = 0;
         int64_t slots_per_tank = 0;
@@ -61,7 +56,7 @@ namespace arenai::agent {
 
         // [nb_tanks, slots_per_tank, ...]
         torch::Tensor visions;
-        torch::Tensor proprioceptions;
+        torch::Tensor states;
         torch::Tensor fire_masks;
         torch::Tensor continuous_actions;
         torch::Tensor discrete_actions;
@@ -69,18 +64,21 @@ namespace arenai::agent {
         torch::Tensor cuts;
         // [nb_tanks, slots_per_tank] whether the slot holds a live transition
         torch::Tensor valids;
+        // [nb_tanks, slots_per_tank] whether the tank had shells left in the slot's state
+        torch::Tensor armed;
 
         // [nb_tanks] tanks already dead in the current episode
         torch::Tensor already_terminated;
 
         void allocate(const SacInputStep &step);
 
-        // writes the observation at write_index and advances it; a slot written with
-        // valid = false is an observation only (its action / reward are ignored)
         void write_observation(const TorchState &state, const torch::Tensor &valid);
 
         // [nb_tanks, slots_per_tank] slots that can be sampled
         torch::Tensor sampleable() const;
+
+        // flat indices of nb slots drawn uniformly among the candidates (empty when none)
+        static torch::Tensor draw(const torch::Tensor &candidates, int64_t nb);
     };
 
 }// namespace arenai::agent

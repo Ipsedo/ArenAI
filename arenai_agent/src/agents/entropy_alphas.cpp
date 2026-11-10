@@ -6,8 +6,8 @@
 
 #include "../distributions/bernoulli.h"
 #include "../metrics/last_metric.h"
-#include "../networks_utils/torch_converter.h"
 #include "../networks_utils/torch_saver.h"
+#include "./torch_types.h"
 
 using namespace arenai;
 using namespace arenai::agent;
@@ -57,8 +57,10 @@ namespace arenai::agent {
           continuous_target_entropy(continuous_target_entropy),
           discrete_target_entropy(
               bernoulli_entropy(torch::tensor(discrete_target_proba)).item<float>()),
-          continuous_metrics(make_metrics(continuous_action_names(), nb_continuous_actions)),
-          discrete_metrics(make_metrics(discrete_action_names(), nb_discrete_actions)) {
+          continuous_metrics(
+              make_metrics(TorchAction::continuous_action_names(), nb_continuous_actions)),
+          discrete_metrics(
+              make_metrics(TorchAction::discrete_action_names(), nb_discrete_actions)) {
         record(continuous_metrics, continuous());
         record(discrete_metrics, discrete());
     }

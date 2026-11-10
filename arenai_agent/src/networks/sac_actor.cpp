@@ -8,6 +8,7 @@
 
 #include "../networks_utils/init.h"
 #include "./constants.h"
+#include "./misc.h"
 
 using namespace arenai;
 using namespace arenai::agent;
@@ -32,8 +33,10 @@ namespace arenai::agent {
                   torch::nn::SiLU()))),
           head(register_module("head", torch::nn::Sequential())),
           mu(register_module("mu", torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions))),
-          log_sigma(register_module(
-              "log_sigma", torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions))),
+          sigma(register_module(
+              "sigma", torch::nn::Sequential(
+                           torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
+                           Clamp(LOG_SIGMA_MIN, LOG_SIGMA_MAX), Exp()))),
           discrete(register_module(
               "discrete", torch::nn::Sequential(
                               torch::nn::Linear(hidden_sizes.back(), nb_discrete_actions),
@@ -61,8 +64,8 @@ namespace arenai::agent {
         mu->apply(init_mu_output_weights);
 
         // small weights + constant bias: the initial spread is initial_sigma whatever the state
-        log_sigma->apply(init_mu_output_weights);
-        torch::nn::init::constant_(log_sigma->bias, std::log(initial_sigma));
+        sigma->apply(
+            [initial_sigma](Module &m) { init_log_sigma_output_weights(m, initial_sigma); });
 
         discrete->apply([&initial_discrete_probas](Module &m) {
             init_discrete_output_weights(m, initial_discrete_probas);
@@ -75,7 +78,7 @@ namespace arenai::agent {
 
         return {
             .mu = mu->forward(encoded),
-            .sigma = torch::exp(log_sigma->forward(encoded).clamp(LOG_SIGMA_MIN, LOG_SIGMA_MAX)),
+            .sigma = sigma->forward(encoded),
             .discrete = discrete->forward(encoded)};
     }
 

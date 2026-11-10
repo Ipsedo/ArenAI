@@ -41,7 +41,7 @@ namespace arenai::agent {
         torch::nn::Sequential head;
 
         torch::nn::Linear mu;
-        torch::nn::Linear log_sigma;
+        torch::nn::Sequential sigma;
         torch::nn::Sequential discrete;
     };
 

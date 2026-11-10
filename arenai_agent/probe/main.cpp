@@ -6,6 +6,7 @@
 #include <deque>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <numbers>
 #include <string>
@@ -24,6 +25,7 @@
 #include "./distributions/bernoulli.h"
 #include "./distributions/gaussian_tanh.h"
 #include "./networks/recurrent/liquid_actor.h"
+#include "./networks/sac_actor.h"
 #include "./networks_utils/torch_converter.h"
 #include "./networks_utils/torch_loader.h"
 
@@ -84,22 +86,61 @@ int main(const int argc, char **argv) {
     const int action_repeat = env_config.at("action_repeat").get<int>();
     const int max_episode_steps = config.at("train").at("max_episode_steps").get<int>();
 
-    const auto actor = std::make_shared<LiquidActor>(
-        model::ENEMY_PROPRIOCEPTION_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
-        model::ENEMY_NB_DISCRETE_ACTION, agent_config.at("hidden_size_sensors").get<int>(),
-        agent_config.at("vision_channels").get<std::vector<std::tuple<int, int>>>(),
-        agent_config.at("group_norm_nums").get<std::vector<int>>(),
-        agent_config.at("neuron_number").get<int>(), agent_config.at("unfolding_steps").get<int>(),
-        agent_config.at("delta_t").get<float>(), agent_config.at("initial_sigma").get<float>(),
-        std::vector{
-            agent_config.at("initial_fire_proba").get<float>(),
-            agent_config.at("initial_zoom_proba").get<float>()});
+    // what the probe needs from an actor, whatever its family (ppo_liquid or sac)
+    struct ProbeActorOutput {
+        torch::Tensor mu, sigma, discrete;
+        // empty for actors without an exposed feature layer (sac)
+        torch::Tensor features, vision_features;
+    };
+    std::function<ProbeActorOutput(const torch::Tensor &, const torch::Tensor &)> act;
+    std::function<void()> reset_hidden = [] {};
 
-    load_torch(save_folder, actor, "actor.pt");
-    actor->to(device);
-    actor->eval();
+    const auto vision_channels =
+        agent_config.at("vision_channels").get<std::vector<std::tuple<int, int>>>();
+    const auto group_norm_nums = agent_config.at("group_norm_nums").get<std::vector<int>>();
+    const std::vector initial_discrete_probas{
+        agent_config.at("initial_fire_proba").get<float>(),
+        agent_config.at("initial_zoom_proba").get<float>()};
 
-    LiquidHiddenState hidden_state(actor);
+    const bool is_sac = !agent_config.contains("neuron_number");
+    std::cout << "actor family : " << (is_sac ? "sac" : "ppo_liquid") << std::endl;
+
+    if (is_sac) {
+        const auto actor = std::make_shared<SacActor>(
+            model::ENEMY_PROPRIOCEPTION_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
+            model::ENEMY_NB_DISCRETE_ACTION, agent_config.at("hidden_size_sensors").get<int>(),
+            agent_config.at("actor_hidden_sizes").get<std::vector<int>>(), vision_channels,
+            group_norm_nums, agent_config.at("initial_sigma").get<float>(),
+            initial_discrete_probas);
+        load_torch(save_folder, actor, "actor.pt");
+        actor->to(device);
+        actor->eval();
+
+        act = [actor](const torch::Tensor &vision, const torch::Tensor &sensors) {
+            auto out = actor->act(vision, sensors);
+            return ProbeActorOutput{out.mu, out.sigma, out.discrete, {}, {}};
+        };
+    } else {
+        const auto actor = std::make_shared<LiquidActor>(
+            model::ENEMY_PROPRIOCEPTION_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
+            model::ENEMY_NB_DISCRETE_ACTION, agent_config.at("hidden_size_sensors").get<int>(),
+            vision_channels, group_norm_nums, agent_config.at("neuron_number").get<int>(),
+            agent_config.at("unfolding_steps").get<int>(), agent_config.at("delta_t").get<float>(),
+            agent_config.at("initial_sigma").get<float>(), initial_discrete_probas);
+        load_torch(save_folder, actor, "actor.pt");
+        actor->to(device);
+        actor->eval();
+
+        const auto hidden_state = std::make_shared<LiquidHiddenState>(actor);
+        reset_hidden = [hidden_state] { hidden_state->reset(); };
+        act = [actor, hidden_state](const torch::Tensor &vision, const torch::Tensor &sensors) {
+            const auto x_t = hidden_state->get(vision.size(0));
+            auto out = actor->act(vision, sensors, x_t);
+            hidden_state->set(out.next_x);
+            return ProbeActorOutput{
+                out.mu, out.sigma, out.discrete, out.features, out.vision_features};
+        };
+    }
 
     auto graphics_backend = view::make_vulkan_backend();
     std::cout << "Vulkan device : " << graphics_backend->renderer_info() << std::endl;
@@ -133,7 +174,7 @@ int main(const int argc, char **argv) {
     constexpr float to_degrees = 180.f / std::numbers::pi_v<float>;
 
     for (int episode = 0; episode < nb_episodes; episode++) {
-        hidden_state.reset();
+        reset_hidden();
 
         auto state = states_to_tensor(
             env->reset(spawn_side, spawn_side, shell_economy), vision_height, vision_width);
@@ -148,16 +189,15 @@ int main(const int argc, char **argv) {
             {
                 torch::NoGradGuard guard;
 
-                const auto x_t = hidden_state.get(state.vision.size(0));
-                auto out =
-                    actor->act(state.vision.to(device), state.proprioception.to(device), x_t);
-                hidden_state.set(out.next_x);
+                auto out = act(state.vision.to(device), state.proprioception.to(device));
 
                 mu = out.mu.cpu();
                 sigma = out.sigma.cpu();
                 discrete = out.discrete.cpu();
-                features = out.features.cpu().contiguous();
-                vision_features = out.vision_features.cpu().contiguous();
+                if (out.features.defined()) {
+                    features = out.features.cpu().contiguous();
+                    vision_features = out.vision_features.cpu().contiguous();
+                }
 
                 if (deterministic) {
                     continuous_action = gaussian_tanh_mode(mu);
@@ -192,7 +232,7 @@ int main(const int argc, char **argv) {
                     << mu_acc[i][3] << ';' << sigma_acc[i][2] << ';' << sigma_acc[i][3] << ';'
                     << cont_acc[i][2] << ';' << cont_acc[i][3] << '\n';
 
-                if (features_out.is_open()) {
+                if (features_out.is_open() && features.defined()) {
                     const float header[3] = {
                         static_cast<float>(episode), static_cast<float>(step),
                         static_cast<float>(i)};

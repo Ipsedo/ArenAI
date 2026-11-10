@@ -1,7 +1,3 @@
-//
-// Created by claude on 08/11/2026.
-//
-
 #ifndef ARENAI_TESTS_SAC_H
 #define ARENAI_TESTS_SAC_H
 
@@ -11,7 +7,6 @@
 #include <agents/sac/sac_factory.h>
 #include <gtest/gtest.h>
 
-// test code: the arenai sub-namespaces are used unqualified
 using namespace arenai;
 
 struct SacTestConfig {

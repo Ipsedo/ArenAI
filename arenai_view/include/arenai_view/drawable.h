@@ -1,7 +1,3 @@
-//
-// Created by samuel on 18/03/2023.
-//
-
 #ifndef ARENAI_DRAWABLE_H
 #define ARENAI_DRAWABLE_H
 #include <filesystem>

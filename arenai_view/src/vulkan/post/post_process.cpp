@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #include "./post_process.h"
 
 #include <utility>
@@ -86,8 +82,6 @@ namespace arenai::view {
         const Target &color = msaa ? *msaa_color_ : *resolve_color_;
         const Target &depth = msaa ? *msaa_depth_ : *resolve_depth_;
 
-        // the whole frame is redrawn: discard previous content; src stages
-        // order against last frame's readers/writers of these images
         record_image_barrier(
             cmd, color.image(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
@@ -162,7 +156,6 @@ namespace arenai::view {
 
         vkCmdBeginRendering(cmd, &rendering_info);
 
-        // negative height: the scene keeps the GL orientation conventions
         const VkViewport viewport{
             .x = 0.f,
             .y = static_cast<float>(height_),

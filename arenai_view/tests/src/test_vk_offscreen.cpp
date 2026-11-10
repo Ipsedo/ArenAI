@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #include <cstdlib>
 #include <numeric>
 #include <thread>
@@ -55,12 +51,10 @@ TEST(VkOffscreenTest, WarmupThenCubemap) {
     const auto matrices = std::vector<std::tuple<std::string, glm::mat4>>{
         {"sky", glm::scale(glm::mat4(1.f), glm::vec3(2000.f))}};
 
-    // first call: black warm-up frame (2-frame readback latency)
     const auto [black_pixels] = renderer->draw_and_get_frame(matrices);
     ASSERT_EQ(black_pixels.size(), 3 * w * h);
     ASSERT_EQ(pixel_sum(black_pixels), 0);
 
-    // second call: the first real frame
     const auto [pixels] = renderer->draw_and_get_frame(matrices);
     ASSERT_EQ(pixels.size(), 3 * w * h);
     ASSERT_GT(pixel_sum(pixels), 0);
@@ -74,7 +68,6 @@ TEST(VkOffscreenTest, DiffuseNonBlack) {
     constexpr int w = 32, h = 32;
     const auto renderer = backend->make_offscreen_renderer(w, h, {0.f, 10.f, -2.f}, make_camera());
 
-    // camera at -z looking at the origin: a big triangle facing it
     const std::vector<std::tuple<float, float, float>> vertices{
         {-5.f, -5.f, 0.f}, {0.f, 5.f, 0.f}, {5.f, -5.f, 0.f}};
     renderer->add_drawable(
@@ -86,7 +79,6 @@ TEST(VkOffscreenTest, DiffuseNonBlack) {
     renderer->draw_and_get_frame(matrices);
     const auto [pixels] = renderer->draw_and_get_frame(matrices);
 
-    // the green channel must dominate somewhere: the triangle is lit green
     constexpr int hw = w * h;
     const int green = std::accumulate(pixels.begin() + hw, pixels.begin() + 2 * hw, 0);
     ASSERT_GT(green, 0);
@@ -125,8 +117,6 @@ TEST(VkOffscreenTest, TwoRenderersAlternate) {
     ASSERT_NE(pixels_a, pixels_b);
 }
 
-// mirrors the vision thread pool: one renderer per thread, concurrent draws
-// on the same device/queue
 TEST(VkOffscreenTest, ConcurrentRenderers) {
     const auto backend = make_vulkan_backend();
     const auto file_reader =
@@ -162,7 +152,6 @@ TEST(VkOffscreenTest, ShadowRendererSmoke) {
         std::make_shared<LocalAssetFileReader>(std::filesystem::path(ARENAI_ASSETS_DIR));
 
     constexpr int w = 32, h = 32;
-    // internal ctor: with_shadows = true (the player-view configuration)
     const auto context = std::dynamic_pointer_cast<VulkanRenderContext>(backend->render_context());
     ASSERT_NE(context, nullptr);
     const auto renderer = std::make_unique<VulkanOffscreenRenderer>(

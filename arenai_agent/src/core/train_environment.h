@@ -1,7 +1,3 @@
-//
-// Created by samuel on 03/10/2025.
-//
-
 #ifndef ARENAI_AGENT_HOST_TRAIN_ENVIRONMENT_H
 #define ARENAI_AGENT_HOST_TRAIN_ENVIRONMENT_H
 
@@ -29,9 +25,6 @@ namespace arenai::agent {
             int max_episode_steps, int vision_height, int vision_width, int vision_num_threads,
             int action_repeat, float gamma);
 
-        // one call = one agent decision: the actions are held action_repeat physics frames
-        // (fire on the first one only), the visions rendered once at the end
-
         std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
         step(float time_delta, const std::vector<core::Action> &actions) override;
 
@@ -44,7 +37,6 @@ namespace arenai::agent {
 
         std::vector<model::RewardDetail> last_step_reward_details() const;
 
-        // totals across every tank since the last reset, for the spawn curriculum
         int episode_nb_fires() const;
         int episode_nb_hits() const;
 
@@ -64,7 +56,7 @@ namespace arenai::agent {
         int action_repeat;
         int nb_tanks;
 
-        // physics frames since the reset (max_episode_steps is in frames too)
+        // physics frames
         int nb_steps;
 
         std::vector<bool> done;
@@ -77,12 +69,10 @@ namespace arenai::agent {
 
         std::shared_ptr<AbstractMetric> reward_metric;
 
-        // the reward terms the policy trades off, split out of reward_metric
         std::shared_ptr<AbstractMetric> reward_hit_metric;
         std::shared_ptr<AbstractMetric> reward_received_metric;
         std::shared_ptr<AbstractMetric> reward_aim_metric;
 
-        // miss distance of the shells that landed, one sample per step that resolved a shell
         std::shared_ptr<AbstractMetric> miss_distance_metric;
 
         std::shared_ptr<AbstractMetric> episode_step_mean_nb_metric;
@@ -97,7 +87,6 @@ namespace arenai::agent {
 
         std::vector<model::RewardDetail> step_reward_details;
 
-        // the learning term paid on top of the tanks' own event rewards: a dense aim signal
         PotentialShaping aim_shaping;
 
         bool are_all_done();

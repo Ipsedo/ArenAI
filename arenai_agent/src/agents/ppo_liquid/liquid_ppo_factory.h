@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #ifndef ARENAI_LIQUID_PPO_FACTORY_H
 #define ARENAI_LIQUID_PPO_FACTORY_H
 
@@ -30,7 +26,6 @@ namespace arenai::agent {
     private:
         nlohmann::json config;
 
-        // triad built once, sharing actor + hidden state + rollout_buffer
         std::shared_ptr<LiquidActor> actor;
         std::shared_ptr<LiquidHiddenState> hidden_state;
 

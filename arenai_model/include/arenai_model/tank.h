@@ -1,7 +1,3 @@
-//
-// Created by samuel on 28/09/2025.
-//
-
 #ifndef ARENAI_TANK_H
 #define ARENAI_TANK_H
 
@@ -21,7 +17,6 @@ namespace arenai::model {
     struct ShellContactInfo {
         glm::vec3 fire_position;
         glm::vec3 current_position;
-        // health actually removed from the touched item (0 on anything without health)
         float damages;
     };
 
@@ -37,7 +32,6 @@ namespace arenai::model {
 
         virtual bool is_dead() const = 0;
 
-        // kills * 10 + hits landed on the other tanks, player and enemies alike
         virtual int get_score() const = 0;
 
         virtual std::shared_ptr<Item> get_chassis() const = 0;

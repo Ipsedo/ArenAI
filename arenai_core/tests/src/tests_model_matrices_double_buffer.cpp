@@ -1,7 +1,3 @@
-//
-// Created by samuel on 01/07/2026.
-//
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -11,10 +7,6 @@
 using namespace arenai;
 using namespace arenai::core;
 
-// ========================================================================
-// Construction — initial empty vector
-// ========================================================================
-
 TEST_F(ModelMatricesDoubleBufferTest, InitialReadIsEmpty) {
     const ModelMatricesDoubleBuffer buffer;
 
@@ -22,10 +14,6 @@ TEST_F(ModelMatricesDoubleBufferTest, InitialReadIsEmpty) {
 
     ASSERT_TRUE(matrices.empty());
 }
-
-// ========================================================================
-// Write / Read round-trip
-// ========================================================================
 
 TEST_F(ModelMatricesDoubleBufferTest, WriteAndReadBack) {
     ModelMatricesDoubleBuffer buffer;
@@ -69,10 +57,6 @@ TEST_F(ModelMatricesDoubleBufferTest, SecondWriteOverwritesFirst) {
     ASSERT_EQ(std::get<0>(read[1]), "new_b");
     ASSERT_EQ(std::get<0>(read[2]), "new_c");
 }
-
-// ========================================================================
-// Write empty then non-empty
-// ========================================================================
 
 TEST_F(ModelMatricesDoubleBufferTest, WriteEmptyThenNonEmpty) {
     ModelMatricesDoubleBuffer buffer;

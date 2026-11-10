@@ -1,7 +1,3 @@
-//
-// Created by claude on 22/07/2026.
-//
-
 #include "./ppo_factory.h"
 
 using namespace arenai;

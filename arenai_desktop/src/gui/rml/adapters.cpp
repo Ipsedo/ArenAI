@@ -1,7 +1,3 @@
-//
-// Created by samuel on 02/08/2026.
-//
-
 #include "./adapters.h"
 
 #include <algorithm>

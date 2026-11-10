@@ -1,7 +1,3 @@
-//
-// Created by samuel on 08/07/2026.
-//
-
 #ifndef ARENAI_FACTORY_H
 #define ARENAI_FACTORY_H
 
@@ -57,9 +53,6 @@ namespace arenai::view {
 
         virtual Rml::RenderInterface &ui_render_interface() = 0;
 
-        // a UI pass on the swapchain image: Clear starts from a cleared
-        // image (the UI is the whole frame), Overlay draws over the frame
-        // already rendered
         virtual void begin_ui_pass(UiPass pass, int width, int height) = 0;
         virtual void end_ui_pass() = 0;
 

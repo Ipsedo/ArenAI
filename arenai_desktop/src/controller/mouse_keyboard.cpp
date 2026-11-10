@@ -1,7 +1,3 @@
-//
-// Created by samuel on 16/03/2026.
-//
-
 #include "./mouse_keyboard.h"
 
 #include <utility>
@@ -70,26 +66,21 @@ namespace arenai::desktop {
 
         bool need_fire = false;
 
-        // keys
         if (event.key) {
             const auto [key, action] = *event.key;
 
             apply_binding(KeyboardBinding(key), action, need_fire);
 
-            // Escape stays hardwired: it hands the cursor back to the OS
             if (key == controller::Key::Escape && action == controller::InputAction::Press)
                 cursor_captured = false;
         }
 
-        // mouse
         const auto center_x = static_cast<double>(renderer.get_width()) / 2.,
                    center_y = static_cast<double>(renderer.get_height()) / 2.;
 
         if (cursor_captured) {
             window->set_cursor_mode(controller::CursorMode::Disabled);
 
-            // the parts consume an aim rate in [-1, 1]: the normalized mouse displacement
-            // is that rate, the player's slew speed being set to match the mouse
             current_turret_rate = static_cast<float>((event.mouse_x - center_x) / center_x);
             current_canon_rate = static_cast<float>((event.mouse_y - center_y) / center_y);
 
@@ -101,13 +92,11 @@ namespace arenai::desktop {
             current_canon_rate = 0.f;
         }
 
-        // mouse buttons
         if (event.button) {
             const auto [button, action] = *event.button;
 
             apply_binding(KeyboardBinding(button), action, need_fire);
 
-            // a left click always recaptures the cursor after an Escape
             if (button == controller::MouseButton::Left && action == controller::InputAction::Press)
                 cursor_captured = true;
         }

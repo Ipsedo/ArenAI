@@ -1,7 +1,3 @@
-//
-// Created by samuel on 22/07/2026.
-//
-
 #include "./value_function.h"
 
 #include "../networks_utils/init.h"

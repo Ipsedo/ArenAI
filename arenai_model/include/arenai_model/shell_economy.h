@@ -1,7 +1,3 @@
-//
-// Created by samuel on 03/11/2026.
-//
-
 #ifndef ARENAI_SHELL_ECONOMY_H
 #define ARENAI_SHELL_ECONOMY_H
 

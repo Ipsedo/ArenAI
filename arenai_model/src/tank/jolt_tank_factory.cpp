@@ -1,7 +1,3 @@
-//
-// Created by samuel on 01/07/2026.
-//
-
 #include "./jolt_tank_factory.h"
 
 #include "./jolt_enemy_tank.h"

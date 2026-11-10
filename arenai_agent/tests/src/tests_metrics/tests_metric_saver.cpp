@@ -1,7 +1,3 @@
-//
-// Created by samuel on 30/06/2026.
-//
-
 #include <filesystem>
 #include <fstream>
 
@@ -36,10 +32,6 @@ namespace {
         return line;
     }
 }// namespace
-
-// ========================================================================
-// Fixed tests
-// ========================================================================
 
 TEST_F(MetricCsvSaverTest, CreatesFileWithHeader) {
     const auto dir = make_temp_dir();
@@ -87,15 +79,10 @@ TEST_F(MetricCsvSaverTest, AppendsDataRows) {
     saver.attempt_append_to_csv();
     saver.attempt_append_to_csv();
 
-    // 1 header + 3 data rows
     ASSERT_EQ(count_lines(dir / "metrics.csv"), 4);
 
     std::filesystem::remove_all(dir);
 }
-
-// ========================================================================
-// Parameterized: save_every behavior
-// ========================================================================
 
 TEST_P(MetricCsvSaverParamTest, SaveEveryRespected) {
     const auto [window_size, save_every, total_calls] = GetParam();
@@ -109,10 +96,8 @@ TEST_P(MetricCsvSaverParamTest, SaveEveryRespected) {
 
     for (int i = 0; i < total_calls; i++) saver.attempt_append_to_csv();
 
-    // index goes from 0..total_calls-1
-    // saves when index % save_every == 0, i.e. at indices 0, save_every, 2*save_every, ...
     const int expected_data_rows = (total_calls + save_every - 1) / save_every;
-    const int total_lines = 1 + expected_data_rows;// header + data
+    const int total_lines = 1 + expected_data_rows;
 
     ASSERT_EQ(count_lines(dir / "metrics.csv"), total_lines);
 

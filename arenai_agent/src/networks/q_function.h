@@ -1,7 +1,3 @@
-//
-// Created by claude on 08/11/2026.
-//
-
 #ifndef ARENAI_Q_FUNCTION_H
 #define ARENAI_Q_FUNCTION_H
 
@@ -16,8 +12,6 @@
 
 namespace arenai::agent {
 
-    // Q(s, a_continuous, ·): one output per joint value of the binary discrete actions
-    // (2^nb_discrete_actions), so a single forward gives the Q of every discrete choice
     class QFunction final : public torch::nn::Module {
     public:
         QFunction(
@@ -38,7 +32,6 @@ namespace arenai::agent {
         torch::nn::Linear to_q;
     };
 
-    // clipped double Q: two independent critics, the target takes their minimum
     class TwinQNetwork final : public torch::nn::Module {
     public:
         TwinQNetwork(

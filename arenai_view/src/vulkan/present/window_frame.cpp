@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #include "./window_frame.h"
 
 #include <utility>
@@ -123,9 +119,6 @@ namespace arenai::view {
 
     void
     WindowFrameContext::begin_swapchain_pass(const bool load_existing, const bool clear) const {
-        // the pass renders into the multisampled target (loaded from the
-        // previous pass of this frame when asked, since the resolve leaves it
-        // intact) and resolves into the swapchain image as it ends
         VkRenderingAttachmentInfo color_attachment{};
         color_attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
         color_attachment.imageView = swapchain_->view(image_index_);

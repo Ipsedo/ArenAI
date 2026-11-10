@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/11/2026.
-//
-
 #include <core/potential_shaping.h>
 #include <gtest/gtest.h>
 

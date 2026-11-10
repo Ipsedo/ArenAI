@@ -1,7 +1,3 @@
-//
-// Created by claude on 22/07/2026.
-//
-
 #include <arenai_agent_tests/tests_agents/tests_ppo_training.h>
 
 using namespace arenai;
@@ -76,7 +72,6 @@ TEST_F(PpoTrainingTest, CountParametersPositive) {
 }
 
 TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
-    // build the triad by hand to keep a handle on the actor's parameters
     constexpr PpoTrainingTestConfig cfg{
         .vision_height = 8,
         .vision_width = 8,
@@ -93,7 +88,6 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
     const auto rollout_buffer = std::make_shared<PpoRolloutBuffer>();
     const auto collector = std::make_shared<PpoStepCollector>(rollout_buffer);
     const auto agent = std::make_shared<TorchPpoAgent>(actor, device, collector);
-    // target_kl = 0 : early stop disabled so every optimizer batch applies its update
     const auto trainer = std::make_shared<PpoTrainer>(
         actor, rollout_buffer, cfg.nb_continuous_actions, cfg.nb_discrete_actions, cfg.nb_sensors,
         1e-3f, 1e-3f, 8, std::vector{16}, vision_channels, group_norm_nums, device, 10, 0.99f,
@@ -104,8 +98,6 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
     for (const auto &parameter: actor->parameters())
         initial_parameters.push_back(parameter.detach().clone());
 
-    // env loop: act -> transition -> maybe train, one more step than the rollout
-    // horizon so that the batch is complete when the trainer checks
     for (int t = 0; t < ROLLOUT_SIZE + 2; t++) {
         constexpr int nb_tanks = 2;
 
@@ -115,7 +107,6 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
         trainer->step();
     }
 
-    // the rollout has been consumed by the training
     ASSERT_LT(rollout_buffer->nb_complete_steps(), static_cast<size_t>(ROLLOUT_SIZE));
 
     const auto parameters = actor->parameters();
@@ -132,7 +123,6 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
 }
 
 TEST_F(PpoTrainingTest, MaskedFireReceivesNoUpdate) {
-    // fire never possible: its head row must stay untouched while zoom keeps learning
     constexpr PpoTrainingTestConfig cfg{
         .vision_height = 8,
         .vision_width = 8,
@@ -149,7 +139,6 @@ TEST_F(PpoTrainingTest, MaskedFireReceivesNoUpdate) {
     const auto rollout_buffer = std::make_shared<PpoRolloutBuffer>();
     const auto collector = std::make_shared<PpoStepCollector>(rollout_buffer);
     const auto agent = std::make_shared<TorchPpoAgent>(actor, device, collector);
-    // target_kl = 0 : early stop disabled so every optimizer batch applies its update
     const auto trainer = std::make_shared<PpoTrainer>(
         actor, rollout_buffer, cfg.nb_continuous_actions, cfg.nb_discrete_actions, cfg.nb_sensors,
         1e-3f, 1e-3f, 8, std::vector{16}, vision_channels, group_norm_nums, device, 10, 0.99f,
@@ -174,7 +163,6 @@ TEST_F(PpoTrainingTest, MaskedFireReceivesNoUpdate) {
         trainer->step();
     }
 
-    // the rollout has been consumed by the training
     ASSERT_LT(rollout_buffer->nb_complete_steps(), static_cast<size_t>(ROLLOUT_SIZE));
 
     // row 0 = fire, row 1 = zoom

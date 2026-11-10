@@ -1,7 +1,3 @@
-//
-// Created by claude on 08/11/2026.
-//
-
 #ifndef ARENAI_SAC_COLLECTOR_H
 #define ARENAI_SAC_COLLECTOR_H
 
@@ -17,7 +13,6 @@ namespace arenai::agent {
     public:
         explicit SacStepCollector(std::shared_ptr<SacReplayBuffer> replay_buffer);
 
-        // concrete act-time channel, called by TorchSacAgent::act
         void on_act(const TorchState &state, const TorchAction &action);
 
         void on_transition(

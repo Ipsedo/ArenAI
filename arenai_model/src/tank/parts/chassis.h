@@ -1,7 +1,3 @@
-//
-// Created by samuel on 02/04/2023.
-//
-
 #ifndef ARENAI_CHASSIS_H
 #define ARENAI_CHASSIS_H
 

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 28/07/2026.
-//
-
 #include <cmath>
 #include <cstdlib>
 #include <filesystem>
@@ -20,14 +16,6 @@
 using namespace arenai;
 using namespace arenai::desktop;
 
-// ========================================================================
-// End-to-end: DesktopGameEnvironment -> AbstractAgent::act()
-// Mirrors run_game()'s loop with the interceptor in the enemy agent's seat;
-// the player view goes to a headless no-op backend, the enemy visions are
-// rendered by the environment's real offscreen backend. The player tank is
-// part of the scene, hence desktop-specific golden images.
-// ========================================================================
-
 namespace {
 
     constexpr int NB_TANKS = 2;
@@ -45,8 +33,6 @@ namespace {
         return env;
     }
 
-    // the run_game() loop shape: act on the current states, step the
-    // environment with the returned actions, feed the next states back
     void run_act_step_loop(
         core::BaseTanksEnvironment &env, InterceptorAgent &agent, std::vector<core::State> states) {
         auto actions = agent.act(states, VISION_HEIGHT, VISION_WIDTH);
@@ -61,8 +47,6 @@ namespace {
         }
     }
 
-    // same tolerance as arenai_core's ResetGoldenImage: rasterization shifts
-    // between llvmpipe versions, so mean error + outlier count, not per-pixel
     void expect_matches_golden(
         const std::filesystem::path &golden_path, const std::vector<uint8_t> &pixels,
         const std::string &label) {
@@ -99,16 +83,11 @@ namespace {
     }
 
     std::filesystem::path golden_image_path(const std::string &name) {
-        // arenai_desktop/tests/src/ -> arenai_desktop/tests/
         return std::filesystem::path(__FILE__).parent_path().parent_path() / "resources"
                / "golden_images" / (name + ".json");
     }
 
 }// namespace
-
-// ========================================================================
-// act() receives structurally valid states on every loop iteration
-// ========================================================================
 
 TEST(DesktopAgentInputEndToEnd, AgentReceivesValidStates) {
     const auto env = make_environment();
@@ -139,14 +118,8 @@ TEST(DesktopAgentInputEndToEnd, AgentReceivesValidStates) {
     env->stop_drawing();
 }
 
-// ========================================================================
-// what reaches act() matches the golden images (seeded RNG, pinned env)
-// ========================================================================
-
 TEST(DesktopAgentInputEndToEnd, AgentInputMatchesGoldenImages) {
 #ifndef ARENAI_REGENERATE_GOLDEN_IMAGES
-    // see arenai_core's ResetGoldenImage: only the pinned environment
-    // (scripts/goldens_docker.sh, also used by the CI) can compare goldens
     if (std::getenv("ARENAI_PINNED_RENDER_ENV") == nullptr)
         GTEST_SKIP() << "golden comparison needs the pinned render environment: "
                         "run ./scripts/goldens_docker.sh";
@@ -170,7 +143,6 @@ TEST(DesktopAgentInputEndToEnd, AgentInputMatchesGoldenImages) {
 
         for (const auto &[golden_path, pixels]: goldens) {
 #ifdef ARENAI_REGENERATE_GOLDEN_IMAGES
-            // rebuild mode: always overwrite the golden below
             if (false) {
 #else
             if (std::filesystem::exists(golden_path)) {

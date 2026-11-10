@@ -1,7 +1,3 @@
-//
-// Created by samuel on 21/10/2026.
-//
-
 #include "./return_scaler.h"
 
 #include "../networks/constants.h"
@@ -39,13 +35,11 @@ namespace arenai::agent {
             discounted_returns = discounted_returns * (1.f - float_dones[t]);
         }
 
-        // live transitions only: the post-mortem steps carry no return
         const auto valid_idx = torch::nonzero(float_valids.flatten() > 0.f).squeeze(-1);
         const auto returns =
             torch::stack(returns_list, 0).flatten().index_select(0, valid_idx).to(torch::kDouble);
 
         if (const auto batch_count = returns.size(0); batch_count > 0) {
-            // parallel variance update (Chan et al.)
             const auto batch_mean = returns.mean();
             const auto batch_var = returns.var(false);
 

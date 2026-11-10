@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #include "./render_target.h"
 
 #include <utility>
@@ -33,7 +29,6 @@ namespace arenai::view {
 
         VmaAllocationCreateInfo alloc_info{};
         alloc_info.usage = VMA_MEMORY_USAGE_AUTO;
-        // render targets (especially the 16k shadow map) deserve their own block
         alloc_info.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
 
         vk_check(

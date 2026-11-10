@@ -1,17 +1,9 @@
-//
-// Created by samuel on 30/06/2026.
-//
-
 #include <networks/misc.h>
 
 #include <arenai_agent_tests/tests_networks/tests_misc.h>
 
 using namespace arenai;
 using namespace arenai::agent;
-
-// ========================================================================
-// Clamp
-// ========================================================================
 
 TEST_P(ClampModuleParamTest, ClampsWithinBounds) {
     const auto [lower, upper, shape] = GetParam();
@@ -44,10 +36,6 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Combine(
         testing::Values(-1.0f, -0.5f, 0.0f), testing::Values(0.5f, 1.0f, 2.0f),
         testing::Values(Shape{5}, Shape{2, 3}, Shape{4, 8, 2})));
-
-// ========================================================================
-// Exp
-// ========================================================================
 
 TEST_P(ExpModuleParamTest, OutputAlwaysPositive) {
     const auto &shape = GetParam();

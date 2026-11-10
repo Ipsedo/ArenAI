@@ -1,7 +1,3 @@
-//
-// Created by samuel on 12/10/2025.
-//
-
 #ifndef ARENAI_AGENT_HOST_TRUNCATED_NORMAL_H
 #define ARENAI_AGENT_HOST_TRUNCATED_NORMAL_H
 

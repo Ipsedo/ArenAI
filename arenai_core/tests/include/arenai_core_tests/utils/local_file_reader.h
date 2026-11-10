@@ -1,7 +1,3 @@
-//
-// Created by samuel on 01/07/2026.
-//
-
 #ifndef ARENAI_CORE_TESTS_LOCAL_FILE_READER_H
 #define ARENAI_CORE_TESTS_LOCAL_FILE_READER_H
 
@@ -9,7 +5,6 @@
 
 #include <arenai_utils/file_reader.h>
 
-// test code: the arenai sub-namespaces are used unqualified
 using namespace arenai;
 
 class LocalAssetFileReader final : public arenai::utils::AbstractResourceFileReader {

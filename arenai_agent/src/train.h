@@ -1,7 +1,3 @@
-//
-// Created by samuel on 03/10/2025.
-//
-
 #ifndef ARENAI_AGENT_HOST_TRAIN_H
 #define ARENAI_AGENT_HOST_TRAIN_H
 

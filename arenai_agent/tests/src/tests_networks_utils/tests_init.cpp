@@ -1,7 +1,3 @@
-//
-// Created by samuel on 30/06/2026.
-//
-
 #include <networks_utils/init.h>
 
 #include <arenai_agent_tests/tests_networks_utils/tests_init.h>
@@ -14,7 +10,6 @@ using namespace arenai;
 using namespace arenai::agent;
 
 namespace {
-    // orthogonal_ rows (flattened) satisfy W @ W^T = gain^2 * I when out_features <= in_features
     void assert_orthogonal(const torch::Tensor &weight, const float gain) {
         const auto w = weight.reshape({weight.size(0), -1});
         const auto gram = torch::mm(w, w.t());

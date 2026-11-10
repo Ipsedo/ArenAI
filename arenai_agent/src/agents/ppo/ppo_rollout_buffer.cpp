@@ -1,7 +1,3 @@
-//
-// Created by claude on 22/07/2026.
-//
-
 #include "./ppo_rollout_buffer.h"
 
 using namespace arenai;
@@ -20,7 +16,6 @@ namespace arenai::agent {
             already_terminated_ = torch::zeros(
                 {nb_tanks}, torch::TensorOptions().dtype(torch::kBool).device(torch::kCPU));
 
-        // tanks already terminated before this step have no valid transition to store
         const auto valid = already_terminated_.logical_not();
         already_terminated_.logical_or_(
             step.done.detach().cpu().to(torch::kBool).reshape({nb_tanks}));
@@ -39,7 +34,6 @@ namespace arenai::agent {
                   .truncated = step.truncated.detach().cpu()},
              .valid = valid});
 
-        // the freshly added step is pending: its closing observation is not known yet
         final_state_.reset();
     }
 
@@ -58,8 +52,6 @@ namespace arenai::agent {
         const auto nb_steps = nb_complete_steps();
         TORCH_CHECK(nb_steps > 0, "PpoRolloutBuffer: no complete step to train on");
 
-        // the observation closing the last consumed step: the episode's final state,
-        // or the pending step's own observation
         const auto bootstrap_state =
             final_state_.has_value() ? *final_state_ : steps_[nb_steps].step.state;
 

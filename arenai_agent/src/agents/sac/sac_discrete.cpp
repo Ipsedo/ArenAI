@@ -1,7 +1,3 @@
-//
-// Created by claude on 08/11/2026.
-//
-
 #include "./sac_discrete.h"
 
 #include "../../distributions/bernoulli.h"

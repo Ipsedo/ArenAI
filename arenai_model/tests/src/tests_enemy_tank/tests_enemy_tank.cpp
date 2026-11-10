@@ -1,7 +1,3 @@
-//
-// Created by claude on 01/07/2026.
-//
-
 #include <cmath>
 #include <memory>
 
@@ -16,10 +12,6 @@ using namespace arenai::model;
 using namespace arenai::utils;
 using namespace arenai::controller;
 
-// ========================================================================
-// is_dead — death by individual part destruction
-// ========================================================================
-
 TEST_F(EnemyTankTest, DeadWhenSingleWheelDestroyed) {
     add_ground();
     const auto tank =
@@ -27,7 +19,6 @@ TEST_F(EnemyTankTest, DeadWhenSingleWheelDestroyed) {
 
     engine->step(1.f / 60.f);
 
-    // find a wheel item (not chassis, not turret, not canon) and destroy it
     const auto items = tank->get_items();
     bool wheel_killed = false;
     for (const auto &item: items) {
@@ -48,10 +39,6 @@ TEST_F(EnemyTankTest, DeadWhenSingleWheelDestroyed) {
         << "tank should be dead when any single wheel is destroyed (any_of over all life_items)";
 }
 
-// ========================================================================
-// on_death — idempotency
-// ========================================================================
-
 TEST_F(EnemyTankTest, OnDeathMultipleCallsDoNotCrash) {
     add_ground();
     auto tank =
@@ -61,7 +48,6 @@ TEST_F(EnemyTankTest, OnDeathMultipleCallsDoNotCrash) {
 
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
 
-    // kill the tank
     for (const auto &item: shared_tank->get_items()) {
         if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
             life->receive_damages({.impact_position = glm::vec3(0.f), .damages = 1e6f});
@@ -71,7 +57,6 @@ TEST_F(EnemyTankTest, OnDeathMultipleCallsDoNotCrash) {
 
     ASSERT_TRUE(shared_tank->is_dead());
 
-    // on_death should be safe to call multiple times
     ASSERT_NO_THROW(shared_tank->on_death());
     ASSERT_NO_THROW(shared_tank->on_death());
     ASSERT_NO_THROW(shared_tank->on_death());
@@ -90,10 +75,6 @@ TEST_F(EnemyTankTest, OnDeathBeforeDeathDoesNothing) {
     ASSERT_NO_THROW(shared_tank->on_death());
 }
 
-// ========================================================================
-// Reward — edge cases
-// ========================================================================
-
 TEST_F(EnemyTankTest, RewardWhenAllEnemiesDeadAndShellFired) {
     add_ground();
     auto tank_a =
@@ -106,7 +87,6 @@ TEST_F(EnemyTankTest, RewardWhenAllEnemiesDeadAndShellFired) {
     const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
     const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
-    // kill tank_b before firing
     for (const auto &item: shared_b->get_items()) {
         if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
             life->receive_damages({.impact_position = glm::vec3(0.f), .damages = 1e6f});
@@ -114,7 +94,6 @@ TEST_F(EnemyTankTest, RewardWhenAllEnemiesDeadAndShellFired) {
     }
     ASSERT_TRUE(shared_b->is_dead());
 
-    // fire from tank_a — shell will hit the dead tank or ground
     constexpr user_input fire_input{
         .left_joystick = {.x = 0.f, .y = 0.f},
         .right_joystick = {.x = 0.f, .y = 0.f},
@@ -125,8 +104,6 @@ TEST_F(EnemyTankTest, RewardWhenAllEnemiesDeadAndShellFired) {
 
     const std::vector tanks{shared_a, shared_b};
 
-    // get_nearest_enemy_index should return -1 (all dead)
-    // reward should not crash and should be 0 (no valid target)
     const float reward = shared_a->get_reward();
     ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN when all enemies are dead";
     ASSERT_FALSE(std::isinf(reward)) << "reward should not be Inf when all enemies are dead";
@@ -141,7 +118,6 @@ TEST_F(EnemyTankTest, RewardNoNaNWhenAloneInTankList) {
 
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
 
-    // fire a shell that will hit the ground
     constexpr user_input fire_input{
         .left_joystick = {.x = 0.f, .y = 0.f},
         .right_joystick = {.x = 0.f, .y = 0.f},
@@ -155,13 +131,8 @@ TEST_F(EnemyTankTest, RewardNoNaNWhenAloneInTankList) {
     ASSERT_FALSE(std::isinf(reward)) << "reward should not be Inf when alone";
 }
 
-// ========================================================================
-// Shell hitting non-LifeItem (ground)
-// ========================================================================
-
 TEST_F(EnemyTankTest, ShellHitsGroundNoRewardNoCrash) {
     add_ground();
-    // point the tank away from any enemy so the shell hits the ground
     auto tank =
         tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
 
@@ -169,8 +140,6 @@ TEST_F(EnemyTankTest, ShellHitsGroundNoRewardNoCrash) {
 
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
 
-    // tilt canon downward to ensure it hits the ground: the aim is a rate, so it takes
-    // several frames of held input to reach the travel limit
     constexpr user_input aim_down{
         .left_joystick = {.x = 0.f, .y = 0.f},
         .right_joystick = {.x = 0.f, .y = 1.f},
@@ -186,18 +155,12 @@ TEST_F(EnemyTankTest, ShellHitsGroundNoRewardNoCrash) {
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
-    // shell hit the ground (CubeItem, not LifeItem) — has_hit should be false
     ASSERT_FALSE(shared_tank->consume_has_hit())
         << "hitting the ground should not count as hitting another tank";
 
-    // but last_shoot_info should still be set — reward should not crash
     const float reward = shared_tank->get_reward();
     ASSERT_FALSE(std::isnan(reward));
 }
-
-// ========================================================================
-// Suicide detection
-// ========================================================================
 
 TEST_F(EnemyTankTest, SuicideDetectionWhenFlipped) {
     add_ground();
@@ -210,15 +173,8 @@ TEST_F(EnemyTankTest, SuicideDetectionWhenFlipped) {
 
     ASSERT_FALSE(shared_tank->is_suicide()) << "tank should not be suicidal initially";
 
-    // simulate being upside down by running many reward calls
-    // the reward function tracks upside_down frames via dot product
-    // we can't easily flip the tank physically, so just verify the initial state
     ASSERT_FALSE(shared_tank->is_dead()) << "tank should be alive initially";
 }
-
-// ========================================================================
-// has_hit_other_tank — reset behavior
-// ========================================================================
 
 TEST_F(EnemyTankTest, HasHitOtherTankResetsAfterCall) {
     add_ground();
@@ -240,16 +196,10 @@ TEST_F(EnemyTankTest, HasHitOtherTankResetsAfterCall) {
 
     for (int i = 0; i < 60; i++) engine->step(1.f / 60.f);
 
-    // first call returns true
     ASSERT_TRUE(shared_a->consume_has_hit());
-    // second call should return false (reset)
     ASSERT_FALSE(shared_a->consume_has_hit())
         << "has_hit_other_tank should reset to false after being queried";
 }
-
-// ========================================================================
-// Shell reserve — no passive regeneration
-// ========================================================================
 
 TEST_F(EnemyTankTest, ShellReserveDoesNotRegenerateOverTime) {
     constexpr int nb_frames_one_second = 60;
@@ -269,7 +219,6 @@ TEST_F(EnemyTankTest, ShellReserveDoesNotRegenerateOverTime) {
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
     const std::vector tanks{shared_tank};
 
-    // fire one shell: the reserve drops by one
     constexpr user_input fire_input{
         .left_joystick = {.x = 0.f, .y = 0.f},
         .right_joystick = {.x = 0.f, .y = 0.f},
@@ -282,7 +231,6 @@ TEST_F(EnemyTankTest, ShellReserveDoesNotRegenerateOverTime) {
     ASSERT_FLOAT_EQ(reserve_after_fire, initial_reserve - 1.f / static_cast<float>(max_shells))
         << "firing should consume a shell";
 
-    // a long wait gives nothing back: only hits recharge the reserve
     for (int i = 0; i < 30 * nb_frames_one_second; i++) shared_tank->tick(tanks);
 
     ASSERT_FLOAT_EQ(shared_tank->get_remaining_shells_ratio(), reserve_after_fire)
@@ -328,10 +276,6 @@ TEST_F(EnemyTankTest, ShellEconomyParametersAreApplied) {
     ASSERT_FALSE(shared_tank->get_can_fire()) << "an empty reserve cannot fire";
 }
 
-// ========================================================================
-// Shell reserve — an empty reserve never kills
-// ========================================================================
-
 namespace {
 
     constexpr user_input AIM_DOWN{
@@ -359,7 +303,6 @@ TEST_F(EnemyTankTest, EmptyReserveDoesNotKill) {
     for (int i = 0; i < 40; i++)
         for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(AIM_DOWN);
 
-    // empty the reserve, then keep going for a minute: nothing ends a disarmed tank
     for (int i = 0; i < 60 * 60; i++) {
         for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(HOLD_FIRE);
         engine->step(1.f / 60.f);
@@ -374,10 +317,6 @@ TEST_F(EnemyTankTest, EmptyReserveDoesNotKill) {
     ASSERT_FLOAT_EQ(shared_tank->get_last_reward_detail().death, 0.f)
         << "an empty reserve carries no penalty";
 }
-
-// ========================================================================
-// respawn — same tank, fresh trajectory
-// ========================================================================
 
 TEST_F(EnemyTankTest, RespawnMovesChassisAndRestoresReserveAndHealth) {
 

@@ -1,17 +1,9 @@
-//
-// Created by samuel on 18/09/2026.
-//
-
 #include <distributions/bernoulli.h>
 
 #include <arenai_agent_tests/tests_distributions/tests_bernoulli.h>
 
 using namespace arenai;
 using namespace arenai::agent;
-
-// ========================================================================
-// Fixed tests
-// ========================================================================
 
 TEST_F(BernoulliTest, EntropyMaxAtHalf) {
     const auto proba = torch::full({1, 3}, 0.5f);
@@ -54,10 +46,6 @@ TEST_F(BernoulliTest, LogProbaMatchesTakenActions) {
     ASSERT_NEAR(log_proba[0][1].item<float>(), std::log(0.7f), 1e-4f);
 }
 
-// ========================================================================
-// Parameterized: sample shape and binary property
-// ========================================================================
-
 TEST_P(BernoulliShapeParamTest, SampleIsBinary) {
     const auto [batch_size, nb_actions] = GetParam();
 
@@ -68,7 +56,6 @@ TEST_P(BernoulliShapeParamTest, SampleIsBinary) {
     ASSERT_EQ(sample.size(0), batch_size);
     ASSERT_EQ(sample.size(1), nb_actions);
 
-    // each element is 0 or 1, independently of the others
     const auto is_binary = torch::logical_or(torch::eq(sample, 0.0f), torch::eq(sample, 1.0f));
     ASSERT_TRUE(torch::all(is_binary).item<bool>()) << "Sample should contain only 0s and 1s";
 }

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 01/07/2026.
-//
-
 #include <cmath>
 #include <memory>
 
@@ -13,10 +9,6 @@ using namespace arenai;
 using namespace arenai::model;
 using namespace arenai::utils;
 using namespace arenai::controller;
-
-// ========================================================================
-// ShellItem — via canon fire
-// ========================================================================
 
 TEST_F(ShellTest, FireCreatesShellItem) {
     add_ground();
@@ -60,8 +52,6 @@ TEST_F(ShellTest, ShellDestroyedAfterLifetime) {
     const int count_with_shell = static_cast<int>(engine->get_items().size());
     ASSERT_GT(count_with_shell, count_before_fire) << "shell must appear after fire";
 
-    // nb_frames_alive = 20 / freq = 20 / (1/60) = 1200 frames
-    // run well past that
     for (int i = 0; i < 1300; i++) engine->step(1.f / 60.f);
 
     const int count_after = static_cast<int>(engine->get_items().size());
@@ -177,10 +167,6 @@ TEST_F(ShellTest, ShellContactCallbackSetsReward) {
     ASSERT_GT(max_reward, 0.f) << "reward should be positive after shell contact callback";
 }
 
-// ========================================================================
-// ShellItem — damages dealt per impact
-// ========================================================================
-
 namespace {
 
     constexpr user_input FIRE_INPUT{
@@ -192,7 +178,6 @@ namespace {
         for (const auto &ctrl: tank->get_controllers()) ctrl->apply_input(FIRE_INPUT);
     }
 
-    // a tank spreads its health over its parts: its damages are the sum over them
     int consume_tank_hits(const std::shared_ptr<EnemyTank> &tank) {
         int hits = 0;
         for (const auto &item: tank->get_items())
@@ -201,7 +186,6 @@ namespace {
         return hits;
     }
 
-    // ShellItem lives behind arenai_model's private Jolt headers: match it by name
     std::shared_ptr<Item> find_shell(AbstractPhysicEngine &engine) {
         for (const auto &item: engine.get_items())
             if (item->get_name() == "shell_item") return item;
@@ -222,7 +206,7 @@ TEST_F(ShellTest, ShellImpactDealsExactlyOneDamage) {
     const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
     const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
-    consume_tank_hits(shared_b);// drop whatever the settling produced
+    consume_tank_hits(shared_b);
 
     fire_once(shared_a);
     for (int i = 0; i < 60; i++) {
@@ -248,11 +232,8 @@ TEST_F(ShellTest, TankSurvivesUntilAPartsHealthPointsAreSpent) {
     const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
     const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
-    consume_tank_hits(shared_b);// drop whatever the settling produced
+    consume_tank_hits(shared_b);
 
-    // the cheapest part (wheel, turret, canon) is worth 5 health points, and every
-    // shell removes at most one: no tank dies in fewer than 5 shells, whatever the
-    // parts they land on
     constexpr int cheapest_part_health_points = 5;
     constexpr int max_shots = 20;
 
@@ -301,8 +282,6 @@ TEST_F(ShellTest, SpentShellDealsNoFurtherDamage) {
 
     target_life->consume_hits_received();
 
-    // a shell colliding with several bodies in the same step is dispatched once per
-    // body: only the first contact may be paid for
     shell->on_contact(target.get());
     shell->on_contact(target.get());
 

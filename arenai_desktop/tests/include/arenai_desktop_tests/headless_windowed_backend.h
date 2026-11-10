@@ -1,7 +1,3 @@
-//
-// Created by samuel on 28/07/2026.
-//
-
 #ifndef ARENAI_DESKTOP_TESTS_HEADLESS_WINDOWED_BACKEND_H
 #define ARENAI_DESKTOP_TESTS_HEADLESS_WINDOWED_BACKEND_H
 
@@ -11,13 +7,7 @@
 
 #include <arenai_view/backend.h>
 
-// test code: the arenai sub-namespaces are used unqualified
 using namespace arenai;
-
-// Headless stand-in for the GLFW windowed backend: DesktopGameEnvironment only
-// touches it for the player view (renderer + drawables), which the end-to-end
-// tests discard. The agents' visions keep their real offscreen backend, built
-// internally by the environment.
 
 class NoopDrawable final : public view::AbstractDrawable {
 public:

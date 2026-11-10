@@ -1,7 +1,3 @@
-//
-// Created by claude on 08/11/2026.
-//
-
 #include "./sac_agent.h"
 
 #include "../../distributions/bernoulli.h"
@@ -34,7 +30,6 @@ namespace arenai::agent {
             const auto [mu, sigma, discrete_proba] =
                 actor->act(state.get_vision(), state.get_state());
 
-            // a fire without effect is not a decision: the stored action never engages it
             const auto effective_proba =
                 discrete_proba * state.get_discrete_action_mask(discrete_proba.size(-1));
 

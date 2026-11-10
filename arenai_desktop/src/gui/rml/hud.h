@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #ifndef ARENAI_DESKTOP_GUI_RML_HUD_H
 #define ARENAI_DESKTOP_GUI_RML_HUD_H
 
@@ -16,17 +12,12 @@
 
 namespace arenai::desktop::gui {
 
-    // what draws a UI pass over the frame already rendered
     class AbstractOverlayRenderer {
     public:
         virtual ~AbstractOverlayRenderer() = default;
         virtual void render_overlay() = 0;
     };
 
-    // The in-game overlay of hud.rml: the aim reticle, the Battlefield-style
-    // hit marker, the incoming-damage arc pool, and the match status bound
-    // through the "hud" data model (clock, both sides' scores, the hull
-    // segments, enemies alive over the roster).
     class HudOverlay final : public DocumentView, public AbstractHudOverlay {
     public:
         explicit HudOverlay(AbstractOverlayRenderer &renderer);
@@ -37,18 +28,15 @@ namespace arenai::desktop::gui {
         void set_aim_point(std::optional<glm::vec2> normalized) override;
         void render() override;
 
-        // the hull bar's segment count
         static constexpr int HULL_SEGMENTS = 8;
 
     protected:
         void bind(DataModel &model) override;
-        // grabs the overlay elements; throws when hud.rml misses one
         void on_attached(Rml::ElementDocument &document) override;
 
     private:
         AbstractOverlayRenderer &renderer_;
 
-        // the status, in the shapes the RML binds
         Rml::String clock_;
         int player_score_ = 0;
         int hull_segments_ = HULL_SEGMENTS;

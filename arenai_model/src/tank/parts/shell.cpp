@@ -1,7 +1,3 @@
-//
-// Created by samuel on 13/04/2023.
-//
-
 #include "./shell.h"
 
 #include <Jolt/Physics/Body/BodyInterface.h>
@@ -28,8 +24,6 @@ namespace arenai::model {
         : LifeItem(1), ConvexItem(NAME, engine, load_shape(file_reader), pos, scale, mass, rot),
           contact_callback(contact_callback),
           nb_frames_alive(static_cast<int>(20.f / wanted_frame_frequency)), start_pos(pos) {
-        // a shell travels several meters per frame: a discrete collision step tunnels through
-        // the terrain's zero-thickness mesh
         engine.get_body_interface().SetMotionQuality(
             get_body()->GetID(), JPH::EMotionQuality::LinearCast);
     }

@@ -1,7 +1,3 @@
-//
-// Created by claude on 01/07/2026.
-//
-
 #include <numeric>
 
 #include <arenai_view/backend.h>
@@ -25,17 +21,13 @@ TEST_P(OffscreenClearColorParam, ClearColorNoDrawable) {
 
     constexpr auto model_matrices = std::vector<std::tuple<std::string, glm::mat4>>{};
 
-    // warmup frame (black)
     buffer_renderer->draw_and_get_frame(model_matrices);
 
-    // actual frame: should be the clear color (red = 1,0,0,0 in on_new_frame)
     const auto [pixels] = buffer_renderer->draw_and_get_frame(model_matrices);
 
     const int hw = width * height;
     ASSERT_EQ(pixels.size(), 3 * hw);
 
-    // CHW layout: [R plane | G plane | B plane]
-    // clear color is (1.0, 0.0, 0.0) => R=255, G=0, B=0
     for (int i = 0; i < hw; ++i) {
         ASSERT_EQ(pixels[0 * hw + i], 255) << "R channel pixel " << i;
         ASSERT_EQ(pixels[1 * hw + i], 0) << "G channel pixel " << i;

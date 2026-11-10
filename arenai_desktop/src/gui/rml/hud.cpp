@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #include "./hud.h"
 
 #include <algorithm>
@@ -29,7 +25,6 @@ namespace arenai::desktop::gui {
         clock_ = clock_label(status.elapsed_seconds);
 
         player_score_ = status.player_score;
-        // ceil: the bar only empties completely once the hull is gone
         hull_segments_ = std::clamp(
             static_cast<int>(std::ceil(status.player_health * HULL_SEGMENTS)), 0, HULL_SEGMENTS);
         enemies_max_score_ = status.enemies_max_score;
@@ -53,7 +48,6 @@ namespace arenai::desktop::gui {
         if (damage_arcs_.empty())
             throw std::runtime_error("hud.rml misses its #damage-arcs elements");
 
-        // always on, never focused: the pages and popups own the input
         show(Rml::ModalFlag::None, Rml::FocusFlag::None);
     }
 
@@ -61,8 +55,6 @@ namespace arenai::desktop::gui {
         const bool kill = kind == HitKind::Kill;
         hit_marker_->SetClass("kill", kill);
 
-        // Battlefield-style feedback: the ticks spread outward while
-        // fading; a kill starts bigger, flares wider and lasts longer
         const float duration = kill ? KILL_MARKER_FADE_SECONDS : HIT_MARKER_FADE_SECONDS;
         const Rml::Tween tween(Rml::Tween::Quadratic, Rml::Tween::Out);
 
@@ -81,8 +73,6 @@ namespace arenai::desktop::gui {
     }
 
     void HudOverlay::notify_damage(const float screen_angle) {
-        // oldest-slot reuse: a burst of impacts shows as many arcs as
-        // the pool holds, each rotated toward its own shooter
         Rml::Element *arc = damage_arcs_[next_damage_arc_];
         next_damage_arc_ = (next_damage_arc_ + 1) % damage_arcs_.size();
 

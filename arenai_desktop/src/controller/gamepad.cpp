@@ -1,7 +1,3 @@
-//
-// Created by samuel on 15/07/2026.
-//
-
 #include "./gamepad.h"
 
 #include <algorithm>
@@ -26,7 +22,6 @@ namespace arenai::desktop {
 
         if (std::abs(value) < DEAD_ZONE) return 0.f;
 
-        // ramp from 0 at the deadzone edge up to ±1 at full deflection
         const double sign = value > 0. ? 1. : -1.;
         return static_cast<float>(sign * (std::abs(value) - DEAD_ZONE) / (1. - DEAD_ZONE));
     }
@@ -64,9 +59,6 @@ namespace arenai::desktop {
                 axis_slot(state, GamepadAxis::RightStickX) = x;
                 axis_slot(state, GamepadAxis::RightStickY) = y;
 
-                // the window dispatches the right stick once per frame, after every
-                // other gamepad callback: use it as the per-frame tick so the
-                // turret / canon deltas are applied exactly once per frame
                 on_event(state);
                 break;
         }
@@ -101,9 +93,6 @@ namespace arenai::desktop {
                 else if (action == controller::InputAction::Release) zoom_held = false;
             }
         } else {
-            // per-frame tick: the parts consume an aim rate in [-1, 1], a fraction of the
-            // tank's slew speed. that speed is set for the mouse, so the stick asks for a
-            // small share of it -- the ratio of the two historical rad/frame gains
             constexpr float stick_sensitivity = 0.05f;
 
             turret_rotation = stick_sensitivity * axis_value(bindings.aim_x, event);
@@ -111,7 +100,6 @@ namespace arenai::desktop {
         }
 
         const float direction = axis_value(bindings.steer, event);
-        // one-way pair driving the tank: accelerate forward, reverse backward
         const float speed = one_way_axis_value(bindings.accelerate, event)
                             - one_way_axis_value(bindings.reverse, event);
 

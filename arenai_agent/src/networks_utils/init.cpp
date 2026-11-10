@@ -1,7 +1,3 @@
-//
-// Created by samuel on 24/10/2025.
-//
-
 #include "./init.h"
 
 #include <algorithm>
@@ -55,8 +51,6 @@ namespace arenai::agent {
     }
 
     void init_concentration_output_weights(torch::nn::Module &module, const float wanted_sigma) {
-        // Beta on [-1, 1]: var = 4 μ(1-μ) / (κ+1), so at μ = 0.5 a wanted action
-        // std σ maps to κ = 1/σ² - 1
         const auto wanted_concentration = std::clamp(
             1.f / (wanted_sigma * wanted_sigma) - 1.f, CONCENTRATION_MIN, CONCENTRATION_MAX);
 
@@ -79,7 +73,6 @@ namespace arenai::agent {
             torch::nn::init::orthogonal_(lin->weight, 0.01f);
 
             if (lin->options.bias()) {
-                // sigmoid head: the bias is the logit of the wanted probability
                 std::vector<float> logits;
                 logits.reserve(initial_probabilities.size());
                 for (const auto probability: initial_probabilities)

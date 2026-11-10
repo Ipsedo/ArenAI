@@ -1,7 +1,3 @@
-//
-// Created by samuel on 30/06/2026.
-//
-
 #include <distributions/beta_law.h>
 
 #include <arenai_agent_tests/tests_distributions/tests_beta_law.h>
@@ -9,12 +5,7 @@
 using namespace arenai;
 using namespace arenai::agent;
 
-// ========================================================================
-// Fixed tests
-// ========================================================================
-
 TEST_F(BetaLawTest, UniformEntropyIsMaximal) {
-    // concentration=2 → alpha=beta=1 → uniform → maximal entropy
     const auto entropy_uniform = beta_law_entropy(torch::tensor({0.5f}), torch::tensor({2.0f}));
     const auto entropy_peaked = beta_law_entropy(torch::tensor({0.5f}), torch::tensor({10.0f}));
 
@@ -58,7 +49,6 @@ TEST_F(BetaLawTest, MeanActionMatchesModeWhenCentered) {
 }
 
 TEST_F(BetaLawTest, ModeActionSpansActionRange) {
-    // mode in [0, 1] maps linearly to [-1, 1], independent of concentration
     const auto mode = torch::tensor({0.0f, 0.25f, 0.5f, 0.75f, 1.0f});
 
     const auto action = beta_law_mode_action(mode);
@@ -66,10 +56,6 @@ TEST_F(BetaLawTest, ModeActionSpansActionRange) {
     ASSERT_TRUE(
         torch::allclose(action, torch::tensor({-1.0f, -0.5f, 0.0f, 0.5f, 1.0f}), 1e-5, 1e-5));
 }
-
-// ========================================================================
-// Parameterized: shape variations
-// ========================================================================
 
 TEST_P(BetaLawParamTest, SampleBounds) {
     const auto &shape = GetParam();
@@ -112,7 +98,6 @@ TEST_P(BetaLawParamTest, EntropyShape) {
 TEST_P(BetaLawParamTest, SampleNoNaNBelowUniformConcentration) {
     const auto &shape = GetParam();
 
-    // concentration below the κ=2 floor → alpha/beta below the clamp, still finite
     const auto mode = torch::ones(shape) * 0.5f;
     const auto concentration = torch::ones(shape) * 0.1f;
 

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 11/03/2026.
-//
-
 #include "./game_environment.h"
 
 #include <algorithm>
@@ -20,7 +16,6 @@ namespace arenai::desktop {
 
     namespace {
 
-        // shadow atlas side per quality preset (Off disables the pass)
         constexpr int shadow_map_size(const ShadowQuality quality) {
             switch (quality) {
                 case ShadowQuality::Low: return 2048;
@@ -30,7 +25,6 @@ namespace arenai::desktop {
             }
         }
 
-        // the renderer-side reading of the player's graphics choices
         view::PlayerRendererSettings player_renderer_settings(const GameSettings &settings) {
             return {
                 .shadows = settings.shadow_quality != ShadowQuality::Off,
@@ -58,8 +52,6 @@ namespace arenai::desktop {
         const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
         last_model_matrices_ = model_matrices;
 
-        // during the reset warm-up the player renderer does not exist yet:
-        // create_player_renderer builds it afterwards, on the main thread
         if (!player_renderer) return;
 
         player_renderer->make_current();
@@ -175,8 +167,6 @@ namespace arenai::desktop {
             player_tank->get_chassis()->get_model_matrix() * glm::vec4(0.f, 0.f, 0.f, 1.f);
 
         for (const auto &[fire_position, impact_position, damages]: impacts) {
-            // the impact lies on the face exposed to the shooter: its offset
-            // from the chassis center points at where the shot came from
             const glm::vec3 direction = fire_position - chassis_center;
             const glm::vec3 direction_flat = direction - up * glm::dot(direction, up);
             if (glm::length(direction_flat) < minimal_length) continue;

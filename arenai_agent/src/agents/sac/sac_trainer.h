@@ -1,7 +1,3 @@
-//
-// Created by claude on 08/11/2026.
-//
-
 #ifndef ARENAI_SAC_TRAINER_H
 #define ARENAI_SAC_TRAINER_H
 
@@ -17,11 +13,6 @@
 
 namespace arenai::agent {
 
-    // Soft Actor-Critic over a factorized hybrid policy: tanh-gaussian continuous
-    // actions (reparameterized) and independent Bernoulli discrete actions whose
-    // expectation is taken exactly over their combinations. One temperature per action
-    // (continuous axes first, then discrete), each tuned toward its own entropy target, so
-    // that no axis can pay the entropy of another.
     class SacTrainer final : public AbstractTrainer {
     public:
         SacTrainer(
@@ -52,7 +43,7 @@ namespace arenai::agent {
         std::shared_ptr<TwinQNetwork> critic;
         std::shared_ptr<TwinQNetwork> target_critic;
 
-        // [nb_continuous + nb_discrete] temperatures, continuous axes first
+        // [nb_continuous + nb_discrete]
         std::shared_ptr<SacAlpha> alphas;
 
         std::unique_ptr<torch::optim::Adam> actor_optim;
@@ -61,17 +52,14 @@ namespace arenai::agent {
 
         std::shared_ptr<AbstractMetric> critic_loss_metric;
         std::shared_ptr<AbstractMetric> actor_loss_metric;
-        // Q of the taken actions, per critic block
         std::shared_ptr<AbstractMetric> q_value_metric;
         std::shared_ptr<AbstractMetric> continuous_entropy_metric;
         std::shared_ptr<AbstractMetric> discrete_entropy_metric;
-        // one per temperature, in the alphas' order
         std::vector<std::shared_ptr<AbstractMetric>> alpha_metrics;
 
         int nb_continuous_actions;
         float gamma;
         float tau;
-        // per continuous axis
         float continuous_target_entropy;
         float discrete_target_entropy_ratio;
 
@@ -82,19 +70,15 @@ namespace arenai::agent {
 
         void train() const;
 
-        // one optimizer step of each network over a sampled batch, cut into device blocks
         void train_step() const;
 
-        // accumulate a device block's share of the batch gradient
         void backward_critic(const SacBatch &block, float batch_fraction) const;
         void backward_actor_and_alphas(const SacBatch &block, float batch_fraction) const;
 
-        // dual loss of the temperatures over the actor's (detached) entropies
         void backward_alphas(
             const torch::Tensor &continuous_log_prob, const torch::Tensor &discrete_entropies,
             const torch::Tensor &discrete_mask, float batch_fraction) const;
 
-        // (continuous, discrete) detached temperatures
         std::pair<torch::Tensor, torch::Tensor> split_alphas() const;
 
         void set_train(bool train) const;

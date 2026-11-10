@@ -1,7 +1,3 @@
-//
-// Created by samuel on 25/10/2026.
-//
-
 #ifndef ARENAI_DESKTOP_CORE_GAME_SESSION_H
 #define ARENAI_DESKTOP_CORE_GAME_SESSION_H
 
@@ -23,20 +19,12 @@ namespace arenai::desktop {
 
     enum class InGameOutcome { MainMenu, ExitGame, Retry };
 
-    // One game, from the agent load to the player leaving: owns the
-    // environment and the input routing, and drives the Playing / Paused /
-    // GameOver / Victory phases against the gui's popups and HUD.
     class GameSession {
     public:
-        // loads the enemy agent (throws when the selection is unusable) and
-        // builds the environment
         GameSession(
             const GameOptions &options, const GameSettings &settings,
             std::shared_ptr<view::AbstractWindowedGraphicBackend> backend, gui::AbstractGui &gui);
 
-        // the constructor may run on a worker thread while the loading
-        // screen presents; this finishes the window-backend half (player
-        // renderer, GPU uploads) and must run on the main thread, before run()
         void finish_loading() const;
 
         InGameOutcome run();
@@ -48,14 +36,11 @@ namespace arenai::desktop {
         void release_input();
 
         void set_phase(Phase phase);
-        // the cursor follows the phase: free over a popup, grabbed by a
-        // gamepad game
         void apply_cursor_mode() const;
         void on_popup_action(gui::PopupAction action);
 
         void play_frame();
         void render_frozen() const;
-        // the figures the HUD and the popups display
         gui::MatchStatus match_status();
 
         GameOptions options_;

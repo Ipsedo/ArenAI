@@ -1,7 +1,3 @@
-//
-// Created by claude on 08/11/2026.
-//
-
 #include "./sac_trainer.h"
 
 #include <algorithm>
@@ -116,13 +112,11 @@ namespace arenai::agent {
                 {start, end, static_cast<float>(end - start) / static_cast<float>(batch_size)});
         }
 
-        // critics on the frozen target
         critic_optim->zero_grad();
         for (const auto &[start, end, fraction]: blocks)
             backward_critic(slice_batch(batch, start, end), fraction);
         critic_optim->step();
 
-        // actor through the fresh critics, temperatures on the actor's entropies
         actor_optim->zero_grad();
         alpha_optim->zero_grad();
         for (const auto &[start, end, fraction]: blocks)
@@ -149,7 +143,6 @@ namespace arenai::agent {
             const auto [mu, sigma, discrete_proba] =
                 actor->act(block.next_states.get_vision(), block.next_states.get_state());
             const auto [next_action, u] = gaussian_tanh_sample(mu, sigma);
-            // each axis' log-probability weighted by its own temperature
             const auto continuous_log_prob = gaussian_tanh_log_pdf(u, mu, sigma);
             const auto continuous_bonus = (continuous_alpha * continuous_log_prob).sum(-1, true);
 
@@ -162,7 +155,6 @@ namespace arenai::agent {
                 block.next_states.get_vision(), block.next_states.get_state(), next_action);
             const auto q_min = torch::min(q1, q2);
 
-            // soft value: exact over the discrete combinations, one sample on the continuous
             const auto next_value =
                 (joint.probas * (q_min - discrete_bonus)).sum(-1, true) - continuous_bonus;
 
@@ -219,8 +211,6 @@ namespace arenai::agent {
     void SacTrainer::backward_alphas(
         const torch::Tensor &continuous_log_prob, const torch::Tensor &discrete_entropies,
         const torch::Tensor &discrete_mask, const float batch_fraction) const {
-        // temperatures: one per action, each pushed toward its own entropy target
-        // (Lagrangian on log-alpha); a discrete action without effect has a zero target
         const auto discrete_target_entropies =
             discrete_target_entropy_ratio * bernoulli_maximum_entropy() * discrete_mask;
 

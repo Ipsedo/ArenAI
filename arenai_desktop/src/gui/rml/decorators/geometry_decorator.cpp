@@ -1,7 +1,3 @@
-//
-// Created by samuel on 25/10/2026.
-//
-
 #include "./geometry_decorator.h"
 
 #include <cmath>
@@ -22,8 +18,6 @@ namespace arenai::desktop::gui {
     void GeometryDecorator::RenderElement(
         Rml::Element *element, const Rml::DecoratorDataHandle element_data) const {
         auto *geometry = reinterpret_cast<Rml::Geometry *>(element_data);
-        // the swap releases the previous frame's geometry through the render
-        // interface, whose retirement is deferred past the frames in flight
         if (animated()) *geometry = element->GetRenderManager()->MakeGeometry(build_mesh(*element));
         geometry->Render(element->GetAbsoluteOffset(Rml::BoxArea::Border));
     }

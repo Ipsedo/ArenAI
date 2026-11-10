@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #ifndef ARENAI_VK_RENDERER_H
 #define ARENAI_VK_RENDERER_H
 
@@ -46,10 +42,6 @@ namespace arenai::view {
 
         void make_current() const override;
         void release_current() const override;
-
-        /*
-         * DrawableContext port
-         */
 
         const SceneFrame &scene_frame() const override;
         VkCommandPool upload_pool() const override;

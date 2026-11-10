@@ -1,7 +1,3 @@
-//
-// Created by samuel on 13/04/2023.
-//
-
 #ifndef ARENAI_SHELL_H
 #define ARENAI_SHELL_H
 

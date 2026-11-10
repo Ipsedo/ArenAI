@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #ifndef ARENAI_VK_PIPELINE_H
 #define ARENAI_VK_PIPELINE_H
 
@@ -38,7 +34,7 @@ namespace arenai::view {
         PipelineBuilder &blend_premultiplied();
         PipelineBuilder &blend_alpha();
 
-        PipelineBuilder &color_format(VkFormat format);// none = depth-only pass
+        PipelineBuilder &color_format(VkFormat format);
         PipelineBuilder &depth_format(VkFormat format);
 
         PipelineBuilder &samples(VkSampleCountFlagBits samples);

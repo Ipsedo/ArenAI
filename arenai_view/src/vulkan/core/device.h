@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #ifndef ARENAI_VK_DEVICE_H
 #define ARENAI_VK_DEVICE_H
 
@@ -17,10 +13,6 @@
 
 namespace arenai::view {
 
-    // One logical device with a single graphics queue. The device is shared
-    // by every renderer of a backend, across threads: command pools and
-    // descriptor pools stay per-renderer (thread-confined), only the queue
-    // itself is serialized here (submit/present/immediate_submit lock).
     class VulkanDevice {
     public:
         VulkanDevice(std::shared_ptr<VulkanInstance> instance, const DeviceCriteria &criteria);

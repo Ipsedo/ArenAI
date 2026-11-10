@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #ifndef ARENAI_VK_POST_PROCESSING_EFFECT_H
 #define ARENAI_VK_POST_PROCESSING_EFFECT_H
 
@@ -22,15 +18,15 @@
 namespace arenai::view {
 
     enum class PostTexture {
-        ao_raw,      // SsaoEffect -> AoBlurEffect
-        ao,          // AoBlurEffect -> CompositeEffect
-        bloom_bright,// BloomBrightEffect -> BloomBlurEffect
-        bloom,       // BloomBlurEffect -> CompositeEffect
-        god_rays,    // GodRaysEffect -> CompositeEffect
+        ao_raw,
+        ao,
+        bloom_bright,
+        bloom,
+        god_rays,
     };
 
     enum class PostScalar {
-        god_ray_strength,// GodRaysEffect -> CompositeEffect
+        god_ray_strength,
     };
 
     class VulkanPostEffect {
@@ -109,8 +105,6 @@ namespace arenai::view {
         VkDescriptorSetLayout empty_layout_ = VK_NULL_HANDLE;
         VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
 
-        // one pipeline per (color format, sample count) drawn into: the
-        // effects' own targets and the multisampled window pass differ
         std::map<std::pair<VkFormat, VkSampleCountFlagBits>, VkPipeline> pipelines_;
 
         std::map<std::vector<const Target *>, VkDescriptorSet> input_sets_;

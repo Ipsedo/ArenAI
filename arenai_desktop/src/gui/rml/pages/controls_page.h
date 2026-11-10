@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #ifndef ARENAI_DESKTOP_GUI_RML_PAGES_CONTROLS_PAGE_H
 #define ARENAI_DESKTOP_GUI_RML_PAGES_CONTROLS_PAGE_H
 
@@ -20,7 +16,6 @@
 
 namespace arenai::desktop::gui {
 
-    // one row of the controls page: an action and its current binding
     struct BindingRow {
         Rml::String label;
         Rml::String binding;
@@ -28,8 +23,6 @@ namespace arenai::desktop::gui {
         bool bound = true;
     };
 
-    // The Controls screen: input kind, gamepad device, and the binding slots
-    // captured through the menu input adapter's raw sink.
     class ControlsPage final : public MenuPage {
     public:
         ControlsPage(

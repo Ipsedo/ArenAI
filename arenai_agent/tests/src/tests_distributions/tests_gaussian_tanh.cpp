@@ -1,17 +1,9 @@
-//
-// Created by samuel on 30/06/2026.
-//
-
 #include <distributions/gaussian_tanh.h>
 
 #include <arenai_agent_tests/tests_distributions/tests_gaussian_tanh.h>
 
 using namespace arenai;
 using namespace arenai::agent;
-
-// ========================================================================
-// Fixed tests
-// ========================================================================
 
 TEST_F(GaussianTanhTest, ActionBoundedByTanh) {
     const auto mu = torch::zeros({1000});
@@ -46,10 +38,6 @@ TEST_F(GaussianTanhTest, SmallSigmaConcentratesAction) {
 
     ASSERT_LT(std_small, std_large);
 }
-
-// ========================================================================
-// Parameterized: shape variations
-// ========================================================================
 
 TEST_P(GaussianTanhShapeParamTest, SampleShapeAndBounds) {
     const auto &shape = GetParam();
@@ -105,10 +93,6 @@ INSTANTIATE_TEST_SUITE_P(
     GaussianTanh, GaussianTanhShapeParamTest,
     testing::Values(Shape{1}, Shape{5}, Shape{2, 3}, Shape{4, 8}, Shape{16, 4}));
 
-// ========================================================================
-// Parameterized: target entropy
-// ========================================================================
-
 TEST_P(GaussianTanhTargetEntropyParamTest, TargetEntropyFinite) {
     const auto [nb_actions, target_sigma] = GetParam();
 
@@ -150,8 +134,6 @@ TEST_P(GaussianTanhShapeParamTest, EntropyShapeAndFinite) {
     ASSERT_TRUE(torch::all(torch::isfinite(entropy)).item<bool>());
 }
 
-// the one-sample estimator is unbiased: averaged over many rows it meets the
-// Monte-Carlo target entropy of the same squashed normal
 TEST_P(GaussianTanhTargetEntropyParamTest, EntropyEstimateMatchesTargetEntropy) {
     const auto [nb_actions, target_sigma] = GetParam();
 
@@ -175,8 +157,6 @@ TEST_F(GaussianTanhTest, EntropyGrowsWithSigma) {
     ASSERT_LT(small, large);
 }
 
-// the squash compresses the density near the bounds: a mode far from the center
-// has less entropy than a centered one at equal sigma
 TEST_F(GaussianTanhTest, EntropyDropsNearTheBounds) {
     constexpr int nb_rows = 100000;
     const auto sigma = torch::full({nb_rows}, 0.3f);
@@ -197,7 +177,6 @@ TEST_F(GaussianTanhTest, EntropyGradientFlowsThroughMuAndSigma) {
 
     ASSERT_TRUE(torch::all(torch::isfinite(mu.grad())).item<bool>());
     ASSERT_TRUE(torch::all(torch::isfinite(sigma.grad())).item<bool>());
-    // widening sigma raises the entropy: the gradient of the mean entropy is positive
     ASSERT_GT(sigma.grad().sum().item<float>(), 0.f);
 }
 

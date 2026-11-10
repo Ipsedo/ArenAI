@@ -1,15 +1,7 @@
-//
-// Created by claude on 29/10/2026.
-//
-
 #include <arenai_agent_tests/tests_agents/tests_ppg.h>
 
 using namespace arenai;
 using namespace arenai::agent;
-
-// ========================================================================
-// Fixture helpers
-// ========================================================================
 
 void PpgAgentTest::SetUp() {
     tmp_dir = std::filesystem::temp_directory_path() / "arenai_test_ppg";
@@ -53,10 +45,6 @@ TorchState PpgAgentTest::make_state(const PpgTestConfig &cfg, const int batch) {
         torch::randn({batch, cfg.nb_sensors}), torch::ones({batch, 1}));
 }
 
-// ========================================================================
-// Fixed tests
-// ========================================================================
-
 TEST_F(PpgAgentTest, ParameterCountPositive) {
     constexpr PpgTestConfig cfg{
         .vision_height = 8,
@@ -79,7 +67,6 @@ TEST_F(PpgAgentTest, MetricsNotEmpty) {
     const auto factory = make_factory(cfg);
 
     ASSERT_EQ(factory->get_trainer()->get_metrics().size(), 8);
-    // one alpha per action, CSV only
     ASSERT_EQ(
         factory->get_trainer()->get_csv_only_metrics().size(),
         cfg.nb_continuous_actions + cfg.nb_discrete_actions);
@@ -106,8 +93,6 @@ TEST_F(PpgAgentTest, DistillationValueShape) {
 }
 
 TEST_F(PpgAgentTest, DistillationValueHeadIsRegistered) {
-    // the auxiliary value head must be part of the actor's parameters: saved with
-    // it and stepped by the actor optimizer during the auxiliary phase
     DistillationActor actor(10, 4, 2, 16, std::vector{32}, {{3, 8}}, {4}, 0.5f, {0.5f, 0.5f});
     const Actor plain_actor(10, 4, 2, 16, std::vector{32}, {{3, 8}}, {4}, 0.5f, {0.5f, 0.5f});
 
@@ -117,10 +102,6 @@ TEST_F(PpgAgentTest, DistillationValueHeadIsRegistered) {
 
     ASSERT_EQ(actor.parameters().size(), plain_actor.parameters().size() + 2);
 }
-
-// ========================================================================
-// Parameterized: act shape tests
-// ========================================================================
 
 TEST_P(PpgActShapeParamTest, ActOutputShapes) {
     const auto cfg = GetParam();
@@ -156,7 +137,6 @@ TEST_P(PpgActShapeParamTest, ActDiscreteIsBinary) {
     const auto [continuous_action, discrete_action] =
         factory->get_agent()->act(make_state(cfg, batch), true);
 
-    // independent Bernoulli actions: each entry is 0 or 1, no one-hot constraint
     const auto is_binary =
         torch::logical_or(torch::eq(discrete_action, 0.0f), torch::eq(discrete_action, 1.0f));
     ASSERT_TRUE(torch::all(is_binary).item<bool>());
@@ -167,10 +147,6 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Values(
         PpgTestConfig{8, 8, 10, 4, 2}, PpgTestConfig{8, 8, 5, 2, 2},
         PpgTestConfig{16, 16, 20, 6, 2}, PpgTestConfig{8, 12, 10, 4, 2}));
-
-// ========================================================================
-// Parameterized: save / load tests
-// ========================================================================
 
 TEST_P(PpgSaveLoadParamTest, SaveCreatesExpectedFiles) {
     const auto cfg = GetParam();
@@ -215,7 +191,6 @@ TEST_P(PpgSaveLoadParamTest, AgentLoadsSavedActor) {
 
     factory->get_trainer()->save(save_dir);
 
-    // a fresh agent reloads the saved actor and acts deterministically like it
     const auto other_factory = make_factory(cfg);
     const auto other_agent = std::dynamic_pointer_cast<AbstractAgent>(other_factory->get_agent());
     ASSERT_NE(other_agent, nullptr);

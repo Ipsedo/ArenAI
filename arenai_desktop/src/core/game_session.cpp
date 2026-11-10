@@ -1,7 +1,3 @@
-//
-// Created by samuel on 25/10/2026.
-//
-
 #include "./game_session.h"
 
 #include <algorithm>
@@ -20,9 +16,6 @@ namespace arenai::desktop {
         std::shared_ptr<view::AbstractWindowedGraphicBackend> backend, gui::AbstractGui &gui)
         : options_(options), settings_(settings), backend_(std::move(backend)),
           window_(backend_->get_window()), gui_(gui),
-          // the menu only lets Play through once the dry-run check passed, so
-          // the load succeeds here; a direct launch (ARENAI_DEBUG_AUTOPLAY)
-          // surfaces its failure as an exception
           enemy_(load_agent(agent_selection(settings_), settings_.cuda)) {
         env_ = std::make_shared<DesktopGameEnvironment>(
             options_.resources_folder, backend_, settings_, enemy_.vision_height,
@@ -35,7 +28,6 @@ namespace arenai::desktop {
     void GameSession::finish_loading() const { env_->create_player_renderer(); }
 
     void GameSession::install_input() {
-        // also covers runs that skip the menu (ARENAI_DEBUG_AUTOPLAY)
         select_configured_gamepad(*window_, settings_);
 
         router_ = std::make_shared<GameInputRouter>(
@@ -142,9 +134,6 @@ namespace arenai::desktop {
         const auto frame_dt =
             std::chrono::milliseconds(static_cast<int>(enemy_.wanted_frequency * 1000.f));
 
-        // the agents decide every action_repeat frames, as in training: their
-        // actions are held in between (fire on the decision frame only) and
-        // their visions rendered on the frame before the next decision
         const bool decide = frame_ % enemy_.action_repeat == 0;
         const bool observe = (frame_ + 1) % enemy_.action_repeat == 0;
         frame_++;
@@ -168,7 +157,6 @@ namespace arenai::desktop {
 
         backend_->present();
 
-        // mutual destruction on the last frame stays a defeat
         if (env_->is_player_dead()) set_phase(Phase::GameOver);
         else if (env_->nb_enemies_alive() == 0) set_phase(Phase::Victory);
 

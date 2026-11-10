@@ -1,7 +1,3 @@
-//
-// Created by claude on 08/11/2026.
-//
-
 #include "./sac_replay_buffer.h"
 
 #include <algorithm>
@@ -28,7 +24,6 @@ namespace arenai::agent {
 
     void SacReplayBuffer::allocate(const SacInputStep &step) {
         nb_tanks = step.state.get_vision().size(0);
-        // a ring needs a slot and its successor
         slots_per_tank = std::max<int64_t>(2, capacity / nb_tanks);
 
         const auto shape = [&](const torch::Tensor &per_tank) {
@@ -72,7 +67,6 @@ namespace arenai::agent {
         const auto done = to_cpu(step.done).to(torch::kBool).reshape({nb_tanks});
         const auto truncated = to_cpu(step.truncated).to(torch::kBool).reshape({nb_tanks});
 
-        // a tank already dead before this step has no live transition to store
         const auto valid = already_terminated.logical_not();
         already_terminated.logical_or_(done);
 
@@ -94,7 +88,6 @@ namespace arenai::agent {
 
     torch::Tensor SacReplayBuffer::sampleable() const {
         auto mask = valids.clone();
-        // the newest slot's successor is not written yet
         const auto newest = (write_index + slots_per_tank - 1) % slots_per_tank;
         mask.select(1, newest).fill_(false);
         return mask;
@@ -121,7 +114,6 @@ namespace arenai::agent {
             armed_candidates.size(0) + dry_candidates.size(0) > 0,
             "SacReplayBuffer: no transition to sample");
 
-        // an empty stratum hands its share to the other one
         int64_t nb_armed = std::lround(armed_fraction * static_cast<float>(batch_size));
         if (armed_candidates.size(0) == 0) nb_armed = 0;
         if (dry_candidates.size(0) == 0) nb_armed = batch_size;

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 02/04/2023.
-//
-
 #include "./turret.h"
 
 #include <algorithm>
@@ -52,8 +48,6 @@ namespace arenai::model {
     void TurretItem::apply_input(const controller::user_input &input) {
         const float delta = std::clamp(input.right_joystick.x, -1.f, 1.f) * max_rad_per_frame;
 
-        // std::remainder keeps the angle in [-pi, pi]: the turret rotates freely, crossing
-        // the back is just another step
         angle = std::remainder(angle - delta, TWO_PI);
 
         hinge->SetMotorState(JPH::EMotorState::Position);

@@ -1,7 +1,3 @@
-//
-// Created by claude on 29/10/2026.
-//
-
 #ifndef ARENAI_TESTS_PPG_H
 #define ARENAI_TESTS_PPG_H
 
@@ -11,7 +7,6 @@
 #include <agents/ppg/ppg_factory.h>
 #include <gtest/gtest.h>
 
-// test code: the arenai sub-namespaces are used unqualified
 using namespace arenai;
 
 struct PpgTestConfig {

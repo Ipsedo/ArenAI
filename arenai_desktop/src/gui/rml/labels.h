@@ -1,7 +1,3 @@
-//
-// Created by samuel on 27/10/2026.
-//
-
 #ifndef ARENAI_DESKTOP_GUI_RML_LABELS_H
 #define ARENAI_DESKTOP_GUI_RML_LABELS_H
 
@@ -13,9 +9,6 @@
 
 namespace arenai::desktop::gui {
 
-    // Human labels of the settings enums, for the one-line summaries the
-    // Main and Parameters screens show (the RML keeps the raw to_string
-    // values for its data-class bindings).
     constexpr const char *algorithm_label(const AiAlgorithm algorithm) {
         switch (algorithm) {
             case AiAlgorithm::Ppo: return "PPO";
@@ -44,7 +37,6 @@ namespace arenai::desktop::gui {
         return kind == ControllerKind::Gamepad ? "Gamepad" : "Mouse + keyboard";
     }
 
-    // mm:ss of a match duration
     inline std::string clock_label(const float seconds) {
         const int whole = std::max(0, static_cast<int>(seconds));
         char text[16];

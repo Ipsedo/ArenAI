@@ -1,7 +1,3 @@
-//
-// Created by claude on 01/07/2026.
-//
-
 #include <networks/vision.h>
 
 #include <arenai_agent_tests/tests_networks/tests_vision_edge.h>

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 18/03/2023.
-//
-
 #include <sstream>
 
 #include <arenai_utils/string_utils.h>

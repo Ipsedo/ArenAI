@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #include "./offscreen_renderer.h"
 
 #include <cstring>

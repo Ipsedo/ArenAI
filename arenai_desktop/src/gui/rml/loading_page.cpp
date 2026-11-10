@@ -1,7 +1,3 @@
-//
-// Created by samuel on 28/10/2026.
-//
-
 #include "./loading_page.h"
 
 namespace arenai::desktop::gui {

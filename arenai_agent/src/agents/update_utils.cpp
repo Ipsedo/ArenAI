@@ -1,7 +1,3 @@
-//
-// Created by claude on 27/10/2026.
-//
-
 #include "./update_utils.h"
 
 #include <algorithm>
@@ -18,7 +14,6 @@ namespace arenai::agent {
             1, static_cast<int64_t>(
                    static_cast<float>(kl_per_row.size(0)) * (1.f - KL_TRIM_FRACTION)));
 
-        // per-row KL is non-negative: sorting ascending puts the outliers past nb_kept
         return std::get<0>(torch::sort(kl_per_row)).slice(0, 0, nb_kept).mean().item<float>();
     }
 

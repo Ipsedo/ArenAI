@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #include "./controls_page.h"
 
 #include <algorithm>
@@ -66,8 +62,6 @@ namespace arenai::desktop::gui {
             settings_.controller_kind = controller_display_ == "gamepad" ? ControllerKind::Gamepad
                                                                          : ControllerKind::Keyboard;
             this->model().dirty("controller");
-            // switching the kind swaps the visible bindings, so a running
-            // capture and the status text follow along
             end_capture();
             set_default_bind_status();
             rebuild_binding_rows();
@@ -94,7 +88,6 @@ namespace arenai::desktop::gui {
             if (settings_.controller_kind == ControllerKind::Keyboard)
                 settings_.bindings.keyboard = {};
             else {
-                // the device choice is not a binding: keep it
                 auto gamepad = GamepadBindings{};
                 gamepad.device_guid = std::move(settings_.bindings.gamepad.device_guid);
                 gamepad.device_name = std::move(settings_.bindings.gamepad.device_name);
@@ -117,12 +110,8 @@ namespace arenai::desktop::gui {
     }
 
     void ControlsPage::update() {
-        // pads can be (un)plugged while the device list is on screen; the
-        // refresh is a no-op while nothing changed
         if (settings_.controller_kind == ControllerKind::Gamepad) refresh_gamepad_list();
 
-        // a forgotten capture ends on its own (a pad-only player has no
-        // Escape at hand)
         if (capture_slot_ >= 0 && std::chrono::steady_clock::now() >= capture_deadline_) {
             end_capture();
             rebuild_binding_rows();
@@ -154,7 +143,6 @@ namespace arenai::desktop::gui {
                 case controller::MouseButton::Right: return "MOUSE R";
                 case controller::MouseButton::Middle: return "MOUSE M";
             }
-        // layout-aware label (Key::Q reads "A" on AZERTY)
         const auto label = window_->key_label(std::get<controller::Key>(*slot));
         return label.empty() ? "?" : Rml::String(label);
     }
@@ -163,7 +151,6 @@ namespace arenai::desktop::gui {
         const std::optional<GamepadAxisBinding> &slot, const bool one_way) {
         if (!slot) return "UNBOUND";
         Rml::String label = GAMEPAD_AXIS_LABELS[static_cast<int>(slot->axis)];
-        // a one-way action bound to a stick reads a single direction
         const bool on_stick =
             slot->axis != GamepadAxis::LeftTrigger && slot->axis != GamepadAxis::RightTrigger;
         if (one_way && on_stick) label += slot->sign > 0.f ? "+" : "-";
@@ -223,8 +210,6 @@ namespace arenai::desktop::gui {
         capture_keyboard_page_ = keyboard_page;
         capture_slot_ = slot;
         capture_deadline_ = std::chrono::steady_clock::now() + CAPTURE_TIMEOUT;
-        // every axis must return to rest once before it can bind (the
-        // stick may still be deflected from navigating the menu)
         axis_armed_.fill(false);
         set_default_bind_status();
 
@@ -239,8 +224,6 @@ namespace arenai::desktop::gui {
     }
 
     void ControlsPage::on_capture_input(const RawMenuInput &input) {
-        // Escape is the only cancel input (every pad button stays
-        // bindable); a pad-only player relies on the capture timeout
         if (const auto *key = std::get_if<controller::Key>(&input);
             key != nullptr && *key == controller::Key::Escape) {
             end_capture();
@@ -253,12 +236,10 @@ namespace arenai::desktop::gui {
                 assign_keyboard(KeyboardBinding(*key));
             else if (const auto *button = std::get_if<controller::MouseButton>(&input))
                 assign_keyboard(KeyboardBinding(*button));
-            // pad input has no meaning on the keyboard page
             return;
         }
 
         if (capture_slot_ < NB_GP_BUTTON_SLOTS) {
-            // Start stays the in-game pause toggle, never a binding
             if (const auto *button = std::get_if<controller::GamepadButton>(&input);
                 button != nullptr && *button != controller::GamepadButton::Start)
                 assign_gamepad_button(*button);
@@ -297,7 +278,6 @@ namespace arenai::desktop::gui {
         const auto slots = gp_button_slots();
         *slots[capture_slot_] = button;
 
-        // the other button slot loses a conflicting assignment
         for (int slot = 0; slot < NB_GP_BUTTON_SLOTS; slot++)
             if (slot != capture_slot_ && *slots[slot] == button) {
                 *slots[slot] = std::nullopt;
@@ -314,9 +294,6 @@ namespace arenai::desktop::gui {
         const GamepadAxisBinding binding{.axis = axis, .sign = one_way && value < 0. ? -1.f : 1.f};
         *slots[capture_slot_ - NB_GP_BUTTON_SLOTS] = binding;
 
-        // two slots clash when they read the same range of an axis: a
-        // two-way slot owns the whole axis, one-way slots only their
-        // captured side
         for (int slot = NB_GP_BUTTON_SLOTS; slot < NB_GP_SLOTS; slot++) {
             if (slot == capture_slot_) continue;
             auto &other = *slots[slot - NB_GP_BUTTON_SLOTS];
@@ -344,8 +321,6 @@ namespace arenai::desktop::gui {
         gamepad_names_.clear();
         for (const auto &pad: gamepads_) gamepad_names_.emplace_back(pad.name);
 
-        // the preferred pad when connected, else the first one (which
-        // is what the window falls back to)
         selected_gamepad_ = gamepads_.empty() ? -1 : 0;
         for (size_t i = 0; i < gamepads_.size(); i++)
             if (!settings_.bindings.gamepad.device_guid.empty()

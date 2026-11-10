@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #ifndef ARENAI_VULKAN_BACKEND_H
 #define ARENAI_VULKAN_BACKEND_H
 

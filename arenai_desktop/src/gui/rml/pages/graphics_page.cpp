@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #include "./graphics_page.h"
 
 #include <cstdlib>
@@ -27,7 +23,6 @@ namespace arenai::desktop::gui {
         };
         selected_window_gpu_ = gpu_index(settings_.window_gpu);
         selected_vision_gpu_ = gpu_index(settings_.vision_gpu);
-        // a saved GPU that disappeared falls back to Auto, re-saved as such
         if (selected_window_gpu_ == 0) settings_.window_gpu.clear();
         if (selected_vision_gpu_ == 0) settings_.vision_gpu.clear();
         window_gpu_display_ = gpu_names_[static_cast<size_t>(selected_window_gpu_)];
@@ -57,8 +52,6 @@ namespace arenai::desktop::gui {
             if (arguments.empty()) return;
             display_display_ = arguments[0].Get<Rml::String>();
             settings_.fullscreen = display_display_ == "fullscreen";
-            // applied immediately; the window reports its new size through
-            // the resize callback (dp-ratio included)
             window_->set_fullscreen(settings_.fullscreen);
             this->model().dirty("display");
         });
@@ -114,7 +107,6 @@ namespace arenai::desktop::gui {
         setting = index == 0 ? std::string() : std::string(gpu_names_[index]);
         window_gpu_display_ = gpu_names_[static_cast<size_t>(selected_window_gpu_)];
         vision_gpu_display_ = gpu_names_[static_cast<size_t>(selected_vision_gpu_)];
-        // picking an entry folds its list
         window_gpu_open_ = false;
         vision_gpu_open_ = false;
         model().dirty(variable);

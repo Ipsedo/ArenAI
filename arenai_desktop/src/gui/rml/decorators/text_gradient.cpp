@@ -1,7 +1,3 @@
-//
-// Created by samuel on 28/10/2026.
-//
-
 #include "./text_gradient.h"
 
 #include <algorithm>
@@ -20,7 +16,6 @@ namespace arenai::desktop::gui {
 
     namespace {
 
-        // one compiled glyph run per font texture page
         struct TextGradientData {
             struct Run {
                 Rml::Geometry geometry;
@@ -29,8 +24,6 @@ namespace arenai::desktop::gui {
             std::vector<Run> runs;
         };
 
-        // the element's direct text nodes concatenated (the title is one),
-        // cased like the hidden native text (capitalize is not supported)
         Rml::String element_text(Rml::Element &element) {
             Rml::String text;
             for (int i = 0; i < element.GetNumChildren(); ++i)
@@ -81,8 +74,6 @@ namespace arenai::desktop::gui {
             computed.letter_spacing()};
         const float opacity = computed.opacity();
 
-        // the single line sits where the hidden native text does: baseline at
-        // the content box top plus the font's ascent
         const Rml::Vector2f origin = element->GetBox().GetPosition(Rml::BoxArea::Content);
         const float ascent = Rml::GetFontEngineInterface()->GetFontMetrics(face).ascent;
 

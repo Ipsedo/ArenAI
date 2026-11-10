@@ -1,7 +1,3 @@
-//
-// Created by claude on 01/07/2026.
-//
-
 #include <glm/ext/matrix_transform.hpp>
 
 #include <arenai_view/backend.h>
@@ -34,14 +30,11 @@ TEST_P(OffscreenMultiFrameParam, StabilityMultiFrame) {
     const auto model_matrices = std::vector<std::tuple<std::string, glm::mat4>>{
         {"test", glm::scale(glm::mat4(1.f), glm::vec3(2000.f))}};
 
-    // warmup
     buffer_renderer->draw_and_get_frame(model_matrices);
 
-    // reference frame
     const auto [ref_pixels] = buffer_renderer->draw_and_get_frame(model_matrices);
     ASSERT_EQ(ref_pixels.size(), 3 * width * height);
 
-    // subsequent frames must be identical (static scene, same camera)
     constexpr int num_extra_frames = 8;
     for (int f = 0; f < num_extra_frames; ++f) {
         const auto [frame_pixels] = buffer_renderer->draw_and_get_frame(model_matrices);

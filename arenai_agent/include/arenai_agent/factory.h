@@ -1,7 +1,3 @@
-//
-// Created by samuel on 22/01/2026.
-//
-
 #ifndef ARENAI_AGENT_HOST_FACTORY_H
 #define ARENAI_AGENT_HOST_FACTORY_H
 

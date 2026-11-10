@@ -1,7 +1,3 @@
-//
-// Created by samuel on 11/03/2026.
-//
-
 #ifndef ARENAI_DESKTOP_GAME_ENVIRONMENT_H
 #define ARENAI_DESKTOP_GAME_ENVIRONMENT_H
 
@@ -29,17 +25,11 @@ namespace arenai::desktop {
 
         ~DesktopGameEnvironment() override;
 
-        // the window-backend half of the reset — the player renderer, its
-        // drawable uploads and the input handlers. reset() leaves it out so
-        // it can run on a worker thread while the loading screen presents;
-        // this must then be called on the main thread, before any frame.
         void create_player_renderer();
 
         std::shared_ptr<controller::AbstractKeyboardCallback> keyboard_handler() const;
         std::shared_ptr<controller::AbstractGamepadCallback> gamepad_handler() const;
 
-        // one physics frame, the player's view drawn every time; the agents' visions are
-        // rendered and returned only when observe is set (the frame before a decision)
         std::optional<std::vector<core::State>>
         play_frame(float time_delta, const std::vector<core::Action> &actions, bool observe);
 
@@ -50,13 +40,8 @@ namespace arenai::desktop {
         bool is_player_dead() const;
 
         int get_score() const;
-        // the weakest of the player's life items, in [0, 1] (is_player_dead
-        // triggers as soon as one of them dies)
         float player_health_ratio() const;
 
-        // the enemy roster: all of them, the ones still fighting, and the sum
-        // of their scores (kills * 10 + hits, as the player's). Non-const:
-        // they go through the base class's enemy visitor.
         int nb_enemies();
         int nb_enemies_alive();
         int enemies_max_score();
@@ -78,8 +63,6 @@ namespace arenai::desktop {
     private:
         std::shared_ptr<view::AbstractWindowedGraphicBackend> windowed_backend;
 
-        // kept from on_reset_drawables for create_player_renderer; owned by
-        // the base class, which outlives it
         model::AbstractPhysicEngine *engine_ = nullptr;
 
         std::shared_ptr<utils::AbstractResourceFileReader> asset_file_reader;

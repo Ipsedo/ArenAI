@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #include "./vulkan_drawable.h"
 
 namespace arenai::view {

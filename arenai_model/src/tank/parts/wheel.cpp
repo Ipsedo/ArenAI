@@ -1,7 +1,3 @@
-//
-// Created by samuel on 02/04/2023.
-//
-
 #include "./wheel.h"
 
 #include <Jolt/Physics/Constraints/SixDOFConstraint.h>
@@ -66,7 +62,6 @@ namespace arenai::model {
 
         ConvexItem::get_body()->SetFriction(1.f);
 
-        // for differential
         wheel_center_pos_rel_to_chassis = rel_pos;
         this->front_axle_z = front_axle_z;
     }
@@ -108,10 +103,6 @@ namespace arenai::model {
 
         return original_rotation_velocity * rw / rc;
     }
-
-    /*
- * DirectionalWheelItem
- */
 
     void DirectionalWheelItem::apply_input(const controller::user_input &input) {
         WheelItem::apply_input(input);

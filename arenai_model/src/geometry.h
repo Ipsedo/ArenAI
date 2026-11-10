@@ -1,7 +1,3 @@
-//
-// Created by claude on 03/11/2026.
-//
-
 #ifndef ARENAI_GEOMETRY_H
 #define ARENAI_GEOMETRY_H
 

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 27/08/2026.
-//
-
 #include <utility>
 
 #include <arenai_controller/input_names.h>

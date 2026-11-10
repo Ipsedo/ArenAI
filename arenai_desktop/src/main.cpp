@@ -1,7 +1,3 @@
-//
-// Created by samuel on 11/03/2026.
-//
-
 #include <filesystem>
 
 #include <argparse/argparse.hpp>
@@ -31,9 +27,6 @@ static std::filesystem::path executable_dir(const char *argv0) {
 int main(const int argc, char **argv) {
     argparse::ArgumentParser parser("arenai game");
 
-    // everything about the AI model (which one, vision size, frequency,
-    // hyper-parameters) comes from the preset or folder selected in the
-    // menu; the command line only keeps what belongs to the player's machine
     parser.add_argument("--window_width").scan<'i', int>().default_value(1920);
     parser.add_argument("--window_height").scan<'i', int>().default_value(1080);
 

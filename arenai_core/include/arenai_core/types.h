@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/10/2025.
-//
-
 #ifndef ARENAI_TYPES_H
 #define ARENAI_TYPES_H
 
@@ -29,8 +25,6 @@ namespace arenai::core {
 
     typedef controller::user_input Action;
 
-    // the actions held on the frames that follow an agent decision (action repeat): the
-    // fire is a single pulse sent on the decision frame only, the axes and zoom stay held
     inline std::vector<Action> release_fire(std::vector<Action> actions) {
         for (auto &action: actions) action.fire_button.pressed = false;
         return actions;

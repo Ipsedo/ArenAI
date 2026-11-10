@@ -1,7 +1,3 @@
-//
-// Created by samuel on 25/10/2026.
-//
-
 #ifndef ARENAI_DESKTOP_GUI_RML_DECORATORS_DECORATOR_REGISTRY_H
 #define ARENAI_DESKTOP_GUI_RML_DECORATORS_DECORATOR_REGISTRY_H
 
@@ -12,9 +8,6 @@
 
 namespace arenai::desktop::gui {
 
-    // Owns the decorator instancers registered with RmlUi. Built after
-    // Rml::Initialise() (property registration needs the style-sheet
-    // specification) and, as RmlUi requires, destroyed after Rml::Shutdown().
     class DecoratorRegistry {
     public:
         DecoratorRegistry() = default;
@@ -27,8 +20,6 @@ namespace arenai::desktop::gui {
         std::vector<std::unique_ptr<Rml::DecoratorInstancer>> instancers_;
     };
 
-    // the decorators menu.rcss and hud.rcss rely on (corner-reticle, slant,
-    // facets, crystals, reticle, hit-marker, damage-arc)
     void register_menu_decorators(DecoratorRegistry &registry);
 
 }// namespace arenai::desktop::gui

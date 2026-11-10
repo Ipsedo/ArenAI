@@ -1,7 +1,3 @@
-//
-// Created by samuel on 10/06/2026.
-//
-
 #ifndef ARENAI_AGENT_HOST_THREAD_POOL_H
 #define ARENAI_AGENT_HOST_THREAD_POOL_H
 #include <barrier>
@@ -33,10 +29,6 @@ namespace arenai::core {
     public:
         ModelMatricesDoubleBuffer();
     };
-
-    /*
-     * Threads
-     */
 
     class ThreadLimiter {
     public:

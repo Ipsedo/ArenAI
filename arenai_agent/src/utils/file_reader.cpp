@@ -1,7 +1,3 @@
-//
-// Created by samuel on 03/10/2025.
-//
-
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
@@ -20,8 +16,6 @@ namespace arenai::agent {
         : path_to_resources(path_to_resources) {}
 
     std::string DesktopAssetFileReader::read_text(const std::filesystem::path &file_path) {
-        // binary: read_text also serves binary assets (TTF fonts for the GUI),
-        // and Windows text mode corrupts them (CRLF translation, 0x1A as EOF)
         std::ifstream file(path_to_resources / file_path, std::ios::binary);
         if (!file) throw std::runtime_error("Could not open " + file_path.string());
 

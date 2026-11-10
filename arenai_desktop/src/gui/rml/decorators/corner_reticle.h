@@ -1,7 +1,3 @@
-//
-// Created by samuel on 02/08/2026.
-//
-
 #ifndef ARENAI_DESKTOP_GUI_RML_DECORATORS_CORNER_RETICLE_H
 #define ARENAI_DESKTOP_GUI_RML_DECORATORS_CORNER_RETICLE_H
 
@@ -9,13 +5,6 @@
 
 namespace arenai::desktop::gui {
 
-    // The menu's single cursor mark: four L-shaped corner ticks framing the
-    // control under the cursor (mouse hover or gamepad focus). The optional
-    // centered fill exists for the slider knob, a widget-internal element
-    // (sliderbar) that cannot host children — plain triangle geometry, the
-    // only thing the Vulkan backend renders (no box-shadow, no textures).
-    // RCSS: decorator: corner-reticle(
-    //           <tick-color> <fill-color> <tick-length> <thickness> <inset> <fill-inset>);
     class CornerReticleDecorator final : public GeometryDecorator {
     public:
         CornerReticleDecorator(

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 23/08/2026.
-//
-
 #ifndef ARENAI_DESKTOP_GUI_RML_DECORATORS_HIT_MARKER_H
 #define ARENAI_DESKTOP_GUI_RML_DECORATORS_HIT_MARKER_H
 
@@ -9,8 +5,6 @@
 
 namespace arenai::desktop::gui {
 
-    // The hit marker X: four diagonal ticks from the corners stopping `gap`
-    // short of the center. RCSS: decorator: hit-marker(<thickness> <gap>);
     class HitMarkerDecorator final : public GeometryDecorator {
     public:
         HitMarkerDecorator(Rml::NumericValue thickness, Rml::NumericValue gap);

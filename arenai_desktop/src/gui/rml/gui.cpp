@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #include "../gui.h"
 
 #include <algorithm>
@@ -35,10 +31,6 @@ namespace arenai::desktop::gui {
 
     namespace {
 
-        // The composition root of the RmlUi implementation: library
-        // lifecycle, the context, and the wiring of the pages, popups and
-        // HUD. Each role of the port is served by a small object below;
-        // everything page-specific lives in the pages.
         class RmlGui final : public AbstractGui, public AbstractOverlayRenderer {
         public:
             RmlGui(
@@ -55,8 +47,6 @@ namespace arenai::desktop::gui {
                 Rml::SetRenderInterface(&backend_->ui_render_interface());
                 Rml::Initialise();
 
-                // built only now: property registration needs the style-sheet
-                // specification Rml::Initialise() just created
                 decorators_ = std::make_unique<DecoratorRegistry>();
                 register_menu_decorators(*decorators_);
                 font_buffers_ = load_menu_fonts(asset_reader);
@@ -65,9 +55,6 @@ namespace arenai::desktop::gui {
                 if (!context_) throw std::runtime_error("RmlUi context creation failed");
                 update_dp_ratio();
 
-                // the adapter is wired before the pages (the controls page
-                // captures bindings through it); input only arrives after
-                // construction, once the documents are loaded
                 input_adapter_ = std::make_shared<MenuInputAdapter>(
                     context_, [this] { on_escape(); },
                     [this](const bool gamepad) { set_gamepad_nav(gamepad); });
@@ -96,8 +83,6 @@ namespace arenai::desktop::gui {
                 loading_page_ = std::make_unique<LoadingPage>();
                 loading_page_->load(*context_);
 
-                // route the pad input to the pad persisted from the previous
-                // session, when it is connected
                 select_configured_gamepad(*window_, state_.settings);
             }
 
@@ -114,19 +99,14 @@ namespace arenai::desktop::gui {
             }
 
             ~RmlGui() override {
-                // nothing may keep pointing at this object through the window
                 window_->set_keyboard_callback(nullptr);
                 window_->set_gamepad_callback(nullptr);
                 window_->set_resize_callback(nullptr);
 
-                // releases the GPU resources through the backend's render
-                // interface; the instancers (decorators_) and font buffers
-                // are members, hence destroyed after this call as RmlUi needs
                 Rml::Shutdown();
             }
 
         private:
-            // the blocking main-menu loop, owning the window input meanwhile
             class MainMenu final : public AbstractMainMenu {
             public:
                 explicit MainMenu(RmlGui &gui) : gui_(gui) {}
@@ -169,10 +149,6 @@ namespace arenai::desktop::gui {
                 std::optional<MenuOutcome> outcome_;
             };
 
-            // one animation frame per call while the application loop waits
-            // for the match to finish building on its worker thread; same
-            // frame sequence as the menu loop, without the navigator (the
-            // document holds no interactive element)
             class LoadingScreen final : public AbstractLoadingScreen {
             public:
                 explicit LoadingScreen(RmlGui &gui) : gui_(gui) {}
@@ -235,9 +211,6 @@ namespace arenai::desktop::gui {
                 }
             }
 
-            // Escape / gamepad B: an open popup first (the application
-            // intercepts Escape itself in-game, this covers the gamepad),
-            // else the menu stack
             void on_escape() {
                 for (PopupPage *popup: {pause_.get(), game_over_.get(), victory_.get()})
                     if (popup->visible()) {
@@ -247,9 +220,6 @@ namespace arenai::desktop::gui {
                 navigator_->on_escape();
             }
 
-            // the .gamepad-nav class on every document of the context — pages,
-            // popups and HUD alike (menu.rcss shows the :focus highlight only
-            // under it)
             void set_gamepad_nav(const bool gamepad) const {
                 for (int i = 0; i < context_->GetNumDocuments(); ++i)
                     context_->GetDocument(i)->SetClass("gamepad-nav", gamepad);
@@ -263,11 +233,6 @@ namespace arenai::desktop::gui {
                 backend_->end_ui_pass();
             }
 
-            // Every dp length in menu.rcss is mapped to pixels so that the
-            // 1280×720 design canvas of the mockups fills the window: the
-            // menu scales with the window itself (a fullscreen 1080p shows
-            // it 1.5× the mockup, a 4K display 3×). The min of both axes
-            // keeps the whole design visible on unusual ratios.
             void update_dp_ratio() const {
                 context_->SetDensityIndependentPixelRatio(std::max(
                     0.5f, std::min(
@@ -285,7 +250,6 @@ namespace arenai::desktop::gui {
             MenuSystemInterface system_interface_;
             ReaderBackedFileInterface file_interface_;
 
-            // created after Rml::Initialise(), destroyed after Rml::Shutdown()
             std::unique_ptr<DecoratorRegistry> decorators_;
             std::vector<std::string> font_buffers_;
 

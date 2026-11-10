@@ -1,7 +1,3 @@
-//
-// Created by samuel on 24/10/2026.
-//
-
 #include "./agent_presets.h"
 
 namespace arenai::desktop {

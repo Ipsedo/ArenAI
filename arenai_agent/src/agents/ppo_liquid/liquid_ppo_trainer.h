@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #ifndef ARENAI_LIQUID_PPO_TRAINER_H
 #define ARENAI_LIQUID_PPO_TRAINER_H
 
@@ -18,13 +14,10 @@ namespace arenai::agent {
     struct LiquidGaeResult {
         torch::Tensor advantages;
         torch::Tensor returns;
-        // [T, nb_tanks, neuron_number] critic liquid state opening each step
+        // [T, nb_tanks, neuron_number]
         torch::Tensor critic_hiddens;
     };
 
-    // Recurrent PPO: the updates run on contiguous [chunk_size]-long sequences
-    // (truncated BPTT), each initialized with the liquid state recorded when the
-    // chunk's first step was collected.
     class LiquidPpoTrainer final : public AbstractTrainer {
     public:
         LiquidPpoTrainer(
@@ -54,7 +47,6 @@ namespace arenai::agent {
         std::shared_ptr<LiquidActor> actor;
         std::shared_ptr<LiquidPpoRolloutBuffer> rollout_buffer;
 
-        // one learned entropy temperature per action
         std::unique_ptr<EntropyAlphas> alphas;
 
         std::shared_ptr<LiquidCritic> critic;
@@ -62,25 +54,19 @@ namespace arenai::agent {
         std::unique_ptr<torch::optim::Adam> actor_optim;
         std::unique_ptr<torch::optim::Adam> critic_optim;
 
-        // rewards scaled by the running std of the discounted return before the GAE
         std::shared_ptr<ReturnScaler> return_scaler;
 
         std::shared_ptr<AbstractMetric> actor_mean_loss_metric;
         std::shared_ptr<AbstractMetric> critic_mean_loss_metric;
 
-        // share of the return variance the critic explains, per critic minibatch
         std::shared_ptr<AbstractMetric> explained_variance_metric;
 
-        // both regulated by their learned alphas (CSV-only metrics)
         std::shared_ptr<AbstractMetric> continuous_entropy_metric;
         std::shared_ptr<AbstractMetric> discrete_entropy_metric;
 
-        // recorded on every minibatch
         std::shared_ptr<AbstractMetric> clip_fraction_metric;
-        // recorded on every actor optimizer step taken or refused
         std::shared_ptr<AbstractMetric> kl_metric;
 
-        // share of the planned actor steps the KL threshold cut, once per rollout
         std::shared_ptr<AbstractMetric> skip_fraction_metric;
 
         float gamma;
@@ -99,11 +85,8 @@ namespace arenai::agent {
         int critic_gpu_batch_size;
         int chunk_size;
 
-        // critic liquid state opening the next rollout's first step, carried
-        // across train() calls; re-drawn at every episode start
         torch::Tensor critic_carry;
 
-        // the kept steps flattened to [T_kept * nb_tanks, ...] rows, all on the device
         struct FlatRows {
             torch::Tensor vision;
             torch::Tensor proprioception;
@@ -117,23 +100,17 @@ namespace arenai::agent {
             torch::Tensor actor_hiddens;
             torch::Tensor critic_hiddens;
 
-            // [nb_chunks, chunk_size, ...] sequences of the given rows, the hidden
-            // states taken at the chunks' first steps
             FlatRows select_chunks(
                 const torch::Tensor &rows, const torch::Tensor &start_rows,
                 int64_t chunk_size) const;
         };
 
-        // chunk unit u = chunk * nb_tanks + tank over the kept steps; maps a unit to
-        // its flat rows and weighs it by its live transitions
         struct ChunkIndex {
             int64_t nb_tanks;
             int64_t chunk_size;
             torch::Device device;
             torch::Tensor step_offsets;
-            // live transitions per chunk unit
             torch::Tensor valid_counts;
-            // units with at least one live transition: the only ones worth training on
             torch::Tensor valid_units;
 
             ChunkIndex(
@@ -142,11 +119,8 @@ namespace arenai::agent {
 
             int64_t units_per_batch(int64_t batch_size) const;
 
-            // the device rows of the units' chunks and of their first steps, where the
-            // stored hidden states start each chunk
             std::tuple<torch::Tensor, torch::Tensor> rows(const torch::Tensor &units) const;
 
-            // live rows of the units, the weight of a block in its optimizer batch
             float live_rows(const torch::Tensor &units) const;
             float batch_live_rows(const std::vector<torch::Tensor> &blocks) const;
         };
@@ -156,12 +130,10 @@ namespace arenai::agent {
         void run_actor_epochs(const FlatRows &rows, const ChunkIndex &chunks) const;
         void run_critic_epochs(const FlatRows &rows, const ChunkIndex &chunks) const;
 
-        // accumulates a device block's share of its optimizer batch gradient; returns its per-row KL
         torch::Tensor backward_actor(const FlatRows &block, float batch_fraction) const;
 
         void backward_critic(const FlatRows &block, float batch_fraction) const;
 
-        // sequential critic pass over the rollout, advancing critic_carry
         LiquidGaeResult compute_gae(const LiquidPpoRollout &rollout, torch::Device device);
 
         void set_train(bool train) const;

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 31/08/2026.
-//
-
 #include "./warmup.h"
 
 #include <numbers>

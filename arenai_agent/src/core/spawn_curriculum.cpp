@@ -1,7 +1,3 @@
-//
-// Created by samuel on 05/09/2026.
-//
-
 #include <algorithm>
 
 #include "./curriculum.h"
@@ -35,8 +31,6 @@ namespace arenai::agent {
     }
 
     void ProgressCurriculum::attempt_update() {
-        // a window without a single fire counts as failure: an agent that stopped
-        // firing must not see its task keep hardening
         const float ratio =
             sum_fires > 0 ? static_cast<float>(sum_hits) / static_cast<float>(sum_fires) : 0.f;
 

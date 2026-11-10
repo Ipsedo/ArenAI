@@ -1,7 +1,3 @@
-//
-// Created by claude on 30/07/2026.
-//
-
 #include "./jolt_engine.h"
 
 #include <algorithm>
@@ -313,7 +309,7 @@ namespace arenai::model {
 
         for (const auto &[body_id, constraints]: constraints_per_body)
             for (const auto &constraint: constraints)
-                if (constraint->GetBody1()->GetID() == body_id)// remove each constraint once
+                if (constraint->GetBody1()->GetID() == body_id)
                     physics_system->RemoveConstraint(constraint);
         constraints_per_body.clear();
 

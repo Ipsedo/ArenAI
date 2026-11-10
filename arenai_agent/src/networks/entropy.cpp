@@ -1,7 +1,3 @@
-//
-// Created by samuel on 12/10/2025.
-//
-
 #include "./entropy.h"
 
 #include <algorithm>
@@ -29,19 +25,11 @@ namespace arenai::agent {
         return torch::sum(log_alpha * entropy_error.detach());
     }
 
-    /*
-     * SAC
-     */
-
     SacAlpha::SacAlpha(const float initial_alpha, const int nb_alphas)
         : log_alpha(
             register_parameter("log_alpha", torch::full({nb_alphas}, std::log(initial_alpha)))) {}
 
     torch::Tensor SacAlpha::alpha() const { return torch::exp(log_alpha); }
-
-    /*
-     * PID Lagrangian
-     */
 
     PidLagrangianAlphaParameters::PidLagrangianAlphaParameters(
         const float k_p, const float k_i, const float k_d, const float initial_alpha,

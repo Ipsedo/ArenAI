@@ -1,7 +1,3 @@
-//
-// Created by claude on 08/11/2026.
-//
-
 #ifndef ARENAI_SAC_FACTORY_H
 #define ARENAI_SAC_FACTORY_H
 
@@ -29,7 +25,6 @@ namespace arenai::agent {
     private:
         nlohmann::json config;
 
-        // triad built once, sharing actor + replay_buffer
         std::shared_ptr<Actor> actor;
 
         std::shared_ptr<SacReplayBuffer> replay_buffer;

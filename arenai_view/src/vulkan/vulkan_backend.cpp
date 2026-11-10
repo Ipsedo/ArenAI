@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #include "./vulkan_backend.h"
 
 #include <utility>
@@ -10,10 +6,6 @@
 #include "./scene/renderers/offscreen_renderer.h"
 
 namespace arenai::view {
-
-    /*
-     * VulkanBackend (headless)
-     */
 
     VulkanBackend::VulkanBackend(const std::string &gpu_name)
         : VulkanBackend(
@@ -44,15 +36,9 @@ namespace arenai::view {
 
     std::string VulkanBackend::renderer_info() { return context_->device()->renderer_info(); }
 
-    void VulkanBackend::release_thread() {
-        // no thread-bound state in Vulkan
-    }
+    void VulkanBackend::release_thread() {}
 
     const std::shared_ptr<VulkanRenderContext> &VulkanBackend::context() const { return context_; }
-
-    /*
-     * VulkanViewFactory (headless part; windowed part in src/glfw)
-     */
 
     std::unique_ptr<AbstractGraphicBackend> make_vulkan_backend(const std::string &gpu_name) {
         return std::make_unique<VulkanBackend>(gpu_name);

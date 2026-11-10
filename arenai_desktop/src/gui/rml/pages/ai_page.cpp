@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #include "./ai_page.h"
 
 #include <algorithm>
@@ -13,7 +9,6 @@ namespace arenai::desktop::gui {
     namespace {
         constexpr const char *CUSTOM_PRESET = "Custom";
 
-        // element ids of ai.rml the page drives from code
         constexpr const char *FILE_LIST_ID = "file-list";
         constexpr const char *PRESET_HEAD_ID = "preset-head";
         constexpr const char *PRESET_LIST_ID = "preset-list";
@@ -21,7 +16,6 @@ namespace arenai::desktop::gui {
         constexpr const char *CUDA_TOGGLE_ID = "cuda-toggle";
         constexpr const char *USE_FOLDER_ID = "use-folder";
 
-        // the data-for clones currently shown in the explorer
         std::vector<Rml::Element *> visible_file_entries(const Rml::Element *file_list) {
             std::vector<Rml::Element *> entries;
             for (int i = 0; i < file_list->GetNumChildren(); i++)
@@ -72,12 +66,8 @@ namespace arenai::desktop::gui {
           algorithm_display_(to_string(settings_.agent_algorithm)) {
         for (const auto &preset: presets_) preset_names_.push_back(preset.name);
 
-        // a preference saved on a machine that had CUDA never reaches the
-        // loader on one that does not
         if (!cuda_available_) settings_.cuda = false;
 
-        // the preset persisted from the previous run, matched by name; an
-        // unknown name (or none) means a hand-picked selection
         if (settings_.agent_preset)
             if (const auto found =
                     std::find(preset_names_.begin(), preset_names_.end(), *settings_.agent_preset);
@@ -90,8 +80,6 @@ namespace arenai::desktop::gui {
                            ? std::filesystem::canonical(settings_.agent_folder)
                            : std::filesystem::current_path();
 
-        // the selection persisted from the previous run gets the same
-        // dry-run check as a freshly picked one
         validate_agent();
     }
 
@@ -133,7 +121,6 @@ namespace arenai::desktop::gui {
                 settings_.agent_algorithm = *algorithm;
                 algorithm_display_ = to_string(*algorithm);
                 mark_custom();
-                // the networks are rebuilt differently: re-run the check
                 validate_agent();
             }
             refresh_explorer();
@@ -148,7 +135,6 @@ namespace arenai::desktop::gui {
             else if (const auto path = current_dir_ / entry; std::filesystem::is_directory(path))
                 current_dir_ = path;
             else {
-                // a listed file is a config.json candidate
                 settings_.agent_config = path;
                 mark_custom();
                 validate_agent();
@@ -196,8 +182,6 @@ namespace arenai::desktop::gui {
             std::cerr << "Cannot list " << current_dir_ << ": " << list_error.message()
                       << std::endl;
 
-        // keep ".." pinned first, then the directories, then the
-        // config.json candidates, each block sorted
         const auto first_dir =
             entries_.begin() + (!entries_.empty() && entries_[0] == ".." ? 1 : 0);
         std::sort(first_dir, entries_.end());
@@ -217,10 +201,6 @@ namespace arenai::desktop::gui {
     }
 
     void AiPage::after_context_update() {
-        // the data-if / data-for clones were rebuilt during Update, dropping
-        // the focused one: put the cursor back where the action leads —
-        // invisible for the mouse, the :focus highlight only shows under
-        // .gamepad-nav
         switch (std::exchange(pending_focus_, PendingFocus::None)) {
             case PendingFocus::FirstEntry: focus_first_entry(); break;
             case PendingFocus::PresetHead: focus_by_id(PRESET_HEAD_ID); break;
@@ -239,8 +219,6 @@ namespace arenai::desktop::gui {
         return true;
     }
 
-    // copies the preset's tuple into the settings and moves the explorer
-    // onto its state-dict folder
     void AiPage::select_preset(const size_t index) {
         apply_preset(presets_[index], settings_);
         selected_preset_ = index;
@@ -251,7 +229,6 @@ namespace arenai::desktop::gui {
         validate_agent();
     }
 
-    // any hand edit of the agent fields detaches the selection from the preset
     void AiPage::mark_custom() {
         selected_preset_ = std::nullopt;
         settings_.agent_preset = std::nullopt;
@@ -260,9 +237,6 @@ namespace arenai::desktop::gui {
 
     void AiPage::dirty_dropdown() { model().dirty({"preset", "preset_open"}); }
 
-    // runs the injected dry-run load and turns its outcome into the
-    // tri-state the AI screen displays (nothing chosen yet / model
-    // loaded / error message); the Play gate follows the real load
     void AiPage::validate_agent() {
         if (settings_.agent_folder.empty()) {
             state_.agent_valid = false;

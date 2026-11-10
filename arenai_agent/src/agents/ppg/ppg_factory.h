@@ -1,7 +1,3 @@
-//
-// Created by samuel on 22/07/2026.
-//
-
 #ifndef ARENAI_PPG_FACTORY_H
 #define ARENAI_PPG_FACTORY_H
 
@@ -29,7 +25,6 @@ namespace arenai::agent {
     private:
         nlohmann::json config;
 
-        // triad built once, sharing actor + rollout_buffer
         std::shared_ptr<DistillationActor> actor;
 
         std::shared_ptr<PpgRolloutBuffer> rollout_buffer;

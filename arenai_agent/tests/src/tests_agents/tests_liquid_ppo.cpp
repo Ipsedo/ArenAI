@@ -1,15 +1,7 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #include <arenai_agent_tests/tests_agents/tests_liquid_ppo.h>
 
 using namespace arenai;
 using namespace arenai::agent;
-
-// ========================================================================
-// Fixture helpers
-// ========================================================================
 
 void LiquidPpoAgentTest::SetUp() {
     tmp_dir = std::filesystem::temp_directory_path() / "arenai_test_liquid_ppo";
@@ -53,10 +45,6 @@ TorchState LiquidPpoAgentTest::make_state(const LiquidPpoTestConfig &cfg, const 
         torch::randn({batch, cfg.nb_sensors}), torch::ones({batch, 1}));
 }
 
-// ========================================================================
-// Fixed tests
-// ========================================================================
-
 TEST_F(LiquidPpoAgentTest, ParameterCountPositive) {
     constexpr LiquidPpoTestConfig cfg{
         .vision_height = 8,
@@ -79,15 +67,10 @@ TEST_F(LiquidPpoAgentTest, MetricsNotEmpty) {
     const auto factory = make_factory(cfg);
 
     ASSERT_EQ(factory->get_trainer()->get_metrics().size(), 8);
-    // one alpha per action, CSV only
     ASSERT_EQ(
         factory->get_trainer()->get_csv_only_metrics().size(),
         cfg.nb_continuous_actions + cfg.nb_discrete_actions);
 }
-
-// ========================================================================
-// Parameterized: act shape tests
-// ========================================================================
 
 TEST_P(LiquidPpoActShapeParamTest, ActOutputShapes) {
     const auto cfg = GetParam();
@@ -123,7 +106,6 @@ TEST_P(LiquidPpoActShapeParamTest, ActDiscreteIsBinary) {
     const auto [continuous_action, discrete_action] =
         factory->get_agent()->act(make_state(cfg, batch), true);
 
-    // independent Bernoulli actions: each entry is 0 or 1, no one-hot constraint
     const auto is_binary =
         torch::logical_or(torch::eq(discrete_action, 0.0f), torch::eq(discrete_action, 1.0f));
     ASSERT_TRUE(torch::all(is_binary).item<bool>());
@@ -133,7 +115,6 @@ TEST_P(LiquidPpoActShapeParamTest, ActKeepsShapesOverConsecutiveSteps) {
     const auto cfg = GetParam();
     const auto factory = make_factory(cfg);
 
-    // the liquid state is carried across the calls: every step must stay consistent
     constexpr int batch = 4;
     for (int t = 0; t < 3; t++) {
         const auto [continuous_action, discrete_action] =
@@ -153,10 +134,6 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Values(
         LiquidPpoTestConfig{8, 8, 10, 4, 2}, LiquidPpoTestConfig{8, 8, 5, 2, 2},
         LiquidPpoTestConfig{16, 16, 20, 6, 2}, LiquidPpoTestConfig{8, 12, 10, 4, 2}));
-
-// ========================================================================
-// Parameterized: save / load tests
-// ========================================================================
 
 TEST_P(LiquidPpoSaveLoadParamTest, SaveCreatesExpectedFiles) {
     const auto cfg = GetParam();

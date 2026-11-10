@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #ifndef ARENAI_LIQUID_CELL_H
 #define ARENAI_LIQUID_CELL_H
 
@@ -30,7 +26,6 @@ namespace arenai::agent {
 
         torch::Tensor forward(const torch::Tensor &inputs);
 
-        // one recurrent step, the state is handled by the caller: (output, x_t_next)
         std::tuple<torch::Tensor, torch::Tensor>
         forward_step(const torch::Tensor &x_t, const torch::Tensor &input_t);
 

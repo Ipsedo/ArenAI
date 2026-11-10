@@ -1,7 +1,3 @@
-//
-// Created by samuel on 27/10/2026.
-//
-
 #include "./slant.h"
 
 #include <algorithm>
@@ -35,26 +31,20 @@ namespace arenai::desktop::gui {
     Rml::Mesh SlantDecorator::build_mesh(Rml::Element &element) const {
         const float opacity = element.GetComputedValues().opacity();
         const Rml::Vector2f size = element_size(element);
-        // the lean can never exceed what the width leaves for the top edge
         const float slant = std::clamp(element.ResolveLength(slant_), 0.f, size.x * 0.5f);
         const float thickness = element.ResolveLength(thickness_);
 
         Rml::Mesh mesh;
 
-        // top-left, top-right, bottom-right, bottom-left
         const std::array<Rml::Vector2f, 4> outer = {
             Rml::Vector2f(slant, 0.f), Rml::Vector2f(size.x, 0.f),
             Rml::Vector2f(size.x - slant, size.y), Rml::Vector2f(0.f, size.y)};
 
         if (fill_color_.alpha > 0) append_quad(mesh, outer, fill_color_.ToPremultiplied(opacity));
 
-        // outline: one bar per edge, centered half a thickness inside the
-        // shape so nothing spills out of the border box
         if (line_color_.alpha > 0 && thickness > 0.f) {
             const Rml::ColourbPremultiplied line = line_color_.ToPremultiplied(opacity);
             const float half = 0.5f * thickness;
-            // the leaning edges keep the same horizontal inset as the lean's
-            // slope demands, approximated by the plain half thickness
             const std::array<Rml::Vector2f, 4> inner = {
                 Rml::Vector2f(slant + half, half), Rml::Vector2f(size.x - half, half),
                 Rml::Vector2f(size.x - slant - half, size.y - half),

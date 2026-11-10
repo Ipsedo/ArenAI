@@ -1,7 +1,3 @@
-//
-// Created by samuel on 01/07/2026.
-//
-
 #include <filesystem>
 
 #include <arenai_core_tests/utils/engine_test_fixture.h>
@@ -19,8 +15,6 @@ void EngineTestFixture::SetUp() {
 
     file_reader = std::make_shared<LocalAssetFileReader>(std::filesystem::path(ARENAI_ASSETS_DIR));
 
-    // one Vulkan backend (instance + device) shared by every test of the
-    // binary: recreating it per test dominated the suite's runtime
     static const std::shared_ptr shared_backend = view::make_vulkan_backend();
     graphics_backend = shared_backend;
 

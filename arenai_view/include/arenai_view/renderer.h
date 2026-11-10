@@ -1,7 +1,3 @@
-//
-// Created by samuel on 18/03/2023.
-//
-
 #ifndef ARENAI_RENDERER_H
 #define ARENAI_RENDERER_H
 

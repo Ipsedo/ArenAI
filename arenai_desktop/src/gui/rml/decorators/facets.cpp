@@ -1,7 +1,3 @@
-//
-// Created by samuel on 27/10/2026.
-//
-
 #include "./facets.h"
 
 #include <algorithm>
@@ -14,11 +10,9 @@ namespace arenai::desktop::gui {
 
     namespace {
 
-        // the mockups' artboard: every coordinate is a fraction of it
         constexpr float DESIGN_WIDTH = 1280.f;
         constexpr float DESIGN_HEIGHT = 720.f;
 
-        // the swell's silent line: the arena floor starts under it
         constexpr float HORIZON = 395.f;
 
         Rml::ColourbPremultiplied scaled(const Rml::Colourb color, const float opacity) {
@@ -30,8 +24,6 @@ namespace arenai::desktop::gui {
             return v * v * (3.f - 2.f * v);
         }
 
-        // convex (or single-reflex) polygon as a triangle fan from its first
-        // vertex: enough for the hand-drawn facets of the backdrops
         void append_fan(
             Rml::Mesh &mesh, const std::vector<Rml::Vector2f> &points,
             const Rml::ColourbPremultiplied color) {
@@ -60,22 +52,17 @@ namespace arenai::desktop::gui {
           polygons_(parse(polygons)), houle_(animation == "houle") {}
 
     float FacetsDecorator::swell_offset(const Rml::Vector2f point, const double time) {
-        if (point.y >= 719.5f) return 0.f;// the screen's foot stays anchored
+        if (point.y >= 719.5f) return 0.f;
 
         float weight;
         if (point.y >= HORIZON) {
-            // the floor: silent at the horizon, full at the screen's foot
             weight = std::pow(std::min((point.y - HORIZON) / 325.f, 1.f), 1.1f);
         } else {
-            // above the horizon the shards only sway, anchored at both the
-            // horizon and the screen's top edge
             const float u = point.y / HORIZON;
             weight = 0.35f * smooth01((u - 0.02f) / 0.23f) * smooth01((1.f - u) / 0.2f);
         }
 
         const auto t = static_cast<float>(time);
-        // the player's half: long, slow, rounded waves; the machine's half:
-        // shorter, quicker ripples running the other way
         const float player = 11.f * std::sin(point.x * 0.0038f + t * 0.42f)
                              + 5.f * std::sin(point.x * 0.009f - t * 0.27f + 2.f);
         const float machine = 8.f * std::sin(point.x * 0.0062f - t * 0.62f + 1.f)
@@ -87,9 +74,6 @@ namespace arenai::desktop::gui {
     bool FacetsDecorator::animated() const { return houle_; }
 
     std::vector<FacetsDecorator::Polygon> FacetsDecorator::parse(const Rml::String &polygons) {
-        // std::from_chars throughout: locale-independent, unlike strtof and
-        // the stream extractors (the game may run under a locale whose
-        // decimal separator is the comma, which would read "0.22" as 0)
         const auto read_float = [](std::string_view text, float &value) -> std::string_view {
             while (!text.empty() && text.front() == ' ') text.remove_prefix(1);
             const auto [end, error] =
@@ -144,8 +128,6 @@ namespace arenai::desktop::gui {
             const float alpha = opacity * polygon.opacity;
 
             if (points.size() == 2) {
-                // a bare segment: drawn with whichever color is set, the line
-                // color first
                 const Rml::Colourb color = lines ? line_color_ : fill_color_;
                 if (lines || fills)
                     append_bar(mesh, points[0], points[1], thickness, scaled(color, alpha));

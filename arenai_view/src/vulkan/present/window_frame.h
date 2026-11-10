@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #ifndef ARENAI_VK_WINDOW_FRAME_H
 #define ARENAI_VK_WINDOW_FRAME_H
 
@@ -16,13 +12,6 @@
 
 namespace arenai::view {
 
-    // Owns the swapchain and the per-frame command buffers / sync of the
-    // window. Every pass drawn into the window goes through
-    // begin_swapchain_pass: it renders into a fixed 4x multisampled color
-    // target (clamped to what the device supports) that is resolved into the
-    // swapchain image when the pass ends, so the UI (RmlUi tessellates its
-    // borders, rounded corners and our decorators' polygons without any
-    // anti-aliasing of its own) and the scene composite come out smooth.
     class WindowFrameContext {
     public:
         static constexpr int FRAME_SLOTS = 2;
@@ -43,7 +32,6 @@ namespace arenai::view {
 
         VkImageView swapchain_view() const;
         VkFormat swapchain_format() const;
-        // sample count every pipeline drawing inside a swapchain pass must use
         VkSampleCountFlagBits samples() const;
 
         int width() const;
@@ -74,10 +62,6 @@ namespace arenai::view {
         std::unique_ptr<SwapChain> swapchain_;
         bool swapchain_valid_;
         VkSampleCountFlagBits samples_;
-        // multisampled color target the swapchain passes render into, resolved
-        // into the swapchain image at the end of each pass (null when the
-        // device has no multisampling: the passes then target the swapchain
-        // image directly)
         std::unique_ptr<Target> msaa_color_;
 
         VkCommandPool pool_;

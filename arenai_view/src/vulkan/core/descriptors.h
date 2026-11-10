@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #ifndef ARENAI_VK_DESCRIPTORS_H
 #define ARENAI_VK_DESCRIPTORS_H
 
@@ -24,9 +20,6 @@ namespace arenai::view {
         std::vector<VkDescriptorSetLayoutBinding> bindings_;
     };
 
-    // Growable descriptor pool. Thread-confined, like the command pools: each
-    // renderer (and the Rml render interface) owns its own allocator on its
-    // thread. Sets live as long as the allocator, there is no per-set free.
     class DescriptorAllocator {
     public:
         explicit DescriptorAllocator(std::shared_ptr<VulkanDevice> device);
@@ -45,7 +38,6 @@ namespace arenai::view {
         std::vector<VkDescriptorPool> pools_;
     };
 
-    // Descriptor write helpers (immediate vkUpdateDescriptorSets)
     void write_buffer_descriptor(
         const VkDevice &device, const VkDescriptorSet &set, uint32_t binding, VkDescriptorType type,
         const VkBuffer &buffer, VkDeviceSize offset, VkDeviceSize range);

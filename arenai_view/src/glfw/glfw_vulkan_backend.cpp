@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #include "./glfw_vulkan_backend.h"
 
 #include <utility>
@@ -85,10 +81,6 @@ namespace arenai::view {
         frame_context_.reset();
         vkDestroySurfaceKHR(context()->instance()->handle(), surface_, nullptr);
     }
-
-    /*
-     * VulkanViewFactory: windowed backend construction (GLFW-specific).
-     */
 
     std::unique_ptr<AbstractWindowedGraphicBackend> make_glfw_vulkan_backend(
         const int window_width, const int window_height, const std::string &title,

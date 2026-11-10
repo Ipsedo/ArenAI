@@ -1,7 +1,3 @@
-//
-// Created by samuel on 18/09/2026.
-//
-
 #include <distributions/bernoulli.h>
 
 #include <arenai_agent_tests/tests_distributions/tests_bernoulli_edge.h>

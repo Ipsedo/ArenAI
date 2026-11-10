@@ -1,7 +1,3 @@
-//
-// Created by samuel on 25/10/2026.
-//
-
 #include "./document_view.h"
 
 #include <stdexcept>

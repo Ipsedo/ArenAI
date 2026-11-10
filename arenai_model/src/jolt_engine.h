@@ -1,7 +1,3 @@
-//
-// Created by claude on 30/07/2026.
-//
-
 #ifndef ARENAI_JOLT_ENGINE_H
 #define ARENAI_JOLT_ENGINE_H
 
@@ -15,8 +11,6 @@
 
 #include <glm/glm.hpp>
 
-// Jolt.h defines the platform macros every other Jolt header relies on: it has
-// to stay first, out of clang-format's alphabetical reach
 // clang-format off
 #include <Jolt/Jolt.h>
 // clang-format on

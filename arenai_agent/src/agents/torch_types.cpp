@@ -1,7 +1,3 @@
-//
-// Created by claude on 10/11/2026.
-//
-
 #include "./torch_types.h"
 
 #include <cstring>
@@ -24,10 +20,6 @@ namespace arenai::agent {
             return {values.data_ptr<float>(), values.data_ptr<float>() + values.numel()};
         }
     }// namespace
-
-    /*
-     * TorchState
-     */
 
     TorchState::TorchState(
         const std::vector<core::State> &states, const int vision_height, const int vision_width) {
@@ -95,7 +87,6 @@ namespace arenai::agent {
 
     torch::Tensor TorchState::discrete_action_mask(
         const torch::Tensor &fire_mask, const int64_t nb_discrete_actions) {
-        // same layout as TorchAction::to_actions: fire first, the others always have an effect
         auto ones_sizes = fire_mask.sizes().vec();
         ones_sizes.back() = nb_discrete_actions - 1;
         return torch::cat({fire_mask, torch::ones(ones_sizes, fire_mask.options())}, -1);
@@ -114,10 +105,6 @@ namespace arenai::agent {
             vision.slice(0, start, end), state.slice(0, start, end),
             fire_mask.slice(0, start, end)};
     }
-
-    /*
-     * TorchAction
-     */
 
     std::vector<core::Action> TorchAction::to_actions() const {
         const auto batch_size = continuous_action.size(0);
@@ -155,10 +142,6 @@ namespace arenai::agent {
         static const std::vector<std::string> names{"fire", "zoom"};
         return names;
     }
-
-    /*
-     * TorchStep
-     */
 
     TorchStep::TorchStep(
         const std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 01/07/2026.
-//
-
 #include <cmath>
 #include <memory>
 #include <vector>
@@ -15,10 +11,6 @@ using namespace arenai;
 using namespace arenai::model;
 using namespace arenai::utils;
 using namespace arenai::controller;
-
-// ========================================================================
-// get_reward — base scenarios
-// ========================================================================
 
 TEST_F(RewardTest, RewardZeroWhenAliveNoShot) {
     add_ground();
@@ -51,7 +43,6 @@ TEST_F(RewardTest, RewardNegativeWhenDead) {
     const std::vector tanks{
         std::shared_ptr<EnemyTank>(tank_a.release()), std::shared_ptr<EnemyTank>(tank_b.release())};
 
-    // damage chassis enough to kill it
     for (const auto chassis_items = tanks[0]->get_items(); const auto &item: chassis_items) {
         if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
             life->receive_damages(
@@ -81,7 +72,6 @@ TEST_F(RewardTest, DeathPenaltyIsMinusOne) {
     const std::vector tanks{
         std::shared_ptr<EnemyTank>(tank_a.release()), std::shared_ptr<EnemyTank>(tank_b.release())};
 
-    // kill by damage → normal death penalty
     for (const auto chassis_items_b = tanks[1]->get_items(); const auto &item: chassis_items_b) {
         if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
             life->receive_damages({.impact_position = glm::vec3(0.f), .damages = 1e6f});
@@ -92,20 +82,13 @@ TEST_F(RewardTest, DeathPenaltyIsMinusOne) {
     const float death_reward = tanks[1]->get_reward();
     const auto detail = tanks[1]->get_last_reward_detail();
 
-    // death and suicide share the same penalty so early termination is never an escape;
-    // the fatal blow also charges the whole health of the part it destroyed
     ASSERT_FLOAT_EQ(detail.death, -DEATH_PENALTY);
     ASSERT_FLOAT_EQ(detail.received, -DAMAGE_REWARD);
     ASSERT_FLOAT_EQ(death_reward, -DEATH_PENALTY - DAMAGE_REWARD);
 }
 
-// ========================================================================
-// get_reward — hit/kill rewards via fire
-// ========================================================================
-
 TEST_F(RewardTest, RewardPositiveOnHit) {
     add_ground();
-    // spawn tanks high enough so all parts start above ground and settle cleanly
     auto tank_a =
         tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
     auto tank_b =
@@ -117,7 +100,6 @@ TEST_F(RewardTest, RewardPositiveOnHit) {
     const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
     const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
-    // fire from tank_a toward tank_b (canon points +Z by default)
     constexpr user_input fire_input{
         .left_joystick = {.x = 0.f, .y = 0.f},
         .right_joystick = {.x = 0.f, .y = 0.f},
@@ -145,7 +127,6 @@ TEST_F(RewardTest, RewardPositiveOnHit) {
 
 TEST_F(RewardTest, RewardUnderOneAfterHit) {
     add_ground();
-    // spawn tanks high enough so all parts start above ground and settle cleanly
     auto tank_a =
         tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
     auto tank_b =
@@ -157,7 +138,6 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
     const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
     const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
-    // fire from tank_a toward tank_b (canon points +Z by default)
     constexpr user_input fire_input{
         .left_joystick = {.x = 0.f, .y = 0.f},
         .right_joystick = {.x = 0.f, .y = 0.f},
@@ -286,7 +266,6 @@ TEST_F(RewardTest, HitPaysTheHealthFractionRemoved) {
     ASSERT_EQ(fire_detail.nb_fired_shells, 1);
     ASSERT_FLOAT_EQ(fire_detail.hit, 0.f) << "the hit is paid at the impact, not at the fire";
 
-    // the touched part is the one that lost health: the hit pays the fraction it lost
     float lost_fraction = 0.f;
     for (const auto &item: shared_b->get_items())
         if (const auto *life = dynamic_cast<LifeItem *>(item.get()))
@@ -299,7 +278,6 @@ TEST_F(RewardTest, HitPaysTheHealthFractionRemoved) {
     ASSERT_FLOAT_EQ(landed_detail.kill, 0.f) << "a single touch is not a kill";
     ASSERT_FLOAT_EQ(total_reward, landed_detail.hit);
 
-    // the victim is charged the same fraction
     shared_b->get_reward();
     ASSERT_FLOAT_EQ(shared_b->get_last_reward_detail().received, -DAMAGE_REWARD * lost_fraction);
 }
@@ -326,7 +304,6 @@ TEST_F(RewardTest, AimPotentialPeaksOnTheEnemy) {
            "tolerance of its center";
     ASSERT_LE(potential, 1.f);
 
-    // a wreck is no target
     for (const auto &item: shared_b->get_items())
         if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
             life->receive_damages({.impact_position = glm::vec3(0.f), .damages = 1e6f});
@@ -335,7 +312,6 @@ TEST_F(RewardTest, AimPotentialPeaksOnTheEnemy) {
     shared_b->on_death();
     ASSERT_FLOAT_EQ(shared_a->get_aim_potential(tanks), 0.f) << "a wreck is no target";
 
-    // nor does a dead tank aim
     for (const auto &item: shared_a->get_items())
         if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
             life->receive_damages({.impact_position = glm::vec3(0.f), .damages = 1e6f});
@@ -360,14 +336,9 @@ TEST_F(RewardTest, AimPotentialIsLowWhenTheShotWouldMiss) {
         << "the enemy sits 53 degrees off the canon axis";
 }
 
-// ========================================================================
-// get_reward — wrecks are not farmable
-// ========================================================================
-
 TEST_F(RewardTest, NoRewardWhenShootingAWreck) {
 
     add_ground();
-    // spawn tanks high enough so all parts start above ground and settle cleanly
     auto tank_a =
         tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
     auto tank_b =
@@ -379,8 +350,6 @@ TEST_F(RewardTest, NoRewardWhenShootingAWreck) {
     const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
     const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
-    // kill tank_b by destroying a single part, then close its death as the environment
-    // does: the 8 surviving parts must stop paying anything
     for (const auto items_b = shared_b->get_items(); const auto &item: items_b) {
         if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
             life->receive_damages({.impact_position = glm::vec3(0.f), .damages = 1e6f});
@@ -392,7 +361,6 @@ TEST_F(RewardTest, NoRewardWhenShootingAWreck) {
 
     const auto shells_ratio_before = shared_a->get_remaining_shells_ratio();
 
-    // fire from tank_a toward the wreck (canon points +Z by default)
     constexpr user_input fire_input{
         .left_joystick = {.x = 0.f, .y = 0.f},
         .right_joystick = {.x = 0.f, .y = 0.f},
@@ -409,14 +377,12 @@ TEST_F(RewardTest, NoRewardWhenShootingAWreck) {
     ASSERT_FALSE(shared_a->consume_has_hit()) << "a wreck must not count as a hit";
     ASSERT_FLOAT_EQ(reward, 0.f) << "shooting a wreck must pay neither hit nor kill";
 
-    // the shell spent must not be given back: a wreck is not an ammo dump
     ASSERT_LT(shared_a->get_remaining_shells_ratio(), shells_ratio_before)
         << "a wreck must not recharge the shell reserve";
 }
 
 TEST_F(RewardTest, NoKillRewardWhenHittingAnotherPartOfAWreck) {
     add_ground();
-    // spawn tanks high enough so all parts start above ground and settle cleanly
     auto tank_a =
         tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
     auto tank_b =
@@ -428,11 +394,6 @@ TEST_F(RewardTest, NoKillRewardWhenHittingAnotherPartOfAWreck) {
     const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
     const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
-    // kill tank_b through a front wheel — on the far side of the wreck, low on the
-    // ground, unreachable by the incoming shell. Every other part dies only through
-    // kill_life_items() in on_death(): the shell will thus hit a part whose death was
-    // never observed by is_already_dead(), the exact spot where a fresh kill (+2)
-    // would be wrongly counted if kill() forgot to flag the part as already dead
     for (const auto items_b = shared_b->get_items(); const auto &item: items_b) {
         auto *life = dynamic_cast<LifeItem *>(item.get());
         if (life && item->get_name().find("wheel_right_1") != std::string::npos) {
@@ -443,8 +404,6 @@ TEST_F(RewardTest, NoKillRewardWhenHittingAnotherPartOfAWreck) {
     ASSERT_TRUE(shared_b->is_dead());
     shared_b->on_death();
 
-    // fire from tank_a toward the wreck (canon points +Z by default): the shell hits
-    // the rear of the chassis or the turret, never the destroyed front wheel
     constexpr user_input fire_input{
         .left_joystick = {.x = 0.f, .y = 0.f},
         .right_joystick = {.x = 0.f, .y = 0.f},
@@ -463,10 +422,6 @@ TEST_F(RewardTest, NoKillRewardWhenHittingAnotherPartOfAWreck) {
         << "a part killed by on_death must not count as a fresh kill";
     ASSERT_FLOAT_EQ(reward, 0.f) << "hitting any part of a wreck must pay neither hit nor kill";
 }
-
-// ========================================================================
-// get_reward — NaN / Inf stability
-// ========================================================================
 
 TEST_F(RewardTest, ZeroRewardWithEmptyTankList) {
     add_ground();
@@ -488,12 +443,10 @@ TEST_F(RewardTest, ZeroRewardWithEmptyTankList) {
         shared_tank->tick({});
     }
 
-    // pass an empty tank list — get_nearest_enemy_index returns -1
     const float reward = shared_tank->get_reward();
 
     ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN with empty tank list";
     ASSERT_FALSE(std::isinf(reward)) << "reward should not be Inf with empty tank list";
 
-    // there is no enemy to sample: nothing is paid
     ASSERT_FLOAT_EQ(reward, 0.f);
 }

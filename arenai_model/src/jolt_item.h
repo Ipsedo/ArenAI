@@ -1,7 +1,3 @@
-//
-// Created by claude on 30/07/2026.
-//
-
 #ifndef ARENAI_JOLT_ITEM_H
 #define ARENAI_JOLT_ITEM_H
 

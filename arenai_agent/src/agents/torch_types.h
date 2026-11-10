@@ -1,7 +1,3 @@
-//
-// Created by claude on 21/07/2026.
-//
-
 #ifndef ARENAI_TORCH_TYPES_H
 #define ARENAI_TORCH_TYPES_H
 

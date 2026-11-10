@@ -1,17 +1,9 @@
-//
-// Created by samuel on 30/06/2026.
-//
-
 #include <metrics/mean_metric.h>
 
 #include <arenai_agent_tests/tests_metrics/tests_metrics.h>
 
 using namespace arenai;
 using namespace arenai::agent;
-
-// ========================================================================
-// Fixed tests (using MeanMetric as concrete impl)
-// ========================================================================
 
 TEST_F(AbstractMetricTest, LastValueReturnsLastAdded) {
     MeanMetric metric("test", 10);
@@ -67,20 +59,14 @@ TEST_F(AbstractMetricTest, MetricsToStringMultiple) {
     ASSERT_TRUE(str.find(',') != std::string::npos);
 }
 
-// ========================================================================
-// Parameterized: window size behavior
-// ========================================================================
-
 TEST_P(AbstractMetricWindowParamTest, WindowSizeRespected) {
     const auto window_size = GetParam();
 
     MeanMetric metric("test", window_size);
 
-    // add 2x window_size values: first half 0, second half 10
     for (int i = 0; i < window_size; i++) metric.add(0.0f);
     for (int i = 0; i < window_size; i++) metric.add(10.0f);
 
-    // window should contain only 10s now
     ASSERT_NEAR(metric.compute_metric(), 10.0f, 1e-6f);
 }
 

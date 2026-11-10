@@ -1,7 +1,3 @@
-//
-// Created by claude on 08/11/2026.
-//
-
 #ifndef ARENAI_ENTROPY_ALPHAS_H
 #define ARENAI_ENTROPY_ALPHAS_H
 
@@ -16,23 +12,18 @@
 
 namespace arenai::agent {
 
-    // Learned entropy temperatures of a PPO-like actor, one per action: each alpha follows
-    // its own dual ascent toward H_action >= target, a constant target per action kind
-    // (an entropy per continuous action, a Bernoulli probability per discrete action).
     class EntropyAlphas {
     public:
         EntropyAlphas(
             int nb_continuous_actions, int nb_discrete_actions, float initial_alpha,
             float learning_rate, float continuous_target_entropy, float discrete_target_proba);
 
-        // [nb_continuous_actions] and [nb_discrete_actions], attached to log_alpha
+        // [nb_continuous_actions] and [nb_discrete_actions]
         torch::Tensor continuous() const;
         torch::Tensor discrete() const;
 
         void zero_grad() const;
 
-        // accumulates a device block's share of the dual gradient: entropies are
-        // [N, nb_actions], the discrete ones weighted by their [N, nb_discrete_actions] mask
         void backward(
             const torch::Tensor &continuous_entropy, const torch::Tensor &discrete_entropy,
             const torch::Tensor &discrete_mask, float batch_fraction) const;

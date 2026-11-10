@@ -1,7 +1,3 @@
-//
-// Created by samuel on 25/10/2026.
-//
-
 #ifndef ARENAI_DESKTOP_GUI_RML_DOCUMENT_VIEW_H
 #define ARENAI_DESKTOP_GUI_RML_DOCUMENT_VIEW_H
 
@@ -13,19 +9,12 @@
 
 namespace arenai::desktop::gui {
 
-    // One .rml document with its own data model (Template Method). load()
-    // runs the fixed RmlUi sequence — create the model, let the subclass
-    // bind its variables and callbacks, load the document, let the subclass
-    // grab its elements — so a view only writes the hooks. Every data model
-    // of a view is dirtied on show(): views are shown one at a time and may
-    // mirror state another view changed meanwhile.
     class DocumentView {
     public:
         virtual ~DocumentView() = default;
         DocumentView(const DocumentView &) = delete;
         DocumentView &operator=(const DocumentView &) = delete;
 
-        // throws when the document fails to load
         void load(Rml::Context &context);
 
         void show(
@@ -36,14 +25,10 @@ namespace arenai::desktop::gui {
 
         Rml::ElementDocument &document() const;
 
-        // once per frame while visible, before the context update
         virtual void update() {}
-        // once per frame while visible, after the context update rebuilt the
-        // data-bound clones
         virtual void after_context_update() {}
 
     protected:
-        // model_name nullptr = the document binds no data
         DocumentView(const char *document_path, const char *model_name);
 
         virtual void bind(DataModel &) {}
@@ -51,7 +36,6 @@ namespace arenai::desktop::gui {
         virtual void on_show() {}
         virtual void on_hide() {}
 
-        // valid once loaded, for views declaring a model
         DataModel &model() const;
         Rml::Context &context() const;
 

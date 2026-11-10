@@ -1,7 +1,3 @@
-//
-// Created by samuel on 01/10/2025.
-//
-
 #ifndef ARENAI_SINGLETON_H
 #define ARENAI_SINGLETON_H
 

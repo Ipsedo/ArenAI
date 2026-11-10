@@ -1,7 +1,3 @@
-//
-// Created by samuel on 29/08/2026.
-//
-
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -13,11 +9,6 @@
 #include <gtest/gtest.h>
 
 using namespace arenai::desktop;
-
-// ========================================================================
-// preferences.json round-trip of the graphics settings, against a store
-// redirected to a per-test temp directory (XDG_CACHE_HOME / LOCALAPPDATA)
-// ========================================================================
 
 namespace {
 
@@ -95,7 +86,6 @@ TEST_F(UserPreferencesTest, InvalidGraphicsValuesFallBackToDefaults) {
 }
 
 TEST_F(UserPreferencesTest, MissingGraphicsKeysKeepDefaults) {
-    // a preferences.json from before the graphics settings existed
     const auto path = preferences_path();
     std::filesystem::create_directories(path.parent_path());
     std::ofstream(path) << R"({"nb_tanks": 4})";
@@ -108,11 +98,6 @@ TEST_F(UserPreferencesTest, MissingGraphicsKeysKeepDefaults) {
     EXPECT_TRUE(loaded.window_gpu.empty());
     EXPECT_TRUE(loaded.vision_gpu.empty());
 }
-
-// ========================================================================
-// agent preset: the saved name wins over the saved paths when it is a
-// known preset, an unknown name leaves a custom selection
-// ========================================================================
 
 namespace {
 
@@ -134,7 +119,6 @@ namespace {
 TEST_F(UserPreferencesTest, KnownPresetNameRestoresThePresetPaths) {
     GameSettings saved;
     apply_preset(two_presets()[1], saved);
-    // the install moved: the paths on disk no longer match the saved ones
     saved.agent_folder = "/old/install/save_4";
     saved.agent_config = "/old/install/config.json";
 
@@ -150,7 +134,7 @@ TEST_F(UserPreferencesTest, KnownPresetNameRestoresThePresetPaths) {
 TEST_F(UserPreferencesTest, CustomSelectionRoundTripsWithoutPreset) {
     GameSettings saved;
     saved.agent_algorithm = AiAlgorithm::PpoLiquid;
-    saved.agent_folder = store_dir_;// must exist to be restored
+    saved.agent_folder = store_dir_;
     saved.agent_preset = std::nullopt;
 
     save_preferences(saved);

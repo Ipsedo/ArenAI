@@ -1,7 +1,3 @@
-//
-// Created by samuel on 22/07/2026.
-//
-
 #ifndef ARENAI_PPG_AGENT_H
 #define ARENAI_PPG_AGENT_H
 

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 27/10/2026.
-//
-
 #include "./click_outside_listener.h"
 
 #include <utility>

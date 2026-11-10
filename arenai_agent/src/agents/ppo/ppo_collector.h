@@ -1,7 +1,3 @@
-//
-// Created by claude on 22/07/2026.
-//
-
 #ifndef ARENAI_PPO_COLLECTOR_H
 #define ARENAI_PPO_COLLECTOR_H
 
@@ -17,7 +13,6 @@ namespace arenai::agent {
     public:
         explicit PpoStepCollector(std::shared_ptr<PpoRolloutBuffer> rollout_buffer);
 
-        // concrete act-time channel, called by TorchPpoAgent::act
         void on_act(
             const TorchState &state, const TorchAction &action,
             const torch::Tensor &continuous_pre_tanh, const torch::Tensor &continuous_log_prob,

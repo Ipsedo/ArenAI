@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #ifndef ARENAI_VK_RML_RENDER_INTERFACE_H
 #define ARENAI_VK_RML_RENDER_INTERFACE_H
 
@@ -49,10 +45,6 @@ namespace arenai::view {
         void SetTransform(const Rml::Matrix4f *transform) override;
 
     private:
-        // host-visible buffers: UI meshes are small and the animated menu
-        // backdrops recompile theirs every frame, so the upload must not
-        // block on a GPU submit (retirement already outlives frames in
-        // flight)
         struct CompiledGeometry {
             std::unique_ptr<HostVisibleBuffer> vertices;
             std::unique_ptr<HostVisibleBuffer> indices;

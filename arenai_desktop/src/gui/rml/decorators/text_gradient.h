@@ -1,7 +1,3 @@
-//
-// Created by samuel on 28/10/2026.
-//
-
 #ifndef ARENAI_DESKTOP_GUI_RML_DECORATORS_TEXT_GRADIENT_H
 #define ARENAI_DESKTOP_GUI_RML_DECORATORS_TEXT_GRADIENT_H
 
@@ -9,16 +5,6 @@
 
 namespace arenai::desktop::gui {
 
-    // Horizontal two-color gradient painted inside the element's own glyphs
-    // (RmlUi has no background-clip: text and the Vulkan backend renders no
-    // shaders, so the fade lives in the glyph vertex colors). The host
-    // element keeps its real text for layout but hides it with
-    // `color: transparent`; the decorator regenerates the same single-line
-    // string through the font engine and recolors every vertex by its x:
-    // left color until `start` % of the text width, blending to the right
-    // color at `end` %. Single line, no font-effects, text read once per
-    // layout (the menu title never changes).
-    // RCSS: decorator: text-gradient(<left-color> <right-color> <start> <end>);
     class TextGradientDecorator final : public Rml::Decorator {
     public:
         TextGradientDecorator(

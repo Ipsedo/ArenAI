@@ -1,7 +1,3 @@
-//
-// Created by samuel on 14/02/2026.
-//
-
 #include "./print_module.h"
 
 using namespace arenai;

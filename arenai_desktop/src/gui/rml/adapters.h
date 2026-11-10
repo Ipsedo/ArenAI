@@ -1,7 +1,3 @@
-//
-// Created by samuel on 02/08/2026.
-//
-
 #ifndef ARENAI_DESKTOP_GUI_RML_ADAPTERS_H
 #define ARENAI_DESKTOP_GUI_RML_ADAPTERS_H
 
@@ -13,9 +9,6 @@
 
 #include <arenai_utils/file_reader.h>
 
-// RmlUi ↔ arenai bridges (clock, asset access). Internal to the gui/ hexagon:
-// only gui/ sources may include this header, everything else goes through
-// gui/gui.h.
 namespace arenai::desktop::gui {
 
     class MenuSystemInterface final : public Rml::SystemInterface {
@@ -26,9 +19,6 @@ namespace arenai::desktop::gui {
         std::chrono::steady_clock::time_point start_ = std::chrono::steady_clock::now();
     };
 
-    // Serves RmlUi (documents, stylesheets, fonts) through the project's
-    // asset port: whole files are pulled once via read_text — binary-safe
-    // here — and the seek/read API is answered from the in-memory buffer.
     class ReaderBackedFileInterface final : public Rml::FileInterface {
     public:
         explicit ReaderBackedFileInterface(

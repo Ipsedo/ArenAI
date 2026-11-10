@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #include "./liquid_ppo_factory.h"
 
 using namespace arenai;

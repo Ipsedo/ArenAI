@@ -1,15 +1,7 @@
-//
-// Created by claude on 08/11/2026.
-//
-
 #include <arenai_agent_tests/tests_agents/tests_sac.h>
 
 using namespace arenai;
 using namespace arenai::agent;
-
-// ========================================================================
-// Fixture helpers
-// ========================================================================
 
 void SacAgentTest::SetUp() {
     tmp_dir = std::filesystem::temp_directory_path() / "arenai_test_sac";
@@ -42,10 +34,6 @@ TorchState SacAgentTest::make_state(const SacTestConfig &cfg, const int batch) {
         torch::randn({batch, cfg.nb_sensors}), torch::ones({batch, 1}));
 }
 
-// ========================================================================
-// Fixed tests
-// ========================================================================
-
 TEST_F(SacAgentTest, ParameterCountPositive) {
     constexpr SacTestConfig cfg{
         .vision_height = 8,
@@ -67,9 +55,7 @@ TEST_F(SacAgentTest, MetricsNotEmpty) {
         .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
-    // q, π, Q, Hc, Hd
     ASSERT_EQ(factory->get_trainer()->get_metrics().size(), 5);
-    // one α per action (4 continuous, 2 discrete), CSV only
     ASSERT_EQ(
         factory->get_trainer()->get_csv_only_metrics().size(),
         cfg.nb_continuous_actions + cfg.nb_discrete_actions);
@@ -84,7 +70,6 @@ TEST_F(SacAgentTest, ConfigCarriesGamma) {
         .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
-    // the training loop reads the agent's gamma for the potential shaping
     ASSERT_TRUE(factory->get_config().contains("gamma"));
     ASSERT_TRUE(factory->get_config().contains("buffer_size"));
 }
@@ -104,13 +89,9 @@ TEST_F(SacAgentTest, MaskedFireIsNeverEngaged) {
 
     const auto [continuous_action, discrete_action] = factory->get_agent()->act(state, true);
 
-    // fire (column 0) cannot shoot: the stored action never says it did
+    // column 0 = fire
     ASSERT_TRUE(torch::all(discrete_action.select(1, 0) == 0.f).item<bool>());
 }
-
-// ========================================================================
-// Parameterized: act shape tests
-// ========================================================================
 
 TEST_P(SacActShapeParamTest, ActOutputShapes) {
     const auto cfg = GetParam();
@@ -137,7 +118,6 @@ TEST_P(SacActShapeParamTest, ActContinuousInRange) {
             factory->get_agent()->act(make_state(cfg, batch), sample);
 
         ASSERT_TRUE(torch::all(torch::isfinite(continuous_action)).item<bool>());
-        // tanh squash
         ASSERT_TRUE(torch::all(continuous_action.abs() <= 1.f).item<bool>());
     }
 }
@@ -160,10 +140,6 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Values(
         SacTestConfig{8, 8, 10, 4, 2}, SacTestConfig{8, 8, 5, 2, 2},
         SacTestConfig{16, 16, 20, 6, 2}, SacTestConfig{8, 12, 10, 4, 2}));
-
-// ========================================================================
-// Parameterized: save / load tests
-// ========================================================================
 
 TEST_P(SacSaveLoadParamTest, SaveCreatesExpectedFiles) {
     const auto cfg = GetParam();

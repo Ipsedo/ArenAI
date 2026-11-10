@@ -1,7 +1,3 @@
-//
-// Created by samuel on 25/10/2026.
-//
-
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
@@ -29,11 +25,6 @@
 using namespace arenai;
 using namespace arenai::desktop;
 
-// ========================================================================
-// The menu screens against a headless RmlUi: navigation through the page
-// tree, and the .rml events landing in the shared settings.
-// ========================================================================
-
 namespace {
 
     class MenuPagesTest : public HeadlessRmlTest {
@@ -52,15 +43,12 @@ namespace {
         }
 
         void TearDown() override {
-            // the context first: destroying the documents detaches the
-            // pages' event listeners, which must still exist
             HeadlessRmlTest::TearDown();
             navigator_.reset();
             adapter_.reset();
             std::filesystem::remove_all(agent_dir_);
         }
 
-        // the real page set, with the dry-run validator replaced by `validator`
         void build_menu(AgentValidator validator) {
             std::vector<std::unique_ptr<gui::MenuPage>> pages;
             pages.push_back(std::make_unique<gui::MainPage>(
@@ -79,11 +67,9 @@ namespace {
 
         void show(const gui::PageId page) {
             navigator_->go(page);
-            context().Update();// builds the data-for clones
+            context().Update();
         }
 
-        // the visible elements matching `selector` on `page` (data-for keeps
-        // its hidden template element in the tree)
         Rml::ElementList visible_elements(const gui::PageId page, const Rml::String &selector) {
             Rml::ElementList all, visible;
             navigator_->page(page).document().QuerySelectorAll(all, selector);
@@ -120,10 +106,6 @@ namespace {
     }
 
 }// namespace
-
-// ========================================================================
-// Navigation: the tree is Main > Parameters > {Graphics, Controls, Ai}
-// ========================================================================
 
 TEST_F(MenuPagesTest, root_is_the_only_visible_page_at_start) {
     build_menu(accepting_validator());
@@ -171,10 +153,6 @@ TEST_F(MenuPagesTest, hide_all_leaves_no_current_page) {
         EXPECT_FALSE(navigator_->page(id).visible());
 }
 
-// ========================================================================
-// Graphics page: the toggles write the settings
-// ========================================================================
-
 TEST_F(MenuPagesTest, graphics_toggles_write_the_settings) {
     build_menu(accepting_validator());
     show(gui::PageId::Graphics);
@@ -195,12 +173,8 @@ TEST_F(MenuPagesTest, graphics_gpu_picker_maps_index_zero_to_auto) {
     build_menu(accepting_validator());
     show(gui::PageId::Graphics);
 
-    // the saved name is still listed: it stays
     EXPECT_EQ(state_.settings.window_gpu, "GPU B");
 
-    // unfold the window GPU dropdown: its data-for clones carry it_index and
-    // read Auto, GPU A, GPU B (IsVisible ignores the ancestors, so the query
-    // stays inside this list: the folded vision one keeps its clones)
     Rml::ElementDocument &document = navigator_->page(gui::PageId::Graphics).document();
     const Rml::Element *list = document.GetElementById("window-gpu-list");
     ASSERT_NE(list, nullptr);
@@ -211,7 +185,6 @@ TEST_F(MenuPagesTest, graphics_gpu_picker_maps_index_zero_to_auto) {
     entries[1]->DispatchEvent(Rml::EventId::Click, Rml::Dictionary());
     context().Update();
     EXPECT_EQ(state_.settings.window_gpu, "GPU A");
-    // picking an entry folds the list
     EXPECT_FALSE(list->IsVisible());
 
     click(gui::PageId::Graphics, "toggle_window_gpu()");
@@ -219,10 +192,6 @@ TEST_F(MenuPagesTest, graphics_gpu_picker_maps_index_zero_to_auto) {
     context().Update();
     EXPECT_TRUE(state_.settings.window_gpu.empty());
 }
-
-// ========================================================================
-// AI page: the dry-run validator gates Play
-// ========================================================================
 
 TEST_F(MenuPagesTest, valid_agent_opens_the_play_gate) {
     int nb_checks = 0;
@@ -282,14 +251,10 @@ TEST_F(MenuPagesTest, dpad_reaches_the_device_toggles_and_crosses_the_explorer) 
         return focus != nullptr ? focus->GetId() : "<none>";
     };
 
-    // the device toggles sit right under the algorithm grid: the spatial
-    // navigation must stop on them on the way down from its bottom-left chip
     ASSERT_TRUE(document.GetElementById("algo-ppg")->Focus(true));
     press(controller::GamepadButton::DPadDown);
     EXPECT_EQ(focused_id(), "cpu-toggle");
 
-    // the explorer bridge hops over the scroll container from either
-    // toggle, and lands back on the CUDA one on the way out
     press(controller::GamepadButton::DPadDown);
     const Rml::Element *entry = context().GetFocusElement();
     ASSERT_NE(entry, nullptr);
@@ -297,7 +262,6 @@ TEST_F(MenuPagesTest, dpad_reaches_the_device_toggles_and_crosses_the_explorer) 
     press(controller::GamepadButton::DPadUp);
     EXPECT_EQ(focused_id(), "cuda-toggle");
 
-    // and the way up leaves the toggle towards the algorithm grid
     press(controller::GamepadButton::DPadUp);
     EXPECT_EQ(focused_id(), "algo-ppo-liquid");
 }
@@ -314,19 +278,13 @@ TEST_F(MenuPagesTest, escape_folds_an_open_dropdown_before_leaving_the_page) {
     EXPECT_TRUE(only_visible(gui::PageId::Parameters));
 }
 
-// ========================================================================
-// Controls page: a binding capture goes through the input adapter
-// ========================================================================
-
 TEST_F(MenuPagesTest, keyboard_capture_rebinds_the_slot) {
     build_menu(accepting_validator());
     show(gui::PageId::Controls);
 
-    // the capturable chips, in slot order (the fixed rows have none)
     const auto chips = visible_elements(gui::PageId::Controls, ".keychip[data-event-click]");
     ASSERT_FALSE(chips.empty());
 
-    // slot 0 is FORWARD: click its chip, then press F
     chips[0]->DispatchEvent(Rml::EventId::Click, Rml::Dictionary());
     adapter_->on_key(controller::Key::F, controller::InputAction::Press);
 
@@ -344,15 +302,10 @@ TEST_F(MenuPagesTest, leaving_the_controls_page_cancels_a_pending_capture) {
     chips[0]->DispatchEvent(Rml::EventId::Click, Rml::Dictionary());
 
     navigator_->back();
-    // the capture sink is gone: the key reaches nobody and the slot keeps W
     adapter_->on_key(controller::Key::F, controller::InputAction::Press);
     EXPECT_EQ(
         std::get<controller::Key>(*state_.settings.bindings.keyboard.forward), controller::Key::W);
 }
-
-// ========================================================================
-// Popups: the listener receives the player's choice
-// ========================================================================
 
 TEST_F(MenuPagesTest, popup_reports_actions_to_its_listener) {
     gui::PopupPage pause(gui::PopupKind::Pause, state_);
@@ -412,11 +365,6 @@ TEST_F(MenuPagesTest, victory_popup_ignores_escape_and_reports_retry) {
     EXPECT_EQ(received[0], gui::PopupAction::Retry);
 }
 
-// ========================================================================
-// Backdrops: the facets declarations survive the RCSS shorthand parsing
-// (quoted polygon strings inside a decorator list)
-// ========================================================================
-
 TEST_F(MenuPagesTest, main_menu_backdrop_declares_its_facets) {
     build_menu(accepting_validator());
 
@@ -425,8 +373,6 @@ TEST_F(MenuPagesTest, main_menu_backdrop_declares_its_facets) {
     ASSERT_NE(property, nullptr);
     const auto decorators = property->Get<Rml::DecoratorsPtr>();
     ASSERT_NE(decorators, nullptr);
-    // two ground halves, two fill passes, two line passes, the seam dashes,
-    // the center lozenges, two crystal camps
     ASSERT_EQ(decorators->list.size(), 10u);
 
     int nb_houle = 0, nb_crystals = 0;
@@ -458,8 +404,6 @@ TEST_F(MenuPagesTest, main_menu_backdrop_declares_its_facets) {
         const Rml::Property *mode = declaration.properties.GetProperty(animation->GetId());
         if (mode != nullptr && mode->Get<Rml::String>() == "houle") ++nb_houle;
     }
-    // the colored layers and the lozenges swell; grounds and dashes stay
-    // still; each camp tumbles its own crystals
     EXPECT_EQ(nb_houle, 5);
     EXPECT_EQ(nb_crystals, 2);
 }
@@ -485,11 +429,6 @@ TEST_F(MenuPagesTest, facets_parse_reads_points_and_opacity) {
     EXPECT_FLOAT_EQ(polygons[1].opacity, 1.f);
 }
 
-// ========================================================================
-// The asymmetric swell: anchored at the horizon and the screen edges,
-// different on the two halves of the arena, and alive over time
-// ========================================================================
-
 TEST_F(MenuPagesTest, facets_swell_is_anchored_at_horizon_and_edges) {
     for (const double t: {0.0, 1.7, 42.0}) {
         EXPECT_FLOAT_EQ(gui::FacetsDecorator::swell_offset({320.f, 720.f}, t), 0.f);
@@ -509,8 +448,6 @@ TEST_F(MenuPagesTest, facets_swell_moves_the_floor_over_time) {
 }
 
 TEST_F(MenuPagesTest, facets_swell_is_asymmetric_between_the_two_sides) {
-    // mirrored probes: were the two halves driven by one symmetric field,
-    // these would stay equal at every time
     float max_difference = 0.f;
     for (const double t: {0.0, 0.5, 1.0, 1.5}) {
         const float player = gui::FacetsDecorator::swell_offset({320.f, 650.f}, t);
@@ -519,10 +456,6 @@ TEST_F(MenuPagesTest, facets_swell_is_asymmetric_between_the_two_sides) {
     }
     EXPECT_GT(max_difference, 1.f);
 }
-
-// ========================================================================
-// HUD: the match status lands in the bound elements
-// ========================================================================
 
 namespace {
     class NoopOverlayRenderer final : public gui::AbstractOverlayRenderer {
@@ -551,7 +484,6 @@ TEST_F(MenuPagesTest, hud_status_fills_clock_scores_hull_and_enemy_slots) {
     EXPECT_EQ(document.GetElementById("hud-ai-score")->GetInnerRML(), "860");
     EXPECT_EQ(document.GetElementById("hud-enemies-left")->GetInnerRML(), "3 / 4");
 
-    // 0.7 of 8 segments: 6 kept (ceil), 2 lost
     Rml::ElementList lost;
     document.QuerySelectorAll(lost, ".hull-segment.lost");
     EXPECT_EQ(lost.size(), 2u);

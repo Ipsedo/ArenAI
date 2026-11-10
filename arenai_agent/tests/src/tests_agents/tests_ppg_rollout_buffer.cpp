@@ -1,15 +1,7 @@
-//
-// Created by claude on 29/10/2026.
-//
-
 #include <arenai_agent_tests/tests_agents/tests_ppg_rollout_buffer.h>
 
 using namespace arenai;
 using namespace arenai::agent;
-
-// ========================================================================
-// Fixture helpers
-// ========================================================================
 
 TorchState PpgRolloutBufferTest::make_state() {
     return TorchState(
@@ -38,10 +30,6 @@ PpgInputStep PpgRolloutBufferTest::make_step(const TorchState &state, const torc
 PpgInputStep PpgRolloutBufferTest::make_step(const TorchState &state) {
     return make_step(state, torch::zeros({NB_TANKS, 1}));
 }
-
-// ========================================================================
-// Completion counting
-// ========================================================================
 
 TEST_F(PpgRolloutBufferTest, EmptyBufferHasNoCompleteStep) {
     PpgRolloutBuffer buffer;
@@ -80,15 +68,10 @@ TEST_F(PpgRolloutBufferTest, GetRolloutKeepsPendingStep) {
     const auto rollout = buffer.get_rollout();
     ASSERT_EQ(rollout.rewards.size(0), 2);
 
-    // the pending step stays and is closed by the next observation
     ASSERT_EQ(buffer.nb_complete_steps(), 0);
     buffer.add(make_step(make_state()));
     ASSERT_EQ(buffer.nb_complete_steps(), 1);
 }
-
-// ========================================================================
-// Rollout content
-// ========================================================================
 
 TEST_F(PpgRolloutBufferTest, RolloutShapes) {
     PpgRolloutBuffer buffer;
@@ -103,7 +86,6 @@ TEST_F(PpgRolloutBufferTest, RolloutShapes) {
         std::vector<int64_t>{nb_steps, NB_TANKS, 3, VISION_SIZE, VISION_SIZE};
     ASSERT_EQ(rollout.states.get_vision().sizes().vec(), expected_vision);
 
-    // the bootstrap state has no time dimension
     ASSERT_EQ(
         rollout.bootstrap_state.get_vision().sizes().vec(),
         (std::vector<int64_t>{NB_TANKS, 3, VISION_SIZE, VISION_SIZE}));
@@ -151,19 +133,13 @@ TEST_F(PpgRolloutBufferTest, BootstrapStateIsPendingObservationMidEpisode) {
 
     const auto rollout = buffer.get_rollout();
 
-    // only the first step is complete; the pending step's own observation closes it
     ASSERT_EQ(rollout.rewards.size(0), 1);
     ASSERT_TRUE(torch::allclose(rollout.bootstrap_state.get_vision(), state_1.get_vision()));
 }
 
-// ========================================================================
-// Validity mask
-// ========================================================================
-
 TEST_F(PpgRolloutBufferTest, TerminatedTankInvalidatesFollowingSteps) {
     PpgRolloutBuffer buffer;
 
-    // tank 0 dies at the first step
     const auto done = torch::cat({torch::ones({1, 1}), torch::zeros({1, 1})}, 0);
 
     buffer.add(make_step(make_state(), done));
@@ -173,12 +149,10 @@ TEST_F(PpgRolloutBufferTest, TerminatedTankInvalidatesFollowingSteps) {
 
     const auto valids = buffer.get_rollout().valids.squeeze(-1);
 
-    // the dying transition itself is valid, the following ones are not for tank 0
     ASSERT_TRUE(valids[0][0].item<bool>());
     ASSERT_FALSE(valids[1][0].item<bool>());
     ASSERT_FALSE(valids[2][0].item<bool>());
 
-    // tank 1 stays valid the whole rollout
     ASSERT_TRUE(valids[0][1].item<bool>());
     ASSERT_TRUE(valids[1][1].item<bool>());
     ASSERT_TRUE(valids[2][1].item<bool>());
@@ -190,7 +164,6 @@ TEST_F(PpgRolloutBufferTest, FinishEpisodeResetsTermination) {
     buffer.add(make_step(make_state(), torch::ones({NB_TANKS, 1})));
     buffer.finish_episode(make_state());
 
-    // new episode: every tank is alive again
     buffer.add(make_step(make_state()));
     buffer.finish_episode(make_state());
 

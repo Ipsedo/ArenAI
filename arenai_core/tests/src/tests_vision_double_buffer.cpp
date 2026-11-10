@@ -1,16 +1,8 @@
-//
-// Created by samuel on 01/07/2026.
-//
-
 #include <arenai_core/thread_pool.h>
 #include <arenai_core_tests/tests_vision_double_buffer.h>
 
 using namespace arenai;
 using namespace arenai::core;
-
-// ========================================================================
-// Construction — initial black image
-// ========================================================================
 
 TEST_F(VisionDoubleBufferTest, InitialImageIsBlack) {
     constexpr int height = 16;
@@ -35,10 +27,6 @@ TEST_F(VisionDoubleBufferTest, InitialImageSizeMatchesDimensions) {
 
     ASSERT_EQ(static_cast<int>(pixels.size()), 3 * height * width);
 }
-
-// ========================================================================
-// Write / Read round-trip
-// ========================================================================
 
 TEST_F(VisionDoubleBufferTest, WriteAndReadBack) {
     constexpr int height = 4;
@@ -78,10 +66,6 @@ TEST_F(VisionDoubleBufferTest, SecondWriteOverwritesFirst) {
 
     for (int i = 0; i < total; i++) { ASSERT_EQ(pixels[i], 200); }
 }
-
-// ========================================================================
-// Square and non-square sizes
-// ========================================================================
 
 TEST_F(VisionDoubleBufferTest, NonSquareDimensions) {
     constexpr int height = 8;

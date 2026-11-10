@@ -1,7 +1,3 @@
-//
-// Created by samuel on 23/10/2025.
-//
-
 #include "./actor.h"
 
 #include <cmath>
@@ -62,7 +58,6 @@ namespace arenai::agent {
         sensors_encoder->apply(init_hidden_weights);
         head->apply(init_hidden_weights);
 
-        // zero bias puts the initial mode at the action-range center
         mu->apply(init_mu_output_weights);
         sigma->apply(
             [initial_sigma](Module &m) { init_log_sigma_output_weights(m, initial_sigma); });
@@ -87,10 +82,6 @@ namespace arenai::agent {
             .sigma = sigma->forward(encoded),
             .discrete = discrete->forward(encoded)};
     }
-
-    /*
-     * Distillation Actor
-     */
 
     DistillationActor::DistillationActor(
         const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_actions,

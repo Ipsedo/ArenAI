@@ -1,7 +1,3 @@
-//
-// Created by samuel on 01/07/2026.
-//
-
 #ifndef ARENAI_MODEL_TESTS_SHELL_H
 #define ARENAI_MODEL_TESTS_SHELL_H
 

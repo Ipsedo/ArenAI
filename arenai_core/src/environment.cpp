@@ -1,7 +1,3 @@
-//
-// Created by samuel on 29/09/2025.
-//
-
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <arenai_core/environment.h>
@@ -51,7 +47,6 @@ namespace arenai::core {
 
     void BaseTanksEnvironment::advance_frame(
         const float time_delta, const std::vector<Action> &actions) {
-        // the parts read the aim axes as a rate
         for (int i = 0; i < tanks.size(); i++) {
             if (tanks[i]->is_dead()) tanks[i]->on_death();
             else
@@ -81,8 +76,6 @@ namespace arenai::core {
 
         for (const auto &tank: tanks) {
             tank->tick(tanks);
-            // no tank is truncated on its own: the episode's fixed length truncates the
-            // survivors together, through the final state the collector bootstraps on
             result.emplace_back(tank->get_reward(), tank->is_dead(), false);
         }
 
@@ -123,7 +116,6 @@ namespace arenai::core {
 
         std::uniform_real_distribution<float> mass_u_dist(3, 100);
 
-        // add tanks
         for (int i = 0; i < nb_tanks; i++) {
             const float x = x_pos_u_dist(rng), z = y_pos_u_dist(rng);
             tanks.push_back(tank_factory->make_enemy_tank(
@@ -131,7 +123,6 @@ namespace arenai::core {
                 glm::vec3(x, ground_height(x, z) + 3.f, z), shell_economy));
         }
 
-        // add basic shapes
         constexpr float item_spawn_size = 2000.f;
         std::uniform_real_distribution item_x_pos_u_dist(-item_spawn_size / 2, item_spawn_size / 2);
         std::uniform_real_distribution item_y_pos_u_dist(-item_spawn_size / 2, item_spawn_size / 2);
@@ -139,7 +130,6 @@ namespace arenai::core {
         std::uniform_real_distribution<float> scale_u_dist(2.5, 10);
         constexpr int nb_shapes = 30;
 
-        // unit meshes scaled by scale.y: spawn the item's half-height (+1 margin) above the ground
         const auto item_pos = [&](const float x, const float z, const glm::vec3 &scale) {
             return glm::vec3(x, ground_height(x, z) + scale.y + 1.f, z);
         };
@@ -176,8 +166,6 @@ namespace arenai::core {
     }
 
     float BaseTanksEnvironment::ground_height(const float x, const float z) const {
-        // terrain surface lies in [40 - 200/2, 40 + 200/2] = [-60, 140]: a vertical
-        // segment from 300 to -300 always crosses it inside the map
         constexpr float terrain_max_y = 40.f + 200.f / 2.f;
         const auto hit = physic_engine->ray_cast(glm::vec3(x, 300.f, z), glm::vec3(x, -300.f, z));
         return hit.has_value() ? hit->y : terrain_max_y;
@@ -200,7 +188,6 @@ namespace arenai::core {
         reset_drawables();
         drawing_started_ = true;
 
-        // warm-up: 2 render loops to prime PBO double-buffering
         const auto model_matrices = get_model_matrices();
         for (int i = 0; i < 2; i++) {
             vision_pool_->set_model_matrices(model_matrices);

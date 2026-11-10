@@ -1,7 +1,3 @@
-//
-// Created by samuel on 01/07/2026.
-//
-
 #include <arenai_model/item.h>
 #include <arenai_model_tests/tests_item/tests_life_item.h>
 
@@ -10,16 +6,11 @@ using namespace arenai::model;
 using namespace arenai::utils;
 
 namespace {
-    // damage-only impact: the position is irrelevant to health accounting
     ImpactInfo impact_of(const float damages) {
         return {
             .fire_position = glm::vec3(0.f), .impact_position = glm::vec3(0.f), .damages = damages};
     }
 }// namespace
-
-// ========================================================================
-// LifeItem
-// ========================================================================
 
 TEST_F(LifeItemTest, AliveAtCreation) {
     const LifeItem item(100.f);
@@ -129,10 +120,6 @@ TEST_F(LifeItemTest, NoDamagesAfterDeath) {
     ASSERT_FLOAT_EQ(received, 0.f);
 }
 
-// ========================================================================
-// LifeItem — impacts received
-// ========================================================================
-
 TEST_F(LifeItemTest, ConsumeHitsReceivedReturnsStoredImpacts) {
     LifeItem item(10.f);
 
@@ -176,10 +163,6 @@ TEST_F(LifeItemTest, AbsorbedlessImpactIsNotRecorded) {
     ASSERT_TRUE(item.consume_hits_received().empty())
         << "a dead item pays no further hit, whatever keeps colliding with it";
 }
-
-// ========================================================================
-// Item base
-// ========================================================================
 
 namespace {
     class DummyItem final : public Item {
@@ -229,10 +212,6 @@ TEST_F(ItemBaseTest, TickDoesNotCrash) {
     ASSERT_NO_THROW(item.tick());
 }
 
-// ========================================================================
-// LifeItem — negative HP edge cases
-// ========================================================================
-
 TEST_F(LifeItemTest, NegativeHpAtCreationIsDead) {
     const LifeItem item(-5.f);
 
@@ -251,8 +230,6 @@ TEST_F(LifeItemTest, NegativeHpReceiveDamagesReturnsZero) {
 TEST_F(LifeItemTest, NegativeHpIsAlreadyDeadFirstCallReturnsFalse) {
     LifeItem item(-5.f);
 
-    // item is dead from creation, but is_already_dead should return false
-    // the first time it's called (triggering the death event)
     ASSERT_TRUE(item.is_dead());
     ASSERT_FALSE(item.is_already_dead())
         << "first is_already_dead call on a dead item should return false (death event trigger)";
@@ -264,10 +241,6 @@ TEST_F(LifeItemTest, NegativeHpIsAlreadyDeadSecondCallReturnsTrue) {
     item.is_already_dead();
     ASSERT_TRUE(item.is_already_dead()) << "second is_already_dead call should return true";
 }
-
-// ========================================================================
-// Item — double destroy
-// ========================================================================
 
 TEST_F(ItemBaseTest, DoubleDestroyDoesNotCrash) {
     DummyItem item("item");

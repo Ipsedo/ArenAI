@@ -1,7 +1,3 @@
-//
-// Created by claude on 22/07/2026.
-//
-
 #ifndef ARENAI_AGENTER_H
 #define ARENAI_AGENTER_H
 
@@ -22,7 +18,6 @@ namespace arenai::agent {
         virtual void step() = 0;
 
         virtual std::vector<std::shared_ptr<AbstractMetric>> get_metrics() = 0;
-        // written to the CSV, kept out of the progress bar
         virtual std::vector<std::shared_ptr<AbstractMetric>> get_csv_only_metrics() = 0;
 
         virtual void save(const std::filesystem::path &output_folder) = 0;

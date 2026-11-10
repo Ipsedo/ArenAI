@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #ifndef ARENAI_DESKTOP_GUI_RML_PAGES_AI_PAGE_H
 #define ARENAI_DESKTOP_GUI_RML_PAGES_AI_PAGE_H
 
@@ -17,38 +13,23 @@
 
 namespace arenai::desktop::gui {
 
-    // The AI screen: the preset dropdown, the algorithm toggles and the
-    // file explorer picking the trained model's folder, dry-run validated
-    // through the injected AgentValidator. Writes the agent fields of the
-    // shared settings and the agent_valid flag the other screens display.
     class AiPage final : public MenuPage {
     public:
         AiPage(
             MenuState &state, std::vector<AgentPreset> presets, AgentValidator validator,
             bool cuda_available);
 
-        // after the context Update rebuilt the data-bound clones, put the
-        // gamepad cursor back where the last action left it (the fresh
-        // explorer listing, the just-opened list, the closed dropdown head)
         void after_context_update() override;
 
-        // Escape / gamepad B folds the open preset dropdown first
         bool on_back() override;
 
     protected:
         void bind_controls(DataModel &model) override;
-        // hooks the D-pad bridge across the explorer's scroll container and
-        // the click-outside closing of the dropdowns
         void on_attached(Rml::ElementDocument &document) override;
 
     private:
-        // which element the gamepad cursor lands on after the next Update
         enum class PendingFocus { None, FirstEntry, PresetHead, PresetList };
 
-        // D-pad bridge across the file explorer: RmlUi's spatial navigation
-        // stops at the scroll container, so Up from the first entry lands on
-        // the CUDA toggle (the control right above the explorer), Down from
-        // the last one on the "Use this folder" button, and back
         class ExplorerNavListener final : public Rml::EventListener {
         public:
             void ProcessEvent(Rml::Event &event) override;
@@ -64,23 +45,18 @@ namespace arenai::desktop::gui {
 
         void focus_first_entry() const;
         void focus_by_id(const char *id) const;
-        // the selected item of an open list, else its first one
         void focus_in_list(const char *list_id) const;
 
         MenuState &state_;
         GameSettings &settings_;
         std::vector<AgentPreset> presets_;
         AgentValidator agent_validator_;
-        // no CUDA device on this machine: the toggle shows disabled and off
         bool cuda_available_;
 
-        // removed from the document when Rml::Shutdown() destroys it, before
-        // the members are torn down
         ExplorerNavListener explorer_nav_listener_;
         ClickOutsideListener click_outside_listener_;
         PendingFocus pending_focus_ = PendingFocus::None;
 
-        // nullopt = "Custom": the agent fields no longer match a preset
         std::optional<size_t> selected_preset_;
         std::vector<Rml::String> preset_names_;
         Rml::String preset_display_;
@@ -91,7 +67,6 @@ namespace arenai::desktop::gui {
         Rml::String current_dir_display_;
         Rml::String agent_folder_display_;
         Rml::String agent_config_display_;
-        // empty while no folder is chosen; otherwise success or error text
         Rml::String agent_status_;
         std::vector<Rml::String> entries_;
     };

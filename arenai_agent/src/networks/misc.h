@@ -1,7 +1,3 @@
-//
-// Created by samuel on 19/05/2026.
-//
-
 #ifndef ARENAI_AGENT_HOST_MISC_H
 #define ARENAI_AGENT_HOST_MISC_H
 
@@ -36,7 +32,6 @@ namespace arenai::agent {
         void pretty_print(std::ostream &stream) const override;
     };
 
-    // Beta concentration κ, log-scale on the excess κ - 2 bounded between min and max
     class ConcentrationOutput : public AbstractFunctionModule {
     public:
         ConcentrationOutput(float min_concentration, float max_concentration);

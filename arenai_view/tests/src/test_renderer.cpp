@@ -1,7 +1,3 @@
-//
-// Created by claude on 01/07/2026.
-//
-
 #include <numeric>
 
 #include <glm/ext/matrix_transform.hpp>
@@ -46,7 +42,6 @@ TEST_F(RendererTest, RemoveDrawableThenDrawClearColor) {
     const auto with_drawable = std::vector<std::tuple<std::string, glm::mat4>>{
         {"sky", glm::scale(glm::mat4(1.f), glm::vec3(2000.f))}};
 
-    // warmup + one real frame with the drawable
     renderer->draw_and_get_frame(with_drawable);
     const auto [with_pixels] = renderer->draw_and_get_frame(with_drawable);
 
@@ -56,16 +51,13 @@ TEST_F(RendererTest, RemoveDrawableThenDrawClearColor) {
             [](const int acc, const uint8_t p) { return static_cast<int>(p) + acc; }),
         0);
 
-    // remove the drawable
     renderer->remove_drawable("sky");
 
     constexpr auto empty = std::vector<std::tuple<std::string, glm::mat4>>{};
 
-    // draw two more frames (PBO double-buffering: need 2 to flush)
     renderer->draw_and_get_frame(empty);
     const auto [after_pixels] = renderer->draw_and_get_frame(empty);
 
-    // should be clear color (red)
     constexpr int hw = w * h;
     for (int i = 0; i < hw; ++i) {
         ASSERT_EQ(after_pixels[0 * hw + i], 255) << "R at pixel " << i;
@@ -97,7 +89,6 @@ TEST_F(RendererTest, MixedDrawablesCubeMapAndDiffuse) {
 
     renderer->make_current();
 
-    // add cubemap alone, render
     renderer->add_drawable(
         "sky", backend->drawable_factory()->make_cube_map(file_reader, "cubemap/1"));
 
@@ -107,7 +98,6 @@ TEST_F(RendererTest, MixedDrawablesCubeMapAndDiffuse) {
     renderer->draw_and_get_frame(sky_only_matrices);
     const auto [sky_pixels] = renderer->draw_and_get_frame(sky_only_matrices);
 
-    // add diffuse cube on top
     auto [vertices, normals] = make_cube(2.f);
     renderer->add_drawable(
         "cube", backend->drawable_factory()->make_diffuse(
@@ -119,7 +109,6 @@ TEST_F(RendererTest, MixedDrawablesCubeMapAndDiffuse) {
     renderer->draw_and_get_frame(mixed_matrices);
     const auto [mixed_pixels] = renderer->draw_and_get_frame(mixed_matrices);
 
-    // mixed scene must differ from sky-only scene
     bool differs = false;
     for (size_t i = 0; i < sky_pixels.size(); ++i) {
         if (sky_pixels[i] != mixed_pixels[i]) {

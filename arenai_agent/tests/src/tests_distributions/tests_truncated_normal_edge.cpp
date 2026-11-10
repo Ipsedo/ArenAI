@@ -1,7 +1,3 @@
-//
-// Created by claude on 01/07/2026.
-//
-
 #include <distributions/truncated_normal.h>
 
 #include <arenai_agent_tests/tests_distributions/tests_truncated_normal_edge.h>
@@ -65,10 +61,6 @@ TEST_F(TruncatedNormalEdgeTest, LogPdfAndPdfConsistent) {
     ASSERT_TRUE(torch::allclose(log_pdf, log_pdf_from_pdf, 1e-2, 1e-5))
         << "log_pdf and log(pdf) should be consistent";
 }
-
-// ========================================================================
-// Gradient flow tests — critical for gradient-based training
-// ========================================================================
 
 TEST_F(TruncatedNormalGradientTest, LogPdfGradientFlowsThroughMu) {
     const auto mu = torch::zeros({5}, torch::TensorOptions().requires_grad(true));

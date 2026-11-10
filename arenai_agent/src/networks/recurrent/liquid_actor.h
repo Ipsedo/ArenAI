@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #ifndef ARENAI_LIQUID_ACTOR_H
 #define ARENAI_LIQUID_ACTOR_H
 
@@ -16,20 +12,14 @@
 namespace arenai::agent {
 
     struct LiquidActorOutput {
-        // squashed normal: the action is tanh(u), u ~ N(mu, sigma), mu unbounded and
-        // sigma state-dependent, both one per continuous action
         torch::Tensor mu;
         torch::Tensor sigma;
-        // independent Bernoulli probabilities, one per discrete action
         torch::Tensor discrete;
-        // liquid state after the last processed step
         torch::Tensor next_x;
         torch::Tensor features;
         torch::Tensor vision_features;
     };
 
-    // CNN on the frames, MLP on the proprioception, both concatenated into the
-    // recurrent input of each step, then run through the liquid network
     class LiquidActor final : public torch::nn::Module {
     public:
         explicit LiquidActor(
@@ -40,12 +30,10 @@ namespace arenai::agent {
             const int &unfolding_steps, const float &delta_t, const float &initial_sigma,
             const std::vector<float> &initial_discrete_probas);
 
-        // one env step: vision [B, C, H, W], sensors [B, S], x_t [B, neuron_number]
+        // vision [B, C, H, W], sensors [B, S], x_t [B, neuron_number]
         LiquidActorOutput
         act(const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &x_t);
 
-        // BPTT chunk: vision [B, T, C, H, W], sensors [B, T, S], x_t [B, neuron_number];
-        // outputs are [B, T, ...]
         LiquidActorOutput act_sequence(
             const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &x_t);
 
@@ -61,7 +49,7 @@ namespace arenai::agent {
         torch::nn::Sequential sigma;
         torch::nn::Sequential discrete;
 
-        // [rows, features] recurrent input: encoded vision and sensors, concatenated
+        // [rows, features]
         torch::Tensor encode(const torch::Tensor &vision, const torch::Tensor &sensors);
     };
 

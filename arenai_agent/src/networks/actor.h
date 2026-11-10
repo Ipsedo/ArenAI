@@ -1,7 +1,3 @@
-//
-// Created by samuel on 23/10/2025.
-//
-
 #ifndef ARENAI_AGENT_HOST_ACTOR_H
 #define ARENAI_AGENT_HOST_ACTOR_H
 
@@ -16,8 +12,6 @@
 namespace arenai::agent {
 
     struct ActorRawOutput {
-        // squashed normal: the action is tanh(u), u ~ N(mu, sigma), mu unbounded and
-        // sigma state-dependent, both one per continuous action
         torch::Tensor mu;
         torch::Tensor sigma;
         torch::Tensor discrete;

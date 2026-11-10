@@ -1,7 +1,3 @@
-//
-// Created by samuel on 24/10/2026.
-//
-
 #ifndef ARENAI_DESKTOP_CORE_SETTINGS_H
 #define ARENAI_DESKTOP_CORE_SETTINGS_H
 
@@ -13,14 +9,10 @@
 #include "../controller/bindings.h"
 #include "../controller/control_kind.h"
 
-// The player-tunable configuration of a game, as the domain sees it: no UI
-// type here, the gui/ hexagon reads and writes this struct through its port.
 namespace arenai::desktop {
 
-    // shadow quality presets; Ultra matches the historical hardcoded rendering
     enum class ShadowQuality { Off, Low, Medium, High, Ultra };
 
-    // canonical names, shared by the JSON preferences and the menu bindings
     constexpr const char *to_string(const ShadowQuality quality) {
         switch (quality) {
             case ShadowQuality::Off: return "off";
@@ -39,11 +31,8 @@ namespace arenai::desktop {
         return std::nullopt;
     }
 
-    // the RL algorithms the enemy agent can be built from; mirrors
-    // agent::AgentAlgorithm without pulling arenai_agent into the settings
     enum class AiAlgorithm { Ppo, PpoLiquid, Ppg };
 
-    // canonical names, shared by the JSON preferences and the menu bindings
     constexpr const char *to_string(const AiAlgorithm algorithm) {
         switch (algorithm) {
             case AiAlgorithm::Ppo: return "ppo";
@@ -58,7 +47,6 @@ namespace arenai::desktop {
         return std::nullopt;
     }
 
-    // what the player can tune in the menu before launching a game
     struct GameSettings {
         int nb_tanks = 16;
         int spawn_side = 500;
@@ -74,23 +62,14 @@ namespace arenai::desktop {
         std::string window_gpu;
         std::string vision_gpu;
 
-        // run the enemy agent's networks on CUDA; forced back to false when
-        // no CUDA device is available on this machine
         bool cuda = false;
 
-        // the trained enemy agent: its state-dict folder, the config.json of
-        // its training run (empty = looked up next to the state dicts) and
-        // the algorithm to rebuild the networks with
         std::filesystem::path agent_folder;
         std::filesystem::path agent_config;
         AiAlgorithm agent_algorithm = AiAlgorithm::Ppo;
-        // the AgentPreset the three fields above were filled from, by name;
-        // nullopt once the player edited any of them by hand ("Custom")
         std::optional<std::string> agent_preset;
     };
 
-    // a ready-to-play bundle shipped with the game: picking one in the menu
-    // fills the agent fields of GameSettings in one go
     struct AgentPreset {
         std::string name;
         AiAlgorithm algorithm;
@@ -105,9 +84,8 @@ namespace arenai::desktop {
         settings.agent_preset = preset.name;
     }
 
-    // the agent fields of GameSettings, as handed to the loader
     struct AgentSelection {
-        std::filesystem::path config;// empty = auto-resolved config.json
+        std::filesystem::path config;
         std::filesystem::path folder;
         AiAlgorithm algorithm;
     };

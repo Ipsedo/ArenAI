@@ -1,14 +1,9 @@
-//
-// Created by claude on 29/10/2026.
-//
-
 #ifndef ARENAI_TESTS_PPG_ROLLOUT_BUFFER_H
 #define ARENAI_TESTS_PPG_ROLLOUT_BUFFER_H
 
 #include <agents/ppg/ppg_rollout_buffer.h>
 #include <gtest/gtest.h>
 
-// test code: the arenai sub-namespaces are used unqualified
 using namespace arenai;
 
 class PpgRolloutBufferTest : public testing::Test {

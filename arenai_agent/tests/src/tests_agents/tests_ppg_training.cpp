@@ -1,7 +1,3 @@
-//
-// Created by claude on 29/10/2026.
-//
-
 #include <arenai_agent_tests/tests_agents/tests_ppg_training.h>
 
 using namespace arenai;
@@ -145,11 +141,8 @@ TEST_F(PpgTrainingTest, TrainingUpdatesActorParameters) {
     for (const auto &parameter: triad.actor->parameters())
         initial_parameters.push_back(parameter.detach().clone());
 
-    // one more step than the rollout horizon so that the batch is complete when the
-    // trainer checks
     run_env_loop(triad, cfg, ROLLOUT_SIZE + 2, true);
 
-    // the rollout has been consumed by the training
     ASSERT_LT(triad.rollout_buffer->nb_complete_steps(), static_cast<size_t>(ROLLOUT_SIZE));
 
     const auto parameters = triad.actor->parameters();
@@ -166,7 +159,6 @@ TEST_F(PpgTrainingTest, TrainingUpdatesActorParameters) {
 }
 
 TEST_F(PpgTrainingTest, AuxiliaryPhaseUpdatesValueHead) {
-    // the actor's value head only receives a gradient from the auxiliary phase
     constexpr PpgTrainingTestConfig cfg{
         .vision_height = 8,
         .vision_width = 8,
@@ -199,12 +191,10 @@ TEST_F(PpgTrainingTest, AuxiliaryPhaseWaitsForNPiPolicyPhases) {
     const auto weight = named_parameters["value.weight"];
     const auto initial_weight = weight.detach().clone();
 
-    // first policy phase: not a multiple of n_pi, the value head stays untouched
     run_env_loop(triad, cfg, ROLLOUT_SIZE + 2, true);
     ASSERT_TRUE(torch::equal(weight, initial_weight))
         << "The auxiliary phase should wait for n_pi policy phases";
 
-    // second policy phase: the auxiliary phase distills the value
     run_env_loop(triad, cfg, ROLLOUT_SIZE + 2, true);
     ASSERT_FALSE(torch::equal(weight, initial_weight));
 }
@@ -218,7 +208,6 @@ TEST_F(PpgTrainingTest, TrainedActorStaysFinite) {
         .nb_discrete_actions = 2};
     const auto triad = make_triad(cfg);
 
-    // several rollouts so that the auxiliary phase runs more than once
     run_env_loop(triad, cfg, 3 * ROLLOUT_SIZE + 2, true);
 
     for (const auto &item: triad.actor->named_parameters())
@@ -227,7 +216,6 @@ TEST_F(PpgTrainingTest, TrainedActorStaysFinite) {
 }
 
 TEST_F(PpgTrainingTest, MaskedFireReceivesNoUpdate) {
-    // fire never possible: its head row must stay untouched while zoom keeps learning
     constexpr PpgTrainingTestConfig cfg{
         .vision_height = 8,
         .vision_width = 8,
@@ -244,7 +232,6 @@ TEST_F(PpgTrainingTest, MaskedFireReceivesNoUpdate) {
 
     run_env_loop(triad, cfg, ROLLOUT_SIZE + 2, false);
 
-    // the rollout has been consumed by the training
     ASSERT_LT(triad.rollout_buffer->nb_complete_steps(), static_cast<size_t>(ROLLOUT_SIZE));
 
     // row 0 = fire, row 1 = zoom

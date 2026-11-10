@@ -1,7 +1,3 @@
-//
-// Created by claude on 30/07/2026.
-//
-
 #include "./jolt_item.h"
 
 #include <utility>

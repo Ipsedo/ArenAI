@@ -1,7 +1,3 @@
-//
-// Created by claude on 22/07/2026.
-//
-
 #include "./ppo_agent.h"
 
 #include "../../distributions/bernoulli.h"
@@ -13,10 +9,6 @@ using namespace arenai;
 using namespace arenai::agent;
 
 namespace arenai::agent {
-
-    /*
-     * Torch PPO agent
-     */
 
     TorchPpoAgent::TorchPpoAgent(
         const std::shared_ptr<Actor> &actor, const torch::Device device,
@@ -52,11 +44,9 @@ namespace arenai::agent {
                 action.discrete_action = bernoulli_max_action(discrete_proba);
             }
 
-            // old log-probabilities, kept for the PPO importance ratio
             continuous_log_prob =
                 gaussian_tanh_log_pdf(continuous_pre_tanh, mu, sigma).sum(-1, true);
 
-            // a fire without effect is not a decision: no log-probability, no gradient
             discrete_log_prob = (bernoulli_log_proba(action.discrete_action, discrete_proba)
                                  * state.get_discrete_action_mask(discrete_proba.size(-1)))
                                     .sum(-1, true);

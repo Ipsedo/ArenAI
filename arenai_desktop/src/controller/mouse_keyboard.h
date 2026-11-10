@@ -1,7 +1,3 @@
-//
-// Created by samuel on 16/03/2026.
-//
-
 #ifndef ARENAI_DESKTOP_PLAYER_CONTROLLER_HANDLER_H
 #define ARENAI_DESKTOP_PLAYER_CONTROLLER_HANDLER_H
 
@@ -41,8 +37,6 @@ namespace arenai::desktop {
         std::tuple<bool, controller::user_input> to_output(PlayerMouseKeyboardInput event) override;
 
     private:
-        // presses / releases of a bound key or mouse button drive the
-        // movement state and the fire flag; an unbound slot never matches
         void apply_binding(
             const KeyboardBinding &input, controller::InputAction action, bool &need_fire);
 
@@ -58,11 +52,10 @@ namespace arenai::desktop {
         float current_dir;
         float current_speed;
 
-        // aim rate in [-1, 1] handed to the tank parts: the normalized mouse displacement
+        // aim rate in [-1, 1]
         float current_turret_rate;
         float current_canon_rate;
 
-        // held state: true between the press and the release of the zoom slot
         bool current_zoom;
 
         bool cursor_captured;

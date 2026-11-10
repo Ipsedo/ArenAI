@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #include "./device.h"
 
 #include <algorithm>
@@ -35,7 +31,6 @@ namespace arenai::view {
         if (criteria.surface != VK_NULL_HANDLE)
             extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
-        // dynamic rendering: core in 1.3, extension + feature struct on 1.2
         VkPhysicalDeviceVulkan13Features features13{};
         features13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
         features13.dynamicRendering = VK_TRUE;
@@ -43,7 +38,6 @@ namespace arenai::view {
         dynamic_rendering.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
         dynamic_rendering.dynamicRendering = VK_TRUE;
 
-        // wide lines (HUD line drawing) are optional: enabled when present
         VkPhysicalDeviceFeatures supported{};
         vkGetPhysicalDeviceFeatures(physical_, &supported);
         wide_lines_ = supported.wideLines == VK_TRUE;

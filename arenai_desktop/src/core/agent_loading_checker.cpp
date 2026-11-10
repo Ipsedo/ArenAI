@@ -1,7 +1,3 @@
-//
-// Created by samuel on 19/07/2026.
-//
-
 #include "./agent_loading_checker.h"
 
 #include <fstream>
@@ -58,8 +54,6 @@ namespace arenai::desktop {
         try {
             agent::AgentFactory factory(read_config(selection));
 
-            // stays on CPU: the point is only to prove the state dicts load
-            // and the networks answer a forward pass
             const auto agent = build_agent(factory, selection.algorithm, false);
             agent->load(selection.folder);
 

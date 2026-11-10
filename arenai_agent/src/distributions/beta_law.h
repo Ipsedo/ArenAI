@@ -1,15 +1,9 @@
-//
-// Created by samuel on 08/02/2026.
-//
-
 #ifndef ARENAI_AGENT_HOST_BETA_LAW_H
 #define ARENAI_AGENT_HOST_BETA_LAW_H
 
 #include <torch/torch.h>
 
 namespace arenai::agent {
-
-    // Beta distribution rescaled to the [-1, 1] action support
 
     torch::Tensor to_alpha(const torch::Tensor &mode, const torch::Tensor &concentration);
     torch::Tensor to_beta(const torch::Tensor &mode, const torch::Tensor &concentration);

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 05/09/2026.
-//
-
 #include <core/curriculum.h>
 #include <gtest/gtest.h>
 
@@ -15,7 +11,6 @@ namespace {
     constexpr int PROBE_WINDOW = 4;
     constexpr std::uint64_t SEED = 42;
 
-    // feed exactly one controller window of probe episodes with the given ratio
     void run_probe_window(ProgressCurriculum &curriculum, const int nb_fires, const int nb_hits) {
         int done = 0;
         while (done < PROBE_WINDOW) {
@@ -37,7 +32,7 @@ TEST(SpawnCurriculumTest, StartsAtZero) {
 TEST(SpawnCurriculumTest, SampleStaysWithinBound) {
     ProgressCurriculum curriculum(DELTA, RATIO_LOW, RATIO_HIGH, PROBE_WINDOW, 0.2f, SEED);
 
-    run_probe_window(curriculum, 100, 10);// grow once so the bound is not 0
+    run_probe_window(curriculum, 100, 10);
 
     for (int i = 0; i < 1000; i++) {
         const float upper = curriculum.upper_bound();
@@ -50,7 +45,7 @@ TEST(SpawnCurriculumTest, SampleStaysWithinBound) {
 TEST(SpawnCurriculumTest, GrowsAboveHighRatio) {
     ProgressCurriculum curriculum(DELTA, RATIO_LOW, RATIO_HIGH, PROBE_WINDOW, 0.2f, SEED);
 
-    run_probe_window(curriculum, 100, 10);// ratio 0.1 > high
+    run_probe_window(curriculum, 100, 10);
 
     ASSERT_FLOAT_EQ(curriculum.upper_bound(), DELTA);
 }
@@ -62,7 +57,7 @@ TEST(SpawnCurriculumTest, ShrinksBelowLowRatio) {
     run_probe_window(curriculum, 100, 10);
     ASSERT_FLOAT_EQ(curriculum.upper_bound(), 2.f * DELTA);
 
-    run_probe_window(curriculum, 100, 1);// ratio 0.01 < low
+    run_probe_window(curriculum, 100, 1);
 
     ASSERT_FLOAT_EQ(curriculum.upper_bound(), DELTA);
 }
@@ -73,7 +68,7 @@ TEST(SpawnCurriculumTest, HoldsInsideHysteresisBand) {
     run_probe_window(curriculum, 100, 10);
     ASSERT_FLOAT_EQ(curriculum.upper_bound(), DELTA);
 
-    run_probe_window(curriculum, 100, 3);// ratio 0.03, between low and high
+    run_probe_window(curriculum, 100, 3);
 
     ASSERT_FLOAT_EQ(curriculum.upper_bound(), DELTA);
 }
@@ -92,18 +87,14 @@ TEST(SpawnCurriculumTest, NoFireCountsAsFailure) {
 TEST(SpawnCurriculumTest, ClampsToUnitInterval) {
     ProgressCurriculum curriculum(DELTA, RATIO_LOW, RATIO_HIGH, PROBE_WINDOW, 0.2f, SEED);
 
-    // more than enough successful windows to reach the top
     for (int i = 0; i < 30; i++) run_probe_window(curriculum, 100, 10);
     ASSERT_FLOAT_EQ(curriculum.upper_bound(), 1.f);
 
-    // and enough failures to reach the bottom
     for (int i = 0; i < 30; i++) run_probe_window(curriculum, 100, 0);
     ASSERT_FLOAT_EQ(curriculum.upper_bound(), 0.f);
 }
 
 TEST(SpawnCurriculumTest, NonProbeEpisodesDoNotFeedController) {
-    // boundary_proba 0: no episode is a probe, the controller must never move
-    // whatever the results
     ProgressCurriculum curriculum(DELTA, RATIO_LOW, RATIO_HIGH, PROBE_WINDOW, 0.f, SEED);
     for (int i = 0; i < 100; i++) {
         curriculum.sample_progress();

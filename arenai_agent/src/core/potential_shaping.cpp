@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/11/2026.
-//
-
 #include "./potential_shaping.h"
 
 namespace arenai::agent {

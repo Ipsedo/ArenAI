@@ -1,7 +1,3 @@
-//
-// Created by samuel on 18/09/2026.
-//
-
 #ifndef ARENAI_TESTS_BERNOULLI_H
 #define ARENAI_TESTS_BERNOULLI_H
 

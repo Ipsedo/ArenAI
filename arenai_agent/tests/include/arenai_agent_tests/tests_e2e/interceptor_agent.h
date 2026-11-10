@@ -1,7 +1,3 @@
-//
-// Created by samuel on 28/07/2026.
-//
-
 #ifndef ARENAI_AGENT_TESTS_INTERCEPTOR_AGENT_H
 #define ARENAI_AGENT_TESTS_INTERCEPTOR_AGENT_H
 
@@ -9,12 +5,8 @@
 
 #include <arenai_agent/agent.h>
 
-// test code: the arenai sub-namespaces are used unqualified
 using namespace arenai;
 
-// Records every batch of states the host loop hands to the agent and answers
-// with neutral actions: what act() received is exactly what a real network
-// would have seen.
 class InterceptorAgent final : public agent::AbstractAgent {
 public:
     std::vector<std::vector<core::State>> received_states;
@@ -28,7 +20,6 @@ public:
         last_vision_height = vision_height;
         last_vision_width = vision_width;
 
-        // a zero aim rate leaves the turret and the canon where they are
         return std::vector<core::Action>(
             states.size(), {.left_joystick = {.x = 0.f, .y = 0.f},
                             .right_joystick = {.x = 0.f, .y = 0.f},

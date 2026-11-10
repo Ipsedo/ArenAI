@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #ifndef ARENAI_VK_PLAYER_RENDERER_H
 #define ARENAI_VK_PLAYER_RENDERER_H
 

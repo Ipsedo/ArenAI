@@ -1,14 +1,9 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #ifndef ARENAI_TESTS_LIQUID_PPO_ROLLOUT_BUFFER_H
 #define ARENAI_TESTS_LIQUID_PPO_ROLLOUT_BUFFER_H
 
 #include <agents/ppo_liquid/liquid_ppo_rollout_buffer.h>
 #include <gtest/gtest.h>
 
-// test code: the arenai sub-namespaces are used unqualified
 using namespace arenai;
 
 class LiquidPpoRolloutBufferTest : public testing::Test {

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #ifndef ARENAI_TESTS_LIQUID_PPO_TRAINING_H
 #define ARENAI_TESTS_LIQUID_PPO_TRAINING_H
 
@@ -10,7 +6,6 @@
 #include <agents/ppo_liquid/liquid_ppo_factory.h>
 #include <gtest/gtest.h>
 
-// test code: the arenai sub-namespaces are used unqualified
 using namespace arenai;
 
 struct LiquidPpoTrainingTestConfig {
@@ -23,9 +18,7 @@ struct LiquidPpoTrainingTestConfig {
 
 class LiquidPpoTrainingTest : public testing::Test {
 protected:
-    // small enough for the trainer to trigger during the test loop
     static constexpr int ROLLOUT_SIZE = 4;
-    // smaller than the number of valid rows so the loop exercises several minibatches
     static constexpr int MINIBATCH_SIZE = 4;
     static constexpr int CHUNK_SIZE = 2;
     static constexpr int NEURON_NUMBER = 16;

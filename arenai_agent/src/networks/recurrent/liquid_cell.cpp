@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #include "./liquid_cell.h"
 
 #include <cmath>
@@ -26,10 +22,6 @@ namespace {
     }
 }// namespace
 
-/*
- * Cell model
- */
-
 CellModel::CellModel(
     const int neuron_number, const int input_size, torch::nn::AnyModule activation_function)
     : weights(register_module(
@@ -50,10 +42,6 @@ CellModel::CellModel(
 torch::Tensor CellModel::forward(const torch::Tensor &x_t, const torch::Tensor &input_t) {
     return activation.forward(recurrent_weights(x_t) + weights(input_t) + biases);
 }
-
-/*
- * Liquid cell
- */
 
 LiquidCell::LiquidCell(
     const int neuron_number, const int input_size, const int output_size, const int unfolding_steps,
@@ -94,7 +82,6 @@ torch::Tensor LiquidCell::forward(const torch::Tensor &inputs) {
         results.push_back(output);
     }
 
-    // (batch, time, output_features)
     return torch::stack(results, 1);
 }
 

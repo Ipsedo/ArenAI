@@ -1,7 +1,3 @@
-//
-// Created by samuel on 28/10/2026.
-//
-
 #ifndef ARENAI_DESKTOP_GUI_RML_DECORATORS_CRYSTALS_H
 #define ARENAI_DESKTOP_GUI_RML_DECORATORS_CRYSTALS_H
 
@@ -11,15 +7,6 @@
 
 namespace arenai::desktop::gui {
 
-    // The "Duel néon" horizon crystals: irregular wireframe tetrahedra
-    // tumbling in 3D above the arena, one of two authored shapes per
-    // instance, projected with a light perspective (back edges dimmed) and a
-    // slow vertical bob. Coordinates live on the same 1280×720 design canvas
-    // as facets; the mesh is rebuilt every frame.
-    // RCSS: decorator: crystals(<line-color> <thickness> "<instances>");
-    //   instances: `cx cy size shape spin phase` entries separated by `|`;
-    //   shape picks the authored tetrahedron (1 or 2), spin is a signed
-    //   rotation-speed factor, phase offsets the rotation and the bob.
     class CrystalsDecorator final : public GeometryDecorator {
     public:
         struct Instance {
@@ -33,7 +20,6 @@ namespace arenai::desktop::gui {
         CrystalsDecorator(
             Rml::Colourb line_color, Rml::NumericValue thickness, const Rml::String &instances);
 
-        // the parsed form of the RCSS string (exposed for the unit tests)
         static std::vector<Instance> parse(const Rml::String &instances);
 
     protected:

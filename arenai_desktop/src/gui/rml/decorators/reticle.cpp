@@ -1,7 +1,3 @@
-//
-// Created by samuel on 23/08/2026.
-//
-
 #include "./reticle.h"
 
 namespace arenai::desktop::gui {

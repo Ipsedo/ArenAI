@@ -1,7 +1,3 @@
-//
-// Created by samuel on 11/06/2026.
-//
-
 #include "./mean_metric.h"
 
 #include <numeric>

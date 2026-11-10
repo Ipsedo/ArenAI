@@ -1,7 +1,3 @@
-//
-// Created by samuel on 19/03/2023.
-//
-
 #include <utility>
 
 #include <arenai_model/item.h>
@@ -10,10 +6,6 @@ using namespace arenai;
 using namespace arenai::model;
 
 namespace arenai::model {
-
-    /*
-     * Base Item
-     */
 
     Item::Item(std::string name) : name(std::move(name)), will_destroy(false) {}
 
@@ -26,10 +18,6 @@ namespace arenai::model {
     void Item::on_contact(Item *other) {}
 
     void Item::tick() {}
-
-    /*
-     * Life Item
-     */
 
     LifeItem::LifeItem(const float health_points)
         : initial_health_points(std::max(health_points, 0.f)), health_points(initial_health_points),

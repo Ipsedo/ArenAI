@@ -1,7 +1,3 @@
-//
-// Created by samuel on 18/03/2026.
-//
-
 #include "./game.h"
 
 #include <chrono>
@@ -24,11 +20,6 @@ namespace arenai::desktop {
 
     namespace {
 
-        // Builds a session behind the loading screen: the heavy work (agent,
-        // physics, vision threads) runs on a worker while the main thread
-        // keeps presenting animation frames, then the window-backend half
-        // (finish_loading) runs here, the one place it may touch the
-        // swapchain. Returns nullptr when the window closed meanwhile.
         std::unique_ptr<GameSession> load_session(
             const GameOptions &options, const GameSettings &settings,
             const std::shared_ptr<view::AbstractWindowedGraphicBackend> &backend,
@@ -48,8 +39,6 @@ namespace arenai::desktop {
                        && !window->should_close())
                     loading.render_frame();
 
-                // joins the worker in every case; rethrows its exception, the
-                // same surfacing a synchronous construction had
                 auto session = future.get();
 
                 if (window->should_close()) {
@@ -69,13 +58,10 @@ namespace arenai::desktop {
     }// namespace
 
     void run_gui(const GameOptions &game_options) {
-        // the first shipped preset is the out-of-the-box selection
         const auto presets = agent_presets(game_options.resources_folder);
         GameSettings defaults;
         if (!presets.empty()) apply_preset(presets.front(), defaults);
 
-        // loaded before the backend: the window GPU choice only applies at
-        // device creation, i.e. here
         const auto initial_settings = load_preferences(defaults, presets);
 
         const std::shared_ptr graphics_backend = view::make_glfw_vulkan_backend(

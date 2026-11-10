@@ -1,7 +1,3 @@
-//
-// Created by samuel on 28/10/2026.
-//
-
 #include "./gradient_bar.h"
 
 #include <algorithm>
@@ -11,8 +7,6 @@ namespace arenai::desktop::gui {
 
     namespace {
 
-        // a slice of the bar, its left and right edges each carrying their
-        // own color (the GPU interpolates between them)
         void append_slice(
             Rml::Mesh &mesh, const float x0, const float x1, const float height,
             const Rml::ColourbPremultiplied left, const Rml::ColourbPremultiplied right) {

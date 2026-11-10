@@ -1,7 +1,3 @@
-//
-// Created by samuel on 30/06/2026.
-//
-
 #include <agents/entropy_alphas.h>
 #include <networks/entropy.h>
 
@@ -10,25 +6,18 @@
 using namespace arenai;
 using namespace arenai::agent;
 
-/*
- * Learned alphas
- */
-
 TEST_F(AlphaParametersTest, StartsAtInitialAlpha) {
     const AlphaParameters alphas(1e-3f, 3);
 
     ASSERT_TRUE(torch::allclose(alphas.alpha(), torch::full({3}, 1e-3f)));
 }
 
-// descending the dual loss raises the alpha of an action whose entropy sits under
-// its target and lowers the one of an action above it, each on its own
 TEST_F(AlphaParametersTest, DualStepMovesEachAlphaWithItsOwnError) {
     AlphaParameters alphas(1e-3f, 2);
     torch::optim::Adam optim(alphas.parameters(), 1e-2);
 
     const auto before = alphas.alpha().detach().clone();
 
-    // H - H_target: the first action is under its target, the second above
     const auto error = torch::tensor({-1.f, 1.f});
     for (int i = 0; i < 10; i++) {
         optim.zero_grad();
@@ -71,9 +60,6 @@ TEST_F(AlphaParametersTest, SustainedUndershootParksAlphaAtTheCeiling) {
     ASSERT_NEAR(alphas.alpha().item<float>(), AlphaParameters::MAX_ALPHA, 1e-5f);
 }
 
-// the floor removes the windup: after a long overshoot, a few steps of undershoot (the
-// span of Adam's momentum) are enough to leave it, where an unbounded log_alpha would first
-// have to climb all the way back
 TEST_F(AlphaParametersTest, AlphaLeavesTheFloorWithinAFewUndershootSteps) {
     AlphaParameters alphas(1e-2f, 1);
     torch::optim::Adam optim(alphas.parameters(), 1e-2);
@@ -103,10 +89,6 @@ TEST_F(AlphaParametersTest, InitialAlphaIsProjectedOnTheBounds) {
     ASSERT_NEAR(above.alpha().item<float>(), AlphaParameters::MAX_ALPHA, 1e-5f);
 }
 
-/*
- * Per-action regulator
- */
-
 TEST_F(EntropyAlphasTest, OneMetricPerActionNamedAfterIt) {
     const EntropyAlphas alphas(4, 2, 1e-3f, 3e-4f, -1.f, 0.05f);
 
@@ -123,8 +105,6 @@ TEST_F(EntropyAlphasTest, OneMetricPerActionNamedAfterIt) {
 TEST_F(EntropyAlphasTest, EntropyUnderTargetRaisesAlphaAboveLowersIt) {
     const EntropyAlphas alphas(2, 2, 1e-2f, 1e-2f, -1.f, 0.05f);
 
-    // continuous: first action under -1, second above; discrete: fire under log 2 / 2 ≈ 0.2,
-    // zoom at the maximum entropy
     const auto continuous_entropy = torch::tensor({{-2.f, 0.f}}).expand({8, 2});
     const auto discrete_entropy = torch::tensor({{0.05f, 0.69f}}).expand({8, 2});
     const auto mask = torch::ones({8, 2});
@@ -144,8 +124,6 @@ TEST_F(EntropyAlphasTest, EntropyUnderTargetRaisesAlphaAboveLowersIt) {
     ASSERT_LT(alphas.discrete()[1].item<float>(), discrete_before[1].item<float>());
 }
 
-// a discrete action that never had an effect brings no row to its error: its alpha
-// stays put while the others move
 TEST_F(EntropyAlphasTest, MaskedDiscreteActionKeepsItsAlpha) {
     const EntropyAlphas alphas(1, 2, 1e-3f, 1e-2f, -1.f, 0.05f);
 
@@ -164,8 +142,6 @@ TEST_F(EntropyAlphasTest, MaskedDiscreteActionKeepsItsAlpha) {
     ASSERT_GT(alphas.continuous()[0].item<float>(), 1e-3f);
 }
 
-// the step projects every alpha back on its bounds: a sustained overshoot parks them at the
-// floor instead of driving log_alpha away
 TEST_F(EntropyAlphasTest, StepKeepsEveryAlphaAboveTheFloor) {
     const EntropyAlphas alphas(2, 2, 1e-2f, 1e-1f, -1.f, 0.05f);
 
@@ -186,10 +162,6 @@ TEST_F(EntropyAlphasTest, StepKeepsEveryAlphaAboveTheFloor) {
     for (const auto &metric: alphas.get_metrics())
         ASSERT_NEAR(metric->compute_metric(), AlphaParameters::MIN_ALPHA, 1e-6f);
 }
-
-/*
- * PID Lagrangian
- */
 
 TEST_F(PidLagrangianAlphaParameterTest, StartsAtInitialAlpha) {
     const PidLagrangianAlphaParameters pid(2e-1f, 5e-3f, 1.f, 1e-3f, 1);
@@ -219,9 +191,6 @@ TEST_F(PidLagrangianAlphaParameterTest, EntropyBelowTargetRaisesAlpha) {
     ASSERT_GT(pid.alpha().item<float>(), before);
 }
 
-// inequality constraint H >= target: while the constraint is satisfied the multiplier is
-// inactive — a sustained overshoot parks alpha at exactly 0, never below (the Lagrangian
-// projection), so the bonus can never flip into a penalty
 TEST_F(PidLagrangianAlphaParameterTest, SustainedOvershootParksAlphaAtZero) {
     const PidLagrangianAlphaParameters pid(2e-1f, 5e-3f, 1.f, 1e-3f, 1);
 
@@ -232,8 +201,6 @@ TEST_F(PidLagrangianAlphaParameterTest, SustainedOvershootParksAlphaAtZero) {
     ASSERT_FLOAT_EQ(pid.alpha().item<float>(), 0.f);
 }
 
-// both the integral and the output are projected on [0, MAX_ALPHA], so even an absurd
-// sustained error keeps alpha inside the feasible dual space
 TEST_F(PidLagrangianAlphaParameterTest, StaysWithinZeroAndMax) {
     const PidLagrangianAlphaParameters pid(2e-1f, 5e-3f, 1.f, 1e-3f, 1);
 
@@ -252,40 +219,26 @@ TEST_F(PidLagrangianAlphaParameterTest, StaysWithinZeroAndMax) {
     }
 }
 
-// the failure mode this controller replaces: the log-space integral used to saturate at
-// log(1e-6), ~13 nats below zero, so alpha stayed pinned for thousands of updates after the
-// error flipped sign. Here the integral saturates at the projection bound (0): the P term
-// acts on the first update after the flip and the integral only has to climb from 0
 TEST_F(PidLagrangianAlphaParameterTest, RecoversFromSaturationWithoutWindup) {
     const PidLagrangianAlphaParameters pid(2e-1f, 5e-3f, 1.f, 1e-3f, 1);
 
     const auto target = torch::full({8, 1}, 0.7f);
 
-    // long stretch above target: alpha parks at the zero floor
     for (int i = 0; i < 5000; i++) pid.update(torch::full({8, 1}, 5.f), target);
     ASSERT_FLOAT_EQ(pid.alpha().item<float>(), 0.f);
 
-    // entropy now under target: the bonus has to come back within the run, not after it
     for (int i = 0; i < 1000; i++) pid.update(torch::full({8, 1}, 0.2f), target);
     ASSERT_GT(pid.alpha().item<float>(), 0.f);
 }
 
-// recovery time scales with 1 / (k_i * |error|), so a gain has to be scaled to the error
-// range of its own head. The discrete target is the binary entropy of the fire probability
-// -- 0.098 nat -- so its errors sit around 0.03, twenty times smaller than the continuous
-// head's. Locks DISCRETE_ALPHA_K_I against that scale: with the gain it replaces, alpha
-// stayed pinned at the floor for the whole of train_368
 TEST_F(PidLagrangianAlphaParameterTest, DiscreteGainRecoversAtItsOwnErrorScale) {
-    // DISCRETE_ALPHA_K_P / K_I / K_D and ALPHA_INITIAL, as set in ppo_trainer.cpp
     const PidLagrangianAlphaParameters pid(2e-1f, 1e-2f, 1.f, 1e-3f, 1);
 
     const auto target = torch::full({8, 1}, 0.098039f);
 
-    // fire head still exploring: entropy above target, alpha parks at the zero floor
     for (int i = 0; i < 3000; i++) pid.update(torch::full({8, 1}, 0.693f), target);
     ASSERT_FLOAT_EQ(pid.alpha().item<float>(), 0.f);
 
-    // entropy now under target: the bonus has to come back within the run, not after it
     for (int i = 0; i < 25000; i++) pid.update(torch::full({8, 1}, 0.068f), target);
     ASSERT_GT(pid.alpha().item<float>(), 1e-3f);
 }

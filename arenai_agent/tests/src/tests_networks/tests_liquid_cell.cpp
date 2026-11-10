@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #include <networks/recurrent/liquid_cell.h>
 
 #include <arenai_agent_tests/tests_networks/tests_liquid_cell.h>
@@ -23,10 +19,6 @@ namespace {
         }
     }
 }// namespace
-
-/*
- * Cell model
- */
 
 TEST_P(CellModelTestParam, OutputShape) {
     const auto [neuron_number, input_size, batch_size] = GetParam();
@@ -64,10 +56,6 @@ TEST_P(CellModelTestParam, GradientFlows) {
 INSTANTIATE_TEST_SUITE_P(
     TestCellModel, CellModelTestParam,
     testing::Combine(testing::Values(2, 8, 16), testing::Values(1, 3, 12), testing::Values(1, 4)));
-
-/*
- * Liquid cell
- */
 
 TEST_P(LiquidCellTestParam, StepOutputShape) {
     const auto [neuron_number, input_size, output_size, unfolding_steps, batch_size, time_steps] =
@@ -113,8 +101,6 @@ TEST_P(LiquidCellTestParam, GradientFlows) {
     const auto [neuron_number, input_size, output_size, unfolding_steps, batch_size, time_steps] =
         GetParam();
 
-    // LayerNorm over a single feature outputs exactly zero (x - mean(x) == 0),
-    // which blocks any gradient from reaching the layers before it
     if (output_size == 1) GTEST_SKIP() << "LayerNorm({1}) zeroes the signal, no gradient flows";
 
     LiquidCell liquid_cell(
@@ -129,7 +115,6 @@ TEST_P(LiquidCellTestParam, GradientFlows) {
 
     ASSERT_TRUE(inputs.grad().defined());
     ASSERT_TRUE(torch::all(torch::isfinite(inputs.grad())).item<bool>());
-    // every time step must contribute to the loss
     const auto per_step_grad = inputs.grad().abs().sum(std::vector<int64_t>{0, 2});
     ASSERT_TRUE(torch::all(torch::gt(per_step_grad, 0.f)).item<bool>())
         << "Some time steps received no gradient: " << per_step_grad;

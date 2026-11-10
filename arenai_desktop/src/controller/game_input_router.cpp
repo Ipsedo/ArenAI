@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #include "./game_input_router.h"
 
 #include <utility>
@@ -22,9 +18,6 @@ namespace arenai::desktop {
     void GameInputRouter::set_paused(const bool paused) {
         paused_ = paused;
 
-        // inputs held when the popup opens would otherwise stay "pressed" for
-        // the whole pause (their release goes to the menu): zero the movement
-        // state with synthetic releases of the bound inputs
         if (paused_ && game_keyboard_)
             for (const auto &slot:
                  {keyboard_bindings_.forward, keyboard_bindings_.backward,

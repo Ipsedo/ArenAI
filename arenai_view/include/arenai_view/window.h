@@ -1,7 +1,3 @@
-//
-// Created by samuel on 08/07/2026.
-//
-
 #ifndef ARENAI_WINDOW_H
 #define ARENAI_WINDOW_H
 
@@ -16,9 +12,6 @@
 
 namespace arenai::view {
 
-    // a connected, mapped gamepad as the window exposes it: `id` is the
-    // backend's device slot (stable while the pad stays connected), `guid`
-    // identifies the pad model across reconnections
     struct GamepadInfo {
         int id;
         std::string name;
@@ -42,26 +35,13 @@ namespace arenai::view {
         virtual void set_cursor_mode(controller::CursorMode mode) = 0;
         virtual void set_cursor_position(double x, double y) = 0;
 
-        // switches between borderless fullscreen (primary monitor, current
-        // video mode) and windowed mode; the new size reaches the application
-        // through the resize callback, like any user resize
         virtual void set_fullscreen(bool fullscreen) = 0;
 
-        // resolution of the monitor the window currently sits on (the one
-        // showing most of it), so UI scale can follow the physical display
-        // rather than the window size
         virtual std::tuple<int, int> screen_size() const = 0;
 
-        // connected gamepads, in the backend's slot order
         virtual std::vector<GamepadInfo> list_gamepads() const = 0;
-        // routes the gamepad callback to this device (an `id` from
-        // list_gamepads); a disconnected or invalid id falls back to the
-        // first connected gamepad
         virtual void select_gamepad(int id) = 0;
 
-        // user-facing label of the key on the current keyboard layout (e.g.
-        // Key::Q reads "A" on an AZERTY layout); canonical name when the
-        // layout gives none
         virtual std::string key_label(controller::Key key) const = 0;
     };
 

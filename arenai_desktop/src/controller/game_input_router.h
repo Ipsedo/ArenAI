@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #ifndef ARENAI_DESKTOP_GAME_INPUT_ROUTER_H
 #define ARENAI_DESKTOP_GAME_INPUT_ROUTER_H
 
@@ -14,11 +10,6 @@
 
 namespace arenai::desktop {
 
-    // Single owner of the window's input slots during a game: forwards events
-    // to the game handlers or to the pause menu depending on the pause state,
-    // and turns Escape / gamepad Start into a pause-toggle request. Routing is
-    // an application policy: neither the environment nor the gui knows the
-    // other exists.
     class GameInputRouter final : public controller::AbstractKeyboardCallback,
                                   public controller::AbstractGamepadCallback {
     public:
@@ -31,14 +22,12 @@ namespace arenai::desktop {
 
         void set_paused(bool paused);
 
-        // keyboard
         void on_key(controller::Key key, controller::InputAction action) override;
         void on_mouse_move(double x, double y) override;
         void
         on_mouse_button(controller::MouseButton button, controller::InputAction action) override;
         void on_scroll(double x_offset, double y_offset) override;
 
-        // gamepad
         void on_gamepad_button(
             controller::GamepadButton button, controller::InputAction action) override;
         void on_joystick(double x, double y, controller::GamepadJoystick stick) override;
@@ -53,7 +42,6 @@ namespace arenai::desktop {
         std::shared_ptr<AbstractKeyboardCallback> pause_input_;
         std::shared_ptr<AbstractGamepadCallback> pause_gamepad_input_;
         std::function<void()> on_pause_toggle_;
-        // movement slots to zero with synthetic releases when the pause opens
         KeyboardBindings keyboard_bindings_;
 
         bool paused_ = false;

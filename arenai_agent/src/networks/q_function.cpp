@@ -1,7 +1,3 @@
-//
-// Created by claude on 08/11/2026.
-//
-
 #include "./q_function.h"
 
 #include "../networks_utils/init.h"
@@ -59,10 +55,6 @@ namespace arenai::agent {
             1);
         return to_q->forward(head->forward(encoded));
     }
-
-    /*
-     * Twin
-     */
 
     TwinQNetwork::TwinQNetwork(
         const int nb_sensors, const int nb_continuous_actions, const int nb_discrete_actions,

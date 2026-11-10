@@ -1,7 +1,3 @@
-//
-// Created by samuel on 28/10/2026.
-//
-
 #ifndef ARENAI_DESKTOP_GUI_RML_DECORATORS_GRADIENT_BAR_H
 #define ARENAI_DESKTOP_GUI_RML_DECORATORS_GRADIENT_BAR_H
 
@@ -9,11 +5,6 @@
 
 namespace arenai::desktop::gui {
 
-    // A horizontal rule fading transparent → left color → right color →
-    // transparent across the element's border box (the Vulkan backend
-    // renders no shaders, so the fade lives in the vertex colors). `fade`
-    // is the width of each transparent ramp, in % of the element's width.
-    // RCSS: decorator: gradient-bar(<left-color> <right-color> <fade>);
     class GradientBarDecorator final : public GeometryDecorator {
     public:
         GradientBarDecorator(Rml::Colourb left_color, Rml::Colourb right_color, float fade_percent);

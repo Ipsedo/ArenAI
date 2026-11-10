@@ -1,7 +1,3 @@
-//
-// Created by samuel on 22/07/2026.
-//
-
 #include "./ppg_factory.h"
 
 using namespace arenai;

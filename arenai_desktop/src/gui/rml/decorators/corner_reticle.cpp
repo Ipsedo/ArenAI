@@ -1,7 +1,3 @@
-//
-// Created by samuel on 02/08/2026.
-//
-
 #include "./corner_reticle.h"
 
 namespace arenai::desktop::gui {
@@ -23,9 +19,6 @@ namespace arenai::desktop::gui {
 
         Rml::Mesh mesh;
 
-        // each corner is an L: the horizontal tick, then the vertical
-        // remainder below/above it (no overlap, so translucent tick colors
-        // blend once)
         for (const float sx: {1.f, -1.f})
             for (const float sy: {1.f, -1.f}) {
                 const float hx = sx > 0.f ? inset : size.x - inset - length;
@@ -39,8 +32,6 @@ namespace arenai::desktop::gui {
                 }
             }
 
-        // centered fill (slider knob): inset from the edges, the element's
-        // own border-radius, skipped when left transparent
         if (fill_color_.alpha > 0) {
             const float fill_inset = element.ResolveLength(fill_inset_);
             const float radius = element.GetComputedValues().border_top_left_radius();

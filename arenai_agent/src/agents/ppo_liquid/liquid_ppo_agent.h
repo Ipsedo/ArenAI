@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #ifndef ARENAI_LIQUID_PPO_AGENT_H
 #define ARENAI_LIQUID_PPO_AGENT_H
 

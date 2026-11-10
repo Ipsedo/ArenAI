@@ -1,7 +1,3 @@
-//
-// Created by samuel on 30/06/2026.
-//
-
 #include <networks/vision.h>
 
 #include <arenai_agent_tests/tests_networks/tests_vision.h>
@@ -33,8 +29,6 @@ TEST_P(VisionTestParam, TestVisionForward) {
     ASSERT_EQ(encoded_images.size(1), conv.get_output_size());
     ASSERT_EQ(encoded_images.size(1) % output_conv_channels.back(), 0);
 }
-
-// Create parametrized tests
 
 INSTANTIATE_TEST_SUITE_P(
     TestVision, VisionTestParam,

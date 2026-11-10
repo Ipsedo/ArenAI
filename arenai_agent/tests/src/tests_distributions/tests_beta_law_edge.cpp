@@ -1,17 +1,9 @@
-//
-// Created by claude on 01/07/2026.
-//
-
 #include <distributions/beta_law.h>
 
 #include <arenai_agent_tests/tests_distributions/tests_beta_law_edge.h>
 
 using namespace arenai;
 using namespace arenai::agent;
-
-// ========================================================================
-// Asymmetric parameter edge cases
-// ========================================================================
 
 TEST_F(BetaLawEdgeTest, ModeNearUpperBound) {
     const auto mode = torch::ones({50}) * 0.999f;
@@ -99,10 +91,6 @@ TEST_F(BetaLawEdgeTest, LogProbAtExactBoundaryValues) {
     ASSERT_TRUE(torch::all(torch::isfinite(log_p_hi)).item<bool>())
         << "Log-proba at exact +1 boundary should be finite (clamped)";
 }
-
-// ========================================================================
-// Gradient flow tests
-// ========================================================================
 
 TEST_F(BetaLawGradientTest, LogProbaGradientFlowsThroughMode) {
     const auto mode = torch::full({5}, 0.4f, torch::TensorOptions().requires_grad(true));

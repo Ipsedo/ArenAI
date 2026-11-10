@@ -1,7 +1,3 @@
-//
-// Created by samuel on 02/04/2023.
-//
-
 #ifndef ARENAI_CANON_H
 #define ARENAI_CANON_H
 

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 19/03/2023.
-//
-
 #ifndef ARENAI_ITEM_H
 #define ARENAI_ITEM_H
 
@@ -66,18 +62,14 @@ namespace arenai::model {
         bool is_dead() const;
         bool is_already_dead();
 
-        // remaining health over the initial one, in [0, 1]
+        // in [0, 1]
         float health_ratio() const;
         float initial_health() const;
 
-        // zeroes the health and flags the item as already dead: a wreck pays
-        // neither hit nor kill to whoever keeps shooting at it
         void kill();
 
         void restore();
 
-        // returns the damage actually taken (capped by the remaining health); the impacts
-        // kept for consume_hits_received() carry that same capped damage
         float receive_damages(const ImpactInfo &impact);
         std::vector<ImpactInfo> consume_hits_received();
 

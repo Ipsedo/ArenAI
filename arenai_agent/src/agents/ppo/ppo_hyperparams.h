@@ -1,7 +1,3 @@
-//
-// Created by claude on 22/07/2026.
-//
-
 #ifndef ARENAI_PPO_HYPERPARAMS_H
 #define ARENAI_PPO_HYPERPARAMS_H
 
@@ -32,9 +28,7 @@ namespace arenai::agent {
         float grad_norm_max = 0.5f;
         float initial_alpha = 0.001f;
         float alpha_learning_rate = 3e-4f;
-        // per continuous action, entropy of the squashed normal
         float continuous_target_entropy = -1.f;
-        // per discrete action, the Bernoulli whose entropy is the target
         float discrete_target_proba = 0.05f;
         int actor_epochs = 4;
         int critic_epochs = 4;

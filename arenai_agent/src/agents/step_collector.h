@@ -1,7 +1,3 @@
-//
-// Created by claude on 22/07/2026.
-//
-
 #ifndef ARENAI_STEP_COLLECTOR_H
 #define ARENAI_STEP_COLLECTOR_H
 
@@ -9,9 +5,6 @@
 
 namespace arenai::agent {
 
-    // Env-feedback ingestion. The act-time recording (state, action and any
-    // algorithm-specific extras) goes through the concrete agent -> collector
-    // channel, wired by the factory.
     class AbstractStepCollector {
     public:
         virtual ~AbstractStepCollector() = default;

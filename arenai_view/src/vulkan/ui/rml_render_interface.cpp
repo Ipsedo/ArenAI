@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #include "./rml_render_interface.h"
 
 #include <algorithm>

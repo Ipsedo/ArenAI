@@ -1,7 +1,3 @@
-//
-// Created by samuel on 02/04/2023.
-//
-
 #include "./jolt_tank.h"
 
 #include <algorithm>
@@ -37,7 +33,6 @@ namespace arenai::model {
 
         glm::vec3 scale(0.5);
 
-        // chassis
         constexpr float chassis_mass = 1e4f;
         auto chassis_item = std::make_shared<ChassisItem>(
             tank_prefix_name, engine, file_reader, chassis_pos, scale, chassis_mass);
@@ -47,7 +42,6 @@ namespace arenai::model {
         jolt_items.push_back(chassis_item);
         life_items.push_back(chassis_item.get());
 
-        // wheels
         constexpr float front_axle_z = 3.f;
 
         constexpr float wheel_mass = 150.f;
@@ -87,7 +81,6 @@ namespace arenai::model {
             life_items.push_back(wheel.get());
         }
 
-        // turret
         glm::vec3 turret_pos(0.f, 1.3f, 1.2f);
         glm::vec3 turret_scale(1.2f);
         auto turret = std::make_shared<TurretItem>(
@@ -99,7 +92,6 @@ namespace arenai::model {
         controllers.push_back(turret);
         life_items.push_back(turret.get());
 
-        // canon
         glm::vec3 canon_pos(0.f, 0.5f, 1.7f);
         glm::vec3 canon_scale = turret_scale;
         auto canon_item = std::make_shared<CanonItem>(
@@ -123,9 +115,6 @@ namespace arenai::model {
 
         canon = canon_item;
 
-        // spring-arm camera: pull the canon camera in front of any world geometry
-        // (terrain, obstacles) blocking the [aim point -> camera] segment. The
-        // tank's own bodies are excluded, the ray starts inside them.
         std::vector<JPH::BodyID> own_bodies;
         own_bodies.reserve(jolt_items.size());
         for (const auto &item: jolt_items) own_bodies.push_back(item->get_body()->GetID());
@@ -138,8 +127,6 @@ namespace arenai::model {
             },
             wanted_frame_frequency);
 
-        // the tank never collides with itself, like Bullet's pairwise
-        // setIgnoreCollisionCheck
         static std::atomic<JPH::CollisionGroup::GroupID> next_group_id{0};
         const auto group_id = next_group_id++;
 
@@ -155,7 +142,6 @@ namespace arenai::model {
 
         for (auto &item: jolt_items) item->get_body()->SetAllowSleeping(false);
 
-        // register with engine
         for (const auto &item: jolt_items) engine.add_jolt_item(item);
 
         engine.add_jolt_item_producer([c = canon_item] { return c->produce_jolt_items(); });

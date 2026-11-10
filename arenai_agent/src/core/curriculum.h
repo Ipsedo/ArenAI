@@ -1,7 +1,3 @@
-//
-// Created by samuel on 05/09/2026.
-//
-
 #ifndef ARENAI_AGENT_HOST_SPAWN_CURRICULUM_H
 #define ARENAI_AGENT_HOST_SPAWN_CURRICULUM_H
 
@@ -18,13 +14,10 @@ namespace arenai::agent {
 
         float sample_progress();
 
-        // per-episode totals across every tank; ignored unless the last sampled
-        // episode was a probe
         void on_episode_end(int nb_fires, int nb_hits);
 
         float upper_bound() const;
 
-        // whether the last sampled episode probes the upper bound
         bool is_probe() const;
 
     private:

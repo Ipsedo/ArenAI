@@ -1,7 +1,3 @@
-//
-// Created by claude on 08/11/2026.
-//
-
 #ifndef ARENAI_SAC_AGENT_H
 #define ARENAI_SAC_AGENT_H
 

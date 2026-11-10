@@ -1,7 +1,3 @@
-//
-// Created by samuel on 25/10/2026.
-//
-
 #include "./gamepad_selection.h"
 
 namespace arenai::desktop {

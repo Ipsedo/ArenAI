@@ -1,17 +1,9 @@
-//
-// Created by claude on 01/07/2026.
-//
-
 #include <distributions/gaussian_tanh.h>
 
 #include <arenai_agent_tests/tests_distributions/tests_gaussian_tanh_edge.h>
 
 using namespace arenai;
 using namespace arenai::agent;
-
-// ========================================================================
-// Edge cases: extreme values
-// ========================================================================
 
 TEST_F(GaussianTanhEdgeTest, LogPdfWithLargeUStaysFinite) {
     const auto mu = torch::zeros({10});
@@ -58,10 +50,6 @@ TEST_F(GaussianTanhEdgeTest, SampleWithVeryLargeMu) {
                     .item<bool>())
         << "Action should still be bounded by tanh";
 }
-
-// ========================================================================
-// Gradient flow tests
-// ========================================================================
 
 TEST_F(GaussianTanhGradientTest, LogPdfGradientFlowsThroughMu) {
     const auto mu = torch::zeros({5}, torch::TensorOptions().requires_grad(true));

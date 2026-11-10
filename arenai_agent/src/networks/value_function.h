@@ -1,7 +1,3 @@
-//
-// Created by samuel on 22/07/2026.
-//
-
 #ifndef ARENAI_VALUE_FUNCTION_H
 #define ARENAI_VALUE_FUNCTION_H
 

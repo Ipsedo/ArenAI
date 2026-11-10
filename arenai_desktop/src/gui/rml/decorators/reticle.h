@@ -1,7 +1,3 @@
-//
-// Created by samuel on 23/08/2026.
-//
-
 #ifndef ARENAI_DESKTOP_GUI_RML_DECORATORS_RETICLE_H
 #define ARENAI_DESKTOP_GUI_RML_DECORATORS_RETICLE_H
 
@@ -9,8 +5,6 @@
 
 namespace arenai::desktop::gui {
 
-    // The aim crosshair: four arms in the element's color stopping `gap`
-    // short of the center. RCSS: decorator: reticle(<thickness> <gap>);
     class ReticleDecorator final : public GeometryDecorator {
     public:
         ReticleDecorator(Rml::NumericValue thickness, Rml::NumericValue gap);

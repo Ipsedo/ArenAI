@@ -1,7 +1,3 @@
-//
-// Created by samuel on 01/07/2026.
-//
-
 #ifndef ARENAI_TANK_FACTORY_H
 #define ARENAI_TANK_FACTORY_H
 

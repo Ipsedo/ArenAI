@@ -1,5 +1,6 @@
 import csv
 import math
+import random
 import statistics as st
 from collections import defaultdict
 
@@ -46,6 +47,16 @@ def tanh_normal_entropy(mu, sigma, n=32):
         t = math.tanh(x)
         acc += math.log(max(1 - t * t, 1e-12))
     return h + acc / n
+
+
+def yaw_spread_deg(r, n=64):
+    mode = math.atan2(math.tanh(r["mu_yaw_sin"]), math.tanh(r["mu_yaw_cos"]))
+    errors = []
+    for _ in range(n):
+        c = math.tanh(random.gauss(r["mu_yaw_cos"], r["sigma_yaw_cos"]))
+        s = math.tanh(random.gauss(r["mu_yaw_sin"], r["sigma_yaw_sin"]))
+        errors.append(math.remainder(math.atan2(s, c) - mode, 2 * math.pi))
+    return math.degrees(math.sqrt(sum(e * e for e in errors) / n))
 
 
 def analyze(decisions_path, step_seconds):
@@ -113,8 +124,11 @@ def analyze(decisions_path, step_seconds):
     out["turret"]["median_nearest_distance"] = quantile([r["distance"] for r in late], 0.5)
 
     # policy heads
-    heads = {}
-    for d in ("canon_x", "canon_y"):
+    heads = {
+        "aim_dims": [k[len("sigma_"):] for k in late[0] if k.startswith("sigma_")],
+        "all_dims": [k[len("mu_"):] for k in late[0] if k.startswith("mu_")],
+    }
+    for d in heads["aim_dims"]:
         s = [r[f"sigma_{d}"] for r in late]
         heads[f"sigma_{d}"] = {
             "p10": quantile(s, 0.1), "p50": quantile(s, 0.5), "p90": quantile(s, 0.9),
@@ -122,12 +136,17 @@ def analyze(decisions_path, step_seconds):
         }
         sample = late[::max(1, len(late) // 3000)]
         heads[f"H_{d}"] = mean(tanh_normal_entropy(r[f"mu_{d}"], r[f"sigma_{d}"]) for r in sample)
-    for d in ("dir_x", "dir_y", "canon_x", "canon_y"):
+    for d in heads["all_dims"]:
         m = [r[f"mu_{d}"] for r in late]
         heads[f"mu_{d}"] = {
             "mean": mean(m), "abs_p50": quantile([abs(x) for x in m], 0.5),
             "saturated": mean(abs(x) > MU_SATURATED for x in m),
         }
+    if "yaw_cos" in heads["aim_dims"]:
+        # absolute turret set point atan2(tanh(u_sin), tanh(u_cos)): angular spread of a draw
+        sample = late[::max(1, len(late) // 3000)]
+        spreads = [yaw_spread_deg(r) for r in sample]
+        heads["yaw_spread_deg"] = {"p50": quantile(spreads, 0.5), "p90": quantile(spreads, 0.9)}
     heads["p_zoom"] = mean(r["p_zoom"] for r in late)
     out["heads"] = heads
 
@@ -193,12 +212,12 @@ HEADLINE = [
     ("%désarmé", lambda m: m["reserve"]["disarmed_fraction"]),
     ("tir/s", lambda m: m["shots"]["per_tank_second"]),
     ("tour<5°", lambda m: m["turret"]["below_5deg"]),
-    ("σx", lambda m: m["heads"]["sigma_canon_x"]["p50"]),
-    ("σy", lambda m: m["heads"]["sigma_canon_y"]["p50"]),
-    ("σ@plaf", lambda m: max(m["heads"]["sigma_canon_x"]["at_ceiling"],
-                             m["heads"]["sigma_canon_y"]["at_ceiling"])),
-    ("|μ|cx", lambda m: m["heads"]["mu_canon_x"]["abs_p50"]),
-    ("μsat", lambda m: max(m["heads"][f"mu_{d}"]["saturated"]
-                           for d in ("dir_x", "dir_y", "canon_x", "canon_y"))),
+    ("σx", lambda m: m["heads"][f"sigma_{m['heads']['aim_dims'][0]}"]["p50"]),
+    ("σy", lambda m: m["heads"][f"sigma_{m['heads']['aim_dims'][-1]}"]["p50"]),
+    ("σ@plaf", lambda m: max(m["heads"][f"sigma_{d}"]["at_ceiling"]
+                             for d in m["heads"]["aim_dims"])),
+    ("|μ|cx", lambda m: m["heads"][f"mu_{m['heads']['aim_dims'][0]}"]["abs_p50"]),
+    ("μsat", lambda m: max(m["heads"][f"mu_{d}"]["saturated"] for d in m["heads"]["all_dims"])),
+    ("σyaw°", lambda m: m["heads"].get("yaw_spread_deg", {}).get("p50", float("nan"))),
     ("p_zoom", lambda m: m["heads"]["p_zoom"]),
 ]

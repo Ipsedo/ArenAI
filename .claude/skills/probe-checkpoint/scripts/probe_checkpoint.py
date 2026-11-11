@@ -123,7 +123,7 @@ def print_detail(side, m):
     print(f"tourelle : <5° {fmt(tu['below_5deg']).strip()}, <10° {fmt(tu['below_10deg']).strip()},"
           f" <20° {fmt(tu['below_20deg']).strip()}, angle médian {fmt(tu['median_best_angle']).strip()}°,"
           f" distance cible médiane {fmt(tu['median_best_distance']).strip()} m")
-    for d in ("canon_x", "canon_y"):
+    for d in h.get("aim_dims", ("canon_x", "canon_y")):
         sg = h[f"sigma_{d}"]
         print(f"σ_{d} p10/p50/p90 {fmt(sg['p10']).strip()}/{fmt(sg['p50']).strip()}/"
               f"{fmt(sg['p90']).strip()}, au plafond {fmt(sg['at_ceiling']).strip()}, "
@@ -131,7 +131,7 @@ def print_detail(side, m):
     print("μ : " + ", ".join(
         f"{d} moy {fmt(h[f'mu_{d}']['mean']).strip()} |μ|p50 {fmt(h[f'mu_{d}']['abs_p50']).strip()}"
         f" sat {fmt(h[f'mu_{d}']['saturated']).strip()}"
-        for d in ("dir_x", "dir_y", "canon_x", "canon_y")))
+        for d in h.get("all_dims", ("dir_x", "dir_y", "canon_x", "canon_y"))))
     print(f"réserve : {fmt(r['emptied']).strip()} des tank-épisodes vident, 1re réserve vide "
           f"p10/p50/p90 {fmt(r['first_empty_s_p10']).strip()}/{fmt(r['first_empty_s_p50']).strip()}/"
           f"{fmt(r['first_empty_s_p90']).strip()} s, désarmé {fmt(r['disarmed_fraction']).strip()},"

@@ -18,6 +18,22 @@ namespace arenai::agent {
         torch::Tensor critic_hiddens;
     };
 
+    // per live transition of a rollout, the two first-epoch pushes on log sigma
+    struct LiquidSigmaGradients {
+        // [N] indices in the rollout
+        torch::Tensor steps;
+        torch::Tensor tanks;
+        // [N, nb_continuous_actions] d(surrogate)/d(log sigma), d(alpha * H)/d(log sigma)
+        torch::Tensor surrogate;
+        torch::Tensor entropy;
+        torch::Tensor mu;
+        torch::Tensor sigma;
+        // [N]
+        torch::Tensor advantages;
+        torch::Tensor fire_masks;
+        torch::Tensor fires;
+    };
+
     class LiquidPpoTrainer final : public AbstractTrainer {
     public:
         LiquidPpoTrainer(
@@ -29,10 +45,11 @@ namespace arenai::agent {
             const std::vector<int> &group_norm_nums, int neuron_number, int unfolding_steps,
             float delta_t, torch::Device device, int metric_window_size, float gamma,
             float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
-            float initial_alpha, float alpha_learning_rate, float continuous_target_entropy,
-            float discrete_target_proba, int actor_epochs, int critic_epochs, int rollout_size,
-            int actor_batch_size, int actor_gpu_batch_size, int critic_batch_size,
-            int critic_gpu_batch_size, int chunk_size);
+            float initial_alpha, float alpha_learning_rate,
+            const std::vector<float> &continuous_target_entropy, float discrete_target_proba,
+            int actor_epochs, int critic_epochs, int rollout_size, int actor_batch_size,
+            int actor_gpu_batch_size, int critic_batch_size, int critic_gpu_batch_size,
+            int chunk_size);
 
         void step() override;
 
@@ -40,6 +57,10 @@ namespace arenai::agent {
         std::vector<std::shared_ptr<AbstractMetric>> get_csv_only_metrics() override;
 
         void save(const std::filesystem::path &output_folder) override;
+        void load(const std::filesystem::path &input_folder) const;
+
+        // consumes the complete steps of the buffer without any optimizer step
+        LiquidSigmaGradients sigma_gradients();
 
         int count_parameters() override;
 
@@ -135,6 +156,29 @@ namespace arenai::agent {
             float live_rows(const torch::Tensor &units) const;
             float batch_live_rows(const std::vector<torch::Tensor> &blocks) const;
         };
+
+        struct ActorTerms {
+            // live rows of the block, in its [units, chunk_size] flattening
+            torch::Tensor valid_idx;
+            torch::Tensor mu;
+            torch::Tensor sigma;
+            torch::Tensor discrete_mask;
+            torch::Tensor ratio;
+            torch::Tensor log_ratio;
+            torch::Tensor continuous_entropy;
+            torch::Tensor discrete_entropy;
+            // [N, 1]
+            torch::Tensor surrogate;
+            // [N, nb_continuous_actions]
+            torch::Tensor continuous_bonus;
+            torch::Tensor discrete_bonus;
+        };
+
+        ActorTerms actor_terms(const FlatRows &block) const;
+
+        static FlatRows flat_rows(
+            const LiquidPpoRollout &rollout, const LiquidGaeResult &gae, int64_t nb_kept_steps,
+            torch::Device device);
 
         void train();
 

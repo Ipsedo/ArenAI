@@ -52,7 +52,7 @@ namespace arenai::agent {
         const int metric_window_size, const float gamma, const float gae_lambda,
         const float clip_epsilon, const float target_kl, const float grad_norm_max,
         const float initial_alpha, const float alpha_learning_rate,
-        const float continuous_target_entropy, const float discrete_target_proba,
+        const std::vector<float> &continuous_target_entropy, const float discrete_target_proba,
         const int actor_epochs, const int critic_epochs, const int rollout_size,
         const int actor_batch_size, const int actor_gpu_batch_size, const int critic_batch_size,
         const int critic_gpu_batch_size, const int actor_aux_epochs, const int critic_aux_epochs,

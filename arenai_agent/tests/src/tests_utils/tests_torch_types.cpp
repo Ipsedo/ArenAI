@@ -8,7 +8,7 @@ using namespace arenai::core;
 using namespace arenai::agent;
 
 TEST_F(TorchTypesTest, SingleActionMapping) {
-    const auto continuous = torch::tensor({{0.1f, -0.2f, 0.3f, -0.4f}});
+    const auto continuous = torch::tensor({{0.1f, -0.2f, 0.3f, -0.4f, 0.5f}});
     const auto discrete = torch::tensor({{1.f, 0.f}});
 
     const auto actions = TorchAction{continuous, discrete}.to_actions();
@@ -16,14 +16,18 @@ TEST_F(TorchTypesTest, SingleActionMapping) {
     ASSERT_EQ(actions.size(), 1);
     ASSERT_FLOAT_EQ(actions[0].left_joystick.x, 0.1f);
     ASSERT_FLOAT_EQ(actions[0].left_joystick.y, -0.2f);
-    ASSERT_FLOAT_EQ(actions[0].right_joystick.x, 0.3f);
-    ASSERT_FLOAT_EQ(actions[0].right_joystick.y, -0.4f);
+    ASSERT_FLOAT_EQ(actions[0].right_joystick.x, 0.f);
+    ASSERT_FLOAT_EQ(actions[0].right_joystick.y, 0.f);
+    ASSERT_TRUE(actions[0].aim.has_value());
+    ASSERT_FLOAT_EQ(actions[0].aim->yaw_cos, 0.3f);
+    ASSERT_FLOAT_EQ(actions[0].aim->yaw_sin, -0.4f);
+    ASSERT_FLOAT_EQ(actions[0].aim->pitch, 0.5f);
     ASSERT_TRUE(actions[0].fire_button.pressed);
     ASSERT_FALSE(actions[0].zoom_button.pressed);
 }
 
 TEST_F(TorchTypesTest, IndependentFireAndZoom) {
-    const auto continuous = torch::zeros({1, 4});
+    const auto continuous = torch::zeros({1, model::ENEMY_NB_CONTINUOUS_ACTION});
     const auto discrete = torch::tensor({{0.f, 1.f}});
 
     const auto actions = TorchAction{continuous, discrete}.to_actions();
@@ -33,7 +37,7 @@ TEST_F(TorchTypesTest, IndependentFireAndZoom) {
 }
 
 TEST_F(TorchTypesTest, BothActionsEngagedTogether) {
-    const auto continuous = torch::zeros({1, 4});
+    const auto continuous = torch::zeros({1, model::ENEMY_NB_CONTINUOUS_ACTION});
     const auto discrete = torch::tensor({{1.f, 1.f}});
 
     const auto actions = TorchAction{continuous, discrete}.to_actions();
@@ -152,7 +156,7 @@ TEST_F(TorchTypesTest, RejectsAProprioceptionOfTheWrongSize) {
 TEST_P(TensorToActionsParamTest, BatchSizePreserved) {
     const auto batch = GetParam();
 
-    const auto continuous = torch::randn({batch, 4});
+    const auto continuous = torch::randn({batch, model::ENEMY_NB_CONTINUOUS_ACTION});
     const auto discrete = torch::rand({batch, 2});
 
     const auto actions = TorchAction{continuous, discrete}.to_actions();
@@ -163,7 +167,7 @@ TEST_P(TensorToActionsParamTest, BatchSizePreserved) {
 TEST_P(TensorToActionsParamTest, ContinuousValuesMatchTensor) {
     const auto batch = GetParam();
 
-    const auto continuous = torch::randn({batch, 4});
+    const auto continuous = torch::randn({batch, model::ENEMY_NB_CONTINUOUS_ACTION});
     const auto discrete = torch::rand({batch, 2});
 
     const auto actions = TorchAction{continuous, discrete}.to_actions();
@@ -172,8 +176,9 @@ TEST_P(TensorToActionsParamTest, ContinuousValuesMatchTensor) {
     for (int i = 0; i < batch; ++i) {
         ASSERT_FLOAT_EQ(actions[i].left_joystick.x, acc[i][0]);
         ASSERT_FLOAT_EQ(actions[i].left_joystick.y, acc[i][1]);
-        ASSERT_FLOAT_EQ(actions[i].right_joystick.x, acc[i][2]);
-        ASSERT_FLOAT_EQ(actions[i].right_joystick.y, acc[i][3]);
+        ASSERT_FLOAT_EQ(actions[i].aim->yaw_cos, acc[i][2]);
+        ASSERT_FLOAT_EQ(actions[i].aim->yaw_sin, acc[i][3]);
+        ASSERT_FLOAT_EQ(actions[i].aim->pitch, acc[i][4]);
     }
 }
 
@@ -181,7 +186,7 @@ TEST_P(TensorToActionsParamTest, DiscreteButtonsConsistent) {
     const auto batch = GetParam();
 
     const auto discrete = torch::rand({batch, 2});
-    const auto continuous = torch::zeros({batch, 4});
+    const auto continuous = torch::zeros({batch, model::ENEMY_NB_CONTINUOUS_ACTION});
 
     const auto actions = TorchAction{continuous, discrete}.to_actions();
 
@@ -195,7 +200,7 @@ TEST_P(TensorToActionsParamTest, DiscreteButtonsConsistent) {
 TEST_P(TensorToActionsParamTest, WorksWithGPUTensor) {
     const auto batch = GetParam();
 
-    auto continuous = torch::randn({batch, 4});
+    auto continuous = torch::randn({batch, model::ENEMY_NB_CONTINUOUS_ACTION});
     auto discrete = torch::rand({batch, 2});
 
     if (torch::cuda::is_available()) {

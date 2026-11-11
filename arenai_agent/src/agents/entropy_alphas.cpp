@@ -2,6 +2,7 @@
 
 #include "../distributions/bernoulli.h"
 #include "../metrics/last_metric.h"
+#include "../networks_utils/torch_loader.h"
 #include "../networks_utils/torch_saver.h"
 #include "./torch_types.h"
 
@@ -43,20 +44,24 @@ namespace arenai::agent {
 
     EntropyAlphas::EntropyAlphas(
         const int nb_continuous_actions, const int nb_discrete_actions, const float initial_alpha,
-        const float learning_rate, const float continuous_target_entropy,
+        const float learning_rate, const std::vector<float> &continuous_target_entropy,
         const float discrete_target_proba)
         : continuous_alphas(
             std::make_shared<AlphaParameters>(initial_alpha, nb_continuous_actions)),
           discrete_alphas(std::make_shared<AlphaParameters>(initial_alpha, nb_discrete_actions)),
           optim(std::make_unique<torch::optim::Adam>(
               all_parameters(continuous_alphas, discrete_alphas), learning_rate)),
-          continuous_target_entropy(continuous_target_entropy),
+          continuous_target_entropy(torch::tensor(continuous_target_entropy)),
           discrete_target_entropy(
               bernoulli_entropy(torch::tensor(discrete_target_proba)).item<float>()),
           continuous_metrics(
               make_metrics(TorchAction::continuous_action_names(), nb_continuous_actions)),
           discrete_metrics(
               make_metrics(TorchAction::discrete_action_names(), nb_discrete_actions)) {
+        if (static_cast<int>(continuous_target_entropy.size()) != nb_continuous_actions)
+            throw std::invalid_argument(
+                "continuous_target_entropy needs " + std::to_string(nb_continuous_actions)
+                + " values, got " + std::to_string(continuous_target_entropy.size()));
         record(continuous_metrics, continuous());
         record(discrete_metrics, discrete());
     }
@@ -107,9 +112,15 @@ namespace arenai::agent {
         save_torch(output_folder, optim, "alpha_optim.pt");
     }
 
+    void EntropyAlphas::load(const std::filesystem::path &input_folder) const {
+        load_torch(input_folder, continuous_alphas, "continuous_alphas.pt");
+        load_torch(input_folder, discrete_alphas, "discrete_alphas.pt");
+    }
+
     void EntropyAlphas::to(const torch::Device device) const {
         continuous_alphas->to(device);
         discrete_alphas->to(device);
+        continuous_target_entropy = continuous_target_entropy.to(device);
     }
 
     int EntropyAlphas::count_parameters() const {

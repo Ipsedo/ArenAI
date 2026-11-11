@@ -37,6 +37,16 @@ namespace {
         return {.left_joystick = {0.f, 0.f}, .right_joystick = {x, y}};
     }
 
+    user_input set_point(const float yaw, const float pitch, const float radius = 1.f) {
+        return {
+            .left_joystick = {0.f, 0.f},
+            .right_joystick = {1.f, 1.f},
+            .aim = aim_target{
+                .yaw_cos = radius * std::cos(yaw),
+                .yaw_sin = radius * std::sin(yaw),
+                .pitch = pitch}};
+    }
+
 }// namespace
 
 TEST_F(AimTest, FullDeflectionMovesTheTurretByOneStep) {
@@ -127,4 +137,80 @@ TEST_F(AimTest, PlayerTurretSlewsFasterThanTheEnemy) {
 
     ASSERT_NEAR(turret->get_angle(), -PLAYER_TURRET_STEP, 1e-5f);
     ASSERT_GT(PLAYER_TURRET_STEP, TURRET_STEP);
+}
+
+TEST_F(AimTest, SetPointWithinOneStepIsReachedExactly) {
+    const auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
+    auto *turret = find_part<TurretItem>(*tank);
+    auto *canon = find_part<CanonItem>(*tank);
+
+    turret->apply_input(set_point(0.5f * TURRET_STEP, 0.f));
+    canon->apply_input(set_point(0.f, 0.5f * CANON_STEP / CANON_MAX_ANGLE));
+
+    ASSERT_NEAR(turret->get_angle(), 0.5f * TURRET_STEP, 1e-6f);
+    ASSERT_NEAR(canon->get_angle(), 0.5f * CANON_STEP, 1e-6f);
+}
+
+TEST_F(AimTest, DistantSetPointIsApproachedAtTheMaxRate) {
+    const auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
+    auto *turret = find_part<TurretItem>(*tank);
+    auto *canon = find_part<CanonItem>(*tank);
+
+    for (int i = 0; i < 3; i++) {
+        turret->apply_input(set_point(0.5f * PI, 0.f));
+        canon->apply_input(set_point(0.f, -1.f));
+    }
+
+    ASSERT_NEAR(turret->get_angle(), 3.f * TURRET_STEP, 1e-5f);
+    ASSERT_NEAR(canon->get_angle(), -3.f * CANON_STEP, 1e-5f);
+}
+
+TEST_F(AimTest, SetPointIsHeldOnceReached) {
+    const auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
+    auto *turret = find_part<TurretItem>(*tank);
+    auto *canon = find_part<CanonItem>(*tank);
+
+    for (int i = 0; i < 200; i++) {
+        turret->apply_input(set_point(-0.75f * PI, 0.f));
+        canon->apply_input(set_point(0.f, 0.5f));
+    }
+
+    ASSERT_NEAR(turret->get_angle(), -0.75f * PI, 1e-5f);
+    ASSERT_NEAR(canon->get_angle(), 0.5f * CANON_MAX_ANGLE, 1e-5f);
+}
+
+TEST_F(AimTest, SetPointTurnsTheShortWayAroundTheBack) {
+    const auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
+    auto *turret = find_part<TurretItem>(*tank);
+
+    for (int i = 0; i < 200; i++) turret->apply_input(set_point(0.9f * PI, 0.f));
+    turret->apply_input(set_point(-0.9f * PI, 0.f));
+
+    ASSERT_NEAR(std::remainder(turret->get_angle() - 0.9f * PI, 2.f * PI), TURRET_STEP, 1e-5f)
+        << "from +0.9 pi to -0.9 pi the short way crosses the back";
+    ASSERT_LE(std::abs(turret->get_angle()), PI);
+}
+
+TEST_F(AimTest, SetPointYawIgnoresTheDirectionNorm) {
+    const auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
+    auto *turret = find_part<TurretItem>(*tank);
+
+    turret->apply_input(set_point(0.5f * TURRET_STEP, 0.f, 0.1f));
+
+    ASSERT_NEAR(turret->get_angle(), 0.5f * TURRET_STEP, 1e-6f);
+}
+
+TEST_F(AimTest, SetPointPitchIsClampedToTheTravelLimit) {
+    const auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
+    auto *canon = find_part<CanonItem>(*tank);
+
+    for (int i = 0; i < 200; i++) canon->apply_input(set_point(0.f, 3.f));
+
+    ASSERT_NEAR(canon->get_angle(), CANON_MAX_ANGLE, 1e-6f);
 }

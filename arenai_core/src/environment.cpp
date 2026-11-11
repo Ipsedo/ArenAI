@@ -47,7 +47,7 @@ namespace arenai::core {
 
     void BaseTanksEnvironment::advance_frame(
         const float time_delta, const std::vector<Action> &actions) {
-        // the parts read the aim axes as a rate
+        // the parts read the aim axes as a rate, or reach the aim set point when one is given
         for (int i = 0; i < tanks.size(); i++) {
             if (tanks[i]->is_dead()) tanks[i]->on_death();
             else

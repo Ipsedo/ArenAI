@@ -26,10 +26,10 @@ namespace arenai::agent {
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
             float gamma, float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
-            float initial_alpha, float alpha_learning_rate, float continuous_target_entropy,
-            float discrete_target_proba, int actor_epochs, int critic_epochs, int rollout_size,
-            int actor_batch_size, int actor_gpu_batch_size, int critic_batch_size,
-            int critic_gpu_batch_size);
+            float initial_alpha, float alpha_learning_rate,
+            const std::vector<float> &continuous_target_entropy, float discrete_target_proba,
+            int actor_epochs, int critic_epochs, int rollout_size, int actor_batch_size,
+            int actor_gpu_batch_size, int critic_batch_size, int critic_gpu_batch_size);
 
         void step() override;
 

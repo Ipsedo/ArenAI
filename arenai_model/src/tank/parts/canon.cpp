@@ -107,7 +107,11 @@ namespace arenai::model {
     }
 
     void CanonItem::apply_input(const controller::user_input &input) {
-        const float delta = std::clamp(input.right_joystick.y, -1.f, 1.f) * max_rad_per_frame;
+        const float delta = input.aim.has_value()
+                                ? std::clamp(
+                                    std::clamp(input.aim->pitch, -1.f, 1.f) * MAX_ANGLE - angle,
+                                    -max_rad_per_frame, max_rad_per_frame)
+                                : std::clamp(input.right_joystick.y, -1.f, 1.f) * max_rad_per_frame;
 
         angle = std::clamp(angle + delta, -MAX_ANGLE, MAX_ANGLE);
 

@@ -8,7 +8,7 @@ namespace arenai::agent {
     // one learned temperature per action, alpha = exp(log_alpha) kept in [MIN_ALPHA, MAX_ALPHA]
     class AlphaParameters : public torch::nn::Module {
     public:
-        static constexpr float MIN_ALPHA = 1e-3f;
+        static constexpr float MIN_ALPHA = 1e-4f;
         static constexpr float MAX_ALPHA = 1.f;
 
         AlphaParameters(float initial_alpha, int nb_alphas);

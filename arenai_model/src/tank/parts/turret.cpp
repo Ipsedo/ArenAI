@@ -46,9 +46,15 @@ namespace arenai::model {
     }
 
     void TurretItem::apply_input(const controller::user_input &input) {
-        const float delta = std::clamp(input.right_joystick.x, -1.f, 1.f) * max_rad_per_frame;
-
-        angle = std::remainder(angle - delta, TWO_PI);
+        if (input.aim.has_value()) {
+            const float target = std::atan2(input.aim->yaw_sin, input.aim->yaw_cos);
+            const float delta = std::clamp(
+                std::remainder(target - angle, TWO_PI), -max_rad_per_frame, max_rad_per_frame);
+            angle = std::remainder(angle + delta, TWO_PI);
+        } else {
+            const float delta = std::clamp(input.right_joystick.x, -1.f, 1.f) * max_rad_per_frame;
+            angle = std::remainder(angle - delta, TWO_PI);
+        }
 
         hinge->SetMotorState(JPH::EMotorState::Position);
         hinge->SetTargetAngle(angle);

@@ -75,7 +75,12 @@ target_link_libraries(arenai_agent PUBLIC nlohmann_json::nlohmann_json)
 target_include_directories(arenai_agent PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 # Probe: offline inspection of a saved actor in the training environment
-add_executable(arenai_agent_probe "${CMAKE_CURRENT_SOURCE_DIR}/probe/main.cpp")
+add_executable(arenai_agent_probe "${CMAKE_CURRENT_SOURCE_DIR}/probe/probe.cpp")
 target_link_libraries(arenai_agent_probe PRIVATE arenai_agent ${ARENAI_AGENT_LINK_LIBS})
 target_include_directories(arenai_agent_probe PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}/src")
 arenai_copy_runtime_dlls(arenai_agent_probe TORCH)
+
+add_executable(arenai_agent_sigma_gradients "${CMAKE_CURRENT_SOURCE_DIR}/probe/sigma_gradients.cpp")
+target_link_libraries(arenai_agent_sigma_gradients PRIVATE arenai_agent ${ARENAI_AGENT_LINK_LIBS})
+target_include_directories(arenai_agent_sigma_gradients PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}/src")
+arenai_copy_runtime_dlls(arenai_agent_sigma_gradients TORCH)

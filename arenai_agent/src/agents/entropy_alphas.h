@@ -16,7 +16,8 @@ namespace arenai::agent {
     public:
         EntropyAlphas(
             int nb_continuous_actions, int nb_discrete_actions, float initial_alpha,
-            float learning_rate, float continuous_target_entropy, float discrete_target_proba);
+            float learning_rate, const std::vector<float> &continuous_target_entropy,
+            float discrete_target_proba);
 
         // [nb_continuous_actions] and [nb_discrete_actions], attached to log_alpha
         torch::Tensor continuous() const;
@@ -33,6 +34,7 @@ namespace arenai::agent {
         std::vector<std::shared_ptr<AbstractMetric>> get_metrics() const;
 
         void save(const std::filesystem::path &output_folder) const;
+        void load(const std::filesystem::path &input_folder) const;
         void to(torch::Device device) const;
         int count_parameters() const;
 
@@ -41,7 +43,8 @@ namespace arenai::agent {
         std::shared_ptr<AlphaParameters> discrete_alphas;
         std::unique_ptr<torch::optim::Adam> optim;
 
-        float continuous_target_entropy;
+        // [nb_continuous_actions]
+        mutable torch::Tensor continuous_target_entropy;
         float discrete_target_entropy;
 
         std::vector<std::shared_ptr<AbstractMetric>> continuous_metrics;

@@ -9,6 +9,7 @@
 #include "../../metrics/mean_metric.h"
 #include "../../networks/constants.h"
 #include "../../networks_utils/print_module.h"
+#include "../../networks_utils/torch_loader.h"
 #include "../../networks_utils/torch_saver.h"
 #include "../update_utils.h"
 
@@ -45,7 +46,7 @@ namespace arenai::agent {
         const float delta_t, const torch::Device device, const int metric_window_size,
         const float gamma, const float gae_lambda, const float clip_epsilon, const float target_kl,
         const float grad_norm_max, const float initial_alpha, const float alpha_learning_rate,
-        const float continuous_target_entropy, const float discrete_target_proba,
+        const std::vector<float> &continuous_target_entropy, const float discrete_target_proba,
         const int actor_epochs, const int critic_epochs, const int rollout_size,
         const int actor_batch_size, const int actor_gpu_batch_size, const int critic_batch_size,
         const int critic_gpu_batch_size, const int chunk_size)
@@ -148,7 +149,7 @@ namespace arenai::agent {
         rollout.states = rollout.states.to(device);
 
         set_train(false);
-        const auto [advantages, returns, critic_hiddens] = compute_gae(rollout, device);
+        const auto gae = compute_gae(rollout, device);
 
         const auto nb_steps = rollout.rewards.size(0);
         const auto nb_tanks = rollout.rewards.size(1);
@@ -157,22 +158,7 @@ namespace arenai::agent {
         if (nb_chunks_per_tank == 0) return;
         const auto nb_kept_steps = nb_chunks_per_tank * chunk_size;
 
-        // flat [T_kept * nb_tanks, ...] rows, all on the device
-        const auto flat = [&](const torch::Tensor &tensor) {
-            return flatten_steps(tensor.slice(0, 0, nb_kept_steps)).to(device);
-        };
-        const FlatRows rows = {
-            .vision = flat(rollout.states.get_vision()),
-            .proprioception = flat(rollout.states.get_state()),
-            .continuous_pre_tanh = flat(rollout.continuous_pre_tanhs),
-            .discrete_actions = flat(rollout.actions.discrete_action),
-            .fire_masks = flat(rollout.states.get_fire_mask()),
-            .old_log_probs = flat(rollout.continuous_log_probs) + flat(rollout.discrete_log_probs),
-            .advantages = flat(advantages),
-            .returns = flat(returns),
-            .valids = flat(rollout.valids),
-            .actor_hiddens = flat(rollout.actor_hiddens),
-            .critic_hiddens = flat(critic_hiddens)};
+        const auto rows = flat_rows(rollout, gae, nb_kept_steps, device);
 
         const ChunkIndex chunks(
             rollout.valids.slice(0, 0, nb_kept_steps), nb_tanks, nb_chunks_per_tank, chunk_size,
@@ -183,6 +169,92 @@ namespace arenai::agent {
         run_actor_epochs(rows, chunks);
         run_critic_epochs(rows, chunks);
         set_train(false);
+    }
+
+    LiquidPpoTrainer::FlatRows LiquidPpoTrainer::flat_rows(
+        const LiquidPpoRollout &rollout, const LiquidGaeResult &gae, const int64_t nb_kept_steps,
+        const torch::Device device) {
+        // flat [T_kept * nb_tanks, ...] rows, all on the device
+        const auto flat = [&](const torch::Tensor &tensor) {
+            return flatten_steps(tensor.slice(0, 0, nb_kept_steps)).to(device);
+        };
+        return {
+            .vision = flat(rollout.states.get_vision()),
+            .proprioception = flat(rollout.states.get_state()),
+            .continuous_pre_tanh = flat(rollout.continuous_pre_tanhs),
+            .discrete_actions = flat(rollout.actions.discrete_action),
+            .fire_masks = flat(rollout.states.get_fire_mask()),
+            .old_log_probs = flat(rollout.continuous_log_probs) + flat(rollout.discrete_log_probs),
+            .advantages = flat(gae.advantages),
+            .returns = flat(gae.returns),
+            .valids = flat(rollout.valids),
+            .actor_hiddens = flat(rollout.actor_hiddens),
+            .critic_hiddens = flat(gae.critic_hiddens)};
+    }
+
+    LiquidSigmaGradients LiquidPpoTrainer::sigma_gradients() {
+        const auto device = actor->parameters().back().device();
+
+        auto rollout = rollout_buffer->get_rollout();
+        rollout.states = rollout.states.to(device);
+
+        set_train(false);
+        const auto gae = compute_gae(rollout, device);
+
+        const auto nb_steps = rollout.rewards.size(0);
+        const auto nb_tanks = rollout.rewards.size(1);
+        const auto nb_chunks_per_tank = nb_steps / chunk_size;
+        const auto nb_kept_steps = nb_chunks_per_tank * chunk_size;
+
+        if (nb_chunks_per_tank == 0) return {};
+
+        const auto rows = flat_rows(rollout, gae, nb_kept_steps, device);
+        const ChunkIndex chunks(
+            rollout.valids.slice(0, 0, nb_kept_steps), nb_tanks, nb_chunks_per_tank, chunk_size,
+            device);
+
+        std::vector<torch::Tensor> row_ids, surrogates, entropies, mus, sigmas, advantages,
+            fire_masks, fires;
+
+        set_train(true);
+        const auto units_per_block = chunks.units_per_batch(actor_gpu_batch_size);
+        for (const auto &units: chunks.valid_units.split(units_per_block)) {
+            const auto [unit_rows, start_rows] = chunks.rows(units);
+            const auto block = rows.select_chunks(unit_rows, start_rows, chunk_size);
+            const auto terms = actor_terms(block);
+
+            // per row: d(row term)/d(sigma) * sigma = d(row term)/d(log sigma)
+            const auto d_surrogate = torch::autograd::grad(
+                {terms.surrogate.sum()}, {terms.sigma}, {}, /*retain_graph=*/true)[0];
+            const auto d_entropy =
+                torch::autograd::grad({terms.continuous_bonus.sum()}, {terms.sigma})[0];
+
+            const auto valid_rows = [&](const torch::Tensor &tensor) {
+                return tensor.flatten(0, 1).index_select(0, terms.valid_idx).detach().cpu();
+            };
+
+            row_ids.push_back(unit_rows.index_select(0, terms.valid_idx).cpu());
+            surrogates.push_back((d_surrogate * terms.sigma).detach().cpu());
+            entropies.push_back((d_entropy * terms.sigma).detach().cpu());
+            mus.push_back(terms.mu.detach().cpu());
+            sigmas.push_back(terms.sigma.detach().cpu());
+            advantages.push_back(valid_rows(block.advantages).squeeze(-1));
+            fire_masks.push_back(valid_rows(block.fire_masks).select(-1, 0));
+            fires.push_back(valid_rows(block.discrete_actions).select(-1, 0));
+        }
+        set_train(false);
+
+        const auto ids = torch::cat(row_ids);
+        return {
+            .steps = ids.div(nb_tanks, "floor"),
+            .tanks = ids.remainder(nb_tanks),
+            .surrogate = torch::cat(surrogates),
+            .entropy = torch::cat(entropies),
+            .mu = torch::cat(mus),
+            .sigma = torch::cat(sigmas),
+            .advantages = torch::cat(advantages),
+            .fire_masks = torch::cat(fire_masks),
+            .fires = torch::cat(fires)};
     }
 
     void LiquidPpoTrainer::run_actor_epochs(const FlatRows &rows, const ChunkIndex &chunks) const {
@@ -251,8 +323,7 @@ namespace arenai::agent {
             }
     }
 
-    torch::Tensor
-    LiquidPpoTrainer::backward_actor(const FlatRows &block, const float batch_fraction) const {
+    LiquidPpoTrainer::ActorTerms LiquidPpoTrainer::actor_terms(const FlatRows &block) const {
         const auto out =
             actor->act_sequence(block.vision, block.proprioception, block.actor_hiddens);
 
@@ -284,33 +355,52 @@ namespace arenai::agent {
         const auto continuous_entropy = gaussian_tanh_entropy(mu, sigma);
         const auto discrete_entropy = bernoulli_entropy(discrete_proba) * discrete_mask;
 
-        // the alphas are constants for the actor: they learn from their own dual loss
-        const auto entropy_bonus =
-            (alphas->continuous().detach() * continuous_entropy).sum(-1, true)
-            + (alphas->discrete().detach() * discrete_entropy).sum(-1, true);
-
         const auto clipped_ratio = torch::clamp(ratio, 1.f - clip_epsilon, 1.f + clip_epsilon);
         const auto valid_advantages = rows(block.advantages);
         const auto surrogate =
             torch::min(ratio * valid_advantages, clipped_ratio * valid_advantages);
 
-        const auto actor_loss = -torch::mean(surrogate + entropy_bonus);
+        // the alphas are constants for the actor: they learn from their own dual loss
+        return {
+            .valid_idx = valid_idx,
+            .mu = mu,
+            .sigma = sigma,
+            .discrete_mask = discrete_mask,
+            .ratio = ratio,
+            .log_ratio = log_ratio,
+            .continuous_entropy = continuous_entropy,
+            .discrete_entropy = discrete_entropy,
+            .surrogate = surrogate,
+            .continuous_bonus = alphas->continuous().detach() * continuous_entropy,
+            .discrete_bonus = alphas->discrete().detach() * discrete_entropy};
+    }
+
+    torch::Tensor
+    LiquidPpoTrainer::backward_actor(const FlatRows &block, const float batch_fraction) const {
+        const auto terms = actor_terms(block);
+
+        const auto entropy_bonus =
+            terms.continuous_bonus.sum(-1, true) + terms.discrete_bonus.sum(-1, true);
+
+        const auto actor_loss = -torch::mean(terms.surrogate + entropy_bonus);
 
         // weighted so that the accumulated gradient is the one of the whole rollout's mean
         (actor_loss * batch_fraction).backward();
-        alphas->backward(continuous_entropy, discrete_entropy, discrete_mask, batch_fraction);
+        alphas->backward(
+            terms.continuous_entropy, terms.discrete_entropy, terms.discrete_mask, batch_fraction);
 
         // metrics
         actor_mean_loss_metric->add(actor_loss.cpu().item<float>());
-        continuous_entropy_metric->add(continuous_entropy.mean().item<float>());
+        continuous_entropy_metric->add(terms.continuous_entropy.mean().item<float>());
         // mean over the discrete actions that had an effect
         discrete_entropy_metric->add(
-            (discrete_entropy.sum() / discrete_mask.sum().clamp_min(1.f)).item<float>());
+            (terms.discrete_entropy.sum() / terms.discrete_mask.sum().clamp_min(1.f))
+                .item<float>());
 
         clip_fraction_metric->add(
-            ((ratio - 1.f).abs() > clip_epsilon).to(torch::kFloat).mean().item<float>());
+            ((terms.ratio - 1.f).abs() > clip_epsilon).to(torch::kFloat).mean().item<float>());
 
-        return (ratio - 1.f - log_ratio).detach().flatten();
+        return (terms.ratio - 1.f - terms.log_ratio).detach().flatten();
     }
 
     void
@@ -437,6 +527,17 @@ namespace arenai::agent {
         // string repr
         write_module_repr(output_folder, actor, "actor");
         write_module_repr(output_folder, critic, "critic");
+    }
+
+    void LiquidPpoTrainer::load(const std::filesystem::path &input_folder) const {
+        const auto device = actor->parameters().back().device();
+
+        load_torch(input_folder, actor, "actor.pt");
+        load_torch(input_folder, critic, "critic.pt");
+        load_torch(input_folder, return_scaler, "return_scaler.pt");
+        alphas->load(input_folder);
+
+        to(device);
     }
 
     void LiquidPpoTrainer::set_train(const bool train) const {

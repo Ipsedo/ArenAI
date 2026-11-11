@@ -17,6 +17,7 @@ PpgTrainingTest::make_factory(const PpgTrainingTestConfig &cfg) const {
         .gamma = 0.99f,
         .gae_lambda = 0.95f,
         .clip_epsilon = 0.2f,
+        .continuous_target_entropy = std::vector(cfg.nb_continuous_actions, 0.f),
         .actor_epochs = 2,
         .critic_epochs = 2,
         .rollout_size = ROLLOUT_SIZE,
@@ -53,8 +54,9 @@ PpgTriad PpgTrainingTest::make_triad(const PpgTrainingTestConfig &cfg, const int
     triad.trainer = std::make_shared<PpgTrainer>(
         triad.actor, triad.rollout_buffer, cfg.nb_continuous_actions, cfg.nb_discrete_actions,
         cfg.nb_sensors, 1e-3f, 1e-3f, 8, std::vector{16}, vision_channels, group_norm_nums, device,
-        10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 3e-4f, -1.f, 0.05f, 2, 2, ROLLOUT_SIZE,
-        MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, 2, 2, 1.f, n_pi);
+        10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 3e-4f,
+        std::vector(cfg.nb_continuous_actions, -1.f), 0.05f, 2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE,
+        MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, 2, 2, 1.f, n_pi);
     return triad;
 }
 

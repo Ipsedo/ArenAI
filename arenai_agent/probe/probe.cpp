@@ -30,6 +30,11 @@
 using namespace arenai;
 using namespace arenai::agent;
 
+namespace {
+    // dir_x, dir_y lead the continuous actions, the aim ones follow
+    constexpr int NB_DIRECTION_ACTIONS = 2;
+}// namespace
+
 int main(const int argc, char **argv) {
     argparse::ArgumentParser parser("arenai probe");
 
@@ -92,7 +97,7 @@ int main(const int argc, char **argv) {
     };
     std::function<ProbeActorOutput(const torch::Tensor &, const torch::Tensor &)> act;
     std::function<void()> reset_hidden = [] {};
-    // [N, 6] ∂E[min Q], ∂E[Q1], ∂E[Q2] /∂a_canon at the mode, undefined for actors without a critic
+    // [N, 3 × nb_aim] ∂E[min Q], ∂E[Q1], ∂E[Q2] /∂a_aim at the mode, undefined without a critic
     std::function<torch::Tensor(const TorchState &, const torch::Tensor &, const torch::Tensor &)>
         canon_q_gradient = [](const TorchState &, const torch::Tensor &, const torch::Tensor &) {
             return torch::Tensor();
@@ -154,7 +159,8 @@ int main(const int argc, char **argv) {
             const auto value_1 = (joint.probas * q1).sum();
             const auto value_2 = (joint.probas * q2).sum();
             const auto gradient_of = [&action](const torch::Tensor &v) {
-                return torch::autograd::grad({v}, {action}, {}, true)[0].slice(1, 2, 4);
+                return torch::autograd::grad({v}, {action}, {}, true)[0].slice(
+                    1, NB_DIRECTION_ACTIONS);
             };
             return torch::cat({gradient_of(value), gradient_of(value_1), gradient_of(value_2)}, 1)
                 .cpu();
@@ -190,10 +196,15 @@ int main(const int argc, char **argv) {
         action_repeat, agent_config.at("gamma").get<float>());
 
     std::ofstream csv(output);
+    const auto &action_names = TorchAction::continuous_action_names();
+    const std::vector aim_names(action_names.begin() + NB_DIRECTION_ACTIONS, action_names.end());
+
     csv << "episode;step;tank;distance;yaw;pitch;best_angle;best_distance;can_fire;shells;cooldown;"
-           "p_fire;p_zoom;fire;"
-           "mu_dir_x;mu_dir_y;mu_canon_x;mu_canon_y;sigma_canon_x;sigma_canon_y;act_canon_x;"
-           "act_canon_y;dq_canon_x;dq_canon_y;dq1_canon_x;dq1_canon_y;dq2_canon_x;dq2_canon_y\n";
+           "p_fire;p_zoom;fire";
+    for (const auto &name: action_names) csv << ";mu_" << name;
+    for (const auto &prefix: {";sigma_", ";act_", ";dq_", ";dq1_", ";dq2_"})
+        for (const auto &name: aim_names) csv << prefix << name;
+    csv << '\n';
 
     std::ofstream shots_csv(output.parent_path() / (output.stem().string() + "_shots.csv"));
     shots_csv
@@ -268,13 +279,14 @@ int main(const int argc, char **argv) {
                     << geometry[i].best_angle * to_degrees << ';' << geometry[i].best_distance
                     << ';' << mask_acc[i][0] << ';' << shells_ratio[i] << ';' << cooldown_ratio[i]
                     << ';' << discrete_acc[i][0] << ';' << discrete_acc[i][1] << ';'
-                    << disc_acc[i][0] << ';' << mu_acc[i][0] << ';' << mu_acc[i][1] << ';'
-                    << mu_acc[i][2] << ';' << mu_acc[i][3] << ';' << sigma_acc[i][2] << ';'
-                    << sigma_acc[i][3] << ';' << cont_acc[i][2] << ';' << cont_acc[i][3] << ';'
-                    << (q_gradient.defined() ? q_gradient[i][0].item<float>() : 0.f) << ';'
-                    << (q_gradient.defined() ? q_gradient[i][1].item<float>() : 0.f);
-                for (int k = 2; k < 6; k++)
-                    csv << ';' << (q_gradient.defined() ? q_gradient[i][k].item<float>() : 0.f);
+                    << disc_acc[i][0];
+                for (int a = 0; a < model::ENEMY_NB_CONTINUOUS_ACTION; a++)
+                    csv << ';' << mu_acc[i][a];
+                for (const auto &acc: {sigma_acc, cont_acc})
+                    for (int a = NB_DIRECTION_ACTIONS; a < model::ENEMY_NB_CONTINUOUS_ACTION; a++)
+                        csv << ';' << acc[i][a];
+                for (int a = 0; a < 3 * static_cast<int>(aim_names.size()); a++)
+                    csv << ';' << (q_gradient.defined() ? q_gradient[i][a].item<float>() : 0.f);
                 csv << '\n';
 
                 if (features_out.is_open() && features.defined()) {

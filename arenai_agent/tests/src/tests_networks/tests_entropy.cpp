@@ -91,20 +91,21 @@ TEST_F(AlphaParametersTest, InitialAlphaIsProjectedOnTheBounds) {
 }
 
 TEST_F(EntropyAlphasTest, OneMetricPerActionNamedAfterIt) {
-    const EntropyAlphas alphas(4, 2, 1e-3f, 3e-4f, -1.f, 0.05f);
+    const EntropyAlphas alphas(5, 2, 1e-3f, 3e-4f, std::vector(5, -1.f), 0.05f);
 
     const auto metrics = alphas.get_metrics();
 
-    ASSERT_EQ(metrics.size(), 6);
+    ASSERT_EQ(metrics.size(), 7);
     ASSERT_EQ(metrics[0]->get_name(), "alpha_dir_x");
-    ASSERT_EQ(metrics[3]->get_name(), "alpha_canon_y");
-    ASSERT_EQ(metrics[4]->get_name(), "alpha_fire");
-    ASSERT_EQ(metrics[5]->get_name(), "alpha_zoom");
+    ASSERT_EQ(metrics[2]->get_name(), "alpha_yaw_cos");
+    ASSERT_EQ(metrics[4]->get_name(), "alpha_pitch");
+    ASSERT_EQ(metrics[5]->get_name(), "alpha_fire");
+    ASSERT_EQ(metrics[6]->get_name(), "alpha_zoom");
     for (const auto &metric: metrics) ASSERT_NEAR(metric->compute_metric(), 1e-3f, 1e-7f);
 }
 
 TEST_F(EntropyAlphasTest, EntropyUnderTargetRaisesAlphaAboveLowersIt) {
-    const EntropyAlphas alphas(2, 2, 1e-2f, 1e-2f, -1.f, 0.05f);
+    const EntropyAlphas alphas(2, 2, 1e-2f, 1e-2f, std::vector(2, -1.f), 0.05f);
 
     const auto continuous_entropy = torch::tensor({{-2.f, 0.f}}).expand({8, 2});
     const auto discrete_entropy = torch::tensor({{0.05f, 0.69f}}).expand({8, 2});
@@ -126,7 +127,7 @@ TEST_F(EntropyAlphasTest, EntropyUnderTargetRaisesAlphaAboveLowersIt) {
 }
 
 TEST_F(EntropyAlphasTest, MaskedDiscreteActionKeepsItsAlpha) {
-    const EntropyAlphas alphas(1, 2, 1e-3f, 1e-2f, -1.f, 0.05f);
+    const EntropyAlphas alphas(1, 2, 1e-3f, 1e-2f, std::vector(1, -1.f), 0.05f);
 
     const auto continuous_entropy = torch::full({8, 1}, -3.f);
     const auto discrete_entropy = torch::full({8, 2}, 0.f);
@@ -144,7 +145,7 @@ TEST_F(EntropyAlphasTest, MaskedDiscreteActionKeepsItsAlpha) {
 }
 
 TEST_F(EntropyAlphasTest, StepKeepsEveryAlphaAboveTheFloor) {
-    const EntropyAlphas alphas(2, 2, 1e-2f, 1e-1f, -1.f, 0.05f);
+    const EntropyAlphas alphas(2, 2, 1e-2f, 1e-1f, std::vector(2, -1.f), 0.05f);
 
     const auto continuous_entropy = torch::full({8, 2}, 5.f);
     const auto discrete_entropy = torch::full({8, 2}, 0.69f);
@@ -162,6 +163,27 @@ TEST_F(EntropyAlphasTest, StepKeepsEveryAlphaAboveTheFloor) {
         alphas.discrete(), torch::full({2}, AlphaParameters::MIN_ALPHA), 1e-4, 1e-7));
     for (const auto &metric: alphas.get_metrics())
         ASSERT_NEAR(metric->compute_metric(), AlphaParameters::MIN_ALPHA, 1e-6f);
+}
+
+TEST_F(EntropyAlphasTest, EachContinuousActionFollowsItsOwnTarget) {
+    const EntropyAlphas alphas(2, 1, 1e-2f, 1e-2f, {0.f, -1.f}, 0.05f);
+
+    const auto continuous_entropy = torch::full({8, 2}, -0.5f);
+    const auto discrete_entropy = torch::full({8, 1}, 0.2f);
+    const auto mask = torch::ones({8, 1});
+
+    for (int i = 0; i < 10; i++) {
+        alphas.zero_grad();
+        alphas.backward(continuous_entropy, discrete_entropy, mask, 1.f);
+        alphas.step();
+    }
+
+    ASSERT_GT(alphas.continuous()[0].item<float>(), 1e-2f);
+    ASSERT_LT(alphas.continuous()[1].item<float>(), 1e-2f);
+}
+
+TEST_F(EntropyAlphasTest, ContinuousTargetSizeMustMatchActions) {
+    ASSERT_THROW(EntropyAlphas(5, 2, 1e-3f, 3e-4f, {0.f, 0.f, -1.f}, 0.05f), std::invalid_argument);
 }
 
 TEST_F(PidLagrangianAlphaParameterTest, StartsAtInitialAlpha) {

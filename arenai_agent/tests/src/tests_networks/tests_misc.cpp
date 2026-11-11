@@ -37,6 +37,62 @@ INSTANTIATE_TEST_SUITE_P(
         testing::Values(-1.0f, -0.5f, 0.0f), testing::Values(0.5f, 1.0f, 2.0f),
         testing::Values(Shape{5}, Shape{2, 3}, Shape{4, 8, 2})));
 
+TEST_P(SoftClampModuleParamTest, StaysStrictlyWithinBounds) {
+    const auto [lower, upper, shape] = GetParam();
+
+    SoftClamp soft_clamp(lower, upper);
+
+    // moderate inputs: a sigmoid of ±30 rounds to the bound itself in float32
+    const auto input = torch::randn(shape) * 3.0f;
+    const auto result = soft_clamp.forward(input);
+
+    ASSERT_EQ(result.sizes(), input.sizes());
+    ASSERT_TRUE(torch::all(torch::logical_and(torch::gt(result, lower), torch::lt(result, upper)))
+                    .item<bool>());
+}
+
+TEST_P(SoftClampModuleParamTest, ZeroMapsToMidpoint) {
+    const auto [lower, upper, shape] = GetParam();
+
+    SoftClamp soft_clamp(lower, upper);
+
+    const auto result = soft_clamp.forward(torch::zeros(shape));
+
+    ASSERT_TRUE(torch::allclose(result, torch::full(shape, (lower + upper) / 2.0f)));
+}
+
+TEST_P(SoftClampModuleParamTest, GradientNeverVanishes) {
+    const auto [lower, upper, shape] = GetParam();
+
+    SoftClamp soft_clamp(lower, upper);
+
+    // far outside the bounds, where a hard clamp has a zero gradient
+    const auto input = (torch::randn(shape) * 4.0f).set_requires_grad(true);
+    soft_clamp.forward(input).sum().backward();
+
+    ASSERT_TRUE(torch::all(torch::gt(input.grad(), 0.0f)).item<bool>());
+}
+
+TEST_P(SoftClampModuleParamTest, InverseRoundTrips) {
+    const auto [lower, upper, shape] = GetParam();
+
+    SoftClamp soft_clamp(lower, upper);
+
+    for (const float wanted:
+         {lower + 0.1f * (upper - lower), (lower + upper) / 2.0f, upper - 0.1f * (upper - lower)}) {
+        const auto pre_activation = SoftClamp::inverse(wanted, lower, upper);
+        const auto result = soft_clamp.forward(torch::full(shape, pre_activation));
+
+        ASSERT_TRUE(torch::allclose(result, torch::full(shape, wanted), 1e-4, 1e-5));
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    TestSoftClamp, SoftClampModuleParamTest,
+    testing::Combine(
+        testing::Values(-5.0f, -1.0f), testing::Values(-0.3567f, 0.5f, 2.0f),
+        testing::Values(Shape{5}, Shape{2, 3}, Shape{4, 8, 2})));
+
 TEST_P(ExpModuleParamTest, OutputAlwaysPositive) {
     const auto &shape = GetParam();
 

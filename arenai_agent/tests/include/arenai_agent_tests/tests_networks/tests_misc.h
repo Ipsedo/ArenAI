@@ -10,6 +10,9 @@ typedef float UpperBound;
 class ClampModuleParamTest
     : public testing::TestWithParam<std::tuple<LowerBound, UpperBound, Shape>> {};
 
+class SoftClampModuleParamTest
+    : public testing::TestWithParam<std::tuple<LowerBound, UpperBound, Shape>> {};
+
 class ExpModuleParamTest : public testing::TestWithParam<Shape> {};
 
 #endif//ARENAI_TESTS_MISC_H

@@ -1,5 +1,6 @@
 #include "./misc.h"
 
+#include <algorithm>
 #include <cmath>
 
 #include "./constants.h"
@@ -22,6 +23,24 @@ namespace arenai::agent {
 
     void Clamp::pretty_print(std::ostream &stream) const {
         stream << name() << "(min=" << lower_bound << ", max=" << upper_bound << ")";
+    }
+
+    SoftClamp::SoftClamp(const float lower_bound, const float upper_bound)
+        : lower_bound(lower_bound), upper_bound(upper_bound) {}
+
+    torch::Tensor SoftClamp::forward(const torch::Tensor &x) {
+        return lower_bound + (upper_bound - lower_bound) * torch::sigmoid(x);
+    }
+
+    void SoftClamp::pretty_print(std::ostream &stream) const {
+        stream << name() << "(min=" << lower_bound << ", max=" << upper_bound << ")";
+    }
+
+    float SoftClamp::inverse(const float value, const float lower_bound, const float upper_bound) {
+        constexpr float margin = 1e-4f;
+        const float ratio =
+            std::clamp((value - lower_bound) / (upper_bound - lower_bound), margin, 1.f - margin);
+        return std::log(ratio / (1.f - ratio));
     }
 
     ConcentrationOutput::ConcentrationOutput(

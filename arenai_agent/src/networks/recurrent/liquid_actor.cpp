@@ -36,7 +36,7 @@ namespace arenai::agent {
           sigma(register_module(
               "sigma", torch::nn::Sequential(
                            torch::nn::Linear(neuron_number, nb_continuous_actions),
-                           Clamp(LOG_SIGMA_MIN, LOG_SIGMA_MAX), Exp()))),
+                           SoftClamp(LOG_SIGMA_MIN, LOG_SIGMA_MAX), Exp()))),
           discrete(register_module(
               "discrete",
               torch::nn::Sequential(

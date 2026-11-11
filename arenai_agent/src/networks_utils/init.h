@@ -12,7 +12,7 @@ namespace arenai::agent {
     void init_liquid_weights(torch::nn::Module &module);
 
     void init_mu_output_weights(torch::nn::Module &module);
-    // log-sigma head: the bias is the log of the wanted initial sigma
+    // log-sigma head (Linear -> SoftClamp -> Exp): the bias puts the initial sigma at the wanted value
     void init_log_sigma_output_weights(torch::nn::Module &module, float initial_sigma);
     void init_concentration_output_weights(torch::nn::Module &module, float wanted_sigma);
     // sigmoid head: one initial engage probability per discrete action

@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "../networks/constants.h"
+#include "../networks/misc.h"
 
 using namespace arenai;
 using namespace arenai::agent;
@@ -40,7 +41,10 @@ namespace arenai::agent {
     void init_log_sigma_output_weights(torch::nn::Module &module, const float initial_sigma) {
         if (auto *lin = module.as<torch::nn::Linear>()) {
             torch::nn::init::orthogonal_(lin->weight, 0.01f);
-            if (lin->options.bias()) torch::nn::init::constant_(lin->bias, std::log(initial_sigma));
+            if (lin->options.bias())
+                torch::nn::init::constant_(
+                    lin->bias,
+                    SoftClamp::inverse(std::log(initial_sigma), LOG_SIGMA_MIN, LOG_SIGMA_MAX));
         }
     }
 

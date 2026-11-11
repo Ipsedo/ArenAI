@@ -25,6 +25,23 @@ namespace arenai::agent {
         float upper_bound;
     };
 
+    // sigmoid between the bounds: never saturates exactly, the gradient stays alive at both ends
+    class SoftClamp : public AbstractFunctionModule {
+    public:
+        SoftClamp(float lower_bound, float upper_bound);
+
+        torch::Tensor forward(const torch::Tensor &x) override;
+
+        void pretty_print(std::ostream &stream) const override;
+
+        // the pre-activation that forwards to the given value, for the heads' initialisation
+        static float inverse(float value, float lower_bound, float upper_bound);
+
+    private:
+        float lower_bound;
+        float upper_bound;
+    };
+
     class Exp : public AbstractFunctionModule {
     public:
         torch::Tensor forward(const torch::Tensor &x) override;

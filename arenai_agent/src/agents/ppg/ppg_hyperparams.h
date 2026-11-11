@@ -33,7 +33,7 @@ namespace arenai::agent {
         // per discrete action, the Bernoulli whose entropy is the target
         float discrete_target_proba = 0.05f;
         int actor_epochs = 4;
-        int critic_epochs = 4;
+        int critic_epochs = 8;
         int rollout_size = 30 * 10;
         int actor_batch_size = 512;
         int actor_gpu_batch_size = 256;

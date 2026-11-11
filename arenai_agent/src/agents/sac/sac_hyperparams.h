@@ -24,6 +24,8 @@ namespace arenai::agent {
         float initial_zoom_proba = 0.5f;
         int metric_window_size = 256;
         float gamma = 0.99f;
+        // steps of reward summed in the critic target before bootstrapping
+        int n_step = 10;
         // Polyak rate of the target critics, per gradient step
         float tau = 0.005f;
         float initial_alpha = 5e-4f;

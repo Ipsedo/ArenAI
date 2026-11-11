@@ -17,6 +17,7 @@ namespace arenai::agent {
             {.name = "--initial_zoom_proba", .member = &SacHyperParams::initial_zoom_proba},
             {.name = "--metric_window_size", .member = &SacHyperParams::metric_window_size},
             {.name = "--gamma", .member = &SacHyperParams::gamma},
+            {.name = "--n_step", .member = &SacHyperParams::n_step},
             {.name = "--tau", .member = &SacHyperParams::tau},
             {.name = "--initial_alpha", .member = &SacHyperParams::initial_alpha},
             {.name = "--target_sigma", .member = &SacHyperParams::target_sigma},

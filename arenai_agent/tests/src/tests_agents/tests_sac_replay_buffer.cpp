@@ -1,3 +1,6 @@
+#include <algorithm>
+#include <cmath>
+
 #include <agents/sac/sac_replay_buffer.h>
 #include <gtest/gtest.h>
 
@@ -12,6 +15,7 @@ namespace {
     constexpr int H = 4, W = 4, P = model::ENEMY_STATE_VECTOR_SIZE, A = 2, D = 2;
     // every batch half armed, half dry
     constexpr float ARMED_FRACTION = 0.5f;
+    constexpr float GAMMA = 0.5f;
 
     TorchState make_state(const int step) {
         return TorchState(
@@ -46,12 +50,12 @@ namespace {
 }// namespace
 
 TEST(SacReplayBuffer, EmptyBufferHasNoTransition) {
-    const SacReplayBuffer buffer(16, ARMED_FRACTION);
+    const SacReplayBuffer buffer(16, ARMED_FRACTION, 1, GAMMA);
     ASSERT_EQ(buffer.nb_transitions(), 0);
 }
 
 TEST(SacReplayBuffer, NewestStepIsNotSampleable) {
-    SacReplayBuffer buffer(16, ARMED_FRACTION);
+    SacReplayBuffer buffer(16, ARMED_FRACTION, 1, GAMMA);
 
     buffer.add(make_step(0));
     // its successor is not known yet
@@ -62,7 +66,7 @@ TEST(SacReplayBuffer, NewestStepIsNotSampleable) {
 }
 
 TEST(SacReplayBuffer, NextStateIsTheFollowingSlot) {
-    SacReplayBuffer buffer(16, ARMED_FRACTION);
+    SacReplayBuffer buffer(16, ARMED_FRACTION, 1, GAMMA);
     for (int t = 0; t < 5; t++) buffer.add(make_step(t));
 
     const auto batch = buffer.sample(32, torch::kCPU);
@@ -70,14 +74,14 @@ TEST(SacReplayBuffer, NextStateIsTheFollowingSlot) {
     ASSERT_EQ(batch.states.get_vision().sizes(), (std::vector<int64_t>{32, 3, H, W}));
     ASSERT_EQ(batch.states.get_vision().dtype(), torch::kUInt8);
     ASSERT_EQ(batch.next_states.get_state().sizes(), (std::vector<int64_t>{32, P}));
-    ASSERT_EQ(batch.cuts.sizes(), (std::vector<int64_t>{32, 1}));
-    ASSERT_TRUE(torch::all(batch.cuts == 0.f).item<bool>());
+    ASSERT_EQ(batch.bootstrap_discounts.sizes(), (std::vector<int64_t>{32, 1}));
+    ASSERT_TRUE(torch::all(batch.bootstrap_discounts == GAMMA).item<bool>());
 
     assert_next_is_successor(batch);
 }
 
 TEST(SacReplayBuffer, FinishEpisodeClosesTheLastStep) {
-    SacReplayBuffer buffer(16, ARMED_FRACTION);
+    SacReplayBuffer buffer(16, ARMED_FRACTION, 1, GAMMA);
     buffer.add(make_step(0));
     buffer.finish_episode(make_state(1));
 
@@ -89,7 +93,7 @@ TEST(SacReplayBuffer, FinishEpisodeClosesTheLastStep) {
 }
 
 TEST(SacReplayBuffer, StepsAfterADeathAreNotTransitions) {
-    SacReplayBuffer buffer(16, ARMED_FRACTION);
+    SacReplayBuffer buffer(16, ARMED_FRACTION, 1, GAMMA);
 
     // tank 0 dies on step 0
     buffer.add(make_step(0, torch::tensor({{1.f}, {0.f}})));
@@ -104,12 +108,13 @@ TEST(SacReplayBuffer, StepsAfterADeathAreNotTransitions) {
 
     // only the death transition is cut, the others bootstrap
     for (int64_t i = 0; i < 64; i++)
-        if (batch.cuts[i].item<float>() == 1.f) ASSERT_EQ(steps[i].item<float>(), 0.f);
-    ASSERT_TRUE(torch::any(batch.cuts == 1.f).item<bool>());
+        if (batch.bootstrap_discounts[i].item<float>() == 0.f)
+            ASSERT_EQ(steps[i].item<float>(), 0.f);
+    ASSERT_TRUE(torch::any(batch.bootstrap_discounts == 0.f).item<bool>());
 }
 
 TEST(SacReplayBuffer, DeathCountResetsAtEpisodeEnd) {
-    SacReplayBuffer buffer(32, ARMED_FRACTION);
+    SacReplayBuffer buffer(32, ARMED_FRACTION, 1, GAMMA);
 
     buffer.add(make_step(0, torch::tensor({{1.f}, {1.f}})));
     buffer.finish_episode(make_state(1));
@@ -122,18 +127,18 @@ TEST(SacReplayBuffer, DeathCountResetsAtEpisodeEnd) {
 }
 
 TEST(SacReplayBuffer, TruncationCutsTheTarget) {
-    SacReplayBuffer buffer(16, ARMED_FRACTION);
+    SacReplayBuffer buffer(16, ARMED_FRACTION, 1, GAMMA);
 
     buffer.add(make_step(0, torch::zeros({NB_TANKS, 1}), torch::ones({NB_TANKS, 1})));
     buffer.add(make_step(1));
 
     const auto batch = buffer.sample(8, torch::kCPU);
-    ASSERT_TRUE(torch::all(batch.cuts == 1.f).item<bool>());
+    ASSERT_TRUE(torch::all(batch.bootstrap_discounts == 0.f).item<bool>());
 }
 
 TEST(SacReplayBuffer, RingWrapsAndKeepsSuccessors) {
     // 3 slots per tank
-    SacReplayBuffer buffer(3 * NB_TANKS, ARMED_FRACTION);
+    SacReplayBuffer buffer(3 * NB_TANKS, ARMED_FRACTION, 1, GAMMA);
     for (int t = 0; t < 8; t++) buffer.add(make_step(t));
 
     // the ring holds steps 5, 6, 7 ; 7 is the newest
@@ -148,7 +153,7 @@ TEST(SacReplayBuffer, RingWrapsAndKeepsSuccessors) {
 }
 
 TEST(SacReplayBuffer, CapacityBelowTwoSlotsPerTankStillRings) {
-    SacReplayBuffer buffer(1, ARMED_FRACTION);
+    SacReplayBuffer buffer(1, ARMED_FRACTION, 1, GAMMA);
     for (int t = 0; t < 4; t++) buffer.add(make_step(t));
 
     ASSERT_EQ(buffer.nb_transitions(), NB_TANKS);
@@ -157,9 +162,9 @@ TEST(SacReplayBuffer, CapacityBelowTwoSlotsPerTankStillRings) {
 
 TEST(SacReplayBuffer, BatchesAreStratifiedOnTheShellReserve) {
     // armed transitions only
-    SacReplayBuffer armed(16, 1.f);
+    SacReplayBuffer armed(16, 1.f, 1, GAMMA);
     // dry transitions only
-    SacReplayBuffer dry(16, 0.f);
+    SacReplayBuffer dry(16, 0.f, 1, GAMMA);
 
     // step 0 is dry (reserve 0), steps 1-3 are armed
     for (int t = 0; t < 5; t++) {
@@ -179,7 +184,7 @@ TEST(SacReplayBuffer, BatchesAreStratifiedOnTheShellReserve) {
 }
 
 TEST(SacReplayBuffer, AnEmptyStratumHandsItsShareToTheOther) {
-    SacReplayBuffer buffer(16, 1.f);
+    SacReplayBuffer buffer(16, 1.f, 1, GAMMA);
 
     // only dry transitions exist (reserve 0 on step 0, step 1 is the newest)
     buffer.add(make_step(0));
@@ -188,4 +193,66 @@ TEST(SacReplayBuffer, AnEmptyStratumHandsItsShareToTheOther) {
     const auto batch = buffer.sample(8, torch::kCPU);
     ASSERT_EQ(batch.states.get_vision().size(0), 8);
     assert_next_is_successor(batch);
+}
+
+TEST(SacReplayBuffer, NStepSumsTheDiscountedRewardsUpToTheNewestSlot) {
+    SacReplayBuffer buffer(32, ARMED_FRACTION, 3, GAMMA);
+    for (int t = 0; t < 6; t++) buffer.add(make_step(t));
+
+    const auto batch = buffer.sample(256, torch::kCPU);
+    const auto steps = batch.states.get_vision().flatten(1).select(1, 0).to(torch::kFloat);
+    const auto next_steps =
+        batch.next_states.get_vision().flatten(1).select(1, 0).to(torch::kFloat);
+
+    for (int64_t i = 0; i < 256; i++) {
+        const int s = static_cast<int>(steps[i].item<float>());
+        // step 5 is the newest: the last transitions take fewer steps
+        const int m = std::min(3, 5 - s);
+        float expected = 0.f;
+        for (int k = 0; k < m; k++) expected += std::pow(GAMMA, k) * static_cast<float>(s + k);
+
+        ASSERT_EQ(next_steps[i].item<float>(), static_cast<float>(s + m));
+        ASSERT_FLOAT_EQ(batch.rewards[i].item<float>(), expected);
+        ASSERT_FLOAT_EQ(batch.bootstrap_discounts[i].item<float>(), std::pow(GAMMA, m));
+    }
+}
+
+TEST(SacReplayBuffer, NStepStopsAtADeath) {
+    SacReplayBuffer buffer(32, ARMED_FRACTION, 5, GAMMA);
+
+    // both tanks die on step 1
+    buffer.add(make_step(0));
+    buffer.add(make_step(1, torch::ones({NB_TANKS, 1})));
+    buffer.add(make_step(2));
+    buffer.add(make_step(3));
+
+    const auto batch = buffer.sample(64, torch::kCPU);
+    const auto steps = batch.states.get_vision().flatten(1).select(1, 0).to(torch::kFloat);
+
+    for (int64_t i = 0; i < 64; i++) {
+        const float s = steps[i].item<float>();
+        ASSERT_EQ(batch.bootstrap_discounts[i].item<float>(), 0.f);
+        ASSERT_FLOAT_EQ(batch.rewards[i].item<float>(), s == 0.f ? GAMMA * 1.f : 1.f);
+    }
+}
+
+TEST(SacReplayBuffer, NStepBootstrapsOnTheEpisodeEnd) {
+    SacReplayBuffer buffer(32, ARMED_FRACTION, 5, GAMMA);
+
+    buffer.add(make_step(0));
+    buffer.add(make_step(1));
+    buffer.finish_episode(make_state(2));
+    for (int t = 10; t < 13; t++) buffer.add(make_step(t));
+
+    const auto batch = buffer.sample(256, torch::kCPU);
+    const auto steps = batch.states.get_vision().flatten(1).select(1, 0).to(torch::kFloat);
+    const auto next_steps =
+        batch.next_states.get_vision().flatten(1).select(1, 0).to(torch::kFloat);
+
+    for (int64_t i = 0; i < 256; i++)
+        if (steps[i].item<float>() == 0.f) {
+            ASSERT_EQ(next_steps[i].item<float>(), 2.f);
+            ASSERT_FLOAT_EQ(batch.rewards[i].item<float>(), GAMMA * 1.f);
+            ASSERT_FLOAT_EQ(batch.bootstrap_discounts[i].item<float>(), GAMMA * GAMMA);
+        }
 }

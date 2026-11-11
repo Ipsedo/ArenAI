@@ -17,11 +17,13 @@
 #include <arenai_view/backend.h>
 
 #include "./agents/ppo_liquid/liquid_hidden_state.h"
+#include "./agents/sac/sac_discrete.h"
 #include "./agents/torch_types.h"
 #include "./core/train_environment.h"
 #include "./distributions/bernoulli.h"
 #include "./distributions/gaussian_tanh.h"
 #include "./networks/actor.h"
+#include "./networks/q_function.h"
 #include "./networks/recurrent/liquid_actor.h"
 #include "./networks_utils/torch_loader.h"
 
@@ -90,6 +92,11 @@ int main(const int argc, char **argv) {
     };
     std::function<ProbeActorOutput(const torch::Tensor &, const torch::Tensor &)> act;
     std::function<void()> reset_hidden = [] {};
+    // [N, 2] ∂E[min Q]/∂a_canon at the mode, undefined for actors without a critic
+    std::function<torch::Tensor(const TorchState &, const torch::Tensor &, const torch::Tensor &)>
+        canon_q_gradient = [](const TorchState &, const torch::Tensor &, const torch::Tensor &) {
+            return torch::Tensor();
+        };
 
     const auto vision_channels =
         agent_config.at("vision_channels").get<std::vector<std::tuple<int, int>>>();
@@ -115,6 +122,31 @@ int main(const int argc, char **argv) {
         act = [actor](const torch::Tensor &vision, const torch::Tensor &sensors) {
             auto out = actor->act(vision, sensors);
             return ProbeActorOutput{out.mu, out.sigma, out.discrete, {}, {}};
+        };
+
+        const auto critic = std::make_shared<TwinQNetwork>(
+            model::ENEMY_STATE_VECTOR_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
+            model::ENEMY_NB_DISCRETE_ACTION, agent_config.at("hidden_size_sensors").get<int>(),
+            agent_config.at("critic_hidden_sizes").get<std::vector<int>>(), vision_channels,
+            group_norm_nums);
+        load_torch(save_folder, critic, "critic.pt");
+        critic->to(device);
+        critic->eval();
+
+        canon_q_gradient = [critic, device](
+                               const TorchState &state, const torch::Tensor &mu,
+                               const torch::Tensor &discrete) {
+            const auto vision = state.get_vision().to(device);
+            const auto sensors = state.get_state().to(device);
+            const auto mask =
+                TorchState::discrete_action_mask(state.get_fire_mask(), discrete.size(-1))
+                    .to(device);
+            const auto action = gaussian_tanh_mode(mu.to(device)).detach().requires_grad_(true);
+            const auto [q1, q2] = critic->q(vision, sensors, action);
+            const auto joint = discrete_joint(discrete.to(device), mask);
+            const auto value = (joint.probas * torch::min(q1, q2)).sum();
+            const auto gradient = torch::autograd::grad({value}, {action})[0];
+            return gradient.slice(1, 2, 4).cpu();
         };
     } else {
         const auto actor = std::make_shared<LiquidActor>(
@@ -150,7 +182,7 @@ int main(const int argc, char **argv) {
     csv << "episode;step;tank;distance;yaw;pitch;best_angle;best_distance;can_fire;shells;cooldown;"
            "p_fire;p_zoom;fire;"
            "mu_dir_x;mu_dir_y;mu_canon_x;mu_canon_y;sigma_canon_x;sigma_canon_y;act_canon_x;"
-           "act_canon_y\n";
+           "act_canon_y;dq_canon_x;dq_canon_y\n";
 
     std::ofstream shots_csv(output.parent_path() / (output.stem().string() + "_shots.csv"));
     shots_csv
@@ -204,6 +236,8 @@ int main(const int argc, char **argv) {
                 }
             }
 
+            const auto q_gradient = canon_q_gradient(state, mu, discrete);
+
             const auto geometry = env->aim_geometry();
 
             const auto mu_acc = mu.accessor<float, 2>();
@@ -225,7 +259,9 @@ int main(const int argc, char **argv) {
                     << ';' << discrete_acc[i][0] << ';' << discrete_acc[i][1] << ';'
                     << disc_acc[i][0] << ';' << mu_acc[i][0] << ';' << mu_acc[i][1] << ';'
                     << mu_acc[i][2] << ';' << mu_acc[i][3] << ';' << sigma_acc[i][2] << ';'
-                    << sigma_acc[i][3] << ';' << cont_acc[i][2] << ';' << cont_acc[i][3] << '\n';
+                    << sigma_acc[i][3] << ';' << cont_acc[i][2] << ';' << cont_acc[i][3] << ';'
+                    << (q_gradient.defined() ? q_gradient[i][0].item<float>() : 0.f) << ';'
+                    << (q_gradient.defined() ? q_gradient[i][1].item<float>() : 0.f) << '\n';
 
                 if (features_out.is_open() && features.defined()) {
                     const float header[3] = {

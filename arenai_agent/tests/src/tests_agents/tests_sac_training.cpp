@@ -14,13 +14,13 @@ SacTrainingTriad SacTrainingTest::make_triad(const SacTrainingTestConfig &cfg) c
     triad.actor = std::make_shared<Actor>(
         cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 8, std::vector{16},
         vision_channels, group_norm_nums, 0.3f, std::vector(cfg.nb_discrete_actions, 0.2f));
-    triad.replay_buffer = std::make_shared<SacReplayBuffer>(64, 0.f);
+    triad.replay_buffer = std::make_shared<SacReplayBuffer>(64, 0.f, 3, 0.99f);
     triad.collector = std::make_shared<SacStepCollector>(triad.replay_buffer);
     triad.agent = std::make_shared<TorchSacAgent>(triad.actor, device, triad.collector);
     triad.trainer = std::make_shared<SacTrainer>(
         triad.actor, triad.replay_buffer, cfg.nb_sensors, cfg.nb_continuous_actions,
         cfg.nb_discrete_actions, 1e-3f, 1e-3f, 1e-3f, 8, std::vector{16}, vision_channels,
-        group_norm_nums, device, 10, 0.99f, 0.05f, 0.1f, 0.3f, 0.3f, LEARNING_STARTS, 1, BATCH_SIZE,
+        group_norm_nums, device, 10, 0.05f, 0.1f, 0.3f, 0.3f, LEARNING_STARTS, 1, BATCH_SIZE,
         GPU_BATCH_SIZE);
     return triad;
 }

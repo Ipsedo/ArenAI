@@ -14,12 +14,14 @@ namespace arenai::agent {
         torch::Tensor to_cpu(const torch::Tensor &tensor) { return tensor.detach().cpu(); }
     }// namespace
 
-    SacReplayBuffer::SacReplayBuffer(const int64_t capacity, const float armed_fraction)
-        : capacity(capacity), armed_fraction(armed_fraction) {
+    SacReplayBuffer::SacReplayBuffer(
+        const int64_t capacity, const float armed_fraction, const int n_step, const float gamma)
+        : capacity(capacity), armed_fraction(armed_fraction), n_step(n_step), gamma(gamma) {
         TORCH_CHECK(capacity > 0, "SacReplayBuffer: capacity must be positive");
         TORCH_CHECK(
             armed_fraction >= 0.f && armed_fraction <= 1.f,
             "SacReplayBuffer: armed_fraction must be in [0, 1]");
+        TORCH_CHECK(n_step >= 1, "SacReplayBuffer: n_step must be at least 1");
     }
 
     void SacReplayBuffer::allocate(const SacInputStep &step) {
@@ -127,7 +129,37 @@ namespace arenai::agent {
 
         const auto tanks = torch::floor_divide(flat, slots_per_tank);
         const auto slots = flat - tanks * slots_per_tank;
-        const auto next_flat = tanks * slots_per_tank + (slots + 1) % slots_per_tank;
+        // [B] slots written after the sampled one
+        const auto age = torch::remainder(write_index - 1 - slots, slots_per_tank);
+
+        const auto flat_rewards = rewards.flatten();
+        const auto flat_cuts = cuts.flatten().to(torch::kBool);
+        const auto flat_valids = valids.flatten();
+
+        auto returns = torch::zeros({flat.size(0)}, CPU.dtype(torch::kFloat));
+        auto discounts = torch::ones({flat.size(0)}, CPU.dtype(torch::kFloat));
+        auto nb_steps = torch::zeros_like(flat);
+        auto running = torch::ones({flat.size(0)}, CPU.dtype(torch::kBool));
+        auto cut = torch::zeros({flat.size(0)}, CPU.dtype(torch::kBool));
+
+        // stops at a cut, an episode end or the newest slot, whichever comes first
+        for (int k = 0; k < n_step; k++) {
+            const auto idx = tanks * slots_per_tank + (slots + k) % slots_per_tank;
+            const auto step_taken =
+                running.logical_and(flat_valids.index_select(0, idx)).logical_and(age >= k + 1);
+
+            returns += torch::where(
+                step_taken, discounts * flat_rewards.index_select(0, idx),
+                torch::zeros_like(returns));
+            discounts = torch::where(step_taken, discounts * gamma, discounts);
+            nb_steps += step_taken.to(torch::kLong);
+
+            const auto step_cut = step_taken.logical_and(flat_cuts.index_select(0, idx));
+            cut.logical_or_(step_cut);
+            running = step_taken.logical_and(step_cut.logical_not());
+        }
+
+        const auto next_flat = tanks * slots_per_tank + (slots + nb_steps) % slots_per_tank;
 
         const auto gather = [&](const torch::Tensor &store, const torch::Tensor &idx) {
             return store.flatten(0, 1).index_select(0, idx).to(device);
@@ -139,8 +171,9 @@ namespace arenai::agent {
             .actions =
                 {.continuous_action = gather(continuous_actions, flat),
                  .discrete_action = gather(discrete_actions, flat)},
-            .rewards = gather(rewards, flat),
-            .cuts = gather(cuts, flat),
+            .rewards = returns.unsqueeze(-1).to(device),
+            .bootstrap_discounts =
+                torch::where(cut, torch::zeros_like(discounts), discounts).unsqueeze(-1).to(device),
             .next_states = TorchState(
                 gather(visions, next_flat), gather(states, next_flat),
                 gather(fire_masks, next_flat))};

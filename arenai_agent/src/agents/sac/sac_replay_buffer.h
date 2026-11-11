@@ -22,15 +22,16 @@ namespace arenai::agent {
     struct SacBatch {
         TorchState states;
         TorchAction actions;
+        // [B, 1] discounted sum of the rewards up to next_states
         torch::Tensor rewards;
-        // [B, 1] 1 when the transition bootstraps on nothing (death or truncation)
-        torch::Tensor cuts;
+        // [B, 1] weight of the value of next_states: gamma^steps, 0 when cut
+        torch::Tensor bootstrap_discounts;
         TorchState next_states;
     };
 
     class SacReplayBuffer {
     public:
-        SacReplayBuffer(int64_t capacity, float armed_fraction);
+        SacReplayBuffer(int64_t capacity, float armed_fraction, int n_step, float gamma);
 
         void add(const SacInputStep &step);
         void finish_episode(const TorchState &final_state);
@@ -43,6 +44,8 @@ namespace arenai::agent {
     private:
         int64_t capacity;
         float armed_fraction;
+        int n_step;
+        float gamma;
 
         int64_t nb_tanks = 0;
         int64_t slots_per_tank = 0;

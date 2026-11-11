@@ -23,9 +23,8 @@ namespace arenai::agent {
             const std::vector<int> &critic_hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
-            float gamma, float tau, float initial_alpha, float target_sigma,
-            float discrete_target_entropy_ratio, int learning_starts, int gradient_steps,
-            int batch_size, int gpu_batch_size);
+            float tau, float initial_alpha, float target_sigma, float discrete_target_entropy_ratio,
+            int learning_starts, int gradient_steps, int batch_size, int gpu_batch_size);
 
         void step() override;
 
@@ -60,7 +59,6 @@ namespace arenai::agent {
         std::vector<std::shared_ptr<AbstractMetric>> alpha_metrics;
 
         int nb_continuous_actions;
-        float gamma;
         float tau;
         // per continuous axis
         float continuous_target_entropy;

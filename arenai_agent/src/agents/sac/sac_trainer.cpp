@@ -21,7 +21,7 @@ namespace arenai::agent {
                     {.continuous_action = batch.actions.continuous_action.slice(0, start, end),
                      .discrete_action = batch.actions.discrete_action.slice(0, start, end)},
                 .rewards = batch.rewards.slice(0, start, end),
-                .cuts = batch.cuts.slice(0, start, end),
+                .bootstrap_discounts = batch.bootstrap_discounts.slice(0, start, end),
                 .next_states = batch.next_states.slice(start, end)};
         }
 
@@ -43,7 +43,7 @@ namespace arenai::agent {
         const std::vector<int> &critic_hidden_sizes,
         const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, const torch::Device device,
-        const int metric_window_size, const float gamma, const float tau, const float initial_alpha,
+        const int metric_window_size, const float tau, const float initial_alpha,
         const float target_sigma, const float discrete_target_entropy_ratio,
         const int learning_starts, const int gradient_steps, const int batch_size,
         const int gpu_batch_size)
@@ -67,7 +67,7 @@ namespace arenai::agent {
           q_value_metric(std::make_shared<MeanMetric>("Q", metric_window_size)),
           continuous_entropy_metric(std::make_shared<MeanMetric>("Hc", metric_window_size)),
           discrete_entropy_metric(std::make_shared<MeanMetric>("Hd", metric_window_size)),
-          nb_continuous_actions(nb_continuous_actions), gamma(gamma), tau(tau),
+          nb_continuous_actions(nb_continuous_actions), tau(tau),
           continuous_target_entropy(gaussian_tanh_target_entropy(1, target_sigma)),
           discrete_target_entropy_ratio(discrete_target_entropy_ratio),
           learning_starts(learning_starts), gradient_steps(gradient_steps), batch_size(batch_size),
@@ -162,7 +162,7 @@ namespace arenai::agent {
             const auto next_value =
                 (joint.probas * (q_min - discrete_bonus)).sum(-1, true) - continuous_bonus;
 
-            target = block.rewards + gamma * (1.f - block.cuts) * next_value;
+            target = block.rewards + block.bootstrap_discounts * next_value;
         }
 
         const auto [q1, q2] = critic->q(

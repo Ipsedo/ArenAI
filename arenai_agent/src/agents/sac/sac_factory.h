@@ -25,8 +25,9 @@ namespace arenai::agent {
     private:
         nlohmann::json config;
 
-        // triad built once, sharing actor + replay_buffer
-        std::shared_ptr<Actor> actor;
+        // triad built once, sharing the encoder, actor + replay_buffer
+        std::shared_ptr<StateEncoder> encoder;
+        std::shared_ptr<SacActor> actor;
 
         std::shared_ptr<SacReplayBuffer> replay_buffer;
         std::shared_ptr<SacStepCollector> collector;

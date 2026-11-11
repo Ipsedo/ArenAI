@@ -105,4 +105,63 @@ namespace arenai::agent {
         return to_value->forward(encoded);
     }
 
+    SacActor::SacActor(
+        const std::shared_ptr<StateEncoder> &encoder, const int nb_continuous_actions,
+        const int nb_discrete_actions, const std::vector<int> &hidden_sizes,
+        const float initial_sigma, const std::vector<float> &initial_discrete_probas)
+        : encoder(register_module("encoder", encoder)),
+          head(register_module("head", torch::nn::Sequential())),
+          mu(register_module("mu", torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions))),
+          sigma(register_module(
+              "sigma", torch::nn::Sequential(
+                           torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
+                           SoftClamp(LOG_SIGMA_MIN, LOG_SIGMA_MAX), Exp()))),
+          discrete(register_module(
+              "discrete", torch::nn::Sequential(
+                              torch::nn::Linear(hidden_sizes.back(), nb_discrete_actions),
+                              torch::nn::Sigmoid()))) {
+
+        head->push_back(torch::nn::Linear(
+            torch::nn::LinearOptions(encoder->get_output_size(), hidden_sizes.front())
+                .bias(false)));
+        head->push_back(torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_sizes.front()})));
+        head->push_back(torch::nn::SiLU());
+
+        for (size_t i = 1; i < hidden_sizes.size(); i++) {
+            head->push_back(torch::nn::Linear(
+                torch::nn::LinearOptions(hidden_sizes[i - 1], hidden_sizes[i]).bias(false)));
+            head->push_back(torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_sizes[i]})));
+            head->push_back(torch::nn::SiLU());
+        }
+
+        head->apply(init_hidden_weights);
+        mu->apply(init_mu_output_weights);
+        sigma->apply(
+            [initial_sigma](Module &m) { init_log_sigma_output_weights(m, initial_sigma); });
+        discrete->apply([&initial_discrete_probas](Module &m) {
+            init_discrete_output_weights(m, initial_discrete_probas);
+        });
+    }
+
+    ActorRawOutput SacActor::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
+        return act_from_encoding(encoder->forward(vision, sensors));
+    }
+
+    ActorRawOutput SacActor::act_from_encoding(const torch::Tensor &encoding) {
+        const auto encoded = head->forward(encoding);
+
+        return {
+            .mu = mu->forward(encoded),
+            .sigma = sigma->forward(encoded),
+            .discrete = discrete->forward(encoded)};
+    }
+
+    std::vector<torch::Tensor> SacActor::head_parameters() const {
+        std::vector<torch::Tensor> parameters;
+        for (const auto &module: std::vector<std::shared_ptr<torch::nn::Module>>{
+                 head.ptr(), mu.ptr(), sigma.ptr(), discrete.ptr()})
+            for (const auto &parameter: module->parameters()) parameters.push_back(parameter);
+        return parameters;
+    }
+
 }// namespace arenai::agent

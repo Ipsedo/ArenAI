@@ -16,7 +16,7 @@ namespace arenai::agent {
     class SacTrainer final : public AbstractTrainer {
     public:
         SacTrainer(
-            const std::shared_ptr<Actor> &actor,
+            const std::shared_ptr<SacActor> &actor, const std::shared_ptr<StateEncoder> &encoder,
             const std::shared_ptr<SacReplayBuffer> &replay_buffer, int nb_sensors,
             int nb_continuous_actions, int nb_discrete_actions, float actor_learning_rate,
             float critic_learning_rate, float alpha_learning_rate, int hidden_size_sensors,
@@ -36,7 +36,7 @@ namespace arenai::agent {
         int count_parameters() override;
 
     private:
-        std::shared_ptr<Actor> actor;
+        std::shared_ptr<SacActor> actor;
         std::shared_ptr<SacReplayBuffer> replay_buffer;
 
         std::shared_ptr<TwinQNetwork> critic;

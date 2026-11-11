@@ -10,9 +10,11 @@ namespace arenai::agent {
         const int nb_continuous_actions, const int nb_discrete_actions, const torch::Device device,
         const SacHyperParams &params)
         : config(cli_fields_to_json(sac_cli_fields(), params)),
-          actor(std::make_shared<Actor>(
-              nb_sensors, nb_continuous_actions, nb_discrete_actions, params.hidden_size_sensors,
-              params.actor_hidden_sizes, params.vision_channels, params.group_norm_nums,
+          encoder(std::make_shared<StateEncoder>(
+              nb_sensors, params.hidden_size_sensors, params.vision_channels,
+              params.group_norm_nums)),
+          actor(std::make_shared<SacActor>(
+              encoder, nb_continuous_actions, nb_discrete_actions, params.actor_hidden_sizes,
               params.initial_sigma,
               std::vector{params.initial_fire_proba, params.initial_zoom_proba})),
           replay_buffer(std::make_shared<SacReplayBuffer>(
@@ -20,7 +22,7 @@ namespace arenai::agent {
           collector(std::make_shared<SacStepCollector>(replay_buffer)),
           agent(std::make_shared<TorchSacAgent>(actor, device, collector)),
           trainer(std::make_shared<SacTrainer>(
-              actor, replay_buffer, nb_sensors, nb_continuous_actions, nb_discrete_actions,
+              actor, encoder, replay_buffer, nb_sensors, nb_continuous_actions, nb_discrete_actions,
               params.actor_learning_rate, params.critic_learning_rate, params.alpha_learning_rate,
               params.hidden_size_sensors, params.critic_hidden_sizes, params.vision_channels,
               params.group_norm_nums, device, params.metric_window_size, params.tau,

@@ -10,7 +10,7 @@ using namespace arenai::agent;
 namespace arenai::agent {
 
     TorchSacAgent::TorchSacAgent(
-        const std::shared_ptr<Actor> &actor, const torch::Device device,
+        const std::shared_ptr<SacActor> &actor, const torch::Device device,
         std::optional<std::shared_ptr<SacStepCollector>> collector)
         : actor(actor), collector(std::move(collector)) {
         actor->to(device);

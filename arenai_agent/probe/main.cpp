@@ -92,7 +92,7 @@ int main(const int argc, char **argv) {
     };
     std::function<ProbeActorOutput(const torch::Tensor &, const torch::Tensor &)> act;
     std::function<void()> reset_hidden = [] {};
-    // [N, 2] ∂E[min Q]/∂a_canon at the mode, undefined for actors without a critic
+    // [N, 6] ∂E[min Q], ∂E[Q1], ∂E[Q2] /∂a_canon at the mode, undefined for actors without a critic
     std::function<torch::Tensor(const TorchState &, const torch::Tensor &, const torch::Tensor &)>
         canon_q_gradient = [](const TorchState &, const torch::Tensor &, const torch::Tensor &) {
             return torch::Tensor();
@@ -109,29 +109,35 @@ int main(const int argc, char **argv) {
     std::cout << "actor family : " << (is_sac ? "sac" : "ppo_liquid") << std::endl;
 
     if (is_sac) {
-        const auto actor = std::make_shared<Actor>(
-            model::ENEMY_STATE_VECTOR_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
-            model::ENEMY_NB_DISCRETE_ACTION, agent_config.at("hidden_size_sensors").get<int>(),
-            agent_config.at("actor_hidden_sizes").get<std::vector<int>>(), vision_channels,
-            group_norm_nums, agent_config.at("initial_sigma").get<float>(),
-            initial_discrete_probas);
+        const auto make_encoder = [&] {
+            return std::make_shared<StateEncoder>(
+                model::ENEMY_STATE_VECTOR_SIZE, agent_config.at("hidden_size_sensors").get<int>(),
+                vision_channels, group_norm_nums);
+        };
+        const auto actor_encoder = make_encoder();
+        const auto actor = std::make_shared<SacActor>(
+            actor_encoder, model::ENEMY_NB_CONTINUOUS_ACTION, model::ENEMY_NB_DISCRETE_ACTION,
+            agent_config.at("actor_hidden_sizes").get<std::vector<int>>(),
+            agent_config.at("initial_sigma").get<float>(), initial_discrete_probas);
         load_torch(save_folder, actor, "actor.pt");
         actor->to(device);
         actor->eval();
 
-        act = [actor](const torch::Tensor &vision, const torch::Tensor &sensors) {
-            auto out = actor->act(vision, sensors);
-            return ProbeActorOutput{out.mu, out.sigma, out.discrete, {}, {}};
-        };
-
         const auto critic = std::make_shared<TwinQNetwork>(
-            model::ENEMY_STATE_VECTOR_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
-            model::ENEMY_NB_DISCRETE_ACTION, agent_config.at("hidden_size_sensors").get<int>(),
-            agent_config.at("critic_hidden_sizes").get<std::vector<int>>(), vision_channels,
-            group_norm_nums);
+            make_encoder(), model::ENEMY_NB_CONTINUOUS_ACTION, model::ENEMY_NB_DISCRETE_ACTION,
+            agent_config.at("critic_hidden_sizes").get<std::vector<int>>());
         load_torch(save_folder, critic, "critic.pt");
         critic->to(device);
         critic->eval();
+
+        act = [actor, actor_encoder,
+               critic](const torch::Tensor &vision, const torch::Tensor &sensors) {
+            auto out = actor->act(vision, sensors);
+            // features: encoding saved with the actor, vision_features: saved with the critic
+            return ProbeActorOutput{
+                out.mu, out.sigma, out.discrete, actor_encoder->forward(vision, sensors),
+                critic->encode(vision, sensors)};
+        };
 
         canon_q_gradient = [critic, device](
                                const TorchState &state, const torch::Tensor &mu,
@@ -145,8 +151,13 @@ int main(const int argc, char **argv) {
             const auto [q1, q2] = critic->q(vision, sensors, action);
             const auto joint = discrete_joint(discrete.to(device), mask);
             const auto value = (joint.probas * torch::min(q1, q2)).sum();
-            const auto gradient = torch::autograd::grad({value}, {action})[0];
-            return gradient.slice(1, 2, 4).cpu();
+            const auto value_1 = (joint.probas * q1).sum();
+            const auto value_2 = (joint.probas * q2).sum();
+            const auto gradient_of = [&action](const torch::Tensor &v) {
+                return torch::autograd::grad({v}, {action}, {}, true)[0].slice(1, 2, 4);
+            };
+            return torch::cat({gradient_of(value), gradient_of(value_1), gradient_of(value_2)}, 1)
+                .cpu();
         };
     } else {
         const auto actor = std::make_shared<LiquidActor>(
@@ -182,7 +193,7 @@ int main(const int argc, char **argv) {
     csv << "episode;step;tank;distance;yaw;pitch;best_angle;best_distance;can_fire;shells;cooldown;"
            "p_fire;p_zoom;fire;"
            "mu_dir_x;mu_dir_y;mu_canon_x;mu_canon_y;sigma_canon_x;sigma_canon_y;act_canon_x;"
-           "act_canon_y;dq_canon_x;dq_canon_y\n";
+           "act_canon_y;dq_canon_x;dq_canon_y;dq1_canon_x;dq1_canon_y;dq2_canon_x;dq2_canon_y\n";
 
     std::ofstream shots_csv(output.parent_path() / (output.stem().string() + "_shots.csv"));
     shots_csv
@@ -261,7 +272,10 @@ int main(const int argc, char **argv) {
                     << mu_acc[i][2] << ';' << mu_acc[i][3] << ';' << sigma_acc[i][2] << ';'
                     << sigma_acc[i][3] << ';' << cont_acc[i][2] << ';' << cont_acc[i][3] << ';'
                     << (q_gradient.defined() ? q_gradient[i][0].item<float>() : 0.f) << ';'
-                    << (q_gradient.defined() ? q_gradient[i][1].item<float>() : 0.f) << '\n';
+                    << (q_gradient.defined() ? q_gradient[i][1].item<float>() : 0.f);
+                for (int k = 2; k < 6; k++)
+                    csv << ';' << (q_gradient.defined() ? q_gradient[i][k].item<float>() : 0.f);
+                csv << '\n';
 
                 if (features_out.is_open() && features.defined()) {
                     const float header[3] = {

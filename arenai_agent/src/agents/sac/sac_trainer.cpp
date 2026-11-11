@@ -36,8 +36,9 @@ namespace arenai::agent {
     }// namespace
 
     SacTrainer::SacTrainer(
-        const std::shared_ptr<Actor> &actor, const std::shared_ptr<SacReplayBuffer> &replay_buffer,
-        const int nb_sensors, const int nb_continuous_actions, const int nb_discrete_actions,
+        const std::shared_ptr<SacActor> &actor, const std::shared_ptr<StateEncoder> &encoder,
+        const std::shared_ptr<SacReplayBuffer> &replay_buffer, const int nb_sensors,
+        const int nb_continuous_actions, const int nb_discrete_actions,
         const float actor_learning_rate, const float critic_learning_rate,
         const float alpha_learning_rate, const int hidden_size_sensors,
         const std::vector<int> &critic_hidden_sizes,
@@ -49,15 +50,15 @@ namespace arenai::agent {
         const int gpu_batch_size)
         : actor(actor), replay_buffer(replay_buffer),
           critic(std::make_shared<TwinQNetwork>(
-              nb_sensors, nb_continuous_actions, nb_discrete_actions, hidden_size_sensors,
-              critic_hidden_sizes, vision_channels, group_norm_nums)),
+              encoder, nb_continuous_actions, nb_discrete_actions, critic_hidden_sizes)),
           target_critic(std::make_shared<TwinQNetwork>(
-              nb_sensors, nb_continuous_actions, nb_discrete_actions, hidden_size_sensors,
-              critic_hidden_sizes, vision_channels, group_norm_nums)),
+              std::make_shared<StateEncoder>(
+                  nb_sensors, hidden_size_sensors, vision_channels, group_norm_nums),
+              nb_continuous_actions, nb_discrete_actions, critic_hidden_sizes)),
           alphas(std::make_shared<SacAlpha>(
               initial_alpha, nb_continuous_actions + nb_discrete_actions)),
-          actor_optim(
-              std::make_unique<torch::optim::Adam>(this->actor->parameters(), actor_learning_rate)),
+          actor_optim(std::make_unique<torch::optim::Adam>(
+              this->actor->head_parameters(), actor_learning_rate)),
           critic_optim(
               std::make_unique<torch::optim::Adam>(critic->parameters(), critic_learning_rate)),
           alpha_optim(
@@ -142,8 +143,8 @@ namespace arenai::agent {
         {
             torch::NoGradGuard no_grad;
 
-            const auto [mu, sigma, discrete_proba] =
-                actor->act(block.next_states.get_vision(), block.next_states.get_state());
+            const auto [mu, sigma, discrete_proba] = actor->act_from_encoding(
+                critic->encode(block.next_states.get_vision(), block.next_states.get_state()));
             const auto [next_action, u] = gaussian_tanh_sample(mu, sigma);
             // each axis' log-probability weighted by its own temperature
             const auto continuous_log_prob = gaussian_tanh_log_pdf(u, mu, sigma);
@@ -184,8 +185,9 @@ namespace arenai::agent {
         const auto [continuous_alpha, discrete_alpha] = split_alphas();
         const auto nb_discrete_actions = block.actions.discrete_action.size(-1);
 
-        const auto [mu, sigma, discrete_proba] =
-            actor->act(block.states.get_vision(), block.states.get_state());
+        const auto encoding =
+            critic->encode(block.states.get_vision(), block.states.get_state()).detach();
+        const auto [mu, sigma, discrete_proba] = actor->act_from_encoding(encoding);
         const auto [action, u] = gaussian_tanh_sample(mu, sigma);
         // [N, nb_continuous_actions]
         const auto continuous_log_prob = gaussian_tanh_log_pdf(u, mu, sigma);
@@ -194,8 +196,7 @@ namespace arenai::agent {
             TorchState::discrete_action_mask(block.states.get_fire_mask(), nb_discrete_actions);
         const auto joint = discrete_joint(discrete_proba, discrete_mask);
 
-        const auto [q1, q2] =
-            critic->q(block.states.get_vision(), block.states.get_state(), action);
+        const auto [q1, q2] = critic->q_from_encoding(encoding, action);
         const auto q_min = torch::min(q1, q2);
 
         const auto discrete_bonus = (discrete_alpha * joint.action_log_probas).sum(-1);
@@ -271,7 +272,7 @@ namespace arenai::agent {
     }
 
     int SacTrainer::count_parameters() {
-        return count_parameters_impl(actor->parameters())
+        return count_parameters_impl(actor->head_parameters())
                + count_parameters_impl(critic->parameters())
                + count_parameters_impl(alphas->parameters());
     }

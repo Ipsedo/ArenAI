@@ -7,6 +7,7 @@
 #include <torch/torch.h>
 
 #include "./misc.h"
+#include "./state_encoder.h"
 #include "./vision.h"
 
 namespace arenai::agent {
@@ -54,6 +55,29 @@ namespace arenai::agent {
 
     private:
         torch::nn::Linear to_value;
+    };
+
+    // reads the state encoding of the critic, only its head is trained by the actor loss
+    class SacActor final : public torch::nn::Module {
+    public:
+        SacActor(
+            const std::shared_ptr<StateEncoder> &encoder, int nb_continuous_actions,
+            int nb_discrete_actions, const std::vector<int> &hidden_sizes, float initial_sigma,
+            const std::vector<float> &initial_discrete_probas);
+
+        ActorRawOutput act(const torch::Tensor &vision, const torch::Tensor &sensors);
+        ActorRawOutput act_from_encoding(const torch::Tensor &encoding);
+
+        std::vector<torch::Tensor> head_parameters() const;
+
+    private:
+        std::shared_ptr<StateEncoder> encoder;
+
+        torch::nn::Sequential head;
+
+        torch::nn::Linear mu;
+        torch::nn::Sequential sigma;
+        torch::nn::Sequential discrete;
     };
 
 }// namespace arenai::agent

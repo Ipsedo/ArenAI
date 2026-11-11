@@ -11,14 +11,16 @@ SacTrainingTriad SacTrainingTest::make_triad(const SacTrainingTestConfig &cfg) c
     const std::vector group_norm_nums{2};
 
     SacTrainingTriad triad;
-    triad.actor = std::make_shared<Actor>(
-        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 8, std::vector{16},
-        vision_channels, group_norm_nums, 0.3f, std::vector(cfg.nb_discrete_actions, 0.2f));
+    triad.encoder =
+        std::make_shared<StateEncoder>(cfg.nb_sensors, 8, vision_channels, group_norm_nums);
+    triad.actor = std::make_shared<SacActor>(
+        triad.encoder, cfg.nb_continuous_actions, cfg.nb_discrete_actions, std::vector{16}, 0.3f,
+        std::vector(cfg.nb_discrete_actions, 0.2f));
     triad.replay_buffer = std::make_shared<SacReplayBuffer>(64, 0.f, 3, 0.99f);
     triad.collector = std::make_shared<SacStepCollector>(triad.replay_buffer);
     triad.agent = std::make_shared<TorchSacAgent>(triad.actor, device, triad.collector);
     triad.trainer = std::make_shared<SacTrainer>(
-        triad.actor, triad.replay_buffer, cfg.nb_sensors, cfg.nb_continuous_actions,
+        triad.actor, triad.encoder, triad.replay_buffer, cfg.nb_sensors, cfg.nb_continuous_actions,
         cfg.nb_discrete_actions, 1e-3f, 1e-3f, 1e-3f, 8, std::vector{16}, vision_channels,
         group_norm_nums, device, 10, 0.05f, 0.1f, 0.3f, 0.3f, LEARNING_STARTS, 1, BATCH_SIZE,
         GPU_BATCH_SIZE);
@@ -153,4 +155,53 @@ TEST_F(SacTrainingTest, EpisodeEndKeepsTraining) {
 
     for (const auto &metric: triad.trainer->get_metrics())
         ASSERT_TRUE(std::isfinite(metric->compute_metric())) << metric->get_name();
+}
+
+TEST_F(SacTrainingTest, ActorAndCriticShareOneEncoder) {
+    constexpr SacTrainingTestConfig cfg{
+        .vision_height = 8,
+        .vision_width = 8,
+        .nb_sensors = model::ENEMY_STATE_VECTOR_SIZE,
+        .nb_continuous_actions = 2,
+        .nb_discrete_actions = 2};
+    const auto triad = make_triad(cfg);
+
+    auto actor_parameters = triad.actor->named_parameters();
+    for (const auto &item: triad.encoder->named_parameters())
+        ASSERT_EQ(actor_parameters["encoder." + item.key()].data_ptr(), item.value().data_ptr());
+
+    // the actor loss never reaches the encoder
+    const auto encoder_size = triad.encoder->parameters().size();
+    const auto head_parameters = triad.actor->head_parameters();
+    ASSERT_EQ(head_parameters.size(), triad.actor->parameters().size() - encoder_size);
+    for (const auto &head_parameter: head_parameters)
+        for (const auto &encoder_parameter: triad.encoder->parameters())
+            ASSERT_NE(head_parameter.data_ptr(), encoder_parameter.data_ptr());
+}
+
+TEST_F(SacTrainingTest, CriticLossTrainsTheSharedEncoder) {
+    constexpr SacTrainingTestConfig cfg{
+        .vision_height = 8,
+        .vision_width = 8,
+        .nb_sensors = model::ENEMY_STATE_VECTOR_SIZE,
+        .nb_continuous_actions = 2,
+        .nb_discrete_actions = 2};
+    const auto triad = make_triad(cfg);
+
+    std::vector<torch::Tensor> initial_parameters;
+    for (const auto &parameter: triad.encoder->parameters())
+        initial_parameters.push_back(parameter.detach().clone());
+
+    for (int t = 0; t < 6; t++) {
+        triad.agent->act(make_state(cfg, NB_TANKS), true);
+        triad.collector->on_transition(
+            torch::randn({NB_TANKS, 1}), torch::zeros({NB_TANKS, 1}), torch::zeros({NB_TANKS, 1}));
+        triad.trainer->step();
+    }
+
+    const auto parameters = triad.encoder->parameters();
+    bool any_changed = false;
+    for (size_t i = 0; i < parameters.size(); i++)
+        any_changed |= !torch::allclose(parameters[i], initial_parameters[i]);
+    ASSERT_TRUE(any_changed) << "The critic loss should update the shared encoder";
 }

@@ -94,8 +94,8 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
     const auto trainer = std::make_shared<PpoTrainer>(
         actor, rollout_buffer, cfg.nb_continuous_actions, cfg.nb_discrete_actions, cfg.nb_sensors,
         1e-3f, 1e-3f, 8, std::vector{16}, vision_channels, group_norm_nums, device, 10, 0.99f,
-        0.95f, 0.2f, 0.f, 1.f, 0.001f, 3e-4f, std::vector(cfg.nb_continuous_actions, -1.f), 0.05f,
-        2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE);
+        0.95f, 0.f, 0.2f, 0.f, 1.f, 0.001f, 3e-4f, std::vector(cfg.nb_continuous_actions, -1.f),
+        0.05f, 2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE);
 
     std::vector<torch::Tensor> initial_parameters;
     for (const auto &parameter: actor->parameters())
@@ -106,7 +106,8 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
 
         agent->act(make_state(cfg, nb_tanks), true);
         collector->on_transition(
-            torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+            torch::randn({nb_tanks, 1}), torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}),
+            torch::zeros({nb_tanks, 1}));
         trainer->step();
     }
 
@@ -148,8 +149,8 @@ TEST_F(PpoTrainingTest, MaskedFireReceivesNoUpdate) {
     const auto trainer = std::make_shared<PpoTrainer>(
         actor, rollout_buffer, cfg.nb_continuous_actions, cfg.nb_discrete_actions, cfg.nb_sensors,
         1e-3f, 1e-3f, 8, std::vector{16}, vision_channels, group_norm_nums, device, 10, 0.99f,
-        0.95f, 0.2f, 0.f, 1.f, 0.001f, 3e-4f, std::vector(cfg.nb_continuous_actions, -1.f), 0.05f,
-        2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE);
+        0.95f, 0.f, 0.2f, 0.f, 1.f, 0.001f, 3e-4f, std::vector(cfg.nb_continuous_actions, -1.f),
+        0.05f, 2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE);
 
     auto named_parameters = actor->named_parameters();
     const auto weight = named_parameters["discrete.0.weight"];
@@ -165,7 +166,8 @@ TEST_F(PpoTrainingTest, MaskedFireReceivesNoUpdate) {
 
         agent->act(state, true);
         collector->on_transition(
-            torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+            torch::randn({nb_tanks, 1}), torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}),
+            torch::zeros({nb_tanks, 1}));
         trainer->step();
     }
 

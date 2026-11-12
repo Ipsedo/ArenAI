@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cmath>
 #include <deque>
 #include <filesystem>
@@ -56,6 +57,11 @@ int main(const int argc, char **argv) {
     parser.add_argument("--cuda").default_value(false).implicit_value(true);
     parser.add_argument("--deterministic").default_value(false).implicit_value(true);
     parser.add_argument("--features").default_value(std::string());
+    parser.add_argument("--oracle").default_value(false).implicit_value(true);
+    parser.add_argument("--oracle_fov").scan<'g', float>().default_value(360.f);
+    parser.add_argument("--oracle_policy_pitch").default_value(false).implicit_value(true);
+    parser.add_argument("--oracle_camera_center").default_value(false).implicit_value(true);
+    parser.add_argument("--oracle_tolerance").scan<'g', float>().default_value(1.f);
     parser.add_argument("--vision_num_threads")
         .scan<'i', int>()
         .default_value(static_cast<int>(std::thread::hardware_concurrency()));
@@ -73,6 +79,13 @@ int main(const int argc, char **argv) {
         .shells_per_hit = parser.get<int>("--shells_per_hit"),
         .max_shells = parser.get<int>("--max_shells")};
     const bool deterministic = parser.get<bool>("--deterministic");
+    const bool oracle = parser.get<bool>("--oracle");
+    const bool oracle_policy_pitch = parser.get<bool>("--oracle_policy_pitch");
+    const bool oracle_camera_center = parser.get<bool>("--oracle_camera_center");
+    const float oracle_tolerance =
+        parser.get<float>("--oracle_tolerance") * std::numbers::pi_v<float> / 180.f;
+    const float oracle_half_yaw =
+        std::min(parser.get<float>("--oracle_fov"), 360.f) * std::numbers::pi_v<float> / 360.f;
 
     const torch::Device device =
         parser.get<bool>("--cuda") ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU);
@@ -204,7 +217,7 @@ int main(const int argc, char **argv) {
     for (const auto &name: action_names) csv << ";mu_" << name;
     for (const auto &prefix: {";sigma_", ";act_", ";dq_", ";dq1_", ";dq2_"})
         for (const auto &name: aim_names) csv << prefix << name;
-    csv << ";turret_yaw\n";
+    csv << ";turret_yaw;canon_elevation;canon_relative_elevation;chassis_pitch;chassis_roll\n";
 
     std::ofstream shots_csv(output.parent_path() / (output.stem().string() + "_shots.csv"));
     shots_csv
@@ -260,7 +273,49 @@ int main(const int argc, char **argv) {
 
             const auto q_gradient = canon_q_gradient(state, mu, discrete);
 
-            const auto geometry = env->aim_geometry();
+            const auto geometry = env->aim_geometry(oracle_half_yaw);
+
+            // oracle: the canon servoes on the nearest enemy in view and fires once aligned
+            if (oracle) {
+                const float decision_seconds = static_cast<float>(action_repeat) * wanted_frequency;
+                const float turret_step = model::ENEMY_TURRET_RADIAL_VELOCITY * decision_seconds;
+                const float canon_step = model::ENEMY_CANON_RADIAL_VELOCITY * decision_seconds;
+                constexpr float gain = 0.3f;
+
+                auto cont = continuous_action.accessor<float, 2>();
+                auto disc = discrete_action.accessor<float, 2>();
+                for (int i = 0; i < nb_tanks; i++) {
+                    disc[i][0] = 0.f;
+                    if (!geometry[i].alive || geometry[i].view_distance < 0.f) continue;
+
+                    const float drop = std::atan(
+                        model::GRAVITY * geometry[i].view_distance
+                        / (2.f * model::SHELL_SPEED * model::SHELL_SPEED));
+                    const float yaw_error = geometry[i].view_yaw;
+                    float pitch_error = geometry[i].view_pitch + drop;
+
+                    // the vision camera sits at (0, 4, -20) in the canon frame, looking at (0, 0, 100)
+                    if (oracle_camera_center) {
+                        const float d = geometry[i].view_distance;
+                        const float height = d * std::sin(geometry[i].view_pitch);
+                        const float depth =
+                            d * std::cos(geometry[i].view_pitch) * std::cos(geometry[i].view_yaw);
+                        pitch_error =
+                            std::atan2(height - 4.f, depth + 20.f) - std::atan2(-4.f, 120.f);
+                    }
+
+                    cont[i][NB_DIRECTION_ACTIONS] =
+                        std::clamp(-gain * yaw_error / turret_step, -1.f, 1.f);
+                    if (!oracle_policy_pitch)
+                        cont[i][NB_DIRECTION_ACTIONS + 1] =
+                            std::clamp(-gain * pitch_error / canon_step, -1.f, 1.f);
+
+                    const bool aligned =
+                        std::abs(yaw_error) < oracle_tolerance
+                        && (oracle_policy_pitch || std::abs(pitch_error) < oracle_tolerance);
+                    disc[i][0] = aligned ? 1.f : 0.f;
+                }
+            }
 
             const auto mu_acc = mu.accessor<float, 2>();
             const auto sigma_acc = sigma.accessor<float, 2>();
@@ -287,7 +342,11 @@ int main(const int argc, char **argv) {
                         csv << ';' << acc[i][a];
                 for (int a = 0; a < 3 * static_cast<int>(aim_names.size()); a++)
                     csv << ';' << (q_gradient.defined() ? q_gradient[i][a].item<float>() : 0.f);
-                csv << ';' << geometry[i].turret_yaw * to_degrees << '\n';
+                csv << ';' << geometry[i].turret_yaw * to_degrees << ';'
+                    << geometry[i].canon_elevation * to_degrees << ';'
+                    << geometry[i].canon_relative_elevation * to_degrees << ';'
+                    << geometry[i].chassis_pitch * to_degrees << ';'
+                    << geometry[i].chassis_roll * to_degrees << '\n';
 
                 if (features_out.is_open() && features.defined()) {
                     const float header[3] = {

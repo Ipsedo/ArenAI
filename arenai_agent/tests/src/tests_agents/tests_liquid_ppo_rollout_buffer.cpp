@@ -24,6 +24,7 @@ LiquidPpoInputStep LiquidPpoRolloutBufferTest::make_step(
         .continuous_log_prob = torch::randn({NB_TANKS, 1}),
         .discrete_log_prob = torch::randn({NB_TANKS, 1}),
         .reward = torch::randn({NB_TANKS, 1}),
+        .aim_reward = torch::randn({NB_TANKS, 1}),
         .done = done,
         .truncated = torch::zeros({NB_TANKS, 1}),
         .actor_hidden = torch::randn({NB_TANKS, NEURON_NUMBER}),
@@ -97,6 +98,7 @@ TEST_F(LiquidPpoRolloutBufferTest, RolloutShapes) {
 
     const auto expected_scalar = std::vector<int64_t>{nb_steps, NB_TANKS, 1};
     ASSERT_EQ(rollout.rewards.sizes().vec(), expected_scalar);
+    ASSERT_EQ(rollout.aim_rewards.sizes().vec(), expected_scalar);
     ASSERT_EQ(rollout.continuous_log_probs.sizes().vec(), expected_scalar);
     ASSERT_EQ(rollout.discrete_log_probs.sizes().vec(), expected_scalar);
     ASSERT_EQ(rollout.valids.sizes().vec(), expected_scalar);

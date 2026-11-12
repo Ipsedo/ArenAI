@@ -1,6 +1,10 @@
 #ifndef ARENAI_AGENT_HOST_TRAIN_ENVIRONMENT_H
 #define ARENAI_AGENT_HOST_TRAIN_ENVIRONMENT_H
 
+#include <numbers>
+
+#include <torch/torch.h>
+
 #include <arenai_core/environment.h>
 
 #include "../metrics/metric.h"
@@ -16,6 +20,14 @@ namespace arenai::agent {
         float best_angle;
         float best_distance;
         float turret_yaw;
+        float view_distance;
+        float view_yaw;
+        float view_pitch;
+        // radians above the horizon (world) and above the chassis plane (relative)
+        float canon_elevation;
+        float canon_relative_elevation;
+        float chassis_pitch;
+        float chassis_roll;
     };
 
     class TrainTankEnvironment final : public core::BaseTanksEnvironment {
@@ -34,9 +46,13 @@ namespace arenai::agent {
 
         bool is_episode_terminated();
 
-        std::vector<AimGeometry> aim_geometry();
+        // view_*: the nearest enemy within view_half_yaw of the canon axis (radians)
+        std::vector<AimGeometry> aim_geometry(float view_half_yaw = std::numbers::pi_v<float>);
 
         std::vector<model::RewardDetail> last_step_reward_details() const;
+
+        // [nb_tanks, 1] the aim potential part of the last step's rewards
+        torch::Tensor last_step_aim_rewards() const;
 
         // totals across every tank since the last reset, for the spawn curriculum
         int episode_nb_fires() const;
@@ -90,9 +106,11 @@ namespace arenai::agent {
         int nb_hits_episode;
 
         std::vector<model::RewardDetail> step_reward_details;
+        std::vector<float> step_aim_rewards;
 
         // the learning term paid on top of the tanks' own event rewards: a dense aim signal
         PotentialShaping aim_shaping;
+        float vision_aspect_ratio;
 
         bool are_all_done();
         std::vector<float> aim_potentials();

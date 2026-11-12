@@ -18,6 +18,7 @@ namespace arenai::agent {
         torch::Tensor continuous_log_prob;
         torch::Tensor discrete_log_prob;
         torch::Tensor reward;
+        torch::Tensor aim_reward;
         torch::Tensor done;
         // segment end that is not a death: cuts the return like a done, the tank plays on
         torch::Tensor truncated;
@@ -31,6 +32,7 @@ namespace arenai::agent {
         torch::Tensor continuous_log_probs;
         torch::Tensor discrete_log_probs;
         torch::Tensor rewards;
+        torch::Tensor aim_rewards;
         torch::Tensor dones;
         // segment ends that are not deaths: cut the return like dones, the tanks play on
         torch::Tensor truncateds;

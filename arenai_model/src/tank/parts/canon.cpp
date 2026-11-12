@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numbers>
+#include <utility>
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -17,6 +18,7 @@ namespace {
         2.f * std::atan(std::tan(arenai::view::DEFAULT_FOV / 2.f) / ZOOM_MAGNIFICATION);
 
     constexpr float MAX_ANGLE = 0.2f * std::numbers::pi_v<float>;
+    constexpr float UNREACHED_ANGLE = 1e-6f;
 
     glm::mat4 to_glm(const JPH::RMat44 &m) {
         glm::mat4 result;
@@ -39,7 +41,7 @@ namespace arenai::model {
         const std::function<void(const ShellItem *, glm::vec3, glm::vec3, float, Item *)>
             &on_contact,
         const std::function<void(const std::shared_ptr<ShellItem> &)> &on_shell_fired,
-        const std::function<bool()> &can_fire)
+        const std::function<bool()> &can_fire, std::shared_ptr<GunLaying> gun_laying)
         : LifeItem(5), ConvexItem(
                            prefix_name + "_canon", engine,
                            std::make_shared<ObjShape>(
@@ -48,7 +50,8 @@ namespace arenai::model {
           angle(0.f), max_rad_per_frame(max_rad_per_frame), zoom_engaged(false),
           current_fov(view::DEFAULT_FOV), file_reader(file_reader), will_fire(false),
           on_contact(on_contact), on_shell_fired(on_shell_fired), can_fire(can_fire),
-          wanted_frame_frequency(wanted_frame_frequency) {
+          wanted_frame_frequency(wanted_frame_frequency), turret(turret),
+          gun_laying(std::move(gun_laying)) {
 
         JPH::HingeConstraintSettings settings;
         settings.mSpace = JPH::EConstraintSpace::LocalToBodyCOM;
@@ -60,6 +63,8 @@ namespace arenai::model {
         settings.mPoint2 = JPH::RVec3::sZero();
         settings.mHingeAxis2 = JPH::Vec3::sAxisX();
         settings.mNormalAxis2 = JPH::Vec3::sAxisY();
+
+        settings.mMotorSettings = JPH::MotorSettings(AIM_HINGE_FREQUENCY, 1.f);
 
         auto *constraint = settings.Create(*turret, *ConvexItem::get_body());
 
@@ -107,19 +112,24 @@ namespace arenai::model {
     }
 
     void CanonItem::apply_input(const controller::user_input &input) {
-        const float delta = input.aim.has_value()
-                                ? std::clamp(
-                                    std::clamp(input.aim->pitch, -1.f, 1.f) * MAX_ANGLE - angle,
-                                    -max_rad_per_frame, max_rad_per_frame)
-                                : std::clamp(input.right_joystick.y, -1.f, 1.f) * max_rad_per_frame;
-
-        angle = std::clamp(angle + delta, -MAX_ANGLE, MAX_ANGLE);
-
-        hinge->SetTargetAngle(angle);
+        gun_laying->rotate_canon(std::clamp(input.right_joystick.y, -1.f, 1.f) * max_rad_per_frame);
 
         if (input.fire_button.pressed && can_fire()) will_fire = true;
 
         zoom_engaged.store(input.zoom_button.pressed, std::memory_order_relaxed);
+    }
+
+    void CanonItem::lay() {
+        const glm::mat3 turret_rotation = rotation_of(*turret);
+        const float target = gun_laying->canon_angle(turret_rotation);
+        angle = std::clamp(
+            angle + std::clamp(target - angle, -max_rad_per_frame, max_rad_per_frame), -MAX_ANGLE,
+            MAX_ANGLE);
+
+        if (std::abs(target - angle) > UNREACHED_ANGLE)
+            gun_laying->anchor_canon(turret_rotation, angle);
+
+        hinge->SetTargetAngle(angle);
     }
 
     float CanonItem::get_angle() const { return angle; }
@@ -150,6 +160,8 @@ namespace arenai::model {
         current_fov += std::clamp(target - current_fov, -step, step);
         return current_fov;
     }
+
+    float CanonItem::get_fov() const { return current_fov; }
 
     glm::vec3 CanonItem::up() {
         const glm::mat4 model_mat = to_glm(ConvexItem::get_body()->GetWorldTransform());

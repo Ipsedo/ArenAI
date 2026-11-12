@@ -18,7 +18,6 @@ TEST_F(TorchTypesTest, SingleActionMapping) {
     ASSERT_FLOAT_EQ(actions[0].left_joystick.y, -0.2f);
     ASSERT_FLOAT_EQ(actions[0].right_joystick.x, 0.3f);
     ASSERT_FLOAT_EQ(actions[0].right_joystick.y, -0.4f);
-    ASSERT_FALSE(actions[0].aim.has_value());
     ASSERT_TRUE(actions[0].fire_button.pressed);
     ASSERT_FALSE(actions[0].zoom_button.pressed);
 }

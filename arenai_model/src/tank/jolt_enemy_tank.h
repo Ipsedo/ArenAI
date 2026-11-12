@@ -56,8 +56,9 @@ namespace arenai::model {
 
         void tick(const std::vector<std::shared_ptr<EnemyTank>> &tanks) override;
 
-        float
-        get_aim_potential(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const override;
+        float get_aim_potential(
+            const std::vector<std::shared_ptr<EnemyTank>> &tanks,
+            float aspect_ratio) const override;
 
         RewardDetail get_last_reward_detail() const override;
 
@@ -77,9 +78,6 @@ namespace arenai::model {
     private:
         int max_frames_upside_down;
         int curr_frame_upside_down;
-
-        float aim_tolerance_min;
-        float aim_tolerance_angle;
 
         int initial_nb_shells;
         int nb_shells;
@@ -114,9 +112,11 @@ namespace arenai::model {
             const glm::vec3 &fire_pos, const glm::vec3 &fire_velocity,
             const std::vector<std::shared_ptr<EnemyTank>> &tanks) const;
 
-        float compute_aim_quality(
-            const glm::vec3 &fire_pos, const glm::vec3 &enemy_pos,
-            const glm::vec3 &shell_pos) const;
+        // the living enemies inside the canon camera frustum, with nothing between them and the muzzle
+        std::vector<std::shared_ptr<EnemyTank>> visible_enemies(
+            const std::vector<std::shared_ptr<EnemyTank>> &tanks, float aspect_ratio) const;
+
+        std::vector<JPH::BodyID> aim_excluded_bodies() const;
 
         void update_closest_approach(
             TrackedShell &tracked, const glm::vec3 &shell_pos,

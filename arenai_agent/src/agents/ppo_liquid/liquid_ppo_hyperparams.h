@@ -26,6 +26,8 @@ namespace arenai::agent {
         int metric_window_size = 256;
         float gamma = 0.995f;
         float gae_lambda = 0.95f;
+        // λ of the canon actions' advantage, the aim potential's own return
+        float aim_gae_lambda = 0.f;
         float clip_epsilon = 0.2f;
         float target_kl = 0.05f;
         float grad_norm_max = 0.5f;

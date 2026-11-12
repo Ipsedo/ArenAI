@@ -168,6 +168,11 @@ namespace arenai::model {
         jolt_item_producers.push_back(std::move(producer));
     }
 
+    void JoltPhysicEngine::add_pre_update_callback(std::function<void()> callback) {
+        std::unique_lock lock(items_mutex);
+        pre_update_callbacks.push_back(std::move(callback));
+    }
+
     void JoltPhysicEngine::remove_jolt_item_constraints(const std::shared_ptr<JoltItem> &item) {
         std::unique_lock lock(items_mutex);
         for (const auto &constraint: item->get_constraints()) {
@@ -231,6 +236,11 @@ namespace arenai::model {
         local_time += delta;
         if (local_time >= wanted_frequency) {
             local_time -= std::floor(local_time / wanted_frequency) * wanted_frequency;
+
+            {
+                std::unique_lock lock(items_mutex);
+                for (const auto &callback: pre_update_callbacks) callback();
+            }
 
             contact_listener.clear();
             physics_system->Update(wanted_frequency, 1, temp_allocator.get(), job_system.get());
@@ -322,6 +332,7 @@ namespace arenai::model {
 
         contact_listener.clear();
         jolt_item_producers.clear();
+        pre_update_callbacks.clear();
         items.clear();
     }
 

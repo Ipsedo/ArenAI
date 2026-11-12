@@ -23,7 +23,8 @@ namespace arenai::agent {
     }
 
     void LiquidPpoStepCollector::on_transition(
-        const torch::Tensor &rewards, const torch::Tensor &done, const torch::Tensor &truncated) {
+        const torch::Tensor &rewards, const torch::Tensor &aim_rewards, const torch::Tensor &done,
+        const torch::Tensor &truncated) {
         rollout_buffer->add(
             {.state = last_state,
              .action = last_action,
@@ -31,6 +32,7 @@ namespace arenai::agent {
              .continuous_log_prob = last_continuous_log_prob,
              .discrete_log_prob = last_discrete_log_prob,
              .reward = rewards,
+             .aim_reward = aim_rewards,
              .done = done,
              .truncated = truncated,
              .actor_hidden = last_actor_hidden,

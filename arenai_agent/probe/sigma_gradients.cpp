@@ -28,14 +28,24 @@ using namespace arenai;
 using namespace arenai::agent;
 
 namespace {
+    struct StepRecord {
+        std::vector<AimGeometry> geometries;
+        std::vector<model::RewardDetail> details;
+        std::vector<float> rewards;
+        std::vector<bool> dones;
+        std::vector<bool> truncateds;
+    };
+
     LiquidPpoHyperParams read_params(const nlohmann::json &agent_config) {
         LiquidPpoHyperParams params{};
         for (const auto &field: liquid_ppo_cli_fields())
             std::visit(
                 [&](const auto member) {
+                    // a run older than a hyperparameter keeps its default
                     const auto name = field.name.substr(field.name.find_first_not_of('-'));
-                    params.*member =
-                        agent_config.at(name).get<std::decay_t<decltype(params.*member)>>();
+                    if (agent_config.contains(name))
+                        params.*member =
+                            agent_config.at(name).get<std::decay_t<decltype(params.*member)>>();
                 },
                 field.member);
         return params;
@@ -98,10 +108,10 @@ int main(const int argc, char **argv) {
         model::ENEMY_STATE_VECTOR_SIZE, params.actor_learning_rate, params.critic_learning_rate,
         params.hidden_size_sensors, params.vision_channels, params.group_norm_nums,
         params.neuron_number, params.unfolding_steps, params.delta_t, device,
-        params.metric_window_size, params.gamma, params.gae_lambda, params.clip_epsilon,
-        params.target_kl, params.grad_norm_max, params.initial_alpha, params.alpha_learning_rate,
-        params.continuous_target_entropy, params.discrete_target_proba, params.actor_epochs,
-        params.critic_epochs, params.rollout_size, params.actor_batch_size,
+        params.metric_window_size, params.gamma, params.gae_lambda, params.aim_gae_lambda,
+        params.clip_epsilon, params.target_kl, params.grad_norm_max, params.initial_alpha,
+        params.alpha_learning_rate, params.continuous_target_entropy, params.discrete_target_proba,
+        params.actor_epochs, params.critic_epochs, params.rollout_size, params.actor_batch_size,
         params.actor_gpu_batch_size, params.critic_batch_size, params.critic_gpu_batch_size,
         params.chunk_size);
     trainer->load(save_folder);
@@ -118,15 +128,16 @@ int main(const int argc, char **argv) {
     const auto names = TorchAction::continuous_action_names();
 
     std::ofstream csv(output);
-    csv << "rollout;step;tank;armed;fire;best_angle;best_distance;advantage";
-    for (const auto &prefix: {"mu_", "sigma_", "g_pg_", "g_h_"})
+    csv << "rollout;step;tank;armed;fire;best_angle;best_distance;distance;yaw;pitch;reward;hit;"
+           "kill;received;death;done;truncated;advantage;aim_advantage";
+    for (const auto &prefix: {"mu_", "sigma_", "u_", "g_pg_", "g_h_"})
         for (const auto &name: names) csv << ';' << prefix << name;
     csv << '\n';
 
     constexpr float to_degrees = 180.f / std::numbers::pi_v<float>;
 
     // one entry per step added to the rollout buffer, consumed with it
-    std::deque<std::vector<AimGeometry>> geometries;
+    std::deque<StepRecord> records;
     int rollout_index = 0;
 
     const auto write_rollout = [&] {
@@ -137,26 +148,35 @@ int main(const int argc, char **argv) {
             const auto step_acc = gradients.steps.accessor<int64_t, 1>();
             const auto tank_acc = gradients.tanks.accessor<int64_t, 1>();
             const auto adv_acc = gradients.advantages.accessor<float, 1>();
+            const auto aim_adv_acc = gradients.aim_advantages.accessor<float, 1>();
             const auto armed_acc = gradients.fire_masks.accessor<float, 1>();
             const auto fire_acc = gradients.fires.accessor<float, 1>();
             const auto mu_acc = gradients.mu.accessor<float, 2>();
             const auto sigma_acc = gradients.sigma.accessor<float, 2>();
+            const auto u_acc = gradients.pre_tanh.accessor<float, 2>();
             const auto pg_acc = gradients.surrogate.accessor<float, 2>();
             const auto h_acc = gradients.entropy.accessor<float, 2>();
 
             for (int64_t r = 0; r < gradients.steps.size(0); r++) {
-                const auto &geometry = geometries[step_acc[r]][tank_acc[r]];
-                csv << rollout_index << ';' << step_acc[r] << ';' << tank_acc[r] << ';'
-                    << armed_acc[r] << ';' << fire_acc[r] << ';' << geometry.best_angle * to_degrees
-                    << ';' << geometry.best_distance << ';' << adv_acc[r];
-                for (const auto &acc: {mu_acc, sigma_acc, pg_acc, h_acc})
+                const auto &record = records[step_acc[r]];
+                const auto tank = tank_acc[r];
+                const auto &geometry = record.geometries[tank];
+                const auto &detail = record.details[tank];
+                csv << rollout_index << ';' << step_acc[r] << ';' << tank << ';' << armed_acc[r]
+                    << ';' << fire_acc[r] << ';' << geometry.best_angle * to_degrees << ';'
+                    << geometry.best_distance << ';' << geometry.distance << ';'
+                    << geometry.yaw * to_degrees << ';' << geometry.pitch * to_degrees << ';'
+                    << record.rewards[tank] << ';' << detail.hit << ';' << detail.kill << ';'
+                    << detail.received << ';' << detail.death << ';' << record.dones[tank] << ';'
+                    << record.truncateds[tank] << ';' << adv_acc[r] << ';' << aim_adv_acc[r];
+                for (const auto &acc: {mu_acc, sigma_acc, u_acc, pg_acc, h_acc})
                     for (int64_t a = 0; a < static_cast<int64_t>(names.size()); a++)
                         csv << ';' << acc[r][a];
                 csv << '\n';
             }
         }
 
-        geometries.erase(geometries.begin(), geometries.begin() + nb_steps);
+        records.erase(records.begin(), records.begin() + nb_steps);
         std::cout << "rollout " << rollout_index << " : " << nb_steps << " steps" << std::endl;
         rollout_index++;
     };
@@ -167,14 +187,23 @@ int main(const int argc, char **argv) {
 
         bool is_done = false;
         while (!is_done) {
-            geometries.push_back(env->aim_geometry());
+            StepRecord record{.geometries = env->aim_geometry()};
 
             const auto steps =
                 env->step(wanted_frequency, agent->act(state.to(device), true).to_actions());
             const TorchStep torch_step(steps, vision_height, vision_width);
 
+            record.details = env->last_step_reward_details();
+            for (const auto &[unused_state, reward, done, truncated]: steps) {
+                record.rewards.push_back(reward);
+                record.dones.push_back(done);
+                record.truncateds.push_back(truncated);
+            }
+            records.push_back(std::move(record));
+
             collector->on_transition(
-                torch_step.get_rewards(), torch_step.get_is_done(), torch_step.get_is_truncated());
+                torch_step.get_rewards(), env->last_step_aim_rewards(), torch_step.get_is_done(),
+                torch_step.get_is_truncated());
 
             if (rollout_buffer->nb_complete_steps() >= static_cast<size_t>(params.rollout_size))
                 write_rollout();

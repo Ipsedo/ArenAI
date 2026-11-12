@@ -17,6 +17,7 @@ namespace arenai::agent {
             {.name = "--metric_window_size", .member = &PpoHyperParams::metric_window_size},
             {.name = "--gamma", .member = &PpoHyperParams::gamma},
             {.name = "--gae_lambda", .member = &PpoHyperParams::gae_lambda},
+            {.name = "--aim_gae_lambda", .member = &PpoHyperParams::aim_gae_lambda},
             {.name = "--clip_epsilon", .member = &PpoHyperParams::clip_epsilon},
             {.name = "--target_kl", .member = &PpoHyperParams::target_kl},
             {.name = "--grad_norm_max", .member = &PpoHyperParams::grad_norm_max},

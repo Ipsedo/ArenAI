@@ -12,6 +12,7 @@ namespace arenai::agent {
 
     struct GaeResult {
         torch::Tensor advantages;
+        torch::Tensor aim_advantages;
         torch::Tensor returns;
     };
 
@@ -25,8 +26,8 @@ namespace arenai::agent {
             const std::vector<int> &critic_hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
-            float gamma, float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
-            float initial_alpha, float alpha_learning_rate,
+            float gamma, float gae_lambda, float aim_gae_lambda, float clip_epsilon,
+            float target_kl, float grad_norm_max, float initial_alpha, float alpha_learning_rate,
             const std::vector<float> &continuous_target_entropy, float discrete_target_proba,
             int actor_epochs, int critic_epochs, int rollout_size, int actor_batch_size,
             int actor_gpu_batch_size, int critic_batch_size, int critic_gpu_batch_size);
@@ -75,6 +76,7 @@ namespace arenai::agent {
 
         float gamma;
         float gae_lambda;
+        float aim_gae_lambda;
         float clip_epsilon;
         float target_kl;
 
@@ -95,8 +97,10 @@ namespace arenai::agent {
             torch::Tensor continuous_pre_tanh;
             torch::Tensor discrete_actions;
             torch::Tensor fire_masks;
-            torch::Tensor old_log_probs;
+            torch::Tensor old_continuous_log_probs;
+            torch::Tensor old_discrete_log_probs;
             torch::Tensor advantages;
+            torch::Tensor aim_advantages;
             torch::Tensor returns;
 
             FlatRows select(const torch::Tensor &idx) const;

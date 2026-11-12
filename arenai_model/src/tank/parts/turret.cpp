@@ -4,6 +4,9 @@
 #include <cmath>
 #include <memory>
 #include <numbers>
+#include <utility>
+
+#include <arenai_model/constants.h>
 
 using namespace arenai;
 using namespace arenai::model;
@@ -11,6 +14,7 @@ using namespace arenai::model;
 namespace {
 
     constexpr float TWO_PI = 2.f * std::numbers::pi_v<float>;
+    constexpr float UNREACHED_ANGLE = 1e-6f;
 
 }// namespace
 
@@ -20,13 +24,14 @@ namespace arenai::model {
         const std::string &prefix_name, JoltPhysicEngine &engine,
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, const glm::vec3 pos,
         const glm::vec3 rel_pos, const glm::vec3 scale, const float mass, JPH::Body *chassis,
-        const float max_rad_per_frame)
+        const float max_rad_per_frame, std::shared_ptr<GunLaying> gun_laying)
         : LifeItem(5), ConvexItem(
                            prefix_name + "_turret", engine,
                            std::make_shared<ObjShape>(
                                file_reader, std::filesystem::path("obj") / "anubis_turret.obj"),
                            pos, scale, mass),
-          angle(0.f), max_rad_per_frame(max_rad_per_frame) {
+          angle(0.f), max_rad_per_frame(max_rad_per_frame), chassis(chassis),
+          gun_laying(std::move(gun_laying)) {
 
         JPH::HingeConstraintSettings settings;
         settings.mSpace = JPH::EConstraintSpace::LocalToBodyCOM;
@@ -39,6 +44,8 @@ namespace arenai::model {
         settings.mHingeAxis2 = JPH::Vec3::sAxisY();
         settings.mNormalAxis2 = JPH::Vec3::sAxisX();
 
+        settings.mMotorSettings = JPH::MotorSettings(AIM_HINGE_FREQUENCY, 1.f);
+
         auto *constraint = settings.Create(*chassis, *ConvexItem::get_body());
 
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
@@ -46,15 +53,19 @@ namespace arenai::model {
     }
 
     void TurretItem::apply_input(const controller::user_input &input) {
-        if (input.aim.has_value()) {
-            const float target = std::atan2(input.aim->yaw_sin, input.aim->yaw_cos);
-            const float delta = std::clamp(
-                std::remainder(target - angle, TWO_PI), -max_rad_per_frame, max_rad_per_frame);
-            angle = std::remainder(angle + delta, TWO_PI);
-        } else {
-            const float delta = std::clamp(input.right_joystick.x, -1.f, 1.f) * max_rad_per_frame;
-            angle = std::remainder(angle - delta, TWO_PI);
-        }
+        gun_laying->rotate_turret(
+            -std::clamp(input.right_joystick.x, -1.f, 1.f) * max_rad_per_frame);
+    }
+
+    void TurretItem::lay() {
+        const glm::mat3 chassis_rotation = rotation_of(*chassis);
+        const float target = gun_laying->turret_angle(chassis_rotation);
+        const float delta = std::clamp(
+            std::remainder(target - angle, TWO_PI), -max_rad_per_frame, max_rad_per_frame);
+        angle = std::remainder(angle + delta, TWO_PI);
+
+        if (std::abs(std::remainder(target - angle, TWO_PI)) > UNREACHED_ANGLE)
+            gun_laying->anchor_turret(chassis_rotation, angle);
 
         hinge->SetMotorState(JPH::EMotorState::Position);
         hinge->SetTargetAngle(angle);

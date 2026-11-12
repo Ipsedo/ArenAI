@@ -14,7 +14,8 @@ namespace arenai::agent {
     }
 
     void SacStepCollector::on_transition(
-        const torch::Tensor &rewards, const torch::Tensor &done, const torch::Tensor &truncated) {
+        const torch::Tensor &rewards, const torch::Tensor &, const torch::Tensor &done,
+        const torch::Tensor &truncated) {
         replay_buffer->add(
             {.state = last_state,
              .action = last_action,

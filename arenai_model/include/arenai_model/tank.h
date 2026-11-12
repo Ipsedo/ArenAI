@@ -68,8 +68,9 @@ namespace arenai::model {
 
         virtual void tick(const std::vector<std::shared_ptr<EnemyTank>> &tanks) = 0;
 
-        virtual float
-        get_aim_potential(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const = 0;
+        // in [0, 1]: how close the predicted shell passes to an enemy seen in a view of this aspect ratio
+        virtual float get_aim_potential(
+            const std::vector<std::shared_ptr<EnemyTank>> &tanks, float aspect_ratio) const = 0;
 
         virtual bool consume_has_hit() = 0;
         virtual bool consume_has_kill() = 0;

@@ -4,6 +4,7 @@
 
 #include <arenai_controller/inputs.h>
 #include <arenai_model/constants.h>
+#include <arenai_model/item_factory.h>
 #include <arenai_model/shell_economy.h>
 #include <arenai_model_tests/tests_reward/tests_reward.h>
 
@@ -290,77 +291,100 @@ TEST_F(RewardTest, HitPaysTheHealthFractionRemoved) {
     ASSERT_FLOAT_EQ(shared_b->get_last_reward_detail().received, -DAMAGE_REWARD * lost_fraction);
 }
 
-TEST_F(RewardTest, AimPotentialPeaksOnTheEnemy) {
+namespace {
+    constexpr float VISION_ASPECT_RATIO = 2.f;
+}// namespace
+
+class AimPotentialTest : public RewardTest {
+protected:
+    std::shared_ptr<model::EnemyTank> spawn(const std::string &name, const glm::vec3 pos) {
+        return tank_factory->make_enemy_tank(file_reader, name, pos, model::GAME_SHELL_ECONOMY);
+    }
+
+    void settle() {
+        for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+    }
+
+    float potential(
+        const std::shared_ptr<model::EnemyTank> &shooter,
+        const std::shared_ptr<model::EnemyTank> &enemy) const {
+        return shooter->get_aim_potential({shooter, enemy}, VISION_ASPECT_RATIO);
+    }
+};
+
+TEST_F(AimPotentialTest, PeaksOnTheEnemy) {
     add_ground();
-    auto tank_a =
-        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
-    auto tank_b =
-        tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, GAME_SHELL_ECONOMY);
+    const auto shooter = spawn("tank_a", {0.f, 5.f, 0.f});
+    const auto enemy = spawn("tank_b", {0.f, 5.f, 30.f});
+    settle();
 
-    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
-
-    const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
-    const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
-    const std::vector tanks{shared_a, shared_b};
-
-    ASSERT_FLOAT_EQ(shared_a->get_aim_potential({shared_a}), 0.f)
+    ASSERT_FLOAT_EQ(shooter->get_aim_potential({shooter}, VISION_ASPECT_RATIO), 0.f)
         << "no enemy to aim at: no potential";
 
-    const float potential = shared_a->get_aim_potential(tanks);
-    ASSERT_GT(potential, 0.5f)
-        << "facing the enemy at 30 m, the predicted trajectory stops on its hull within the "
-           "tolerance of its center";
-    ASSERT_LE(potential, 1.f);
+    ASSERT_GT(potential(shooter, enemy), 0.95f)
+        << "the predicted shell crosses the hull, 2 m above the center of the enemy facing it";
+    ASSERT_LE(potential(shooter, enemy), 1.f);
 
     // a wreck is no target
-    for (const auto &item: shared_b->get_items())
+    for (const auto &item: enemy->get_items())
         if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
             life->receive_damages({.impact_position = glm::vec3(0.f), .damages = 1e6f});
             break;
         }
-    shared_b->on_death();
-    ASSERT_FLOAT_EQ(shared_a->get_aim_potential(tanks), 0.f) << "a wreck is no target";
+    enemy->on_death();
+    ASSERT_FLOAT_EQ(potential(shooter, enemy), 0.f) << "a wreck is no target";
 
     // nor does a dead tank aim
-    for (const auto &item: shared_a->get_items())
+    for (const auto &item: shooter->get_items())
         if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
             life->receive_damages({.impact_position = glm::vec3(0.f), .damages = 1e6f});
             break;
         }
-    ASSERT_FLOAT_EQ(shared_a->get_aim_potential(tanks), 0.f) << "a dead tank has no potential";
+    ASSERT_FLOAT_EQ(potential(shooter, enemy), 0.f) << "a dead tank has no potential";
 }
 
-TEST_F(RewardTest, AimPotentialIsLowWhenTheShotWouldMiss) {
+TEST_F(AimPotentialTest, IgnoresAnEnemyOutOfView) {
     add_ground();
-    auto tank_a =
-        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
-    auto tank_b =
-        tank_factory->make_enemy_tank(file_reader, "tank_b", {60.f, 5.f, 20.f}, GAME_SHELL_ECONOMY);
+    const auto shooter = spawn("tank_a", {0.f, 5.f, 0.f});
+    const auto enemy = spawn("tank_b", {60.f, 5.f, 20.f});
+    settle();
 
-    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
-
-    const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
-    const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
-
-    ASSERT_LT(shared_a->get_aim_potential({shared_a, shared_b}), 0.1f)
-        << "the enemy sits 72 degrees off the canon axis";
+    ASSERT_FLOAT_EQ(potential(shooter, enemy), 0.f)
+        << "the enemy sits 72 degrees off the canon axis, outside the camera frustum";
 }
 
-TEST_F(RewardTest, AimPotentialKeepsASlopeAcrossTheFieldOfView) {
+TEST_F(AimPotentialTest, IgnoresAHiddenEnemy) {
     add_ground();
-    auto tank_a =
-        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
-    auto tank_b =
-        tank_factory->make_enemy_tank(file_reader, "tank_b", {11.f, 5.f, 30.f}, GAME_SHELL_ECONOMY);
+    const auto wall = engine->get_item_factory()->make_cube_item(
+        "wall", file_reader, glm::vec3(0.f, 10.f, 15.f), glm::vec3(20.f, 10.f, 1.f), 0.f);
+    const auto shooter = spawn("tank_a", {0.f, 5.f, 0.f});
+    const auto enemy = spawn("tank_b", {0.f, 5.f, 30.f});
+    settle();
 
-    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+    ASSERT_FLOAT_EQ(potential(shooter, enemy), 0.f)
+        << "a wall stands between the muzzle and the enemy";
+}
 
-    const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
-    const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
+TEST_F(AimPotentialTest, ToleranceIsTheHullRadius) {
+    add_ground();
+    const auto shooter = spawn("tank_a", {0.f, 5.f, 0.f});
+    const auto enemy = spawn("tank_b", {6.f, 5.f, 30.f});
+    settle();
 
-    const float potential = shared_a->get_aim_potential({shared_a, shared_b});
-    ASSERT_GT(potential, 0.3f) << "the enemy sits 20 degrees off the canon axis";
-    ASSERT_LT(potential, 0.9f);
+    // the predicted shell passes about 6.4 m from the enemy center, 3.4 m off its hull
+    ASSERT_GT(potential(shooter, enemy), 0.3f);
+    ASSERT_LT(potential(shooter, enemy), 0.6f);
+}
+
+TEST_F(AimPotentialTest, TightensWithDistance) {
+    add_ground();
+    const auto shooter = spawn("tank_a", {0.f, 5.f, 0.f});
+    const auto near_enemy = spawn("tank_b", {5.f, 5.f, 30.f});
+    const auto far_enemy = spawn("tank_c", {-50.f, 5.f, 300.f});
+    settle();
+
+    ASSERT_GT(potential(shooter, near_enemy), 10.f * potential(shooter, far_enemy))
+        << "the same 9.5 degrees off is a near miss at 30 m, a wide one at 300 m";
 }
 
 TEST_F(RewardTest, NoRewardWhenShootingAWreck) {

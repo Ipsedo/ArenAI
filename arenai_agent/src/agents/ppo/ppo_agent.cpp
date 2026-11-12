@@ -44,9 +44,8 @@ namespace arenai::agent {
                 action.discrete_action = bernoulli_max_action(discrete_proba);
             }
 
-            // old log-probabilities, kept for the PPO importance ratio
-            continuous_log_prob =
-                gaussian_tanh_log_pdf(continuous_pre_tanh, mu, sigma).sum(-1, true);
+            // old log-probabilities per continuous action, kept for the PPO importance ratios
+            continuous_log_prob = gaussian_tanh_log_pdf(continuous_pre_tanh, mu, sigma);
 
             // a fire without effect is not a decision: no log-probability, no gradient
             discrete_log_prob = (bernoulli_log_proba(action.discrete_action, discrete_proba)

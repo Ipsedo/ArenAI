@@ -8,6 +8,7 @@
 #include <arenai_controller/inputs.h>
 
 #include "../../items/convex.h"
+#include "./gun_laying.h"
 
 namespace arenai::model {
 
@@ -17,10 +18,13 @@ namespace arenai::model {
             const std::string &prefix_name, JoltPhysicEngine &engine,
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader, glm::vec3 pos,
             glm::vec3 rel_pos, glm::vec3 scale, float mass, JPH::Body *chassis,
-            float max_rad_per_frame);
+            float max_rad_per_frame, std::shared_ptr<GunLaying> gun_laying);
 
         // the input carries an aim rate in [-1, 1], a fraction of max_rad_per_frame
         void apply_input(const controller::user_input &input) override;
+
+        // tracks the set point at the hinge, once per physics update
+        void lay();
 
         float get_angle() const;
 
@@ -29,6 +33,8 @@ namespace arenai::model {
     private:
         float angle;
         float max_rad_per_frame;
+        JPH::Body *chassis;
+        std::shared_ptr<GunLaying> gun_laying;
         JPH::Ref<JPH::HingeConstraint> hinge;
     };
 

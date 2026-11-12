@@ -18,6 +18,7 @@ namespace arenai::agent {
         torch::Tensor continuous_log_prob;
         torch::Tensor discrete_log_prob;
         torch::Tensor reward;
+        torch::Tensor aim_reward;
         torch::Tensor done;
         torch::Tensor truncated;
         // [nb_tanks, neuron_number] actor liquid state opening the step
@@ -34,6 +35,7 @@ namespace arenai::agent {
         torch::Tensor continuous_log_probs;
         torch::Tensor discrete_log_probs;
         torch::Tensor rewards;
+        torch::Tensor aim_rewards;
         torch::Tensor dones;
         torch::Tensor truncateds;
         // [nb_tanks, ...] observation closing the last step, for the value bootstrap

@@ -202,8 +202,8 @@ namespace arenai::agent {
 
                 // complete the pending transition - maybe train
                 collector->on_transition(
-                    torch_step.get_rewards(), torch_step.get_is_done(),
-                    torch_step.get_is_truncated());
+                    torch_step.get_rewards(), env->last_step_aim_rewards(),
+                    torch_step.get_is_done(), torch_step.get_is_truncated());
                 trainer->step();
 
                 // step ending stuff

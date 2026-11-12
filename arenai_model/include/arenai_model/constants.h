@@ -21,7 +21,13 @@ namespace arenai::model {
     constexpr float PLAYER_TURRET_RADIAL_VELOCITY = std::numbers::pi * 12.f;
     constexpr float PLAYER_CANON_RADIAL_VELOCITY = 0.4f * PLAYER_TURRET_RADIAL_VELOCITY;
 
+    // Hz, critically damped spring of the turret and canon hinge motors
+    constexpr float AIM_HINGE_FREQUENCY = 20.f;
+
     constexpr float CANON_AIM_DISTANCE = 100.f;
+
+    // m, the hull radius: a predicted pass within it scores the full aim potential
+    constexpr float AIM_TARGET_RADIUS = 3.f;
 
     constexpr float GRAVITY = 9.8f;
     constexpr float SHELL_SPEED = 250.f;

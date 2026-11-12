@@ -9,6 +9,7 @@
 #include "../jolt_engine.h"
 #include "./parts/canon.h"
 #include "./parts/chassis.h"
+#include "./parts/gun_laying.h"
 #include "./parts/shell.h"
 #include "./parts/turret.h"
 #include "./parts/wheel.h"
@@ -29,7 +30,7 @@ namespace arenai::model {
         const std::function<void(const std::shared_ptr<ShellItem> &)> &on_shell_fired_callback,
         const std::function<bool()> &can_fire_callback)
         : engine(engine), name(tank_prefix_name), camera(std::nullptr_t()),
-          file_reader(file_reader) {
+          gun_laying(std::make_shared<GunLaying>()), file_reader(file_reader) {
 
         glm::vec3 scale(0.5);
 
@@ -89,7 +90,7 @@ namespace arenai::model {
         auto turret = std::make_shared<TurretItem>(
             tank_prefix_name, engine, file_reader, chassis_pos + turret_pos, turret_pos,
             scale * turret_scale, 300, chassis_item->get_body(),
-            aim_turret_rad_per_second * wanted_frame_frequency);
+            aim_turret_rad_per_second * wanted_frame_frequency, gun_laying);
         jolt_items.push_back(turret);
         items.push_back(turret);
         controllers.push_back(turret);
@@ -110,7 +111,7 @@ namespace arenai::model {
                     {.fire_position = fire_pos, .current_position = hit_pos, .damages = damages},
                     item);
             },
-            on_shell_fired_callback, can_fire_callback);
+            on_shell_fired_callback, can_fire_callback, gun_laying);
 
         jolt_items.push_back(canon_item);
         items.push_back(canon_item);
@@ -118,6 +119,7 @@ namespace arenai::model {
         life_items.push_back(canon_item.get());
 
         canon = canon_item;
+        lay_gun_on_canon();
 
         std::vector<JPH::BodyID> own_bodies;
         own_bodies.reserve(jolt_items.size());
@@ -150,6 +152,10 @@ namespace arenai::model {
         for (const auto &item: jolt_items) engine.add_jolt_item(item);
 
         engine.add_jolt_item_producer([c = canon_item] { return c->produce_jolt_items(); });
+        engine.add_pre_update_callback([t = turret, c = canon_item] {
+            t->lay();
+            c->lay();
+        });
     }
 
     std::shared_ptr<view::AbstractCamera> JoltTank::get_camera() const { return camera; }
@@ -212,6 +218,12 @@ namespace arenai::model {
             body_interface.SetLinearAndAngularVelocity(
                 body->GetID(), JPH::Vec3::sZero(), JPH::Vec3::sZero());
         }
+
+        lay_gun_on_canon();
+    }
+
+    void JoltTank::lay_gun_on_canon() const {
+        gun_laying->reset(glm::vec3(canon->get_model_matrix() * glm::vec4(0.f, 0.f, 1.f, 0.f)));
     }
 
     std::vector<LifeItem *> JoltTank::get_life_items() const { return life_items; }

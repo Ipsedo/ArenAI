@@ -9,6 +9,7 @@
 #include <arenai_utils/cache.h>
 #include <arenai_utils/singleton.h>
 #include <arenai_view/backend.h>
+#include <arenai_view/camera.h>
 
 #include "../metrics/mean_metric.h"
 
@@ -49,7 +50,9 @@ namespace arenai::agent {
           hit_metric(std::make_shared<MeanMetric>("hit", 16, 2, true)),
           kill_metric(std::make_shared<MeanMetric>("kill", 16, 1)), nb_kills_episode(0),
           nb_fires_episode(0), nb_hits_episode(0),
-          aim_shaping(gamma, AIM_POTENTIAL_SCALE, nb_tanks) {}
+          aim_shaping(gamma, AIM_POTENTIAL_SCALE, nb_tanks),
+          vision_aspect_ratio(
+              static_cast<float>(vision_width) / static_cast<float>(vision_height)) {}
 
     std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
     TrainTankEnvironment::step(const float time_delta, const std::vector<core::Action> &actions) {
@@ -155,6 +158,7 @@ namespace arenai::agent {
         nb_fires_episode += nb_fires;
         nb_hits_episode += nb_hits;
         step_reward_details = reward_details;
+        step_aim_rewards = shaping_details;
 
         std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>> result;
         result.reserve(nb_tanks);
@@ -218,10 +222,11 @@ namespace arenai::agent {
 
     std::vector<float> TrainTankEnvironment::aim_potentials() {
         return apply_on_enemies<std::vector<float>>(
-            [](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
+            [this](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
                 std::vector<float> potentials;
                 potentials.reserve(tanks.size());
-                for (const auto &tank: tanks) potentials.push_back(tank->get_aim_potential(tanks));
+                for (const auto &tank: tanks)
+                    potentials.push_back(tank->get_aim_potential(tanks, vision_aspect_ratio));
                 return potentials;
             });
     }
@@ -230,9 +235,18 @@ namespace arenai::agent {
         return step_reward_details;
     }
 
-    std::vector<AimGeometry> TrainTankEnvironment::aim_geometry() {
+    torch::Tensor TrainTankEnvironment::last_step_aim_rewards() const {
+        return torch::tensor(step_aim_rewards, torch::TensorOptions().dtype(torch::kFloat))
+            .unsqueeze(-1);
+    }
+
+    std::vector<AimGeometry> TrainTankEnvironment::aim_geometry(const float view_half_yaw) {
         return apply_on_enemies<std::vector<AimGeometry>>(
-            [](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
+            [view_half_yaw](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
+                const float view_half_pitch = view_half_yaw < std::numbers::pi_v<float>
+                                                  ? view::DEFAULT_FOV / 2.f
+                                                  : std::numbers::pi_v<float>;
+
                 constexpr glm::vec4 origin(0.f, 0.f, 0.f, 1.f);
 
                 std::vector<glm::vec3> positions;
@@ -251,14 +265,33 @@ namespace arenai::agent {
                         .pitch = 0.f,
                         .best_angle = std::numbers::pi_v<float>,
                         .best_distance = -1.f,
-                        .turret_yaw = 0.f};
+                        .turret_yaw = 0.f,
+                        .view_distance = -1.f,
+                        .view_yaw = 0.f,
+                        .view_pitch = 0.f,
+                        .canon_elevation = 0.f,
+                        .canon_relative_elevation = 0.f,
+                        .chassis_pitch = 0.f,
+                        .chassis_roll = 0.f};
 
                     const auto canon_matrix = tanks[i]->get_canon()->get_model_matrix();
+                    const auto chassis_matrix = tanks[i]->get_chassis()->get_model_matrix();
                     const auto canon_forward_in_chassis =
-                        glm::inverse(tanks[i]->get_chassis()->get_model_matrix()) * canon_matrix
-                        * glm::vec4(0.f, 0.f, 1.f, 0.f);
+                        glm::inverse(chassis_matrix) * canon_matrix * glm::vec4(0.f, 0.f, 1.f, 0.f);
                     geometry.turret_yaw =
                         std::atan2(canon_forward_in_chassis.x, canon_forward_in_chassis.z);
+
+                    const auto canon_forward =
+                        glm::normalize(glm::vec3(canon_matrix * glm::vec4(0.f, 0.f, 1.f, 0.f)));
+                    const auto chassis_forward =
+                        glm::normalize(glm::vec3(chassis_matrix * glm::vec4(0.f, 0.f, 1.f, 0.f)));
+                    const auto chassis_right =
+                        glm::normalize(glm::vec3(chassis_matrix * glm::vec4(1.f, 0.f, 0.f, 0.f)));
+                    geometry.canon_elevation = std::asin(std::clamp(canon_forward.y, -1.f, 1.f));
+                    geometry.canon_relative_elevation = std::asin(std::clamp(
+                        glm::normalize(glm::vec3(canon_forward_in_chassis)).y, -1.f, 1.f));
+                    geometry.chassis_pitch = std::asin(std::clamp(chassis_forward.y, -1.f, 1.f));
+                    geometry.chassis_roll = std::asin(std::clamp(chassis_right.y, -1.f, 1.f));
                     const auto canon_pos = glm::vec3(canon_matrix * origin);
                     const auto canon_inverse = glm::inverse(canon_matrix);
 
@@ -277,6 +310,16 @@ namespace arenai::agent {
                             angle < geometry.best_angle) {
                             geometry.best_angle = angle;
                             geometry.best_distance = distance;
+                        }
+
+                        const float yaw = std::atan2(relative.x, relative.z);
+                        const float pitch = std::asin(std::clamp(relative.y, -1.f, 1.f));
+                        if (std::abs(yaw) <= view_half_yaw && std::abs(pitch) <= view_half_pitch
+                            && (geometry.view_distance < 0.f
+                                || distance < geometry.view_distance)) {
+                            geometry.view_distance = distance;
+                            geometry.view_yaw = yaw;
+                            geometry.view_pitch = pitch;
                         }
                     }
 

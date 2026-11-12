@@ -31,6 +31,7 @@ namespace arenai::agent {
                   .continuous_log_prob = step.continuous_log_prob.detach().cpu(),
                   .discrete_log_prob = step.discrete_log_prob.detach().cpu(),
                   .reward = step.reward.detach().cpu(),
+                  .aim_reward = step.aim_reward.detach().cpu(),
                   .done = step.done.detach().cpu(),
                   .truncated = step.truncated.detach().cpu()},
              .valid = valid});
@@ -81,6 +82,7 @@ namespace arenai::agent {
             .discrete_log_probs =
                 stack([](const StoredStep &s) { return s.step.discrete_log_prob; }),
             .rewards = stack([](const StoredStep &s) { return s.step.reward; }),
+            .aim_rewards = stack([](const StoredStep &s) { return s.step.aim_reward; }),
             .dones = stack([](const StoredStep &s) { return s.step.done; }),
             .truncateds = stack([](const StoredStep &s) { return s.step.truncated; }),
             .bootstrap_state = bootstrap_state,

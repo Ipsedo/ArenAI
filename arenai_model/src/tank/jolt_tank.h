@@ -11,6 +11,7 @@ namespace arenai::model {
 
     class JoltPhysicEngine;
     class CanonItem;
+    class GunLaying;
     class ShellItem;
 
     class JoltTank : virtual public Tank {
@@ -56,7 +57,10 @@ namespace arenai::model {
         std::vector<LifeItem *> life_items;
         std::shared_ptr<Item> chassis;
         std::shared_ptr<Item> canon;
+        std::shared_ptr<GunLaying> gun_laying;
         std::shared_ptr<utils::AbstractResourceFileReader> file_reader;
+
+        void lay_gun_on_canon() const;
     };
 
 }// namespace arenai::model

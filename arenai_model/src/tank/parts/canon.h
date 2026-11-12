@@ -12,6 +12,7 @@
 #include <arenai_utils/file_reader.h>
 #include <arenai_view/camera.h>
 
+#include "./gun_laying.h"
 #include "./items/convex.h"
 #include "./shell.h"
 
@@ -36,10 +37,13 @@ namespace arenai::model {
             const std::function<void(const ShellItem *, glm::vec3, glm::vec3, float, Item *)>
                 &on_contact,
             const std::function<void(const std::shared_ptr<ShellItem> &)> &on_shell_fired,
-            const std::function<bool()> &can_fire);
+            const std::function<bool()> &can_fire, std::shared_ptr<GunLaying> gun_laying);
 
         // the input carries an aim rate in [-1, 1], a fraction of max_rad_per_frame
         void apply_input(const controller::user_input &input) override;
+
+        // tracks the set point at the hinge, once per physics update
+        void lay();
 
         float get_angle() const;
 
@@ -49,6 +53,7 @@ namespace arenai::model {
         glm::vec3 look() override;
         glm::vec3 up() override;
         float fov() override;
+        float get_fov() const;
         glm::vec3 pivot() override;
 
         std::vector<JPH::Ref<JPH::TwoBodyConstraint>> get_constraints() override;
@@ -68,6 +73,8 @@ namespace arenai::model {
         std::function<void(const std::shared_ptr<ShellItem> &)> on_shell_fired;
         std::function<bool()> can_fire;
         float wanted_frame_frequency;
+        JPH::Body *turret;
+        std::shared_ptr<GunLaying> gun_laying;
     };
 
 }// namespace arenai::model

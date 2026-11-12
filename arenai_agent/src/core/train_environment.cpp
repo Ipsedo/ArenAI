@@ -250,9 +250,15 @@ namespace arenai::agent {
                         .yaw = 0.f,
                         .pitch = 0.f,
                         .best_angle = std::numbers::pi_v<float>,
-                        .best_distance = -1.f};
+                        .best_distance = -1.f,
+                        .turret_yaw = 0.f};
 
                     const auto canon_matrix = tanks[i]->get_canon()->get_model_matrix();
+                    const auto canon_forward_in_chassis =
+                        glm::inverse(tanks[i]->get_chassis()->get_model_matrix()) * canon_matrix
+                        * glm::vec4(0.f, 0.f, 1.f, 0.f);
+                    geometry.turret_yaw =
+                        std::atan2(canon_forward_in_chassis.x, canon_forward_in_chassis.z);
                     const auto canon_pos = glm::vec3(canon_matrix * origin);
                     const auto canon_inverse = glm::inverse(canon_matrix);
 

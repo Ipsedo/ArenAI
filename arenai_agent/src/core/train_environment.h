@@ -15,6 +15,7 @@ namespace arenai::agent {
         float pitch;
         float best_angle;
         float best_distance;
+        float turret_yaw;
     };
 
     class TrainTankEnvironment final : public core::BaseTanksEnvironment {

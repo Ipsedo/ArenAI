@@ -335,7 +335,7 @@ TEST_F(RewardTest, AimPotentialIsLowWhenTheShotWouldMiss) {
     auto tank_a =
         tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
     auto tank_b =
-        tank_factory->make_enemy_tank(file_reader, "tank_b", {40.f, 5.f, 30.f}, GAME_SHELL_ECONOMY);
+        tank_factory->make_enemy_tank(file_reader, "tank_b", {60.f, 5.f, 20.f}, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -343,7 +343,24 @@ TEST_F(RewardTest, AimPotentialIsLowWhenTheShotWouldMiss) {
     const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
     ASSERT_LT(shared_a->get_aim_potential({shared_a, shared_b}), 0.1f)
-        << "the enemy sits 53 degrees off the canon axis";
+        << "the enemy sits 72 degrees off the canon axis";
+}
+
+TEST_F(RewardTest, AimPotentialKeepsASlopeAcrossTheFieldOfView) {
+    add_ground();
+    auto tank_a =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
+    auto tank_b =
+        tank_factory->make_enemy_tank(file_reader, "tank_b", {11.f, 5.f, 30.f}, GAME_SHELL_ECONOMY);
+
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+
+    const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
+    const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
+
+    const float potential = shared_a->get_aim_potential({shared_a, shared_b});
+    ASSERT_GT(potential, 0.3f) << "the enemy sits 20 degrees off the canon axis";
+    ASSERT_LT(potential, 0.9f);
 }
 
 TEST_F(RewardTest, NoRewardWhenShootingAWreck) {

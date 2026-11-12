@@ -28,8 +28,8 @@ namespace arenai::agent {
         float grad_norm_max = 0.5f;
         float initial_alpha = 0.001f;
         float alpha_learning_rate = 3e-4f;
-        // entropy of the squashed normal per dir_x, dir_y, yaw_cos, yaw_sin, pitch
-        std::vector<float> continuous_target_entropy = {0.f, 0.f, -1.f, -1.f, -1.f};
+        // entropy of the squashed normal per dir_x, dir_y, canon_x, canon_y
+        std::vector<float> continuous_target_entropy = {0.f, 0.f, 0.f, 0.f};
         // per discrete action, the Bernoulli whose entropy is the target
         float discrete_target_proba = 0.05f;
         int actor_epochs = 4;

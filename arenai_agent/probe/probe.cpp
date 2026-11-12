@@ -204,7 +204,7 @@ int main(const int argc, char **argv) {
     for (const auto &name: action_names) csv << ";mu_" << name;
     for (const auto &prefix: {";sigma_", ";act_", ";dq_", ";dq1_", ";dq2_"})
         for (const auto &name: aim_names) csv << prefix << name;
-    csv << '\n';
+    csv << ";turret_yaw\n";
 
     std::ofstream shots_csv(output.parent_path() / (output.stem().string() + "_shots.csv"));
     shots_csv
@@ -287,7 +287,7 @@ int main(const int argc, char **argv) {
                         csv << ';' << acc[i][a];
                 for (int a = 0; a < 3 * static_cast<int>(aim_names.size()); a++)
                     csv << ';' << (q_gradient.defined() ? q_gradient[i][a].item<float>() : 0.f);
-                csv << '\n';
+                csv << ';' << geometry[i].turret_yaw * to_degrees << '\n';
 
                 if (features_out.is_open() && features.defined()) {
                     const float header[3] = {

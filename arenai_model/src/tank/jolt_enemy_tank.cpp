@@ -34,8 +34,8 @@ namespace arenai::model {
                 return can_fire;
             }),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-          curr_frame_upside_down(0), aim_tolerance_min(2.5f),
-          aim_tolerance_angle(glm::radians(3.f)), initial_nb_shells(shell_economy.initial_shells),
+          curr_frame_upside_down(0), aim_tolerance_min(5.f),
+          aim_tolerance_angle(glm::radians(10.f)), initial_nb_shells(shell_economy.initial_shells),
           nb_shells(initial_nb_shells), max_shells(shell_economy.max_shells),
           fire_cooldown_frames(static_cast<int>(1.f / 6.f / wanted_frame_frequency)),
           curr_cooldown_frame(fire_cooldown_frames),

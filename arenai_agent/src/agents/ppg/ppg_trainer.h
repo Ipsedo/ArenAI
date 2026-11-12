@@ -5,6 +5,7 @@
 #include "../../networks/value_function.h"
 #include "../../networks_utils/warmup.h"
 #include "../entropy_alphas.h"
+#include "../ppo_objective.h"
 #include "../return_scaler.h"
 #include "../trainer.h"
 #include "./ppg_rollout_buffer.h"
@@ -75,6 +76,7 @@ namespace arenai::agent {
 
         // share of the planned actor steps the KL threshold cut, once per rollout
         std::shared_ptr<AbstractMetric> skip_fraction_metric;
+        std::shared_ptr<AbstractMetric> skip_canon_metric;
 
         float gamma;
         float gae_lambda;
@@ -139,8 +141,14 @@ namespace arenai::agent {
             const FlatRows &rows, const CloneTargets &targets,
             const torch::Tensor &valid_idx) const;
 
-        // accumulates a device block's share of its optimizer batch gradient; returns its per-row KL
-        torch::Tensor backward_actor(const FlatRows &block, float batch_fraction) const;
+        // batch gradient of the active groups; returns the KLs of the policy it starts from
+        GroupKls accumulate_actor_gradients(
+            const FlatRows &rows, const std::vector<torch::Tensor> &blocks,
+            const ActiveGroups &active) const;
+
+        // accumulates a device block's share of its optimizer batch gradient; returns its row KLs
+        RowKls backward_actor(
+            const FlatRows &block, float batch_fraction, const ActiveGroups &active) const;
 
         // value distillation + policy clone loss of the auxiliary phase
         void backward_actor_aux(

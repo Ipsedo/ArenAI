@@ -68,10 +68,10 @@ TEST_F(PpgAgentTest, MetricsNotEmpty) {
     const auto factory = make_factory(cfg);
 
     ASSERT_EQ(factory->get_trainer()->get_metrics().size(), 8);
-    // one alpha per action, CSV only
+    // one alpha per action and skip_canon, CSV only
     ASSERT_EQ(
         factory->get_trainer()->get_csv_only_metrics().size(),
-        cfg.nb_continuous_actions + cfg.nb_discrete_actions);
+        cfg.nb_continuous_actions + cfg.nb_discrete_actions + 1);
 }
 
 TEST_F(PpgAgentTest, DistillationValueShape) {

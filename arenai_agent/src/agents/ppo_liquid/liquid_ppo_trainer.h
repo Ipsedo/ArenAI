@@ -5,6 +5,7 @@
 #include "../../networks/recurrent/liquid_actor.h"
 #include "../../networks/recurrent/liquid_critic.h"
 #include "../entropy_alphas.h"
+#include "../ppo_objective.h"
 #include "../return_scaler.h"
 #include "../trainer.h"
 #include "./liquid_ppo_rollout_buffer.h"
@@ -37,6 +38,17 @@ namespace arenai::agent {
         torch::Tensor fires;
     };
 
+    // one actor optimizer step of a replayed update, trimmed KLs measured before the step
+    struct LiquidKlStep {
+        int epoch;
+        int step;
+        // of the whole action, the one target_kl reads
+        float joint;
+        float move;
+        float canon;
+        float discrete;
+    };
+
     class LiquidPpoTrainer final : public AbstractTrainer {
     public:
         LiquidPpoTrainer(
@@ -64,6 +76,11 @@ namespace arenai::agent {
 
         // consumes the complete steps of the buffer without any optimizer step
         LiquidSigmaGradients sigma_gradients();
+
+        void load_actor_optimizer(const std::filesystem::path &input_folder) const;
+
+        // replays the actor epochs on the buffer's complete steps, never stopped by target_kl
+        std::vector<LiquidKlStep> kl_by_group();
 
         int count_parameters() override;
 
@@ -99,6 +116,7 @@ namespace arenai::agent {
 
         // share of the planned actor steps the KL threshold cut, once per rollout
         std::shared_ptr<AbstractMetric> skip_fraction_metric;
+        std::shared_ptr<AbstractMetric> skip_canon_metric;
 
         float gamma;
         float gae_lambda;
@@ -171,6 +189,9 @@ namespace arenai::agent {
             torch::Tensor discrete_mask;
             torch::Tensor ratio;
             torch::Tensor log_ratio;
+            // [N, 3] move, canon, discrete
+            torch::Tensor group_log_ratios;
+            RowKls kls;
             torch::Tensor continuous_entropy;
             torch::Tensor discrete_entropy;
             // [N, 1]
@@ -180,7 +201,7 @@ namespace arenai::agent {
             torch::Tensor discrete_bonus;
         };
 
-        ActorTerms actor_terms(const FlatRows &block) const;
+        ActorTerms actor_terms(const FlatRows &block, const ActiveGroups &active = {}) const;
 
         static FlatRows flat_rows(
             const LiquidPpoRollout &rollout, const LiquidGaeResult &gae, int64_t nb_kept_steps,
@@ -191,8 +212,20 @@ namespace arenai::agent {
         void run_actor_epochs(const FlatRows &rows, const ChunkIndex &chunks) const;
         void run_critic_epochs(const FlatRows &rows, const ChunkIndex &chunks) const;
 
-        // accumulates a device block's share of its optimizer batch gradient; returns its per-row KL
-        torch::Tensor backward_actor(const FlatRows &block, float batch_fraction) const;
+        struct RowKl {
+            RowKls kls;
+            // [N, 3] move, canon, discrete
+            torch::Tensor groups;
+        };
+
+        // batch gradient of the active groups; returns the KLs of the policy it starts from
+        GroupKls accumulate_actor_gradients(
+            const FlatRows &rows, const ChunkIndex &chunks,
+            const std::vector<torch::Tensor> &blocks, const ActiveGroups &active) const;
+
+        // accumulates a device block's share of its optimizer batch gradient; returns its row KLs
+        RowKl backward_actor(
+            const FlatRows &block, float batch_fraction, const ActiveGroups &active) const;
 
         void backward_critic(const FlatRows &block, float batch_fraction) const;
 

@@ -62,6 +62,7 @@ int main(const int argc, char **argv) {
     parser.add_argument("--nb_episodes").scan<'i', int>().default_value(2);
     parser.add_argument("--spawn_side").scan<'g', float>().default_value(1000.f);
     parser.add_argument("--cuda").default_value(false).implicit_value(true);
+    parser.add_argument("--kl_by_group").default_value(false).implicit_value(true);
     parser.add_argument("--vision_num_threads")
         .scan<'i', int>()
         .default_value(static_cast<int>(std::thread::hardware_concurrency()));
@@ -74,6 +75,7 @@ int main(const int argc, char **argv) {
     const std::filesystem::path output(parser.get<std::string>("--output"));
     const int nb_episodes = parser.get<int>("--nb_episodes");
     const float spawn_side = parser.get<float>("--spawn_side");
+    const bool kl_by_group = parser.get<bool>("--kl_by_group");
 
     const torch::Device device =
         parser.get<bool>("--cuda") ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU);
@@ -114,7 +116,11 @@ int main(const int argc, char **argv) {
         params.actor_epochs, params.critic_epochs, params.rollout_size, params.actor_batch_size,
         params.actor_gpu_batch_size, params.critic_batch_size, params.critic_gpu_batch_size,
         params.chunk_size);
-    trainer->load(save_folder);
+    const auto load_save = [&] {
+        trainer->load(save_folder);
+        if (kl_by_group) trainer->load_actor_optimizer(save_folder);
+    };
+    load_save();
 
     auto graphics_backend = view::make_vulkan_backend();
     std::cout << "Vulkan device : " << graphics_backend->renderer_info() << std::endl;
@@ -128,11 +134,14 @@ int main(const int argc, char **argv) {
     const auto names = TorchAction::continuous_action_names();
 
     std::ofstream csv(output);
-    csv << "rollout;step;tank;armed;fire;best_angle;best_distance;distance;yaw;pitch;reward;hit;"
-           "kill;received;death;done;truncated;advantage;aim_advantage";
-    for (const auto &prefix: {"mu_", "sigma_", "u_", "g_pg_", "g_h_"})
-        for (const auto &name: names) csv << ';' << prefix << name;
-    csv << '\n';
+    if (kl_by_group) csv << "rollout;epoch;step;joint;move;canon;discrete\n";
+    else {
+        csv << "rollout;step;tank;armed;fire;best_angle;best_distance;distance;yaw;pitch;reward;"
+               "hit;kill;received;death;done;truncated;advantage;aim_advantage";
+        for (const auto &prefix: {"mu_", "sigma_", "u_", "g_pg_", "g_h_"})
+            for (const auto &name: names) csv << ';' << prefix << name;
+        csv << '\n';
+    }
 
     constexpr float to_degrees = 180.f / std::numbers::pi_v<float>;
 
@@ -140,7 +149,23 @@ int main(const int argc, char **argv) {
     std::deque<StepRecord> records;
     int rollout_index = 0;
 
+    const auto write_kl_by_group = [&] {
+        const auto nb_steps = static_cast<int64_t>(rollout_buffer->nb_complete_steps());
+
+        for (const auto &[epoch, step, joint, move, canon, discrete]: trainer->kl_by_group())
+            csv << rollout_index << ';' << epoch << ';' << step << ';' << joint << ';' << move
+                << ';' << canon << ';' << discrete << '\n';
+
+        load_save();
+
+        records.erase(records.begin(), records.begin() + nb_steps);
+        std::cout << "rollout " << rollout_index << " : " << nb_steps << " steps" << std::endl;
+        rollout_index++;
+    };
+
     const auto write_rollout = [&] {
+        if (kl_by_group) return write_kl_by_group();
+
         const auto nb_steps = static_cast<int64_t>(rollout_buffer->nb_complete_steps());
         const auto gradients = trainer->sigma_gradients();
 

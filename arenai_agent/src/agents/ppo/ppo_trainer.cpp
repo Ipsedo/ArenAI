@@ -75,6 +75,7 @@ namespace arenai::agent {
           clip_fraction_metric(std::make_shared<MeanMetric>("clip", metric_window_size)),
           kl_metric(std::make_shared<MeanMetric>("kl", metric_window_size, 2, true)),
           skip_fraction_metric(std::make_shared<MeanMetric>("skip", metric_window_size)),
+          skip_canon_metric(std::make_shared<MeanMetric>("skip_canon", metric_window_size)),
           gamma(gamma), gae_lambda(gae_lambda), aim_gae_lambda(aim_gae_lambda),
           clip_epsilon(clip_epsilon), target_kl(target_kl), grad_norm_max(grad_norm_max),
           actor_epochs(actor_epochs), critic_epochs(critic_epochs), rollout_size(rollout_size),
@@ -142,44 +143,49 @@ namespace arenai::agent {
     }
 
     void PpoTrainer::run_actor_epochs(const FlatRows &rows, const torch::Tensor &valid_idx) const {
-        int nb_actor_steps = 0;
-        int nb_planned_actor_steps = 0;
-        bool kl_exceeded = false;
+        GroupKlStop kl_stop(target_kl);
 
         for (int e = 0; e < actor_epochs; e++) {
             const auto batches =
                 shuffled_batches(valid_idx, actor_batch_size, actor_gpu_batch_size);
-            nb_planned_actor_steps += static_cast<int>(batches.size());
+            kl_stop.on_planned_steps(static_cast<int>(batches.size()));
 
             for (const auto &blocks: batches) {
-                if (kl_exceeded) break;
+                if (!kl_stop.any_active()) break;
 
-                actor_optim->zero_grad();
-                alphas->zero_grad();
+                const auto kls = accumulate_actor_gradients(rows, blocks, kl_stop.active());
+                kl_metric->add(kls.joint);
 
-                const auto nb_batch_rows = static_cast<float>(total_rows(blocks));
-
-                std::vector<torch::Tensor> kl_per_rows;
-                for (const auto &idx: blocks)
-                    kl_per_rows.push_back(backward_actor(
-                        rows.select(idx), static_cast<float>(idx.size(0)) / nb_batch_rows));
-
-                // KL of the policy this step starts from
-                const auto approx_kl = trimmed_kl(kl_per_rows);
-                kl_metric->add(approx_kl);
-
-                kl_exceeded = target_kl > 0.f && approx_kl > 1.5f * target_kl;
-                if (kl_exceeded) break;
+                if (kl_stop.stop_exceeded(kls)) {
+                    if (!kl_stop.any_active()) break;
+                    accumulate_actor_gradients(rows, blocks, kl_stop.active());
+                }
 
                 torch::nn::utils::clip_grad_norm_(actor->parameters(), grad_norm_max);
                 actor_optim->step();
                 alphas->step();
-                nb_actor_steps++;
+                kl_stop.on_step();
             }
         }
 
-        skip_fraction_metric->add(
-            1.f - static_cast<float>(nb_actor_steps) / static_cast<float>(nb_planned_actor_steps));
+        skip_fraction_metric->add(kl_stop.rest_skip_fraction());
+        skip_canon_metric->add(kl_stop.aim_skip_fraction());
+    }
+
+    GroupKls PpoTrainer::accumulate_actor_gradients(
+        const FlatRows &rows, const std::vector<torch::Tensor> &blocks,
+        const ActiveGroups &active) const {
+        actor_optim->zero_grad();
+        alphas->zero_grad();
+
+        const auto nb_batch_rows = static_cast<float>(total_rows(blocks));
+
+        std::vector<RowKls> row_kls;
+        for (const auto &idx: blocks)
+            row_kls.push_back(backward_actor(
+                rows.select(idx), static_cast<float>(idx.size(0)) / nb_batch_rows, active));
+
+        return trimmed_group_kls(row_kls);
     }
 
     void PpoTrainer::run_critic_epochs(const FlatRows &rows, const torch::Tensor &valid_idx) const {
@@ -199,8 +205,8 @@ namespace arenai::agent {
             }
     }
 
-    torch::Tensor
-    PpoTrainer::backward_actor(const FlatRows &block, const float batch_fraction) const {
+    RowKls PpoTrainer::backward_actor(
+        const FlatRows &block, const float batch_fraction, const ActiveGroups &active) const {
         const auto [mu, sigma, discrete_proba] = actor->act(block.vision, block.proprioception);
         const auto discrete_mask =
             TorchState::discrete_action_mask(block.fire_masks, discrete_proba.size(-1));
@@ -212,16 +218,19 @@ namespace arenai::agent {
         const auto old =
             PolicyLogProbs::split(block.old_continuous_log_probs, block.old_discrete_log_probs);
 
-        const auto [surrogate, log_ratio, ratio] =
-            clipped_surrogate(current, old, block.aim_advantages, block.advantages, clip_epsilon);
+        const auto [surrogate, log_ratio, ratio, kls] = clipped_surrogate(
+            current, old, block.aim_advantages, block.advantages, clip_epsilon, active);
 
         const auto continuous_entropy = gaussian_tanh_entropy(mu, sigma);
         const auto discrete_entropy = bernoulli_entropy(discrete_proba) * discrete_mask;
 
         // the alphas are constants for the actor: they learn from their own dual loss
         const auto entropy_bonus =
-            (alphas->continuous().detach() * continuous_entropy).sum(-1, true)
-            + (alphas->discrete().detach() * discrete_entropy).sum(-1, true);
+            (alphas->continuous().detach() * continuous_entropy
+             * continuous_group_mask(active, continuous_entropy.size(-1), mu.device()))
+                .sum(-1, true)
+            + static_cast<float>(active.rest)
+                  * (alphas->discrete().detach() * discrete_entropy).sum(-1, true);
 
         const auto actor_loss = -torch::mean(surrogate + entropy_bonus);
 
@@ -239,7 +248,7 @@ namespace arenai::agent {
         clip_fraction_metric->add(
             ((ratio - 1.f).abs() > clip_epsilon).to(torch::kFloat).mean().item<float>());
 
-        return (ratio - 1.f - log_ratio).detach().flatten();
+        return kls;
     }
 
     void PpoTrainer::backward_critic(const FlatRows &block, const float batch_fraction) const {
@@ -319,7 +328,9 @@ namespace arenai::agent {
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> PpoTrainer::get_csv_only_metrics() {
-        return alphas->get_metrics();
+        auto metrics = alphas->get_metrics();
+        metrics.push_back(skip_canon_metric);
+        return metrics;
     }
 
     void PpoTrainer::save(const std::filesystem::path &output_folder) {

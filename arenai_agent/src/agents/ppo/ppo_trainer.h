@@ -1,14 +1,11 @@
-//
-// Created by claude on 22/07/2026.
-//
-
 #ifndef ARENAI_PPO_TRAINER_H
 #define ARENAI_PPO_TRAINER_H
 
 #include "../../networks/actor.h"
-#include "../../networks/entropy.h"
 #include "../../networks/value_function.h"
-#include "../../networks_utils/warmup.h"
+#include "../entropy_alphas.h"
+#include "../ppo_objective.h"
+#include "../return_scaler.h"
 #include "../trainer.h"
 #include "./ppo_rollout_buffer.h"
 
@@ -16,6 +13,7 @@ namespace arenai::agent {
 
     struct GaeResult {
         torch::Tensor advantages;
+        torch::Tensor aim_advantages;
         torch::Tensor returns;
     };
 
@@ -23,20 +21,22 @@ namespace arenai::agent {
     public:
         PpoTrainer(
             const std::shared_ptr<Actor> &actor,
-            const std::shared_ptr<PpoRolloutBuffer> &rollout_buffer, int vision_height,
-            int vision_width, int nb_sensors, int nb_continuous_actions, int nb_discrete_action,
-            float actor_learning_rate, float critic_learning_rate, int hidden_size_sensors,
+            const std::shared_ptr<PpoRolloutBuffer> &rollout_buffer, int nb_continuous_actions,
+            int nb_discrete_actions, int nb_sensors, float actor_learning_rate,
+            float critic_learning_rate, int hidden_size_sensors,
             const std::vector<int> &critic_hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
-            float gamma, float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
-            const std::vector<float> &continuous_target_entropy,
-            const std::vector<float> &discrete_target_entropy_factors, int epochs, int rollout_size,
-            int minibatch_size);
+            float gamma, float gae_lambda, float aim_gae_lambda, float clip_epsilon,
+            float target_kl, float grad_norm_max, float initial_alpha, float alpha_learning_rate,
+            const std::vector<float> &continuous_target_entropy, float discrete_target_proba,
+            int actor_epochs, int critic_epochs, int rollout_size, int actor_batch_size,
+            int actor_gpu_batch_size, int critic_batch_size, int critic_gpu_batch_size);
 
         void step() override;
 
         std::vector<std::shared_ptr<AbstractMetric>> get_metrics() override;
+        std::vector<std::shared_ptr<AbstractMetric>> get_csv_only_metrics() override;
 
         void save(const std::filesystem::path &output_folder) override;
 
@@ -46,16 +46,16 @@ namespace arenai::agent {
         std::shared_ptr<Actor> actor;
         std::shared_ptr<PpoRolloutBuffer> rollout_buffer;
 
-        std::unique_ptr<PidLagrangianAlphaParameters> continuous_alpha;
-        std::unique_ptr<PidLagrangianAlphaParameters> discrete_alpha;
-
-        std::vector<float> continuous_target_entropy;
-        std::vector<float> discrete_target_entropy;
+        // one learned entropy temperature per action
+        std::unique_ptr<EntropyAlphas> alphas;
 
         std::shared_ptr<ValueFunction> critic;
 
         std::unique_ptr<torch::optim::Adam> actor_optim;
         std::unique_ptr<torch::optim::Adam> critic_optim;
+
+        // rewards scaled by the running std of the discounted return before the GAE
+        std::shared_ptr<ReturnScaler> return_scaler;
 
         std::shared_ptr<AbstractMetric> actor_mean_loss_metric;
         std::shared_ptr<AbstractMetric> critic_mean_loss_metric;
@@ -63,41 +63,66 @@ namespace arenai::agent {
         // share of the return variance the critic explains, per critic minibatch
         std::shared_ptr<AbstractMetric> explained_variance_metric;
 
-        // both regulated by their constant entropy bonus
+        // both regulated by their learned alphas (CSV-only metrics)
         std::shared_ptr<AbstractMetric> continuous_entropy_metric;
         std::shared_ptr<AbstractMetric> discrete_entropy_metric;
 
-        std::shared_ptr<AbstractMetric> continuous_alpha_metric;
-        std::shared_ptr<AbstractMetric> discrete_alpha_metric;
-
-        // both recorded on every attempted minibatch, skipped ones included
+        // recorded on every minibatch
         std::shared_ptr<AbstractMetric> clip_fraction_metric;
+        // recorded on every actor optimizer step taken or refused
         std::shared_ptr<AbstractMetric> kl_metric;
 
-        // fraction of minibatches the KL threshold skipped
+        // share of the planned actor steps the KL threshold cut, once per rollout
         std::shared_ptr<AbstractMetric> skip_fraction_metric;
+        std::shared_ptr<AbstractMetric> skip_canon_metric;
 
         float gamma;
         float gae_lambda;
+        float aim_gae_lambda;
         float clip_epsilon;
         float target_kl;
 
         float grad_norm_max;
 
-        int epochs;
+        int actor_epochs;
+        int critic_epochs;
         int rollout_size;
-        int minibatch_size;
+        int actor_batch_size;
+        int actor_gpu_batch_size;
+        int critic_batch_size;
+        int critic_gpu_batch_size;
+
+        // the rollout flattened to [T * nb_tanks, ...] rows, all on the device
+        struct FlatRows {
+            torch::Tensor vision;
+            torch::Tensor proprioception;
+            torch::Tensor continuous_pre_tanh;
+            torch::Tensor discrete_actions;
+            torch::Tensor fire_masks;
+            torch::Tensor old_continuous_log_probs;
+            torch::Tensor old_discrete_log_probs;
+            torch::Tensor advantages;
+            torch::Tensor aim_advantages;
+            torch::Tensor returns;
+
+            FlatRows select(const torch::Tensor &idx) const;
+        };
 
         void train() const;
 
-        bool train_actor(
-            const torch::Tensor &vision, const torch::Tensor &proprioception,
-            const torch::Tensor &continuous_actions, const torch::Tensor &discrete_actions,
-            const torch::Tensor &old_log_probs, const torch::Tensor &advantages) const;
+        void run_actor_epochs(const FlatRows &rows, const torch::Tensor &valid_idx) const;
+        void run_critic_epochs(const FlatRows &rows, const torch::Tensor &valid_idx) const;
 
-        void train_critic(
-            const torch::Tensor &vision, const torch::Tensor &proprioception,
-            const torch::Tensor &returns) const;
+        // batch gradient of the active groups; returns the KLs of the policy it starts from
+        GroupKls accumulate_actor_gradients(
+            const FlatRows &rows, const std::vector<torch::Tensor> &blocks,
+            const ActiveGroups &active) const;
+
+        // accumulates a device block's share of its optimizer batch gradient; returns its row KLs
+        RowKls backward_actor(
+            const FlatRows &block, float batch_fraction, const ActiveGroups &active) const;
+
+        void backward_critic(const FlatRows &block, float batch_fraction) const;
 
         GaeResult compute_gae(const PpoRollout &rollout, torch::Device device) const;
 

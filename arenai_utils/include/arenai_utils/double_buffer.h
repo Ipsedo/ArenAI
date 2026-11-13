@@ -1,7 +1,3 @@
-//
-// Created by samuel on 15/02/2026.
-//
-
 #ifndef ARENAI_AGENT_HOST_DOUBLE_BUFFER_H
 #define ARENAI_AGENT_HOST_DOUBLE_BUFFER_H
 

@@ -1,8 +1,6 @@
-//
-// Created by samuel on 23/10/2025.
-//
-
 #include "./actor.h"
+
+#include <cmath>
 
 #include "../networks_utils/init.h"
 #include "./constants.h"
@@ -14,15 +12,14 @@ using namespace arenai::agent;
 namespace arenai::agent {
 
     Actor::Actor(
-        const int &vision_height, const int &vision_width, const int &nb_sensors,
-        const int &nb_continuous_actions, const int &nb_discrete_actions,
+        const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_actions,
         const int &hidden_size_sensors, const std::vector<int> &hidden_sizes,
         const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, const float &initial_sigma,
         const std::vector<float> &initial_discrete_probas)
         : vision_encoder(register_module(
-            "vision_encoder", std::make_shared<ConvolutionNetwork>(
-                                  vision_height, vision_width, vision_channels, group_norm_nums))),
+            "vision_encoder",
+            std::make_shared<ConvolutionNetwork>(vision_channels, group_norm_nums))),
           sensors_encoder(register_module(
               "sensors_encoder",
               torch::nn::Sequential(
@@ -31,14 +28,11 @@ namespace arenai::agent {
                   torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_sensors})),
                   torch::nn::SiLU()))),
           head(register_module("head", torch::nn::Sequential())),
-          mu(register_module(
-              "mu", torch::nn::Sequential(
-                        torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
-                        torch::nn::Tanh()))),
+          mu(register_module("mu", torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions))),
           sigma(register_module(
               "sigma", torch::nn::Sequential(
                            torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
-                           std::make_shared<SigmaOutput>(SIGMA_MIN, SIGMA_MAX)))),
+                           SoftClamp(LOG_SIGMA_MIN, LOG_SIGMA_MAX), Exp()))),
           discrete(register_module(
               "discrete", torch::nn::Sequential(
                               torch::nn::Linear(hidden_sizes.back(), nb_discrete_actions),
@@ -64,23 +58,110 @@ namespace arenai::agent {
         sensors_encoder->apply(init_hidden_weights);
         head->apply(init_hidden_weights);
 
-        // zero bias + tanh puts the initial mode at the action-range center
+        // zero bias puts the initial mode at the action-range center
         mu->apply(init_mu_output_weights);
-        sigma->apply([initial_sigma](Module &m) { init_sigma_output_weights(m, initial_sigma); });
+        sigma->apply(
+            [initial_sigma](Module &m) { init_log_sigma_output_weights(m, initial_sigma); });
 
         discrete->apply([&initial_discrete_probas](Module &m) {
             init_discrete_output_weights(m, initial_discrete_probas);
         });
     }
 
-    ActorRawOutput Actor::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
+    torch::Tensor Actor::trunc_forward(const torch::Tensor &vision, const torch::Tensor &sensors) {
         auto vision_encoded = vision_encoder->forward(vision);
         auto sensors_encoded = sensors_encoder->forward(sensors);
-        auto encoded = head->forward(torch::cat({vision_encoded, sensors_encoded}, 1));
+
+        return head->forward(torch::cat({vision_encoded, sensors_encoded}, 1));
+    }
+
+    ActorRawOutput Actor::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
+        const auto encoded = trunc_forward(vision, sensors);
+
         return {
             .mu = mu->forward(encoded),
             .sigma = sigma->forward(encoded),
             .discrete = discrete->forward(encoded)};
+    }
+
+    DistillationActor::DistillationActor(
+        const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_actions,
+        const int &hidden_size_sensors, const std::vector<int> &hidden_sizes,
+        const std::vector<std::tuple<int, int>> &vision_channels,
+        const std::vector<int> &group_norm_nums, const float &initial_sigma,
+        const std::vector<float> &initial_discrete_probas)
+        : Actor(
+            nb_sensors, nb_continuous_actions, nb_discrete_actions, hidden_size_sensors,
+            hidden_sizes, vision_channels, group_norm_nums, initial_sigma, initial_discrete_probas),
+          to_value(register_module("value", torch::nn::Linear(hidden_sizes.back(), 1))) {
+
+        to_value->apply(init_value_output_weights);
+    }
+
+    torch::Tensor
+    DistillationActor::value(const torch::Tensor &vision, const torch::Tensor &sensors) {
+        const auto encoded = trunc_forward(vision, sensors);
+
+        return to_value->forward(encoded);
+    }
+
+    SacActor::SacActor(
+        const std::shared_ptr<StateEncoder> &encoder, const int nb_continuous_actions,
+        const int nb_discrete_actions, const std::vector<int> &hidden_sizes,
+        const float initial_sigma, const std::vector<float> &initial_discrete_probas)
+        : encoder(register_module("encoder", encoder)),
+          head(register_module("head", torch::nn::Sequential())),
+          mu(register_module("mu", torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions))),
+          sigma(register_module(
+              "sigma", torch::nn::Sequential(
+                           torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
+                           SoftClamp(LOG_SIGMA_MIN, LOG_SIGMA_MAX), Exp()))),
+          discrete(register_module(
+              "discrete", torch::nn::Sequential(
+                              torch::nn::Linear(hidden_sizes.back(), nb_discrete_actions),
+                              torch::nn::Sigmoid()))) {
+
+        head->push_back(torch::nn::Linear(
+            torch::nn::LinearOptions(encoder->get_output_size(), hidden_sizes.front())
+                .bias(false)));
+        head->push_back(torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_sizes.front()})));
+        head->push_back(torch::nn::SiLU());
+
+        for (size_t i = 1; i < hidden_sizes.size(); i++) {
+            head->push_back(torch::nn::Linear(
+                torch::nn::LinearOptions(hidden_sizes[i - 1], hidden_sizes[i]).bias(false)));
+            head->push_back(torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_sizes[i]})));
+            head->push_back(torch::nn::SiLU());
+        }
+
+        head->apply(init_hidden_weights);
+        mu->apply(init_mu_output_weights);
+        sigma->apply(
+            [initial_sigma](Module &m) { init_log_sigma_output_weights(m, initial_sigma); });
+        discrete->apply([&initial_discrete_probas](Module &m) {
+            init_discrete_output_weights(m, initial_discrete_probas);
+        });
+    }
+
+    ActorRawOutput SacActor::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
+        return act_from_encoding(encoder->forward(vision, sensors));
+    }
+
+    ActorRawOutput SacActor::act_from_encoding(const torch::Tensor &encoding) {
+        const auto encoded = head->forward(encoding);
+
+        return {
+            .mu = mu->forward(encoded),
+            .sigma = sigma->forward(encoded),
+            .discrete = discrete->forward(encoded)};
+    }
+
+    std::vector<torch::Tensor> SacActor::head_parameters() const {
+        std::vector<torch::Tensor> parameters;
+        for (const auto &module: std::vector<std::shared_ptr<torch::nn::Module>>{
+                 head.ptr(), mu.ptr(), sigma.ptr(), discrete.ptr()})
+            for (const auto &parameter: module->parameters()) parameters.push_back(parameter);
+        return parameters;
     }
 
 }// namespace arenai::agent

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #ifndef ARENAI_DESKTOP_GAME_INPUT_ROUTER_H
 #define ARENAI_DESKTOP_GAME_INPUT_ROUTER_H
 
@@ -14,11 +10,6 @@
 
 namespace arenai::desktop {
 
-    // Single owner of the window's input slots during a game: forwards events
-    // to the game handlers or to the pause menu depending on the pause state,
-    // and turns Escape / gamepad Start into a pause-toggle request. Routing is
-    // an application policy: neither the environment nor the gui knows the
-    // other exists.
     class GameInputRouter final : public controller::AbstractKeyboardCallback,
                                   public controller::AbstractGamepadCallback {
     public:

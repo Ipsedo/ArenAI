@@ -1,7 +1,3 @@
-//
-// Created by samuel on 20/07/2026.
-//
-
 #include "./physical_device_selection.h"
 
 #include <algorithm>
@@ -135,8 +131,6 @@ namespace arenai::view {
             }
         }
 
-        // user preference (menu): softer than the env var, an unmatched name
-        // falls back to the automatic pick
         if (!criteria.preferred_device.empty()) {
             for (const auto &candidate: candidates)
                 if (std::string(candidate.properties.deviceName).find(criteria.preferred_device)

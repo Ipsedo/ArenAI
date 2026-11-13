@@ -1,7 +1,3 @@
-//
-// Created by samuel on 08/07/2026.
-//
-
 #ifndef ARENAI_GLFW_VULKAN_WINDOW_H
 #define ARENAI_GLFW_VULKAN_WINDOW_H
 
@@ -10,8 +6,6 @@
 #include <memory>
 #include <string>
 
-// GLFW pulls no GL header (GLFW_INCLUDE_NONE); vulkan.h (via vk.h) MUST come
-// first so glfw3.h declares its Vulkan helpers (glfwCreateWindowSurface, ...)
 // clang-format off
 #define GLFW_INCLUDE_NONE
 #include "../vulkan/core/vk.h"
@@ -71,6 +65,7 @@ namespace arenai::view {
         int windowed_width_ = 0, windowed_height_ = 0;
 
         void on_key(int key, int action) const;
+        std::tuple<double, double> cursor_scale() const;
         void on_cursor(double x, double y) const;
         void on_mouse_button(int button, int action) const;
         void on_scroll(double x_offset, double y_offset) const;

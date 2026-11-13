@@ -1,7 +1,3 @@
-//
-// Created by samuel on 12/10/2025.
-//
-
 #include "./metric.h"
 
 #include <iomanip>
@@ -47,9 +43,11 @@ namespace arenai::agent {
     AbstractMetric::metrics_to_string(const std::vector<std::shared_ptr<AbstractMetric>> &metrics) {
         std::stringstream stream;
 
-        for (int i = 0; i < metrics.size(); i++) {
-            if (i > 0) stream << ", ";
-            stream << metrics[i]->to_string();
+        bool first = true;
+        for (const auto &metric: metrics) {
+            if (!first) stream << ", ";
+            stream << metric->to_string();
+            first = false;
         }
 
         stream << " ";

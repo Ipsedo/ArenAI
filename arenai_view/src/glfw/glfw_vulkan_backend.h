@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #ifndef ARENAI_GLFW_VULKAN_BACKEND_H
 #define ARENAI_GLFW_VULKAN_BACKEND_H
 
@@ -30,9 +26,8 @@ namespace arenai::view {
             const PlayerRendererSettings &settings) override;
 
         Rml::RenderInterface &ui_render_interface() override;
-        void begin_ui_frame(int width, int height) override;
-        void begin_ui_overlay(int width, int height) override;
-        void end_ui_frame() override;
+        void begin_ui_pass(UiPass pass, int width, int height) override;
+        void end_ui_pass() override;
         void present() override;
 
         ~GlfwVulkanBackend() override;

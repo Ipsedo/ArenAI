@@ -16,8 +16,13 @@ set(ARENAI_DESKTOP_TESTED_SRC
         "${CMAKE_CURRENT_SOURCE_DIR}/../src/core/user_preferences.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../src/controller/bindings.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../src/controller/gamepad.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../src/controller/mouse_keyboard.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../src/gui/rml/input.cpp")
+        "${CMAKE_CURRENT_SOURCE_DIR}/../src/controller/mouse_keyboard.cpp")
+
+# the gui hexagon runs headless in the tests (no-op RmlUi render interface);
+# only its composition root (gui.cpp) needs the real windowed backend
+file(GLOB_RECURSE ARENAI_DESKTOP_GUI_SRC "${CMAKE_CURRENT_SOURCE_DIR}/../src/gui/rml/*.cpp")
+list(FILTER ARENAI_DESKTOP_GUI_SRC EXCLUDE REGEX "/gui\\.cpp$")
+list(APPEND ARENAI_DESKTOP_TESTED_SRC ${ARENAI_DESKTOP_GUI_SRC})
 
 add_executable(arenai_desktop_tests "${SRC}" ${ARENAI_DESKTOP_TESTED_SRC})
 

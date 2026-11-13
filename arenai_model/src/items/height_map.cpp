@@ -1,7 +1,3 @@
-//
-// Created by samuel on 23/03/2023.
-//
-
 #include "./height_map.h"
 
 #include <algorithm>
@@ -54,9 +50,6 @@ namespace arenai::model {
         if (shape_cache.exists(cache_key)) {
             mesh_shape = shape_cache.get(cache_key);
         } else {
-            // collision mesh: same grid, same centering and diamond subdivision as
-            // Bullet's btHeightfieldTerrainShape, triangles wound to face +Y (Jolt
-            // meshes are single-sided)
             JPH::TriangleList triangles;
             triangles.reserve(2 * (map_height - 1) * (map_width - 1));
 

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #ifndef ARENAI_VK_WINDOW_FRAME_H
 #define ARENAI_VK_WINDOW_FRAME_H
 
@@ -10,6 +6,7 @@
 #include <vector>
 
 #include "../core/device.h"
+#include "../core/render_target.h"
 #include "../core/vk.h"
 #include "./swap_chain.h"
 
@@ -18,6 +15,7 @@ namespace arenai::view {
     class WindowFrameContext {
     public:
         static constexpr int FRAME_SLOTS = 2;
+        static constexpr int WINDOW_MSAA_SAMPLES = 4;
 
         WindowFrameContext(
             std::shared_ptr<VulkanDevice> device, const VkSurfaceKHR &surface,
@@ -34,6 +32,8 @@ namespace arenai::view {
 
         VkImageView swapchain_view() const;
         VkFormat swapchain_format() const;
+        // sample count every pipeline drawing inside a swapchain pass must use
+        VkSampleCountFlagBits samples() const;
 
         int width() const;
         int height() const;
@@ -56,10 +56,14 @@ namespace arenai::view {
         };
 
         void wait_all_fences();
+        bool recreate_swapchain();
+        void create_msaa_target();
 
         std::shared_ptr<VulkanDevice> device_;
         std::unique_ptr<SwapChain> swapchain_;
         bool swapchain_valid_;
+        VkSampleCountFlagBits samples_;
+        std::unique_ptr<Target> msaa_color_;
 
         VkCommandPool pool_;
         Slot slots_[FRAME_SLOTS];

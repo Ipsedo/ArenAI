@@ -1,7 +1,3 @@
-//
-// Created by samuel on 26/06/2026.
-//
-
 #include <fstream>
 #include <numeric>
 #include <unordered_set>

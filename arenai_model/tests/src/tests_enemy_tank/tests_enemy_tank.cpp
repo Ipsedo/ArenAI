@@ -1,28 +1,21 @@
-//
-// Created by claude on 01/07/2026.
-//
-
 #include <cmath>
 #include <memory>
 
 #include <arenai_controller/inputs.h>
+#include <arenai_model/constants.h>
 #include <arenai_model/item.h>
+#include <arenai_model/shell_economy.h>
 #include <arenai_model_tests/tests_enemy_tank/tests_enemy_tank.h>
-
-#include "arenai_model/constants.h"
 
 using namespace arenai;
 using namespace arenai::model;
 using namespace arenai::utils;
 using namespace arenai::controller;
 
-// ========================================================================
-// is_dead — death by individual part destruction
-// ========================================================================
-
 TEST_F(EnemyTankTest, DeadWhenSingleWheelDestroyed) {
     add_ground();
-    const auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, false);
+    const auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, GAME_SHELL_ECONOMY);
 
     engine->step(1.f / 60.f);
 
@@ -47,13 +40,10 @@ TEST_F(EnemyTankTest, DeadWhenSingleWheelDestroyed) {
         << "tank should be dead when any single wheel is destroyed (any_of over all life_items)";
 }
 
-// ========================================================================
-// on_death — idempotency
-// ========================================================================
-
 TEST_F(EnemyTankTest, OnDeathMultipleCallsDoNotCrash) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, false);
+    auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, GAME_SHELL_ECONOMY);
 
     engine->step(1.f / 60.f);
 
@@ -77,7 +67,8 @@ TEST_F(EnemyTankTest, OnDeathMultipleCallsDoNotCrash) {
 
 TEST_F(EnemyTankTest, OnDeathBeforeDeathDoesNothing) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, false);
+    auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, GAME_SHELL_ECONOMY);
 
     engine->step(1.f / 60.f);
 
@@ -87,14 +78,12 @@ TEST_F(EnemyTankTest, OnDeathBeforeDeathDoesNothing) {
     ASSERT_NO_THROW(shared_tank->on_death());
 }
 
-// ========================================================================
-// Reward — edge cases
-// ========================================================================
-
 TEST_F(EnemyTankTest, RewardWhenAllEnemiesDeadAndShellFired) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, false);
+    auto tank_a =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
+    auto tank_b =
+        tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -120,8 +109,6 @@ TEST_F(EnemyTankTest, RewardWhenAllEnemiesDeadAndShellFired) {
 
     const std::vector tanks{shared_a, shared_b};
 
-    // get_nearest_enemy_index should return -1 (all dead)
-    // reward should not crash and should be 0 (no valid target)
     const float reward = shared_a->get_reward();
     ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN when all enemies are dead";
     ASSERT_FALSE(std::isinf(reward)) << "reward should not be Inf when all enemies are dead";
@@ -129,7 +116,8 @@ TEST_F(EnemyTankTest, RewardWhenAllEnemiesDeadAndShellFired) {
 
 TEST_F(EnemyTankTest, RewardNoNaNWhenAloneInTankList) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
+    auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -149,21 +137,16 @@ TEST_F(EnemyTankTest, RewardNoNaNWhenAloneInTankList) {
     ASSERT_FALSE(std::isinf(reward)) << "reward should not be Inf when alone";
 }
 
-// ========================================================================
-// Shell hitting non-LifeItem (ground)
-// ========================================================================
-
 TEST_F(EnemyTankTest, ShellHitsGroundNoRewardNoCrash) {
     add_ground();
     // point the tank away from any enemy so the shell hits the ground
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
+    auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
 
-    // tilt canon downward to ensure it hits the ground: the aim is a rate, so it takes
-    // several frames of held input to reach the travel limit
     constexpr user_input aim_down{
         .left_joystick = {.x = 0.f, .y = 0.f},
         .right_joystick = {.x = 0.f, .y = 1.f},
@@ -188,13 +171,10 @@ TEST_F(EnemyTankTest, ShellHitsGroundNoRewardNoCrash) {
     ASSERT_FALSE(std::isnan(reward));
 }
 
-// ========================================================================
-// Suicide detection
-// ========================================================================
-
 TEST_F(EnemyTankTest, SuicideDetectionWhenFlipped) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, false);
+    auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, GAME_SHELL_ECONOMY);
 
     engine->step(1.f / 60.f);
 
@@ -202,20 +182,15 @@ TEST_F(EnemyTankTest, SuicideDetectionWhenFlipped) {
 
     ASSERT_FALSE(shared_tank->is_suicide()) << "tank should not be suicidal initially";
 
-    // simulate being upside down by running many reward calls
-    // the reward function tracks upside_down frames via dot product
-    // we can't easily flip the tank physically, so just verify the initial state
     ASSERT_FALSE(shared_tank->is_dead()) << "tank should be alive initially";
 }
 
-// ========================================================================
-// has_hit_other_tank — reset behavior
-// ========================================================================
-
 TEST_F(EnemyTankTest, HasHitOtherTankResetsAfterCall) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, false);
+    auto tank_a =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
+    auto tank_b =
+        tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -237,46 +212,23 @@ TEST_F(EnemyTankTest, HasHitOtherTankResetsAfterCall) {
         << "has_hit_other_tank should reset to false after being queried";
 }
 
-// ========================================================================
-// Shell reserve — passive regeneration
-// ========================================================================
-
-TEST_F(EnemyTankTest, ShellReserveRegeneratesOverTime) {
-    // the fixture engine runs at 60 Hz: one reward call per frame, one shell every 1.5 s.
-    // the bounds stay a frame away from the period so the test does not depend on how the
-    // period rounds to an integer number of frames
+TEST_F(EnemyTankTest, ShellReserveDoesNotRegenerateOverTime) {
     constexpr int nb_frames_one_second = 60;
-    constexpr int max_shells = 30;
-    constexpr int initial_shells = 10;
-    constexpr float seconds_per_regen = 1.5f;
-
-    // proprioception ends with (reserve, cooldown) ratios
-    constexpr int proprioception_reserve_index = ENEMY_PROPRIOCEPTION_SIZE - 2;
+    constexpr int initial_shells = GAME_SHELL_ECONOMY.initial_shells;
+    constexpr int max_shells = GAME_SHELL_ECONOMY.max_shells;
 
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
+    auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
 
-    float last_reserve = tank->get_proprioception()[proprioception_reserve_index];
-    ASSERT_FLOAT_EQ(
-        last_reserve, static_cast<float>(initial_shells) / static_cast<float>(max_shells))
+    const float initial_reserve =
+        static_cast<float>(initial_shells) / static_cast<float>(max_shells);
+
+    ASSERT_FLOAT_EQ(tank->get_remaining_shells_ratio(), initial_reserve)
         << "reserve start with initial shells";
-
-    for (int i = 0; i < static_cast<int>(nb_frames_one_second * seconds_per_regen * max_shells);
-         i++) {
-        engine->step(1.f / static_cast<float>(nb_frames_one_second));
-        tank->tick({});
-
-        const float curr_reserve = tank->get_proprioception()[proprioception_reserve_index];
-        ASSERT_GE(curr_reserve, last_reserve) << "reserve should increase";
-
-        last_reserve = curr_reserve;
-    }
 
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
     const std::vector tanks{shared_tank};
-
-    ASSERT_FLOAT_EQ(shared_tank->get_proprioception()[proprioception_reserve_index], 1.f)
-        << "the reserve should be full";
 
     // fire one shell: the reserve drops by one
     constexpr user_input fire_input{
@@ -284,52 +236,187 @@ TEST_F(EnemyTankTest, ShellReserveRegeneratesOverTime) {
         .right_joystick = {.x = 0.f, .y = 0.f},
         .fire_button = {true}};
     for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
-    engine->step(1.f / 60.f);
-    shared_tank->tick({});
+    engine->step(1.f / static_cast<float>(nb_frames_one_second));
+    shared_tank->tick(tanks);
 
-    const float reserve_after_fire =
-        shared_tank->get_proprioception()[proprioception_reserve_index];
-    ASSERT_FLOAT_EQ(reserve_after_fire, 1.f - 1.f / static_cast<float>(max_shells))
+    const float reserve_after_fire = shared_tank->get_remaining_shells_ratio();
+    ASSERT_FLOAT_EQ(reserve_after_fire, initial_reserve - 1.f / static_cast<float>(max_shells))
         << "firing should consume a shell";
 
-    // after 1 s the period is not over yet: still nothing
-    for (int i = 0; i < nb_frames_one_second / 2; i++) shared_tank->tick(tanks);
-    ASSERT_FLOAT_EQ(
-        shared_tank->get_proprioception()[proprioception_reserve_index], reserve_after_fire)
-        << "the reserve should not regenerate before the full period has elapsed";
+    // a long wait gives nothing back: only hits recharge the reserve
+    for (int i = 0; i < 30 * nb_frames_one_second; i++) shared_tank->tick(tanks);
 
-    // after 2 s the shell is back
-    for (int i = 0; i < nb_frames_one_second; i++) shared_tank->tick(tanks);
-    ASSERT_FLOAT_EQ(shared_tank->get_proprioception()[proprioception_reserve_index], 1.f)
-        << "one shell should be given back after 1.5 s";
+    ASSERT_FLOAT_EQ(shared_tank->get_remaining_shells_ratio(), reserve_after_fire)
+        << "the reserve should never regenerate over time";
 }
 
-TEST_F(EnemyTankTest, ShellReserveRegenerationIsCappedAtMaximalReserve) {
+TEST_F(EnemyTankTest, ShellEconomyParametersAreApplied) {
     constexpr int nb_frames_one_second = 60;
-    constexpr int max_shells = 30;
-    constexpr float seconds_per_regen = 1.5f;
-
-    // proprioception ends with (reserve, cooldown) ratios
-    constexpr int proprioception_reserve_index = ENEMY_PROPRIOCEPTION_SIZE - 2;
+    constexpr ShellEconomy economy{.initial_shells = 3, .shells_per_hit = 2, .max_shells = 4};
+    constexpr float scale = static_cast<float>(economy.max_shells);
 
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
+    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, economy);
 
-    for (int i = 0; i < static_cast<int>(nb_frames_one_second * seconds_per_regen * max_shells);
-         i++) {
-        engine->step(1.f / static_cast<float>(nb_frames_one_second));
-        tank->tick({});
-    }
-
-    ASSERT_FLOAT_EQ(tank->get_proprioception()[proprioception_reserve_index], 1.f)
-        << "the reserve should be full";
+    ASSERT_FLOAT_EQ(tank->get_remaining_shells_ratio(), 3.f / scale)
+        << "the reserve starts at the economy's initial shells over its maximum";
 
     const std::shared_ptr<EnemyTank> shared_tank(tank.release());
     const std::vector tanks{shared_tank};
 
-    // the reserve is already full: several periods must not push it above it
-    for (int i = 0; i < 5 * nb_frames_one_second; i++) shared_tank->tick(tanks);
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
+    constexpr user_input no_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {false}};
 
-    ASSERT_FLOAT_EQ(shared_tank->get_proprioception()[proprioception_reserve_index], 1.f)
-        << "regeneration should never take the reserve above its max value";
+    for (int shot = 0; shot < 3; shot++) {
+        for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
+        engine->step(1.f / static_cast<float>(nb_frames_one_second));
+        shared_tank->tick(tanks);
+        for (int i = 0; i < nb_frames_one_second; i++) {
+            for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(no_input);
+            engine->step(1.f / static_cast<float>(nb_frames_one_second));
+            shared_tank->tick(tanks);
+        }
+    }
+
+    ASSERT_FLOAT_EQ(shared_tank->get_remaining_shells_ratio(), 0.f)
+        << "three shells is the whole reserve of this economy";
+    ASSERT_FALSE(shared_tank->get_can_fire()) << "an empty reserve cannot fire";
+}
+
+namespace {
+
+    constexpr user_input AIM_DOWN{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 1.f},
+        .fire_button = {false}};
+
+    constexpr user_input HOLD_FIRE{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
+
+}// namespace
+
+TEST_F(EnemyTankTest, EmptyReserveDoesNotKill) {
+    add_ground();
+    auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
+
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
+    const std::vector tanks{shared_tank};
+
+    for (int i = 0; i < 40; i++)
+        for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(AIM_DOWN);
+
+    // empty the reserve, then keep going for a minute: nothing ends a disarmed tank
+    for (int i = 0; i < 60 * 60; i++) {
+        for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(HOLD_FIRE);
+        engine->step(1.f / 60.f);
+        shared_tank->tick(tanks);
+        shared_tank->get_reward();
+    }
+
+    ASSERT_FLOAT_EQ(shared_tank->get_remaining_shells_ratio(), 0.f)
+        << "the tank should have emptied its reserve";
+    ASSERT_FALSE(shared_tank->is_dead()) << "a disarmed tank stays alive";
+    ASSERT_FALSE(shared_tank->is_suicide());
+    ASSERT_FLOAT_EQ(shared_tank->get_last_reward_detail().death, 0.f)
+        << "an empty reserve carries no penalty";
+}
+
+TEST_F(EnemyTankTest, RespawnMovesChassisAndRestoresReserveAndHealth) {
+
+    add_ground();
+    auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
+    const std::vector tanks{shared_tank};
+
+    const float initial_reserve = shared_tank->get_remaining_shells_ratio();
+
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
+    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
+    engine->step(1.f / 60.f);
+    shared_tank->tick(tanks);
+
+    auto *chassis_life = dynamic_cast<LifeItem *>(shared_tank->get_chassis().get());
+    ASSERT_NE(chassis_life, nullptr);
+    chassis_life->receive_damages(
+        {.fire_position = glm::vec3(0.f), .impact_position = glm::vec3(0.f), .damages = 1.f});
+
+    ASSERT_LT(shared_tank->get_remaining_shells_ratio(), initial_reserve);
+    ASSERT_LT(chassis_life->health_ratio(), 1.f);
+
+    constexpr glm::vec3 target(50.f, 8.f, -30.f);
+    shared_tank->respawn(target);
+
+    const auto chassis_pos = glm::vec3(shared_tank->get_chassis()->get_model_matrix()[3]);
+    EXPECT_NEAR(chassis_pos.x, target.x, 0.5f);
+    EXPECT_NEAR(chassis_pos.y, target.y, 0.5f);
+    EXPECT_NEAR(chassis_pos.z, target.z, 0.5f);
+
+    EXPECT_FLOAT_EQ(shared_tank->get_remaining_shells_ratio(), initial_reserve);
+    for (const auto &item: shared_tank->get_items())
+        if (const auto *life = dynamic_cast<LifeItem *>(item.get()))
+            EXPECT_FLOAT_EQ(life->health_ratio(), 1.f) << item->get_name();
+    EXPECT_FALSE(shared_tank->is_dead());
+    EXPECT_FALSE(shared_tank->has_shells_in_flight());
+
+    for (int i = 0; i < 60; i++) {
+        engine->step(1.f / 60.f);
+        shared_tank->tick(tanks);
+    }
+    EXPECT_FALSE(shared_tank->is_dead());
+    EXPECT_FALSE(std::isnan(shared_tank->get_reward()));
+}
+
+TEST_F(EnemyTankTest, OutOfShellsAndShellsInFlightFollowTheLastShell) {
+    constexpr ShellEconomy economy{.initial_shells = 1, .shells_per_hit = 0, .max_shells = 1};
+
+    add_ground();
+    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, economy);
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
+    const std::vector tanks{shared_tank};
+
+    ASSERT_FALSE(shared_tank->is_out_of_shells());
+    ASSERT_FALSE(shared_tank->has_shells_in_flight());
+
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
+    for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(fire_input);
+    engine->step(1.f / 60.f);
+    shared_tank->tick(tanks);
+
+    ASSERT_TRUE(shared_tank->is_out_of_shells());
+    ASSERT_TRUE(shared_tank->has_shells_in_flight());
+
+    constexpr user_input no_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {false}};
+    for (int i = 0; i < 5 * 60; i++) {
+        for (const auto &ctrl: shared_tank->get_controllers()) ctrl->apply_input(no_input);
+        engine->step(1.f / 60.f);
+        shared_tank->tick(tanks);
+        shared_tank->get_reward();
+    }
+
+    ASSERT_TRUE(shared_tank->is_out_of_shells());
+    ASSERT_FALSE(shared_tank->has_shells_in_flight());
+
+    shared_tank->respawn({10.f, 5.f, 10.f});
+    ASSERT_FALSE(shared_tank->is_out_of_shells());
 }

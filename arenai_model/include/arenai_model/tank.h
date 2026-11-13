@@ -1,7 +1,3 @@
-//
-// Created by samuel on 28/09/2025.
-//
-
 #ifndef ARENAI_TANK_H
 #define ARENAI_TANK_H
 
@@ -21,6 +17,8 @@ namespace arenai::model {
     struct ShellContactInfo {
         glm::vec3 fire_position;
         glm::vec3 current_position;
+        // health actually removed from the touched item (0 on anything without health)
+        float damages;
     };
 
     class Tank {
@@ -35,18 +33,22 @@ namespace arenai::model {
 
         virtual bool is_dead() const = 0;
 
+        // kills * 10 + hits landed on the other tanks, player and enemies alike
+        virtual int get_score() const = 0;
+
         virtual std::shared_ptr<Item> get_chassis() const = 0;
         virtual std::shared_ptr<Item> get_canon() const = 0;
     };
 
     struct RewardDetail {
-        float aim = 0.f;
         float hit = 0.f;
+        float kill = 0.f;
         float received = 0.f;
         float death = 0.f;
 
+        int nb_fired_shells = 0;
         int nb_landed_shells = 0;
-        float sum_aim_quality = 0.f;
+        int nb_hits = 0;
         float sum_miss_distance = 0.f;
     };
 
@@ -55,9 +57,20 @@ namespace arenai::model {
         virtual float get_reward() const = 0;
 
         virtual RewardDetail get_last_reward_detail() const = 0;
+
         virtual std::vector<float> get_proprioception() const = 0;
 
+        virtual float get_remaining_shells_ratio() const = 0;
+
+        virtual float get_cooldown_ratio() const = 0;
+
+        virtual bool get_can_fire() const = 0;
+
         virtual void tick(const std::vector<std::shared_ptr<EnemyTank>> &tanks) = 0;
+
+        // in [0, 1]: how close the predicted shell passes to an enemy seen in a view of this aspect ratio
+        virtual float get_aim_potential(
+            const std::vector<std::shared_ptr<EnemyTank>> &tanks, float aspect_ratio) const = 0;
 
         virtual bool consume_has_hit() = 0;
         virtual bool consume_has_kill() = 0;
@@ -65,9 +78,13 @@ namespace arenai::model {
 
         virtual bool is_first_frame_dead() const = 0;
         virtual bool is_suicide() const = 0;
-        virtual bool is_timeout() const = 0;
 
         virtual void on_death() = 0;
+
+        virtual bool is_out_of_shells() const = 0;
+        virtual bool has_shells_in_flight() const = 0;
+
+        virtual void respawn(glm::vec3 chassis_pos) = 0;
     };
 
     struct PlayerHits {
@@ -77,8 +94,6 @@ namespace arenai::model {
 
     class PlayerTank : virtual public Tank {
     public:
-        virtual int get_score() const = 0;
-
         virtual PlayerHits consume_hits() = 0;
         virtual std::vector<ImpactInfo> consume_received_impacts() = 0;
 

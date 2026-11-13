@@ -1,7 +1,3 @@
-//
-// Created by samuel on 20/07/2026.
-//
-
 #include "./shadow_pass.h"
 
 #include <algorithm>

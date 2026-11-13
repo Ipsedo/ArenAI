@@ -1,7 +1,3 @@
-//
-// Created by samuel on 18/03/2023.
-//
-
 #include <utility>
 
 #include <arenai_model/shapes.h>
@@ -13,10 +9,6 @@ using namespace arenai;
 using namespace arenai::model;
 
 namespace arenai::model {
-
-    /*
- * Obj Shape
- */
 
     ObjShape::ObjShape(
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,

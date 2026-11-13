@@ -1,7 +1,3 @@
-//
-// Created by samuel on 27/08/2026.
-//
-
 #include <utility>
 #include <variant>
 #include <vector>
@@ -11,14 +7,6 @@
 
 using namespace arenai;
 using namespace arenai::desktop;
-
-// ========================================================================
-// MenuInputAdapter binding capture: the controls page uninstalls the sink
-// (set_capture_sink(nullptr)) from inside the sink itself as soon as an
-// event completes the capture. A joystick event carries two axis values
-// (X then Y), so the adapter must survive the sink dying on the first one
-// and drop the second instead of invoking an empty std::function.
-// ========================================================================
 
 namespace {
 

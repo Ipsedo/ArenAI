@@ -1,7 +1,3 @@
-//
-// Created by samuel on 16/02/2026.
-//
-
 #ifndef ARENAI_AGENT_HOST_DISTRIBUTION_H
 #define ARENAI_AGENT_HOST_DISTRIBUTION_H
 

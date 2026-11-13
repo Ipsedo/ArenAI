@@ -1,7 +1,3 @@
-//
-// Created by samuel on 30/06/2026.
-//
-
 #include <networks_utils/target_update.h>
 
 #include <arenai_agent_tests/tests_networks_utils/tests_target_update.h>

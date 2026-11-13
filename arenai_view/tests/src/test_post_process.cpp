@@ -1,7 +1,3 @@
-//
-// Created by samuel on 15/07/2026.
-//
-
 #include <cmath>
 #include <numeric>
 #include <vector>
@@ -23,10 +19,6 @@ namespace {
 
     constexpr int WIDTH = 64, HEIGHT = 64;
 
-    // smoke-test harness of the whole player post-processing pipeline on a
-    // headless device: every effect shader (SSAO, blurs, bloom, god rays,
-    // composite) is compiled and drawn once, the composited frame is read
-    // back from an offscreen target standing in for the swapchain image
     class PostProcessHarness {
     public:
         PostProcessHarness()
@@ -60,8 +52,6 @@ namespace {
                 post_process_.begin_scene_pass(cmd);
                 post_process_.run_effects(cmd, proj_matrix, sun_dir_view);
 
-                // composite into the output target, as the player renderer
-                // does into the swapchain image
                 record_image_barrier(
                     cmd, output.image(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0,

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 21/03/2026.
-//
-
 #include "./jolt_player_tank.h"
 
 #include <utility>

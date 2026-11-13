@@ -1,7 +1,3 @@
-//
-// Created by samuel on 30/06/2026.
-//
-
 #include <networks/vision.h>
 
 #include <arenai_agent_tests/tests_networks/tests_vision.h>
@@ -21,7 +17,7 @@ TEST_P(VisionTestParam, TestVisionForward) {
         curr_channels = c_o;
     }
 
-    ConvolutionNetwork conv(height, width, conv_layers, group_norm_nums);
+    ConvolutionNetwork conv(conv_layers, group_norm_nums);
 
     const auto images = torch::randint(
         255, {batch_size, channels, height, width}, torch::TensorOptions().dtype(torch::kUInt8));

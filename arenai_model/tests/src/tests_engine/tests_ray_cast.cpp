@@ -1,17 +1,9 @@
-//
-// Created by claude on 21/09/2026.
-//
-
 #include <glm/glm.hpp>
 
 #include <arenai_model_tests/utils/engine_test_fixture.h>
 
 using namespace arenai;
 using namespace arenai::model;
-
-// ========================================================================
-// ray_cast — hit position, miss cases
-// ========================================================================
 
 TEST_F(EngineTestFixture, RayCastHitsGroundWithoutStep) {
     add_ground();

@@ -1,58 +1,71 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #ifndef ARENAI_DESKTOP_GUI_RML_PAGES_AI_PAGE_H
 #define ARENAI_DESKTOP_GUI_RML_PAGES_AI_PAGE_H
 
 #include <filesystem>
+#include <functional>
+#include <optional>
 #include <vector>
 
-#include <RmlUi/Core.h>
-
-#include "../../menu.h"
-#include "../input.h"
+#include "../../../core/agent_validator.h"
+#include "../click_outside_listener.h"
+#include "../menu_page.h"
+#include "../menu_state.h"
 
 namespace arenai::desktop::gui {
 
-    // The AI screen: the algorithm toggle and the file explorer picking the
-    // trained model's folder, dry-run validated through the injected
-    // AgentValidator. Registers its slice of the shared "settings" data model
-    // and writes straight into the GameSettings it was built around.
-    class AiPage {
+    class AiPage final : public MenuPage {
     public:
-        AiPage(GameSettings &settings, AgentValidator validator);
+        AiPage(
+            MenuState &state, std::vector<AgentPreset> presets, AgentValidator validator,
+            bool cuda_available);
 
-        // registers the page's variables and callbacks into the shared model
-        void bind(Rml::DataModelConstructor &constructor);
-        void set_model_handle(Rml::DataModelHandle handle);
+        void after_context_update() override;
 
-        // hooks the D-pad bridge across the explorer's scroll container and
-        // remembers the document for the post-Update focus restore
-        void attach(Rml::ElementDocument &document);
+        // Escape / gamepad B folds the open preset dropdown first
+        bool on_back() override;
 
-        void refresh_explorer();
-
-        // after the context Update rebuilt the entry clones, put the gamepad
-        // cursor back on the first entry of the fresh listing
-        void update_after_context();
-
-        // the menu's Play gate: true once the dry-run load succeeded
-        bool can_play() const { return can_play_; }
+    protected:
+        void bind_controls(DataModel &model) override;
+        void on_attached(Rml::ElementDocument &document) override;
 
     private:
+        // which element the gamepad cursor lands on after the next Update
+        enum class PendingFocus { None, FirstEntry, PresetHead, PresetList };
+
+        class ExplorerNavListener final : public Rml::EventListener {
+        public:
+            void ProcessEvent(Rml::Event &event) override;
+        };
+
+        void refresh_explorer();
+        bool close_dropdown();
+
+        void select_preset(size_t index);
+        void mark_custom();
         void validate_agent();
+        void dirty_dropdown();
+
         void focus_first_entry() const;
+        void focus_by_id(const char *id) const;
+        // the selected item of an open list, else its first one
+        void focus_in_list(const char *list_id) const;
 
+        MenuState &state_;
         GameSettings &settings_;
+        std::vector<AgentPreset> presets_;
         AgentValidator agent_validator_;
-        Rml::DataModelHandle model_handle_;
+        // no CUDA device on this machine: the toggle shows disabled and off
+        bool cuda_available_;
 
-        Rml::ElementDocument *document_ = nullptr;
-        // removed from the document when Rml::Shutdown() destroys it, before
-        // the members are torn down
         ExplorerNavListener explorer_nav_listener_;
-        bool focus_explorer_pending_ = false;
+        ClickOutsideListener click_outside_listener_;
+        PendingFocus pending_focus_ = PendingFocus::None;
+
+        // nullopt = "Custom": the agent fields no longer match a preset
+        std::optional<size_t> selected_preset_;
+        std::vector<Rml::String> preset_names_;
+        Rml::String preset_display_;
+        bool preset_open_ = false;
 
         std::filesystem::path current_dir_;
         Rml::String algorithm_display_;
@@ -62,8 +75,6 @@ namespace arenai::desktop::gui {
         // empty while no folder is chosen; otherwise success or error text
         Rml::String agent_status_;
         std::vector<Rml::String> entries_;
-        bool agent_valid_ = false;
-        bool can_play_ = false;
     };
 
 }// namespace arenai::desktop::gui

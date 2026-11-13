@@ -3,13 +3,39 @@
     <title>ArenAI</title>
     <link type="text/rcss" href="menu.rcss"/>
 </head>
-<body data-model="settings">
-    <div id="main-panel" class="panel">
-        <h1>ArenAI</h1>
-        <div class="button primary" autofocus data-class-disabled="!can_play" data-event-click="play()">Play</div>
-        <div class="button" data-event-click="open_params()">Parameters</div>
-        <div class="button" data-event-click="exit()">Exit</div>
-        <p class="hint" data-if="!can_play">Select a trained AI model folder in Parameters to play</p>
+<body id="main-body" data-model="main">
+    <div class="topbar">
+        <span class="side-player">◆ Player</span>
+        <span class="side-ai">Neural opponent ◆</span>
+    </div>
+
+    <div id="main-panel" class="hero">
+        <h1 class="title">ArenAI</h1>
+        <div class="title-rule"></div>
+        <div class="versus-intro">
+            <div class="versus-side left">
+                <span class="who side-player">You</span>
+                <span class="who-sub">player · human</span>
+            </div>
+            <div class="versus-badge">VS</div>
+            <div class="versus-side right">
+                <span class="who side-ai">The machine</span>
+                <span class="who-sub">neural opponent</span>
+            </div>
+        </div>
+
+        <div class="hero-buttons">
+            <div class="button primary wide-play" autofocus data-class-disabled="!can_play" data-event-click="play()">Play</div>
+            <div class="button wide-play" data-event-click="navigate('parameters')">Parameters</div>
+            <div class="button exit" data-event-click="exit()">Exit</div>
+        </div>
+
+        <div class="callout ai" data-if="!can_play"><span class="bang">!</span>Select a trained AI model folder in Parameters to play.</div>
+    </div>
+
+    <div class="bottombar">
+        <span>{{input_summary}}</span>
+        <span>{{agent_summary}}</span>
     </div>
 </body>
 </rml>

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #ifndef ARENAI_TESTS_LIQUID_PPO_TRAINING_H
 #define ARENAI_TESTS_LIQUID_PPO_TRAINING_H
 
@@ -9,6 +5,9 @@
 
 #include <agents/ppo_liquid/liquid_ppo_factory.h>
 #include <gtest/gtest.h>
+
+// test code: the arenai sub-namespaces are used unqualified
+using namespace arenai;
 
 struct LiquidPpoTrainingTestConfig {
     int vision_height;

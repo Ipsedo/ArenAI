@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #include "./post_process.h"
 
 #include <utility>
@@ -86,8 +82,6 @@ namespace arenai::view {
         const Target &color = msaa ? *msaa_color_ : *resolve_color_;
         const Target &depth = msaa ? *msaa_depth_ : *resolve_depth_;
 
-        // the whole frame is redrawn: discard previous content; src stages
-        // order against last frame's readers/writers of these images
         record_image_barrier(
             cmd, color.image(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
@@ -210,6 +204,7 @@ namespace arenai::view {
             .textures = {},
             .scalars = {},
             .output_format = VK_FORMAT_UNDEFINED,
+            .output_samples = VK_SAMPLE_COUNT_1_BIT,
             .output_width = 0,
             .output_height = 0};
 
@@ -219,9 +214,10 @@ namespace arenai::view {
 
     void VulkanPostProcess::composite_within(
         const VkCommandBuffer &cmd, const VkFormat output_format, const int output_width,
-        const int output_height) {
+        const int output_height, const VkSampleCountFlagBits output_samples) {
         context_.cmd = cmd;
         context_.output_format = output_format;
+        context_.output_samples = output_samples;
         context_.output_width = output_width;
         context_.output_height = output_height;
         ordered_effects_.back()->render(context_);

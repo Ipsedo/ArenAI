@@ -1,7 +1,3 @@
-//
-// Created by samuel on 08/07/2026.
-//
-
 #include "./glfw_vulkan_window.h"
 
 #include <algorithm>
@@ -14,8 +10,6 @@
 namespace arenai::view {
 
     namespace {
-        // both directions rely on A..Z, 0..9 and F1..F12 being contiguous in
-        // GLFW and in controller::Key
         constexpr std::pair<int, controller::Key> SPECIAL_KEYS[] = {
             {GLFW_KEY_UP, controller::Key::Up},
             {GLFW_KEY_DOWN, controller::Key::Down},
@@ -113,11 +107,6 @@ namespace arenai::view {
             {GLFW_GAMEPAD_BUTTON_DPAD_RIGHT, controller::GamepadButton::DPadRight},
         };
 
-        // GLFW only exposes the gamepad API for joysticks whose GUID it finds in
-        // its bundled SDL mapping database, which is too old to know some common
-        // controllers (e.g. the Xbox One S over Bluetooth via the xpadneo driver,
-        // GUID 050000005e0400008e02000030110000). Supplement it here so those pads
-        // are recognized; a GUID already known to GLFW is simply overridden.
         constexpr auto EXTRA_GAMEPAD_MAPPINGS =
             "050000005e0400008e02000030110000,Xbox Wireless Controller,"
             "a:b0,b:b1,x:b2,y:b3,back:b6,guide:b8,start:b7,"
@@ -185,8 +174,20 @@ namespace arenai::view {
         if (keyboard_callback_) keyboard_callback_->on_key(to_key(key), to_action(action));
     }
 
+    std::tuple<double, double> GlfwVulkanWindow::cursor_scale() const {
+        int window_width, window_height, framebuffer_width, framebuffer_height;
+        glfwGetWindowSize(window_, &window_width, &window_height);
+        glfwGetFramebufferSize(window_, &framebuffer_width, &framebuffer_height);
+        if (window_width <= 0 || window_height <= 0) return {1.0, 1.0};
+        return {
+            static_cast<double>(framebuffer_width) / window_width,
+            static_cast<double>(framebuffer_height) / window_height};
+    }
+
     void GlfwVulkanWindow::on_cursor(const double x, const double y) const {
-        if (keyboard_callback_) keyboard_callback_->on_mouse_move(x, y);
+        if (!keyboard_callback_) return;
+        const auto [scale_x, scale_y] = cursor_scale();
+        keyboard_callback_->on_mouse_move(x * scale_x, y * scale_y);
     }
 
     void GlfwVulkanWindow::on_mouse_button(const int button, const int action) const {
@@ -215,8 +216,6 @@ namespace arenai::view {
         if (!gamepad_callback_) return;
 
         GLFWgamepadstate state;
-        // the selected pad first; unplugged or never selected falls back to
-        // the first connected one
         bool found = selected_gamepad_ >= 0 && glfwJoystickIsGamepad(selected_gamepad_)
                      && glfwGetGamepadState(selected_gamepad_, &state);
         for (int jid = GLFW_JOYSTICK_1; jid <= GLFW_JOYSTICK_LAST && !found; jid++)
@@ -281,7 +280,8 @@ namespace arenai::view {
     }
 
     void GlfwVulkanWindow::set_cursor_position(const double x, const double y) {
-        glfwSetCursorPos(window_, x, y);
+        const auto [scale_x, scale_y] = cursor_scale();
+        glfwSetCursorPos(window_, x / scale_x, y / scale_y);
     }
 
     void GlfwVulkanWindow::set_fullscreen(const bool fullscreen) {
@@ -358,8 +358,6 @@ namespace arenai::view {
     void GlfwVulkanWindow::select_gamepad(const int id) { selected_gamepad_ = id; }
 
     std::string GlfwVulkanWindow::key_label(const controller::Key key) const {
-        // layout-aware name for printable keys (Key::Q reads "A" on AZERTY);
-        // GLFW returns nullptr for the non-printable ones
         if (const int glfw_key = to_glfw_key(key); glfw_key != GLFW_KEY_UNKNOWN)
             if (const char *name = glfwGetKeyName(glfw_key, 0); name != nullptr && *name != '\0') {
                 std::string label(name);

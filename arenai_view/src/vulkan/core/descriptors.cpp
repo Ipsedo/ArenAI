@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #include "./descriptors.h"
 
 #include <utility>
@@ -9,10 +5,6 @@
 #include "./errors.h"
 
 namespace arenai::view {
-
-    /*
-     * DescriptorLayoutBuilder
-     */
 
     DescriptorLayoutBuilder &DescriptorLayoutBuilder::add_binding(
         const uint32_t binding, const VkDescriptorType type, const VkShaderStageFlags stages) {
@@ -37,10 +29,6 @@ namespace arenai::view {
             "vkCreateDescriptorSetLayout");
         return layout;
     }
-
-    /*
-     * DescriptorAllocator
-     */
 
     DescriptorAllocator::DescriptorAllocator(std::shared_ptr<VulkanDevice> device)
         : device_(std::move(device)) {}
@@ -90,10 +78,6 @@ namespace arenai::view {
     DescriptorAllocator::~DescriptorAllocator() {
         for (const auto pool: pools_) vkDestroyDescriptorPool(device_->handle(), pool, nullptr);
     }
-
-    /*
-     * Write helpers
-     */
 
     void write_buffer_descriptor(
         const VkDevice &device, const VkDescriptorSet &set, const uint32_t binding,

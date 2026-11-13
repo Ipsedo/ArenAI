@@ -1,15 +1,9 @@
-//
-// Created by samuel on 15/07/2026.
-//
-
 #ifndef ARENAI_CALLBACK_H
 #define ARENAI_CALLBACK_H
 
 namespace arenai::controller {
     enum class InputAction { Press, Release, Repeat };
 
-    // keyboard — the ranges A..Z, Num0..Num9 and F1..F12 are contiguous so
-    // backends can convert them arithmetically
     enum class Key {
         Unknown,
         // clang-format off

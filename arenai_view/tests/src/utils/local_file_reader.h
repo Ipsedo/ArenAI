@@ -1,13 +1,12 @@
-//
-// Created by samuel on 03/10/2025.
-//
-
 #ifndef ARENAI_AGENT_HOST_LINUX_FILE_READER_H
 #define ARENAI_AGENT_HOST_LINUX_FILE_READER_H
 
 #include <filesystem>
 
 #include <arenai_utils/file_reader.h>
+
+// test code: the arenai sub-namespaces are used unqualified
+using namespace arenai;
 
 class LocalAssetFileReader final : public arenai::utils::AbstractResourceFileReader {
 public:

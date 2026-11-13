@@ -1,7 +1,3 @@
-//
-// Created by samuel on 12/10/2025.
-//
-
 #include "./target_update.h"
 
 using namespace arenai;

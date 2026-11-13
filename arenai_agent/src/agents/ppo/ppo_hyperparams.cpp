@@ -1,7 +1,3 @@
-//
-// Created by claude on 22/07/2026.
-//
-
 #include "./ppo_hyperparams.h"
 
 namespace arenai::agent {
@@ -21,16 +17,22 @@ namespace arenai::agent {
             {.name = "--metric_window_size", .member = &PpoHyperParams::metric_window_size},
             {.name = "--gamma", .member = &PpoHyperParams::gamma},
             {.name = "--gae_lambda", .member = &PpoHyperParams::gae_lambda},
+            {.name = "--aim_gae_lambda", .member = &PpoHyperParams::aim_gae_lambda},
             {.name = "--clip_epsilon", .member = &PpoHyperParams::clip_epsilon},
             {.name = "--target_kl", .member = &PpoHyperParams::target_kl},
             {.name = "--grad_norm_max", .member = &PpoHyperParams::grad_norm_max},
+            {.name = "--initial_alpha", .member = &PpoHyperParams::initial_alpha},
+            {.name = "--alpha_learning_rate", .member = &PpoHyperParams::alpha_learning_rate},
             {.name = "--continuous_target_entropy",
              .member = &PpoHyperParams::continuous_target_entropy},
-            {.name = "--discrete_target_entropy_factors",
-             .member = &PpoHyperParams::discrete_target_entropy_factors},
-            {.name = "--epochs", .member = &PpoHyperParams::epochs},
+            {.name = "--discrete_target_proba", .member = &PpoHyperParams::discrete_target_proba},
+            {.name = "--actor_epochs", .member = &PpoHyperParams::actor_epochs},
+            {.name = "--critic_epochs", .member = &PpoHyperParams::critic_epochs},
             {.name = "--rollout_size", .member = &PpoHyperParams::rollout_size},
-            {.name = "--minibatch_size", .member = &PpoHyperParams::minibatch_size},
+            {.name = "--actor_batch_size", .member = &PpoHyperParams::actor_batch_size},
+            {.name = "--actor_gpu_batch_size", .member = &PpoHyperParams::actor_gpu_batch_size},
+            {.name = "--critic_batch_size", .member = &PpoHyperParams::critic_batch_size},
+            {.name = "--critic_gpu_batch_size", .member = &PpoHyperParams::critic_gpu_batch_size},
         };
     }
 

@@ -1,20 +1,12 @@
-//
-// Created by claude on 22/07/2026.
-//
-
 #include <arenai_agent_tests/tests_agents/tests_ppo_rollout_buffer.h>
 
 using namespace arenai;
 using namespace arenai::agent;
 
-// ========================================================================
-// Fixture helpers
-// ========================================================================
-
 TorchState PpoRolloutBufferTest::make_state() {
-    return {
-        .vision = torch::randn({NB_TANKS, 3, VISION_SIZE, VISION_SIZE}),
-        .proprioception = torch::randn({NB_TANKS, NB_SENSORS})};
+    return TorchState(
+        torch::randn({NB_TANKS, 3, VISION_SIZE, VISION_SIZE}), torch::randn({NB_TANKS, NB_SENSORS}),
+        torch::randint(0, 2, {NB_TANKS, 1}).to(torch::kFloat));
 }
 
 PpoInputStep PpoRolloutBufferTest::make_step(const TorchState &state, const torch::Tensor &done) {
@@ -27,9 +19,11 @@ PpoInputStep PpoRolloutBufferTest::make_step(const TorchState &state, const torc
                                         0, torch::randint(
                                                NB_DISCRETE_ACTIONS, {NB_TANKS},
                                                torch::TensorOptions().dtype(torch::kInt64)))},
+        .continuous_pre_tanh = torch::randn({NB_TANKS, NB_CONTINUOUS_ACTIONS}),
         .continuous_log_prob = torch::randn({NB_TANKS, 1}),
         .discrete_log_prob = torch::randn({NB_TANKS, 1}),
         .reward = torch::randn({NB_TANKS, 1}),
+        .aim_reward = torch::randn({NB_TANKS, 1}),
         .done = done,
         .truncated = torch::zeros({NB_TANKS, 1})};
 }
@@ -37,10 +31,6 @@ PpoInputStep PpoRolloutBufferTest::make_step(const TorchState &state, const torc
 PpoInputStep PpoRolloutBufferTest::make_step(const TorchState &state) {
     return make_step(state, torch::zeros({NB_TANKS, 1}));
 }
-
-// ========================================================================
-// Completion counting
-// ========================================================================
 
 TEST_F(PpoRolloutBufferTest, EmptyBufferHasNoCompleteStep) {
     PpoRolloutBuffer buffer;
@@ -85,10 +75,6 @@ TEST_F(PpoRolloutBufferTest, GetRolloutKeepsPendingStep) {
     ASSERT_EQ(buffer.nb_complete_steps(), 1);
 }
 
-// ========================================================================
-// Rollout content
-// ========================================================================
-
 TEST_F(PpoRolloutBufferTest, RolloutShapes) {
     PpoRolloutBuffer buffer;
 
@@ -100,21 +86,26 @@ TEST_F(PpoRolloutBufferTest, RolloutShapes) {
 
     const auto expected_vision =
         std::vector<int64_t>{nb_steps, NB_TANKS, 3, VISION_SIZE, VISION_SIZE};
-    ASSERT_EQ(rollout.states.vision.sizes().vec(), expected_vision);
+    ASSERT_EQ(rollout.states.get_vision().sizes().vec(), expected_vision);
 
     // the bootstrap state has no time dimension
     ASSERT_EQ(
-        rollout.bootstrap_state.vision.sizes().vec(),
+        rollout.bootstrap_state.get_vision().sizes().vec(),
         (std::vector<int64_t>{NB_TANKS, 3, VISION_SIZE, VISION_SIZE}));
 
     const auto expected_scalar = std::vector<int64_t>{nb_steps, NB_TANKS, 1};
     ASSERT_EQ(rollout.rewards.sizes().vec(), expected_scalar);
+    ASSERT_EQ(rollout.aim_rewards.sizes().vec(), expected_scalar);
     ASSERT_EQ(rollout.continuous_log_probs.sizes().vec(), expected_scalar);
     ASSERT_EQ(rollout.discrete_log_probs.sizes().vec(), expected_scalar);
     ASSERT_EQ(rollout.valids.sizes().vec(), expected_scalar);
+    ASSERT_EQ(rollout.states.get_fire_mask().sizes().vec(), expected_scalar);
 
     ASSERT_EQ(
         rollout.actions.continuous_action.sizes().vec(),
+        (std::vector<int64_t>{nb_steps, NB_TANKS, NB_CONTINUOUS_ACTIONS}));
+    ASSERT_EQ(
+        rollout.continuous_pre_tanhs.sizes().vec(),
         (std::vector<int64_t>{nb_steps, NB_TANKS, NB_CONTINUOUS_ACTIONS}));
 }
 
@@ -132,7 +123,7 @@ TEST_F(PpoRolloutBufferTest, BootstrapStateIsEpisodeFinalObservation) {
     const auto rollout = buffer.get_rollout();
 
     ASSERT_EQ(rollout.rewards.size(0), 2);
-    ASSERT_TRUE(torch::allclose(rollout.bootstrap_state.vision, final_state.vision));
+    ASSERT_TRUE(torch::allclose(rollout.bootstrap_state.get_vision(), final_state.get_vision()));
 }
 
 TEST_F(PpoRolloutBufferTest, BootstrapStateIsPendingObservationMidEpisode) {
@@ -148,12 +139,8 @@ TEST_F(PpoRolloutBufferTest, BootstrapStateIsPendingObservationMidEpisode) {
 
     // only the first step is complete; the pending step's own observation closes it
     ASSERT_EQ(rollout.rewards.size(0), 1);
-    ASSERT_TRUE(torch::allclose(rollout.bootstrap_state.vision, state_1.vision));
+    ASSERT_TRUE(torch::allclose(rollout.bootstrap_state.get_vision(), state_1.get_vision()));
 }
-
-// ========================================================================
-// Validity mask
-// ========================================================================
 
 TEST_F(PpoRolloutBufferTest, TerminatedTankInvalidatesFollowingSteps) {
     PpoRolloutBuffer buffer;

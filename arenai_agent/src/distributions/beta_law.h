@@ -1,7 +1,3 @@
-//
-// Created by samuel on 08/02/2026.
-//
-
 #ifndef ARENAI_AGENT_HOST_BETA_LAW_H
 #define ARENAI_AGENT_HOST_BETA_LAW_H
 

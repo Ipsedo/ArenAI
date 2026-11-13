@@ -1,7 +1,3 @@
-//
-// Created by samuel on 30/06/2026.
-//
-
 #ifndef ARENAI_JOLT_ITEM_FACTORY_H
 #define ARENAI_JOLT_ITEM_FACTORY_H
 

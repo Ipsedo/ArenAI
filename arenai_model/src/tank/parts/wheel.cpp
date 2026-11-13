@@ -1,7 +1,3 @@
-//
-// Created by samuel on 02/04/2023.
-//
-
 #include "./wheel.h"
 
 #include <Jolt/Physics/Constraints/SixDOFConstraint.h>
@@ -108,10 +104,6 @@ namespace arenai::model {
 
         return original_rotation_velocity * rw / rc;
     }
-
-    /*
- * DirectionalWheelItem
- */
 
     void DirectionalWheelItem::apply_input(const controller::user_input &input) {
         WheelItem::apply_input(input);

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 28/09/2025.
-//
-
 #ifndef ARENAI_FILE_READER_H
 #define ARENAI_FILE_READER_H
 

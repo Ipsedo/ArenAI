@@ -1,7 +1,3 @@
-//
-// Created by samuel on 08/02/2026.
-//
-
 #include "../distributions/beta_law.h"
 
 #include "../networks/constants.h"
@@ -31,8 +27,6 @@ namespace arenai::agent {
         const auto alpha = to_alpha(mode, concentration);
         const auto beta = to_beta(mode, concentration);
 
-        // Beta(α, β) = X / (X + Y) with X ~ Gamma(α, 1) and Y ~ Gamma(β, 1),
-        // differentiable w.r.t. α and β through the implicit gradients of _standard_gamma
         const auto x = at::_standard_gamma(clamp_pos(alpha));
         const auto y = at::_standard_gamma(clamp_pos(beta));
 

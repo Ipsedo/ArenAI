@@ -1,7 +1,3 @@
-//
-// Created by samuel on 11/03/2026.
-//
-
 #include "./game_environment.h"
 
 #include <algorithm>
@@ -18,16 +14,37 @@ using namespace arenai;
 
 namespace arenai::desktop {
 
+    namespace {
+
+        // shadow atlas side per quality preset (Off disables the pass)
+        constexpr int shadow_map_size(const ShadowQuality quality) {
+            switch (quality) {
+                case ShadowQuality::Low: return 2048;
+                case ShadowQuality::Medium: return 4096;
+                case ShadowQuality::High: return 8192;
+                default: return 16384;
+            }
+        }
+
+        // the renderer-side reading of the player's graphics choices
+        view::PlayerRendererSettings player_renderer_settings(const GameSettings &settings) {
+            return {
+                .shadows = settings.shadow_quality != ShadowQuality::Off,
+                .shadow_map_size = shadow_map_size(settings.shadow_quality),
+                .msaa_samples = settings.msaa_samples};
+        }
+
+    }// namespace
+
     DesktopGameEnvironment::DesktopGameEnvironment(
         const std::filesystem::path &asset_folder_path,
         const std::shared_ptr<view::AbstractWindowedGraphicBackend> &graphics_backend,
-        const gui::GameSettings &settings, const int vision_height, const int vision_width,
+        const GameSettings &settings, const int vision_height, const int vision_width,
         const float wanted_frequency)
         : BaseTanksEnvironment(
             std::make_shared<agent::DesktopAssetFileReader>(asset_folder_path),
             view::make_vulkan_backend(settings.vision_gpu), settings.nb_tanks, wanted_frequency,
-            // no starving timeout in the playable game
-            vision_height, vision_width, 8, true, false),
+            vision_height, vision_width, 8, true),
           windowed_backend(graphics_backend),
           asset_file_reader(std::make_shared<agent::DesktopAssetFileReader>(asset_folder_path)),
           player_tank(std::nullptr_t()), player_renderer(std::nullptr_t()),
@@ -37,8 +54,20 @@ namespace arenai::desktop {
         const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
         last_model_matrices_ = model_matrices;
 
+        if (!player_renderer) return;
+
         player_renderer->make_current();
         player_renderer->draw(model_matrices);
+    }
+
+    std::optional<std::vector<core::State>> DesktopGameEnvironment::play_frame(
+        const float time_delta, const std::vector<core::Action> &actions, const bool observe) {
+        advance_frame(time_delta, actions);
+        render_frame(observe);
+        tick_frame();
+
+        if (!observe) return std::nullopt;
+        return read_states();
     }
 
     void DesktopGameEnvironment::redraw() const {
@@ -67,6 +96,34 @@ namespace arenai::desktop {
     }
 
     int DesktopGameEnvironment::get_score() const { return player_tank->get_score(); }
+
+    float DesktopGameEnvironment::player_health_ratio() const {
+        float ratio = 1.f;
+        for (const auto &item: player_tank->get_items())
+            if (const auto &life_item = std::dynamic_pointer_cast<model::LifeItem>(item); life_item)
+                ratio = std::min(ratio, life_item->health_ratio());
+        return ratio;
+    }
+
+    int DesktopGameEnvironment::nb_enemies() {
+        return apply_on_enemies<int>(
+            [](const auto &tanks) { return static_cast<int>(tanks.size()); });
+    }
+
+    int DesktopGameEnvironment::nb_enemies_alive() {
+        return apply_on_enemies<int>([](const auto &tanks) {
+            return static_cast<int>(
+                std::ranges::count_if(tanks, [](const auto &tank) { return !tank->is_dead(); }));
+        });
+    }
+
+    int DesktopGameEnvironment::enemies_max_score() {
+        return apply_on_enemies<int>([](const auto &tanks) {
+            int max = 0;
+            for (const auto &tank: tanks) max = std::max(tank->get_score(), max);
+            return max;
+        });
+    }
 
     std::optional<glm::vec2> DesktopGameEnvironment::aim_point_on_screen() const {
         if (!player_tank || !player_renderer) return std::nullopt;
@@ -112,8 +169,6 @@ namespace arenai::desktop {
             player_tank->get_chassis()->get_model_matrix() * glm::vec4(0.f, 0.f, 0.f, 1.f);
 
         for (const auto &[fire_position, impact_position, damages]: impacts) {
-            // the impact lies on the face exposed to the shooter: its offset
-            // from the chassis center points at where the shot came from
             const glm::vec3 direction = fire_position - chassis_center;
             const glm::vec3 direction_flat = direction - up * glm::dot(direction, up);
             if (glm::length(direction_flat) < minimal_length) continue;
@@ -143,11 +198,13 @@ namespace arenai::desktop {
 
     void DesktopGameEnvironment::on_reset_drawables(
         const std::unique_ptr<model::AbstractPhysicEngine> &engine) {
+        engine_ = engine.get();
+    }
+
+    void DesktopGameEnvironment::create_player_renderer() {
         player_renderer = windowed_backend->make_player_renderer(
             glm::vec3(200, 300, 200), player_tank->get_camera(),
-            {.shadows = settings.shadow_quality != gui::ShadowQuality::Off,
-             .shadow_map_size = gui::shadow_map_size(settings.shadow_quality),
-             .msaa_samples = settings.msaa_samples});
+            player_renderer_settings(settings));
 
         if (settings.controller_kind == ControllerKind::Gamepad) {
             const auto player_controller_handler =
@@ -183,7 +240,7 @@ namespace arenai::desktop {
                 name, drawable_factory->make_diffuse(file_reader, shape->get_vertices(), color));
         }
 
-        for (const auto &item: engine->get_items()) {
+        for (const auto &item: engine_->get_items()) {
             const glm::vec4 color(u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, 1.f);
 
             player_renderer->add_drawable(
@@ -194,8 +251,6 @@ namespace arenai::desktop {
         player_renderer->release_current();
     }
 
-    DesktopGameEnvironment::~DesktopGameEnvironment() {
-        std::cout << "Final score : " << player_tank->get_score() << std::endl;
-    }
+    DesktopGameEnvironment::~DesktopGameEnvironment() = default;
 
 }// namespace arenai::desktop

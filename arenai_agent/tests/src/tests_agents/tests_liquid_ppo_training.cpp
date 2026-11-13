@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #include <arenai_agent_tests/tests_agents/tests_liquid_ppo_training.h>
 
 using namespace arenai;
@@ -23,11 +19,14 @@ LiquidPpoTrainingTest::make_factory(const LiquidPpoTrainingTestConfig &cfg) cons
         .gamma = 0.99f,
         .gae_lambda = 0.95f,
         .clip_epsilon = 0.2f,
-        .continuous_target_entropy = std::vector(cfg.nb_continuous_actions, -0.88f),
-        .discrete_target_entropy_factors = std::vector(cfg.nb_discrete_actions, 0.2f),
-        .epochs = 2,
+        .continuous_target_entropy = std::vector(cfg.nb_continuous_actions, 0.f),
+        .actor_epochs = 2,
+        .critic_epochs = 2,
         .rollout_size = ROLLOUT_SIZE,
-        .minibatch_size = MINIBATCH_SIZE};
+        .actor_batch_size = MINIBATCH_SIZE,
+        .actor_gpu_batch_size = MINIBATCH_SIZE,
+        .critic_batch_size = MINIBATCH_SIZE,
+        .critic_gpu_batch_size = MINIBATCH_SIZE};
 
     return std::make_unique<LiquidPpoTorchAgentFactory>(
         cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
@@ -36,10 +35,10 @@ LiquidPpoTrainingTest::make_factory(const LiquidPpoTrainingTestConfig &cfg) cons
 
 TorchState
 LiquidPpoTrainingTest::make_state(const LiquidPpoTrainingTestConfig &cfg, const int nb_tanks) {
-    return {
-        .vision = torch::randint(
-            0, 255, {nb_tanks, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
-        .proprioception = torch::randn({nb_tanks, cfg.nb_sensors})};
+    return TorchState(
+        torch::randint(0, 255, {nb_tanks, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
+        torch::randn({nb_tanks, cfg.nb_sensors}),
+        torch::randint(0, 2, {nb_tanks, 1}).to(torch::kFloat));
 }
 
 TEST_F(LiquidPpoTrainingTest, ActProducesValidOutput) {
@@ -90,9 +89,9 @@ TEST_F(LiquidPpoTrainingTest, HiddenStateAdvancesAndResetsAcrossEpisodes) {
     const std::vector group_norm_nums{2};
 
     const auto actor = std::make_shared<LiquidActor>(
-        cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, 8, vision_channels, group_norm_nums, NEURON_NUMBER,
-        UNFOLDING_STEPS, DELTA_T, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
+        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 8, vision_channels,
+        group_norm_nums, NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T, 0.1f,
+        std::vector(cfg.nb_discrete_actions, 0.2f));
     const auto hidden_state = std::make_shared<LiquidHiddenState>(actor);
     const auto rollout_buffer = std::make_shared<LiquidPpoRolloutBuffer>();
     const auto collector = std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state);
@@ -102,16 +101,19 @@ TEST_F(LiquidPpoTrainingTest, HiddenStateAdvancesAndResetsAcrossEpisodes) {
     // first episode: two steps
     agent->act(make_state(cfg, nb_tanks), true);
     collector->on_transition(
-        torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+        torch::randn({nb_tanks, 1}), torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}),
+        torch::zeros({nb_tanks, 1}));
     agent->act(make_state(cfg, nb_tanks), true);
     collector->on_transition(
-        torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+        torch::randn({nb_tanks, 1}), torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}),
+        torch::zeros({nb_tanks, 1}));
     collector->on_episode_end(make_state(cfg, nb_tanks));
 
     // second episode: one step
     agent->act(make_state(cfg, nb_tanks), true);
     collector->on_transition(
-        torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+        torch::randn({nb_tanks, 1}), torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}),
+        torch::zeros({nb_tanks, 1}));
     collector->on_episode_end(make_state(cfg, nb_tanks));
 
     const auto rollout = rollout_buffer->get_rollout();
@@ -138,34 +140,33 @@ TEST_F(LiquidPpoTrainingTest, TrainingUpdatesActorParameters) {
     const std::vector group_norm_nums{2};
 
     const auto actor = std::make_shared<LiquidActor>(
-        cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, 8, vision_channels, group_norm_nums, NEURON_NUMBER,
-        UNFOLDING_STEPS, DELTA_T, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
+        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 8, vision_channels,
+        group_norm_nums, NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T, 0.1f,
+        std::vector(cfg.nb_discrete_actions, 0.2f));
     const auto hidden_state = std::make_shared<LiquidHiddenState>(actor);
     const auto rollout_buffer = std::make_shared<LiquidPpoRolloutBuffer>();
     const auto collector = std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state);
     const auto agent =
         std::make_shared<TorchLiquidPpoAgent>(actor, hidden_state, device, collector);
-    // target_kl = 0 : early stop disabled so every minibatch applies its update
+    // target_kl = 0 : early stop disabled so every optimizer batch applies its update
     const auto trainer = std::make_shared<LiquidPpoTrainer>(
-        actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_sensors,
-        cfg.nb_continuous_actions, cfg.nb_discrete_actions, 1e-3f, 1e-3f, 8, vision_channels,
-        group_norm_nums, NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T, device, 10, 0.99f, 0.95f, 0.2f,
-        0.f, 1.f, std::vector(cfg.nb_continuous_actions, 0.25f),
-        std::vector(cfg.nb_discrete_actions, 0.98f), 2, ROLLOUT_SIZE, MINIBATCH_SIZE, CHUNK_SIZE);
+        actor, rollout_buffer, cfg.nb_continuous_actions, cfg.nb_discrete_actions, cfg.nb_sensors,
+        1e-3f, 1e-3f, 8, vision_channels, group_norm_nums, NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T,
+        device, 10, 0.99f, 0.95f, 0.f, 0.2f, 0.f, 1.f, 0.001f, 3e-4f,
+        std::vector(cfg.nb_continuous_actions, -1.f), 0.05f, 2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE,
+        MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, CHUNK_SIZE);
 
     std::vector<torch::Tensor> initial_parameters;
     for (const auto &parameter: actor->parameters())
         initial_parameters.push_back(parameter.detach().clone());
 
-    // env loop: act -> transition -> maybe train, one more step than the rollout
-    // horizon so that the batch is complete when the trainer checks
     for (int t = 0; t < ROLLOUT_SIZE + 2; t++) {
         constexpr int nb_tanks = 2;
 
         agent->act(make_state(cfg, nb_tanks), true);
         collector->on_transition(
-            torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+            torch::randn({nb_tanks, 1}), torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}),
+            torch::zeros({nb_tanks, 1}));
         trainer->step();
     }
 
@@ -183,4 +184,61 @@ TEST_F(LiquidPpoTrainingTest, TrainingUpdatesActorParameters) {
         }
 
     ASSERT_TRUE(any_changed) << "Training should update the actor's parameters";
+}
+
+TEST_F(LiquidPpoTrainingTest, MaskedFireReceivesNoUpdate) {
+    // fire never possible: its head row must stay untouched while zoom keeps learning
+    constexpr LiquidPpoTrainingTestConfig cfg{
+        .vision_height = 8,
+        .vision_width = 8,
+        .nb_sensors = 3,
+        .nb_continuous_actions = 2,
+        .nb_discrete_actions = 2};
+
+    const std::vector<std::tuple<int, int>> vision_channels{{3, 4}};
+    const std::vector group_norm_nums{2};
+
+    const auto actor = std::make_shared<LiquidActor>(
+        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 8, vision_channels,
+        group_norm_nums, NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T, 0.1f,
+        std::vector(cfg.nb_discrete_actions, 0.2f));
+    const auto hidden_state = std::make_shared<LiquidHiddenState>(actor);
+    const auto rollout_buffer = std::make_shared<LiquidPpoRolloutBuffer>();
+    const auto collector = std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state);
+    const auto agent =
+        std::make_shared<TorchLiquidPpoAgent>(actor, hidden_state, device, collector);
+    // target_kl = 0 : early stop disabled so every optimizer batch applies its update
+    const auto trainer = std::make_shared<LiquidPpoTrainer>(
+        actor, rollout_buffer, cfg.nb_continuous_actions, cfg.nb_discrete_actions, cfg.nb_sensors,
+        1e-3f, 1e-3f, 8, vision_channels, group_norm_nums, NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T,
+        device, 10, 0.99f, 0.95f, 0.f, 0.2f, 0.f, 1.f, 0.001f, 3e-4f,
+        std::vector(cfg.nb_continuous_actions, -1.f), 0.05f, 2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE,
+        MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, CHUNK_SIZE);
+
+    auto named_parameters = actor->named_parameters();
+    const auto weight = named_parameters["discrete.0.weight"];
+    const auto bias = named_parameters["discrete.0.bias"];
+    const auto initial_weight = weight.detach().clone();
+    const auto initial_bias = bias.detach().clone();
+
+    for (int t = 0; t < ROLLOUT_SIZE + 2; t++) {
+        constexpr int nb_tanks = 2;
+
+        auto state = make_state(cfg, nb_tanks);
+        state = TorchState(state.get_vision(), state.get_state(), torch::zeros({nb_tanks, 1}));
+
+        agent->act(state, true);
+        collector->on_transition(
+            torch::randn({nb_tanks, 1}), torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}),
+            torch::zeros({nb_tanks, 1}));
+        trainer->step();
+    }
+
+    // the rollout has been consumed by the training
+    ASSERT_LT(rollout_buffer->nb_complete_steps(), static_cast<size_t>(ROLLOUT_SIZE));
+
+    // row 0 = fire, row 1 = zoom
+    ASSERT_TRUE(torch::equal(weight[0], initial_weight[0]));
+    ASSERT_TRUE(torch::equal(bias[0], initial_bias[0]));
+    ASSERT_FALSE(torch::equal(weight[1], initial_weight[1]));
 }

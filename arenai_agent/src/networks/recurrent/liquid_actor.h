@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #ifndef ARENAI_LIQUID_ACTOR_H
 #define ARENAI_LIQUID_ACTOR_H
 
@@ -9,29 +5,27 @@
 
 #include <torch/torch.h>
 
+#include "../misc.h"
 #include "../vision.h"
 #include "./liquid_cell.h"
 
 namespace arenai::agent {
 
     struct LiquidActorOutput {
-        // truncated normal on [-1, 1]: mu is the mode, sigma the spread. sigma is
-        // parameterised in log-scale, so the aim precision has no ceiling
         torch::Tensor mu;
         torch::Tensor sigma;
         // independent Bernoulli probabilities, one per discrete action
         torch::Tensor discrete;
         // liquid state after the last processed step
         torch::Tensor next_x;
+        torch::Tensor features;
+        torch::Tensor vision_features;
     };
 
-    // CNN on the frames, MLP on the proprioception, both concatenated into the
-    // recurrent input of each step, then run through the liquid network
     class LiquidActor final : public torch::nn::Module {
     public:
         explicit LiquidActor(
-            const int &vision_height, const int &vision_width, const int &nb_sensors,
-            const int &nb_continuous_actions, const int &nb_discrete_actions,
+            const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_actions,
             const int &hidden_size_sensors,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, const int &neuron_number,
@@ -42,8 +36,6 @@ namespace arenai::agent {
         LiquidActorOutput
         act(const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &x_t);
 
-        // BPTT chunk: vision [B, T, C, H, W], sensors [B, T, S], x_t [B, neuron_number];
-        // outputs are [B, T, ...]
         LiquidActorOutput act_sequence(
             const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &x_t);
 
@@ -55,7 +47,7 @@ namespace arenai::agent {
 
         std::shared_ptr<LiquidCell> liquid;
 
-        torch::nn::Sequential mu;
+        torch::nn::Linear mu;
         torch::nn::Sequential sigma;
         torch::nn::Sequential discrete;
 

@@ -1,12 +1,9 @@
-//
-// Created by samuel on 22/01/2026.
-//
-
 #include <tuple>
 #include <vector>
 
 #include <arenai_agent/factory.h>
 
+#include "./ppg/ppg_agent.h"
 #include "./ppo/ppo_agent.h"
 #include "./ppo_liquid/liquid_ppo_agent.h"
 
@@ -15,16 +12,24 @@ using namespace arenai::agent;
 
 namespace arenai::agent {
 
+    bool cuda_available() { return torch::cuda::is_available(); }
+
     AgentFactory::AgentFactory(const nlohmann::json &config)
         : agent_arguments(config.at("agent")),
           vision_height(config.at("environment").at("vision_height").get<int>()),
           vision_width(config.at("environment").at("vision_width").get<int>()),
-          wanted_frequency(config.at("environment").at("wanted_frequency").get<float>()) {}
+          wanted_frequency(config.at("environment").at("wanted_frequency").get<float>()),
+          action_repeat(config.at("environment").at("action_repeat").get<int>()) {}
 
+    // needed for game
     int AgentFactory::get_vision_height() const { return vision_height; }
     int AgentFactory::get_vision_width() const { return vision_width; }
+
     float AgentFactory::get_wanted_frequency() const { return wanted_frequency; }
 
+    int AgentFactory::get_action_repeat() const { return action_repeat; }
+
+    // factory method
     std::shared_ptr<AbstractAgent> AgentFactory::get_agent(
         const AgentAlgorithm algorithm, const int &nb_sensors, const int &nb_continuous_actions,
         const int &nb_discrete_actions, const bool cuda) {
@@ -35,6 +40,9 @@ namespace arenai::agent {
             case PPO_LIQUID:
                 return create_liquid_ppo_agent(
                     nb_sensors, nb_continuous_actions, nb_discrete_actions, cuda);
+            case PPG:
+                return create_ppg_agent(
+                    nb_sensors, nb_continuous_actions, nb_discrete_actions, cuda);
             default: throw std::runtime_error("Unknown agent algorithm");
         }
     }
@@ -44,7 +52,7 @@ namespace arenai::agent {
         const bool cuda) {
         return std::make_shared<TorchPpoAgent>(
             std::make_shared<Actor>(
-                vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_action,
+                nb_sensors, nb_continuous_actions, nb_discrete_action,
                 get_value<int>("hidden_size_sensors"),
                 get_value<std::vector<int>>("actor_hidden_sizes"),
                 get_value<std::vector<std::tuple<int, int>>>("vision_channels"),
@@ -56,7 +64,7 @@ namespace arenai::agent {
         const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_action,
         const bool cuda) {
         const auto actor = std::make_shared<LiquidActor>(
-            vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_action,
+            nb_sensors, nb_continuous_actions, nb_discrete_action,
             get_value<int>("hidden_size_sensors"),
             get_value<std::vector<std::tuple<int, int>>>("vision_channels"),
             get_value<std::vector<int>>("group_norm_nums"), get_value<int>("neuron_number"),
@@ -65,6 +73,19 @@ namespace arenai::agent {
 
         return std::make_shared<TorchLiquidPpoAgent>(
             actor, std::make_shared<LiquidHiddenState>(actor), cuda ? torch::kCUDA : torch::kCPU);
+    }
+
+    std::shared_ptr<AbstractAgent> AgentFactory::create_ppg_agent(
+        const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_action,
+        const bool cuda) {
+        return std::make_shared<TorchPpgAgent>(
+            std::make_shared<DistillationActor>(
+                nb_sensors, nb_continuous_actions, nb_discrete_action,
+                get_value<int>("hidden_size_sensors"),
+                get_value<std::vector<int>>("actor_hidden_sizes"),
+                get_value<std::vector<std::tuple<int, int>>>("vision_channels"),
+                get_value<std::vector<int>>("group_norm_nums"), 0.f, std::vector{0.5f, 0.5f}),
+            cuda ? torch::kCUDA : torch::kCPU);
     }
 
 }// namespace arenai::agent

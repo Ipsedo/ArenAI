@@ -1,7 +1,3 @@
-//
-// Created by samuel on 18/09/2026.
-//
-
 #include "./bernoulli.h"
 
 #include <cmath>
@@ -13,12 +9,10 @@ using namespace arenai::agent;
 
 namespace {
 
-    // float32: 1 - EPSILON (1e-8) rounds back to 1 and log(1 - p) would still
-    // hit -inf when the sigmoid saturates, so the upper clamp needs its own margin
     constexpr float PROBA_MAX = 1.f - 1e-6f;
 
     torch::Tensor clamp_proba(const torch::Tensor &probabilities) {
-        return torch::clamp(probabilities, agent::EPSILON, PROBA_MAX);
+        return torch::clamp(probabilities, EPSILON, PROBA_MAX);
     }
 
 }// namespace

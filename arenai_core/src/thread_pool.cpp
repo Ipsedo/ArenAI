@@ -1,7 +1,3 @@
-//
-// Created by samuel on 10/06/2026.
-//
-
 #include <chrono>
 
 #include <arenai_core/thread_pool.h>
@@ -10,10 +6,6 @@ using namespace arenai;
 using namespace arenai::core;
 
 namespace arenai::core {
-
-    /*
-     * VisionDoubleBuffer / ModelMatricesDoubleBuffer
-     */
 
     view::image<uint8_t> VisionDoubleBuffer::black_image(const int height, const int width) {
         return {std::vector<uint8_t>(3 * height * width, 0)};
@@ -24,10 +16,6 @@ namespace arenai::core {
 
     ModelMatricesDoubleBuffer::ModelMatricesDoubleBuffer()
         : DoubleBuffer(std::vector<std::tuple<std::string, glm::mat4>>()) {}
-
-    /*
-     * ThreadLimiter
-     */
 
     ThreadLimiter::ThreadLimiter(const unsigned int k) : k_threads(k) {}
 
@@ -44,10 +32,6 @@ namespace arenai::core {
         ++serving_ticket;
         condition_variable.notify_all();
     }
-
-    /*
- * EnemyVisionThreadPool
- */
 
     EnemyVisionThreadPool::EnemyVisionThreadPool(
         const int num_tanks, const int max_concurrent_renders, const int vision_height,
@@ -143,8 +127,6 @@ namespace arenai::core {
             std::chrono::milliseconds(static_cast<int>(wanted_frequency_ * 1000.f));
 
         while (threads_running_.load(std::memory_order_acquire)) {
-            // wait until the main thread has published this frame's model matrices,
-            // otherwise the render may use the previous frame's scene
             start_barrier_->arrive_and_wait();
 
             if (!threads_running_.load(std::memory_order_acquire)) break;
@@ -185,11 +167,7 @@ namespace arenai::core {
         return enemy_visions_[index]->read_copy();
     }
 
-    void EnemyVisionThreadPool::begin_frame() const {
-        // release the workers now that the current model matrices are published;
-        // arrive() does not block, so the caller can keep rendering its own view
-        (void) start_barrier_->arrive();
-    }
+    void EnemyVisionThreadPool::begin_frame() const { (void) start_barrier_->arrive(); }
 
     void EnemyVisionThreadPool::loop_wait() const { loop_barrier_->arrive_and_wait(); }
 

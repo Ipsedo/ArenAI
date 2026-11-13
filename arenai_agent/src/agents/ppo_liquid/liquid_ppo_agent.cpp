@@ -1,23 +1,14 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #include "./liquid_ppo_agent.h"
 
 #include "../../distributions/bernoulli.h"
-#include "../../distributions/truncated_normal.h"
+#include "../../distributions/gaussian_tanh.h"
 #include "../../networks/constants.h"
-#include "../../networks_utils/torch_converter.h"
 #include "../../networks_utils/torch_loader.h"
 
 using namespace arenai;
 using namespace arenai::agent;
 
 namespace arenai::agent {
-
-    /*
-     * Torch liquid PPO agent
-     */
 
     TorchLiquidPpoAgent::TorchLiquidPpoAgent(
         const std::shared_ptr<LiquidActor> &actor,
@@ -29,13 +20,12 @@ namespace arenai::agent {
 
     std::vector<core::Action> TorchLiquidPpoAgent::act(
         const std::vector<core::State> &states, const int vision_height, const int vision_width) {
-        const auto [continuous_action, discrete_action] =
-            act(states_to_tensor(states, vision_height, vision_width), false);
-        return tensor_to_actions(continuous_action, discrete_action);
+        return act(TorchState(states, vision_height, vision_width), false).to_actions();
     }
 
     TorchAction TorchLiquidPpoAgent::act(const TorchState &state, const bool sample) {
         TorchAction action;
+        torch::Tensor continuous_pre_tanh;
         torch::Tensor continuous_log_prob;
         torch::Tensor discrete_log_prob;
         torch::Tensor x_t;
@@ -43,30 +33,35 @@ namespace arenai::agent {
         {
             torch::NoGradGuard guard;
 
-            const auto &[vision, sensors] = state;
-
-            x_t = hidden_state->get(vision.size(0));
-            const auto &[mu, sigma, discrete_proba, next_x] = actor->act(vision, sensors, x_t);
-            hidden_state->set(next_x);
+            x_t = hidden_state->get(state.get_vision().size(0));
+            const auto out = actor->act(state.get_vision(), state.get_state(), x_t);
+            const auto &mu = out.mu;
+            const auto &sigma = out.sigma;
+            const auto &discrete_proba = out.discrete;
+            hidden_state->set(out.next_x);
 
             if (sample) {
-                action.continuous_action = truncated_normal_sample(mu, sigma);
+                std::tie(action.continuous_action, continuous_pre_tanh) =
+                    gaussian_tanh_sample(mu, sigma);
                 action.discrete_action = bernoulli_sample(discrete_proba);
             } else {
-                action.continuous_action = truncated_normal_mean(mu, sigma);
+                continuous_pre_tanh = mu;
+                action.continuous_action = gaussian_tanh_mode(mu);
                 action.discrete_action = bernoulli_max_action(discrete_proba);
             }
 
-            // old log-probabilities, kept for the PPO importance ratio
-            continuous_log_prob =
-                truncated_normal_log_pdf(action.continuous_action, mu, sigma).sum(-1, true);
+            // old log-probabilities per continuous action, kept for the PPO importance ratios
+            continuous_log_prob = gaussian_tanh_log_pdf(continuous_pre_tanh, mu, sigma);
 
-            discrete_log_prob =
-                bernoulli_log_proba(action.discrete_action, discrete_proba).sum(-1, true);
+            // a fire without effect is not a decision: no log-probability, no gradient
+            discrete_log_prob = (bernoulli_log_proba(action.discrete_action, discrete_proba)
+                                 * state.get_discrete_action_mask(discrete_proba.size(-1)))
+                                    .sum(-1, true);
         }
 
         if (collector.has_value())
-            collector.value()->on_act(state, action, continuous_log_prob, discrete_log_prob, x_t);
+            collector.value()->on_act(
+                state, action, continuous_pre_tanh, continuous_log_prob, discrete_log_prob, x_t);
 
         return action;
     }

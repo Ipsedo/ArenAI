@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #include "./glfw_vulkan_backend.h"
 
 #include <utility>
@@ -63,21 +59,15 @@ namespace arenai::view {
         return *rml_render_interface_;
     }
 
-    void GlfwVulkanBackend::begin_ui_frame(const int width, const int height) {
+    void GlfwVulkanBackend::begin_ui_pass(const UiPass pass, const int width, const int height) {
         if (!frame_context_->ensure_frame_begun()) return;
 
-        frame_context_->begin_swapchain_pass(false, true);
+        const bool overlay = pass == UiPass::Overlay;
+        frame_context_->begin_swapchain_pass(/*load_existing=*/overlay, /*clear=*/!overlay);
         rml_render_interface_->begin_frame(width, height);
     }
 
-    void GlfwVulkanBackend::begin_ui_overlay(const int width, const int height) {
-        if (!frame_context_->ensure_frame_begun()) return;
-
-        frame_context_->begin_swapchain_pass(true, false);
-        rml_render_interface_->begin_frame(width, height);
-    }
-
-    void GlfwVulkanBackend::end_ui_frame() {
+    void GlfwVulkanBackend::end_ui_pass() {
         if (!frame_context_->frame_active()) return;
 
         rml_render_interface_->end_frame();
@@ -91,10 +81,6 @@ namespace arenai::view {
         frame_context_.reset();
         vkDestroySurfaceKHR(context()->instance()->handle(), surface_, nullptr);
     }
-
-    /*
-     * VulkanViewFactory: windowed backend construction (GLFW-specific).
-     */
 
     std::unique_ptr<AbstractWindowedGraphicBackend> make_glfw_vulkan_backend(
         const int window_width, const int window_height, const std::string &title,

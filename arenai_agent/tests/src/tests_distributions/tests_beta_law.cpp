@@ -1,17 +1,9 @@
-//
-// Created by samuel on 30/06/2026.
-//
-
 #include <distributions/beta_law.h>
 
 #include <arenai_agent_tests/tests_distributions/tests_beta_law.h>
 
 using namespace arenai;
 using namespace arenai::agent;
-
-// ========================================================================
-// Fixed tests
-// ========================================================================
 
 TEST_F(BetaLawTest, UniformEntropyIsMaximal) {
     // concentration=2 → alpha=beta=1 → uniform → maximal entropy
@@ -66,10 +58,6 @@ TEST_F(BetaLawTest, ModeActionSpansActionRange) {
     ASSERT_TRUE(
         torch::allclose(action, torch::tensor({-1.0f, -0.5f, 0.0f, 0.5f, 1.0f}), 1e-5, 1e-5));
 }
-
-// ========================================================================
-// Parameterized: shape variations
-// ========================================================================
 
 TEST_P(BetaLawParamTest, SampleBounds) {
     const auto &shape = GetParam();

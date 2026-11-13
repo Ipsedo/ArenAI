@@ -1,7 +1,3 @@
-//
-// Created by claude on 01/07/2026.
-//
-
 #include <numeric>
 
 #include <arenai_view/backend.h>
@@ -34,8 +30,6 @@ TEST_P(OffscreenClearColorParam, ClearColorNoDrawable) {
     const int hw = width * height;
     ASSERT_EQ(pixels.size(), 3 * hw);
 
-    // CHW layout: [R plane | G plane | B plane]
-    // clear color is (1.0, 0.0, 0.0) => R=255, G=0, B=0
     for (int i = 0; i < hw; ++i) {
         ASSERT_EQ(pixels[0 * hw + i], 255) << "R channel pixel " << i;
         ASSERT_EQ(pixels[1 * hw + i], 0) << "G channel pixel " << i;

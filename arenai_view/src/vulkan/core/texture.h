@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #ifndef ARENAI_VK_TEXTURE_H
 #define ARENAI_VK_TEXTURE_H
 
@@ -17,10 +13,6 @@
 
 namespace arenai::view {
 
-    // Sampled R8G8B8A8_UNORM texture (2D or cube), uploaded once at creation
-    // on the caller's thread and left in SHADER_READ_ONLY layout. RGB images
-    // are expanded to RGBA on the CPU (tightly-packed RGB formats have no
-    // guaranteed sampling support in Vulkan).
     class VulkanTexture {
     public:
         // 2D texture from raw RGBA/RGB bytes

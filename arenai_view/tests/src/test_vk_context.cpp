@@ -1,7 +1,3 @@
-//
-// Created by claude on 01/07/2026.
-//
-
 #include <numeric>
 
 #include <glm/ext/matrix_transform.hpp>

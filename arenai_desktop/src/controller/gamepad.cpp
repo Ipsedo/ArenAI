@@ -1,7 +1,3 @@
-//
-// Created by samuel on 15/07/2026.
-//
-
 #include "./gamepad.h"
 
 #include <algorithm>
@@ -64,9 +60,6 @@ namespace arenai::desktop {
                 axis_slot(state, GamepadAxis::RightStickX) = x;
                 axis_slot(state, GamepadAxis::RightStickY) = y;
 
-                // the window dispatches the right stick once per frame, after every
-                // other gamepad callback: use it as the per-frame tick so the
-                // turret / canon deltas are applied exactly once per frame
                 on_event(state);
                 break;
         }
@@ -101,9 +94,6 @@ namespace arenai::desktop {
                 else if (action == controller::InputAction::Release) zoom_held = false;
             }
         } else {
-            // per-frame tick: the parts consume an aim rate in [-1, 1], a fraction of the
-            // tank's slew speed. that speed is set for the mouse, so the stick asks for a
-            // small share of it -- the ratio of the two historical rad/frame gains
             constexpr float stick_sensitivity = 0.05f;
 
             turret_rotation = stick_sensitivity * axis_value(bindings.aim_x, event);

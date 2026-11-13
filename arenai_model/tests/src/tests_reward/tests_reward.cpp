@@ -1,13 +1,11 @@
-//
-// Created by samuel on 01/07/2026.
-//
-
 #include <cmath>
 #include <memory>
 #include <vector>
 
 #include <arenai_controller/inputs.h>
 #include <arenai_model/constants.h>
+#include <arenai_model/item_factory.h>
+#include <arenai_model/shell_economy.h>
 #include <arenai_model_tests/tests_reward/tests_reward.h>
 
 using namespace arenai;
@@ -15,14 +13,12 @@ using namespace arenai::model;
 using namespace arenai::utils;
 using namespace arenai::controller;
 
-// ========================================================================
-// get_reward — base scenarios
-// ========================================================================
-
 TEST_F(RewardTest, RewardZeroWhenAliveNoShot) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {20.f, 0.f, 0.f}, false);
+    auto tank_a =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, GAME_SHELL_ECONOMY);
+    auto tank_b =
+        tank_factory->make_enemy_tank(file_reader, "tank_b", {20.f, 0.f, 0.f}, GAME_SHELL_ECONOMY);
 
     engine->step(1.f / 60.f);
 
@@ -38,8 +34,10 @@ TEST_F(RewardTest, RewardZeroWhenAliveNoShot) {
 
 TEST_F(RewardTest, RewardNegativeWhenDead) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {20.f, 0.f, 0.f}, false);
+    auto tank_a =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, GAME_SHELL_ECONOMY);
+    auto tank_b =
+        tank_factory->make_enemy_tank(file_reader, "tank_b", {20.f, 0.f, 0.f}, GAME_SHELL_ECONOMY);
 
     engine->step(1.f / 60.f);
 
@@ -66,8 +64,10 @@ TEST_F(RewardTest, RewardNegativeWhenDead) {
 
 TEST_F(RewardTest, DeathPenaltyIsMinusOne) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {20.f, 0.f, 0.f}, false);
+    auto tank_a =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, GAME_SHELL_ECONOMY);
+    auto tank_b =
+        tank_factory->make_enemy_tank(file_reader, "tank_b", {20.f, 0.f, 0.f}, GAME_SHELL_ECONOMY);
 
     engine->step(1.f / 60.f);
 
@@ -83,21 +83,20 @@ TEST_F(RewardTest, DeathPenaltyIsMinusOne) {
     }
 
     const float death_reward = tanks[1]->get_reward();
+    const auto detail = tanks[1]->get_last_reward_detail();
 
-    // death and suicide share the same penalty so early termination is never an escape;
-    // the fatal hit also counts as a received hit (-0.3)
-    ASSERT_FLOAT_EQ(death_reward, -1.3f);
+    ASSERT_FLOAT_EQ(detail.death, -DEATH_PENALTY);
+    ASSERT_FLOAT_EQ(detail.received, -DAMAGE_REWARD);
+    ASSERT_FLOAT_EQ(death_reward, -DEATH_PENALTY - DAMAGE_REWARD);
 }
-
-// ========================================================================
-// get_reward — hit/kill rewards via fire
-// ========================================================================
 
 TEST_F(RewardTest, RewardPositiveOnHit) {
     add_ground();
     // spawn tanks high enough so all parts start above ground and settle cleanly
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, false);
+    auto tank_a =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
+    auto tank_b =
+        tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, GAME_SHELL_ECONOMY);
 
     // settle on ground (300 frames = 5s at 60fps)
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
@@ -127,15 +126,17 @@ TEST_F(RewardTest, RewardPositiveOnHit) {
     ASSERT_FALSE(std::isnan(max_reward)) << "reward should never be NaN";
     ASSERT_FALSE(std::isinf(max_reward)) << "reward should never be Inf";
 
-    ASSERT_GE(max_reward, 0.2f)
-        << "reward should be greater than or equal to the hit bonus after hitting an enemy";
+    ASSERT_GE(max_reward, 0.1f)
+        << "a landed shell pays the health fraction it removed, 0.1 on a chassis, 0.2 elsewhere";
 }
 
 TEST_F(RewardTest, RewardUnderOneAfterHit) {
     add_ground();
     // spawn tanks high enough so all parts start above ground and settle cleanly
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, false);
+    auto tank_a =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
+    auto tank_b =
+        tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, GAME_SHELL_ECONOMY);
 
     // settle on ground (300 frames = 5s at 60fps)
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
@@ -164,8 +165,8 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
     ASSERT_FALSE(std::isnan(max_reward_on_hit)) << "reward should never be NaN";
     ASSERT_FALSE(std::isinf(max_reward_on_hit)) << "reward should never be Inf";
 
-    ASSERT_GE(max_reward_on_hit, 0.2f)
-        << "reward should be greater than or equal to the hit bonus after hitting an enemy";
+    ASSERT_GE(max_reward_on_hit, 0.1f)
+        << "a landed shell pays the health fraction it removed, 0.1 on a chassis, 0.2 elsewhere";
 
     constexpr user_input no_fire_input{
         .left_joystick = {.x = 0.f, .y = 0.f},
@@ -191,8 +192,10 @@ TEST_F(RewardTest, RewardUnderOneAfterHit) {
 
 TEST_F(RewardTest, MissedShellPaysNothing) {
     add_ground();
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {15.f, 5.f, 30.f}, false);
+    auto tank_a =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
+    auto tank_b =
+        tank_factory->make_enemy_tank(file_reader, "tank_b", {15.f, 5.f, 30.f}, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -208,34 +211,190 @@ TEST_F(RewardTest, MissedShellPaysNothing) {
     const std::vector tanks{shared_a, shared_b};
 
     float total_reward = 0.f;
-    int max_landed_shells = 0;
+    RewardDetail fire_detail, landed_detail;
+    int fire_frame = -1;
     for (int i = 0; i < 180; i++) {
         engine->step(1.f / 60.f);
         shared_a->tick(tanks);
 
         total_reward += shared_a->get_reward();
-        max_landed_shells =
-            std::max(shared_a->get_last_reward_detail().nb_landed_shells, max_landed_shells);
+        const auto detail = shared_a->get_last_reward_detail();
+        if (detail.nb_fired_shells > 0) {
+            fire_detail = detail;
+            fire_frame = i;
+        }
+        if (detail.nb_landed_shells > 0) landed_detail = detail;
     }
 
     ASSERT_FALSE(shared_a->consume_has_hit()) << "shell should have missed the enemy tank";
-    ASSERT_GT(max_landed_shells, 0) << "the shell tracker should have sampled a landed shell";
-    ASSERT_FLOAT_EQ(total_reward, 0.f) << "a shell that lands without hitting must pay nothing";
+    ASSERT_EQ(fire_frame, 0) << "the fired shell is reported on the fire frame";
+    ASSERT_EQ(fire_detail.nb_fired_shells, 1);
+    ASSERT_EQ(landed_detail.nb_landed_shells, 1)
+        << "the shell tracker should have sampled a landed shell";
+    ASSERT_EQ(landed_detail.nb_hits, 0);
+    ASSERT_FLOAT_EQ(landed_detail.hit, 0.f);
+    ASSERT_FLOAT_EQ(landed_detail.kill, 0.f);
+    ASSERT_FLOAT_EQ(total_reward, 0.f) << "the model's reward is the game's objective only";
 }
 
-// ========================================================================
-// get_reward — wrecks are not farmable
-// ========================================================================
+TEST_F(RewardTest, HitPaysTheHealthFractionRemoved) {
+    add_ground();
+    auto tank_a =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
+    auto tank_b =
+        tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, GAME_SHELL_ECONOMY);
+
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+
+    const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
+    const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
+
+    constexpr user_input fire_input{
+        .left_joystick = {.x = 0.f, .y = 0.f},
+        .right_joystick = {.x = 0.f, .y = 0.f},
+        .fire_button = {true}};
+    for (const auto &ctrl: shared_a->get_controllers()) ctrl->apply_input(fire_input);
+
+    const std::vector tanks{shared_a, shared_b};
+
+    float total_reward = 0.f;
+    RewardDetail fire_detail, landed_detail;
+    for (int i = 0; i < 60; i++) {
+        engine->step(1.f / 60.f);
+        shared_a->tick(tanks);
+
+        total_reward += shared_a->get_reward();
+        const auto detail = shared_a->get_last_reward_detail();
+        if (detail.nb_fired_shells > 0) fire_detail = detail;
+        if (detail.nb_landed_shells > 0) landed_detail = detail;
+    }
+
+    ASSERT_TRUE(shared_a->consume_has_hit()) << "shell should have hit the enemy tank";
+    ASSERT_EQ(fire_detail.nb_fired_shells, 1);
+    ASSERT_FLOAT_EQ(fire_detail.hit, 0.f) << "the hit is paid at the impact, not at the fire";
+
+    // the touched part is the one that lost health: the hit pays the fraction it lost
+    float lost_fraction = 0.f;
+    for (const auto &item: shared_b->get_items())
+        if (const auto *life = dynamic_cast<LifeItem *>(item.get()))
+            lost_fraction += 1.f - life->health_ratio();
+    ASSERT_GT(lost_fraction, 0.f);
+
+    ASSERT_EQ(landed_detail.nb_landed_shells, 1);
+    ASSERT_EQ(landed_detail.nb_hits, 1);
+    ASSERT_FLOAT_EQ(landed_detail.hit, DAMAGE_REWARD * lost_fraction);
+    ASSERT_FLOAT_EQ(landed_detail.kill, 0.f) << "a single touch is not a kill";
+    ASSERT_FLOAT_EQ(total_reward, landed_detail.hit);
+
+    // the victim is charged the same fraction
+    shared_b->get_reward();
+    ASSERT_FLOAT_EQ(shared_b->get_last_reward_detail().received, -DAMAGE_REWARD * lost_fraction);
+}
+
+namespace {
+    constexpr float VISION_ASPECT_RATIO = 2.f;
+}// namespace
+
+class AimPotentialTest : public RewardTest {
+protected:
+    std::shared_ptr<model::EnemyTank> spawn(const std::string &name, const glm::vec3 pos) {
+        return tank_factory->make_enemy_tank(file_reader, name, pos, model::GAME_SHELL_ECONOMY);
+    }
+
+    void settle() {
+        for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+    }
+
+    float potential(
+        const std::shared_ptr<model::EnemyTank> &shooter,
+        const std::shared_ptr<model::EnemyTank> &enemy) const {
+        return shooter->get_aim_potential({shooter, enemy}, VISION_ASPECT_RATIO);
+    }
+};
+
+TEST_F(AimPotentialTest, PeaksOnTheEnemy) {
+    add_ground();
+    const auto shooter = spawn("tank_a", {0.f, 5.f, 0.f});
+    const auto enemy = spawn("tank_b", {0.f, 5.f, 30.f});
+    settle();
+
+    ASSERT_FLOAT_EQ(shooter->get_aim_potential({shooter}, VISION_ASPECT_RATIO), 0.f)
+        << "no enemy to aim at: no potential";
+
+    ASSERT_GT(potential(shooter, enemy), 0.95f)
+        << "the predicted shell crosses the hull, 2 m above the center of the enemy facing it";
+    ASSERT_LE(potential(shooter, enemy), 1.f);
+
+    // a wreck is no target
+    for (const auto &item: enemy->get_items())
+        if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
+            life->receive_damages({.impact_position = glm::vec3(0.f), .damages = 1e6f});
+            break;
+        }
+    enemy->on_death();
+    ASSERT_FLOAT_EQ(potential(shooter, enemy), 0.f) << "a wreck is no target";
+
+    // nor does a dead tank aim
+    for (const auto &item: shooter->get_items())
+        if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
+            life->receive_damages({.impact_position = glm::vec3(0.f), .damages = 1e6f});
+            break;
+        }
+    ASSERT_FLOAT_EQ(potential(shooter, enemy), 0.f) << "a dead tank has no potential";
+}
+
+TEST_F(AimPotentialTest, IgnoresAnEnemyOutOfView) {
+    add_ground();
+    const auto shooter = spawn("tank_a", {0.f, 5.f, 0.f});
+    const auto enemy = spawn("tank_b", {60.f, 5.f, 20.f});
+    settle();
+
+    ASSERT_FLOAT_EQ(potential(shooter, enemy), 0.f)
+        << "the enemy sits 72 degrees off the canon axis, outside the camera frustum";
+}
+
+TEST_F(AimPotentialTest, IgnoresAHiddenEnemy) {
+    add_ground();
+    const auto wall = engine->get_item_factory()->make_cube_item(
+        "wall", file_reader, glm::vec3(0.f, 10.f, 15.f), glm::vec3(20.f, 10.f, 1.f), 0.f);
+    const auto shooter = spawn("tank_a", {0.f, 5.f, 0.f});
+    const auto enemy = spawn("tank_b", {0.f, 5.f, 30.f});
+    settle();
+
+    ASSERT_FLOAT_EQ(potential(shooter, enemy), 0.f)
+        << "a wall stands between the muzzle and the enemy";
+}
+
+TEST_F(AimPotentialTest, ToleranceIsTheHullRadius) {
+    add_ground();
+    const auto shooter = spawn("tank_a", {0.f, 5.f, 0.f});
+    const auto enemy = spawn("tank_b", {6.f, 5.f, 30.f});
+    settle();
+
+    // the predicted shell passes about 6.4 m from the enemy center, 3.4 m off its hull
+    ASSERT_GT(potential(shooter, enemy), 0.3f);
+    ASSERT_LT(potential(shooter, enemy), 0.6f);
+}
+
+TEST_F(AimPotentialTest, TightensWithDistance) {
+    add_ground();
+    const auto shooter = spawn("tank_a", {0.f, 5.f, 0.f});
+    const auto near_enemy = spawn("tank_b", {5.f, 5.f, 30.f});
+    const auto far_enemy = spawn("tank_c", {-50.f, 5.f, 300.f});
+    settle();
+
+    ASSERT_GT(potential(shooter, near_enemy), 10.f * potential(shooter, far_enemy))
+        << "the same 9.5 degrees off is a near miss at 30 m, a wide one at 300 m";
+}
 
 TEST_F(RewardTest, NoRewardWhenShootingAWreck) {
 
-    // proprioception ends with (reserve, cooldown) ratios
-    constexpr int proprioception_reserve_index = ENEMY_PROPRIOCEPTION_SIZE - 2;
-
     add_ground();
     // spawn tanks high enough so all parts start above ground and settle cleanly
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, false);
+    auto tank_a =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
+    auto tank_b =
+        tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, GAME_SHELL_ECONOMY);
 
     // settle on ground (300 frames = 5s at 60fps)
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
@@ -243,8 +402,6 @@ TEST_F(RewardTest, NoRewardWhenShootingAWreck) {
     const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
     const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
-    // kill tank_b by destroying a single part, then close its death as the environment
-    // does: the 8 surviving parts must stop paying anything
     for (const auto items_b = shared_b->get_items(); const auto &item: items_b) {
         if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
             life->receive_damages({.impact_position = glm::vec3(0.f), .damages = 1e6f});
@@ -254,7 +411,7 @@ TEST_F(RewardTest, NoRewardWhenShootingAWreck) {
     ASSERT_TRUE(shared_b->is_dead());
     shared_b->on_death();
 
-    const auto shells_ratio_before = shared_a->get_proprioception()[proprioception_reserve_index];
+    const auto shells_ratio_before = shared_a->get_remaining_shells_ratio();
 
     // fire from tank_a toward the wreck (canon points +Z by default)
     constexpr user_input fire_input{
@@ -274,15 +431,17 @@ TEST_F(RewardTest, NoRewardWhenShootingAWreck) {
     ASSERT_FLOAT_EQ(reward, 0.f) << "shooting a wreck must pay neither hit nor kill";
 
     // the shell spent must not be given back: a wreck is not an ammo dump
-    ASSERT_LT(shared_a->get_proprioception()[proprioception_reserve_index], shells_ratio_before)
+    ASSERT_LT(shared_a->get_remaining_shells_ratio(), shells_ratio_before)
         << "a wreck must not recharge the shell reserve";
 }
 
 TEST_F(RewardTest, NoKillRewardWhenHittingAnotherPartOfAWreck) {
     add_ground();
     // spawn tanks high enough so all parts start above ground and settle cleanly
-    auto tank_a = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
-    auto tank_b = tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, false);
+    auto tank_a =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
+    auto tank_b =
+        tank_factory->make_enemy_tank(file_reader, "tank_b", {0.f, 5.f, 30.f}, GAME_SHELL_ECONOMY);
 
     // settle on ground (300 frames = 5s at 60fps)
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
@@ -290,11 +449,6 @@ TEST_F(RewardTest, NoKillRewardWhenHittingAnotherPartOfAWreck) {
     const std::shared_ptr<EnemyTank> shared_a(tank_a.release());
     const std::shared_ptr<EnemyTank> shared_b(tank_b.release());
 
-    // kill tank_b through a front wheel — on the far side of the wreck, low on the
-    // ground, unreachable by the incoming shell. Every other part dies only through
-    // kill_life_items() in on_death(): the shell will thus hit a part whose death was
-    // never observed by is_already_dead(), the exact spot where a fresh kill (+2)
-    // would be wrongly counted if kill() forgot to flag the part as already dead
     for (const auto items_b = shared_b->get_items(); const auto &item: items_b) {
         auto *life = dynamic_cast<LifeItem *>(item.get());
         if (life && item->get_name().find("wheel_right_1") != std::string::npos) {
@@ -305,8 +459,6 @@ TEST_F(RewardTest, NoKillRewardWhenHittingAnotherPartOfAWreck) {
     ASSERT_TRUE(shared_b->is_dead());
     shared_b->on_death();
 
-    // fire from tank_a toward the wreck (canon points +Z by default): the shell hits
-    // the rear of the chassis or the turret, never the destroyed front wheel
     constexpr user_input fire_input{
         .left_joystick = {.x = 0.f, .y = 0.f},
         .right_joystick = {.x = 0.f, .y = 0.f},
@@ -326,13 +478,10 @@ TEST_F(RewardTest, NoKillRewardWhenHittingAnotherPartOfAWreck) {
     ASSERT_FLOAT_EQ(reward, 0.f) << "hitting any part of a wreck must pay neither hit nor kill";
 }
 
-// ========================================================================
-// get_reward — NaN / Inf stability
-// ========================================================================
-
 TEST_F(RewardTest, ZeroRewardWithEmptyTankList) {
     add_ground();
-    auto tank = tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, false);
+    auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -355,6 +504,6 @@ TEST_F(RewardTest, ZeroRewardWithEmptyTankList) {
     ASSERT_FALSE(std::isnan(reward)) << "reward should not be NaN with empty tank list";
     ASSERT_FALSE(std::isinf(reward)) << "reward should not be Inf with empty tank list";
 
-    // firing is free and there is no enemy to sample, so no reward at all
+    // there is no enemy to sample: nothing is paid
     ASSERT_FLOAT_EQ(reward, 0.f);
 }

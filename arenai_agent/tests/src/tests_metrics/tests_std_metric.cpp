@@ -1,7 +1,3 @@
-//
-// Created by samuel on 30/06/2026.
-//
-
 #include <cmath>
 
 #include <metrics/std_metric.h>
@@ -10,10 +6,6 @@
 
 using namespace arenai;
 using namespace arenai::agent;
-
-// ========================================================================
-// Fixed tests
-// ========================================================================
 
 TEST_F(StdMetricTest, ConstantValuesZeroStd) {
     StdMetric metric("test", 10);
@@ -45,10 +37,6 @@ TEST_F(StdMetricTest, TwoValues) {
     // mean = 5, var = (25 + 25) / 2 = 25, std = 5
     ASSERT_NEAR(metric.compute_metric(), 5.0f, 1e-4f);
 }
-
-// ========================================================================
-// Parameterized: constant values always give std = 0
-// ========================================================================
 
 TEST_P(StdMetricParamTest, ConstantAlwaysZero) {
     const auto [window_size, values_to_add] = GetParam();

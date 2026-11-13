@@ -1,7 +1,3 @@
-//
-// Created by samuel on 11/06/2026.
-//
-
 #include "./std_metric.h"
 
 #include <cmath>

@@ -1,7 +1,3 @@
-//
-// Created by claude on 30/07/2026.
-//
-
 #ifndef ARENAI_JOLT_ENGINE_H
 #define ARENAI_JOLT_ENGINE_H
 
@@ -15,8 +11,6 @@
 
 #include <glm/glm.hpp>
 
-// Jolt.h defines the platform macros every other Jolt header relies on: it has
-// to stay first, out of clang-format's alphabetical reach
 // clang-format off
 #include <Jolt/Jolt.h>
 // clang-format on
@@ -59,8 +53,16 @@ namespace arenai::model {
         void add_jolt_item(const std::shared_ptr<JoltItem> &item);
         void
         add_jolt_item_producer(std::function<std::vector<std::shared_ptr<JoltItem>>()> producer);
+        void add_pre_update_callback(std::function<void()> callback);
         void remove_jolt_item_constraints(const std::shared_ptr<JoltItem> &item);
 
+        struct RayHit {
+            float fraction;
+            JPH::BodyID body_id;
+        };
+
+        std::optional<RayHit>
+        ray_test_body(glm::vec3 from, glm::vec3 to, const std::vector<JPH::BodyID> &excluded) const;
         std::optional<float>
         ray_test(glm::vec3 from, glm::vec3 to, const std::vector<JPH::BodyID> &excluded) const;
 
@@ -109,6 +111,7 @@ namespace arenai::model {
 
         std::vector<std::shared_ptr<JoltItem>> items;
         std::vector<std::function<std::vector<std::shared_ptr<JoltItem>>()>> jolt_item_producers;
+        std::vector<std::function<void()>> pre_update_callbacks;
 
         std::map<JPH::BodyID, std::vector<JPH::Ref<JPH::TwoBodyConstraint>>> constraints_per_body;
 

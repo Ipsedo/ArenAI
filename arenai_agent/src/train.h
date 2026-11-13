@@ -1,12 +1,10 @@
-//
-// Created by samuel on 03/10/2025.
-//
-
 #ifndef ARENAI_AGENT_HOST_TRAIN_H
 #define ARENAI_AGENT_HOST_TRAIN_H
 
 #include <filesystem>
 #include <memory>
+
+#include <arenai_model/shell_economy.h>
 
 #include "./agents/torch_factory.h"
 
@@ -30,12 +28,15 @@ namespace arenai::agent {
         float initial_spawn_height;
         float final_spawn_width;
         float final_spawn_height;
+        model::ShellEconomy shell_economy;
         float curriculum_delta;
         float curriculum_ratio_low;
         float curriculum_ratio_high;
         int curriculum_probe_window;
         float curriculum_boundary_proba;
         int num_threads;
+        // physics frames per agent decision
+        int action_repeat;
     };
 
     void train_main(

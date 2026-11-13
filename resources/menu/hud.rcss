@@ -1,11 +1,116 @@
-/* In-game HUD: a transparent full-screen layer that ignores the pointer and
-   carries only the aiming reticle. Not linked to menu.rcss on purpose: the
+/* In-game HUD ("Duel néon"): a transparent full-screen layer that ignores
+   the pointer and carries the aiming reticle, the damage arcs and the two
+   side bands. Machine side cyan #2FE6FF for the incoming-damage arcs, the
+   player's band orange #FF7A2F, the reticle itself plain ink. The dp ratio
+   now follows the window (1.5 at 1080p instead of 1), so every size below
+   is 2/3 of the former value to keep the same on-screen footprint. Not linked to menu.rcss on purpose: the
    menu body paints a background and pads the content. */
 
 body {
     width: 100%;
     height: 100%;
     pointer-events: none;
+}
+
+/* ---- match status ---- */
+
+.side-player {
+    color: #FF7A2F;
+}
+
+.side-ai {
+    color: #2FE6FF;
+}
+
+/* a side's figures: the label, the big score, then the hull bar or the
+   enemy row, a notch above the mockup's sizes so they read over the game
+   (no outline nor shadow: they muddied the glyphs). */
+.status {
+    position: absolute;
+    top: 20dp;
+    left: 28dp;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.status.right {
+    left: auto;
+    right: 28dp;
+    align-items: flex-end;
+}
+
+.status-label {
+    font-family: "JetBrains Mono";
+    font-size: 13dp;
+    font-weight: 500;
+    letter-spacing: 3dp;
+    text-transform: uppercase;
+    margin-bottom: 2dp;
+}
+
+.status-score {
+    font-family: "Chakra Petch";
+    font-size: 48dp;
+    font-weight: 700;
+    line-height: 1;
+}
+
+/* the hull: eight slanted segments, the lost ones greyed from the right */
+.hull {
+    display: flex;
+    margin-top: 8dp;
+}
+
+.hull-segment {
+    width: 26dp;
+    height: 8dp;
+    margin-right: 3dp;
+    decorator: slant(#FF7A2F transparent 3dp 0dp);
+}
+
+.hull-segment.lost {
+    decorator: slant(#4A4670 transparent 3dp 0dp);
+}
+
+/* enemies still fighting over the roster, in the machine's color */
+.enemies-left {
+    font-family: "JetBrains Mono";
+    font-size: 16dp;
+    font-weight: 500;
+    margin-top: 8dp;
+}
+
+/* the match clock, top center */
+.clock {
+    position: absolute;
+    top: 20dp;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-family: "JetBrains Mono";
+    font-size: 22dp;
+    font-weight: 500;
+    color: #F2F4FF;
+}
+
+/* 4dp translucent bands on the left and right edges, full height */
+.side-band {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 4dp;
+    opacity: 0.7;
+}
+
+#side-player {
+    left: 0;
+    background-color: #FF7A2F;
+}
+
+#side-ai {
+    right: 0;
+    background-color: #2FE6FF;
 }
 
 /* zero-sized anchor fixed at the screen center; each arc child is a
@@ -20,19 +125,20 @@ body {
     top: 50%;
 }
 
-/* Battlefield-style incoming-damage arc: 16dp thick, 60 degrees wide, at
-   100dp from the screen center, in the kill-marker red */
+/* Battlefield-style incoming-damage arc: 11dp thick, 60 degrees wide, at
+   67dp from the screen center, in the machine's cyan (it is the machine
+   that hit you) */
 .damage-arc {
     position: absolute;
-    width: 200dp;
-    height: 200dp;
+    width: 134dp;
+    height: 134dp;
     left: 0;
     top: 0;
-    margin-left: -100dp;
-    margin-top: -100dp;
+    margin-left: -67dp;
+    margin-top: -67dp;
     opacity: 0;
-    color: #FF3B3B;
-    decorator: damage-arc(16dp 60);
+    color: #2FE6FF;
+    decorator: damage-arc(11dp 60);
 }
 
 /* zero-sized anchor placed by code (left/top in px) at the point where the
@@ -48,49 +154,49 @@ body {
 }
 
 /* the crosshair, drawn by the gui-registered reticle decorator inside this
-   centered square: Battlefield-style thin cross, arms 1.5dp thick stopping
-   5dp short of the center */
+   centered square: Battlefield-style thin cross, arms 1dp thick stopping
+   3.5dp short of the center, plain ink */
 #crosshair {
     position: absolute;
-    width: 28dp;
-    height: 28dp;
+    width: 19dp;
+    height: 19dp;
     left: 0;
     top: 0;
-    margin-left: -14dp;
-    margin-top: -14dp;
-    color: #EAF7FFD9;
-    decorator: reticle(1.5dp 5dp);
+    margin-left: -9.5dp;
+    margin-top: -9.5dp;
+    color: #F2F4FFD9;
+    decorator: reticle(1dp 3.5dp);
 }
 
 /* the Battlefield center dot, a rounded quad centered on the aim point */
 #crosshair-dot {
     position: absolute;
-    width: 2.5dp;
-    height: 2.5dp;
+    width: 1.7dp;
+    height: 1.7dp;
     left: 0;
     top: 0;
-    margin-left: -1.25dp;
-    margin-top: -1.25dp;
-    border-radius: 1.25dp;
-    background-color: #EAF7FFD9;
+    margin-left: -0.85dp;
+    margin-top: -0.85dp;
+    border-radius: 0.85dp;
+    background-color: #F2F4FFD9;
 }
 
 /* the X of the marker is drawn by the gui-registered hit-marker decorator
-   inside this centered square: Battlefield-style thin ticks (2dp) stopping
-   11dp short of the center. Its color paints the bars; its opacity and
+   inside this centered square: Battlefield-style thin ticks (1.5dp)
+   stopping 7.5dp short of the center. Its color paints the bars; its opacity and
    scale are driven from code (appears at 1, expands outward while fading
    to 0, larger and longer on a kill). */
 #hit-marker {
     position: absolute;
-    width: 30dp;
-    height: 30dp;
+    width: 20dp;
+    height: 20dp;
     left: 0;
     top: 0;
-    margin-left: -15dp;
-    margin-top: -15dp;
+    margin-left: -10dp;
+    margin-top: -10dp;
     opacity: 0;
-    color: #EAF7FF;
-    decorator: hit-marker(2dp 11dp);
+    color: #F2F4FF;
+    decorator: hit-marker(1.5dp 7.5dp);
 }
 
 /* the shell that destroyed the tank flashes red */

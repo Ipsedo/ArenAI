@@ -1,7 +1,3 @@
-//
-// Created by samuel on 27/08/2026.
-//
-
 #ifndef ARENAI_DESKTOP_CONTROLLER_BINDINGS_H
 #define ARENAI_DESKTOP_CONTROLLER_BINDINGS_H
 
@@ -14,9 +10,6 @@
 
 namespace arenai::desktop {
 
-    // A keyboard slot holds a key or a mouse button; nullopt = unbound (the
-    // action lost its input to a conflicting reassignment and stays inert
-    // until the player rebinds it).
     using KeyboardBinding = std::variant<controller::Key, controller::MouseButton>;
 
     struct KeyboardBindings {

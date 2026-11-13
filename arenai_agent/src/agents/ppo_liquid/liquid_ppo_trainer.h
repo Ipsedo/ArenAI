@@ -1,13 +1,12 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #ifndef ARENAI_LIQUID_PPO_TRAINER_H
 #define ARENAI_LIQUID_PPO_TRAINER_H
 
 #include "../../networks/entropy.h"
 #include "../../networks/recurrent/liquid_actor.h"
 #include "../../networks/recurrent/liquid_critic.h"
+#include "../entropy_alphas.h"
+#include "../ppo_objective.h"
+#include "../return_scaler.h"
 #include "../trainer.h"
 #include "./liquid_ppo_rollout_buffer.h"
 
@@ -15,34 +14,73 @@ namespace arenai::agent {
 
     struct LiquidGaeResult {
         torch::Tensor advantages;
+        torch::Tensor aim_advantages;
         torch::Tensor returns;
         // [T, nb_tanks, neuron_number] critic liquid state opening each step
         torch::Tensor critic_hiddens;
     };
 
-    // Recurrent PPO: the updates run on contiguous [chunk_size]-long sequences
-    // (truncated BPTT), each initialized with the liquid state recorded when the
-    // chunk's first step was collected.
+    // per live transition of a rollout, the two first-epoch pushes on log sigma
+    struct LiquidSigmaGradients {
+        // [N] indices in the rollout
+        torch::Tensor steps;
+        torch::Tensor tanks;
+        // [N, nb_continuous_actions] d(surrogate)/d(log sigma), d(alpha * H)/d(log sigma)
+        torch::Tensor surrogate;
+        torch::Tensor entropy;
+        torch::Tensor mu;
+        torch::Tensor sigma;
+        torch::Tensor pre_tanh;
+        // [N]
+        torch::Tensor advantages;
+        torch::Tensor aim_advantages;
+        torch::Tensor fire_masks;
+        torch::Tensor fires;
+    };
+
+    // one actor optimizer step of a replayed update, trimmed KLs measured before the step
+    struct LiquidKlStep {
+        int epoch;
+        int step;
+        // of the whole action, the one target_kl reads
+        float joint;
+        float move;
+        float canon;
+        float discrete;
+    };
+
     class LiquidPpoTrainer final : public AbstractTrainer {
     public:
         LiquidPpoTrainer(
             const std::shared_ptr<LiquidActor> &actor,
-            const std::shared_ptr<LiquidPpoRolloutBuffer> &rollout_buffer, int vision_height,
-            int vision_width, int nb_sensors, int nb_continuous_actions, int nb_discrete_action,
+            const std::shared_ptr<LiquidPpoRolloutBuffer> &rollout_buffer,
+            int nb_continuous_actions, int nb_discrete_actions, int nb_sensors,
             float actor_learning_rate, float critic_learning_rate, int hidden_size_sensors,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, int neuron_number, int unfolding_steps,
             float delta_t, torch::Device device, int metric_window_size, float gamma,
-            float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
-            const std::vector<float> &continuous_target_entropy,
-            const std::vector<float> &discrete_target_entropy_factors, int epochs, int rollout_size,
-            int minibatch_size, int chunk_size);
+            float gae_lambda, float aim_gae_lambda, float clip_epsilon, float target_kl,
+            float grad_norm_max, float initial_alpha, float alpha_learning_rate,
+            const std::vector<float> &continuous_target_entropy, float discrete_target_proba,
+            int actor_epochs, int critic_epochs, int rollout_size, int actor_batch_size,
+            int actor_gpu_batch_size, int critic_batch_size, int critic_gpu_batch_size,
+            int chunk_size);
 
         void step() override;
 
         std::vector<std::shared_ptr<AbstractMetric>> get_metrics() override;
+        std::vector<std::shared_ptr<AbstractMetric>> get_csv_only_metrics() override;
 
         void save(const std::filesystem::path &output_folder) override;
+        void load(const std::filesystem::path &input_folder) const;
+
+        // consumes the complete steps of the buffer without any optimizer step
+        LiquidSigmaGradients sigma_gradients();
+
+        void load_actor_optimizer(const std::filesystem::path &input_folder) const;
+
+        // replays the actor epochs on the buffer's complete steps, never stopped by target_kl
+        std::vector<LiquidKlStep> kl_by_group();
 
         int count_parameters() override;
 
@@ -50,17 +88,16 @@ namespace arenai::agent {
         std::shared_ptr<LiquidActor> actor;
         std::shared_ptr<LiquidPpoRolloutBuffer> rollout_buffer;
 
-        std::unique_ptr<PidLagrangianAlphaParameters> continuous_alpha;
-        std::unique_ptr<PidLagrangianAlphaParameters> discrete_alpha;
-
-        // per-dimension targets, aligned with the per-dimension alphas
-        std::vector<float> continuous_target_entropy;
-        std::vector<float> discrete_target_entropy;
+        // one learned entropy temperature per action
+        std::unique_ptr<EntropyAlphas> alphas;
 
         std::shared_ptr<LiquidCritic> critic;
 
         std::unique_ptr<torch::optim::Adam> actor_optim;
         std::unique_ptr<torch::optim::Adam> critic_optim;
+
+        // rewards scaled by the running std of the discounted return before the GAE
+        std::shared_ptr<ReturnScaler> return_scaler;
 
         std::shared_ptr<AbstractMetric> actor_mean_loss_metric;
         std::shared_ptr<AbstractMetric> critic_mean_loss_metric;
@@ -68,48 +105,129 @@ namespace arenai::agent {
         // share of the return variance the critic explains, per critic minibatch
         std::shared_ptr<AbstractMetric> explained_variance_metric;
 
-        // both regulated by their constant entropy bonus
+        // both regulated by their learned alphas (CSV-only metrics)
         std::shared_ptr<AbstractMetric> continuous_entropy_metric;
         std::shared_ptr<AbstractMetric> discrete_entropy_metric;
 
-        std::shared_ptr<AbstractMetric> continuous_alpha_metric;
-        std::shared_ptr<AbstractMetric> discrete_alpha_metric;
-
-        // both recorded on every attempted minibatch, skipped ones included
+        // recorded on every minibatch
         std::shared_ptr<AbstractMetric> clip_fraction_metric;
+        // recorded on every actor optimizer step taken or refused
         std::shared_ptr<AbstractMetric> kl_metric;
 
-        // fraction of minibatches the KL threshold skipped
+        // share of the planned actor steps the KL threshold cut, once per rollout
         std::shared_ptr<AbstractMetric> skip_fraction_metric;
+        std::shared_ptr<AbstractMetric> skip_canon_metric;
 
         float gamma;
         float gae_lambda;
+        float aim_gae_lambda;
         float clip_epsilon;
         float target_kl;
 
         float grad_norm_max;
 
-        int epochs;
+        int actor_epochs;
+        int critic_epochs;
         int rollout_size;
-        int minibatch_size;
+        int actor_batch_size;
+        int actor_gpu_batch_size;
+        int critic_batch_size;
+        int critic_gpu_batch_size;
         int chunk_size;
 
-        // critic liquid state opening the next rollout's first step, carried
-        // across train() calls; re-drawn at every episode start
         torch::Tensor critic_carry;
+
+        // the kept steps flattened to [T_kept * nb_tanks, ...] rows, all on the device
+        struct FlatRows {
+            torch::Tensor vision;
+            torch::Tensor proprioception;
+            torch::Tensor continuous_pre_tanh;
+            torch::Tensor discrete_actions;
+            torch::Tensor fire_masks;
+            torch::Tensor old_continuous_log_probs;
+            torch::Tensor old_discrete_log_probs;
+            torch::Tensor advantages;
+            torch::Tensor aim_advantages;
+            torch::Tensor returns;
+            torch::Tensor valids;
+            torch::Tensor actor_hiddens;
+            torch::Tensor critic_hiddens;
+
+            FlatRows select_chunks(
+                const torch::Tensor &rows, const torch::Tensor &start_rows,
+                int64_t chunk_size) const;
+        };
+
+        struct ChunkIndex {
+            int64_t nb_tanks;
+            int64_t chunk_size;
+            torch::Device device;
+            torch::Tensor step_offsets;
+            // live transitions per chunk unit
+            torch::Tensor valid_counts;
+            // units with at least one live transition: the only ones worth training on
+            torch::Tensor valid_units;
+
+            ChunkIndex(
+                const torch::Tensor &valids, int64_t nb_tanks, int64_t nb_chunks_per_tank,
+                int64_t chunk_size, torch::Device device);
+
+            int64_t units_per_batch(int64_t batch_size) const;
+
+            std::tuple<torch::Tensor, torch::Tensor> rows(const torch::Tensor &units) const;
+
+            // live rows of the units, the weight of a block in its optimizer batch
+            float live_rows(const torch::Tensor &units) const;
+            float batch_live_rows(const std::vector<torch::Tensor> &blocks) const;
+        };
+
+        struct ActorTerms {
+            // live rows of the block, in its [units, chunk_size] flattening
+            torch::Tensor valid_idx;
+            torch::Tensor mu;
+            torch::Tensor sigma;
+            torch::Tensor discrete_mask;
+            torch::Tensor ratio;
+            torch::Tensor log_ratio;
+            // [N, 3] move, canon, discrete
+            torch::Tensor group_log_ratios;
+            RowKls kls;
+            torch::Tensor continuous_entropy;
+            torch::Tensor discrete_entropy;
+            // [N, 1]
+            torch::Tensor surrogate;
+            // [N, nb_continuous_actions]
+            torch::Tensor continuous_bonus;
+            torch::Tensor discrete_bonus;
+        };
+
+        ActorTerms actor_terms(const FlatRows &block, const ActiveGroups &active = {}) const;
+
+        static FlatRows flat_rows(
+            const LiquidPpoRollout &rollout, const LiquidGaeResult &gae, int64_t nb_kept_steps,
+            torch::Device device);
 
         void train();
 
-        bool train_actor(
-            const torch::Tensor &vision, const torch::Tensor &proprioception,
-            const torch::Tensor &hidden, const torch::Tensor &continuous_actions,
-            const torch::Tensor &discrete_actions, const torch::Tensor &old_log_probs,
-            const torch::Tensor &advantages, const torch::Tensor &valids) const;
+        void run_actor_epochs(const FlatRows &rows, const ChunkIndex &chunks) const;
+        void run_critic_epochs(const FlatRows &rows, const ChunkIndex &chunks) const;
 
-        void train_critic(
-            const torch::Tensor &vision, const torch::Tensor &proprioception,
-            const torch::Tensor &hidden, const torch::Tensor &returns,
-            const torch::Tensor &valids) const;
+        struct RowKl {
+            RowKls kls;
+            // [N, 3] move, canon, discrete
+            torch::Tensor groups;
+        };
+
+        // batch gradient of the active groups; returns the KLs of the policy it starts from
+        GroupKls accumulate_actor_gradients(
+            const FlatRows &rows, const ChunkIndex &chunks,
+            const std::vector<torch::Tensor> &blocks, const ActiveGroups &active) const;
+
+        // accumulates a device block's share of its optimizer batch gradient; returns its row KLs
+        RowKl backward_actor(
+            const FlatRows &block, float batch_fraction, const ActiveGroups &active) const;
+
+        void backward_critic(const FlatRows &block, float batch_fraction) const;
 
         // sequential critic pass over the rollout, advancing critic_carry
         LiquidGaeResult compute_gae(const LiquidPpoRollout &rollout, torch::Device device);

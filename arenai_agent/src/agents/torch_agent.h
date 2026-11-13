@@ -1,7 +1,3 @@
-//
-// Created by claude on 22/07/2026.
-//
-
 #ifndef ARENAI_TORCH_AGENT_H
 #define ARENAI_TORCH_AGENT_H
 

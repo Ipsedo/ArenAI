@@ -1,25 +1,18 @@
-//
-// Created by samuel on 19/05/2026.
-//
-
 #include "./misc.h"
+
+#include <algorithm>
+#include <cmath>
+
+#include "./constants.h"
 
 using namespace arenai;
 using namespace arenai::agent;
 
 namespace arenai::agent {
 
-    /*
-     * Exp
-     */
-
     torch::Tensor Exp::forward(const torch::Tensor &x) { return torch::exp(x); }
 
     void Exp::pretty_print(std::ostream &stream) const { stream << name() << "()"; }
-
-    /*
-     * Clamp
-     */
 
     Clamp::Clamp(const float lower_bound, const float upper_bound)
         : lower_bound(lower_bound), upper_bound(upper_bound) {}
@@ -32,27 +25,23 @@ namespace arenai::agent {
         stream << name() << "(min=" << lower_bound << ", max=" << upper_bound << ")";
     }
 
-    /*
-     * Sigma of normal distribution output layer
-     */
+    SoftClamp::SoftClamp(const float lower_bound, const float upper_bound)
+        : lower_bound(lower_bound), upper_bound(upper_bound) {}
 
-    SigmaOutput::SigmaOutput(const float min_sigma, const float max_sigma)
-        : min_log_sigma(std::log(min_sigma)), max_log_sigma(std::log(max_sigma)) {}
-
-    torch::Tensor SigmaOutput::forward(const torch::Tensor &input) {
-        const auto log_sigma =
-            min_log_sigma + (max_log_sigma - min_log_sigma) * torch::sigmoid(input);
-        return torch::exp(log_sigma);
+    torch::Tensor SoftClamp::forward(const torch::Tensor &x) {
+        return lower_bound + (upper_bound - lower_bound) * torch::sigmoid(x);
     }
 
-    void SigmaOutput::pretty_print(std::ostream &stream) const {
-        stream << name() << "(min=" << std::exp(min_log_sigma)
-               << ", max=" << std::exp(max_log_sigma) << ")";
+    void SoftClamp::pretty_print(std::ostream &stream) const {
+        stream << name() << "(min=" << lower_bound << ", max=" << upper_bound << ")";
     }
 
-    /*
-     * Concentration of Beta distribution output layer
-     */
+    float SoftClamp::inverse(const float value, const float lower_bound, const float upper_bound) {
+        constexpr float margin = 1e-4f;
+        const float ratio =
+            std::clamp((value - lower_bound) / (upper_bound - lower_bound), margin, 1.f - margin);
+        return std::log(ratio / (1.f - ratio));
+    }
 
     ConcentrationOutput::ConcentrationOutput(
         const float min_concentration, const float max_concentration)
@@ -68,6 +57,34 @@ namespace arenai::agent {
     void ConcentrationOutput::pretty_print(std::ostream &stream) const {
         stream << name() << "(min=" << 2.f + std::exp(min_log_excess)
                << ", max=" << 2.f + std::exp(max_log_excess) << ")";
+    }
+
+    SpatialSoftmax::SpatialSoftmax()
+        : log_temperature(register_parameter("log_temperature", torch::zeros({1}))) {}
+
+    torch::Tensor SpatialSoftmax::forward(const torch::Tensor &input) {
+        const auto batch_size = input.size(0);
+        const auto channels = input.size(1);
+        const auto height = input.size(2);
+        const auto width = input.size(3);
+
+        const auto flat_input = input.flatten(2);
+
+        const auto weights = torch::softmax(flat_input / log_temperature.exp(), -1)
+                                 .view({batch_size, channels, height, width});
+
+        const auto xs = torch::linspace(-1.f, 1.f, width, input.options());
+        const auto ys = torch::linspace(-1.f, 1.f, height, input.options());
+
+        const auto expected_x = (weights.sum(2) * xs).sum(-1);
+        const auto expected_y = (weights.sum(3) * ys).sum(-1);
+        const auto presence = flat_input.amax(-1);
+
+        return torch::cat({expected_x, expected_y, presence}, 1);
+    }
+
+    void SpatialSoftmax::pretty_print(std::ostream &stream) const {
+        stream << name() << "(temperature=" << log_temperature.exp().item<float>() << ")";
     }
 
 }// namespace arenai::agent

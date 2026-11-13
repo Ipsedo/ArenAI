@@ -1,20 +1,12 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #include <arenai_agent_tests/tests_agents/tests_liquid_ppo_rollout_buffer.h>
 
 using namespace arenai;
 using namespace arenai::agent;
 
-// ========================================================================
-// Fixture helpers
-// ========================================================================
-
 TorchState LiquidPpoRolloutBufferTest::make_state() {
-    return {
-        .vision = torch::randn({NB_TANKS, 3, VISION_SIZE, VISION_SIZE}),
-        .proprioception = torch::randn({NB_TANKS, NB_SENSORS})};
+    return TorchState(
+        torch::randn({NB_TANKS, 3, VISION_SIZE, VISION_SIZE}), torch::randn({NB_TANKS, NB_SENSORS}),
+        torch::randint(0, 2, {NB_TANKS, 1}).to(torch::kFloat));
 }
 
 LiquidPpoInputStep LiquidPpoRolloutBufferTest::make_step(
@@ -28,9 +20,11 @@ LiquidPpoInputStep LiquidPpoRolloutBufferTest::make_step(
                                         0, torch::randint(
                                                NB_DISCRETE_ACTIONS, {NB_TANKS},
                                                torch::TensorOptions().dtype(torch::kInt64)))},
+        .continuous_pre_tanh = torch::randn({NB_TANKS, NB_CONTINUOUS_ACTIONS}),
         .continuous_log_prob = torch::randn({NB_TANKS, 1}),
         .discrete_log_prob = torch::randn({NB_TANKS, 1}),
         .reward = torch::randn({NB_TANKS, 1}),
+        .aim_reward = torch::randn({NB_TANKS, 1}),
         .done = done,
         .truncated = torch::zeros({NB_TANKS, 1}),
         .actor_hidden = torch::randn({NB_TANKS, NEURON_NUMBER}),
@@ -40,10 +34,6 @@ LiquidPpoInputStep LiquidPpoRolloutBufferTest::make_step(
 LiquidPpoInputStep LiquidPpoRolloutBufferTest::make_step(const TorchState &state) {
     return make_step(state, torch::zeros({NB_TANKS, 1}), false);
 }
-
-// ========================================================================
-// Completion counting
-// ========================================================================
 
 TEST_F(LiquidPpoRolloutBufferTest, EmptyBufferHasNoCompleteStep) {
     LiquidPpoRolloutBuffer buffer;
@@ -88,10 +78,6 @@ TEST_F(LiquidPpoRolloutBufferTest, GetRolloutKeepsPendingStep) {
     ASSERT_EQ(buffer.nb_complete_steps(), 1);
 }
 
-// ========================================================================
-// Rollout content
-// ========================================================================
-
 TEST_F(LiquidPpoRolloutBufferTest, RolloutShapes) {
     LiquidPpoRolloutBuffer buffer;
 
@@ -103,21 +89,26 @@ TEST_F(LiquidPpoRolloutBufferTest, RolloutShapes) {
 
     const auto expected_vision =
         std::vector<int64_t>{nb_steps, NB_TANKS, 3, VISION_SIZE, VISION_SIZE};
-    ASSERT_EQ(rollout.states.vision.sizes().vec(), expected_vision);
+    ASSERT_EQ(rollout.states.get_vision().sizes().vec(), expected_vision);
 
     // the bootstrap state has no time dimension
     ASSERT_EQ(
-        rollout.bootstrap_state.vision.sizes().vec(),
+        rollout.bootstrap_state.get_vision().sizes().vec(),
         (std::vector<int64_t>{NB_TANKS, 3, VISION_SIZE, VISION_SIZE}));
 
     const auto expected_scalar = std::vector<int64_t>{nb_steps, NB_TANKS, 1};
     ASSERT_EQ(rollout.rewards.sizes().vec(), expected_scalar);
+    ASSERT_EQ(rollout.aim_rewards.sizes().vec(), expected_scalar);
     ASSERT_EQ(rollout.continuous_log_probs.sizes().vec(), expected_scalar);
     ASSERT_EQ(rollout.discrete_log_probs.sizes().vec(), expected_scalar);
     ASSERT_EQ(rollout.valids.sizes().vec(), expected_scalar);
+    ASSERT_EQ(rollout.states.get_fire_mask().sizes().vec(), expected_scalar);
 
     ASSERT_EQ(
         rollout.actions.continuous_action.sizes().vec(),
+        (std::vector<int64_t>{nb_steps, NB_TANKS, NB_CONTINUOUS_ACTIONS}));
+    ASSERT_EQ(
+        rollout.continuous_pre_tanhs.sizes().vec(),
         (std::vector<int64_t>{nb_steps, NB_TANKS, NB_CONTINUOUS_ACTIONS}));
 
     // liquid extras: the per-step actor states and the episode-start flags
@@ -142,6 +133,22 @@ TEST_F(LiquidPpoRolloutBufferTest, ActorHiddenRoundTrip) {
 
     ASSERT_TRUE(torch::allclose(rollout.actor_hiddens[0], step_0.actor_hidden));
     ASSERT_TRUE(torch::allclose(rollout.actor_hiddens[1], step_1.actor_hidden));
+}
+
+TEST_F(LiquidPpoRolloutBufferTest, FireMaskRoundTrip) {
+    LiquidPpoRolloutBuffer buffer;
+
+    const auto step_0 = make_step(make_state());
+    const auto step_1 = make_step(make_state());
+
+    buffer.add(step_0);
+    buffer.add(step_1);
+    buffer.finish_episode(make_state());
+
+    const auto rollout = buffer.get_rollout();
+
+    ASSERT_TRUE(torch::equal(rollout.states.get_fire_mask()[0], step_0.state.get_fire_mask()));
+    ASSERT_TRUE(torch::equal(rollout.states.get_fire_mask()[1], step_1.state.get_fire_mask()));
 }
 
 TEST_F(LiquidPpoRolloutBufferTest, EpisodeStartFlagsRoundTrip) {
@@ -174,7 +181,7 @@ TEST_F(LiquidPpoRolloutBufferTest, BootstrapStateIsEpisodeFinalObservation) {
     const auto rollout = buffer.get_rollout();
 
     ASSERT_EQ(rollout.rewards.size(0), 2);
-    ASSERT_TRUE(torch::allclose(rollout.bootstrap_state.vision, final_state.vision));
+    ASSERT_TRUE(torch::allclose(rollout.bootstrap_state.get_vision(), final_state.get_vision()));
 }
 
 TEST_F(LiquidPpoRolloutBufferTest, BootstrapStateIsPendingObservationMidEpisode) {
@@ -190,12 +197,8 @@ TEST_F(LiquidPpoRolloutBufferTest, BootstrapStateIsPendingObservationMidEpisode)
 
     // only the first step is complete; the pending step's own observation closes it
     ASSERT_EQ(rollout.rewards.size(0), 1);
-    ASSERT_TRUE(torch::allclose(rollout.bootstrap_state.vision, state_1.vision));
+    ASSERT_TRUE(torch::allclose(rollout.bootstrap_state.get_vision(), state_1.get_vision()));
 }
-
-// ========================================================================
-// Validity mask
-// ========================================================================
 
 TEST_F(LiquidPpoRolloutBufferTest, TerminatedTankInvalidatesFollowingSteps) {
     LiquidPpoRolloutBuffer buffer;
@@ -245,6 +248,28 @@ TEST_F(LiquidPpoRolloutBufferTest, TruncatedStepIsStackedAndStaysValid) {
     // the truncated (dying) transition itself is valid, the following one is not
     ASSERT_TRUE(valids[0][0].item<bool>());
     ASSERT_FALSE(valids[1][0].item<bool>());
+}
+
+TEST_F(LiquidPpoRolloutBufferTest, TruncatedWithoutDoneKeepsTheNextStepValid) {
+    LiquidPpoRolloutBuffer buffer;
+
+    auto step_0 = make_step(make_state());
+    step_0.truncated = torch::cat({torch::ones({1, 1}), torch::zeros({1, 1})}, 0);
+
+    buffer.add(step_0);
+    buffer.add(make_step(make_state()));
+    buffer.finish_episode(make_state());
+
+    const auto rollout = buffer.get_rollout();
+    const auto truncateds = rollout.truncateds.squeeze(-1);
+    const auto valids = rollout.valids.squeeze(-1);
+
+    ASSERT_TRUE(truncateds[0][0].item<bool>());
+    ASSERT_FALSE(truncateds[1][0].item<bool>());
+    ASSERT_FALSE(torch::any(rollout.dones).item<bool>());
+
+    ASSERT_TRUE(valids[0][0].item<bool>());
+    ASSERT_TRUE(valids[1][0].item<bool>());
 }
 
 TEST_F(LiquidPpoRolloutBufferTest, FinishEpisodeResetsTermination) {

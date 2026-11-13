@@ -1,8 +1,6 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #include "./liquid_actor.h"
+
+#include <cmath>
 
 #include "../../networks_utils/init.h"
 #include "../constants.h"
@@ -14,15 +12,14 @@ using namespace arenai::agent;
 namespace arenai::agent {
 
     LiquidActor::LiquidActor(
-        const int &vision_height, const int &vision_width, const int &nb_sensors,
-        const int &nb_continuous_actions, const int &nb_discrete_actions,
+        const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_actions,
         const int &hidden_size_sensors, const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, const int &neuron_number,
         const int &unfolding_steps, const float &delta_t, const float &initial_sigma,
         const std::vector<float> &initial_discrete_probas)
         : vision_encoder(register_module(
-            "vision_encoder", std::make_shared<ConvolutionNetwork>(
-                                  vision_height, vision_width, vision_channels, group_norm_nums))),
+            "vision_encoder",
+            std::make_shared<ConvolutionNetwork>(vision_channels, group_norm_nums))),
           sensors_encoder(register_module(
               "sensors_encoder",
               torch::nn::Sequential(
@@ -33,16 +30,13 @@ namespace arenai::agent {
           liquid(register_module(
               "liquid", std::make_shared<LiquidCell>(
                             neuron_number, hidden_size_sensors + vision_encoder->get_output_size(),
-                            neuron_number, unfolding_steps,
-                            [](const torch::Tensor &t) { return torch::silu(t); }, delta_t))),
-          mu(register_module(
-              "mu",
-              torch::nn::Sequential(
-                  torch::nn::Linear(neuron_number, nb_continuous_actions), torch::nn::Tanh()))),
+                            neuron_number, unfolding_steps, torch::nn::AnyModule(torch::nn::SiLU()),
+                            delta_t))),
+          mu(register_module("mu", torch::nn::Linear(neuron_number, nb_continuous_actions))),
           sigma(register_module(
               "sigma", torch::nn::Sequential(
                            torch::nn::Linear(neuron_number, nb_continuous_actions),
-                           std::make_shared<SigmaOutput>(SIGMA_MIN, SIGMA_MAX)))),
+                           SoftClamp(LOG_SIGMA_MIN, LOG_SIGMA_MAX), Exp()))),
           discrete(register_module(
               "discrete",
               torch::nn::Sequential(
@@ -51,9 +45,10 @@ namespace arenai::agent {
         vision_encoder->apply(init_hidden_weights);
         sensors_encoder->apply(init_hidden_weights);
 
-        // zero bias + tanh puts the initial mode at the action-range center
+        // zero bias puts the initial mode at the action-range center
         mu->apply(init_mu_output_weights);
-        sigma->apply([initial_sigma](Module &m) { init_sigma_output_weights(m, initial_sigma); });
+        sigma->apply(
+            [initial_sigma](Module &m) { init_log_sigma_output_weights(m, initial_sigma); });
 
         discrete->apply([&initial_discrete_probas](Module &m) {
             init_discrete_output_weights(m, initial_discrete_probas);
@@ -66,12 +61,18 @@ namespace arenai::agent {
 
     LiquidActorOutput LiquidActor::act(
         const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &x_t) {
-        const auto [output, next_x] = liquid->forward_step(x_t, encode(vision, sensors));
+        const auto vision_encoded = vision_encoder->forward(vision);
+        const auto encoded = torch::cat({vision_encoded, sensors_encoder->forward(sensors)}, 1);
+
+        const auto [liquid_output, next_x] = liquid->forward_step(x_t, encoded);
+
         return {
-            .mu = mu->forward(output),
-            .sigma = sigma->forward(output),
-            .discrete = discrete->forward(output),
-            .next_x = next_x};
+            .mu = mu->forward(liquid_output),
+            .sigma = sigma->forward(liquid_output),
+            .discrete = discrete->forward(liquid_output),
+            .next_x = next_x,
+            .features = liquid_output,
+            .vision_features = vision_encoded};
     }
 
     LiquidActorOutput LiquidActor::act_sequence(
@@ -97,11 +98,14 @@ namespace arenai::agent {
         }
 
         const auto output = torch::stack(outputs, 1);
+
         return {
             .mu = mu->forward(output),
             .sigma = sigma->forward(output),
             .discrete = discrete->forward(output),
-            .next_x = x};
+            .next_x = x,
+            .features = output,
+            .vision_features = torch::Tensor()};
     }
 
     torch::Tensor LiquidActor::initial_state(const int batch_size) const {

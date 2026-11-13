@@ -1,7 +1,3 @@
-//
-// Created by samuel on 22/07/2026.
-//
-
 #include "./value_function.h"
 
 #include "../networks_utils/init.h"
@@ -10,13 +6,11 @@ using namespace arenai;
 using namespace arenai::agent;
 
 ValueFunction::ValueFunction(
-    const int &vision_height, const int &vision_width, const int &nb_sensors,
-    const int &hidden_size_sensors, const std::vector<int> &hidden_sizes,
+    const int &nb_sensors, const int &hidden_size_sensors, const std::vector<int> &hidden_sizes,
     const std::vector<std::tuple<int, int>> &vision_channels,
     const std::vector<int> &group_norm_nums)
     : vision_encoder(register_module(
-        "vision_encoder", std::make_shared<ConvolutionNetwork>(
-                              vision_height, vision_width, vision_channels, group_norm_nums))),
+        "vision_encoder", std::make_shared<ConvolutionNetwork>(vision_channels, group_norm_nums))),
       sensors_encoder(register_module(
           "sensors_encoder",
           torch::nn::Sequential(

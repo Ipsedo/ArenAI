@@ -1,7 +1,3 @@
-//
-// Created by samuel on 27/08/2026.
-//
-
 #include "./bindings.h"
 
 #include <utility>

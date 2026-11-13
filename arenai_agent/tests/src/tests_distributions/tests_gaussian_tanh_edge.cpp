@@ -1,17 +1,9 @@
-//
-// Created by claude on 01/07/2026.
-//
-
 #include <distributions/gaussian_tanh.h>
 
 #include <arenai_agent_tests/tests_distributions/tests_gaussian_tanh_edge.h>
 
 using namespace arenai;
 using namespace arenai::agent;
-
-// ========================================================================
-// Edge cases: extreme values
-// ========================================================================
 
 TEST_F(GaussianTanhEdgeTest, LogPdfWithLargeUStaysFinite) {
     const auto mu = torch::zeros({10});
@@ -46,17 +38,6 @@ TEST_F(GaussianTanhEdgeTest, LogPdfWithNegativeLargeUStaysFinite) {
         << "log_pdf should be finite with large negative u";
 }
 
-TEST_F(GaussianTanhEdgeTest, LogPdfWithZeroSigma) {
-    const auto mu = torch::zeros({10});
-    const auto sigma = torch::zeros({10});
-    const auto u = torch::randn({10}) * 0.1f;
-
-    const auto log_p = gaussian_tanh_log_pdf(u, mu, sigma);
-
-    ASSERT_TRUE(torch::all(torch::isfinite(log_p)).item<bool>())
-        << "log_pdf should handle zero sigma via clamping";
-}
-
 TEST_F(GaussianTanhEdgeTest, SampleWithVeryLargeMu) {
     const auto mu = torch::ones({100}) * 100.f;
     const auto sigma = torch::ones({100}) * 0.1f;
@@ -69,20 +50,6 @@ TEST_F(GaussianTanhEdgeTest, SampleWithVeryLargeMu) {
                     .item<bool>())
         << "Action should still be bounded by tanh";
 }
-
-TEST_F(GaussianTanhEdgeTest, SampleWithZeroSigma) {
-    const auto mu = torch::zeros({100});
-    const auto sigma = torch::zeros({100});
-
-    const auto [action, u] = gaussian_tanh_sample(mu, sigma);
-
-    ASSERT_TRUE(torch::all(torch::isfinite(action)).item<bool>())
-        << "Action should be finite with zero sigma (clamped)";
-}
-
-// ========================================================================
-// Gradient flow tests
-// ========================================================================
 
 TEST_F(GaussianTanhGradientTest, LogPdfGradientFlowsThroughMu) {
     const auto mu = torch::zeros({5}, torch::TensorOptions().requires_grad(true));

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 01/07/2026.
-//
-
 #ifndef ARENAI_CORE_TESTS_ENVIRONMENT_H
 #define ARENAI_CORE_TESTS_ENVIRONMENT_H
 
@@ -11,9 +7,24 @@
 
 #include "./utils/engine_test_fixture.h"
 
+// test code: the arenai sub-namespaces are used unqualified
+using namespace arenai;
+
 class TestTanksEnvironment final : public core::BaseTanksEnvironment {
 public:
     using BaseTanksEnvironment::BaseTanksEnvironment;
+    using BaseTanksEnvironment::respawn_tank;
+
+    glm::vec3 chassis_position(const int index) {
+        return apply_on_enemies<glm::vec3>([index](const auto &tanks) {
+            return glm::vec3(tanks[index]->get_chassis()->get_model_matrix()[3]);
+        });
+    }
+
+    bool out_of_shells(const int index) {
+        return apply_on_enemies<bool>(
+            [index](const auto &tanks) { return tanks[index]->is_out_of_shells(); });
+    }
 
     int draw_call_count = 0;
     int reset_physics_call_count = 0;

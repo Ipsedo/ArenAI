@@ -1,10 +1,3 @@
-//
-// Created by samuel on 26/06/2026.
-//
-
-// stb_image_write is header-only: this translation unit provides the
-// implementation behind the declarations image_writer.h pulls in. STATIC
-// keeps the symbols internal — soil2 already exports its own stb copy.
 #define STB_IMAGE_WRITE_STATIC
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 

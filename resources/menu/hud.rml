@@ -3,7 +3,35 @@
     <title>HUD</title>
     <link type="text/rcss" href="hud.rcss"/>
 </head>
-<body>
+<body data-model="hud">
+    <!-- the two sides of the arena framing the view: the player's orange on
+         the left, the machine's cyan on the right -->
+    <div id="side-player" class="side-band"></div>
+    <div id="side-ai" class="side-band"></div>
+
+    <!-- match status: the player's figures top-left, the clock top-center,
+         the machine's figures top-right -->
+    <div id="status-player" class="status">
+        <span class="status-label side-player">◆ You</span>
+        <span id="hud-player-score" class="status-score side-player">{{player_score}}</span>
+        <div id="hud-hull" class="hull">
+            <div class="hull-segment" data-class-lost="hull_segments < 1"></div>
+            <div class="hull-segment" data-class-lost="hull_segments < 2"></div>
+            <div class="hull-segment" data-class-lost="hull_segments < 3"></div>
+            <div class="hull-segment" data-class-lost="hull_segments < 4"></div>
+            <div class="hull-segment" data-class-lost="hull_segments < 5"></div>
+            <div class="hull-segment" data-class-lost="hull_segments < 6"></div>
+            <div class="hull-segment" data-class-lost="hull_segments < 7"></div>
+            <div class="hull-segment" data-class-lost="hull_segments < 8"></div>
+        </div>
+    </div>
+    <div id="hud-clock" class="clock">{{clock}}</div>
+    <div id="status-ai" class="status right">
+        <span class="status-label side-ai">Machine ◆</span>
+        <span id="hud-ai-score" class="status-score side-ai">{{enemies_mean_score}}</span>
+        <span id="hud-enemies-left" class="enemies-left side-ai">{{enemies_alive}} / {{enemies_total}}</span>
+    </div>
+
     <!-- fixed screen-center anchor: code rotates one arc child toward each
          impact the player suffers and fades it out -->
     <div id="damage-arcs">

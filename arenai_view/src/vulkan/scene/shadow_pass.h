@@ -1,7 +1,3 @@
-//
-// Created by samuel on 20/07/2026.
-//
-
 #ifndef ARENAI_VK_SHADOW_PASS_H
 #define ARENAI_VK_SHADOW_PASS_H
 

@@ -1,17 +1,9 @@
-//
-// Created by samuel on 30/06/2026.
-//
-
 #include <metrics/mean_metric.h>
 
 #include <arenai_agent_tests/tests_metrics/tests_metrics.h>
 
 using namespace arenai;
 using namespace arenai::agent;
-
-// ========================================================================
-// Fixed tests
-// ========================================================================
 
 TEST_F(MeanMetricTest, KnownSequence) {
     MeanMetric metric("test", 5);
@@ -38,10 +30,6 @@ TEST_F(MeanMetricTest, NegativeValues) {
 
     ASSERT_NEAR(metric.compute_metric(), -6.0f, 1e-6f);
 }
-
-// ========================================================================
-// Parameterized: window eviction behavior
-// ========================================================================
 
 TEST_P(MeanMetricParamTest, ConstantValueAlwaysReturnsSame) {
     const auto [window_size, values_to_add] = GetParam();

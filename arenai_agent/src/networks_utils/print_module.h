@@ -1,7 +1,3 @@
-//
-// Created by samuel on 14/02/2026.
-//
-
 #ifndef ARENAI_AGENT_HOST_PRINT_MODULE_H
 #define ARENAI_AGENT_HOST_PRINT_MODULE_H
 

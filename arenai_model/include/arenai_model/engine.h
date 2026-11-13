@@ -1,7 +1,3 @@
-//
-// Created by samuel on 19/03/2023.
-//
-
 #ifndef ARENAI_ENGINE_H
 #define ARENAI_ENGINE_H
 

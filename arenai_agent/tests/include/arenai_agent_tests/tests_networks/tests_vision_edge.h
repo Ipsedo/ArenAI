@@ -1,7 +1,3 @@
-//
-// Created by claude on 01/07/2026.
-//
-
 #ifndef ARENAI_TESTS_VISION_EDGE_H
 #define ARENAI_TESTS_VISION_EDGE_H
 

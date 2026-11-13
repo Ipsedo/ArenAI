@@ -1,7 +1,3 @@
-//
-// Created by claude on 22/07/2026.
-//
-
 #ifndef ARENAI_PPO_FACTORY_H
 #define ARENAI_PPO_FACTORY_H
 

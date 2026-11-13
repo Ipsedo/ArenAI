@@ -1,7 +1,3 @@
-//
-// Created by samuel on 19/07/2026.
-//
-
 #ifndef ARENAI_EXCEPTIONS_H
 #define ARENAI_EXCEPTIONS_H
 

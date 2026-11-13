@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #include "./liquid_ppo_collector.h"
 
 using namespace arenai;
@@ -16,23 +12,27 @@ namespace arenai::agent {
 
     void LiquidPpoStepCollector::on_act(
         const TorchState &state, const TorchAction &action,
-        const torch::Tensor &continuous_log_prob, const torch::Tensor &discrete_log_prob,
-        const torch::Tensor &actor_hidden) {
+        const torch::Tensor &continuous_pre_tanh, const torch::Tensor &continuous_log_prob,
+        const torch::Tensor &discrete_log_prob, const torch::Tensor &actor_hidden) {
         last_state = state;
         last_action = action;
+        last_continuous_pre_tanh = continuous_pre_tanh;
         last_continuous_log_prob = continuous_log_prob;
         last_discrete_log_prob = discrete_log_prob;
         last_actor_hidden = actor_hidden;
     }
 
     void LiquidPpoStepCollector::on_transition(
-        const torch::Tensor &rewards, const torch::Tensor &done, const torch::Tensor &truncated) {
+        const torch::Tensor &rewards, const torch::Tensor &aim_rewards, const torch::Tensor &done,
+        const torch::Tensor &truncated) {
         rollout_buffer->add(
             {.state = last_state,
              .action = last_action,
+             .continuous_pre_tanh = last_continuous_pre_tanh,
              .continuous_log_prob = last_continuous_log_prob,
              .discrete_log_prob = last_discrete_log_prob,
              .reward = rewards,
+             .aim_reward = aim_rewards,
              .done = done,
              .truncated = truncated,
              .actor_hidden = last_actor_hidden,

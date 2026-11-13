@@ -1,7 +1,3 @@
-//
-// Created by samuel on 26/06/2026.
-//
-
 #include "./make_shapes.h"
 
 std::tuple<

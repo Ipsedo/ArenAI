@@ -1,7 +1,3 @@
-//
-// Created by samuel on 01/07/2026.
-//
-
 #ifndef ARENAI_CORE_TESTS_ENGINE_TEST_FIXTURE_H
 #define ARENAI_CORE_TESTS_ENGINE_TEST_FIXTURE_H
 
@@ -15,6 +11,9 @@
 #include <arenai_model/tank_factory.h>
 #include <arenai_utils/file_reader.h>
 #include <arenai_view/backend.h>
+
+// test code: the arenai sub-namespaces are used unqualified
+using namespace arenai;
 
 class EngineTestFixture : public testing::Test {
 protected:

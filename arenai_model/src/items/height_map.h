@@ -1,7 +1,3 @@
-//
-// Created by samuel on 23/03/2023.
-//
-
 #ifndef ARENAI_HEIGHT_MAP_H
 #define ARENAI_HEIGHT_MAP_H
 

@@ -1,21 +1,17 @@
-//
-// Created by claude on 22/07/2026.
-//
-
 #include "./ppo_trainer.h"
 
 #include <algorithm>
 #include <fstream>
+#include <numeric>
 
 #include "../../distributions/bernoulli.h"
-#include "../../distributions/truncated_normal.h"
+#include "../../distributions/gaussian_tanh.h"
 #include "../../metrics/mean_metric.h"
 #include "../../networks/constants.h"
 #include "../../networks_utils/print_module.h"
 #include "../../networks_utils/torch_saver.h"
-
-using namespace arenai;
-using namespace arenai::agent;
+#include "../ppo_objective.h"
+#include "../update_utils.h"
 
 namespace arenai::agent {
     namespace {
@@ -27,77 +23,64 @@ namespace arenai::agent {
             return tensor.reshape(sizes);
         }
 
-        constexpr float LOG_RATIO_MAX_ABS = 3.f;
+        int64_t total_rows(const std::vector<torch::Tensor> &blocks) {
+            return std::accumulate(
+                blocks.begin(), blocks.end(), int64_t{0},
+                [](const int64_t sum, const torch::Tensor &idx) { return sum + idx.size(0); });
+        }
 
-        constexpr float KL_TRIM_FRACTION = 0.01f;
-
-        constexpr float CONTINUOUS_ALPHA_K_P = 2e-1f;
-        constexpr float CONTINUOUS_ALPHA_K_I = 5e-3f;
-        constexpr float CONTINUOUS_ALPHA_K_D = 1.f;
-
-        constexpr float DISCRETE_ALPHA_K_P = 2e-1f;
-        constexpr float DISCRETE_ALPHA_K_I = 1e-2f;
-        constexpr float DISCRETE_ALPHA_K_D = 1.f;
-
-        constexpr float ALPHA_INITIAL = 1e-3f;
+        void write_module_repr(
+            const std::filesystem::path &output_folder,
+            const std::shared_ptr<torch::nn::Module> &module, const std::string &name) {
+            std::ostringstream oss;
+            dump_module_tree(module, oss, 0, name);
+            std::ofstream file(output_folder / (name + "_repr.txt"));
+            file << oss.str();
+        }
 
     }// namespace
 
     PpoTrainer::PpoTrainer(
         const std::shared_ptr<Actor> &actor,
-        const std::shared_ptr<PpoRolloutBuffer> &rollout_buffer, const int vision_height,
-        const int vision_width, const int nb_sensors, const int nb_continuous_actions,
-        const int nb_discrete_action, const float actor_learning_rate,
+        const std::shared_ptr<PpoRolloutBuffer> &rollout_buffer, const int nb_continuous_actions,
+        const int nb_discrete_actions, const int nb_sensors, const float actor_learning_rate,
         const float critic_learning_rate, const int hidden_size_sensors,
         const std::vector<int> &critic_hidden_sizes,
         const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, const torch::Device device,
         const int metric_window_size, const float gamma, const float gae_lambda,
-        const float clip_epsilon, const float target_kl, const float grad_norm_max,
-        const std::vector<float> &continuous_target_entropy,
-        const std::vector<float> &discrete_target_entropy_factors, const int epochs,
-        const int rollout_size, const int minibatch_size)
+        const float aim_gae_lambda, const float clip_epsilon, const float target_kl,
+        const float grad_norm_max, const float initial_alpha, const float alpha_learning_rate,
+        const std::vector<float> &continuous_target_entropy, const float discrete_target_proba,
+        const int actor_epochs, const int critic_epochs, const int rollout_size,
+        const int actor_batch_size, const int actor_gpu_batch_size, const int critic_batch_size,
+        const int critic_gpu_batch_size)
         : actor(actor), rollout_buffer(rollout_buffer),
-          continuous_alpha(std::make_unique<PidLagrangianAlphaParameters>(
-              CONTINUOUS_ALPHA_K_P, CONTINUOUS_ALPHA_K_I, CONTINUOUS_ALPHA_K_D, ALPHA_INITIAL,
-              nb_continuous_actions)),
-          discrete_alpha(std::make_unique<PidLagrangianAlphaParameters>(
-              DISCRETE_ALPHA_K_P, DISCRETE_ALPHA_K_I, DISCRETE_ALPHA_K_D, ALPHA_INITIAL,
-              nb_discrete_action)),
-          continuous_target_entropy(continuous_target_entropy),
-          // per-action target: each discrete action is an independent Bernoulli
-          discrete_target_entropy([&discrete_target_entropy_factors] {
-              std::vector<float> targets = discrete_target_entropy_factors;
-              for (auto &target: targets) target *= bernoulli_maximum_entropy();
-              return targets;
-          }()),
+          alphas(std::make_unique<EntropyAlphas>(
+              nb_continuous_actions, nb_discrete_actions, initial_alpha, alpha_learning_rate,
+              continuous_target_entropy, discrete_target_proba)),
           critic(std::make_shared<ValueFunction>(
-              vision_height, vision_width, nb_sensors, hidden_size_sensors, critic_hidden_sizes,
-              vision_channels, group_norm_nums)),
+              nb_sensors, hidden_size_sensors, critic_hidden_sizes, vision_channels,
+              group_norm_nums)),
           actor_optim(
               std::make_unique<torch::optim::Adam>(this->actor->parameters(), actor_learning_rate)),
           critic_optim(
               std::make_unique<torch::optim::Adam>(critic->parameters(), critic_learning_rate)),
+          return_scaler(std::make_shared<ReturnScaler>(gamma)),
           actor_mean_loss_metric(std::make_shared<MeanMetric>("π", metric_window_size)),
           critic_mean_loss_metric(std::make_shared<MeanMetric>("v", metric_window_size)),
           explained_variance_metric(std::make_shared<MeanMetric>("ev", metric_window_size)),
           continuous_entropy_metric(std::make_shared<MeanMetric>("Hc", metric_window_size)),
           discrete_entropy_metric(std::make_shared<MeanMetric>("Hd", metric_window_size)),
-          continuous_alpha_metric(std::make_shared<MeanMetric>("α_c", metric_window_size, 2, true)),
-          discrete_alpha_metric(std::make_shared<MeanMetric>("α_d", metric_window_size, 2, true)),
           clip_fraction_metric(std::make_shared<MeanMetric>("clip", metric_window_size)),
           kl_metric(std::make_shared<MeanMetric>("kl", metric_window_size, 2, true)),
           skip_fraction_metric(std::make_shared<MeanMetric>("skip", metric_window_size)),
-          gamma(gamma), gae_lambda(gae_lambda), clip_epsilon(clip_epsilon), target_kl(target_kl),
-          grad_norm_max(grad_norm_max), epochs(epochs), rollout_size(rollout_size),
-          minibatch_size(minibatch_size) {
-        TORCH_CHECK(
-            static_cast<int>(continuous_target_entropy.size()) == nb_continuous_actions,
-            "continuous_target_entropy needs one target per continuous action");
-        TORCH_CHECK(
-            static_cast<int>(discrete_target_entropy_factors.size()) == nb_discrete_action,
-            "discrete_target_entropy_factors needs one factor per discrete action");
-
+          skip_canon_metric(std::make_shared<MeanMetric>("skip_canon", metric_window_size)),
+          gamma(gamma), gae_lambda(gae_lambda), aim_gae_lambda(aim_gae_lambda),
+          clip_epsilon(clip_epsilon), target_kl(target_kl), grad_norm_max(grad_norm_max),
+          actor_epochs(actor_epochs), critic_epochs(critic_epochs), rollout_size(rollout_size),
+          actor_batch_size(actor_batch_size), actor_gpu_batch_size(actor_gpu_batch_size),
+          critic_batch_size(critic_batch_size), critic_gpu_batch_size(critic_gpu_batch_size) {
         to(device);
 
         set_train(false);
@@ -107,149 +90,177 @@ namespace arenai::agent {
         if (rollout_buffer->nb_complete_steps() >= static_cast<size_t>(rollout_size)) train();
     }
 
+    PpoTrainer::FlatRows PpoTrainer::FlatRows::select(const torch::Tensor &idx) const {
+        const auto rows = [&](const torch::Tensor &tensor) { return tensor.index_select(0, idx); };
+        return {
+            .vision = rows(vision),
+            .proprioception = rows(proprioception),
+            .continuous_pre_tanh = rows(continuous_pre_tanh),
+            .discrete_actions = rows(discrete_actions),
+            .fire_masks = rows(fire_masks),
+            .old_continuous_log_probs = rows(old_continuous_log_probs),
+            .old_discrete_log_probs = rows(old_discrete_log_probs),
+            .advantages = rows(advantages),
+            .aim_advantages = rows(aim_advantages),
+            .returns = rows(returns)};
+    }
+
     void PpoTrainer::train() const {
         const auto device = actor->parameters().back().device();
 
-        const auto rollout = rollout_buffer->get_rollout();
+        auto rollout = rollout_buffer->get_rollout();
+
+        rollout.states = rollout.states.to(device);
 
         set_train(false);
-        const auto [advantages, returns] = compute_gae(rollout, device);
+        const auto [advantages, aim_advantages, returns] = compute_gae(rollout, device);
+
+        // flat [T * nb_tanks, ...] rows, all on the device
+        const auto flat = [&](const torch::Tensor &tensor) {
+            return flatten_steps(tensor).to(device);
+        };
+        const FlatRows rows = {
+            .vision = flat(rollout.states.get_vision()),
+            .proprioception = flat(rollout.states.get_state()),
+            .continuous_pre_tanh = flat(rollout.continuous_pre_tanhs),
+            .discrete_actions = flat(rollout.actions.discrete_action),
+            .fire_masks = flat(rollout.states.get_fire_mask()),
+            .old_continuous_log_probs = flat(rollout.continuous_log_probs),
+            .old_discrete_log_probs = flat(rollout.discrete_log_probs),
+            .advantages = flat(advantages),
+            .aim_advantages = flat(aim_advantages),
+            .returns = flat(returns)};
+
+        // live (step, tank) pairs; the optimizer batches split these rows only
+        const auto valid_idx =
+            torch::nonzero(flatten_steps(rollout.valids).squeeze(-1)).squeeze(-1).to(device);
+        if (valid_idx.size(0) == 0) return;
 
         set_train(true);
-
-        // the rollout stays on CPU; only the minibatches hit the device
-        const auto flat_vision = flatten_steps(rollout.states.vision);
-        const auto flat_proprioception = flatten_steps(rollout.states.proprioception);
-        const auto flat_continuous_actions = flatten_steps(rollout.actions.continuous_action);
-        const auto flat_discrete_actions = flatten_steps(rollout.actions.discrete_action);
-        const auto flat_old_log_probs =
-            flatten_steps(rollout.continuous_log_probs) + flatten_steps(rollout.discrete_log_probs);
-        const auto flat_advantages = flatten_steps(advantages);
-        const auto flat_returns = flatten_steps(returns);
-
-        // live (step, tank) pairs; minibatches are drawn from these rows only
-        const auto valid_idx =
-            torch::nonzero(flatten_steps(rollout.valids).squeeze(-1)).squeeze(-1);
-        const auto nb_valid_rows = valid_idx.size(0);
-        if (nb_valid_rows == 0) return;
-
-        const auto select = [&](const torch::Tensor &tensor, const torch::Tensor &idx) {
-            return tensor.index_select(0, idx).to(device);
-        };
-
-        for (int e = 0; e < epochs; e++) {
-            const auto perm = valid_idx.index_select(0, torch::randperm(nb_valid_rows));
-
-            for (int64_t start = 0; start < nb_valid_rows; start += minibatch_size) {
-                const auto idx =
-                    perm.slice(0, start, std::min<int64_t>(start + minibatch_size, nb_valid_rows));
-
-                const auto mb_vision = select(flat_vision, idx);
-                const auto mb_proprioception = select(flat_proprioception, idx);
-
-                train_actor(
-                    mb_vision, mb_proprioception, select(flat_continuous_actions, idx),
-                    select(flat_discrete_actions, idx), select(flat_old_log_probs, idx),
-                    select(flat_advantages, idx));
-
-                train_critic(mb_vision, mb_proprioception, select(flat_returns, idx));
-            }
-        }
-
+        run_actor_epochs(rows, valid_idx);
+        run_critic_epochs(rows, valid_idx);
         set_train(false);
     }
 
-    bool PpoTrainer::train_actor(
-        const torch::Tensor &vision, const torch::Tensor &proprioception,
-        const torch::Tensor &continuous_actions, const torch::Tensor &discrete_actions,
-        const torch::Tensor &old_log_probs, const torch::Tensor &advantages) const {
-        const auto device = actor->parameters().back().device();
+    void PpoTrainer::run_actor_epochs(const FlatRows &rows, const torch::Tensor &valid_idx) const {
+        GroupKlStop kl_stop(target_kl);
 
-        const auto [mu, sigma, discrete_proba] = actor->act(vision, proprioception);
+        for (int e = 0; e < actor_epochs; e++) {
+            const auto batches =
+                shuffled_batches(valid_idx, actor_batch_size, actor_gpu_batch_size);
+            kl_stop.on_planned_steps(static_cast<int>(batches.size()));
 
-        const auto curr_continuous_log_probs =
-            truncated_normal_log_pdf(continuous_actions, mu, sigma).sum(-1, true);
+            for (const auto &blocks: batches) {
+                if (!kl_stop.any_active()) break;
 
-        const auto curr_discrete_log_probs =
-            bernoulli_log_proba(discrete_actions, discrete_proba).sum(-1, true);
+                const auto kls = accumulate_actor_gradients(rows, blocks, kl_stop.active());
+                kl_metric->add(kls.joint);
 
-        const auto log_ratio = torch::clamp(
-            curr_continuous_log_probs + curr_discrete_log_probs - old_log_probs, -LOG_RATIO_MAX_ABS,
-            LOG_RATIO_MAX_ABS);
+                if (kl_stop.stop_exceeded(kls)) {
+                    if (!kl_stop.any_active()) break;
+                    accumulate_actor_gradients(rows, blocks, kl_stop.active());
+                }
 
-        const auto ratio = torch::exp(log_ratio);
-
-        const auto continuous_entropy = truncated_normal_entropy(mu, sigma);
-        const auto discrete_entropy = bernoulli_entropy(discrete_proba);
-
-        const auto kl_per_row = (ratio - 1.f - log_ratio).flatten();
-
-        const auto nb_kept = std::max<int64_t>(
-            1, static_cast<int64_t>(
-                   static_cast<float>(kl_per_row.size(0)) * (1.f - KL_TRIM_FRACTION)));
-
-        // per-row KL is non-negative: sorting ascending puts the outliers past nb_kept
-        const auto approx_kl =
-            std::get<0>(torch::sort(kl_per_row)).slice(0, 0, nb_kept).mean().item<float>();
-
-        const bool kl_exceeded = target_kl > 0.f && approx_kl > 1.5f * target_kl;
-
-        const auto entropy_bonus =
-            torch::sum(continuous_alpha->alpha().detach() * continuous_entropy, -1)
-            + torch::sum(discrete_alpha->alpha().detach() * discrete_entropy, -1);
-
-        if (!kl_exceeded) {
-            const auto clipped_ratio = torch::clamp(ratio, 1.f - clip_epsilon, 1.f + clip_epsilon);
-            const auto surrogate = torch::min(ratio * advantages, clipped_ratio * advantages);
-
-            const auto actor_loss = -torch::mean(surrogate + entropy_bonus);
-
-            actor_optim->zero_grad();
-            actor_loss.backward();
-            torch::nn::utils::clip_grad_norm_(actor->parameters(), grad_norm_max);
-            actor_optim->step();
-
-            // actor metrics
-            actor_mean_loss_metric->add(actor_loss.cpu().item<float>());
+                torch::nn::utils::clip_grad_norm_(actor->parameters(), grad_norm_max);
+                actor_optim->step();
+                alphas->step();
+                kl_stop.on_step();
+            }
         }
 
-        // adjust alphas
-        continuous_alpha->update(
-            continuous_entropy, torch::tensor(continuous_target_entropy, device));
-        discrete_alpha->update(discrete_entropy, torch::tensor(discrete_target_entropy, device));
+        skip_fraction_metric->add(kl_stop.rest_skip_fraction());
+        skip_canon_metric->add(kl_stop.aim_skip_fraction());
+    }
+
+    GroupKls PpoTrainer::accumulate_actor_gradients(
+        const FlatRows &rows, const std::vector<torch::Tensor> &blocks,
+        const ActiveGroups &active) const {
+        actor_optim->zero_grad();
+        alphas->zero_grad();
+
+        const auto nb_batch_rows = static_cast<float>(total_rows(blocks));
+
+        std::vector<RowKls> row_kls;
+        for (const auto &idx: blocks)
+            row_kls.push_back(backward_actor(
+                rows.select(idx), static_cast<float>(idx.size(0)) / nb_batch_rows, active));
+
+        return trimmed_group_kls(row_kls);
+    }
+
+    void PpoTrainer::run_critic_epochs(const FlatRows &rows, const torch::Tensor &valid_idx) const {
+        for (int e = 0; e < critic_epochs; e++)
+            for (const auto &blocks:
+                 shuffled_batches(valid_idx, critic_batch_size, critic_gpu_batch_size)) {
+                critic_optim->zero_grad();
+
+                const auto nb_batch_rows = static_cast<float>(total_rows(blocks));
+
+                for (const auto &idx: blocks)
+                    backward_critic(
+                        rows.select(idx), static_cast<float>(idx.size(0)) / nb_batch_rows);
+
+                torch::nn::utils::clip_grad_norm_(critic->parameters(), grad_norm_max);
+                critic_optim->step();
+            }
+    }
+
+    RowKls PpoTrainer::backward_actor(
+        const FlatRows &block, const float batch_fraction, const ActiveGroups &active) const {
+        const auto [mu, sigma, discrete_proba] = actor->act(block.vision, block.proprioception);
+        const auto discrete_mask =
+            TorchState::discrete_action_mask(block.fire_masks, discrete_proba.size(-1));
+
+        const auto current = PolicyLogProbs::split(
+            gaussian_tanh_log_pdf(block.continuous_pre_tanh, mu, sigma),
+            (bernoulli_log_proba(block.discrete_actions, discrete_proba) * discrete_mask)
+                .sum(-1, true));
+        const auto old =
+            PolicyLogProbs::split(block.old_continuous_log_probs, block.old_discrete_log_probs);
+
+        const auto [surrogate, log_ratio, ratio, kls] = clipped_surrogate(
+            current, old, block.aim_advantages, block.advantages, clip_epsilon, active);
+
+        const auto continuous_entropy = gaussian_tanh_entropy(mu, sigma);
+        const auto discrete_entropy = bernoulli_entropy(discrete_proba) * discrete_mask;
+
+        // the alphas are constants for the actor: they learn from their own dual loss
+        const auto entropy_bonus =
+            (alphas->continuous().detach() * continuous_entropy
+             * continuous_group_mask(active, continuous_entropy.size(-1), mu.device()))
+                .sum(-1, true)
+            + static_cast<float>(active.rest)
+                  * (alphas->discrete().detach() * discrete_entropy).sum(-1, true);
+
+        const auto actor_loss = -torch::mean(surrogate + entropy_bonus);
+
+        // weighted so that the accumulated gradient is the one of the whole rollout's mean
+        (actor_loss * batch_fraction).backward();
+        alphas->backward(continuous_entropy, discrete_entropy, discrete_mask, batch_fraction);
 
         // metrics
+        actor_mean_loss_metric->add(actor_loss.cpu().item<float>());
         continuous_entropy_metric->add(continuous_entropy.mean().item<float>());
-        discrete_entropy_metric->add(discrete_entropy.mean().item<float>());
-
-        continuous_alpha_metric->add(continuous_alpha->alpha().mean().item<float>());
-        discrete_alpha_metric->add(discrete_alpha->alpha().mean().item<float>());
-
-        kl_metric->add(approx_kl);
+        // mean over the discrete actions that had an effect
+        discrete_entropy_metric->add(
+            (discrete_entropy.sum() / discrete_mask.sum().clamp_min(1.f)).item<float>());
 
         clip_fraction_metric->add(
             ((ratio - 1.f).abs() > clip_epsilon).to(torch::kFloat).mean().item<float>());
 
-        skip_fraction_metric->add(kl_exceeded ? 1.f : 0.f);
-
-        return kl_exceeded;
+        return kls;
     }
 
-    void PpoTrainer::train_critic(
-        const torch::Tensor &vision, const torch::Tensor &proprioception,
-        const torch::Tensor &returns) const {
-        const auto values = critic->value(vision, proprioception);
-        const auto critic_loss = torch::mse_loss(values, returns, at::Reduction::Mean);
+    void PpoTrainer::backward_critic(const FlatRows &block, const float batch_fraction) const {
+        const auto values = critic->value(block.vision, block.proprioception);
+        const auto critic_loss = torch::mse_loss(values, block.returns, at::Reduction::Mean);
 
-        critic_optim->zero_grad();
-        critic_loss.backward();
-        torch::nn::utils::clip_grad_norm_(critic->parameters(), grad_norm_max);
-        critic_optim->step();
+        (critic_loss * batch_fraction).backward();
 
         critic_mean_loss_metric->add(critic_loss.cpu().item<float>());
 
-        const auto residual_var = (returns - values.detach()).var(false);
-        const auto returns_var = returns.var(false);
+        const auto residual_var = (block.returns - values.detach()).var(false);
+        const auto returns_var = block.returns.var(false);
         explained_variance_metric->add(
             (1.f - residual_var / returns_var.clamp_min(EPSILON)).item<float>());
     }
@@ -260,12 +271,12 @@ namespace arenai::agent {
         const auto nb_steps = rollout.rewards.size(0);
         const auto nb_tanks = rollout.rewards.size(1);
 
-        // critic forward in minibatch-sized chunks: the full rollout does not fit on the device
+        // critic forward in device-sized chunks: the whole rollout's activations do not fit
         const auto eval_values = [&](const torch::Tensor &vision,
                                      const torch::Tensor &proprioception) {
             std::vector<torch::Tensor> chunks;
-            for (int64_t i = 0; i < vision.size(0); i += minibatch_size) {
-                const auto end = std::min<int64_t>(i + minibatch_size, vision.size(0));
+            for (int64_t i = 0; i < vision.size(0); i += critic_gpu_batch_size) {
+                const auto end = std::min<int64_t>(i + critic_gpu_batch_size, vision.size(0));
                 chunks.push_back(critic
                                      ->value(
                                          vision.slice(0, i, end).to(device),
@@ -275,50 +286,51 @@ namespace arenai::agent {
             return torch::cat(chunks, 0);
         };
 
-        const auto values =
-            eval_values(
-                flatten_steps(rollout.states.vision), flatten_steps(rollout.states.proprioception))
-                .reshape({nb_steps, nb_tanks, 1});
+        const auto values = eval_values(
+                                flatten_steps(rollout.states.get_vision()),
+                                flatten_steps(rollout.states.get_state()))
+                                .reshape({nb_steps, nb_tanks, 1});
 
         // next values are the values shifted by one step, closed by the bootstrap state
         const auto bootstrap_value =
-            eval_values(rollout.bootstrap_state.vision, rollout.bootstrap_state.proprioception)
+            eval_values(rollout.bootstrap_state.get_vision(), rollout.bootstrap_state.get_state())
                 .unsqueeze(0);
         const auto next_values = torch::cat({values.slice(0, 1), bootstrap_value}, 0);
 
-        const auto rewards = rollout.rewards.to(torch::kFloat);
+        const auto rewards = return_scaler->scale(
+            rollout.rewards, rollout.dones.logical_or(rollout.truncateds), rollout.valids);
         const auto dones = rollout.dones.to(torch::kFloat);
         const auto truncateds = rollout.truncateds.to(torch::kFloat);
         const auto valids = rollout.valids.to(torch::kFloat);
 
-        // a truncated step bootstraps on its own value (the last alive observation):
-        // the post-mortem next state is not a state the counterfactual life would reach
-        const auto deltas =
-            rewards + gamma * (next_values * (1.f - dones) + values * truncateds) - values;
+        const auto cuts = torch::clamp_max(dones + truncateds, 1.f);
+        const auto deltas = rewards + gamma * next_values * (1.f - cuts) - values;
 
-        auto advantages = torch::zeros_like(deltas);
-        auto gae = torch::zeros({nb_tanks, 1}, deltas.options());
-        for (int64_t t = nb_steps - 1; t >= 0; t--) {
-            gae = deltas[t] + gamma * gae_lambda * (1.f - dones[t]) * gae;
-            advantages[t] = gae;
-        }
+        const auto advantages = generalized_advantages(deltas, cuts, gamma * gae_lambda);
 
-        const auto returns = advantages + values;
-
-        const auto nb_valid = valids.sum().clamp_min(1.f);
-        const auto advantage_mean = torch::sum(advantages * valids) / nb_valid;
-        const auto advantage_std =
-            torch::sqrt(torch::sum(torch::square(advantages - advantage_mean) * valids) / nb_valid);
-        advantages = (advantages - advantage_mean) / (advantage_std + EPSILON);
-
-        return {.advantages = advantages, .returns = returns};
+        return {
+            .advantages = normalized(advantages, valids),
+            .aim_advantages =
+                aim_advantages(rollout.aim_rewards, cuts, valids, gamma, aim_gae_lambda),
+            .returns = advantages + values};
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> PpoTrainer::get_metrics() {
-        return {actor_mean_loss_metric,    critic_mean_loss_metric, explained_variance_metric,
-                continuous_entropy_metric, continuous_alpha_metric, discrete_entropy_metric,
-                discrete_alpha_metric,     clip_fraction_metric,    kl_metric,
-                skip_fraction_metric};
+        return {
+            actor_mean_loss_metric,
+            critic_mean_loss_metric,
+            explained_variance_metric,
+            continuous_entropy_metric,
+            discrete_entropy_metric,
+            clip_fraction_metric,
+            kl_metric,
+            skip_fraction_metric};
+    }
+
+    std::vector<std::shared_ptr<AbstractMetric>> PpoTrainer::get_csv_only_metrics() {
+        auto metrics = alphas->get_metrics();
+        metrics.push_back(skip_canon_metric);
+        return metrics;
     }
 
     void PpoTrainer::save(const std::filesystem::path &output_folder) {
@@ -329,39 +341,27 @@ namespace arenai::agent {
         // Optimizers
         save_torch(output_folder, actor_optim, "actor_optim.pt");
         save_torch(output_folder, critic_optim, "critic_optim.pt");
+        save_torch(output_folder, return_scaler, "return_scaler.pt");
+        alphas->save(output_folder);
 
         // string repr
-        std::ostringstream actor_repr_oss;
-        dump_module_tree(actor, actor_repr_oss, 0, "actor");
-        std::ofstream actor_repr_file(output_folder / "actor_repr.txt");
-        actor_repr_file << actor_repr_oss.str();
-        actor_repr_file.close();
-
-        std::ostringstream critic_repr_oss;
-        dump_module_tree(critic, critic_repr_oss, 0, "critic");
-        std::ofstream critic_repr_file(output_folder / "critic_repr.txt");
-        critic_repr_file << critic_repr_oss.str();
-        critic_repr_file.close();
+        write_module_repr(output_folder, actor, "actor");
+        write_module_repr(output_folder, critic, "critic");
     }
 
     void PpoTrainer::set_train(const bool train) const {
         actor->train(train);
         critic->train(train);
-
-        continuous_alpha->train(train);
-        discrete_alpha->train(train);
     }
 
     void PpoTrainer::to(const torch::Device device) const {
         actor->to(device);
         critic->to(device);
-
-        continuous_alpha->to(device);
-        discrete_alpha->to(device);
+        alphas->to(device);
     }
 
     int PpoTrainer::count_parameters() {
         return count_parameters_impl(actor->parameters())
-               + count_parameters_impl(critic->parameters());
+               + count_parameters_impl(critic->parameters()) + alphas->count_parameters();
     }
 }// namespace arenai::agent

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 30/06/2026.
-//
-
 #include "./jolt_item_factory.h"
 
 #include "../jolt_engine.h"

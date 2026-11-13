@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #ifndef ARENAI_VK_BLOOM_BLUR_H
 #define ARENAI_VK_BLOOM_BLUR_H
 

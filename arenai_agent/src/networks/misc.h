@@ -1,7 +1,3 @@
-//
-// Created by samuel on 19/05/2026.
-//
-
 #ifndef ARENAI_AGENT_HOST_MISC_H
 #define ARENAI_AGENT_HOST_MISC_H
 
@@ -29,24 +25,28 @@ namespace arenai::agent {
         float upper_bound;
     };
 
+    // sigmoid between the bounds: never saturates exactly, the gradient stays alive at both ends
+    class SoftClamp : public AbstractFunctionModule {
+    public:
+        SoftClamp(float lower_bound, float upper_bound);
+
+        torch::Tensor forward(const torch::Tensor &x) override;
+
+        void pretty_print(std::ostream &stream) const override;
+
+        // the pre-activation that forwards to the given value, for the heads' initialisation
+        static float inverse(float value, float lower_bound, float upper_bound);
+
+    private:
+        float lower_bound;
+        float upper_bound;
+    };
+
     class Exp : public AbstractFunctionModule {
     public:
         torch::Tensor forward(const torch::Tensor &x) override;
 
         void pretty_print(std::ostream &stream) const override;
-    };
-
-    class SigmaOutput : public AbstractFunctionModule {
-    public:
-        SigmaOutput(float min_sigma, float max_sigma);
-
-        torch::Tensor forward(const torch::Tensor &input) override;
-
-        void pretty_print(std::ostream &stream) const override;
-
-    private:
-        float min_log_sigma;
-        float max_log_sigma;
     };
 
     // Beta concentration κ, log-scale on the excess κ - 2 bounded between min and max
@@ -61,6 +61,18 @@ namespace arenai::agent {
     private:
         float min_log_excess;
         float max_log_excess;
+    };
+
+    class SpatialSoftmax : public torch::nn::Module {
+    public:
+        SpatialSoftmax();
+
+        torch::Tensor forward(const torch::Tensor &input);
+
+        void pretty_print(std::ostream &stream) const override;
+
+    private:
+        torch::Tensor log_temperature;
     };
 
 }// namespace arenai::agent

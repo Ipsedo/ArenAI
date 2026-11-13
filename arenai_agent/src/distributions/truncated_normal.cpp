@@ -1,7 +1,3 @@
-//
-// Created by samuel on 12/10/2025.
-//
-
 #include "../distributions/truncated_normal.h"
 
 using namespace arenai;

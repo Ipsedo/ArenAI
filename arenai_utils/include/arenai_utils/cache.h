@@ -1,6 +1,3 @@
-//
-// Created by samuel on 01/10/2025.
-//
 #ifndef ARENAI_CACHE_H
 #define ARENAI_CACHE_H
 

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 13/07/2026.
-//
-
 #include <numeric>
 
 #include <glm/ext/matrix_transform.hpp>
@@ -24,8 +20,6 @@ namespace {
 
     // floor of 200x2x200 units centered at the origin
     const auto FLOOR_MATRIX = glm::scale(glm::mat4(1.f), glm::vec3(100.f, 1.f, 100.f));
-    // cube of 40 units hanging at y=100, between the overhead light and the
-    // floor, outside the camera frustum (only its shadow is visible)
     const auto OCCLUDER_MATRIX =
         glm::scale(glm::translate(glm::mat4(1.f), glm::vec3(0.f, 100.f, 0.f)), glm::vec3(20.f));
 
@@ -82,8 +76,6 @@ TEST(ShadowRenderingTest, OccluderDarkensFloor) {
 
     ASSERT_GT(floor_only_sum, 0);
 
-    // the occluder is not visible from the camera, so any brightness drop
-    // comes from its shadow on the floor
     constexpr long margin = 3L * WIDTH * HEIGHT;// per-pixel tolerance
     ASSERT_LT(occluded_sum + margin, floor_only_sum);
 }

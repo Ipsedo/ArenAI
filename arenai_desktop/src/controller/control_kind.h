@@ -1,7 +1,3 @@
-//
-// Created by samuel on 16/07/2026.
-//
-
 #ifndef ARENAI_CONTROL_KIND_H
 #define ARENAI_CONTROL_KIND_H
 

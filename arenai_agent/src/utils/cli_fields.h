@@ -1,7 +1,3 @@
-//
-// Created by claude on 22/07/2026.
-//
-
 #ifndef ARENAI_AGENT_HOST_CLI_FIELDS_H
 #define ARENAI_AGENT_HOST_CLI_FIELDS_H
 
@@ -16,9 +12,6 @@
 
 namespace arenai::agent {
 
-    // One CLI option bound to a member of the hyper-parameter struct S. The
-    // default value is read from a default-constructed S, so the member
-    // initializers of S are the single source of truth for CLI defaults.
     template<typename S>
     struct CliField {
         std::string name;
@@ -28,16 +21,10 @@ namespace arenai::agent {
             member;
     };
 
-    // argparse's get<T> unpacks container types element-wise, so a
-    // vector produced by an action must travel boxed in a scalar type
     template<typename T>
     struct CliJsonValue {
         T value;
     };
-
-    /*
-     * Add field
-     */
 
     inline void add_cli_field(
         argparse::ArgumentParser &parser, const std::string &name, const int default_value) {
@@ -83,10 +70,6 @@ namespace arenai::agent {
         add_cli_json_field(parser, name, default_value);
     }
 
-    /*
-     * Read fields
-     */
-
     inline void
     read_cli_field(const argparse::ArgumentParser &parser, const std::string &name, int &output) {
         output = parser.get<int>(name);
@@ -114,10 +97,6 @@ namespace arenai::agent {
         output = parser.get<CliJsonValue<std::vector<std::tuple<int, int>>>>(name).value;
     }
 
-    /*
-     * Add & read cli arg
-     */
-
     template<typename S>
     void add_cli_fields(argparse::ArgumentParser &parser, const std::vector<CliField<S>> &fields) {
         const S default_params{};
@@ -129,8 +108,6 @@ namespace arenai::agent {
                 field.member);
     }
 
-    // the resolved hyper-parameters keyed by option name, dashes stripped: what the
-    // run was actually launched with, as native JSON values
     template<typename S>
     nlohmann::json cli_fields_to_json(const std::vector<CliField<S>> &fields, const S &params) {
         nlohmann::json config;

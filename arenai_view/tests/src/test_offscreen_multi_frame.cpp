@@ -1,7 +1,3 @@
-//
-// Created by claude on 01/07/2026.
-//
-
 #include <glm/ext/matrix_transform.hpp>
 
 #include <arenai_view/backend.h>

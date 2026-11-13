@@ -1,7 +1,3 @@
-//
-// Created by samuel on 19/03/2023.
-//
-
 #include <arenai_model/engine.h>
 #include <arenai_model/tank_factory.h>
 

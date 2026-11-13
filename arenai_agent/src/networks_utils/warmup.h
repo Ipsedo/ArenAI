@@ -1,7 +1,3 @@
-//
-// Created by samuel on 31/08/2026.
-//
-
 #ifndef ARENAI_WARMUP_H
 #define ARENAI_WARMUP_H
 

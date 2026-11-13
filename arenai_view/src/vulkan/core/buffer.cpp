@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #include "./buffer.h"
 
 #include <cstring>
@@ -10,10 +6,6 @@
 #include "./errors.h"
 
 namespace arenai::view {
-
-    /*
-     * VulkanBuffer (device local)
-     */
 
     VulkanBuffer::VulkanBuffer(
         std::shared_ptr<VulkanDevice> device, const VkCommandPool &pool, const void *data,
@@ -70,10 +62,6 @@ namespace arenai::view {
     VulkanBuffer::~VulkanBuffer() {
         if (buffer_ != VK_NULL_HANDLE) vmaDestroyBuffer(device_->allocator(), buffer_, allocation_);
     }
-
-    /*
-     * HostVisibleBuffer
-     */
 
     HostVisibleBuffer::HostVisibleBuffer(
         std::shared_ptr<VulkanDevice> device, const size_t size, const VkBufferUsageFlags &usage)

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 28/07/2026.
-//
-
 #ifndef ARENAI_DESKTOP_TESTS_HEADLESS_WINDOWED_BACKEND_H
 #define ARENAI_DESKTOP_TESTS_HEADLESS_WINDOWED_BACKEND_H
 
@@ -11,10 +7,8 @@
 
 #include <arenai_view/backend.h>
 
-// Headless stand-in for the GLFW windowed backend: DesktopGameEnvironment only
-// touches it for the player view (renderer + drawables), which the end-to-end
-// tests discard. The agents' visions keep their real offscreen backend, built
-// internally by the environment.
+// test code: the arenai sub-namespaces are used unqualified
+using namespace arenai;
 
 class NoopDrawable final : public view::AbstractDrawable {
 public:
@@ -52,7 +46,6 @@ public:
     void make_current() const override {}
     void release_current() const override {}
 
-    void add_hud_drawable(std::unique_ptr<view::AbstractHudDrawable> hud_drawable) override {}
     void set_window_size(int new_width, int new_height) override {}
     glm::mat4 last_view_projection() const override { return glm::mat4(1.f); }
 };
@@ -71,8 +64,6 @@ public:
         return std::make_shared<NoopDrawableFactory>();
     }
 
-    std::shared_ptr<view::AbstractHudFactory> hud_factory() override { return nullptr; }
-
     std::string renderer_info() override { return "headless test backend"; }
 
     void release_thread() override {}
@@ -88,9 +79,8 @@ public:
     Rml::RenderInterface &ui_render_interface() override {
         throw std::logic_error("no UI in the headless test backend");
     }
-    void begin_ui_frame(int width, int height) override {}
-    void begin_ui_overlay(int width, int height) override {}
-    void end_ui_frame() override {}
+    void begin_ui_pass(view::UiPass pass, int width, int height) override {}
+    void end_ui_pass() override {}
     void present() override {}
 };
 

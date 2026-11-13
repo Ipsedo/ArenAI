@@ -1,7 +1,3 @@
-//
-// Created by samuel on 30/06/2026.
-//
-
 #ifndef ARENAI_TESTS_INIT_H
 #define ARENAI_TESTS_INIT_H
 

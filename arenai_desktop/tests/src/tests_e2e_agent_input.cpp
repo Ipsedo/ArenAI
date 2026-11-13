@@ -1,7 +1,3 @@
-//
-// Created by samuel on 28/07/2026.
-//
-
 #include <cmath>
 #include <cstdlib>
 #include <filesystem>
@@ -15,17 +11,10 @@
 
 #include <arenai_desktop_tests/headless_windowed_backend.h>
 #include <arenai_desktop_tests/interceptor_agent.h>
+#include <arenai_model/shell_economy.h>
 
 using namespace arenai;
 using namespace arenai::desktop;
-
-// ========================================================================
-// End-to-end: DesktopGameEnvironment -> AbstractAgent::act()
-// Mirrors run_game()'s loop with the interceptor in the enemy agent's seat;
-// the player view goes to a headless no-op backend, the enemy visions are
-// rendered by the environment's real offscreen backend. The player tank is
-// part of the scene, hence desktop-specific golden images.
-// ========================================================================
 
 namespace {
 
@@ -38,14 +27,12 @@ namespace {
     std::unique_ptr<DesktopGameEnvironment> make_environment() {
         auto env = std::make_unique<DesktopGameEnvironment>(
             ARENAI_ASSETS_DIR, std::make_shared<HeadlessWindowedBackend>(),
-            gui::GameSettings{.nb_tanks = NB_TANKS, .controller_kind = ControllerKind::Gamepad},
+            GameSettings{.nb_tanks = NB_TANKS, .controller_kind = ControllerKind::Gamepad},
             VISION_HEIGHT, VISION_WIDTH, FREQUENCY);
         env->seed(42);
         return env;
     }
 
-    // the run_game() loop shape: act on the current states, step the
-    // environment with the returned actions, feed the next states back
     void run_act_step_loop(
         core::BaseTanksEnvironment &env, InterceptorAgent &agent, std::vector<core::State> states) {
         auto actions = agent.act(states, VISION_HEIGHT, VISION_WIDTH);
@@ -60,8 +47,6 @@ namespace {
         }
     }
 
-    // same tolerance as arenai_core's ResetGoldenImage: rasterization shifts
-    // between llvmpipe versions, so mean error + outlier count, not per-pixel
     void expect_matches_golden(
         const std::filesystem::path &golden_path, const std::vector<uint8_t> &pixels,
         const std::string &label) {
@@ -105,15 +90,11 @@ namespace {
 
 }// namespace
 
-// ========================================================================
-// act() receives structurally valid states on every loop iteration
-// ========================================================================
-
 TEST(DesktopAgentInputEndToEnd, AgentReceivesValidStates) {
     const auto env = make_environment();
     InterceptorAgent agent;
 
-    run_act_step_loop(*env, agent, env->reset(100.f, 100.f));
+    run_act_step_loop(*env, agent, env->reset(100.f, 100.f, model::GAME_SHELL_ECONOMY));
 
     ASSERT_EQ(static_cast<int>(agent.received_states.size()), NB_STEPS + 1);
     ASSERT_EQ(agent.last_vision_height, VISION_HEIGHT);
@@ -122,7 +103,7 @@ TEST(DesktopAgentInputEndToEnd, AgentReceivesValidStates) {
     for (const auto &states: agent.received_states) {
         ASSERT_EQ(static_cast<int>(states.size()), NB_TANKS);
 
-        for (const auto &[vision, proprioception]: states) {
+        for (const auto &[vision, proprioception, shells_ratio, cooldown_ratio, can_fire]: states) {
             ASSERT_EQ(static_cast<int>(vision.pixels.size()), 3 * VISION_HEIGHT * VISION_WIDTH);
 
             const int pixel_sum = std::accumulate(
@@ -138,14 +119,8 @@ TEST(DesktopAgentInputEndToEnd, AgentReceivesValidStates) {
     env->stop_drawing();
 }
 
-// ========================================================================
-// what reaches act() matches the golden images (seeded RNG, pinned env)
-// ========================================================================
-
 TEST(DesktopAgentInputEndToEnd, AgentInputMatchesGoldenImages) {
 #ifndef ARENAI_REGENERATE_GOLDEN_IMAGES
-    // see arenai_core's ResetGoldenImage: only the pinned environment
-    // (scripts/goldens_docker.sh, also used by the CI) can compare goldens
     if (std::getenv("ARENAI_PINNED_RENDER_ENV") == nullptr)
         GTEST_SKIP() << "golden comparison needs the pinned render environment: "
                         "run ./scripts/goldens_docker.sh";
@@ -154,7 +129,7 @@ TEST(DesktopAgentInputEndToEnd, AgentInputMatchesGoldenImages) {
     const auto env = make_environment();
     InterceptorAgent agent;
 
-    run_act_step_loop(*env, agent, env->reset(100.f, 100.f));
+    run_act_step_loop(*env, agent, env->reset(100.f, 100.f, model::GAME_SHELL_ECONOMY));
 
     for (int tank_idx = 0; tank_idx < NB_TANKS; tank_idx++) {
         const std::vector<std::pair<std::filesystem::path, const std::vector<uint8_t> *>> goldens =

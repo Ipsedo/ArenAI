@@ -1,21 +1,14 @@
-//
-// Created by claude on 01/07/2026.
-//
-
 #include <memory>
 
 #include <arenai_controller/inputs.h>
 #include <arenai_model/item.h>
+#include <arenai_model/shell_economy.h>
 #include <arenai_model_tests/tests_player_tank/tests_player_tank.h>
 
 using namespace arenai;
 using namespace arenai::model;
 using namespace arenai::utils;
 using namespace arenai::controller;
-
-// ========================================================================
-// PlayerTank — score tracking
-// ========================================================================
 
 TEST_F(PlayerTankTest, ScoreZeroAtCreation) {
     add_ground();
@@ -29,7 +22,8 @@ TEST_F(PlayerTankTest, ScoreZeroAtCreation) {
 TEST_F(PlayerTankTest, ScoreIncreasesOnHit) {
     add_ground();
     const auto player = tank_factory->make_player_tank(file_reader, "player", {0.f, 5.f, 0.f});
-    auto enemy = tank_factory->make_enemy_tank(file_reader, "enemy", {0.f, 5.f, 30.f}, false);
+    auto enemy =
+        tank_factory->make_enemy_tank(file_reader, "enemy", {0.f, 5.f, 30.f}, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 
@@ -47,7 +41,8 @@ TEST_F(PlayerTankTest, ScoreIncreasesOnHit) {
 TEST_F(PlayerTankTest, ScoreHigherOnKillThanHit) {
     add_ground();
     const auto player = tank_factory->make_player_tank(file_reader, "player", {0.f, 5.f, 0.f});
-    const auto enemy = tank_factory->make_enemy_tank(file_reader, "enemy", {0.f, 5.f, 30.f}, false);
+    const auto enemy =
+        tank_factory->make_enemy_tank(file_reader, "enemy", {0.f, 5.f, 30.f}, GAME_SHELL_ECONOMY);
 
     for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
 

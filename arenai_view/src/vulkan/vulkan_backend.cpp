@@ -1,20 +1,11 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #include "./vulkan_backend.h"
 
 #include <utility>
 
 #include "./scene/drawables/drawable_factory.h"
-#include "./scene/drawables/hud_factory.h"
 #include "./scene/renderers/offscreen_renderer.h"
 
 namespace arenai::view {
-
-    /*
-     * VulkanBackend (headless)
-     */
 
     VulkanBackend::VulkanBackend(const std::string &gpu_name)
         : VulkanBackend(
@@ -28,8 +19,7 @@ namespace arenai::view {
         const std::shared_ptr<VulkanInstance> &instance, const DeviceCriteria &criteria)
         : context_(std::make_shared<VulkanRenderContext>(
             instance, std::make_shared<VulkanDevice>(instance, criteria))),
-          drawable_factory_(std::make_shared<VulkanDrawableFactory>()),
-          hud_factory_(std::make_shared<VulkanHudFactory>()) {}
+          drawable_factory_(std::make_shared<VulkanDrawableFactory>()) {}
 
     std::shared_ptr<AbstractRenderContext> VulkanBackend::render_context() { return context_; }
 
@@ -44,8 +34,6 @@ namespace arenai::view {
         return drawable_factory_;
     }
 
-    std::shared_ptr<AbstractHudFactory> VulkanBackend::hud_factory() { return hud_factory_; }
-
     std::string VulkanBackend::renderer_info() { return context_->device()->renderer_info(); }
 
     void VulkanBackend::release_thread() {
@@ -53,10 +41,6 @@ namespace arenai::view {
     }
 
     const std::shared_ptr<VulkanRenderContext> &VulkanBackend::context() const { return context_; }
-
-    /*
-     * VulkanViewFactory (headless part; windowed part in src/glfw)
-     */
 
     std::unique_ptr<AbstractGraphicBackend> make_vulkan_backend(const std::string &gpu_name) {
         return std::make_unique<VulkanBackend>(gpu_name);

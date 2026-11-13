@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #include "./liquid_ppo_hyperparams.h"
 
 namespace arenai::agent {
@@ -24,16 +20,25 @@ namespace arenai::agent {
             {.name = "--metric_window_size", .member = &LiquidPpoHyperParams::metric_window_size},
             {.name = "--gamma", .member = &LiquidPpoHyperParams::gamma},
             {.name = "--gae_lambda", .member = &LiquidPpoHyperParams::gae_lambda},
+            {.name = "--aim_gae_lambda", .member = &LiquidPpoHyperParams::aim_gae_lambda},
             {.name = "--clip_epsilon", .member = &LiquidPpoHyperParams::clip_epsilon},
             {.name = "--target_kl", .member = &LiquidPpoHyperParams::target_kl},
             {.name = "--grad_norm_max", .member = &LiquidPpoHyperParams::grad_norm_max},
+            {.name = "--initial_alpha", .member = &LiquidPpoHyperParams::initial_alpha},
+            {.name = "--alpha_learning_rate", .member = &LiquidPpoHyperParams::alpha_learning_rate},
             {.name = "--continuous_target_entropy",
              .member = &LiquidPpoHyperParams::continuous_target_entropy},
-            {.name = "--discrete_target_entropy_factors",
-             .member = &LiquidPpoHyperParams::discrete_target_entropy_factors},
-            {.name = "--epochs", .member = &LiquidPpoHyperParams::epochs},
+            {.name = "--discrete_target_proba",
+             .member = &LiquidPpoHyperParams::discrete_target_proba},
+            {.name = "--actor_epochs", .member = &LiquidPpoHyperParams::actor_epochs},
+            {.name = "--critic_epochs", .member = &LiquidPpoHyperParams::critic_epochs},
             {.name = "--rollout_size", .member = &LiquidPpoHyperParams::rollout_size},
-            {.name = "--minibatch_size", .member = &LiquidPpoHyperParams::minibatch_size},
+            {.name = "--actor_batch_size", .member = &LiquidPpoHyperParams::actor_batch_size},
+            {.name = "--actor_gpu_batch_size",
+             .member = &LiquidPpoHyperParams::actor_gpu_batch_size},
+            {.name = "--critic_batch_size", .member = &LiquidPpoHyperParams::critic_batch_size},
+            {.name = "--critic_gpu_batch_size",
+             .member = &LiquidPpoHyperParams::critic_gpu_batch_size},
         };
     }
 

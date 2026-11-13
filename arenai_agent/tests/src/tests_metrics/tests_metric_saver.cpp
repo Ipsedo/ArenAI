@@ -1,7 +1,3 @@
-//
-// Created by samuel on 30/06/2026.
-//
-
 #include <filesystem>
 #include <fstream>
 
@@ -37,17 +33,14 @@ namespace {
     }
 }// namespace
 
-// ========================================================================
-// Fixed tests
-// ========================================================================
-
 TEST_F(MetricCsvSaverTest, CreatesFileWithHeader) {
     const auto dir = make_temp_dir();
 
     auto m1 = std::make_shared<MeanMetric>("loss", 5);
     auto m2 = std::make_shared<MeanMetric>("reward", 5);
+    auto hidden = std::make_shared<MeanMetric>("hidden", 5, 3, false);
 
-    MetricCsvSaver saver(dir, {m1, m2}, 1);
+    MetricCsvSaver saver(dir, {m1, m2, hidden}, 1);
 
     const auto csv_path = dir / "metrics.csv";
     ASSERT_TRUE(std::filesystem::exists(csv_path));
@@ -55,6 +48,7 @@ TEST_F(MetricCsvSaverTest, CreatesFileWithHeader) {
     const auto header = read_first_line(csv_path);
     ASSERT_TRUE(header.find("loss") != std::string::npos);
     ASSERT_TRUE(header.find("reward") != std::string::npos);
+    ASSERT_TRUE(header.find("hidden") != std::string::npos);
     ASSERT_TRUE(header.find("index") != std::string::npos);
 
     std::filesystem::remove_all(dir);
@@ -91,10 +85,6 @@ TEST_F(MetricCsvSaverTest, AppendsDataRows) {
     std::filesystem::remove_all(dir);
 }
 
-// ========================================================================
-// Parameterized: save_every behavior
-// ========================================================================
-
 TEST_P(MetricCsvSaverParamTest, SaveEveryRespected) {
     const auto [window_size, save_every, total_calls] = GetParam();
 
@@ -107,8 +97,6 @@ TEST_P(MetricCsvSaverParamTest, SaveEveryRespected) {
 
     for (int i = 0; i < total_calls; i++) saver.attempt_append_to_csv();
 
-    // index goes from 0..total_calls-1
-    // saves when index % save_every == 0, i.e. at indices 0, save_every, 2*save_every, ...
     const int expected_data_rows = (total_calls + save_every - 1) / save_every;
     const int total_lines = 1 + expected_data_rows;// header + data
 

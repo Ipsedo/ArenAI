@@ -1,7 +1,3 @@
-//
-// Created by samuel on 15/07/2026.
-//
-
 #ifndef ARENAI_GAMEPAD_HANDLER_H
 #define ARENAI_GAMEPAD_HANDLER_H
 
@@ -17,8 +13,6 @@
 namespace arenai::desktop {
 
     struct PlayerGamepadInput {
-        // raw values indexed by GamepadAxis: sticks in [-1, 1], triggers
-        // normalized to [0, 1] by the window
         std::array<double, NB_GAMEPAD_AXES> axes;
 
         std::optional<std::pair<controller::GamepadButton, controller::InputAction>> button;

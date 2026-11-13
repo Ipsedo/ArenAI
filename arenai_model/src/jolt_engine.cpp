@@ -1,7 +1,3 @@
-//
-// Created by claude on 30/07/2026.
-//
-
 #include "./jolt_engine.h"
 
 #include <algorithm>
@@ -14,6 +10,8 @@
 #include <Jolt/Physics/Collision/ObjectLayer.h>
 #include <Jolt/Physics/Collision/RayCast.h>
 #include <Jolt/RegisterTypes.h>
+
+#include <arenai_model/constants.h>
 
 #include "./items/jolt_item_factory.h"
 #include "./tank/jolt_tank_factory.h"
@@ -131,7 +129,7 @@ namespace arenai::model {
             10240, 0, 65536, 10240, *broad_phase_layer_interface, *object_vs_broad_phase_filter,
             *object_layer_pair_filter);
 
-        physics_system->SetGravity(JPH::Vec3(0.f, -9.8f, 0.f));
+        physics_system->SetGravity(JPH::Vec3(0.f, -GRAVITY, 0.f));
         physics_system->SetContactListener(&contact_listener);
 
         physics_system->SetCombineFriction(
@@ -168,6 +166,11 @@ namespace arenai::model {
         std::function<std::vector<std::shared_ptr<JoltItem>>()> producer) {
         std::unique_lock lock(items_mutex);
         jolt_item_producers.push_back(std::move(producer));
+    }
+
+    void JoltPhysicEngine::add_pre_update_callback(std::function<void()> callback) {
+        std::unique_lock lock(items_mutex);
+        pre_update_callbacks.push_back(std::move(callback));
     }
 
     void JoltPhysicEngine::remove_jolt_item_constraints(const std::shared_ptr<JoltItem> &item) {
@@ -234,6 +237,11 @@ namespace arenai::model {
         if (local_time >= wanted_frequency) {
             local_time -= std::floor(local_time / wanted_frequency) * wanted_frequency;
 
+            {
+                std::unique_lock lock(items_mutex);
+                for (const auto &callback: pre_update_callbacks) callback();
+            }
+
             contact_listener.clear();
             physics_system->Update(wanted_frequency, 1, temp_allocator.get(), job_system.get());
         }
@@ -253,6 +261,12 @@ namespace arenai::model {
     }
 
     std::optional<float> JoltPhysicEngine::ray_test(
+        const glm::vec3 from, const glm::vec3 to, const std::vector<JPH::BodyID> &excluded) const {
+        if (const auto hit = ray_test_body(from, to, excluded)) return hit->fraction;
+        return std::nullopt;
+    }
+
+    std::optional<JoltPhysicEngine::RayHit> JoltPhysicEngine::ray_test_body(
         const glm::vec3 from, const glm::vec3 to, const std::vector<JPH::BodyID> &excluded) const {
 
         class ExcludingBodyFilter final : public JPH::BodyFilter {
@@ -277,7 +291,7 @@ namespace arenai::model {
 
         if (JPH::RayCastResult result;
             physics_system->GetNarrowPhaseQuery().CastRay(ray, result, {}, {}, body_filter))
-            return result.mFraction;
+            return RayHit{.fraction = result.mFraction, .body_id = result.mBodyID};
         return std::nullopt;
     }
 
@@ -318,6 +332,7 @@ namespace arenai::model {
 
         contact_listener.clear();
         jolt_item_producers.clear();
+        pre_update_callbacks.clear();
         items.clear();
     }
 

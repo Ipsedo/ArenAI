@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #ifndef ARENAI_LIQUID_PPO_COLLECTOR_H
 #define ARENAI_LIQUID_PPO_COLLECTOR_H
 
@@ -23,12 +19,12 @@ namespace arenai::agent {
         // concrete act-time channel, called by TorchLiquidPpoAgent::act
         void on_act(
             const TorchState &state, const TorchAction &action,
-            const torch::Tensor &continuous_log_prob, const torch::Tensor &discrete_log_prob,
-            const torch::Tensor &actor_hidden);
+            const torch::Tensor &continuous_pre_tanh, const torch::Tensor &continuous_log_prob,
+            const torch::Tensor &discrete_log_prob, const torch::Tensor &actor_hidden);
 
         void on_transition(
-            const torch::Tensor &rewards, const torch::Tensor &done,
-            const torch::Tensor &truncated) override;
+            const torch::Tensor &rewards, const torch::Tensor &aim_rewards,
+            const torch::Tensor &done, const torch::Tensor &truncated) override;
 
         void on_episode_end(const TorchState &final_state) override;
 
@@ -38,6 +34,7 @@ namespace arenai::agent {
 
         TorchState last_state;
         TorchAction last_action;
+        torch::Tensor last_continuous_pre_tanh;
         torch::Tensor last_continuous_log_prob;
         torch::Tensor last_discrete_log_prob;
         torch::Tensor last_actor_hidden;

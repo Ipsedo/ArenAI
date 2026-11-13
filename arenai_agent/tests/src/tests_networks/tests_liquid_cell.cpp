@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #include <networks/recurrent/liquid_cell.h>
 
 #include <arenai_agent_tests/tests_networks/tests_liquid_cell.h>
@@ -11,8 +7,6 @@ using namespace arenai::agent;
 
 namespace {
     constexpr float DELTA_T = 1.f;
-
-    torch::Tensor tanh_activation(const torch::Tensor &t) { return torch::tanh(t); }
 
     void assert_all_parameters_receive_gradient(const torch::nn::Module &module) {
         for (const auto &p: module.named_parameters()) {
@@ -26,14 +20,10 @@ namespace {
     }
 }// namespace
 
-/*
- * Cell model
- */
-
 TEST_P(CellModelTestParam, OutputShape) {
     const auto [neuron_number, input_size, batch_size] = GetParam();
 
-    CellModel cell_model(neuron_number, input_size, tanh_activation);
+    CellModel cell_model(neuron_number, input_size, torch::nn::AnyModule(torch::nn::Tanh()));
 
     const auto x_t = torch::randn({batch_size, neuron_number});
     const auto input_t = torch::randn({batch_size, input_size});
@@ -48,7 +38,7 @@ TEST_P(CellModelTestParam, OutputShape) {
 TEST_P(CellModelTestParam, GradientFlows) {
     const auto [neuron_number, input_size, batch_size] = GetParam();
 
-    CellModel cell_model(neuron_number, input_size, tanh_activation);
+    CellModel cell_model(neuron_number, input_size, torch::nn::AnyModule(torch::nn::Tanh()));
 
     const auto x_t = torch::randn({batch_size, neuron_number}, torch::requires_grad());
     const auto input_t = torch::randn({batch_size, input_size}, torch::requires_grad());
@@ -67,16 +57,13 @@ INSTANTIATE_TEST_SUITE_P(
     TestCellModel, CellModelTestParam,
     testing::Combine(testing::Values(2, 8, 16), testing::Values(1, 3, 12), testing::Values(1, 4)));
 
-/*
- * Liquid cell
- */
-
 TEST_P(LiquidCellTestParam, StepOutputShape) {
     const auto [neuron_number, input_size, output_size, unfolding_steps, batch_size, time_steps] =
         GetParam();
 
     LiquidCell liquid_cell(
-        neuron_number, input_size, output_size, unfolding_steps, tanh_activation, DELTA_T);
+        neuron_number, input_size, output_size, unfolding_steps,
+        torch::nn::AnyModule(torch::nn::Tanh()), DELTA_T);
 
     const auto x_t = torch::randn({batch_size, neuron_number});
     const auto input_t = torch::randn({batch_size, input_size});
@@ -97,7 +84,8 @@ TEST_P(LiquidCellTestParam, OutputShape) {
         GetParam();
 
     LiquidCell liquid_cell(
-        neuron_number, input_size, output_size, unfolding_steps, tanh_activation, DELTA_T);
+        neuron_number, input_size, output_size, unfolding_steps,
+        torch::nn::AnyModule(torch::nn::Tanh()), DELTA_T);
 
     const auto inputs = torch::randn({batch_size, time_steps, input_size});
 
@@ -113,12 +101,11 @@ TEST_P(LiquidCellTestParam, GradientFlows) {
     const auto [neuron_number, input_size, output_size, unfolding_steps, batch_size, time_steps] =
         GetParam();
 
-    // LayerNorm over a single feature outputs exactly zero (x - mean(x) == 0),
-    // which blocks any gradient from reaching the layers before it
     if (output_size == 1) GTEST_SKIP() << "LayerNorm({1}) zeroes the signal, no gradient flows";
 
     LiquidCell liquid_cell(
-        neuron_number, input_size, output_size, unfolding_steps, tanh_activation, DELTA_T);
+        neuron_number, input_size, output_size, unfolding_steps,
+        torch::nn::AnyModule(torch::nn::Tanh()), DELTA_T);
 
     const auto inputs = torch::randn({batch_size, time_steps, input_size}, torch::requires_grad());
 
@@ -135,7 +122,7 @@ TEST_P(LiquidCellTestParam, GradientFlows) {
 }
 
 TEST(LiquidCellEdge, RejectsNon3DInput) {
-    LiquidCell liquid_cell(4, 3, 2, 2, tanh_activation, DELTA_T);
+    LiquidCell liquid_cell(4, 3, 2, 2, torch::nn::AnyModule(torch::nn::Tanh()), DELTA_T);
 
     EXPECT_THROW(liquid_cell.forward(torch::randn({2, 3})), c10::Error);
     EXPECT_THROW(liquid_cell.forward(torch::randn({2, 5, 3, 1})), c10::Error);

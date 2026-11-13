@@ -1,7 +1,3 @@
-//
-// Created by samuel on 02/08/2026.
-//
-
 #include "./adapters.h"
 
 #include <algorithm>
@@ -13,6 +9,18 @@ namespace arenai::desktop::gui {
 
     double MenuSystemInterface::GetElapsedTime() {
         return std::chrono::duration<double>(std::chrono::steady_clock::now() - start_).count();
+    }
+
+    bool MenuSystemInterface::LogMessage(const Rml::Log::Type type, const Rml::String &message) {
+        switch (type) {
+            case Rml::Log::LT_ERROR:
+            case Rml::Log::LT_ASSERT: std::cerr << "RmlUi error: " << message << std::endl; break;
+            case Rml::Log::LT_WARNING:
+                std::cerr << "RmlUi warning: " << message << std::endl;
+                break;
+            default: break;
+        }
+        return true;
     }
 
     ReaderBackedFileInterface::ReaderBackedFileInterface(

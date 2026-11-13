@@ -9,6 +9,14 @@ En cas de doute ou d'alternative de design : **poser la question d'abord**, prop
 options, attendre la réponse. Les corrections de bugs internes (fichiers `src/`) qui ne
 changent ni contrat ni comportement voulu restent autorisées.
 
+## Règle de travail — commentaires
+
+**Aucun commentaire de plus d'une ligne.** Un commentaire d'une ligne sert soit à désambiguïser
+la lecture du code là où le code seul ne peut pas le dire (une indication de shape de tenseur,
+une unité, un index), soit de titre de section ou d'étape (`// metrics`, `// warmup`,
+`// close episode`). Pas de paraphrase du code, pas de justification, pas de prose sur
+plusieurs lignes : le code parle de lui-même.
+
 A neural network (PPO) trained to play a tank-arena game.
 Jolt physics, offscreen Vulkan rendering (the agent's vision), NN via LibTorch.
 
@@ -21,12 +29,12 @@ Dependency order: utils → model → view → core → agent / desktop
 - **arenai_view**   — Vulkan rendering; `offscreen_renderer` = offscreen render for the agent's vision
 - **arenai_core**   — `BaseTanksEnvironment`, enemy_handler, thread_pool (RL env loop)
 - **arenai_controller** — input handling
-- **arenai_agent**  — agents (sac, ppo, ppo_liquid), networks, core (train env + spawn curriculum),
+- **arenai_agent**  — agents (ppo, ppo_liquid, ppg, sac), networks, core (train env + spawn curriculum),
   metrics + `main.cpp` (training executable). The reward is purely event-based
   (hit/kill/received/death/win — no dense shaping).
 - **arenai_desktop** — the playable game executable. Its `src/` folders are hexagons of their own:
   `gui/` (RmlUi main menu — RmlUi types must never leak out of it, other code only includes
-  `gui/menu.h`), `controller/`, `core/`. Menu assets live in `resources/menu/` + `resources/font/`.
+  `gui/gui.h`), `controller/`, `core/`. Menu assets live in `resources/menu/` + `resources/font/`.
 
 ## Build
 

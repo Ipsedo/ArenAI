@@ -1,7 +1,3 @@
-//
-// Created by samuel on 30/06/2026.
-//
-
 #include <distributions/truncated_normal.h>
 
 #include <arenai_agent_tests/tests_distributions/tests_truncated_normal.h>

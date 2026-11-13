@@ -1,7 +1,3 @@
-//
-// Created by samuel on 01/07/2026.
-//
-
 #ifndef ARENAI_CORE_TESTS_THREAD_LIMITER_H
 #define ARENAI_CORE_TESTS_THREAD_LIMITER_H
 

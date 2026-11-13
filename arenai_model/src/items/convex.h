@@ -1,7 +1,3 @@
-//
-// Created by samuel on 23/03/2023.
-//
-
 #ifndef ARENAI_CONVEX_H
 #define ARENAI_CONVEX_H
 

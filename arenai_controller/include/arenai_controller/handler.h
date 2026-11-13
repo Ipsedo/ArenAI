@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/10/2025.
-//
-
 #ifndef ARENAI_HANDLER_H
 #define ARENAI_HANDLER_H
 

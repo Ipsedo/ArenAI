@@ -1,7 +1,3 @@
-//
-// Created by samuel on 03/10/2025.
-//
-
 #include "./local_file_reader.h"
 
 #include <cstdlib>

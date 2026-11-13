@@ -1,7 +1,3 @@
-//
-// Created by samuel on 16/03/2026.
-//
-
 #include "./mouse_keyboard.h"
 
 #include <utility>
@@ -88,12 +84,12 @@ namespace arenai::desktop {
         if (cursor_captured) {
             window->set_cursor_mode(controller::CursorMode::Disabled);
 
-            // the parts consume an aim rate in [-1, 1]: the normalized mouse displacement
-            // is that rate, the player's slew speed being set to match the mouse
             current_turret_rate = static_cast<float>((event.mouse_x - center_x) / center_x);
             current_canon_rate = static_cast<float>((event.mouse_y - center_y) / center_y);
 
             window->set_cursor_position(center_x, center_y);
+            last_mouse_x = center_x;
+            last_mouse_y = center_y;
         } else {
             window->set_cursor_mode(controller::CursorMode::Normal);
 

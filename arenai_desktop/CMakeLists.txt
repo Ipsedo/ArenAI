@@ -31,7 +31,7 @@ add_executable(arenai_desktop ${ARENAI_DESKTOP_SRC})
 # ArenAI module headers propagate through arenai_agent's PUBLIC interface.
 # Windowing (GLFW) is fully encapsulated inside arenai_view.
 # RmlUi is reserved to the src/gui/ hexagon: only sources under gui/ may
-# include it, every other folder goes through gui/menu.h (which exposes no
+# include it, every other folder goes through gui/gui.h (which exposes no
 # RmlUi type).
 target_link_libraries(
         arenai_desktop

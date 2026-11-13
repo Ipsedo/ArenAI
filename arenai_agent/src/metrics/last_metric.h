@@ -1,7 +1,3 @@
-//
-// Created by samuel on 11/07/2026.
-//
-
 #ifndef ARENAI_LAST_METRIC_H
 #define ARENAI_LAST_METRIC_H
 

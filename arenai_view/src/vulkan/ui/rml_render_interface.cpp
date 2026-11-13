@@ -1,11 +1,8 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #include "./rml_render_interface.h"
 
 #include <algorithm>
 #include <cstddef>
+#include <cstring>
 #include <iostream>
 #include <utility>
 
@@ -65,6 +62,7 @@ namespace arenai::view {
                         .depth(false, false)
                         .blend_premultiplied()
                         .color_format(frame_context_->swapchain_format())
+                        .samples(frame_context_->samples())
                         .build(device_, pipeline_layout_);
 
         white_texture_ = std::make_unique<RmlTexture>();
@@ -121,12 +119,15 @@ namespace arenai::view {
 
         auto *geometry = new CompiledGeometry{};
         geometry->nb_indices = static_cast<uint32_t>(indices.size());
-        geometry->vertices = std::make_unique<VulkanBuffer>(
-            device_, upload_pool_, vertices.data(), vertices.size() * sizeof(Rml::Vertex),
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-        geometry->indices = std::make_unique<VulkanBuffer>(
-            device_, upload_pool_, indices.data(), indices.size() * sizeof(int),
-            VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+        geometry->vertices = std::make_unique<HostVisibleBuffer>(
+            device_, vertices.size() * sizeof(Rml::Vertex), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+        std::memcpy(
+            geometry->vertices->data(), vertices.data(), vertices.size() * sizeof(Rml::Vertex));
+        geometry->vertices->flush();
+        geometry->indices = std::make_unique<HostVisibleBuffer>(
+            device_, indices.size() * sizeof(int), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+        std::memcpy(geometry->indices->data(), indices.data(), indices.size() * sizeof(int));
+        geometry->indices->flush();
 
         return reinterpret_cast<Rml::CompiledGeometryHandle>(geometry);
     }

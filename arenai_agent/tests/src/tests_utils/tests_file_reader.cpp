@@ -1,7 +1,3 @@
-//
-// Created by samuel on 30/06/2026.
-//
-
 #include <cstdio>
 #include <fstream>
 
@@ -19,10 +15,6 @@ void DesktopAssetFileReaderTest::SetUp() {
 }
 
 void DesktopAssetFileReaderTest::TearDown() { std::filesystem::remove_all(tmp_dir); }
-
-// ========================================================================
-// read_text tests
-// ========================================================================
 
 TEST_F(DesktopAssetFileReaderTest, ReadTextReturnsContent) {
     std::ofstream(tmp_dir / "hello.txt") << "Hello World!";
@@ -43,8 +35,6 @@ TEST_F(DesktopAssetFileReaderTest, ReadTextEmptyFile) {
 }
 
 TEST_F(DesktopAssetFileReaderTest, ReadTextMultiLine) {
-    // written in binary so the file holds exactly these bytes on every
-    // platform: read_text is byte-exact (it also serves binary assets)
     std::ofstream(tmp_dir / "multi.txt", std::ios::binary) << "line1\nline2\nline3";
 
     DesktopAssetFileReader reader(tmp_dir);
@@ -77,10 +67,6 @@ TEST_F(DesktopAssetFileReaderTest, ReadTextUTF8Content) {
 
     ASSERT_EQ(content, "café résumé naïve");
 }
-
-// ========================================================================
-// read_png tests
-// ========================================================================
 
 TEST_F(DesktopAssetFileReaderTest, ReadPngValidImage) {
     constexpr int W = 4, H = 3, C = 4;

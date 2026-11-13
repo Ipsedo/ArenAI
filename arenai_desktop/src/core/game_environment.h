@@ -1,7 +1,3 @@
-//
-// Created by samuel on 11/03/2026.
-//
-
 #ifndef ARENAI_DESKTOP_GAME_ENVIRONMENT_H
 #define ARENAI_DESKTOP_GAME_ENVIRONMENT_H
 
@@ -15,7 +11,7 @@
 
 #include "../controller/gamepad.h"
 #include "../controller/mouse_keyboard.h"
-#include "../gui/menu.h"
+#include "./settings.h"
 
 namespace arenai::desktop {
 
@@ -24,13 +20,18 @@ namespace arenai::desktop {
         DesktopGameEnvironment(
             const std::filesystem::path &asset_folder_path,
             const std::shared_ptr<view::AbstractWindowedGraphicBackend> &graphics_backend,
-            const gui::GameSettings &settings, int vision_height, int vision_width,
+            const GameSettings &settings, int vision_height, int vision_width,
             float wanted_frequency);
 
         ~DesktopGameEnvironment() override;
 
+        void create_player_renderer();
+
         std::shared_ptr<controller::AbstractKeyboardCallback> keyboard_handler() const;
         std::shared_ptr<controller::AbstractGamepadCallback> gamepad_handler() const;
+
+        std::optional<std::vector<core::State>>
+        play_frame(float time_delta, const std::vector<core::Action> &actions, bool observe);
 
         void redraw() const;
 
@@ -39,6 +40,11 @@ namespace arenai::desktop {
         bool is_player_dead() const;
 
         int get_score() const;
+        float player_health_ratio() const;
+
+        int nb_enemies();
+        int nb_enemies_alive();
+        int enemies_max_score();
 
         model::PlayerHits consume_player_hits() const;
         std::vector<float> consume_damage_screen_angles() const;
@@ -57,6 +63,8 @@ namespace arenai::desktop {
     private:
         std::shared_ptr<view::AbstractWindowedGraphicBackend> windowed_backend;
 
+        model::AbstractPhysicEngine *engine_ = nullptr;
+
         std::shared_ptr<utils::AbstractResourceFileReader> asset_file_reader;
         std::unique_ptr<model::PlayerTank> player_tank;
         std::unique_ptr<view::AbstractPlayerRenderer> player_renderer;
@@ -68,7 +76,7 @@ namespace arenai::desktop {
 
         float wanted_frequency;
 
-        gui::GameSettings settings;
+        GameSettings settings;
     };
 
 }// namespace arenai::desktop

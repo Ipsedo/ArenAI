@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #ifndef ARENAI_VK_RML_RENDER_INTERFACE_H
 #define ARENAI_VK_RML_RENDER_INTERFACE_H
 
@@ -50,8 +46,8 @@ namespace arenai::view {
 
     private:
         struct CompiledGeometry {
-            std::unique_ptr<VulkanBuffer> vertices;
-            std::unique_ptr<VulkanBuffer> indices;
+            std::unique_ptr<HostVisibleBuffer> vertices;
+            std::unique_ptr<HostVisibleBuffer> indices;
             uint32_t nb_indices;
         };
 

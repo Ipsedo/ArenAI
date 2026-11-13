@@ -1,7 +1,3 @@
-//
-// Created by samuel on 03/10/2025.
-//
-
 #ifndef ARENAI_AGENT_HOST_VISION_H
 #define ARENAI_AGENT_HOST_VISION_H
 
@@ -12,32 +8,8 @@ namespace arenai::agent {
     class ConvolutionNetwork final : public torch::nn::Module {
     public:
         explicit ConvolutionNetwork(
-            int vision_height, int vision_width, const std::vector<std::tuple<int, int>> &channels,
+            const std::vector<std::tuple<int, int>> &channels,
             const std::vector<int> &group_norm_nums);
-
-        torch::Tensor forward(const torch::Tensor &input);
-
-        int get_output_size() const;
-
-    private:
-        torch::nn::Sequential cnn{nullptr};
-        int output_size;
-    };
-
-    class ResidualBlock final : public torch::nn::Module {
-    public:
-        explicit ResidualBlock(int channels);
-
-        torch::Tensor forward(const torch::Tensor &input);
-
-    private:
-        torch::nn::Sequential conv_block{nullptr};
-    };
-
-    class ImpalaConvolutionNetwork final : public torch::nn::Module {
-    public:
-        ImpalaConvolutionNetwork(
-            int vision_height, int vision_width, const std::vector<std::tuple<int, int>> &channels);
 
         torch::Tensor forward(const torch::Tensor &input);
 

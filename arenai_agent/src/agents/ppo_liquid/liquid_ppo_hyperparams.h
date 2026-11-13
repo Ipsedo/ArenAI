@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #ifndef ARENAI_LIQUID_PPO_HYPERPARAMS_H
 #define ARENAI_LIQUID_PPO_HYPERPARAMS_H
 
@@ -16,30 +12,38 @@ namespace arenai::agent {
     struct LiquidPpoHyperParams {
         float actor_learning_rate = 1e-4f;
         float critic_learning_rate = 3e-4f;
-        int hidden_size_sensors = 128;
-        std::vector<std::tuple<int, int>> vision_channels = {{3, 16},  {16, 24}, {24, 32}, {32, 48},
-                                                             {48, 64}, {64, 96}, {96, 128}};
-        std::vector<int> group_norm_nums = {2, 3, 4, 6, 8, 12, 16};
+        int hidden_size_sensors = 64;
+        std::vector<std::tuple<int, int>> vision_channels =
+            {{3, 16}, {16, 32}, {32, 64}, {64, 128}};
+        std::vector<int> group_norm_nums = {2, 4, 8, 16};
         int neuron_number = 128;
         int unfolding_steps = 6;
-        float delta_t = 1.f / 30.f;
+        float delta_t = 1.f / 10.f;
         int chunk_size = 30;
-        float initial_sigma = 0.5f;
-        float initial_fire_proba = 0.4f;
-        float initial_zoom_proba = 0.25f;
+        float initial_sigma = 0.3f;
+        float initial_fire_proba = 0.5f;
+        float initial_zoom_proba = 0.5f;
         int metric_window_size = 256;
-        float gamma = 0.997f;
-        float gae_lambda = 0.99f;
+        float gamma = 0.995f;
+        float gae_lambda = 0.95f;
+        // λ of the canon actions' advantage, the aim potential's own return
+        float aim_gae_lambda = 0.f;
         float clip_epsilon = 0.2f;
         float target_kl = 0.05f;
         float grad_norm_max = 0.5f;
-        // per continuous action: direction x, direction y, canon x, canon y
-        std::vector<float> continuous_target_entropy = {-0.2f, -0.2f, -0.88f, -0.88f};
-        // factors of the Bernoulli maximum entropy, per discrete action: fire, zoom
-        std::vector<float> discrete_target_entropy_factors = {0.4f, 0.4f};
-        int epochs = 2;
-        int rollout_size = 30 * 30;
-        int minibatch_size = 1024;
+        float initial_alpha = 0.001f;
+        float alpha_learning_rate = 3e-4f;
+        // entropy of the squashed normal per dir_x, dir_y, canon_x, canon_y
+        std::vector<float> continuous_target_entropy = {0.f, 0.f, 0.f, 0.f};
+        // per discrete action, the Bernoulli whose entropy is the target
+        float discrete_target_proba = 0.05f;
+        int actor_epochs = 4;
+        int critic_epochs = 8;
+        int rollout_size = 30 * 10;
+        int actor_batch_size = 512;
+        int actor_gpu_batch_size = 512;
+        int critic_batch_size = 512;
+        int critic_gpu_batch_size = 512;
     };
 
     std::vector<CliField<LiquidPpoHyperParams>> liquid_ppo_cli_fields();

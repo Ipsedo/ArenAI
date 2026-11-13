@@ -1,7 +1,3 @@
-//
-// Created by claude on 22/07/2026.
-//
-
 #ifndef ARENAI_TESTS_PPO_H
 #define ARENAI_TESTS_PPO_H
 
@@ -10,6 +6,9 @@
 
 #include <agents/ppo/ppo_factory.h>
 #include <gtest/gtest.h>
+
+// test code: the arenai sub-namespaces are used unqualified
+using namespace arenai;
 
 struct PpoTestConfig {
     int vision_height;

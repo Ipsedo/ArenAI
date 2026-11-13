@@ -1,7 +1,3 @@
-//
-// Created by samuel on 01/07/2026.
-//
-
 #include <atomic>
 #include <thread>
 #include <vector>
@@ -11,10 +7,6 @@
 
 using namespace arenai;
 using namespace arenai::core;
-
-// ========================================================================
-// Acquire / Release — basic behavior
-// ========================================================================
 
 TEST_F(ThreadLimiterTest, SingleAcquireRelease) {
     ThreadLimiter limiter(1);
@@ -41,10 +33,6 @@ TEST_F(ThreadLimiterTest, SequentialAcquiresReturnIncreasingTickets) {
     ASSERT_EQ(t1, 1);
     ASSERT_EQ(t2, 2);
 }
-
-// ========================================================================
-// Concurrency limiting
-// ========================================================================
 
 TEST_F(ThreadLimiterTest, ConcurrencyNeverExceedsK) {
     constexpr unsigned int k = 2;
@@ -126,10 +114,6 @@ TEST_F(ThreadLimiterTest, ConcurrencyLimitOneActsAsMutex) {
     ASSERT_FALSE(violation.load()) << "k=1 should behave as a mutex";
 }
 
-// ========================================================================
-// FIFO ordering
-// ========================================================================
-
 TEST_F(ThreadLimiterTest, FIFOOrdering) {
     constexpr unsigned int k = 1;
     constexpr int num_threads = 5;
@@ -175,10 +159,6 @@ TEST_F(ThreadLimiterTest, FIFOOrdering) {
         ASSERT_EQ(order[i], i) << "thread " << i << " should have been served at position " << i;
     }
 }
-
-// ========================================================================
-// Large K — all threads proceed immediately
-// ========================================================================
 
 TEST_F(ThreadLimiterTest, LargeKAllThreadsProceedImmediately) {
     constexpr int num_threads = 8;

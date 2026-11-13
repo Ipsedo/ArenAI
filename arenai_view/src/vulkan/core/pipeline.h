@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #ifndef ARENAI_VK_PIPELINE_H
 #define ARENAI_VK_PIPELINE_H
 

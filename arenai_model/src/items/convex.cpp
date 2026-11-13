@@ -1,7 +1,3 @@
-//
-// Created by samuel on 23/03/2023.
-//
-
 #include "./convex.h"
 
 #include <algorithm>
@@ -77,10 +73,6 @@ namespace arenai::model {
     JPH::Body *ConvexItem::get_body() { return body; }
 
     glm::vec3 ConvexItem::_get_scale() { return scale; }
-
-    /*
- * Basic shapes
- */
 
     CubeItem::CubeItem(
         std::string name, JoltPhysicEngine &engine,

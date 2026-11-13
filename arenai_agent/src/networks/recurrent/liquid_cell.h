@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #ifndef ARENAI_LIQUID_CELL_H
 #define ARENAI_LIQUID_CELL_H
 
@@ -10,9 +6,7 @@
 namespace arenai::agent {
     class CellModel : public torch::nn::Module {
     public:
-        CellModel(
-            int neuron_number, int input_size,
-            const std::function<torch::Tensor(const torch::Tensor &)> &activation_function);
+        CellModel(int neuron_number, int input_size, torch::nn::AnyModule activation_function);
 
         torch::Tensor forward(const torch::Tensor &x_t, const torch::Tensor &input_t);
 
@@ -21,15 +15,14 @@ namespace arenai::agent {
         torch::nn::Linear recurrent_weights;
         torch::Tensor biases;
 
-        std::function<torch::Tensor(const torch::Tensor &)> activation_function;
+        torch::nn::AnyModule activation;
     };
 
     class LiquidCell : public torch::nn::Module {
     public:
         LiquidCell(
             int neuron_number, int input_size, int output_size, int unfolding_steps,
-            const std::function<torch::Tensor(const torch::Tensor &)> &activation_function,
-            float delta_t);
+            const torch::nn::AnyModule &activation_function, float delta_t);
 
         torch::Tensor forward(const torch::Tensor &inputs);
 

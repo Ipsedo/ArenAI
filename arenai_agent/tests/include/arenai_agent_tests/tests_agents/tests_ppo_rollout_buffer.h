@@ -1,12 +1,11 @@
-//
-// Created by claude on 22/07/2026.
-//
-
 #ifndef ARENAI_TESTS_PPO_ROLLOUT_BUFFER_H
 #define ARENAI_TESTS_PPO_ROLLOUT_BUFFER_H
 
 #include <agents/ppo/ppo_rollout_buffer.h>
 #include <gtest/gtest.h>
+
+// test code: the arenai sub-namespaces are used unqualified
+using namespace arenai;
 
 class PpoRolloutBufferTest : public testing::Test {
 protected:

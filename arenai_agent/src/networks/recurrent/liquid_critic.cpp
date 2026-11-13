@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #include "./liquid_critic.h"
 
 #include "../../networks_utils/init.h"
@@ -12,13 +8,13 @@ using namespace arenai::agent;
 namespace arenai::agent {
 
     LiquidCritic::LiquidCritic(
-        const int &vision_height, const int &vision_width, const int &nb_sensors,
-        const int &hidden_size_sensors, const std::vector<std::tuple<int, int>> &vision_channels,
+        const int &nb_sensors, const int &hidden_size_sensors,
+        const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, const int &neuron_number,
         const int &unfolding_steps, const float &delta_t)
         : vision_encoder(register_module(
-            "vision_encoder", std::make_shared<ConvolutionNetwork>(
-                                  vision_height, vision_width, vision_channels, group_norm_nums))),
+            "vision_encoder",
+            std::make_shared<ConvolutionNetwork>(vision_channels, group_norm_nums))),
           sensors_encoder(register_module(
               "sensors_encoder",
               torch::nn::Sequential(
@@ -29,8 +25,8 @@ namespace arenai::agent {
           liquid(register_module(
               "liquid", std::make_shared<LiquidCell>(
                             neuron_number, hidden_size_sensors + vision_encoder->get_output_size(),
-                            neuron_number, unfolding_steps,
-                            [](const torch::Tensor &t) { return torch::silu(t); }, delta_t))),
+                            neuron_number, unfolding_steps, torch::nn::AnyModule(torch::nn::SiLU()),
+                            delta_t))),
           to_value(register_module("to_value", torch::nn::Linear(neuron_number, 1))) {
 
         vision_encoder->apply(init_hidden_weights);
@@ -45,7 +41,8 @@ namespace arenai::agent {
 
     LiquidCriticOutput LiquidCritic::value(
         const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &x_t) {
-        const auto [output, next_x] = liquid->forward_step(x_t, encode(vision, sensors));
+        const auto encoded = encode(vision, sensors);
+        const auto [output, next_x] = liquid->forward_step(x_t, encoded);
         return {.value = to_value->forward(output), .next_x = next_x};
     }
 

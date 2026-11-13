@@ -1,7 +1,3 @@
-//
-// Created by samuel on 16/03/2026.
-//
-
 #ifndef ARENAI_DESKTOP_PLAYER_CONTROLLER_HANDLER_H
 #define ARENAI_DESKTOP_PLAYER_CONTROLLER_HANDLER_H
 
@@ -41,8 +37,6 @@ namespace arenai::desktop {
         std::tuple<bool, controller::user_input> to_output(PlayerMouseKeyboardInput event) override;
 
     private:
-        // presses / releases of a bound key or mouse button drive the
-        // movement state and the fire flag; an unbound slot never matches
         void apply_binding(
             const KeyboardBinding &input, controller::InputAction action, bool &need_fire);
 

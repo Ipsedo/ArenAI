@@ -1,7 +1,3 @@
-//
-// Created by samuel on 03/10/2025.
-//
-
 #include "./torch_saver.h"
 
 #include <fstream>
@@ -12,10 +8,6 @@ using namespace arenai;
 using namespace arenai::agent;
 
 namespace arenai::agent {
-
-    /*
-     * Agent Saver
-     */
 
     AgentSaver::AgentSaver(
         const std::shared_ptr<AbstractTrainer> &trainer, const std::filesystem::path &output_path,

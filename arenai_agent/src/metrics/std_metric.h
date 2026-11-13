@@ -1,7 +1,3 @@
-//
-// Created by samuel on 11/06/2026.
-//
-
 #ifndef ARENAI_AGENT_HOST_STD_METRIC_H
 #define ARENAI_AGENT_HOST_STD_METRIC_H
 

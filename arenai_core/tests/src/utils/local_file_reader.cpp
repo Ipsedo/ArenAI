@@ -1,7 +1,3 @@
-//
-// Created by samuel on 01/07/2026.
-//
-
 #include <cstdlib>
 #include <cstring>
 #include <fstream>

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/10/2025.
-//
-
 #ifndef ARENAI_TYPES_H
 #define ARENAI_TYPES_H
 
@@ -14,17 +10,25 @@ namespace arenai::core {
     struct State {
         view::image<uint8_t> vision;
         std::vector<float> proprioception;
+
+        float remaining_shells_ratio;
+        float cooldown_ratio;
+
+        bool can_fire;
     };
 
     typedef float Reward;
 
     typedef bool IsDone;
 
-    // done from starving out: the episode ends for the tank, but the value target must
-    // bootstrap instead of cutting the return (truncation, not termination)
     typedef bool IsTruncated;
 
     typedef controller::user_input Action;
+
+    inline std::vector<Action> release_fire(std::vector<Action> actions) {
+        for (auto &action: actions) action.fire_button.pressed = false;
+        return actions;
+    }
 }// namespace arenai::core
 
 #endif//ARENAI_TYPES_H

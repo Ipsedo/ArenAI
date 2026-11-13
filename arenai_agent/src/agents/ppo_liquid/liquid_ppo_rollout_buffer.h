@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #ifndef ARENAI_LIQUID_PPO_ROLLOUT_BUFFER_H
 #define ARENAI_LIQUID_PPO_ROLLOUT_BUFFER_H
 
@@ -17,11 +13,13 @@ namespace arenai::agent {
     struct LiquidPpoInputStep {
         TorchState state;
         TorchAction action;
+        // pre-tanh draw of the squashed normal, what the log-probabilities are computed on
+        torch::Tensor continuous_pre_tanh;
         torch::Tensor continuous_log_prob;
         torch::Tensor discrete_log_prob;
         torch::Tensor reward;
+        torch::Tensor aim_reward;
         torch::Tensor done;
-        // done whose value target must bootstrap instead of cutting the return (famine)
         torch::Tensor truncated;
         // [nb_tanks, neuron_number] actor liquid state opening the step
         torch::Tensor actor_hidden;
@@ -33,11 +31,12 @@ namespace arenai::agent {
     struct LiquidPpoRollout {
         TorchState states;
         TorchAction actions;
+        torch::Tensor continuous_pre_tanhs;
         torch::Tensor continuous_log_probs;
         torch::Tensor discrete_log_probs;
         torch::Tensor rewards;
+        torch::Tensor aim_rewards;
         torch::Tensor dones;
-        // dones whose value target must bootstrap instead of cutting the return
         torch::Tensor truncateds;
         // [nb_tanks, ...] observation closing the last step, for the value bootstrap
         TorchState bootstrap_state;
@@ -49,8 +48,6 @@ namespace arenai::agent {
         torch::Tensor episode_starts;
     };
 
-    // Sequential on-policy buffer. A step is "complete" once the observation that
-    // follows it is known - the next add()'s state, or finish_episode()'s final state.
     class LiquidPpoRolloutBuffer {
     public:
         void add(const LiquidPpoInputStep &step);

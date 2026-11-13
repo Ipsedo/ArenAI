@@ -1,7 +1,3 @@
-//
-// Created by samuel on 27/02/2026.
-//
-
 #ifndef ARENAI_AGENT_HOST_ATOMIC_SNAPSHOT_H
 #define ARENAI_AGENT_HOST_ATOMIC_SNAPSHOT_H
 

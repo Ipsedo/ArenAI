@@ -1,15 +1,7 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #include <arenai_agent_tests/tests_agents/tests_liquid_ppo.h>
 
 using namespace arenai;
 using namespace arenai::agent;
-
-// ========================================================================
-// Fixture helpers
-// ========================================================================
 
 void LiquidPpoAgentTest::SetUp() {
     tmp_dir = std::filesystem::temp_directory_path() / "arenai_test_liquid_ppo";
@@ -34,11 +26,14 @@ LiquidPpoAgentTest::make_factory(const LiquidPpoTestConfig &cfg) const {
         .gae_lambda = 0.95f,
         .clip_epsilon = 0.2f,
         .grad_norm_max = 1.f,
-        .continuous_target_entropy = std::vector(cfg.nb_continuous_actions, -0.88f),
-        .discrete_target_entropy_factors = std::vector(cfg.nb_discrete_actions, 0.2f),
-        .epochs = 1,
+        .continuous_target_entropy = std::vector(cfg.nb_continuous_actions, 0.f),
+        .actor_epochs = 1,
+        .critic_epochs = 1,
         .rollout_size = 8,
-        .minibatch_size = 10};
+        .actor_batch_size = 10,
+        .actor_gpu_batch_size = 10,
+        .critic_batch_size = 10,
+        .critic_gpu_batch_size = 10};
 
     return std::make_unique<LiquidPpoTorchAgentFactory>(
         cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
@@ -46,15 +41,10 @@ LiquidPpoAgentTest::make_factory(const LiquidPpoTestConfig &cfg) const {
 }
 
 TorchState LiquidPpoAgentTest::make_state(const LiquidPpoTestConfig &cfg, const int batch) {
-    return {
-        .vision =
-            torch::randint(0, 255, {batch, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
-        .proprioception = torch::randn({batch, cfg.nb_sensors})};
+    return TorchState(
+        torch::randint(0, 255, {batch, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
+        torch::randn({batch, cfg.nb_sensors}), torch::ones({batch, 1}));
 }
-
-// ========================================================================
-// Fixed tests
-// ========================================================================
 
 TEST_F(LiquidPpoAgentTest, ParameterCountPositive) {
     constexpr LiquidPpoTestConfig cfg{
@@ -77,14 +67,12 @@ TEST_F(LiquidPpoAgentTest, MetricsNotEmpty) {
         .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
-    const auto metrics = factory->get_trainer()->get_metrics();
-
-    ASSERT_EQ(metrics.size(), 10);
+    ASSERT_EQ(factory->get_trainer()->get_metrics().size(), 8);
+    // one alpha per action and skip_canon, CSV only
+    ASSERT_EQ(
+        factory->get_trainer()->get_csv_only_metrics().size(),
+        cfg.nb_continuous_actions + cfg.nb_discrete_actions + 1);
 }
-
-// ========================================================================
-// Parameterized: act shape tests
-// ========================================================================
 
 TEST_P(LiquidPpoActShapeParamTest, ActOutputShapes) {
     const auto cfg = GetParam();
@@ -151,10 +139,6 @@ INSTANTIATE_TEST_SUITE_P(
         LiquidPpoTestConfig{8, 8, 10, 4, 2}, LiquidPpoTestConfig{8, 8, 5, 2, 2},
         LiquidPpoTestConfig{16, 16, 20, 6, 2}, LiquidPpoTestConfig{8, 12, 10, 4, 2}));
 
-// ========================================================================
-// Parameterized: save / load tests
-// ========================================================================
-
 TEST_P(LiquidPpoSaveLoadParamTest, SaveCreatesExpectedFiles) {
     const auto cfg = GetParam();
     const auto factory = make_factory(cfg);
@@ -165,8 +149,9 @@ TEST_P(LiquidPpoSaveLoadParamTest, SaveCreatesExpectedFiles) {
     factory->get_trainer()->save(save_dir);
 
     const std::vector<std::string> expected_files = {
-        "actor.pt",        "critic.pt",      "actor_optim.pt",
-        "critic_optim.pt", "actor_repr.txt", "critic_repr.txt",
+        "actor.pt",       "critic.pt",       "actor_optim.pt",       "critic_optim.pt",
+        "actor_repr.txt", "critic_repr.txt", "continuous_alphas.pt", "discrete_alphas.pt",
+        "alpha_optim.pt",
     };
 
     for (const auto &f: expected_files)

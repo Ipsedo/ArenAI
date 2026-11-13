@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #include <cstdlib>
 #include <numeric>
 #include <thread>
@@ -125,8 +121,6 @@ TEST(VkOffscreenTest, TwoRenderersAlternate) {
     ASSERT_NE(pixels_a, pixels_b);
 }
 
-// mirrors the vision thread pool: one renderer per thread, concurrent draws
-// on the same device/queue
 TEST(VkOffscreenTest, ConcurrentRenderers) {
     const auto backend = make_vulkan_backend();
     const auto file_reader =

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 28/07/2026.
-//
-
 #ifndef ARENAI_DESKTOP_TESTS_INTERCEPTOR_AGENT_H
 #define ARENAI_DESKTOP_TESTS_INTERCEPTOR_AGENT_H
 
@@ -9,9 +5,9 @@
 
 #include <arenai_agent/agent.h>
 
-// Records every batch of states the game loop hands to the agent and answers
-// with neutral actions: what act() received is exactly what the enemy agent
-// would have seen in run_game().
+// test code: the arenai sub-namespaces are used unqualified
+using namespace arenai;
+
 class InterceptorAgent final : public agent::AbstractAgent {
 public:
     std::vector<std::vector<core::State>> received_states;

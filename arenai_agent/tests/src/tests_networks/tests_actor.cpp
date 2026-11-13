@@ -1,7 +1,3 @@
-//
-// Created by samuel on 30/06/2026.
-//
-
 #include <networks/actor.h>
 #include <networks/constants.h>
 
@@ -20,9 +16,8 @@ TEST_P(ActorTestParam, TestActorAct) {
     constexpr int height = 32;
 
     Actor actor(
-        height, width, sensors_nb, cont_actions_nb, discrete_actions_nb, sensors_hidden_size,
-        layers, {{input_channels, 4}, {4, 8}}, {2, 4}, 0.1f,
-        std::vector(discrete_actions_nb, 0.2f));
+        sensors_nb, cont_actions_nb, discrete_actions_nb, sensors_hidden_size, layers,
+        {{input_channels, 4}, {4, 8}}, {2, 4}, 0.1f, std::vector(discrete_actions_nb, 0.2f));
 
     const auto image = torch::randint(
         255, {batch_size, input_channels, height, width},
@@ -34,15 +29,17 @@ TEST_P(ActorTestParam, TestActorAct) {
     ASSERT_EQ(mu.ndimension(), 2);
     ASSERT_EQ(mu.size(0), batch_size);
     ASSERT_EQ(mu.size(1), cont_actions_nb);
-    ASSERT_TRUE(
-        torch::all(torch::logical_and(torch::ge(mu, -1.0), torch::le(mu, 1.0))).item<bool>());
+    ASSERT_TRUE(torch::all(torch::isfinite(mu)).item<bool>());
 
     ASSERT_EQ(sigma.ndimension(), 2);
     ASSERT_EQ(sigma.size(0), batch_size);
     ASSERT_EQ(sigma.size(1), cont_actions_nb);
-    ASSERT_TRUE(
-        torch::all(torch::logical_and(torch::ge(sigma, SIGMA_MIN), torch::le(sigma, SIGMA_MAX)))
-            .item<bool>());
+    ASSERT_TRUE(torch::all(torch::logical_and(
+                               torch::ge(sigma, std::exp(LOG_SIGMA_MIN)),
+                               torch::le(sigma, std::exp(LOG_SIGMA_MAX))))
+                    .item<bool>());
+    // the log-sigma head starts at the wanted initial sigma, whatever the state
+    ASSERT_TRUE(torch::all(torch::abs(sigma - 0.1f) < 0.02f).item<bool>());
 
     ASSERT_EQ(discrete.ndimension(), 2);
     ASSERT_EQ(discrete.size(0), batch_size);

@@ -1,7 +1,3 @@
-//
-// Created by samuel on 03/10/2025.
-//
-
 #include "./train.h"
 
 #include <cmath>
@@ -16,11 +12,11 @@
 
 #include <arenai_model/constants.h>
 
-#include "./core/spawn_curriculum.h"
+#include "./agents/torch_types.h"
+#include "./core/curriculum.h"
 #include "./core/train_environment.h"
 #include "./metrics/last_metric.h"
 #include "./metrics/metric_saver.h"
-#include "./networks_utils/torch_converter.h"
 #include "./networks_utils/torch_saver.h"
 
 using namespace arenai;
@@ -29,8 +25,6 @@ using namespace arenai::agent;
 namespace arenai::agent {
 
     namespace {
-        // every resolved option of the run, written next to the metrics: a run must stay
-        // identifiable once its command line is forgotten
         void save_run_config(
             const EnvironmentOptions &environment_options, const TrainOptions &train_options,
             const nlohmann::json &agent_config) {
@@ -52,12 +46,16 @@ namespace arenai::agent {
                   {"initial_spawn_height", environment_options.initial_spawn_height},
                   {"final_spawn_width", environment_options.final_spawn_width},
                   {"final_spawn_height", environment_options.final_spawn_height},
+                  {"shells", environment_options.shell_economy.initial_shells},
+                  {"shells_per_hit", environment_options.shell_economy.shells_per_hit},
+                  {"max_shells", environment_options.shell_economy.max_shells},
                   {"curriculum_delta", environment_options.curriculum_delta},
                   {"curriculum_ratio_low", environment_options.curriculum_ratio_low},
                   {"curriculum_ratio_high", environment_options.curriculum_ratio_high},
                   {"curriculum_probe_window", environment_options.curriculum_probe_window},
                   {"curriculum_boundary_proba", environment_options.curriculum_boundary_proba},
-                  {"vision_num_threads", environment_options.num_threads}}},
+                  {"vision_num_threads", environment_options.num_threads},
+                  {"action_repeat", environment_options.action_repeat}}},
                 {"agent", agent_config}};
 
             std::filesystem::create_directories(train_options.output_folder);
@@ -81,7 +79,7 @@ namespace arenai::agent {
 
         std::cout << "Vision size : width=" << environment_options.vision_width
                   << ", height=" << environment_options.vision_height << std::endl;
-        std::cout << "Proprioception size : " << model::ENEMY_PROPRIOCEPTION_SIZE << std::endl;
+        std::cout << "State vector size : " << model::ENEMY_STATE_VECTOR_SIZE << std::endl;
         std::cout << "Action size (continuous) : " << model::ENEMY_NB_CONTINUOUS_ACTION
                   << std::endl;
         std::cout << "Action size (discrete) : " << model::ENEMY_NB_DISCRETE_ACTION << std::endl;
@@ -90,22 +88,22 @@ namespace arenai::agent {
             std::move(graphics_backend), environment_options.nb_tanks,
             train_options.resources_folder, environment_options.wanted_frequency,
             train_options.max_episode_steps, environment_options.vision_height,
-            environment_options.vision_width, environment_options.num_threads);
+            environment_options.vision_width, environment_options.num_threads,
+            environment_options.action_repeat,
+            agent_factory->get_config().at("gamma").get<float>());
 
         const float initial_spawn_side = std::sqrt(
             environment_options.initial_spawn_width * environment_options.initial_spawn_height);
         const float final_spawn_side = std::sqrt(
             environment_options.final_spawn_width * environment_options.final_spawn_height);
 
-        // delta is given in meters on the spawn side; a non-growing range disables
-        // the curriculum (progress stays at 0, i.e. the initial spawn size)
         const float curriculum_delta_progress =
             final_spawn_side > initial_spawn_side
                 ? environment_options.curriculum_delta / (final_spawn_side - initial_spawn_side)
                 : 0.f;
 
         constexpr std::uint64_t curriculum_seed = 1337;
-        SpawnCurriculum curriculum(
+        ProgressCurriculum curriculum(
             curriculum_delta_progress, environment_options.curriculum_ratio_low,
             environment_options.curriculum_ratio_high, environment_options.curriculum_probe_window,
             environment_options.curriculum_boundary_proba, curriculum_seed);
@@ -135,8 +133,16 @@ namespace arenai::agent {
         metrics.push_back(spawn_bound_metric);
         metrics.insert(metrics.end(), trainer_metrics.begin(), trainer_metrics.end());
 
+        const auto env_csv_only_metrics = env->get_csv_only_metrics();
+        const auto trainer_csv_only_metrics = trainer->get_csv_only_metrics();
+        auto csv_metrics = metrics;
+        csv_metrics.insert(
+            csv_metrics.end(), env_csv_only_metrics.begin(), env_csv_only_metrics.end());
+        csv_metrics.insert(
+            csv_metrics.end(), trainer_csv_only_metrics.begin(), trainer_csv_only_metrics.end());
+
         MetricCsvSaver metric_csv_saver(
-            train_options.output_folder, metrics,
+            train_options.output_folder, csv_metrics,
             static_cast<int>(30.f / environment_options.wanted_frequency));
 
         // progress bar
@@ -178,40 +184,32 @@ namespace arenai::agent {
             // set variable for episode
             bool is_done = false;
 
-            auto [vision, proprioception] = states_to_tensor(
-                env->reset(spawn_width, spawn_height), environment_options.vision_height,
-                environment_options.vision_width);
+            auto state = TorchState(
+                env->reset(spawn_width, spawn_height, environment_options.shell_economy),
+                environment_options.vision_height, environment_options.vision_width);
 
             while (!is_done) {
 
                 std::vector<core::Action> actions_for_env;
 
-                const auto [continuous_action, discrete_action] = agent->act(
-                    {.vision = vision.to(torch_device),
-                     .proprioception = proprioception.to(torch_device)},
-                    true);
-
-                TorchAction torch_action = {
-                    .continuous_action = continuous_action, .discrete_action = discrete_action};
-
-                actions_for_env = tensor_to_actions(continuous_action, discrete_action);
+                actions_for_env = agent->act(state.to(torch_device), true).to_actions();
 
                 // step environment
                 const auto steps = env->step(environment_options.wanted_frequency, actions_for_env);
 
-                const auto [torch_next_states, torch_rewards, torch_are_done, torch_are_truncated] =
-                    steps_to_tensor(
-                        steps, environment_options.vision_height, environment_options.vision_width);
+                const TorchStep torch_step(
+                    steps, environment_options.vision_height, environment_options.vision_width);
 
                 // complete the pending transition - maybe train
-                collector->on_transition(torch_rewards, torch_are_done, torch_are_truncated);
+                collector->on_transition(
+                    torch_step.get_rewards(), env->last_step_aim_rewards(),
+                    torch_step.get_is_done(), torch_step.get_is_truncated());
                 trainer->step();
 
                 // step ending stuff
                 is_done = env->is_episode_terminated();
 
-                vision = torch_next_states.vision;
-                proprioception = torch_next_states.proprioception;
+                state = torch_step.get_states();
 
                 print_counter = (print_counter + 1) % print_tqdm_bar_every;
 
@@ -231,7 +229,7 @@ namespace arenai::agent {
             }
 
             // close episode
-            collector->on_episode_end({.vision = vision, .proprioception = proprioception});
+            collector->on_episode_end(state);
 
             env->stop_drawing();
 

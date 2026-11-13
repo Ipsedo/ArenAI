@@ -1,7 +1,3 @@
-//
-// Created by samuel on 06/09/2026.
-//
-
 #include "./liquid_ppo_rollout_buffer.h"
 
 using namespace arenai;
@@ -10,15 +6,11 @@ using namespace arenai::agent;
 namespace arenai::agent {
 
     namespace {
-        TorchState to_cpu(const TorchState &state) {
-            return {
-                .vision = state.vision.detach().cpu(),
-                .proprioception = state.proprioception.detach().cpu()};
-        }
+        TorchState to_cpu(const TorchState &state) { return state.detach().to(torch::kCPU); }
     }// namespace
 
     void LiquidPpoRolloutBuffer::add(const LiquidPpoInputStep &step) {
-        const auto nb_tanks = step.state.vision.size(0);
+        const auto nb_tanks = step.state.get_vision().size(0);
 
         if (!already_terminated_.defined())
             already_terminated_ = torch::zeros(
@@ -35,9 +27,11 @@ namespace arenai::agent {
                   .action =
                       {.continuous_action = step.action.continuous_action.detach().cpu(),
                        .discrete_action = step.action.discrete_action.detach().cpu()},
+                  .continuous_pre_tanh = step.continuous_pre_tanh.detach().cpu(),
                   .continuous_log_prob = step.continuous_log_prob.detach().cpu(),
                   .discrete_log_prob = step.discrete_log_prob.detach().cpu(),
                   .reward = step.reward.detach().cpu(),
+                  .aim_reward = step.aim_reward.detach().cpu(),
                   .done = step.done.detach().cpu(),
                   .truncated = step.truncated.detach().cpu(),
                   .actor_hidden = step.actor_hidden.detach().cpu(),
@@ -63,8 +57,6 @@ namespace arenai::agent {
         const auto nb_steps = nb_complete_steps();
         TORCH_CHECK(nb_steps > 0, "LiquidPpoRolloutBuffer: no complete step to train on");
 
-        // the observation closing the last consumed step: the episode's final state,
-        // or the pending step's own observation
         const auto bootstrap_state =
             final_state_.has_value() ? *final_state_ : steps_[nb_steps].step.state;
 
@@ -80,20 +72,23 @@ namespace arenai::agent {
             if (steps_[i].step.episode_start) episode_starts[static_cast<long>(i)] = true;
 
         LiquidPpoRollout rollout{
-            .states =
-                {.vision = stack([](const StoredStep &s) { return s.step.state.vision; }),
-                 .proprioception =
-                     stack([](const StoredStep &s) { return s.step.state.proprioception; })},
+            .states = TorchState(
+                stack([](const StoredStep &s) { return s.step.state.get_vision(); }),
+                stack([](const StoredStep &s) { return s.step.state.get_state(); }),
+                stack([](const StoredStep &s) { return s.step.state.get_fire_mask(); })),
             .actions =
                 {.continuous_action =
                      stack([](const StoredStep &s) { return s.step.action.continuous_action; }),
                  .discrete_action =
                      stack([](const StoredStep &s) { return s.step.action.discrete_action; })},
+            .continuous_pre_tanhs =
+                stack([](const StoredStep &s) { return s.step.continuous_pre_tanh; }),
             .continuous_log_probs =
                 stack([](const StoredStep &s) { return s.step.continuous_log_prob; }),
             .discrete_log_probs =
                 stack([](const StoredStep &s) { return s.step.discrete_log_prob; }),
             .rewards = stack([](const StoredStep &s) { return s.step.reward; }),
+            .aim_rewards = stack([](const StoredStep &s) { return s.step.aim_reward; }),
             .dones = stack([](const StoredStep &s) { return s.step.done; }),
             .truncateds = stack([](const StoredStep &s) { return s.step.truncated; }),
             .bootstrap_state = bootstrap_state,

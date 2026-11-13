@@ -1,7 +1,3 @@
-//
-// Created by samuel on 12/10/2025.
-//
-
 #include "./entropy.h"
 
 #include <algorithm>
@@ -13,9 +9,27 @@ using namespace arenai::agent;
 
 namespace arenai::agent {
 
-    /*
-     * PID Lagrangian
-     */
+    AlphaParameters::AlphaParameters(const float initial_alpha, const int nb_alphas)
+        : log_alpha(register_parameter(
+            "log_alpha",
+            torch::full({nb_alphas}, std::log(std::clamp(initial_alpha, MIN_ALPHA, MAX_ALPHA))))) {}
+
+    torch::Tensor AlphaParameters::alpha() const { return torch::exp(log_alpha); }
+
+    void AlphaParameters::clamp() const {
+        const torch::NoGradGuard no_grad;
+        log_alpha.clamp_(std::log(MIN_ALPHA), std::log(MAX_ALPHA));
+    }
+
+    torch::Tensor AlphaParameters::loss(const torch::Tensor &entropy_error) const {
+        return torch::sum(log_alpha * entropy_error.detach());
+    }
+
+    SacAlpha::SacAlpha(const float initial_alpha, const int nb_alphas)
+        : log_alpha(
+            register_parameter("log_alpha", torch::full({nb_alphas}, std::log(initial_alpha)))) {}
+
+    torch::Tensor SacAlpha::alpha() const { return torch::exp(log_alpha); }
 
     PidLagrangianAlphaParameters::PidLagrangianAlphaParameters(
         const float k_p, const float k_i, const float k_d, const float initial_alpha,

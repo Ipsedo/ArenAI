@@ -1,7 +1,3 @@
-//
-// Created by samuel on 02/04/2023.
-//
-
 #ifndef ARENAI_JOLT_TANK_H
 #define ARENAI_JOLT_TANK_H
 
@@ -15,6 +11,7 @@ namespace arenai::model {
 
     class JoltPhysicEngine;
     class CanonItem;
+    class GunLaying;
     class ShellItem;
 
     class JoltTank : virtual public Tank {
@@ -45,6 +42,10 @@ namespace arenai::model {
     protected:
         void remove_constraints_from_engine() const;
         void kill_life_items() const;
+        void restore_life_items() const;
+        void teleport(glm::vec3 chassis_pos) const;
+        std::vector<LifeItem *> get_life_items() const;
+        std::vector<JPH::BodyID> get_body_ids() const;
         JoltPhysicEngine &engine;
 
     private:
@@ -56,7 +57,10 @@ namespace arenai::model {
         std::vector<LifeItem *> life_items;
         std::shared_ptr<Item> chassis;
         std::shared_ptr<Item> canon;
+        std::shared_ptr<GunLaying> gun_laying;
         std::shared_ptr<utils::AbstractResourceFileReader> file_reader;
+
+        void lay_gun_on_canon() const;
     };
 
 }// namespace arenai::model

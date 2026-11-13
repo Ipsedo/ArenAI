@@ -1,7 +1,3 @@
-//
-// Created by samuel on 11/07/2026.
-//
-
 #include "./last_metric.h"
 
 using namespace arenai;

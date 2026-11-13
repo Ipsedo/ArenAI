@@ -1,7 +1,3 @@
-//
-// Created by samuel on 17/07/2026.
-//
-
 #include "./renderer.h"
 
 #include <cmath>
@@ -17,9 +13,6 @@ using namespace arenai;
 
 namespace arenai::view {
 
-    // matches the horizon of the "cubemap/1" sky, keeps distant geometry
-    // blending into it (same constant as the GL VulkanDiffuse drawable, lifted to
-    // the frame globals UBO)
     constexpr glm::vec3 FOG_COLOR(0.53f, 0.57f, 0.65f);
 
     namespace {
@@ -143,8 +136,6 @@ namespace arenai::view {
         const auto camera_pos = camera_->pos();
         const glm::mat4 view_matrix = glm::lookAt(camera_pos, camera_->look(), camera_->up());
 
-        // zero-to-one depth projection (Vulkan clip space); the y flip is
-        // handled by the negative-height viewport, not by the matrix
         const glm::mat4 proj_matrix = glm::perspectiveRH_ZO(
             camera_->fov(), static_cast<float>(get_width()) / static_cast<float>(get_height()), 1.f,
             10000.f * std::sqrt(3.f));
@@ -152,9 +143,6 @@ namespace arenai::view {
 
         const glm::mat4 biased_light_vp_matrix = ShadowPass::biased(light_vp_matrix);
 
-        // world up axis in view space (xyz) + camera world height (w): enough
-        // for the shadow shader to do hemisphere ambient and height fog
-        // without a full inverse view matrix
         const glm::vec4 world_up(glm::mat3(view_matrix) * glm::vec3(0.f, 1.f, 0.f), camera_pos.y);
 
         const FrameGlobals globals{

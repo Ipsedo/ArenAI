@@ -1,7 +1,3 @@
-//
-// Created by samuel on 29/09/2025.
-//
-
 #ifndef ARENAI_ENVIRONMENT_H
 #define ARENAI_ENVIRONMENT_H
 
@@ -11,6 +7,7 @@
 #include <vector>
 
 #include <arenai_model/engine.h>
+#include <arenai_model/shell_economy.h>
 #include <arenai_model/tank.h>
 #include <arenai_utils/file_reader.h>
 #include <arenai_view/backend.h>
@@ -26,12 +23,14 @@ namespace arenai::core {
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, int nb_tanks,
             float wanted_frequency, int vision_height, int vision_width, int vision_num_threads,
-            bool vision_thread_sleep, bool apply_timeout);
+            bool vision_thread_sleep);
 
         virtual std::vector<std::tuple<State, Reward, IsDone, IsTruncated>>
         step(float time_delta, const std::vector<Action> &actions);
 
-        std::vector<State> reset(float spawn_width, float spawn_height);
+        std::vector<State> reset(
+            float new_spawn_width, float new_spawn_height,
+            const model::ShellEconomy &shell_economy);
 
         void seed(unsigned int seed);
         void stop_drawing() const;
@@ -56,15 +55,20 @@ namespace arenai::core {
 
         int nb_reset_frames;
 
-        bool drawing_started_;
+        float spawn_width;
+        float spawn_height;
 
-        bool apply_timeout;
+        bool drawing_started_;
 
         std::shared_ptr<view::AbstractGraphicBackend> graphics_backend;
         std::shared_ptr<view::AbstractRenderContext> gl_context;
 
-        void reset_physics(float spawn_width, float spawn_height);
+        void reset_physics(
+            float new_spawn_width, float new_spawn_height,
+            const model::ShellEconomy &shell_economy);
         void reset_drawables();
+
+        float ground_height(float x, float z) const;
 
     protected:
         std::random_device dev;
@@ -80,6 +84,20 @@ namespace arenai::core {
         on_reset_drawables(const std::unique_ptr<model::AbstractPhysicEngine> &engine) = 0;
 
         const std::shared_ptr<view::AbstractGraphicBackend> &get_graphics_backend() const;
+
+        // applies the actions and steps the physics (no rendering)
+        void advance_frame(float time_delta, const std::vector<Action> &actions);
+
+        // draws the frame (on_draw, every frame); the agents' visions only when asked
+        void render_frame(bool with_visions);
+
+        // ticks the tanks and reads each one's (reward, done, truncated) for this frame
+        std::vector<std::tuple<Reward, IsDone, IsTruncated>> tick_frame();
+
+        // the agents' observations: the visions of the last render_frame(true)
+        std::vector<State> read_states() const;
+
+        void respawn_tank(int index);
 
         template<typename T>
         T apply_on_enemies(std::function<T(const std::vector<std::shared_ptr<model::EnemyTank>> &)>

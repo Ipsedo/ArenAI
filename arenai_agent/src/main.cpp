@@ -1,11 +1,9 @@
-//
-// Created by samuel on 28/09/2025.
-//
-
 #include <thread>
 
 #include <argparse/argparse.hpp>
 #include <ATen/Context.h>
+
+#include <arenai_model/shell_economy.h>
 
 #include "./agents/agent_cli.h"
 #include "./train.h"
@@ -24,8 +22,8 @@ int main(const int argc, char **argv) {
     parser.add_argument("--output_folder").required();
     parser.add_argument("--resources_folder").required();
     parser.add_argument("--max_episode_steps").scan<'i', int>().default_value(30 * 60 * 3);
-    parser.add_argument("--nb_episodes").scan<'i', int>().default_value(6000);
-    parser.add_argument("--save_every").scan<'i', int>().default_value(30 * 60 * 3 * 20);
+    parser.add_argument("--nb_episodes").scan<'i', int>().default_value(30000);
+    parser.add_argument("--save_every").scan<'i', int>().default_value(30 * 60 * 3 * 5);
     parser.add_argument("--cuda").default_value(false).implicit_value(true);
 
     // env
@@ -38,11 +36,17 @@ int main(const int argc, char **argv) {
     parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(250.f);
     parser.add_argument("--final_spawn_width").scan<'g', float>().default_value(1000.f);
     parser.add_argument("--final_spawn_height").scan<'g', float>().default_value(1000.f);
+    parser.add_argument("--shells")
+        .scan<'i', int>()
+        .default_value(model::GAME_SHELL_ECONOMY.initial_shells);
+    parser.add_argument("--shells_per_hit").scan<'i', int>().default_value(5);
+    parser.add_argument("--max_shells").scan<'i', int>().default_value(30);
     parser.add_argument("--curriculum_delta").scan<'g', float>().default_value(50.f);
-    parser.add_argument("--curriculum_ratio_low").scan<'g', float>().default_value(0.03f);
-    parser.add_argument("--curriculum_ratio_high").scan<'g', float>().default_value(0.06f);
-    parser.add_argument("--curriculum_probe_window").scan<'i', int>().default_value(24);
-    parser.add_argument("--curriculum_boundary_proba").scan<'g', float>().default_value(0.2f);
+    parser.add_argument("--curriculum_ratio_low").scan<'g', float>().default_value(0.05f);
+    parser.add_argument("--curriculum_ratio_high").scan<'g', float>().default_value(0.08f);
+    parser.add_argument("--curriculum_probe_window").scan<'i', int>().default_value(8);
+    parser.add_argument("--curriculum_boundary_proba").scan<'g', float>().default_value(0.5f);
+    parser.add_argument("--action_repeat").scan<'i', int>().default_value(3);
     parser.add_argument("--vision_num_threads")
         .scan<'i', int>()
         .default_value(static_cast<int>(std::thread::hardware_concurrency()));
@@ -52,8 +56,6 @@ int main(const int argc, char **argv) {
 
     parser.parse_args(argc, argv);
 
-    // first algorithm by default: its subparser is not parsed, argparse falls back on
-    // the defaults carried by its arguments
     const AgentCli *selected_algorithm = &algorithms.front();
     for (const auto &algorithm: algorithms)
         if (parser.is_subcommand_used(algorithm.name)) selected_algorithm = &algorithm;
@@ -78,12 +80,17 @@ int main(const int argc, char **argv) {
          .initial_spawn_height = parser.get<float>("--initial_spawn_height"),
          .final_spawn_width = parser.get<float>("--final_spawn_width"),
          .final_spawn_height = parser.get<float>("--final_spawn_height"),
+         .shell_economy =
+             {.initial_shells = parser.get<int>("--shells"),
+              .shells_per_hit = parser.get<int>("--shells_per_hit"),
+              .max_shells = parser.get<int>("--max_shells")},
          .curriculum_delta = parser.get<float>("--curriculum_delta"),
          .curriculum_ratio_low = parser.get<float>("--curriculum_ratio_low"),
          .curriculum_ratio_high = parser.get<float>("--curriculum_ratio_high"),
          .curriculum_probe_window = parser.get<int>("--curriculum_probe_window"),
          .curriculum_boundary_proba = parser.get<float>("--curriculum_boundary_proba"),
-         .num_threads = parser.get<int>("--vision_num_threads")},
+         .num_threads = parser.get<int>("--vision_num_threads"),
+         .action_repeat = parser.get<int>("--action_repeat")},
         {.output_folder = std::filesystem::path(parser.get<std::string>("--output_folder")),
          .resources_folder = std::filesystem::path(parser.get<std::string>("--resources_folder")),
          .max_episode_steps = parser.get<int>("--max_episode_steps"),

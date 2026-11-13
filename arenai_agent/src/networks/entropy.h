@@ -1,7 +1,3 @@
-//
-// Created by samuel on 12/10/2025.
-//
-
 #ifndef ARENAI_AGENT_HOST_ENTROPY_H
 #define ARENAI_AGENT_HOST_ENTROPY_H
 
@@ -9,13 +5,34 @@
 
 namespace arenai::agent {
 
-    /*
-     * Lagrangian
-     */
+    // one learned temperature per action, alpha = exp(log_alpha) kept in [MIN_ALPHA, MAX_ALPHA]
+    class AlphaParameters : public torch::nn::Module {
+    public:
+        static constexpr float MIN_ALPHA = 1e-4f;
+        static constexpr float MAX_ALPHA = 1.f;
 
-    // Inequality constraint H >= target: alpha is a Lagrange multiplier, projected on
-    // [0, MAX_ALPHA] (Stooke et al. 2020) — a bonus while entropy sits under the target,
-    // inactive (0) once the constraint is satisfied
+        AlphaParameters(float initial_alpha, int nb_alphas);
+
+        torch::Tensor alpha() const;
+
+        torch::Tensor loss(const torch::Tensor &entropy_error) const;
+
+        void clamp() const;
+
+    private:
+        torch::Tensor log_alpha;
+    };
+
+    class SacAlpha final : public torch::nn::Module {
+    public:
+        SacAlpha(float initial_alpha, int nb_alphas);
+
+        torch::Tensor alpha() const;
+
+    private:
+        torch::Tensor log_alpha;
+    };
+
     class PidLagrangianAlphaParameters final : public torch::nn::Module {
     public:
         PidLagrangianAlphaParameters(

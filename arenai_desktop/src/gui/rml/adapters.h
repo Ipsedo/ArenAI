@@ -14,6 +14,7 @@ namespace arenai::desktop::gui {
     class MenuSystemInterface final : public Rml::SystemInterface {
     public:
         double GetElapsedTime() override;
+        bool LogMessage(Rml::Log::Type type, const Rml::String &message) override;
 
     private:
         std::chrono::steady_clock::time_point start_ = std::chrono::steady_clock::now();

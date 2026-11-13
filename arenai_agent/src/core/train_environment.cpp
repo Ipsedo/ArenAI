@@ -21,8 +21,6 @@ namespace {
     constexpr float AIM_POTENTIAL_SCALE = 0.3f;
     constexpr float HIT_REWARD_SCALE = 3.f;
     constexpr float RECEIVED_REWARD_SCALE = 1.f;
-    constexpr float RESPAWN_DELAY_SECONDS = 10.f;
-    constexpr glm::vec3 RESPAWN_LIFT(0.f, 2.f, 0.f);
 }// namespace
 
 namespace arenai::agent {
@@ -37,10 +35,9 @@ namespace arenai::agent {
             nb_tanks, wanted_frequency, vision_height, vision_width, vision_num_threads, false),
           wanted_frequency(wanted_frequency), action_repeat(action_repeat), nb_tanks(nb_tanks),
           nb_steps(0), done(nb_tanks, false), already_done(nb_tanks, false),
-          disarmed_frames(nb_tanks, 0), max_episode_steps(max_episode_steps),
-          nb_hits_per_tanks(nb_tanks, 0), nb_kills_per_tanks(nb_tanks, 0),
-          reward_metric(
-              std::make_shared<MeanMetric>("r", 4 * nb_tanks * max_episode_steps, 1, true)),
+          max_episode_steps(max_episode_steps), nb_hits_per_tanks(nb_tanks, 0),
+          nb_kills_per_tanks(nb_tanks, 0), reward_metric(std::make_shared<MeanMetric>(
+                                               "r", 4 * nb_tanks * max_episode_steps, 1, true)),
           reward_hit_metric(
               std::make_shared<MeanMetric>("r_hit", 4 * nb_tanks * max_episode_steps, 1, true)),
           reward_received_metric(
@@ -124,19 +121,10 @@ namespace arenai::agent {
 
         apply_on_enemies<int>([&](const auto &tanks) {
             for (int i = 0; i < nb_tanks; i++) {
-                if (done[i] || !tanks[i]->is_out_of_shells() || tanks[i]->has_shells_in_flight()) {
-                    disarmed_frames[i] = 0;
+                if (done[i] || !tanks[i]->is_out_of_shells() || tanks[i]->has_shells_in_flight())
                     continue;
-                }
-                disarmed_frames[i] += nb_frames;
-                if (static_cast<float>(disarmed_frames[i]) * wanted_frequency
-                    < RESPAWN_DELAY_SECONDS)
-                    continue;
-                disarmed_frames[i] = 0;
                 truncated[i] = true;
-                const auto position =
-                    glm::vec3(tanks[i]->get_chassis()->get_model_matrix()[3]) + RESPAWN_LIFT;
-                tanks[i]->respawn(position);
+                respawn_tank(i);
             }
             return 0;
         });
@@ -222,7 +210,6 @@ namespace arenai::agent {
 
         already_done = std::vector(nb_tanks, false);
         done = std::vector(nb_tanks, false);
-        disarmed_frames = std::vector(nb_tanks, 0);
 
         nb_hits_per_tanks = std::vector(nb_tanks, 0);
         nb_kills_per_tanks = std::vector(nb_tanks, 0);

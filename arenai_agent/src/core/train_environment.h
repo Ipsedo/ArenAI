@@ -80,9 +80,6 @@ namespace arenai::agent {
         std::vector<bool> done;
         std::vector<bool> already_done;
 
-        // physics frames spent out of shells with none in flight, until the in-place respawn
-        std::vector<int> disarmed_frames;
-
         int max_episode_steps;
 
         std::vector<int> nb_hits_per_tanks;

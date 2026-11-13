@@ -119,16 +119,6 @@ namespace arenai::agent {
             });
         }
 
-        apply_on_enemies<int>([&](const auto &tanks) {
-            for (int i = 0; i < nb_tanks; i++) {
-                if (done[i] || !tanks[i]->is_out_of_shells() || tanks[i]->has_shells_in_flight())
-                    continue;
-                truncated[i] = true;
-                respawn_tank(i);
-            }
-            return 0;
-        });
-
         // the aim potential is read once per decision, on the state the agent will see
         const auto shaping_rewards = aim_shaping.step(aim_potentials(), done);
         for (int i = 0; i < nb_tanks; i++) {

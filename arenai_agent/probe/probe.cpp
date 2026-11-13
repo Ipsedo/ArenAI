@@ -102,10 +102,10 @@ int main(const int argc, char **argv) {
     const int action_repeat = env_config.at("action_repeat").get<int>();
     const int max_episode_steps = config.at("train").at("max_episode_steps").get<int>();
 
-    // what the probe needs from an actor, whatever its family (ppo_liquid or sac)
+    // what the probe needs from an actor, whatever its family (ppo_liquid, sac or ppg)
     struct ProbeActorOutput {
         torch::Tensor mu, sigma, discrete;
-        // empty for actors without an exposed feature layer (sac)
+        // empty for actors without an exposed feature layer (ppg)
         torch::Tensor features, vision_features;
     };
     std::function<ProbeActorOutput(const torch::Tensor &, const torch::Tensor &)> act;
@@ -123,10 +123,26 @@ int main(const int argc, char **argv) {
         agent_config.at("initial_fire_proba").get<float>(),
         agent_config.at("initial_zoom_proba").get<float>()};
 
-    const bool is_sac = !agent_config.contains("neuron_number");
-    std::cout << "actor family : " << (is_sac ? "sac" : "ppo_liquid") << std::endl;
+    const bool is_ppg = agent_config.contains("beta_clone");
+    const bool is_sac = !is_ppg && !agent_config.contains("neuron_number");
+    std::cout << "actor family : " << (is_ppg ? "ppg" : is_sac ? "sac" : "ppo_liquid") << std::endl;
 
-    if (is_sac) {
+    if (is_ppg) {
+        const auto actor = std::make_shared<DistillationActor>(
+            model::ENEMY_STATE_VECTOR_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
+            model::ENEMY_NB_DISCRETE_ACTION, agent_config.at("hidden_size_sensors").get<int>(),
+            agent_config.at("actor_hidden_sizes").get<std::vector<int>>(), vision_channels,
+            group_norm_nums, agent_config.at("initial_sigma").get<float>(),
+            initial_discrete_probas);
+        load_torch(save_folder, actor, "actor.pt");
+        actor->to(device);
+        actor->eval();
+
+        act = [actor](const torch::Tensor &vision, const torch::Tensor &sensors) {
+            auto out = actor->act(vision, sensors);
+            return ProbeActorOutput{out.mu, out.sigma, out.discrete};
+        };
+    } else if (is_sac) {
         const auto make_encoder = [&] {
             return std::make_shared<StateEncoder>(
                 model::ENEMY_STATE_VECTOR_SIZE, agent_config.at("hidden_size_sensors").get<int>(),

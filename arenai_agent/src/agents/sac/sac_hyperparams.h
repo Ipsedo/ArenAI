@@ -21,7 +21,6 @@ namespace arenai::agent {
         std::vector<int> group_norm_nums = {2, 4, 8, 16};
         float initial_sigma = 0.3f;
         float initial_fire_proba = 0.5f;
-        float initial_zoom_proba = 0.5f;
         int metric_window_size = 256;
         float gamma = 0.99f;
         // steps of reward summed in the critic target before bootstrapping

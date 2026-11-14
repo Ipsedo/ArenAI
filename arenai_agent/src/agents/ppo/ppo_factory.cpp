@@ -13,8 +13,7 @@ namespace arenai::agent {
           actor(std::make_shared<Actor>(
               nb_sensors, nb_continuous_actions, nb_discrete_actions, params.hidden_size_sensors,
               params.actor_hidden_sizes, params.vision_channels, params.group_norm_nums,
-              params.initial_sigma,
-              std::vector{params.initial_fire_proba, params.initial_zoom_proba})),
+              params.initial_sigma, std::vector{params.initial_fire_proba})),
           rollout_buffer(std::make_shared<PpoRolloutBuffer>()),
           collector(std::make_shared<PpoStepCollector>(rollout_buffer)),
           agent(std::make_shared<TorchPpoAgent>(actor, device, collector)),

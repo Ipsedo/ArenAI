@@ -15,8 +15,7 @@ namespace arenai::agent {
               params.group_norm_nums)),
           actor(std::make_shared<SacActor>(
               encoder, nb_continuous_actions, nb_discrete_actions, params.actor_hidden_sizes,
-              params.initial_sigma,
-              std::vector{params.initial_fire_proba, params.initial_zoom_proba})),
+              params.initial_sigma, std::vector{params.initial_fire_proba})),
           replay_buffer(std::make_shared<SacReplayBuffer>(
               params.buffer_size, params.armed_fraction, params.n_step, params.gamma)),
           collector(std::make_shared<SacStepCollector>(replay_buffer)),

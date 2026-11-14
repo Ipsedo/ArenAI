@@ -15,11 +15,10 @@ namespace arenai::agent {
         std::vector<int> actor_hidden_sizes = {256, 128};
         std::vector<int> critic_hidden_sizes = {256, 128};
         std::vector<std::tuple<int, int>> vision_channels =
-            {{3, 16}, {16, 32}, {32, 64}, {64, 128}};
-        std::vector<int> group_norm_nums = {2, 4, 8, 16};
+            {{3, 8}, {8, 16}, {16, 32}, {32, 64}, {64, 128}};
+        std::vector<int> group_norm_nums = {1, 2, 4, 8, 16};
         float initial_sigma = 0.3f;
         float initial_fire_proba = 0.5f;
-        float initial_zoom_proba = 0.5f;
         int metric_window_size = 256;
         float gamma = 0.995f;
         float gae_lambda = 0.95f;

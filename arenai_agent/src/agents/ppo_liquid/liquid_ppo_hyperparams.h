@@ -14,17 +14,16 @@ namespace arenai::agent {
         float critic_learning_rate = 3e-4f;
         int hidden_size_sensors = 64;
         std::vector<std::tuple<int, int>> vision_channels =
-            {{3, 16}, {16, 32}, {32, 64}, {64, 128}};
-        std::vector<int> group_norm_nums = {2, 4, 8, 16};
+            {{3, 8}, {8, 16}, {16, 32}, {32, 64}, {64, 128}};
+        std::vector<int> group_norm_nums = {1, 2, 4, 8, 16};
         int neuron_number = 128;
         int unfolding_steps = 6;
         float delta_t = 1.f / 10.f;
         int chunk_size = 30;
         float initial_sigma = 0.3f;
         float initial_fire_proba = 0.5f;
-        float initial_zoom_proba = 0.5f;
         int metric_window_size = 256;
-        float gamma = 0.995f;
+        float gamma = 0.998f;
         float gae_lambda = 0.95f;
         // λ of the canon actions' advantage, the aim potential's own return
         float aim_gae_lambda = 0.f;

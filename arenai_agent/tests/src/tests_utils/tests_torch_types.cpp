@@ -11,7 +11,7 @@ using namespace arenai::agent;
 
 TEST_F(TorchTypesTest, SingleActionMapping) {
     const auto continuous = torch::tensor({{0.1f, -0.2f, 0.3f, -0.4f}});
-    const auto discrete = torch::tensor({{1.f, 0.f}});
+    const auto discrete = torch::tensor({{1.f}});
 
     const auto actions = TorchAction{continuous, discrete}.to_actions();
 
@@ -29,24 +29,15 @@ TEST_F(TorchTypesTest, AimRateRoundTrip) {
         ASSERT_NEAR(aim_action_to_rate(aim_rate_to_action(rate)), rate, 1e-6f);
 }
 
-TEST_F(TorchTypesTest, IndependentFireAndZoom) {
-    const auto continuous = torch::zeros({1, model::ENEMY_NB_CONTINUOUS_ACTION});
-    const auto discrete = torch::tensor({{0.f, 1.f}});
+TEST_F(TorchTypesTest, AgentNeverZooms) {
+    const auto continuous = torch::zeros({2, model::ENEMY_NB_CONTINUOUS_ACTION});
+    const auto discrete = torch::tensor({{0.f}, {1.f}});
 
     const auto actions = TorchAction{continuous, discrete}.to_actions();
 
     ASSERT_FALSE(actions[0].fire_button.pressed);
-    ASSERT_TRUE(actions[0].zoom_button.pressed);
-}
-
-TEST_F(TorchTypesTest, BothActionsEngagedTogether) {
-    const auto continuous = torch::zeros({1, model::ENEMY_NB_CONTINUOUS_ACTION});
-    const auto discrete = torch::tensor({{1.f, 1.f}});
-
-    const auto actions = TorchAction{continuous, discrete}.to_actions();
-
-    ASSERT_TRUE(actions[0].fire_button.pressed);
-    ASSERT_TRUE(actions[0].zoom_button.pressed);
+    ASSERT_TRUE(actions[1].fire_button.pressed);
+    for (const auto &action: actions) ASSERT_FALSE(action.zoom_button.pressed);
 }
 
 TEST_F(TorchTypesTest, SingleStateToTensor) {
@@ -160,7 +151,7 @@ TEST_P(TensorToActionsParamTest, BatchSizePreserved) {
     const auto batch = GetParam();
 
     const auto continuous = torch::randn({batch, model::ENEMY_NB_CONTINUOUS_ACTION});
-    const auto discrete = torch::rand({batch, 2});
+    const auto discrete = torch::rand({batch, model::ENEMY_NB_DISCRETE_ACTION});
 
     const auto actions = TorchAction{continuous, discrete}.to_actions();
 
@@ -171,7 +162,7 @@ TEST_P(TensorToActionsParamTest, ContinuousValuesMatchTensor) {
     const auto batch = GetParam();
 
     const auto continuous = torch::randn({batch, model::ENEMY_NB_CONTINUOUS_ACTION});
-    const auto discrete = torch::rand({batch, 2});
+    const auto discrete = torch::rand({batch, model::ENEMY_NB_DISCRETE_ACTION});
 
     const auto actions = TorchAction{continuous, discrete}.to_actions();
 
@@ -187,7 +178,7 @@ TEST_P(TensorToActionsParamTest, ContinuousValuesMatchTensor) {
 TEST_P(TensorToActionsParamTest, DiscreteButtonsConsistent) {
     const auto batch = GetParam();
 
-    const auto discrete = torch::rand({batch, 2});
+    const auto discrete = torch::rand({batch, model::ENEMY_NB_DISCRETE_ACTION});
     const auto continuous = torch::zeros({batch, model::ENEMY_NB_CONTINUOUS_ACTION});
 
     const auto actions = TorchAction{continuous, discrete}.to_actions();
@@ -195,7 +186,7 @@ TEST_P(TensorToActionsParamTest, DiscreteButtonsConsistent) {
     auto acc = discrete.accessor<float, 2>();
     for (int i = 0; i < batch; ++i) {
         ASSERT_EQ(actions[i].fire_button.pressed, acc[i][0] > 0.5f);
-        ASSERT_EQ(actions[i].zoom_button.pressed, acc[i][1] > 0.5f);
+        ASSERT_FALSE(actions[i].zoom_button.pressed);
     }
 }
 
@@ -203,7 +194,7 @@ TEST_P(TensorToActionsParamTest, WorksWithGPUTensor) {
     const auto batch = GetParam();
 
     auto continuous = torch::randn({batch, model::ENEMY_NB_CONTINUOUS_ACTION});
-    auto discrete = torch::rand({batch, 2});
+    auto discrete = torch::rand({batch, model::ENEMY_NB_DISCRETE_ACTION});
 
     if (torch::cuda::is_available()) {
         continuous = continuous.cuda();

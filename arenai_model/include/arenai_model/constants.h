@@ -26,7 +26,7 @@ namespace arenai::model {
 
     constexpr float CANON_AIM_DISTANCE = 100.f;
 
-    // m, the hull radius: a predicted pass within it scores the full aim potential
+    // m, the miss at which the aim potential halves
     constexpr float AIM_TARGET_RADIUS = 3.f;
 
     constexpr float GRAVITY = 9.8f;

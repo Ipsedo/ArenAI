@@ -321,10 +321,10 @@ int main(const int argc, char **argv) {
                     }
 
                     cont[i][NB_DIRECTION_ACTIONS] =
-                        std::clamp(-gain * yaw_error / turret_step, -1.f, 1.f);
+                        aim_rate_to_action(std::clamp(-gain * yaw_error / turret_step, -1.f, 1.f));
                     if (!oracle_policy_pitch)
-                        cont[i][NB_DIRECTION_ACTIONS + 1] =
-                            std::clamp(-gain * pitch_error / canon_step, -1.f, 1.f);
+                        cont[i][NB_DIRECTION_ACTIONS + 1] = aim_rate_to_action(
+                            std::clamp(-gain * pitch_error / canon_step, -1.f, 1.f));
 
                     const bool aligned =
                         std::abs(yaw_error) < oracle_tolerance

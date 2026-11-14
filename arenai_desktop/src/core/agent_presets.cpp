@@ -15,7 +15,7 @@ namespace arenai::desktop {
             {.name = "PPG (debug model)",
              .algorithm = AiAlgorithm::Ppg,
              .config = resources_folder / "trained_models" / "ppg" / "config.json",
-             .folder = resources_folder / "trained_models" / "ppg" / "save_1"},
+             .folder = resources_folder / "trained_models" / "ppg" / "save_38"},
         };
     }
 

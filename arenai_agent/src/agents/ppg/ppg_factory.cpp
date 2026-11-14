@@ -13,7 +13,8 @@ namespace arenai::agent {
           actor(std::make_shared<DistillationActor>(
               nb_sensors, nb_continuous_actions, nb_discrete_actions, params.hidden_size_sensors,
               params.actor_hidden_sizes, params.vision_channels, params.group_norm_nums,
-              params.initial_sigma, std::vector{params.initial_fire_proba})),
+              params.initial_sigma,
+              std::vector{params.initial_fire_proba, params.initial_zoom_proba})),
           rollout_buffer(std::make_shared<PpgRolloutBuffer>()),
           collector(std::make_shared<PpgStepCollector>(rollout_buffer)),
           agent(std::make_shared<TorchPpgAgent>(actor, device, collector)),

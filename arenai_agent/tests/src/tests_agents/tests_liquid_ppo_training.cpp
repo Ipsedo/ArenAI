@@ -187,7 +187,7 @@ TEST_F(LiquidPpoTrainingTest, TrainingUpdatesActorParameters) {
 }
 
 TEST_F(LiquidPpoTrainingTest, MaskedFireReceivesNoUpdate) {
-    // fire never possible: its head row must stay untouched while the second action keeps learning
+    // fire never possible: its head row must stay untouched while zoom keeps learning
     constexpr LiquidPpoTrainingTestConfig cfg{
         .vision_height = 8,
         .vision_width = 8,
@@ -237,7 +237,7 @@ TEST_F(LiquidPpoTrainingTest, MaskedFireReceivesNoUpdate) {
     // the rollout has been consumed by the training
     ASSERT_LT(rollout_buffer->nb_complete_steps(), static_cast<size_t>(ROLLOUT_SIZE));
 
-    // row 0 = fire, row 1 = second action
+    // row 0 = fire, row 1 = zoom
     ASSERT_TRUE(torch::equal(weight[0], initial_weight[0]));
     ASSERT_TRUE(torch::equal(bias[0], initial_bias[0]));
     ASSERT_FALSE(torch::equal(weight[1], initial_weight[1]));

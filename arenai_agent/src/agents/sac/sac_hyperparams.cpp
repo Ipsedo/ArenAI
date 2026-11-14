@@ -14,6 +14,7 @@ namespace arenai::agent {
             {.name = "--group_norm_nums", .member = &SacHyperParams::group_norm_nums},
             {.name = "--initial_sigma", .member = &SacHyperParams::initial_sigma},
             {.name = "--initial_fire_proba", .member = &SacHyperParams::initial_fire_proba},
+            {.name = "--initial_zoom_proba", .member = &SacHyperParams::initial_zoom_proba},
             {.name = "--metric_window_size", .member = &SacHyperParams::metric_window_size},
             {.name = "--gamma", .member = &SacHyperParams::gamma},
             {.name = "--n_step", .member = &SacHyperParams::n_step},

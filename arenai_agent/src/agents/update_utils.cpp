@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+#include "../networks/constants.h"
+
 namespace arenai::agent {
     namespace {
         constexpr float KL_TRIM_FRACTION = 0.01f;
@@ -16,6 +18,13 @@ namespace arenai::agent {
 
         // per-row KL is non-negative: sorting ascending puts the outliers past nb_kept
         return std::get<0>(torch::sort(kl_per_row)).slice(0, 0, nb_kept).mean().item<float>();
+    }
+
+    float explained_variance(
+        const std::vector<torch::Tensor> &returns, const std::vector<torch::Tensor> &values) {
+        const auto all_returns = torch::cat(returns);
+        const auto residual_var = (all_returns - torch::cat(values)).var(false);
+        return (1.f - residual_var / all_returns.var(false).clamp_min(EPSILON)).item<float>();
     }
 
     std::vector<std::vector<torch::Tensor>> shuffled_batches(

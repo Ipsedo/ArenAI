@@ -57,6 +57,9 @@ int main(const int argc, char **argv) {
     parser.add_argument("--cuda").default_value(false).implicit_value(true);
     parser.add_argument("--deterministic").default_value(false).implicit_value(true);
     parser.add_argument("--features").default_value(std::string());
+    parser.add_argument("--zoom")
+        .default_value(std::string("policy"))
+        .choices("policy", "on", "off");
     parser.add_argument("--oracle").default_value(false).implicit_value(true);
     parser.add_argument("--oracle_fov").scan<'g', float>().default_value(360.f);
     parser.add_argument("--oracle_policy_pitch").default_value(false).implicit_value(true);
@@ -79,6 +82,7 @@ int main(const int argc, char **argv) {
         .shells_per_hit = parser.get<int>("--shells_per_hit"),
         .max_shells = parser.get<int>("--max_shells")};
     const bool deterministic = parser.get<bool>("--deterministic");
+    const auto zoom_mode = parser.get<std::string>("--zoom");
     const bool oracle = parser.get<bool>("--oracle");
     const bool oracle_policy_pitch = parser.get<bool>("--oracle_policy_pitch");
     const bool oracle_camera_center = parser.get<bool>("--oracle_camera_center");
@@ -119,7 +123,9 @@ int main(const int argc, char **argv) {
     const auto vision_channels =
         agent_config.at("vision_channels").get<std::vector<std::tuple<int, int>>>();
     const auto group_norm_nums = agent_config.at("group_norm_nums").get<std::vector<int>>();
-    const std::vector initial_discrete_probas{agent_config.at("initial_fire_proba").get<float>()};
+    const std::vector initial_discrete_probas{
+        agent_config.at("initial_fire_proba").get<float>(),
+        agent_config.at("initial_zoom_proba").get<float>()};
 
     const bool is_ppg = agent_config.contains("beta_clone");
     const bool is_sac = !is_ppg && !agent_config.contains("neuron_number");
@@ -227,7 +233,7 @@ int main(const int argc, char **argv) {
     const std::vector aim_names(action_names.begin() + NB_DIRECTION_ACTIONS, action_names.end());
 
     csv << "episode;step;tank;distance;yaw;pitch;best_angle;best_distance;can_fire;shells;cooldown;"
-           "p_fire;fire";
+           "p_fire;p_zoom;fire";
     for (const auto &name: action_names) csv << ";mu_" << name;
     for (const auto &prefix: {";sigma_", ";act_", ";dq_", ";dq1_", ";dq2_"})
         for (const auto &name: aim_names) csv << prefix << name;
@@ -283,6 +289,10 @@ int main(const int argc, char **argv) {
                     continuous_action = gaussian_tanh_sample(mu, sigma).first;
                     discrete_action = bernoulli_sample(discrete);
                 }
+
+                // discrete actions : fire, zoom
+                if (zoom_mode != "policy")
+                    discrete_action.select(1, 1).fill_(zoom_mode == "on" ? 1.f : 0.f);
             }
 
             const auto q_gradient = canon_q_gradient(state, mu, discrete);
@@ -347,7 +357,8 @@ int main(const int argc, char **argv) {
                     << geometry[i].yaw * to_degrees << ';' << geometry[i].pitch * to_degrees << ';'
                     << geometry[i].best_angle * to_degrees << ';' << geometry[i].best_distance
                     << ';' << mask_acc[i][0] << ';' << shells_ratio[i] << ';' << cooldown_ratio[i]
-                    << ';' << discrete_acc[i][0] << ';' << disc_acc[i][0];
+                    << ';' << discrete_acc[i][0] << ';' << discrete_acc[i][1] << ';'
+                    << disc_acc[i][0];
                 for (int a = 0; a < model::ENEMY_NB_CONTINUOUS_ACTION; a++)
                     csv << ';' << mu_acc[i][a];
                 for (const auto &acc: {sigma_acc, cont_acc})

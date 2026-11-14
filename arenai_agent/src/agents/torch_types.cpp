@@ -130,12 +130,13 @@ namespace arenai::agent {
             const controller::joystick joystick_canon{
                 .x = aim_action_to_rate(cont_acc[i][2]), .y = aim_action_to_rate(cont_acc[i][3])};
             const controller::button fire_button(disc_acc[i][0] > 0.5f);
+            const controller::button zoom_button(disc_acc[i][1] > 0.5f);
 
             actions.push_back(
                 {.left_joystick = joystick_direction,
                  .right_joystick = joystick_canon,
                  .fire_button = fire_button,
-                 .zoom_button = controller::button(false)});
+                 .zoom_button = zoom_button});
         }
 
         return actions;
@@ -147,7 +148,7 @@ namespace arenai::agent {
     }
 
     const std::vector<std::string> &TorchAction::discrete_action_names() {
-        static const std::vector<std::string> names{"fire"};
+        static const std::vector<std::string> names{"fire", "zoom"};
         return names;
     }
 

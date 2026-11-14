@@ -213,9 +213,14 @@ namespace arenai::agent {
 
                 const auto nb_batch_rows = static_cast<float>(total_rows(blocks));
 
-                for (const auto &idx: blocks)
-                    backward_critic(
+                std::vector<torch::Tensor> batch_returns, batch_values;
+                for (const auto &idx: blocks) {
+                    const auto [returns, values] = backward_critic(
                         rows.select(idx), static_cast<float>(idx.size(0)) / nb_batch_rows);
+                    batch_returns.push_back(returns);
+                    batch_values.push_back(values);
+                }
+                explained_variance_metric->add(explained_variance(batch_returns, batch_values));
 
                 torch::nn::utils::clip_grad_norm_(critic->parameters(), grad_norm_max);
                 critic_optim->step();
@@ -347,7 +352,8 @@ namespace arenai::agent {
         (loss * batch_fraction).backward();
     }
 
-    void PpgTrainer::backward_critic(const FlatRows &block, const float batch_fraction) const {
+    std::tuple<torch::Tensor, torch::Tensor>
+    PpgTrainer::backward_critic(const FlatRows &block, const float batch_fraction) const {
         const auto values = critic->value(block.vision, block.proprioception);
         const auto critic_loss = torch::mse_loss(values, block.returns, at::Reduction::Mean);
 
@@ -355,10 +361,7 @@ namespace arenai::agent {
 
         critic_mean_loss_metric->add(critic_loss.cpu().item<float>());
 
-        const auto residual_var = (block.returns - values.detach()).var(false);
-        const auto returns_var = block.returns.var(false);
-        explained_variance_metric->add(
-            (1.f - residual_var / returns_var.clamp_min(EPSILON)).item<float>());
+        return {block.returns.detach(), values.detach()};
     }
 
     PpgGaeResult

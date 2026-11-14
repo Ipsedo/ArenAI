@@ -99,7 +99,7 @@ int main(const int argc, char **argv) {
         model::ENEMY_STATE_VECTOR_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
         model::ENEMY_NB_DISCRETE_ACTION, params.hidden_size_sensors, params.vision_channels,
         params.group_norm_nums, params.neuron_number, params.unfolding_steps, params.delta_t,
-        params.initial_sigma, std::vector{params.initial_fire_proba});
+        params.initial_sigma, std::vector{params.initial_fire_proba, params.initial_zoom_proba});
     const auto hidden_state = std::make_shared<LiquidHiddenState>(actor);
     const auto rollout_buffer = std::make_shared<LiquidPpoRolloutBuffer>();
     const auto collector = std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state);

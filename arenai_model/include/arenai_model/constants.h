@@ -12,7 +12,7 @@ namespace arenai::model {
     // the network's state vector: the proprioception followed by the remaining shells ratio and the cooldown ratio
     constexpr int ENEMY_STATE_VECTOR_SIZE = ENEMY_PROPRIOCEPTION_SIZE + 2;
     constexpr int ENEMY_NB_CONTINUOUS_ACTION = 2 + 2;
-    constexpr int ENEMY_NB_DISCRETE_ACTION = 1;
+    constexpr int ENEMY_NB_DISCRETE_ACTION = 2;
 
     constexpr float ENEMY_TURRET_RADIAL_VELOCITY = std::numbers::pi * 1.f;
     // the canon travels a much shorter range than the turret: it aims 2.5 times slower

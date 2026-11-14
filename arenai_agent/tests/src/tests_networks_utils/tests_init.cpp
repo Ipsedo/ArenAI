@@ -1,6 +1,7 @@
 #include <networks_utils/init.h>
 
 #include <arenai_agent_tests/tests_networks_utils/tests_init.h>
+#include <arenai_model/constants.h>
 
 #include "./networks/constants.h"
 #include "./networks/misc.h"
@@ -64,7 +65,7 @@ TEST_F(InitWeightsTest, DiscreteOutputProbasAreEqualToWantedOnes) {
     const std::vector wanted_probas{0.2f, 0.35f};
 
     torch::nn::Sequential seq(
-        torch::nn::Linear(32, static_cast<int64_t>(wanted_probas.size())), torch::nn::Sigmoid());
+        torch::nn::Linear(32, model::ENEMY_NB_DISCRETE_ACTION), torch::nn::Sigmoid());
     seq->apply(
         [&wanted_probas](torch::nn::Module &m) { init_discrete_output_weights(m, wanted_probas); });
 

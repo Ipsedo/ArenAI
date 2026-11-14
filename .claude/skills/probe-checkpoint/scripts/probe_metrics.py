@@ -77,8 +77,6 @@ def analyze(decisions_path, step_seconds):
         "armed_fraction": ratio(len(armed), len(late)),
     }
 
-    has_zoom = bool(rows) and "p_zoom" in rows[0]
-
     # trigger
     def p_fire(sel):
         return mean(r["p_fire"] for r in sel)
@@ -88,7 +86,7 @@ def analyze(decisions_path, step_seconds):
         sub = [r for r in armed if lo <= r["best_angle"] < hi]
         by_bin[f"{lo}-{hi}"] = {
             "n": len(sub), "p_fire": p_fire(sub), "fire": mean(r["fire"] for r in sub),
-            "p_zoom": mean(r["p_zoom"] for r in sub) if has_zoom else float("nan"),
+            "p_zoom": mean(r["p_zoom"] for r in sub),
         }
     aligned = [r for r in armed if r["best_angle"] < ALIGNED_DEG]
     aligned_close = [r for r in aligned if 0 <= r["best_distance"] < CLOSE_M]
@@ -109,7 +107,7 @@ def analyze(decisions_path, step_seconds):
         "deterministic_fires_off_axis": mean(r["p_fire"] > 0.5 for r in off),
         "by_angle": by_bin,
     }
-    if has_zoom and len(armed) > 2:
+    if len(armed) > 2:
         try:
             out["trigger"]["corr_p_fire_p_zoom"] = st.correlation(
                 [r["p_fire"] for r in armed], [r["p_zoom"] for r in armed])
@@ -149,7 +147,7 @@ def analyze(decisions_path, step_seconds):
         sample = late[::max(1, len(late) // 3000)]
         spreads = [yaw_spread_deg(r) for r in sample]
         heads["yaw_spread_deg"] = {"p50": quantile(spreads, 0.5), "p90": quantile(spreads, 0.9)}
-    heads["p_zoom"] = mean(r["p_zoom"] for r in late) if has_zoom else float("nan")
+    heads["p_zoom"] = mean(r["p_zoom"] for r in late)
     out["heads"] = heads
 
     # reserve

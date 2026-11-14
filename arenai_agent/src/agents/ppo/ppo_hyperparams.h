@@ -38,9 +38,9 @@ namespace arenai::agent {
         int critic_epochs = 8;
         int rollout_size = 30 * 10;
         int actor_batch_size = 512;
-        int actor_gpu_batch_size = 256;
+        int actor_gpu_batch_size = 512;
         int critic_batch_size = 512;
-        int critic_gpu_batch_size = 256;
+        int critic_gpu_batch_size = 512;
     };
 
     std::vector<CliField<PpoHyperParams>> ppo_cli_fields();

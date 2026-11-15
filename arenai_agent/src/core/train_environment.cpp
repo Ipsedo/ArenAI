@@ -21,6 +21,8 @@ namespace {
     constexpr float AIM_POTENTIAL_SCALE = 0.3f;
     constexpr float HIT_REWARD_SCALE = 3.f;
     constexpr float RECEIVED_REWARD_SCALE = 1.f;
+    // paid at D = final spawn side, scaled by D / final spawn side below
+    constexpr float EMPTY_RESERVE_PENALTY = 1.f;
 }// namespace
 
 namespace arenai::agent {
@@ -29,7 +31,9 @@ namespace arenai::agent {
         const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, const int nb_tanks,
         const std::filesystem::path &android_assets_path, const float wanted_frequency,
         const int max_episode_steps, const int vision_height, const int vision_width,
-        const int vision_num_threads, const int action_repeat, const float gamma)
+        const int vision_num_threads, const int action_repeat, const float gamma,
+        const std::shared_ptr<const ProgressCurriculum> &curriculum, const float initial_spawn_side,
+        const float final_spawn_side)
         : BaseTanksEnvironment(
             std::make_shared<DesktopAssetFileReader>(android_assets_path), graphics_backend,
             nb_tanks, wanted_frequency, vision_height, vision_width, vision_num_threads, false),
@@ -51,8 +55,9 @@ namespace arenai::agent {
           kill_metric(std::make_shared<MeanMetric>("kill", 16, 1)), nb_kills_episode(0),
           nb_fires_episode(0), nb_hits_episode(0),
           aim_shaping(gamma, AIM_POTENTIAL_SCALE, nb_tanks),
-          vision_aspect_ratio(
-              static_cast<float>(vision_width) / static_cast<float>(vision_height)) {}
+          vision_aspect_ratio(static_cast<float>(vision_width) / static_cast<float>(vision_height)),
+          curriculum(curriculum), initial_spawn_side(initial_spawn_side),
+          final_spawn_side(final_spawn_side), empty_reserve_penalty(0.f) {}
 
     std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
     TrainTankEnvironment::step(const float time_delta, const std::vector<core::Action> &actions) {
@@ -123,6 +128,7 @@ namespace arenai::agent {
             for (int i = 0; i < nb_tanks; i++) {
                 if (done[i] || !tanks[i]->is_out_of_shells() || tanks[i]->has_shells_in_flight())
                     continue;
+                rewards[i] -= empty_reserve_penalty;
                 truncated[i] = true;
                 respawn_tank(i);
             }
@@ -216,6 +222,13 @@ namespace arenai::agent {
 
         nb_fires_episode = 0;
         nb_hits_episode = 0;
+
+        empty_reserve_penalty =
+            curriculum
+                ? EMPTY_RESERVE_PENALTY
+                      * std::lerp(initial_spawn_side, final_spawn_side, curriculum->upper_bound())
+                      / final_spawn_side
+                : 0.f;
 
         aim_shaping.reset(aim_potentials());
     }

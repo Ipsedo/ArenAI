@@ -8,6 +8,7 @@
 #include <arenai_core/environment.h>
 
 #include "../metrics/metric.h"
+#include "./curriculum.h"
 #include "./potential_shaping.h"
 
 namespace arenai::agent {
@@ -36,7 +37,9 @@ namespace arenai::agent {
             const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, int nb_tanks,
             const std::filesystem::path &android_assets_path, float wanted_frequency,
             int max_episode_steps, int vision_height, int vision_width, int vision_num_threads,
-            int action_repeat, float gamma);
+            int action_repeat, float gamma,
+            const std::shared_ptr<const ProgressCurriculum> &curriculum = nullptr,
+            float initial_spawn_side = 0.f, float final_spawn_side = 1.f);
 
         std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
         step(float time_delta, const std::vector<core::Action> &actions) override;
@@ -111,6 +114,11 @@ namespace arenai::agent {
         // the learning term paid on top of the tanks' own event rewards: a dense aim signal
         PotentialShaping aim_shaping;
         float vision_aspect_ratio;
+
+        std::shared_ptr<const ProgressCurriculum> curriculum;
+        float initial_spawn_side;
+        float final_spawn_side;
+        float empty_reserve_penalty;
 
         bool are_all_done();
         std::vector<float> aim_potentials();

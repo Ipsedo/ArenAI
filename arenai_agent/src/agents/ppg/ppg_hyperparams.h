@@ -25,7 +25,7 @@ namespace arenai::agent {
         float gae_lambda = 0.95f;
         // λ of the canon actions' advantage, the aim potential's own return
         float clip_epsilon = 0.2f;
-        float target_kl = 0.05f;
+        float target_kl = 0.1f;
         float grad_norm_max = 0.5f;
         float initial_alpha = 0.001f;
         float alpha_learning_rate = 3e-4f;

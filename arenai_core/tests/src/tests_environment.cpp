@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <numeric>
+#include <optional>
 
 #include <nlohmann/json.hpp>
 
@@ -285,6 +286,16 @@ TEST_F(EnvironmentTest, StopDrawingDoubleCallDoesNotCrash) {
     ASSERT_NO_THROW(env.stop_drawing());
 }
 
+static std::optional<glm::vec3> terrain_hit(
+    const std::unique_ptr<model::AbstractPhysicEngine> &engine, const float x, const float z) {
+    for (const float offset: {0.f, 0.05f})
+        if (const auto hit = engine->ray_cast(
+                glm::vec3(x + offset, 300.f, z + offset),
+                glm::vec3(x + offset, -300.f, z + offset)))
+            return hit;
+    return std::nullopt;
+}
+
 TEST_F(EnvironmentTest, SpawnedBodiesStartAboveTerrain) {
     constexpr int nb_tanks = 4;
     constexpr int nb_shapes_per_kind = 30;
@@ -309,8 +320,7 @@ TEST_F(EnvironmentTest, SpawnedBodiesStartAboveTerrain) {
                              || name.starts_with("tetra_") || name.starts_with("cylinder_");
         if (!is_prop && !name.ends_with("_chassis")) continue;
 
-        const auto ground =
-            engine->ray_cast(glm::vec3(pos.x, 300.f, pos.z), glm::vec3(pos.x, -300.f, pos.z));
+        const auto ground = terrain_hit(engine, pos.x, pos.z);
         ASSERT_TRUE(ground.has_value()) << name;
         EXPECT_GT(pos.y, ground->y) << name;
         checked++;
@@ -347,9 +357,7 @@ TEST_F(EnvironmentTest, RespawnTankLandsInSpawnBoxAboveTerrain) {
     engine->get_item_factory()->make_height_map_item(
         "height_map", file_reader, "heightmap/heightmap6.png", glm::vec3(0., 40., 0.),
         glm::vec3(10., 200., 10.));
-    const auto ground = engine->ray_cast(
-        glm::vec3(settled_pos.x, 300.f, settled_pos.z),
-        glm::vec3(settled_pos.x, -300.f, settled_pos.z));
+    const auto ground = terrain_hit(engine, settled_pos.x, settled_pos.z);
     ASSERT_TRUE(ground.has_value());
     EXPECT_GT(settled_pos.y, ground->y);
 }

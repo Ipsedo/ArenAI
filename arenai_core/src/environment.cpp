@@ -171,8 +171,13 @@ namespace arenai::core {
 
     float BaseTanksEnvironment::ground_height(const float x, const float z) const {
         constexpr float terrain_max_y = 40.f + 200.f / 2.f;
-        const auto hit = physic_engine->ray_cast(glm::vec3(x, 300.f, z), glm::vec3(x, -300.f, z));
-        return hit.has_value() ? hit->y : terrain_max_y;
+        constexpr float retry_offset = 0.05f;
+        for (const float offset: {0.f, retry_offset})
+            if (const auto hit = physic_engine->ray_cast(
+                    glm::vec3(x + offset, 300.f, z + offset),
+                    glm::vec3(x + offset, -300.f, z + offset)))
+                return hit->y;
+        return terrain_max_y;
     }
 
     void BaseTanksEnvironment::respawn_tank(const int index) {

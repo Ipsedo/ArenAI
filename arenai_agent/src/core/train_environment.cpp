@@ -164,7 +164,6 @@ namespace arenai::agent {
         nb_fires_episode += nb_fires;
         nb_hits_episode += nb_hits;
         step_reward_details = reward_details;
-        step_aim_rewards = shaping_details;
 
         std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>> result;
         result.reserve(nb_tanks);
@@ -246,11 +245,6 @@ namespace arenai::agent {
 
     std::vector<model::RewardDetail> TrainTankEnvironment::last_step_reward_details() const {
         return step_reward_details;
-    }
-
-    torch::Tensor TrainTankEnvironment::last_step_aim_rewards() const {
-        return torch::tensor(step_aim_rewards, torch::TensorOptions().dtype(torch::kFloat))
-            .unsqueeze(-1);
     }
 
     std::vector<AimGeometry> TrainTankEnvironment::aim_geometry(const float view_half_yaw) {

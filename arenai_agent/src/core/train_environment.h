@@ -58,7 +58,6 @@ namespace arenai::agent {
         std::vector<model::RewardDetail> last_step_reward_details() const;
 
         // [nb_tanks, 1] the aim potential part of the last step's rewards
-        torch::Tensor last_step_aim_rewards() const;
 
         // totals across every tank since the last reset, for the spawn curriculum
         int episode_nb_fires() const;
@@ -112,7 +111,6 @@ namespace arenai::agent {
         int nb_hits_episode;
 
         std::vector<model::RewardDetail> step_reward_details;
-        std::vector<float> step_aim_rewards;
 
         // the learning term paid on top of the tanks' own event rewards: a dense aim signal
         PotentialShaping aim_shaping;

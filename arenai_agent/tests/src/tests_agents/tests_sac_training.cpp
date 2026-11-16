@@ -51,8 +51,7 @@ TEST_F(SacTrainingTest, NoUpdateBeforeLearningStarts) {
     for (int t = 0; t < 2; t++) {
         triad.agent->act(make_state(cfg, NB_TANKS), true);
         triad.collector->on_transition(
-            torch::randn({NB_TANKS, 1}), torch::randn({NB_TANKS, 1}), torch::zeros({NB_TANKS, 1}),
-            torch::zeros({NB_TANKS, 1}));
+            torch::randn({NB_TANKS, 1}), torch::zeros({NB_TANKS, 1}), torch::zeros({NB_TANKS, 1}));
         triad.trainer->step();
     }
 
@@ -77,8 +76,7 @@ TEST_F(SacTrainingTest, TrainingUpdatesActorParameters) {
     for (int t = 0; t < 6; t++) {
         triad.agent->act(make_state(cfg, NB_TANKS), true);
         triad.collector->on_transition(
-            torch::randn({NB_TANKS, 1}), torch::randn({NB_TANKS, 1}), torch::zeros({NB_TANKS, 1}),
-            torch::zeros({NB_TANKS, 1}));
+            torch::randn({NB_TANKS, 1}), torch::zeros({NB_TANKS, 1}), torch::zeros({NB_TANKS, 1}));
         triad.trainer->step();
     }
 
@@ -121,8 +119,7 @@ TEST_F(SacTrainingTest, MaskedFireReceivesNoUpdate) {
 
         triad.agent->act(state, true);
         triad.collector->on_transition(
-            torch::randn({NB_TANKS, 1}), torch::randn({NB_TANKS, 1}), torch::zeros({NB_TANKS, 1}),
-            torch::zeros({NB_TANKS, 1}));
+            torch::randn({NB_TANKS, 1}), torch::zeros({NB_TANKS, 1}), torch::zeros({NB_TANKS, 1}));
         triad.trainer->step();
     }
 
@@ -147,8 +144,7 @@ TEST_F(SacTrainingTest, EpisodeEndKeepsTraining) {
             // the last step kills one tank
             const auto done = t == 3 ? torch::tensor({{1.f}, {0.f}}) : torch::zeros({NB_TANKS, 1});
             triad.collector->on_transition(
-                torch::randn({NB_TANKS, 1}), torch::randn({NB_TANKS, 1}), done,
-                torch::zeros({NB_TANKS, 1}));
+                torch::randn({NB_TANKS, 1}), done, torch::zeros({NB_TANKS, 1}));
             triad.trainer->step();
         }
         triad.collector->on_episode_end(make_state(cfg, NB_TANKS));
@@ -199,8 +195,7 @@ TEST_F(SacTrainingTest, CriticLossTrainsTheSharedEncoder) {
     for (int t = 0; t < 6; t++) {
         triad.agent->act(make_state(cfg, NB_TANKS), true);
         triad.collector->on_transition(
-            torch::randn({NB_TANKS, 1}), torch::randn({NB_TANKS, 1}), torch::zeros({NB_TANKS, 1}),
-            torch::zeros({NB_TANKS, 1}));
+            torch::randn({NB_TANKS, 1}), torch::zeros({NB_TANKS, 1}), torch::zeros({NB_TANKS, 1}));
         triad.trainer->step();
     }
 

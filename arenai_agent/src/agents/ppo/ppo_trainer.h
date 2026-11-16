@@ -13,7 +13,6 @@ namespace arenai::agent {
 
     struct GaeResult {
         torch::Tensor advantages;
-        torch::Tensor aim_advantages;
         torch::Tensor returns;
     };
 
@@ -27,8 +26,8 @@ namespace arenai::agent {
             const std::vector<int> &critic_hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
-            float gamma, float gae_lambda, float aim_gae_lambda, float clip_epsilon,
-            float target_kl, float grad_norm_max, float initial_alpha, float alpha_learning_rate,
+            float gamma, float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
+            float initial_alpha, float alpha_learning_rate,
             const std::vector<float> &continuous_target_entropy, float discrete_target_proba,
             int actor_epochs, int critic_epochs, int rollout_size, int actor_batch_size,
             int actor_gpu_batch_size, int critic_batch_size, int critic_gpu_batch_size);
@@ -74,11 +73,9 @@ namespace arenai::agent {
 
         // share of the planned actor steps the KL threshold cut, once per rollout
         std::shared_ptr<AbstractMetric> skip_fraction_metric;
-        std::shared_ptr<AbstractMetric> skip_canon_metric;
 
         float gamma;
         float gae_lambda;
-        float aim_gae_lambda;
         float clip_epsilon;
         float target_kl;
 
@@ -102,7 +99,6 @@ namespace arenai::agent {
             torch::Tensor old_continuous_log_probs;
             torch::Tensor old_discrete_log_probs;
             torch::Tensor advantages;
-            torch::Tensor aim_advantages;
             torch::Tensor returns;
 
             FlatRows select(const torch::Tensor &idx) const;
@@ -113,14 +109,12 @@ namespace arenai::agent {
         void run_actor_epochs(const FlatRows &rows, const torch::Tensor &valid_idx) const;
         void run_critic_epochs(const FlatRows &rows, const torch::Tensor &valid_idx) const;
 
-        // batch gradient of the active groups; returns the KLs of the policy it starts from
-        GroupKls accumulate_actor_gradients(
-            const FlatRows &rows, const std::vector<torch::Tensor> &blocks,
-            const ActiveGroups &active) const;
+        // batch gradient; returns the KL of the policy it starts from
+        float accumulate_actor_gradients(
+            const FlatRows &rows, const std::vector<torch::Tensor> &blocks) const;
 
         // accumulates a device block's share of its optimizer batch gradient; returns its row KLs
-        RowKls backward_actor(
-            const FlatRows &block, float batch_fraction, const ActiveGroups &active) const;
+        torch::Tensor backward_actor(const FlatRows &block, float batch_fraction) const;
 
         // [returns, values] of the block's live rows, detached
         std::tuple<torch::Tensor, torch::Tensor>

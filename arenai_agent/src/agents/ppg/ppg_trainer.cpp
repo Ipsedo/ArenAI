@@ -49,8 +49,8 @@ namespace arenai::agent {
         const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, const torch::Device device,
         const int metric_window_size, const float gamma, const float gae_lambda,
-        const float aim_gae_lambda, const float clip_epsilon, const float target_kl,
-        const float grad_norm_max, const float initial_alpha, const float alpha_learning_rate,
+        const float clip_epsilon, const float target_kl, const float grad_norm_max,
+        const float initial_alpha, const float alpha_learning_rate,
         const std::vector<float> &continuous_target_entropy, const float discrete_target_proba,
         const int actor_epochs, const int critic_epochs, const int rollout_size,
         const int actor_batch_size, const int actor_gpu_batch_size, const int critic_batch_size,
@@ -76,14 +76,12 @@ namespace arenai::agent {
           clip_fraction_metric(std::make_shared<MeanMetric>("clip", metric_window_size)),
           kl_metric(std::make_shared<MeanMetric>("kl", metric_window_size, 2, true)),
           skip_fraction_metric(std::make_shared<MeanMetric>("skip", metric_window_size)),
-          skip_canon_metric(std::make_shared<MeanMetric>("skip_canon", metric_window_size)),
-          gamma(gamma), gae_lambda(gae_lambda), aim_gae_lambda(aim_gae_lambda),
-          clip_epsilon(clip_epsilon), target_kl(target_kl), grad_norm_max(grad_norm_max),
-          actor_epochs(actor_epochs), critic_epochs(critic_epochs), rollout_size(rollout_size),
-          actor_batch_size(actor_batch_size), actor_gpu_batch_size(actor_gpu_batch_size),
-          critic_batch_size(critic_batch_size), critic_gpu_batch_size(critic_gpu_batch_size),
-          actor_aux_epochs(actor_aux_epochs), critic_aux_epochs(critic_aux_epochs),
-          beta_clone(beta_clone), n_pi(std::max(1, n_pi)) {
+          gamma(gamma), gae_lambda(gae_lambda), clip_epsilon(clip_epsilon), target_kl(target_kl),
+          grad_norm_max(grad_norm_max), actor_epochs(actor_epochs), critic_epochs(critic_epochs),
+          rollout_size(rollout_size), actor_batch_size(actor_batch_size),
+          actor_gpu_batch_size(actor_gpu_batch_size), critic_batch_size(critic_batch_size),
+          critic_gpu_batch_size(critic_gpu_batch_size), actor_aux_epochs(actor_aux_epochs),
+          critic_aux_epochs(critic_aux_epochs), beta_clone(beta_clone), n_pi(std::max(1, n_pi)) {
         to(device);
 
         set_train(false);
@@ -107,7 +105,6 @@ namespace arenai::agent {
             .old_continuous_log_probs = rows(old_continuous_log_probs),
             .old_discrete_log_probs = rows(old_discrete_log_probs),
             .advantages = rows(advantages),
-            .aim_advantages = rows(aim_advantages),
             .returns = rows(returns)};
     }
 
@@ -126,7 +123,7 @@ namespace arenai::agent {
         rollout.states = rollout.states.to(device);
 
         set_train(false);
-        const auto [advantages, aim_advantages, returns] = compute_gae(rollout, device);
+        const auto [advantages, returns] = compute_gae(rollout, device);
 
         // flat [T * nb_tanks, ...] rows, all on the device
         const auto flat = [&](const torch::Tensor &tensor) {
@@ -141,7 +138,6 @@ namespace arenai::agent {
             .old_continuous_log_probs = flat(rollout.continuous_log_probs),
             .old_discrete_log_probs = flat(rollout.discrete_log_probs),
             .advantages = flat(advantages),
-            .aim_advantages = flat(aim_advantages),
             .returns = flat(returns)};
 
         // live (step, tank) pairs; the optimizer batches split these rows only
@@ -159,7 +155,7 @@ namespace arenai::agent {
     }
 
     void PpgTrainer::run_actor_epochs(const FlatRows &rows, const torch::Tensor &valid_idx) const {
-        GroupKlStop kl_stop(target_kl);
+        KlStop kl_stop(target_kl);
 
         for (int e = 0; e < actor_epochs; e++) {
             const auto batches =
@@ -167,15 +163,12 @@ namespace arenai::agent {
             kl_stop.on_planned_steps(static_cast<int>(batches.size()));
 
             for (const auto &blocks: batches) {
-                if (!kl_stop.any_active()) break;
+                if (kl_stop.stopped()) break;
 
-                const auto kls = accumulate_actor_gradients(rows, blocks, kl_stop.active());
-                kl_metric->add(kls.joint);
+                const auto kl = accumulate_actor_gradients(rows, blocks);
+                kl_metric->add(kl);
 
-                if (kl_stop.stop_exceeded(kls)) {
-                    if (!kl_stop.any_active()) break;
-                    accumulate_actor_gradients(rows, blocks, kl_stop.active());
-                }
+                if (kl_stop.stop_exceeded(kl)) break;
 
                 torch::nn::utils::clip_grad_norm_(actor->parameters(), grad_norm_max);
                 actor_optim->step();
@@ -184,24 +177,22 @@ namespace arenai::agent {
             }
         }
 
-        skip_fraction_metric->add(kl_stop.rest_skip_fraction());
-        skip_canon_metric->add(kl_stop.aim_skip_fraction());
+        skip_fraction_metric->add(kl_stop.skip_fraction());
     }
 
-    GroupKls PpgTrainer::accumulate_actor_gradients(
-        const FlatRows &rows, const std::vector<torch::Tensor> &blocks,
-        const ActiveGroups &active) const {
+    float PpgTrainer::accumulate_actor_gradients(
+        const FlatRows &rows, const std::vector<torch::Tensor> &blocks) const {
         actor_optim->zero_grad();
         alphas->zero_grad();
 
         const auto nb_batch_rows = static_cast<float>(total_rows(blocks));
 
-        std::vector<RowKls> row_kls;
+        std::vector<torch::Tensor> row_kls;
         for (const auto &idx: blocks)
-            row_kls.push_back(backward_actor(
-                rows.select(idx), static_cast<float>(idx.size(0)) / nb_batch_rows, active));
+            row_kls.push_back(
+                backward_actor(rows.select(idx), static_cast<float>(idx.size(0)) / nb_batch_rows));
 
-        return trimmed_group_kls(row_kls);
+        return trimmed_kl(row_kls);
     }
 
     void PpgTrainer::run_critic_epochs(
@@ -280,32 +271,29 @@ namespace arenai::agent {
         }
     }
 
-    RowKls PpgTrainer::backward_actor(
-        const FlatRows &block, const float batch_fraction, const ActiveGroups &active) const {
+    torch::Tensor
+    PpgTrainer::backward_actor(const FlatRows &block, const float batch_fraction) const {
         const auto [mu, sigma, discrete_proba] = actor->act(block.vision, block.proprioception);
         const auto discrete_mask =
             TorchState::discrete_action_mask(block.fire_masks, discrete_proba.size(-1));
 
-        const auto current = PolicyLogProbs::split(
-            gaussian_tanh_log_pdf(block.continuous_pre_tanh, mu, sigma),
-            (bernoulli_log_proba(block.discrete_actions, discrete_proba) * discrete_mask)
-                .sum(-1, true));
-        const auto old =
-            PolicyLogProbs::split(block.old_continuous_log_probs, block.old_discrete_log_probs);
+        const auto log_probs =
+            gaussian_tanh_log_pdf(block.continuous_pre_tanh, mu, sigma).sum(-1, true)
+            + (bernoulli_log_proba(block.discrete_actions, discrete_proba) * discrete_mask)
+                  .sum(-1, true);
+        const auto old_log_probs =
+            block.old_continuous_log_probs.sum(-1, true) + block.old_discrete_log_probs;
 
-        const auto [surrogate, log_ratio, ratio, kls] = clipped_surrogate(
-            current, old, block.aim_advantages, block.advantages, clip_epsilon, active);
+        const auto [surrogate, log_ratio, ratio, kl] =
+            clipped_surrogate(log_probs, old_log_probs, block.advantages, clip_epsilon);
 
         const auto continuous_entropy = gaussian_tanh_entropy(mu, sigma);
         const auto discrete_entropy = bernoulli_entropy(discrete_proba) * discrete_mask;
 
         // the alphas are constants for the actor: they learn from their own dual loss
         const auto entropy_bonus =
-            (alphas->continuous().detach() * continuous_entropy
-             * continuous_group_mask(active, continuous_entropy.size(-1), mu.device()))
-                .sum(-1, true)
-            + static_cast<float>(active.rest)
-                  * (alphas->discrete().detach() * discrete_entropy).sum(-1, true);
+            (alphas->continuous().detach() * continuous_entropy).sum(-1, true)
+            + (alphas->discrete().detach() * discrete_entropy).sum(-1, true);
 
         const auto actor_loss = -torch::mean(surrogate + entropy_bonus);
 
@@ -323,7 +311,7 @@ namespace arenai::agent {
         clip_fraction_metric->add(
             ((ratio - 1.f).abs() > clip_epsilon).to(torch::kFloat).mean().item<float>());
 
-        return kls;
+        return kl;
     }
 
     void PpgTrainer::backward_actor_aux(
@@ -408,11 +396,7 @@ namespace arenai::agent {
 
         const auto advantages = generalized_advantages(deltas, cuts, gamma * gae_lambda);
 
-        return {
-            .advantages = normalized(advantages, valids),
-            .aim_advantages =
-                aim_advantages(rollout.aim_rewards, cuts, valids, gamma, aim_gae_lambda),
-            .returns = advantages + values};
+        return {.advantages = normalized(advantages, valids), .returns = advantages + values};
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> PpgTrainer::get_metrics() {
@@ -428,9 +412,7 @@ namespace arenai::agent {
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> PpgTrainer::get_csv_only_metrics() {
-        auto metrics = alphas->get_metrics();
-        metrics.push_back(skip_canon_metric);
-        return metrics;
+        return alphas->get_metrics();
     }
 
     void PpgTrainer::save(const std::filesystem::path &output_folder) {

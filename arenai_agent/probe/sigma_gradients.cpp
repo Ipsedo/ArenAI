@@ -62,7 +62,6 @@ int main(const int argc, char **argv) {
     parser.add_argument("--nb_episodes").scan<'i', int>().default_value(2);
     parser.add_argument("--spawn_side").scan<'g', float>().default_value(1000.f);
     parser.add_argument("--cuda").default_value(false).implicit_value(true);
-    parser.add_argument("--kl_by_group").default_value(false).implicit_value(true);
     parser.add_argument("--vision_num_threads")
         .scan<'i', int>()
         .default_value(static_cast<int>(std::thread::hardware_concurrency()));
@@ -75,7 +74,6 @@ int main(const int argc, char **argv) {
     const std::filesystem::path output(parser.get<std::string>("--output"));
     const int nb_episodes = parser.get<int>("--nb_episodes");
     const float spawn_side = parser.get<float>("--spawn_side");
-    const bool kl_by_group = parser.get<bool>("--kl_by_group");
 
     const torch::Device device =
         parser.get<bool>("--cuda") ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU);
@@ -111,17 +109,13 @@ int main(const int argc, char **argv) {
         model::ENEMY_NB_DISCRETE_ACTION, model::ENEMY_STATE_VECTOR_SIZE, params.actor_learning_rate,
         params.critic_learning_rate, params.hidden_size_sensors, params.vision_channels,
         params.group_norm_nums, params.neuron_number, params.unfolding_steps, params.delta_t,
-        device, params.metric_window_size, params.gamma, params.gae_lambda, params.aim_gae_lambda,
-        params.clip_epsilon, params.target_kl, params.grad_norm_max, params.initial_alpha,
-        params.alpha_learning_rate, params.continuous_target_entropy, params.discrete_target_proba,
-        params.actor_epochs, params.critic_epochs, params.rollout_size, params.actor_batch_size,
+        device, params.metric_window_size, params.gamma, params.gae_lambda, params.clip_epsilon,
+        params.target_kl, params.grad_norm_max, params.initial_alpha, params.alpha_learning_rate,
+        params.continuous_target_entropy, params.discrete_target_proba, params.actor_epochs,
+        params.critic_epochs, params.rollout_size, params.actor_batch_size,
         params.actor_gpu_batch_size, params.critic_batch_size, params.critic_gpu_batch_size,
         params.chunk_size);
-    const auto load_save = [&] {
-        trainer->load(save_folder);
-        if (kl_by_group) trainer->load_actor_optimizer(save_folder);
-    };
-    load_save();
+    trainer->load(save_folder);
 
     auto graphics_backend = view::make_vulkan_backend();
     std::cout << "Vulkan device : " << graphics_backend->renderer_info() << std::endl;
@@ -135,14 +129,11 @@ int main(const int argc, char **argv) {
     const auto names = TorchAction::continuous_action_names();
 
     std::ofstream csv(output);
-    if (kl_by_group) csv << "rollout;epoch;step;joint;move;canon;discrete\n";
-    else {
-        csv << "rollout;step;tank;armed;fire;best_angle;best_distance;distance;yaw;pitch;reward;"
-               "hit;kill;received;death;done;truncated;advantage;aim_advantage";
-        for (const auto &prefix: {"mu_", "sigma_", "u_", "g_pg_", "g_h_"})
-            for (const auto &name: names) csv << ';' << prefix << name;
-        csv << '\n';
-    }
+    csv << "rollout;step;tank;armed;fire;best_angle;best_distance;distance;yaw;pitch;reward;"
+           "hit;kill;received;death;done;truncated;advantage";
+    for (const auto &prefix: {"mu_", "sigma_", "u_", "g_pg_", "g_h_"})
+        for (const auto &name: names) csv << ';' << prefix << name;
+    csv << '\n';
 
     constexpr float to_degrees = 180.f / std::numbers::pi_v<float>;
 
@@ -150,23 +141,7 @@ int main(const int argc, char **argv) {
     std::deque<StepRecord> records;
     int rollout_index = 0;
 
-    const auto write_kl_by_group = [&] {
-        const auto nb_steps = static_cast<int64_t>(rollout_buffer->nb_complete_steps());
-
-        for (const auto &[epoch, step, joint, move, canon, discrete]: trainer->kl_by_group())
-            csv << rollout_index << ';' << epoch << ';' << step << ';' << joint << ';' << move
-                << ';' << canon << ';' << discrete << '\n';
-
-        load_save();
-
-        records.erase(records.begin(), records.begin() + nb_steps);
-        std::cout << "rollout " << rollout_index << " : " << nb_steps << " steps" << std::endl;
-        rollout_index++;
-    };
-
     const auto write_rollout = [&] {
-        if (kl_by_group) return write_kl_by_group();
-
         const auto nb_steps = static_cast<int64_t>(rollout_buffer->nb_complete_steps());
         const auto gradients = trainer->sigma_gradients();
 
@@ -174,7 +149,6 @@ int main(const int argc, char **argv) {
             const auto step_acc = gradients.steps.accessor<int64_t, 1>();
             const auto tank_acc = gradients.tanks.accessor<int64_t, 1>();
             const auto adv_acc = gradients.advantages.accessor<float, 1>();
-            const auto aim_adv_acc = gradients.aim_advantages.accessor<float, 1>();
             const auto armed_acc = gradients.fire_masks.accessor<float, 1>();
             const auto fire_acc = gradients.fires.accessor<float, 1>();
             const auto mu_acc = gradients.mu.accessor<float, 2>();
@@ -194,7 +168,7 @@ int main(const int argc, char **argv) {
                     << geometry.yaw * to_degrees << ';' << geometry.pitch * to_degrees << ';'
                     << record.rewards[tank] << ';' << detail.hit << ';' << detail.kill << ';'
                     << detail.received << ';' << detail.death << ';' << record.dones[tank] << ';'
-                    << record.truncateds[tank] << ';' << adv_acc[r] << ';' << aim_adv_acc[r];
+                    << record.truncateds[tank] << ';' << adv_acc[r];
                 for (const auto &acc: {mu_acc, sigma_acc, u_acc, pg_acc, h_acc})
                     for (int64_t a = 0; a < static_cast<int64_t>(names.size()); a++)
                         csv << ';' << acc[r][a];
@@ -228,8 +202,7 @@ int main(const int argc, char **argv) {
             records.push_back(std::move(record));
 
             collector->on_transition(
-                torch_step.get_rewards(), env->last_step_aim_rewards(), torch_step.get_is_done(),
-                torch_step.get_is_truncated());
+                torch_step.get_rewards(), torch_step.get_is_done(), torch_step.get_is_truncated());
 
             if (rollout_buffer->nb_complete_steps() >= static_cast<size_t>(params.rollout_size))
                 write_rollout();

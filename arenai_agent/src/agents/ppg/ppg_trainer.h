@@ -154,7 +154,9 @@ namespace arenai::agent {
         void backward_actor_aux(
             const FlatRows &block, const CloneTargets &targets, float batch_fraction) const;
 
-        void backward_critic(const FlatRows &block, float batch_fraction) const;
+        // [returns, values] of the block's live rows, detached
+        std::tuple<torch::Tensor, torch::Tensor>
+        backward_critic(const FlatRows &block, float batch_fraction) const;
 
         PpgGaeResult compute_gae(const PpgRollout &rollout, torch::Device device) const;
 

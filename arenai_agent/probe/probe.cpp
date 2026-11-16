@@ -57,9 +57,14 @@ int main(const int argc, char **argv) {
     parser.add_argument("--cuda").default_value(false).implicit_value(true);
     parser.add_argument("--deterministic").default_value(false).implicit_value(true);
     parser.add_argument("--features").default_value(std::string());
+    parser.add_argument("--zoom")
+        .default_value(std::string("policy"))
+        .choices("policy", "on", "off");
     parser.add_argument("--oracle").default_value(false).implicit_value(true);
     parser.add_argument("--oracle_fov").scan<'g', float>().default_value(360.f);
+    parser.add_argument("--oracle_policy_yaw").default_value(false).implicit_value(true);
     parser.add_argument("--oracle_policy_pitch").default_value(false).implicit_value(true);
+    parser.add_argument("--oracle_policy_fire").default_value(false).implicit_value(true);
     parser.add_argument("--oracle_camera_center").default_value(false).implicit_value(true);
     parser.add_argument("--oracle_tolerance").scan<'g', float>().default_value(1.f);
     parser.add_argument("--vision_num_threads")
@@ -79,8 +84,11 @@ int main(const int argc, char **argv) {
         .shells_per_hit = parser.get<int>("--shells_per_hit"),
         .max_shells = parser.get<int>("--max_shells")};
     const bool deterministic = parser.get<bool>("--deterministic");
+    const auto zoom_mode = parser.get<std::string>("--zoom");
     const bool oracle = parser.get<bool>("--oracle");
+    const bool oracle_policy_yaw = parser.get<bool>("--oracle_policy_yaw");
     const bool oracle_policy_pitch = parser.get<bool>("--oracle_policy_pitch");
+    const bool oracle_policy_fire = parser.get<bool>("--oracle_policy_fire");
     const bool oracle_camera_center = parser.get<bool>("--oracle_camera_center");
     const float oracle_tolerance =
         parser.get<float>("--oracle_tolerance") * std::numbers::pi_v<float> / 180.f;
@@ -285,6 +293,10 @@ int main(const int argc, char **argv) {
                     continuous_action = gaussian_tanh_sample(mu, sigma).first;
                     discrete_action = bernoulli_sample(discrete);
                 }
+
+                // discrete actions : fire, zoom
+                if (zoom_mode != "policy")
+                    discrete_action.select(1, 1).fill_(zoom_mode == "on" ? 1.f : 0.f);
             }
 
             const auto q_gradient = canon_q_gradient(state, mu, discrete);
@@ -301,7 +313,7 @@ int main(const int argc, char **argv) {
                 auto cont = continuous_action.accessor<float, 2>();
                 auto disc = discrete_action.accessor<float, 2>();
                 for (int i = 0; i < nb_tanks; i++) {
-                    disc[i][0] = 0.f;
+                    if (!oracle_policy_fire) disc[i][0] = 0.f;
                     if (!geometry[i].alive || geometry[i].view_distance < 0.f) continue;
 
                     const float drop = std::atan(
@@ -320,16 +332,17 @@ int main(const int argc, char **argv) {
                             std::atan2(height - 4.f, depth + 20.f) - std::atan2(-4.f, 120.f);
                     }
 
-                    cont[i][NB_DIRECTION_ACTIONS] =
-                        std::clamp(-gain * yaw_error / turret_step, -1.f, 1.f);
+                    if (!oracle_policy_yaw)
+                        cont[i][NB_DIRECTION_ACTIONS] = aim_rate_to_action(
+                            std::clamp(-gain * yaw_error / turret_step, -1.f, 1.f));
                     if (!oracle_policy_pitch)
-                        cont[i][NB_DIRECTION_ACTIONS + 1] =
-                            std::clamp(-gain * pitch_error / canon_step, -1.f, 1.f);
-
-                    const bool aligned =
-                        std::abs(yaw_error) < oracle_tolerance
-                        && (oracle_policy_pitch || std::abs(pitch_error) < oracle_tolerance);
-                    disc[i][0] = aligned ? 1.f : 0.f;
+                        cont[i][NB_DIRECTION_ACTIONS + 1] = aim_rate_to_action(
+                            std::clamp(-gain * pitch_error / canon_step, -1.f, 1.f));
+                    if (!oracle_policy_fire)
+                        disc[i][0] = std::abs(yaw_error) < oracle_tolerance
+                                             && std::abs(pitch_error) < oracle_tolerance
+                                         ? 1.f
+                                         : 0.f;
                 }
             }
 

@@ -96,6 +96,8 @@ def run_probe(run, save, binary, side, args, out_csv):
         cmd.append("--cuda")
     if args.deterministic:
         cmd.append("--deterministic")
+    if args.zoom != "policy":
+        cmd += ["--zoom", args.zoom]
     log = out_csv.with_suffix(".log")
     print(f"$ {' '.join(cmd)}", flush=True)
     with open(log, "w") as f:
@@ -154,6 +156,8 @@ def main():
     parser.add_argument("--episodes", type=int, default=4)
     parser.add_argument("--binary", help="binaire arenai_agent_probe (défaut : le plus récent)")
     parser.add_argument("--deterministic", action="store_true")
+    parser.add_argument("--zoom", choices=["policy", "on", "off"], default="policy",
+                        help="force le zoom (on/off) ou le laisse à la politique")
     parser.add_argument("--no-cuda", dest="cuda", action="store_false")
     parser.add_argument("--check-only", action="store_true", help="compatibilité seulement")
     parser.add_argument("--analyze-only", action="store_true", help="réanalyse les CSV existants")
@@ -199,7 +203,7 @@ def main():
     out_dir.mkdir(exist_ok=True)
     step_seconds = (config_value(run, "action_repeat") or 3) * \
         (config_value(run, "wanted_frequency") or 1 / 30)
-    suffix = "_det" if args.deterministic else ""
+    suffix = ("_det" if args.deterministic else "") + ("" if args.zoom == "policy" else f"_zoom{args.zoom}")
     results = {}
     for side in [float(s) for s in args.sides.split(",")]:
         out_csv = out_dir / f"{save}_side{side:g}{suffix}.csv"
@@ -208,7 +212,7 @@ def main():
         metrics = analyze(str(out_csv), step_seconds)
         meta = {
             "run": run.name, "save": save, "save_index": k, "index": index, "D_at_save": d_at,
-            "side": side, "episodes": args.episodes, "deterministic": args.deterministic,
+            "side": side, "episodes": args.episodes, "deterministic": args.deterministic, "zoom": args.zoom,
             "probed_at": datetime.now().isoformat(timespec="minutes"), **compat,
         }
         results[side] = metrics

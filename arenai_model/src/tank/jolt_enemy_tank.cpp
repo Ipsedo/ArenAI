@@ -181,9 +181,8 @@ namespace arenai::model {
 
         if (!predicted.has_sample) return 0.f;
 
-        // a pass within the hull radius is a hit: the miss counts from the hull
         const float miss = glm::length(predicted.shell_pos_at_t - predicted.enemy_pos_at_t);
-        const float ratio = std::max(0.f, miss - AIM_TARGET_RADIUS) / AIM_TARGET_RADIUS;
+        const float ratio = miss / AIM_TARGET_RADIUS;
         return 1.f / (1.f + ratio * ratio);
     }
 

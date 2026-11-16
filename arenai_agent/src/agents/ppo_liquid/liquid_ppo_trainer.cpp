@@ -398,12 +398,16 @@ namespace arenai::agent {
 
                 const auto batch_rows = chunks.batch_live_rows(blocks);
 
+                std::vector<torch::Tensor> batch_returns, batch_values;
                 for (const auto &units: blocks) {
                     const auto [unit_rows, start_rows] = chunks.rows(units);
-                    backward_critic(
+                    const auto [returns, values] = backward_critic(
                         rows.select_chunks(unit_rows, start_rows, chunk_size),
                         chunks.live_rows(units) / batch_rows);
+                    batch_returns.push_back(returns);
+                    batch_values.push_back(values);
                 }
+                explained_variance_metric->add(explained_variance(batch_returns, batch_values));
 
                 torch::nn::utils::clip_grad_norm_(critic->parameters(), grad_norm_max);
                 critic_optim->step();
@@ -501,7 +505,7 @@ namespace arenai::agent {
             .groups = torch::exp(terms.group_log_ratios) - 1.f - terms.group_log_ratios};
     }
 
-    void
+    std::tuple<torch::Tensor, torch::Tensor>
     LiquidPpoTrainer::backward_critic(const FlatRows &block, const float batch_fraction) const {
         const auto [value, next_x] =
             critic->value_sequence(block.vision, block.proprioception, block.critic_hiddens);
@@ -517,10 +521,7 @@ namespace arenai::agent {
 
         critic_mean_loss_metric->add(critic_loss.cpu().item<float>());
 
-        const auto residual_var = (valid_returns - values.detach()).var(false);
-        const auto returns_var = valid_returns.var(false);
-        explained_variance_metric->add(
-            (1.f - residual_var / returns_var.clamp_min(EPSILON)).item<float>());
+        return {valid_returns.detach(), values.detach()};
     }
 
     LiquidGaeResult

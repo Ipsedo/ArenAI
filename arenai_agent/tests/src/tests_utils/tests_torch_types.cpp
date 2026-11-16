@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include <agents/torch_types.h>
 
 #include <arenai_agent_tests/tests_utils/tests_torch_types.h>
@@ -16,10 +18,15 @@ TEST_F(TorchTypesTest, SingleActionMapping) {
     ASSERT_EQ(actions.size(), 1);
     ASSERT_FLOAT_EQ(actions[0].left_joystick.x, 0.1f);
     ASSERT_FLOAT_EQ(actions[0].left_joystick.y, -0.2f);
-    ASSERT_FLOAT_EQ(actions[0].right_joystick.x, 0.3f);
-    ASSERT_FLOAT_EQ(actions[0].right_joystick.y, -0.4f);
+    ASSERT_FLOAT_EQ(actions[0].right_joystick.x, 0.09f);
+    ASSERT_FLOAT_EQ(actions[0].right_joystick.y, -0.16f);
     ASSERT_TRUE(actions[0].fire_button.pressed);
     ASSERT_FALSE(actions[0].zoom_button.pressed);
+}
+
+TEST_F(TorchTypesTest, AimRateRoundTrip) {
+    for (const float rate: {-1.f, -0.25f, 0.f, 0.01f, 0.5f, 1.f})
+        ASSERT_NEAR(aim_action_to_rate(aim_rate_to_action(rate)), rate, 1e-6f);
 }
 
 TEST_F(TorchTypesTest, IndependentFireAndZoom) {
@@ -172,8 +179,8 @@ TEST_P(TensorToActionsParamTest, ContinuousValuesMatchTensor) {
     for (int i = 0; i < batch; ++i) {
         ASSERT_FLOAT_EQ(actions[i].left_joystick.x, acc[i][0]);
         ASSERT_FLOAT_EQ(actions[i].left_joystick.y, acc[i][1]);
-        ASSERT_FLOAT_EQ(actions[i].right_joystick.x, acc[i][2]);
-        ASSERT_FLOAT_EQ(actions[i].right_joystick.y, acc[i][3]);
+        ASSERT_FLOAT_EQ(actions[i].right_joystick.x, acc[i][2] * std::abs(acc[i][2]));
+        ASSERT_FLOAT_EQ(actions[i].right_joystick.y, acc[i][3] * std::abs(acc[i][3]));
     }
 }
 

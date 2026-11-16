@@ -9,21 +9,28 @@
             128
         ],
         "actor_learning_rate": 9.999999747378752e-05,
+        "aim_gae_lambda": 0.0,
+        "alpha_learning_rate": 0.0003000000142492354,
         "beta_clone": 1.0,
         "clip_epsilon": 0.20000000298023224,
-        "continuous_entropy_factor": 0.0010000000474974513,
+        "continuous_target_entropy": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+        ],
         "critic_aux_epochs": 4,
         "critic_batch_size": 512,
-        "critic_epochs": 4,
+        "critic_epochs": 8,
         "critic_gpu_batch_size": 256,
         "critic_hidden_sizes": [
             256,
             128
         ],
         "critic_learning_rate": 0.0003000000142492354,
-        "discrete_entropy_factor": 0.0010000000474974513,
+        "discrete_target_proba": 0.05000000074505806,
         "gae_lambda": 0.949999988079071,
-        "gamma": 0.9900000095367432,
+        "gamma": 0.9950000047683716,
         "grad_norm_max": 0.5,
         "group_norm_nums": [
             2,
@@ -32,9 +39,10 @@
             16
         ],
         "hidden_size_sensors": 64,
-        "initial_fire_proba": 0.10000000149011612,
+        "initial_alpha": 0.0010000000474974513,
+        "initial_fire_proba": 0.5,
         "initial_sigma": 0.30000001192092896,
-        "initial_zoom_proba": 0.10000000149011612,
+        "initial_zoom_proba": 0.5,
         "metric_window_size": 256,
         "n_pi": 8,
         "rollout_size": 300,
@@ -60,16 +68,19 @@
     },
     "environment": {
         "action_repeat": 3,
-        "curriculum_boundary_proba": 0.20000000298023224,
+        "curriculum_boundary_proba": 0.5,
         "curriculum_delta": 50.0,
-        "curriculum_probe_window": 24,
-        "curriculum_ratio_high": 0.05999999865889549,
-        "curriculum_ratio_low": 0.029999999329447746,
+        "curriculum_probe_window": 8,
+        "curriculum_ratio_high": 0.07999999821186066,
+        "curriculum_ratio_low": 0.05000000074505806,
         "final_spawn_height": 1000.0,
         "final_spawn_width": 1000.0,
         "initial_spawn_height": 250.0,
         "initial_spawn_width": 250.0,
+        "max_shells": 30,
         "nb_tanks": 32,
+        "shells": 10,
+        "shells_per_hit": 3,
         "vision_height": 128,
         "vision_num_threads": 16,
         "vision_width": 256,
@@ -79,8 +90,8 @@
         "cuda": true,
         "max_episode_steps": 5400,
         "nb_episodes": 30000,
-        "output_folder": "./outputs/train_392_ppg",
+        "output_folder": "./outputs/train_427_ppg",
         "resources_folder": "./resources",
-        "save_every": 108000
+        "save_every": 27000
     }
 }

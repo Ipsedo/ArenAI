@@ -6,7 +6,7 @@ A battle-royal game with trained agent which controls tanks in realistic physic 
 
 Each tank receives the rendered frame of its camera as input, and the agent is trained to fire and hit enemies.
 
-When the agent is trained (with PPO algorith), you can fight it through the tanks it handles.
+When the agent is trained (PPO or PPG), you can fight it through the tanks it handles.
 
 ## Installation
 

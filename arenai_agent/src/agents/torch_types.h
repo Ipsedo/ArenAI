@@ -40,6 +40,9 @@ namespace arenai::agent {
         torch::Tensor fire_mask;
     };
 
+    float aim_action_to_rate(float action);
+    float aim_rate_to_action(float rate);
+
     struct TorchAction {
         torch::Tensor continuous_action;
         torch::Tensor discrete_action;

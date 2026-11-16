@@ -21,7 +21,7 @@ namespace arenai::agent {
         float initial_fire_proba = 0.5f;
         float initial_zoom_proba = 0.5f;
         int metric_window_size = 256;
-        float gamma = 0.995f;
+        float gamma = 0.998f;
         float gae_lambda = 0.95f;
         // λ of the canon actions' advantage, the aim potential's own return
         float aim_gae_lambda = 0.f;
@@ -33,14 +33,14 @@ namespace arenai::agent {
         // entropy of the squashed normal per dir_x, dir_y, canon_x, canon_y
         std::vector<float> continuous_target_entropy = {0.f, 0.f, 0.f, 0.f};
         // per discrete action, the Bernoulli whose entropy is the target
-        float discrete_target_proba = 0.05f;
+        float discrete_target_proba = 0.01f;
         int actor_epochs = 4;
         int critic_epochs = 8;
         int rollout_size = 30 * 10;
         int actor_batch_size = 512;
-        int actor_gpu_batch_size = 256;
+        int actor_gpu_batch_size = 512;
         int critic_batch_size = 512;
-        int critic_gpu_batch_size = 256;
+        int critic_gpu_batch_size = 512;
     };
 
     std::vector<CliField<PpoHyperParams>> ppo_cli_fields();

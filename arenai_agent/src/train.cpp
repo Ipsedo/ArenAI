@@ -84,14 +84,6 @@ namespace arenai::agent {
                   << std::endl;
         std::cout << "Action size (discrete) : " << model::ENEMY_NB_DISCRETE_ACTION << std::endl;
 
-        const auto env = std::make_unique<TrainTankEnvironment>(
-            std::move(graphics_backend), environment_options.nb_tanks,
-            train_options.resources_folder, environment_options.wanted_frequency,
-            train_options.max_episode_steps, environment_options.vision_height,
-            environment_options.vision_width, environment_options.num_threads,
-            environment_options.action_repeat,
-            agent_factory->get_config().at("gamma").get<float>());
-
         const float initial_spawn_side = std::sqrt(
             environment_options.initial_spawn_width * environment_options.initial_spawn_height);
         const float final_spawn_side = std::sqrt(
@@ -103,10 +95,18 @@ namespace arenai::agent {
                 : 0.f;
 
         constexpr std::uint64_t curriculum_seed = 1337;
-        ProgressCurriculum curriculum(
+        const auto curriculum = std::make_shared<ProgressCurriculum>(
             curriculum_delta_progress, environment_options.curriculum_ratio_low,
             environment_options.curriculum_ratio_high, environment_options.curriculum_probe_window,
             environment_options.curriculum_boundary_proba, curriculum_seed);
+
+        const auto env = std::make_unique<TrainTankEnvironment>(
+            std::move(graphics_backend), environment_options.nb_tanks,
+            train_options.resources_folder, environment_options.wanted_frequency,
+            train_options.max_episode_steps, environment_options.vision_height,
+            environment_options.vision_width, environment_options.num_threads,
+            environment_options.action_repeat, agent_factory->get_config().at("gamma").get<float>(),
+            curriculum, initial_spawn_side, final_spawn_side);
 
         const auto agent = agent_factory->get_agent();
         const auto collector = agent_factory->get_collector();
@@ -167,7 +167,7 @@ namespace arenai::agent {
         int print_counter = 0;
 
         for (int episode_index = 0; episode_index < train_options.nb_episodes; episode_index++) {
-            const float progress = curriculum.sample_progress();
+            const float progress = curriculum->sample_progress();
 
             const float spawn_width = std::lerp(
                 environment_options.initial_spawn_width, environment_options.final_spawn_width,
@@ -179,7 +179,7 @@ namespace arenai::agent {
 
             spawn_side_metric->add(spawn_side);
             spawn_bound_metric->add(
-                std::lerp(initial_spawn_side, final_spawn_side, curriculum.upper_bound()));
+                std::lerp(initial_spawn_side, final_spawn_side, curriculum->upper_bound()));
 
             // set variable for episode
             bool is_done = false;
@@ -233,7 +233,7 @@ namespace arenai::agent {
 
             env->stop_drawing();
 
-            curriculum.on_episode_end(env->episode_nb_fires(), env->episode_nb_hits());
+            curriculum->on_episode_end(env->episode_nb_fires(), env->episode_nb_hits());
 
             p_bar.tick();
         }

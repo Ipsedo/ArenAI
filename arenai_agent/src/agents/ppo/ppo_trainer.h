@@ -122,7 +122,9 @@ namespace arenai::agent {
         RowKls backward_actor(
             const FlatRows &block, float batch_fraction, const ActiveGroups &active) const;
 
-        void backward_critic(const FlatRows &block, float batch_fraction) const;
+        // [returns, values] of the block's live rows, detached
+        std::tuple<torch::Tensor, torch::Tensor>
+        backward_critic(const FlatRows &block, float batch_fraction) const;
 
         GaeResult compute_gae(const PpoRollout &rollout, torch::Device device) const;
 

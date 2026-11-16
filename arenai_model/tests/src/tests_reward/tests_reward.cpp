@@ -321,9 +321,9 @@ TEST_F(AimPotentialTest, PeaksOnTheEnemy) {
     ASSERT_FLOAT_EQ(shooter->get_aim_potential({shooter}, VISION_ASPECT_RATIO), 0.f)
         << "no enemy to aim at: no potential";
 
-    ASSERT_GT(potential(shooter, enemy), 0.95f)
-        << "the predicted shell crosses the hull, 2 m above the center of the enemy facing it";
-    ASSERT_LE(potential(shooter, enemy), 1.f);
+    ASSERT_GT(potential(shooter, enemy), 0.5f)
+        << "the predicted shell passes about 2.5 m above the center of the enemy facing it";
+    ASSERT_LT(potential(shooter, enemy), 0.7f) << "only a pass through the center scores 1";
 
     // a wreck is no target
     for (const auto &item: enemy->get_items())
@@ -365,15 +365,15 @@ TEST_F(AimPotentialTest, IgnoresAHiddenEnemy) {
         << "a wall stands between the muzzle and the enemy";
 }
 
-TEST_F(AimPotentialTest, ToleranceIsTheHullRadius) {
+TEST_F(AimPotentialTest, DecaysWithTheMiss) {
     add_ground();
     const auto shooter = spawn("tank_a", {0.f, 5.f, 0.f});
     const auto enemy = spawn("tank_b", {6.f, 5.f, 30.f});
     settle();
 
-    // the predicted shell passes about 6.4 m from the enemy center, 3.4 m off its hull
-    ASSERT_GT(potential(shooter, enemy), 0.3f);
-    ASSERT_LT(potential(shooter, enemy), 0.6f);
+    // the predicted shell passes about 6.4 m from the enemy center
+    ASSERT_GT(potential(shooter, enemy), 0.1f);
+    ASSERT_LT(potential(shooter, enemy), 0.3f);
 }
 
 TEST_F(AimPotentialTest, TightensWithDistance) {

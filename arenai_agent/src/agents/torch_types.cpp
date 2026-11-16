@@ -1,5 +1,6 @@
 #include "./torch_types.h"
 
+#include <cmath>
 #include <cstring>
 
 #include <ATen/Parallel.h>
@@ -107,6 +108,12 @@ namespace arenai::agent {
             fire_mask.slice(0, start, end)};
     }
 
+    float aim_action_to_rate(const float action) { return action * std::abs(action); }
+
+    float aim_rate_to_action(const float rate) {
+        return std::copysign(std::sqrt(std::abs(rate)), rate);
+    }
+
     std::vector<core::Action> TorchAction::to_actions() const {
         const auto batch_size = continuous_action.size(0);
 
@@ -120,7 +127,8 @@ namespace arenai::agent {
 
         for (int i = 0; i < batch_size; i++) {
             const controller::joystick joystick_direction{.x = cont_acc[i][0], .y = cont_acc[i][1]};
-            const controller::joystick joystick_canon{.x = cont_acc[i][2], .y = cont_acc[i][3]};
+            const controller::joystick joystick_canon{
+                .x = aim_action_to_rate(cont_acc[i][2]), .y = aim_action_to_rate(cont_acc[i][3])};
             const controller::button fire_button(disc_acc[i][0] > 0.5f);
             const controller::button zoom_button(disc_acc[i][1] > 0.5f);
 

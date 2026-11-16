@@ -11,8 +11,8 @@ namespace arenai::agent {
         const SacHyperParams &params)
         : config(cli_fields_to_json(sac_cli_fields(), params)),
           encoder(std::make_shared<StateEncoder>(
-              nb_sensors, params.hidden_size_sensors, params.vision_channels,
-              params.group_norm_nums)),
+              vision_height, vision_width, nb_sensors, params.hidden_size_sensors,
+              params.vision_channels, params.group_norm_nums)),
           actor(std::make_shared<SacActor>(
               encoder, nb_continuous_actions, nb_discrete_actions, params.actor_hidden_sizes,
               params.initial_sigma,
@@ -22,13 +22,13 @@ namespace arenai::agent {
           collector(std::make_shared<SacStepCollector>(replay_buffer)),
           agent(std::make_shared<TorchSacAgent>(actor, device, collector)),
           trainer(std::make_shared<SacTrainer>(
-              actor, encoder, replay_buffer, nb_sensors, nb_continuous_actions, nb_discrete_actions,
-              params.actor_learning_rate, params.critic_learning_rate, params.alpha_learning_rate,
-              params.hidden_size_sensors, params.critic_hidden_sizes, params.vision_channels,
-              params.group_norm_nums, device, params.metric_window_size, params.tau,
-              params.initial_alpha, params.target_sigma, params.discrete_target_entropy_ratio,
-              params.learning_starts, params.gradient_steps, params.batch_size,
-              params.gpu_batch_size)) {}
+              actor, encoder, replay_buffer, vision_height, vision_width, nb_sensors,
+              nb_continuous_actions, nb_discrete_actions, params.actor_learning_rate,
+              params.critic_learning_rate, params.alpha_learning_rate, params.hidden_size_sensors,
+              params.critic_hidden_sizes, params.vision_channels, params.group_norm_nums, device,
+              params.metric_window_size, params.tau, params.initial_alpha, params.target_sigma,
+              params.discrete_target_entropy_ratio, params.learning_starts, params.gradient_steps,
+              params.batch_size, params.gpu_batch_size)) {}
 
     std::shared_ptr<AbstractTorchAgent> SacTorchAgentFactory::get_agent() { return agent; }
 

@@ -278,6 +278,9 @@ namespace arenai::agent {
                         .pitch = 0.f,
                         .best_angle = std::numbers::pi_v<float>,
                         .best_distance = -1.f,
+                        .best_yaw = 0.f,
+                        .best_pitch = 0.f,
+                        .view_count = 0,
                         .turret_yaw = 0.f,
                         .view_distance = -1.f,
                         .view_yaw = 0.f,
@@ -323,10 +326,14 @@ namespace arenai::agent {
                             angle < geometry.best_angle) {
                             geometry.best_angle = angle;
                             geometry.best_distance = distance;
+                            geometry.best_yaw = std::atan2(relative.x, relative.z);
+                            geometry.best_pitch = std::asin(std::clamp(relative.y, -1.f, 1.f));
                         }
 
                         const float yaw = std::atan2(relative.x, relative.z);
                         const float pitch = std::asin(std::clamp(relative.y, -1.f, 1.f));
+                        if (std::abs(yaw) <= view_half_yaw && std::abs(pitch) <= view_half_pitch)
+                            geometry.view_count++;
                         if (std::abs(yaw) <= view_half_yaw && std::abs(pitch) <= view_half_pitch
                             && (geometry.view_distance < 0.f
                                 || distance < geometry.view_distance)) {

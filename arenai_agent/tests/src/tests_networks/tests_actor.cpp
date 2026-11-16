@@ -16,8 +16,9 @@ TEST_P(ActorTestParam, TestActorAct) {
     constexpr int height = 32;
 
     Actor actor(
-        sensors_nb, cont_actions_nb, discrete_actions_nb, sensors_hidden_size, layers,
-        {{input_channels, 4}, {4, 8}}, {2, 4}, 0.1f, std::vector(discrete_actions_nb, 0.2f));
+        height, width, sensors_nb, cont_actions_nb, discrete_actions_nb, sensors_hidden_size,
+        layers, {{input_channels, 4}, {4, 8}}, {2, 4}, 0.1f,
+        std::vector(discrete_actions_nb, 0.2f));
 
     const auto image = torch::randint(
         255, {batch_size, input_channels, height, width},

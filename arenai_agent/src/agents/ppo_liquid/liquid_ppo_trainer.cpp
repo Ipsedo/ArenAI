@@ -37,9 +37,9 @@ namespace arenai::agent {
 
     LiquidPpoTrainer::LiquidPpoTrainer(
         const std::shared_ptr<LiquidActor> &actor,
-        const std::shared_ptr<LiquidPpoRolloutBuffer> &rollout_buffer,
-        const int nb_continuous_actions, const int nb_discrete_actions, const int nb_sensors,
-        const float actor_learning_rate, const float critic_learning_rate,
+        const std::shared_ptr<LiquidPpoRolloutBuffer> &rollout_buffer, const int vision_height,
+        const int vision_width, const int nb_continuous_actions, const int nb_discrete_actions,
+        const int nb_sensors, const float actor_learning_rate, const float critic_learning_rate,
         const int hidden_size_sensors, const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, const int neuron_number, const int unfolding_steps,
         const float delta_t, const torch::Device device, const int metric_window_size,
@@ -55,8 +55,8 @@ namespace arenai::agent {
               nb_continuous_actions, nb_discrete_actions, initial_alpha, alpha_learning_rate,
               continuous_target_entropy, discrete_target_proba)),
           critic(std::make_shared<LiquidCritic>(
-              nb_sensors, hidden_size_sensors, vision_channels, group_norm_nums, neuron_number,
-              unfolding_steps, delta_t)),
+              vision_height, vision_width, nb_sensors, hidden_size_sensors, vision_channels,
+              group_norm_nums, neuron_number, unfolding_steps, delta_t)),
           actor_optim(
               std::make_unique<torch::optim::Adam>(this->actor->parameters(), actor_learning_rate)),
           critic_optim(

@@ -52,7 +52,7 @@ namespace arenai::agent {
         const bool cuda) {
         return std::make_shared<TorchPpoAgent>(
             std::make_shared<Actor>(
-                nb_sensors, nb_continuous_actions, nb_discrete_action,
+                vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_action,
                 get_value<int>("hidden_size_sensors"),
                 get_value<std::vector<int>>("actor_hidden_sizes"),
                 get_value<std::vector<std::tuple<int, int>>>("vision_channels"),
@@ -64,7 +64,7 @@ namespace arenai::agent {
         const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_action,
         const bool cuda) {
         const auto actor = std::make_shared<LiquidActor>(
-            nb_sensors, nb_continuous_actions, nb_discrete_action,
+            vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_action,
             get_value<int>("hidden_size_sensors"),
             get_value<std::vector<std::tuple<int, int>>>("vision_channels"),
             get_value<std::vector<int>>("group_norm_nums"), get_value<int>("neuron_number"),
@@ -80,7 +80,7 @@ namespace arenai::agent {
         const bool cuda) {
         return std::make_shared<TorchPpgAgent>(
             std::make_shared<DistillationActor>(
-                nb_sensors, nb_continuous_actions, nb_discrete_action,
+                vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_action,
                 get_value<int>("hidden_size_sensors"),
                 get_value<std::vector<int>>("actor_hidden_sizes"),
                 get_value<std::vector<std::tuple<int, int>>>("vision_channels"),

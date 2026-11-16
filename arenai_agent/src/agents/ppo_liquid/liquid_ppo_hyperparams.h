@@ -13,9 +13,9 @@ namespace arenai::agent {
         float actor_learning_rate = 1e-4f;
         float critic_learning_rate = 3e-4f;
         int hidden_size_sensors = 64;
-        std::vector<std::tuple<int, int>> vision_channels =
-            {{3, 16}, {16, 32}, {32, 64}, {64, 128}};
-        std::vector<int> group_norm_nums = {2, 4, 8, 16};
+        std::vector<std::tuple<int, int>> vision_channels = {
+            {3, 16}, {16, 32}, {32, 64}, {64, 128}, {128, 128}, {128, 128}, {128, 128}};
+        std::vector<int> group_norm_nums = {2, 4, 8, 16, 16, 16, 16};
         int neuron_number = 128;
         int unfolding_steps = 6;
         float delta_t = 1.f / 10.f;

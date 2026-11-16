@@ -20,7 +20,8 @@ namespace arenai::agent {
     class LiquidCritic final : public torch::nn::Module {
     public:
         explicit LiquidCritic(
-            const int &nb_sensors, const int &hidden_size_sensors,
+            const int &vision_height, const int &vision_width, const int &nb_sensors,
+            const int &hidden_size_sensors,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, const int &neuron_number,
             const int &unfolding_steps, const float &delta_t);

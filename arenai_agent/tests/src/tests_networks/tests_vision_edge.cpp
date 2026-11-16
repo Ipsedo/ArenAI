@@ -6,7 +6,7 @@ using namespace arenai;
 using namespace arenai::agent;
 
 TEST_F(VisionEdgeTest, RejectsNonUint8Input) {
-    ConvolutionNetwork conv({{3, 4}}, {2});
+    ConvolutionNetwork conv(8, 8, {{3, 4}}, {2});
 
     const auto float_input = torch::randn({1, 3, 8, 8});
 
@@ -14,7 +14,7 @@ TEST_F(VisionEdgeTest, RejectsNonUint8Input) {
 }
 
 TEST_F(VisionEdgeTest, NormalizesToExpectedRange) {
-    ConvolutionNetwork conv({{3, 4}}, {2});
+    ConvolutionNetwork conv(8, 8, {{3, 4}}, {2});
 
     const auto zeros = torch::zeros({1, 3, 8, 8}, torch::kUInt8);
     const auto result_zeros = conv.forward(zeros);
@@ -32,7 +32,7 @@ TEST_F(VisionEdgeTest, OutputSizeMatchesGetOutputSize) {
     constexpr int h = 16, w = 16;
     constexpr int batch_size = 2;
 
-    ConvolutionNetwork conv(channels, gnums);
+    ConvolutionNetwork conv(h, w, channels, gnums);
 
     const auto input = torch::randint(255, {batch_size, 3, h, w}, torch::kUInt8);
     const auto output = conv.forward(input);

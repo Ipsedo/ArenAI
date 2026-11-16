@@ -57,6 +57,8 @@ int main(const int argc, char **argv) {
     parser.add_argument("--cuda").default_value(false).implicit_value(true);
     parser.add_argument("--deterministic").default_value(false).implicit_value(true);
     parser.add_argument("--features").default_value(std::string());
+    parser.add_argument("--frames").default_value(std::string());
+    parser.add_argument("--frames_every").scan<'i', int>().default_value(5);
     parser.add_argument("--zoom")
         .default_value(std::string("policy"))
         .choices("policy", "on", "off");
@@ -137,8 +139,9 @@ int main(const int argc, char **argv) {
 
     if (is_ppg) {
         const auto actor = std::make_shared<DistillationActor>(
-            model::ENEMY_STATE_VECTOR_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
-            model::ENEMY_NB_DISCRETE_ACTION, agent_config.at("hidden_size_sensors").get<int>(),
+            vision_height, vision_width, model::ENEMY_STATE_VECTOR_SIZE,
+            model::ENEMY_NB_CONTINUOUS_ACTION, model::ENEMY_NB_DISCRETE_ACTION,
+            agent_config.at("hidden_size_sensors").get<int>(),
             agent_config.at("actor_hidden_sizes").get<std::vector<int>>(), vision_channels,
             group_norm_nums, agent_config.at("initial_sigma").get<float>(),
             initial_discrete_probas);
@@ -153,8 +156,9 @@ int main(const int argc, char **argv) {
     } else if (is_sac) {
         const auto make_encoder = [&] {
             return std::make_shared<StateEncoder>(
-                model::ENEMY_STATE_VECTOR_SIZE, agent_config.at("hidden_size_sensors").get<int>(),
-                vision_channels, group_norm_nums);
+                vision_height, vision_width, model::ENEMY_STATE_VECTOR_SIZE,
+                agent_config.at("hidden_size_sensors").get<int>(), vision_channels,
+                group_norm_nums);
         };
         const auto actor_encoder = make_encoder();
         const auto actor = std::make_shared<SacActor>(
@@ -204,9 +208,10 @@ int main(const int argc, char **argv) {
         };
     } else {
         const auto actor = std::make_shared<LiquidActor>(
-            model::ENEMY_STATE_VECTOR_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
-            model::ENEMY_NB_DISCRETE_ACTION, agent_config.at("hidden_size_sensors").get<int>(),
-            vision_channels, group_norm_nums, agent_config.at("neuron_number").get<int>(),
+            vision_height, vision_width, model::ENEMY_STATE_VECTOR_SIZE,
+            model::ENEMY_NB_CONTINUOUS_ACTION, model::ENEMY_NB_DISCRETE_ACTION,
+            agent_config.at("hidden_size_sensors").get<int>(), vision_channels, group_norm_nums,
+            agent_config.at("neuron_number").get<int>(),
             agent_config.at("unfolding_steps").get<int>(), agent_config.at("delta_t").get<float>(),
             agent_config.at("initial_sigma").get<float>(), initial_discrete_probas);
         load_torch(save_folder, actor, "actor.pt");
@@ -251,6 +256,12 @@ int main(const int argc, char **argv) {
     const auto features_path = parser.get<std::string>("--features");
     std::ofstream features_out;
     if (!features_path.empty()) features_out.open(features_path, std::ios::binary);
+
+    const auto frames_path = parser.get<std::string>("--frames");
+    const int frames_every = parser.get<int>("--frames_every");
+    std::ofstream frames_out;
+    if (!frames_path.empty()) frames_out.open(frames_path, std::ios::binary);
+    constexpr float frames_half_yaw = 39.5f * std::numbers::pi_v<float> / 180.f;
 
     struct PendingShot {
         int step;
@@ -302,6 +313,11 @@ int main(const int argc, char **argv) {
             const auto q_gradient = canon_q_gradient(state, mu, discrete);
 
             const auto geometry = env->aim_geometry(oracle_half_yaw);
+            const bool write_frames = frames_out.is_open() && step % frames_every == 0;
+            const auto frame_geometry =
+                write_frames ? env->aim_geometry(frames_half_yaw) : std::vector<AimGeometry>();
+            const auto frames =
+                write_frames ? state.get_vision().cpu().contiguous() : torch::Tensor();
 
             // oracle: the canon servoes on the nearest enemy in view and fires once aligned
             if (oracle) {
@@ -388,6 +404,24 @@ int main(const int argc, char **argv) {
                     features_out.write(
                         reinterpret_cast<const char *>(vision_features[i].data_ptr<float>()),
                         vision_features.size(1) * sizeof(float));
+                }
+
+                if (write_frames) {
+                    const float header[10] = {
+                        static_cast<float>(episode),
+                        static_cast<float>(step),
+                        static_cast<float>(i),
+                        frame_geometry[i].view_distance,
+                        frame_geometry[i].view_yaw * to_degrees,
+                        frame_geometry[i].view_pitch * to_degrees,
+                        frame_geometry[i].best_distance,
+                        frame_geometry[i].best_yaw * to_degrees,
+                        frame_geometry[i].best_pitch * to_degrees,
+                        static_cast<float>(frame_geometry[i].view_count)};
+                    frames_out.write(reinterpret_cast<const char *>(header), sizeof(header));
+                    frames_out.write(
+                        reinterpret_cast<const char *>(frames[i].data_ptr<uint8_t>()),
+                        frames[i].numel());
                 }
 
                 if (mask_acc[i][0] > 0.5f && disc_acc[i][0] > 0.5f)

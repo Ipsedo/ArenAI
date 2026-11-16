@@ -96,21 +96,22 @@ int main(const int argc, char **argv) {
 
     // the training triad of LiquidPpoTorchAgentFactory
     const auto actor = std::make_shared<LiquidActor>(
-        model::ENEMY_STATE_VECTOR_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
-        model::ENEMY_NB_DISCRETE_ACTION, params.hidden_size_sensors, params.vision_channels,
-        params.group_norm_nums, params.neuron_number, params.unfolding_steps, params.delta_t,
-        params.initial_sigma, std::vector{params.initial_fire_proba, params.initial_zoom_proba});
+        vision_height, vision_width, model::ENEMY_STATE_VECTOR_SIZE,
+        model::ENEMY_NB_CONTINUOUS_ACTION, model::ENEMY_NB_DISCRETE_ACTION,
+        params.hidden_size_sensors, params.vision_channels, params.group_norm_nums,
+        params.neuron_number, params.unfolding_steps, params.delta_t, params.initial_sigma,
+        std::vector{params.initial_fire_proba, params.initial_zoom_proba});
     const auto hidden_state = std::make_shared<LiquidHiddenState>(actor);
     const auto rollout_buffer = std::make_shared<LiquidPpoRolloutBuffer>();
     const auto collector = std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state);
     const auto agent =
         std::make_shared<TorchLiquidPpoAgent>(actor, hidden_state, device, collector);
     const auto trainer = std::make_shared<LiquidPpoTrainer>(
-        actor, rollout_buffer, model::ENEMY_NB_CONTINUOUS_ACTION, model::ENEMY_NB_DISCRETE_ACTION,
-        model::ENEMY_STATE_VECTOR_SIZE, params.actor_learning_rate, params.critic_learning_rate,
-        params.hidden_size_sensors, params.vision_channels, params.group_norm_nums,
-        params.neuron_number, params.unfolding_steps, params.delta_t, device,
-        params.metric_window_size, params.gamma, params.gae_lambda, params.aim_gae_lambda,
+        actor, rollout_buffer, vision_height, vision_width, model::ENEMY_NB_CONTINUOUS_ACTION,
+        model::ENEMY_NB_DISCRETE_ACTION, model::ENEMY_STATE_VECTOR_SIZE, params.actor_learning_rate,
+        params.critic_learning_rate, params.hidden_size_sensors, params.vision_channels,
+        params.group_norm_nums, params.neuron_number, params.unfolding_steps, params.delta_t,
+        device, params.metric_window_size, params.gamma, params.gae_lambda, params.aim_gae_lambda,
         params.clip_epsilon, params.target_kl, params.grad_norm_max, params.initial_alpha,
         params.alpha_learning_rate, params.continuous_target_entropy, params.discrete_target_proba,
         params.actor_epochs, params.critic_epochs, params.rollout_size, params.actor_batch_size,

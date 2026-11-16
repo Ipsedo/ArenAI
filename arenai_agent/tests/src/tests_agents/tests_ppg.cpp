@@ -83,8 +83,9 @@ TEST_F(PpgAgentTest, DistillationValueShape) {
         .nb_discrete_actions = 2};
 
     DistillationActor actor(
-        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 16, std::vector{32},
-        {{3, 8}}, {4}, 0.5f, std::vector(cfg.nb_discrete_actions, 0.5f));
+        cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
+        cfg.nb_discrete_actions, 16, std::vector{32}, {{3, 8}}, {4}, 0.5f,
+        std::vector(cfg.nb_discrete_actions, 0.5f));
 
     constexpr int batch = 4;
     const auto state = make_state(cfg, batch);
@@ -95,8 +96,8 @@ TEST_F(PpgAgentTest, DistillationValueShape) {
 }
 
 TEST_F(PpgAgentTest, DistillationValueHeadIsRegistered) {
-    DistillationActor actor(10, 4, 2, 16, std::vector{32}, {{3, 8}}, {4}, 0.5f, {0.5f, 0.5f});
-    const Actor plain_actor(10, 4, 2, 16, std::vector{32}, {{3, 8}}, {4}, 0.5f, {0.5f, 0.5f});
+    DistillationActor actor(8, 8, 10, 4, 2, 16, std::vector{32}, {{3, 8}}, {4}, 0.5f, {0.5f, 0.5f});
+    const Actor plain_actor(8, 8, 10, 4, 2, 16, std::vector{32}, {{3, 8}}, {4}, 0.5f, {0.5f, 0.5f});
 
     auto named_parameters = actor.named_parameters();
     ASSERT_TRUE(named_parameters.contains("value.weight"));

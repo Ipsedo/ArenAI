@@ -37,11 +37,11 @@ namespace arenai::agent {
 
     SacTrainer::SacTrainer(
         const std::shared_ptr<SacActor> &actor, const std::shared_ptr<StateEncoder> &encoder,
-        const std::shared_ptr<SacReplayBuffer> &replay_buffer, const int nb_sensors,
-        const int nb_continuous_actions, const int nb_discrete_actions,
-        const float actor_learning_rate, const float critic_learning_rate,
-        const float alpha_learning_rate, const int hidden_size_sensors,
-        const std::vector<int> &critic_hidden_sizes,
+        const std::shared_ptr<SacReplayBuffer> &replay_buffer, const int vision_height,
+        const int vision_width, const int nb_sensors, const int nb_continuous_actions,
+        const int nb_discrete_actions, const float actor_learning_rate,
+        const float critic_learning_rate, const float alpha_learning_rate,
+        const int hidden_size_sensors, const std::vector<int> &critic_hidden_sizes,
         const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, const torch::Device device,
         const int metric_window_size, const float tau, const float initial_alpha,
@@ -53,7 +53,8 @@ namespace arenai::agent {
               encoder, nb_continuous_actions, nb_discrete_actions, critic_hidden_sizes)),
           target_critic(std::make_shared<TwinQNetwork>(
               std::make_shared<StateEncoder>(
-                  nb_sensors, hidden_size_sensors, vision_channels, group_norm_nums),
+                  vision_height, vision_width, nb_sensors, hidden_size_sensors, vision_channels,
+                  group_norm_nums),
               nb_continuous_actions, nb_discrete_actions, critic_hidden_sizes)),
           alphas(std::make_shared<SacAlpha>(
               initial_alpha, nb_continuous_actions + nb_discrete_actions)),

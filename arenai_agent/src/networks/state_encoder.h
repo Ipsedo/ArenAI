@@ -14,7 +14,7 @@ namespace arenai::agent {
     class StateEncoder final : public torch::nn::Module {
     public:
         StateEncoder(
-            int nb_sensors, int hidden_size_sensors,
+            int vision_height, int vision_width, int nb_sensors, int hidden_size_sensors,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums);
 

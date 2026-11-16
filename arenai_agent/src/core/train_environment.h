@@ -20,6 +20,9 @@ namespace arenai::agent {
         float pitch;
         float best_angle;
         float best_distance;
+        float best_yaw;
+        float best_pitch;
+        int view_count;
         float turret_yaw;
         float view_distance;
         float view_yaw;

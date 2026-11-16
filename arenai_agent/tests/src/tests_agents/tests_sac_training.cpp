@@ -11,8 +11,8 @@ SacTrainingTriad SacTrainingTest::make_triad(const SacTrainingTestConfig &cfg) c
     const std::vector group_norm_nums{2};
 
     SacTrainingTriad triad;
-    triad.encoder =
-        std::make_shared<StateEncoder>(cfg.nb_sensors, 8, vision_channels, group_norm_nums);
+    triad.encoder = std::make_shared<StateEncoder>(
+        cfg.vision_height, cfg.vision_width, cfg.nb_sensors, 8, vision_channels, group_norm_nums);
     triad.actor = std::make_shared<SacActor>(
         triad.encoder, cfg.nb_continuous_actions, cfg.nb_discrete_actions, std::vector{16}, 0.3f,
         std::vector(cfg.nb_discrete_actions, 0.2f));
@@ -20,10 +20,10 @@ SacTrainingTriad SacTrainingTest::make_triad(const SacTrainingTestConfig &cfg) c
     triad.collector = std::make_shared<SacStepCollector>(triad.replay_buffer);
     triad.agent = std::make_shared<TorchSacAgent>(triad.actor, device, triad.collector);
     triad.trainer = std::make_shared<SacTrainer>(
-        triad.actor, triad.encoder, triad.replay_buffer, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, 1e-3f, 1e-3f, 1e-3f, 8, std::vector{16}, vision_channels,
-        group_norm_nums, device, 10, 0.05f, 0.1f, 0.3f, 0.3f, LEARNING_STARTS, 1, BATCH_SIZE,
-        GPU_BATCH_SIZE);
+        triad.actor, triad.encoder, triad.replay_buffer, cfg.vision_height, cfg.vision_width,
+        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 1e-3f, 1e-3f, 1e-3f, 8,
+        std::vector{16}, vision_channels, group_norm_nums, device, 10, 0.05f, 0.1f, 0.3f, 0.3f,
+        LEARNING_STARTS, 1, BATCH_SIZE, GPU_BATCH_SIZE);
     return triad;
 }
 

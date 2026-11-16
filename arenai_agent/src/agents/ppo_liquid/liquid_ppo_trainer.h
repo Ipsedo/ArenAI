@@ -53,8 +53,8 @@ namespace arenai::agent {
     public:
         LiquidPpoTrainer(
             const std::shared_ptr<LiquidActor> &actor,
-            const std::shared_ptr<LiquidPpoRolloutBuffer> &rollout_buffer,
-            int nb_continuous_actions, int nb_discrete_actions, int nb_sensors,
+            const std::shared_ptr<LiquidPpoRolloutBuffer> &rollout_buffer, int vision_height,
+            int vision_width, int nb_continuous_actions, int nb_discrete_actions, int nb_sensors,
             float actor_learning_rate, float critic_learning_rate, int hidden_size_sensors,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, int neuron_number, int unfolding_steps,

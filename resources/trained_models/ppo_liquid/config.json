@@ -72,7 +72,7 @@
         "max_shells": 30,
         "nb_tanks": 32,
         "shells": 10,
-        "shells_per_hit": 3,
+        "shells_per_hit": 2,
         "vision_height": 128,
         "vision_num_threads": 16,
         "vision_width": 256,
@@ -82,7 +82,7 @@
         "cuda": true,
         "max_episode_steps": 5400,
         "nb_episodes": 30000,
-        "output_folder": "./outputs/train_520_ppo_liquid",
+        "output_folder": "./outputs/train_522_ppo_liquid",
         "resources_folder": "/home/samuel/CLionProjects/ArenAI/resources",
         "save_every": 27000
     }

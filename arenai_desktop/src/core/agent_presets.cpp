@@ -7,7 +7,7 @@ namespace arenai::desktop {
             {.name = "PPO Liquid (debug model)",
              .algorithm = AiAlgorithm::PpoLiquid,
              .config = resources_folder / "trained_models" / "ppo_liquid" / "config.json",
-             .folder = resources_folder / "trained_models" / "ppo_liquid" / "save_32"},
+             .folder = resources_folder / "trained_models" / "ppo_liquid" / "save_36"},
             {.name = "PPO (debug model)",
              .algorithm = AiAlgorithm::Ppo,
              .config = resources_folder / "trained_models" / "ppo" / "config.json",

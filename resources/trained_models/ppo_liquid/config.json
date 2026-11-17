@@ -27,6 +27,9 @@
             2,
             4,
             8,
+            16,
+            16,
+            16,
             16
         ],
         "hidden_size_sensors": 64,
@@ -55,6 +58,18 @@
             [
                 64,
                 128
+            ],
+            [
+                128,
+                128
+            ],
+            [
+                128,
+                128
+            ],
+            [
+                128,
+                128
             ]
         ]
     },
@@ -82,8 +97,8 @@
         "cuda": true,
         "max_episode_steps": 5400,
         "nb_episodes": 30000,
-        "output_folder": "./outputs/train_522_ppo_liquid",
-        "resources_folder": "/home/samuel/CLionProjects/ArenAI/resources",
+        "output_folder": "./outputs/train_430_ppo_liquid",
+        "resources_folder": "./resources",
         "save_every": 27000
     }
 }

@@ -206,18 +206,19 @@ body {
 
 /* ---- minimap ---- */
 
-/* 240dp square, bottom-left, on the arena ink */
+/* 160dp square, bottom-left; the ground lets the scene show through, the marks stay opaque */
 #minimap {
     position: absolute;
     left: 28dp;
     bottom: 28dp;
-    width: 240dp;
-    height: 240dp;
-    background-color: #0D0B1A;
+    width: 160dp;
+    height: 160dp;
+    background-color: #0D0B1AB3;
 }
 
 minimap-terrain {
     display: block;
+    opacity: 0.75;
     position: absolute;
     left: 0;
     top: 0;
@@ -230,10 +231,10 @@ minimap-terrain {
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 160dp;
-    height: 160dp;
-    margin-left: -80dp;
-    margin-top: -80dp;
+    width: 107dp;
+    height: 107dp;
+    margin-left: -53.5dp;
+    margin-top: -53.5dp;
     color: #FF7A2F59;
     decorator: view-cone(63);
 }
@@ -250,12 +251,12 @@ minimap-terrain {
 .minimap-blip {
     position: absolute;
     box-sizing: border-box;
-    width: 8dp;
-    height: 8dp;
-    margin-left: -4dp;
-    margin-top: -4dp;
-    border-radius: 4dp;
-    border-width: 1.5dp;
+    width: 6dp;
+    height: 6dp;
+    margin-left: -3dp;
+    margin-top: -3dp;
+    border-radius: 3dp;
+    border-width: 1dp;
     border-color: #0D0B1A;
     background-color: #2FE6FF;
 }
@@ -269,10 +270,10 @@ minimap-terrain {
 
 /* an enemy beyond the window, pinned on the border */
 .minimap-blip.edge {
-    width: 6dp;
-    height: 6dp;
-    margin-left: -3dp;
-    margin-top: -3dp;
+    width: 4dp;
+    height: 4dp;
+    margin-left: -2dp;
+    margin-top: -2dp;
     border-radius: 0;
     border-width: 0;
 }
@@ -282,32 +283,32 @@ minimap-terrain {
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 22dp;
-    height: 22dp;
-    margin-left: -11dp;
-    margin-top: -11dp;
+    width: 15dp;
+    height: 15dp;
+    margin-left: -7.5dp;
+    margin-top: -7.5dp;
     color: #FF7A2F;
-    decorator: chevron(#0D0B1A 1.5dp);
+    decorator: chevron(#0D0B1A 1dp);
 }
 
 #minimap-north {
     position: absolute;
-    top: 8dp;
+    top: 5dp;
     left: 0;
     right: 0;
     text-align: center;
     font-family: "JetBrains Mono";
-    font-size: 11dp;
+    font-size: 9dp;
     font-weight: 500;
     color: #F2F4FF;
 }
 
 #minimap-coordinates {
     position: absolute;
-    left: 10dp;
-    bottom: 8dp;
+    left: 7dp;
+    bottom: 5dp;
     font-family: "JetBrains Mono";
-    font-size: 10dp;
+    font-size: 8dp;
     font-weight: 500;
     white-space: pre;
     color: #F2F4FF;
@@ -323,5 +324,5 @@ minimap-terrain {
     height: 100%;
     border-width: 1dp;
     border-color: #4A4670E6;
-    decorator: corner-reticle(#F2F4FF transparent 20dp 2dp 0dp);
+    decorator: corner-reticle(#F2F4FF transparent 13dp 1.5dp 0dp);
 }

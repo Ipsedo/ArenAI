@@ -44,8 +44,8 @@ namespace arenai::desktop::gui {
         Rml::Mesh mesh;
         Rml::MeshUtilities::GenerateQuad(
             mesh, {from.x, from.y}, {to.x - from.x, to.y - from.y},
-            Rml::ColourbPremultiplied(255, 255, 255, 255), {shown_min.x, shown_min.y},
-            {shown_max.x, shown_max.y});
+            Rml::Colourb(255, 255, 255, 255).ToPremultiplied(GetComputedValues().opacity()),
+            {shown_min.x, shown_min.y}, {shown_max.x, shown_max.y});
         geometry_ = render_manager->MakeGeometry(std::move(mesh));
         geometry_.Render(GetAbsoluteOffset(Rml::BoxArea::Border), texture_);
     }

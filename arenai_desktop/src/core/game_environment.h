@@ -11,6 +11,7 @@
 
 #include "../controller/gamepad.h"
 #include "../controller/mouse_keyboard.h"
+#include "./minimap/tank_pose.h"
 #include "./settings.h"
 
 namespace arenai::desktop {
@@ -50,6 +51,11 @@ namespace arenai::desktop {
         std::vector<float> consume_damage_screen_angles() const;
 
         std::optional<glm::vec2> aim_point_on_screen() const;
+
+        TankPose player_pose() const;
+        std::vector<TankPose> enemy_poses();
+
+        using BaseTanksEnvironment::arena_terrain;
 
     protected:
         void

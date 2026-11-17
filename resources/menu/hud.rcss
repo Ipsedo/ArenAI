@@ -203,3 +203,125 @@ body {
 #hit-marker.kill {
     color: #FF3B3B;
 }
+
+/* ---- minimap ---- */
+
+/* 240dp square, bottom-left, on the arena ink */
+#minimap {
+    position: absolute;
+    left: 28dp;
+    bottom: 28dp;
+    width: 240dp;
+    height: 240dp;
+    background-color: #0D0B1A;
+}
+
+minimap-terrain {
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* the player's heading fan, rotated from code around the minimap center */
+#minimap-cone {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 160dp;
+    height: 160dp;
+    margin-left: -80dp;
+    margin-top: -80dp;
+    color: #FF7A2F59;
+    decorator: view-cone(63);
+}
+
+#minimap-blips {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* placed from code (left/top in %), centered on its point */
+.minimap-blip {
+    position: absolute;
+    box-sizing: border-box;
+    width: 8dp;
+    height: 8dp;
+    margin-left: -4dp;
+    margin-top: -4dp;
+    border-radius: 4dp;
+    border-width: 1.5dp;
+    border-color: #0D0B1A;
+    background-color: #2FE6FF;
+}
+
+.minimap-blip.dead {
+    border-width: 0;
+    background-color: transparent;
+    color: #4A4670;
+    decorator: hit-marker(1.5dp 0dp);
+}
+
+/* an enemy beyond the window, pinned on the border */
+.minimap-blip.edge {
+    width: 6dp;
+    height: 6dp;
+    margin-left: -3dp;
+    margin-top: -3dp;
+    border-radius: 0;
+    border-width: 0;
+}
+
+/* the player's chevron, always at the center, rotated from code */
+#minimap-cursor {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 22dp;
+    height: 22dp;
+    margin-left: -11dp;
+    margin-top: -11dp;
+    color: #FF7A2F;
+    decorator: chevron(#0D0B1A 1.5dp);
+}
+
+#minimap-north {
+    position: absolute;
+    top: 8dp;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-family: "JetBrains Mono";
+    font-size: 11dp;
+    font-weight: 500;
+    color: #F2F4FF;
+}
+
+#minimap-coordinates {
+    position: absolute;
+    left: 10dp;
+    bottom: 8dp;
+    font-family: "JetBrains Mono";
+    font-size: 10dp;
+    font-weight: 500;
+    white-space: pre;
+    color: #F2F4FF;
+}
+
+/* 1dp violet border plus ink brackets on the corners */
+#minimap-frame {
+    position: absolute;
+    box-sizing: border-box;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    border-width: 1dp;
+    border-color: #4A4670E6;
+    decorator: corner-reticle(#F2F4FF transparent 20dp 2dp 0dp);
+}

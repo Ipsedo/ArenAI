@@ -1,6 +1,7 @@
 #ifndef ARENAI_DESKTOP_GUI_GUI_H
 #define ARENAI_DESKTOP_GUI_GUI_H
 
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -69,9 +70,45 @@ namespace arenai::desktop::gui {
 
     enum class HitKind { Hit, Kill };
 
+    // premultiplied RGBA8, row 0 = north (-z), column 0 = west (-x)
+    struct MinimapTerrain {
+        int width = 0;
+        int height = 0;
+        std::vector<std::uint8_t> rgba;
+    };
+
+    enum class BlipKind { Enemy, DeadEnemy, EnemyOutOfRange };
+
+    struct MinimapBlip {
+        // in the minimap frame, [0, 1]², y down
+        glm::vec2 position;
+        BlipKind kind;
+    };
+
+    struct MinimapSnapshot {
+        // the terrain window shown, in texture coordinates (may overflow [0, 1])
+        glm::vec2 view_min;
+        glm::vec2 view_max;
+        // radians, clockwise from north
+        float player_heading = 0.f;
+        // world x, z
+        glm::ivec2 player_coordinates;
+        std::vector<MinimapBlip> blips;
+    };
+
+    class AbstractMinimap {
+    public:
+        virtual ~AbstractMinimap() = default;
+
+        virtual void set_terrain(const MinimapTerrain &terrain) = 0;
+        virtual void update(const MinimapSnapshot &snapshot) = 0;
+    };
+
     class AbstractHudOverlay {
     public:
         virtual ~AbstractHudOverlay() = default;
+
+        virtual AbstractMinimap &minimap() = 0;
 
         virtual void set_status(const MatchStatus &status) = 0;
         virtual void notify_hit(HitKind kind) = 0;

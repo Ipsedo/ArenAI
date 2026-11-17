@@ -13,6 +13,7 @@
 #include "./agent_loading_checker.h"
 #include "./game_environment.h"
 #include "./game_options.h"
+#include "./minimap/minimap.h"
 #include "./settings.h"
 
 namespace arenai::desktop {
@@ -53,6 +54,7 @@ namespace arenai::desktop {
         LoadedAgent enemy_;
         std::shared_ptr<DesktopGameEnvironment> env_;
         std::shared_ptr<GameInputRouter> router_;
+        std::optional<Minimap> minimap_;
 
         Phase phase_ = Phase::Playing;
         bool pause_toggle_requested_ = false;

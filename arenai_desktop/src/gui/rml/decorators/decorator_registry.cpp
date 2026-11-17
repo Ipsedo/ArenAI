@@ -1,5 +1,7 @@
 #include "./decorator_registry.h"
 
+#include "../minimap/minimap_terrain_element.h"
+#include "./chevron.h"
 #include "./corner_reticle.h"
 #include "./crystals.h"
 #include "./damage_arc.h"
@@ -9,6 +11,7 @@
 #include "./reticle.h"
 #include "./slant.h"
 #include "./text_gradient.h"
+#include "./view_cone.h"
 
 namespace arenai::desktop::gui {
 
@@ -16,6 +19,12 @@ namespace arenai::desktop::gui {
         const Rml::String &name, std::unique_ptr<Rml::DecoratorInstancer> instancer) {
         Rml::Factory::RegisterDecoratorInstancer(name, instancer.get());
         instancers_.push_back(std::move(instancer));
+    }
+
+    void DecoratorRegistry::add_element(
+        const Rml::String &tag, std::unique_ptr<Rml::ElementInstancer> instancer) {
+        Rml::Factory::RegisterElementInstancer(tag, instancer.get());
+        element_instancers_.push_back(std::move(instancer));
     }
 
     void register_menu_decorators(DecoratorRegistry &registry) {
@@ -28,6 +37,14 @@ namespace arenai::desktop::gui {
         registry.add("damage-arc", std::make_unique<DamageArcDecoratorInstancer>());
         registry.add("text-gradient", std::make_unique<TextGradientDecoratorInstancer>());
         registry.add("gradient-bar", std::make_unique<GradientBarDecoratorInstancer>());
+        registry.add("chevron", std::make_unique<ChevronDecoratorInstancer>());
+        registry.add("view-cone", std::make_unique<ViewConeDecoratorInstancer>());
+    }
+
+    void register_hud_elements(DecoratorRegistry &registry) {
+        registry.add_element(
+            MinimapTerrainElement::TAG,
+            std::make_unique<Rml::ElementInstancerGeneric<MinimapTerrainElement>>());
     }
 
 }// namespace arenai::desktop::gui

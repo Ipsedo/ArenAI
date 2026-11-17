@@ -14,6 +14,9 @@ file(GLOB_RECURSE SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 set(ARENAI_DESKTOP_TESTED_SRC
         "${CMAKE_CURRENT_SOURCE_DIR}/../src/core/game_environment.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../src/core/user_preferences.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../src/core/minimap/minimap.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../src/core/minimap/minimap_projection.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../src/core/minimap/terrain_relief.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../src/controller/bindings.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../src/controller/gamepad.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../src/controller/mouse_keyboard.cpp")

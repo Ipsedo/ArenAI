@@ -2,6 +2,7 @@
 #define ARENAI_DESKTOP_GUI_RML_HUD_H
 
 #include <cstddef>
+#include <memory>
 #include <optional>
 #include <vector>
 
@@ -9,6 +10,7 @@
 
 #include "../gui.h"
 #include "./document_view.h"
+#include "./minimap/minimap_widget.h"
 
 namespace arenai::desktop::gui {
 
@@ -22,6 +24,9 @@ namespace arenai::desktop::gui {
     class HudOverlay final : public DocumentView, public AbstractHudOverlay {
     public:
         explicit HudOverlay(AbstractOverlayRenderer &renderer);
+
+        // valid once loaded
+        AbstractMinimap &minimap() override;
 
         void set_status(const MatchStatus &status) override;
         void notify_hit(HitKind kind) override;
@@ -47,6 +52,8 @@ namespace arenai::desktop::gui {
         int enemies_max_score_ = 0;
         int enemies_alive_ = 0;
         int enemies_total_ = 0;
+
+        std::unique_ptr<MinimapWidget> minimap_;
 
         Rml::Element *reticle_ = nullptr;
         Rml::Element *hit_marker_ = nullptr;

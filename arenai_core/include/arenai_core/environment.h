@@ -13,6 +13,7 @@
 #include <arenai_view/backend.h>
 #include <arenai_view/renderer.h>
 
+#include "./arena_terrain.h"
 #include "./thread_pool.h"
 #include "./types.h"
 
@@ -60,6 +61,8 @@ namespace arenai::core {
 
         bool drawing_started_;
 
+        ArenaTerrain arena_terrain_;
+
         std::shared_ptr<view::AbstractGraphicBackend> graphics_backend;
         std::shared_ptr<view::AbstractRenderContext> gl_context;
 
@@ -84,6 +87,8 @@ namespace arenai::core {
         on_reset_drawables(const std::unique_ptr<model::AbstractPhysicEngine> &engine) = 0;
 
         const std::shared_ptr<view::AbstractGraphicBackend> &get_graphics_backend() const;
+
+        const ArenaTerrain &arena_terrain() const;
 
         // applies the actions and steps the physics (no rendering)
         void advance_frame(float time_delta, const std::vector<Action> &actions);

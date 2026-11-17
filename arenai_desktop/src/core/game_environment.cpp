@@ -143,6 +143,29 @@ namespace arenai::desktop {
         return glm::vec2((ndc.x + 1.f) * 0.5f, (1.f - ndc.y) * 0.5f);
     }
 
+    namespace {
+
+        TankPose pose_of(const model::Tank &tank, const bool alive) {
+            const glm::mat4 chassis = tank.get_chassis()->get_model_matrix();
+            return {
+                .position = glm::vec3(chassis * glm::vec4(0.f, 0.f, 0.f, 1.f)),
+                .forward = glm::vec3(chassis * glm::vec4(0.f, 0.f, 1.f, 0.f)),
+                .alive = alive};
+        }
+
+    }// namespace
+
+    TankPose DesktopGameEnvironment::player_pose() const { return pose_of(*player_tank, true); }
+
+    std::vector<TankPose> DesktopGameEnvironment::enemy_poses() {
+        return apply_on_enemies<std::vector<TankPose>>([](const auto &tanks) {
+            std::vector<TankPose> poses;
+            poses.reserve(tanks.size());
+            for (const auto &tank: tanks) poses.push_back(pose_of(*tank, !tank->is_dead()));
+            return poses;
+        });
+    }
+
     model::PlayerHits DesktopGameEnvironment::consume_player_hits() const {
         return player_tank->consume_hits();
     }

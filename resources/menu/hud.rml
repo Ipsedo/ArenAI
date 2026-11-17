@@ -32,6 +32,17 @@
         <span id="hud-enemies-left" class="enemies-left side-ai">{{enemies_alive}} / {{enemies_total}}</span>
     </div>
 
+    <!-- tactical minimap, north up, following the player; code fills #minimap-blips -->
+    <div id="minimap">
+        <minimap-terrain id="minimap-terrain"></minimap-terrain>
+        <div id="minimap-cone"></div>
+        <div id="minimap-blips"></div>
+        <div id="minimap-cursor"></div>
+        <div id="minimap-north">N</div>
+        <div id="minimap-coordinates"></div>
+        <div id="minimap-frame"></div>
+    </div>
+
     <!-- fixed screen-center anchor: code rotates one arc child toward each
          impact the player suffers and fades it out -->
     <div id="damage-arcs">

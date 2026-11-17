@@ -49,6 +49,7 @@ namespace arenai::desktop::gui {
 
                 decorators_ = std::make_unique<DecoratorRegistry>();
                 register_menu_decorators(*decorators_);
+                register_hud_elements(*decorators_);
                 font_buffers_ = load_menu_fonts(asset_reader);
 
                 context_ = Rml::CreateContext("menu", Rml::Vector2i(width_, height_));

@@ -12,6 +12,8 @@ namespace arenai::desktop::gui {
     HudOverlay::HudOverlay(AbstractOverlayRenderer &renderer)
         : DocumentView("menu/hud.rml", "hud"), renderer_(renderer), clock_("00:00") {}
 
+    AbstractMinimap &HudOverlay::minimap() { return *minimap_; }
+
     void HudOverlay::bind(DataModel &model) {
         model.bind("clock", &clock_);
         model.bind("player_score", &player_score_);
@@ -48,6 +50,8 @@ namespace arenai::desktop::gui {
                 damage_arcs_.push_back(arcs->GetChild(i));
         if (damage_arcs_.empty())
             throw std::runtime_error("hud.rml misses its #damage-arcs elements");
+
+        minimap_ = std::make_unique<MinimapWidget>(document);
 
         // always on, never focused: the pages and popups own the input
         show(Rml::ModalFlag::None, Rml::FocusFlag::None);

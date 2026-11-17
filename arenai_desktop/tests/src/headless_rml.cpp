@@ -17,6 +17,7 @@ void HeadlessRmlEnvironment::SetUp() {
 
     decorators_ = std::make_unique<gui::DecoratorRegistry>();
     gui::register_menu_decorators(*decorators_);
+    gui::register_hud_elements(*decorators_);
     font_buffers_ =
         gui::load_menu_fonts(std::make_shared<agent::DesktopAssetFileReader>(ARENAI_ASSETS_DIR));
 }

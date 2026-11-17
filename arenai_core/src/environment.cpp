@@ -23,8 +23,11 @@ namespace arenai::core {
               vision_thread_sleep)),
           physic_engine(model::make_physic_engine(wanted_frequency)),
           nb_reset_frames(static_cast<int>(4.f / wanted_frequency)), spawn_width(0.f),
-          spawn_height(0.f), drawing_started_(false), graphics_backend(graphics_backend),
-          gl_context(graphics_backend->render_context()), rng(dev()), file_reader(file_reader) {}
+          spawn_height(0.f), drawing_started_(false),
+          arena_terrain_{
+              "heightmap/heightmap6.png", glm::vec3(0., 40., 0.), glm::vec3(10., 200., 10.)},
+          graphics_backend(graphics_backend), gl_context(graphics_backend->render_context()),
+          rng(dev()), file_reader(file_reader) {}
 
     std::vector<std::tuple<State, Reward, IsDone, IsTruncated>>
     BaseTanksEnvironment::step(const float time_delta, const std::vector<Action> &actions) {
@@ -109,8 +112,8 @@ namespace arenai::core {
         const auto tank_factory = physic_engine->get_tank_factory();
 
         item_factory->make_height_map_item(
-            "height_map", file_reader, "heightmap/heightmap6.png", glm::vec3(0., 40., 0.),
-            glm::vec3(10., 200., 10.));
+            "height_map", file_reader, arena_terrain_.height_map, arena_terrain_.position,
+            arena_terrain_.scale);
 
         std::uniform_real_distribution x_pos_u_dist(-new_spawn_width / 2, new_spawn_width / 2);
         std::uniform_real_distribution y_pos_u_dist(-new_spawn_height / 2, new_spawn_height / 2);
@@ -170,7 +173,7 @@ namespace arenai::core {
     }
 
     float BaseTanksEnvironment::ground_height(const float x, const float z) const {
-        constexpr float terrain_max_y = 40.f + 200.f / 2.f;
+        const float terrain_max_y = arena_terrain_.position.y + arena_terrain_.scale.y / 2.f;
         constexpr float retry_offset = 0.05f;
         for (const float offset: {0.f, retry_offset})
             if (const auto hit = physic_engine->ray_cast(
@@ -247,6 +250,8 @@ namespace arenai::core {
     BaseTanksEnvironment::get_graphics_backend() const {
         return graphics_backend;
     }
+
+    const ArenaTerrain &BaseTanksEnvironment::arena_terrain() const { return arena_terrain_; }
 
     BaseTanksEnvironment::~BaseTanksEnvironment() {
         stop_drawing();

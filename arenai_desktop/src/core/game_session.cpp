@@ -5,6 +5,7 @@
 #include <thread>
 #include <utility>
 
+#include <arenai_agent/file_reader.h>
 #include <arenai_model/shell_economy.h>
 
 #include "../controller/gamepad_selection.h"
@@ -23,6 +24,9 @@ namespace arenai::desktop {
         states_ = env_->reset(
             static_cast<float>(settings_.spawn_side), static_cast<float>(settings_.spawn_side),
             model::GAME_SHELL_ECONOMY);
+
+        agent::DesktopAssetFileReader asset_reader(options_.resources_folder);
+        minimap_.emplace(make_minimap(env_->arena_terrain(), asset_reader));
     }
 
     void GameSession::finish_loading() const { env_->create_player_renderer(); }
@@ -56,6 +60,7 @@ namespace arenai::desktop {
 
     InGameOutcome GameSession::run() {
         install_input();
+        gui_.hud().minimap().set_terrain(minimap_->terrain());
 
         while (!window_->should_close() && !outcome_) {
             window_->poll_events();
@@ -154,6 +159,7 @@ namespace arenai::desktop {
         else if (hits > 0) hud.notify_hit(gui::HitKind::Hit);
         for (const float angle: env_->consume_damage_screen_angles()) hud.notify_damage(angle);
         hud.set_aim_point(env_->aim_point_on_screen());
+        hud.minimap().update(minimap_->snapshot(env_->player_pose(), env_->enemy_poses()));
         hud.render();
 
         backend_->present();

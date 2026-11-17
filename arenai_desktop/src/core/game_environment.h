@@ -54,6 +54,8 @@ namespace arenai::desktop {
 
         TankPose player_pose() const;
         std::vector<TankPose> enemy_poses();
+        // the player's camera look direction, world space
+        glm::vec3 view_direction() const;
 
         using BaseTanksEnvironment::arena_terrain;
 

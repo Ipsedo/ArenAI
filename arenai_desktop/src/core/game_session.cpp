@@ -159,7 +159,8 @@ namespace arenai::desktop {
         else if (hits > 0) hud.notify_hit(gui::HitKind::Hit);
         for (const float angle: env_->consume_damage_screen_angles()) hud.notify_damage(angle);
         hud.set_aim_point(env_->aim_point_on_screen());
-        hud.minimap().update(minimap_->snapshot(env_->player_pose(), env_->enemy_poses()));
+        hud.minimap().update(
+            minimap_->snapshot(env_->player_pose(), env_->view_direction(), env_->enemy_poses()));
         hud.render();
 
         backend_->present();

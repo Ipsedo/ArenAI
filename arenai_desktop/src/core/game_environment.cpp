@@ -157,6 +157,11 @@ namespace arenai::desktop {
 
     TankPose DesktopGameEnvironment::player_pose() const { return pose_of(*player_tank, true); }
 
+    glm::vec3 DesktopGameEnvironment::view_direction() const {
+        const auto camera = player_tank->get_camera();
+        return camera->look() - camera->pos();
+    }
+
     std::vector<TankPose> DesktopGameEnvironment::enemy_poses() {
         return apply_on_enemies<std::vector<TankPose>>([](const auto &tanks) {
             std::vector<TankPose> poses;

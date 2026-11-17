@@ -41,7 +41,7 @@ namespace arenai::desktop::gui {
     void MinimapWidget::update(const MinimapSnapshot &snapshot) {
         terrain_->set_view(snapshot.view_min, snapshot.view_max);
         rotate(*cursor_, snapshot.player_heading);
-        rotate(*cone_, snapshot.player_heading);
+        rotate(*cone_, snapshot.view_heading);
         show_coordinates(snapshot.player_coordinates);
 
         for (std::size_t i = 0; i < snapshot.blips.size(); i++) {

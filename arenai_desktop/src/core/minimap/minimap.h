@@ -19,8 +19,10 @@ namespace arenai::desktop {
 
         const gui::MinimapTerrain &terrain() const;
 
-        gui::MinimapSnapshot
-        snapshot(const TankPose &player, const std::vector<TankPose> &enemies) const;
+        // view_forward: the camera's look direction, world space
+        gui::MinimapSnapshot snapshot(
+            const TankPose &player, glm::vec3 view_forward,
+            const std::vector<TankPose> &enemies) const;
 
         // world units: the rendered terrain's half side, the shown window's
         static constexpr float HALF_EXTENT = 2000.f;

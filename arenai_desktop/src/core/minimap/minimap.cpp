@@ -34,11 +34,13 @@ namespace arenai::desktop {
 
     const gui::MinimapTerrain &Minimap::terrain() const { return terrain_; }
 
-    gui::MinimapSnapshot
-    Minimap::snapshot(const TankPose &player, const std::vector<TankPose> &enemies) const {
+    gui::MinimapSnapshot Minimap::snapshot(
+        const TankPose &player, const glm::vec3 view_forward,
+        const std::vector<TankPose> &enemies) const {
         gui::MinimapSnapshot snapshot;
         std::tie(snapshot.view_min, snapshot.view_max) = projection_.view_window(player.position);
         snapshot.player_heading = MinimapProjection::heading(player.forward);
+        snapshot.view_heading = MinimapProjection::heading(view_forward);
         snapshot.player_coordinates =
             glm::ivec2(glm::round(glm::vec2(player.position.x, player.position.z)));
 

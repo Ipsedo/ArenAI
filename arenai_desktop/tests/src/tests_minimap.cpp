@@ -73,10 +73,13 @@ TEST(MinimapTest, snapshot_sorts_enemies_into_blips) {
     const Minimap minimap(arena_projection(), {});
 
     const auto snapshot = minimap.snapshot(
-        pose(30.4f, -12.6f), {pose(230.4f, -12.6f), pose(30.4f, 187.4f, false),
-                              pose(2000.f, -12.6f), pose(-2000.f, -12.6f, false)});
+        pose(30.4f, -12.6f), glm::vec3(1.f, -0.2f, 0.f),
+        {pose(230.4f, -12.6f), pose(30.4f, 187.4f, false), pose(2000.f, -12.6f),
+         pose(-2000.f, -12.6f, false)});
 
     EXPECT_EQ(snapshot.player_coordinates, glm::ivec2(30, -13));
+    EXPECT_NEAR(snapshot.player_heading, 0.f, 1e-6f);
+    EXPECT_NEAR(snapshot.view_heading, std::numbers::pi_v<float> / 2.f, 1e-6f);
     ASSERT_EQ(snapshot.blips.size(), 3u);
 
     EXPECT_EQ(snapshot.blips[0].kind, gui::BlipKind::Enemy);
@@ -135,6 +138,7 @@ TEST_F(MinimapWidgetTest, update_places_one_blip_per_enemy_and_hides_the_rest) {
         {.view_min = glm::vec2(0.4f),
          .view_max = glm::vec2(0.6f),
          .player_heading = 0.5f,
+         .view_heading = 1.2f,
          .player_coordinates = glm::ivec2(30, -12),
          .blips = {
              {glm::vec2(0.75f, 0.5f), gui::BlipKind::Enemy},

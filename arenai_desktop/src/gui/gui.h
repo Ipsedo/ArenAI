@@ -89,8 +89,9 @@ namespace arenai::desktop::gui {
         // the terrain window shown, in texture coordinates (may overflow [0, 1])
         glm::vec2 view_min;
         glm::vec2 view_max;
-        // radians, clockwise from north
+        // radians, clockwise from north: the chassis' and the camera's
         float player_heading = 0.f;
+        float view_heading = 0.f;
         // world x, z
         glm::ivec2 player_coordinates;
         std::vector<MinimapBlip> blips;

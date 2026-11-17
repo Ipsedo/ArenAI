@@ -1,5 +1,6 @@
 #include "./post_process.h"
 
+#include <cmath>
 #include <utility>
 
 #include "./ao_blur.h"
@@ -13,14 +14,23 @@ namespace arenai::view {
 
     std::vector<std::shared_ptr<VulkanPostEffect>> make_default_post_processing_effects(
         const std::shared_ptr<VulkanDevice> &device, DescriptorAllocator *descriptors,
-        const int width, const int height) {
-        return {
-            std::make_shared<SsaoEffect>(device, descriptors, width, height),
-            std::make_shared<AoBlurEffect>(device, descriptors, width, height),
-            std::make_shared<BloomBrightEffect>(device, descriptors, width, height),
-            std::make_shared<BloomBlurEffect>(device, descriptors, width, height),
-            std::make_shared<GodRaysEffect>(device, descriptors, width, height),
-            std::make_shared<CompositeEffect>(device, descriptors, width, height)};
+        const int width, const int height, const PostProcessSettings &settings) {
+        std::vector<std::shared_ptr<VulkanPostEffect>> effects;
+        if (settings.ambient_occlusion) {
+            effects.push_back(std::make_shared<SsaoEffect>(device, descriptors, width, height));
+            effects.push_back(std::make_shared<AoBlurEffect>(device, descriptors, width, height));
+        }
+        if (settings.bloom) {
+            effects.push_back(
+                std::make_shared<BloomBrightEffect>(device, descriptors, width, height));
+            effects.push_back(
+                std::make_shared<BloomBlurEffect>(device, descriptors, width, height));
+        }
+        if (settings.sun_rays)
+            effects.push_back(std::make_shared<GodRaysEffect>(device, descriptors, width, height));
+        effects.push_back(std::make_shared<CompositeEffect>(
+            device, descriptors, width, height, std::exp2(-0.5f * settings.brightness)));
+        return effects;
     }
 
     VulkanPostProcess::VulkanPostProcess(
@@ -30,8 +40,50 @@ namespace arenai::view {
         : device_(std::move(device)), descriptors_(descriptors), width_(width), height_(height),
           frame_(0), samples_(device_->clamp_sample_count(msaa_samples)),
           depth_format_(device_->find_depth_format(true)),
-          ordered_effects_(std::move(ordered_effects)) {
+          ordered_effects_(std::move(ordered_effects)),
+          neutral_white_(std::make_unique<Target>(
+              device_, 1, 1, VK_FORMAT_R8G8B8A8_UNORM,
+              VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+              VK_IMAGE_ASPECT_COLOR_BIT)),
+          neutral_black_(std::make_unique<Target>(
+              device_, 1, 1, VK_FORMAT_R8G8B8A8_UNORM,
+              VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+              VK_IMAGE_ASPECT_COLOR_BIT)),
+          neutral_cleared_(false) {
         create_scene_targets();
+    }
+
+    void VulkanPostProcess::provide_missing_inputs(const VkCommandBuffer &cmd) {
+        if (!neutral_cleared_) {
+            const VkImageSubresourceRange range{
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .baseMipLevel = 0,
+                .levelCount = 1,
+                .baseArrayLayer = 0,
+                .layerCount = 1};
+            const auto clear = [&](const Target &target, const float value) {
+                record_image_barrier(
+                    cmd, target.image(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
+                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, VK_ACCESS_TRANSFER_WRITE_BIT,
+                    VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+                const VkClearColorValue color{{value, value, value, 1.f}};
+                vkCmdClearColorImage(
+                    cmd, target.image(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &color, 1, &range);
+                record_image_barrier(
+                    cmd, target.image(), VK_IMAGE_ASPECT_COLOR_BIT,
+                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                    VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+                    VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+            };
+            clear(*neutral_white_, 1.f);
+            clear(*neutral_black_, 0.f);
+            neutral_cleared_ = true;
+        }
+
+        context_.textures.try_emplace(PostTexture::ao, neutral_white_.get());
+        context_.textures.try_emplace(PostTexture::bloom, neutral_black_.get());
+        context_.textures.try_emplace(PostTexture::god_rays, neutral_black_.get());
+        context_.scalars.try_emplace(PostScalar::god_ray_strength, 0.f);
     }
 
     void VulkanPostProcess::create_scene_targets() {
@@ -210,6 +262,8 @@ namespace arenai::view {
 
         for (size_t i = 0; i + 1 < ordered_effects_.size(); i++)
             ordered_effects_[i]->render(context_);
+
+        provide_missing_inputs(cmd);
     }
 
     void VulkanPostProcess::composite_within(

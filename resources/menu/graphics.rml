@@ -17,37 +17,98 @@
 
         <div class="columns">
             <div class="col">
+                <h2 class="section"><span>Display</span></h2>
+
                 <div class="param-row">
-                    <span class="param-label">Display</span>
+                    <span class="param-label">Mode</span>
                     <div class="toggle-grid" id="display-row">
-                        <div class="toggle half" data-class-selected="display=='windowed'" data-event-click="set_display('windowed')">Windowed</div>
-                        <div class="toggle half" data-class-selected="display=='fullscreen'" data-event-click="set_display('fullscreen')">Fullscreen</div>
+                        <div class="toggle" data-class-selected="display=='windowed'" data-event-click="set_display('windowed')">Windowed</div>
+                        <div class="toggle" data-class-selected="display=='fullscreen'" data-event-click="set_display('fullscreen')">Fullscreen</div>
                     </div>
                 </div>
 
                 <div class="param-row">
-                    <span class="param-label">Shadows</span>
-                    <div class="toggle-grid">
-                        <div class="toggle fifth" data-class-selected="shadow_quality=='off'" data-event-click="set_shadow_quality('off')">Off</div>
-                        <div class="toggle fifth" data-class-selected="shadow_quality=='low'" data-event-click="set_shadow_quality('low')">Low</div>
-                        <div class="toggle fifth" data-class-selected="shadow_quality=='medium'" data-event-click="set_shadow_quality('medium')">Medium</div>
-                        <div class="toggle fifth" data-class-selected="shadow_quality=='high'" data-event-click="set_shadow_quality('high')">High</div>
-                        <div class="toggle fifth" data-class-selected="shadow_quality=='ultra'" data-event-click="set_shadow_quality('ultra')">Ultra</div>
+                    <span class="param-label">Fullscreen resolution</span>
+                    <div class="dropdown" id="resolution-dropdown">
+                        <div class="dropdown-head player" id="resolution-head" data-class-open="resolution_open" data-class-disabled="display=='windowed'" data-event-click="toggle_resolution()">
+                            <span class="dropdown-value">{{resolution}}</span><span class="dropdown-tag">{{resolution_tag}}</span><span class="dropdown-caret">›</span>
+                        </div>
+                        <div class="dropdown-list" id="resolution-list" data-if="resolution_open">
+                            <div class="dropdown-item split" data-for="entry, entry_index : resolutions" data-class-selected="entry_index == selected_resolution" data-event-click="set_resolution(entry_index)"><span>{{entry.label}}</span><span class="dropdown-tag">{{entry.tag}}</span></div>
+                        </div>
+                    </div>
+                    <p class="hint" data-if="display=='fullscreen'">{{monitor}}</p>
+                    <p class="hint" data-if="display=='windowed'">Fullscreen only. Windowed follows the window size.</p>
+                </div>
+
+                <div class="param-row">
+                    <span class="param-label">VSync</span>
+                    <div class="toggle-grid" id="vsync-row">
+                        <div class="toggle" data-class-selected="!vsync" data-event-click="set_vsync('off')">Off</div>
+                        <div class="toggle" data-class-selected="vsync" data-event-click="set_vsync('on')">On</div>
                     </div>
                 </div>
 
                 <div class="param-row">
-                    <span class="param-label">Anti-aliasing</span>
-                    <div class="toggle-grid">
-                        <div class="toggle quarter" data-class-selected="msaa == 1" data-event-click="set_msaa(1)">Off</div>
-                        <div class="toggle quarter" data-class-selected="msaa == 2" data-event-click="set_msaa(2)">2x</div>
-                        <div class="toggle quarter" data-class-selected="msaa == 4" data-event-click="set_msaa(4)">4x</div>
-                        <div class="toggle quarter" data-class-selected="msaa == 8" data-event-click="set_msaa(8)">8x</div>
+                    <div class="param-label split"><span>Brightness</span><span class="param-value">{{brightness_label}}</span></div>
+                    <div class="centered-range">
+                        <div class="centered-track"></div>
+                        <div class="centered-fill" data-style-left="brightness_fill_left" data-style-width="brightness_fill_width"></div>
+                        <input type="range" class="centered" min="-10" max="10" step="1" data-value="brightness" data-event-change="sync_brightness(ev.value)"/>
+                    </div>
+                    <div class="ticks"><span>Darker</span><span class="mid">Default</span><span>Brighter</span></div>
+                    <div class="calibration">
+                        <div class="calibration-card"><span data-style-color="calibration_visible">◆</span><span data-style-color="calibration_faint">◆</span></div>
+                        <p class="hint">Left mark visible, right one barely. Applies on Play.</p>
                     </div>
                 </div>
             </div>
 
             <div class="col">
+                <h2 class="section"><span>Quality</span><span class="when">applies on <span class="accent">next Play</span></span></h2>
+
+                <div class="param-row">
+                    <div class="param-label split"><span>Resolution scale</span><span><span class="param-value plain">{{render_pixels}}</span><span class="param-value">{{render_scale}} %</span></span></div>
+                    <input type="range" min="50" max="100" step="5" data-value="render_scale" data-event-change="sync_render_scale(ev.value)"/>
+                    <div class="ticks"><span>50 %</span><span>75 %</span><span>100 %</span></div>
+                </div>
+
+                <div class="param-row">
+                    <div class="param-label split"><span>Shadows</span><span><span class="param-value plain">{{shadow_detail}}</span><span class="param-value">{{shadow_value}}</span></span></div>
+                    <input type="range" min="0" max="4" step="1" data-value="shadow_level" data-event-change="set_shadow_level(ev.value)"/>
+                    <div class="steps">
+                        <div class="stop first" style="left: 0%;" data-class-on="shadow_level == 0" data-event-click="set_shadow_level(0)"><span class="notch"></span><span>Off</span></div>
+                        <div class="stop" style="left: 25%;" data-class-on="shadow_level == 1" data-class-passed="shadow_level >= 1" data-event-click="set_shadow_level(1)"><span class="notch"></span><span>Low</span></div>
+                        <div class="stop" style="left: 50%;" data-class-on="shadow_level == 2" data-class-passed="shadow_level >= 2" data-event-click="set_shadow_level(2)"><span class="notch"></span><span>Medium</span></div>
+                        <div class="stop" style="left: 75%;" data-class-on="shadow_level == 3" data-class-passed="shadow_level >= 3" data-event-click="set_shadow_level(3)"><span class="notch"></span><span>High</span></div>
+                        <div class="stop last" style="left: 100%;" data-class-on="shadow_level == 4" data-class-passed="shadow_level >= 4" data-event-click="set_shadow_level(4)"><span class="notch"></span><span>Ultra</span></div>
+                    </div>
+                </div>
+
+                <div class="param-row">
+                    <div class="param-label split"><span>Anti-aliasing</span><span><span class="param-value plain">MSAA</span><span class="param-value">{{msaa_value}}</span></span></div>
+                    <input type="range" min="0" max="3" step="1" data-value="msaa_level" data-event-change="set_msaa_level(ev.value)"/>
+                    <div class="steps">
+                        <div class="stop first" style="left: 0%;" data-class-on="msaa_level == 0" data-event-click="set_msaa_level(0)"><span class="notch"></span><span>Off</span></div>
+                        <div class="stop" style="left: 33.3333%;" data-class-on="msaa_level == 1" data-class-passed="msaa_level >= 1" data-event-click="set_msaa_level(1)"><span class="notch"></span><span>2x</span></div>
+                        <div class="stop" style="left: 66.6667%;" data-class-on="msaa_level == 2" data-class-passed="msaa_level >= 2" data-event-click="set_msaa_level(2)"><span class="notch"></span><span>4x</span></div>
+                        <div class="stop last" style="left: 100%;" data-class-on="msaa_level == 3" data-class-passed="msaa_level >= 3" data-event-click="set_msaa_level(3)"><span class="notch"></span><span>8x</span></div>
+                    </div>
+                </div>
+
+                <div class="param-row">
+                    <span class="param-label">Effects</span>
+                    <div class="toggle-grid" id="effects-row">
+                        <div class="toggle check" data-class-selected="ambient_occlusion" data-event-click="toggle_effect('ambient_occlusion')"><span class="check-mark"></span>Occlusion</div>
+                        <div class="toggle check" data-class-selected="bloom" data-event-click="toggle_effect('bloom')"><span class="check-mark"></span>Bloom</div>
+                        <div class="toggle check" data-class-selected="sun_rays" data-event-click="toggle_effect('sun_rays')"><span class="check-mark"></span>Sun rays</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col narrow">
+                <h2 class="section"><span>GPUs</span></h2>
+
                 <div class="param-row">
                     <span class="param-label side-player">◆ Window GPU <span class="dim">— your view</span></span>
                     <div class="dropdown" id="window-gpu-dropdown">
@@ -72,6 +133,7 @@
                             <div class="dropdown-item" data-for="gpus" data-class-selected="it_index == selected_vision_gpu" data-event-click="set_vision_gpu(it_index)">{{it}}</div>
                         </div>
                     </div>
+                    <p class="hint">Takes effect on Play.</p>
                     <p class="hint warn" data-if="vision_gpu_env">Overridden by the ARENAI_VK_DEVICE environment variable.</p>
                 </div>
             </div>

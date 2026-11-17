@@ -1,10 +1,13 @@
 #ifndef ARENAI_DESKTOP_CORE_SETTINGS_H
 #define ARENAI_DESKTOP_CORE_SETTINGS_H
 
+#include <algorithm>
 #include <filesystem>
 #include <optional>
 #include <string>
 #include <string_view>
+
+#include <arenai_view/window.h>
 
 #include "../controller/bindings.h"
 #include "../controller/control_kind.h"
@@ -33,6 +36,16 @@ namespace arenai::desktop {
         return std::nullopt;
     }
 
+    // shadow atlas side per quality preset (Off disables the pass)
+    constexpr int shadow_map_size(const ShadowQuality quality) {
+        switch (quality) {
+            case ShadowQuality::Low: return 2048;
+            case ShadowQuality::Medium: return 4096;
+            case ShadowQuality::High: return 8192;
+            default: return 16384;
+        }
+    }
+
     enum class AiAlgorithm { Ppo, PpoLiquid, Ppg };
 
     // canonical names, shared by the JSON preferences and the menu bindings
@@ -59,9 +72,19 @@ namespace arenai::desktop {
         ControlBindings bindings;
 
         bool fullscreen = false;
+        // nullopt = the monitor's native mode
+        std::optional<view::VideoMode> fullscreen_mode;
+        bool vsync = true;
+        // [-10, 10], 0 = neutral
+        int brightness = 0;
 
         ShadowQuality shadow_quality = ShadowQuality::Ultra;
         int msaa_samples = 4;
+        // percent of the window size, [50, 100] by 5
+        int render_scale = 100;
+        bool ambient_occlusion = true;
+        bool bloom = true;
+        bool sun_rays = true;
 
         std::string window_gpu;
         std::string vision_gpu;
@@ -73,6 +96,14 @@ namespace arenai::desktop {
         AiAlgorithm agent_algorithm = AiAlgorithm::Ppo;
         std::optional<std::string> agent_preset;
     };
+
+    // the saved mode when the monitor still offers it, the native one otherwise
+    inline std::optional<view::VideoMode> available_fullscreen_mode(
+        const view::FullscreenModes &available, const std::optional<view::VideoMode> &saved) {
+        if (saved && std::ranges::find(available.modes, *saved) != available.modes.end())
+            return saved;
+        return std::nullopt;
+    }
 
     struct AgentPreset {
         std::string name;

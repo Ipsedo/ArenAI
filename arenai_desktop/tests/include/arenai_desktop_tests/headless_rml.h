@@ -49,6 +49,11 @@ public:
     void set_cursor_position(double, double) override {}
 
     void set_fullscreen(const bool fullscreen) override { this->fullscreen = fullscreen; }
+
+    arenai::view::FullscreenModes fullscreen_modes() const override { return modes; }
+    void set_fullscreen_mode(const std::optional<arenai::view::VideoMode> mode) override {
+        fullscreen_mode = mode;
+    }
     std::tuple<int, int> screen_size() const override { return {1920, 1080}; }
 
     std::vector<arenai::view::GamepadInfo> list_gamepads() const override { return gamepads; }
@@ -59,6 +64,11 @@ public:
     }
 
     bool fullscreen = false;
+    arenai::view::FullscreenModes modes{
+        .monitor = "Test monitor",
+        .modes = {{2560, 1440, 165}, {1920, 1080, 144}},
+        .native = {2560, 1440, 165}};
+    std::optional<arenai::view::VideoMode> fullscreen_mode;
     std::vector<arenai::view::GamepadInfo> gamepads;
     int selected_gamepad = -2;
 };

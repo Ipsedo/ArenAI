@@ -74,6 +74,48 @@ TEST_F(UserPreferencesTest, GraphicsSettingsRoundTrip) {
     EXPECT_EQ(loaded.vision_gpu, saved.vision_gpu);
 }
 
+TEST_F(UserPreferencesTest, DisplayAndQualitySettingsRoundTrip) {
+    GameSettings saved;
+    saved.fullscreen_mode = arenai::view::VideoMode{1920, 1080, 144};
+    saved.vsync = false;
+    saved.brightness = -4;
+    saved.render_scale = 75;
+    saved.ambient_occlusion = false;
+    saved.bloom = true;
+    saved.sun_rays = false;
+
+    save_preferences(saved);
+    const auto loaded = load_preferences({}, {});
+
+    EXPECT_EQ(loaded.fullscreen_mode, saved.fullscreen_mode);
+    EXPECT_FALSE(loaded.vsync);
+    EXPECT_EQ(loaded.brightness, -4);
+    EXPECT_EQ(loaded.render_scale, 75);
+    EXPECT_FALSE(loaded.ambient_occlusion);
+    EXPECT_TRUE(loaded.bloom);
+    EXPECT_FALSE(loaded.sun_rays);
+}
+
+TEST_F(UserPreferencesTest, NativeFullscreenModeRoundTripsAsNull) {
+    save_preferences(GameSettings{});
+    const auto loaded = load_preferences({}, {});
+
+    EXPECT_FALSE(loaded.fullscreen_mode.has_value());
+}
+
+TEST_F(UserPreferencesTest, InvalidDisplayAndQualityValuesFallBackToDefaults) {
+    const auto path = preferences_path();
+    std::filesystem::create_directories(path.parent_path());
+    std::ofstream(path)
+        << R"({"render_scale": 42, "brightness": 11, "fullscreen_mode": {"width": 0}})";
+
+    const auto loaded = load_preferences({}, {});
+
+    EXPECT_EQ(loaded.render_scale, GameSettings{}.render_scale);
+    EXPECT_EQ(loaded.brightness, GameSettings{}.brightness);
+    EXPECT_FALSE(loaded.fullscreen_mode.has_value());
+}
+
 TEST_F(UserPreferencesTest, InvalidGraphicsValuesFallBackToDefaults) {
     const auto path = preferences_path();
     std::filesystem::create_directories(path.parent_path());

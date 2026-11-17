@@ -1,5 +1,7 @@
 #include "./player_renderer.h"
 
+#include <algorithm>
+#include <cmath>
 #include <utility>
 
 namespace arenai::view {
@@ -8,18 +10,35 @@ namespace arenai::view {
         const std::shared_ptr<VulkanDevice> &device,
         std::shared_ptr<WindowFrameContext> frame_context, const int width, const int height,
         const glm::vec3 light_pos, const std::shared_ptr<AbstractCamera> &camera,
-        const bool shadows, const int shadow_map_size, const int msaa_samples)
+        const PlayerRendererSettings &settings)
         : VulkanRenderer(
-            device, light_pos, camera, shadows, ShadowSettings{.map_size = shadow_map_size}),
-          width_(width), height_(height), msaa_samples_(msaa_samples),
+            device, light_pos, camera, settings.shadows,
+            ShadowSettings{.map_size = settings.shadow_map_size}),
+          width_(width), height_(height), msaa_samples_(settings.msaa_samples),
+          render_scale_(std::clamp(settings.render_scale, 0.5f, 1.f)),
+          post_process_settings_{
+              .ambient_occlusion = settings.ambient_occlusion,
+              .bloom = settings.bloom,
+              .sun_rays = settings.sun_rays,
+              .brightness = std::clamp(settings.brightness, -1.f, 1.f)},
           frame_context_(std::move(frame_context)) {}
+
+    int VulkanPlayerRenderer::render_width() const {
+        return std::max(
+            1, static_cast<int>(std::lround(static_cast<float>(width_) * render_scale_)));
+    }
+
+    int VulkanPlayerRenderer::render_height() const {
+        return std::max(
+            1, static_cast<int>(std::lround(static_cast<float>(height_) * render_scale_)));
+    }
 
     void VulkanPlayerRenderer::ensure_post_process() {
         if (post_process_) return;
         post_process_ = std::make_unique<VulkanPostProcess>(
-            device(), &descriptors(), get_width(), get_height(),
+            device(), &descriptors(), render_width(), render_height(),
             make_default_post_processing_effects(
-                device(), &descriptors(), get_width(), get_height()),
+                device(), &descriptors(), render_width(), render_height(), post_process_settings_),
             msaa_samples_);
     }
 
@@ -60,7 +79,7 @@ namespace arenai::view {
         height_ = new_height;
 
         frame_context_->handle_resize();
-        if (post_process_) post_process_->resize(new_width, new_height);
+        if (post_process_) post_process_->resize(render_width(), render_height());
     }
 
     VkFormat VulkanPlayerRenderer::scene_color_format() const {

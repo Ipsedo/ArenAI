@@ -297,14 +297,59 @@ namespace arenai::view {
             glfwGetWindowPos(window_, &windowed_x_, &windowed_y_);
             glfwGetWindowSize(window_, &windowed_width_, &windowed_height_);
 
-            GLFWmonitor *monitor = glfwGetPrimaryMonitor();
-            const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-            glfwSetWindowMonitor(
-                window_, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+            enter_fullscreen();
         } else {
             glfwSetWindowMonitor(
                 window_, nullptr, windowed_x_, windowed_y_, windowed_width_, windowed_height_, 0);
         }
+    }
+
+    void GlfwVulkanWindow::refresh_native_mode() const {
+        if (glfwGetWindowMonitor(window_) != nullptr && native_mode_.width > 0) return;
+        GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+        if (!monitor) return;
+        if (const GLFWvidmode *mode = glfwGetVideoMode(monitor))
+            native_mode_ = VideoMode{
+                .width = mode->width, .height = mode->height, .refresh_rate = mode->refreshRate};
+    }
+
+    void GlfwVulkanWindow::enter_fullscreen() const {
+        refresh_native_mode();
+        const VideoMode mode = fullscreen_mode_.value_or(native_mode_);
+        glfwSetWindowMonitor(
+            window_, glfwGetPrimaryMonitor(), 0, 0, mode.width, mode.height, mode.refresh_rate);
+    }
+
+    FullscreenModes GlfwVulkanWindow::fullscreen_modes() const {
+        GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+        FullscreenModes result{.monitor = "", .modes = {}, .native = {0, 0, 0}};
+        if (!monitor) return result;
+
+        if (const char *name = glfwGetMonitorName(monitor)) result.monitor = name;
+
+        refresh_native_mode();
+        result.native = native_mode_;
+
+        int count = 0;
+        const GLFWvidmode *modes = glfwGetVideoModes(monitor, &count);
+        for (int i = 0; i < count; i++) {
+            const VideoMode mode{
+                .width = modes[i].width,
+                .height = modes[i].height,
+                .refresh_rate = modes[i].refreshRate};
+            if (std::ranges::find(result.modes, mode) == result.modes.end())
+                result.modes.push_back(mode);
+        }
+        std::ranges::sort(result.modes, [](const VideoMode &a, const VideoMode &b) {
+            return std::tie(a.width, a.height, a.refresh_rate)
+                   > std::tie(b.width, b.height, b.refresh_rate);
+        });
+        return result;
+    }
+
+    void GlfwVulkanWindow::set_fullscreen_mode(const std::optional<VideoMode> mode) {
+        fullscreen_mode_ = mode;
+        if (glfwGetWindowMonitor(window_) != nullptr) enter_fullscreen();
     }
 
     std::tuple<int, int> GlfwVulkanWindow::screen_size() const {

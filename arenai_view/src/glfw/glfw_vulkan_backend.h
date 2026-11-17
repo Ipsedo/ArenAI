@@ -30,6 +30,8 @@ namespace arenai::view {
         void end_ui_pass() override;
         void present() override;
 
+        void set_vsync(bool vsync) override;
+
         ~GlfwVulkanBackend() override;
 
     private:

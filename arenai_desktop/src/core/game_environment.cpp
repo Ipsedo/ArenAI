@@ -16,22 +16,17 @@ namespace arenai::desktop {
 
     namespace {
 
-        // shadow atlas side per quality preset (Off disables the pass)
-        constexpr int shadow_map_size(const ShadowQuality quality) {
-            switch (quality) {
-                case ShadowQuality::Low: return 2048;
-                case ShadowQuality::Medium: return 4096;
-                case ShadowQuality::High: return 8192;
-                default: return 16384;
-            }
-        }
-
         // the renderer-side reading of the player's graphics choices
         view::PlayerRendererSettings player_renderer_settings(const GameSettings &settings) {
             return {
                 .shadows = settings.shadow_quality != ShadowQuality::Off,
                 .shadow_map_size = shadow_map_size(settings.shadow_quality),
-                .msaa_samples = settings.msaa_samples};
+                .msaa_samples = settings.msaa_samples,
+                .render_scale = static_cast<float>(settings.render_scale) / 100.f,
+                .ambient_occlusion = settings.ambient_occlusion,
+                .bloom = settings.bloom,
+                .sun_rays = settings.sun_rays,
+                .brightness = static_cast<float>(settings.brightness) / 10.f};
         }
 
     }// namespace

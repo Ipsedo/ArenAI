@@ -82,6 +82,8 @@ public:
     void begin_ui_pass(view::UiPass pass, int width, int height) override {}
     void end_ui_pass() override {}
     void present() override {}
+
+    void set_vsync(bool vsync) override {}
 };
 
 #endif// ARENAI_DESKTOP_TESTS_HEADLESS_WINDOWED_BACKEND_H

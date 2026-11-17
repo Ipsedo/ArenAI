@@ -64,7 +64,10 @@ namespace arenai::desktop::gui {
                 pages.push_back(std::make_unique<MainPage>(
                     state_, [this](const MenuOutcome outcome) { main_menu_.finish(outcome); }));
                 pages.push_back(std::make_unique<ParametersPage>(state_));
-                pages.push_back(std::make_unique<GraphicsPage>(state_, window_, options.gpus));
+                pages.push_back(std::make_unique<GraphicsPage>(
+                    state_, window_,
+                    [backend = backend_](const bool vsync) { backend->set_vsync(vsync); },
+                    options.gpus));
                 pages.push_back(std::make_unique<ControlsPage>(state_, window_, *input_adapter_));
                 pages.push_back(std::make_unique<AiPage>(
                     state_, std::move(options.presets), std::move(options.agent_validator),

@@ -13,6 +13,14 @@
 
 namespace arenai::view {
 
+    struct PostProcessSettings {
+        bool ambient_occlusion = true;
+        bool bloom = true;
+        bool sun_rays = true;
+        // in [-1, 1], 0 = neutral
+        float brightness = 0.f;
+    };
+
     class VulkanPostProcess {
     public:
         VulkanPostProcess(
@@ -43,6 +51,8 @@ namespace arenai::view {
 
     private:
         void create_scene_targets();
+        // stand-ins sampled by the composite for the effects left out
+        void provide_missing_inputs(const VkCommandBuffer &cmd);
 
         std::shared_ptr<VulkanDevice> device_;
         DescriptorAllocator *descriptors_;
@@ -62,12 +72,16 @@ namespace arenai::view {
 
         std::vector<std::shared_ptr<VulkanPostEffect>> ordered_effects_;
 
+        std::unique_ptr<Target> neutral_white_;
+        std::unique_ptr<Target> neutral_black_;
+        bool neutral_cleared_;
+
         VulkanPostEffect::FrameContext context_{};
     };
 
     std::vector<std::shared_ptr<VulkanPostEffect>> make_default_post_processing_effects(
         const std::shared_ptr<VulkanDevice> &device, DescriptorAllocator *descriptors, int width,
-        int height);
+        int height, const PostProcessSettings &settings = {});
 
 }// namespace arenai::view
 

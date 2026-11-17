@@ -4,6 +4,8 @@
 #include <memory>
 #include <vector>
 
+#include <arenai_view/backend.h>
+
 #include "../../post/post_process.h"
 #include "../../present/window_frame.h"
 #include "./renderer.h"
@@ -15,8 +17,8 @@ namespace arenai::view {
         VulkanPlayerRenderer(
             const std::shared_ptr<VulkanDevice> &device,
             std::shared_ptr<WindowFrameContext> frame_context, int width, int height,
-            glm::vec3 light_pos, const std::shared_ptr<AbstractCamera> &camera, bool shadows,
-            int shadow_map_size, int msaa_samples);
+            glm::vec3 light_pos, const std::shared_ptr<AbstractCamera> &camera,
+            const PlayerRendererSettings &settings);
 
         int get_width() const override;
         int get_height() const override;
@@ -37,10 +39,15 @@ namespace arenai::view {
 
     private:
         void ensure_post_process();
+        // the scene resolution, the window size times the render scale
+        int render_width() const;
+        int render_height() const;
 
         int width_;
         int height_;
         int msaa_samples_;
+        float render_scale_;
+        PostProcessSettings post_process_settings_;
 
         std::shared_ptr<WindowFrameContext> frame_context_;
 

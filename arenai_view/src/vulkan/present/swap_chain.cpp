@@ -12,7 +12,7 @@ namespace arenai::view {
         std::function<VkExtent2D()> framebuffer_extent)
         : device_(std::move(device)), surface_(surface),
           framebuffer_extent_(std::move(framebuffer_extent)), swapchain_(VK_NULL_HANDLE),
-          format_(VK_FORMAT_UNDEFINED), extent_{.width = 0, .height = 0} {
+          format_(VK_FORMAT_UNDEFINED), extent_{.width = 0, .height = 0}, vsync_(true) {
         recreate();
     }
 
@@ -20,6 +20,22 @@ namespace arenai::view {
         const auto [width, height] = framebuffer_extent_();
         if (width == 0 || height == 0) return true;
         return width == extent_.width && height == extent_.height;
+    }
+
+    void SwapChain::set_vsync(const bool vsync) { vsync_ = vsync; }
+
+    VkPresentModeKHR SwapChain::choose_present_mode() const {
+        if (vsync_) return VK_PRESENT_MODE_FIFO_KHR;
+
+        uint32_t count = 0;
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device_->physical(), surface_, &count, nullptr);
+        std::vector<VkPresentModeKHR> modes(count);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(
+            device_->physical(), surface_, &count, modes.data());
+
+        for (const auto preferred: {VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_IMMEDIATE_KHR})
+            if (std::ranges::find(modes, preferred) != modes.end()) return preferred;
+        return VK_PRESENT_MODE_FIFO_KHR;
     }
 
     bool SwapChain::recreate() {
@@ -74,7 +90,7 @@ namespace arenai::view {
         create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
         create_info.preTransform = capabilities.currentTransform;
         create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-        create_info.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+        create_info.presentMode = choose_present_mode();
         create_info.clipped = VK_TRUE;
         create_info.oldSwapchain = swapchain_;
 

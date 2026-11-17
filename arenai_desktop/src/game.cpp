@@ -89,6 +89,15 @@ namespace arenai::desktop {
         window->set_resize_callback(
             [&gui](const int width, const int height) { gui->on_window_resized(width, height); });
 
+        graphics_backend->set_vsync(initial_settings.vsync);
+        const auto fullscreen_mode =
+            available_fullscreen_mode(window->fullscreen_modes(), initial_settings.fullscreen_mode);
+        if (initial_settings.fullscreen_mode && !fullscreen_mode)
+            std::cerr << "Saved fullscreen mode " << initial_settings.fullscreen_mode->width << "x"
+                      << initial_settings.fullscreen_mode->height << "@"
+                      << initial_settings.fullscreen_mode->refresh_rate
+                      << " is not offered by the monitor, using its native mode" << std::endl;
+        window->set_fullscreen_mode(fullscreen_mode);
         if (initial_settings.fullscreen) window->set_fullscreen(true);
 
         const bool dbg_autoplay = std::getenv("ARENAI_DEBUG_AUTOPLAY") != nullptr;

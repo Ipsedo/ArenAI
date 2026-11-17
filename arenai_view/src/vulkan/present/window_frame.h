@@ -45,6 +45,9 @@ namespace arenai::view {
 
         void handle_resize();
 
+        // the swapchain is rebuilt when the next frame begins
+        void set_vsync(bool vsync);
+
         ~WindowFrameContext();
 
     private:

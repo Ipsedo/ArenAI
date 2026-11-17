@@ -9,9 +9,12 @@ namespace arenai::view {
     public:
         CompositeEffect(
             const std::shared_ptr<VulkanDevice> &device, DescriptorAllocator *descriptors,
-            int width, int height);
+            int width, int height, float gamma_exponent);
 
         void render(FrameContext &context) override;
+
+    private:
+        float gamma_exponent_;
     };
 
 }// namespace arenai::view

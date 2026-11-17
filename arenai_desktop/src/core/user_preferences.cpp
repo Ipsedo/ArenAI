@@ -170,6 +170,19 @@ namespace arenai::desktop {
                                            : ControllerKind::Keyboard;
 
             settings.fullscreen = json.value("fullscreen", settings.fullscreen);
+            if (const auto mode = json.value("fullscreen_mode", nlohmann::json());
+                mode.is_object()) {
+                const view::VideoMode parsed{
+                    .width = mode.value("width", 0),
+                    .height = mode.value("height", 0),
+                    .refresh_rate = mode.value("refresh_rate", 0)};
+                if (parsed.width > 0 && parsed.height > 0 && parsed.refresh_rate > 0)
+                    settings.fullscreen_mode = parsed;
+            }
+            settings.vsync = json.value("vsync", settings.vsync);
+            if (const int brightness = json.value("brightness", settings.brightness);
+                brightness >= -10 && brightness <= 10)
+                settings.brightness = brightness;
 
             if (const auto quality =
                     shadow_quality_from_string(json.value("shadow_quality", std::string())))
@@ -177,6 +190,13 @@ namespace arenai::desktop {
             if (const int msaa = json.value("msaa", settings.msaa_samples);
                 msaa == 1 || msaa == 2 || msaa == 4 || msaa == 8)
                 settings.msaa_samples = msaa;
+            if (const int scale = json.value("render_scale", settings.render_scale);
+                scale >= 50 && scale <= 100 && scale % 5 == 0)
+                settings.render_scale = scale;
+            settings.ambient_occlusion =
+                json.value("ambient_occlusion", settings.ambient_occlusion);
+            settings.bloom = json.value("bloom", settings.bloom);
+            settings.sun_rays = json.value("sun_rays", settings.sun_rays);
             settings.window_gpu = json.value("window_gpu", settings.window_gpu);
             settings.vision_gpu = json.value("vision_gpu", settings.vision_gpu);
             // the AI page forces it back to false when CUDA is unavailable
@@ -234,8 +254,20 @@ namespace arenai::desktop {
                 {"controller",
                  settings.controller_kind == ControllerKind::Gamepad ? "gamepad" : "keyboard"},
                 {"fullscreen", settings.fullscreen},
+                {"fullscreen_mode",
+                 settings.fullscreen_mode
+                     ? nlohmann::json{{"width", settings.fullscreen_mode->width},
+                                      {"height", settings.fullscreen_mode->height},
+                                      {"refresh_rate", settings.fullscreen_mode->refresh_rate}}
+                     : nlohmann::json(nullptr)},
+                {"vsync", settings.vsync},
+                {"brightness", settings.brightness},
                 {"shadow_quality", to_string(settings.shadow_quality)},
                 {"msaa", settings.msaa_samples},
+                {"render_scale", settings.render_scale},
+                {"ambient_occlusion", settings.ambient_occlusion},
+                {"bloom", settings.bloom},
+                {"sun_rays", settings.sun_rays},
                 {"window_gpu", settings.window_gpu},
                 {"vision_gpu", settings.vision_gpu},
                 {"cuda", settings.cuda},

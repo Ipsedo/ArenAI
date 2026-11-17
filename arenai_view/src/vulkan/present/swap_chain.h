@@ -23,6 +23,9 @@ namespace arenai::view {
 
         bool matches_framebuffer() const;
 
+        // takes effect on the next recreate()
+        void set_vsync(bool vsync);
+
         VkResult acquire(const VkSemaphore &signal, uint32_t *image_index) const;
 
         VkSwapchainKHR handle() const;
@@ -37,6 +40,7 @@ namespace arenai::view {
 
     private:
         void destroy_views();
+        VkPresentModeKHR choose_present_mode() const;
 
         std::shared_ptr<VulkanDevice> device_;
         VkSurfaceKHR surface_;
@@ -44,6 +48,7 @@ namespace arenai::view {
         VkSwapchainKHR swapchain_;
         VkFormat format_;
         VkExtent2D extent_;
+        bool vsync_;
         std::vector<VkImage> images_;
         std::vector<VkImageView> views_;
     };

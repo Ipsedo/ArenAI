@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -16,6 +17,21 @@ namespace arenai::view {
         int id;
         std::string name;
         std::string guid;
+    };
+
+    struct VideoMode {
+        int width;
+        int height;
+        int refresh_rate;
+
+        bool operator==(const VideoMode &) const = default;
+    };
+
+    struct FullscreenModes {
+        std::string monitor;
+        // largest first
+        std::vector<VideoMode> modes;
+        VideoMode native;
     };
 
     class AbstractWindow {
@@ -36,6 +52,10 @@ namespace arenai::view {
         virtual void set_cursor_position(double x, double y) = 0;
 
         virtual void set_fullscreen(bool fullscreen) = 0;
+
+        virtual FullscreenModes fullscreen_modes() const = 0;
+        // nullopt = the monitor's native mode
+        virtual void set_fullscreen_mode(std::optional<VideoMode> mode) = 0;
 
         virtual std::tuple<int, int> screen_size() const = 0;
 

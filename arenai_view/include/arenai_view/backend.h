@@ -41,6 +41,13 @@ namespace arenai::view {
         bool shadows = true;
         int shadow_map_size = 16384;
         int msaa_samples = 4;
+        // fraction of the window size the scene is rendered at, in [0.5, 1]
+        float render_scale = 1.f;
+        bool ambient_occlusion = true;
+        bool bloom = true;
+        bool sun_rays = true;
+        // in [-1, 1], 0 = neutral
+        float brightness = 0.f;
     };
 
     class AbstractWindowedGraphicBackend : public virtual AbstractGraphicBackend {
@@ -57,6 +64,8 @@ namespace arenai::view {
         virtual void end_ui_pass() = 0;
 
         virtual void present() = 0;
+
+        virtual void set_vsync(bool vsync) = 0;
     };
 
     std::unique_ptr<AbstractGraphicBackend> make_vulkan_backend(const std::string &gpu_name = "");

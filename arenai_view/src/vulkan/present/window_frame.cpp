@@ -207,7 +207,7 @@ namespace arenai::view {
         if (const VkResult result = device_->present(swapchain_->handle(), image_index_, finished);
             result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
             device_->wait_idle();
-            swapchain_valid_ = swapchain_->recreate();
+            recreate_swapchain();
         } else {
             vk_check(result, "vkQueuePresentKHR");
         }
@@ -219,6 +219,16 @@ namespace arenai::view {
     void WindowFrameContext::handle_resize() {
         device_->wait_idle();
         recreate_swapchain();
+    }
+
+    void WindowFrameContext::set_vsync(const bool vsync) {
+        swapchain_->set_vsync(vsync);
+        swapchain_valid_ = false;
+    }
+
+    bool WindowFrameContext::recreate_swapchain() {
+        swapchain_valid_ = swapchain_->recreate();
+        create_msaa_target();
 
         if (swapchain_valid_ && render_finished_.size() != swapchain_->image_count()) {
             for (const auto semaphore: render_finished_)
@@ -234,11 +244,7 @@ namespace arenai::view {
                     vkCreateSemaphore(device_->handle(), &semaphore_info, nullptr, &semaphore),
                     "vkCreateSemaphore (render finished)");
         }
-    }
 
-    bool WindowFrameContext::recreate_swapchain() {
-        swapchain_valid_ = swapchain_->recreate();
-        create_msaa_target();
         return swapchain_valid_;
     }
 

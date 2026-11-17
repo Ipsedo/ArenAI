@@ -51,8 +51,7 @@ namespace arenai::view {
 
         const auto [width, height] = window_->framebuffer_size();
         return std::make_unique<VulkanPlayerRenderer>(
-            context()->device(), frame_context_, width, height, light_pos, camera, settings.shadows,
-            settings.shadow_map_size, settings.msaa_samples);
+            context()->device(), frame_context_, width, height, light_pos, camera, settings);
     }
 
     Rml::RenderInterface &GlfwVulkanBackend::ui_render_interface() {
@@ -75,6 +74,8 @@ namespace arenai::view {
     }
 
     void GlfwVulkanBackend::present() { frame_context_->present(); }
+
+    void GlfwVulkanBackend::set_vsync(const bool vsync) { frame_context_->set_vsync(vsync); }
 
     GlfwVulkanBackend::~GlfwVulkanBackend() {
         rml_render_interface_.reset();

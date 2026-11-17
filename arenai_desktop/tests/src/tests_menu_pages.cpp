@@ -56,7 +56,8 @@ namespace {
                 state_, [this](const gui::MenuOutcome outcome) { outcome_ = outcome; }));
             pages.push_back(std::make_unique<gui::ParametersPage>(state_));
             pages.push_back(std::make_unique<gui::GraphicsPage>(
-                state_, window_, std::vector<std::string>{"GPU A", "GPU B"}));
+                state_, window_, [this](const bool vsync) { applied_vsync_ = vsync; },
+                std::vector<std::string>{"GPU A", "GPU B"}));
             pages.push_back(std::make_unique<gui::ControlsPage>(state_, window_, *adapter_));
             pages.push_back(std::make_unique<gui::AiPage>(
                 state_, std::vector<AgentPreset>{}, std::move(validator), true));
@@ -98,6 +99,7 @@ namespace {
         std::optional<gui::MenuOutcome> outcome_;
         std::filesystem::path agent_dir_;
         std::shared_ptr<FakeWindow> window_;
+        std::optional<bool> applied_vsync_;
         std::unique_ptr<gui::MenuInputAdapter> adapter_;
         std::unique_ptr<gui::Navigator> navigator_;
     };
@@ -158,15 +160,102 @@ TEST_F(MenuPagesTest, graphics_toggles_write_the_settings) {
     build_menu(accepting_validator());
     show(gui::PageId::Graphics);
 
-    click(gui::PageId::Graphics, "set_shadow_quality('low')");
+    click(gui::PageId::Graphics, "set_shadow_level(1)");
     EXPECT_EQ(state_.settings.shadow_quality, ShadowQuality::Low);
+    click(gui::PageId::Graphics, "set_shadow_level(0)");
+    EXPECT_EQ(state_.settings.shadow_quality, ShadowQuality::Off);
 
-    click(gui::PageId::Graphics, "set_msaa(8)");
+    click(gui::PageId::Graphics, "set_msaa_level(3)");
     EXPECT_EQ(state_.settings.msaa_samples, 8);
+    click(gui::PageId::Graphics, "set_msaa_level(0)");
+    EXPECT_EQ(state_.settings.msaa_samples, 1);
 
     click(gui::PageId::Graphics, "set_display('fullscreen')");
     EXPECT_TRUE(state_.settings.fullscreen);
     EXPECT_TRUE(window_->fullscreen);
+}
+
+TEST_F(MenuPagesTest, graphics_quality_sliders_write_the_settings) {
+    build_menu(accepting_validator());
+    show(gui::PageId::Graphics);
+
+    Rml::ElementDocument &document = navigator_->page(gui::PageId::Graphics).document();
+    auto *shadows = dynamic_cast<Rml::ElementFormControl *>(
+        document.QuerySelector("input[data-value=shadow_level]"));
+    auto *msaa = dynamic_cast<Rml::ElementFormControl *>(
+        document.QuerySelector("input[data-value=msaa_level]"));
+    ASSERT_NE(shadows, nullptr);
+    ASSERT_NE(msaa, nullptr);
+
+    shadows->SetValue("3");
+    context().Update();
+    EXPECT_EQ(state_.settings.shadow_quality, ShadowQuality::High);
+
+    msaa->SetValue("1");
+    context().Update();
+    EXPECT_EQ(state_.settings.msaa_samples, 2);
+}
+
+TEST_F(MenuPagesTest, graphics_vsync_and_effects_write_the_settings) {
+    build_menu(accepting_validator());
+    show(gui::PageId::Graphics);
+
+    click(gui::PageId::Graphics, "set_vsync('off')");
+    EXPECT_FALSE(state_.settings.vsync);
+    ASSERT_TRUE(applied_vsync_.has_value());
+    EXPECT_FALSE(*applied_vsync_);
+
+    click(gui::PageId::Graphics, "toggle_effect('bloom')");
+    EXPECT_FALSE(state_.settings.bloom);
+    EXPECT_TRUE(state_.settings.ambient_occlusion);
+    EXPECT_TRUE(state_.settings.sun_rays);
+    click(gui::PageId::Graphics, "toggle_effect('bloom')");
+    EXPECT_TRUE(state_.settings.bloom);
+}
+
+TEST_F(MenuPagesTest, graphics_resolution_picker_maps_native_to_nullopt) {
+    state_.settings.fullscreen = true;
+    build_menu(accepting_validator());
+    show(gui::PageId::Graphics);
+
+    const Rml::Element *list =
+        navigator_->page(gui::PageId::Graphics).document().GetElementById("resolution-list");
+    ASSERT_NE(list, nullptr);
+    click(gui::PageId::Graphics, "toggle_resolution()");
+    EXPECT_TRUE(list->IsVisible());
+    const auto entries = visible_elements(gui::PageId::Graphics, "#resolution-list .dropdown-item");
+    ASSERT_EQ(entries.size(), 2u);
+
+    entries[1]->DispatchEvent(Rml::EventId::Click, Rml::Dictionary());
+    context().Update();
+    const view::VideoMode smaller{1920, 1080, 144};
+    EXPECT_EQ(state_.settings.fullscreen_mode, smaller);
+    EXPECT_EQ(window_->fullscreen_mode, smaller);
+    EXPECT_FALSE(list->IsVisible());
+
+    click(gui::PageId::Graphics, "toggle_resolution()");
+    entries[0]->DispatchEvent(Rml::EventId::Click, Rml::Dictionary());
+    context().Update();
+    EXPECT_FALSE(state_.settings.fullscreen_mode.has_value());
+    EXPECT_FALSE(window_->fullscreen_mode.has_value());
+}
+
+TEST_F(MenuPagesTest, graphics_resolution_picker_stays_shut_in_windowed_mode) {
+    state_.settings.fullscreen = false;
+    build_menu(accepting_validator());
+    show(gui::PageId::Graphics);
+
+    click(gui::PageId::Graphics, "toggle_resolution()");
+    const Rml::Element *list =
+        navigator_->page(gui::PageId::Graphics).document().GetElementById("resolution-list");
+    EXPECT_TRUE(list == nullptr || !list->IsVisible());
+}
+
+TEST_F(MenuPagesTest, graphics_drops_a_saved_mode_the_monitor_no_longer_offers) {
+    state_.settings.fullscreen_mode = view::VideoMode{800, 600, 60};
+    build_menu(accepting_validator());
+
+    EXPECT_FALSE(state_.settings.fullscreen_mode.has_value());
 }
 
 TEST_F(MenuPagesTest, graphics_gpu_picker_maps_index_zero_to_auto) {

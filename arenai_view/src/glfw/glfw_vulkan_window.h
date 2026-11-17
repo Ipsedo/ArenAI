@@ -4,6 +4,7 @@
 #include <array>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 
 // clang-format off
@@ -36,6 +37,9 @@ namespace arenai::view {
 
         void set_fullscreen(bool fullscreen) override;
 
+        FullscreenModes fullscreen_modes() const override;
+        void set_fullscreen_mode(std::optional<VideoMode> mode) override;
+
         std::tuple<int, int> screen_size() const override;
 
         std::vector<GamepadInfo> list_gamepads() const override;
@@ -63,6 +67,13 @@ namespace arenai::view {
         // windowed geometry, saved on entering fullscreen and restored on exit
         int windowed_x_ = 0, windowed_y_ = 0;
         int windowed_width_ = 0, windowed_height_ = 0;
+
+        std::optional<VideoMode> fullscreen_mode_;
+        // the desktop mode, only readable while windowed (fullscreen reports the mode in use)
+        mutable VideoMode native_mode_{.width = 0, .height = 0, .refresh_rate = 0};
+
+        void refresh_native_mode() const;
+        void enter_fullscreen() const;
 
         void on_key(int key, int action) const;
         std::tuple<double, double> cursor_scale() const;

@@ -10,6 +10,8 @@ layout(push_constant) uniform Push {
     float u_ray_strength;
     // frame counter animating the film grain
     float u_frame;
+    // brightness curve on the display-encoded color, 1 = neutral
+    float u_gamma;
 };
 
 layout(location = 0) in vec2 v_uv;
@@ -79,6 +81,7 @@ void main() {
 
     // encode back to sRGB for the display, then grain on the encoded value
     color = pow(clamp(color, 0.0, 1.0), vec3(1.0 / 2.2));
+    if (u_gamma != 1.0) color = pow(color, vec3(u_gamma));
     float noise = hash(gl_FragCoord.xy + vec2(u_frame * 13.37, u_frame * 7.13));
     color += (noise - 0.5) * GRAIN;
 

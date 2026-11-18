@@ -5,8 +5,11 @@ using namespace arenai::agent;
 
 namespace arenai::agent {
 
-    PpoStepCollector::PpoStepCollector(std::shared_ptr<PpoRolloutBuffer> rollout_buffer)
-        : rollout_buffer(std::move(rollout_buffer)) {}
+    PpoStepCollector::PpoStepCollector(
+        std::shared_ptr<PpoRolloutBuffer> rollout_buffer,
+        std::shared_ptr<ColoredNoise> exploration_noise)
+        : rollout_buffer(std::move(rollout_buffer)),
+          exploration_noise(std::move(exploration_noise)) {}
 
     void PpoStepCollector::on_act(
         const TorchState &state, const TorchAction &action,
@@ -30,10 +33,13 @@ namespace arenai::agent {
              .reward = rewards,
              .done = done,
              .truncated = truncated});
+
+        exploration_noise->restart(done.logical_or(truncated));
     }
 
     void PpoStepCollector::on_episode_end(const TorchState &final_state) {
         rollout_buffer->finish_episode(final_state);
+        exploration_noise->reset();
     }
 
 }// namespace arenai::agent

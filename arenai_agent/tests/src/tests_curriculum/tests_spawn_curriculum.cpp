@@ -12,13 +12,13 @@ namespace {
     constexpr std::uint64_t SEED = 42;
 
     // feed exactly one controller window of probe episodes with the given ratio
-    void run_probe_window(ProgressCurriculum &curriculum, const int nb_fires, const int nb_hits) {
+    void run_probe_window(ProgressCurriculum &curriculum, const int nb_tanks, const int nb_kills) {
         int done = 0;
         while (done < PROBE_WINDOW) {
             curriculum.sample_progress();
             const bool is_probe = curriculum.is_probe();
 
-            curriculum.on_episode_end(nb_fires, nb_hits);
+            curriculum.on_episode_end(nb_tanks, nb_kills);
             if (is_probe) done++;
         }
     }
@@ -74,7 +74,7 @@ TEST(SpawnCurriculumTest, HoldsInsideHysteresisBand) {
     ASSERT_FLOAT_EQ(curriculum.upper_bound(), DELTA);
 }
 
-TEST(SpawnCurriculumTest, NoFireCountsAsFailure) {
+TEST(SpawnCurriculumTest, NoTankCountsAsFailure) {
     ProgressCurriculum curriculum(DELTA, RATIO_LOW, RATIO_HIGH, PROBE_WINDOW, 0.2f, SEED);
 
     run_probe_window(curriculum, 100, 10);

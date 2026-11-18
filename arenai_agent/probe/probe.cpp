@@ -22,6 +22,7 @@
 #include "./agents/torch_types.h"
 #include "./core/train_environment.h"
 #include "./distributions/bernoulli.h"
+#include "./distributions/colored_noise.h"
 #include "./distributions/gaussian_tanh.h"
 #include "./networks/actor.h"
 #include "./networks/q_function.h"
@@ -120,6 +121,7 @@ int main(const int argc, char **argv) {
     };
     std::function<ProbeActorOutput(const torch::Tensor &, const torch::Tensor &)> act;
     std::function<void()> reset_hidden = [] {};
+    ColoredNoise exploration_noise(agent_config.value("noise_correlation", 0.f));
     // [N, 3 × nb_aim] ∂E[min Q], ∂E[Q1], ∂E[Q2] /∂a_aim at the mode, undefined without a critic
     std::function<torch::Tensor(const TorchState &, const torch::Tensor &, const torch::Tensor &)>
         canon_q_gradient = [](const TorchState &, const torch::Tensor &, const torch::Tensor &) {
@@ -235,7 +237,7 @@ int main(const int argc, char **argv) {
     const auto env = std::make_unique<TrainTankEnvironment>(
         std::move(graphics_backend), nb_tanks, resources_folder, wanted_frequency,
         max_episode_steps, vision_height, vision_width, parser.get<int>("--vision_num_threads"),
-        action_repeat, agent_config.at("gamma").get<float>());
+        action_repeat);
 
     std::ofstream csv(output);
     const auto &action_names = TorchAction::continuous_action_names();
@@ -273,6 +275,7 @@ int main(const int argc, char **argv) {
 
     for (int episode = 0; episode < nb_episodes; episode++) {
         reset_hidden();
+        exploration_noise.reset();
 
         auto state = TorchState(
             env->reset(spawn_side, spawn_side, shell_economy), vision_height, vision_width);
@@ -301,7 +304,8 @@ int main(const int argc, char **argv) {
                     continuous_action = gaussian_tanh_mode(mu);
                     discrete_action = bernoulli_max_action(discrete);
                 } else {
-                    continuous_action = gaussian_tanh_sample(mu, sigma).first;
+                    continuous_action =
+                        gaussian_tanh_sample(mu, sigma, exploration_noise.next(mu)).first;
                     discrete_action = bernoulli_sample(discrete);
                 }
 
@@ -431,7 +435,10 @@ int main(const int argc, char **argv) {
             const auto steps = env->step(
                 wanted_frequency, TorchAction{continuous_action, discrete_action}.to_actions());
 
-            state = TorchStep(steps, vision_height, vision_width).get_states();
+            const TorchStep torch_step(steps, vision_height, vision_width);
+            exploration_noise.restart(
+                torch_step.get_is_done().logical_or(torch_step.get_is_truncated()));
+            state = torch_step.get_states();
 
             const auto details = env->last_step_reward_details();
             for (int i = 0; i < nb_tanks; i++) {

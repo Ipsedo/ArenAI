@@ -3,6 +3,7 @@
 
 #include <memory>
 
+#include "../../distributions/colored_noise.h"
 #include "../step_collector.h"
 #include "../torch_types.h"
 #include "./ppo_rollout_buffer.h"
@@ -11,7 +12,9 @@ namespace arenai::agent {
 
     class PpoStepCollector final : public AbstractStepCollector {
     public:
-        explicit PpoStepCollector(std::shared_ptr<PpoRolloutBuffer> rollout_buffer);
+        PpoStepCollector(
+            std::shared_ptr<PpoRolloutBuffer> rollout_buffer,
+            std::shared_ptr<ColoredNoise> exploration_noise);
 
         // concrete act-time channel, called by TorchPpoAgent::act
         void on_act(
@@ -27,6 +30,7 @@ namespace arenai::agent {
 
     private:
         std::shared_ptr<PpoRolloutBuffer> rollout_buffer;
+        std::shared_ptr<ColoredNoise> exploration_noise;
 
         TorchState last_state;
         TorchAction last_action;

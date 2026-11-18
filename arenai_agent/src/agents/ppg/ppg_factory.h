@@ -29,6 +29,7 @@ namespace arenai::agent {
         std::shared_ptr<DistillationActor> actor;
 
         std::shared_ptr<PpgRolloutBuffer> rollout_buffer;
+        std::shared_ptr<ColoredNoise> exploration_noise;
         std::shared_ptr<PpgStepCollector> collector;
         std::shared_ptr<TorchPpgAgent> agent;
         std::shared_ptr<PpgTrainer> trainer;

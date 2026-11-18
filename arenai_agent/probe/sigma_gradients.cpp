@@ -23,6 +23,9 @@
 #include "./agents/ppo_liquid/liquid_ppo_trainer.h"
 #include "./agents/torch_types.h"
 #include "./core/train_environment.h"
+#include "./networks/recurrent/liquid_critic.h"
+#include "./networks/vision.h"
+#include "./networks_utils/torch_loader.h"
 
 using namespace arenai;
 using namespace arenai::agent;
@@ -61,6 +64,9 @@ int main(const int argc, char **argv) {
     parser.add_argument("--output").required();
     parser.add_argument("--nb_episodes").scan<'i', int>().default_value(2);
     parser.add_argument("--spawn_side").scan<'g', float>().default_value(1000.f);
+    parser.add_argument("--critic_inputs").default_value(std::string());
+    parser.add_argument("--frames").default_value(std::string());
+    parser.add_argument("--frames_every").scan<'i', int>().default_value(3);
     parser.add_argument("--cuda").default_value(false).implicit_value(true);
     parser.add_argument("--vision_num_threads")
         .scan<'i', int>()
@@ -101,9 +107,11 @@ int main(const int argc, char **argv) {
         std::vector{params.initial_fire_proba, params.initial_zoom_proba});
     const auto hidden_state = std::make_shared<LiquidHiddenState>(actor);
     const auto rollout_buffer = std::make_shared<LiquidPpoRolloutBuffer>();
-    const auto collector = std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state);
-    const auto agent =
-        std::make_shared<TorchLiquidPpoAgent>(actor, hidden_state, device, collector);
+    const auto exploration_noise = std::make_shared<ColoredNoise>(params.noise_correlation);
+    const auto collector =
+        std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state, exploration_noise);
+    const auto agent = std::make_shared<TorchLiquidPpoAgent>(
+        actor, hidden_state, device, exploration_noise, collector);
     const auto trainer = std::make_shared<LiquidPpoTrainer>(
         actor, rollout_buffer, vision_height, vision_width, model::ENEMY_NB_CONTINUOUS_ACTION,
         model::ENEMY_NB_DISCRETE_ACTION, model::ENEMY_STATE_VECTOR_SIZE, params.actor_learning_rate,
@@ -117,14 +125,32 @@ int main(const int argc, char **argv) {
         params.chunk_size);
     trainer->load(save_folder);
 
+    const auto critic_inputs_path = parser.get<std::string>("--critic_inputs");
+    std::ofstream critic_inputs;
+    std::shared_ptr<LiquidCritic> critic;
+    if (!critic_inputs_path.empty()) {
+        critic_inputs.open(critic_inputs_path, std::ios::binary);
+        critic = std::make_shared<LiquidCritic>(
+            vision_height, vision_width, model::ENEMY_STATE_VECTOR_SIZE, params.hidden_size_sensors,
+            params.vision_channels, params.group_norm_nums, params.neuron_number,
+            params.unfolding_steps, params.delta_t);
+        load_torch(save_folder, critic, "critic.pt");
+        critic->to(device);
+        critic->eval();
+    }
+
+    const auto frames_path = parser.get<std::string>("--frames");
+    const int frames_every = parser.get<int>("--frames_every");
+    std::ofstream frames_out;
+    if (!frames_path.empty()) frames_out.open(frames_path, std::ios::binary);
+
     auto graphics_backend = view::make_vulkan_backend();
     std::cout << "Vulkan device : " << graphics_backend->renderer_info() << std::endl;
 
     const auto env = std::make_unique<TrainTankEnvironment>(
         std::move(graphics_backend), nb_tanks, resources_folder, wanted_frequency,
         config.at("train").at("max_episode_steps").get<int>(), vision_height, vision_width,
-        parser.get<int>("--vision_num_threads"), env_config.at("action_repeat").get<int>(),
-        params.gamma);
+        parser.get<int>("--vision_num_threads"), env_config.at("action_repeat").get<int>());
 
     const auto names = TorchAction::continuous_action_names();
 
@@ -186,11 +212,39 @@ int main(const int argc, char **argv) {
             env->reset(spawn_side, spawn_side, shell_economy), vision_height, vision_width);
 
         bool is_done = false;
+        int episode_step = 0;
         while (!is_done) {
             StepRecord record{.geometries = env->aim_geometry()};
 
-            const auto steps =
-                env->step(wanted_frequency, agent->act(state.to(device), true).to_actions());
+            const auto action = agent->act(state.to(device), true);
+            torch::Tensor critic_features;
+            if (critic) {
+                torch::NoGradGuard guard;
+                critic_features = critic->named_children()["vision_encoder"]
+                                      ->as<ConvolutionNetwork>()
+                                      ->forward(state.get_vision().to(device))
+                                      .cpu()
+                                      .contiguous();
+            }
+            // row : episode, step, tank, then the uint8 frame
+            if (frames_out.is_open() && episode_step % frames_every == 0) {
+                const auto frames = state.get_vision().cpu().contiguous();
+                for (int i = 0; i < nb_tanks; i++) {
+                    if (!record.geometries[i].alive) continue;
+                    const float header[3] = {
+                        static_cast<float>(episode), static_cast<float>(episode_step),
+                        static_cast<float>(i)};
+                    frames_out.write(reinterpret_cast<const char *>(header), sizeof(header));
+                    frames_out.write(
+                        reinterpret_cast<const char *>(frames[i].data_ptr<uint8_t>()),
+                        frames[i].numel());
+                }
+            }
+            const auto sensors = state.get_state().cpu().contiguous();
+            const auto armed = state.get_fire_mask().cpu().contiguous();
+            const auto fired = action.discrete_action.cpu().contiguous();
+
+            const auto steps = env->step(wanted_frequency, action.to_actions());
             const TorchStep torch_step(steps, vision_height, vision_width);
 
             record.details = env->last_step_reward_details();
@@ -199,6 +253,36 @@ int main(const int argc, char **argv) {
                 record.dones.push_back(done);
                 record.truncateds.push_back(truncated);
             }
+
+            // row : 16 floats, sensors, critic vision features
+            for (int i = 0; critic && i < nb_tanks; i++) {
+                const auto &geometry = record.geometries[i];
+                const float header[16] = {
+                    static_cast<float>(episode),
+                    static_cast<float>(episode_step),
+                    static_cast<float>(i),
+                    geometry.alive ? 1.f : 0.f,
+                    armed[i][0].item<float>(),
+                    fired[i][0].item<float>(),
+                    record.rewards[i],
+                    record.dones[i] ? 1.f : 0.f,
+                    record.truncateds[i] ? 1.f : 0.f,
+                    geometry.distance,
+                    geometry.yaw * to_degrees,
+                    geometry.pitch * to_degrees,
+                    geometry.best_angle * to_degrees,
+                    geometry.best_distance,
+                    record.details[i].hit,
+                    record.details[i].kill};
+                critic_inputs.write(reinterpret_cast<const char *>(header), sizeof(header));
+                critic_inputs.write(
+                    reinterpret_cast<const char *>(sensors[i].data_ptr<float>()),
+                    sensors.size(1) * sizeof(float));
+                critic_inputs.write(
+                    reinterpret_cast<const char *>(critic_features[i].data_ptr<float>()),
+                    critic_features.size(1) * sizeof(float));
+            }
+            episode_step++;
             records.push_back(std::move(record));
 
             collector->on_transition(

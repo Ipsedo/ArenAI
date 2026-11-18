@@ -26,14 +26,21 @@ namespace arenai::agent {
     }
 
     SoftClamp::SoftClamp(const float lower_bound, const float upper_bound)
-        : lower_bound(lower_bound), upper_bound(upper_bound) {}
+        : SoftClamp(lower_bound, std::vector{upper_bound}) {}
+
+    SoftClamp::SoftClamp(const float lower_bound, const std::vector<float> &upper_bounds)
+        : lower_bound(lower_bound), upper_bounds(upper_bounds) {}
 
     torch::Tensor SoftClamp::forward(const torch::Tensor &x) {
-        return lower_bound + (upper_bound - lower_bound) * torch::sigmoid(x);
+        const auto upper = torch::tensor(upper_bounds, x.options().requires_grad(false));
+        return lower_bound + (upper - lower_bound) * torch::sigmoid(x);
     }
 
     void SoftClamp::pretty_print(std::ostream &stream) const {
-        stream << name() << "(min=" << lower_bound << ", max=" << upper_bound << ")";
+        stream << name() << "(min=" << lower_bound << ", max=";
+        for (size_t i = 0; i < upper_bounds.size(); i++)
+            stream << (i == 0 ? "" : "/") << upper_bounds[i];
+        stream << ")";
     }
 
     float SoftClamp::inverse(const float value, const float lower_bound, const float upper_bound) {

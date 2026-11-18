@@ -57,7 +57,7 @@ namespace arenai::agent {
                 get_value<std::vector<int>>("actor_hidden_sizes"),
                 get_value<std::vector<std::tuple<int, int>>>("vision_channels"),
                 get_value<std::vector<int>>("group_norm_nums"), 0.f, std::vector{0.5f, 0.5f}),
-            cuda ? torch::kCUDA : torch::kCPU);
+            cuda ? torch::kCUDA : torch::kCPU, std::make_shared<ColoredNoise>(0.f));
     }
 
     std::shared_ptr<AbstractAgent> AgentFactory::create_liquid_ppo_agent(
@@ -72,7 +72,8 @@ namespace arenai::agent {
             std::vector{0.5f, 0.5f});
 
         return std::make_shared<TorchLiquidPpoAgent>(
-            actor, std::make_shared<LiquidHiddenState>(actor), cuda ? torch::kCUDA : torch::kCPU);
+            actor, std::make_shared<LiquidHiddenState>(actor), cuda ? torch::kCUDA : torch::kCPU,
+            std::make_shared<ColoredNoise>(0.f));
     }
 
     std::shared_ptr<AbstractAgent> AgentFactory::create_ppg_agent(
@@ -85,7 +86,7 @@ namespace arenai::agent {
                 get_value<std::vector<int>>("actor_hidden_sizes"),
                 get_value<std::vector<std::tuple<int, int>>>("vision_channels"),
                 get_value<std::vector<int>>("group_norm_nums"), 0.f, std::vector{0.5f, 0.5f}),
-            cuda ? torch::kCUDA : torch::kCPU);
+            cuda ? torch::kCUDA : torch::kCPU, std::make_shared<ColoredNoise>(0.f));
     }
 
 }// namespace arenai::agent

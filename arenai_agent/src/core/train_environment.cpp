@@ -17,8 +17,6 @@ using namespace arenai;
 using namespace arenai::agent;
 
 namespace {
-    // the aim potential is in [0, 1]: going from no aim to a perfect one is worth this much
-    constexpr float AIM_POTENTIAL_SCALE = 0.3f;
     constexpr float HIT_REWARD_SCALE = 3.f;
     constexpr float RECEIVED_REWARD_SCALE = 1.f;
     // paid at D = final spawn side, scaled by D / final spawn side below
@@ -31,7 +29,7 @@ namespace arenai::agent {
         const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, const int nb_tanks,
         const std::filesystem::path &android_assets_path, const float wanted_frequency,
         const int max_episode_steps, const int vision_height, const int vision_width,
-        const int vision_num_threads, const int action_repeat, const float gamma,
+        const int vision_num_threads, const int action_repeat,
         const std::shared_ptr<const ProgressCurriculum> &curriculum, const float initial_spawn_side,
         const float final_spawn_side)
         : BaseTanksEnvironment(
@@ -46,18 +44,14 @@ namespace arenai::agent {
               std::make_shared<MeanMetric>("r_hit", 4 * nb_tanks * max_episode_steps, 1, true)),
           reward_received_metric(
               std::make_shared<MeanMetric>("r_rcv", 4 * nb_tanks * max_episode_steps, 1, true)),
-          reward_aim_metric(
-              std::make_shared<MeanMetric>("r_aim", 4 * nb_tanks * max_episode_steps, 1, true)),
           miss_distance_metric(std::make_shared<MeanMetric>("miss", 1024 * nb_tanks, 1)),
           episode_step_mean_nb_metric(std::make_shared<MeanMetric>("s", 32, 1)),
           fire_metric(std::make_shared<MeanMetric>("fire", 256, 2)),
           hit_metric(std::make_shared<MeanMetric>("hit", 16, 2, true)),
           kill_metric(std::make_shared<MeanMetric>("kill", 16, 1)), nb_kills_episode(0),
-          nb_fires_episode(0), nb_hits_episode(0),
-          aim_shaping(gamma, AIM_POTENTIAL_SCALE, nb_tanks),
-          vision_aspect_ratio(static_cast<float>(vision_width) / static_cast<float>(vision_height)),
-          curriculum(curriculum), initial_spawn_side(initial_spawn_side),
-          final_spawn_side(final_spawn_side), empty_reserve_penalty(0.f) {}
+          nb_fires_episode(0), nb_hits_episode(0), curriculum(curriculum),
+          initial_spawn_side(initial_spawn_side), final_spawn_side(final_spawn_side),
+          empty_reserve_penalty(0.f) {}
 
     std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
     TrainTankEnvironment::step(const float time_delta, const std::vector<core::Action> &actions) {
@@ -67,7 +61,6 @@ namespace arenai::agent {
         std::vector rewards(nb_tanks, 0.f);
         std::vector truncated(nb_tanks, false);
         std::vector<model::RewardDetail> reward_details(nb_tanks);
-        std::vector shaping_details(nb_tanks, 0.f);
         std::vector nb_fires_per_tank(nb_tanks, 0);
         std::vector nb_hits_per_tank(nb_tanks, 0);
 
@@ -135,13 +128,10 @@ namespace arenai::agent {
             return 0;
         });
 
-        // the aim potential is read once per decision, on the state the agent will see
-        const auto shaping_rewards = aim_shaping.step(aim_potentials(), done);
         for (int i = 0; i < nb_tanks; i++) {
             if (already_done[i]) continue;
-            rewards[i] += shaping_rewards[i] + (HIT_REWARD_SCALE - 1.f) * reward_details[i].hit
+            rewards[i] += (HIT_REWARD_SCALE - 1.f) * reward_details[i].hit
                           + (RECEIVED_REWARD_SCALE - 1.f) * reward_details[i].received;
-            shaping_details[i] = shaping_rewards[i];
         }
 
         render_frame(true);
@@ -177,7 +167,6 @@ namespace arenai::agent {
 
                 reward_hit_metric->add(HIT_REWARD_SCALE * detail.hit);
                 reward_received_metric->add(RECEIVED_REWARD_SCALE * detail.received);
-                reward_aim_metric->add(shaping_details[i]);
 
                 if (detail.nb_landed_shells > 0)
                     miss_distance_metric->add(
@@ -228,19 +217,6 @@ namespace arenai::agent {
                       * std::lerp(initial_spawn_side, final_spawn_side, curriculum->upper_bound())
                       / final_spawn_side
                 : 0.f;
-
-        aim_shaping.reset(aim_potentials());
-    }
-
-    std::vector<float> TrainTankEnvironment::aim_potentials() {
-        return apply_on_enemies<std::vector<float>>(
-            [this](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
-                std::vector<float> potentials;
-                potentials.reserve(tanks.size());
-                for (const auto &tank: tanks)
-                    potentials.push_back(tank->get_aim_potential(tanks, vision_aspect_ratio));
-                return potentials;
-            });
     }
 
     std::vector<model::RewardDetail> TrainTankEnvironment::last_step_reward_details() const {
@@ -353,9 +329,7 @@ namespace arenai::agent {
             });
     }
 
-    int TrainTankEnvironment::episode_nb_fires() const { return nb_fires_episode; }
-
-    int TrainTankEnvironment::episode_nb_hits() const { return nb_hits_episode; }
+    int TrainTankEnvironment::episode_nb_kills() const { return nb_kills_episode; }
 
     bool TrainTankEnvironment::are_all_done() {
         return std::accumulate(
@@ -389,7 +363,7 @@ namespace arenai::agent {
 
     std::vector<std::shared_ptr<AbstractMetric>>
     TrainTankEnvironment::get_csv_only_metrics() const {
-        return {reward_aim_metric};
+        return {};
     }
 
 }// namespace arenai::agent

@@ -39,15 +39,13 @@ int main(const int argc, char **argv) {
     parser.add_argument("--shells")
         .scan<'i', int>()
         .default_value(model::GAME_SHELL_ECONOMY.initial_shells);
-    parser.add_argument("--shells_per_hit")
-        .scan<'i', int>()
-        .default_value(model::GAME_SHELL_ECONOMY.shells_per_hit);
+    parser.add_argument("--shells_per_hit").scan<'i', int>().default_value(5);
     parser.add_argument("--max_shells")
         .scan<'i', int>()
         .default_value(model::GAME_SHELL_ECONOMY.max_shells);
     parser.add_argument("--curriculum_delta").scan<'g', float>().default_value(50.f);
-    parser.add_argument("--curriculum_ratio_low").scan<'g', float>().default_value(0.05f);
-    parser.add_argument("--curriculum_ratio_high").scan<'g', float>().default_value(0.08f);
+    parser.add_argument("--curriculum_ratio_low").scan<'g', float>().default_value(0.3f);
+    parser.add_argument("--curriculum_ratio_high").scan<'g', float>().default_value(0.5f);
     parser.add_argument("--curriculum_probe_window").scan<'i', int>().default_value(8);
     parser.add_argument("--curriculum_boundary_proba").scan<'g', float>().default_value(0.5f);
     parser.add_argument("--action_repeat").scan<'i', int>().default_value(3);

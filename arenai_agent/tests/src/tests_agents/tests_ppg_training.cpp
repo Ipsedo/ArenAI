@@ -50,8 +50,10 @@ PpgTriad PpgTrainingTest::make_triad(const PpgTrainingTestConfig &cfg, const int
         cfg.nb_discrete_actions, 8, std::vector{16}, vision_channels, group_norm_nums, 0.1f,
         std::vector(cfg.nb_discrete_actions, 0.2f));
     triad.rollout_buffer = std::make_shared<PpgRolloutBuffer>();
-    triad.collector = std::make_shared<PpgStepCollector>(triad.rollout_buffer);
-    triad.agent = std::make_shared<TorchPpgAgent>(triad.actor, device, triad.collector);
+    const auto exploration_noise = std::make_shared<ColoredNoise>(0.9f);
+    triad.collector = std::make_shared<PpgStepCollector>(triad.rollout_buffer, exploration_noise);
+    triad.agent =
+        std::make_shared<TorchPpgAgent>(triad.actor, device, exploration_noise, triad.collector);
     triad.trainer = std::make_shared<PpgTrainer>(
         triad.actor, triad.rollout_buffer, cfg.vision_height, cfg.vision_width,
         cfg.nb_continuous_actions, cfg.nb_discrete_actions, cfg.nb_sensors, 1e-3f, 1e-3f, 8,

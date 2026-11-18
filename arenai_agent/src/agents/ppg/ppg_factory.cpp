@@ -16,8 +16,9 @@ namespace arenai::agent {
               params.group_norm_nums, params.initial_sigma,
               std::vector{params.initial_fire_proba, params.initial_zoom_proba})),
           rollout_buffer(std::make_shared<PpgRolloutBuffer>()),
-          collector(std::make_shared<PpgStepCollector>(rollout_buffer)),
-          agent(std::make_shared<TorchPpgAgent>(actor, device, collector)),
+          exploration_noise(std::make_shared<ColoredNoise>(params.noise_correlation)),
+          collector(std::make_shared<PpgStepCollector>(rollout_buffer, exploration_noise)),
+          agent(std::make_shared<TorchPpgAgent>(actor, device, exploration_noise, collector)),
           trainer(std::make_shared<PpgTrainer>(
               actor, rollout_buffer, vision_height, vision_width, nb_continuous_actions,
               nb_discrete_actions, nb_sensors, params.actor_learning_rate,

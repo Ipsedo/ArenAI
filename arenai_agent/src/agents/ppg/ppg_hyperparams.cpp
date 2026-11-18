@@ -12,6 +12,7 @@ namespace arenai::agent {
             {.name = "--vision_channels", .member = &PpgHyperParams::vision_channels},
             {.name = "--group_norm_nums", .member = &PpgHyperParams::group_norm_nums},
             {.name = "--initial_sigma", .member = &PpgHyperParams::initial_sigma},
+            {.name = "--noise_correlation", .member = &PpgHyperParams::noise_correlation},
             {.name = "--initial_fire_proba", .member = &PpgHyperParams::initial_fire_proba},
             {.name = "--initial_zoom_proba", .member = &PpgHyperParams::initial_zoom_proba},
             {.name = "--metric_window_size", .member = &PpgHyperParams::metric_window_size},

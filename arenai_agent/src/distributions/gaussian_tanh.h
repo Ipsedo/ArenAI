@@ -9,6 +9,10 @@ namespace arenai::agent {
     std::pair<torch::Tensor, torch::Tensor>
     gaussian_tanh_sample(const torch::Tensor &mu, const torch::Tensor &sigma);
 
+    // same law, drawn from a given standard normal noise
+    std::pair<torch::Tensor, torch::Tensor> gaussian_tanh_sample(
+        const torch::Tensor &mu, const torch::Tensor &sigma, const torch::Tensor &noise);
+
     torch::Tensor gaussian_tanh_mode(const torch::Tensor &mu);
 
     torch::Tensor gaussian_tanh_log_pdf(

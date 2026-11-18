@@ -3,6 +3,7 @@
 
 #include <memory>
 
+#include "../../distributions/colored_noise.h"
 #include "../step_collector.h"
 #include "../torch_types.h"
 #include "./liquid_hidden_state.h"
@@ -14,7 +15,8 @@ namespace arenai::agent {
     public:
         LiquidPpoStepCollector(
             std::shared_ptr<LiquidPpoRolloutBuffer> rollout_buffer,
-            std::shared_ptr<LiquidHiddenState> hidden_state);
+            std::shared_ptr<LiquidHiddenState> hidden_state,
+            std::shared_ptr<ColoredNoise> exploration_noise);
 
         // concrete act-time channel, called by TorchLiquidPpoAgent::act
         void on_act(
@@ -31,6 +33,7 @@ namespace arenai::agent {
     private:
         std::shared_ptr<LiquidPpoRolloutBuffer> rollout_buffer;
         std::shared_ptr<LiquidHiddenState> hidden_state;
+        std::shared_ptr<ColoredNoise> exploration_noise;
 
         TorchState last_state;
         TorchAction last_action;

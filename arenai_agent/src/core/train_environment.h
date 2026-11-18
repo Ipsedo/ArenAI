@@ -9,7 +9,6 @@
 
 #include "../metrics/metric.h"
 #include "./curriculum.h"
-#include "./potential_shaping.h"
 
 namespace arenai::agent {
 
@@ -40,7 +39,7 @@ namespace arenai::agent {
             const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, int nb_tanks,
             const std::filesystem::path &android_assets_path, float wanted_frequency,
             int max_episode_steps, int vision_height, int vision_width, int vision_num_threads,
-            int action_repeat, float gamma,
+            int action_repeat,
             const std::shared_ptr<const ProgressCurriculum> &curriculum = nullptr,
             float initial_spawn_side = 0.f, float final_spawn_side = 1.f);
 
@@ -57,11 +56,8 @@ namespace arenai::agent {
 
         std::vector<model::RewardDetail> last_step_reward_details() const;
 
-        // [nb_tanks, 1] the aim potential part of the last step's rewards
-
         // totals across every tank since the last reset, for the spawn curriculum
-        int episode_nb_fires() const;
-        int episode_nb_hits() const;
+        int episode_nb_kills() const;
 
         static void reset_singleton();
 
@@ -95,7 +91,6 @@ namespace arenai::agent {
         // the reward terms the policy trades off, split out of reward_metric
         std::shared_ptr<AbstractMetric> reward_hit_metric;
         std::shared_ptr<AbstractMetric> reward_received_metric;
-        std::shared_ptr<AbstractMetric> reward_aim_metric;
 
         // miss distance of the shells that landed, one sample per step that resolved a shell
         std::shared_ptr<AbstractMetric> miss_distance_metric;
@@ -112,17 +107,12 @@ namespace arenai::agent {
 
         std::vector<model::RewardDetail> step_reward_details;
 
-        // the learning term paid on top of the tanks' own event rewards: a dense aim signal
-        PotentialShaping aim_shaping;
-        float vision_aspect_ratio;
-
         std::shared_ptr<const ProgressCurriculum> curriculum;
         float initial_spawn_side;
         float final_spawn_side;
         float empty_reserve_penalty;
 
         bool are_all_done();
-        std::vector<float> aim_potentials();
     };
 
 }// namespace arenai::agent

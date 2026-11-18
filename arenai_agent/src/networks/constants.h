@@ -8,6 +8,11 @@ namespace arenai::agent {
     constexpr float LOG_SIGMA_MIN = -5.f;
     constexpr float LOG_SIGMA_MAX = -0.3567f;
 
+    constexpr int FIRST_CANON_ACTION = 2;
+    constexpr int NB_CANON_ACTIONS = 2;
+    constexpr float CANON_LOG_SIGMA_MAX = -1.3863f;
+    constexpr float CANON_INITIAL_SIGMA_MAX = 0.2f;
+
     constexpr float LIQUID_TAU_INIT_MIN = 0.1f;
     constexpr float LIQUID_TAU_INIT_MAX = 2.f;
 

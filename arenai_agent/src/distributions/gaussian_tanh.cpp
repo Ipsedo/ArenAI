@@ -14,7 +14,12 @@ namespace arenai::agent {
 
     std::pair<torch::Tensor, torch::Tensor>
     gaussian_tanh_sample(const torch::Tensor &mu, const torch::Tensor &sigma) {
-        const auto u = mu + sigma * torch::randn_like(mu);
+        return gaussian_tanh_sample(mu, sigma, torch::randn_like(mu));
+    }
+
+    std::pair<torch::Tensor, torch::Tensor> gaussian_tanh_sample(
+        const torch::Tensor &mu, const torch::Tensor &sigma, const torch::Tensor &noise) {
+        const auto u = mu + sigma * noise;
         return {torch::tanh(u), u};
     }
 

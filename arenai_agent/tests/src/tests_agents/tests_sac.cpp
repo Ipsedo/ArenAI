@@ -72,7 +72,6 @@ TEST_F(SacAgentTest, ConfigCarriesGamma) {
         .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
-    // the training loop reads the agent's gamma for the potential shaping
     ASSERT_TRUE(factory->get_config().contains("gamma"));
     ASSERT_TRUE(factory->get_config().contains("buffer_size"));
 }

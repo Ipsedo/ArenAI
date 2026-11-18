@@ -14,7 +14,7 @@ namespace arenai::agent {
 
         float sample_progress();
 
-        void on_episode_end(int nb_fires, int nb_hits);
+        void on_episode_end(int nb_tanks, int nb_kills);
 
         float upper_bound() const;
 
@@ -34,8 +34,8 @@ namespace arenai::agent {
 
         bool last_was_probe;
         int nb_probe_episodes;
-        long sum_fires;
-        long sum_hits;
+        long sum_kills;
+        long sum_tanks;
 
         std::mt19937 rng;
     };

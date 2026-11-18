@@ -3,6 +3,7 @@
 
 #include <arenai_agent/agent.h>
 
+#include "../../distributions/colored_noise.h"
 #include "../../networks/recurrent/liquid_actor.h"
 #include "../torch_agent.h"
 #include "./liquid_hidden_state.h"
@@ -16,6 +17,7 @@ namespace arenai::agent {
         TorchLiquidPpoAgent(
             const std::shared_ptr<LiquidActor> &actor,
             const std::shared_ptr<LiquidHiddenState> &hidden_state, torch::Device device,
+            std::shared_ptr<ColoredNoise> exploration_noise,
             std::optional<std::shared_ptr<LiquidPpoStepCollector>> collector = std::nullopt);
 
         TorchAction act(const TorchState &state, bool sample) override;
@@ -28,6 +30,7 @@ namespace arenai::agent {
         std::shared_ptr<LiquidActor> actor;
         std::shared_ptr<LiquidHiddenState> hidden_state;
         std::optional<std::shared_ptr<LiquidPpoStepCollector>> collector;
+        std::shared_ptr<ColoredNoise> exploration_noise;
     };
 
 }// namespace arenai::agent

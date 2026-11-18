@@ -31,6 +31,7 @@ namespace arenai::agent {
         std::shared_ptr<LiquidHiddenState> hidden_state;
 
         std::shared_ptr<LiquidPpoRolloutBuffer> rollout_buffer;
+        std::shared_ptr<ColoredNoise> exploration_noise;
         std::shared_ptr<LiquidPpoStepCollector> collector;
         std::shared_ptr<TorchLiquidPpoAgent> agent;
         std::shared_ptr<LiquidPpoTrainer> trainer;

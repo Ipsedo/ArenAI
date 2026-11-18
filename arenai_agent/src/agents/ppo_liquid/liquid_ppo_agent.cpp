@@ -13,8 +13,10 @@ namespace arenai::agent {
     TorchLiquidPpoAgent::TorchLiquidPpoAgent(
         const std::shared_ptr<LiquidActor> &actor,
         const std::shared_ptr<LiquidHiddenState> &hidden_state, const torch::Device device,
+        std::shared_ptr<ColoredNoise> exploration_noise,
         std::optional<std::shared_ptr<LiquidPpoStepCollector>> collector)
-        : actor(actor), hidden_state(hidden_state), collector(std::move(collector)) {
+        : actor(actor), hidden_state(hidden_state), collector(std::move(collector)),
+          exploration_noise(std::move(exploration_noise)) {
         actor->to(device);
     }
 
@@ -42,7 +44,7 @@ namespace arenai::agent {
 
             if (sample) {
                 std::tie(action.continuous_action, continuous_pre_tanh) =
-                    gaussian_tanh_sample(mu, sigma);
+                    gaussian_tanh_sample(mu, sigma, exploration_noise->next(mu));
                 action.discrete_action = bernoulli_sample(discrete_proba);
             } else {
                 continuous_pre_tanh = mu;

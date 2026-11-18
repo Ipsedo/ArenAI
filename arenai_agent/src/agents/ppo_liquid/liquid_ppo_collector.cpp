@@ -7,8 +7,10 @@ namespace arenai::agent {
 
     LiquidPpoStepCollector::LiquidPpoStepCollector(
         std::shared_ptr<LiquidPpoRolloutBuffer> rollout_buffer,
-        std::shared_ptr<LiquidHiddenState> hidden_state)
-        : rollout_buffer(std::move(rollout_buffer)), hidden_state(std::move(hidden_state)) {}
+        std::shared_ptr<LiquidHiddenState> hidden_state,
+        std::shared_ptr<ColoredNoise> exploration_noise)
+        : rollout_buffer(std::move(rollout_buffer)), hidden_state(std::move(hidden_state)),
+          exploration_noise(std::move(exploration_noise)) {}
 
     void LiquidPpoStepCollector::on_act(
         const TorchState &state, const TorchAction &action,
@@ -37,6 +39,7 @@ namespace arenai::agent {
              .episode_start = next_episode_start});
 
         next_episode_start = false;
+        exploration_noise->restart(done.logical_or(truncated));
     }
 
     void LiquidPpoStepCollector::on_episode_end(const TorchState &final_state) {
@@ -44,6 +47,7 @@ namespace arenai::agent {
 
         // the environment resets every tank: re-draw the liquid states
         hidden_state->reset();
+        exploration_noise->reset();
         next_episode_start = true;
     }
 

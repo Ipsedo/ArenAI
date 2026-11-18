@@ -16,17 +16,6 @@
 using namespace arenai;
 using namespace arenai::model;
 
-namespace {
-    std::vector<JPH::BodyID> body_ids_of(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
-        std::vector<JPH::BodyID> ids;
-        for (const auto &tank: tanks)
-            for (const auto &item: tank->get_items())
-                if (auto *jolt_item = dynamic_cast<JoltItem *>(item.get()))
-                    ids.push_back(jolt_item->get_body()->GetID());
-        return ids;
-    }
-}// namespace
-
 namespace arenai::model {
 
     JoltEnemyTank::JoltEnemyTank(
@@ -102,101 +91,6 @@ namespace arenai::model {
         }
 
         return best_i;
-    }
-
-    std::vector<JPH::BodyID> JoltEnemyTank::aim_excluded_bodies() const {
-        auto excluded = get_body_ids();
-        for (const auto &other: tracked_shells)
-            if (const auto shell = other.shell.lock())
-                excluded.push_back(shell->get_body()->GetID());
-        return excluded;
-    }
-
-    std::vector<std::shared_ptr<EnemyTank>> JoltEnemyTank::visible_enemies(
-        const std::vector<std::shared_ptr<EnemyTank>> &tanks, const float aspect_ratio) const {
-        const auto canon = std::dynamic_pointer_cast<CanonItem>(get_canon());
-
-        const glm::vec3 eye = canon->pos();
-        const glm::vec3 forward = glm::normalize(canon->look() - eye);
-        const glm::vec3 right = glm::normalize(glm::cross(forward, canon->up()));
-        const glm::vec3 up = glm::cross(right, forward);
-
-        const float tan_half_vertical = std::tan(canon->get_fov() / 2.f);
-        const float tan_half_horizontal = aspect_ratio * tan_half_vertical;
-
-        const glm::vec3 muzzle = canon->get_fire_pose().position;
-
-        std::vector<std::shared_ptr<EnemyTank>> visible;
-        for (const auto &tank: tanks) {
-            if (tank.get() == this || tank->is_dead()) continue;
-
-            const auto center =
-                glm::vec3(tank->get_chassis()->get_model_matrix() * glm::vec4(glm::vec3(0.f), 1.f));
-
-            const glm::vec3 seen = center - eye;
-            const float depth = glm::dot(seen, forward);
-            if (depth <= 0.f || std::abs(glm::dot(seen, right)) > depth * tan_half_horizontal
-                || std::abs(glm::dot(seen, up)) > depth * tan_half_vertical)
-                continue;
-
-            auto excluded = aim_excluded_bodies();
-            std::ranges::copy(body_ids_of({tank}), std::back_inserter(excluded));
-            if (engine.ray_test_body(muzzle, center, excluded)) continue;
-
-            visible.push_back(tank);
-        }
-        return visible;
-    }
-
-    float JoltEnemyTank::predict_aim(
-        const glm::vec3 &fire_pos, const glm::vec3 &fire_velocity,
-        const std::vector<std::shared_ptr<EnemyTank>> &tanks) const {
-        constexpr float time_step = 0.1f;
-        constexpr float max_flight_time = 20.f;
-        // the predicted shell flies through its targets: the miss is measured to their center
-        auto excluded = aim_excluded_bodies();
-        std::ranges::copy(body_ids_of(tanks), std::back_inserter(excluded));
-
-        TrackedShell predicted{
-            .last_shell_pos = fire_pos,
-            .min_distance = std::numeric_limits<float>::infinity(),
-            .has_sample = false};
-
-        glm::vec3 pos = fire_pos;
-        glm::vec3 velocity = fire_velocity;
-
-        for (float t = 0.f; t < max_flight_time; t += time_step) {
-            const glm::vec3 next = pos + velocity * time_step
-                                   + glm::vec3(0.f, -0.5f * GRAVITY * time_step * time_step, 0.f);
-            velocity.y -= GRAVITY * time_step;
-
-            const auto ray_hit = engine.ray_test_body(pos, next, excluded);
-            const glm::vec3 end = ray_hit ? pos + ray_hit->fraction * (next - pos) : next;
-
-            update_closest_approach(predicted, end, tanks);
-
-            if (ray_hit) break;
-            pos = end;
-        }
-
-        if (!predicted.has_sample) return 0.f;
-
-        const float miss = glm::length(predicted.shell_pos_at_t - predicted.enemy_pos_at_t);
-        const float ratio = miss / AIM_TARGET_RADIUS;
-        return 1.f / (1.f + ratio * ratio);
-    }
-
-    float JoltEnemyTank::get_aim_potential(
-        const std::vector<std::shared_ptr<EnemyTank>> &tanks, const float aspect_ratio) const {
-        if (is_dead()) return 0.f;
-
-        const auto targets = visible_enemies(tanks, aspect_ratio);
-        if (targets.empty()) return 0.f;
-
-        const auto canon = std::dynamic_pointer_cast<CanonItem>(get_canon());
-        const auto [position, direction] = canon->get_fire_pose();
-
-        return predict_aim(position, direction * SHELL_SPEED, targets);
     }
 
     float JoltEnemyTank::get_reward() const {

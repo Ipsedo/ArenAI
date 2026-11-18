@@ -26,9 +26,6 @@ namespace arenai::model {
 
     constexpr float CANON_AIM_DISTANCE = 100.f;
 
-    // m, the miss at which the aim potential halves
-    constexpr float AIM_TARGET_RADIUS = 3.f;
-
     constexpr float GRAVITY = 9.8f;
     constexpr float SHELL_SPEED = 250.f;
 

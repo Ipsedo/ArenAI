@@ -17,8 +17,11 @@ namespace arenai::agent {
               std::vector{params.initial_fire_proba, params.initial_zoom_proba})),
           hidden_state(std::make_shared<LiquidHiddenState>(actor)),
           rollout_buffer(std::make_shared<LiquidPpoRolloutBuffer>()),
-          collector(std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state)),
-          agent(std::make_shared<TorchLiquidPpoAgent>(actor, hidden_state, device, collector)),
+          exploration_noise(std::make_shared<ColoredNoise>(params.noise_correlation)),
+          collector(std::make_shared<LiquidPpoStepCollector>(
+              rollout_buffer, hidden_state, exploration_noise)),
+          agent(std::make_shared<TorchLiquidPpoAgent>(
+              actor, hidden_state, device, exploration_noise, collector)),
           trainer(std::make_shared<LiquidPpoTrainer>(
               actor, rollout_buffer, vision_height, vision_width, nb_continuous_actions,
               nb_discrete_actions, nb_sensors, params.actor_learning_rate,

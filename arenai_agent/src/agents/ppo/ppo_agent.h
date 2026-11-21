@@ -3,7 +3,6 @@
 
 #include <arenai_agent/agent.h>
 
-#include "../../distributions/colored_noise.h"
 #include "../../networks/actor.h"
 #include "../torch_agent.h"
 #include "./ppo_collector.h"
@@ -14,7 +13,6 @@ namespace arenai::agent {
     public:
         TorchPpoAgent(
             const std::shared_ptr<Actor> &actor, torch::Device device,
-            std::shared_ptr<ColoredNoise> exploration_noise,
             std::optional<std::shared_ptr<PpoStepCollector>> collector = std::nullopt);
 
         TorchAction act(const TorchState &state, bool sample) override;
@@ -26,7 +24,6 @@ namespace arenai::agent {
     private:
         std::shared_ptr<Actor> actor;
         std::optional<std::shared_ptr<PpoStepCollector>> collector;
-        std::shared_ptr<ColoredNoise> exploration_noise;
     };
 
 }// namespace arenai::agent

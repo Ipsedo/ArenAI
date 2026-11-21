@@ -75,6 +75,7 @@ namespace arenai::agent {
           clip_fraction_metric(std::make_shared<MeanMetric>("clip", metric_window_size)),
           kl_metric(std::make_shared<MeanMetric>("kl", metric_window_size, 2, true)),
           skip_fraction_metric(std::make_shared<MeanMetric>("skip", metric_window_size)),
+          skip_canon_metric(std::make_shared<MeanMetric>("skip_canon", metric_window_size)),
           gamma(gamma), gae_lambda(gae_lambda), clip_epsilon(clip_epsilon), target_kl(target_kl),
           grad_norm_max(grad_norm_max), actor_epochs(actor_epochs), critic_epochs(critic_epochs),
           rollout_size(rollout_size), actor_batch_size(actor_batch_size),
@@ -100,7 +101,9 @@ namespace arenai::agent {
             .old_continuous_log_probs = rows(old_continuous_log_probs),
             .old_discrete_log_probs = rows(old_discrete_log_probs),
             .advantages = rows(advantages),
-            .returns = rows(returns)};
+            .aim_advantages = rows(aim_advantages),
+            .returns = rows(returns),
+        };
     }
 
     void PpoTrainer::train() const {
@@ -111,7 +114,9 @@ namespace arenai::agent {
         rollout.states = rollout.states.to(device);
 
         set_train(false);
-        const auto [advantages, returns] = compute_gae(rollout, device);
+        const auto critic_pass = evaluate_critic(rollout, device);
+        const auto gae = compute_gae(rollout, critic_pass);
+        const auto aim_advantages = compute_aim_advantages(rollout);
 
         // flat [T * nb_tanks, ...] rows, all on the device
         const auto flat = [&](const torch::Tensor &tensor) {
@@ -125,8 +130,10 @@ namespace arenai::agent {
             .fire_masks = flat(rollout.states.get_fire_mask()),
             .old_continuous_log_probs = flat(rollout.continuous_log_probs),
             .old_discrete_log_probs = flat(rollout.discrete_log_probs),
-            .advantages = flat(advantages),
-            .returns = flat(returns)};
+            .advantages = flat(gae.advantages),
+            .aim_advantages = flat(aim_advantages),
+            .returns = flat(gae.returns),
+        };
 
         // live (step, tank) pairs; the optimizer batches split these rows only
         const auto valid_idx =
@@ -140,7 +147,7 @@ namespace arenai::agent {
     }
 
     void PpoTrainer::run_actor_epochs(const FlatRows &rows, const torch::Tensor &valid_idx) const {
-        KlStop kl_stop(target_kl);
+        GroupKlStop kl_stop(target_kl);
 
         for (int e = 0; e < actor_epochs; e++) {
             const auto batches =
@@ -148,12 +155,15 @@ namespace arenai::agent {
             kl_stop.on_planned_steps(static_cast<int>(batches.size()));
 
             for (const auto &blocks: batches) {
-                if (kl_stop.stopped()) break;
+                if (!kl_stop.any_active()) break;
 
-                const auto kl = accumulate_actor_gradients(rows, blocks);
-                kl_metric->add(kl);
+                const auto kls = accumulate_actor_gradients(rows, blocks, kl_stop.active());
+                kl_metric->add(kls.joint);
 
-                if (kl_stop.stop_exceeded(kl)) break;
+                if (kl_stop.stop_exceeded(kls)) {
+                    if (!kl_stop.any_active()) break;
+                    accumulate_actor_gradients(rows, blocks, kl_stop.active());
+                }
 
                 torch::nn::utils::clip_grad_norm_(actor->parameters(), grad_norm_max);
                 actor_optim->step();
@@ -162,22 +172,24 @@ namespace arenai::agent {
             }
         }
 
-        skip_fraction_metric->add(kl_stop.skip_fraction());
+        skip_fraction_metric->add(kl_stop.rest_skip_fraction());
+        skip_canon_metric->add(kl_stop.aim_skip_fraction());
     }
 
-    float PpoTrainer::accumulate_actor_gradients(
-        const FlatRows &rows, const std::vector<torch::Tensor> &blocks) const {
+    GroupKls PpoTrainer::accumulate_actor_gradients(
+        const FlatRows &rows, const std::vector<torch::Tensor> &blocks,
+        const ActiveGroups &active) const {
         actor_optim->zero_grad();
         alphas->zero_grad();
 
         const auto nb_batch_rows = static_cast<float>(total_rows(blocks));
 
-        std::vector<torch::Tensor> row_kls;
+        std::vector<RowKls> row_kls;
         for (const auto &idx: blocks)
-            row_kls.push_back(
-                backward_actor(rows.select(idx), static_cast<float>(idx.size(0)) / nb_batch_rows));
+            row_kls.push_back(backward_actor(
+                rows.select(idx), static_cast<float>(idx.size(0)) / nb_batch_rows, active));
 
-        return trimmed_kl(row_kls);
+        return trimmed_group_kls(row_kls);
     }
 
     void PpoTrainer::run_critic_epochs(const FlatRows &rows, const torch::Tensor &valid_idx) const {
@@ -190,10 +202,10 @@ namespace arenai::agent {
 
                 std::vector<torch::Tensor> batch_returns, batch_values;
                 for (const auto &idx: blocks) {
-                    const auto [returns, values] = backward_critic(
+                    const auto block = backward_critic(
                         rows.select(idx), static_cast<float>(idx.size(0)) / nb_batch_rows);
-                    batch_returns.push_back(returns);
-                    batch_values.push_back(values);
+                    batch_returns.push_back(block.returns);
+                    batch_values.push_back(block.values);
                 }
                 explained_variance_metric->add(explained_variance(batch_returns, batch_values));
 
@@ -202,29 +214,32 @@ namespace arenai::agent {
             }
     }
 
-    torch::Tensor
-    PpoTrainer::backward_actor(const FlatRows &block, const float batch_fraction) const {
+    RowKls PpoTrainer::backward_actor(
+        const FlatRows &block, const float batch_fraction, const ActiveGroups &active) const {
         const auto [mu, sigma, discrete_proba] = actor->act(block.vision, block.proprioception);
         const auto discrete_mask =
             TorchState::discrete_action_mask(block.fire_masks, discrete_proba.size(-1));
 
-        const auto log_probs =
-            gaussian_tanh_log_pdf(block.continuous_pre_tanh, mu, sigma).sum(-1, true)
-            + (bernoulli_log_proba(block.discrete_actions, discrete_proba) * discrete_mask)
-                  .sum(-1, true);
-        const auto old_log_probs =
-            block.old_continuous_log_probs.sum(-1, true) + block.old_discrete_log_probs;
+        const auto current = PolicyLogProbs::split(
+            gaussian_tanh_log_pdf(block.continuous_pre_tanh, mu, sigma),
+            (bernoulli_log_proba(block.discrete_actions, discrete_proba) * discrete_mask)
+                .sum(-1, true));
+        const auto old =
+            PolicyLogProbs::split(block.old_continuous_log_probs, block.old_discrete_log_probs);
 
-        const auto [surrogate, log_ratio, ratio, kl] =
-            clipped_surrogate(log_probs, old_log_probs, block.advantages, clip_epsilon);
+        const auto [surrogate, log_ratio, ratio, kls] = clipped_surrogate(
+            current, old, block.aim_advantages, block.advantages, clip_epsilon, active);
 
         const auto continuous_entropy = gaussian_tanh_entropy(mu, sigma);
         const auto discrete_entropy = bernoulli_entropy(discrete_proba) * discrete_mask;
 
         // the alphas are constants for the actor: they learn from their own dual loss
         const auto entropy_bonus =
-            (alphas->continuous().detach() * continuous_entropy).sum(-1, true)
-            + (alphas->discrete().detach() * discrete_entropy).sum(-1, true);
+            (alphas->continuous().detach() * continuous_entropy
+             * continuous_group_mask(active, mu.size(-1), mu.device()))
+                .sum(-1, true)
+            + static_cast<float>(active.rest)
+                  * (alphas->discrete().detach() * discrete_entropy).sum(-1, true);
 
         const auto actor_loss = -torch::mean(surrogate + entropy_bonus);
 
@@ -242,10 +257,10 @@ namespace arenai::agent {
         clip_fraction_metric->add(
             ((ratio - 1.f).abs() > clip_epsilon).to(torch::kFloat).mean().item<float>());
 
-        return kl;
+        return kls;
     }
 
-    std::tuple<torch::Tensor, torch::Tensor>
+    PpoTrainer::CriticBlock
     PpoTrainer::backward_critic(const FlatRows &block, const float batch_fraction) const {
         const auto values = critic->value(block.vision, block.proprioception);
         const auto critic_loss = torch::mse_loss(values, block.returns, at::Reduction::Mean);
@@ -254,53 +269,65 @@ namespace arenai::agent {
 
         critic_mean_loss_metric->add(critic_loss.cpu().item<float>());
 
-        return {block.returns.detach(), values.detach()};
+        return {.returns = block.returns.detach(), .values = values.detach()};
     }
 
-    GaeResult PpoTrainer::compute_gae(const PpoRollout &rollout, const torch::Device device) const {
+    CriticPass
+    PpoTrainer::evaluate_critic(const PpoRollout &rollout, const torch::Device device) const {
         torch::NoGradGuard no_grad;
 
         const auto nb_steps = rollout.rewards.size(0);
         const auto nb_tanks = rollout.rewards.size(1);
 
         // critic forward in device-sized chunks: the whole rollout's activations do not fit
-        const auto eval_values = [&](const torch::Tensor &vision,
+        const auto eval_critic = [&](const torch::Tensor &vision,
                                      const torch::Tensor &proprioception) {
-            std::vector<torch::Tensor> chunks;
+            std::vector<torch::Tensor> values;
             for (int64_t i = 0; i < vision.size(0); i += critic_gpu_batch_size) {
                 const auto end = std::min<int64_t>(i + critic_gpu_batch_size, vision.size(0));
-                chunks.push_back(critic
+                values.push_back(critic
                                      ->value(
                                          vision.slice(0, i, end).to(device),
                                          proprioception.slice(0, i, end).to(device))
                                      .cpu());
             }
-            return torch::cat(chunks, 0);
+            return torch::cat(values, 0);
         };
 
-        const auto values = eval_values(
-                                flatten_steps(rollout.states.get_vision()),
-                                flatten_steps(rollout.states.get_state()))
-                                .reshape({nb_steps, nb_tanks, 1});
+        const auto rollout_critic = eval_critic(
+            flatten_steps(rollout.states.get_vision()), flatten_steps(rollout.states.get_state()));
+        const auto bootstrap_critic =
+            eval_critic(rollout.bootstrap_state.get_vision(), rollout.bootstrap_state.get_state());
+
+        return {
+            .values = rollout_critic.reshape({nb_steps, nb_tanks, 1}),
+            .bootstrap_value = bootstrap_critic};
+    }
+
+    GaeResult
+    PpoTrainer::compute_gae(const PpoRollout &rollout, const CriticPass &critic_pass) const {
+        const auto &values = critic_pass.values;
 
         // next values are the values shifted by one step, closed by the bootstrap state
-        const auto bootstrap_value =
-            eval_values(rollout.bootstrap_state.get_vision(), rollout.bootstrap_state.get_state())
-                .unsqueeze(0);
-        const auto next_values = torch::cat({values.slice(0, 1), bootstrap_value}, 0);
+        const auto next_values =
+            torch::cat({values.slice(0, 1), critic_pass.bootstrap_value.unsqueeze(0)}, 0);
 
         const auto rewards = return_scaler->scale(
             rollout.rewards, rollout.dones.logical_or(rollout.truncateds), rollout.valids);
-        const auto dones = rollout.dones.to(torch::kFloat);
-        const auto truncateds = rollout.truncateds.to(torch::kFloat);
         const auto valids = rollout.valids.to(torch::kFloat);
 
-        const auto cuts = torch::clamp_max(dones + truncateds, 1.f);
+        const auto cuts = episode_cuts(rollout.dones, rollout.truncateds);
         const auto deltas = rewards + gamma * next_values * (1.f - cuts) - values;
 
         const auto advantages = generalized_advantages(deltas, cuts, gamma * gae_lambda);
 
         return {.advantages = normalized(advantages, valids), .returns = advantages + values};
+    }
+
+    torch::Tensor PpoTrainer::compute_aim_advantages(const PpoRollout &rollout) const {
+        return aim_potential_advantages(
+            rollout.aim_potentials, episode_cuts(rollout.dones, rollout.truncateds),
+            rollout.valids.to(torch::kFloat), gamma);
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> PpoTrainer::get_metrics() {
@@ -316,7 +343,9 @@ namespace arenai::agent {
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> PpoTrainer::get_csv_only_metrics() {
-        return alphas->get_metrics();
+        auto metrics = alphas->get_metrics();
+        metrics.push_back(skip_canon_metric);
+        return metrics;
     }
 
     void PpoTrainer::save(const std::filesystem::path &output_folder) {

@@ -31,6 +31,9 @@ namespace arenai::agent {
                   .continuous_log_prob = step.continuous_log_prob.detach().cpu(),
                   .discrete_log_prob = step.discrete_log_prob.detach().cpu(),
                   .reward = step.reward.detach().cpu(),
+                  .aim_potentials =
+                      {.before = step.aim_potentials.before.detach().cpu(),
+                       .after = step.aim_potentials.after.detach().cpu()},
                   .done = step.done.detach().cpu(),
                   .truncated = step.truncated.detach().cpu(),
                   .actor_hidden = step.actor_hidden.detach().cpu(),
@@ -92,7 +95,10 @@ namespace arenai::agent {
             .bootstrap_state = bootstrap_state,
             .valids = stack([](const StoredStep &s) { return s.valid; }).unsqueeze(-1),
             .actor_hiddens = stack([](const StoredStep &s) { return s.step.actor_hidden; }),
-            .episode_starts = episode_starts};
+            .episode_starts = episode_starts,
+            .aim_potentials = {
+                .before = stack([](const StoredStep &s) { return s.step.aim_potentials.before; }),
+                .after = stack([](const StoredStep &s) { return s.step.aim_potentials.after; })}};
 
         steps_.erase(steps_.begin(), steps_.begin() + static_cast<long>(nb_steps));
         final_state_.reset();

@@ -6,8 +6,21 @@
 initiative : modifier un contrat d'interface public (`*/include/`), ajouter/retirer une
 fonctionnalité ou une option, changer un comportement par défaut, ou restructurer une API.
 En cas de doute ou d'alternative de design : **poser la question d'abord**, proposer les
-options, attendre la réponse. Les corrections de bugs internes (fichiers `src/`) qui ne
+options, attendre la réponse.
+
+**Tout ce qui change la façon dont le problème est posé se valide pièce par pièce, avant le
+code** : nouveau réseau ou encodeur, nouvelle tête, nouvelle perte, nouveau signal de crédit ou
+d'avantage, nouvelle entrée, changement de reward. Donner d'abord le détail technique (où ça se
+branche, ce qui est appris, sur quelles données, quels gradients passent où, coût), puis poser une
+question explicite par choix. Un « oui » à une piste nommée (« code B ») ne valide que le
+principe, jamais les pièces d'architecture qu'elle sous-entend. Un « valides-tu ? » global ne
+compte pas. Les corrections de bugs internes (fichiers `src/`) qui ne
 changent ni contrat ni comportement voulu restent autorisées.
+
+## Règle de travail — réponses
+
+**Clair et concis.** La conclusion d'abord, en une phrase, puis seulement les chiffres qui la
+portent. Pas de blabla, pas de tergiversation, pas de redite : le sens des mots suffit.
 
 ## Règle de travail — commentaires
 

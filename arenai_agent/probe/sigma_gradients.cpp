@@ -67,6 +67,9 @@ int main(const int argc, char **argv) {
     parser.add_argument("--critic_inputs").default_value(std::string());
     parser.add_argument("--frames").default_value(std::string());
     parser.add_argument("--frames_every").scan<'i', int>().default_value(3);
+    parser.add_argument("--frames_fired").default_value(false).implicit_value(true);
+    parser.add_argument("--kl_breakdown").default_value(std::string());
+    parser.add_argument("--kl_record_every").scan<'i', int>().default_value(4);
     parser.add_argument("--cuda").default_value(false).implicit_value(true);
     parser.add_argument("--vision_num_threads")
         .scan<'i', int>()
@@ -107,11 +110,9 @@ int main(const int argc, char **argv) {
         std::vector{params.initial_fire_proba, params.initial_zoom_proba});
     const auto hidden_state = std::make_shared<LiquidHiddenState>(actor);
     const auto rollout_buffer = std::make_shared<LiquidPpoRolloutBuffer>();
-    const auto exploration_noise = std::make_shared<ColoredNoise>(params.noise_correlation);
-    const auto collector =
-        std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state, exploration_noise);
-    const auto agent = std::make_shared<TorchLiquidPpoAgent>(
-        actor, hidden_state, device, exploration_noise, collector);
+    const auto collector = std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state);
+    const auto agent =
+        std::make_shared<TorchLiquidPpoAgent>(actor, hidden_state, device, collector);
     const auto trainer = std::make_shared<LiquidPpoTrainer>(
         actor, rollout_buffer, vision_height, vision_width, model::ENEMY_NB_CONTINUOUS_ACTION,
         model::ENEMY_NB_DISCRETE_ACTION, model::ENEMY_STATE_VECTOR_SIZE, params.actor_learning_rate,
@@ -141,6 +142,7 @@ int main(const int argc, char **argv) {
 
     const auto frames_path = parser.get<std::string>("--frames");
     const int frames_every = parser.get<int>("--frames_every");
+    const bool frames_fired = parser.get<bool>("--frames_fired");
     std::ofstream frames_out;
     if (!frames_path.empty()) frames_out.open(frames_path, std::ios::binary);
 
@@ -156,10 +158,25 @@ int main(const int argc, char **argv) {
 
     std::ofstream csv(output);
     csv << "rollout;step;tank;armed;fire;best_angle;best_distance;distance;yaw;pitch;reward;"
-           "hit;kill;received;death;done;truncated;advantage";
+           "hit;kill;received;death;done;truncated;advantage;nearest;position_x;position_z;"
+           "nearest_x;nearest_z;canon_heading;chassis_heading;turret_yaw;fired_shells;landed_"
+           "shells;"
+           "nb_hits";
     for (const auto &prefix: {"mu_", "sigma_", "u_", "g_pg_", "g_h_"})
         for (const auto &name: names) csv << ';' << prefix << name;
     csv << '\n';
+
+    const auto kl_breakdown_path = parser.get<std::string>("--kl_breakdown");
+    const int kl_record_every = parser.get<int>("--kl_record_every");
+    std::ofstream kl_csv;
+    if (!kl_breakdown_path.empty()) {
+        kl_csv.open(kl_breakdown_path);
+        kl_csv << "rollout;step;sampled_kl";
+        for (const auto &name: names) kl_csv << ";kl_" << name;
+        for (const auto &name: names) kl_csv << ";kl_mean_" << name;
+        for (const auto &name: names) kl_csv << ";shift_" << name;
+        kl_csv << ";kl_fire;kl_zoom\n";
+    }
 
     constexpr float to_degrees = 180.f / std::numbers::pi_v<float>;
 
@@ -169,6 +186,25 @@ int main(const int argc, char **argv) {
 
     const auto write_rollout = [&] {
         const auto nb_steps = static_cast<int64_t>(rollout_buffer->nb_complete_steps());
+
+        if (kl_csv.is_open()) {
+            const auto breakdown = trainer->kl_breakdown(save_folder, kl_record_every);
+            for (int64_t r = 0; breakdown.steps.defined() && r < breakdown.steps.size(0); r++) {
+                kl_csv << rollout_index << ';' << breakdown.steps[r].item<float>() << ';'
+                       << breakdown.sampled_kl[r].item<float>();
+                for (const auto &kls:
+                     {breakdown.continuous_kl, breakdown.continuous_mean_kl,
+                      breakdown.continuous_mean_shift, breakdown.discrete_kl})
+                    for (int64_t a = 0; a < kls.size(1); a++)
+                        kl_csv << ';' << kls[r][a].item<float>();
+                kl_csv << std::endl;
+            }
+            records.erase(records.begin(), records.begin() + nb_steps);
+            std::cout << "rollout " << rollout_index << " : " << nb_steps << " steps" << std::endl;
+            rollout_index++;
+            return;
+        }
+
         const auto gradients = trainer->sigma_gradients();
 
         if (gradients.steps.defined()) {
@@ -194,7 +230,13 @@ int main(const int argc, char **argv) {
                     << geometry.yaw * to_degrees << ';' << geometry.pitch * to_degrees << ';'
                     << record.rewards[tank] << ';' << detail.hit << ';' << detail.kill << ';'
                     << detail.received << ';' << detail.death << ';' << record.dones[tank] << ';'
-                    << record.truncateds[tank] << ';' << adv_acc[r];
+                    << record.truncateds[tank] << ';' << adv_acc[r] << ';' << geometry.nearest
+                    << ';' << geometry.position_x << ';' << geometry.position_z << ';'
+                    << geometry.nearest_x << ';' << geometry.nearest_z << ';'
+                    << geometry.canon_heading * to_degrees << ';'
+                    << geometry.chassis_heading * to_degrees << ';'
+                    << geometry.turret_yaw * to_degrees << ';' << detail.nb_fired_shells << ';'
+                    << detail.nb_landed_shells << ';' << detail.nb_hits;
                 for (const auto &acc: {mu_acc, sigma_acc, u_acc, pg_acc, h_acc})
                     for (int64_t a = 0; a < static_cast<int64_t>(names.size()); a++)
                         csv << ';' << acc[r][a];
@@ -226,11 +268,18 @@ int main(const int argc, char **argv) {
                                       .cpu()
                                       .contiguous();
             }
+            const auto sensors = state.get_state().cpu().contiguous();
+            const auto armed = state.get_fire_mask().cpu().contiguous();
+            const auto fired = action.discrete_action.cpu().contiguous();
+
             // row : episode, step, tank, then the uint8 frame
-            if (frames_out.is_open() && episode_step % frames_every == 0) {
+            if (frames_out.is_open() && (frames_fired || episode_step % frames_every == 0)) {
                 const auto frames = state.get_vision().cpu().contiguous();
                 for (int i = 0; i < nb_tanks; i++) {
                     if (!record.geometries[i].alive) continue;
+                    const bool shot =
+                        armed[i][0].item<float>() > 0.5f && fired[i][0].item<float>() > 0.5f;
+                    if (episode_step % frames_every != 0 && !shot) continue;
                     const float header[3] = {
                         static_cast<float>(episode), static_cast<float>(episode_step),
                         static_cast<float>(i)};
@@ -240,10 +289,6 @@ int main(const int argc, char **argv) {
                         frames[i].numel());
                 }
             }
-            const auto sensors = state.get_state().cpu().contiguous();
-            const auto armed = state.get_fire_mask().cpu().contiguous();
-            const auto fired = action.discrete_action.cpu().contiguous();
-
             const auto steps = env->step(wanted_frequency, action.to_actions());
             const TorchStep torch_step(steps, vision_height, vision_width);
 
@@ -286,7 +331,8 @@ int main(const int argc, char **argv) {
             records.push_back(std::move(record));
 
             collector->on_transition(
-                torch_step.get_rewards(), torch_step.get_is_done(), torch_step.get_is_truncated());
+                torch_step.get_rewards(), env->last_step_aim_potentials(), torch_step.get_is_done(),
+                torch_step.get_is_truncated());
 
             if (rollout_buffer->nb_complete_steps() >= static_cast<size_t>(params.rollout_size))
                 write_rollout();

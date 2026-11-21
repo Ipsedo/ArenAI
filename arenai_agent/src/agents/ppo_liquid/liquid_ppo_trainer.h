@@ -4,6 +4,7 @@
 #include "../../networks/entropy.h"
 #include "../../networks/recurrent/liquid_actor.h"
 #include "../../networks/recurrent/liquid_critic.h"
+#include "../aim_credit.h"
 #include "../entropy_alphas.h"
 #include "../ppo_objective.h"
 #include "../return_scaler.h"
@@ -12,11 +13,18 @@
 
 namespace arenai::agent {
 
+    struct LiquidCriticPass {
+        // [T, nb_tanks, 1]
+        torch::Tensor values;
+        // [nb_tanks, 1]
+        torch::Tensor bootstrap_value;
+        // [T, nb_tanks, neuron_number] critic liquid state opening each step
+        torch::Tensor critic_hiddens;
+    };
+
     struct LiquidGaeResult {
         torch::Tensor advantages;
         torch::Tensor returns;
-        // [T, nb_tanks, neuron_number] critic liquid state opening each step
-        torch::Tensor critic_hiddens;
     };
 
     // per live transition of a rollout, the two first-epoch pushes on log sigma
@@ -34,6 +42,18 @@ namespace arenai::agent {
         torch::Tensor advantages;
         torch::Tensor fire_masks;
         torch::Tensor fires;
+    };
+
+    struct LiquidKlBreakdown {
+        // [nb_records]
+        torch::Tensor steps;
+        torch::Tensor sampled_kl;
+        // [nb_records, nb_continuous_actions]
+        torch::Tensor continuous_kl;
+        torch::Tensor continuous_mean_kl;
+        torch::Tensor continuous_mean_shift;
+        // [nb_records, nb_discrete_actions]
+        torch::Tensor discrete_kl;
     };
 
     class LiquidPpoTrainer final : public AbstractTrainer {
@@ -63,6 +83,9 @@ namespace arenai::agent {
 
         // consumes the complete steps of the buffer without any optimizer step
         LiquidSigmaGradients sigma_gradients();
+
+        // replays the actor epochs of the buffered rollout without KL stop, then restores the actor
+        LiquidKlBreakdown kl_breakdown(const std::filesystem::path &save_folder, int record_every);
 
         int count_parameters() override;
 
@@ -98,6 +121,7 @@ namespace arenai::agent {
 
         // share of the planned actor steps the KL threshold cut, once per rollout
         std::shared_ptr<AbstractMetric> skip_fraction_metric;
+        std::shared_ptr<AbstractMetric> skip_canon_metric;
 
         float gamma;
         float gae_lambda;
@@ -127,6 +151,7 @@ namespace arenai::agent {
             torch::Tensor old_continuous_log_probs;
             torch::Tensor old_discrete_log_probs;
             torch::Tensor advantages;
+            torch::Tensor aim_advantages;
             torch::Tensor returns;
             torch::Tensor valids;
             torch::Tensor actor_hiddens;
@@ -168,8 +193,7 @@ namespace arenai::agent {
             torch::Tensor discrete_mask;
             torch::Tensor ratio;
             torch::Tensor log_ratio;
-            // [N]
-            torch::Tensor kl;
+            RowKls kls;
             torch::Tensor continuous_entropy;
             torch::Tensor discrete_entropy;
             // [N, 1]
@@ -179,31 +203,47 @@ namespace arenai::agent {
             torch::Tensor discrete_bonus;
         };
 
-        ActorTerms actor_terms(const FlatRows &block) const;
+        ActorTerms actor_terms(const FlatRows &block, const ActiveGroups &active = {}) const;
 
-        static FlatRows flat_rows(
-            const LiquidPpoRollout &rollout, const LiquidGaeResult &gae, int64_t nb_kept_steps,
-            torch::Device device);
+        struct PolicyRows {
+            torch::Tensor mu;
+            torch::Tensor sigma;
+            torch::Tensor discrete_proba;
+            torch::Tensor discrete_mask;
+        };
+
+        PolicyRows policy_rows(const FlatRows &rows, const ChunkIndex &chunks) const;
+
+        // critic pass, GAE and gun laying credit of the rollout, flattened
+        FlatRows
+        rollout_rows(const LiquidPpoRollout &rollout, int64_t nb_kept_steps, torch::Device device);
 
         void train();
 
         void run_actor_epochs(const FlatRows &rows, const ChunkIndex &chunks) const;
         void run_critic_epochs(const FlatRows &rows, const ChunkIndex &chunks) const;
 
-        // batch gradient; returns the KL of the policy it starts from
-        float accumulate_actor_gradients(
+        // batch gradient of the active groups; returns the KLs of the policy it starts from
+        GroupKls accumulate_actor_gradients(
             const FlatRows &rows, const ChunkIndex &chunks,
-            const std::vector<torch::Tensor> &blocks) const;
+            const std::vector<torch::Tensor> &blocks, const ActiveGroups &active = {}) const;
 
         // accumulates a device block's share of its optimizer batch gradient; returns its row KLs
-        torch::Tensor backward_actor(const FlatRows &block, float batch_fraction) const;
+        RowKls backward_actor(
+            const FlatRows &block, float batch_fraction, const ActiveGroups &active) const;
 
-        // [returns, values] of the block's live rows, detached
-        std::tuple<torch::Tensor, torch::Tensor>
-        backward_critic(const FlatRows &block, float batch_fraction) const;
+        struct CriticBlock {
+            torch::Tensor returns;
+            torch::Tensor values;
+        };
+
+        CriticBlock backward_critic(const FlatRows &block, float batch_fraction) const;
 
         // sequential critic pass over the rollout, advancing critic_carry
-        LiquidGaeResult compute_gae(const LiquidPpoRollout &rollout, torch::Device device);
+        LiquidCriticPass evaluate_critic(const LiquidPpoRollout &rollout, torch::Device device);
+        LiquidGaeResult
+        compute_gae(const LiquidPpoRollout &rollout, const LiquidCriticPass &critic_pass) const;
+        torch::Tensor compute_aim_advantages(const LiquidPpoRollout &rollout) const;
 
         void set_train(bool train) const;
         void to(torch::Device device) const;

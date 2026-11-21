@@ -31,10 +31,9 @@ namespace arenai::agent {
           head(register_module("head", torch::nn::Sequential())),
           mu(register_module("mu", torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions))),
           sigma(register_module(
-              "sigma",
-              torch::nn::Sequential(
-                  torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
-                  SoftClamp(LOG_SIGMA_MIN, log_sigma_upper_bounds(nb_continuous_actions)), Exp()))),
+              "sigma", torch::nn::Sequential(
+                           torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
+                           SoftClamp(LOG_SIGMA_MIN, LOG_SIGMA_MAX), Exp()))),
           discrete(register_module(
               "discrete", torch::nn::Sequential(
                               torch::nn::Linear(hidden_sizes.back(), nb_discrete_actions),
@@ -117,10 +116,9 @@ namespace arenai::agent {
           head(register_module("head", torch::nn::Sequential())),
           mu(register_module("mu", torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions))),
           sigma(register_module(
-              "sigma",
-              torch::nn::Sequential(
-                  torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
-                  SoftClamp(LOG_SIGMA_MIN, log_sigma_upper_bounds(nb_continuous_actions)), Exp()))),
+              "sigma", torch::nn::Sequential(
+                           torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
+                           SoftClamp(LOG_SIGMA_MIN, LOG_SIGMA_MAX), Exp()))),
           discrete(register_module(
               "discrete", torch::nn::Sequential(
                               torch::nn::Linear(hidden_sizes.back(), nb_discrete_actions),

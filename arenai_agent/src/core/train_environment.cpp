@@ -19,7 +19,6 @@ using namespace arenai::agent;
 namespace {
     constexpr float HIT_REWARD_SCALE = 3.f;
     constexpr float RECEIVED_REWARD_SCALE = 1.f;
-    // paid at D = final spawn side, scaled by D / final spawn side below
     constexpr float EMPTY_RESERVE_PENALTY = 1.f;
 }// namespace
 
@@ -57,6 +56,7 @@ namespace arenai::agent {
     TrainTankEnvironment::step(const float time_delta, const std::vector<core::Action> &actions) {
 
         already_done = done;
+        step_aim_potentials_before = aim_potentials();
 
         std::vector rewards(nb_tanks, 0.f);
         std::vector truncated(nb_tanks, false);
@@ -127,6 +127,8 @@ namespace arenai::agent {
             }
             return 0;
         });
+
+        step_aim_potentials_after = aim_potentials();
 
         for (int i = 0; i < nb_tanks; i++) {
             if (already_done[i]) continue;
@@ -223,6 +225,22 @@ namespace arenai::agent {
         return step_reward_details;
     }
 
+    AimPotentials TrainTankEnvironment::last_step_aim_potentials() const {
+        return {
+            .before = torch::tensor(step_aim_potentials_before),
+            .after = torch::tensor(step_aim_potentials_after)};
+    }
+
+    std::vector<float> TrainTankEnvironment::aim_potentials() {
+        return apply_on_enemies<std::vector<float>>(
+            [](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
+                std::vector<float> potentials;
+                potentials.reserve(tanks.size());
+                for (const auto &tank: tanks) potentials.push_back(tank->get_aim_potential(tanks));
+                return potentials;
+            });
+    }
+
     std::vector<AimGeometry> TrainTankEnvironment::aim_geometry(const float view_half_yaw) {
         return apply_on_enemies<std::vector<AimGeometry>>(
             [view_half_yaw](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
@@ -258,7 +276,14 @@ namespace arenai::agent {
                         .canon_elevation = 0.f,
                         .canon_relative_elevation = 0.f,
                         .chassis_pitch = 0.f,
-                        .chassis_roll = 0.f};
+                        .chassis_roll = 0.f,
+                        .nearest = -1,
+                        .position_x = 0.f,
+                        .position_z = 0.f,
+                        .nearest_x = 0.f,
+                        .nearest_z = 0.f,
+                        .canon_heading = 0.f,
+                        .chassis_heading = 0.f};
 
                     const auto canon_matrix = tanks[i]->get_canon()->get_model_matrix();
                     const auto chassis_matrix = tanks[i]->get_chassis()->get_model_matrix();
@@ -279,6 +304,10 @@ namespace arenai::agent {
                     geometry.chassis_pitch = std::asin(std::clamp(chassis_forward.y, -1.f, 1.f));
                     geometry.chassis_roll = std::asin(std::clamp(chassis_right.y, -1.f, 1.f));
                     const auto canon_pos = glm::vec3(canon_matrix * origin);
+                    geometry.position_x = canon_pos.x;
+                    geometry.position_z = canon_pos.z;
+                    geometry.canon_heading = std::atan2(canon_forward.x, canon_forward.z);
+                    geometry.chassis_heading = std::atan2(chassis_forward.x, chassis_forward.z);
                     const auto canon_inverse = glm::inverse(canon_matrix);
 
                     int nearest = -1;
@@ -314,6 +343,9 @@ namespace arenai::agent {
                     }
 
                     if (nearest != -1) {
+                        geometry.nearest = nearest;
+                        geometry.nearest_x = positions[nearest].x;
+                        geometry.nearest_z = positions[nearest].z;
                         const auto relative =
                             glm::vec3(canon_inverse * glm::vec4(positions[nearest], 1.f));
                         geometry.yaw = std::atan2(relative.x, relative.z);

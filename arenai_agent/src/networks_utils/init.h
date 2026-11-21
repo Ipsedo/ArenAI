@@ -14,7 +14,6 @@ namespace arenai::agent {
     void init_mu_output_weights(torch::nn::Module &module);
     // log-sigma head (Linear -> SoftClamp -> Exp): the bias puts the initial sigma at the wanted value
     void init_log_sigma_output_weights(torch::nn::Module &module, float initial_sigma);
-    std::vector<float> log_sigma_upper_bounds(int nb_continuous_actions);
     void init_concentration_output_weights(torch::nn::Module &module, float wanted_sigma);
     // sigmoid head: one initial engage probability per discrete action
     void init_discrete_output_weights(

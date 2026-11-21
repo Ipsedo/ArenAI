@@ -31,9 +31,14 @@ namespace arenai::agent {
                   .continuous_log_prob = step.continuous_log_prob.detach().cpu(),
                   .discrete_log_prob = step.discrete_log_prob.detach().cpu(),
                   .reward = step.reward.detach().cpu(),
+                  .aim_potentials =
+                      {.before = step.aim_potentials.before.detach().cpu(),
+                       .after = step.aim_potentials.after.detach().cpu()},
                   .done = step.done.detach().cpu(),
                   .truncated = step.truncated.detach().cpu()},
-             .valid = valid});
+             .valid = valid,
+             .episode_start = next_step_starts_episode_});
+        next_step_starts_episode_ = false;
 
         // the freshly added step is pending: its closing observation is not known yet
         final_state_.reset();
@@ -43,6 +48,8 @@ namespace arenai::agent {
         if (!steps_.empty()) final_state_ = to_cpu(final_state);
 
         if (already_terminated_.defined()) already_terminated_.fill_(false);
+
+        next_step_starts_episode_ = true;
     }
 
     size_t PpgRolloutBuffer::nb_complete_steps() const {
@@ -64,6 +71,10 @@ namespace arenai::agent {
             return torch::stack(tensors, 0);
         };
 
+        auto episode_starts = torch::zeros({static_cast<int64_t>(nb_steps)}, torch::kBool);
+        for (size_t i = 0; i < nb_steps; i++)
+            episode_starts[static_cast<int64_t>(i)] = steps_[i].episode_start;
+
         PpgRollout rollout{
             .states = TorchState(
                 stack([](const StoredStep &s) { return s.step.state.get_vision(); }),
@@ -84,7 +95,10 @@ namespace arenai::agent {
             .dones = stack([](const StoredStep &s) { return s.step.done; }),
             .truncateds = stack([](const StoredStep &s) { return s.step.truncated; }),
             .bootstrap_state = bootstrap_state,
-            .valids = stack([](const StoredStep &s) { return s.valid; }).unsqueeze(-1)};
+            .valids = stack([](const StoredStep &s) { return s.valid; }).unsqueeze(-1),
+            .aim_potentials = {
+                .before = stack([](const StoredStep &s) { return s.step.aim_potentials.before; }),
+                .after = stack([](const StoredStep &s) { return s.step.aim_potentials.after; })}};
 
         steps_.erase(steps_.begin(), steps_.begin() + static_cast<long>(nb_steps));
         final_state_.reset();

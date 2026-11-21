@@ -6,6 +6,7 @@
 
 #include <torch/torch.h>
 
+#include "../aim_credit.h"
 #include "../torch_types.h"
 
 namespace arenai::agent {
@@ -18,6 +19,7 @@ namespace arenai::agent {
         torch::Tensor continuous_log_prob;
         torch::Tensor discrete_log_prob;
         torch::Tensor reward;
+        AimPotentials aim_potentials;
         torch::Tensor done;
         // segment end that is not a death: cuts the return like a done, the tank plays on
         torch::Tensor truncated;
@@ -38,6 +40,8 @@ namespace arenai::agent {
         TorchState bootstrap_state;
         // [T, nb_tanks, 1] whether the (step, tank) pair is a live transition
         torch::Tensor valids;
+        // [T, nb_tanks]
+        AimPotentials aim_potentials;
     };
 
     class PpgRolloutBuffer {
@@ -54,6 +58,7 @@ namespace arenai::agent {
         struct StoredStep {
             PpgInputStep step;
             torch::Tensor valid;
+            bool episode_start;
         };
 
         std::vector<StoredStep> steps_;
@@ -63,6 +68,8 @@ namespace arenai::agent {
 
         // [nb_tanks] tanks already done in the current episode
         torch::Tensor already_terminated_;
+
+        bool next_step_starts_episode_ = true;
     };
 
 }// namespace arenai::agent

@@ -39,10 +39,6 @@ TEST_P(ActorTestParam, TestActorAct) {
                                torch::ge(sigma, std::exp(LOG_SIGMA_MIN)),
                                torch::le(sigma, std::exp(LOG_SIGMA_MAX))))
                     .item<bool>());
-    if (cont_actions_nb > FIRST_CANON_ACTION)
-        ASSERT_TRUE(
-            torch::all(torch::le(sigma.slice(1, FIRST_CANON_ACTION), std::exp(CANON_LOG_SIGMA_MAX)))
-                .item<bool>());
     // the log-sigma head starts at the wanted initial sigma, whatever the state
     ASSERT_TRUE(torch::all(torch::abs(sigma - 0.1f) < 0.02f).item<bool>());
 

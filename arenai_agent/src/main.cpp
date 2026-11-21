@@ -39,7 +39,7 @@ int main(const int argc, char **argv) {
     parser.add_argument("--shells")
         .scan<'i', int>()
         .default_value(model::GAME_SHELL_ECONOMY.initial_shells);
-    parser.add_argument("--shells_per_hit").scan<'i', int>().default_value(5);
+    parser.add_argument("--shells_per_hit").scan<'i', int>().default_value(2);
     parser.add_argument("--max_shells")
         .scan<'i', int>()
         .default_value(model::GAME_SHELL_ECONOMY.max_shells);

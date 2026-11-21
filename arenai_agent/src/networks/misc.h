@@ -1,8 +1,6 @@
 #ifndef ARENAI_AGENT_HOST_MISC_H
 #define ARENAI_AGENT_HOST_MISC_H
 
-#include <vector>
-
 #include <torch/torch.h>
 
 namespace arenai::agent {
@@ -31,7 +29,6 @@ namespace arenai::agent {
     class SoftClamp : public AbstractFunctionModule {
     public:
         SoftClamp(float lower_bound, float upper_bound);
-        SoftClamp(float lower_bound, const std::vector<float> &upper_bounds);
 
         torch::Tensor forward(const torch::Tensor &x) override;
 
@@ -42,7 +39,7 @@ namespace arenai::agent {
 
     private:
         float lower_bound;
-        std::vector<float> upper_bounds;
+        float upper_bound;
     };
 
     class Exp : public AbstractFunctionModule {

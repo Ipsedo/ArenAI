@@ -21,26 +21,24 @@ namespace arenai::agent {
         float delta_t = 1.f / 10.f;
         int chunk_size = 30;
         float initial_sigma = 0.3f;
-        // AR(1) correlation of the exploration noise between two decisions
-        float noise_correlation = 0.9f;
         float initial_fire_proba = 0.5f;
         float initial_zoom_proba = 0.5f;
         int metric_window_size = 256;
         float gamma = 0.998f;
         float gae_lambda = 0.95f;
         float clip_epsilon = 0.2f;
-        float target_kl = 0.1f;
+        float target_kl = 0.05f;
         float grad_norm_max = 0.5f;
         float initial_alpha = 0.001f;
         float alpha_learning_rate = 3e-4f;
         // entropy of the squashed normal per dir_x, dir_y, canon_x, canon_y
-        std::vector<float> continuous_target_entropy = {0.f, 0.f, -1.f, -1.f};
+        std::vector<float> continuous_target_entropy = {0.f, 0.f, 0.f, 0.f};
         // per discrete action, the Bernoulli whose entropy is the target
         float discrete_target_proba = 0.01f;
         int actor_epochs = 4;
         int critic_epochs = 8;
         int rollout_size = 30 * 10;
-        int actor_batch_size = 512;
+        int actor_batch_size = 2400;
         int actor_gpu_batch_size = 512;
         int critic_batch_size = 512;
         int critic_gpu_batch_size = 512;

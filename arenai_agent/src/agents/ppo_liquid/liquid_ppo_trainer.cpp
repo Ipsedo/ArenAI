@@ -69,6 +69,7 @@ namespace arenai::agent {
           clip_fraction_metric(std::make_shared<MeanMetric>("clip", metric_window_size)),
           kl_metric(std::make_shared<MeanMetric>("kl", metric_window_size, 2, true)),
           skip_fraction_metric(std::make_shared<MeanMetric>("skip", metric_window_size)),
+          skip_canon_metric(std::make_shared<MeanMetric>("skip_canon", metric_window_size)),
           gamma(gamma), gae_lambda(gae_lambda), clip_epsilon(clip_epsilon), target_kl(target_kl),
           grad_norm_max(grad_norm_max), actor_epochs(actor_epochs), critic_epochs(critic_epochs),
           rollout_size(rollout_size), actor_batch_size(actor_batch_size),
@@ -101,6 +102,7 @@ namespace arenai::agent {
             .old_continuous_log_probs = chunked(old_continuous_log_probs),
             .old_discrete_log_probs = chunked(old_discrete_log_probs),
             .advantages = chunked(advantages),
+            .aim_advantages = chunked(aim_advantages),
             .returns = chunked(returns),
             .valids = chunked(valids),
             .actor_hiddens = actor_hiddens.index_select(0, start_rows),
@@ -149,16 +151,15 @@ namespace arenai::agent {
         rollout.states = rollout.states.to(device);
 
         set_train(false);
-        const auto gae = compute_gae(rollout, device);
 
         const auto nb_steps = rollout.rewards.size(0);
         const auto nb_tanks = rollout.rewards.size(1);
 
         const auto nb_chunks_per_tank = nb_steps / chunk_size;
-        if (nb_chunks_per_tank == 0) return;
         const auto nb_kept_steps = nb_chunks_per_tank * chunk_size;
 
-        const auto rows = flat_rows(rollout, gae, nb_kept_steps, device);
+        const auto rows = rollout_rows(rollout, nb_kept_steps, device);
+        if (nb_chunks_per_tank == 0) return;
 
         const ChunkIndex chunks(
             rollout.valids.slice(0, 0, nb_kept_steps), nb_tanks, nb_chunks_per_tank, chunk_size,
@@ -171,9 +172,12 @@ namespace arenai::agent {
         set_train(false);
     }
 
-    LiquidPpoTrainer::FlatRows LiquidPpoTrainer::flat_rows(
-        const LiquidPpoRollout &rollout, const LiquidGaeResult &gae, const int64_t nb_kept_steps,
-        const torch::Device device) {
+    LiquidPpoTrainer::FlatRows LiquidPpoTrainer::rollout_rows(
+        const LiquidPpoRollout &rollout, const int64_t nb_kept_steps, const torch::Device device) {
+        const auto critic_pass = evaluate_critic(rollout, device);
+        const auto gae = compute_gae(rollout, critic_pass);
+        const auto aim_advantages = compute_aim_advantages(rollout);
+
         // flat [T_kept * nb_tanks, ...] rows, all on the device
         const auto flat = [&](const torch::Tensor &tensor) {
             return flatten_steps(tensor.slice(0, 0, nb_kept_steps)).to(device);
@@ -187,10 +191,11 @@ namespace arenai::agent {
             .old_continuous_log_probs = flat(rollout.continuous_log_probs),
             .old_discrete_log_probs = flat(rollout.discrete_log_probs),
             .advantages = flat(gae.advantages),
+            .aim_advantages = flat(aim_advantages),
             .returns = flat(gae.returns),
             .valids = flat(rollout.valids),
             .actor_hiddens = flat(rollout.actor_hiddens),
-            .critic_hiddens = flat(gae.critic_hiddens)};
+            .critic_hiddens = flat(critic_pass.critic_hiddens)};
     }
 
     LiquidSigmaGradients LiquidPpoTrainer::sigma_gradients() {
@@ -200,16 +205,14 @@ namespace arenai::agent {
         rollout.states = rollout.states.to(device);
 
         set_train(false);
-        const auto gae = compute_gae(rollout, device);
 
         const auto nb_steps = rollout.rewards.size(0);
         const auto nb_tanks = rollout.rewards.size(1);
         const auto nb_chunks_per_tank = nb_steps / chunk_size;
         const auto nb_kept_steps = nb_chunks_per_tank * chunk_size;
 
+        const auto rows = rollout_rows(rollout, nb_kept_steps, device);
         if (nb_chunks_per_tank == 0) return {};
-
-        const auto rows = flat_rows(rollout, gae, nb_kept_steps, device);
         const ChunkIndex chunks(
             rollout.valids.slice(0, 0, nb_kept_steps), nb_tanks, nb_chunks_per_tank, chunk_size,
             device);
@@ -260,8 +263,134 @@ namespace arenai::agent {
             .fires = torch::cat(fires)};
     }
 
+    LiquidPpoTrainer::PolicyRows
+    LiquidPpoTrainer::policy_rows(const FlatRows &rows, const ChunkIndex &chunks) const {
+        torch::NoGradGuard no_grad;
+
+        std::vector<torch::Tensor> mus, sigmas, probas, masks;
+        for (const auto &units:
+             chunks.valid_units.split(chunks.units_per_batch(actor_gpu_batch_size))) {
+            const auto [unit_rows, start_rows] = chunks.rows(units);
+            const auto block = rows.select_chunks(unit_rows, start_rows, chunk_size);
+            const auto out =
+                actor->act_sequence(block.vision, block.proprioception, block.actor_hiddens);
+
+            const auto valid_idx =
+                torch::nonzero(block.valids.flatten(0, 1).squeeze(-1)).squeeze(-1);
+            const auto live = [&](const torch::Tensor &tensor) {
+                return tensor.flatten(0, 1).index_select(0, valid_idx);
+            };
+
+            const auto proba = live(out.discrete);
+            mus.push_back(live(out.mu));
+            sigmas.push_back(live(out.sigma));
+            probas.push_back(proba);
+            masks.push_back(
+                TorchState::discrete_action_mask(live(block.fire_masks), proba.size(-1)));
+        }
+
+        return {
+            .mu = torch::cat(mus),
+            .sigma = torch::cat(sigmas),
+            .discrete_proba = torch::cat(probas),
+            .discrete_mask = torch::cat(masks)};
+    }
+
+    LiquidKlBreakdown LiquidPpoTrainer::kl_breakdown(
+        const std::filesystem::path &save_folder, const int record_every) {
+        const auto device = actor->parameters().back().device();
+
+        auto rollout = rollout_buffer->get_rollout();
+        rollout.states = rollout.states.to(device);
+
+        set_train(false);
+
+        const auto nb_steps = rollout.rewards.size(0);
+        const auto nb_tanks = rollout.rewards.size(1);
+        const auto nb_chunks_per_tank = nb_steps / chunk_size;
+        const auto nb_kept_steps = nb_chunks_per_tank * chunk_size;
+
+        const auto rows = rollout_rows(rollout, nb_kept_steps, device);
+        if (nb_chunks_per_tank == 0) return {};
+        const ChunkIndex chunks(
+            rollout.valids.slice(0, 0, nb_kept_steps), nb_tanks, nb_chunks_per_tank, chunk_size,
+            device);
+        if (chunks.valid_units.size(0) == 0) return {};
+
+        std::vector<torch::Tensor> initial_parameters;
+        for (const auto &parameter: actor->parameters())
+            initial_parameters.push_back(parameter.detach().clone());
+
+        load_torch(save_folder, actor_optim, "actor_optim.pt");
+        for (auto &[key, state]: actor_optim->state()) {
+            auto &adam_state = static_cast<torch::optim::AdamParamState &>(*state);
+            adam_state.exp_avg(adam_state.exp_avg().to(device));
+            adam_state.exp_avg_sq(adam_state.exp_avg_sq().to(device));
+        }
+
+        set_train(true);
+        const auto old_policy = policy_rows(rows, chunks);
+
+        std::vector<float> record_steps, sampled_kls;
+        std::vector<torch::Tensor> continuous_kls, continuous_mean_kls, continuous_mean_shifts,
+            discrete_kls;
+
+        int step = 0;
+        for (int e = 0; e < actor_epochs; e++)
+            for (const auto &blocks: shuffled_batches(
+                     chunks.valid_units, chunks.units_per_batch(actor_batch_size),
+                     chunks.units_per_batch(actor_gpu_batch_size))) {
+                const auto sampled_kl = accumulate_actor_gradients(rows, chunks, blocks).joint;
+
+                torch::nn::utils::clip_grad_norm_(actor->parameters(), grad_norm_max);
+                actor_optim->step();
+                step++;
+
+                if (step % record_every != 0) continue;
+
+                const auto policy = policy_rows(rows, chunks);
+                const auto old_proba = old_policy.discrete_proba.clamp(EPSILON, 1.f - EPSILON);
+                const auto proba = policy.discrete_proba.clamp(EPSILON, 1.f - EPSILON);
+
+                record_steps.push_back(static_cast<float>(step));
+                sampled_kls.push_back(sampled_kl);
+                continuous_kls.push_back(
+                    gaussian_tanh_kl(old_policy.mu, old_policy.sigma, policy.mu, policy.sigma)
+                        .mean(0)
+                        .cpu());
+                continuous_mean_kls.push_back(
+                    (torch::pow(old_policy.mu - policy.mu, 2) / (2.f * torch::pow(policy.sigma, 2)))
+                        .mean(0)
+                        .cpu());
+                continuous_mean_shifts.push_back(
+                    ((policy.mu - old_policy.mu) / policy.sigma).mean(0).cpu());
+                discrete_kls.push_back(
+                    ((old_proba * torch::log(old_proba / proba)
+                      + (1.f - old_proba) * torch::log((1.f - old_proba) / (1.f - proba)))
+                     * old_policy.discrete_mask)
+                        .mean(0)
+                        .cpu());
+            }
+        set_train(false);
+
+        {
+            torch::NoGradGuard no_grad;
+            const auto parameters = actor->parameters();
+            for (size_t i = 0; i < parameters.size(); i++)
+                parameters[i].copy_(initial_parameters[i]);
+        }
+
+        return {
+            .steps = torch::tensor(record_steps),
+            .sampled_kl = torch::tensor(sampled_kls),
+            .continuous_kl = torch::stack(continuous_kls),
+            .continuous_mean_kl = torch::stack(continuous_mean_kls),
+            .continuous_mean_shift = torch::stack(continuous_mean_shifts),
+            .discrete_kl = torch::stack(discrete_kls)};
+    }
+
     void LiquidPpoTrainer::run_actor_epochs(const FlatRows &rows, const ChunkIndex &chunks) const {
-        KlStop kl_stop(target_kl);
+        GroupKlStop kl_stop(target_kl);
 
         for (int e = 0; e < actor_epochs; e++) {
             const auto batches = shuffled_batches(
@@ -270,12 +399,15 @@ namespace arenai::agent {
             kl_stop.on_planned_steps(static_cast<int>(batches.size()));
 
             for (const auto &blocks: batches) {
-                if (kl_stop.stopped()) break;
+                if (!kl_stop.any_active()) break;
 
-                const auto kl = accumulate_actor_gradients(rows, chunks, blocks);
-                kl_metric->add(kl);
+                const auto kls = accumulate_actor_gradients(rows, chunks, blocks, kl_stop.active());
+                kl_metric->add(kls.joint);
 
-                if (kl_stop.stop_exceeded(kl)) break;
+                if (kl_stop.stop_exceeded(kls)) {
+                    if (!kl_stop.any_active()) break;
+                    accumulate_actor_gradients(rows, chunks, blocks, kl_stop.active());
+                }
 
                 torch::nn::utils::clip_grad_norm_(actor->parameters(), grad_norm_max);
                 actor_optim->step();
@@ -284,26 +416,27 @@ namespace arenai::agent {
             }
         }
 
-        skip_fraction_metric->add(kl_stop.skip_fraction());
+        skip_fraction_metric->add(kl_stop.rest_skip_fraction());
+        skip_canon_metric->add(kl_stop.aim_skip_fraction());
     }
 
-    float LiquidPpoTrainer::accumulate_actor_gradients(
-        const FlatRows &rows, const ChunkIndex &chunks,
-        const std::vector<torch::Tensor> &blocks) const {
+    GroupKls LiquidPpoTrainer::accumulate_actor_gradients(
+        const FlatRows &rows, const ChunkIndex &chunks, const std::vector<torch::Tensor> &blocks,
+        const ActiveGroups &active) const {
         actor_optim->zero_grad();
         alphas->zero_grad();
 
         const auto batch_rows = chunks.batch_live_rows(blocks);
 
-        std::vector<torch::Tensor> row_kls;
+        std::vector<RowKls> row_kls;
         for (const auto &units: blocks) {
             const auto [unit_rows, start_rows] = chunks.rows(units);
             row_kls.push_back(backward_actor(
                 rows.select_chunks(unit_rows, start_rows, chunk_size),
-                chunks.live_rows(units) / batch_rows));
+                chunks.live_rows(units) / batch_rows, active));
         }
 
-        return trimmed_kl(row_kls);
+        return trimmed_group_kls(row_kls);
     }
 
     void LiquidPpoTrainer::run_critic_epochs(const FlatRows &rows, const ChunkIndex &chunks) const {
@@ -318,11 +451,11 @@ namespace arenai::agent {
                 std::vector<torch::Tensor> batch_returns, batch_values;
                 for (const auto &units: blocks) {
                     const auto [unit_rows, start_rows] = chunks.rows(units);
-                    const auto [returns, values] = backward_critic(
+                    const auto block = backward_critic(
                         rows.select_chunks(unit_rows, start_rows, chunk_size),
                         chunks.live_rows(units) / batch_rows);
-                    batch_returns.push_back(returns);
-                    batch_values.push_back(values);
+                    batch_returns.push_back(block.returns);
+                    batch_values.push_back(block.values);
                 }
                 explained_variance_metric->add(explained_variance(batch_returns, batch_values));
 
@@ -331,7 +464,8 @@ namespace arenai::agent {
             }
     }
 
-    LiquidPpoTrainer::ActorTerms LiquidPpoTrainer::actor_terms(const FlatRows &block) const {
+    LiquidPpoTrainer::ActorTerms
+    LiquidPpoTrainer::actor_terms(const FlatRows &block, const ActiveGroups &active) const {
         const auto out =
             actor->act_sequence(block.vision, block.proprioception, block.actor_hiddens);
 
@@ -347,15 +481,15 @@ namespace arenai::agent {
         const auto discrete_mask =
             TorchState::discrete_action_mask(rows(block.fire_masks), discrete_proba.size(-1));
 
-        const auto log_probs =
-            gaussian_tanh_log_pdf(rows(block.continuous_pre_tanh), mu, sigma).sum(-1, true)
-            + (bernoulli_log_proba(rows(block.discrete_actions), discrete_proba) * discrete_mask)
-                  .sum(-1, true);
-        const auto old_log_probs =
-            rows(block.old_continuous_log_probs).sum(-1, true) + rows(block.old_discrete_log_probs);
+        const auto current = PolicyLogProbs::split(
+            gaussian_tanh_log_pdf(rows(block.continuous_pre_tanh), mu, sigma),
+            (bernoulli_log_proba(rows(block.discrete_actions), discrete_proba) * discrete_mask)
+                .sum(-1, true));
+        const auto old = PolicyLogProbs::split(
+            rows(block.old_continuous_log_probs), rows(block.old_discrete_log_probs));
 
-        const auto [surrogate, log_ratio, ratio, kl] =
-            clipped_surrogate(log_probs, old_log_probs, rows(block.advantages), clip_epsilon);
+        const auto [surrogate, log_ratio, ratio, kls] = clipped_surrogate(
+            current, old, rows(block.aim_advantages), rows(block.advantages), clip_epsilon, active);
 
         const auto continuous_entropy = gaussian_tanh_entropy(mu, sigma);
         const auto discrete_entropy = bernoulli_entropy(discrete_proba) * discrete_mask;
@@ -368,17 +502,19 @@ namespace arenai::agent {
             .discrete_mask = discrete_mask,
             .ratio = ratio,
             .log_ratio = log_ratio,
-            .kl = kl,
+            .kls = kls,
             .continuous_entropy = continuous_entropy,
             .discrete_entropy = discrete_entropy,
             .surrogate = surrogate,
-            .continuous_bonus = alphas->continuous().detach() * continuous_entropy,
-            .discrete_bonus = alphas->discrete().detach() * discrete_entropy};
+            .continuous_bonus = alphas->continuous().detach() * continuous_entropy
+                                * continuous_group_mask(active, mu.size(-1), mu.device()),
+            .discrete_bonus =
+                static_cast<float>(active.rest) * alphas->discrete().detach() * discrete_entropy};
     }
 
-    torch::Tensor
-    LiquidPpoTrainer::backward_actor(const FlatRows &block, const float batch_fraction) const {
-        const auto terms = actor_terms(block);
+    RowKls LiquidPpoTrainer::backward_actor(
+        const FlatRows &block, const float batch_fraction, const ActiveGroups &active) const {
+        const auto terms = actor_terms(block, active);
 
         const auto entropy_bonus =
             terms.continuous_bonus.sum(-1, true) + terms.discrete_bonus.sum(-1, true);
@@ -401,10 +537,10 @@ namespace arenai::agent {
         clip_fraction_metric->add(
             ((terms.ratio - 1.f).abs() > clip_epsilon).to(torch::kFloat).mean().item<float>());
 
-        return terms.kl;
+        return terms.kls;
     }
 
-    std::tuple<torch::Tensor, torch::Tensor>
+    LiquidPpoTrainer::CriticBlock
     LiquidPpoTrainer::backward_critic(const FlatRows &block, const float batch_fraction) const {
         const auto [value, next_x] =
             critic->value_sequence(block.vision, block.proprioception, block.critic_hiddens);
@@ -420,11 +556,11 @@ namespace arenai::agent {
 
         critic_mean_loss_metric->add(critic_loss.cpu().item<float>());
 
-        return {valid_returns.detach(), values.detach()};
+        return {.returns = valid_returns.detach(), .values = values.detach()};
     }
 
-    LiquidGaeResult
-    LiquidPpoTrainer::compute_gae(const LiquidPpoRollout &rollout, const torch::Device device) {
+    LiquidCriticPass
+    LiquidPpoTrainer::evaluate_critic(const LiquidPpoRollout &rollout, const torch::Device device) {
         torch::NoGradGuard no_grad;
 
         const auto nb_steps = rollout.rewards.size(0);
@@ -435,7 +571,6 @@ namespace arenai::agent {
         if (!critic_carry.defined() || critic_carry.size(0) != nb_tanks)
             critic_carry = critic->initial_state(static_cast<int>(nb_tanks));
 
-        // sequential critic pass: the values and the liquid state opening each step
         std::vector<torch::Tensor> value_list;
         std::vector<torch::Tensor> hidden_list;
         value_list.reserve(nb_steps);
@@ -454,35 +589,40 @@ namespace arenai::agent {
             critic_carry = next_x;
         }
 
-        const auto values = torch::stack(value_list, 0);
-        const auto critic_hiddens = torch::stack(hidden_list, 0);
+        const auto bootstrap = critic->value(
+            rollout.bootstrap_state.get_vision().to(device),
+            rollout.bootstrap_state.get_state().to(device), critic_carry);
 
-        const auto bootstrap_value =
-            critic
-                ->value(
-                    rollout.bootstrap_state.get_vision().to(device),
-                    rollout.bootstrap_state.get_state().to(device), critic_carry)
-                .value.cpu()
-                .unsqueeze(0);
+        return {
+            .values = torch::stack(value_list, 0),
+            .bootstrap_value = bootstrap.value.cpu(),
+            .critic_hiddens = torch::stack(hidden_list, 0)};
+    }
+
+    LiquidGaeResult LiquidPpoTrainer::compute_gae(
+        const LiquidPpoRollout &rollout, const LiquidCriticPass &critic_pass) const {
+        const auto &values = critic_pass.values;
 
         // next values are the values shifted by one step, closed by the bootstrap state
-        const auto next_values = torch::cat({values.slice(0, 1), bootstrap_value}, 0);
+        const auto next_values =
+            torch::cat({values.slice(0, 1), critic_pass.bootstrap_value.unsqueeze(0)}, 0);
 
         const auto rewards = return_scaler->scale(
             rollout.rewards, rollout.dones.logical_or(rollout.truncateds), rollout.valids);
-        const auto dones = rollout.dones.to(torch::kFloat);
-        const auto truncateds = rollout.truncateds.to(torch::kFloat);
         const auto valids = rollout.valids.to(torch::kFloat);
 
-        const auto cuts = torch::clamp_max(dones + truncateds, 1.f);
+        const auto cuts = episode_cuts(rollout.dones, rollout.truncateds);
         const auto deltas = rewards + gamma * next_values * (1.f - cuts) - values;
 
         const auto advantages = generalized_advantages(deltas, cuts, gamma * gae_lambda);
 
-        return {
-            .advantages = normalized(advantages, valids),
-            .returns = advantages + values,
-            .critic_hiddens = critic_hiddens};
+        return {.advantages = normalized(advantages, valids), .returns = advantages + values};
+    }
+
+    torch::Tensor LiquidPpoTrainer::compute_aim_advantages(const LiquidPpoRollout &rollout) const {
+        return aim_potential_advantages(
+            rollout.aim_potentials, episode_cuts(rollout.dones, rollout.truncateds),
+            rollout.valids.to(torch::kFloat), gamma);
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> LiquidPpoTrainer::get_metrics() {
@@ -498,7 +638,9 @@ namespace arenai::agent {
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> LiquidPpoTrainer::get_csv_only_metrics() {
-        return alphas->get_metrics();
+        auto metrics = alphas->get_metrics();
+        metrics.push_back(skip_canon_metric);
+        return metrics;
     }
 
     void LiquidPpoTrainer::save(const std::filesystem::path &output_folder) {

@@ -182,12 +182,7 @@ namespace arenai::view {
         const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) {
         draw(model_matrices);
 
-        const auto &previous = slots_[slot_index_];
-        if (!previous.submitted) {
-            const int hw = width_ * height_;
-            return image(std::vector<uint8_t>(hw * 3, 0));
-        }
-        return read_slot(previous);
+        return read_slot(slots_[(slot_index_ + FRAME_SLOTS - 1) % FRAME_SLOTS]);
     }
 
     int VulkanOffscreenRenderer::get_width() const { return width_; }

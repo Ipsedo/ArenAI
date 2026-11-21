@@ -50,10 +50,8 @@ PpgTriad PpgTrainingTest::make_triad(const PpgTrainingTestConfig &cfg, const int
         cfg.nb_discrete_actions, 8, std::vector{16}, vision_channels, group_norm_nums, 0.1f,
         std::vector(cfg.nb_discrete_actions, 0.2f));
     triad.rollout_buffer = std::make_shared<PpgRolloutBuffer>();
-    const auto exploration_noise = std::make_shared<ColoredNoise>(0.9f);
-    triad.collector = std::make_shared<PpgStepCollector>(triad.rollout_buffer, exploration_noise);
-    triad.agent =
-        std::make_shared<TorchPpgAgent>(triad.actor, device, exploration_noise, triad.collector);
+    triad.collector = std::make_shared<PpgStepCollector>(triad.rollout_buffer);
+    triad.agent = std::make_shared<TorchPpgAgent>(triad.actor, device, triad.collector);
     triad.trainer = std::make_shared<PpgTrainer>(
         triad.actor, triad.rollout_buffer, cfg.vision_height, cfg.vision_width,
         cfg.nb_continuous_actions, cfg.nb_discrete_actions, cfg.nb_sensors, 1e-3f, 1e-3f, 8,
@@ -75,7 +73,9 @@ void PpgTrainingTest::run_env_loop(
 
         triad.agent->act(state, true);
         triad.collector->on_transition(
-            torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+            torch::randn({nb_tanks, 1}),
+            AimPotentials{torch::zeros({nb_tanks}), torch::zeros({nb_tanks})},
+            torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
         triad.trainer->step();
     }
 }
@@ -128,7 +128,9 @@ TEST_F(PpgTrainingTest, FactoryTrainingRunsWithoutError) {
 
         factory->get_agent()->act(make_state(cfg, nb_tanks), true);
         factory->get_collector()->on_transition(
-            torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+            torch::randn({nb_tanks, 1}),
+            AimPotentials{torch::zeros({nb_tanks}), torch::zeros({nb_tanks})},
+            torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
         ASSERT_NO_THROW(factory->get_trainer()->step());
     }
 }

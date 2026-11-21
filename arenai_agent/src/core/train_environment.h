@@ -7,6 +7,7 @@
 
 #include <arenai_core/environment.h>
 
+#include "../agents/aim_credit.h"
 #include "../metrics/metric.h"
 #include "./curriculum.h"
 
@@ -31,6 +32,13 @@ namespace arenai::agent {
         float canon_relative_elevation;
         float chassis_pitch;
         float chassis_roll;
+        int nearest;
+        float position_x;
+        float position_z;
+        float nearest_x;
+        float nearest_z;
+        float canon_heading;
+        float chassis_heading;
     };
 
     class TrainTankEnvironment final : public core::BaseTanksEnvironment {
@@ -55,6 +63,8 @@ namespace arenai::agent {
         std::vector<AimGeometry> aim_geometry(float view_half_yaw = std::numbers::pi_v<float>);
 
         std::vector<model::RewardDetail> last_step_reward_details() const;
+
+        AimPotentials last_step_aim_potentials() const;
 
         // totals across every tank since the last reset, for the spawn curriculum
         int episode_nb_kills() const;
@@ -112,7 +122,11 @@ namespace arenai::agent {
         float final_spawn_side;
         float empty_reserve_penalty;
 
+        std::vector<float> step_aim_potentials_before;
+        std::vector<float> step_aim_potentials_after;
+
         bool are_all_done();
+        std::vector<float> aim_potentials();
     };
 
 }// namespace arenai::agent

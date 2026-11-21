@@ -1,6 +1,4 @@
-#include <networks/constants.h>
 #include <networks/misc.h>
-#include <networks_utils/init.h>
 
 #include <arenai_agent_tests/tests_networks/tests_misc.h>
 
@@ -94,25 +92,6 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Combine(
         testing::Values(-5.0f, -1.0f), testing::Values(-0.3567f, 0.5f, 2.0f),
         testing::Values(Shape{5}, Shape{2, 3}, Shape{4, 8, 2})));
-
-TEST(SoftClampModuleTest, OneUpperBoundPerColumn) {
-    const std::vector upper_bounds{-0.3567f, -0.3567f, -1.3863f, -1.3863f};
-    SoftClamp soft_clamp(-5.0f, upper_bounds);
-
-    const auto result = soft_clamp.forward(torch::full({3, 7, 4}, 20.0f));
-
-    ASSERT_TRUE(torch::allclose(result, torch::tensor(upper_bounds).expand({3, 7, 4}), 1e-4, 1e-5));
-}
-
-TEST(InitLogSigmaTest, CanonStartsBelowItsOwnCeiling) {
-    torch::nn::Linear linear(8, 4);
-    init_log_sigma_output_weights(*linear, 0.3f);
-
-    SoftClamp soft_clamp(LOG_SIGMA_MIN, log_sigma_upper_bounds(4));
-    const auto sigma = torch::exp(soft_clamp.forward(linear->bias.detach()));
-
-    ASSERT_TRUE(torch::allclose(sigma, torch::tensor({0.3f, 0.3f, 0.2f, 0.2f}), 1e-3, 1e-4));
-}
 
 TEST_P(ExpModuleParamTest, OutputAlwaysPositive) {
     const auto &shape = GetParam();

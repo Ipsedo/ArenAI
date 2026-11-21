@@ -5,11 +5,8 @@ using namespace arenai::agent;
 
 namespace arenai::agent {
 
-    PpoStepCollector::PpoStepCollector(
-        std::shared_ptr<PpoRolloutBuffer> rollout_buffer,
-        std::shared_ptr<ColoredNoise> exploration_noise)
-        : rollout_buffer(std::move(rollout_buffer)),
-          exploration_noise(std::move(exploration_noise)) {}
+    PpoStepCollector::PpoStepCollector(std::shared_ptr<PpoRolloutBuffer> rollout_buffer)
+        : rollout_buffer(std::move(rollout_buffer)) {}
 
     void PpoStepCollector::on_act(
         const TorchState &state, const TorchAction &action,
@@ -23,7 +20,8 @@ namespace arenai::agent {
     }
 
     void PpoStepCollector::on_transition(
-        const torch::Tensor &rewards, const torch::Tensor &done, const torch::Tensor &truncated) {
+        const torch::Tensor &rewards, const AimPotentials &aim_potentials,
+        const torch::Tensor &done, const torch::Tensor &truncated) {
         rollout_buffer->add(
             {.state = last_state,
              .action = last_action,
@@ -31,15 +29,13 @@ namespace arenai::agent {
              .continuous_log_prob = last_continuous_log_prob,
              .discrete_log_prob = last_discrete_log_prob,
              .reward = rewards,
+             .aim_potentials = aim_potentials,
              .done = done,
              .truncated = truncated});
-
-        exploration_noise->restart(done.logical_or(truncated));
     }
 
     void PpoStepCollector::on_episode_end(const TorchState &final_state) {
         rollout_buffer->finish_episode(final_state);
-        exploration_noise->reset();
     }
 
 }// namespace arenai::agent

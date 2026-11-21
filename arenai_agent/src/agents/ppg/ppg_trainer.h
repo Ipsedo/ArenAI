@@ -4,6 +4,7 @@
 #include "../../networks/actor.h"
 #include "../../networks/value_function.h"
 #include "../../networks_utils/warmup.h"
+#include "../aim_credit.h"
 #include "../entropy_alphas.h"
 #include "../ppo_objective.h"
 #include "../return_scaler.h"
@@ -11,6 +12,13 @@
 #include "./ppg_rollout_buffer.h"
 
 namespace arenai::agent {
+
+    struct PpgCriticPass {
+        // [T, nb_tanks, 1]
+        torch::Tensor values;
+        // [nb_tanks, 1]
+        torch::Tensor bootstrap_value;
+    };
 
     struct PpgGaeResult {
         torch::Tensor advantages;
@@ -75,6 +83,7 @@ namespace arenai::agent {
 
         // share of the planned actor steps the KL threshold cut, once per rollout
         std::shared_ptr<AbstractMetric> skip_fraction_metric;
+        std::shared_ptr<AbstractMetric> skip_canon_metric;
 
         float gamma;
         float gae_lambda;
@@ -110,6 +119,7 @@ namespace arenai::agent {
             torch::Tensor old_continuous_log_probs;
             torch::Tensor old_discrete_log_probs;
             torch::Tensor advantages;
+            torch::Tensor aim_advantages;
             torch::Tensor returns;
 
             FlatRows select(const torch::Tensor &idx) const;
@@ -137,22 +147,29 @@ namespace arenai::agent {
             const FlatRows &rows, const CloneTargets &targets,
             const torch::Tensor &valid_idx) const;
 
-        // batch gradient; returns the KL of the policy it starts from
-        float accumulate_actor_gradients(
-            const FlatRows &rows, const std::vector<torch::Tensor> &blocks) const;
+        // batch gradient of the active groups; returns the KLs of the policy it starts from
+        GroupKls accumulate_actor_gradients(
+            const FlatRows &rows, const std::vector<torch::Tensor> &blocks,
+            const ActiveGroups &active) const;
 
         // accumulates a device block's share of its optimizer batch gradient; returns its row KLs
-        torch::Tensor backward_actor(const FlatRows &block, float batch_fraction) const;
+        RowKls backward_actor(
+            const FlatRows &block, float batch_fraction, const ActiveGroups &active) const;
 
         // value distillation + policy clone loss of the auxiliary phase
         void backward_actor_aux(
             const FlatRows &block, const CloneTargets &targets, float batch_fraction) const;
 
-        // [returns, values] of the block's live rows, detached
-        std::tuple<torch::Tensor, torch::Tensor>
-        backward_critic(const FlatRows &block, float batch_fraction) const;
+        struct CriticBlock {
+            torch::Tensor returns;
+            torch::Tensor values;
+        };
 
-        PpgGaeResult compute_gae(const PpgRollout &rollout, torch::Device device) const;
+        CriticBlock backward_critic(const FlatRows &block, float batch_fraction) const;
+
+        PpgCriticPass evaluate_critic(const PpgRollout &rollout, torch::Device device) const;
+        PpgGaeResult compute_gae(const PpgRollout &rollout, const PpgCriticPass &critic_pass) const;
+        torch::Tensor compute_aim_advantages(const PpgRollout &rollout) const;
 
         void set_train(bool train) const;
         void to(torch::Device device) const;

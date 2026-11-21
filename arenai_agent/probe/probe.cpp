@@ -22,7 +22,6 @@
 #include "./agents/torch_types.h"
 #include "./core/train_environment.h"
 #include "./distributions/bernoulli.h"
-#include "./distributions/colored_noise.h"
 #include "./distributions/gaussian_tanh.h"
 #include "./networks/actor.h"
 #include "./networks/q_function.h"
@@ -70,6 +69,7 @@ int main(const int argc, char **argv) {
     parser.add_argument("--oracle_policy_fire").default_value(false).implicit_value(true);
     parser.add_argument("--oracle_camera_center").default_value(false).implicit_value(true);
     parser.add_argument("--oracle_tolerance").scan<'g', float>().default_value(1.f);
+    parser.add_argument("--detrend_canon_x_steps").scan<'i', int>().default_value(0);
     parser.add_argument("--vision_num_threads")
         .scan<'i', int>()
         .default_value(static_cast<int>(std::thread::hardware_concurrency()));
@@ -87,6 +87,7 @@ int main(const int argc, char **argv) {
         .shells_per_hit = parser.get<int>("--shells_per_hit"),
         .max_shells = parser.get<int>("--max_shells")};
     const bool deterministic = parser.get<bool>("--deterministic");
+    const int detrend_canon_x_steps = parser.get<int>("--detrend_canon_x_steps");
     const auto zoom_mode = parser.get<std::string>("--zoom");
     const bool oracle = parser.get<bool>("--oracle");
     const bool oracle_policy_yaw = parser.get<bool>("--oracle_policy_yaw");
@@ -121,7 +122,6 @@ int main(const int argc, char **argv) {
     };
     std::function<ProbeActorOutput(const torch::Tensor &, const torch::Tensor &)> act;
     std::function<void()> reset_hidden = [] {};
-    ColoredNoise exploration_noise(agent_config.value("noise_correlation", 0.f));
     // [N, 3 × nb_aim] ∂E[min Q], ∂E[Q1], ∂E[Q2] /∂a_aim at the mode, undefined without a critic
     std::function<torch::Tensor(const TorchState &, const torch::Tensor &, const torch::Tensor &)>
         canon_q_gradient = [](const TorchState &, const torch::Tensor &, const torch::Tensor &) {
@@ -226,6 +226,7 @@ int main(const int argc, char **argv) {
             const auto x_t = hidden_state->get(vision.size(0));
             auto out = actor->act(vision, sensors, x_t);
             hidden_state->set(out.next_x);
+
             return ProbeActorOutput{
                 out.mu, out.sigma, out.discrete, out.features, out.vision_features};
         };
@@ -275,13 +276,15 @@ int main(const int argc, char **argv) {
 
     for (int episode = 0; episode < nb_episodes; episode++) {
         reset_hidden();
-        exploration_noise.reset();
 
         auto state = TorchState(
             env->reset(spawn_side, spawn_side, shell_economy), vision_height, vision_width);
 
         int step = 0;
         bool is_done = false;
+        float episode_kills = 0.f;
+        int episode_hits = 0, episode_fired = 0;
+        auto slow_mu_canon_x = torch::zeros({nb_tanks});
         std::vector<std::deque<PendingShot>> pending(nb_tanks);
 
         while (!is_done) {
@@ -300,12 +303,19 @@ int main(const int argc, char **argv) {
                     vision_features = out.vision_features.cpu().contiguous();
                 }
 
+                auto acted_mu = mu;
+                if (detrend_canon_x_steps > 0) {
+                    slow_mu_canon_x += (mu.select(1, 2) - slow_mu_canon_x)
+                                       / static_cast<float>(detrend_canon_x_steps);
+                    acted_mu = mu.clone();
+                    acted_mu.select(1, 2) -= slow_mu_canon_x;
+                }
+
                 if (deterministic) {
-                    continuous_action = gaussian_tanh_mode(mu);
+                    continuous_action = gaussian_tanh_mode(acted_mu);
                     discrete_action = bernoulli_max_action(discrete);
                 } else {
-                    continuous_action =
-                        gaussian_tanh_sample(mu, sigma, exploration_noise.next(mu)).first;
+                    continuous_action = gaussian_tanh_sample(acted_mu, sigma).first;
                     discrete_action = bernoulli_sample(discrete);
                 }
 
@@ -353,11 +363,11 @@ int main(const int argc, char **argv) {
                     }
 
                     if (!oracle_policy_yaw)
-                        cont[i][NB_DIRECTION_ACTIONS] = aim_rate_to_action(
-                            std::clamp(-gain * yaw_error / turret_step, -1.f, 1.f));
+                        cont[i][NB_DIRECTION_ACTIONS] =
+                            std::clamp(-gain * yaw_error / turret_step, -1.f, 1.f);
                     if (!oracle_policy_pitch)
-                        cont[i][NB_DIRECTION_ACTIONS + 1] = aim_rate_to_action(
-                            std::clamp(-gain * pitch_error / canon_step, -1.f, 1.f));
+                        cont[i][NB_DIRECTION_ACTIONS + 1] =
+                            std::clamp(-gain * pitch_error / canon_step, -1.f, 1.f);
                     if (!oracle_policy_fire)
                         disc[i][0] = std::abs(yaw_error) < oracle_tolerance
                                              && std::abs(pitch_error) < oracle_tolerance
@@ -436,12 +446,14 @@ int main(const int argc, char **argv) {
                 wanted_frequency, TorchAction{continuous_action, discrete_action}.to_actions());
 
             const TorchStep torch_step(steps, vision_height, vision_width);
-            exploration_noise.restart(
-                torch_step.get_is_done().logical_or(torch_step.get_is_truncated()));
             state = torch_step.get_states();
 
             const auto details = env->last_step_reward_details();
             for (int i = 0; i < nb_tanks; i++) {
+                episode_kills += details[i].kill;
+                episode_hits += details[i].nb_hits;
+                episode_fired += details[i].nb_fired_shells;
+
                 const int landed = details[i].nb_landed_shells;
                 if (landed == 0) continue;
 
@@ -464,7 +476,9 @@ int main(const int argc, char **argv) {
         }
 
         env->stop_drawing();
-        std::cout << "episode " << episode << " : " << step << " steps" << std::endl;
+        std::cout << "episode " << episode << " : " << step << " steps, kill reward "
+                  << episode_kills << ", hits " << episode_hits << ", fired " << episode_fired
+                  << std::endl;
     }
 
     return 0;

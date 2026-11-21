@@ -51,12 +51,6 @@ TEST(VkOffscreenTest, WarmupThenCubemap) {
     const auto matrices = std::vector<std::tuple<std::string, glm::mat4>>{
         {"sky", glm::scale(glm::mat4(1.f), glm::vec3(2000.f))}};
 
-    // first call: black warm-up frame (2-frame readback latency)
-    const auto [black_pixels] = renderer->draw_and_get_frame(matrices);
-    ASSERT_EQ(black_pixels.size(), 3 * w * h);
-    ASSERT_EQ(pixel_sum(black_pixels), 0);
-
-    // second call: the first real frame
     const auto [pixels] = renderer->draw_and_get_frame(matrices);
     ASSERT_EQ(pixels.size(), 3 * w * h);
     ASSERT_GT(pixel_sum(pixels), 0);

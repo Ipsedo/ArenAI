@@ -3,6 +3,7 @@
 
 #include "../../networks/actor.h"
 #include "../../networks/value_function.h"
+#include "../aim_credit.h"
 #include "../entropy_alphas.h"
 #include "../ppo_objective.h"
 #include "../return_scaler.h"
@@ -10,6 +11,13 @@
 #include "./ppo_rollout_buffer.h"
 
 namespace arenai::agent {
+
+    struct CriticPass {
+        // [T, nb_tanks, 1]
+        torch::Tensor values;
+        // [nb_tanks, 1]
+        torch::Tensor bootstrap_value;
+    };
 
     struct GaeResult {
         torch::Tensor advantages;
@@ -73,6 +81,7 @@ namespace arenai::agent {
 
         // share of the planned actor steps the KL threshold cut, once per rollout
         std::shared_ptr<AbstractMetric> skip_fraction_metric;
+        std::shared_ptr<AbstractMetric> skip_canon_metric;
 
         float gamma;
         float gae_lambda;
@@ -99,6 +108,7 @@ namespace arenai::agent {
             torch::Tensor old_continuous_log_probs;
             torch::Tensor old_discrete_log_probs;
             torch::Tensor advantages;
+            torch::Tensor aim_advantages;
             torch::Tensor returns;
 
             FlatRows select(const torch::Tensor &idx) const;
@@ -109,18 +119,25 @@ namespace arenai::agent {
         void run_actor_epochs(const FlatRows &rows, const torch::Tensor &valid_idx) const;
         void run_critic_epochs(const FlatRows &rows, const torch::Tensor &valid_idx) const;
 
-        // batch gradient; returns the KL of the policy it starts from
-        float accumulate_actor_gradients(
-            const FlatRows &rows, const std::vector<torch::Tensor> &blocks) const;
+        // batch gradient of the active groups; returns the KLs of the policy it starts from
+        GroupKls accumulate_actor_gradients(
+            const FlatRows &rows, const std::vector<torch::Tensor> &blocks,
+            const ActiveGroups &active) const;
 
         // accumulates a device block's share of its optimizer batch gradient; returns its row KLs
-        torch::Tensor backward_actor(const FlatRows &block, float batch_fraction) const;
+        RowKls backward_actor(
+            const FlatRows &block, float batch_fraction, const ActiveGroups &active) const;
 
-        // [returns, values] of the block's live rows, detached
-        std::tuple<torch::Tensor, torch::Tensor>
-        backward_critic(const FlatRows &block, float batch_fraction) const;
+        struct CriticBlock {
+            torch::Tensor returns;
+            torch::Tensor values;
+        };
 
-        GaeResult compute_gae(const PpoRollout &rollout, torch::Device device) const;
+        CriticBlock backward_critic(const FlatRows &block, float batch_fraction) const;
+
+        CriticPass evaluate_critic(const PpoRollout &rollout, torch::Device device) const;
+        GaeResult compute_gae(const PpoRollout &rollout, const CriticPass &critic_pass) const;
+        torch::Tensor compute_aim_advantages(const PpoRollout &rollout) const;
 
         void set_train(bool train) const;
         void to(torch::Device device) const;

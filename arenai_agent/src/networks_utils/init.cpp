@@ -11,12 +11,6 @@ using namespace arenai::agent;
 
 namespace arenai::agent {
 
-    namespace {
-        bool is_canon_action(const int action) {
-            return action >= FIRST_CANON_ACTION && action < FIRST_CANON_ACTION + NB_CANON_ACTIONS;
-        }
-    }// namespace
-
     void init_hidden_weights(torch::nn::Module &module) {
         if (auto *lin = module.as<torch::nn::Linear>()) {
             torch::nn::init::orthogonal_(lin->weight, std::sqrt(2.f));
@@ -47,29 +41,11 @@ namespace arenai::agent {
     void init_log_sigma_output_weights(torch::nn::Module &module, const float initial_sigma) {
         if (auto *lin = module.as<torch::nn::Linear>()) {
             torch::nn::init::orthogonal_(lin->weight, 0.01f);
-            if (!lin->options.bias()) return;
-
-            const int nb_actions = static_cast<int>(lin->bias.size(0));
-            const auto upper_bounds = log_sigma_upper_bounds(nb_actions);
-
-            std::vector<float> biases(nb_actions);
-            for (int i = 0; i < nb_actions; i++) {
-                const float sigma = is_canon_action(i)
-                                        ? std::min(initial_sigma, CANON_INITIAL_SIGMA_MAX)
-                                        : initial_sigma;
-                biases[i] = SoftClamp::inverse(std::log(sigma), LOG_SIGMA_MIN, upper_bounds[i]);
-            }
-
-            torch::NoGradGuard no_grad;
-            lin->bias.copy_(torch::tensor(biases));
+            if (lin->options.bias())
+                torch::nn::init::constant_(
+                    lin->bias,
+                    SoftClamp::inverse(std::log(initial_sigma), LOG_SIGMA_MIN, LOG_SIGMA_MAX));
         }
-    }
-
-    std::vector<float> log_sigma_upper_bounds(const int nb_continuous_actions) {
-        std::vector upper_bounds(nb_continuous_actions, LOG_SIGMA_MAX);
-        for (int i = 0; i < nb_continuous_actions; i++)
-            if (is_canon_action(i)) upper_bounds[i] = CANON_LOG_SIGMA_MAX;
-        return upper_bounds;
     }
 
     void init_liquid_weights(torch::nn::Module &module) {

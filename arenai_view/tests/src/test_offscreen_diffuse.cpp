@@ -38,16 +38,6 @@ TEST_P(OffscreenDiffuseParam, TestDiffuseRendering) {
     const auto model_matrices =
         std::vector<std::tuple<std::string, glm::mat4>>{{"cube", glm::mat4(1.f)}};
 
-    // warmup
-    const auto [black_pixels] = buffer_renderer->draw_and_get_frame(model_matrices);
-    ASSERT_EQ(black_pixels.size(), 3 * width * height);
-    ASSERT_EQ(
-        std::accumulate(
-            black_pixels.begin(), black_pixels.end(), 0,
-            [](const int acc, const uint8_t p) { return static_cast<int>(p) + acc; }),
-        0);
-
-    // actual frame
     const auto [pixels] = buffer_renderer->draw_and_get_frame(model_matrices);
     ASSERT_EQ(pixels.size(), 3 * width * height);
 

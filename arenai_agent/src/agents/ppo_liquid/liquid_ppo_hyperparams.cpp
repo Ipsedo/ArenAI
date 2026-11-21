@@ -15,7 +15,6 @@ namespace arenai::agent {
             {.name = "--delta_t", .member = &LiquidPpoHyperParams::delta_t},
             {.name = "--chunk_size", .member = &LiquidPpoHyperParams::chunk_size},
             {.name = "--initial_sigma", .member = &LiquidPpoHyperParams::initial_sigma},
-            {.name = "--noise_correlation", .member = &LiquidPpoHyperParams::noise_correlation},
             {.name = "--initial_fire_proba", .member = &LiquidPpoHyperParams::initial_fire_proba},
             {.name = "--initial_zoom_proba", .member = &LiquidPpoHyperParams::initial_zoom_proba},
             {.name = "--metric_window_size", .member = &LiquidPpoHyperParams::metric_window_size},

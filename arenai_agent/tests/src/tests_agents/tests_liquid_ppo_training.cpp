@@ -94,25 +94,29 @@ TEST_F(LiquidPpoTrainingTest, HiddenStateAdvancesAndResetsAcrossEpisodes) {
         UNFOLDING_STEPS, DELTA_T, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
     const auto hidden_state = std::make_shared<LiquidHiddenState>(actor);
     const auto rollout_buffer = std::make_shared<LiquidPpoRolloutBuffer>();
-    const auto exploration_noise = std::make_shared<ColoredNoise>(0.9f);
-    const auto collector =
-        std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state, exploration_noise);
-    const auto agent = std::make_shared<TorchLiquidPpoAgent>(
-        actor, hidden_state, device, exploration_noise, collector);
+    const auto collector = std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state);
+    const auto agent =
+        std::make_shared<TorchLiquidPpoAgent>(actor, hidden_state, device, collector);
 
     // first episode: two steps
     agent->act(make_state(cfg, nb_tanks), true);
     collector->on_transition(
-        torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+        torch::randn({nb_tanks, 1}),
+        AimPotentials{torch::zeros({nb_tanks}), torch::zeros({nb_tanks})},
+        torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
     agent->act(make_state(cfg, nb_tanks), true);
     collector->on_transition(
-        torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+        torch::randn({nb_tanks, 1}),
+        AimPotentials{torch::zeros({nb_tanks}), torch::zeros({nb_tanks})},
+        torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
     collector->on_episode_end(make_state(cfg, nb_tanks));
 
     // second episode: one step
     agent->act(make_state(cfg, nb_tanks), true);
     collector->on_transition(
-        torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+        torch::randn({nb_tanks, 1}),
+        AimPotentials{torch::zeros({nb_tanks}), torch::zeros({nb_tanks})},
+        torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
     collector->on_episode_end(make_state(cfg, nb_tanks));
 
     const auto rollout = rollout_buffer->get_rollout();
@@ -144,11 +148,9 @@ TEST_F(LiquidPpoTrainingTest, TrainingUpdatesActorParameters) {
         UNFOLDING_STEPS, DELTA_T, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
     const auto hidden_state = std::make_shared<LiquidHiddenState>(actor);
     const auto rollout_buffer = std::make_shared<LiquidPpoRolloutBuffer>();
-    const auto exploration_noise = std::make_shared<ColoredNoise>(0.9f);
-    const auto collector =
-        std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state, exploration_noise);
-    const auto agent = std::make_shared<TorchLiquidPpoAgent>(
-        actor, hidden_state, device, exploration_noise, collector);
+    const auto collector = std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state);
+    const auto agent =
+        std::make_shared<TorchLiquidPpoAgent>(actor, hidden_state, device, collector);
     // target_kl = 0 : early stop disabled so every optimizer batch applies its update
     const auto trainer = std::make_shared<LiquidPpoTrainer>(
         actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_continuous_actions,
@@ -166,7 +168,9 @@ TEST_F(LiquidPpoTrainingTest, TrainingUpdatesActorParameters) {
 
         agent->act(make_state(cfg, nb_tanks), true);
         collector->on_transition(
-            torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+            torch::randn({nb_tanks, 1}),
+            AimPotentials{torch::zeros({nb_tanks}), torch::zeros({nb_tanks})},
+            torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
         trainer->step();
     }
 
@@ -204,11 +208,9 @@ TEST_F(LiquidPpoTrainingTest, MaskedFireReceivesNoUpdate) {
         UNFOLDING_STEPS, DELTA_T, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
     const auto hidden_state = std::make_shared<LiquidHiddenState>(actor);
     const auto rollout_buffer = std::make_shared<LiquidPpoRolloutBuffer>();
-    const auto exploration_noise = std::make_shared<ColoredNoise>(0.9f);
-    const auto collector =
-        std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state, exploration_noise);
-    const auto agent = std::make_shared<TorchLiquidPpoAgent>(
-        actor, hidden_state, device, exploration_noise, collector);
+    const auto collector = std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state);
+    const auto agent =
+        std::make_shared<TorchLiquidPpoAgent>(actor, hidden_state, device, collector);
     // target_kl = 0 : early stop disabled so every optimizer batch applies its update
     const auto trainer = std::make_shared<LiquidPpoTrainer>(
         actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_continuous_actions,
@@ -231,7 +233,9 @@ TEST_F(LiquidPpoTrainingTest, MaskedFireReceivesNoUpdate) {
 
         agent->act(state, true);
         collector->on_transition(
-            torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+            torch::randn({nb_tanks, 1}),
+            AimPotentials{torch::zeros({nb_tanks}), torch::zeros({nb_tanks})},
+            torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
         trainer->step();
     }
 
@@ -261,11 +265,9 @@ TEST_F(LiquidPpoTrainingTest, TrainedCheckpointReloads) {
         UNFOLDING_STEPS, DELTA_T, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
     const auto hidden_state = std::make_shared<LiquidHiddenState>(actor);
     const auto rollout_buffer = std::make_shared<LiquidPpoRolloutBuffer>();
-    const auto exploration_noise = std::make_shared<ColoredNoise>(0.9f);
-    const auto collector =
-        std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state, exploration_noise);
-    const auto agent = std::make_shared<TorchLiquidPpoAgent>(
-        actor, hidden_state, device, exploration_noise, collector);
+    const auto collector = std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state);
+    const auto agent =
+        std::make_shared<TorchLiquidPpoAgent>(actor, hidden_state, device, collector);
     const auto make_trainer = [&] {
         return std::make_shared<LiquidPpoTrainer>(
             actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_continuous_actions,
@@ -282,7 +284,9 @@ TEST_F(LiquidPpoTrainingTest, TrainedCheckpointReloads) {
 
         agent->act(make_state(cfg, nb_tanks), true);
         collector->on_transition(
-            torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+            torch::randn({nb_tanks, 1}),
+            AimPotentials{torch::zeros({nb_tanks}), torch::zeros({nb_tanks})},
+            torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
         trainer->step();
     }
 

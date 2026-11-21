@@ -411,3 +411,81 @@ TEST_F(RewardTest, ZeroRewardWithEmptyTankList) {
     // there is no enemy to sample: nothing is paid
     ASSERT_FLOAT_EQ(reward, 0.f);
 }
+
+class AimPotentialTest : public RewardTest {
+protected:
+    std::shared_ptr<EnemyTank> spawn(const std::string &name, const glm::vec3 pos) {
+        return tank_factory->make_enemy_tank(file_reader, name, pos, GAME_SHELL_ECONOMY);
+    }
+
+    void settle() {
+        for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+    }
+
+    static void kill(const std::shared_ptr<EnemyTank> &tank) {
+        for (const auto &item: tank->get_items())
+            if (auto *life = dynamic_cast<LifeItem *>(item.get())) {
+                life->receive_damages(
+                    {.fire_position = glm::vec3(0.f),
+                     .impact_position = glm::vec3(0.f),
+                     .damages = 1e6f});
+                break;
+            }
+        tank->on_death();
+    }
+};
+
+TEST_F(AimPotentialTest, PeaksOnACloseEnemyInTheAxis) {
+    add_ground();
+    const auto shooter = spawn("tank_a", {0.f, 5.f, 0.f});
+    const auto enemy = spawn("tank_b", {0.f, 5.f, 30.f});
+    settle();
+
+    ASSERT_FLOAT_EQ(shooter->get_aim_potential({shooter}), 0.f);
+
+    const float potential = shooter->get_aim_potential({shooter, enemy});
+    ASSERT_GT(potential, 1.4f);
+    ASSERT_LE(potential, 1.f + AIM_BEARING_WEIGHT);
+}
+
+TEST_F(AimPotentialTest, SlopesTowardAnEnemyOnTheFlank) {
+    add_ground();
+    const auto shooter = spawn("tank_a", {0.f, 5.f, 0.f});
+    const auto flank = spawn("tank_b", {30.f, 5.f, 0.f});
+    const auto quarter = spawn("tank_c", {21.2f, 5.f, 21.2f});
+    const auto behind = spawn("tank_d", {0.f, 5.f, -30.f});
+    settle();
+
+    const float on_flank = shooter->get_aim_potential({shooter, flank});
+    ASSERT_NEAR(on_flank, 0.5f * AIM_BEARING_WEIGHT, 0.1f);
+    ASSERT_GT(shooter->get_aim_potential({shooter, quarter}), on_flank + 0.15f);
+    ASSERT_LT(shooter->get_aim_potential({shooter, behind}), 0.1f);
+}
+
+TEST_F(AimPotentialTest, FollowsTheMostUrgentEnemy) {
+    add_ground();
+    const auto shooter = spawn("tank_a", {0.f, 5.f, 0.f});
+    const auto near_flank = spawn("tank_b", {40.f, 5.f, 0.f});
+    const auto far_axis = spawn("tank_c", {0.f, 5.f, 300.f});
+    settle();
+
+    const float near_potential = shooter->get_aim_potential({shooter, near_flank});
+    const float far_potential = shooter->get_aim_potential({shooter, far_axis});
+
+    ASSERT_GT(near_potential, far_potential);
+    ASSERT_FLOAT_EQ(shooter->get_aim_potential({shooter, near_flank, far_axis}), near_potential);
+}
+
+TEST_F(AimPotentialTest, IgnoresWrecks) {
+    add_ground();
+    const auto shooter = spawn("tank_a", {0.f, 5.f, 0.f});
+    const auto enemy = spawn("tank_b", {0.f, 5.f, 30.f});
+    settle();
+
+    kill(enemy);
+    ASSERT_FLOAT_EQ(shooter->get_aim_potential({shooter, enemy}), 0.f);
+
+    const auto other = spawn("tank_c", {30.f, 5.f, 0.f});
+    kill(shooter);
+    ASSERT_FLOAT_EQ(shooter->get_aim_potential({shooter, other}), 0.f);
+}

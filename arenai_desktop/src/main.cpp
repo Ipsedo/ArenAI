@@ -2,8 +2,12 @@
 
 #include <argparse/argparse.hpp>
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #include <windows.h>
+#elif defined(__APPLE__)
+#include <vector>
+
+#include <mach-o/dyld.h>
 #endif
 
 #include "./game.h"
@@ -12,10 +16,18 @@ using namespace arenai;
 using namespace arenai::desktop;
 
 static std::filesystem::path executable_dir(const char *argv0) {
-#ifdef _WIN32
+#if defined(_WIN32)
     wchar_t buffer[MAX_PATH];
     if (GetModuleFileNameW(nullptr, buffer, MAX_PATH) > 0)
         return std::filesystem::path(buffer).parent_path();
+#elif defined(__APPLE__)
+    uint32_t size = 0;
+    _NSGetExecutablePath(nullptr, &size);
+    std::vector<char> buffer(size);
+    std::error_code error;
+    if (_NSGetExecutablePath(buffer.data(), &size) == 0)
+        if (const auto exe_path = std::filesystem::canonical(buffer.data(), error); !error)
+            return exe_path.parent_path();
 #else
     std::error_code error;
     const auto exe_path = std::filesystem::read_symlink("/proc/self/exe", error);

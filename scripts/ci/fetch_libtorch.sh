@@ -36,6 +36,13 @@ case "$(uname -m)" in
         unzip -q "$TMP/torch.whl" -d "$TMP/wheel" "torch/*"
         cp -r "$TMP/wheel/torch/." "$DEST"
         ;;
+    arm64)
+        # macOS
+        curl -fL -o "$TMP/libtorch.zip" \
+            "https://download.pytorch.org/libtorch/cpu/libtorch-macos-arm64-${VERSION}.zip"
+        unzip -q "$TMP/libtorch.zip" -d "$TMP"
+        cp -R "$TMP/libtorch/." "$DEST"
+        ;;
     *)
         echo "unsupported architecture: $(uname -m)" >&2
         exit 1

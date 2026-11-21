@@ -253,8 +253,74 @@ jobs:
           path: dist/*.zip
           if-no-files-found: error
 
+  # experimental target: a failure only leaves the macOS zip out of the release
+  package-macos:
+    needs: release-gate
+    if: needs.release-gate.outputs.should_release == 'true'
+    # oldest arm64 image: the bundled Homebrew libraries set the minimum macOS
+    runs-on: macos-14
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select the latest Xcode
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+
+      - name: Install dependencies
+        run: >
+          brew install glfw glm freetype glslang googletest
+          vulkan-headers vulkan-loader molten-vk dylibbundler
+
+      - name: Cache LibTorch
+        uses: actions/cache@v4
+        with:
+          path: ~/libtorch
+          key: libtorch-cpu-${{ env.LIBTORCH_VERSION }}-macos-arm64
+
+      - name: Download LibTorch (CPU)
+        run: scripts/ci/fetch_libtorch.sh "$LIBTORCH_VERSION" "$HOME/libtorch"
+
+      - name: Configure
+        run: >
+          cmake -S . -B build
+          -DCMAKE_BUILD_TYPE=Release
+          -DLIBTORCH_PATH="$HOME/libtorch"
+          -DARENAI_PORTABLE_RPATH=ON
+
+      - name: Build
+        run: >
+          cmake --build build -j"$(sysctl -n hw.ncpu)"
+          --target arenai_desktop arenai_agent_train
+
+      - name: Package
+        run: >
+          scripts/ci/package_macos.sh build
+          "${{ needs.release-gate.outputs.version }}" "$HOME/libtorch" dist
+
+      # with build tree, libtorch and Homebrew libraries gone, only the bundle can satisfy dyld
+      - name: Verify the bundle resolves on its own
+        run: |
+          mkdir /tmp/verify
+          unzip -q dist/*.zip -d /tmp/verify
+          mv "$HOME/libtorch" "$HOME/libtorch.away"
+          mv build build.away
+          brew uninstall --ignore-dependencies glfw freetype vulkan-loader molten-vk
+          /tmp/verify/ArenAI.app/Contents/MacOS/arenai_agent_train --help
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arenai-macos-arm64
+          path: dist/*.zip
+          if-no-files-found: error
+
   publish-release:
-    needs: [release-gate, package-linux, package-windows]
+    needs: [release-gate, package-linux, package-windows, package-macos]
+    # package-macos may fail: only Linux and Windows gate the release
+    if: >-
+      !cancelled()
+      && needs.package-linux.result == 'success'
+      && needs.package-windows.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write

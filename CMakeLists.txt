@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.29)
 
+# std::format needs the macOS 13.3 libc++; must precede project()
+set(CMAKE_OSX_DEPLOYMENT_TARGET "13.3" CACHE STRING "minimum macOS version")
+
 project(arenai)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -28,7 +31,10 @@ include(ArenaiRuntimeDlls)
 # their normal build-tree RPATH only.
 option(ARENAI_PORTABLE_RPATH
         "Link with \$ORIGIN-relative RPATH for the packaged release layout" OFF)
-if (ARENAI_PORTABLE_RPATH AND UNIX)
+if (ARENAI_PORTABLE_RPATH AND APPLE)
+    # ArenAI.app layout (scripts/ci/package_macos.sh)
+    set(CMAKE_BUILD_RPATH "@executable_path/../Frameworks;@loader_path")
+elseif (ARENAI_PORTABLE_RPATH AND UNIX)
     # $ORIGIN/lib: executable at the zip root next to lib/
     # $ORIGIN: the bundled libraries resolving each other inside lib/
     set(CMAKE_BUILD_RPATH "$ORIGIN/lib;$ORIGIN")

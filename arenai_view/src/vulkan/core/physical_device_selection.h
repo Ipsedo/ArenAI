@@ -25,6 +25,8 @@ namespace arenai::view {
     PhysicalDeviceChoice
     pick_physical_device(const VkInstance &instance, const DeviceCriteria &criteria);
 
+    bool has_extension(const VkPhysicalDevice &device, const char *name);
+
     std::vector<std::string> list_device_names(const VkInstance &instance);
 
 }// namespace arenai::view

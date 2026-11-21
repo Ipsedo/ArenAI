@@ -66,6 +66,18 @@ cd C:\Users\MyName\path\to\ArenAI\
 .\build_windows.ps1
 ```
 
+### macOS
+
+There is no local build for macOS yet : use the `arenai-<version>_macos-arm64.zip` archive of a [release](https://github.com/Ipsedo/ArenAI/releases) (Apple Silicon, experimental).
+
+The application is not signed with an Apple developer account, so macOS blocks it once downloaded.
+Unzip the archive, then open a Terminal in the folder containing `ArenAI.app` and remove the quarantine flag :
+```bash
+xattr -dr com.apple.quarantine ArenAI.app
+```
+
+You can now launch `ArenAI.app` with a double click.
+
 ## Known issues
 
 Any bug, build failed, etc. reports will be really appreciated.

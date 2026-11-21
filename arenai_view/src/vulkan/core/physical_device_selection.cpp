@@ -34,16 +34,6 @@ namespace arenai::view {
             return std::nullopt;
         }
 
-        bool has_extension(const VkPhysicalDevice &device, const char *name) {
-            uint32_t count = 0;
-            vkEnumerateDeviceExtensionProperties(device, nullptr, &count, nullptr);
-            std::vector<VkExtensionProperties> extensions(count);
-            vkEnumerateDeviceExtensionProperties(device, nullptr, &count, extensions.data());
-            return std::ranges::any_of(extensions, [name](const VkExtensionProperties &extension) {
-                return std::strcmp(extension.extensionName, name) == 0;
-            });
-        }
-
         bool supports_dynamic_rendering(const VkPhysicalDevice &device) {
             VkPhysicalDeviceDynamicRenderingFeatures dynamic_rendering{};
             dynamic_rendering.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
@@ -102,6 +92,16 @@ namespace arenai::view {
         }
 
     }// namespace
+
+    bool has_extension(const VkPhysicalDevice &device, const char *name) {
+        uint32_t count = 0;
+        vkEnumerateDeviceExtensionProperties(device, nullptr, &count, nullptr);
+        std::vector<VkExtensionProperties> extensions(count);
+        vkEnumerateDeviceExtensionProperties(device, nullptr, &count, extensions.data());
+        return std::ranges::any_of(extensions, [name](const VkExtensionProperties &extension) {
+            return std::strcmp(extension.extensionName, name) == 0;
+        });
+    }
 
     PhysicalDeviceChoice
     pick_physical_device(const VkInstance &instance, const DeviceCriteria &criteria) {

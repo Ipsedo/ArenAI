@@ -2,10 +2,10 @@
 
 #include <algorithm>
 #include <array>
-#include <charconv>
 #include <cmath>
+#include <cstdlib>
+#include <string>
 #include <string_view>
-#include <system_error>
 
 namespace arenai::desktop::gui {
 
@@ -42,13 +42,14 @@ namespace arenai::desktop::gui {
 
     std::vector<CrystalsDecorator::Instance>
     CrystalsDecorator::parse(const Rml::String &instances) {
-        // std::from_chars: locale-independent, like the facets parser
         const auto read_float = [](std::string_view text, float &value) -> std::string_view {
             while (!text.empty() && text.front() == ' ') text.remove_prefix(1);
-            const auto [end, error] =
-                std::from_chars(text.data(), text.data() + text.size(), value);
-            return error == std::errc() ? text.substr(static_cast<size_t>(end - text.data()))
-                                        : std::string_view();
+            const std::string buffer(text);
+            char *end = nullptr;
+            const float number = std::strtof(buffer.c_str(), &end);
+            if (end == buffer.c_str()) return std::string_view();
+            value = number;
+            return text.substr(static_cast<size_t>(end - buffer.c_str()));
         };
 
         std::vector<Instance> parsed;

@@ -9,6 +9,10 @@
 
 namespace arenai::view {
 
+    namespace {
+        constexpr auto PORTABILITY_SUBSET_EXTENSION = "VK_KHR_portability_subset";
+    }// namespace
+
     VulkanDevice::VulkanDevice(
         std::shared_ptr<VulkanInstance> instance, const DeviceCriteria &criteria)
         : instance_(std::move(instance)), physical_(VK_NULL_HANDLE), properties_(),
@@ -30,6 +34,9 @@ namespace arenai::view {
         std::vector<const char *> extensions;
         if (criteria.surface != VK_NULL_HANDLE)
             extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+        // mandatory whenever the driver advertises it (MoltenVK)
+        if (has_extension(physical_, PORTABILITY_SUBSET_EXTENSION))
+            extensions.push_back(PORTABILITY_SUBSET_EXTENSION);
 
         // dynamic rendering: core in 1.3, extension + feature struct on 1.2
         VkPhysicalDeviceVulkan13Features features13{};

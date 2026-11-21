@@ -1,10 +1,9 @@
 {
     "agent": {
-        "actor_batch_size": 512,
+        "actor_batch_size": 2400,
         "actor_epochs": 4,
         "actor_gpu_batch_size": 512,
         "actor_learning_rate": 9.999999747378752e-05,
-        "aim_gae_lambda": 0.0,
         "alpha_learning_rate": 0.0003000000142492354,
         "chunk_size": 30,
         "clip_epsilon": 0.20000000298023224,
@@ -78,8 +77,8 @@
         "curriculum_boundary_proba": 0.5,
         "curriculum_delta": 50.0,
         "curriculum_probe_window": 8,
-        "curriculum_ratio_high": 0.07999999821186066,
-        "curriculum_ratio_low": 0.05000000074505806,
+        "curriculum_ratio_high": 0.5,
+        "curriculum_ratio_low": 0.30000001192092896,
         "final_spawn_height": 1000.0,
         "final_spawn_width": 1000.0,
         "initial_spawn_height": 250.0,
@@ -97,8 +96,8 @@
         "cuda": true,
         "max_episode_steps": 5400,
         "nb_episodes": 30000,
-        "output_folder": "./outputs/train_430_ppo_liquid",
-        "resources_folder": "./resources",
+        "output_folder": "./outputs/train_545_ppo_liquid",
+        "resources_folder": "/home/samuel/CLionProjects/ArenAI/resources",
         "save_every": 27000
     }
 }

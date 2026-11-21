@@ -96,7 +96,7 @@
         "cuda": true,
         "max_episode_steps": 5400,
         "nb_episodes": 30000,
-        "output_folder": "./outputs/train_545_ppo_liquid",
+        "output_folder": "./outputs/train_546_ppo_liquid",
         "resources_folder": "/home/samuel/CLionProjects/ArenAI/resources",
         "save_every": 27000
     }

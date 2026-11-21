@@ -35,7 +35,7 @@ namespace arenai::agent {
         int actor_epochs = 4;
         int critic_epochs = 8;
         int rollout_size = 30 * 10;
-        int actor_batch_size = 512;
+        int actor_batch_size = 2400;
         int actor_gpu_batch_size = 512;
         int critic_batch_size = 512;
         int critic_gpu_batch_size = 512;

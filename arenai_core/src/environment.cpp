@@ -25,7 +25,8 @@ namespace arenai::core {
           nb_reset_frames(static_cast<int>(4.f / wanted_frequency)), spawn_width(0.f),
           spawn_height(0.f), drawing_started_(false),
           arena_terrain_{
-              "heightmap/heightmap6.png", glm::vec3(0., 40., 0.), glm::vec3(10., 200., 10.)},
+              "heightmap/heightmap6.png", glm::vec3(0., 40., 0.), glm::vec3(10., 200., 10.),
+              2000.f},
           graphics_backend(graphics_backend), gl_context(graphics_backend->render_context()),
           rng(dev()), file_reader(file_reader) {}
 
@@ -52,6 +53,11 @@ namespace arenai::core {
         const float time_delta, const std::vector<Action> &actions) {
         // the parts read the aim axes as a rate, or reach the aim set point when one is given
         for (int i = 0; i < tanks.size(); i++) {
+            if (!tanks[i]->is_dead()
+                && !arena_terrain_.contains(
+                    glm::vec3(tanks[i]->get_chassis()->get_model_matrix()[3])))
+                tanks[i]->leave_arena();
+
             if (tanks[i]->is_dead()) tanks[i]->on_death();
             else
                 for (const auto &controller: tanks[i]->get_controllers())
@@ -241,7 +247,8 @@ namespace arenai::core {
         for (const auto &item: items)
             curr_model_matrices.emplace_back(item->get_name(), item->get_model_matrix());
 
-        curr_model_matrices.emplace_back("cubemap", glm::scale(glm::mat4(1.f), glm::vec3(2000.f)));
+        curr_model_matrices.emplace_back(
+            "cubemap", glm::scale(glm::mat4(1.f), glm::vec3(arena_terrain_.half_extent)));
 
         return curr_model_matrices;
     }

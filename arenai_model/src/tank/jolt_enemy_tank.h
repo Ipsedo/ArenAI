@@ -49,6 +49,7 @@ namespace arenai::model {
         bool consume_has_fire() override;
 
         void on_death() override;
+        void leave_arena() override;
 
         bool is_out_of_shells() const override;
         bool has_shells_in_flight() const override;
@@ -77,6 +78,7 @@ namespace arenai::model {
     private:
         int max_frames_upside_down;
         int curr_frame_upside_down;
+        bool has_left_arena;
 
         int initial_nb_shells;
         int nb_shells;
@@ -99,6 +101,12 @@ namespace arenai::model {
 
         // shells fired since the last get_reward(), reported there once
         mutable int nb_fired_to_pay;
+
+        int hit_direction_frames;
+        mutable int frames_since_hit;
+        mutable glm::vec3 last_shooter_pos;
+
+        glm::vec3 get_hit_direction() const;
 
         void on_shell_fired(const std::shared_ptr<ShellItem> &shell);
         void

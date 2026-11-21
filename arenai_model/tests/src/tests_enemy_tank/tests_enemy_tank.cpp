@@ -185,6 +185,29 @@ TEST_F(EnemyTankTest, SuicideDetectionWhenFlipped) {
     ASSERT_FALSE(shared_tank->is_dead()) << "tank should be alive initially";
 }
 
+TEST_F(EnemyTankTest, LeavingArenaIsSuicideUntilRespawn) {
+    add_ground();
+    auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 0.f, 0.f}, GAME_SHELL_ECONOMY);
+
+    engine->step(1.f / 60.f);
+
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
+
+    shared_tank->leave_arena();
+
+    ASSERT_TRUE(shared_tank->is_suicide());
+    ASSERT_TRUE(shared_tank->is_dead());
+
+    shared_tank->get_reward();
+    ASSERT_FLOAT_EQ(shared_tank->get_last_reward_detail().death, -1.f);
+
+    shared_tank->respawn({0.f, 2.f, 0.f});
+
+    ASSERT_FALSE(shared_tank->is_suicide());
+    ASSERT_FALSE(shared_tank->is_dead());
+}
+
 TEST_F(EnemyTankTest, HasHitOtherTankResetsAfterCall) {
     add_ground();
     auto tank_a =

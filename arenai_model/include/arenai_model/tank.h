@@ -80,6 +80,8 @@ namespace arenai::model {
 
         virtual void on_death() = 0;
 
+        virtual void leave_arena() = 0;
+
         virtual bool is_out_of_shells() const = 0;
         virtual bool has_shells_in_flight() const = 0;
 

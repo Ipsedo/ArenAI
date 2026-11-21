@@ -8,6 +8,10 @@ fonctionnalité ou une option, changer un comportement par défaut, ou restructu
 En cas de doute ou d'alternative de design : **poser la question d'abord**, proposer les
 options, attendre la réponse.
 
+**Ces questions se posent toujours en interactif** (outil `AskUserQuestion`, une question par
+choix, options concrètes, la recommandée en premier), jamais en prose en fin de réponse. Cela
+vaut pour tout changement de comportement ou de code qui relève d'un choix.
+
 **Tout ce qui change la façon dont le problème est posé se valide pièce par pièce, avant le
 code** : nouveau réseau ou encodeur, nouvelle tête, nouvelle perte, nouveau signal de crédit ou
 d'avantage, nouvelle entrée, changement de reward. Donner d'abord le détail technique (où ça se

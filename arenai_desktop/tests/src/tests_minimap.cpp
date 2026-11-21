@@ -16,7 +16,7 @@ using namespace arenai::desktop;
 namespace {
 
     MinimapProjection arena_projection() {
-        return {glm::vec2(0.f), Minimap::HALF_EXTENT, Minimap::VIEW_HALF_SIZE};
+        return {glm::vec2(0.f), 2000.f, Minimap::VIEW_HALF_SIZE};
     }
 
     TankPose pose(const float x, const float z, const bool alive = true) {

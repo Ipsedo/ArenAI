@@ -361,3 +361,29 @@ TEST_F(EnvironmentTest, RespawnTankLandsInSpawnBoxAboveTerrain) {
     ASSERT_TRUE(ground.has_value());
     EXPECT_GT(settled_pos.y, ground->y);
 }
+
+TEST_F(EnvironmentTest, TankLeavingArenaDiesAsSuicide) {
+    constexpr int nb_tanks = 2;
+    constexpr float frequency = 1.f / 60.f;
+
+    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false);
+    env.reset(200.f, 200.f, model::GAME_SHELL_ECONOMY);
+
+    const std::vector<controller::user_input> no_input(
+        nb_tanks, {.left_joystick = {.x = 0.f, .y = 0.f},
+                   .right_joystick = {.x = 0.f, .y = 0.f},
+                   .fire_button = {false}});
+
+    env.move_tank(0, {2100.f, 300.f, 0.f});
+    const auto results = env.step(frequency, no_input);
+    const bool is_suicide_out = env.is_suicide(0);
+    const bool is_suicide_in = env.is_suicide(1);
+    env.stop_drawing();
+
+    EXPECT_TRUE(std::get<2>(results[0]));
+    EXPECT_FLOAT_EQ(std::get<1>(results[0]), -1.f);
+    EXPECT_TRUE(is_suicide_out);
+
+    EXPECT_FALSE(std::get<2>(results[1]));
+    EXPECT_FALSE(is_suicide_in);
+}

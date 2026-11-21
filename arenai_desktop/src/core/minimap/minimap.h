@@ -24,8 +24,7 @@ namespace arenai::desktop {
             const TankPose &player, glm::vec3 view_forward,
             const std::vector<TankPose> &enemies) const;
 
-        // world units: the rendered terrain's half side, the shown window's
-        static constexpr float HALF_EXTENT = 2000.f;
+        // world units: the shown window's half side
         static constexpr float VIEW_HALF_SIZE = 400.f;
         static constexpr int TEXELS_PER_CELL = 4;
         // frame fraction kept between an out-of-range blip and the border

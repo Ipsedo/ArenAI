@@ -4,6 +4,7 @@
 
 #include <arenai_controller/inputs.h>
 #include <arenai_model/constants.h>
+#include <arenai_model/item.h>
 #include <arenai_model/shell_economy.h>
 #include <arenai_model_tests/tests_proprioception/tests_proprioception.h>
 
@@ -191,4 +192,68 @@ TEST_F(ProprioceptionTest, ShellAndCooldownRatiosFollowAShot) {
     }
 
     ASSERT_FLOAT_EQ(shared_tank->get_cooldown_ratio(), 1.f) << "the cooldown is over";
+}
+
+TEST_F(ProprioceptionTest, HitDirectionPointsToShooterAndDecays) {
+    add_ground();
+    auto tank =
+        tank_factory->make_enemy_tank(file_reader, "tank_a", {0.f, 5.f, 0.f}, GAME_SHELL_ECONOMY);
+
+    for (int i = 0; i < 300; i++) engine->step(1.f / 60.f);
+
+    const std::shared_ptr<EnemyTank> shared_tank(tank.release());
+    const std::vector tanks{shared_tank};
+
+    const auto hit_direction = [&] {
+        const auto proprio = shared_tank->get_proprioception();
+        const int i = ENEMY_PROPRIOCEPTION_SIZE - 3;
+        return glm::vec3(proprio[i], proprio[i + 1], proprio[i + 2]);
+    };
+
+    shared_tank->tick(tanks);
+    shared_tank->get_reward();
+    ASSERT_FLOAT_EQ(glm::length(hit_direction()), 0.f) << "no hit received yet";
+
+    const auto chassis_model_matrix = shared_tank->get_chassis()->get_model_matrix();
+    const auto chassis_pos = glm::vec3(chassis_model_matrix[3]);
+    const auto chassis_forward = glm::normalize(glm::vec3(chassis_model_matrix[2]));
+
+    auto *chassis_life = dynamic_cast<LifeItem *>(shared_tank->get_chassis().get());
+    ASSERT_NE(chassis_life, nullptr);
+    chassis_life->receive_damages(
+        {.fire_position = chassis_pos - 50.f * chassis_forward,
+         .impact_position = chassis_pos,
+         .damages = 1.f});
+
+    shared_tank->tick(tanks);
+    shared_tank->get_reward();
+
+    const auto fresh = hit_direction();
+    EXPECT_NEAR(glm::length(fresh), 1.f, 1e-3f);
+    EXPECT_NEAR(fresh.z, -1.f, 1e-2f) << "the shooter is behind the chassis";
+
+    for (int i = 0; i < 60; i++) {
+        engine->step(1.f / 60.f);
+        shared_tank->tick(tanks);
+        shared_tank->get_reward();
+    }
+    EXPECT_NEAR(glm::length(hit_direction()), 0.5f, 0.02f);
+
+    for (int i = 0; i < 60; i++) {
+        engine->step(1.f / 60.f);
+        shared_tank->tick(tanks);
+        shared_tank->get_reward();
+    }
+    EXPECT_FLOAT_EQ(glm::length(hit_direction()), 0.f) << "the signal expires after 2 s";
+
+    chassis_life->receive_damages(
+        {.fire_position = chassis_pos - 50.f * chassis_forward,
+         .impact_position = chassis_pos,
+         .damages = 1.f});
+    shared_tank->tick(tanks);
+    shared_tank->get_reward();
+    ASSERT_GT(glm::length(hit_direction()), 0.9f);
+
+    shared_tank->respawn(chassis_pos);
+    EXPECT_FLOAT_EQ(glm::length(hit_direction()), 0.f) << "a respawn clears the signal";
 }

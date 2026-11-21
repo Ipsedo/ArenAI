@@ -85,9 +85,14 @@ namespace arenai::desktop {
                 return false;
             });
 
-        if (is_any_item_dead) player_tank->destroy();
+        const bool is_out_of_arena =
+            !arena_terrain().contains(glm::vec3(player_tank->get_chassis()->get_model_matrix()[3]));
 
-        return is_any_item_dead;
+        const bool is_dead = is_any_item_dead || is_out_of_arena;
+
+        if (is_dead) player_tank->destroy();
+
+        return is_dead;
     }
 
     int DesktopGameEnvironment::get_score() const { return player_tank->get_score(); }

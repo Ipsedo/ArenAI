@@ -21,6 +21,18 @@ public:
         });
     }
 
+    void move_tank(const int index, const glm::vec3 position) {
+        apply_on_enemies<int>([&](const auto &tanks) {
+            tanks[index]->respawn(position);
+            return 0;
+        });
+    }
+
+    bool is_suicide(const int index) {
+        return apply_on_enemies<bool>(
+            [index](const auto &tanks) { return tanks[index]->is_suicide(); });
+    }
+
     bool out_of_shells(const int index) {
         return apply_on_enemies<bool>(
             [index](const auto &tanks) { return tanks[index]->is_out_of_shells(); });

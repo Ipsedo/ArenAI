@@ -74,13 +74,16 @@ namespace arenai::model {
                 return can_fire;
             }),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
-          curr_frame_upside_down(0), initial_nb_shells(shell_economy.initial_shells),
-          nb_shells(initial_nb_shells), max_shells(shell_economy.max_shells),
+          curr_frame_upside_down(0), has_left_arena(false),
+          initial_nb_shells(shell_economy.initial_shells), nb_shells(initial_nb_shells),
+          max_shells(shell_economy.max_shells),
           fire_cooldown_frames(static_cast<int>(1.f / 6.f / wanted_frame_frequency)),
           curr_cooldown_frame(fire_cooldown_frames),
           shells_recharged_per_hit(shell_economy.shells_per_hit), is_dead_already_triggered(false),
           has_hit(false), has_kill(false), has_fired(false), killed_nb(0), hit_nb(0),
-          nb_fired_to_pay(0) {}
+          nb_fired_to_pay(0),
+          hit_direction_frames(static_cast<int>(HIT_DIRECTION_SECONDS / wanted_frame_frequency)),
+          frames_since_hit(hit_direction_frames), last_shooter_pos(0.f) {}
 
     int JoltEnemyTank::get_score() const { return killed_nb * 10 + hit_nb; }
 
@@ -189,7 +192,7 @@ namespace arenai::model {
     float JoltEnemyTank::get_reward() const {
         RewardDetail detail;
 
-        // 1. death penalty: killed or flipped over, the two ways a tank ends before the episode
+        // 1. death penalty: killed, flipped over or out of the arena
         if (is_dead()) detail.death = -DEATH_PENALTY;
 
         // 2. landed shells: the health fraction they removed, and the kill
@@ -219,8 +222,11 @@ namespace arenai::model {
 
         // 4. damage received: the health fraction lost on each part
         for (const auto life_item: get_life_items())
-            for (const auto &impact: life_item->consume_hits_received())
+            for (const auto &impact: life_item->consume_hits_received()) {
                 detail.received -= DAMAGE_REWARD * impact.damages / life_item->initial_health();
+                last_shooter_pos = impact.fire_position;
+                frames_since_hit = 0;
+            }
 
         // 5. total reward, kept split for the metrics
         last_reward_detail = detail;
@@ -265,6 +271,9 @@ namespace arenai::model {
 
         // 3. fire cooldown
         curr_cooldown_frame = std::min(fire_cooldown_frames, curr_cooldown_frame + 1);
+
+        // 4. hit direction decay
+        frames_since_hit = std::min(hit_direction_frames, frames_since_hit + 1);
     }
 
     void JoltEnemyTank::on_shell_fired(const std::shared_ptr<ShellItem> &shell) {
@@ -363,8 +372,10 @@ namespace arenai::model {
     }
 
     bool JoltEnemyTank::is_suicide() const {
-        return curr_frame_upside_down > max_frames_upside_down;
+        return has_left_arena || curr_frame_upside_down > max_frames_upside_down;
     }
+
+    void JoltEnemyTank::leave_arena() { has_left_arena = true; }
 
     void JoltEnemyTank::on_death() {
         if (is_dead() && !is_dead_already_triggered) {
@@ -389,11 +400,33 @@ namespace arenai::model {
         restore_life_items();
 
         curr_frame_upside_down = 0;
+        has_left_arena = false;
         nb_shells = initial_nb_shells;
         curr_cooldown_frame = fire_cooldown_frames;
         tracked_shells.clear();
         nb_fired_to_pay = 0;
+        frames_since_hit = hit_direction_frames;
     }
+
+    glm::vec3 JoltEnemyTank::get_hit_direction() const {
+        const auto chassis_model_matrix = get_chassis()->get_model_matrix();
+        const auto to_shooter = last_shooter_pos - glm::vec3(chassis_model_matrix[3]);
+        const float distance = glm::length(to_shooter);
+
+        if (frames_since_hit >= hit_direction_frames || distance < 1e-3f) return glm::vec3(0.f);
+
+        const float intensity =
+            1.f - static_cast<float>(frames_since_hit) / static_cast<float>(hit_direction_frames);
+
+        // chassis frame
+        const glm::vec3 local(
+            glm::dot(to_shooter, glm::normalize(glm::vec3(chassis_model_matrix[0]))),
+            glm::dot(to_shooter, glm::normalize(glm::vec3(chassis_model_matrix[1]))),
+            glm::dot(to_shooter, glm::normalize(glm::vec3(chassis_model_matrix[2]))));
+
+        return local * (intensity / distance);
+    }
+
     std::vector<float> JoltEnemyTank::get_proprioception() const {
         const auto items = get_items();
 
@@ -434,6 +467,9 @@ namespace arenai::model {
         }
 
         for (const auto &life_item: get_life_items()) result.push_back(life_item->health_ratio());
+
+        const auto hit_direction = get_hit_direction();
+        result.insert(result.end(), {hit_direction.x, hit_direction.y, hit_direction.z});
 
         return result;
     }

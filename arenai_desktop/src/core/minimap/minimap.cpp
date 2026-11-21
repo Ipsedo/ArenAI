@@ -64,9 +64,9 @@ namespace arenai::desktop {
             terrain.scale);
         return {
             MinimapProjection(
-                glm::vec2(terrain.position.x, terrain.position.z), Minimap::HALF_EXTENT,
+                glm::vec2(terrain.position.x, terrain.position.z), terrain.half_extent,
                 Minimap::VIEW_HALF_SIZE),
-            relief.render(Minimap::HALF_EXTENT, Minimap::TEXELS_PER_CELL)};
+            relief.render(terrain.half_extent, Minimap::TEXELS_PER_CELL)};
     }
 
 }// namespace arenai::desktop

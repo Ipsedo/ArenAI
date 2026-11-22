@@ -24,7 +24,6 @@ LiquidPpoInputStep LiquidPpoRolloutBufferTest::make_step(
         .continuous_log_prob = torch::randn({NB_TANKS, 1}),
         .discrete_log_prob = torch::randn({NB_TANKS, 1}),
         .reward = torch::randn({NB_TANKS, 1}),
-        .aim_potentials = AimPotentials{torch::zeros({NB_TANKS}), torch::zeros({NB_TANKS})},
         .done = done,
         .truncated = torch::zeros({NB_TANKS, 1}),
         .actor_hidden = torch::randn({NB_TANKS, NEURON_NUMBER}),

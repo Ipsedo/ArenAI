@@ -101,22 +101,16 @@ TEST_F(LiquidPpoTrainingTest, HiddenStateAdvancesAndResetsAcrossEpisodes) {
     // first episode: two steps
     agent->act(make_state(cfg, nb_tanks), true);
     collector->on_transition(
-        torch::randn({nb_tanks, 1}),
-        AimPotentials{torch::zeros({nb_tanks}), torch::zeros({nb_tanks})},
-        torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+        torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
     agent->act(make_state(cfg, nb_tanks), true);
     collector->on_transition(
-        torch::randn({nb_tanks, 1}),
-        AimPotentials{torch::zeros({nb_tanks}), torch::zeros({nb_tanks})},
-        torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+        torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
     collector->on_episode_end(make_state(cfg, nb_tanks));
 
     // second episode: one step
     agent->act(make_state(cfg, nb_tanks), true);
     collector->on_transition(
-        torch::randn({nb_tanks, 1}),
-        AimPotentials{torch::zeros({nb_tanks}), torch::zeros({nb_tanks})},
-        torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+        torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
     collector->on_episode_end(make_state(cfg, nb_tanks));
 
     const auto rollout = rollout_buffer->get_rollout();
@@ -168,9 +162,7 @@ TEST_F(LiquidPpoTrainingTest, TrainingUpdatesActorParameters) {
 
         agent->act(make_state(cfg, nb_tanks), true);
         collector->on_transition(
-            torch::randn({nb_tanks, 1}),
-            AimPotentials{torch::zeros({nb_tanks}), torch::zeros({nb_tanks})},
-            torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+            torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
         trainer->step();
     }
 
@@ -233,9 +225,7 @@ TEST_F(LiquidPpoTrainingTest, MaskedFireReceivesNoUpdate) {
 
         agent->act(state, true);
         collector->on_transition(
-            torch::randn({nb_tanks, 1}),
-            AimPotentials{torch::zeros({nb_tanks}), torch::zeros({nb_tanks})},
-            torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+            torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
         trainer->step();
     }
 
@@ -284,9 +274,7 @@ TEST_F(LiquidPpoTrainingTest, TrainedCheckpointReloads) {
 
         agent->act(make_state(cfg, nb_tanks), true);
         collector->on_transition(
-            torch::randn({nb_tanks, 1}),
-            AimPotentials{torch::zeros({nb_tanks}), torch::zeros({nb_tanks})},
-            torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+            torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
         trainer->step();
     }
 

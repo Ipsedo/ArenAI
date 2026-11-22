@@ -4,7 +4,6 @@
 #include <cmath>
 #include <iterator>
 #include <limits>
-#include <numbers>
 #include <vector>
 
 #include <arenai_model/constants.h>
@@ -16,43 +15,6 @@
 
 using namespace arenai;
 using namespace arenai::model;
-
-namespace {
-    glm::vec3 center_of(const std::shared_ptr<EnemyTank> &tank) {
-        return glm::vec3(tank->get_chassis()->get_model_matrix() * glm::vec4(glm::vec3(0.f), 1.f));
-    }
-
-    std::vector<JPH::BodyID> body_ids_of(const std::vector<std::shared_ptr<EnemyTank>> &tanks) {
-        std::vector<JPH::BodyID> ids;
-        for (const auto &tank: tanks)
-            for (const auto &item: tank->get_items())
-                if (auto *jolt_item = dynamic_cast<JoltItem *>(item.get()))
-                    ids.push_back(jolt_item->get_body()->GetID());
-        return ids;
-    }
-
-    float aim_bell(const std::vector<glm::vec3> &trajectory, const glm::vec3 &target) {
-        float miss = std::numeric_limits<float>::infinity();
-        for (size_t i = 1; i < trajectory.size(); i++) {
-            glm::vec3 closest;
-            miss = std::min(
-                miss, distance_to_segment(trajectory[i - 1], trajectory[i], target, closest));
-        }
-
-        const float ratio = miss / AIM_TARGET_RADIUS;
-        return 1.f / (1.f + ratio * ratio);
-    }
-
-    float
-    bearing_score(const glm::vec3 &from, const glm::vec3 &direction, const glm::vec3 &target) {
-        const glm::vec2 heading(direction.x, direction.z);
-        const glm::vec2 toward(target.x - from.x, target.z - from.z);
-        if (glm::length(heading) < 1e-6f || glm::length(toward) < 1e-6f) return 0.f;
-
-        const float cosine = glm::dot(glm::normalize(heading), glm::normalize(toward));
-        return 1.f - std::acos(std::clamp(cosine, -1.f, 1.f)) / std::numbers::pi_v<float>;
-    }
-}// namespace
 
 namespace arenai::model {
 
@@ -86,61 +48,6 @@ namespace arenai::model {
           frames_since_hit(hit_direction_frames), last_shooter_pos(0.f) {}
 
     int JoltEnemyTank::get_score() const { return killed_nb * 10 + hit_nb; }
-
-    std::vector<glm::vec3> JoltEnemyTank::predict_trajectory(
-        const glm::vec3 &fire_pos, const glm::vec3 &fire_velocity,
-        const std::vector<std::shared_ptr<EnemyTank>> &tanks) const {
-        constexpr float time_step = 0.1f;
-        constexpr float max_flight_time = 20.f;
-
-        auto excluded = body_ids_of(tanks);
-        for (const auto &tracked: tracked_shells)
-            if (const auto shell = tracked.shell.lock())
-                excluded.push_back(shell->get_body()->GetID());
-
-        std::vector trajectory{fire_pos};
-        glm::vec3 pos = fire_pos;
-        glm::vec3 velocity = fire_velocity;
-
-        for (float t = 0.f; t < max_flight_time; t += time_step) {
-            const glm::vec3 next = pos + velocity * time_step
-                                   + glm::vec3(0.f, -0.5f * GRAVITY * time_step * time_step, 0.f);
-            velocity.y -= GRAVITY * time_step;
-
-            const auto ray_hit = engine.ray_test_body(pos, next, excluded);
-            pos = ray_hit ? pos + ray_hit->fraction * (next - pos) : next;
-            trajectory.push_back(pos);
-
-            if (ray_hit) break;
-        }
-
-        return trajectory;
-    }
-
-    float
-    JoltEnemyTank::get_aim_potential(const std::vector<std::shared_ptr<EnemyTank>> &tanks) const {
-        if (is_dead()) return 0.f;
-
-        const auto canon = std::dynamic_pointer_cast<CanonItem>(get_canon());
-        const auto [muzzle, direction] = canon->get_fire_pose();
-        const auto trajectory = predict_trajectory(muzzle, direction * SHELL_SPEED, tanks);
-        const auto pivot = glm::vec3(canon->get_model_matrix() * glm::vec4(glm::vec3(0.f), 1.f));
-
-        float potential = 0.f;
-        for (const auto &tank: tanks) {
-            if (tank.get() == this || tank->is_dead()) continue;
-
-            const auto target = center_of(tank);
-            const float urgency = std::min(1.f, AIM_URGENCY_DISTANCE / glm::length(target - pivot));
-
-            potential = std::max(
-                potential, urgency
-                               * (aim_bell(trajectory, target)
-                                  + AIM_BEARING_WEIGHT * bearing_score(pivot, direction, target)));
-        }
-
-        return potential;
-    }
 
     void JoltEnemyTank::update_closest_approach(
         TrackedShell &tracked, const glm::vec3 &shell_pos,

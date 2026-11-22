@@ -73,9 +73,7 @@ void PpgTrainingTest::run_env_loop(
 
         triad.agent->act(state, true);
         triad.collector->on_transition(
-            torch::randn({nb_tanks, 1}),
-            AimPotentials{torch::zeros({nb_tanks}), torch::zeros({nb_tanks})},
-            torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+            torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
         triad.trainer->step();
     }
 }
@@ -128,9 +126,7 @@ TEST_F(PpgTrainingTest, FactoryTrainingRunsWithoutError) {
 
         factory->get_agent()->act(make_state(cfg, nb_tanks), true);
         factory->get_collector()->on_transition(
-            torch::randn({nb_tanks, 1}),
-            AimPotentials{torch::zeros({nb_tanks}), torch::zeros({nb_tanks})},
-            torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
+            torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
         ASSERT_NO_THROW(factory->get_trainer()->step());
     }
 }

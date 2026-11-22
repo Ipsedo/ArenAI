@@ -4,7 +4,6 @@
 #include "../../networks/entropy.h"
 #include "../../networks/recurrent/liquid_actor.h"
 #include "../../networks/recurrent/liquid_critic.h"
-#include "../aim_credit.h"
 #include "../entropy_alphas.h"
 #include "../ppo_objective.h"
 #include "../return_scaler.h"
@@ -123,7 +122,6 @@ namespace arenai::agent {
 
         // share of the planned actor steps the KL threshold cut, once per rollout
         std::shared_ptr<AbstractMetric> skip_fraction_metric;
-        std::shared_ptr<AbstractMetric> skip_canon_metric;
 
         float gamma;
         float gae_lambda;
@@ -153,7 +151,6 @@ namespace arenai::agent {
             torch::Tensor old_continuous_log_probs;
             torch::Tensor old_discrete_log_probs;
             torch::Tensor advantages;
-            torch::Tensor aim_advantages;
             torch::Tensor returns;
             torch::Tensor valids;
             torch::Tensor actor_hiddens;
@@ -195,7 +192,8 @@ namespace arenai::agent {
             torch::Tensor discrete_mask;
             torch::Tensor ratio;
             torch::Tensor log_ratio;
-            RowKls kls;
+            // [N]
+            torch::Tensor kl;
             torch::Tensor continuous_entropy;
             torch::Tensor discrete_entropy;
             // [N, 1]
@@ -205,7 +203,7 @@ namespace arenai::agent {
             torch::Tensor discrete_bonus;
         };
 
-        ActorTerms actor_terms(const FlatRows &block, const ActiveGroups &active = {}) const;
+        ActorTerms actor_terms(const FlatRows &block) const;
 
         struct PolicyRows {
             torch::Tensor mu;
@@ -216,7 +214,7 @@ namespace arenai::agent {
 
         PolicyRows policy_rows(const FlatRows &rows, const ChunkIndex &chunks) const;
 
-        // critic pass, GAE and gun laying credit of the rollout, flattened
+        // critic pass and GAE of the rollout, flattened
         FlatRows
         rollout_rows(const LiquidPpoRollout &rollout, int64_t nb_kept_steps, torch::Device device);
 
@@ -225,14 +223,13 @@ namespace arenai::agent {
         void run_actor_epochs(const FlatRows &rows, const ChunkIndex &chunks) const;
         void run_critic_epochs(const FlatRows &rows, const ChunkIndex &chunks) const;
 
-        // batch gradient of the active groups; returns the KLs of the policy it starts from
-        GroupKls accumulate_actor_gradients(
+        // batch gradient; returns the KL of the policy it starts from
+        float accumulate_actor_gradients(
             const FlatRows &rows, const ChunkIndex &chunks,
-            const std::vector<torch::Tensor> &blocks, const ActiveGroups &active = {}) const;
+            const std::vector<torch::Tensor> &blocks) const;
 
         // accumulates a device block's share of its optimizer batch gradient; returns its row KLs
-        RowKls backward_actor(
-            const FlatRows &block, float batch_fraction, const ActiveGroups &active) const;
+        torch::Tensor backward_actor(const FlatRows &block, float batch_fraction) const;
 
         struct CriticBlock {
             torch::Tensor returns;
@@ -245,7 +242,6 @@ namespace arenai::agent {
         LiquidCriticPass evaluate_critic(const LiquidPpoRollout &rollout, torch::Device device);
         LiquidGaeResult
         compute_gae(const LiquidPpoRollout &rollout, const LiquidCriticPass &critic_pass) const;
-        torch::Tensor compute_aim_advantages(const LiquidPpoRollout &rollout) const;
 
         void set_train(bool train) const;
         void to(torch::Device device) const;

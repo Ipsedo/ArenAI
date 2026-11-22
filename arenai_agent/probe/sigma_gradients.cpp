@@ -331,8 +331,7 @@ int main(const int argc, char **argv) {
             records.push_back(std::move(record));
 
             collector->on_transition(
-                torch_step.get_rewards(), env->last_step_aim_potentials(), torch_step.get_is_done(),
-                torch_step.get_is_truncated());
+                torch_step.get_rewards(), torch_step.get_is_done(), torch_step.get_is_truncated());
 
             if (rollout_buffer->nb_complete_steps() >= static_cast<size_t>(params.rollout_size))
                 write_rollout();

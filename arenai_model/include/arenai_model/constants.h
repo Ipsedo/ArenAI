@@ -29,12 +29,6 @@ namespace arenai::model {
     constexpr float GRAVITY = 9.8f;
     constexpr float SHELL_SPEED = 250.f;
 
-    // m
-    constexpr float AIM_TARGET_RADIUS = 3.f;
-    // m
-    constexpr float AIM_URGENCY_DISTANCE = 50.f;
-    constexpr float AIM_BEARING_WEIGHT = 1.f;
-
     // s
     constexpr float HIT_DIRECTION_SECONDS = 2.f;
 

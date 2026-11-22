@@ -6,7 +6,6 @@
 
 #include <torch/torch.h>
 
-#include "../aim_credit.h"
 #include "../torch_types.h"
 
 namespace arenai::agent {
@@ -19,7 +18,6 @@ namespace arenai::agent {
         torch::Tensor continuous_log_prob;
         torch::Tensor discrete_log_prob;
         torch::Tensor reward;
-        AimPotentials aim_potentials;
         torch::Tensor done;
         // segment end that is not a death: cuts the return like a done, the tank plays on
         torch::Tensor truncated;
@@ -40,8 +38,6 @@ namespace arenai::agent {
         TorchState bootstrap_state;
         // [T, nb_tanks, 1] whether the (step, tank) pair is a live transition
         torch::Tensor valids;
-        // [T, nb_tanks]
-        AimPotentials aim_potentials;
         // [T] bool, the step closes an episode
         torch::Tensor episode_ends;
         // one per episode end, in step order

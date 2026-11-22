@@ -19,7 +19,7 @@ using namespace arenai::agent;
 namespace {
     constexpr float HIT_REWARD_SCALE = 3.f;
     constexpr float RECEIVED_REWARD_SCALE = 1.f;
-    constexpr float EMPTY_RESERVE_PENALTY = 1.f;
+    constexpr float EMPTY_RESERVE_PENALTY = 0.25f;
 }// namespace
 
 namespace arenai::agent {
@@ -56,7 +56,6 @@ namespace arenai::agent {
     TrainTankEnvironment::step(const float time_delta, const std::vector<core::Action> &actions) {
 
         already_done = done;
-        step_aim_potentials_before = aim_potentials();
 
         std::vector rewards(nb_tanks, 0.f);
         std::vector truncated(nb_tanks, false);
@@ -127,8 +126,6 @@ namespace arenai::agent {
             }
             return 0;
         });
-
-        step_aim_potentials_after = aim_potentials();
 
         for (int i = 0; i < nb_tanks; i++) {
             if (already_done[i]) continue;
@@ -213,32 +210,11 @@ namespace arenai::agent {
         nb_fires_episode = 0;
         nb_hits_episode = 0;
 
-        empty_reserve_penalty =
-            curriculum
-                ? EMPTY_RESERVE_PENALTY
-                      * std::lerp(initial_spawn_side, final_spawn_side, curriculum->upper_bound())
-                      / final_spawn_side
-                : 0.f;
+        empty_reserve_penalty = curriculum ? EMPTY_RESERVE_PENALTY : 0.f;
     }
 
     std::vector<model::RewardDetail> TrainTankEnvironment::last_step_reward_details() const {
         return step_reward_details;
-    }
-
-    AimPotentials TrainTankEnvironment::last_step_aim_potentials() const {
-        return {
-            .before = torch::tensor(step_aim_potentials_before),
-            .after = torch::tensor(step_aim_potentials_after)};
-    }
-
-    std::vector<float> TrainTankEnvironment::aim_potentials() {
-        return apply_on_enemies<std::vector<float>>(
-            [](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
-                std::vector<float> potentials;
-                potentials.reserve(tanks.size());
-                for (const auto &tank: tanks) potentials.push_back(tank->get_aim_potential(tanks));
-                return potentials;
-            });
     }
 
     std::vector<AimGeometry> TrainTankEnvironment::aim_geometry(const float view_half_yaw) {

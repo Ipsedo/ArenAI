@@ -6,7 +6,6 @@
 
 #include <torch/torch.h>
 
-#include "../aim_credit.h"
 #include "../torch_types.h"
 
 namespace arenai::agent {
@@ -19,7 +18,6 @@ namespace arenai::agent {
         torch::Tensor continuous_log_prob;
         torch::Tensor discrete_log_prob;
         torch::Tensor reward;
-        AimPotentials aim_potentials;
         torch::Tensor done;
         torch::Tensor truncated;
         // [nb_tanks, neuron_number] actor liquid state opening the step
@@ -46,8 +44,6 @@ namespace arenai::agent {
         torch::Tensor actor_hiddens;
         // [T] bool, the step opens a fresh episode
         torch::Tensor episode_starts;
-        // [T, nb_tanks]
-        AimPotentials aim_potentials;
         // [T] bool, the step closes an episode
         torch::Tensor episode_ends;
         // one per episode end, in step order

@@ -39,6 +39,20 @@ namespace arenai::agent {
         return torch::clamp_max(dones.to(torch::kFloat) + truncateds.to(torch::kFloat), 1.f);
     }
 
+    torch::Tensor with_episode_ends(const torch::Tensor &cuts, const torch::Tensor &episode_ends) {
+        return torch::clamp_max(cuts + episode_ends.to(torch::kFloat).reshape({-1, 1, 1}), 1.f);
+    }
+
+    torch::Tensor closed_next_values(
+        const torch::Tensor &next_values, const torch::Tensor &episode_ends,
+        const std::vector<torch::Tensor> &closing_values) {
+        auto closed = next_values.clone();
+        const auto end_steps = torch::nonzero(episode_ends).flatten();
+        for (int64_t e = 0; e < end_steps.size(0); e++)
+            closed[end_steps[e].item<int64_t>()] = closing_values[static_cast<size_t>(e)];
+        return closed;
+    }
+
     torch::Tensor normalized(const torch::Tensor &advantages, const torch::Tensor &valids) {
         const auto nb_valid = valids.sum().clamp_min(1.f);
         const auto mean = torch::sum(advantages * valids) / nb_valid;

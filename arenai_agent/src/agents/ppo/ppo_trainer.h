@@ -17,6 +17,8 @@ namespace arenai::agent {
         torch::Tensor values;
         // [nb_tanks, 1]
         torch::Tensor bootstrap_value;
+        // one [nb_tanks, 1] per episode end, in step order
+        std::vector<torch::Tensor> closing_values;
     };
 
     struct GaeResult {

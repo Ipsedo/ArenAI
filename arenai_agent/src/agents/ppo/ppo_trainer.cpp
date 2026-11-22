@@ -299,9 +299,15 @@ namespace arenai::agent {
         const auto bootstrap_critic =
             eval_critic(rollout.bootstrap_state.get_vision(), rollout.bootstrap_state.get_state());
 
+        std::vector<torch::Tensor> closing_values;
+        for (const auto &closing_state: rollout.closing_states)
+            closing_values.push_back(
+                eval_critic(closing_state.get_vision(), closing_state.get_state()));
+
         return {
             .values = rollout_critic.reshape({nb_steps, nb_tanks, 1}),
-            .bootstrap_value = bootstrap_critic};
+            .bootstrap_value = bootstrap_critic,
+            .closing_values = closing_values};
     }
 
     GaeResult
@@ -309,17 +315,19 @@ namespace arenai::agent {
         const auto &values = critic_pass.values;
 
         // next values are the values shifted by one step, closed by the bootstrap state
-        const auto next_values =
-            torch::cat({values.slice(0, 1), critic_pass.bootstrap_value.unsqueeze(0)}, 0);
-
-        const auto rewards = return_scaler->scale(
-            rollout.rewards, rollout.dones.logical_or(rollout.truncateds), rollout.valids);
-        const auto valids = rollout.valids.to(torch::kFloat);
+        const auto next_values = closed_next_values(
+            torch::cat({values.slice(0, 1), critic_pass.bootstrap_value.unsqueeze(0)}, 0),
+            rollout.episode_ends, critic_pass.closing_values);
 
         const auto cuts = episode_cuts(rollout.dones, rollout.truncateds);
+        const auto segment_ends = with_episode_ends(cuts, rollout.episode_ends);
+
+        const auto rewards = return_scaler->scale(rollout.rewards, segment_ends, rollout.valids);
+        const auto valids = rollout.valids.to(torch::kFloat);
+
         const auto deltas = rewards + gamma * next_values * (1.f - cuts) - values;
 
-        const auto advantages = generalized_advantages(deltas, cuts, gamma * gae_lambda);
+        const auto advantages = generalized_advantages(deltas, segment_ends, gamma * gae_lambda);
 
         return {.advantages = normalized(advantages, valids), .returns = advantages + values};
     }

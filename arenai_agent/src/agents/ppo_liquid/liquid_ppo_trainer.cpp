@@ -567,6 +567,8 @@ namespace arenai::agent {
         const auto nb_tanks = rollout.rewards.size(1);
 
         const auto episode_starts = rollout.episode_starts.accessor<bool, 1>();
+        const auto episode_ends = rollout.episode_ends.accessor<bool, 1>();
+        std::vector<torch::Tensor> closing_values;
 
         if (!critic_carry.defined() || critic_carry.size(0) != nb_tanks)
             critic_carry = critic->initial_state(static_cast<int>(nb_tanks));
@@ -587,6 +589,14 @@ namespace arenai::agent {
 
             value_list.push_back(value.cpu());
             critic_carry = next_x;
+
+            if (!episode_ends[t]) continue;
+            const auto &closing_state = rollout.closing_states[closing_values.size()];
+            closing_values.push_back(critic
+                                         ->value(
+                                             closing_state.get_vision().to(device),
+                                             closing_state.get_state().to(device), critic_carry)
+                                         .value.cpu());
         }
 
         const auto bootstrap = critic->value(
@@ -596,6 +606,7 @@ namespace arenai::agent {
         return {
             .values = torch::stack(value_list, 0),
             .bootstrap_value = bootstrap.value.cpu(),
+            .closing_values = closing_values,
             .critic_hiddens = torch::stack(hidden_list, 0)};
     }
 
@@ -604,17 +615,19 @@ namespace arenai::agent {
         const auto &values = critic_pass.values;
 
         // next values are the values shifted by one step, closed by the bootstrap state
-        const auto next_values =
-            torch::cat({values.slice(0, 1), critic_pass.bootstrap_value.unsqueeze(0)}, 0);
-
-        const auto rewards = return_scaler->scale(
-            rollout.rewards, rollout.dones.logical_or(rollout.truncateds), rollout.valids);
-        const auto valids = rollout.valids.to(torch::kFloat);
+        const auto next_values = closed_next_values(
+            torch::cat({values.slice(0, 1), critic_pass.bootstrap_value.unsqueeze(0)}, 0),
+            rollout.episode_ends, critic_pass.closing_values);
 
         const auto cuts = episode_cuts(rollout.dones, rollout.truncateds);
+        const auto segment_ends = with_episode_ends(cuts, rollout.episode_ends);
+
+        const auto rewards = return_scaler->scale(rollout.rewards, segment_ends, rollout.valids);
+        const auto valids = rollout.valids.to(torch::kFloat);
+
         const auto deltas = rewards + gamma * next_values * (1.f - cuts) - values;
 
-        const auto advantages = generalized_advantages(deltas, cuts, gamma * gae_lambda);
+        const auto advantages = generalized_advantages(deltas, segment_ends, gamma * gae_lambda);
 
         return {.advantages = normalized(advantages, valids), .returns = advantages + values};
     }

@@ -286,3 +286,24 @@ TEST_F(LiquidPpoRolloutBufferTest, FinishEpisodeResetsTermination) {
     ASSERT_TRUE(torch::all(valids[0]).item<bool>());
     ASSERT_TRUE(torch::all(valids[1]).item<bool>());
 }
+
+TEST_F(LiquidPpoRolloutBufferTest, EpisodeEndKeepsItsClosingStateInsideTheRollout) {
+    LiquidPpoRolloutBuffer buffer;
+
+    buffer.add(make_step(make_state()));
+    buffer.add(make_step(make_state()));
+    const auto closing_state = make_state();
+    buffer.finish_episode(closing_state);
+
+    buffer.add(make_step(make_state(), torch::zeros({NB_TANKS, 1}), true));
+    buffer.add(make_step(make_state()));
+
+    const auto rollout = buffer.get_rollout();
+
+    ASSERT_EQ(rollout.rewards.size(0), 3);
+    ASSERT_FALSE(rollout.episode_ends[0].item<bool>());
+    ASSERT_TRUE(rollout.episode_ends[1].item<bool>());
+    ASSERT_FALSE(rollout.episode_ends[2].item<bool>());
+    ASSERT_EQ(rollout.closing_states.size(), 1);
+    ASSERT_TRUE(torch::allclose(rollout.closing_states[0].get_state(), closing_state.get_state()));
+}

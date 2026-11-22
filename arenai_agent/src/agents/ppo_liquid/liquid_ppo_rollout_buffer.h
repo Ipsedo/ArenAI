@@ -48,6 +48,10 @@ namespace arenai::agent {
         torch::Tensor episode_starts;
         // [T, nb_tanks]
         AimPotentials aim_potentials;
+        // [T] bool, the step closes an episode
+        torch::Tensor episode_ends;
+        // one per episode end, in step order
+        std::vector<TorchState> closing_states;
     };
 
     class LiquidPpoRolloutBuffer {
@@ -64,6 +68,7 @@ namespace arenai::agent {
         struct StoredStep {
             LiquidPpoInputStep step;
             torch::Tensor valid;
+            std::optional<TorchState> closing_state;
         };
 
         std::vector<StoredStep> steps_;

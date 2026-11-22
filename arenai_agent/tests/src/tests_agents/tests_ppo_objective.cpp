@@ -142,3 +142,25 @@ TEST(PpoObjective, GroupKlStopNeverStopsWithoutTarget) {
     ASSERT_TRUE(kl_stop.any_active());
     ASSERT_FLOAT_EQ(kl_stop.aim_skip_fraction(), 0.f);
 }
+
+TEST(PpoObjective, EpisodeEndTakesItsClosingValueAndStopsTheRecursion) {
+    // [T = 3, nb_tanks = 2, 1], the episode ends after the second step
+    const auto next_values = torch::zeros({3, 2, 1});
+    const auto episode_ends = torch::tensor({false, true, false});
+    const auto closing_value = torch::tensor({5.f, 7.f}).reshape({2, 1});
+
+    const auto closed = closed_next_values(next_values, episode_ends, {closing_value});
+
+    ASSERT_TRUE(torch::allclose(closed[1], closing_value));
+    ASSERT_FLOAT_EQ(closed[0].abs().sum().item<float>(), 0.f);
+    ASSERT_FLOAT_EQ(closed[2].abs().sum().item<float>(), 0.f);
+
+    const auto cuts = torch::zeros({3, 2, 1});
+    const auto segment_ends = with_episode_ends(cuts, episode_ends);
+    const auto deltas = torch::ones({3, 2, 1});
+
+    const auto advantages = generalized_advantages(deltas, segment_ends, 0.5f);
+
+    ASSERT_FLOAT_EQ(advantages[1][0].item<float>(), 1.f);
+    ASSERT_FLOAT_EQ(advantages[0][0].item<float>(), 1.5f);
+}

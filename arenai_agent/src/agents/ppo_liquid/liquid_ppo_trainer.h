@@ -18,6 +18,8 @@ namespace arenai::agent {
         torch::Tensor values;
         // [nb_tanks, 1]
         torch::Tensor bootstrap_value;
+        // one [nb_tanks, 1] per episode end, in step order
+        std::vector<torch::Tensor> closing_values;
         // [T, nb_tanks, neuron_number] critic liquid state opening each step
         torch::Tensor critic_hiddens;
     };

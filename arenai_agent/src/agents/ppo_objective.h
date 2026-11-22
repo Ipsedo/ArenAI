@@ -17,6 +17,14 @@ namespace arenai::agent {
     // [T, nb_tanks, 1] 1 where the episode ends or is truncated
     torch::Tensor episode_cuts(const torch::Tensor &dones, const torch::Tensor &truncateds);
 
+    // cuts [T, nb_tanks, 1] raised on every tank where episode_ends [T] is set
+    torch::Tensor with_episode_ends(const torch::Tensor &cuts, const torch::Tensor &episode_ends);
+
+    // next_values [T, nb_tanks, 1] with the closing values at the episode ends
+    torch::Tensor closed_next_values(
+        const torch::Tensor &next_values, const torch::Tensor &episode_ends,
+        const std::vector<torch::Tensor> &closing_values);
+
     // zero mean and unit variance over the live transitions
     torch::Tensor normalized(const torch::Tensor &advantages, const torch::Tensor &valids);
 

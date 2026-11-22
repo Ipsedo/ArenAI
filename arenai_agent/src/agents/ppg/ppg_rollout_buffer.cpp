@@ -37,6 +37,7 @@ namespace arenai::agent {
                   .done = step.done.detach().cpu(),
                   .truncated = step.truncated.detach().cpu()},
              .valid = valid,
+             .closing_state = std::nullopt,
              .episode_start = next_step_starts_episode_});
         next_step_starts_episode_ = false;
 
@@ -45,7 +46,10 @@ namespace arenai::agent {
     }
 
     void PpgRolloutBuffer::finish_episode(const TorchState &final_state) {
-        if (!steps_.empty()) final_state_ = to_cpu(final_state);
+        if (!steps_.empty()) {
+            final_state_ = to_cpu(final_state);
+            steps_.back().closing_state = final_state_;
+        }
 
         if (already_terminated_.defined()) already_terminated_.fill_(false);
 
@@ -99,6 +103,13 @@ namespace arenai::agent {
             .aim_potentials = {
                 .before = stack([](const StoredStep &s) { return s.step.aim_potentials.before; }),
                 .after = stack([](const StoredStep &s) { return s.step.aim_potentials.after; })}};
+
+        rollout.episode_ends = torch::zeros({static_cast<int64_t>(nb_steps)}, torch::kBool);
+        for (size_t i = 0; i < nb_steps; i++) {
+            if (!steps_[i].closing_state.has_value()) continue;
+            rollout.episode_ends[static_cast<int64_t>(i)] = true;
+            rollout.closing_states.push_back(*steps_[i].closing_state);
+        }
 
         steps_.erase(steps_.begin(), steps_.begin() + static_cast<long>(nb_steps));
         final_state_.reset();

@@ -26,6 +26,7 @@
 #include "./networks/actor.h"
 #include "./networks/q_function.h"
 #include "./networks/recurrent/liquid_actor.h"
+#include "./networks/recurrent/liquid_critic.h"
 #include "./networks_utils/torch_loader.h"
 
 using namespace arenai;
@@ -119,6 +120,8 @@ int main(const int argc, char **argv) {
         torch::Tensor mu, sigma, discrete;
         // empty for actors without an exposed feature layer (ppg)
         torch::Tensor features, vision_features;
+        // [N, 1] critic state value in scaled-return units, empty without a state-value critic
+        torch::Tensor value;
     };
     std::function<ProbeActorOutput(const torch::Tensor &, const torch::Tensor &)> act;
     std::function<void()> reset_hidden = [] {};
@@ -220,15 +223,34 @@ int main(const int argc, char **argv) {
         actor->to(device);
         actor->eval();
 
+        const auto critic = std::make_shared<LiquidCritic>(
+            vision_height, vision_width, model::ENEMY_STATE_VECTOR_SIZE,
+            agent_config.at("hidden_size_sensors").get<int>(), vision_channels, group_norm_nums,
+            agent_config.at("neuron_number").get<int>(),
+            agent_config.at("unfolding_steps").get<int>(), agent_config.at("delta_t").get<float>());
+        load_torch(save_folder, critic, "critic.pt");
+        critic->to(device);
+        critic->eval();
+
         const auto hidden_state = std::make_shared<LiquidHiddenState>(actor);
-        reset_hidden = [hidden_state] { hidden_state->reset(); };
-        act = [actor, hidden_state](const torch::Tensor &vision, const torch::Tensor &sensors) {
+        const auto critic_x = std::make_shared<torch::Tensor>();
+        reset_hidden = [hidden_state, critic_x] {
+            hidden_state->reset();
+            *critic_x = torch::Tensor();
+        };
+        act = [actor, hidden_state, critic,
+               critic_x](const torch::Tensor &vision, const torch::Tensor &sensors) {
             const auto x_t = hidden_state->get(vision.size(0));
             auto out = actor->act(vision, sensors, x_t);
             hidden_state->set(out.next_x);
 
-            return ProbeActorOutput{
-                out.mu, out.sigma, out.discrete, out.features, out.vision_features};
+            if (!critic_x->defined())
+                *critic_x = critic->initial_state(static_cast<int>(vision.size(0)));
+            const auto [value, next_critic_x] = critic->value(vision, sensors, *critic_x);
+            *critic_x = next_critic_x;
+
+            return ProbeActorOutput{out.mu,       out.sigma,           out.discrete,
+                                    out.features, out.vision_features, value};
         };
     }
 
@@ -249,12 +271,16 @@ int main(const int argc, char **argv) {
     for (const auto &name: action_names) csv << ";mu_" << name;
     for (const auto &prefix: {";sigma_", ";act_", ";dq_", ";dq1_", ";dq2_"})
         for (const auto &name: aim_names) csv << prefix << name;
-    csv << ";turret_yaw;canon_elevation;canon_relative_elevation;chassis_pitch;chassis_roll\n";
+    csv << ";turret_yaw;canon_elevation;canon_relative_elevation;chassis_pitch;chassis_roll;"
+           "value\n";
 
     std::ofstream shots_csv(output.parent_path() / (output.stem().string() + "_shots.csv"));
     shots_csv
         << "episode;tank;fire_step;land_step;fire_best_angle;fire_best_distance;fire_distance;"
            "fire_yaw;fire_pitch;shells_at_fire;group_size;group_hits;group_miss\n";
+
+    std::ofstream rewards_csv(output.parent_path() / (output.stem().string() + "_rewards.csv"));
+    rewards_csv << "episode;step;tank;reward;done;truncated\n";
 
     const auto features_path = parser.get<std::string>("--features");
     std::ofstream features_out;
@@ -289,7 +315,7 @@ int main(const int argc, char **argv) {
 
         while (!is_done) {
             torch::Tensor continuous_action, discrete_action, mu, sigma, discrete, features,
-                vision_features;
+                vision_features, value;
             {
                 torch::NoGradGuard guard;
 
@@ -298,6 +324,7 @@ int main(const int argc, char **argv) {
                 mu = out.mu.cpu();
                 sigma = out.sigma.cpu();
                 discrete = out.discrete.cpu();
+                if (out.value.defined()) value = out.value.cpu().reshape({-1});
                 if (out.features.defined()) {
                     features = out.features.cpu().contiguous();
                     vision_features = out.vision_features.cpu().contiguous();
@@ -405,7 +432,8 @@ int main(const int argc, char **argv) {
                     << geometry[i].canon_elevation * to_degrees << ';'
                     << geometry[i].canon_relative_elevation * to_degrees << ';'
                     << geometry[i].chassis_pitch * to_degrees << ';'
-                    << geometry[i].chassis_roll * to_degrees << '\n';
+                    << geometry[i].chassis_roll * to_degrees << ';'
+                    << (value.defined() ? value[i].item<float>() : 0.f) << '\n';
 
                 if (features_out.is_open() && features.defined()) {
                     const float header[3] = {
@@ -447,6 +475,15 @@ int main(const int argc, char **argv) {
 
             const TorchStep torch_step(steps, vision_height, vision_width);
             state = torch_step.get_states();
+
+            const auto step_rewards = torch_step.get_rewards().to(torch::kFloat).reshape({-1});
+            const auto step_dones = torch_step.get_is_done().to(torch::kFloat).reshape({-1});
+            const auto step_truncateds =
+                torch_step.get_is_truncated().to(torch::kFloat).reshape({-1});
+            for (int i = 0; i < nb_tanks; i++)
+                rewards_csv << episode << ';' << step << ';' << i << ';'
+                            << step_rewards[i].item<float>() << ';' << step_dones[i].item<float>()
+                            << ';' << step_truncateds[i].item<float>() << '\n';
 
             const auto details = env->last_step_reward_details();
             for (int i = 0; i < nb_tanks; i++) {

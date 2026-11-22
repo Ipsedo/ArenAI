@@ -47,8 +47,7 @@ namespace arenai::agent {
             const std::filesystem::path &android_assets_path, float wanted_frequency,
             int max_episode_steps, int vision_height, int vision_width, int vision_num_threads,
             int action_repeat,
-            const std::shared_ptr<const ProgressCurriculum> &curriculum = nullptr,
-            float initial_spawn_side = 0.f, float final_spawn_side = 1.f);
+            const std::shared_ptr<const ProgressCurriculum> &curriculum = nullptr);
 
         std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
         step(float time_delta, const std::vector<core::Action> &actions) override;
@@ -115,8 +114,6 @@ namespace arenai::agent {
         std::vector<model::RewardDetail> step_reward_details;
 
         std::shared_ptr<const ProgressCurriculum> curriculum;
-        float initial_spawn_side;
-        float final_spawn_side;
         float empty_reserve_penalty;
 
         bool are_all_done();

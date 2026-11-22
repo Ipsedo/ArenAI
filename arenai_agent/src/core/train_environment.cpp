@@ -29,8 +29,7 @@ namespace arenai::agent {
         const std::filesystem::path &android_assets_path, const float wanted_frequency,
         const int max_episode_steps, const int vision_height, const int vision_width,
         const int vision_num_threads, const int action_repeat,
-        const std::shared_ptr<const ProgressCurriculum> &curriculum, const float initial_spawn_side,
-        const float final_spawn_side)
+        const std::shared_ptr<const ProgressCurriculum> &curriculum)
         : BaseTanksEnvironment(
             std::make_shared<DesktopAssetFileReader>(android_assets_path), graphics_backend,
             nb_tanks, wanted_frequency, vision_height, vision_width, vision_num_threads, false),
@@ -49,7 +48,6 @@ namespace arenai::agent {
           hit_metric(std::make_shared<MeanMetric>("hit", 16, 2, true)),
           kill_metric(std::make_shared<MeanMetric>("kill", 16, 1)), nb_kills_episode(0),
           nb_fires_episode(0), nb_hits_episode(0), curriculum(curriculum),
-          initial_spawn_side(initial_spawn_side), final_spawn_side(final_spawn_side),
           empty_reserve_penalty(0.f) {}
 
     std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>

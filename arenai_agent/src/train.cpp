@@ -105,7 +105,7 @@ namespace arenai::agent {
             train_options.resources_folder, environment_options.wanted_frequency,
             train_options.max_episode_steps, environment_options.vision_height,
             environment_options.vision_width, environment_options.num_threads,
-            environment_options.action_repeat, curriculum, initial_spawn_side, final_spawn_side);
+            environment_options.action_repeat, curriculum);
 
         const auto agent = agent_factory->get_agent();
         const auto collector = agent_factory->get_collector();

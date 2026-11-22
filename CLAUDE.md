@@ -21,6 +21,14 @@ principe, jamais les pièces d'architecture qu'elle sous-entend. Un « valides-t
 compte pas. Les corrections de bugs internes (fichiers `src/`) qui ne
 changent ni contrat ni comportement voulu restent autorisées.
 
+## Règle de travail — solutions
+
+**Pas de pansement.** On cherche la solution juste mathématiquement et scientifiquement, celle
+qui supprime la cause, jamais une règle ad hoc qui masque le symptôme (plancher, plafond, seuil,
+coefficient ou cas particulier ajouté pour compenser). Avant de proposer un correctif : nommer la
+cause, dire en quoi il la traite, et s'il ne la traite pas, le dire. Un expédient n'est
+acceptable que comme test de diagnostic, annoncé jetable.
+
 ## Règle de travail — réponses
 
 **Clair et concis.** La conclusion d'abord, en une phrase, puis seulement les chiffres qui la

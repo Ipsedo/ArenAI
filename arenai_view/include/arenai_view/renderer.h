@@ -42,12 +42,13 @@ namespace arenai::view {
 
         virtual void make_current() const = 0;
         virtual void release_current() const = 0;
+
+        virtual glm::mat4 last_view_projection() const = 0;
     };
 
     class AbstractPlayerRenderer : public virtual AbstractRenderer {
     public:
         virtual void set_window_size(int new_width, int new_height) = 0;
-        virtual glm::mat4 last_view_projection() const = 0;
     };
 
     class AbstractOffscreenRenderer : public virtual AbstractRenderer {

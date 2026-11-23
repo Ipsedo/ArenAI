@@ -27,6 +27,7 @@
 #include "./networks/q_function.h"
 #include "./networks/recurrent/liquid_actor.h"
 #include "./networks/recurrent/liquid_critic.h"
+#include "./networks/vision.h"
 #include "./networks_utils/torch_loader.h"
 
 using namespace arenai;
@@ -59,6 +60,8 @@ int main(const int argc, char **argv) {
     parser.add_argument("--deterministic").default_value(false).implicit_value(true);
     parser.add_argument("--features").default_value(std::string());
     parser.add_argument("--frames").default_value(std::string());
+    parser.add_argument("--sightings").default_value(std::string());
+    parser.add_argument("--presence").default_value(std::string());
     parser.add_argument("--frames_every").scan<'i', int>().default_value(5);
     parser.add_argument("--zoom")
         .default_value(std::string("policy"))
@@ -272,7 +275,7 @@ int main(const int argc, char **argv) {
     for (const auto &prefix: {";sigma_", ";act_", ";dq_", ";dq1_", ";dq2_"})
         for (const auto &name: aim_names) csv << prefix << name;
     csv << ";turret_yaw;canon_elevation;canon_relative_elevation;chassis_pitch;chassis_roll;"
-           "value\n";
+           "value;nearest_sight_fraction\n";
 
     std::ofstream shots_csv(output.parent_path() / (output.stem().string() + "_shots.csv"));
     shots_csv
@@ -281,6 +284,16 @@ int main(const int argc, char **argv) {
 
     std::ofstream rewards_csv(output.parent_path() / (output.stem().string() + "_rewards.csv"));
     rewards_csv << "episode;step;tank;reward;done;truncated\n";
+
+    const auto sightings_path = parser.get<std::string>("--sightings");
+    std::ofstream sightings_out;
+    if (!sightings_path.empty()) sightings_out.open(sightings_path, std::ios::binary);
+
+    const auto presence_path = parser.get<std::string>("--presence");
+    std::ofstream presence_out;
+    if (!presence_path.empty()) presence_out.open(presence_path, std::ios::binary);
+    const auto [presence_rows, presence_cols] =
+        presence_grid_size(vision_height, vision_width, static_cast<int>(vision_channels.size()));
 
     const auto features_path = parser.get<std::string>("--features");
     std::ofstream features_out;
@@ -354,6 +367,13 @@ int main(const int argc, char **argv) {
             const auto q_gradient = canon_q_gradient(state, mu, discrete);
 
             const auto geometry = env->aim_geometry(oracle_half_yaw);
+            const auto presence = presence_out.is_open()
+                                      ? env->presence_maps(presence_rows, presence_cols)
+                                      : torch::Tensor();
+            const auto sightings =
+                sightings_out.is_open() ? env->enemy_sightings(
+                    static_cast<float>(vision_width) / static_cast<float>(vision_height))
+                                        : std::vector<std::vector<EnemySighting>>();
             const bool write_frames = frames_out.is_open() && step % frames_every == 0;
             const auto frame_geometry =
                 write_frames ? env->aim_geometry(frames_half_yaw) : std::vector<AimGeometry>();
@@ -433,7 +453,32 @@ int main(const int argc, char **argv) {
                     << geometry[i].canon_relative_elevation * to_degrees << ';'
                     << geometry[i].chassis_pitch * to_degrees << ';'
                     << geometry[i].chassis_roll * to_degrees << ';'
-                    << (value.defined() ? value[i].item<float>() : 0.f) << '\n';
+                    << (value.defined() ? value[i].item<float>() : 0.f) << ';'
+                    << geometry[i].nearest_sight_fraction << '\n';
+
+                if (presence_out.is_open()) {
+                    const float header[3] = {
+                        static_cast<float>(episode), static_cast<float>(step),
+                        static_cast<float>(i)};
+                    presence_out.write(reinterpret_cast<const char *>(header), sizeof(header));
+                    presence_out.write(
+                        reinterpret_cast<const char *>(presence[i].contiguous().data_ptr<float>()),
+                        presence_rows * presence_cols * sizeof(float));
+                }
+
+                if (sightings_out.is_open()) {
+                    std::vector<float> record{
+                        static_cast<float>(episode), static_cast<float>(step),
+                        static_cast<float>(i), static_cast<float>(sightings[i].size())};
+                    for (const auto &sighting: sightings[i])
+                        record.insert(
+                            record.end(), {sighting.ndc_x, sighting.ndc_y, sighting.clip_w,
+                                           sighting.distance, sighting.sight_fraction});
+                    record.resize(4 + 5 * (nb_tanks - 1), 0.f);
+                    sightings_out.write(
+                        reinterpret_cast<const char *>(record.data()),
+                        static_cast<std::streamsize>(record.size() * sizeof(float)));
+                }
 
                 if (features_out.is_open() && features.defined()) {
                     const float header[3] = {

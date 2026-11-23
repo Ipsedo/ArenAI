@@ -12,6 +12,7 @@ namespace arenai::agent {
     struct LiquidPpoHyperParams {
         float actor_learning_rate = 1e-4f;
         float critic_learning_rate = 3e-4f;
+        float presence_learning_rate = 3e-4f;
         int hidden_size_sensors = 64;
         std::vector<std::tuple<int, int>> vision_channels = {
             {3, 16}, {16, 32}, {32, 64}, {64, 128}, {128, 128}, {128, 128}, {128, 128}};

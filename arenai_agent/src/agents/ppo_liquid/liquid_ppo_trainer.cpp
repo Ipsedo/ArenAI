@@ -48,7 +48,7 @@ namespace arenai::agent {
         const std::vector<float> &continuous_target_entropy, const float discrete_target_proba,
         const int actor_epochs, const int critic_epochs, const int rollout_size,
         const int actor_batch_size, const int actor_gpu_batch_size, const int critic_batch_size,
-        const int critic_gpu_batch_size, const int chunk_size)
+        const int critic_gpu_batch_size, const int chunk_size, const float presence_learning_rate)
         : actor(actor), rollout_buffer(rollout_buffer),
           alphas(std::make_unique<EntropyAlphas>(
               nb_continuous_actions, nb_discrete_actions, initial_alpha, alpha_learning_rate,
@@ -60,6 +60,11 @@ namespace arenai::agent {
               std::make_unique<torch::optim::Adam>(this->actor->parameters(), actor_learning_rate)),
           critic_optim(
               std::make_unique<torch::optim::Adam>(critic->parameters(), critic_learning_rate)),
+          presence_loss_metric(std::make_shared<MeanMetric>("pres", metric_window_size)),
+          actor_presence(std::make_unique<PresenceLearner>(
+              this->actor, presence_learning_rate, presence_loss_metric)),
+          critic_presence(std::make_unique<PresenceLearner>(
+              critic, presence_learning_rate, presence_loss_metric)),
           return_scaler(std::make_shared<ReturnScaler>(gamma)),
           actor_mean_loss_metric(std::make_shared<MeanMetric>("π", metric_window_size)),
           critic_mean_loss_metric(std::make_shared<MeanMetric>("v", metric_window_size)),
@@ -167,6 +172,12 @@ namespace arenai::agent {
         set_train(true);
         run_actor_epochs(rows, chunks);
         run_critic_epochs(rows, chunks);
+
+        const auto presence =
+            flatten_steps(rollout.presences.slice(0, 0, nb_kept_steps)).to(device);
+        const auto valid_rows = torch::nonzero(rows.valids.squeeze(-1)).squeeze(-1);
+        actor_presence->fit(rows.vision, presence, valid_rows, actor_gpu_batch_size);
+        critic_presence->fit(rows.vision, presence, valid_rows, critic_gpu_batch_size);
         set_train(false);
     }
 
@@ -630,7 +641,8 @@ namespace arenai::agent {
             discrete_entropy_metric,
             clip_fraction_metric,
             kl_metric,
-            skip_fraction_metric};
+            skip_fraction_metric,
+            presence_loss_metric};
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> LiquidPpoTrainer::get_csv_only_metrics() {
@@ -645,6 +657,8 @@ namespace arenai::agent {
         // Optimizers
         save_torch(output_folder, actor_optim, "actor_optim.pt");
         save_torch(output_folder, critic_optim, "critic_optim.pt");
+        actor_presence->save(output_folder, "actor_presence_optim.pt");
+        critic_presence->save(output_folder, "critic_presence_optim.pt");
         save_torch(output_folder, return_scaler, "return_scaler.pt");
         alphas->save(output_folder);
 

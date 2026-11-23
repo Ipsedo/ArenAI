@@ -67,6 +67,12 @@ namespace arenai::core {
             enemy_visions_.push_back(
                 std::make_unique<VisionDoubleBuffer>(vision_height_, vision_width_));
 
+        enemy_view_projections_.clear();
+        enemy_view_projections_.reserve(num_tanks_);
+        for (int i = 0; i < num_tanks_; i++)
+            enemy_view_projections_.push_back(
+                std::make_unique<utils::DoubleBuffer<glm::mat4>>(glm::mat4(1.f)));
+
         pool_.reserve(num_tanks_);
         for (int i = 0; i < num_tanks_; i++)
             pool_.emplace_back(
@@ -137,6 +143,7 @@ namespace arenai::core {
 
             const auto matrices = model_matrices_->read_copy();
             enemy_visions_[index]->write(renderer->draw_and_get_frame(matrices));
+            enemy_view_projections_[index]->write(renderer->last_view_projection());
 
             limiter_.release();
 
@@ -165,6 +172,10 @@ namespace arenai::core {
 
     view::image<uint8_t> EnemyVisionThreadPool::read_vision(const int index) const {
         return enemy_visions_[index]->read_copy();
+    }
+
+    glm::mat4 EnemyVisionThreadPool::read_view_projection(const int index) const {
+        return enemy_view_projections_[index]->read_copy();
     }
 
     void EnemyVisionThreadPool::begin_frame() const { (void) start_barrier_->arrive(); }

@@ -7,6 +7,8 @@ namespace arenai::agent {
             {.name = "--actor_learning_rate", .member = &LiquidPpoHyperParams::actor_learning_rate},
             {.name = "--critic_learning_rate",
              .member = &LiquidPpoHyperParams::critic_learning_rate},
+            {.name = "--presence_learning_rate",
+             .member = &LiquidPpoHyperParams::presence_learning_rate},
             {.name = "--hidden_size_sensors", .member = &LiquidPpoHyperParams::hidden_size_sensors},
             {.name = "--vision_channels", .member = &LiquidPpoHyperParams::vision_channels},
             {.name = "--group_norm_nums", .member = &LiquidPpoHyperParams::group_norm_nums},

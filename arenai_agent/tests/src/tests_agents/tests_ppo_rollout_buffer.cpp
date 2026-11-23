@@ -24,7 +24,8 @@ PpoInputStep PpoRolloutBufferTest::make_step(const TorchState &state, const torc
         .discrete_log_prob = torch::randn({NB_TANKS, 1}),
         .reward = torch::randn({NB_TANKS, 1}),
         .done = done,
-        .truncated = torch::zeros({NB_TANKS, 1})};
+        .truncated = torch::zeros({NB_TANKS, 1}),
+        .presence = torch::zeros({NB_TANKS, 2, 2})};
 }
 
 PpoInputStep PpoRolloutBufferTest::make_step(const TorchState &state) {

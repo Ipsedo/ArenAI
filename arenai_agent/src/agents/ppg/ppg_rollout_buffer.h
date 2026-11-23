@@ -21,6 +21,8 @@ namespace arenai::agent {
         torch::Tensor done;
         // segment end that is not a death: cuts the return like a done, the tank plays on
         torch::Tensor truncated;
+        // [nb_tanks, rows, cols] enemy presence map of the state
+        torch::Tensor presence;
     };
 
     // On-policy rollout stacked on the time dimension: every tensor is [T, nb_tanks, ...]
@@ -34,6 +36,7 @@ namespace arenai::agent {
         torch::Tensor dones;
         // segment ends that are not deaths: cut the return like dones, the tanks play on
         torch::Tensor truncateds;
+        torch::Tensor presences;
         // [nb_tanks, ...] observation closing the last step, for the value bootstrap
         TorchState bootstrap_state;
         // [T, nb_tanks, 1] whether the (step, tank) pair is a live transition

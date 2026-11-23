@@ -67,7 +67,7 @@ TEST_F(PpgAgentTest, MetricsNotEmpty) {
         .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
-    ASSERT_EQ(factory->get_trainer()->get_metrics().size(), 8);
+    ASSERT_EQ(factory->get_trainer()->get_metrics().size(), 9);
     // one alpha per action, CSV only
     ASSERT_EQ(
         factory->get_trainer()->get_csv_only_metrics().size(),

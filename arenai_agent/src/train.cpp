@@ -17,6 +17,7 @@
 #include "./core/train_environment.h"
 #include "./metrics/last_metric.h"
 #include "./metrics/metric_saver.h"
+#include "./networks/vision.h"
 #include "./networks_utils/torch_saver.h"
 
 using namespace arenai;
@@ -161,6 +162,10 @@ namespace arenai::agent {
 
         indicators::show_console_cursor(false);
 
+        const auto [presence_rows, presence_cols] = presence_grid_size(
+            environment_options.vision_height, environment_options.vision_width,
+            static_cast<int>(agent_factory->get_config().at("vision_channels").size()));
+
         const int print_tqdm_bar_every =
             static_cast<int>(1.f / environment_options.wanted_frequency);
         int print_counter = 0;
@@ -190,6 +195,8 @@ namespace arenai::agent {
             while (!is_done) {
 
                 std::vector<core::Action> actions_for_env;
+
+                collector->on_presence(env->presence_maps(presence_rows, presence_cols));
 
                 actions_for_env = agent->act(state.to(torch_device), true).to_actions();
 

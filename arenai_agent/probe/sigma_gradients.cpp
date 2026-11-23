@@ -123,8 +123,11 @@ int main(const int argc, char **argv) {
         params.continuous_target_entropy, params.discrete_target_proba, params.actor_epochs,
         params.critic_epochs, params.rollout_size, params.actor_batch_size,
         params.actor_gpu_batch_size, params.critic_batch_size, params.critic_gpu_batch_size,
-        params.chunk_size);
+        params.chunk_size, params.presence_learning_rate);
     trainer->load(save_folder);
+
+    const auto [presence_rows, presence_cols] = presence_grid_size(
+        vision_height, vision_width, static_cast<int>(params.vision_channels.size()));
 
     const auto critic_inputs_path = parser.get<std::string>("--critic_inputs");
     std::ofstream critic_inputs;
@@ -257,6 +260,8 @@ int main(const int argc, char **argv) {
         int episode_step = 0;
         while (!is_done) {
             StepRecord record{.geometries = env->aim_geometry()};
+
+            collector->on_presence(env->presence_maps(presence_rows, presence_cols));
 
             const auto action = agent->act(state.to(device), true);
             torch::Tensor critic_features;

@@ -6,6 +6,7 @@ namespace arenai::agent {
         return {
             {.name = "--actor_learning_rate", .member = &PpoHyperParams::actor_learning_rate},
             {.name = "--critic_learning_rate", .member = &PpoHyperParams::critic_learning_rate},
+            {.name = "--presence_learning_rate", .member = &PpoHyperParams::presence_learning_rate},
             {.name = "--hidden_size_sensors", .member = &PpoHyperParams::hidden_size_sensors},
             {.name = "--actor_hidden_sizes", .member = &PpoHyperParams::actor_hidden_sizes},
             {.name = "--critic_hidden_sizes", .member = &PpoHyperParams::critic_hidden_sizes},

@@ -5,6 +5,9 @@
 #include <numbers>
 #include <numeric>
 
+#include <glm/gtc/matrix_access.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include <arenai_agent/file_reader.h>
 #include <arenai_utils/cache.h>
 #include <arenai_utils/singleton.h>
@@ -20,6 +23,11 @@ namespace {
     constexpr float HIT_REWARD_SCALE = 3.f;
     constexpr float RECEIVED_REWARD_SCALE = 1.f;
     constexpr float EMPTY_RESERVE_PENALTY = 0.25f;
+    constexpr glm::vec4 CAMERA_IN_CANON(0.f, 4.f, -20.f, 1.f);
+    // m
+    constexpr float TANK_HALF_LENGTH = 3.5f;
+    constexpr float TANK_HALF_HEIGHT = 1.5f;
+    constexpr float SIGHT_TOLERANCE = 8.f;
 }// namespace
 
 namespace arenai::agent {
@@ -48,7 +56,7 @@ namespace arenai::agent {
           hit_metric(std::make_shared<MeanMetric>("hit", 16, 2, true)),
           kill_metric(std::make_shared<MeanMetric>("kill", 16, 1)), nb_kills_episode(0),
           nb_fires_episode(0), nb_hits_episode(0), curriculum(curriculum),
-          empty_reserve_penalty(0.f) {}
+          empty_reserve_penalty(0.f), physic_engine(nullptr) {}
 
     std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
     TrainTankEnvironment::step(const float time_delta, const std::vector<core::Action> &actions) {
@@ -209,6 +217,8 @@ namespace arenai::agent {
         nb_hits_episode = 0;
 
         empty_reserve_penalty = curriculum ? EMPTY_RESERVE_PENALTY : 0.f;
+
+        physic_engine = engine.get();
     }
 
     std::vector<model::RewardDetail> TrainTankEnvironment::last_step_reward_details() const {
@@ -217,7 +227,7 @@ namespace arenai::agent {
 
     std::vector<AimGeometry> TrainTankEnvironment::aim_geometry(const float view_half_yaw) {
         return apply_on_enemies<std::vector<AimGeometry>>(
-            [view_half_yaw](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
+            [this, view_half_yaw](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
                 const float view_half_pitch = view_half_yaw < std::numbers::pi_v<float>
                                                   ? view::DEFAULT_FOV / 2.f
                                                   : std::numbers::pi_v<float>;
@@ -257,7 +267,8 @@ namespace arenai::agent {
                         .nearest_x = 0.f,
                         .nearest_z = 0.f,
                         .canon_heading = 0.f,
-                        .chassis_heading = 0.f};
+                        .chassis_heading = 0.f,
+                        .nearest_sight_fraction = 1.f};
 
                     const auto canon_matrix = tanks[i]->get_canon()->get_model_matrix();
                     const auto chassis_matrix = tanks[i]->get_chassis()->get_model_matrix();
@@ -326,12 +337,125 @@ namespace arenai::agent {
                         geometry.pitch = std::atan2(
                             relative.y,
                             std::sqrt(relative.x * relative.x + relative.z * relative.z));
+
+                        const auto camera_pos = glm::vec3(canon_matrix * CAMERA_IN_CANON);
+                        if (const auto hit =
+                                physic_engine->ray_cast(camera_pos, positions[nearest]))
+                            geometry.nearest_sight_fraction =
+                                glm::length(*hit - camera_pos)
+                                / glm::length(positions[nearest] - camera_pos);
                     }
 
                     result.push_back(geometry);
                 }
 
                 return result;
+            });
+    }
+
+    std::vector<std::vector<EnemySighting>>
+    TrainTankEnvironment::enemy_sightings(const float aspect_ratio) {
+        return apply_on_enemies<std::vector<std::vector<EnemySighting>>>(
+            [this, aspect_ratio](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
+                constexpr glm::vec4 origin(0.f, 0.f, 0.f, 1.f);
+
+                std::vector<glm::vec3> positions;
+                positions.reserve(tanks.size());
+                for (const auto &tank: tanks)
+                    positions.emplace_back(tank->get_chassis()->get_model_matrix() * origin);
+
+                std::vector<std::vector<EnemySighting>> result(tanks.size());
+
+                for (int i = 0; i < tanks.size(); i++) {
+                    if (tanks[i]->is_dead()) continue;
+
+                    const auto camera = tanks[i]->get_camera();
+                    const auto camera_pos = camera->pos();
+                    const auto view_projection =
+                        glm::perspectiveRH_ZO(camera->fov(), aspect_ratio, 1.f, 20000.f)
+                        * glm::lookAt(camera_pos, camera->look(), camera->up());
+
+                    for (int j = 0; j < tanks.size(); j++) {
+                        if (j == i || tanks[j]->is_dead()) continue;
+
+                        const float distance = glm::length(positions[j] - camera_pos);
+
+                        float sight_fraction = 1.f;
+                        if (const auto hit = physic_engine->ray_cast(camera_pos, positions[j]))
+                            sight_fraction = glm::length(*hit - camera_pos) / distance;
+
+                        const auto clip = view_projection * glm::vec4(positions[j], 1.f);
+
+                        result[i].push_back(
+                            {.ndc_x = clip.x / clip.w,
+                             .ndc_y = clip.y / clip.w,
+                             .clip_w = clip.w,
+                             .distance = distance,
+                             .sight_fraction = sight_fraction});
+                    }
+                }
+
+                return result;
+            });
+    }
+
+    torch::Tensor TrainTankEnvironment::presence_maps(const int rows, const int cols) {
+        const auto view_projections = read_view_projections();
+
+        return apply_on_enemies<torch::Tensor>(
+            [&](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
+                constexpr glm::vec4 origin(0.f, 0.f, 0.f, 1.f);
+
+                std::vector<glm::vec3> positions;
+                positions.reserve(tanks.size());
+                for (const auto &tank: tanks)
+                    positions.emplace_back(tank->get_chassis()->get_model_matrix() * origin);
+
+                auto maps = torch::zeros({static_cast<int64_t>(tanks.size()), rows, cols});
+                auto cells = maps.accessor<float, 3>();
+
+                const auto cell = [](const float ndc, const int size) {
+                    return std::clamp(
+                        static_cast<int>(std::floor((ndc + 1.f) / 2.f * static_cast<float>(size))),
+                        0, size - 1);
+                };
+
+                for (int i = 0; i < tanks.size(); i++) {
+                    if (tanks[i]->is_dead()) continue;
+
+                    const auto &view_projection = view_projections[i];
+
+                    // near plane center
+                    const auto eye_clip = glm::inverse(view_projection) * origin;
+                    const auto eye = glm::vec3(eye_clip) / eye_clip.w;
+
+                    const float x_scale = glm::length(glm::vec3(glm::row(view_projection, 0)));
+                    const float y_scale = glm::length(glm::vec3(glm::row(view_projection, 1)));
+
+                    for (int j = 0; j < tanks.size(); j++) {
+                        if (j == i || tanks[j]->is_dead()) continue;
+
+                        const auto clip = view_projection * glm::vec4(positions[j], 1.f);
+                        if (clip.w <= 0.f) continue;
+
+                        const float x = clip.x / clip.w, y = clip.y / clip.w;
+                        if (std::abs(x) >= 1.f || std::abs(y) >= 1.f) continue;
+
+                        if (const auto hit = physic_engine->ray_cast(eye, positions[j]);
+                            hit && glm::length(*hit - positions[j]) >= SIGHT_TOLERANCE)
+                            continue;
+
+                        const float half_x = TANK_HALF_LENGTH * x_scale / clip.w;
+                        const float half_y = TANK_HALF_HEIGHT * y_scale / clip.w;
+
+                        // image rows go down
+                        for (int r = cell(-y - half_y, rows); r <= cell(-y + half_y, rows); r++)
+                            for (int c = cell(x - half_x, cols); c <= cell(x + half_x, cols); c++)
+                                cells[i][r][c] = 1.f;
+                    }
+                }
+
+                return maps;
             });
     }
 

@@ -20,6 +20,8 @@ namespace arenai::agent {
         torch::Tensor reward;
         torch::Tensor done;
         torch::Tensor truncated;
+        // [nb_tanks, rows, cols] enemy presence map of the state
+        torch::Tensor presence;
         // [nb_tanks, neuron_number] actor liquid state opening the step
         torch::Tensor actor_hidden;
         // the step opens a fresh episode (the liquid states were re-drawn)
@@ -36,6 +38,7 @@ namespace arenai::agent {
         torch::Tensor rewards;
         torch::Tensor dones;
         torch::Tensor truncateds;
+        torch::Tensor presences;
         // [nb_tanks, ...] observation closing the last step, for the value bootstrap
         TorchState bootstrap_state;
         // [T, nb_tanks, 1] whether the (step, tank) pair is a live transition

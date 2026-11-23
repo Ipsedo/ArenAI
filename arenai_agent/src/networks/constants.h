@@ -11,6 +11,9 @@ namespace arenai::agent {
     constexpr float LIQUID_TAU_INIT_MIN = 0.1f;
     constexpr float LIQUID_TAU_INIT_MAX = 2.f;
 
+    // convolution blocks under the enemy presence head
+    constexpr int PRESENCE_BLOCKS = 4;
+
     constexpr float CONCENTRATION_MIN = 2.01f;
     constexpr float CONCENTRATION_MAX = 2000.f;
 }// namespace arenai::agent

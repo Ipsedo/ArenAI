@@ -55,7 +55,7 @@ namespace arenai::agent {
         const int actor_epochs, const int critic_epochs, const int rollout_size,
         const int actor_batch_size, const int actor_gpu_batch_size, const int critic_batch_size,
         const int critic_gpu_batch_size, const int actor_aux_epochs, const int critic_aux_epochs,
-        const float beta_clone, const int n_pi)
+        const float beta_clone, const int n_pi, const float presence_learning_rate)
         : actor(actor), rollout_buffer(rollout_buffer),
           alphas(std::make_unique<EntropyAlphas>(
               nb_continuous_actions, nb_discrete_actions, initial_alpha, alpha_learning_rate,
@@ -67,6 +67,11 @@ namespace arenai::agent {
               std::make_unique<torch::optim::Adam>(this->actor->parameters(), actor_learning_rate)),
           critic_optim(
               std::make_unique<torch::optim::Adam>(critic->parameters(), critic_learning_rate)),
+          presence_loss_metric(std::make_shared<MeanMetric>("pres", metric_window_size)),
+          actor_presence(std::make_unique<PresenceLearner>(
+              this->actor, presence_learning_rate, presence_loss_metric)),
+          critic_presence(std::make_unique<PresenceLearner>(
+              critic, presence_learning_rate, presence_loss_metric)),
           return_scaler(std::make_shared<ReturnScaler>(gamma)),
           actor_mean_loss_metric(std::make_shared<MeanMetric>("π", metric_window_size)),
           critic_mean_loss_metric(std::make_shared<MeanMetric>("v", metric_window_size)),
@@ -153,6 +158,10 @@ namespace arenai::agent {
         run_critic_epochs(critic_epochs, rows, valid_idx);
 
         if (run_aux) auxiliary_phase(rows, valid_idx);
+
+        const auto presence = flat(rollout.presences);
+        actor_presence->fit(rows.vision, presence, valid_idx, actor_gpu_batch_size);
+        critic_presence->fit(rows.vision, presence, valid_idx, critic_gpu_batch_size);
 
         set_train(false);
     }
@@ -424,7 +433,8 @@ namespace arenai::agent {
             discrete_entropy_metric,
             clip_fraction_metric,
             kl_metric,
-            skip_fraction_metric};
+            skip_fraction_metric,
+            presence_loss_metric};
     }
 
     std::vector<std::shared_ptr<AbstractMetric>> PpgTrainer::get_csv_only_metrics() {
@@ -439,6 +449,8 @@ namespace arenai::agent {
         // Optimizers
         save_torch(output_folder, actor_optim, "actor_optim.pt");
         save_torch(output_folder, critic_optim, "critic_optim.pt");
+        actor_presence->save(output_folder, "actor_presence_optim.pt");
+        critic_presence->save(output_folder, "critic_presence_optim.pt");
         save_torch(output_folder, return_scaler, "return_scaler.pt");
         alphas->save(output_folder);
 

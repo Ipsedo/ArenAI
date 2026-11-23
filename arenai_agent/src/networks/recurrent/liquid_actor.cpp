@@ -109,6 +109,14 @@ namespace arenai::agent {
             .vision_features = torch::Tensor()};
     }
 
+    torch::Tensor LiquidActor::presence_logits(const torch::Tensor &vision) {
+        return vision_encoder->presence_logits(vision);
+    }
+
+    std::vector<torch::Tensor> LiquidActor::presence_parameters() const {
+        return vision_encoder->presence_parameters();
+    }
+
     torch::Tensor LiquidActor::initial_state(const int batch_size) const {
         return liquid->get_first_x(batch_size);
     }

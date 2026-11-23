@@ -72,8 +72,6 @@ namespace arenai::view {
 
     int VulkanPlayerRenderer::get_height() const { return height_; }
 
-    glm::mat4 VulkanPlayerRenderer::last_view_projection() const { return last_view_proj_matrix(); }
-
     void VulkanPlayerRenderer::set_window_size(const int new_width, const int new_height) {
         width_ = new_width;
         height_ = new_height;

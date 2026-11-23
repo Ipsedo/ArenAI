@@ -22,6 +22,10 @@ namespace arenai::agent {
         last_actor_hidden = actor_hidden;
     }
 
+    void LiquidPpoStepCollector::on_presence(const torch::Tensor &presence) {
+        last_presence = presence;
+    }
+
     void LiquidPpoStepCollector::on_transition(
         const torch::Tensor &rewards, const torch::Tensor &done, const torch::Tensor &truncated) {
         rollout_buffer->add(
@@ -33,6 +37,7 @@ namespace arenai::agent {
              .reward = rewards,
              .done = done,
              .truncated = truncated,
+             .presence = last_presence,
              .actor_hidden = last_actor_hidden,
              .episode_start = next_episode_start});
 

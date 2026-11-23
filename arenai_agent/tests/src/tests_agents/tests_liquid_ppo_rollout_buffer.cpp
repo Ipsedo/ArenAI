@@ -26,6 +26,7 @@ LiquidPpoInputStep LiquidPpoRolloutBufferTest::make_step(
         .reward = torch::randn({NB_TANKS, 1}),
         .done = done,
         .truncated = torch::zeros({NB_TANKS, 1}),
+        .presence = torch::zeros({NB_TANKS, 2, 2}),
         .actor_hidden = torch::randn({NB_TANKS, NEURON_NUMBER}),
         .episode_start = episode_start};
 }

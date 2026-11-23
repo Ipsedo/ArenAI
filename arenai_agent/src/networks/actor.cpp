@@ -76,6 +76,14 @@ namespace arenai::agent {
         return head->forward(torch::cat({vision_encoded, sensors_encoded}, 1));
     }
 
+    torch::Tensor Actor::presence_logits(const torch::Tensor &vision) {
+        return vision_encoder->presence_logits(vision);
+    }
+
+    std::vector<torch::Tensor> Actor::presence_parameters() const {
+        return vision_encoder->presence_parameters();
+    }
+
     ActorRawOutput Actor::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
         const auto encoded = trunc_forward(vision, sensors);
 

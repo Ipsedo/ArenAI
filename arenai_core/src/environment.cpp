@@ -105,6 +105,16 @@ namespace arenai::core {
         return states;
     }
 
+    std::vector<glm::mat4> BaseTanksEnvironment::read_view_projections() const {
+        std::vector<glm::mat4> view_projections;
+        view_projections.reserve(tanks.size());
+
+        for (int i = 0; i < static_cast<int>(tanks.size()); i++)
+            view_projections.push_back(vision_pool_->read_view_projection(i));
+
+        return view_projections;
+    }
+
     void BaseTanksEnvironment::reset_physics(
         const float new_spawn_width, const float new_spawn_height,
         const model::ShellEconomy &shell_economy) {

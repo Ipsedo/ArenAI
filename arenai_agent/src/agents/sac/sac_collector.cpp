@@ -13,6 +13,8 @@ namespace arenai::agent {
         last_action = action;
     }
 
+    void SacStepCollector::on_presence(const torch::Tensor &presence) {}
+
     void SacStepCollector::on_transition(
         const torch::Tensor &rewards, const torch::Tensor &done, const torch::Tensor &truncated) {
         replay_buffer->add(

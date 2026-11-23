@@ -27,8 +27,8 @@ namespace arenai::agent {
               params.grad_norm_max, params.initial_alpha, params.alpha_learning_rate,
               params.continuous_target_entropy, params.discrete_target_proba, params.actor_epochs,
               params.critic_epochs, params.rollout_size, params.actor_batch_size,
-              params.actor_gpu_batch_size, params.critic_batch_size,
-              params.critic_gpu_batch_size)) {}
+              params.actor_gpu_batch_size, params.critic_batch_size, params.critic_gpu_batch_size,
+              params.presence_learning_rate)) {}
 
     std::shared_ptr<AbstractTorchAgent> PpoTorchAgentFactory::get_agent() { return agent; }
 

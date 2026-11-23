@@ -3,6 +3,14 @@
 using namespace arenai;
 using namespace arenai::agent;
 
+namespace {
+    template<typename Config>
+    torch::Tensor make_presence(const Config &cfg, const int nb_tanks) {
+        const auto [rows, cols] = presence_grid_size(cfg.vision_height, cfg.vision_width, 1);
+        return torch::zeros({nb_tanks, rows, cols});
+    }
+}// namespace
+
 std::unique_ptr<PpgTorchAgentFactory>
 PpgTrainingTest::make_factory(const PpgTrainingTestConfig &cfg) const {
     const PpgHyperParams params{
@@ -57,7 +65,7 @@ PpgTriad PpgTrainingTest::make_triad(const PpgTrainingTestConfig &cfg, const int
         cfg.nb_continuous_actions, cfg.nb_discrete_actions, cfg.nb_sensors, 1e-3f, 1e-3f, 8,
         std::vector{16}, vision_channels, group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f,
         0.001f, 3e-4f, std::vector(cfg.nb_continuous_actions, -1.f), 0.05f, 2, 2, ROLLOUT_SIZE,
-        MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, 2, 2, 1.f, n_pi);
+        MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, 2, 2, 1.f, n_pi, 3e-4f);
     return triad;
 }
 
@@ -72,6 +80,7 @@ void PpgTrainingTest::run_env_loop(
             state = TorchState(state.get_vision(), state.get_state(), torch::zeros({nb_tanks, 1}));
 
         triad.agent->act(state, true);
+        triad.collector->on_presence(make_presence(cfg, nb_tanks));
         triad.collector->on_transition(
             torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
         triad.trainer->step();
@@ -125,6 +134,7 @@ TEST_F(PpgTrainingTest, FactoryTrainingRunsWithoutError) {
         constexpr int nb_tanks = 2;
 
         factory->get_agent()->act(make_state(cfg, nb_tanks), true);
+        factory->get_collector()->on_presence(make_presence(cfg, nb_tanks));
         factory->get_collector()->on_transition(
             torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
         ASSERT_NO_THROW(factory->get_trainer()->step());

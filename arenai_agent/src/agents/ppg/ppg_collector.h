@@ -19,6 +19,8 @@ namespace arenai::agent {
             const torch::Tensor &continuous_pre_tanh, const torch::Tensor &continuous_log_prob,
             const torch::Tensor &discrete_log_prob);
 
+        void on_presence(const torch::Tensor &presence) override;
+
         void on_transition(
             const torch::Tensor &rewards, const torch::Tensor &done,
             const torch::Tensor &truncated) override;
@@ -33,6 +35,7 @@ namespace arenai::agent {
         torch::Tensor last_continuous_pre_tanh;
         torch::Tensor last_continuous_log_prob;
         torch::Tensor last_discrete_log_prob;
+        torch::Tensor last_presence;
     };
 
 }// namespace arenai::agent

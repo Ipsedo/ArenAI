@@ -3,6 +3,14 @@
 using namespace arenai;
 using namespace arenai::agent;
 
+namespace {
+    template<typename Config>
+    torch::Tensor make_presence(const Config &cfg, const int nb_tanks) {
+        const auto [rows, cols] = presence_grid_size(cfg.vision_height, cfg.vision_width, 1);
+        return torch::zeros({nb_tanks, rows, cols});
+    }
+}// namespace
+
 std::unique_ptr<PpoTorchAgentFactory>
 PpoTrainingTest::make_factory(const PpoTrainingTestConfig &cfg) const {
     const PpoHyperParams params{
@@ -97,7 +105,7 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
         cfg.nb_discrete_actions, cfg.nb_sensors, 1e-3f, 1e-3f, 8, std::vector{16}, vision_channels,
         group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 3e-4f,
         std::vector(cfg.nb_continuous_actions, -1.f), 0.05f, 2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE,
-        MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE);
+        MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, 3e-4f);
 
     std::vector<torch::Tensor> initial_parameters;
     for (const auto &parameter: actor->parameters())
@@ -107,6 +115,7 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
         constexpr int nb_tanks = 2;
 
         agent->act(make_state(cfg, nb_tanks), true);
+        collector->on_presence(make_presence(cfg, nb_tanks));
         collector->on_transition(
             torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
         trainer->step();
@@ -153,7 +162,7 @@ TEST_F(PpoTrainingTest, MaskedFireReceivesNoUpdate) {
         cfg.nb_discrete_actions, cfg.nb_sensors, 1e-3f, 1e-3f, 8, std::vector{16}, vision_channels,
         group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 3e-4f,
         std::vector(cfg.nb_continuous_actions, -1.f), 0.05f, 2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE,
-        MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE);
+        MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, 3e-4f);
 
     auto named_parameters = actor->named_parameters();
     const auto weight = named_parameters["discrete.0.weight"];
@@ -168,6 +177,7 @@ TEST_F(PpoTrainingTest, MaskedFireReceivesNoUpdate) {
         state = TorchState(state.get_vision(), state.get_state(), torch::zeros({nb_tanks, 1}));
 
         agent->act(state, true);
+        collector->on_presence(make_presence(cfg, nb_tanks));
         collector->on_transition(
             torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
         trainer->step();

@@ -6,6 +6,7 @@
 #include "../../networks/recurrent/liquid_critic.h"
 #include "../entropy_alphas.h"
 #include "../ppo_objective.h"
+#include "../presence_learner.h"
 #include "../return_scaler.h"
 #include "../trainer.h"
 #include "./liquid_ppo_rollout_buffer.h"
@@ -72,7 +73,7 @@ namespace arenai::agent {
             const std::vector<float> &continuous_target_entropy, float discrete_target_proba,
             int actor_epochs, int critic_epochs, int rollout_size, int actor_batch_size,
             int actor_gpu_batch_size, int critic_batch_size, int critic_gpu_batch_size,
-            int chunk_size);
+            int chunk_size, float presence_learning_rate);
 
         void step() override;
 
@@ -101,6 +102,10 @@ namespace arenai::agent {
 
         std::unique_ptr<torch::optim::Adam> actor_optim;
         std::unique_ptr<torch::optim::Adam> critic_optim;
+
+        std::shared_ptr<AbstractMetric> presence_loss_metric;
+        std::unique_ptr<PresenceLearner> actor_presence;
+        std::unique_ptr<PresenceLearner> critic_presence;
 
         // rewards scaled by the running std of the discounted return before the GAE
         std::shared_ptr<ReturnScaler> return_scaler;

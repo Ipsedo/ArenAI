@@ -5,6 +5,7 @@
 
 #include <torch/torch.h>
 
+#include "../presence_model.h"
 #include "../vision.h"
 #include "./liquid_cell.h"
 
@@ -17,7 +18,7 @@ namespace arenai::agent {
     };
 
     // same encoders as the liquid actor, ending on a state-value head
-    class LiquidCritic final : public torch::nn::Module {
+    class LiquidCritic final : public torch::nn::Module, public PresenceModel {
     public:
         explicit LiquidCritic(
             const int &vision_height, const int &vision_width, const int &nb_sensors,
@@ -34,6 +35,9 @@ namespace arenai::agent {
             const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &x_t);
 
         torch::Tensor initial_state(int batch_size) const;
+
+        torch::Tensor presence_logits(const torch::Tensor &vision) override;
+        std::vector<torch::Tensor> presence_parameters() const override;
 
     private:
         std::shared_ptr<ConvolutionNetwork> vision_encoder;

@@ -19,6 +19,8 @@ namespace arenai::agent {
         last_discrete_log_prob = discrete_log_prob;
     }
 
+    void PpgStepCollector::on_presence(const torch::Tensor &presence) { last_presence = presence; }
+
     void PpgStepCollector::on_transition(
         const torch::Tensor &rewards, const torch::Tensor &done, const torch::Tensor &truncated) {
         rollout_buffer->add(
@@ -29,7 +31,8 @@ namespace arenai::agent {
              .discrete_log_prob = last_discrete_log_prob,
              .reward = rewards,
              .done = done,
-             .truncated = truncated});
+             .truncated = truncated,
+             .presence = last_presence});
     }
 
     void PpgStepCollector::on_episode_end(const TorchState &final_state) {

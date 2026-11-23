@@ -1,107 +1,110 @@
 ---
 name: analyze-run
-description: Analyse le metrics.csv d'un dossier d'entraînement ArenAI (outputs/train_NNN_*) en le replaçant dans l'état du code au moment du run (commit effectif, diff vs run précédent) et dans sa config.json, puis écrit <run>/analysis.md. À utiliser dès qu'il faut lire un run ou son CSV (« analyse 504 », « où en est le run », « regarde le CSV de train_503 », « qu'est-ce qui s'est passé dans ce run »).
+description: Analyse the metrics.csv of an ArenAI training folder (outputs/train_NNN_*) against the exact code of the run (effective commit, diff vs the previous run) and its config.json, then write <run>/analysis.md. Use whenever a run or its CSV must be read (« analyse 504 », « où en est le run », « regarde le CSV de train_503 », « qu'est-ce qui s'est passé dans ce run »).
 ---
 
-# Analyse d'un run
+# Run analysis
 
-Entrée : un dossier `outputs/train_NNN_<algo>/` ou juste son numéro (`504`).
-Sortie : `<run>/analysis.md` (en français) + `<run>/analysis_summary.json`, et un résumé dans le chat.
+Input: `outputs/train_NNN_<agent>/` or its number (`504`).
+Output: `<run>/analysis.md` (French) + `<run>/analysis_summary.json`, and a short chat summary.
 
-L'analyse n'est jamais une décision de conception : elle établit des faits, propose des options,
-Samuel tranche (règle de CLAUDE.md).
+Role: establish facts, expose options. Deciding is Samuel's (`CLAUDE.md` gates). Reading
+discipline, noise floor and vocabulary: `docs/rl_method.md`.
 
-## 1. Résumé chiffré
+## 1. Numeric summary
 
-Depuis la racine du repo :
+From the repo root:
 
 ```shell
-python3 .claude/skills/analyze-run/scripts/analyze_run.py <run> --json [--prev <run_de_référence>]
+python3 .claude/skills/analyze-run/scripts/analyze_run.py <run> --json [--prev <reference_run>]
 ```
 
-Le script (stdlib seule) affiche : datation (mtime de `config.json`, jamais celle du dossier,
-qui peut être réutilisé), état en cours/fini, débit en pas/h et tank-steps/h, commit au lancement
-et commits pendant le run, diff de config et diff de code **hors commentaires/blancs** avec le run
-précédent, jalons D, moyennes par niveau de D, 10 tranches d'index, extrêmes, signaux
-automatiques. Les signaux sont des pistes, pas des verdicts.
+Stdlib only. Prints: dating (mtime of `config.json`, never of the folder — folders get reused),
+running/finished, throughput in steps/h and tank-steps/h, commit at launch and commits during
+the run, config diff and code diff **excluding comments/whitespace** against the previous run, D
+milestones, means per D level, 10 index slices, extremes, automatic signals. Signals are leads,
+not verdicts.
 
-## 2. Établir le code exact du run
+## 2. Establish the exact code of the run
 
-1. **Commit effectif.** Samuel lance souvent un run avant de commiter : le script marque les
-   commits ≤ 90 min après le lancement (et avant le run suivant) comme « peut contenir le code du
-   run » et en déduit un commit effectif estimé. Le confirmer :
-   - les valeurs de `config.json` doivent coïncider avec les défauts de l'en-tête
-     `arenai_agent/src/agents/<algo>/*_hyperparams.h` au commit effectif
-     (`git show <hash>:<chemin>`), sauf options CLI explicites ;
-   - lire la fiche mémoire du run (`run-NNN-*.md`) et celles des runs voisins : elles disent
-     « non commité », « relancé », « binaire du HH:MM »… Si mémoire et git divergent, le dire.
-   - run en cours avec un arbre de travail sale (`git status`) : comparer la mtime du binaire
-     (`cmake-build-release/arenai_agent/arenai_agent_train` ou `build/…`) à la date de lancement.
-2. **Lire le code au commit effectif, pas l'arbre de travail** (`git show <hash>:<chemin>`) pour
-   tout ce que `config.json` ne contient pas :
-   - reward et shaping : `arenai_agent/src/core/train_environment.cpp` (échelles hit/reçu,
-     potentiel de visée, respawn/troncature à réserve vide) ;
-   - événements, économie d'obus : `arenai_model/src/tank/jolt_enemy_tank.cpp`,
-     `arenai_model/include/arenai_model/constants.h`, `shell_economy.h` ;
-   - σ, entropie, α : `arenai_agent/src/networks/constants.h`, `networks/misc.cpp`,
-     `networks/entropy.cpp`, `agents/entropy_alphas.cpp` ;
-   - trainer de l'algo (`agents/<algo>/*_trainer.cpp`), curriculum (`core/spawn_curriculum.cpp`),
-     définition des métriques (constructeurs `MeanMetric("<nom>", fenêtre, …)`).
-3. **Ce qui change vs le run précédent** : lire le diff réel des fichiers listés par le script
-   (`git diff <from> <to> -- <fichier>`), pas seulement les messages de commit. Nommer le ou les
-   changements testés ; s'il y en a plusieurs, ils sont **confondus** — le dire.
+1. **Effective commit.** Samuel often launches before committing: the script flags commits ≤ 90
+   min after launch (and before the next run) as "may contain the run's code" and derives an
+   estimated effective commit. Confirm it:
+   - `config.json` values must equal the defaults of
+     `arenai_agent/src/agents/<agent>/*_hyperparams.h` at the effective commit
+     (`git show <hash>:<path>`), except explicit CLI options;
+   - read the run's memory note and its neighbours': they record "uncommitted", "relaunched",
+     "binary of HH:MM"… Memory and git disagreeing is a finding: state it;
+   - running run + dirty tree (`git status`): compare the binary mtime
+     (`cmake-build-release/arenai_agent/arenai_agent_train` or `build/…`) to the launch date.
+2. **Read the code at the effective commit, never the working tree** (`git show <hash>:<path>`)
+   for everything `config.json` does not hold:
+   - reward and shaping: `arenai_agent/src/core/train_environment.cpp`;
+   - events, shell economy: `arenai_model/src/tank/jolt_enemy_tank.cpp`,
+     `arenai_model/include/arenai_model/constants.h`, `shell_economy.h`;
+   - σ, entropy, α: `arenai_agent/src/networks/constants.h`, `networks/misc.cpp`,
+     `networks/entropy.cpp`, `agents/entropy_alphas.cpp`;
+   - the agent's trainer (`agents/<agent>/*_trainer.cpp`), curriculum
+     (`core/spawn_curriculum.cpp`), metric definitions (`MeanMetric("<name>", window, …)`
+     constructors).
+3. **What differs from the previous run**: read the real diff of the files the script lists
+   (`git diff <from> <to> -- <file>`), not commit messages. Name the change(s) under test.
+   Several ⟹ **confounded**: say it, attribute nothing.
 
-## 3. Lire le CSV
+## 3. Read the CSV
 
-Une ligne toutes les `30 / wanted_frequency` itérations ; `index` = itérations de la boucle
-d'entraînement = décisions (période `action_repeat × wanted_frequency`, 0,1 s par défaut). La
-ligne `index = 0` est ignorée. `save_N` ≈ `N × save_every`. Les colonnes changent d'un run à
-l'autre : se fier à l'en-tête réel et, pour une colonne inconnue ou suspecte, à sa définition au
-commit effectif.
+One row every `30 / wanted_frequency` iterations; `index` = training-loop iterations = decisions
+(period `action_repeat × wanted_frequency`, 0.1 s by default). Row `index = 0` is ignored.
+`save_N` ≈ `N × save_every`. Columns change between runs: trust the actual header and, for an
+unknown or suspicious column, its definition at the effective commit.
 
-| colonne | sens (au 11/11/2026, à revérifier au commit du run) |
+| column | meaning (as of 2026-11-11 — re-verify at the run's commit) |
 |---|---|
-| `r`, `r_hit`, `r_rcv`, `r_aim` | reward moyen par tank-décision, fenêtre très longue (4 × nb_tanks × max_episode_steps) ⟹ lissé, en retard |
-| `miss` | distance de ratage moyenne (m) des obus retombés |
-| `s` | durée de vie (s) des tanks morts |
-| `fire` | tirs/s par tank vivant, fenêtre 256 décisions ; **aveugle au dump** de début d'épisode |
-| `hit` | touches/tirs par épisode, fenêtre 16 épisodes (≠ hit/obus de la sonde) |
-| `kill` | kills par épisode, fenêtre 16 épisodes |
-| `side`, `D` | côté de spawn joué / borne haute du curriculum |
-| `π`, `v` | pertes acteur / critic |
-| `ev` | variance expliquée **in-sample** (tous minibatchs de tous les epochs) : plus d'epochs critic la gonfle |
-| `Hc` | entropie continue moyenne des dims (masque une dim saturée) |
-| `Hd` | entropie discrète ; fire masqué hors états armés ⟹ ≈ H(zoom) |
-| `clip`, `kl`, `skip` | fraction clippée, KL par rollout, fraction de minibatchs sautés par `target_kl` |
-| `alpha_*` | température d'entropie par dimension d'action (CSV seulement) |
+| `r`, `r_hit`, `r_rcv`, `r_aim` | mean reward per tank-decision, very long window (4 × nb_tanks × max_episode_steps) ⟹ smoothed, lagging |
+| `miss` | mean miss distance (m) of landed shells |
+| `s` | lifetime (s) of dead tanks |
+| `fire` | shots/s per living tank, 256-decision window; **blind to the dump** at episode start |
+| `hit` | hits/shots per episode, 16-episode window (≠ the probe's hit/shell) |
+| `kill` | kills per episode, 16-episode window |
+| `side`, `D` | spawn side played / upper bound of the curriculum |
+| `π`, `v` | actor / critic losses |
+| `ev` | explained variance **in-sample** (all minibatches of all epochs): more critic epochs inflate it |
+| `Hc` | mean continuous entropy over dims (hides one saturated dim) |
+| `Hd` | discrete entropy; fire masked outside armed states ⟹ ≈ H(zoom) |
+| `clip`, `kl`, `skip` | clipped fraction, KL per rollout, fraction of minibatches skipped by `target_kl` |
+| `alpha_*` | entropy temperature per action dimension (CSV only) |
 
-## 4. Interpréter
+## 4. Interpret
 
-- Lire `MEMORY.md` et les fiches liées (runs précédents de la même lignée, feedbacks). Ne
-  **jamais** re-proposer un levier marqué refusé (cooldown long, contrainte de cadence, tête
-  auxiliaire, duplication vision → proprio, …).
-- Comparer à **D égal**, pas à index égal ; bruit de seed : jalon D ±30 k, réserve ×2, un record
-  isolé ne prouve rien. Seuls sont structurels les effets imposés par le code.
-- Débits à nb_tanks différent : comparer en tank-steps ou en temps mur.
-- Régimes connus à reconnaître : régime KL (skip ↑, kl ≥ target), collapse de σ (Hc ↓ < 0),
-  critic faible (ev < 0,2 ; ev précède hit de 10-20 k), gâchette éteinte (fire → 0, kill → 0),
-  dump (invisible au CSV : décomposition du reward ou sonde), μ aux bornes, α hors plancher.
-- Le CSV ne dit rien de la sélectivité de la gâchette ni de la réserve vidée : si la question
-  l'exige, proposer une sonde (`arenai_agent_probe`, step = 0,1 s) plutôt que conclure.
-- Chaque affirmation chiffrée porte son index et son D.
+- Read `MEMORY.md` and the linked notes (lineage runs, feedback). **Never** re-propose a lever
+  recorded as refused, nor a cause recorded as ruled out.
+- Compare at **equal D**, not equal index. Noise floor: D milestone ±30k, reserve ×2; one
+  isolated record proves nothing. Only code-imposed effects are structural.
+- Throughput at different `nb_tanks`: compare in tank-steps or wall-clock.
+- Regimes to recognise: KL regime (skip ↑, kl ≥ target), σ collapse (Hc ↓ < 0), weak critic
+  (ev < 0.2; ev leads hit by 10–20k), trigger off (fire → 0, kill → 0), dump (invisible in the
+  CSV: reward decomposition or probe), μ at the bounds, α off its floor.
+- The CSV says nothing about trigger selectivity or the emptied reserve. If the question needs
+  it, **run the probe** (`probe-checkpoint`; fast evaluators need no permission) instead of
+  concluding or merely suggesting.
+- Every quantitative statement carries its index and D.
+- Any cause or remedy that comes out of the analysis follows `rl-hypothesis` (fast evaluator
+  attached, gates applied).
 
-## 5. Écrire `<run>/analysis.md`
+## 5. Write `<run>/analysis.md`
 
-En français, sans remplissage :
+French, no filler, LaTeX for any formula:
 
-1. **En-tête** : run, algo, lancement → dernière ligne, en cours/fini, index final, débit,
-   commit effectif (et degré de confiance).
-2. **Ce que teste ce run** : diff config + code vs le run précédent, hypothèse (mémoire),
-   changements confondus.
-3. **Lecture du CSV** : jalons D, trajectoire par phase, chiffres clés à D égal avec les runs de
-   référence connus en mémoire.
-4. **Diagnostic** : mécanismes avec leurs preuves ; séparer établi / dans le bruit / non tranché.
-5. **Options** (pas de décision) et **repères** : quoi regarder, à quel D/index, quelle sonde.
+1. **Header**: run, agent, launch → last row, running/finished, final index, throughput,
+   effective commit (with confidence).
+2. **What this run tests**: config + code diff vs the previous run, hypothesis (memory),
+   confounded changes, any typed imposition by Samuel.
+3. **CSV reading**: D milestones, trajectory by phase, key numbers at equal D against the
+   reference runs known in memory.
+4. **Diagnosis**: mechanisms with their evidence; separate established / within noise /
+   undecided.
+5. **Options** (no decision), each with its fast evaluator, and **markers**: what to watch, at
+   which D/index, which probe.
 
-Puis un résumé court dans le chat avec le lien vers le fichier. Si l'analyse établit un fait
-nouveau, mettre à jour la fiche mémoire du run (ou en créer une), en suivant les règles mémoire.
+Then a short chat summary linking the file. A newly established fact updates (or creates) the
+run's memory note.

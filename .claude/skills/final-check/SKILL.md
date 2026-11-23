@@ -1,31 +1,48 @@
 ---
 name: final-check
-description: Final verification of code modifications via `pre-commit run --all-files` — formats the code (clang-format, whitespace), builds the project and runs all module tests. ALWAYS use this as the last step after modifying C++ code, before declaring the work done or committing (e.g. "verify", "final check", "run pre-commit", "make sure everything passes").
+description: Final verification of code modifications via `pre-commit run --all-files` — formats (clang-format, whitespace), builds the project and runs every module's tests. ALWAYS the last step after modifying C++ code, before declaring the work done or committing (« vérifie », « final check », « lance pre-commit », « assure-toi que tout passe »).
 ---
 
-# Final check (pre-commit)
+# Final check
 
-Run the full pre-commit pipeline on the whole repo. The hooks (defined in the parent `ArenAI/.pre-commit-config.yaml`) do, in order: `end-of-file-fixer`, `trailing-whitespace`, `clang-format`, then **build** (`build_linux.sh`) and the **test binaries** of each module (view, model, core, agent). `fail_fast: true` — the run stops at the first failing hook.
+Hooks (`.pre-commit-config.yaml` at the repo root, `fail_fast: true`), in order:
+`end-of-file-fixer`, `trailing-whitespace`, `clang-format`, `build` (`./build_linux.sh`),
+`tests` (`ctest --build-dir ./build --output-on-failure`).
 
-## Prerequisites
+## 0. Self-review first
 
-`pre-commit` lives in the venv at `arenai/.venv`. If it's missing, run the `setup-venv` skill first (from `arenai/`).
+The pipeline checks that the code compiles and passes; it does not check that it is right.
+Before running it, re-read the diff against `CLAUDE.md`:
 
-## Steps
+- no shared surface changed without a validated question (`design-gate` §5 checklist: getters,
+  threaded parameters, usage leaks, flags/defaults);
+- no comment longer than one line, none that paraphrases or justifies;
+- nothing unrequested: no extra option, default, feature, refactor.
 
-1. Run from the **git root** (`ArenAI/`, the directory containing `.pre-commit-config.yaml`), using the venv binary directly:
-   ```shell
-   ./.venv/bin/pre-commit run --all-files
-   ```
+## 1. Run
 
-2. **Interpret failures** — a hook marked `Failed` means one of two things:
-   - **Formatting hooks** (`end-of-file-fixer`, `trailing-whitespace`, `clang-format`): they *fixed* files in place and report `Failed` because files were modified. This is normal — re-run the command; it should pass on the second pass. Review the reformatted files (`git diff`) if the changes touch code you just wrote.
-   - **`build` or `test_*` hooks**: a real compilation or test failure. Read the error output, fix the code, then re-run from step 1.
+From the repo root; `pre-commit` lives in `./.venv` (missing ⟹ skill `setup-venv`):
 
-3. **Repeat until everything passes.** The task is only done when a full run shows every hook `Passed` (or `Skipped` for hooks with no matching files).
+```shell
+git add -A <files you changed>
+./.venv/bin/pre-commit run --all-files
+```
 
-## Notes
+New files must be staged, otherwise pre-commit does not see them. Bash timeout ≥ 10 min (cold
+build).
 
-- The build hook is incremental (reuses `./build/`), so re-runs are much faster than the first one; still allow several minutes for a cold build. Use a generous Bash timeout (≥ 10 min).
-- Report the outcome honestly: quote the failing hook's output if something fails; only claim success after a fully green run.
-- Formatting fixes made by the hooks are part of your change — don't revert them, and include them in any commit.
+## 2. Read failures
+
+- **Formatting hooks** report `Failed` because they *fixed* files in place. Re-run; the second
+  pass is green. Their fixes are part of the change: keep and re-stage them.
+- **`build` / `tests`**: a real failure. Read the error, fix the cause, re-run from step 1.
+- **Golden-image tests** (`arenai_view`, `arenai_core`) compare against lavapipe/Ubuntu
+  references and may fail on the local GPU for that reason alone. Distinguish: a failure that
+  exists without your change is environmental — say so; a render change you made requires
+  `./scripts/goldens_docker.sh` (and `--regenerate` only if the change is intended, which is
+  Samuel's call). Never use `-DARENAI_REGENERATE_GOLDEN_IMAGES=ON` to get green.
+
+## 3. Done criterion
+
+Every hook `Passed` (or `Skipped` for no matching file) in one full run. Otherwise the work is
+not done: quote the failing hook's output and say what remains.

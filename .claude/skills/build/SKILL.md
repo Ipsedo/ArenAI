@@ -1,27 +1,29 @@
 ---
 name: build
-description: Build the ArenAI C++ project with CMake + make. Use whenever it needs to build, compile, or rebuild the project (e.g. "build it", "compile", "run a build", "rebuild").
+description: Build the ArenAI C++ project with CMake + make. Use whenever the project must be built, compiled or rebuilt (« build », « compile », « rebuild », « recompile »), including a probe binary at another commit in a worktree.
 ---
 
 # Build
 
-Configure and compile the project from the repo root, parallelizing over all available CPU cores.
-
-## Steps
-
-Run from the **project root** (`ArenAI/`, the directory containing the top-level `CMakeLists.txt`):
+From the repo root (directory of the top-level `CMakeLists.txt`):
 
 ```shell
-mkdir -p build && cd build
-cmake .. && make -j "$(nproc)"
+./build_linux.sh
 ```
 
-- `mkdir -p build` — create the build directory if it doesn't already exist (safe to re-run; won't fail on an existing build).
-- `-j "$(nproc)"` — parallel build using the number of available CPU cores. On macOS use `-j "$(sysctl -n hw.ncpu)"`; on Windows/MSVC prefer the PowerShell scripts (see below).
+Equivalent to `cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS_RELEASE="-O3" ..` then
+`make -j "$(nproc)"` inside `build/`. Incremental. This is the tree the pre-commit hooks and
+`ctest` use.
 
-## Notes
-
-- **LibTorch** is expected in `/opt/libtorch`. If it lives elsewhere, pass `-DLIBTORCH_PATH=/path/to/libtorch` to the `cmake ..` step.
-- Re-running is incremental — CMake reconfigures only if needed and `make` rebuilds only changed targets. To force a clean build, remove the directory first: `rm -rf build`.
-- Report the outcome honestly: if the build fails, surface the compiler/linker error; only state success when `make` actually completed without errors.
-- On **Windows**, build via `.\build_windows.ps1` (`-Config Debug` / `-LibtorchPath ...` to override) instead of the commands above.
+- **LibTorch** expected in `/opt/libtorch`; elsewhere: configure by hand with
+  `-DLIBTORCH_PATH=/path/to/libtorch`.
+- `cmake-build-release/` is Samuel's CLion/ninja tree, usually the freshest binaries:
+  `cmake --build cmake-build-release --target <t>` builds one target there.
+- Probe binary for an older run: `git worktree add <scratch>/<hash> <hash>`, run
+  `build_linux.sh` there, pass the resulting `arenai_agent_probe` with `--binary`. Remove the
+  worktree afterwards.
+- Clean build only when incremental state is proven wrong: `rm -rf build`.
+- Windows: `.\build_windows.ps1` (`-Config Debug`, `-LibtorchPath …`).
+- Cold build takes several minutes: Bash timeout ≥ 10 min or `run_in_background`.
+- Report faithfully: on failure quote the first compiler/linker error; claim success only when
+  `make` ended without error.

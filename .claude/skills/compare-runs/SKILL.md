@@ -1,75 +1,77 @@
 ---
 name: compare-runs
-description: Compare plusieurs runs d'entraînement ArenAI (outputs/train_NNN_*) à partir de leurs analyses de CSV, en tenant compte des différences de code (commits effectifs, diff hors commentaires) et de config.json entre les runs, puis écrit outputs/comparisons/<date>_<runs>.md. À utiliser pour « compare 502 503 504 », « 504 vs 502 », « est-ce que le changement X a servi », « lequel est le meilleur ».
+description: Compare several ArenAI training runs (outputs/train_NNN_*) from their CSV analyses, accounting for code differences (effective commits, diff excluding comments) and config.json differences, then write outputs/comparisons/<date>_<runs>.md. Use for « compare 502 503 504 », « 504 vs 502 », « est-ce que le changement X a servi », « lequel est le meilleur ».
 ---
 
-# Comparaison de runs
+# Run comparison
 
-Entrée : deux runs ou plus (dossiers ou numéros), **la référence en premier**, éventuellement la
-question posée (« le SoftClamp a-t-il servi ? »).
-Sortie : `outputs/comparisons/<AAAA-MM-JJ>_<n1>_vs_<n2>[_vs_…].md` (en français) + un résumé dans
-le chat.
+Input: two or more runs (folders or numbers), **reference first**, optionally the question asked
+(« le SoftClamp a-t-il servi ? »).
+Output: `outputs/comparisons/<YYYY-MM-DD>_<n1>_vs_<n2>[_vs_…].md` (French) + a chat summary.
 
-Comme pour `analyze-run` : établir des faits et proposer, ne rien décider à la place de Samuel.
+Role: establish facts, expose options; Samuel decides. Vocabulary (confound, noise floor,
+structural effect): `docs/rl_method.md`.
 
-## 1. Une analyse à jour par run
+## 1. One up-to-date analysis per run
 
-Pour chaque run, si `<run>/analysis.md` manque ou est antérieure à la dernière ligne de
-`metrics.csv` (le script de comparaison le signale), appliquer d'abord le skill `analyze-run`
-à ce run. Lire ensuite chaque `analysis.md` : elles portent le commit effectif confirmé, ce que
-teste chaque run et les pièges déjà identifiés.
+For each run whose `<run>/analysis.md` is missing or older than the last row of `metrics.csv`
+(the comparison script reports it), apply `analyze-run` first. Then read every `analysis.md`:
+they hold the confirmed effective commit, what each run tests, and known traps.
 
-## 2. Tables comparatives
+## 2. Comparative tables
 
-Depuis la racine du repo :
+From the repo root:
 
 ```shell
 python3 .claude/skills/compare-runs/scripts/compare_runs.py <ref> <run2> [<run3> …] [--step 100000] [--half-width 15000] [--columns hit,kill,ev,Hc]
 ```
 
-Le script réutilise `analyze-run/scripts/arenai_run.py` et affiche : état et débit de chaque run,
-commit effectif estimé, clés de `config.json` qui diffèrent, diff de code hors commentaires entre
-runs consécutifs (dans l'ordre donné), colonnes CSV absentes, jalons D, moyennes **à D égal**,
-moyennes à index égal, pics, signaux, et l'état des `analysis.md`.
+Reuses `analyze-run/scripts/arenai_run.py`. Prints: state and throughput of each run, estimated
+effective commit, differing `config.json` keys, code diff excluding comments between consecutive
+runs (in the given order), missing CSV columns, D milestones, means **at equal D**, means at
+equal index, peaks, signals, state of each `analysis.md`.
 
-## 3. Inventorier toutes les différences
+## 3. Inventory every difference
 
-Une comparaison ne vaut que si l'on sait ce qui diffère. Lister, pour chaque paire :
-- **config.json** : chaque clé qui diffère (nb_tanks, rollout, epochs, lr, cibles d'entropie…) ;
-- **code** : lire le diff réel des fichiers listés entre commits effectifs
-  (`git diff <a> <b> -- <fichier>`) ; reward, économie, σ/entropie, trainer, curriculum d'abord ;
-- **hors git** : code non commité au lancement, binaire différent, dossier relancé (fiches mémoire
-  et `analysis.md`) ;
-- **métriques** : une colonne dont la définition a changé entre les commits
-  (`git log -S'"<nom>"' <a>..<b>`) n'est pas comparable telle quelle — le dire.
+A comparison is worth exactly what is known about what differs. For each pair:
 
-Plus d'une différence ⟹ effets **confondus** : ne pas attribuer l'écart à l'une d'elles.
+- **config.json**: every differing key (nb_tanks, rollout, epochs, lr, entropy targets…);
+- **code**: read the real diff between effective commits (`git diff <a> <b> -- <file>`);
+  reward, economy, σ/entropy, trainer, curriculum first;
+- **outside git**: uncommitted code at launch, different binary, relaunched folder (memory notes
+  and `analysis.md`);
+- **metrics**: a column whose definition changed between the commits
+  (`git log -S'"<name>"' <a>..<b>`) is not comparable as is — say it.
 
-## 4. Comparer honnêtement
+More than one difference ⟹ **confounded**: attribute the gap to none of them. If Samuel needs
+the attribution, the isolating control run is a tactical training (gate G4).
 
-- **À D égal d'abord** (même stade du curriculum), index égal ensuite ; tank-steps ou temps mur
-  si nb_tanks diffère. Ne pas comparer au-delà du D atteint par le run le moins avancé ; signaler
-  les runs en cours.
-- **Bruit de seed** (n = 1 par config) : jalon D ±30 k, réserve vidée ×2, hit/obus ±1 point entre
-  configs identiques. Exiger un écart tenu sur plusieurs niveaux de D ou plusieurs saves. Un
-  calendrier D identique entre runs n'est pas une preuve d'équivalence (curriculum seedé).
-- **Structurel vs bruit** : un effet imposé mécaniquement par le code (σ jamais au plafond avec
-  une borne douce, α qui monte quand Hc passe sous la cible…) est établi ; un écart de niveau de
-  hit/kill n'est établi que s'il dépasse le bruit.
-- `ev` in-sample (gonflé par plus d'epochs critic), `fire` aveugle au dump, `Hd` ≈ H(zoom) :
-  ne pas comparer ces colonnes naïvement entre configs qui changent ces mécanismes.
-- Lire `MEMORY.md` et les fiches des runs : ne pas re-proposer un levier refusé.
+## 4. Compare honestly
 
-## 5. Écrire la comparaison
+- **Equal D first** (same curriculum stage), equal index second; tank-steps or wall-clock when
+  `nb_tanks` differs. Never beyond the D reached by the least advanced run; flag running runs.
+- **Noise floor** (n = 1 seed per config): D milestone ±30k, emptied reserve ×2, hit/shell ±1
+  point between identical configs. Require a gap held over several D levels or several saves. An
+  identical D calendar is no proof of equivalence (seeded curriculum).
+- **Structural vs noise**: an effect mechanically imposed by the code (σ never at the cap with a
+  soft bound, α rising when Hc drops under target…) is established; a hit/kill level gap is
+  established only beyond the noise floor.
+- `ev` in-sample (inflated by more critic epochs), `fire` blind to the dump, `Hd` ≈ H(zoom): do
+  not compare these columns naively across configs that change those mechanisms.
+- Read `MEMORY.md` and the run notes: no refused lever re-proposed.
+- If the CSV cannot decide and a probe can, run it (`probe-checkpoint` on the matching saves of
+  each run, same side, same mode) — no permission needed.
 
-`outputs/comparisons/<AAAA-MM-JJ>_<n1>_vs_<n2>….md` :
+## 5. Write the comparison
 
-1. **Runs** : état, index/D atteints, commit effectif, débit.
-2. **Différences** : config, code (résumé du diff réel), hors git, métriques ; changements confondus.
-3. **Tableau à D égal** des métriques qui répondent à la question (pas toutes les colonnes).
-4. **Trajectoires** : jalons D, pics, dérives (où et à quel D chaque run décroche).
-5. **Verdict** par question : établi / dans le bruit / non tranché, avec les chiffres.
-6. **Pour trancher** : ce qu'il faudrait (D à atteindre, sonde, run de contrôle isolant une
-   variable) — options, pas décisions.
+`outputs/comparisons/<YYYY-MM-DD>_<n1>_vs_<n2>….md`, French:
 
-Puis un résumé court dans le chat avec le lien vers le fichier.
+1. **Runs**: state, index/D reached, effective commit, throughput.
+2. **Differences**: config, code (summary of the real diff), outside git, metrics; confounds.
+3. **Table at equal D** of the metrics that answer the question (not every column).
+4. **Trajectories**: D milestones, peaks, drifts (where and at which D each run breaks away).
+5. **Verdict** per question: established / within noise / undecided, with numbers.
+6. **To decide**: what it would take (D to reach, probe, control run isolating one variable) —
+   options, not decisions.
+
+Then a short chat summary linking the file.

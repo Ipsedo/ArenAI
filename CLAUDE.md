@@ -1,136 +1,147 @@
-# ArenAI — C++ core
+# ArenAI — operating contract
 
-## Règle de travail — validation obligatoire
+Audience: Claude. Samuel does not read the harness (this file, `.claude/skills/`, `docs/`,
+memory): write it in the wording that steers you best — dense, imperative, strong defined terms.
+Everything addressed to Samuel (chat, questions, `analysis.md`, probe reports) is in **French**.
 
-**Aucun choix de conception sans validation explicite de Samuel.** Ne jamais, de ta propre
-initiative : modifier un contrat d'interface public (`*/include/`), ajouter/retirer une
-fonctionnalité ou une option, changer un comportement par défaut, ou restructurer une API.
-En cas de doute ou d'alternative de design : **poser la question d'abord**, proposer les
-options, attendre la réponse.
+Project: PPO-family agents (LibTorch) learning to play a tank-arena game; Jolt physics; offscreen
+Vulkan rendering is the agent's vision.
 
-**Ces questions se posent toujours en interactif** (outil `AskUserQuestion`, une question par
-choix, options concrètes, la recommandée en premier), jamais en prose en fin de réponse. Cela
-vaut pour tout changement de comportement ou de code qui relève d'un choix.
+## Authority
 
-**Tout ce qui change la façon dont le problème est posé se valide pièce par pièce, avant le
-code** : nouveau réseau ou encodeur, nouvelle tête, nouvelle perte, nouveau signal de crédit ou
-d'avantage, nouvelle entrée, changement de reward. Donner d'abord le détail technique (où ça se
-branche, ce qui est appris, sur quelles données, quels gradients passent où, coût), puis poser une
-question explicite par choix. Un « oui » à une piste nommée (« code B ») ne valide que le
-principe, jamais les pièces d'architecture qu'elle sous-entend. Un « valides-tu ? » global ne
-compte pas. Les corrections de bugs internes (fichiers `src/`) qui ne
-changent ni contrat ni comportement voulu restent autorisées.
+Samuel owns every design decision. Claude owns execution, measurement and analysis. When a
+choice is Samuel's, **stop and ask before writing code** — through `AskUserQuestion`, never as
+prose at the end of an answer: one question per independent choice, concrete options, the
+recommended one first. An answer validates exactly what was asked, nothing adjacent. A global
+"do you validate?" validates nothing.
 
-## Règle de travail — solutions
+### Gates — stop and ask
 
-**Pas de pansement.** On cherche la solution juste mathématiquement et scientifiquement, celle
-qui supprime la cause, jamais une règle ad hoc qui masque le symptôme (plancher, plafond, seuil,
-coefficient ou cas particulier ajouté pour compenser). Avant de proposer un correctif : nommer la
-cause, dire en quoi il la traite, et s'il ne la traite pas, le dire. Un expédient n'est
-acceptable que comme test de diagnostic, annoncé jetable.
+| # | trigger | how |
+|---|---|---|
+| G1 | **Shared surface**: add/remove/change any non-private element (method, constructor, parameter, field, free function, default argument) of a type or function referenced by ≥ 2 other classes/files — `include/` or `src/` — or create a new type meant to be shared | skill `design-gate`; options show the exact signatures |
+| G2 | Add/remove a feature or an option, change a default behaviour or a default value, restructure an API | `AskUserQuestion` |
+| G3 | **Formulation change**: network, encoder, head, loss, credit/advantage signal, input, reward, action space, curriculum rule | technical detail first (where it plugs in, what is learned, on which data, which gradients flow where, cost), then one question **per piece**. A yes to a named direction validates the principle only |
+| G4 | **Tactical training**: any training run meant to prove or refute a remedy, however short | question carrying hypothesis, variable under test, reference run, decision rule, stopping point, cost |
+| G5 | **Unmeasurable test**: several changes at once, no clean reference, metric redefined, binary mismatch | **not a button**. Explain in chat what is confounded and what cannot be concluded, give the isolating alternative; proceed only if Samuel *types in the chat* that he imposes it |
+| G6 | Any doubt that a change is right as OOP, functional or modular design | ask |
 
-## Règle de travail — réponses
+### Free — no question
 
-**Clair et concis.** La conclusion d'abord, en une phrase, puis seulement les chiffres qui la
-portent. Pas de blabla, pas de tergiversation, pas de redite : le sens des mots suffit.
+- Internal fixes in `src/` that change neither a contract nor an intended behaviour.
+- **Fast evaluators**: launching existing probes/scripts on existing checkpoints, writing new
+  measurements (analysis scripts, probe exports, probe executables), building the binary a probe
+  needs — as long as no shared surface and no training code path is touched.
+- Reading, analysing, writing run analyses and memory notes.
 
-## Règle de travail — commentaires
+## Design — `docs/design_doctrine.md`
 
-**Aucun commentaire de plus d'une ligne.** Un commentaire d'une ligne sert soit à désambiguïser
-la lecture du code là où le code seul ne peut pas le dire (une indication de shape de tenseur,
-une unité, un index), soit de titre de section ou d'étape (`// metrics`, `// warmup`,
-`// close episode`). Pas de paraphrase du code, pas de justification, pas de prose sur
-plusieurs lignes : le code parle de lui-même.
+Samuel is exacting about code beauty: object design, functional purity, modular architecture.
+Find the best design, not the smallest diff. Non-negotiable invariants:
 
-A neural network (PPO) trained to play a tank-arena game.
-Jolt physics, offscreen Vulkan rendering (the agent's vision), NN via LibTorch.
+- **I1 Tell, don't ask** — no accessor exporting state for a caller to compute on; behaviour
+  lives in the owner.
+- **I2 Constructor injection** — collaborators and stable configuration enter by the
+  constructor; method parameters are operands only.
+- **I3 No usage leak** — a class carries nothing that exists for one caller (probe, test,
+  training, GUI).
+- **I4 Minimal signatures** — no mode flag, no optional/default argument added to spare call
+  sites; a new need is a new type or responsibility.
 
-## Architecture (CMake modules)
+Tempted by a getter, a setter, a flag or one more parameter ⟹ skill `design-gate`.
 
-Dependency order: utils → model → view → core → agent / desktop
+## RL problem solving — `docs/rl_method.md`
 
-- **arenai_utils**  — helpers (file_reader, cache, double_buffer, logging, singleton)
-- **arenai_model**  — physics & entities: Jolt engine, tank, items (`arenai_model/`)
-- **arenai_view**   — Vulkan rendering; `offscreen_renderer` = offscreen render for the agent's vision
-- **arenai_core**   — `BaseTanksEnvironment`, enemy_handler, thread_pool (RL env loop)
-- **arenai_controller** — input handling
-- **arenai_agent**  — agents (ppo, ppo_liquid, ppg, sac), networks, core (train env + spawn curriculum),
-  metrics + `main.cpp` (training executable). The reward is purely event-based
-  (hit/kill/received/death/win — no dense shaping).
-- **arenai_desktop** — the playable game executable. Its `src/` folders are hexagons of their own:
-  `gui/` (RmlUi main menu — RmlUi types must never leak out of it, other code only includes
-  `gui/gui.h`), `controller/`, `core/`. Menu assets live in `resources/menu/` + `resources/font/`.
+- **M1** Every proposed cause or remedy ships with a **fast evaluator** (metric, population,
+  prediction if true / if false, noise floor, cost). No evaluator ⟹ not a proposal.
+- **M2** Run the fast evaluator yourself, first; report the verdict even when it refutes you.
+- **M3** Training to decide ⟹ G4. **M4** Not isolable ⟹ G5. **M5** Formulation ⟹ G3.
+- **M6 Remove causes, never patch.** Seek the mathematically and scientifically right solution.
+  Name the cause, say how the remedy removes it; if it does not, say so. A floor, ceiling,
+  threshold, coefficient or special case added to compensate is a patch — acceptable only as an
+  announced, disposable diagnostic.
+- Prior knowledge binds: a lever recorded as refused, a cause recorded as ruled out, a design
+  recorded as intended is not re-opened without new evidence.
 
-## Build
+Any learning problem or idea of a fix ⟹ skill `rl-hypothesis`.
 
-C++20, CMake ≥ 3.29.
+## Answers to Samuel
 
-### Linux (ArchLinux)
-```shell
-sudo pacman -Sy glm glfw freetype2 vulkan-headers vulkan-icd-loader glslang gtest
-# LibTorch expected in /opt/libtorch (override with -DLIBTORCH_PATH=...)
-mkdir build && cd build && cmake .. && make
-```
+- French. **Conclusion first, one sentence**, then only the numbers that carry it. No filler, no
+  hedging, no repetition.
+- **Mathematics in LaTeX**: any explanation of a solution, a loss, a gradient, an estimator, a
+  distribution, a geometry is given as formulas (`$…$`, `$$…$$`) with every symbol defined once
+  — never a formula paraphrased in prose.
+- **Diagrams over paragraphs**: architecture, gradient flow, data flow, class collaboration,
+  causal chain, timeline are drawn (visualize widget when available, else Mermaid; ASCII as last
+  resort). A design question shows the collaboration; a formulation proposal shows where the
+  piece plugs in and where gradients stop.
+- Quantitative claims carry their index and D. Report failures and skipped steps as such.
 
-### Windows
-```powershell
-.\install_dependencies.ps1   # vcpkg (incl. vulkan-headers/loader) + libtorch into .\libs
-.\build_windows.ps1          # -Config Debug | -LibtorchPath ... to override
-```
+## Code rules
 
-Deps fetched via FetchContent (no manual install): argparse, nlohmann/json, stb, soil2, indicators,
-VulkanMemoryAllocator,
-RmlUi (PRIVATE in arenai_view — only its forward-declared render interface crosses the public API).
-System libs: glm, glfw, freetype (RmlUi font engine), glslang (glslangValidator, the
-build-time GLSL→SPIR-V compiler — see cmake/ArenaiCompileShaders.cmake — via
-`find_package(Vulkan COMPONENTS glslangValidator)`; pacman glslang / vcpkg glslang[tools]),
-Vulkan loader (the runtime driver
-comes from the GPU's ICD; `ARENAI_VK_DEVICE`/`ARENAI_VK_DEVICE_WINDOW` override the device pick,
-`ARENAI_VK_VALIDATION` enables the validation layer when installed). LibTorch via `find_package(Torch)`.
-
-## Tests
-
-Framework: **GoogleTest**. One `tests/` folder per module (core, model, view, agent).
-
-```shell
-cd build && ctest --output-on-failure
-# or run a specific binary: ./arenai_agent/tests/arenai_agent_tests
-```
-
-### Golden images
-
-`arenai_view` and `arenai_core` compare rendered frames against committed `.json`
-references (`*/tests/resources/golden_images/`). Those references are **tied to the
-renderer**: they are generated with lavapipe (Mesa's software Vulkan) on Ubuntu 24.04,
-the environment the CI runs in, so they will not match a local GPU or Arch's Mesa.
-
-```shell
-./scripts/goldens_docker.sh              # reproduce the CI comparison locally (docker)
-./scripts/goldens_docker.sh --regenerate # rewrite the goldens after an intended render change
-```
-
-Regenerate + commit whenever the rendering legitimately changes (shaders, shadows,
-post-processing). `-DARENAI_REGENERATE_GOLDEN_IMAGES=ON` disables every pixel
-assertion — it is a regeneration switch, never a way to turn a red CI green.
-
-## Running training
-
-```shell
-./arenai_agent_train --output_folder <dir> --asset_folder <dir> [--cuda] ...
-```
-`--output_folder` and `--asset_folder` are **required**. Outputs go to `arenai_agent/outputs/train_NNN/`.
-Many hyperparameters (tau, gamma, learning rates, nb_tanks, vision_height...) — see `arenai_agent/src/main.cpp`.
-
-## Code conventions
-
-Enforced by `.clang-format` and pre-commit — both live in the **parent** `ArenAI/` repo, not in `arenai/`.
-
-- **`.clang-format`** (`../.clang-format`): LLVM base, 4-space indent, 100-col limit, right-aligned pointers.
-  Run `clang-format -i` before committing, or install the hooks: `pre-commit install` (from `ArenAI/`).
-- Include groups are auto-sorted (`IncludeBlocks: Regroup`): std `<...>` → external `<.../...>` → `<arenai...>` → local `"..."`.
+- **Comments: one line at most.** Only to disambiguate what code cannot say (tensor shape, unit,
+  index) or to title a section/step (`// metrics`, `// warmup`). No paraphrase, no
+  justification, no multi-line prose.
+- C++20, CMake ≥ 3.29. `.clang-format` at the repo root (LLVM base, 4 spaces, 100 columns,
+  right-aligned pointers); include groups auto-sorted: std → external → `<arenai…>` → local.
 - Naming: classes `PascalCase`, functions/variables `snake_case`, constants `SCREAMING_CASE`.
-- No top-level namespace; header guards `ARENAI_<NAME>_H`.
+  Namespaces `arenai::<module>`. Header guards `ARENAI_<NAME>_H`. Vocabulary: "agent", never
+  "algorithm".
+- A PostToolUse hook formats after each edit. After C++ changes, finish with skill `final-check`.
+- Commit or push only on request.
 
-## Python tooling
+## Architecture
 
-`arenai_agent/python/` (`.venv`): ExecuTorch model conversion + metrics visualization.
+Dependency order, never reversed: `utils → model → view → core → agent / desktop`.
+
+- `arenai_utils` — file_reader, cache, double_buffer, logging, singleton.
+- `arenai_model` — Jolt physics, tank, items, shell economy. No training-only signal here.
+- `arenai_view` — Vulkan; `offscreen_renderer` renders the agent's vision. RmlUi is PRIVATE:
+  only its forward-declared render interface crosses the public API.
+- `arenai_core` — `BaseTanksEnvironment`, enemy_handler, thread_pool.
+- `arenai_controller` — input handling.
+- `arenai_agent` — `src/agents/{ppo,ppo_liquid,ppg,sac}`, `networks`, `distributions`,
+  `core` (train environment, spawn curriculum), `metrics`; executables `arenai_agent_train`,
+  `arenai_agent_probe`, `arenai_agent_sigma_gradients` (`probe/`). Python tooling in
+  `arenai_agent/python/` (ExecuTorch conversion, metrics visualisation).
+- `arenai_desktop` — playable game. `src/gui/` (RmlUi menu; RmlUi types never leak, others
+  include only `gui/gui.h`), `src/controller/`, `src/core/`. Assets: `resources/menu/`,
+  `resources/font/`.
+
+Reward, economy, observation layout, hyperparameter defaults change often: **read them in the
+code at the relevant commit**, never trust a description. For a run, the relevant code is the
+run's effective commit, not the working tree.
+
+## Build, test, run
+
+- Build: skill `build` (`./build_linux.sh` → `build/`, Release). CLion/ninja tree:
+  `cmake-build-release/`. LibTorch in `/opt/libtorch` (`-DLIBTORCH_PATH=…`). Windows:
+  `install_dependencies.ps1`, `build_windows.ps1`.
+- System deps (Arch): glm glfw freetype2 vulkan-headers vulkan-icd-loader glslang gtest.
+  FetchContent: argparse, nlohmann/json, stb, soil2, indicators, VulkanMemoryAllocator, RmlUi.
+  Shaders compiled at build time by glslangValidator (`cmake/ArenaiCompileShaders.cmake`).
+  Env: `ARENAI_VK_DEVICE`, `ARENAI_VK_DEVICE_WINDOW`, `ARENAI_VK_VALIDATION`.
+- Tests: GoogleTest, one `tests/` per module. `ctest --test-dir build --output-on-failure`.
+- **Golden images** (`arenai_view`, `arenai_core`): references generated with lavapipe on Ubuntu
+  24.04 (CI environment); they never match a local GPU. `./scripts/goldens_docker.sh` reproduces
+  CI, `--regenerate` rewrites after an *intended* render change.
+  `-DARENAI_REGENERATE_GOLDEN_IMAGES=ON` disables pixel assertions: a regeneration switch, never
+  a way to turn CI green.
+- Training: `arenai_agent_train <agent> --output_folder <dir> --asset_folder <dir> [--cuda] …`
+  (both folders required; options in `arenai_agent/src/main.cpp` and `agents/agent_cli.cpp`).
+  Runs live in `outputs/train_NNN_<agent>/` (`config.json`, `metrics.csv`, `save_K/`).
+
+## Skill routing
+
+| situation | skill |
+|---|---|
+| shared surface, design doubt, refactor, API | `design-gate` |
+| learning problem, idea of a fix, "how to verify" | `rl-hypothesis` |
+| read one run's CSV | `analyze-run` |
+| compare runs, "did change X help" | `compare-runs` |
+| behaviour of one checkpoint | `probe-checkpoint` |
+| evolution across saves | `probe-timeline` |
+| compile | `build` |
+| last step after C++ edits | `final-check` |
+| `.venv` / pre-commit missing | `setup-venv` |

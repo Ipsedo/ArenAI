@@ -1,85 +1,89 @@
 ---
 name: probe-checkpoint
-description: Lance la sonde (arenai_agent_probe) sur un checkpoint ArenAI (outputs/train_NNN_*/save_K) après avoir vérifié que le binaire correspond au code du run, puis analyse ses métriques (gâchette vs alignement, hit/obus, réserve vidée, tourelle, σ/μ) et écrit <run>/probes/save_K.md. À utiliser pour « sonde save_9 de 504 », « lance la sonde sur ce checkpoint », « est-ce que la gâchette est sélective à save_12 ».
+description: Run the probe (arenai_agent_probe) on an ArenAI checkpoint (outputs/train_NNN_*/save_K) after checking that the binary matches the run's code, then analyse its metrics (trigger vs alignment, hit/shell, emptied reserve, turret, σ/μ) and write <run>/probes/save_K.md. The standard fast evaluator of a hypothesis — launch it without asking. Use for « sonde save_9 de 504 », « lance la sonde sur ce checkpoint », « est-ce que la gâchette est sélective à save_12 ».
 ---
 
-# Sonde d'un checkpoint
+# Checkpoint probe
 
-Entrée : `outputs/train_NNN_<algo>/save_K` (ou un run + `--save K`), éventuellement les côtés de
-spawn, le nombre d'épisodes, le mode déterministe.
-Sortie : `<run>/probes/save_K_side<S>[_det].{csv,_shots.csv,log,json}`, `<run>/probes/save_K.md`
-(en français) et un résumé dans le chat.
+Input: `outputs/train_NNN_<agent>/save_K` (or a run + `--save K`), optionally spawn sides, number
+of episodes, deterministic mode.
+Output: `<run>/probes/save_K_side<S>[_det].{csv,_shots.csv,log,json}`, `<run>/probes/save_K.md`
+(French) and a chat summary.
 
-Comme les autres skills d'analyse : établir des faits, proposer, ne rien décider.
+Role: establish facts, expose options. A probe is a **fast evaluator** (`docs/rl_method.md` M2):
+launching it, and building the binary it needs, requires no permission.
 
-## 1. Compatibilité binaire ↔ checkpoint (avant tout lancement)
+## 1. Binary ↔ checkpoint compatibility (before any launch)
 
 ```shell
 python3 .claude/skills/probe-checkpoint/scripts/probe_checkpoint.py <save> --check-only
 ```
 
-La sonde rejoue le checkpoint **avec le code compilé dans le binaire**, pas avec celui du run :
-réseau, distributions, observation et environnement (respawn à réserve vide, économie…) viennent
-du binaire. Le script prend le binaire le plus récent parmi `cmake-build-release/` et `build/`
-(`--binary` pour en imposer un), le date (mtime → commit) et affiche :
-- la tête σ/μ du checkpoint (`actor_repr.txt` : `Clamp` vs `SoftClamp`, `mu` Linear vs
-  Sequential…) ;
-- le diff hors commentaires entre le commit effectif du run et celui du binaire sur le code
-  d'inférence, et les modifs non commitées antérieures au build.
+The probe replays the checkpoint **with the code compiled into the binary**, not the run's:
+network, distributions, observation and environment (respawn on empty reserve, economy…) come
+from the binary. The script picks the most recent binary among `cmake-build-release/` and
+`build/` (`--binary` to force one), dates it (mtime → commit) and prints:
 
-S'il y a un diff, le script refuse de lancer. Lire le diff : s'il change la forme ou
-l'interprétation d'un tenseur (paramétrage de σ, couche `mu`, taille ou ordre de
-l'observation), la sonde est **fausse**. Le chargement peut quand même réussir, comme pour
-`Clamp`/`SoftClamp`. Il faut alors un binaire au bon commit (worktree + skill `build`, après
-accord de Samuel), ou une conversion du checkpoint (`arenai_agent/python/convert_mu_linear.py`
-sur une copie). Si le diff est sans effet sur l'inférence (refactor, environnement inchangé),
-relancer avec `--force` et le dire dans l'analyse.
+- the checkpoint's σ/μ head (`actor_repr.txt`: `Clamp` vs `SoftClamp`, `mu` Linear vs
+  Sequential…);
+- the diff excluding comments between the run's effective commit and the binary's on the
+  inference code, plus uncommitted changes older than the build.
 
-## 2. Lancer
+On a diff the script refuses to launch. Read the diff: if it changes the shape or the
+interpretation of a tensor (σ parametrisation, `mu` layer, observation size or order), the probe
+is **wrong** — and loading may still succeed (`Clamp`/`SoftClamp` did). Then either build a
+binary at the right commit (git worktree + skill `build`), or convert a *copy* of the checkpoint
+(`arenai_agent/python/convert_mu_linear.py`). If the diff has no effect on inference (refactor,
+unchanged environment), relaunch with `--force` and state it in the analysis.
+
+## 2. Launch
 
 ```shell
 python3 .claude/skills/probe-checkpoint/scripts/probe_checkpoint.py <save> [--sides 550,1000] [--episodes 4] [--deterministic]
 ```
 
-Défauts : côtés 550 et 1000, 4 épisodes, stochastique, `--cuda`. L'économie d'obus
-(`shells`, `shells_per_hit`, `max_shells`) vient de `config.json` du run, pas des défauts du jeu.
-Compter ~40 s par épisode et par côté à 32 tanks (≈ 5-6 min avec les défauts). Lancer en arrière-plan (`run_in_background`) et attendre la
-notification. La sonde partage le GPU avec un entraînement en cours. `--analyze-only` réanalyse
-les CSV existants sans relancer.
+Defaults: sides 550 and 1000, 4 episodes, stochastic, `--cuda`. The shell economy (`shells`,
+`shells_per_hit`, `max_shells`) comes from the run's `config.json`, not the game defaults.
+~40 s per episode and per side at 32 tanks (≈ 5–6 min with defaults). Launch with
+`run_in_background` and wait for the notification. The probe shares the GPU with any running
+training: say so in the report. `--analyze-only` re-analyses existing CSVs without relaunching.
 
-## 3. Métriques (décisions armées = `can_fire` et réserve > 0, step ≥ 10)
+## 3. Metrics (armed decisions = `can_fire` and reserve > 0, step ≥ 10)
 
-Un step = une décision = `action_repeat × wanted_frequency` = 0,1 s par défaut. Les valeurs en
-secondes notées en mémoire avant le 11/11 sont 3× trop grandes.
+One step = one decision = `action_repeat × wanted_frequency` = 0.1 s by default. Durations in
+seconds recorded in memory before 2026-11-11 are 3× too large.
 
-| métrique | sens |
+| metric | meaning |
 |---|---|
-| `ratio`, `p_al`, `p_off` | p_fire armé aligné (< 5° **et** cible < 40 m) / hors axe (≥ 20°) : la **sélectivité** de la gâchette, définition des records en mémoire depuis le 10/11. `ratio_angle_only` (< 5° seul) est dans le JSON |
-| `p_arm` | niveau moyen de la gâchette ; plat vs angle = pas de sélectivité |
-| déterministe (p > 0,5) | ce que fait le jeu en mode déterministe : une gâchette sous 0,5 partout est muette en jeu |
-| `hit/ob`, `h<5°`, `tirs<5°`, `enrich` | touches par obus retombé, par obus tiré aligné, part des tirs alignés, enrichissement (part des tirs alignés / part des décisions alignées) |
-| `vide_s`, `%vident`, `%désarmé` | 1re réserve vide (médiane, s), part des tank-épisodes qui vident, part des pas désarmés : le **dump** |
-| `tour<5°` | part des décisions où la tourelle est à < 5° d'une cible : la visée |
-| `σx`, `σy`, `σ@plaf`, `|μ|cx`, `μsat` | σ canon médian, part au plafond (≥ 0,69), \|μ\| canon médian, part \|μ\| > 1,5 (saturation tanh) |
-| `p_zoom`, corr(p_fire, p_zoom) | couplage gâchette/zoom |
+| `ratio`, `p_al`, `p_off` | armed p_fire aligned (< 5° **and** target < 40 m) / off-axis (≥ 20°): trigger **selectivity**, definition of the records in memory since 2026-11-10. `ratio_angle_only` (< 5° alone) is in the JSON |
+| `p_arm` | mean trigger level; flat vs angle = no selectivity |
+| deterministic (p > 0.5) | what the game does in deterministic mode: a trigger under 0.5 everywhere is mute in game |
+| `hit/ob`, `h<5°`, `tirs<5°`, `enrich` | hits per landed shell, per shell fired aligned, share of aligned shots, enrichment (share of aligned shots / share of aligned decisions) |
+| `vide_s`, `%vident`, `%désarmé` | first empty reserve (median, s), share of tank-episodes that empty it, share of disarmed steps: the **dump** |
+| `tour<5°` | share of decisions with the turret within 5° of a target: aim |
+| `σx`, `σy`, `σ@plaf`, `|μ|cx`, `μsat` | median canon σ, share at the cap (≥ 0.69), median canon \|μ\|, share \|μ\| > 1.5 (tanh saturation) |
+| `p_zoom`, corr(p_fire, p_zoom) | trigger/zoom coupling |
 
-Regarder les effectifs (`n` aligné & proche) : sous ~300, le ratio est bruité.
+Check the counts (`n` aligned & close): under ~300 the ratio is noise.
 
-## 4. Interpréter
+## 4. Interpret
 
-- Situer le checkpoint : index = K × `save_every`, D du curriculum à cet index, CSV autour
-  (skill `analyze-run` si `<run>/analysis.md` manque ou est périmée).
-- Comparer aux repères en mémoire **au même D et au même côté** (`metriques-croisiere-d1000-*`,
-  fiches des runs), en tenant compte du bruit de seed. Un record isolé n'établit rien.
-- Côté 550 = compétence à portée moyenne, côté 1000 = conditions de croisière. Lire les deux.
-- Pièges connus : gâchette plate vs angle à un niveau quelconque = pas d'apprentissage ;
-  sélectivité brute faussée par le réflexe de spawn, d'où step ≥ 10 ; « tourelle cassée » en jeu
-  = souvent la réserve vide ; Hd du CSV ≈ entropie du zoom, donc la gâchette se lit ici
-  seulement.
+- Place the checkpoint: index = K × `save_every`, curriculum D at that index, CSV around it
+  (`analyze-run` if `<run>/analysis.md` is missing or stale).
+- Compare to the markers in memory **at the same D and the same side**, within the noise floor.
+  One isolated record establishes nothing. `save_0` is the random reference.
+- Side 550 = mid-range competence, side 1000 = cruise conditions. Read both.
+- Aim learning shows as a **negative** correlation between action mean and signed error; measure
+  it per error bucket, never globally.
+- Known traps: trigger flat vs angle at any level = no learning; raw selectivity distorted by
+  the spawn reflex, hence step ≥ 10; "broken turret" in game = usually the empty reserve; CSV
+  `Hd` ≈ zoom entropy, so the trigger is readable here only.
+- When this probe was run to decide a hypothesis: apply the decision rule written beforehand
+  (prediction if true / if false) and state the verdict, refutation included.
 
-## 5. Écrire `<run>/probes/save_K.md`
+## 5. Write `<run>/probes/save_K.md`
 
-En-tête (run, save, index, D, binaire + commit, compatibilité, côtés/épisodes/mode), table de
-résumé, lecture (gâchette, tir, dump, visée, têtes), comparaison aux repères au même D,
-conclusions établies vs bruit, sondes ou saves suivantes utiles. Résumé court dans le chat. Si un
-fait nouveau est établi, mettre à jour la fiche mémoire du run.
+French. Header (run, save, index, D, binary + commit, compatibility, sides/episodes/mode),
+summary table, reading (trigger, shooting, dump, aim, heads), comparison to markers at the same
+D, conclusions established vs noise, next probes or saves worth running. Short chat summary. A
+newly established fact updates the run's memory note.

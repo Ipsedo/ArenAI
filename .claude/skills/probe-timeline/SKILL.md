@@ -1,24 +1,24 @@
 ---
 name: probe-timeline
-description: Analyse la chronologie des sondes d'un même entraînement ArenAI (<run>/probes/*.json, saves successives) en la croisant avec l'analyse du CSV, la config et le code du run, puis écrit <run>/probes/timeline.md. À utiliser pour « analyse les sondes de 504 », « comment évolue la gâchette au fil des saves », « la sélectivité tient-elle de save_13 à save_27 ».
+description: Analyse the chronology of the probes of one ArenAI training (<run>/probes/*.json, successive saves), crossed with the CSV analysis, the config and the run's code, then write <run>/probes/timeline.md. Use for « analyse les sondes de 504 », « comment évolue la gâchette au fil des saves », « la sélectivité tient-elle de save_13 à save_27 ».
 ---
 
-# Chronologie des sondes d'un run
+# Probe timeline of a run
 
-Entrée : un run (dossier ou numéro), éventuellement un sous-ensemble de saves.
-Sortie : `<run>/probes/timeline.md` (en français) + un résumé dans le chat.
+Input: a run (folder or number), optionally a subset of saves.
+Output: `<run>/probes/timeline.md` (French) + a chat summary.
 
-Établir des faits, proposer, ne rien décider à la place de Samuel.
+Role: establish facts, expose options; Samuel decides. Vocabulary: `docs/rl_method.md`.
 
-## 1. Prérequis
+## 1. Prerequisites
 
-- **Sondes** : les résultats du skill `probe-checkpoint` (`<run>/probes/save_K_side<S>.json`).
-  Avec moins de deux saves sondées au même côté, il n'y a pas de chronologie. Proposer à
-  Samuel les saves à sonder (aux changements de D, autour d'un pic ou d'un décrochage du CSV),
-  sans les lancer d'office : c'est du temps GPU.
-- **Analyse du CSV** : `<run>/analysis.md` du skill `analyze-run`. Si elle manque ou est
-  antérieure à la dernière ligne de `metrics.csv`, appliquer d'abord `analyze-run`. Elle fournit
-  le commit effectif, ce que teste le run, les phases et les régimes du CSV.
+- **Probes**: results of `probe-checkpoint` (`<run>/probes/save_K_side<S>.json`). Fewer than two
+  saves probed on the same side ⟹ no chronology. Choose the saves that discriminate (at D
+  changes, around a CSV peak or break, plus `save_0` as random reference) and **probe them
+  yourself** — fast evaluators need no permission; state the GPU cost.
+- **CSV analysis**: `<run>/analysis.md` from `analyze-run`. Missing or older than the last row
+  of `metrics.csv` ⟹ apply `analyze-run` first. It provides the effective commit, what the run
+  tests, the phases and regimes of the CSV.
 
 ## 2. Tables
 
@@ -26,54 +26,53 @@ Sortie : `<run>/probes/timeline.md` (en français) + un résumé dans le chat.
 python3 .claude/skills/probe-timeline/scripts/probe_timeline.py <run> [--saves 5,9,13] [--half-width 15000]
 ```
 
-Le script affiche :
-- les binaires utilisés, avec un avertissement si la chronologie mélange des binaires ou contient
-  une sonde faite malgré un diff d'inférence ;
-- une table par côté et par mode (stochastique ou déterministe, nombre d'épisodes), une ligne par
-  save, avec les métriques de `probe-checkpoint` et leurs effectifs ;
-- les métriques du CSV autour de l'index de chaque save : D, hit, kill, fire, ev, Hc, Hd, kl,
-  skip et l'α le plus haut ;
-- les saves non sondées.
+Prints:
+- the binaries used, with a warning when the chronology mixes binaries or contains a probe made
+  despite an inference diff;
+- one table per side and per mode (stochastic or deterministic, episode count), one row per
+  save, with the `probe-checkpoint` metrics and their counts;
+- the CSV metrics around each save's index: D, hit, kill, fire, ev, Hc, Hd, kl, skip and the
+  highest α;
+- the saves not probed.
 
-## 3. Analyser
+## 3. Analyse
 
-1. **Comparabilité.** Ne mettre sur une même courbe que des sondes au même côté, au même mode,
-   avec le même nombre d'épisodes et un code d'inférence équivalent. Si le binaire a changé en
-   cours de chronologie, lire son diff (cf. `probe-checkpoint` §1) avant de comparer les saves
-   de part et d'autre.
-2. **Trajectoire par axe**, en séparant :
-   - la gâchette : ratio, p_al, p_off, niveau, mode déterministe ;
-   - le tir : hit/obus, part des tirs alignés, enrichissement ;
-   - le dump : réserve vidée, % qui vident, % désarmé ;
-   - la visée : tourelle < 5° ;
-   - les têtes : σ, |μ|, saturation, zoom.
+1. **Comparability.** On one curve, only probes with the same side, same mode, same episode
+   count and equivalent inference code. If the binary changed mid-chronology, read its diff
+   (`probe-checkpoint` §1) before comparing saves across the change.
+2. **Trajectory per axis**, kept separate:
+   - trigger: ratio, p_al, p_off, level, deterministic mode;
+   - shooting: hit/shell, share of aligned shots, enrichment;
+   - dump: emptied reserve, % emptying, % disarmed;
+   - aim: turret < 5°;
+   - heads: σ, |μ|, saturation, zoom.
 
-   Dire quel axe bouge en premier : par exemple la tourelle lâche avant la gâchette, ou la
-   saturation de μ précède la perte de visée.
-3. **Croiser avec le CSV et le code.**
-   - Chaque changement de sonde a-t-il un pendant dans le CSV (hit, kill, ev, Hc, α, skip) au
-     même index ? Ou le CSV y est-il aveugle (`fire` ne voit pas le dump, Hd ≈ zoom) ?
-   - Un changement de D entre deux saves change la difficulté : un recul côté 550 n'est pas une
-     régression si D a doublé. Regarder les deux côtés.
-   - Rapporter chaque mécanisme au code du run : reward, économie, paramétrage de σ, α, ce que
-     teste le run d'après `analysis.md`. Un effet imposé par le code est structurel ; le reste se
-     juge contre le bruit.
-4. **Bruit.** Le ratio est bruité sous ~300 décisions alignées & proches. 4 épisodes par sonde,
-   n = 1 seed : exiger une tendance sur au moins 3 saves, ou un écart qui dépasse nettement la
-   variabilité entre saves voisines. Les repères de mémoire (records, autres runs) se comparent
-   au même D et au même côté.
-5. **Mémoire.** Lire `MEMORY.md` et les fiches du run et de ses prédécesseurs. Ne pas
-   reproposer un levier refusé.
+   State which axis moves **first** (e.g. the turret lets go before the trigger; μ saturation
+   precedes the loss of aim): order of events is the causal evidence.
+3. **Cross with the CSV and the code.**
+   - Does each probe change have a counterpart in the CSV (hit, kill, ev, Hc, α, skip) at the
+     same index? Or is the CSV blind there (`fire` does not see the dump, `Hd` ≈ zoom)?
+   - A change of D between two saves changes the difficulty: a drop on side 550 is no
+     regression if D doubled. Read both sides.
+   - Tie every mechanism to the run's code: reward, economy, σ parametrisation, α, what the run
+     tests per `analysis.md`. A code-imposed effect is structural; the rest is judged against
+     the noise floor.
+4. **Noise.** Ratio unreliable under ~300 aligned-and-close decisions. 4 episodes per probe,
+   n = 1 seed: require a trend over ≥ 3 saves, or a gap clearly beyond the variability between
+   neighbouring saves. Memory markers (records, other runs) compare at the same D and side.
+5. **Memory.** Read `MEMORY.md` and the notes of the run and its predecessors. No refused lever
+   re-proposed.
+6. Any cause or remedy drawn from the timeline follows `rl-hypothesis`.
 
-## 4. Écrire `<run>/probes/timeline.md`
+## 4. Write `<run>/probes/timeline.md`
 
-1. **Run et code** : commit effectif, ce que teste le run, binaire(s) de sonde.
-2. **Table chronologique** des métriques clés par côté, avec D et le CSV au même index.
-3. **Lecture par axe**, avec l'ordre des événements.
-4. **Lien avec le CSV et le code** : mécanismes, avec leurs preuves.
-5. **Établi / dans le bruit / non tranché.**
-6. **Suite** : saves à sonder pour trancher, repères à surveiller. Ce sont des options, pas des
-   décisions.
+French:
 
-Puis un résumé court dans le chat. Si un fait nouveau est établi, mettre à jour la fiche mémoire
-du run.
+1. **Run and code**: effective commit, what the run tests, probe binary(ies).
+2. **Chronological table** of key metrics per side, with D and the CSV at the same index.
+3. **Reading per axis**, with the order of events.
+4. **Link with the CSV and the code**: mechanisms, with their evidence.
+5. **Established / within noise / undecided.**
+6. **Next**: saves to probe to decide, markers to watch — options, not decisions.
+
+Then a short chat summary. A newly established fact updates the run's memory note.

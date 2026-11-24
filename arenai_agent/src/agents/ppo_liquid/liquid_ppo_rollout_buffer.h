@@ -16,6 +16,10 @@ namespace arenai::agent {
         // pre-tanh draw of the squashed normal, what the log-probabilities are computed on
         torch::Tensor continuous_pre_tanh;
         torch::Tensor continuous_log_prob;
+        // [nb_tanks] int64 aimed cell, [nb_tanks, 2] pre-tanh offset, [nb_tanks, 1] log-probability
+        torch::Tensor aim_cell;
+        torch::Tensor aim_pre_tanh;
+        torch::Tensor aim_log_prob;
         torch::Tensor discrete_log_prob;
         torch::Tensor reward;
         torch::Tensor done;
@@ -34,6 +38,9 @@ namespace arenai::agent {
         TorchAction actions;
         torch::Tensor continuous_pre_tanhs;
         torch::Tensor continuous_log_probs;
+        torch::Tensor aim_cells;
+        torch::Tensor aim_pre_tanhs;
+        torch::Tensor aim_log_probs;
         torch::Tensor discrete_log_probs;
         torch::Tensor rewards;
         torch::Tensor dones;

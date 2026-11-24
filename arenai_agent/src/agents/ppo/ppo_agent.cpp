@@ -2,6 +2,7 @@
 
 #include "../../distributions/bernoulli.h"
 #include "../../distributions/gaussian_tanh.h"
+#include "../../distributions/spatial_aim_law.h"
 #include "../../networks/constants.h"
 #include "../../networks_utils/torch_loader.h"
 
@@ -26,23 +27,31 @@ namespace arenai::agent {
         TorchAction action;
         torch::Tensor continuous_pre_tanh;
         torch::Tensor continuous_log_prob;
+        AimDraw aim_draw;
+        torch::Tensor aim_log_prob;
         torch::Tensor discrete_log_prob;
 
         {
             torch::NoGradGuard guard;
 
-            const auto &[mu, sigma, discrete_proba] =
-                actor->act(state.get_vision(), state.get_state());
+            const auto out = actor->act(state.get_vision(), state.get_state());
+            const auto &mu = out.mu;
+            const auto &sigma = out.sigma;
+            const auto &discrete_proba = out.discrete;
 
+            torch::Tensor drive;
             if (sample) {
-                std::tie(action.continuous_action, continuous_pre_tanh) =
-                    gaussian_tanh_sample(mu, sigma);
+                std::tie(drive, continuous_pre_tanh) = gaussian_tanh_sample(mu, sigma);
+                aim_draw = out.aim.sample();
                 action.discrete_action = bernoulli_sample(discrete_proba);
             } else {
                 continuous_pre_tanh = mu;
-                action.continuous_action = gaussian_tanh_mode(mu);
+                drive = gaussian_tanh_mode(mu);
+                aim_draw = out.aim.mode();
                 action.discrete_action = bernoulli_max_action(discrete_proba);
             }
+            action.continuous_action = torch::cat({drive, out.aim.point(aim_draw)}, -1);
+            aim_log_prob = out.aim.log_prob(aim_draw);
 
             // old log-probabilities per continuous action, kept for the PPO importance ratios
             continuous_log_prob = gaussian_tanh_log_pdf(continuous_pre_tanh, mu, sigma);
@@ -55,7 +64,8 @@ namespace arenai::agent {
 
         if (collector.has_value())
             collector.value()->on_act(
-                state, action, continuous_pre_tanh, continuous_log_prob, discrete_log_prob);
+                state, action, continuous_pre_tanh, continuous_log_prob, aim_draw.cell,
+                aim_draw.pre_tanh, aim_log_prob, discrete_log_prob);
 
         return action;
     }

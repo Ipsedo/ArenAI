@@ -13,11 +13,16 @@ namespace arenai::agent {
     void LiquidPpoStepCollector::on_act(
         const TorchState &state, const TorchAction &action,
         const torch::Tensor &continuous_pre_tanh, const torch::Tensor &continuous_log_prob,
-        const torch::Tensor &discrete_log_prob, const torch::Tensor &actor_hidden) {
+        const torch::Tensor &aim_cell, const torch::Tensor &aim_pre_tanh,
+        const torch::Tensor &aim_log_prob, const torch::Tensor &discrete_log_prob,
+        const torch::Tensor &actor_hidden) {
         last_state = state;
         last_action = action;
         last_continuous_pre_tanh = continuous_pre_tanh;
         last_continuous_log_prob = continuous_log_prob;
+        last_aim_cell = aim_cell;
+        last_aim_pre_tanh = aim_pre_tanh;
+        last_aim_log_prob = aim_log_prob;
         last_discrete_log_prob = discrete_log_prob;
         last_actor_hidden = actor_hidden;
     }
@@ -33,6 +38,9 @@ namespace arenai::agent {
              .action = last_action,
              .continuous_pre_tanh = last_continuous_pre_tanh,
              .continuous_log_prob = last_continuous_log_prob,
+             .aim_cell = last_aim_cell,
+             .aim_pre_tanh = last_aim_pre_tanh,
+             .aim_log_prob = last_aim_log_prob,
              .discrete_log_prob = last_discrete_log_prob,
              .reward = rewards,
              .done = done,

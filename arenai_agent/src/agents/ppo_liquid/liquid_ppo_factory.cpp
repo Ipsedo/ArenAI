@@ -27,7 +27,8 @@ namespace arenai::agent {
               device, params.metric_window_size, params.gamma, params.gae_lambda,
               params.clip_epsilon, params.target_kl, params.grad_norm_max, params.initial_alpha,
               params.alpha_learning_rate, params.continuous_target_entropy,
-              params.discrete_target_proba, params.actor_epochs, params.critic_epochs,
+              params.discrete_target_proba, params.aim_cell_target_entropy,
+              params.aim_offset_target_entropy, params.actor_epochs, params.critic_epochs,
               params.rollout_size, params.actor_batch_size, params.actor_gpu_batch_size,
               params.critic_batch_size, params.critic_gpu_batch_size, params.chunk_size,
               params.presence_learning_rate)) {}

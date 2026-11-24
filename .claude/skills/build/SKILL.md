@@ -23,6 +23,8 @@ Equivalent to `cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS_RELEASE="-O3" 
   `build_linux.sh` there, pass the resulting `arenai_agent_probe` with `--binary`. Remove the
   worktree afterwards.
 - Clean build only when incremental state is proven wrong: `rm -rf build`.
+- Configure fails and `/var/log/pacman.log` shows a recent cuda / nvidia / libtorch update ⟹ stop,
+  touch nothing in `build/`, report « validation not done, reboot needed »: Samuel reboots.
 - Windows: `.\build_windows.ps1` (`-Config Debug`, `-LibtorchPath …`).
 - Cold build takes several minutes: Bash timeout ≥ 10 min or `run_in_background`.
 - Report faithfully: on failure quote the first compiler/linker error; claim success only when

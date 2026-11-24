@@ -36,6 +36,7 @@ build).
 - **Formatting hooks** report `Failed` because they *fixed* files in place. Re-run; the second
   pass is green. Their fixes are part of the change: keep and re-stage them.
 - **`build` / `tests`**: a real failure. Read the error, fix the cause, re-run from step 1.
+  Configure failure after a system update: see skill `build`, do not repair.
 - **Golden-image tests** (`arenai_view`, `arenai_core`) compare against lavapipe/Ubuntu
   references and may fail on the local GPU for that reason alone. Distinguish: a failure that
   exists without your change is environmental — say so; a render change you made requires

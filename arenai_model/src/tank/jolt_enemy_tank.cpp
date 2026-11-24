@@ -243,6 +243,28 @@ namespace arenai::model {
         }
     }
 
+    void JoltEnemyTank::apply_command(
+        const EnemyCommand &command, const glm::mat4 &observed_view_projection) {
+        const auto canon_matrix = get_canon()->get_model_matrix();
+        const glm::mat4 unprojection = glm::inverse(observed_view_projection);
+        const glm::vec4 near = unprojection * glm::vec4(command.aim_point, 0.f, 1.f);
+        const glm::vec4 far = unprojection * glm::vec4(command.aim_point, 1.f, 1.f);
+        const glm::vec3 eye = glm::vec3(near) / near.w;
+
+        // the aimed point lies on the observed ray, as far from the eye as the image center
+        const glm::vec3 look = canon_matrix * glm::vec4(0.f, 0.f, CANON_AIM_DISTANCE, 1.f);
+        const glm::vec3 aimed =
+            eye + glm::length(look - eye) * glm::normalize(glm::vec3(far) / far.w - eye);
+        lay_gun_along(aimed - glm::vec3(canon_matrix * glm::vec4(0.f, 0.f, 0.f, 1.f)));
+
+        const controller::user_input input{
+            .left_joystick = command.drive,
+            .right_joystick = {.x = 0.f, .y = 0.f},
+            .fire_button = command.fire_button,
+            .zoom_button = command.zoom_button};
+        for (const auto &controller: get_controllers()) controller->apply_input(input);
+    }
+
     bool JoltEnemyTank::get_can_fire() const {
         return nb_shells > 0 && curr_cooldown_frame == fire_cooldown_frames;
     }

@@ -47,6 +47,9 @@ namespace arenai::agent {
         float clip_w;
         float distance;
         float sight_fraction;
+        // radians, in the canon frame
+        float canon_yaw;
+        float canon_pitch;
     };
 
     class TrainTankEnvironment final : public core::BaseTanksEnvironment {

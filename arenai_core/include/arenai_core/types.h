@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include <arenai_controller/inputs.h>
+#include <arenai_model/tank.h>
 #include <arenai_view/renderer.h>
 
 namespace arenai::core {
@@ -23,7 +23,7 @@ namespace arenai::core {
 
     typedef bool IsTruncated;
 
-    typedef controller::user_input Action;
+    typedef model::EnemyCommand Action;
 
     inline std::vector<Action> release_fire(std::vector<Action> actions) {
         for (auto &action: actions) action.fire_button.pressed = false;

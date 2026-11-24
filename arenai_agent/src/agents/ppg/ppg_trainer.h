@@ -4,6 +4,7 @@
 #include "../../networks/actor.h"
 #include "../../networks/value_function.h"
 #include "../../networks_utils/warmup.h"
+#include "../aim_entropy_alphas.h"
 #include "../entropy_alphas.h"
 #include "../ppo_objective.h"
 #include "../presence_learner.h"
@@ -40,6 +41,7 @@ namespace arenai::agent {
             float gamma, float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
             float initial_alpha, float alpha_learning_rate,
             const std::vector<float> &continuous_target_entropy, float discrete_target_proba,
+            float aim_cell_target_entropy, const std::vector<float> &aim_offset_target_entropy,
             int actor_epochs, int critic_epochs, int rollout_size, int actor_batch_size,
             int actor_gpu_batch_size, int critic_batch_size, int critic_gpu_batch_size,
             int actor_aux_epochs, int critic_aux_epochs, float beta_clone, int n_pi,
@@ -60,6 +62,7 @@ namespace arenai::agent {
 
         // one learned entropy temperature per action
         std::unique_ptr<EntropyAlphas> alphas;
+        std::unique_ptr<AimEntropyAlphas> aim_alphas;
 
         std::shared_ptr<ValueFunction> critic;
 
@@ -120,9 +123,12 @@ namespace arenai::agent {
             torch::Tensor vision;
             torch::Tensor proprioception;
             torch::Tensor continuous_pre_tanh;
+            torch::Tensor aim_cells;
+            torch::Tensor aim_pre_tanh;
             torch::Tensor discrete_actions;
             torch::Tensor fire_masks;
             torch::Tensor old_continuous_log_probs;
+            torch::Tensor old_aim_log_probs;
             torch::Tensor old_discrete_log_probs;
             torch::Tensor advantages;
             torch::Tensor returns;
@@ -135,6 +141,10 @@ namespace arenai::agent {
             torch::Tensor mus;
             torch::Tensor sigmas;
             torch::Tensor discrete_probas;
+            // one draw of the old aim law and its log-probability, for a sampled KL
+            torch::Tensor aim_cells;
+            torch::Tensor aim_pre_tanh;
+            torch::Tensor aim_log_probs;
 
             CloneTargets select(const torch::Tensor &idx) const;
         };

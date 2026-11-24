@@ -97,7 +97,7 @@ TEST_F(EntropyAlphasTest, OneMetricPerActionNamedAfterIt) {
 
     ASSERT_EQ(metrics.size(), 6);
     ASSERT_EQ(metrics[0]->get_name(), "alpha_dir_x");
-    ASSERT_EQ(metrics[3]->get_name(), "alpha_canon_y");
+    ASSERT_EQ(metrics[3]->get_name(), "alpha_aim_y");
     ASSERT_EQ(metrics[4]->get_name(), "alpha_fire");
     ASSERT_EQ(metrics[5]->get_name(), "alpha_zoom");
     for (const auto &metric: metrics) ASSERT_NEAR(metric->compute_metric(), 1e-3f, 1e-7f);

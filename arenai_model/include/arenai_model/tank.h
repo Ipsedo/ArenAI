@@ -52,8 +52,19 @@ namespace arenai::model {
         float sum_miss_distance = 0.f;
     };
 
+    struct EnemyCommand {
+        controller::joystick drive;
+        // aim point in the last observed image, NDC
+        glm::vec2 aim_point;
+        controller::button fire_button;
+        controller::button zoom_button;
+    };
+
     class EnemyTank : virtual public Tank {
     public:
+        virtual void
+        apply_command(const EnemyCommand &command, const glm::mat4 &observed_view_projection) = 0;
+
         virtual float get_reward() const = 0;
 
         virtual RewardDetail get_last_reward_detail() const = 0;

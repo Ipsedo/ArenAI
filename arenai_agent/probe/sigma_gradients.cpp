@@ -23,6 +23,7 @@
 #include "./agents/ppo_liquid/liquid_ppo_trainer.h"
 #include "./agents/torch_types.h"
 #include "./core/train_environment.h"
+#include "./distributions/spatial_aim_law.h"
 #include "./networks/recurrent/liquid_critic.h"
 #include "./networks/vision.h"
 #include "./networks_utils/torch_loader.h"
@@ -120,7 +121,8 @@ int main(const int argc, char **argv) {
         params.group_norm_nums, params.neuron_number, params.unfolding_steps, params.delta_t,
         device, params.metric_window_size, params.gamma, params.gae_lambda, params.clip_epsilon,
         params.target_kl, params.grad_norm_max, params.initial_alpha, params.alpha_learning_rate,
-        params.continuous_target_entropy, params.discrete_target_proba, params.actor_epochs,
+        params.continuous_target_entropy, params.discrete_target_proba,
+        params.aim_cell_target_entropy, params.aim_offset_target_entropy, params.actor_epochs,
         params.critic_epochs, params.rollout_size, params.actor_batch_size,
         params.actor_gpu_batch_size, params.critic_batch_size, params.critic_gpu_batch_size,
         params.chunk_size, params.presence_learning_rate);
@@ -157,7 +159,9 @@ int main(const int argc, char **argv) {
         config.at("train").at("max_episode_steps").get<int>(), vision_height, vision_width,
         parser.get<int>("--vision_num_threads"), env_config.at("action_repeat").get<int>());
 
-    const auto names = TorchAction::continuous_action_names();
+    // the squashed normal covers the drive actions only, the aim point has its own law
+    const auto &action_names = TorchAction::continuous_action_names();
+    const std::vector names(action_names.begin(), action_names.end() - AIM_POINT_SIZE);
 
     std::ofstream csv(output);
     csv << "rollout;step;tank;armed;fire;best_angle;best_distance;distance;yaw;pitch;reward;"
@@ -269,8 +273,8 @@ int main(const int argc, char **argv) {
                 torch::NoGradGuard guard;
                 critic_features = critic->named_children()["vision_encoder"]
                                       ->as<ConvolutionNetwork>()
-                                      ->forward(state.get_vision().to(device))
-                                      .cpu()
+                                      ->encode(state.get_vision().to(device))
+                                      .keypoints.cpu()
                                       .contiguous();
             }
             const auto sensors = state.get_state().cpu().contiguous();

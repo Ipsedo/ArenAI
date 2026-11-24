@@ -20,7 +20,9 @@ namespace arenai::agent {
         void on_act(
             const TorchState &state, const TorchAction &action,
             const torch::Tensor &continuous_pre_tanh, const torch::Tensor &continuous_log_prob,
-            const torch::Tensor &discrete_log_prob, const torch::Tensor &actor_hidden);
+            const torch::Tensor &aim_cell, const torch::Tensor &aim_pre_tanh,
+            const torch::Tensor &aim_log_prob, const torch::Tensor &discrete_log_prob,
+            const torch::Tensor &actor_hidden);
 
         void on_presence(const torch::Tensor &presence) override;
 
@@ -38,6 +40,9 @@ namespace arenai::agent {
         TorchAction last_action;
         torch::Tensor last_continuous_pre_tanh;
         torch::Tensor last_continuous_log_prob;
+        torch::Tensor last_aim_cell;
+        torch::Tensor last_aim_pre_tanh;
+        torch::Tensor last_aim_log_prob;
         torch::Tensor last_discrete_log_prob;
         torch::Tensor last_presence;
         torch::Tensor last_actor_hidden;

@@ -58,6 +58,16 @@ function over the existing surface.
 - Known instance: RmlUi types never leave `arenai_desktop/src/gui/`.
 - Test: "delete that caller — is this member dead?" Yes ⟹ violation.
 
+### Frozen contracts and no backward compatibility
+
+- `TorchAction`, `TorchState`, `TorchStep` (`agents/torch_types.h`) are shared with code outside
+  this repo (Samuel's SAC on another machine): never add a field. Algorithm-specific data
+  (pre-tanh sample, log-probs, hidden states) goes in the buffers' `*InputStep` / `*Rollout` and
+  the collector's `on_act`.
+- A validated feature is permanent: no disable option, no « 0 = off » value, no fallback for old
+  `config.json` or checkpoints. New logic gets its own class instead of being duplicated across
+  the trainers. Old runs are probed with a binary built in a worktree at their commit.
+
 ### I4 — Minimal signatures
 
 No boolean or enum *mode* parameter, no optional parameter, no default argument added to spare
@@ -108,8 +118,9 @@ existing signature.
 
 - Change touches a **shared surface**, existing or newly created ⟹ **STOP before writing code**.
   Ask through `AskUserQuestion`: one question per independent choice, 2–3 concrete designs, the
-  recommended one first, each with its exact proposed signature in the option preview and its
-  cost. Samuel's answer validates that signature only, not the neighbouring choices.
+  recommended one first, each with its exact proposed diff in the option preview — file,
+  signature added / changed / removed, who implements it, who calls it — and its cost. A
+  one-sentence description (« on expose la matrice ») is not a proposal. Samuel's answer validates that signature only, not the neighbouring choices.
 - Change stays inside one class's private part or one `.cpp` and alters neither contract nor
   intended behaviour ⟹ free.
 - **Any doubt** about whether a change is right under this doctrine — even on a non-shared

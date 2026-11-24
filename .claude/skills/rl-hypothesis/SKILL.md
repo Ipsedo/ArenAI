@@ -19,9 +19,11 @@ M1–M6. This skill is the operational sequence.
 
 ## 2. Load prior knowledge
 
-`MEMORY.md` + the notes of the run lineage. Extract three lists and keep them in view:
-**refused levers**, **causes ruled out**, **intended designs**. None of them is re-proposed
-without new evidence, and the evidence is then stated first.
+`docs/decisions.md` (refused / lifted levers) + `MEMORY.md` + the notes of the run lineage. Extract
+three lists and keep them in view: **refused levers**, **causes ruled out**, **intended designs**.
+None of them is re-proposed without new evidence, and the evidence is then stated first.
+Samuel says « on tourne en rond » ⟹ before any new proposal, name the circle: what was removed
+and never restored, and which runs varied only what was left.
 
 ## 3. Candidate causes and the discriminating measurement
 

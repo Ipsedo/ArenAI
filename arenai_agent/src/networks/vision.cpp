@@ -60,9 +60,10 @@ namespace arenai::agent {
         return input.to(torch::kFloat).mul_(2.0f / 255.0f).add_(-1.0f);
     }
 
-    torch::Tensor ConvolutionNetwork::forward(const torch::Tensor &input) {
+    VisionEncoding ConvolutionNetwork::encode(const torch::Tensor &input) {
+        const auto map = cnn->forward(normalized(input));
         // (B, C, H * W)
-        const auto features = cnn->forward(normalized(input)).flatten(2);
+        const auto features = map.flatten(2);
         const auto attention =
             torch::softmax(features * torch::exp(-log_temperature).unsqueeze(1), -1);
 
@@ -71,7 +72,7 @@ namespace arenai::agent {
         // (B, C, 1)
         const auto amplitude = (attention * features).sum(-1, true);
 
-        return torch::cat({keypoints, amplitude}, -1).flatten(1);
+        return {.map = map, .keypoints = torch::cat({keypoints, amplitude}, -1).flatten(1)};
     }
 
     torch::Tensor ConvolutionNetwork::presence_logits(const torch::Tensor &input) {

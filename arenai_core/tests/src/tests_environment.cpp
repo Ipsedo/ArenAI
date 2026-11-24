@@ -157,10 +157,8 @@ TEST_F(EnvironmentTest, StepReturnsCorrectNumberOfTuples) {
 
     env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
 
-    const std::vector<controller::user_input> actions(
-        nb_tanks, {.left_joystick = {.x = 0.f, .y = 0.f},
-                   .right_joystick = {.x = 0.f, .y = 0.f},
-                   .fire_button = {false}});
+    const std::vector<core::Action> actions(
+        nb_tanks, {.drive = {.x = 0.f, .y = 0.f}, .aim_point = {0.f, 0.f}, .fire_button = {false}});
 
     const auto results = env.step(frequency, actions);
 
@@ -177,10 +175,8 @@ TEST_F(EnvironmentTest, StepRewardAndDoneAreValid) {
 
     env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
 
-    const std::vector<controller::user_input> actions(
-        nb_tanks, {.left_joystick = {.x = 0.f, .y = 0.f},
-                   .right_joystick = {.x = 0.f, .y = 0.f},
-                   .fire_button = {false}});
+    const std::vector<core::Action> actions(
+        nb_tanks, {.drive = {.x = 0.f, .y = 0.f}, .aim_point = {0.f, 0.f}, .fire_button = {false}});
 
     for (const auto results = env.step(frequency, actions);
          const auto &[state, reward, is_done, is_truncated]: results) {
@@ -199,10 +195,8 @@ TEST_F(EnvironmentTest, StepCallsOnDraw) {
 
     env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
 
-    const std::vector<controller::user_input> actions(
-        nb_tanks, {.left_joystick = {.x = 0.f, .y = 0.f},
-                   .right_joystick = {.x = 0.f, .y = 0.f},
-                   .fire_button = {false}});
+    const std::vector<core::Action> actions(
+        nb_tanks, {.drive = {.x = 0.f, .y = 0.f}, .aim_point = {0.f, 0.f}, .fire_button = {false}});
 
     const int draw_count_after_reset = env.draw_call_count;
 
@@ -223,10 +217,9 @@ TEST_F(EnvironmentTest, MultipleStepsDoNotCrash) {
 
     env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
 
-    const std::vector<controller::user_input> actions(
-        nb_tanks, {.left_joystick = {.x = 0.5f, .y = -0.5f},
-                   .right_joystick = {.x = 0.3f, .y = -0.2f},
-                   .fire_button = {false}});
+    const std::vector<core::Action> actions(
+        nb_tanks,
+        {.drive = {.x = 0.5f, .y = -0.5f}, .aim_point = {0.3f, -0.2f}, .fire_button = {false}});
 
     for (int i = 0; i < 30; i++) {
         const auto results = env.step(frequency, actions);
@@ -259,10 +252,8 @@ TEST_F(EnvironmentTest, FullLifecycle) {
     const auto initial_states = env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
     ASSERT_EQ(static_cast<int>(initial_states.size()), nb_tanks);
 
-    const std::vector<controller::user_input> actions(
-        nb_tanks, {.left_joystick = {.x = 0.f, .y = 0.f},
-                   .right_joystick = {.x = 0.f, .y = 0.f},
-                   .fire_button = {false}});
+    const std::vector<core::Action> actions(
+        nb_tanks, {.drive = {.x = 0.f, .y = 0.f}, .aim_point = {0.f, 0.f}, .fire_button = {false}});
     for (int i = 0; i < 10; i++) env.step(frequency, actions);
 
     // Second episode (reset handles stop_drawing internally)
@@ -337,10 +328,8 @@ TEST_F(EnvironmentTest, RespawnTankLandsInSpawnBoxAboveTerrain) {
     TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false);
     env.reset(spawn_side, spawn_side, model::GAME_SHELL_ECONOMY);
 
-    const std::vector<controller::user_input> no_input(
-        nb_tanks, {.left_joystick = {.x = 0.f, .y = 0.f},
-                   .right_joystick = {.x = 0.f, .y = 0.f},
-                   .fire_button = {false}});
+    const std::vector<core::Action> no_input(
+        nb_tanks, {.drive = {.x = 0.f, .y = 0.f}, .aim_point = {0.f, 0.f}, .fire_button = {false}});
 
     env.step(frequency, no_input);
     env.respawn_tank(0);
@@ -369,10 +358,8 @@ TEST_F(EnvironmentTest, TankLeavingArenaDiesAsSuicide) {
     TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false);
     env.reset(200.f, 200.f, model::GAME_SHELL_ECONOMY);
 
-    const std::vector<controller::user_input> no_input(
-        nb_tanks, {.left_joystick = {.x = 0.f, .y = 0.f},
-                   .right_joystick = {.x = 0.f, .y = 0.f},
-                   .fire_button = {false}});
+    const std::vector<core::Action> no_input(
+        nb_tanks, {.drive = {.x = 0.f, .y = 0.f}, .aim_point = {0.f, 0.f}, .fire_button = {false}});
 
     env.move_tank(0, {2100.f, 300.f, 0.f});
     const auto results = env.step(frequency, no_input);

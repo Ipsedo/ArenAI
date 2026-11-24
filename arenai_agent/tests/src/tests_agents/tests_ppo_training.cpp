@@ -1,3 +1,5 @@
+#include <distributions/spatial_aim_law.h>
+
 #include <arenai_agent_tests/tests_agents/tests_ppo_training.h>
 
 using namespace arenai;
@@ -25,7 +27,7 @@ PpoTrainingTest::make_factory(const PpoTrainingTestConfig &cfg) const {
         .gamma = 0.99f,
         .gae_lambda = 0.95f,
         .clip_epsilon = 0.2f,
-        .continuous_target_entropy = std::vector(cfg.nb_continuous_actions, 0.f),
+        .continuous_target_entropy = std::vector(cfg.nb_continuous_actions - AIM_POINT_SIZE, 0.f),
         .actor_epochs = 2,
         .critic_epochs = 2,
         .rollout_size = ROLLOUT_SIZE,
@@ -51,7 +53,7 @@ TEST_F(PpoTrainingTest, ActProducesValidOutput) {
         .vision_height = 8,
         .vision_width = 8,
         .nb_sensors = 3,
-        .nb_continuous_actions = 2,
+        .nb_continuous_actions = 4,
         .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
@@ -59,7 +61,7 @@ TEST_F(PpoTrainingTest, ActProducesValidOutput) {
         factory->get_agent()->act(make_state(cfg, 1), true);
 
     ASSERT_EQ(continuous_action.size(0), 1);
-    ASSERT_EQ(continuous_action.size(1), 2);
+    ASSERT_EQ(continuous_action.size(1), 4);
     ASSERT_EQ(discrete_action.size(0), 1);
     ASSERT_EQ(discrete_action.size(1), 2);
 
@@ -72,7 +74,7 @@ TEST_F(PpoTrainingTest, CountParametersPositive) {
         .vision_height = 8,
         .vision_width = 8,
         .nb_sensors = 3,
-        .nb_continuous_actions = 2,
+        .nb_continuous_actions = 4,
         .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
@@ -86,7 +88,7 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
         .vision_height = 8,
         .vision_width = 8,
         .nb_sensors = 3,
-        .nb_continuous_actions = 2,
+        .nb_continuous_actions = 4,
         .nb_discrete_actions = 3};
 
     const std::vector<std::tuple<int, int>> vision_channels{{3, 4}};
@@ -104,8 +106,9 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
         actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_continuous_actions,
         cfg.nb_discrete_actions, cfg.nb_sensors, 1e-3f, 1e-3f, 8, std::vector{16}, vision_channels,
         group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 3e-4f,
-        std::vector(cfg.nb_continuous_actions, -1.f), 0.05f, 2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE,
-        MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, 3e-4f);
+        std::vector(cfg.nb_continuous_actions - AIM_POINT_SIZE, -1.f), 0.05f, 0.6931472f,
+        std::vector{-1.f, -1.f}, 2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE,
+        MINIBATCH_SIZE, 3e-4f);
 
     std::vector<torch::Tensor> initial_parameters;
     for (const auto &parameter: actor->parameters())
@@ -143,7 +146,7 @@ TEST_F(PpoTrainingTest, MaskedFireReceivesNoUpdate) {
         .vision_height = 8,
         .vision_width = 8,
         .nb_sensors = 3,
-        .nb_continuous_actions = 2,
+        .nb_continuous_actions = 4,
         .nb_discrete_actions = 2};
 
     const std::vector<std::tuple<int, int>> vision_channels{{3, 4}};
@@ -161,8 +164,9 @@ TEST_F(PpoTrainingTest, MaskedFireReceivesNoUpdate) {
         actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_continuous_actions,
         cfg.nb_discrete_actions, cfg.nb_sensors, 1e-3f, 1e-3f, 8, std::vector{16}, vision_channels,
         group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 3e-4f,
-        std::vector(cfg.nb_continuous_actions, -1.f), 0.05f, 2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE,
-        MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, 3e-4f);
+        std::vector(cfg.nb_continuous_actions - AIM_POINT_SIZE, -1.f), 0.05f, 0.6931472f,
+        std::vector{-1.f, -1.f}, 2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE,
+        MINIBATCH_SIZE, 3e-4f);
 
     auto named_parameters = actor->named_parameters();
     const auto weight = named_parameters["discrete.0.weight"];

@@ -2,7 +2,12 @@
 
 Audience: Claude. Samuel does not read the harness (this file, `.claude/skills/`, `docs/`,
 memory): write it in the wording that steers you best — dense, imperative, strong defined terms.
-Everything addressed to Samuel (chat, questions, `analysis.md`, probe reports) is in **French**.
+Everything addressed to Samuel (chat, questions, `analysis.md`, probe reports) is in **French**,
+except `docs/`: every file there is in **English** (only Samuel's verbatim quotes stay French),
+including project documentation written for Samuel (e.g. a design explained with its diagram).
+A working rule Samuel states or corrects goes into the harness via `kaizen` → `harness-improvement`,
+**never into memory** — this overrides the generic auto-memory guidance to save feedback there.
+Memory holds facts about runs and project state only.
 
 Project: PPO-family agents (LibTorch) learning to play a tank-arena game; Jolt physics; offscreen
 Vulkan rendering is the agent's vision.
@@ -22,7 +27,7 @@ recommended one first. An answer validates exactly what was asked, nothing adjac
 | G1 | **Shared surface**: add/remove/change any non-private element (method, constructor, parameter, field, free function, default argument) of a type or function referenced by ≥ 2 other classes/files — `include/` or `src/` — or create a new type meant to be shared | skill `design-gate`; options show the exact signatures |
 | G2 | Add/remove a feature or an option, change a default behaviour or a default value, restructure an API | `AskUserQuestion` |
 | G3 | **Formulation change**: network, encoder, head, loss, credit/advantage signal, input, reward, action space, curriculum rule | technical detail first (where it plugs in, what is learned, on which data, which gradients flow where, cost), then one question **per piece**. A yes to a named direction validates the principle only |
-| G4 | **Tactical training**: any training run meant to prove or refute a remedy, however short | question carrying hypothesis, variable under test, reference run, decision rule, stopping point, cost |
+| G4 | **Tactical training**: any training run meant to prove or refute a remedy, however short | question carrying hypothesis, variable under test, reference run, decision rule, stopping point, cost. **Samuel launches every real run himself, always** (2026-11-24): never start a training into `outputs/`, never offer to launch one — hand him the ready binary/branch and the command |
 | G5 | **Unmeasurable test**: several changes at once, no clean reference, metric redefined, binary mismatch | **not a button**. Explain in chat what is confounded and what cannot be concluded, give the isolating alternative; proceed only if Samuel *types in the chat* that he imposes it |
 | G6 | Any doubt that a change is right as OOP, functional or modular design | ask |
 
@@ -33,6 +38,8 @@ recommended one first. An answer validates exactly what was asked, nothing adjac
   measurements (analysis scripts, probe exports, probe executables), building the binary a probe
   needs — as long as no shared surface and no training code path is touched.
 - Reading, analysing, writing run analyses and memory notes.
+- **Disposable smoke runs**: a few minutes of training into the scratchpad to check that the code
+  runs (no NaN, saves load, probe reads them); never in `outputs/`, never read as a result.
 
 ## Design — `docs/design_doctrine.md`
 
@@ -60,8 +67,8 @@ Tempted by a getter, a setter, a flag or one more parameter ⟹ skill `design-ga
   Name the cause, say how the remedy removes it; if it does not, say so. A floor, ceiling,
   threshold, coefficient or special case added to compensate is a patch — acceptable only as an
   announced, disposable diagnostic.
-- Prior knowledge binds: a lever recorded as refused, a cause recorded as ruled out, a design
-  recorded as intended is not re-opened without new evidence.
+- Prior knowledge binds: a lever recorded as refused (`docs/decisions.md`), a cause recorded as
+  ruled out, a design recorded as intended is not re-opened without new evidence.
 
 Any learning problem or idea of a fix ⟹ skill `rl-hypothesis`.
 
@@ -77,14 +84,20 @@ Any learning problem or idea of a fix ⟹ skill `rl-hypothesis`.
   resort). A design question shows the collaboration; a formulation proposal shows where the
   piece plugs in and where gradients stop.
 - Quantitative claims carry their index and D. Report failures and skipped steps as such.
+- **Comparison tables**: per measure row, bold the best cell among the compared items; a row
+  without an obvious "better" direction stays unbolded.
 
 ## Code rules
 
 - **Comments: one line at most.** Only to disambiguate what code cannot say (tensor shape, unit,
   index) or to title a section/step (`// metrics`, `// warmup`). No paraphrase, no
-  justification, no multi-line prose.
+  justification, no multi-line prose. A comment a change makes false is deleted, not rewritten.
 - C++20, CMake ≥ 3.29. `.clang-format` at the repo root (LLVM base, 4 spaces, 100 columns,
   right-aligned pointers); include groups auto-sorted: std → external → `<arenai…>` → local.
+  Never run the system `clang-format` (v23, wrong style): `.venv/bin/pre-commit run clang-format
+  --files <touched files>` (pinned v16).
+- Training metrics: none added without Samuel's explicit validation (G2); a diagnostic metric is
+  CSV-only (`get_csv_only_metrics`) unless Samuel asks for it in the progress bar.
 - Naming: classes `PascalCase`, functions/variables `snake_case`, constants `SCREAMING_CASE`.
   Namespaces `arenai::<module>`. Header guards `ARENAI_<NAME>_H`. Vocabulary: "agent", never
   "algorithm".
@@ -145,3 +158,5 @@ run's effective commit, not the working tree.
 | compile | `build` |
 | last step after C++ edits | `final-check` |
 | `.venv` / pre-commit missing | `setup-venv` |
+| « kaizen », a correction of how Claude works, a stated working rule | `kaizen` → `harness-improvement` |
+| put a rule in the harness, create/edit a skill | `harness-improvement` |

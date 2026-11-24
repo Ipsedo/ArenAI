@@ -374,6 +374,8 @@ namespace arenai::agent {
                     const auto view_projection =
                         glm::perspectiveRH_ZO(camera->fov(), aspect_ratio, 1.f, 20000.f)
                         * glm::lookAt(camera_pos, camera->look(), camera->up());
+                    const auto canon_inverse =
+                        glm::inverse(tanks[i]->get_canon()->get_model_matrix());
 
                     for (int j = 0; j < tanks.size(); j++) {
                         if (j == i || tanks[j]->is_dead()) continue;
@@ -385,13 +387,17 @@ namespace arenai::agent {
                             sight_fraction = glm::length(*hit - camera_pos) / distance;
 
                         const auto clip = view_projection * glm::vec4(positions[j], 1.f);
+                        const auto relative =
+                            glm::normalize(glm::vec3(canon_inverse * glm::vec4(positions[j], 1.f)));
 
                         result[i].push_back(
                             {.ndc_x = clip.x / clip.w,
                              .ndc_y = clip.y / clip.w,
                              .clip_w = clip.w,
                              .distance = distance,
-                             .sight_fraction = sight_fraction});
+                             .sight_fraction = sight_fraction,
+                             .canon_yaw = std::atan2(relative.x, relative.z),
+                             .canon_pitch = std::asin(std::clamp(relative.y, -1.f, 1.f))});
                     }
                 }
 

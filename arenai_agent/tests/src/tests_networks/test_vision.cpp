@@ -22,7 +22,7 @@ TEST_P(VisionTestParam, TestVisionForward) {
     const auto images = torch::randint(
         255, {batch_size, channels, height, width}, torch::TensorOptions().dtype(torch::kUInt8));
 
-    const auto encoded_images = conv.forward(images);
+    const auto encoded_images = conv.encode(images).keypoints;
 
     ASSERT_EQ(encoded_images.ndimension(), 2);
     ASSERT_EQ(encoded_images.size(0), batch_size);

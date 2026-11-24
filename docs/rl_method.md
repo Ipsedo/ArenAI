@@ -26,6 +26,10 @@ that can refute it, at the lowest cost that can refute it.
 - **Noise floor**: variability between identical configurations (n = 1 seed per run). Known
   orders of magnitude: curriculum milestone D ±30k index, emptied reserve ×2, hit/shell ±1 point,
   probe ratio unreliable under ~300 aligned-and-close decisions.
+- **Lever**: a change whose effect is established on an outcome metric (time on target,
+  hits/tank-s per distance band, kills at equal D). A gap on an intermediate indicator (sign of μ,
+  a correlation, a corrector gain) is reported as « indicator, effect not established », never as
+  a lever.
 - **Random floor**: the metric value of an untrained or random policy at the same D. Always the
   reference for "has it learned".
 - **Structural effect**: imposed mechanically by the code; established by reading the code.
@@ -126,6 +130,9 @@ Floors, ceilings, thresholds, coefficients and special cases added to compensate
 - The code that matters is the code *of the run* (effective commit, binary mtime), not the
   working tree.
 - Every quantitative statement carries its index and D.
+- **Cruise reading (D = 1000)**, in this order: hits/tank-s per distance band (probe, sides 550
+  and 1000) and kill at equal D; then hit/shell, dump (emptied reserve: median, share emptying,
+  share disarmed) and trigger selectivity (`p_al` / `p_off`); D, fire, Hc/σ only to explain.
 
 ## Output shape for a proposal (chat, French, concise)
 

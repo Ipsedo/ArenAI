@@ -5,6 +5,8 @@
 
 #include <torch/torch.h>
 
+#include "../../distributions/spatial_aim_law.h"
+#include "../aim_head.h"
 #include "../misc.h"
 #include "../presence_model.h"
 #include "../vision.h"
@@ -13,6 +15,7 @@
 namespace arenai::agent {
 
     struct LiquidActorOutput {
+        // drive actions
         torch::Tensor mu;
         torch::Tensor sigma;
         // independent Bernoulli probabilities, one per discrete action
@@ -21,6 +24,8 @@ namespace arenai::agent {
         torch::Tensor next_x;
         torch::Tensor features;
         torch::Tensor vision_features;
+        // over the rows [B] of act, the flattened rows [B * T] of act_sequence
+        SpatialAimLaw aim;
     };
 
     class LiquidActor final : public torch::nn::Module, public PresenceModel {
@@ -55,9 +60,11 @@ namespace arenai::agent {
         torch::nn::Linear mu;
         torch::nn::Sequential sigma;
         torch::nn::Sequential discrete;
+        std::shared_ptr<AimHead> aim;
 
-        // [rows, features] recurrent input: encoded vision and sensors, concatenated
-        torch::Tensor encode(const torch::Tensor &vision, const torch::Tensor &sensors);
+        // recurrent input [rows, features]: encoded vision and sensors, concatenated
+        std::tuple<torch::Tensor, torch::Tensor>
+        encode(const torch::Tensor &vision, const torch::Tensor &sensors);
     };
 
 }// namespace arenai::agent

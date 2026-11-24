@@ -5,7 +5,9 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <limits>
 #include <numbers>
+#include <optional>
 #include <string>
 #include <thread>
 
@@ -23,6 +25,7 @@
 #include "./core/train_environment.h"
 #include "./distributions/bernoulli.h"
 #include "./distributions/gaussian_tanh.h"
+#include "./distributions/spatial_aim_law.h"
 #include "./networks/actor.h"
 #include "./networks/q_function.h"
 #include "./networks/recurrent/liquid_actor.h"
@@ -71,9 +74,10 @@ int main(const int argc, char **argv) {
     parser.add_argument("--oracle_policy_yaw").default_value(false).implicit_value(true);
     parser.add_argument("--oracle_policy_pitch").default_value(false).implicit_value(true);
     parser.add_argument("--oracle_policy_fire").default_value(false).implicit_value(true);
-    parser.add_argument("--oracle_camera_center").default_value(false).implicit_value(true);
     parser.add_argument("--oracle_tolerance").scan<'g', float>().default_value(1.f);
-    parser.add_argument("--detrend_canon_x_steps").scan<'i', int>().default_value(0);
+    parser.add_argument("--oracle_target")
+        .default_value(std::string("geometry"))
+        .choices("geometry", "network");
     parser.add_argument("--vision_num_threads")
         .scan<'i', int>()
         .default_value(static_cast<int>(std::thread::hardware_concurrency()));
@@ -91,15 +95,14 @@ int main(const int argc, char **argv) {
         .shells_per_hit = parser.get<int>("--shells_per_hit"),
         .max_shells = parser.get<int>("--max_shells")};
     const bool deterministic = parser.get<bool>("--deterministic");
-    const int detrend_canon_x_steps = parser.get<int>("--detrend_canon_x_steps");
     const auto zoom_mode = parser.get<std::string>("--zoom");
     const bool oracle = parser.get<bool>("--oracle");
     const bool oracle_policy_yaw = parser.get<bool>("--oracle_policy_yaw");
     const bool oracle_policy_pitch = parser.get<bool>("--oracle_policy_pitch");
     const bool oracle_policy_fire = parser.get<bool>("--oracle_policy_fire");
-    const bool oracle_camera_center = parser.get<bool>("--oracle_camera_center");
     const float oracle_tolerance =
         parser.get<float>("--oracle_tolerance") * std::numbers::pi_v<float> / 180.f;
+    const bool network_target = parser.get<std::string>("--oracle_target") == "network";
     const float oracle_half_yaw =
         std::min(parser.get<float>("--oracle_fov"), 360.f) * std::numbers::pi_v<float> / 360.f;
 
@@ -125,6 +128,10 @@ int main(const int argc, char **argv) {
         torch::Tensor features, vision_features;
         // [N, 1] critic state value in scaled-return units, empty without a state-value critic
         torch::Tensor value;
+        // [N, rows, cols] actor presence logits, empty unless the oracle targets the network's pick
+        torch::Tensor presence;
+        // the aim point law of the PPO families, absent for SAC whose aim point is in mu
+        std::optional<SpatialAimLaw> aim;
     };
     std::function<ProbeActorOutput(const torch::Tensor &, const torch::Tensor &)> act;
     std::function<void()> reset_hidden = [] {};
@@ -159,7 +166,8 @@ int main(const int argc, char **argv) {
 
         act = [actor](const torch::Tensor &vision, const torch::Tensor &sensors) {
             auto out = actor->act(vision, sensors);
-            return ProbeActorOutput{out.mu, out.sigma, out.discrete};
+            return ProbeActorOutput{
+                .mu = out.mu, .sigma = out.sigma, .discrete = out.discrete, .aim = out.aim};
         };
     } else if (is_sac) {
         const auto make_encoder = [&] {
@@ -189,8 +197,11 @@ int main(const int argc, char **argv) {
             auto out = actor->act(vision, sensors);
             // features: encoding saved with the actor, vision_features: saved with the critic
             return ProbeActorOutput{
-                out.mu, out.sigma, out.discrete, actor_encoder->forward(vision, sensors),
-                critic->encode(vision, sensors)};
+                .mu = out.mu,
+                .sigma = out.sigma,
+                .discrete = out.discrete,
+                .features = actor_encoder->forward(vision, sensors),
+                .vision_features = critic->encode(vision, sensors)};
         };
 
         canon_q_gradient = [critic, device](
@@ -241,8 +252,8 @@ int main(const int argc, char **argv) {
             hidden_state->reset();
             *critic_x = torch::Tensor();
         };
-        act = [actor, hidden_state, critic,
-               critic_x](const torch::Tensor &vision, const torch::Tensor &sensors) {
+        act = [actor, hidden_state, critic, critic_x,
+               network_target](const torch::Tensor &vision, const torch::Tensor &sensors) {
             const auto x_t = hidden_state->get(vision.size(0));
             auto out = actor->act(vision, sensors, x_t);
             hidden_state->set(out.next_x);
@@ -252,8 +263,15 @@ int main(const int argc, char **argv) {
             const auto [value, next_critic_x] = critic->value(vision, sensors, *critic_x);
             *critic_x = next_critic_x;
 
-            return ProbeActorOutput{out.mu,       out.sigma,           out.discrete,
-                                    out.features, out.vision_features, value};
+            return ProbeActorOutput{
+                .mu = out.mu,
+                .sigma = out.sigma,
+                .discrete = out.discrete,
+                .features = out.features,
+                .vision_features = out.vision_features,
+                .value = value,
+                .presence = network_target ? actor->presence_logits(vision) : torch::Tensor(),
+                .aim = out.aim};
         };
     }
 
@@ -271,8 +289,11 @@ int main(const int argc, char **argv) {
 
     csv << "episode;step;tank;distance;yaw;pitch;best_angle;best_distance;can_fire;shells;cooldown;"
            "p_fire;p_zoom;fire";
-    for (const auto &name: action_names) csv << ";mu_" << name;
-    for (const auto &prefix: {";sigma_", ";act_", ";dq_", ";dq1_", ";dq2_"})
+    for (const auto &prefix: {";mu_", ";sigma_"})
+        for (int a = 0; a < NB_DIRECTION_ACTIONS; a++) csv << prefix << action_names[a];
+    for (const auto &name: action_names) csv << ";act_" << name;
+    csv << ";aim_cell;aim_log_prob;aim_cell_entropy";
+    for (const auto &prefix: {";dq_", ";dq1_", ";dq2_"})
         for (const auto &name: aim_names) csv << prefix << name;
     csv << ";turret_yaw;canon_elevation;canon_relative_elevation;chassis_pitch;chassis_roll;"
            "value;nearest_sight_fraction\n";
@@ -323,12 +344,12 @@ int main(const int argc, char **argv) {
         bool is_done = false;
         float episode_kills = 0.f;
         int episode_hits = 0, episode_fired = 0;
-        auto slow_mu_canon_x = torch::zeros({nb_tanks});
+        long network_designations = 0, network_agreements = 0;
         std::vector<std::deque<PendingShot>> pending(nb_tanks);
 
         while (!is_done) {
             torch::Tensor continuous_action, discrete_action, mu, sigma, discrete, features,
-                vision_features, value;
+                vision_features, value, presence_probas, aim_cell, aim_log_prob, aim_cell_entropy;
             {
                 torch::NoGradGuard guard;
 
@@ -338,25 +359,28 @@ int main(const int argc, char **argv) {
                 sigma = out.sigma.cpu();
                 discrete = out.discrete.cpu();
                 if (out.value.defined()) value = out.value.cpu().reshape({-1});
+                if (out.presence.defined()) presence_probas = torch::sigmoid(out.presence).cpu();
                 if (out.features.defined()) {
                     features = out.features.cpu().contiguous();
                     vision_features = out.vision_features.cpu().contiguous();
                 }
 
-                auto acted_mu = mu;
-                if (detrend_canon_x_steps > 0) {
-                    slow_mu_canon_x += (mu.select(1, 2) - slow_mu_canon_x)
-                                       / static_cast<float>(detrend_canon_x_steps);
-                    acted_mu = mu.clone();
-                    acted_mu.select(1, 2) -= slow_mu_canon_x;
-                }
-
                 if (deterministic) {
-                    continuous_action = gaussian_tanh_mode(acted_mu);
+                    continuous_action = gaussian_tanh_mode(mu);
                     discrete_action = bernoulli_max_action(discrete);
                 } else {
-                    continuous_action = gaussian_tanh_sample(acted_mu, sigma).first;
+                    continuous_action = gaussian_tanh_sample(mu, sigma).first;
                     discrete_action = bernoulli_sample(discrete);
+                }
+
+                // the PPO families close the command with a point drawn from their aim law
+                if (out.aim.has_value()) {
+                    const auto draw = deterministic ? out.aim->mode() : out.aim->sample();
+                    continuous_action =
+                        torch::cat({continuous_action, out.aim->point(draw).cpu()}, -1);
+                    aim_cell = draw.cell.cpu();
+                    aim_log_prob = out.aim->log_prob(draw).cpu().reshape({-1});
+                    aim_cell_entropy = out.aim->cell_entropy().cpu().reshape({-1});
                 }
 
                 // discrete actions : fire, zoom
@@ -371,55 +395,80 @@ int main(const int argc, char **argv) {
                                       ? env->presence_maps(presence_rows, presence_cols)
                                       : torch::Tensor();
             const auto sightings =
-                sightings_out.is_open() ? env->enemy_sightings(
+                sightings_out.is_open() || oracle ? env->enemy_sightings(
                     static_cast<float>(vision_width) / static_cast<float>(vision_height))
-                                        : std::vector<std::vector<EnemySighting>>();
+                                                  : std::vector<std::vector<EnemySighting>>();
             const bool write_frames = frames_out.is_open() && step % frames_every == 0;
             const auto frame_geometry =
                 write_frames ? env->aim_geometry(frames_half_yaw) : std::vector<AimGeometry>();
             const auto frames =
                 write_frames ? state.get_vision().cpu().contiguous() : torch::Tensor();
 
-            // oracle: the canon servoes on the nearest enemy in view and fires once aligned
+            // oracle: aims at the image point of the target and fires once the canon is aligned
             if (oracle) {
-                const float decision_seconds = static_cast<float>(action_repeat) * wanted_frequency;
-                const float turret_step = model::ENEMY_TURRET_RADIAL_VELOCITY * decision_seconds;
-                const float canon_step = model::ENEMY_CANON_RADIAL_VELOCITY * decision_seconds;
-                constexpr float gain = 0.3f;
-
                 auto cont = continuous_action.accessor<float, 2>();
                 auto disc = discrete_action.accessor<float, 2>();
                 for (int i = 0; i < nb_tanks; i++) {
                     if (!oracle_policy_fire) disc[i][0] = 0.f;
-                    if (!geometry[i].alive || geometry[i].view_distance < 0.f) continue;
+                    if (!geometry[i].alive) continue;
 
-                    const float drop = std::atan(
-                        model::GRAVITY * geometry[i].view_distance
-                        / (2.f * model::SHELL_SPEED * model::SHELL_SPEED));
-                    const float yaw_error = geometry[i].view_yaw;
-                    float pitch_error = geometry[i].view_pitch + drop;
+                    // geometry target: the sighting of the nearest enemy in view
+                    float target_gap = std::numeric_limits<float>::max();
+                    const auto gap_of = [&](const EnemySighting &sighting) {
+                        if (network_target) {
+                            const auto probas = presence_probas[i].reshape({-1});
+                            const auto best = probas.argmax().item<int64_t>();
+                            if (probas[best].item<float>() < 0.5f)
+                                return std::numeric_limits<float>::max();
+                            const float row = static_cast<float>(best / presence_cols) + 0.5f;
+                            const float col = static_cast<float>(best % presence_cols) + 0.5f;
+                            const float gap_row =
+                                (1.f - sighting.ndc_y) / 2.f * static_cast<float>(presence_rows)
+                                - row;
+                            const float gap_col =
+                                (sighting.ndc_x + 1.f) / 2.f * static_cast<float>(presence_cols)
+                                - col;
+                            return gap_row * gap_row + gap_col * gap_col;
+                        }
+                        if (geometry[i].view_distance < 0.f)
+                            return std::numeric_limits<float>::max();
+                        return std::abs(sighting.canon_yaw - geometry[i].view_yaw)
+                               + std::abs(sighting.canon_pitch - geometry[i].view_pitch);
+                    };
 
-                    // the vision camera sits at (0, 4, -20) in the canon frame, looking at (0, 0, 100)
-                    if (oracle_camera_center) {
-                        const float d = geometry[i].view_distance;
-                        const float height = d * std::sin(geometry[i].view_pitch);
-                        const float depth =
-                            d * std::cos(geometry[i].view_pitch) * std::cos(geometry[i].view_yaw);
-                        pitch_error =
-                            std::atan2(height - 4.f, depth + 20.f) - std::atan2(-4.f, 120.f);
+                    const EnemySighting *target = nullptr;
+                    for (const auto &sighting: sightings[i]) {
+                        if (sighting.clip_w <= 0.f || std::abs(sighting.ndc_x) >= 1.f
+                            || std::abs(sighting.ndc_y) >= 1.f)
+                            continue;
+                        if (const float gap = gap_of(sighting); gap < target_gap) {
+                            target_gap = gap;
+                            target = &sighting;
+                        }
+                    }
+                    if (target == nullptr) continue;
+
+                    if (network_target) {
+                        network_designations++;
+                        if (geometry[i].view_distance >= 0.f
+                            && std::abs(target->canon_yaw - geometry[i].view_yaw) < 0.01f
+                            && std::abs(target->canon_pitch - geometry[i].view_pitch) < 0.01f)
+                            network_agreements++;
                     }
 
-                    if (!oracle_policy_yaw)
-                        cont[i][NB_DIRECTION_ACTIONS] =
-                            std::clamp(-gain * yaw_error / turret_step, -1.f, 1.f);
-                    if (!oracle_policy_pitch)
-                        cont[i][NB_DIRECTION_ACTIONS + 1] =
-                            std::clamp(-gain * pitch_error / canon_step, -1.f, 1.f);
+                    // the image point carries no drop nor parallax correction
+                    if (!oracle_policy_yaw) cont[i][NB_DIRECTION_ACTIONS] = target->ndc_x;
+                    if (!oracle_policy_pitch) cont[i][NB_DIRECTION_ACTIONS + 1] = target->ndc_y;
+
+                    const float drop = std::atan(
+                        model::GRAVITY * target->distance
+                        / (2.f * model::SHELL_SPEED * model::SHELL_SPEED));
                     if (!oracle_policy_fire)
-                        disc[i][0] = std::abs(yaw_error) < oracle_tolerance
-                                             && std::abs(pitch_error) < oracle_tolerance
-                                         ? 1.f
-                                         : 0.f;
+                        disc[i][0] =
+                            std::abs(target->canon_yaw) < oracle_tolerance
+                                    && std::abs(target->canon_pitch + drop) < oracle_tolerance
+                                ? 1.f
+                                : 0.f;
                 }
             }
 
@@ -441,11 +490,15 @@ int main(const int argc, char **argv) {
                     << ';' << mask_acc[i][0] << ';' << shells_ratio[i] << ';' << cooldown_ratio[i]
                     << ';' << discrete_acc[i][0] << ';' << discrete_acc[i][1] << ';'
                     << disc_acc[i][0];
+                for (const auto &acc: {mu_acc, sigma_acc})
+                    for (int a = 0; a < NB_DIRECTION_ACTIONS; a++) csv << ';' << acc[i][a];
                 for (int a = 0; a < model::ENEMY_NB_CONTINUOUS_ACTION; a++)
-                    csv << ';' << mu_acc[i][a];
-                for (const auto &acc: {sigma_acc, cont_acc})
-                    for (int a = NB_DIRECTION_ACTIONS; a < model::ENEMY_NB_CONTINUOUS_ACTION; a++)
-                        csv << ';' << acc[i][a];
+                    csv << ';' << cont_acc[i][a];
+                if (aim_cell.defined())
+                    csv << ';' << aim_cell[i].item<int64_t>() << ';'
+                        << aim_log_prob[i].item<float>() << ';'
+                        << aim_cell_entropy[i].item<float>();
+                else csv << ";-1;0;0";
                 for (int a = 0; a < 3 * static_cast<int>(aim_names.size()); a++)
                     csv << ';' << (q_gradient.defined() ? q_gradient[i][a].item<float>() : 0.f);
                 csv << ';' << geometry[i].turret_yaw * to_degrees << ';'
@@ -559,8 +612,11 @@ int main(const int argc, char **argv) {
 
         env->stop_drawing();
         std::cout << "episode " << episode << " : " << step << " steps, kill reward "
-                  << episode_kills << ", hits " << episode_hits << ", fired " << episode_fired
-                  << std::endl;
+                  << episode_kills << ", hits " << episode_hits << ", fired " << episode_fired;
+        if (network_target)
+            std::cout << ", network designations " << network_designations
+                      << ", same as nearest in view " << network_agreements;
+        std::cout << std::endl;
     }
 
     return 0;

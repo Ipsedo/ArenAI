@@ -10,13 +10,20 @@
 
 namespace arenai::agent {
 
+    struct VisionEncoding {
+        // [B, C, H, W]
+        torch::Tensor map;
+        // [B, 3C] spatial softmax keypoints and amplitudes
+        torch::Tensor keypoints;
+    };
+
     class ConvolutionNetwork final : public torch::nn::Module, public PresenceModel {
     public:
         explicit ConvolutionNetwork(
             int vision_height, int vision_width, const std::vector<std::tuple<int, int>> &channels,
             const std::vector<int> &group_norm_nums);
 
-        torch::Tensor forward(const torch::Tensor &input);
+        VisionEncoding encode(const torch::Tensor &input);
 
         torch::Tensor presence_logits(const torch::Tensor &input) override;
         // the convolution blocks and the head

@@ -55,7 +55,7 @@ std::vector<torch::Tensor> ValueFunction::presence_parameters() const {
 }
 
 torch::Tensor ValueFunction::value(const torch::Tensor &vision, const torch::Tensor &sensors) {
-    const auto vision_encoded = vision_encoder->forward(vision);
+    const auto vision_encoded = vision_encoder->encode(vision).keypoints;
     const auto sensors_encoded = sensors_encoder->forward(sensors);
 
     const auto encoded = torch::cat({vision_encoded, sensors_encoded}, 1);

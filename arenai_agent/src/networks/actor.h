@@ -6,6 +6,8 @@
 
 #include <torch/torch.h>
 
+#include "../distributions/spatial_aim_law.h"
+#include "./aim_head.h"
 #include "./misc.h"
 #include "./presence_model.h"
 #include "./state_encoder.h"
@@ -19,6 +21,14 @@ namespace arenai::agent {
         torch::Tensor discrete;
     };
 
+    struct PolicyOutput {
+        // drive actions
+        torch::Tensor mu;
+        torch::Tensor sigma;
+        torch::Tensor discrete;
+        SpatialAimLaw aim;
+    };
+
     class Actor : public torch::nn::Module, public PresenceModel {
     public:
         explicit Actor(
@@ -28,7 +38,7 @@ namespace arenai::agent {
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, const float &initial_sigma,
             const std::vector<float> &initial_discrete_probas);
-        ActorRawOutput act(const torch::Tensor &vision, const torch::Tensor &sensors);
+        PolicyOutput act(const torch::Tensor &vision, const torch::Tensor &sensors);
 
         torch::Tensor presence_logits(const torch::Tensor &vision) override;
         std::vector<torch::Tensor> presence_parameters() const override;
@@ -42,6 +52,7 @@ namespace arenai::agent {
         torch::nn::Linear mu;
         torch::nn::Sequential sigma;
         torch::nn::Sequential discrete;
+        std::shared_ptr<AimHead> aim;
 
     protected:
         torch::Tensor trunc_forward(const torch::Tensor &vision, const torch::Tensor &sensors);

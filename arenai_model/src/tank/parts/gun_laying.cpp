@@ -64,6 +64,8 @@ namespace arenai::model {
 
     void GunLaying::reset(const glm::vec3 &canon_forward) { set_direction(canon_forward); }
 
+    void GunLaying::aim_along(const glm::vec3 &world_direction) { set_direction(world_direction); }
+
     glm::vec3 GunLaying::direction() const { return from_angles(yaw, elevation); }
 
     void GunLaying::set_direction(const glm::vec3 &world_direction) {

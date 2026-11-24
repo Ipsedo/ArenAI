@@ -36,7 +36,8 @@ namespace arenai::agent {
     }
 
     torch::Tensor LiquidCritic::encode(const torch::Tensor &vision, const torch::Tensor &sensors) {
-        return torch::cat({vision_encoder->forward(vision), sensors_encoder->forward(sensors)}, 1);
+        return torch::cat(
+            {vision_encoder->encode(vision).keypoints, sensors_encoder->forward(sensors)}, 1);
     }
 
     LiquidCriticOutput LiquidCritic::value(

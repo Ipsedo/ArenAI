@@ -222,6 +222,10 @@ namespace arenai::model {
         lay_gun_on_canon();
     }
 
+    void JoltTank::lay_gun_along(const glm::vec3 &world_direction) const {
+        gun_laying->aim_along(world_direction);
+    }
+
     void JoltTank::lay_gun_on_canon() const {
         gun_laying->reset(glm::vec3(canon->get_model_matrix() * glm::vec4(0.f, 0.f, 1.f, 0.f)));
     }

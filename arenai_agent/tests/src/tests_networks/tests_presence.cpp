@@ -1,7 +1,6 @@
 #include <agents/presence_learner.h>
 #include <gtest/gtest.h>
 #include <metrics/mean_metric.h>
-#include <networks/constants.h>
 #include <networks/vision.h>
 
 using namespace arenai;
@@ -9,8 +8,8 @@ using namespace arenai::agent;
 
 TEST(PresenceTest, GridSizeFollowsTheConvolutionBlocks) {
     const auto [rows, cols] = presence_grid_size(128, 256, 7);
-    ASSERT_EQ(rows, 128 >> PRESENCE_BLOCKS);
-    ASSERT_EQ(cols, 256 >> PRESENCE_BLOCKS);
+    ASSERT_EQ(rows, 1);
+    ASSERT_EQ(cols, 2);
 
     const auto [shallow_rows, shallow_cols] = presence_grid_size(8, 16, 1);
     ASSERT_EQ(shallow_rows, 4);
@@ -28,7 +27,7 @@ TEST(PresenceTest, LogitsHaveTheGridShape) {
     ASSERT_EQ(logits.sizes(), (std::vector<int64_t>{3, rows, cols}));
 }
 
-TEST(PresenceTest, FitLowersTheLossThroughTheFirstBlocksOnly) {
+TEST(PresenceTest, FitLowersTheLossThroughTheBlocksOnly) {
     torch::manual_seed(0);
 
     const std::vector<std::tuple<int, int>> channels{{3, 4}, {4, 4}, {4, 8}, {8, 8}, {8, 8}};
@@ -49,7 +48,7 @@ TEST(PresenceTest, FitLowersTheLossThroughTheFirstBlocksOnly) {
     };
 
     const auto named = conv->named_parameters();
-    const auto last_block = named["cnn.12.weight"].detach().clone();
+    const auto temperature = named["log_temperature"].detach().clone();
     const auto first_block = named["cnn.0.weight"].detach().clone();
 
     const float before = loss();
@@ -57,5 +56,5 @@ TEST(PresenceTest, FitLowersTheLossThroughTheFirstBlocksOnly) {
 
     ASSERT_LT(loss(), before);
     ASSERT_FALSE(torch::equal(named["cnn.0.weight"], first_block));
-    ASSERT_TRUE(torch::equal(named["cnn.12.weight"], last_block));
+    ASSERT_TRUE(torch::equal(named["log_temperature"], temperature));
 }

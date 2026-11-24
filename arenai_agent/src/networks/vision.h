@@ -19,7 +19,7 @@ namespace arenai::agent {
         torch::Tensor forward(const torch::Tensor &input);
 
         torch::Tensor presence_logits(const torch::Tensor &input) override;
-        // the blocks under the presence head, and the head
+        // the convolution blocks and the head
         std::vector<torch::Tensor> presence_parameters() const override;
 
         int get_output_size() const;
@@ -27,7 +27,8 @@ namespace arenai::agent {
     private:
         torch::nn::Sequential cnn{nullptr};
         torch::nn::Conv2d presence{nullptr};
-        int nb_presence_modules;
+        torch::Tensor log_temperature;
+        torch::Tensor coordinates;
         int output_size;
 
         static torch::Tensor normalized(const torch::Tensor &input);

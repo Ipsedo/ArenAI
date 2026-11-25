@@ -79,6 +79,12 @@ Any learning problem or idea of a fix ⟹ skill `rl-hypothesis`.
 
 - French. **Conclusion first, one sentence**, then only the numbers that carry it. No filler, no
   hedging, no repetition.
+- **Default length: ≤ 10 lines** (« pas de blah blah », 2026-11-25): the reasoning as a chain
+  (finding → consequence → next step), at most one table or one diagram. More tables, limits,
+  file lists, method detail: only when Samuel explicitly asks for the detail (« tu ne détailles que si je te le demande
+  explicitement »). This bound wins over the form
+  bullets below and over `docs/rl_method.md` §Output shape, except in the technical detail a gate
+  (G1–G5) requires.
 - **Mathematics in LaTeX**: any explanation of a solution, a loss, a gradient, an estimator, a
   distribution, a geometry is given as formulas (`$…$`, `$$…$$`) with every symbol defined once
   — never a formula paraphrased in prose.

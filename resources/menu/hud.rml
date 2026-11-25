@@ -28,7 +28,7 @@
     <div id="hud-clock" class="clock">{{clock}}</div>
     <div id="status-ai" class="status right">
         <span class="status-label side-ai">Machine ◆</span>
-        <span id="hud-ai-score" class="status-score side-ai">{{enemies_mean_score}}</span>
+        <span id="hud-ai-score" class="status-score side-ai">{{enemies_max_score}}</span>
         <span id="hud-enemies-left" class="enemies-left side-ai">{{enemies_alive}} / {{enemies_total}}</span>
     </div>
 

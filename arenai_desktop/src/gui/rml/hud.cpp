@@ -18,7 +18,7 @@ namespace arenai::desktop::gui {
         model.bind("clock", &clock_);
         model.bind("player_score", &player_score_);
         model.bind("hull_segments", &hull_segments_);
-        model.bind("enemies_mean_score", &enemies_max_score_);
+        model.bind("enemies_max_score", &enemies_max_score_);
         model.bind("enemies_alive", &enemies_alive_);
         model.bind("enemies_total", &enemies_total_);
     }
@@ -35,7 +35,7 @@ namespace arenai::desktop::gui {
         enemies_alive_ = std::clamp(status.enemies_alive, 0, enemies_total_);
 
         model().dirty(
-            {"clock", "player_score", "hull_segments", "enemies_mean_score", "enemies_alive",
+            {"clock", "player_score", "hull_segments", "enemies_max_score", "enemies_alive",
              "enemies_total"});
     }
 

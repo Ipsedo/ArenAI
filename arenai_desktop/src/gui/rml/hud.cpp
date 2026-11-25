@@ -82,10 +82,10 @@ namespace arenai::desktop::gui {
         Rml::Element *arc = damage_arcs_[next_damage_arc_];
         next_damage_arc_ = (next_damage_arc_ + 1) % damage_arcs_.size();
 
-        constexpr float rad_to_deg = 180.f / std::numbers::pi_v<float>;
+        constexpr float RAD_TO_DEG = 180.f / std::numbers::pi_v<float>;
         arc->SetProperty(
             Rml::PropertyId::Transform,
-            Rml::Transform::MakeProperty({Rml::Transforms::Rotate2D(screen_angle * rad_to_deg)}));
+            Rml::Transform::MakeProperty({Rml::Transforms::Rotate2D(screen_angle * RAD_TO_DEG)}));
 
         const Rml::Tween tween(Rml::Tween::Quadratic, Rml::Tween::Out);
         const Rml::Property opaque(1.f, Rml::Unit::NUMBER);

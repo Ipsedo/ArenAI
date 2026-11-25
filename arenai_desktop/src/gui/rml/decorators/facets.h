@@ -32,7 +32,7 @@ namespace arenai::desktop::gui {
         Rml::Colourb line_color_;
         Rml::NumericValue thickness_;
         std::vector<Polygon> polygons_;
-        bool houle_;
+        bool swells_;
     };
 
     class FacetsDecoratorInstancer final : public GeometryDecoratorInstancer {

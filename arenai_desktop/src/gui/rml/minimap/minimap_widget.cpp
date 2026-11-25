@@ -16,10 +16,10 @@ namespace arenai::desktop::gui {
         }
 
         void rotate(Rml::Element &element, const float radians) {
-            constexpr float rad_to_deg = 180.f / std::numbers::pi_v<float>;
+            constexpr float RAD_TO_DEG = 180.f / std::numbers::pi_v<float>;
             element.SetProperty(
                 Rml::PropertyId::Transform,
-                Rml::Transform::MakeProperty({Rml::Transforms::Rotate2D(radians * rad_to_deg)}));
+                Rml::Transform::MakeProperty({Rml::Transforms::Rotate2D(radians * RAD_TO_DEG)}));
         }
 
     }// namespace

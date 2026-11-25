@@ -51,15 +51,15 @@ namespace arenai::desktop::gui {
         const Rml::NumericValue thickness, const Rml::String &polygons,
         const Rml::String &animation)
         : fill_color_(fill_color), line_color_(line_color), thickness_(thickness),
-          polygons_(parse(polygons)), houle_(animation == "houle") {}
+          polygons_(parse(polygons)), swells_(animation == "houle") {}
 
     float FacetsDecorator::swell_offset(const Rml::Vector2f point, const double time) {
-        if (point.y >= 719.5f) return 0.f;// the screen's foot stays anchored
+        if (point.y >= DESIGN_HEIGHT - 0.5f) return 0.f;// the screen's foot stays anchored
 
         float weight;
         if (point.y >= HORIZON) {
             // the floor: silent at the horizon, full at the screen's foot
-            weight = std::pow(std::min((point.y - HORIZON) / 325.f, 1.f), 1.1f);
+            weight = std::pow(std::min((point.y - HORIZON) / (DESIGN_HEIGHT - HORIZON), 1.f), 1.1f);
         } else {
             const float u = point.y / HORIZON;
             weight = 0.35f * smooth01((u - 0.02f) / 0.23f) * smooth01((1.f - u) / 0.2f);
@@ -74,7 +74,7 @@ namespace arenai::desktop::gui {
         return -weight * (player * (1.f - blend) + machine * blend);
     }
 
-    bool FacetsDecorator::animated() const { return houle_; }
+    bool FacetsDecorator::animated() const { return swells_; }
 
     std::vector<FacetsDecorator::Polygon> FacetsDecorator::parse(const Rml::String &polygons) {
         const auto read_float = [](std::string_view text, float &value) -> std::string_view {
@@ -120,14 +120,14 @@ namespace arenai::desktop::gui {
         const bool fills = fill_color_.alpha > 0;
         const bool lines = line_color_.alpha > 0 && thickness > 0.f;
 
-        const double time = houle_ ? Rml::GetSystemInterface()->GetElapsedTime() : 0.0;
+        const double time = swells_ ? Rml::GetSystemInterface()->GetElapsedTime() : 0.0;
 
         Rml::Mesh mesh;
         std::vector<Rml::Vector2f> points;
         for (const auto &polygon: polygons_) {
             points.clear();
             for (const Rml::Vector2f point: polygon.points) {
-                const float y = houle_ ? point.y + swell_offset(point, time) : point.y;
+                const float y = swells_ ? point.y + swell_offset(point, time) : point.y;
                 points.emplace_back(point.x * scale.x, y * scale.y);
             }
             const float alpha = opacity * polygon.opacity;

@@ -2,7 +2,6 @@
 #define ARENAI_DESKTOP_GUI_RML_PAGES_AI_PAGE_H
 
 #include <filesystem>
-#include <functional>
 #include <optional>
 #include <vector>
 

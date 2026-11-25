@@ -1,6 +1,5 @@
 #include "./popup_page.h"
 
-#include <cmath>
 #include <utility>
 
 #include "./labels.h"

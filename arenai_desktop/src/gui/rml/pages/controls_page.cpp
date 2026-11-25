@@ -15,9 +15,6 @@ namespace arenai::desktop::gui {
                                                   "TURN RIGHT", "FIRE",     "ZOOM"};
         constexpr const char *GP_SLOT_LABELS[] = {"FIRE",  "ZOOM",       "STEER",  "AIM X",
                                                   "AIM Y", "ACCELERATE", "REVERSE"};
-        constexpr int NB_KB_SLOTS = 6;
-        constexpr int NB_GP_SLOTS = 7;
-        constexpr int NB_GP_BUTTON_SLOTS = 2;
 
         constexpr bool gp_slot_is_one_way(const int slot) { return slot >= 5; }
 
@@ -119,18 +116,21 @@ namespace arenai::desktop::gui {
         }
     }
 
-    std::array<std::optional<KeyboardBinding> *, 6> ControlsPage::kb_slots() {
+    std::array<std::optional<KeyboardBinding> *, ControlsPage::NB_KB_SLOTS>
+    ControlsPage::kb_slots() {
         auto &keyboard = settings_.bindings.keyboard;
         return {&keyboard.forward,    &keyboard.backward, &keyboard.turn_left,
                 &keyboard.turn_right, &keyboard.fire,     &keyboard.zoom};
     }
 
-    std::array<std::optional<controller::GamepadButton> *, 2> ControlsPage::gp_button_slots() {
+    std::array<std::optional<controller::GamepadButton> *, ControlsPage::NB_GP_BUTTON_SLOTS>
+    ControlsPage::gp_button_slots() {
         auto &gamepad = settings_.bindings.gamepad;
         return {&gamepad.fire, &gamepad.zoom};
     }
 
-    std::array<std::optional<GamepadAxisBinding> *, 5> ControlsPage::gp_axis_slots() {
+    std::array<std::optional<GamepadAxisBinding> *, ControlsPage::NB_GP_AXIS_SLOTS>
+    ControlsPage::gp_axis_slots() {
         auto &gamepad = settings_.bindings.gamepad;
         return {
             &gamepad.steer, &gamepad.aim_x, &gamepad.aim_y, &gamepad.accelerate, &gamepad.reverse};

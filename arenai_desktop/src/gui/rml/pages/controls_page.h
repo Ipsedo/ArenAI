@@ -38,9 +38,15 @@ namespace arenai::desktop::gui {
         void on_hide() override;
 
     private:
-        std::array<std::optional<KeyboardBinding> *, 6> kb_slots();
-        std::array<std::optional<controller::GamepadButton> *, 2> gp_button_slots();
-        std::array<std::optional<GamepadAxisBinding> *, 5> gp_axis_slots();
+        static constexpr int NB_KB_SLOTS = 6;
+        static constexpr int NB_GP_BUTTON_SLOTS = 2;
+        static constexpr int NB_GP_AXIS_SLOTS = 5;
+        static constexpr int NB_GP_SLOTS = NB_GP_BUTTON_SLOTS + NB_GP_AXIS_SLOTS;
+
+        std::array<std::optional<KeyboardBinding> *, NB_KB_SLOTS> kb_slots();
+        std::array<std::optional<controller::GamepadButton> *, NB_GP_BUTTON_SLOTS>
+        gp_button_slots();
+        std::array<std::optional<GamepadAxisBinding> *, NB_GP_AXIS_SLOTS> gp_axis_slots();
 
         Rml::String keyboard_slot_label(const std::optional<KeyboardBinding> &slot) const;
         static Rml::String

@@ -149,6 +149,11 @@ run's effective commit, not the working tree.
 
 ## Build, test, run
 
+- Public guides, written for GitHub developers, commands first, no prose: `docs/BUILD.md`
+  (dependencies, build per platform, CMake options, tests, goldens, pre-commit) and
+  `docs/USAGE.md` (play, train, match/probe executables, Python tooling, every CLI option with
+  its default). A change to a build script, a dependency, a CMake option, an executable, a CLI
+  option or one of its defaults updates the matching guide in the same commit.
 - Build: skill `build` (`./build_linux.sh` → `build/`, Release). CLion/ninja tree:
   `cmake-build-release/`. LibTorch in `/opt/libtorch` (`-DLIBTORCH_PATH=…`). Windows:
   `install_dependencies.ps1`, `build_windows.ps1`.

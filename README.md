@@ -8,62 +8,33 @@ Each tank receives the rendered frame of its camera as input, and the agent is t
 
 When the agent is trained (PPO or PPG), you can fight it through the tanks it handles.
 
-## Installation
+## Documentation
 
-First you need to clone the repo :
+| | |
+|---|---|
+| [docs/BUILD.md](docs/BUILD.md) | dependencies, build (Linux, Windows, macOS), tests |
+| [docs/USAGE.md](docs/USAGE.md) | play, train an agent, evaluate a checkpoint |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | modules, class diagrams, frame sequences |
+
+## Quick start
+
+Linux, dependencies and LibTorch installed ([docs/BUILD.md](docs/BUILD.md)) :
 ```bash
 git clone https://github.com/Ipsedo/ArenAI.git
+cd ArenAI
+./build_linux.sh
+./build/arenai_desktop/arenai_desktop
 ```
 
-Build should work on any decent Linux distribution.
-
-Windows build is now working !
-
-### ArchLinux
-
-Install dependencies with pacman :
-```shell
-sudo pacman -Sy glm glfw vulkan-devel vulkan-headers glslang gtest
-```
-
-Then, download or install LibTorch :
-
-```shell
-wget https://download.pytorch.org/libtorch/cu132/libtorch-shared-with-deps-2.12.0%2Bcu132.zip
-unzip ./libtorch-shared-with-deps-2.12.0+cu132.zip -d /opt
-```
-
-or from the AUR with your favorite manager (ex : paru) :
-```shell
-# to adapt according your machine (cpu/cuda)
-paru -Sy libtorch-cuda
-```
-
-Finally, build the project :
-```shell
-cd /path/to/ArenAI/
-mkdir build && cd build
-cmake .. && make -j $(nproc)
-```
-
-### Windows
-
-You need first to install Visual Studio C++ (download it from [official website](https://visualstudio.microsoft.com/fr/vs/features/cplusplus/)).
-This will add the `vcpkg` executable in the `PATH` which is needed to compile the project and its dependencies.
-
-Then you are ready to build all modules.
-Open a PowerShell session :
+Windows (Visual Studio 2022 with C++ workload), in PowerShell :
 ```powershell
-cd C:\Users\MyName\path\to\ArenAI\
 .\install_dependencies.ps1
+.\build_windows.ps1
 ```
 
-This will create `libs` folder with all dependencies.
-
-You can now compile the project's modules :
-```powershell
-cd C:\Users\MyName\path\to\ArenAI\
-.\build_windows.ps1
+Train an agent ([docs/USAGE.md](docs/USAGE.md)) :
+```bash
+./build/arenai_agent/arenai_agent_train --output_folder outputs/train_001_ppo --resources_folder resources --cuda ppo
 ```
 
 ### macOS

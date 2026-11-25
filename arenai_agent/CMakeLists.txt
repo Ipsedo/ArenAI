@@ -80,6 +80,12 @@ target_link_libraries(arenai_agent_probe PRIVATE arenai_agent ${ARENAI_AGENT_LIN
 target_include_directories(arenai_agent_probe PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}/src")
 arenai_copy_runtime_dlls(arenai_agent_probe TORCH)
 
+# Match: a saved agent played under the desktop game's rules
+add_executable(arenai_agent_match "${CMAKE_CURRENT_SOURCE_DIR}/probe/match.cpp")
+target_link_libraries(arenai_agent_match PRIVATE arenai_agent ${ARENAI_AGENT_LINK_LIBS})
+target_include_directories(arenai_agent_match PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+arenai_copy_runtime_dlls(arenai_agent_match TORCH)
+
 add_executable(arenai_agent_sigma_gradients "${CMAKE_CURRENT_SOURCE_DIR}/probe/sigma_gradients.cpp")
 target_link_libraries(arenai_agent_sigma_gradients PRIVATE arenai_agent ${ARENAI_AGENT_LINK_LIBS})
 target_include_directories(arenai_agent_sigma_gradients PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}/src")

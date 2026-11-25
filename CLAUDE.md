@@ -192,3 +192,4 @@ run's effective commit, not the working tree.
 | `.venv` / pre-commit missing | `setup-venv` |
 | « kaizen », a correction of how Claude works, a stated working rule | `kaizen` → `harness-improvement` |
 | put a rule in the harness, create/edit a skill | `harness-improvement` |
+| **explicit request only** (« nettoyeur », « nettoie X »); never suggest it | agent `cleaner` on the scope Samuel names (none ⟹ ask it); relay its table, `AskUserQuestion` multiSelect over its **libre** rows (> 4 rows ⟹ options = groups of rows by rule or file); selected rows ⟹ agent `cleaner-fix`, `isolation: "worktree"`; gated rows go through their gate here |

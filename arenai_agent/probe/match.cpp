@@ -36,6 +36,9 @@ namespace {
         float canon_elevation;
         // nearest living target (enemy or player) and the one closest to the canon axis
         float nearest_distance;
+        // degrees, nearest target seen from the canon axis: horizontal bearing and elevation gap
+        float nearest_yaw;
+        float nearest_pitch;
         float best_angle;
         float best_distance;
         bool best_is_player;
@@ -128,6 +131,8 @@ namespace {
                         .position = positions[i],
                         .canon_elevation = std::asin(std::clamp(axis.y, -1.f, 1.f)) * TO_DEGREES,
                         .nearest_distance = std::numeric_limits<float>::infinity(),
+                        .nearest_yaw = 0.f,
+                        .nearest_pitch = 0.f,
                         .best_angle = 180.f,
                         .best_distance = std::numeric_limits<float>::infinity(),
                         .best_is_player = false};
@@ -139,7 +144,16 @@ namespace {
                             std::acos(std::clamp(glm::dot(axis, to_target / distance), -1.f, 1.f))
                             * TO_DEGREES;
 
-                        frame.nearest_distance = std::min(frame.nearest_distance, distance);
+                        if (distance < frame.nearest_distance) {
+                            frame.nearest_distance = distance;
+                            const float yaw =
+                                std::atan2(to_target.x, to_target.z) - std::atan2(axis.x, axis.z);
+                            frame.nearest_yaw = std::remainder(yaw * TO_DEGREES, 360.f);
+                            frame.nearest_pitch =
+                                std::asin(std::clamp(to_target.y / distance, -1.f, 1.f))
+                                    * TO_DEGREES
+                                - frame.canon_elevation;
+                        }
                         if (angle < frame.best_angle) {
                             frame.best_angle = angle;
                             frame.best_distance = distance;
@@ -287,7 +301,8 @@ int main(const int argc, char **argv) {
 
     std::ofstream tanks_csv(parser.get<std::string>("--output") + "_tanks.csv");
     tanks_csv << "match;second;tank;alive;out_of_shells;shells;fired;hits;kills;x;z;"
-                 "canon_elevation;nearest_distance;best_angle;best_distance;best_is_player\n";
+                 "canon_elevation;nearest_distance;best_angle;best_distance;best_is_player;"
+                 "nearest_yaw;nearest_pitch\n";
 
     std::ofstream player_csv(parser.get<std::string>("--output") + "_player.csv");
     player_csv << "match;second;alive;health;impacts\n";
@@ -362,7 +377,8 @@ int main(const int argc, char **argv) {
                               << ';' << hits[i] << ';' << kills[i] << ';' << tank.position.x << ';'
                               << tank.position.z << ';' << tank.canon_elevation << ';'
                               << tank.nearest_distance << ';' << tank.best_angle << ';'
-                              << tank.best_distance << ';' << tank.best_is_player << '\n';
+                              << tank.best_distance << ';' << tank.best_is_player << ';'
+                              << tank.nearest_yaw << ';' << tank.nearest_pitch << '\n';
                     fired[i] = hits[i] = kills[i] = 0;
                 }
 

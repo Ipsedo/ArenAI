@@ -85,8 +85,8 @@ existing signature.
   "Manager", "Helper", "Utils" for a stateful thing is a warning.
 - **Cohesion**: every member is used by most methods. A member used by one method is an operand
   or belongs to another class.
-- **Dependency direction**: `utils → model → view → core → agent / desktop`. Never upward, never
-  sideways between `agent` and `desktop`. Inside a module, depend on abstractions at boundaries.
+- **Dependency direction**: `utils, controller → view → model → core → agent → desktop`. Never
+  upward. Inside a module, depend on abstractions at boundaries.
 - **Composition over inheritance**: inherit only for a genuine substitutable interface
   (`Abstract*` bases). Never to share code.
 - **Immutability**: `const` by default; value types over mutable shared state; no output

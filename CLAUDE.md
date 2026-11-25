@@ -121,7 +121,12 @@ Any learning problem or idea of a fix ⟹ skill `rl-hypothesis`.
 
 ## Architecture
 
-Dependency order, never reversed: `utils → model → view → core → agent / desktop`.
+Reference: `docs/ARCHITECTURE.md` — public, written for GitHub developers (module graph, class
+diagrams of the model/view/controller headers, frame sequence of core, desktop and training
+flows). Read it before a cross-module change; a change to a module, a public header, an
+executable or one of these flows updates it in the same commit, diagrams included.
+
+Dependency order, never reversed: `utils, controller → view → model → core → agent → desktop`.
 
 - `arenai_utils` — file_reader, cache, double_buffer, logging, singleton.
 - `arenai_model` — Jolt physics, tank, items, shell economy. No training-only signal here.

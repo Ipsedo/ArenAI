@@ -36,8 +36,17 @@ namespace arenai::desktop::gui {
         void on_show() override;
 
     private:
-        // "Auto" rides index 0 of gpu_names_, the actual devices follow
-        void select_gpu(int index, int &selected, std::string &setting, const char *variable);
+        // one GPU role: its dropdown index, its saved setting, its bound variable
+        struct GpuChoice {
+            std::string &setting;
+            const char *variable;
+            int selected = 0;
+
+            // "Auto" rides index 0 of names, the actual devices follow; false when out of range
+            bool select(int index, const std::vector<Rml::String> &names);
+        };
+
+        void select_gpu(GpuChoice &choice, int index);
         void select_resolution(int index);
         // folds every list; true when one was open
         bool close_dropdowns();
@@ -84,8 +93,8 @@ namespace arenai::desktop::gui {
         Rml::String calibration_faint_color_;
 
         std::vector<Rml::String> gpu_names_;
-        int selected_window_gpu_ = 0;
-        int selected_vision_gpu_ = 0;
+        GpuChoice window_gpu_;
+        GpuChoice vision_gpu_;
         // the selected names, what the folded dropdown heads display
         Rml::String window_gpu_display_;
         Rml::String vision_gpu_display_;

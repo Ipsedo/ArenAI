@@ -51,7 +51,7 @@ namespace arenai::core {
 
     void BaseTanksEnvironment::advance_frame(
         const float time_delta, const std::vector<Action> &actions) {
-        const auto view_projections = read_view_projections();
+        // the parts read the aim axes as a rate, or reach the aim set point when one is given
         for (int i = 0; i < tanks.size(); i++) {
             if (!tanks[i]->is_dead()
                 && !arena_terrain_.contains(
@@ -59,7 +59,9 @@ namespace arenai::core {
                 tanks[i]->leave_arena();
 
             if (tanks[i]->is_dead()) tanks[i]->on_death();
-            else tanks[i]->apply_command(actions[i], view_projections[i]);
+            else
+                for (const auto &controller: tanks[i]->get_controllers())
+                    controller->apply_input(actions[i]);
         }
 
         physic_engine->step(time_delta);
@@ -101,16 +103,6 @@ namespace arenai::core {
                 tanks[i]->get_can_fire());
 
         return states;
-    }
-
-    std::vector<glm::mat4> BaseTanksEnvironment::read_view_projections() const {
-        std::vector<glm::mat4> view_projections;
-        view_projections.reserve(tanks.size());
-
-        for (int i = 0; i < static_cast<int>(tanks.size()); i++)
-            view_projections.push_back(vision_pool_->read_view_projection(i));
-
-        return view_projections;
     }
 
     void BaseTanksEnvironment::reset_physics(

@@ -199,7 +199,9 @@ namespace arenai::view {
 
     const std::shared_ptr<AbstractCamera> &VulkanRenderer::camera() const { return camera_; }
 
-    glm::mat4 VulkanRenderer::last_view_projection() const { return last_view_proj_matrix_; }
+    const glm::mat4 &VulkanRenderer::last_view_proj_matrix() const {
+        return last_view_proj_matrix_;
+    }
 
     VulkanRenderer::~VulkanRenderer() {
         // the subclass destructor has already waited its frame fences

@@ -36,8 +36,7 @@ namespace arenai::agent {
     }
 
     torch::Tensor LiquidCritic::encode(const torch::Tensor &vision, const torch::Tensor &sensors) {
-        return torch::cat(
-            {vision_encoder->encode(vision).keypoints, sensors_encoder->forward(sensors)}, 1);
+        return torch::cat({vision_encoder->forward(vision), sensors_encoder->forward(sensors)}, 1);
     }
 
     LiquidCriticOutput LiquidCritic::value(
@@ -70,14 +69,6 @@ namespace arenai::agent {
         }
 
         return {.value = to_value->forward(torch::stack(outputs, 1)), .next_x = x};
-    }
-
-    torch::Tensor LiquidCritic::presence_logits(const torch::Tensor &vision) {
-        return vision_encoder->presence_logits(vision);
-    }
-
-    std::vector<torch::Tensor> LiquidCritic::presence_parameters() const {
-        return vision_encoder->presence_parameters();
     }
 
     torch::Tensor LiquidCritic::initial_state(const int batch_size) const {

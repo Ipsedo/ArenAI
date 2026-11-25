@@ -64,9 +64,6 @@ namespace arenai::model {
         float get_cooldown_ratio() const override;
         bool get_can_fire() const override;
 
-        void apply_command(
-            const EnemyCommand &command, const glm::mat4 &observed_view_projection) override;
-
         // Tank methods resolved via JoltTank
         using JoltTank::get_camera;
         using JoltTank::get_canon;

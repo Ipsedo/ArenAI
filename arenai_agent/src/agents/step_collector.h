@@ -9,9 +9,6 @@ namespace arenai::agent {
     public:
         virtual ~AbstractStepCollector() = default;
 
-        // [nb_tanks, rows, cols] enemy presence map of the state about to be acted on
-        virtual void on_presence(const torch::Tensor &presence) = 0;
-
         virtual void on_transition(
             const torch::Tensor &rewards, const torch::Tensor &done,
             const torch::Tensor &truncated) = 0;

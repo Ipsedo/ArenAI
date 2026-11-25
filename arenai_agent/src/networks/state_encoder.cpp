@@ -27,8 +27,7 @@ namespace arenai::agent {
     }
 
     torch::Tensor StateEncoder::forward(const torch::Tensor &vision, const torch::Tensor &sensors) {
-        return torch::cat(
-            {vision_encoder->encode(vision).keypoints, sensors_encoder->forward(sensors)}, 1);
+        return torch::cat({vision_encoder->forward(vision), sensors_encoder->forward(sensors)}, 1);
     }
 
     int StateEncoder::get_output_size() const { return output_size; }

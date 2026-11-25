@@ -46,16 +46,8 @@ ValueFunction::ValueFunction(
     to_value->apply(init_value_output_weights);
 }
 
-torch::Tensor ValueFunction::presence_logits(const torch::Tensor &vision) {
-    return vision_encoder->presence_logits(vision);
-}
-
-std::vector<torch::Tensor> ValueFunction::presence_parameters() const {
-    return vision_encoder->presence_parameters();
-}
-
 torch::Tensor ValueFunction::value(const torch::Tensor &vision, const torch::Tensor &sensors) {
-    const auto vision_encoded = vision_encoder->encode(vision).keypoints;
+    const auto vision_encoded = vision_encoder->forward(vision);
     const auto sensors_encoded = sensors_encoder->forward(sensors);
 
     const auto encoded = torch::cat({vision_encoded, sensors_encoded}, 1);

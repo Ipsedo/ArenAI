@@ -21,10 +21,11 @@ public:
         last_vision_height = vision_height;
         last_vision_width = vision_width;
 
-        // the image centre keeps the canon on its line of sight
+        // a zero aim rate leaves the turret and the canon where they are
         return std::vector<core::Action>(
-            states.size(),
-            {.drive = {.x = 0.f, .y = 0.f}, .aim_point = {0.f, 0.f}, .fire_button = {false}});
+            states.size(), {.left_joystick = {.x = 0.f, .y = 0.f},
+                            .right_joystick = {.x = 0.f, .y = 0.f},
+                            .fire_button = {false}});
     }
 
     void load(const std::filesystem::path &agent_folder) override {}

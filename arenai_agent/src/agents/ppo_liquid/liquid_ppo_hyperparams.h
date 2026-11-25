@@ -12,11 +12,10 @@ namespace arenai::agent {
     struct LiquidPpoHyperParams {
         float actor_learning_rate = 1e-4f;
         float critic_learning_rate = 3e-4f;
-        float presence_learning_rate = 3e-4f;
         int hidden_size_sensors = 64;
-        std::vector<std::tuple<int, int>> vision_channels =
-            {{3, 16}, {16, 32}, {32, 64}, {64, 128}};
-        std::vector<int> group_norm_nums = {2, 4, 8, 16};
+        std::vector<std::tuple<int, int>> vision_channels = {
+            {3, 16}, {16, 32}, {32, 64}, {64, 128}, {128, 128}, {128, 128}, {128, 128}};
+        std::vector<int> group_norm_nums = {2, 4, 8, 16, 16, 16, 16};
         int neuron_number = 128;
         int unfolding_steps = 6;
         float delta_t = 1.f / 10.f;
@@ -32,14 +31,10 @@ namespace arenai::agent {
         float grad_norm_max = 0.5f;
         float initial_alpha = 0.001f;
         float alpha_learning_rate = 3e-4f;
-        // entropy of the squashed normal per dir_x, dir_y
-        std::vector<float> continuous_target_entropy = {-1.f, -1.f};
+        // entropy of the squashed normal per dir_x, dir_y, canon_x, canon_y
+        std::vector<float> continuous_target_entropy = {-1.f, -1.f, -1.f, -1.f};
         // per discrete action, the Bernoulli whose entropy is the target
         float discrete_target_proba = 0.01f;
-        // ln 2: at least about two candidate cells
-        float aim_cell_target_entropy = 0.6931472f;
-        // entropy of the squashed normal per aim offset dimension
-        std::vector<float> aim_offset_target_entropy = {-1.f, -1.f};
         int actor_epochs = 4;
         int critic_epochs = 8;
         int rollout_size = 30 * 10;

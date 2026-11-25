@@ -1,17 +1,7 @@
-#include <distributions/spatial_aim_law.h>
-
 #include <arenai_agent_tests/tests_agents/tests_liquid_ppo_training.h>
 
 using namespace arenai;
 using namespace arenai::agent;
-
-namespace {
-    template<typename Config>
-    torch::Tensor make_presence(const Config &cfg, const int nb_tanks) {
-        const auto [rows, cols] = presence_grid_size(cfg.vision_height, cfg.vision_width, 1);
-        return torch::zeros({nb_tanks, rows, cols});
-    }
-}// namespace
 
 std::unique_ptr<LiquidPpoTorchAgentFactory>
 LiquidPpoTrainingTest::make_factory(const LiquidPpoTrainingTestConfig &cfg) const {
@@ -29,7 +19,7 @@ LiquidPpoTrainingTest::make_factory(const LiquidPpoTrainingTestConfig &cfg) cons
         .gamma = 0.99f,
         .gae_lambda = 0.95f,
         .clip_epsilon = 0.2f,
-        .continuous_target_entropy = std::vector(cfg.nb_continuous_actions - AIM_POINT_SIZE, 0.f),
+        .continuous_target_entropy = std::vector(cfg.nb_continuous_actions, 0.f),
         .actor_epochs = 2,
         .critic_epochs = 2,
         .rollout_size = ROLLOUT_SIZE,
@@ -56,7 +46,7 @@ TEST_F(LiquidPpoTrainingTest, ActProducesValidOutput) {
         .vision_height = 8,
         .vision_width = 8,
         .nb_sensors = 3,
-        .nb_continuous_actions = 4,
+        .nb_continuous_actions = 2,
         .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
@@ -64,7 +54,7 @@ TEST_F(LiquidPpoTrainingTest, ActProducesValidOutput) {
         factory->get_agent()->act(make_state(cfg, 1), true);
 
     ASSERT_EQ(continuous_action.size(0), 1);
-    ASSERT_EQ(continuous_action.size(1), 4);
+    ASSERT_EQ(continuous_action.size(1), 2);
     ASSERT_EQ(discrete_action.size(0), 1);
     ASSERT_EQ(discrete_action.size(1), 2);
 
@@ -77,7 +67,7 @@ TEST_F(LiquidPpoTrainingTest, CountParametersPositive) {
         .vision_height = 8,
         .vision_width = 8,
         .nb_sensors = 3,
-        .nb_continuous_actions = 4,
+        .nb_continuous_actions = 2,
         .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
@@ -91,7 +81,7 @@ TEST_F(LiquidPpoTrainingTest, HiddenStateAdvancesAndResetsAcrossEpisodes) {
         .vision_height = 8,
         .vision_width = 8,
         .nb_sensors = 3,
-        .nb_continuous_actions = 4,
+        .nb_continuous_actions = 2,
         .nb_discrete_actions = 3};
 
     constexpr int nb_tanks = 2;
@@ -110,18 +100,15 @@ TEST_F(LiquidPpoTrainingTest, HiddenStateAdvancesAndResetsAcrossEpisodes) {
 
     // first episode: two steps
     agent->act(make_state(cfg, nb_tanks), true);
-    collector->on_presence(make_presence(cfg, nb_tanks));
     collector->on_transition(
         torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
     agent->act(make_state(cfg, nb_tanks), true);
-    collector->on_presence(make_presence(cfg, nb_tanks));
     collector->on_transition(
         torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
     collector->on_episode_end(make_state(cfg, nb_tanks));
 
     // second episode: one step
     agent->act(make_state(cfg, nb_tanks), true);
-    collector->on_presence(make_presence(cfg, nb_tanks));
     collector->on_transition(
         torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
     collector->on_episode_end(make_state(cfg, nb_tanks));
@@ -143,7 +130,7 @@ TEST_F(LiquidPpoTrainingTest, TrainingUpdatesActorParameters) {
         .vision_height = 8,
         .vision_width = 8,
         .nb_sensors = 3,
-        .nb_continuous_actions = 4,
+        .nb_continuous_actions = 2,
         .nb_discrete_actions = 3};
 
     const std::vector<std::tuple<int, int>> vision_channels{{3, 4}};
@@ -163,9 +150,8 @@ TEST_F(LiquidPpoTrainingTest, TrainingUpdatesActorParameters) {
         actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_continuous_actions,
         cfg.nb_discrete_actions, cfg.nb_sensors, 1e-3f, 1e-3f, 8, vision_channels, group_norm_nums,
         NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f,
-        3e-4f, std::vector(cfg.nb_continuous_actions - AIM_POINT_SIZE, -1.f), 0.05f, 0.6931472f,
-        std::vector{-1.f, -1.f}, 2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE,
-        MINIBATCH_SIZE, CHUNK_SIZE, 3e-4f);
+        3e-4f, std::vector(cfg.nb_continuous_actions, -1.f), 0.05f, 2, 2, ROLLOUT_SIZE,
+        MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, CHUNK_SIZE);
 
     std::vector<torch::Tensor> initial_parameters;
     for (const auto &parameter: actor->parameters())
@@ -175,7 +161,6 @@ TEST_F(LiquidPpoTrainingTest, TrainingUpdatesActorParameters) {
         constexpr int nb_tanks = 2;
 
         agent->act(make_state(cfg, nb_tanks), true);
-        collector->on_presence(make_presence(cfg, nb_tanks));
         collector->on_transition(
             torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
         trainer->step();
@@ -203,7 +188,7 @@ TEST_F(LiquidPpoTrainingTest, MaskedFireReceivesNoUpdate) {
         .vision_height = 8,
         .vision_width = 8,
         .nb_sensors = 3,
-        .nb_continuous_actions = 4,
+        .nb_continuous_actions = 2,
         .nb_discrete_actions = 2};
 
     const std::vector<std::tuple<int, int>> vision_channels{{3, 4}};
@@ -223,9 +208,8 @@ TEST_F(LiquidPpoTrainingTest, MaskedFireReceivesNoUpdate) {
         actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_continuous_actions,
         cfg.nb_discrete_actions, cfg.nb_sensors, 1e-3f, 1e-3f, 8, vision_channels, group_norm_nums,
         NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f,
-        3e-4f, std::vector(cfg.nb_continuous_actions - AIM_POINT_SIZE, -1.f), 0.05f, 0.6931472f,
-        std::vector{-1.f, -1.f}, 2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE,
-        MINIBATCH_SIZE, CHUNK_SIZE, 3e-4f);
+        3e-4f, std::vector(cfg.nb_continuous_actions, -1.f), 0.05f, 2, 2, ROLLOUT_SIZE,
+        MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, CHUNK_SIZE);
 
     auto named_parameters = actor->named_parameters();
     const auto weight = named_parameters["discrete.0.weight"];
@@ -240,7 +224,6 @@ TEST_F(LiquidPpoTrainingTest, MaskedFireReceivesNoUpdate) {
         state = TorchState(state.get_vision(), state.get_state(), torch::zeros({nb_tanks, 1}));
 
         agent->act(state, true);
-        collector->on_presence(make_presence(cfg, nb_tanks));
         collector->on_transition(
             torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
         trainer->step();
@@ -260,7 +243,7 @@ TEST_F(LiquidPpoTrainingTest, TrainedCheckpointReloads) {
         .vision_height = 8,
         .vision_width = 8,
         .nb_sensors = 3,
-        .nb_continuous_actions = 4,
+        .nb_continuous_actions = 2,
         .nb_discrete_actions = 2};
 
     const std::vector<std::tuple<int, int>> vision_channels{{3, 4}};
@@ -280,10 +263,9 @@ TEST_F(LiquidPpoTrainingTest, TrainedCheckpointReloads) {
             actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_continuous_actions,
             cfg.nb_discrete_actions, cfg.nb_sensors, 1e-3f, 1e-3f, 8, vision_channels,
             group_norm_nums, NEURON_NUMBER, UNFOLDING_STEPS, DELTA_T, device, 10, 0.99f, 0.95f,
-            0.2f, 0.f, 1.f, 0.001f, 3e-4f,
-            std::vector(cfg.nb_continuous_actions - AIM_POINT_SIZE, -1.f), 0.05f, 0.6931472f,
-            std::vector{-1.f, -1.f}, 2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE,
-            MINIBATCH_SIZE, MINIBATCH_SIZE, CHUNK_SIZE, 3e-4f);
+            0.2f, 0.f, 1.f, 0.001f, 3e-4f, std::vector(cfg.nb_continuous_actions, -1.f), 0.05f, 2,
+            2, ROLLOUT_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE,
+            CHUNK_SIZE);
     };
     const auto trainer = make_trainer();
 
@@ -291,7 +273,6 @@ TEST_F(LiquidPpoTrainingTest, TrainedCheckpointReloads) {
         constexpr int nb_tanks = 2;
 
         agent->act(make_state(cfg, nb_tanks), true);
-        collector->on_presence(make_presence(cfg, nb_tanks));
         collector->on_transition(
             torch::randn({nb_tanks, 1}), torch::zeros({nb_tanks, 1}), torch::zeros({nb_tanks, 1}));
         trainer->step();

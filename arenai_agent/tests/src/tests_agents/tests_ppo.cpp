@@ -1,5 +1,3 @@
-#include <distributions/spatial_aim_law.h>
-
 #include <arenai_agent_tests/tests_agents/tests_ppo.h>
 
 using namespace arenai;
@@ -26,7 +24,7 @@ std::unique_ptr<PpoTorchAgentFactory> PpoAgentTest::make_factory(const PpoTestCo
         .gae_lambda = 0.95f,
         .clip_epsilon = 0.2f,
         .grad_norm_max = 1.f,
-        .continuous_target_entropy = std::vector(cfg.nb_continuous_actions - AIM_POINT_SIZE, 0.f),
+        .continuous_target_entropy = std::vector(cfg.nb_continuous_actions, 0.f),
         .actor_epochs = 1,
         .critic_epochs = 1,
         .rollout_size = 8,
@@ -67,11 +65,11 @@ TEST_F(PpoAgentTest, MetricsNotEmpty) {
         .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
-    ASSERT_EQ(factory->get_trainer()->get_metrics().size(), 9);
-    // one alpha per drive and discrete action, three for the aim, CSV only
+    ASSERT_EQ(factory->get_trainer()->get_metrics().size(), 8);
+    // one alpha per action, CSV only
     ASSERT_EQ(
         factory->get_trainer()->get_csv_only_metrics().size(),
-        cfg.nb_continuous_actions - AIM_POINT_SIZE + cfg.nb_discrete_actions + 3);
+        cfg.nb_continuous_actions + cfg.nb_discrete_actions);
 }
 
 TEST_P(PpoActShapeParamTest, ActOutputShapes) {
@@ -117,7 +115,7 @@ TEST_P(PpoActShapeParamTest, ActDiscreteIsBinary) {
 INSTANTIATE_TEST_SUITE_P(
     PpoAgent, PpoActShapeParamTest,
     testing::Values(
-        PpoTestConfig{8, 8, 10, 4, 2}, PpoTestConfig{8, 8, 5, 3, 2},
+        PpoTestConfig{8, 8, 10, 4, 2}, PpoTestConfig{8, 8, 5, 2, 2},
         PpoTestConfig{16, 16, 20, 6, 2}, PpoTestConfig{8, 12, 10, 4, 2}));
 
 TEST_P(PpoSaveLoadParamTest, SaveCreatesExpectedFiles) {
@@ -130,9 +128,9 @@ TEST_P(PpoSaveLoadParamTest, SaveCreatesExpectedFiles) {
     factory->get_trainer()->save(save_dir);
 
     const std::vector<std::string> expected_files = {
-        "actor.pt",       "critic.pt",         "actor_optim.pt",       "critic_optim.pt",
-        "actor_repr.txt", "critic_repr.txt",   "continuous_alphas.pt", "discrete_alphas.pt",
-        "alpha_optim.pt", "aim_cell_alpha.pt", "aim_offset_alphas.pt", "aim_alpha_optim.pt",
+        "actor.pt",       "critic.pt",       "actor_optim.pt",       "critic_optim.pt",
+        "actor_repr.txt", "critic_repr.txt", "continuous_alphas.pt", "discrete_alphas.pt",
+        "alpha_optim.pt",
     };
 
     for (const auto &f: expected_files)
@@ -157,5 +155,5 @@ TEST_P(PpoSaveLoadParamTest, SavedFilesNonEmpty) {
 INSTANTIATE_TEST_SUITE_P(
     PpoAgent, PpoSaveLoadParamTest,
     testing::Values(
-        PpoTestConfig{8, 8, 10, 4, 2}, PpoTestConfig{8, 8, 5, 3, 2},
+        PpoTestConfig{8, 8, 10, 4, 2}, PpoTestConfig{8, 8, 5, 2, 2},
         PpoTestConfig{16, 16, 20, 6, 2}));

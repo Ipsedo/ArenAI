@@ -16,8 +16,6 @@ namespace arenai::agent {
         // concrete act-time channel, called by TorchSacAgent::act
         void on_act(const TorchState &state, const TorchAction &action);
 
-        void on_presence(const torch::Tensor &presence) override;
-
         void on_transition(
             const torch::Tensor &rewards, const torch::Tensor &done,
             const torch::Tensor &truncated) override;

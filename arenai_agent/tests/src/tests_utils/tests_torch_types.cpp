@@ -16,10 +16,10 @@ TEST_F(TorchTypesTest, SingleActionMapping) {
     const auto actions = TorchAction{continuous, discrete}.to_actions();
 
     ASSERT_EQ(actions.size(), 1);
-    ASSERT_FLOAT_EQ(actions[0].drive.x, 0.1f);
-    ASSERT_FLOAT_EQ(actions[0].drive.y, -0.2f);
-    ASSERT_FLOAT_EQ(actions[0].aim_point.x, 0.3f);
-    ASSERT_FLOAT_EQ(actions[0].aim_point.y, -0.4f);
+    ASSERT_FLOAT_EQ(actions[0].left_joystick.x, 0.1f);
+    ASSERT_FLOAT_EQ(actions[0].left_joystick.y, -0.2f);
+    ASSERT_FLOAT_EQ(actions[0].right_joystick.x, 0.3f);
+    ASSERT_FLOAT_EQ(actions[0].right_joystick.y, -0.4f);
     ASSERT_TRUE(actions[0].fire_button.pressed);
     ASSERT_FALSE(actions[0].zoom_button.pressed);
 }
@@ -172,10 +172,10 @@ TEST_P(TensorToActionsParamTest, ContinuousValuesMatchTensor) {
 
     auto acc = continuous.accessor<float, 2>();
     for (int i = 0; i < batch; ++i) {
-        ASSERT_FLOAT_EQ(actions[i].drive.x, acc[i][0]);
-        ASSERT_FLOAT_EQ(actions[i].drive.y, acc[i][1]);
-        ASSERT_FLOAT_EQ(actions[i].aim_point.x, acc[i][2]);
-        ASSERT_FLOAT_EQ(actions[i].aim_point.y, acc[i][3]);
+        ASSERT_FLOAT_EQ(actions[i].left_joystick.x, acc[i][0]);
+        ASSERT_FLOAT_EQ(actions[i].left_joystick.y, acc[i][1]);
+        ASSERT_FLOAT_EQ(actions[i].right_joystick.x, acc[i][2]);
+        ASSERT_FLOAT_EQ(actions[i].right_joystick.y, acc[i][3]);
     }
 }
 

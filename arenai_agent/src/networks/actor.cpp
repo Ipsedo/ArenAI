@@ -29,22 +29,15 @@ namespace arenai::agent {
                   torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_sensors})),
                   torch::nn::SiLU()))),
           head(register_module("head", torch::nn::Sequential())),
-          mu(register_module(
-              "mu",
-              torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions - AIM_POINT_SIZE))),
+          mu(register_module("mu", torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions))),
           sigma(register_module(
-              "sigma",
-              torch::nn::Sequential(
-                  torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions - AIM_POINT_SIZE),
-                  SoftClamp(LOG_SIGMA_MIN, LOG_SIGMA_MAX), Exp()))),
+              "sigma", torch::nn::Sequential(
+                           torch::nn::Linear(hidden_sizes.back(), nb_continuous_actions),
+                           SoftClamp(LOG_SIGMA_MIN, LOG_SIGMA_MAX), Exp()))),
           discrete(register_module(
               "discrete", torch::nn::Sequential(
                               torch::nn::Linear(hidden_sizes.back(), nb_discrete_actions),
-                              torch::nn::Sigmoid()))),
-          aim(register_module(
-              "aim",
-              std::make_shared<AimHead>(
-                  std::get<1>(vision_channels.back()), hidden_sizes.back(), initial_sigma))) {
+                              torch::nn::Sigmoid()))) {
 
         head->push_back(torch::nn::Linear(
             torch::nn::LinearOptions(
@@ -77,28 +70,19 @@ namespace arenai::agent {
     }
 
     torch::Tensor Actor::trunc_forward(const torch::Tensor &vision, const torch::Tensor &sensors) {
-        return head->forward(torch::cat(
-            {vision_encoder->encode(vision).keypoints, sensors_encoder->forward(sensors)}, 1));
+        auto vision_encoded = vision_encoder->forward(vision);
+        auto sensors_encoded = sensors_encoder->forward(sensors);
+
+        return head->forward(torch::cat({vision_encoded, sensors_encoded}, 1));
     }
 
-    torch::Tensor Actor::presence_logits(const torch::Tensor &vision) {
-        return vision_encoder->presence_logits(vision);
-    }
-
-    std::vector<torch::Tensor> Actor::presence_parameters() const {
-        return vision_encoder->presence_parameters();
-    }
-
-    PolicyOutput Actor::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
-        const auto encoding = vision_encoder->encode(vision);
-        const auto encoded =
-            head->forward(torch::cat({encoding.keypoints, sensors_encoder->forward(sensors)}, 1));
+    ActorRawOutput Actor::act(const torch::Tensor &vision, const torch::Tensor &sensors) {
+        const auto encoded = trunc_forward(vision, sensors);
 
         return {
             .mu = mu->forward(encoded),
             .sigma = sigma->forward(encoded),
-            .discrete = discrete->forward(encoded),
-            .aim = aim->forward(encoding.map, encoded)};
+            .discrete = discrete->forward(encoded)};
     }
 
     DistillationActor::DistillationActor(

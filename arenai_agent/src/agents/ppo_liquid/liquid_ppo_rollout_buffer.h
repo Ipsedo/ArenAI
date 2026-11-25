@@ -16,16 +16,10 @@ namespace arenai::agent {
         // pre-tanh draw of the squashed normal, what the log-probabilities are computed on
         torch::Tensor continuous_pre_tanh;
         torch::Tensor continuous_log_prob;
-        // [nb_tanks] int64 aimed cell, [nb_tanks, 2] pre-tanh offset, [nb_tanks, 1] log-probability
-        torch::Tensor aim_cell;
-        torch::Tensor aim_pre_tanh;
-        torch::Tensor aim_log_prob;
         torch::Tensor discrete_log_prob;
         torch::Tensor reward;
         torch::Tensor done;
         torch::Tensor truncated;
-        // [nb_tanks, rows, cols] enemy presence map of the state
-        torch::Tensor presence;
         // [nb_tanks, neuron_number] actor liquid state opening the step
         torch::Tensor actor_hidden;
         // the step opens a fresh episode (the liquid states were re-drawn)
@@ -38,14 +32,10 @@ namespace arenai::agent {
         TorchAction actions;
         torch::Tensor continuous_pre_tanhs;
         torch::Tensor continuous_log_probs;
-        torch::Tensor aim_cells;
-        torch::Tensor aim_pre_tanhs;
-        torch::Tensor aim_log_probs;
         torch::Tensor discrete_log_probs;
         torch::Tensor rewards;
         torch::Tensor dones;
         torch::Tensor truncateds;
-        torch::Tensor presences;
         // [nb_tanks, ...] observation closing the last step, for the value bootstrap
         TorchState bootstrap_state;
         // [T, nb_tanks, 1] whether the (step, tank) pair is a live transition

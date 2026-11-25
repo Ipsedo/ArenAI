@@ -33,19 +33,15 @@ namespace arenai::agent {
                             neuron_number, hidden_size_sensors + vision_encoder->get_output_size(),
                             neuron_number, unfolding_steps, torch::nn::AnyModule(torch::nn::SiLU()),
                             delta_t))),
-          mu(register_module(
-              "mu", torch::nn::Linear(neuron_number, nb_continuous_actions - AIM_POINT_SIZE))),
+          mu(register_module("mu", torch::nn::Linear(neuron_number, nb_continuous_actions))),
           sigma(register_module(
               "sigma", torch::nn::Sequential(
-                           torch::nn::Linear(neuron_number, nb_continuous_actions - AIM_POINT_SIZE),
+                           torch::nn::Linear(neuron_number, nb_continuous_actions),
                            SoftClamp(LOG_SIGMA_MIN, LOG_SIGMA_MAX), Exp()))),
           discrete(register_module(
               "discrete",
               torch::nn::Sequential(
-                  torch::nn::Linear(neuron_number, nb_discrete_actions), torch::nn::Sigmoid()))),
-          aim(register_module(
-              "aim", std::make_shared<AimHead>(
-                         std::get<1>(vision_channels.back()), neuron_number, initial_sigma))) {
+                  torch::nn::Linear(neuron_number, nb_discrete_actions), torch::nn::Sigmoid()))) {
 
         vision_encoder->apply(init_hidden_weights);
         sensors_encoder->apply(init_hidden_weights);
@@ -60,17 +56,14 @@ namespace arenai::agent {
         });
     }
 
-    std::tuple<torch::Tensor, torch::Tensor>
-    LiquidActor::encode(const torch::Tensor &vision, const torch::Tensor &sensors) {
-        const auto encoding = vision_encoder->encode(vision);
-        return {
-            encoding.map, torch::cat({encoding.keypoints, sensors_encoder->forward(sensors)}, 1)};
+    torch::Tensor LiquidActor::encode(const torch::Tensor &vision, const torch::Tensor &sensors) {
+        return torch::cat({vision_encoder->forward(vision), sensors_encoder->forward(sensors)}, 1);
     }
 
     LiquidActorOutput LiquidActor::act(
         const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &x_t) {
-        const auto encoding = vision_encoder->encode(vision);
-        const auto encoded = torch::cat({encoding.keypoints, sensors_encoder->forward(sensors)}, 1);
+        const auto vision_encoded = vision_encoder->forward(vision);
+        const auto encoded = torch::cat({vision_encoded, sensors_encoder->forward(sensors)}, 1);
 
         const auto [liquid_output, next_x] = liquid->forward_step(x_t, encoded);
 
@@ -80,8 +73,7 @@ namespace arenai::agent {
             .discrete = discrete->forward(liquid_output),
             .next_x = next_x,
             .features = liquid_output,
-            .vision_features = encoding.keypoints,
-            .aim = aim->forward(encoding.map, liquid_output)};
+            .vision_features = vision_encoded};
     }
 
     LiquidActorOutput LiquidActor::act_sequence(
@@ -90,8 +82,8 @@ namespace arenai::agent {
         const auto nb_steps = vision.size(1);
 
         // the encoders are step-wise: fold time into the row dimension
-        const auto [map, flat_encoded] = encode(vision.flatten(0, 1), sensors.flatten(0, 1));
-        const auto encoded = flat_encoded.reshape({batch_size, nb_steps, -1});
+        const auto encoded =
+            encode(vision.flatten(0, 1), sensors.flatten(0, 1)).reshape({batch_size, nb_steps, -1});
 
         auto x = x_t;
 
@@ -114,16 +106,7 @@ namespace arenai::agent {
             .discrete = discrete->forward(output),
             .next_x = x,
             .features = output,
-            .vision_features = torch::Tensor(),
-            .aim = aim->forward(map, output.flatten(0, 1))};
-    }
-
-    torch::Tensor LiquidActor::presence_logits(const torch::Tensor &vision) {
-        return vision_encoder->presence_logits(vision);
-    }
-
-    std::vector<torch::Tensor> LiquidActor::presence_parameters() const {
-        return vision_encoder->presence_parameters();
+            .vision_features = torch::Tensor()};
     }
 
     torch::Tensor LiquidActor::initial_state(const int batch_size) const {

@@ -28,8 +28,6 @@ namespace arenai::model {
 
         void reset(const glm::vec3 &canon_forward);
 
-        void aim_along(const glm::vec3 &world_direction);
-
     private:
         float yaw;
         float elevation;

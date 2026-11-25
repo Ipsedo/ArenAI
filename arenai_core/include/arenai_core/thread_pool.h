@@ -56,7 +56,6 @@ namespace arenai::core {
             const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) const;
 
         view::image<uint8_t> read_vision(int index) const;
-        glm::mat4 read_view_projection(int index) const;
 
         void set_seed(unsigned int seed);
 
@@ -88,7 +87,6 @@ namespace arenai::core {
 
         std::unique_ptr<ModelMatricesDoubleBuffer> model_matrices_;
         std::vector<std::unique_ptr<VisionDoubleBuffer>> enemy_visions_;
-        std::vector<std::unique_ptr<utils::DoubleBuffer<glm::mat4>>> enemy_view_projections_;
 
         std::unique_ptr<std::barrier<>> reset_barrier_;
         std::unique_ptr<std::barrier<>> start_barrier_;

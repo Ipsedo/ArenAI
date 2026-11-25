@@ -11,19 +11,13 @@ namespace arenai::agent {
     void PpoStepCollector::on_act(
         const TorchState &state, const TorchAction &action,
         const torch::Tensor &continuous_pre_tanh, const torch::Tensor &continuous_log_prob,
-        const torch::Tensor &aim_cell, const torch::Tensor &aim_pre_tanh,
-        const torch::Tensor &aim_log_prob, const torch::Tensor &discrete_log_prob) {
+        const torch::Tensor &discrete_log_prob) {
         last_state = state;
         last_action = action;
         last_continuous_pre_tanh = continuous_pre_tanh;
         last_continuous_log_prob = continuous_log_prob;
-        last_aim_cell = aim_cell;
-        last_aim_pre_tanh = aim_pre_tanh;
-        last_aim_log_prob = aim_log_prob;
         last_discrete_log_prob = discrete_log_prob;
     }
-
-    void PpoStepCollector::on_presence(const torch::Tensor &presence) { last_presence = presence; }
 
     void PpoStepCollector::on_transition(
         const torch::Tensor &rewards, const torch::Tensor &done, const torch::Tensor &truncated) {
@@ -32,14 +26,10 @@ namespace arenai::agent {
              .action = last_action,
              .continuous_pre_tanh = last_continuous_pre_tanh,
              .continuous_log_prob = last_continuous_log_prob,
-             .aim_cell = last_aim_cell,
-             .aim_pre_tanh = last_aim_pre_tanh,
-             .aim_log_prob = last_aim_log_prob,
              .discrete_log_prob = last_discrete_log_prob,
              .reward = rewards,
              .done = done,
-             .truncated = truncated,
-             .presence = last_presence});
+             .truncated = truncated});
     }
 
     void PpoStepCollector::on_episode_end(const TorchState &final_state) {

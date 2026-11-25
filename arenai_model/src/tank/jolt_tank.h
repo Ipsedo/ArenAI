@@ -44,7 +44,6 @@ namespace arenai::model {
         void kill_life_items() const;
         void restore_life_items() const;
         void teleport(glm::vec3 chassis_pos) const;
-        void lay_gun_along(const glm::vec3 &world_direction) const;
         std::vector<LifeItem *> get_life_items() const;
         std::vector<JPH::BodyID> get_body_ids() const;
         JoltPhysicEngine &engine;

@@ -119,18 +119,23 @@ namespace arenai::agent {
         auto disc_acc = disc_cpu.accessor<float, 2>();
 
         for (int i = 0; i < batch_size; i++) {
+            const controller::joystick joystick_direction{.x = cont_acc[i][0], .y = cont_acc[i][1]};
+            const controller::joystick joystick_canon{.x = cont_acc[i][2], .y = cont_acc[i][3]};
+            const controller::button fire_button(disc_acc[i][0] > 0.5f);
+            const controller::button zoom_button(disc_acc[i][1] > 0.5f);
+
             actions.push_back(
-                {.drive = {.x = cont_acc[i][0], .y = cont_acc[i][1]},
-                 .aim_point = {cont_acc[i][2], cont_acc[i][3]},
-                 .fire_button = controller::button(disc_acc[i][0] > 0.5f),
-                 .zoom_button = controller::button(disc_acc[i][1] > 0.5f)});
+                {.left_joystick = joystick_direction,
+                 .right_joystick = joystick_canon,
+                 .fire_button = fire_button,
+                 .zoom_button = zoom_button});
         }
 
         return actions;
     }
 
     const std::vector<std::string> &TorchAction::continuous_action_names() {
-        static const std::vector<std::string> names{"dir_x", "dir_y", "aim_x", "aim_y"};
+        static const std::vector<std::string> names{"dir_x", "dir_y", "canon_x", "canon_y"};
         return names;
     }
 

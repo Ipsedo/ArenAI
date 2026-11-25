@@ -29,14 +29,10 @@ namespace arenai::agent {
                        .discrete_action = step.action.discrete_action.detach().cpu()},
                   .continuous_pre_tanh = step.continuous_pre_tanh.detach().cpu(),
                   .continuous_log_prob = step.continuous_log_prob.detach().cpu(),
-                  .aim_cell = step.aim_cell.detach().cpu(),
-                  .aim_pre_tanh = step.aim_pre_tanh.detach().cpu(),
-                  .aim_log_prob = step.aim_log_prob.detach().cpu(),
                   .discrete_log_prob = step.discrete_log_prob.detach().cpu(),
                   .reward = step.reward.detach().cpu(),
                   .done = step.done.detach().cpu(),
-                  .truncated = step.truncated.detach().cpu(),
-                  .presence = step.presence.detach().cpu()},
+                  .truncated = step.truncated.detach().cpu()},
              .valid = valid,
              .closing_state = std::nullopt,
              .episode_start = next_step_starts_episode_});
@@ -94,15 +90,11 @@ namespace arenai::agent {
                 stack([](const StoredStep &s) { return s.step.continuous_pre_tanh; }),
             .continuous_log_probs =
                 stack([](const StoredStep &s) { return s.step.continuous_log_prob; }),
-            .aim_cells = stack([](const StoredStep &s) { return s.step.aim_cell; }),
-            .aim_pre_tanhs = stack([](const StoredStep &s) { return s.step.aim_pre_tanh; }),
-            .aim_log_probs = stack([](const StoredStep &s) { return s.step.aim_log_prob; }),
             .discrete_log_probs =
                 stack([](const StoredStep &s) { return s.step.discrete_log_prob; }),
             .rewards = stack([](const StoredStep &s) { return s.step.reward; }),
             .dones = stack([](const StoredStep &s) { return s.step.done; }),
             .truncateds = stack([](const StoredStep &s) { return s.step.truncated; }),
-            .presences = stack([](const StoredStep &s) { return s.step.presence; }),
             .bootstrap_state = bootstrap_state,
             .valids = stack([](const StoredStep &s) { return s.valid; }).unsqueeze(-1)};
 

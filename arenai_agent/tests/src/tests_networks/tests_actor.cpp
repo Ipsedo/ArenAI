@@ -1,4 +1,3 @@
-#include <distributions/spatial_aim_law.h>
 #include <networks/actor.h>
 #include <networks/constants.h>
 
@@ -26,17 +25,16 @@ TEST_P(ActorTestParam, TestActorAct) {
         torch::TensorOptions().dtype(torch::kUInt8));
     const auto sensors = torch::randn({batch_size, sensors_nb});
 
-    const auto [mu, sigma, discrete, aim] = actor.act(image, sensors);
-    const auto drive_actions_nb = cont_actions_nb - AIM_POINT_SIZE;
+    const auto [mu, sigma, discrete] = actor.act(image, sensors);
 
     ASSERT_EQ(mu.ndimension(), 2);
     ASSERT_EQ(mu.size(0), batch_size);
-    ASSERT_EQ(mu.size(1), drive_actions_nb);
+    ASSERT_EQ(mu.size(1), cont_actions_nb);
     ASSERT_TRUE(torch::all(torch::isfinite(mu)).item<bool>());
 
     ASSERT_EQ(sigma.ndimension(), 2);
     ASSERT_EQ(sigma.size(0), batch_size);
-    ASSERT_EQ(sigma.size(1), drive_actions_nb);
+    ASSERT_EQ(sigma.size(1), cont_actions_nb);
     ASSERT_TRUE(torch::all(torch::logical_and(
                                torch::ge(sigma, std::exp(LOG_SIGMA_MIN)),
                                torch::le(sigma, std::exp(LOG_SIGMA_MAX))))
@@ -50,17 +48,11 @@ TEST_P(ActorTestParam, TestActorAct) {
     // independent Bernoulli probabilities: each in (0, 1), no sum constraint
     ASSERT_TRUE(torch::all(torch::logical_and(torch::gt(discrete, 0.0), torch::lt(discrete, 1.0)))
                     .item<bool>());
-
-    // the aim point stays inside the image
-    const auto point = aim.point(aim.sample());
-    ASSERT_EQ(point.size(0), batch_size);
-    ASSERT_EQ(point.size(1), AIM_POINT_SIZE);
-    ASSERT_TRUE(torch::all(torch::abs(point) <= 1.f).item<bool>());
 }
 
 INSTANTIATE_TEST_SUITE_P(
     TestActor, ActorTestParam,
     testing::Combine(
-        testing::Values(HiddenLayers{16, 32}, HiddenLayers{2, 3}), testing::Values(3, 4, 5),
+        testing::Values(HiddenLayers{16, 32}, HiddenLayers{2, 3}), testing::Values(1, 2, 3),
         testing::Values(2, 3, 4), testing::Values(1, 2, 3), testing::Values(2, 3, 4),
         testing::Values(1, 2, 3)));

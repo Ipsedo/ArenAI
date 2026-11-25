@@ -102,9 +102,6 @@ namespace arenai::core {
         // the agents' observations: the visions of the last render_frame(true)
         std::vector<State> read_states() const;
 
-        // one per tank: the view-projection of its vision at the last render_frame(true)
-        std::vector<glm::mat4> read_view_projections() const;
-
         void respawn_tank(int index);
 
         template<typename T>

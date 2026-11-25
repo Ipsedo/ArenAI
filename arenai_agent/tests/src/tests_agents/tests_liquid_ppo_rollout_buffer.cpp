@@ -22,14 +22,10 @@ LiquidPpoInputStep LiquidPpoRolloutBufferTest::make_step(
                                                torch::TensorOptions().dtype(torch::kInt64)))},
         .continuous_pre_tanh = torch::randn({NB_TANKS, NB_CONTINUOUS_ACTIONS}),
         .continuous_log_prob = torch::randn({NB_TANKS, 1}),
-        .aim_cell = torch::zeros({NB_TANKS}, torch::kInt64),
-        .aim_pre_tanh = torch::randn({NB_TANKS, 2}),
-        .aim_log_prob = torch::randn({NB_TANKS, 1}),
         .discrete_log_prob = torch::randn({NB_TANKS, 1}),
         .reward = torch::randn({NB_TANKS, 1}),
         .done = done,
         .truncated = torch::zeros({NB_TANKS, 1}),
-        .presence = torch::zeros({NB_TANKS, 2, 2}),
         .actor_hidden = torch::randn({NB_TANKS, NEURON_NUMBER}),
         .episode_start = episode_start};
 }

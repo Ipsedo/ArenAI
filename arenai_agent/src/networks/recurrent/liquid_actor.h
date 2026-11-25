@@ -5,17 +5,13 @@
 
 #include <torch/torch.h>
 
-#include "../../distributions/spatial_aim_law.h"
-#include "../aim_head.h"
 #include "../misc.h"
-#include "../presence_model.h"
 #include "../vision.h"
 #include "./liquid_cell.h"
 
 namespace arenai::agent {
 
     struct LiquidActorOutput {
-        // drive actions
         torch::Tensor mu;
         torch::Tensor sigma;
         // independent Bernoulli probabilities, one per discrete action
@@ -24,11 +20,9 @@ namespace arenai::agent {
         torch::Tensor next_x;
         torch::Tensor features;
         torch::Tensor vision_features;
-        // over the rows [B] of act, the flattened rows [B * T] of act_sequence
-        SpatialAimLaw aim;
     };
 
-    class LiquidActor final : public torch::nn::Module, public PresenceModel {
+    class LiquidActor final : public torch::nn::Module {
     public:
         explicit LiquidActor(
             const int &vision_height, const int &vision_width, const int &nb_sensors,
@@ -48,9 +42,6 @@ namespace arenai::agent {
 
         torch::Tensor initial_state(int batch_size) const;
 
-        torch::Tensor presence_logits(const torch::Tensor &vision) override;
-        std::vector<torch::Tensor> presence_parameters() const override;
-
     private:
         std::shared_ptr<ConvolutionNetwork> vision_encoder;
         torch::nn::Sequential sensors_encoder;
@@ -60,11 +51,9 @@ namespace arenai::agent {
         torch::nn::Linear mu;
         torch::nn::Sequential sigma;
         torch::nn::Sequential discrete;
-        std::shared_ptr<AimHead> aim;
 
-        // recurrent input [rows, features]: encoded vision and sensors, concatenated
-        std::tuple<torch::Tensor, torch::Tensor>
-        encode(const torch::Tensor &vision, const torch::Tensor &sensors);
+        // [rows, features] recurrent input: encoded vision and sensors, concatenated
+        torch::Tensor encode(const torch::Tensor &vision, const torch::Tensor &sensors);
     };
 
 }// namespace arenai::agent

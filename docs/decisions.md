@@ -17,3 +17,5 @@ longer binds, within the stated scope. Add an entry the moment Samuel refuses or
 | 2026-11-22 | hard σ floor / faster entropy regulator to compensate | refused | M6 (« pas de règle à la noix ») |
 | 2026-11-24 | separate aim credit on a potential Φ | refused | Φ fixes the target in place of the event reward |
 | 2026-11-24 | aim gradient through Q(s,a) or latent dynamics (SVG) | refused | « on l'oublie » — same information as PPO |
+| 2026-11-25 | enemy-presence auxiliary head on the actor and critic CNNs (`db9a825a`, run 552) | removed | Samuel chose « La retirer » after game matches against its twin 550: no gain on game outcomes, canon held low (−14 to −21° armed) on early/mid saves, ~340 k index late; one training seed. Re-opening needs new evidence |
+| 2026-11-25 | spatial softmax (`7b612934`) + spatial aim action cell + offset (`95f1812c`, run 553) | removed | Samuel chose « Les retirer »: more armed time on target but no more hits than 552, reserve dumped at s8 and s36; only ever measured together with the presence head. Design doc `docs/spatial_aim.md` lives in git history at `95f1812c` |

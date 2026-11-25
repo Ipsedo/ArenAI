@@ -6,7 +6,6 @@ namespace arenai::agent {
         return {
             {.name = "--actor_learning_rate", .member = &PpgHyperParams::actor_learning_rate},
             {.name = "--critic_learning_rate", .member = &PpgHyperParams::critic_learning_rate},
-            {.name = "--presence_learning_rate", .member = &PpgHyperParams::presence_learning_rate},
             {.name = "--hidden_size_sensors", .member = &PpgHyperParams::hidden_size_sensors},
             {.name = "--actor_hidden_sizes", .member = &PpgHyperParams::actor_hidden_sizes},
             {.name = "--critic_hidden_sizes", .member = &PpgHyperParams::critic_hidden_sizes},
@@ -26,10 +25,6 @@ namespace arenai::agent {
             {.name = "--continuous_target_entropy",
              .member = &PpgHyperParams::continuous_target_entropy},
             {.name = "--discrete_target_proba", .member = &PpgHyperParams::discrete_target_proba},
-            {.name = "--aim_cell_target_entropy",
-             .member = &PpgHyperParams::aim_cell_target_entropy},
-            {.name = "--aim_offset_target_entropy",
-             .member = &PpgHyperParams::aim_offset_target_entropy},
             {.name = "--actor_epochs", .member = &PpgHyperParams::actor_epochs},
             {.name = "--critic_epochs", .member = &PpgHyperParams::critic_epochs},
             {.name = "--rollout_size", .member = &PpgHyperParams::rollout_size},

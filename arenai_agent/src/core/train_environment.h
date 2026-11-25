@@ -38,18 +38,6 @@ namespace arenai::agent {
         float nearest_z;
         float canon_heading;
         float chassis_heading;
-        float nearest_sight_fraction;
-    };
-
-    struct EnemySighting {
-        float ndc_x;
-        float ndc_y;
-        float clip_w;
-        float distance;
-        float sight_fraction;
-        // radians, in the canon frame
-        float canon_yaw;
-        float canon_pitch;
     };
 
     class TrainTankEnvironment final : public core::BaseTanksEnvironment {
@@ -71,12 +59,6 @@ namespace arenai::agent {
 
         // view_*: the nearest enemy within view_half_yaw of the canon axis (radians)
         std::vector<AimGeometry> aim_geometry(float view_half_yaw = std::numbers::pi_v<float>);
-
-        // [tank][enemy], dead enemies and the tank itself left out
-        std::vector<std::vector<EnemySighting>> enemy_sightings(float aspect_ratio);
-
-        // [nb_tanks, rows, cols] 1 on the cells of each tank's vision an enemy in sight covers
-        torch::Tensor presence_maps(int rows, int cols);
 
         std::vector<model::RewardDetail> last_step_reward_details() const;
 
@@ -133,8 +115,6 @@ namespace arenai::agent {
 
         std::shared_ptr<const ProgressCurriculum> curriculum;
         float empty_reserve_penalty;
-
-        const model::AbstractPhysicEngine *physic_engine;
 
         bool are_all_done();
     };

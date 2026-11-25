@@ -54,8 +54,6 @@ namespace arenai::view {
         VkDescriptorSetLayout set0_plain_layout() const override;
         VkDescriptorSetLayout set0_shadow_layout() const override;
 
-        glm::mat4 last_view_projection() const override;
-
     protected:
         virtual std::pair<VkCommandBuffer, int> on_begin_frame() = 0;
 
@@ -65,6 +63,7 @@ namespace arenai::view {
 
         const glm::vec3 &light_position() const;
         const std::shared_ptr<AbstractCamera> &camera() const;
+        const glm::mat4 &last_view_proj_matrix() const;
 
     private:
         struct DrawableEntry {

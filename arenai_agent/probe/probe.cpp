@@ -292,7 +292,7 @@ int main(const int argc, char **argv) {
     for (const auto &prefix: {";mu_", ";sigma_"})
         for (int a = 0; a < NB_DIRECTION_ACTIONS; a++) csv << prefix << action_names[a];
     for (const auto &name: action_names) csv << ";act_" << name;
-    csv << ";aim_cell;aim_log_prob;aim_cell_entropy";
+    csv << ";aim_cell;aim_log_prob;aim_cell_entropy;aim_offset_entropy_x;aim_offset_entropy_y";
     for (const auto &prefix: {";dq_", ";dq1_", ";dq2_"})
         for (const auto &name: aim_names) csv << prefix << name;
     csv << ";turret_yaw;canon_elevation;canon_relative_elevation;chassis_pitch;chassis_roll;"
@@ -349,7 +349,8 @@ int main(const int argc, char **argv) {
 
         while (!is_done) {
             torch::Tensor continuous_action, discrete_action, mu, sigma, discrete, features,
-                vision_features, value, presence_probas, aim_cell, aim_log_prob, aim_cell_entropy;
+                vision_features, value, presence_probas, aim_cell, aim_log_prob, aim_cell_entropy,
+                aim_offset_entropy;
             {
                 torch::NoGradGuard guard;
 
@@ -381,6 +382,8 @@ int main(const int argc, char **argv) {
                     aim_cell = draw.cell.cpu();
                     aim_log_prob = out.aim->log_prob(draw).cpu().reshape({-1});
                     aim_cell_entropy = out.aim->cell_entropy().cpu().reshape({-1});
+                    // [N, 2]
+                    aim_offset_entropy = out.aim->offset_entropy().cpu().reshape({-1, 2});
                 }
 
                 // discrete actions : fire, zoom
@@ -496,9 +499,10 @@ int main(const int argc, char **argv) {
                     csv << ';' << cont_acc[i][a];
                 if (aim_cell.defined())
                     csv << ';' << aim_cell[i].item<int64_t>() << ';'
-                        << aim_log_prob[i].item<float>() << ';'
-                        << aim_cell_entropy[i].item<float>();
-                else csv << ";-1;0;0";
+                        << aim_log_prob[i].item<float>() << ';' << aim_cell_entropy[i].item<float>()
+                        << ';' << aim_offset_entropy[i][0].item<float>() << ';'
+                        << aim_offset_entropy[i][1].item<float>();
+                else csv << ";-1;0;0;0;0";
                 for (int a = 0; a < 3 * static_cast<int>(aim_names.size()); a++)
                     csv << ';' << (q_gradient.defined() ? q_gradient[i][a].item<float>() : 0.f);
                 csv << ';' << geometry[i].turret_yaw * to_degrees << ';'

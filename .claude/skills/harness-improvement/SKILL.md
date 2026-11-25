@@ -29,7 +29,7 @@ notes of `type: feedback`) is a batch of `C5 misplaced` — run the procedure on
 | only inside one procedure | that skill's `SKILL.md` body | a step or a rule in its list |
 | it was not loaded because the situation did not trigger the skill (C2) | that skill's `description` | add the situation and Samuel's literal words (French) |
 | a new recurring situation with its own procedure (≥ 3 steps) | new skill `.claude/skills/<name>/SKILL.md` + a row in CLAUDE.md « Skill routing » | frontmatter `name`, `description` with triggers |
-| Samuel refuses or lifts a lever / design | `docs/decisions.md` | one dated row, his words, scope |
+| Samuel refuses or lifts a lever / design | `docs/decisions.md` | one dated row, reason and scope — public file: no name, no conversation quote |
 | normative reference several skills load | `docs/<topic>.md`, referenced from each skill that needs it | defined terms + invariants |
 | mechanical, checkable without judgement (format, forbidden path, command) | hook or script in `.claude/` (settings via `update-config`) | enforcement, not text |
 | a fact about runs, results, project state | memory | never a working rule |

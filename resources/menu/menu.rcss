@@ -37,23 +37,14 @@ body {
     padding: 22dp 40dp;
     display: flex;
     flex-direction: column;
-    /* when the window is smaller than the page, the per-axis scrollbars
-       keep the whole content reachable */
+    /* per-axis scrollbars when the window is smaller than the page */
     overflow-x: auto;
     overflow-y: auto;
-    /* focus recovery: when the focused element vanishes (a data-if folding,
-       a data-for rebuild), the next direction key falls back to the document
-       and this nav restarts the spatial search from here */
+    /* focus recovery when the focused element vanishes */
     nav: auto;
 }
 
-/* The backdrops, one per screen. The colored layers ride the facets
-   decorator's asymmetric swell (`houle`): the player's half heaves in long,
-   slow waves, the machine's half ripples shorter and quicker the other way,
-   welded at the arena's seam, silent at the horizon and the screen edges.
-   The seam dashes and the ground halves stay still. On the main menu the
-   horizon shards are wireframe tetrahedra tumbling in 3D (the crystals
-   decorator), one large and one small per camp. */
+/* backdrops, one per screen */
 #main-body, #loading-body {
     decorator: facets(transparent #FFFFFF 2dp "640 0 640 6@0.25|640 16 640 22@0.25|640 32 640 38@0.25|640 48 640 54@0.25|640 64 640 70@0.25|640 80 640 86@0.25|640 96 640 102@0.25|640 112 640 118@0.25|640 128 640 134@0.25|640 144 640 150@0.25|640 160 640 166@0.25|640 176 640 182@0.25|640 192 640 198@0.25|640 208 640 214@0.25|640 224 640 230@0.25|640 240 640 246@0.25|640 256 640 262@0.25|640 272 640 278@0.25|640 288 640 294@0.25|640 304 640 310@0.25|640 320 640 326@0.25|640 336 640 342@0.25|640 352 640 358@0.25|640 368 640 374@0.25|640 384 640 390@0.25|640 400 640 406@0.25|640 416 640 422@0.25|640 432 640 438@0.25|640 448 640 454@0.25|640 464 640 470@0.25|640 480 640 486@0.25|640 496 640 502@0.25|640 512 640 518@0.25|640 528 640 534@0.25|640 544 640 550@0.25|640 560 640 566@0.25|640 576 640 582@0.25|640 592 640 598@0.25|640 608 640 614@0.25|640 624 640 630@0.25|640 640 640 646@0.25|640 656 640 662@0.25|640 672 640 678@0.25|640 688 640 694@0.25|640 704 640 710@0.25"),
                facets(transparent #FFFFFF 2dp "640 520 520 560 640 600 760 560@0.12|640 480 460 540 640 640 820 540@0.12" houle),
@@ -67,8 +58,7 @@ body {
                facets(#140C22 transparent 1dp "0 0 640 0 640 720 0 720");
 }
 
-/* The sub-pages float one or two crystals of their own over the quiet band
-   under the content, in their facets' accent. */
+/* sub-page crystals */
 #ai-body {
     background-color: #0A1420;
     decorator: crystals(#2FE6FF 1dp "230 600 48 2 -1.1 1.7|380 645 26 1 -1.4 3.8"),
@@ -92,17 +82,14 @@ body {
                facets(#FF7A2F transparent 1dp "1280 720 1280 440 1120 560@0.10|1280 720 1120 560 960 720@0.10|1120 560 1280 440 1040 400 960 720@0.10" houle);
 }
 
-/* controls: a faceted massif burying the lower-left corner, fully under the
-   columns. Every anchor sits off-canvas, so the fills swallow the corner
-   while every visible edge runs off-screen instead of ending on it. */
+/* controls: faceted massif in the lower-left corner */
 #controls-body {
     decorator: crystals(#FF7A2F 1dp "910 615 50 1 1.25 2.9|1070 655 28 2 0.85 0.4"),
                facets(transparent #FF7A2F 1dp "-120 490 150 555 -20 830@0.35|150 555 330 605 380 800@0.35|330 605 540 660 700 790@0.35" houle),
                facets(#FF7A2F transparent 1dp "-120 490 150 555 -20 830@0.10|150 555 330 605 380 800 -20 830@0.10|330 605 540 660 700 790 380 800@0.10" houle);
 }
 
-/* pause / game-over popup: the body is a translucent veil over the frozen
-   game frame */
+/* pause / game-over popup: translucent veil over the game frame */
 body.overlay {
     background-color: #080614b8;
 }
@@ -112,17 +99,13 @@ body.overlay {
                facets(#2FE6FF transparent 1dp "1280 0 1000 0 1120 160@0.12|1120 160 1000 0 880 200@0.12|1280 0 1120 160 1280 300@0.12|0 720 0 440 160 560@0.12|0 720 160 560 320 720@0.12" houle);
 }
 
-/* victory: the game-over backdrop mirrored onto the player's side, in the
-   player accent */
+/* victory: game-over backdrop mirrored to the player's side */
 #victory-body {
     decorator: facets(transparent #FF7A2F 1dp "160 160 280 0 400 200@0.4|1280 720 1120 560 960 720@0.4" houle),
                facets(#FF7A2F transparent 1dp "0 0 280 0 160 160@0.12|160 160 280 0 400 200@0.12|0 0 160 160 0 300@0.12|1280 720 1280 440 1120 560@0.12|1280 720 1120 560 960 720@0.12" houle);
 }
 
-/* Every control declaring a click in the RML is reachable with the keyboard
-   and the gamepad, no per-class opt-in; an element without a click stays
-   inert (fixed keychips). Form controls carry their own tab-index but still
-   need a local nav (input.range below). */
+/* keyboard and gamepad navigation of every clickable control */
 [data-event-click] {
     tab-index: auto;
     nav: auto;
@@ -167,8 +150,7 @@ body.overlay {
     color: #8C8FA8;
 }
 
-/* the quiet top-bar link of the mockups: mono, dim, the cursor mark alone
-   framing it */
+/* quiet top-bar link */
 .back-arrow {
     font-family: "JetBrains Mono";
     font-size: 12dp;
@@ -193,8 +175,7 @@ body.overlay {
 
 .page {
     width: 1120dp;
-    /* never shrink below the design size: a too-small window overflows
-       the body and triggers its scrollbars instead of crushing the page */
+    /* never shrink below the design size */
     flex-shrink: 0;
     margin: 28dp auto 0 auto;
     display: flex;
@@ -284,8 +265,7 @@ h2 {
     margin-bottom: 8dp;
 }
 
-/* side-colored labels (the GPU rows of the Graphics page): restated after
-   .param-label so the cascade keeps the side color */
+/* side-colored labels */
 .param-label.side-player {
     color: #FF7A2F;
 }
@@ -294,8 +274,7 @@ h2 {
     color: #2FE6FF;
 }
 
-/* a label row with a value on its right: both sides are spans (RmlUi draws
-   no bare text inside a flex container, so a plain label stays a block) */
+/* label row with a value on its right */
 .param-label.split {
     display: flex;
     justify-content: space-between;
@@ -335,8 +314,7 @@ h2 {
 
 /* ---- callouts, hints, status ---- */
 
-/* the bordered one-line notice of the mockups (cyan: the machine's, orange:
-   the player's) */
+/* bordered one-line notice */
 .callout {
     display: block;
     padding: 10dp 16dp;
@@ -427,8 +405,7 @@ h2 {
 
 /* ---- buttons ---- */
 
-/* Parallelogram button: the slant decorator paints surface and outline,
-   the element only sizes and holds the label. */
+/* parallelogram button */
 .button {
     display: block;
     margin: 10dp auto;
@@ -445,10 +422,7 @@ h2 {
     decorator: slant(#1C1836 #4A4670 14dp 1dp);
 }
 
-/* One pointing device at a time: the gamepad cursor is the RmlUi focus and
-   reuses the exact hover look, but only when the C++ side has flagged the
-   documents with .gamepad-nav (mouse hover is cleared on that switch, and
-   the first mouse move flips back). */
+/* gamepad cursor: reuses the hover look under .gamepad-nav */
 .button:hover, body.gamepad-nav .button:focus {
     decorator: slant(#302135 #FF7A2F 14dp 1dp);
 }
@@ -478,9 +452,7 @@ h2 {
     color: #8C8FA8;
 }
 
-/* a control that belongs to the machine's side (Opponent AI): at rest it
-   looks like its neighbours; under the cursor it answers in cyan, the AI
-   tint lit and the summary turning cyan too */
+/* machine-side control */
 .button.ai-side:hover, body.gamepad-nav .button.ai-side:focus {
     decorator: slant(#0F2A36 #2FE6FF 14dp 1dp);
 }
@@ -499,16 +471,13 @@ h2 {
     decorator: slant(#1C1836 #2A3A52 14dp 1dp);
 }
 
-/* after the cursor rules, so a disabled Play keeps its greyed fill under
-   either cursor (the ticks still show, marking the position without
-   promising a click) */
+/* disabled button under either cursor */
 .button.disabled:hover, body.gamepad-nav .button.disabled:focus, .button.disabled:active {
     color: #5C5F7A;
     decorator: slant(#1C1836 #2A3A52 14dp 1dp);
 }
 
-/* the system doors of the Parameters page: full width, label left, the
-   current choice right in mono */
+/* Parameters page system doors */
 .button.wide {
     display: flex;
     justify-content: space-between;
@@ -541,10 +510,7 @@ h2 {
     margin: 60dp auto 0 auto;
 }
 
-/* the wordmark's orange → cyan fade is painted inside the glyphs by the
-   gui-registered text-gradient decorator (the transition centered on the
-   word, hence on the arena's seam); the native text keeps the layout,
-   invisible */
+/* wordmark gradient */
 .title {
     font-size: 140dp;
     line-height: 0.9;
@@ -553,8 +519,7 @@ h2 {
     decorator: text-gradient(#FF7A2F #2FE6FF 36 64);
 }
 
-/* the thin rule under the wordmark: transparent → orange → cyan →
-   transparent, vertex-colored by the gui-registered gradient-bar decorator */
+/* rule under the wordmark */
 .title-rule {
     display: block;
     width: 760dp;
@@ -563,8 +528,7 @@ h2 {
     decorator: gradient-bar(#FF7A2F #2FE6FF 30);
 }
 
-/* the two camps face to face under the title, equal fixed wings around the
-   versus lozenge so the VS sits on the arena's seam */
+/* the two camps face to face under the title */
 .versus-intro {
     display: flex;
     align-items: center;
@@ -629,15 +593,11 @@ input.range {
     display: block;
     width: 100%;
     height: 16dp;
-    /* tab-index comes built-in with form controls; nav must be local for
-       the spatial navigation to leave the slider upwards / downwards */
+    /* local nav to leave the slider vertically */
     nav: auto;
 }
 
-/* the knob's vertical offset is its own margin-top measured from the input's
-   top, NOT from the track (RmlUi WidgetSlider::PositionBar): with a 16dp-high
-   input, a 16dp knob at margin-top 0 and a 4dp track pushed down by 6dp share
-   the same 8dp center line */
+/* slider track and knob alignment */
 input.range slidertrack {
     background-color: #2A3A52;
     height: 4dp;
@@ -656,8 +616,7 @@ input.range sliderbar {
     background-color: #FF7A2F;
 }
 
-/* under the cursor the knob grows to 20dp and lightens, recentered on the
-   track */
+/* knob under the cursor */
 input.range sliderbar:hover, input.range sliderbar:active,
 body.gamepad-nav input.range:focus sliderbar {
     width: 20dp;
@@ -671,8 +630,7 @@ input.range sliderarrowdec, input.range sliderarrowinc {
     height: 0;
 }
 
-/* a slider that belongs to the machine's side (the enemy count): progress
-   and knob in cyan, matching the .param-value.ai it drives */
+/* machine-side slider */
 input.range.ai-side sliderprogress, input.range.ai-side sliderbar {
     background-color: #2FE6FF;
 }
@@ -691,8 +649,7 @@ body.gamepad-nav input.range.ai-side:focus sliderbar {
     margin: 0 -4dp;
 }
 
-/* option chips: parallelograms; the selected one fills with the accent and
-   turns its label night, like a primary button */
+/* option chips */
 .toggle {
     display: block;
     box-sizing: border-box;
@@ -764,8 +721,7 @@ body.gamepad-nav input.range.ai-side:focus sliderbar {
     decorator: slant(#121C2C #2A3A52 10dp 1dp);
 }
 
-/* as .button.disabled: the ticks still mark the cursor position without
-   promising a click */
+/* disabled toggle under either cursor */
 .toggle.disabled:hover, body.gamepad-nav .toggle.disabled:focus, .toggle.disabled:active {
     color: #5C5F7A;
     decorator: slant(#121C2C #2A3A52 10dp 1dp);
@@ -773,9 +729,7 @@ body.gamepad-nav input.range.ai-side:focus sliderbar {
 
 /* ---- dropdowns ---- */
 
-/* a rectangular head carrying a 3dp accent stripe on its left, the list
-   unfolding over the content below it (absolute) so the page keeps its
-   height. Items reuse the dense list-row look of .device-entry. */
+/* dropdown */
 .dropdown {
     display: block;
     position: relative;
@@ -820,8 +774,7 @@ body.gamepad-nav input.range.ai-side:focus sliderbar {
     display: inline-block;
 }
 
-/* the caret: a chevron pointing down when folded and up when the list
-   is open */
+/* dropdown caret */
 .dropdown-caret {
     display: inline-block;
     position: absolute;
@@ -890,8 +843,7 @@ body.gamepad-nav input.range.ai-side:focus sliderbar {
     border-top: 1dp #2A3A52;
 }
 
-/* symmetric gutters (no nth-child alternation: the hidden data-for
-   template counts as a child and would flip the parity) */
+/* symmetric gutters */
 .bind-row {
     display: flex;
     align-items: center;
@@ -935,9 +887,7 @@ body.gamepad-nav input.range.ai-side:focus sliderbar {
     decorator: slant(#412F2C #FF9A5C 6dp 1dp);
 }
 
-/* capture in progress: the chip's outline lights up and its label blinks
-   between the accent and the ink (a geometry decorator cannot be
-   interpolated, so the pulse lives on the text color alone) */
+/* capture in progress */
 @keyframes chip-pulse {
     from { color: #FF7A2F; }
     to { color: #F2F4FF; }
@@ -954,9 +904,7 @@ body.gamepad-nav input.range.ai-side:focus sliderbar {
     decorator: slant(#2A2318 #B97E2F 6dp 1dp);
 }
 
-/* non-remappable rows: visible so the full scheme reads, but inert — they
-   declare no click in the RML, so the [data-event-click] rule leaves them
-   out of the navigation by itself. Dim label, outline-only chip. */
+/* non-remappable rows */
 .bind-row.fixed .bind-action {
     color: #8C8FA8;
 }
@@ -964,8 +912,7 @@ body.gamepad-nav input.range.ai-side:focus sliderbar {
 .bind-row.fixed .keychip {
     color: #8C8FA8;
     cursor: default;
-    /* inert (no click in the RML, so no hover rule lands here): the same
-       slant as its neighbours, outline only */
+    /* inert chip, outline only */
     decorator: slant(transparent #4A4670 6dp 1dp);
 }
 
@@ -1070,9 +1017,7 @@ body.gamepad-nav input.range.ai-side:focus sliderbar {
     font-size: 110dp;
 }
 
-/* the two sides face to face: the player's figure on the left, the
-   machine's on the right, a rule (pause) or a "vs" lozenge (game over)
-   between them */
+/* the two sides face to face */
 .versus {
     display: flex;
     align-items: center;
@@ -1142,8 +1087,7 @@ body.gamepad-nav input.range.ai-side:focus sliderbar {
     color: #C8CBE0;
 }
 
-/* the side colors restated after the two rules above, which would
-   otherwise win the cascade at equal specificity */
+/* side colors restated */
 .score-label.side-player, .game-over-score.side-player {
     color: #FF7A2F;
 }
@@ -1507,9 +1451,7 @@ input.range.centered slidertrack, input.range.centered sliderprogress {
 
 /* ---- scrollbars ---- */
 
-/* thin 8px scrollbars, invisible track, strong-line thumb turning accent
-   on hover — shared by the file explorer and the whole menu when the
-   window is too small for it */
+/* thin scrollbars */
 scrollbarvertical {
     width: 8dp;
 }
@@ -1546,11 +1488,7 @@ scrollbarcorner {
 
 /* ---- loading screen: the arena being built after Play ---- */
 
-/* no progress bar: the label breathes and the diamonds ripple toward it,
-   orange from the player's camp, cyan from the machine's. The backdrop is
-   the main menu's (shared selector above); the document sits over the
-   always-on HUD. Geometry decorators cannot be interpolated, so all the
-   motion lives on color, opacity and transform. */
+/* loading screen */
 #loading-body {
     z-index: 1;
 }
@@ -1586,8 +1524,7 @@ scrollbarcorner {
     100% { opacity: 0.15; transform: translateY(0dp); }
 }
 
-/* same period, stepped delays: a wave converging on the label from both
-   camps (the pre-delay state equals frame 0, so nothing pops) */
+/* diamond wave */
 .loading-diamond {
     font-size: 18dp;
     opacity: 0.15;

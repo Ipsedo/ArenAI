@@ -4,13 +4,11 @@
     <link type="text/rcss" href="hud.rcss"/>
 </head>
 <body data-model="hud">
-    <!-- the two sides of the arena framing the view: the player's orange on
-         the left, the machine's cyan on the right -->
+    <!-- side bands: player orange left, machine cyan right -->
     <div id="side-player" class="side-band"></div>
     <div id="side-ai" class="side-band"></div>
 
-    <!-- match status: the player's figures top-left, the clock top-center,
-         the machine's figures top-right -->
+    <!-- match status -->
     <div id="status-player" class="status">
         <span class="status-label side-player">◆ You</span>
         <span id="hud-player-score" class="status-score side-player">{{player_score}}</span>
@@ -43,16 +41,14 @@
         <div id="minimap-frame"></div>
     </div>
 
-    <!-- fixed screen-center anchor: code rotates one arc child toward each
-         impact the player suffers and fades it out -->
+    <!-- incoming damage arcs -->
     <div id="damage-arcs">
         <div class="damage-arc"></div>
         <div class="damage-arc"></div>
         <div class="damage-arc"></div>
         <div class="damage-arc"></div>
     </div>
-    <!-- anchor moved from code to the projected aim point; the crosshair
-         and the hit marker are both centered on it -->
+    <!-- aim point anchor: crosshair and hit marker -->
     <div id="reticle">
         <div id="crosshair"></div>
         <div id="crosshair-dot"></div>

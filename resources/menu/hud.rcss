@@ -1,10 +1,4 @@
-/* In-game HUD ("Duel néon"): a transparent full-screen layer that ignores
-   the pointer and carries the aiming reticle, the damage arcs and the two
-   side bands. Machine side cyan #2FE6FF for the incoming-damage arcs, the
-   player's band orange #FF7A2F, the reticle itself plain ink. The dp ratio
-   now follows the window (1.5 at 1080p instead of 1), so every size below
-   is 2/3 of the former value to keep the same on-screen footprint. Not linked to menu.rcss on purpose: the
-   menu body paints a background and pads the content. */
+/* In-game HUD ("Duel néon") */
 
 body {
     width: 100%;
@@ -22,9 +16,7 @@ body {
     color: #2FE6FF;
 }
 
-/* a side's figures: the label, the big score, then the hull bar or the
-   enemy row, a notch above the mockup's sizes so they read over the game
-   (no outline nor shadow: they muddied the glyphs). */
+/* a side's figures: label, score, hull bar or enemy row */
 .status {
     position: absolute;
     top: 20dp;
@@ -113,10 +105,7 @@ body {
     background-color: #2FE6FF;
 }
 
-/* zero-sized anchor fixed at the screen center; each arc child is a
-   centered square the gui-registered damage-arc decorator fills with an
-   annular sector pointing up. Code rotates the square toward the impact
-   (transform origin = box center = screen center) and fades its opacity. */
+/* damage arcs anchor at the screen center */
 #damage-arcs {
     position: absolute;
     width: 0;
@@ -125,9 +114,7 @@ body {
     top: 50%;
 }
 
-/* Battlefield-style incoming-damage arc: 11dp thick, 60 degrees wide, at
-   67dp from the screen center, in the machine's cyan (it is the machine
-   that hit you) */
+/* incoming-damage arc */
 .damage-arc {
     position: absolute;
     width: 134dp;
@@ -141,9 +128,7 @@ body {
     decorator: damage-arc(11dp 60);
 }
 
-/* zero-sized anchor placed by code (left/top in px) at the point where the
-   canon axis meets the screen; hidden from code when that point is off
-   screen. Its children center themselves on it with negative margins. */
+/* reticle anchor at the projected aim point */
 #reticle {
     position: absolute;
     width: 0;
@@ -153,9 +138,7 @@ body {
     visibility: hidden;
 }
 
-/* the crosshair, drawn by the gui-registered reticle decorator inside this
-   centered square: Battlefield-style thin cross, arms 1dp thick stopping
-   3.5dp short of the center, plain ink */
+/* crosshair */
 #crosshair {
     position: absolute;
     width: 19dp;
@@ -181,11 +164,7 @@ body {
     background-color: #F2F4FFD9;
 }
 
-/* the X of the marker is drawn by the gui-registered hit-marker decorator
-   inside this centered square: Battlefield-style thin ticks (1.5dp)
-   stopping 7.5dp short of the center. Its color paints the bars; its opacity and
-   scale are driven from code (appears at 1, expands outward while fading
-   to 0, larger and longer on a kill). */
+/* hit marker */
 #hit-marker {
     position: absolute;
     width: 20dp;

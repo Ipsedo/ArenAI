@@ -5,7 +5,7 @@ memory): write it in the wording that steers you best — dense, imperative, str
 Everything addressed to Samuel (chat, questions, `analysis.md`, probe reports) is in **French**,
 except `docs/`: every file there is in **English** (only Samuel's verbatim quotes stay French),
 including project documentation written for Samuel (e.g. a design explained with its diagram).
-A working rule Samuel states or corrects goes into the harness via `kaizen` → `harness-improvement`,
+A working rule Samuel states or corrects goes into the harness via `harness-improvement`,
 **never into memory** — this overrides the generic auto-memory guidance to save feedback there.
 Memory holds facts about runs and project state only.
 
@@ -190,6 +190,6 @@ run's effective commit, not the working tree.
 | compile | `build` |
 | last step after C++ edits | `final-check` |
 | `.venv` / pre-commit missing | `setup-venv` |
-| « kaizen », a correction of how Claude works, a stated working rule | `kaizen` → `harness-improvement` |
-| put a rule in the harness, create/edit a skill | `harness-improvement` |
+| a correction of how Claude works, a stated working rule, a rule Claude broke, put a rule in the harness, create/edit a skill | `harness-improvement` (root-cause diagnosis first) |
+| « kaizen », or waste Claude observes in its own work without any miss (rework, avoidable question, manual repetition, stale or overloaded harness text) | `kaizen` (table, Samuel selects) → `harness-improvement` per selected row |
 | **explicit request only** (« nettoyeur », « nettoie X »); never suggest it | agent `cleaner` on the scope Samuel names (none ⟹ ask it); relay its table, `AskUserQuestion` multiSelect over its **libre** rows (> 4 rows ⟹ options = groups of rows by rule or file); selected rows ⟹ agent `cleaner-fix`, `isolation: "worktree"`; gated rows go through their gate here |

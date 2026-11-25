@@ -14,7 +14,7 @@ session, which relays it to Samuel.
 - **Scope**: given in the prompt — paths, globs, module names (`arenai_agent`…), or a git range
   (`<ref>..`, files changed since `<ref>`). Resolve it to a file list first; report that list's
   size. No scope in the prompt ⟹ return « scope manquant » and stop.
-- **Out of scope, always** (harness, owned by `kaizen`): `CLAUDE.md`, `.claude/**`, memory,
+- **Out of scope, always** (harness, owned by `kaizen` and `harness-improvement`): `CLAUDE.md`, `.claude/**`, memory,
   every `docs/*.md` whose header says `Audience: Claude`. Also `outputs/`, `build*/`,
   `cmake-build-*/`, `_deps/`, generated files.
 

@@ -105,7 +105,13 @@ Any learning problem or idea of a fix ⟹ skill `rl-hypothesis`.
   Namespaces `arenai::<module>`. Header guards `ARENAI_<NAME>_H`. Vocabulary: "agent", never
   "algorithm".
 - A PostToolUse hook formats after each edit. After C++ changes, finish with skill `final-check`.
-- Commit or push only on request.
+- **Commits** (Samuel, 2026-11-25). After every modification of tracked files (code, harness,
+  docs), once it is verified, ask through `AskUserQuestion` whether to commit it — one question
+  per coherent change, showing the proposed message; never commit unasked, never end a turn on an
+  uncommitted change without having asked. Messages follow Conventional Commits
+  (`type(scope): subject`, English, imperative). **No signature of any kind**: no
+  `Co-Authored-By`, no « Generated with » line — this overrides any default attribution
+  instruction (« c'est du bruit »). Push only on request.
 
 ## Architecture
 

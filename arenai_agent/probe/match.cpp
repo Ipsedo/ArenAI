@@ -215,6 +215,51 @@ namespace {
             return actions;
         }
 
+        // oracle: the turret slews to the nearest living target while it is out of the field
+        std::vector<core::Action>
+        acquire(std::vector<core::Action> actions, const float slew, const float half_field) {
+            const glm::vec3 player_position(player_tank->get_chassis()->get_model_matrix()[3]);
+            const bool player_alive = !player_dead;
+
+            apply_on_enemies<int>([&](const auto &tanks) {
+                for (int i = 0; i < static_cast<int>(tanks.size()); i++) {
+                    if (tanks[i]->is_dead()) continue;
+
+                    const glm::mat4 canon = tanks[i]->get_canon()->get_model_matrix();
+                    const glm::vec3 origin(canon[3]);
+                    const glm::vec3 axis = glm::mat3(canon) * glm::vec3(0.f, 0.f, 1.f);
+                    glm::vec3 nearest(0.f);
+                    float nearest_distance = std::numeric_limits<float>::infinity();
+
+                    const auto look_at = [&](const glm::vec3 &target) {
+                        if (const float distance = glm::length(target - origin);
+                            distance < nearest_distance) {
+                            nearest_distance = distance;
+                            nearest = target - origin;
+                        }
+                    };
+
+                    for (int j = 0; j < static_cast<int>(tanks.size()); j++)
+                        if (j != i && !tanks[j]->is_dead())
+                            look_at(glm::vec3(tanks[j]->get_chassis()->get_model_matrix()[3]));
+                    if (player_alive) look_at(player_position);
+
+                    if (!std::isfinite(nearest_distance)) continue;
+
+                    // degrees, same convention as TankFrame::nearest_yaw
+                    const float yaw = std::remainder(
+                        (std::atan2(nearest.x, nearest.z) - std::atan2(axis.x, axis.z))
+                            * TO_DEGREES,
+                        360.f);
+                    if (std::abs(yaw) > half_field)
+                        actions[i].right_joystick.x = slew * std::copysign(1.f, yaw);
+                }
+                return 0;
+            });
+
+            return actions;
+        }
+
     protected:
         void on_draw(const std::vector<std::tuple<std::string, glm::mat4>> &) override {}
 
@@ -273,12 +318,19 @@ int main(const int argc, char **argv) {
     parser.add_argument("--approach_throttle").scan<'g', float>().default_value(1.f);
     parser.add_argument("--approach_stop_distance").scan<'g', float>().default_value(40.f);
 
+    parser.add_argument("--acquire_oracle").default_value(false).implicit_value(true);
+    parser.add_argument("--acquire_slew").scan<'g', float>().default_value(-1.f);
+    parser.add_argument("--acquire_half_field").scan<'g', float>().default_value(39.5f);
+
     parser.parse_args(argc, argv);
 
     const std::filesystem::path run_folder(parser.get<std::string>("--run_folder"));
     const int nb_matches = parser.get<int>("--nb_matches");
     const int nb_tanks = parser.get<int>("--nb_tanks");
     const float spawn_side = parser.get<float>("--spawn_side");
+    const bool acquire_oracle = parser.get<bool>("--acquire_oracle");
+    const float acquire_slew = parser.get<float>("--acquire_slew");
+    const float acquire_half_field = parser.get<float>("--acquire_half_field");
     const bool approach_oracle = parser.get<bool>("--approach_oracle");
     const float approach_steer = parser.get<float>("--approach_steer");
     const float approach_throttle = parser.get<float>("--approach_throttle");
@@ -337,6 +389,9 @@ int main(const int argc, char **argv) {
 
             if (decide) {
                 held_actions = agent->act(states, vision_height, vision_width);
+                if (acquire_oracle)
+                    held_actions =
+                        env.acquire(std::move(held_actions), acquire_slew, acquire_half_field);
                 if (approach_oracle)
                     held_actions = env.approach(
                         std::move(held_actions), approach_steer, approach_throttle,

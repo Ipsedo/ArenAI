@@ -67,6 +67,9 @@ Tempted by a getter, a setter, a flag or one more parameter ⟹ skill `design-ga
   Name the cause, say how the remedy removes it; if it does not, say so. A floor, ceiling,
   threshold, coefficient or special case added to compensate is a patch — acceptable only as an
   announced, disposable diagnostic.
+- **M7 Only the game judges a run.** Train-rule metrics (CSV, probe: refill at empty reserve) are
+  indicators; « bon / meilleur / progrès » only on game outcomes from a game match, as a prediction
+  of Samuel's verdict, bad news first.
 - Prior knowledge binds: a lever recorded as refused (`docs/decisions.md`), a cause recorded as
   ruled out, a design recorded as intended is not re-opened without new evidence.
 
@@ -116,8 +119,9 @@ Dependency order, never reversed: `utils → model → view → core → agent /
 - `arenai_controller` — input handling.
 - `arenai_agent` — `src/agents/{ppo,ppo_liquid,ppg,sac}`, `networks`, `distributions`,
   `core` (train environment, spawn curriculum), `metrics`; executables `arenai_agent_train`,
-  `arenai_agent_probe`, `arenai_agent_sigma_gradients` (`probe/`). Python tooling in
-  `arenai_agent/python/` (ExecuTorch conversion, metrics visualisation).
+  `arenai_agent_probe`, `arenai_agent_sigma_gradients`, `arenai_agent_match` (game rules) (`probe/`). Python tooling in
+  `arenai_agent/python/` (metrics visualisation, checkpoint conversion). No ExecuTorch (Android
+  era, gone): the desktop game loads `actor.pt` through the same agent code, deterministic mode.
 - `arenai_desktop` — playable game. `src/gui/` (RmlUi menu; RmlUi types never leak, others
   include only `gui/gui.h`), `src/controller/`, `src/core/`. Assets: `resources/menu/`,
   `resources/font/`.
@@ -153,7 +157,8 @@ run's effective commit, not the working tree.
 | learning problem, idea of a fix, "how to verify" | `rl-hypothesis` |
 | read one run's CSV | `analyze-run` |
 | compare runs, "did change X help" | `compare-runs` |
-| behaviour of one checkpoint | `probe-checkpoint` |
+| is this run / checkpoint good in game, « bon en jeu », verdict on a run | `game-match` |
+| behaviour of one checkpoint (indicators, train rules) | `probe-checkpoint` |
 | evolution across saves | `probe-timeline` |
 | compile | `build` |
 | last step after C++ edits | `final-check` |

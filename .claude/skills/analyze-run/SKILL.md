@@ -8,6 +8,9 @@ description: Analyse the metrics.csv of an ArenAI training folder (outputs/train
 Input: `outputs/train_NNN_<agent>/` or its number (`504`).
 Output: `<run>/analysis.md` (French) + `<run>/analysis_summary.json`, and a short chat summary.
 
+**Train rules only** (`docs/rl_method.md` M7): nothing read here supports « bon / meilleur en jeu »;
+a verdict on the run needs skill `game-match`.
+
 Role: establish facts, expose options. Deciding is Samuel's (`CLAUDE.md` gates). Reading
 discipline, noise floor and vocabulary: `docs/rl_method.md`.
 

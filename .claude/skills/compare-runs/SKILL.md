@@ -9,6 +9,9 @@ Input: two or more runs (folders or numbers), **reference first**, optionally th
 (« le SoftClamp a-t-il servi ? »).
 Output: `outputs/comparisons/<YYYY-MM-DD>_<n1>_vs_<n2>[_vs_…].md` (French) + a chat summary.
 
+**Train rules only** (`docs/rl_method.md` M7): nothing read here supports « bon / meilleur en jeu »;
+a verdict on the run needs skill `game-match`.
+
 Role: establish facts, expose options; Samuel decides. Vocabulary (confound, noise floor,
 structural effect): `docs/rl_method.md`.
 

@@ -10,6 +10,9 @@ of episodes, deterministic mode.
 Output: `<run>/probes/save_K_side<S>[_det].{csv,_shots.csv,log,json}`, `<run>/probes/save_K.md`
 (French) and a chat summary.
 
+**Train rules only** (`docs/rl_method.md` M7): nothing read here supports « bon / meilleur en jeu »;
+a verdict on the run needs skill `game-match`.
+
 Role: establish facts, expose options. A probe is a **fast evaluator** (`docs/rl_method.md` M2):
 launching it, and building the binary it needs, requires no permission.
 

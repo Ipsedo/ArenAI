@@ -26,10 +26,22 @@ that can refute it, at the lowest cost that can refute it.
 - **Noise floor**: variability between identical configurations (n = 1 seed per run). Known
   orders of magnitude: curriculum milestone D ±30k index, emptied reserve ×2, hit/shell ±1 point,
   probe ratio unreliable under ~300 aligned-and-close decisions.
-- **Lever**: a change whose effect is established on an outcome metric (time on target,
-  hits/tank-s per distance band, kills at equal D). A gap on an intermediate indicator (sign of μ,
-  a correlation, a corrector gain) is reported as « indicator, effect not established », never as
-  a lever.
+- **Lever**: a change whose effect is established on a **game outcome** (M7). A gap on a
+  train-rule metric (CSV `kill`/`hit`/`fire`, probe hits/tank-s, `tour<5°`, selectivity) or on an
+  intermediate indicator (sign of μ, a correlation, a corrector gain) is reported as « indicator,
+  game effect not established », never as a lever, never as "better".
+- **Train rules / game rules**: the training and probe environment (`TrainTankEnvironment`)
+  refills a dry tank (respawn at empty reserve), cuts episodes at `max_episode_steps`, samples
+  actions, runs 32 tanks without a player. The game (`DesktopGameEnvironment` + `GameSession`)
+  never refills, has no time limit, acts deterministically, runs `nb_tanks` 16 with the player's
+  tank in the arena, `GAME_SHELL_ECONOMY`. Any count that includes actions after a refill does
+  not exist in game.
+- **Game match**: the measurement under game rules — `arenai_agent_match` (skill `game-match`).
+- **Game outcome**: a game-match metric of Samuel's criteria (2026-11-25, his order): « trouve les
+  ennemis », « reste dangereux longtemps », « touche le joueur », « touche et tue les autres
+  tanks », « tenue visible ».
+- **Game label**: Samuel's own verdict after playing a checkpoint. The only ground truth. Recorded
+  in memory note `etalons-verdict-jeu` (checkpoint, date, his words).
 - **Random floor**: the metric value of an untrained or random policy at the same D. Always the
   reference for "has it learned".
 - **Structural effect**: imposed mechanically by the code; established by reading the code.
@@ -86,6 +98,25 @@ the architectural pieces it implies. A global "do you validate?" does not count.
 Before any remedy: name the cause, say how the remedy removes it, and if it does not, say so.
 Floors, ceilings, thresholds, coefficients and special cases added to compensate are patches.
 
+### M7 — Only the game judges a run (2026-11-25)
+
+Trigger: Samuel judged 553 s36 « pourri en jeu » after Claude called it the best aim of three
+runs from train-rule kill and `tour<5°`; over half of its hits came after a free refill.
+
+- The words good / better / best / improved / « meilleur », « bon », « progrès » about a run or a
+  checkpoint are allowed only on game outcomes measured by a game match, against a reference
+  checkpoint measured the same way, beyond the match-to-match noise. Otherwise write
+  « indicateur (règles d'entraînement), effet en jeu non mesuré ».
+- A game-match result is a **prediction** of Samuel's verdict, stated as such. The verdict is his.
+- Every game label is recorded the day it is given; the game-match reading must rank all labelled
+  checkpoints as Samuel did. A label it misranks ⟹ the instrument is wrong: say so, fix the
+  instrument before any further verdict.
+- Bad news first: any game outcome worse than the reference (reserve emptied, disarmed share,
+  player never hit) opens the analysis, before any favourable indicator.
+- Until a game match exists for a checkpoint, the only admissible proxy from an existing probe
+  is the **first-life reading** (events before each tank's first empty reserve), labelled as an
+  approximation.
+
 ## Procedure
 
 1. **Symptom.** State it with numbers, index, D, and its distance to the random floor and to the
@@ -130,9 +161,10 @@ Floors, ceilings, thresholds, coefficients and special cases added to compensate
 - The code that matters is the code *of the run* (effective commit, binary mtime), not the
   working tree.
 - Every quantitative statement carries its index and D.
-- **Cruise reading (D = 1000)**, in this order: hits/tank-s per distance band (probe, sides 550
-  and 1000) and kill at equal D; then hit/shell, dump (emptied reserve: median, share emptying,
-  share disarmed) and trigger selectivity (`p_al` / `p_off`); D, fire, Hc/σ only to explain.
+- **Cruise reading (D = 1000)**, in this order: game outcomes from a game match (M7); then, as
+  indicators only, hits/tank-s per distance band (probe, sides 550 and 1000) in first life, dump
+  (emptied reserve: median, share emptying, share disarmed), hit/shell, trigger selectivity
+  (`p_al` / `p_off`); CSV kill/hit, D, fire, Hc/σ only to explain.
 
 ## Output shape for a proposal (chat, French, concise)
 

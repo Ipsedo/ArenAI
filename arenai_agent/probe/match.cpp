@@ -158,6 +158,49 @@ namespace {
             });
         }
 
+        // oracle: each living enemy drives its chassis at the nearest living target
+        std::vector<core::Action> approach(
+            std::vector<core::Action> actions, const float steer, const float throttle,
+            const float stop_distance) {
+            const glm::vec3 player_position(player_tank->get_chassis()->get_model_matrix()[3]);
+            const bool player_alive = !player_dead;
+
+            apply_on_enemies<int>([&](const auto &tanks) {
+                for (int i = 0; i < static_cast<int>(tanks.size()); i++) {
+                    if (tanks[i]->is_dead()) continue;
+
+                    const glm::mat4 chassis = tanks[i]->get_chassis()->get_model_matrix();
+                    glm::vec3 nearest(0.f);
+                    float nearest_distance = std::numeric_limits<float>::infinity();
+
+                    const auto look_at = [&](const glm::vec3 &target) {
+                        const glm::vec3 local =
+                            glm::transpose(glm::mat3(chassis)) * (target - glm::vec3(chassis[3]));
+                        if (const float distance = glm::length(local);
+                            distance < nearest_distance) {
+                            nearest_distance = distance;
+                            nearest = local;
+                        }
+                    };
+
+                    for (int j = 0; j < static_cast<int>(tanks.size()); j++)
+                        if (j != i && !tanks[j]->is_dead())
+                            look_at(glm::vec3(tanks[j]->get_chassis()->get_model_matrix()[3]));
+                    if (player_alive) look_at(player_position);
+
+                    if (!std::isfinite(nearest_distance)) continue;
+
+                    // radians, positive when the target is on the local +x side
+                    const float bearing = std::atan2(nearest.x, nearest.z);
+                    actions[i].left_joystick.x = std::clamp(steer * bearing, -1.f, 1.f);
+                    actions[i].left_joystick.y = nearest_distance > stop_distance ? throttle : 0.f;
+                }
+                return 0;
+            });
+
+            return actions;
+        }
+
     protected:
         void on_draw(const std::vector<std::tuple<std::string, glm::mat4>> &) override {}
 
@@ -211,6 +254,10 @@ int main(const int argc, char **argv) {
     parser.add_argument("--seed").scan<'i', int>().default_value(0);
     parser.add_argument("--vision_num_threads").scan<'i', int>().default_value(8);
     parser.add_argument("--cuda").default_value(false).implicit_value(true);
+    parser.add_argument("--approach_oracle").default_value(false).implicit_value(true);
+    parser.add_argument("--approach_steer").scan<'g', float>().default_value(-2.f);
+    parser.add_argument("--approach_throttle").scan<'g', float>().default_value(1.f);
+    parser.add_argument("--approach_stop_distance").scan<'g', float>().default_value(40.f);
 
     parser.parse_args(argc, argv);
 
@@ -218,6 +265,10 @@ int main(const int argc, char **argv) {
     const int nb_matches = parser.get<int>("--nb_matches");
     const int nb_tanks = parser.get<int>("--nb_tanks");
     const float spawn_side = parser.get<float>("--spawn_side");
+    const bool approach_oracle = parser.get<bool>("--approach_oracle");
+    const float approach_steer = parser.get<float>("--approach_steer");
+    const float approach_throttle = parser.get<float>("--approach_throttle");
+    const float approach_stop_distance = parser.get<float>("--approach_stop_distance");
 
     // the game's loading path: deterministic agent built by the public factory
     nlohmann::json config;
@@ -269,7 +320,13 @@ int main(const int argc, char **argv) {
             const bool decide = frame % action_repeat == 0;
             const bool observe = (frame + 1) % action_repeat == 0;
 
-            if (decide) held_actions = agent->act(states, vision_height, vision_width);
+            if (decide) {
+                held_actions = agent->act(states, vision_height, vision_width);
+                if (approach_oracle)
+                    held_actions = env.approach(
+                        std::move(held_actions), approach_steer, approach_throttle,
+                        approach_stop_distance);
+            }
 
             if (auto next_states = env.play_frame(
                     wanted_frequency, decide ? held_actions : core::release_fire(held_actions),

@@ -34,23 +34,20 @@ std::unique_ptr<PpoTorchAgentFactory> PpoAgentTest::make_factory(const PpoTestCo
         .critic_gpu_batch_size = 10};
 
     return std::make_unique<PpoTorchAgentFactory>(
-        cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, device, params);
+        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, device, params);
 }
 
 TorchState PpoAgentTest::make_state(const PpoTestConfig &cfg, const int batch) {
     return TorchState(
-        torch::randint(0, 255, {batch, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
+        torch::randint(
+            0, 255, {batch, 3, arenai::core::VISION_HEIGHT, arenai::core::VISION_WIDTH},
+            torch::kUInt8),
         torch::randn({batch, cfg.nb_sensors}), torch::ones({batch, 1}));
 }
 
 TEST_F(PpoAgentTest, ParameterCountPositive) {
     constexpr PpoTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
-        .nb_sensors = 10,
-        .nb_continuous_actions = 4,
-        .nb_discrete_actions = 2};
+        .nb_sensors = 10, .nb_continuous_actions = 4, .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
     ASSERT_GT(factory->get_trainer()->count_parameters(), 0);
@@ -58,11 +55,7 @@ TEST_F(PpoAgentTest, ParameterCountPositive) {
 
 TEST_F(PpoAgentTest, MetricsNotEmpty) {
     constexpr PpoTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
-        .nb_sensors = 10,
-        .nb_continuous_actions = 4,
-        .nb_discrete_actions = 2};
+        .nb_sensors = 10, .nb_continuous_actions = 4, .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
     ASSERT_EQ(factory->get_trainer()->get_metrics().size(), 8);
@@ -115,8 +108,8 @@ TEST_P(PpoActShapeParamTest, ActDiscreteIsBinary) {
 INSTANTIATE_TEST_SUITE_P(
     PpoAgent, PpoActShapeParamTest,
     testing::Values(
-        PpoTestConfig{8, 8, 10, 4, 2}, PpoTestConfig{8, 8, 5, 2, 2},
-        PpoTestConfig{16, 16, 20, 6, 2}, PpoTestConfig{8, 12, 10, 4, 2}));
+        PpoTestConfig{10, 4, 2}, PpoTestConfig{5, 2, 2}, PpoTestConfig{20, 6, 2},
+        PpoTestConfig{10, 4, 2}));
 
 TEST_P(PpoSaveLoadParamTest, SaveCreatesExpectedFiles) {
     const auto cfg = GetParam();
@@ -154,6 +147,4 @@ TEST_P(PpoSaveLoadParamTest, SavedFilesNonEmpty) {
 
 INSTANTIATE_TEST_SUITE_P(
     PpoAgent, PpoSaveLoadParamTest,
-    testing::Values(
-        PpoTestConfig{8, 8, 10, 4, 2}, PpoTestConfig{8, 8, 5, 2, 2},
-        PpoTestConfig{16, 16, 20, 6, 2}));
+    testing::Values(PpoTestConfig{10, 4, 2}, PpoTestConfig{5, 2, 2}, PpoTestConfig{20, 6, 2}));

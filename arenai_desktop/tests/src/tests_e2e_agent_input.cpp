@@ -19,8 +19,6 @@ using namespace arenai::desktop;
 namespace {
 
     constexpr int NB_TANKS = 2;
-    constexpr int VISION_HEIGHT = 16;
-    constexpr int VISION_WIDTH = 16;
     constexpr float FREQUENCY = 1.f / 60.f;
     constexpr int NB_STEPS = 30;
 
@@ -28,14 +26,14 @@ namespace {
         auto env = std::make_unique<DesktopGameEnvironment>(
             ARENAI_ASSETS_DIR, std::make_shared<HeadlessWindowedBackend>(),
             GameSettings{.nb_tanks = NB_TANKS, .controller_kind = ControllerKind::Gamepad},
-            VISION_HEIGHT, VISION_WIDTH, FREQUENCY);
+            FREQUENCY);
         env->seed(42);
         return env;
     }
 
     void run_act_step_loop(
         core::BaseTanksEnvironment &env, InterceptorAgent &agent, std::vector<core::State> states) {
-        auto actions = agent.act(states, VISION_HEIGHT, VISION_WIDTH);
+        auto actions = agent.act(states);
 
         for (int i = 0; i < NB_STEPS; i++) {
             const auto steps = env.step(FREQUENCY, actions);
@@ -43,7 +41,7 @@ namespace {
             states.clear();
             for (const auto &[state, reward, done, truncated]: steps) states.push_back(state);
 
-            actions = agent.act(states, VISION_HEIGHT, VISION_WIDTH);
+            actions = agent.act(states);
         }
     }
 
@@ -97,14 +95,14 @@ TEST(DesktopAgentInputEndToEnd, AgentReceivesValidStates) {
     run_act_step_loop(*env, agent, env->reset(100.f, 100.f, model::GAME_SHELL_ECONOMY));
 
     ASSERT_EQ(static_cast<int>(agent.received_states.size()), NB_STEPS + 1);
-    ASSERT_EQ(agent.last_vision_height, VISION_HEIGHT);
-    ASSERT_EQ(agent.last_vision_width, VISION_WIDTH);
 
     for (const auto &states: agent.received_states) {
         ASSERT_EQ(static_cast<int>(states.size()), NB_TANKS);
 
         for (const auto &[vision, proprioception, shells_ratio, cooldown_ratio, can_fire]: states) {
-            ASSERT_EQ(static_cast<int>(vision.pixels.size()), 3 * VISION_HEIGHT * VISION_WIDTH);
+            ASSERT_EQ(
+                static_cast<int>(vision.pixels.size()),
+                3 * core::VISION_HEIGHT * core::VISION_WIDTH);
 
             const int pixel_sum = std::accumulate(
                 vision.pixels.begin(), vision.pixels.end(), 0,

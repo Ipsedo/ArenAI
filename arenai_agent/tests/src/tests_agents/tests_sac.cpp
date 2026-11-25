@@ -24,23 +24,20 @@ std::unique_ptr<SacTorchAgentFactory> SacAgentTest::make_factory(const SacTestCo
         .gpu_batch_size = 4};
 
     return std::make_unique<SacTorchAgentFactory>(
-        cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, device, params);
+        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, device, params);
 }
 
 TorchState SacAgentTest::make_state(const SacTestConfig &cfg, const int batch) {
     return TorchState(
-        torch::randint(0, 255, {batch, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
+        torch::randint(
+            0, 255, {batch, 3, arenai::core::VISION_HEIGHT, arenai::core::VISION_WIDTH},
+            torch::kUInt8),
         torch::randn({batch, cfg.nb_sensors}), torch::ones({batch, 1}));
 }
 
 TEST_F(SacAgentTest, ParameterCountPositive) {
     constexpr SacTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
-        .nb_sensors = 10,
-        .nb_continuous_actions = 4,
-        .nb_discrete_actions = 2};
+        .nb_sensors = 10, .nb_continuous_actions = 4, .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
     ASSERT_GT(factory->get_trainer()->count_parameters(), 0);
@@ -48,11 +45,7 @@ TEST_F(SacAgentTest, ParameterCountPositive) {
 
 TEST_F(SacAgentTest, MetricsNotEmpty) {
     constexpr SacTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
-        .nb_sensors = 10,
-        .nb_continuous_actions = 4,
-        .nb_discrete_actions = 2};
+        .nb_sensors = 10, .nb_continuous_actions = 4, .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
     // q, π, Q, Hc, Hd
@@ -65,11 +58,7 @@ TEST_F(SacAgentTest, MetricsNotEmpty) {
 
 TEST_F(SacAgentTest, ConfigCarriesGamma) {
     constexpr SacTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
-        .nb_sensors = 10,
-        .nb_continuous_actions = 4,
-        .nb_discrete_actions = 2};
+        .nb_sensors = 10, .nb_continuous_actions = 4, .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
     ASSERT_TRUE(factory->get_config().contains("gamma"));
@@ -78,11 +67,7 @@ TEST_F(SacAgentTest, ConfigCarriesGamma) {
 
 TEST_F(SacAgentTest, MaskedFireIsNeverEngaged) {
     constexpr SacTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
-        .nb_sensors = 10,
-        .nb_continuous_actions = 4,
-        .nb_discrete_actions = 2};
+        .nb_sensors = 10, .nb_continuous_actions = 4, .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
     constexpr int batch = 64;
@@ -141,8 +126,8 @@ TEST_P(SacActShapeParamTest, ActDiscreteIsBinary) {
 INSTANTIATE_TEST_SUITE_P(
     SacAgent, SacActShapeParamTest,
     testing::Values(
-        SacTestConfig{8, 8, 10, 4, 2}, SacTestConfig{8, 8, 5, 2, 2},
-        SacTestConfig{16, 16, 20, 6, 2}, SacTestConfig{8, 12, 10, 4, 2}));
+        SacTestConfig{10, 4, 2}, SacTestConfig{5, 2, 2}, SacTestConfig{20, 6, 2},
+        SacTestConfig{10, 4, 2}));
 
 TEST_P(SacSaveLoadParamTest, SaveCreatesExpectedFiles) {
     const auto cfg = GetParam();
@@ -190,4 +175,4 @@ TEST_P(SacSaveLoadParamTest, LoadedActorActsLikeSaved) {
 
 INSTANTIATE_TEST_SUITE_P(
     SacAgent, SacSaveLoadParamTest,
-    testing::Values(SacTestConfig{8, 8, 10, 4, 2}, SacTestConfig{16, 16, 20, 6, 2}));
+    testing::Values(SacTestConfig{10, 4, 2}, SacTestConfig{20, 6, 2}));

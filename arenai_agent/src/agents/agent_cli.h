@@ -17,8 +17,7 @@ namespace arenai::agent {
         std::string name;
         // stable address: the main parser keeps a reference on the subparser
         std::unique_ptr<argparse::ArgumentParser> parser;
-        std::function<std::unique_ptr<AbstractTorchAgentFactory>(
-            int vision_height, int vision_width, torch::Device device)>
+        std::function<std::unique_ptr<AbstractTorchAgentFactory>(torch::Device device)>
             create_factory;
     };
 

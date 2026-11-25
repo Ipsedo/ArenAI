@@ -30,8 +30,6 @@ int main(const int argc, char **argv) {
     parser.add_group("environment");
     parser.add_argument("--wanted_frequency").scan<'g', float>().default_value(1.f / 30.f);
     parser.add_argument("--nb_tanks").scan<'i', int>().default_value(32);
-    parser.add_argument("--vision_height").scan<'i', int>().default_value(128);
-    parser.add_argument("--vision_width").scan<'i', int>().default_value(256);
     parser.add_argument("--initial_spawn_width").scan<'g', float>().default_value(250.f);
     parser.add_argument("--initial_spawn_height").scan<'g', float>().default_value(250.f);
     parser.add_argument("--final_spawn_width").scan<'g', float>().default_value(1000.f);
@@ -68,18 +66,12 @@ int main(const int argc, char **argv) {
     // input sizes are constant, let the cuDNN autotuner pick the best conv algorithms
     if (cuda) at::globalContext().setBenchmarkCuDNN(true);
 
-    const int vision_height = parser.get<int>("--vision_height");
-    const int vision_width = parser.get<int>("--vision_width");
-
     const auto agent_factory = selected_algorithm->create_factory(
-        vision_height, vision_width,
         cuda ? torch::Device(torch::kCUDA) : torch::Device(torch::kCPU));
 
     train_main(
         {.wanted_frequency = parser.get<float>("--wanted_frequency"),
          .nb_tanks = parser.get<int>("--nb_tanks"),
-         .vision_height = vision_height,
-         .vision_width = vision_width,
          .initial_spawn_width = parser.get<float>("--initial_spawn_width"),
          .initial_spawn_height = parser.get<float>("--initial_spawn_height"),
          .final_spawn_width = parser.get<float>("--final_spawn_width"),

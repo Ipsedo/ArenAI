@@ -15,7 +15,7 @@ namespace arenai::agent {
     public:
         TorchState() = default;
 
-        TorchState(const std::vector<core::State> &states, int vision_height, int vision_width);
+        TorchState(const std::vector<core::State> &states);
         TorchState(torch::Tensor vision, torch::Tensor state, torch::Tensor fire_mask);
 
         const torch::Tensor &get_vision() const;
@@ -52,10 +52,8 @@ namespace arenai::agent {
 
     class TorchStep {
     public:
-        TorchStep(
-            const std::vector<
-                std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>> &steps,
-            int vision_height, int vision_width);
+        TorchStep(const std::vector<
+                  std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>> &steps);
 
         const TorchState &get_states() const;
 

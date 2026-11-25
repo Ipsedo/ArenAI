@@ -1,6 +1,7 @@
 #include <chrono>
 
 #include <arenai_core/thread_pool.h>
+#include <arenai_core/types.h>
 
 using namespace arenai;
 using namespace arenai::core;
@@ -34,11 +35,10 @@ namespace arenai::core {
     }
 
     EnemyVisionThreadPool::EnemyVisionThreadPool(
-        const int num_tanks, const int max_concurrent_renders, const int vision_height,
-        const int vision_width, const float wanted_frequency, const bool thread_sleep)
-        : num_tanks_(num_tanks), vision_height_(vision_height), vision_width_(vision_width),
-          wanted_frequency_(wanted_frequency), thread_sleep_(thread_sleep), threads_running_(true),
-          limiter_(max_concurrent_renders),
+        const int num_tanks, const int max_concurrent_renders, const float wanted_frequency,
+        const bool thread_sleep)
+        : num_tanks_(num_tanks), wanted_frequency_(wanted_frequency), thread_sleep_(thread_sleep),
+          threads_running_(true), limiter_(max_concurrent_renders),
           model_matrices_(std::make_unique<ModelMatricesDoubleBuffer>()),
           reset_barrier_(std::nullptr_t()), start_barrier_(std::nullptr_t()),
           loop_barrier_(std::nullptr_t()) {}
@@ -65,7 +65,7 @@ namespace arenai::core {
         enemy_visions_.reserve(num_tanks_);
         for (int i = 0; i < num_tanks_; i++)
             enemy_visions_.push_back(
-                std::make_unique<VisionDoubleBuffer>(vision_height_, vision_width_));
+                std::make_unique<VisionDoubleBuffer>(VISION_HEIGHT, VISION_WIDTH));
 
         pool_.reserve(num_tanks_);
         for (int i = 0; i < num_tanks_; i++)
@@ -96,7 +96,7 @@ namespace arenai::core {
         }
 
         auto renderer = graphics_backend->make_offscreen_renderer(
-            vision_width_, vision_height_, glm::vec3(200, 300, 200), tank_factory->get_camera());
+            VISION_WIDTH, VISION_HEIGHT, glm::vec3(200, 300, 200), tank_factory->get_camera());
 
         renderer->make_current();
 

@@ -14,8 +14,8 @@ namespace arenai::agent {
     class LiquidPpoTorchAgentFactory final : public AbstractTorchAgentFactory {
     public:
         LiquidPpoTorchAgentFactory(
-            int vision_height, int vision_width, int nb_sensors, int nb_continuous_actions,
-            int nb_discrete_actions, torch::Device device, const LiquidPpoHyperParams &params);
+            int nb_sensors, int nb_continuous_actions, int nb_discrete_actions,
+            torch::Device device, const LiquidPpoHyperParams &params);
 
         std::shared_ptr<AbstractTorchAgent> get_agent() override;
         std::shared_ptr<AbstractStepCollector> get_collector() override;

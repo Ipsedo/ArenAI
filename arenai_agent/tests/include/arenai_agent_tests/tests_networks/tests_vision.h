@@ -13,8 +13,7 @@ typedef std::vector<int> GroupNormNums;
 typedef int BatchSize;
 
 class VisionTestParam
-    : public testing::TestWithParam<std::tuple<
-          VisionWidth, VisionHeight, VisionChannel, OutputConvChannels, GroupNormNums, BatchSize>> {
-};
+    : public testing::TestWithParam<
+          std::tuple<VisionChannel, OutputConvChannels, GroupNormNums, BatchSize>> {};
 
 #endif//ARENAI_TESTS_VISION_H

@@ -7,6 +7,10 @@
 #include <arenai_view/renderer.h>
 
 namespace arenai::core {
+    // the agent's vision, in pixels
+    constexpr int VISION_HEIGHT = 128;
+    constexpr int VISION_WIDTH = 256;
+
     struct State {
         view::image<uint8_t> vision;
         std::vector<float> proprioception;

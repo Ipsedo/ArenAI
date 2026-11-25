@@ -21,8 +21,7 @@ namespace arenai::desktop {
         DesktopGameEnvironment(
             const std::filesystem::path &asset_folder_path,
             const std::shared_ptr<view::AbstractWindowedGraphicBackend> &graphics_backend,
-            const GameSettings &settings, int vision_height, int vision_width,
-            float wanted_frequency);
+            const GameSettings &settings, float wanted_frequency);
 
         ~DesktopGameEnvironment() override;
 

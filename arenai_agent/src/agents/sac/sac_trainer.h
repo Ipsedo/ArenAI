@@ -17,10 +17,10 @@ namespace arenai::agent {
     public:
         SacTrainer(
             const std::shared_ptr<SacActor> &actor, const std::shared_ptr<StateEncoder> &encoder,
-            const std::shared_ptr<SacReplayBuffer> &replay_buffer, int vision_height,
-            int vision_width, int nb_sensors, int nb_continuous_actions, int nb_discrete_actions,
-            float actor_learning_rate, float critic_learning_rate, float alpha_learning_rate,
-            int hidden_size_sensors, const std::vector<int> &critic_hidden_sizes,
+            const std::shared_ptr<SacReplayBuffer> &replay_buffer, int nb_sensors,
+            int nb_continuous_actions, int nb_discrete_actions, float actor_learning_rate,
+            float critic_learning_rate, float alpha_learning_rate, int hidden_size_sensors,
+            const std::vector<int> &critic_hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
             float tau, float initial_alpha, float target_sigma, float discrete_target_entropy_ratio,

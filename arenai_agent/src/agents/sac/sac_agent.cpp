@@ -16,9 +16,8 @@ namespace arenai::agent {
         actor->to(device);
     }
 
-    std::vector<core::Action> TorchSacAgent::act(
-        const std::vector<core::State> &states, const int vision_height, const int vision_width) {
-        return act(TorchState(states, vision_height, vision_width), false).to_actions();
+    std::vector<core::Action> TorchSacAgent::act(const std::vector<core::State> &states) {
+        return act(TorchState(states), false).to_actions();
     }
 
     TorchAction TorchSacAgent::act(const TorchState &state, const bool sample) {

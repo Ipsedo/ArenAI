@@ -25,11 +25,10 @@ namespace arenai::agent {
             auto *parser_ptr = parser.get();
             return {
                 name, std::move(parser),
-                [parser_ptr, fields = std::move(fields)](
-                    const int vision_height, const int vision_width, const torch::Device device) {
+                [parser_ptr, fields = std::move(fields)](const torch::Device device) {
                     return std::make_unique<Factory>(
-                        vision_height, vision_width, model::ENEMY_STATE_VECTOR_SIZE,
-                        model::ENEMY_NB_CONTINUOUS_ACTION, model::ENEMY_NB_DISCRETE_ACTION, device,
+                        model::ENEMY_STATE_VECTOR_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
+                        model::ENEMY_NB_DISCRETE_ACTION, device,
                         read_cli_fields(*parser_ptr, fields));
                 }};
         }

@@ -12,15 +12,14 @@ using namespace arenai::agent;
 namespace arenai::agent {
 
     Actor::Actor(
-        const int &vision_height, const int &vision_width, const int &nb_sensors,
-        const int &nb_continuous_actions, const int &nb_discrete_actions,
+        const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_actions,
         const int &hidden_size_sensors, const std::vector<int> &hidden_sizes,
         const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, const float &initial_sigma,
         const std::vector<float> &initial_discrete_probas)
         : vision_encoder(register_module(
-            "vision_encoder", std::make_shared<ConvolutionNetwork>(
-                                  vision_height, vision_width, vision_channels, group_norm_nums))),
+            "vision_encoder",
+            std::make_shared<ConvolutionNetwork>(vision_channels, group_norm_nums))),
           sensors_encoder(register_module(
               "sensors_encoder",
               torch::nn::Sequential(
@@ -86,16 +85,14 @@ namespace arenai::agent {
     }
 
     DistillationActor::DistillationActor(
-        const int &vision_height, const int &vision_width, const int &nb_sensors,
-        const int &nb_continuous_actions, const int &nb_discrete_actions,
+        const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_actions,
         const int &hidden_size_sensors, const std::vector<int> &hidden_sizes,
         const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums, const float &initial_sigma,
         const std::vector<float> &initial_discrete_probas)
         : Actor(
-            vision_height, vision_width, nb_sensors, nb_continuous_actions, nb_discrete_actions,
-            hidden_size_sensors, hidden_sizes, vision_channels, group_norm_nums, initial_sigma,
-            initial_discrete_probas),
+            nb_sensors, nb_continuous_actions, nb_discrete_actions, hidden_size_sensors,
+            hidden_sizes, vision_channels, group_norm_nums, initial_sigma, initial_discrete_probas),
           to_value(register_module("value", torch::nn::Linear(hidden_sizes.back(), 1))) {
 
         to_value->apply(init_value_output_weights);

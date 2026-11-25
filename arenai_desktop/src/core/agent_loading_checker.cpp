@@ -60,14 +60,12 @@ namespace arenai::desktop {
             const core::State blank_state = {
                 .vision =
                     {.pixels = std::vector<uint8_t>(
-                         static_cast<size_t>(3) * factory.get_vision_height()
-                             * factory.get_vision_width(),
-                         0)},
+                         static_cast<size_t>(3) * core::VISION_HEIGHT * core::VISION_WIDTH, 0)},
                 .proprioception = std::vector(model::ENEMY_PROPRIOCEPTION_SIZE, 0.f),
                 .remaining_shells_ratio = 1.f,
                 .cooldown_ratio = 1.f,
                 .can_fire = true};
-            agent->act({blank_state}, factory.get_vision_height(), factory.get_vision_width());
+            agent->act({blank_state});
 
             return std::nullopt;
         } catch (const std::exception &e) { return e.what(); }
@@ -81,8 +79,6 @@ namespace arenai::desktop {
 
         return {
             .agent = std::move(agent),
-            .vision_height = factory.get_vision_height(),
-            .vision_width = factory.get_vision_width(),
             .wanted_frequency = factory.get_wanted_frequency(),
             .action_repeat = factory.get_action_repeat()};
     }

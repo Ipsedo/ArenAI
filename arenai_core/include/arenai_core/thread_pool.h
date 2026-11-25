@@ -49,8 +49,7 @@ namespace arenai::core {
     class EnemyVisionThreadPool {
     public:
         EnemyVisionThreadPool(
-            int num_tanks, int max_concurrent_renders, int vision_height, int vision_width,
-            float wanted_frequency, bool thread_sleep);
+            int num_tanks, int max_concurrent_renders, float wanted_frequency, bool thread_sleep);
 
         void set_model_matrices(
             const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) const;
@@ -74,9 +73,6 @@ namespace arenai::core {
 
     private:
         int num_tanks_;
-
-        int vision_height_;
-        int vision_width_;
 
         float wanted_frequency_;
         bool thread_sleep_;

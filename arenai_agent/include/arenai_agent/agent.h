@@ -12,8 +12,7 @@ namespace arenai::agent {
     public:
         virtual ~AbstractAgent() = default;
 
-        virtual std::vector<core::Action>
-        act(const std::vector<core::State> &states, int vision_height, int vision_width) = 0;
+        virtual std::vector<core::Action> act(const std::vector<core::State> &states) = 0;
 
         virtual void load(const std::filesystem::path &agent_folder) = 0;
     };

@@ -21,8 +21,7 @@ namespace arenai::agent {
     class Actor : public torch::nn::Module {
     public:
         explicit Actor(
-            const int &vision_height, const int &vision_width, const int &nb_sensors,
-            const int &nb_continuous_actions, const int &nb_discrete_actions,
+            const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_actions,
             const int &hidden_size_sensors, const std::vector<int> &hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, const float &initial_sigma,
@@ -46,8 +45,7 @@ namespace arenai::agent {
     class DistillationActor final : public Actor {
     public:
         explicit DistillationActor(
-            const int &vision_height, const int &vision_width, const int &nb_sensors,
-            const int &nb_continuous_actions, const int &nb_discrete_actions,
+            const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_actions,
             const int &hidden_size_sensors, const std::vector<int> &hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums, const float &initial_sigma,

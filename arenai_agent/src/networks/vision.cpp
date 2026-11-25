@@ -1,15 +1,16 @@
 #include "./vision.h"
 
+#include <arenai_core/types.h>
+
 using namespace arenai;
 using namespace arenai::agent;
 
 namespace arenai::agent {
     ConvolutionNetwork::ConvolutionNetwork(
-        const int vision_height, const int vision_width,
         const std::vector<std::tuple<int, int>> &channels, const std::vector<int> &group_norm_nums)
         : cnn(register_module("cnn", torch::nn::Sequential())) {
 
-        int w = vision_width, h = vision_height;
+        int w = core::VISION_WIDTH, h = core::VISION_HEIGHT;
 
         for (int i = 0; i < channels.size(); i++) {
             const auto &[c_i, c_o] = channels[i];

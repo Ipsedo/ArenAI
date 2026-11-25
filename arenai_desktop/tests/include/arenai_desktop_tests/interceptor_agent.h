@@ -11,15 +11,9 @@ using namespace arenai;
 class InterceptorAgent final : public agent::AbstractAgent {
 public:
     std::vector<std::vector<core::State>> received_states;
-    int last_vision_height = -1;
-    int last_vision_width = -1;
 
-    std::vector<core::Action>
-    act(const std::vector<core::State> &states, const int vision_height,
-        const int vision_width) override {
+    std::vector<core::Action> act(const std::vector<core::State> &states) override {
         received_states.push_back(states);
-        last_vision_height = vision_height;
-        last_vision_width = vision_width;
 
         // a zero aim rate leaves the turret and the canon where they are
         return std::vector<core::Action>(

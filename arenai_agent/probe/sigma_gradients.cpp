@@ -92,8 +92,6 @@ int main(const int argc, char **argv) {
     const auto &env_config = config.at("environment");
     const auto params = read_params(config.at("agent"));
 
-    const int vision_height = env_config.at("vision_height").get<int>();
-    const int vision_width = env_config.at("vision_width").get<int>();
     const float wanted_frequency = env_config.at("wanted_frequency").get<float>();
     const int nb_tanks = env_config.at("nb_tanks").get<int>();
     const model::ShellEconomy shell_economy{
@@ -103,22 +101,21 @@ int main(const int argc, char **argv) {
 
     // the training triad of LiquidPpoTorchAgentFactory
     const auto actor = std::make_shared<LiquidActor>(
-        vision_height, vision_width, model::ENEMY_STATE_VECTOR_SIZE,
-        model::ENEMY_NB_CONTINUOUS_ACTION, model::ENEMY_NB_DISCRETE_ACTION,
-        params.hidden_size_sensors, params.vision_channels, params.group_norm_nums,
-        params.neuron_number, params.unfolding_steps, params.delta_t, params.initial_sigma,
-        std::vector{params.initial_fire_proba, params.initial_zoom_proba});
+        model::ENEMY_STATE_VECTOR_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
+        model::ENEMY_NB_DISCRETE_ACTION, params.hidden_size_sensors, params.vision_channels,
+        params.group_norm_nums, params.neuron_number, params.unfolding_steps, params.delta_t,
+        params.initial_sigma, std::vector{params.initial_fire_proba, params.initial_zoom_proba});
     const auto hidden_state = std::make_shared<LiquidHiddenState>(actor);
     const auto rollout_buffer = std::make_shared<LiquidPpoRolloutBuffer>();
     const auto collector = std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state);
     const auto agent =
         std::make_shared<TorchLiquidPpoAgent>(actor, hidden_state, device, collector);
     const auto trainer = std::make_shared<LiquidPpoTrainer>(
-        actor, rollout_buffer, vision_height, vision_width, model::ENEMY_NB_CONTINUOUS_ACTION,
-        model::ENEMY_NB_DISCRETE_ACTION, model::ENEMY_STATE_VECTOR_SIZE, params.actor_learning_rate,
-        params.critic_learning_rate, params.hidden_size_sensors, params.vision_channels,
-        params.group_norm_nums, params.neuron_number, params.unfolding_steps, params.delta_t,
-        device, params.metric_window_size, params.gamma, params.gae_lambda, params.clip_epsilon,
+        actor, rollout_buffer, model::ENEMY_NB_CONTINUOUS_ACTION, model::ENEMY_NB_DISCRETE_ACTION,
+        model::ENEMY_STATE_VECTOR_SIZE, params.actor_learning_rate, params.critic_learning_rate,
+        params.hidden_size_sensors, params.vision_channels, params.group_norm_nums,
+        params.neuron_number, params.unfolding_steps, params.delta_t, device,
+        params.metric_window_size, params.gamma, params.gae_lambda, params.clip_epsilon,
         params.target_kl, params.grad_norm_max, params.initial_alpha, params.alpha_learning_rate,
         params.continuous_target_entropy, params.discrete_target_proba, params.actor_epochs,
         params.critic_epochs, params.rollout_size, params.actor_batch_size,
@@ -132,9 +129,8 @@ int main(const int argc, char **argv) {
     if (!critic_inputs_path.empty()) {
         critic_inputs.open(critic_inputs_path, std::ios::binary);
         critic = std::make_shared<LiquidCritic>(
-            vision_height, vision_width, model::ENEMY_STATE_VECTOR_SIZE, params.hidden_size_sensors,
-            params.vision_channels, params.group_norm_nums, params.neuron_number,
-            params.unfolding_steps, params.delta_t);
+            model::ENEMY_STATE_VECTOR_SIZE, params.hidden_size_sensors, params.vision_channels,
+            params.group_norm_nums, params.neuron_number, params.unfolding_steps, params.delta_t);
         load_torch(save_folder, critic, "critic.pt");
         critic->to(device);
         critic->eval();
@@ -151,7 +147,7 @@ int main(const int argc, char **argv) {
 
     const auto env = std::make_unique<TrainTankEnvironment>(
         std::move(graphics_backend), nb_tanks, resources_folder, wanted_frequency,
-        config.at("train").at("max_episode_steps").get<int>(), vision_height, vision_width,
+        config.at("train").at("max_episode_steps").get<int>(),
         parser.get<int>("--vision_num_threads"), env_config.at("action_repeat").get<int>());
 
     const auto names = TorchAction::continuous_action_names();
@@ -250,8 +246,7 @@ int main(const int argc, char **argv) {
     };
 
     for (int episode = 0; episode < nb_episodes; episode++) {
-        auto state = TorchState(
-            env->reset(spawn_side, spawn_side, shell_economy), vision_height, vision_width);
+        auto state = TorchState(env->reset(spawn_side, spawn_side, shell_economy));
 
         bool is_done = false;
         int episode_step = 0;
@@ -290,7 +285,7 @@ int main(const int argc, char **argv) {
                 }
             }
             const auto steps = env->step(wanted_frequency, action.to_actions());
-            const TorchStep torch_step(steps, vision_height, vision_width);
+            const TorchStep torch_step(steps);
 
             record.details = env->last_step_reward_details();
             for (const auto &[unused_state, reward, done, truncated]: steps) {

@@ -21,12 +21,11 @@ namespace arenai::agent {
         }
     }// namespace
 
-    TorchState::TorchState(
-        const std::vector<core::State> &states, const int vision_height, const int vision_width) {
+    TorchState::TorchState(const std::vector<core::State> &states) {
         const auto N = static_cast<int64_t>(states.size());
         constexpr int64_t C = 3;
-        const int64_t H = vision_height;
-        const int64_t W = vision_width;
+        constexpr int64_t H = core::VISION_HEIGHT;
+        constexpr int64_t W = core::VISION_WIDTH;
         constexpr int64_t P = model::ENEMY_PROPRIOCEPTION_SIZE;
         constexpr int64_t S = model::ENEMY_STATE_VECTOR_SIZE;
 
@@ -146,8 +145,7 @@ namespace arenai::agent {
 
     TorchStep::TorchStep(
         const std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
-            &steps,
-        const int vision_height, const int vision_width) {
+            &steps) {
         std::vector<core::State> env_states;
         std::vector<torch::Tensor> env_rewards;
         std::vector<torch::Tensor> are_done;
@@ -162,7 +160,7 @@ namespace arenai::agent {
                 torch::tensor({truncated}, torch::TensorOptions().dtype(torch::kBool)));
         }
 
-        states = TorchState(env_states, vision_height, vision_width);
+        states = TorchState(env_states);
         rewards = torch::stack(env_rewards);
         is_done = torch::stack(are_done);
         is_truncated = torch::stack(are_truncated);

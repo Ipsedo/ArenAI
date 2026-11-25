@@ -11,8 +11,8 @@ SacTrainingTriad SacTrainingTest::make_triad(const SacTrainingTestConfig &cfg) c
     const std::vector group_norm_nums{2};
 
     SacTrainingTriad triad;
-    triad.encoder = std::make_shared<StateEncoder>(
-        cfg.vision_height, cfg.vision_width, cfg.nb_sensors, 8, vision_channels, group_norm_nums);
+    triad.encoder =
+        std::make_shared<StateEncoder>(cfg.nb_sensors, 8, vision_channels, group_norm_nums);
     triad.actor = std::make_shared<SacActor>(
         triad.encoder, cfg.nb_continuous_actions, cfg.nb_discrete_actions, std::vector{16}, 0.3f,
         std::vector(cfg.nb_discrete_actions, 0.2f));
@@ -20,24 +20,24 @@ SacTrainingTriad SacTrainingTest::make_triad(const SacTrainingTestConfig &cfg) c
     triad.collector = std::make_shared<SacStepCollector>(triad.replay_buffer);
     triad.agent = std::make_shared<TorchSacAgent>(triad.actor, device, triad.collector);
     triad.trainer = std::make_shared<SacTrainer>(
-        triad.actor, triad.encoder, triad.replay_buffer, cfg.vision_height, cfg.vision_width,
-        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 1e-3f, 1e-3f, 1e-3f, 8,
-        std::vector{16}, vision_channels, group_norm_nums, device, 10, 0.05f, 0.1f, 0.3f, 0.3f,
-        LEARNING_STARTS, 1, BATCH_SIZE, GPU_BATCH_SIZE);
+        triad.actor, triad.encoder, triad.replay_buffer, cfg.nb_sensors, cfg.nb_continuous_actions,
+        cfg.nb_discrete_actions, 1e-3f, 1e-3f, 1e-3f, 8, std::vector{16}, vision_channels,
+        group_norm_nums, device, 10, 0.05f, 0.1f, 0.3f, 0.3f, LEARNING_STARTS, 1, BATCH_SIZE,
+        GPU_BATCH_SIZE);
     return triad;
 }
 
 TorchState SacTrainingTest::make_state(const SacTrainingTestConfig &cfg, const int nb_tanks) {
     return TorchState(
-        torch::randint(0, 255, {nb_tanks, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
+        torch::randint(
+            0, 255, {nb_tanks, 3, arenai::core::VISION_HEIGHT, arenai::core::VISION_WIDTH},
+            torch::kUInt8),
         torch::randn({nb_tanks, cfg.nb_sensors}),
         torch::randint(0, 2, {nb_tanks, 1}).to(torch::kFloat));
 }
 
 TEST_F(SacTrainingTest, NoUpdateBeforeLearningStarts) {
     constexpr SacTrainingTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
         .nb_sensors = model::ENEMY_STATE_VECTOR_SIZE,
         .nb_continuous_actions = 2,
         .nb_discrete_actions = 2};
@@ -62,8 +62,6 @@ TEST_F(SacTrainingTest, NoUpdateBeforeLearningStarts) {
 
 TEST_F(SacTrainingTest, TrainingUpdatesActorParameters) {
     constexpr SacTrainingTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
         .nb_sensors = model::ENEMY_STATE_VECTOR_SIZE,
         .nb_continuous_actions = 2,
         .nb_discrete_actions = 3};
@@ -100,8 +98,6 @@ TEST_F(SacTrainingTest, TrainingUpdatesActorParameters) {
 TEST_F(SacTrainingTest, MaskedFireReceivesNoUpdate) {
     // fire never possible: its head row must stay untouched while zoom keeps learning
     constexpr SacTrainingTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
         .nb_sensors = model::ENEMY_STATE_VECTOR_SIZE,
         .nb_continuous_actions = 2,
         .nb_discrete_actions = 2};
@@ -131,8 +127,6 @@ TEST_F(SacTrainingTest, MaskedFireReceivesNoUpdate) {
 
 TEST_F(SacTrainingTest, EpisodeEndKeepsTraining) {
     constexpr SacTrainingTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
         .nb_sensors = model::ENEMY_STATE_VECTOR_SIZE,
         .nb_continuous_actions = 2,
         .nb_discrete_actions = 2};
@@ -159,8 +153,6 @@ TEST_F(SacTrainingTest, EpisodeEndKeepsTraining) {
 
 TEST_F(SacTrainingTest, ActorAndCriticShareOneEncoder) {
     constexpr SacTrainingTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
         .nb_sensors = model::ENEMY_STATE_VECTOR_SIZE,
         .nb_continuous_actions = 2,
         .nb_discrete_actions = 2};
@@ -181,8 +173,6 @@ TEST_F(SacTrainingTest, ActorAndCriticShareOneEncoder) {
 
 TEST_F(SacTrainingTest, CriticLossTrainsTheSharedEncoder) {
     constexpr SacTrainingTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
         .nb_sensors = model::ENEMY_STATE_VECTOR_SIZE,
         .nb_continuous_actions = 2,
         .nb_discrete_actions = 2};

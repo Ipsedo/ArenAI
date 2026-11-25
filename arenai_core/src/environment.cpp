@@ -13,14 +13,11 @@ namespace arenai::core {
     BaseTanksEnvironment::BaseTanksEnvironment(
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, const int nb_tanks,
-        float wanted_frequency, const int vision_height, const int vision_width,
-        const int vision_num_threads, const bool vision_thread_sleep)
-        : wanted_frequency(wanted_frequency), nb_tanks(nb_tanks), vision_height(vision_height),
-          vision_width(vision_width), vision_num_threads(vision_num_threads),
-          vision_thread_sleep(vision_thread_sleep),
+        float wanted_frequency, const int vision_num_threads, const bool vision_thread_sleep)
+        : wanted_frequency(wanted_frequency), nb_tanks(nb_tanks),
+          vision_num_threads(vision_num_threads), vision_thread_sleep(vision_thread_sleep),
           vision_pool_(std::make_unique<EnemyVisionThreadPool>(
-              nb_tanks, vision_num_threads, vision_height, vision_width, wanted_frequency,
-              vision_thread_sleep)),
+              nb_tanks, vision_num_threads, wanted_frequency, vision_thread_sleep)),
           physic_engine(model::make_physic_engine(wanted_frequency)),
           nb_reset_frames(static_cast<int>(4.f / wanted_frequency)), spawn_width(0.f),
           spawn_height(0.f), drawing_started_(false),

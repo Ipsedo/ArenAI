@@ -81,9 +81,7 @@
         "nb_tanks": 32,
         "shells": 10,
         "shells_per_hit": 3,
-        "vision_height": 128,
         "vision_num_threads": 16,
-        "vision_width": 256,
         "wanted_frequency": 0.03333333507180214
     },
     "train": {

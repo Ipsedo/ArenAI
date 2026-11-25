@@ -2,6 +2,7 @@
 #include <networks/constants.h>
 
 #include <arenai_agent_tests/tests_networks/tests_actor.h>
+#include <arenai_core/types.h>
 
 using namespace arenai;
 using namespace arenai::agent;
@@ -12,13 +13,12 @@ TEST_P(ActorTestParam, TestActorAct) {
          batch_size] = GetParam();
 
     constexpr int input_channels = 3;
-    constexpr int width = 32;
-    constexpr int height = 32;
+    constexpr int width = core::VISION_WIDTH;
+    constexpr int height = core::VISION_HEIGHT;
 
     Actor actor(
-        height, width, sensors_nb, cont_actions_nb, discrete_actions_nb, sensors_hidden_size,
-        layers, {{input_channels, 4}, {4, 8}}, {2, 4}, 0.1f,
-        std::vector(discrete_actions_nb, 0.2f));
+        sensors_nb, cont_actions_nb, discrete_actions_nb, sensors_hidden_size, layers,
+        {{input_channels, 4}, {4, 8}}, {2, 4}, 0.1f, std::vector(discrete_actions_nb, 0.2f));
 
     const auto image = torch::randint(
         255, {batch_size, input_channels, height, width},

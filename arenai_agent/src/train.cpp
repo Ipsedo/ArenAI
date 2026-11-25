@@ -40,8 +40,6 @@ namespace arenai::agent {
                 {"environment",
                  {{"wanted_frequency", environment_options.wanted_frequency},
                   {"nb_tanks", environment_options.nb_tanks},
-                  {"vision_height", environment_options.vision_height},
-                  {"vision_width", environment_options.vision_width},
                   {"initial_spawn_width", environment_options.initial_spawn_width},
                   {"initial_spawn_height", environment_options.initial_spawn_height},
                   {"final_spawn_width", environment_options.final_spawn_width},
@@ -77,8 +75,8 @@ namespace arenai::agent {
         std::cout << "Vulkan device : " << graphics_backend->renderer_info() << std::endl;
         std::cout << "PyTorch device : " << torch_device.str() << std::endl;
 
-        std::cout << "Vision size : width=" << environment_options.vision_width
-                  << ", height=" << environment_options.vision_height << std::endl;
+        std::cout << "Vision size : width=" << core::VISION_WIDTH
+                  << ", height=" << core::VISION_HEIGHT << std::endl;
         std::cout << "State vector size : " << model::ENEMY_STATE_VECTOR_SIZE << std::endl;
         std::cout << "Action size (continuous) : " << model::ENEMY_NB_CONTINUOUS_ACTION
                   << std::endl;
@@ -103,8 +101,7 @@ namespace arenai::agent {
         const auto env = std::make_unique<TrainTankEnvironment>(
             std::move(graphics_backend), environment_options.nb_tanks,
             train_options.resources_folder, environment_options.wanted_frequency,
-            train_options.max_episode_steps, environment_options.vision_height,
-            environment_options.vision_width, environment_options.num_threads,
+            train_options.max_episode_steps, environment_options.num_threads,
             environment_options.action_repeat, curriculum);
 
         const auto agent = agent_factory->get_agent();
@@ -184,8 +181,7 @@ namespace arenai::agent {
             bool is_done = false;
 
             auto state = TorchState(
-                env->reset(spawn_width, spawn_height, environment_options.shell_economy),
-                environment_options.vision_height, environment_options.vision_width);
+                env->reset(spawn_width, spawn_height, environment_options.shell_economy));
 
             while (!is_done) {
 
@@ -196,8 +192,7 @@ namespace arenai::agent {
                 // step environment
                 const auto steps = env->step(environment_options.wanted_frequency, actions_for_env);
 
-                const TorchStep torch_step(
-                    steps, environment_options.vision_height, environment_options.vision_width);
+                const TorchStep torch_step(steps);
 
                 // complete the pending transition - maybe train
                 collector->on_transition(

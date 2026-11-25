@@ -20,8 +20,6 @@ namespace arenai::desktop {
 
     struct LoadedAgent {
         std::shared_ptr<agent::AbstractAgent> agent;
-        int vision_height;
-        int vision_width;
         float wanted_frequency;
         int action_repeat;
     };

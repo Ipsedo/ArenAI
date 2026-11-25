@@ -22,9 +22,6 @@ namespace arenai::agent {
             AgentAlgorithm algorithm, const int &nb_sensors, const int &nb_continuous_actions,
             const int &nb_discrete_actions, bool cuda);
 
-        int get_vision_height() const;
-        int get_vision_width() const;
-
         float get_wanted_frequency() const;
 
         int get_action_repeat() const;
@@ -48,9 +45,6 @@ namespace arenai::agent {
             bool cuda);
 
         nlohmann::json agent_arguments;
-
-        int vision_height;
-        int vision_width;
 
         float wanted_frequency;
 

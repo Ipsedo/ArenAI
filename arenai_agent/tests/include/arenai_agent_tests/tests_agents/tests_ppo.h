@@ -11,8 +11,6 @@
 using namespace arenai;
 
 struct PpoTestConfig {
-    int vision_height;
-    int vision_width;
     int nb_sensors;
     int nb_continuous_actions;
     int nb_discrete_actions;

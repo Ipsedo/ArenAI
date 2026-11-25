@@ -1,25 +1,27 @@
 #include <networks/vision.h>
 
 #include <arenai_agent_tests/tests_networks/tests_vision_edge.h>
+#include <arenai_core/types.h>
 
 using namespace arenai;
 using namespace arenai::agent;
 
 TEST_F(VisionEdgeTest, RejectsNonUint8Input) {
-    ConvolutionNetwork conv(8, 8, {{3, 4}}, {2});
+    ConvolutionNetwork conv({{3, 4}}, {2});
 
-    const auto float_input = torch::randn({1, 3, 8, 8});
+    const auto float_input = torch::randn({1, 3, core::VISION_HEIGHT, core::VISION_WIDTH});
 
     ASSERT_THROW(conv.forward(float_input), c10::Error) << "Should throw when input is not UInt8";
 }
 
 TEST_F(VisionEdgeTest, NormalizesToExpectedRange) {
-    ConvolutionNetwork conv(8, 8, {{3, 4}}, {2});
+    ConvolutionNetwork conv({{3, 4}}, {2});
 
-    const auto zeros = torch::zeros({1, 3, 8, 8}, torch::kUInt8);
+    const auto zeros = torch::zeros({1, 3, core::VISION_HEIGHT, core::VISION_WIDTH}, torch::kUInt8);
     const auto result_zeros = conv.forward(zeros);
 
-    const auto max255 = torch::ones({1, 3, 8, 8}, torch::kUInt8) * 255;
+    const auto max255 =
+        torch::ones({1, 3, core::VISION_HEIGHT, core::VISION_WIDTH}, torch::kUInt8) * 255;
     const auto result_255 = conv.forward(max255);
 
     ASSERT_TRUE(torch::all(torch::isfinite(result_zeros)).item<bool>());
@@ -29,10 +31,10 @@ TEST_F(VisionEdgeTest, NormalizesToExpectedRange) {
 TEST_F(VisionEdgeTest, OutputSizeMatchesGetOutputSize) {
     const std::vector<std::tuple<int, int>> channels = {{3, 8}, {8, 16}};
     const std::vector gnums = {4, 4};
-    constexpr int h = 16, w = 16;
+    constexpr int h = core::VISION_HEIGHT, w = core::VISION_WIDTH;
     constexpr int batch_size = 2;
 
-    ConvolutionNetwork conv(h, w, channels, gnums);
+    ConvolutionNetwork conv(channels, gnums);
 
     const auto input = torch::randint(255, {batch_size, 3, h, w}, torch::kUInt8);
     const auto output = conv.forward(input);

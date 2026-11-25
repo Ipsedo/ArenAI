@@ -27,12 +27,11 @@ namespace arenai::agent {
     TrainTankEnvironment::TrainTankEnvironment(
         const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, const int nb_tanks,
         const std::filesystem::path &android_assets_path, const float wanted_frequency,
-        const int max_episode_steps, const int vision_height, const int vision_width,
-        const int vision_num_threads, const int action_repeat,
+        const int max_episode_steps, const int vision_num_threads, const int action_repeat,
         const std::shared_ptr<const ProgressCurriculum> &curriculum)
         : BaseTanksEnvironment(
             std::make_shared<DesktopAssetFileReader>(android_assets_path), graphics_backend,
-            nb_tanks, wanted_frequency, vision_height, vision_width, vision_num_threads, false),
+            nb_tanks, wanted_frequency, vision_num_threads, false),
           wanted_frequency(wanted_frequency), action_repeat(action_repeat), nb_tanks(nb_tanks),
           nb_steps(0), done(nb_tanks, false), already_done(nb_tanks, false),
           max_episode_steps(max_episode_steps), nb_hits_per_tanks(nb_tanks, 0),

@@ -17,11 +17,7 @@ using namespace arenai::core;
 TEST_F(EnvironmentTest, ResetReturnsCorrectNumberOfStates) {
     constexpr int nb_tanks = 3;
     constexpr float frequency = 1.f / 60.f;
-    constexpr int vision_h = 16;
-    constexpr int vision_w = 16;
-
-    TestTanksEnvironment env(
-        file_reader, graphics_backend, nb_tanks, frequency, vision_h, vision_w, 1, false);
+    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 1, false);
 
     const auto states = env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
 
@@ -33,15 +29,12 @@ TEST_F(EnvironmentTest, ResetReturnsCorrectNumberOfStates) {
 TEST_F(EnvironmentTest, ResetInitialVisionIsNotBlack) {
     constexpr int nb_tanks = 2;
     constexpr float frequency = 1.f / 60.f;
-    constexpr int vision_h = 16;
-    constexpr int vision_w = 16;
-
-    TestTanksEnvironment env(
-        file_reader, graphics_backend, nb_tanks, frequency, vision_h, vision_w, 1, false);
+    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 1, false);
 
     for (const auto states = env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
          const auto &[vision, proprioception, shells_ratio, cooldown_ratio, can_fire]: states) {
-        ASSERT_EQ(static_cast<int>(vision.pixels.size()), 3 * vision_h * vision_w);
+        ASSERT_EQ(
+            static_cast<int>(vision.pixels.size()), 3 * core::VISION_HEIGHT * core::VISION_WIDTH);
 
         const int pixel_sum = std::accumulate(
             vision.pixels.begin(), vision.pixels.end(), 0,
@@ -61,11 +54,7 @@ TEST_F(EnvironmentTest, ResetGoldenImage) {
 
     constexpr int nb_tanks = 2;
     constexpr float frequency = 1.f / 60.f;
-    constexpr int vision_h = 16;
-    constexpr int vision_w = 16;
-
-    TestTanksEnvironment env(
-        file_reader, graphics_backend, nb_tanks, frequency, vision_h, vision_w, 1, false);
+    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 1, false);
 
     env.seed(42);
 
@@ -123,7 +112,7 @@ TEST_F(EnvironmentTest, ResetProprioceptionNonEmpty) {
     constexpr int nb_tanks = 2;
     constexpr float frequency = 1.f / 60.f;
 
-    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 8, 8, 1, false);
+    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 1, false);
 
     for (const auto states = env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
          const auto &[vision, proprioception, shells_ratio, cooldown_ratio, can_fire]: states) {
@@ -137,7 +126,7 @@ TEST_F(EnvironmentTest, ResetCallsOnResetPhysics) {
     constexpr int nb_tanks = 1;
     constexpr float frequency = 1.f / 60.f;
 
-    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 8, 8, 1, false);
+    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 1, false);
 
     env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
 
@@ -149,11 +138,7 @@ TEST_F(EnvironmentTest, ResetCallsOnResetPhysics) {
 TEST_F(EnvironmentTest, StepReturnsCorrectNumberOfTuples) {
     constexpr int nb_tanks = 2;
     constexpr float frequency = 1.f / 60.f;
-    constexpr int vision_h = 16;
-    constexpr int vision_w = 16;
-
-    TestTanksEnvironment env(
-        file_reader, graphics_backend, nb_tanks, frequency, vision_h, vision_w, 1, false);
+    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 1, false);
 
     env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
 
@@ -173,7 +158,7 @@ TEST_F(EnvironmentTest, StepRewardAndDoneAreValid) {
     constexpr int nb_tanks = 2;
     constexpr float frequency = 1.f / 60.f;
 
-    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false);
+    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 1, false);
 
     env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
 
@@ -195,7 +180,7 @@ TEST_F(EnvironmentTest, StepCallsOnDraw) {
     constexpr int nb_tanks = 1;
     constexpr float frequency = 1.f / 60.f;
 
-    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false);
+    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 1, false);
 
     env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
 
@@ -219,7 +204,7 @@ TEST_F(EnvironmentTest, MultipleStepsDoNotCrash) {
     constexpr int nb_tanks = 2;
     constexpr float frequency = 1.f / 60.f;
 
-    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false);
+    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 1, false);
 
     env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
 
@@ -240,7 +225,7 @@ TEST_F(EnvironmentTest, ResetCallsOnResetDrawables) {
     constexpr int nb_tanks = 1;
     constexpr float frequency = 1.f / 60.f;
 
-    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false);
+    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 1, false);
 
     env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
 
@@ -253,7 +238,7 @@ TEST_F(EnvironmentTest, FullLifecycle) {
     constexpr int nb_tanks = 2;
     constexpr float frequency = 1.f / 60.f;
 
-    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false);
+    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 1, false);
 
     // First episode
     const auto initial_states = env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
@@ -278,7 +263,7 @@ TEST_F(EnvironmentTest, StopDrawingDoubleCallDoesNotCrash) {
     constexpr int nb_tanks = 1;
     constexpr float frequency = 1.f / 60.f;
 
-    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false);
+    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 1, false);
 
     env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
 
@@ -301,7 +286,7 @@ TEST_F(EnvironmentTest, SpawnedBodiesStartAboveTerrain) {
     constexpr int nb_shapes_per_kind = 30;
     constexpr float frequency = 1.f / 60.f;
 
-    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false);
+    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 1, false);
 
     // wide spawn zone so tanks land on varied terrain heights
     env.reset(2000.f, 2000.f, model::GAME_SHELL_ECONOMY);
@@ -334,7 +319,7 @@ TEST_F(EnvironmentTest, RespawnTankLandsInSpawnBoxAboveTerrain) {
     constexpr float frequency = 1.f / 60.f;
     constexpr float spawn_side = 200.f;
 
-    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false);
+    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 1, false);
     env.reset(spawn_side, spawn_side, model::GAME_SHELL_ECONOMY);
 
     const std::vector<controller::user_input> no_input(
@@ -366,7 +351,7 @@ TEST_F(EnvironmentTest, TankLeavingArenaDiesAsSuicide) {
     constexpr int nb_tanks = 2;
     constexpr float frequency = 1.f / 60.f;
 
-    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 16, 16, 1, false);
+    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 1, false);
     env.reset(200.f, 200.f, model::GAME_SHELL_ECONOMY);
 
     const std::vector<controller::user_input> no_input(

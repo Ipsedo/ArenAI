@@ -10,7 +10,6 @@ typedef int VisionHeight;
 typedef int VisionWidth;
 
 class TensorToActionsParamTest : public testing::TestWithParam<BatchSize> {};
-class StatesToTensorParamTest
-    : public testing::TestWithParam<std::tuple<BatchSize, VisionHeight, VisionWidth>> {};
+class StatesToTensorParamTest : public testing::TestWithParam<BatchSize> {};
 
 #endif//ARENAI_TESTS_TORCH_TYPES_H

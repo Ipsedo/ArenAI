@@ -45,8 +45,7 @@ namespace arenai::agent {
         TrainTankEnvironment(
             const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, int nb_tanks,
             const std::filesystem::path &android_assets_path, float wanted_frequency,
-            int max_episode_steps, int vision_height, int vision_width, int vision_num_threads,
-            int action_repeat,
+            int max_episode_steps, int vision_num_threads, int action_repeat,
             const std::shared_ptr<const ProgressCurriculum> &curriculum = nullptr);
 
         std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>

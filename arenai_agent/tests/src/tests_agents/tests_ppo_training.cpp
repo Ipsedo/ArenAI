@@ -27,24 +27,21 @@ PpoTrainingTest::make_factory(const PpoTrainingTestConfig &cfg) const {
         .critic_gpu_batch_size = MINIBATCH_SIZE};
 
     return std::make_unique<PpoTorchAgentFactory>(
-        cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, device, params);
+        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, device, params);
 }
 
 TorchState PpoTrainingTest::make_state(const PpoTrainingTestConfig &cfg, const int nb_tanks) {
     return TorchState(
-        torch::randint(0, 255, {nb_tanks, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
+        torch::randint(
+            0, 255, {nb_tanks, 3, arenai::core::VISION_HEIGHT, arenai::core::VISION_WIDTH},
+            torch::kUInt8),
         torch::randn({nb_tanks, cfg.nb_sensors}),
         torch::randint(0, 2, {nb_tanks, 1}).to(torch::kFloat));
 }
 
 TEST_F(PpoTrainingTest, ActProducesValidOutput) {
     constexpr PpoTrainingTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
-        .nb_sensors = 3,
-        .nb_continuous_actions = 2,
-        .nb_discrete_actions = 2};
+        .nb_sensors = 3, .nb_continuous_actions = 2, .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
     const auto [continuous_action, discrete_action] =
@@ -61,11 +58,7 @@ TEST_F(PpoTrainingTest, ActProducesValidOutput) {
 
 TEST_F(PpoTrainingTest, CountParametersPositive) {
     constexpr PpoTrainingTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
-        .nb_sensors = 3,
-        .nb_continuous_actions = 2,
-        .nb_discrete_actions = 2};
+        .nb_sensors = 3, .nb_continuous_actions = 2, .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
     ASSERT_GT(factory->get_trainer()->count_parameters(), 0)
@@ -75,29 +68,23 @@ TEST_F(PpoTrainingTest, CountParametersPositive) {
 TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
     // build the triad by hand to keep a handle on the actor's parameters
     constexpr PpoTrainingTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
-        .nb_sensors = 3,
-        .nb_continuous_actions = 2,
-        .nb_discrete_actions = 3};
+        .nb_sensors = 3, .nb_continuous_actions = 2, .nb_discrete_actions = 3};
 
     const std::vector<std::tuple<int, int>> vision_channels{{3, 4}};
     const std::vector group_norm_nums{2};
 
     const auto actor = std::make_shared<Actor>(
-        cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, 8, std::vector{16}, vision_channels, group_norm_nums, 0.1f,
-        std::vector(cfg.nb_discrete_actions, 0.2f));
+        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 8, std::vector{16},
+        vision_channels, group_norm_nums, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
     const auto rollout_buffer = std::make_shared<PpoRolloutBuffer>();
     const auto collector = std::make_shared<PpoStepCollector>(rollout_buffer);
     const auto agent = std::make_shared<TorchPpoAgent>(actor, device, collector);
     // target_kl = 0 : early stop disabled so every optimizer batch applies its update
     const auto trainer = std::make_shared<PpoTrainer>(
-        actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, cfg.nb_sensors, 1e-3f, 1e-3f, 8, std::vector{16}, vision_channels,
-        group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 3e-4f,
-        std::vector(cfg.nb_continuous_actions, -1.f), 0.05f, 2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE,
-        MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE);
+        actor, rollout_buffer, cfg.nb_continuous_actions, cfg.nb_discrete_actions, cfg.nb_sensors,
+        1e-3f, 1e-3f, 8, std::vector{16}, vision_channels, group_norm_nums, device, 10, 0.99f,
+        0.95f, 0.2f, 0.f, 1.f, 0.001f, 3e-4f, std::vector(cfg.nb_continuous_actions, -1.f), 0.05f,
+        2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE);
 
     std::vector<torch::Tensor> initial_parameters;
     for (const auto &parameter: actor->parameters())
@@ -131,29 +118,23 @@ TEST_F(PpoTrainingTest, TrainingUpdatesActorParameters) {
 TEST_F(PpoTrainingTest, MaskedFireReceivesNoUpdate) {
     // fire never possible: its head row must stay untouched while zoom keeps learning
     constexpr PpoTrainingTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
-        .nb_sensors = 3,
-        .nb_continuous_actions = 2,
-        .nb_discrete_actions = 2};
+        .nb_sensors = 3, .nb_continuous_actions = 2, .nb_discrete_actions = 2};
 
     const std::vector<std::tuple<int, int>> vision_channels{{3, 4}};
     const std::vector group_norm_nums{2};
 
     const auto actor = std::make_shared<Actor>(
-        cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, 8, std::vector{16}, vision_channels, group_norm_nums, 0.1f,
-        std::vector(cfg.nb_discrete_actions, 0.2f));
+        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 8, std::vector{16},
+        vision_channels, group_norm_nums, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
     const auto rollout_buffer = std::make_shared<PpoRolloutBuffer>();
     const auto collector = std::make_shared<PpoStepCollector>(rollout_buffer);
     const auto agent = std::make_shared<TorchPpoAgent>(actor, device, collector);
     // target_kl = 0 : early stop disabled so every optimizer batch applies its update
     const auto trainer = std::make_shared<PpoTrainer>(
-        actor, rollout_buffer, cfg.vision_height, cfg.vision_width, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, cfg.nb_sensors, 1e-3f, 1e-3f, 8, std::vector{16}, vision_channels,
-        group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 3e-4f,
-        std::vector(cfg.nb_continuous_actions, -1.f), 0.05f, 2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE,
-        MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE);
+        actor, rollout_buffer, cfg.nb_continuous_actions, cfg.nb_discrete_actions, cfg.nb_sensors,
+        1e-3f, 1e-3f, 8, std::vector{16}, vision_channels, group_norm_nums, device, 10, 0.99f,
+        0.95f, 0.2f, 0.f, 1.f, 0.001f, 3e-4f, std::vector(cfg.nb_continuous_actions, -1.f), 0.05f,
+        2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE);
 
     auto named_parameters = actor->named_parameters();
     const auto weight = named_parameters["discrete.0.weight"];

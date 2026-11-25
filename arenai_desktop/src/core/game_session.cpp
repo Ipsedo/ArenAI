@@ -19,8 +19,7 @@ namespace arenai::desktop {
           window_(backend_->get_window()), gui_(gui),
           enemy_(load_agent(agent_selection(settings_), settings_.cuda)) {
         env_ = std::make_shared<DesktopGameEnvironment>(
-            options_.resources_folder, backend_, settings_, enemy_.vision_height,
-            enemy_.vision_width, enemy_.wanted_frequency);
+            options_.resources_folder, backend_, settings_, enemy_.wanted_frequency);
         states_ = env_->reset(
             static_cast<float>(settings_.spawn_side), static_cast<float>(settings_.spawn_side),
             model::GAME_SHELL_ECONOMY);
@@ -144,8 +143,7 @@ namespace arenai::desktop {
         const bool observe = (frame_ + 1) % enemy_.action_repeat == 0;
         frame_++;
 
-        if (decide)
-            held_actions_ = enemy_.agent->act(states_, enemy_.vision_height, enemy_.vision_width);
+        if (decide) held_actions_ = enemy_.agent->act(states_);
 
         if (auto next_states = env_->play_frame(
                 enemy_.wanted_frequency, decide ? held_actions_ : core::release_fire(held_actions_),

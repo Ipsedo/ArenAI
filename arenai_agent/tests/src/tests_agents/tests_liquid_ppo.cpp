@@ -36,23 +36,20 @@ LiquidPpoAgentTest::make_factory(const LiquidPpoTestConfig &cfg) const {
         .critic_gpu_batch_size = 10};
 
     return std::make_unique<LiquidPpoTorchAgentFactory>(
-        cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, device, params);
+        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, device, params);
 }
 
 TorchState LiquidPpoAgentTest::make_state(const LiquidPpoTestConfig &cfg, const int batch) {
     return TorchState(
-        torch::randint(0, 255, {batch, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
+        torch::randint(
+            0, 255, {batch, 3, arenai::core::VISION_HEIGHT, arenai::core::VISION_WIDTH},
+            torch::kUInt8),
         torch::randn({batch, cfg.nb_sensors}), torch::ones({batch, 1}));
 }
 
 TEST_F(LiquidPpoAgentTest, ParameterCountPositive) {
     constexpr LiquidPpoTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
-        .nb_sensors = 10,
-        .nb_continuous_actions = 4,
-        .nb_discrete_actions = 2};
+        .nb_sensors = 10, .nb_continuous_actions = 4, .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
     ASSERT_GT(factory->get_trainer()->count_parameters(), 0);
@@ -60,11 +57,7 @@ TEST_F(LiquidPpoAgentTest, ParameterCountPositive) {
 
 TEST_F(LiquidPpoAgentTest, MetricsNotEmpty) {
     constexpr LiquidPpoTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
-        .nb_sensors = 10,
-        .nb_continuous_actions = 4,
-        .nb_discrete_actions = 2};
+        .nb_sensors = 10, .nb_continuous_actions = 4, .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
     ASSERT_EQ(factory->get_trainer()->get_metrics().size(), 8);
@@ -136,8 +129,8 @@ TEST_P(LiquidPpoActShapeParamTest, ActKeepsShapesOverConsecutiveSteps) {
 INSTANTIATE_TEST_SUITE_P(
     LiquidPpoAgent, LiquidPpoActShapeParamTest,
     testing::Values(
-        LiquidPpoTestConfig{8, 8, 10, 4, 2}, LiquidPpoTestConfig{8, 8, 5, 2, 2},
-        LiquidPpoTestConfig{16, 16, 20, 6, 2}, LiquidPpoTestConfig{8, 12, 10, 4, 2}));
+        LiquidPpoTestConfig{10, 4, 2}, LiquidPpoTestConfig{5, 2, 2}, LiquidPpoTestConfig{20, 6, 2},
+        LiquidPpoTestConfig{10, 4, 2}));
 
 TEST_P(LiquidPpoSaveLoadParamTest, SaveCreatesExpectedFiles) {
     const auto cfg = GetParam();
@@ -176,5 +169,5 @@ TEST_P(LiquidPpoSaveLoadParamTest, SavedFilesNonEmpty) {
 INSTANTIATE_TEST_SUITE_P(
     LiquidPpoAgent, LiquidPpoSaveLoadParamTest,
     testing::Values(
-        LiquidPpoTestConfig{8, 8, 10, 4, 2}, LiquidPpoTestConfig{8, 8, 5, 2, 2},
-        LiquidPpoTestConfig{16, 16, 20, 6, 2}));
+        LiquidPpoTestConfig{10, 4, 2}, LiquidPpoTestConfig{5, 2, 2},
+        LiquidPpoTestConfig{20, 6, 2}));

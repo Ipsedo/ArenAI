@@ -20,8 +20,7 @@ namespace arenai::agent {
 
         TorchAction act(const TorchState &state, bool sample) override;
 
-        std::vector<core::Action>
-        act(const std::vector<core::State> &states, int vision_height, int vision_width) override;
+        std::vector<core::Action> act(const std::vector<core::State> &states) override;
         void load(const std::filesystem::path &agent_folder) override;
 
     private:

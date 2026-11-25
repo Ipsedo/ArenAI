@@ -36,23 +36,20 @@ std::unique_ptr<PpgTorchAgentFactory> PpgAgentTest::make_factory(const PpgTestCo
         .critic_aux_epochs = 1};
 
     return std::make_unique<PpgTorchAgentFactory>(
-        cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, device, params);
+        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, device, params);
 }
 
 TorchState PpgAgentTest::make_state(const PpgTestConfig &cfg, const int batch) {
     return TorchState(
-        torch::randint(0, 255, {batch, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
+        torch::randint(
+            0, 255, {batch, 3, arenai::core::VISION_HEIGHT, arenai::core::VISION_WIDTH},
+            torch::kUInt8),
         torch::randn({batch, cfg.nb_sensors}), torch::ones({batch, 1}));
 }
 
 TEST_F(PpgAgentTest, ParameterCountPositive) {
     constexpr PpgTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
-        .nb_sensors = 10,
-        .nb_continuous_actions = 4,
-        .nb_discrete_actions = 2};
+        .nb_sensors = 10, .nb_continuous_actions = 4, .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
     ASSERT_GT(factory->get_trainer()->count_parameters(), 0);
@@ -60,11 +57,7 @@ TEST_F(PpgAgentTest, ParameterCountPositive) {
 
 TEST_F(PpgAgentTest, MetricsNotEmpty) {
     constexpr PpgTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
-        .nb_sensors = 10,
-        .nb_continuous_actions = 4,
-        .nb_discrete_actions = 2};
+        .nb_sensors = 10, .nb_continuous_actions = 4, .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
     ASSERT_EQ(factory->get_trainer()->get_metrics().size(), 8);
@@ -76,16 +69,11 @@ TEST_F(PpgAgentTest, MetricsNotEmpty) {
 
 TEST_F(PpgAgentTest, DistillationValueShape) {
     constexpr PpgTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
-        .nb_sensors = 10,
-        .nb_continuous_actions = 4,
-        .nb_discrete_actions = 2};
+        .nb_sensors = 10, .nb_continuous_actions = 4, .nb_discrete_actions = 2};
 
     DistillationActor actor(
-        cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, 16, std::vector{32}, {{3, 8}}, {4}, 0.5f,
-        std::vector(cfg.nb_discrete_actions, 0.5f));
+        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 16, std::vector{32},
+        {{3, 8}}, {4}, 0.5f, std::vector(cfg.nb_discrete_actions, 0.5f));
 
     constexpr int batch = 4;
     const auto state = make_state(cfg, batch);
@@ -96,8 +84,8 @@ TEST_F(PpgAgentTest, DistillationValueShape) {
 }
 
 TEST_F(PpgAgentTest, DistillationValueHeadIsRegistered) {
-    DistillationActor actor(8, 8, 10, 4, 2, 16, std::vector{32}, {{3, 8}}, {4}, 0.5f, {0.5f, 0.5f});
-    const Actor plain_actor(8, 8, 10, 4, 2, 16, std::vector{32}, {{3, 8}}, {4}, 0.5f, {0.5f, 0.5f});
+    DistillationActor actor(10, 4, 2, 16, std::vector{32}, {{3, 8}}, {4}, 0.5f, {0.5f, 0.5f});
+    const Actor plain_actor(10, 4, 2, 16, std::vector{32}, {{3, 8}}, {4}, 0.5f, {0.5f, 0.5f});
 
     auto named_parameters = actor.named_parameters();
     ASSERT_TRUE(named_parameters.contains("value.weight"));
@@ -149,8 +137,8 @@ TEST_P(PpgActShapeParamTest, ActDiscreteIsBinary) {
 INSTANTIATE_TEST_SUITE_P(
     PpgAgent, PpgActShapeParamTest,
     testing::Values(
-        PpgTestConfig{8, 8, 10, 4, 2}, PpgTestConfig{8, 8, 5, 2, 2},
-        PpgTestConfig{16, 16, 20, 6, 2}, PpgTestConfig{8, 12, 10, 4, 2}));
+        PpgTestConfig{10, 4, 2}, PpgTestConfig{5, 2, 2}, PpgTestConfig{20, 6, 2},
+        PpgTestConfig{10, 4, 2}));
 
 TEST_P(PpgSaveLoadParamTest, SaveCreatesExpectedFiles) {
     const auto cfg = GetParam();
@@ -212,6 +200,4 @@ TEST_P(PpgSaveLoadParamTest, AgentLoadsSavedActor) {
 
 INSTANTIATE_TEST_SUITE_P(
     PpgAgent, PpgSaveLoadParamTest,
-    testing::Values(
-        PpgTestConfig{8, 8, 10, 4, 2}, PpgTestConfig{8, 8, 5, 2, 2},
-        PpgTestConfig{16, 16, 20, 6, 2}));
+    testing::Values(PpgTestConfig{10, 4, 2}, PpgTestConfig{5, 2, 2}, PpgTestConfig{20, 6, 2}));

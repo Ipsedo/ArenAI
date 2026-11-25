@@ -29,13 +29,14 @@ PpgTrainingTest::make_factory(const PpgTrainingTestConfig &cfg) const {
         .critic_aux_epochs = 2};
 
     return std::make_unique<PpgTorchAgentFactory>(
-        cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, device, params);
+        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, device, params);
 }
 
 TorchState PpgTrainingTest::make_state(const PpgTrainingTestConfig &cfg, const int nb_tanks) {
     return TorchState(
-        torch::randint(0, 255, {nb_tanks, 3, cfg.vision_height, cfg.vision_width}, torch::kUInt8),
+        torch::randint(
+            0, 255, {nb_tanks, 3, arenai::core::VISION_HEIGHT, arenai::core::VISION_WIDTH},
+            torch::kUInt8),
         torch::randn({nb_tanks, cfg.nb_sensors}),
         torch::randint(0, 2, {nb_tanks, 1}).to(torch::kFloat));
 }
@@ -46,18 +47,17 @@ PpgTriad PpgTrainingTest::make_triad(const PpgTrainingTestConfig &cfg, const int
 
     PpgTriad triad;
     triad.actor = std::make_shared<DistillationActor>(
-        cfg.vision_height, cfg.vision_width, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, 8, std::vector{16}, vision_channels, group_norm_nums, 0.1f,
-        std::vector(cfg.nb_discrete_actions, 0.2f));
+        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 8, std::vector{16},
+        vision_channels, group_norm_nums, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
     triad.rollout_buffer = std::make_shared<PpgRolloutBuffer>();
     triad.collector = std::make_shared<PpgStepCollector>(triad.rollout_buffer);
     triad.agent = std::make_shared<TorchPpgAgent>(triad.actor, device, triad.collector);
     triad.trainer = std::make_shared<PpgTrainer>(
-        triad.actor, triad.rollout_buffer, cfg.vision_height, cfg.vision_width,
-        cfg.nb_continuous_actions, cfg.nb_discrete_actions, cfg.nb_sensors, 1e-3f, 1e-3f, 8,
-        std::vector{16}, vision_channels, group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f,
-        0.001f, 3e-4f, std::vector(cfg.nb_continuous_actions, -1.f), 0.05f, 2, 2, ROLLOUT_SIZE,
-        MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, 2, 2, 1.f, n_pi);
+        triad.actor, triad.rollout_buffer, cfg.nb_continuous_actions, cfg.nb_discrete_actions,
+        cfg.nb_sensors, 1e-3f, 1e-3f, 8, std::vector{16}, vision_channels, group_norm_nums, device,
+        10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 3e-4f,
+        std::vector(cfg.nb_continuous_actions, -1.f), 0.05f, 2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE,
+        MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, 2, 2, 1.f, n_pi);
     return triad;
 }
 
@@ -80,11 +80,7 @@ void PpgTrainingTest::run_env_loop(
 
 TEST_F(PpgTrainingTest, ActProducesValidOutput) {
     constexpr PpgTrainingTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
-        .nb_sensors = 3,
-        .nb_continuous_actions = 2,
-        .nb_discrete_actions = 2};
+        .nb_sensors = 3, .nb_continuous_actions = 2, .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
     const auto [continuous_action, discrete_action] =
@@ -101,11 +97,7 @@ TEST_F(PpgTrainingTest, ActProducesValidOutput) {
 
 TEST_F(PpgTrainingTest, CountParametersPositive) {
     constexpr PpgTrainingTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
-        .nb_sensors = 3,
-        .nb_continuous_actions = 2,
-        .nb_discrete_actions = 2};
+        .nb_sensors = 3, .nb_continuous_actions = 2, .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
     ASSERT_GT(factory->get_trainer()->count_parameters(), 0)
@@ -114,11 +106,7 @@ TEST_F(PpgTrainingTest, CountParametersPositive) {
 
 TEST_F(PpgTrainingTest, FactoryTrainingRunsWithoutError) {
     constexpr PpgTrainingTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
-        .nb_sensors = 3,
-        .nb_continuous_actions = 2,
-        .nb_discrete_actions = 2};
+        .nb_sensors = 3, .nb_continuous_actions = 2, .nb_discrete_actions = 2};
     const auto factory = make_factory(cfg);
 
     for (int t = 0; t < ROLLOUT_SIZE + 2; t++) {
@@ -133,11 +121,7 @@ TEST_F(PpgTrainingTest, FactoryTrainingRunsWithoutError) {
 
 TEST_F(PpgTrainingTest, TrainingUpdatesActorParameters) {
     constexpr PpgTrainingTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
-        .nb_sensors = 3,
-        .nb_continuous_actions = 2,
-        .nb_discrete_actions = 3};
+        .nb_sensors = 3, .nb_continuous_actions = 2, .nb_discrete_actions = 3};
     const auto triad = make_triad(cfg);
 
     std::vector<torch::Tensor> initial_parameters;
@@ -165,11 +149,7 @@ TEST_F(PpgTrainingTest, TrainingUpdatesActorParameters) {
 TEST_F(PpgTrainingTest, AuxiliaryPhaseUpdatesValueHead) {
     // the actor's value head only receives a gradient from the auxiliary phase
     constexpr PpgTrainingTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
-        .nb_sensors = 3,
-        .nb_continuous_actions = 2,
-        .nb_discrete_actions = 2};
+        .nb_sensors = 3, .nb_continuous_actions = 2, .nb_discrete_actions = 2};
     const auto triad = make_triad(cfg);
 
     auto named_parameters = triad.actor->named_parameters();
@@ -185,11 +165,7 @@ TEST_F(PpgTrainingTest, AuxiliaryPhaseUpdatesValueHead) {
 
 TEST_F(PpgTrainingTest, AuxiliaryPhaseWaitsForNPiPolicyPhases) {
     constexpr PpgTrainingTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
-        .nb_sensors = 3,
-        .nb_continuous_actions = 2,
-        .nb_discrete_actions = 2};
+        .nb_sensors = 3, .nb_continuous_actions = 2, .nb_discrete_actions = 2};
     const auto triad = make_triad(cfg, 2);
 
     auto named_parameters = triad.actor->named_parameters();
@@ -208,11 +184,7 @@ TEST_F(PpgTrainingTest, AuxiliaryPhaseWaitsForNPiPolicyPhases) {
 
 TEST_F(PpgTrainingTest, TrainedActorStaysFinite) {
     constexpr PpgTrainingTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
-        .nb_sensors = 3,
-        .nb_continuous_actions = 2,
-        .nb_discrete_actions = 2};
+        .nb_sensors = 3, .nb_continuous_actions = 2, .nb_discrete_actions = 2};
     const auto triad = make_triad(cfg);
 
     // several rollouts so that the auxiliary phase runs more than once
@@ -226,11 +198,7 @@ TEST_F(PpgTrainingTest, TrainedActorStaysFinite) {
 TEST_F(PpgTrainingTest, MaskedFireReceivesNoUpdate) {
     // fire never possible: its head row must stay untouched while zoom keeps learning
     constexpr PpgTrainingTestConfig cfg{
-        .vision_height = 8,
-        .vision_width = 8,
-        .nb_sensors = 3,
-        .nb_continuous_actions = 2,
-        .nb_discrete_actions = 2};
+        .nb_sensors = 3, .nb_continuous_actions = 2, .nb_discrete_actions = 2};
     const auto triad = make_triad(cfg);
 
     auto named_parameters = triad.actor->named_parameters();

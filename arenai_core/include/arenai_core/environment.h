@@ -23,8 +23,7 @@ namespace arenai::core {
         BaseTanksEnvironment(
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend, int nb_tanks,
-            float wanted_frequency, int vision_height, int vision_width, int vision_num_threads,
-            bool vision_thread_sleep);
+            float wanted_frequency, int vision_num_threads, bool vision_thread_sleep);
 
         virtual std::vector<std::tuple<State, Reward, IsDone, IsTruncated>>
         step(float time_delta, const std::vector<Action> &actions);
@@ -41,9 +40,6 @@ namespace arenai::core {
     private:
         float wanted_frequency;
         int nb_tanks;
-
-        int vision_height;
-        int vision_width;
 
         int vision_num_threads;
         bool vision_thread_sleep;

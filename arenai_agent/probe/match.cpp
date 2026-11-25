@@ -55,12 +55,10 @@ namespace {
     public:
         MatchEnvironment(
             const std::filesystem::path &resources_folder, const int nb_tanks,
-            const float wanted_frequency, const int vision_height, const int vision_width,
-            const int vision_num_threads)
+            const float wanted_frequency, const int vision_num_threads)
             : BaseTanksEnvironment(
                 std::make_shared<agent::DesktopAssetFileReader>(resources_folder),
-                view::make_vulkan_backend(), nb_tanks, wanted_frequency, vision_height,
-                vision_width, vision_num_threads, false),
+                view::make_vulkan_backend(), nb_tanks, wanted_frequency, vision_num_threads, false),
               player_dead(false) {}
 
         // same sequence as DesktopGameEnvironment::play_frame
@@ -341,15 +339,13 @@ int main(const int argc, char **argv) {
     std::ifstream(run_folder / "config.json") >> config;
     agent::AgentFactory factory(config);
 
-    const int vision_height = factory.get_vision_height();
-    const int vision_width = factory.get_vision_width();
     const float wanted_frequency = factory.get_wanted_frequency();
     const int action_repeat = factory.get_action_repeat();
     const int max_frames = static_cast<int>(parser.get<float>("--max_seconds") / wanted_frequency);
 
     MatchEnvironment env(
-        parser.get<std::string>("--resources_folder"), nb_tanks, wanted_frequency, vision_height,
-        vision_width, parser.get<int>("--vision_num_threads"));
+        parser.get<std::string>("--resources_folder"), nb_tanks, wanted_frequency,
+        parser.get<int>("--vision_num_threads"));
 
     std::ofstream tanks_csv(parser.get<std::string>("--output") + "_tanks.csv");
     tanks_csv << "match;second;tank;alive;out_of_shells;shells;fired;hits;kills;x;z;"
@@ -388,7 +384,7 @@ int main(const int argc, char **argv) {
             const bool observe = (frame + 1) % action_repeat == 0;
 
             if (decide) {
-                held_actions = agent->act(states, vision_height, vision_width);
+                held_actions = agent->act(states);
                 if (acquire_oracle)
                     held_actions =
                         env.acquire(std::move(held_actions), acquire_slew, acquire_half_field);

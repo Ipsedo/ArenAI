@@ -108,8 +108,6 @@ int main(const int argc, char **argv) {
     const auto &agent_config = config.at("agent");
     const auto &env_config = config.at("environment");
 
-    const int vision_height = env_config.at("vision_height").get<int>();
-    const int vision_width = env_config.at("vision_width").get<int>();
     const float wanted_frequency = env_config.at("wanted_frequency").get<float>();
     const int nb_tanks = env_config.at("nb_tanks").get<int>();
     const int action_repeat = env_config.at("action_repeat").get<int>();
@@ -144,9 +142,8 @@ int main(const int argc, char **argv) {
 
     if (is_ppg) {
         const auto actor = std::make_shared<DistillationActor>(
-            vision_height, vision_width, model::ENEMY_STATE_VECTOR_SIZE,
-            model::ENEMY_NB_CONTINUOUS_ACTION, model::ENEMY_NB_DISCRETE_ACTION,
-            agent_config.at("hidden_size_sensors").get<int>(),
+            model::ENEMY_STATE_VECTOR_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
+            model::ENEMY_NB_DISCRETE_ACTION, agent_config.at("hidden_size_sensors").get<int>(),
             agent_config.at("actor_hidden_sizes").get<std::vector<int>>(), vision_channels,
             group_norm_nums, agent_config.at("initial_sigma").get<float>(),
             initial_discrete_probas);
@@ -161,9 +158,8 @@ int main(const int argc, char **argv) {
     } else if (is_sac) {
         const auto make_encoder = [&] {
             return std::make_shared<StateEncoder>(
-                vision_height, vision_width, model::ENEMY_STATE_VECTOR_SIZE,
-                agent_config.at("hidden_size_sensors").get<int>(), vision_channels,
-                group_norm_nums);
+                model::ENEMY_STATE_VECTOR_SIZE, agent_config.at("hidden_size_sensors").get<int>(),
+                vision_channels, group_norm_nums);
         };
         const auto actor_encoder = make_encoder();
         const auto actor = std::make_shared<SacActor>(
@@ -213,10 +209,9 @@ int main(const int argc, char **argv) {
         };
     } else {
         const auto actor = std::make_shared<LiquidActor>(
-            vision_height, vision_width, model::ENEMY_STATE_VECTOR_SIZE,
-            model::ENEMY_NB_CONTINUOUS_ACTION, model::ENEMY_NB_DISCRETE_ACTION,
-            agent_config.at("hidden_size_sensors").get<int>(), vision_channels, group_norm_nums,
-            agent_config.at("neuron_number").get<int>(),
+            model::ENEMY_STATE_VECTOR_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
+            model::ENEMY_NB_DISCRETE_ACTION, agent_config.at("hidden_size_sensors").get<int>(),
+            vision_channels, group_norm_nums, agent_config.at("neuron_number").get<int>(),
             agent_config.at("unfolding_steps").get<int>(), agent_config.at("delta_t").get<float>(),
             agent_config.at("initial_sigma").get<float>(), initial_discrete_probas);
         load_torch(save_folder, actor, "actor.pt");
@@ -224,9 +219,8 @@ int main(const int argc, char **argv) {
         actor->eval();
 
         const auto critic = std::make_shared<LiquidCritic>(
-            vision_height, vision_width, model::ENEMY_STATE_VECTOR_SIZE,
-            agent_config.at("hidden_size_sensors").get<int>(), vision_channels, group_norm_nums,
-            agent_config.at("neuron_number").get<int>(),
+            model::ENEMY_STATE_VECTOR_SIZE, agent_config.at("hidden_size_sensors").get<int>(),
+            vision_channels, group_norm_nums, agent_config.at("neuron_number").get<int>(),
             agent_config.at("unfolding_steps").get<int>(), agent_config.at("delta_t").get<float>());
         load_torch(save_folder, critic, "critic.pt");
         critic->to(device);
@@ -259,8 +253,7 @@ int main(const int argc, char **argv) {
 
     const auto env = std::make_unique<TrainTankEnvironment>(
         std::move(graphics_backend), nb_tanks, resources_folder, wanted_frequency,
-        max_episode_steps, vision_height, vision_width, parser.get<int>("--vision_num_threads"),
-        action_repeat);
+        max_episode_steps, parser.get<int>("--vision_num_threads"), action_repeat);
 
     std::ofstream csv(output);
     const auto &action_names = TorchAction::continuous_action_names();
@@ -303,8 +296,7 @@ int main(const int argc, char **argv) {
     for (int episode = 0; episode < nb_episodes; episode++) {
         reset_hidden();
 
-        auto state = TorchState(
-            env->reset(spawn_side, spawn_side, shell_economy), vision_height, vision_width);
+        auto state = TorchState(env->reset(spawn_side, spawn_side, shell_economy));
 
         int step = 0;
         bool is_done = false;
@@ -473,7 +465,7 @@ int main(const int argc, char **argv) {
             const auto steps = env->step(
                 wanted_frequency, TorchAction{continuous_action, discrete_action}.to_actions());
 
-            const TorchStep torch_step(steps, vision_height, vision_width);
+            const TorchStep torch_step(steps);
             state = torch_step.get_states();
 
             const auto step_rewards = torch_step.get_rewards().to(torch::kFloat).reshape({-1});

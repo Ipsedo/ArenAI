@@ -22,9 +22,12 @@ namespace arenai::agent {
             float critic_learning_rate, float alpha_learning_rate, int hidden_size_sensors,
             const std::vector<int> &critic_hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
-            const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
-            float tau, float initial_alpha, float target_sigma, float discrete_target_entropy_ratio,
-            int learning_starts, int gradient_steps, int batch_size, int gpu_batch_size);
+            const std::vector<int> &group_norm_nums,
+            const std::vector<std::tuple<int, int>> &panorama_channels,
+            const std::vector<int> &panorama_group_norm_nums, int panorama_output_channels,
+            torch::Device device, int metric_window_size, float tau, float initial_alpha,
+            float target_sigma, float discrete_target_entropy_ratio, int learning_starts,
+            int gradient_steps, int batch_size, int gpu_batch_size);
 
         void step() override;
 

@@ -41,9 +41,12 @@ namespace arenai::agent {
         const int nb_continuous_actions, const int nb_discrete_actions, const int nb_sensors,
         const float actor_learning_rate, const float critic_learning_rate,
         const int hidden_size_sensors, const std::vector<std::tuple<int, int>> &vision_channels,
-        const std::vector<int> &group_norm_nums, const int neuron_number, const int unfolding_steps,
-        const float delta_t, const torch::Device device, const int metric_window_size,
-        const float gamma, const float gae_lambda, const float clip_epsilon, const float target_kl,
+        const std::vector<int> &group_norm_nums,
+        const std::vector<std::tuple<int, int>> &panorama_channels,
+        const std::vector<int> &panorama_group_norm_nums, const int panorama_output_channels,
+        const int neuron_number, const int unfolding_steps, const float delta_t,
+        const torch::Device device, const int metric_window_size, const float gamma,
+        const float gae_lambda, const float clip_epsilon, const float target_kl,
         const float grad_norm_max, const float initial_alpha, const float alpha_learning_rate,
         const std::vector<float> &continuous_target_entropy, const float discrete_target_proba,
         const int actor_epochs, const int critic_epochs, const int rollout_size,
@@ -54,8 +57,9 @@ namespace arenai::agent {
               nb_continuous_actions, nb_discrete_actions, initial_alpha, alpha_learning_rate,
               continuous_target_entropy, discrete_target_proba)),
           critic(std::make_shared<LiquidCritic>(
-              nb_sensors, hidden_size_sensors, vision_channels, group_norm_nums, neuron_number,
-              unfolding_steps, delta_t)),
+              nb_sensors, hidden_size_sensors, vision_channels, group_norm_nums, panorama_channels,
+              panorama_group_norm_nums, panorama_output_channels, neuron_number, unfolding_steps,
+              delta_t)),
           actor_optim(
               std::make_unique<torch::optim::Adam>(this->actor->parameters(), actor_learning_rate)),
           critic_optim(
@@ -94,6 +98,7 @@ namespace arenai::agent {
         };
         return {
             .vision = chunked(vision),
+            .panorama = chunked(panorama),
             .proprioception = chunked(proprioception),
             .continuous_pre_tanh = chunked(continuous_pre_tanh),
             .discrete_actions = chunked(discrete_actions),
@@ -181,6 +186,7 @@ namespace arenai::agent {
         };
         return {
             .vision = flat(rollout.states.get_vision()),
+            .panorama = flat(rollout.states.get_panorama()),
             .proprioception = flat(rollout.states.get_state()),
             .continuous_pre_tanh = flat(rollout.continuous_pre_tanhs),
             .discrete_actions = flat(rollout.actions.discrete_action),
@@ -268,8 +274,8 @@ namespace arenai::agent {
              chunks.valid_units.split(chunks.units_per_batch(actor_gpu_batch_size))) {
             const auto [unit_rows, start_rows] = chunks.rows(units);
             const auto block = rows.select_chunks(unit_rows, start_rows, chunk_size);
-            const auto out =
-                actor->act_sequence(block.vision, block.proprioception, block.actor_hiddens);
+            const auto out = actor->act_sequence(
+                block.vision, block.panorama, block.proprioception, block.actor_hiddens);
 
             const auto valid_idx =
                 torch::nonzero(block.valids.flatten(0, 1).squeeze(-1)).squeeze(-1);
@@ -457,8 +463,8 @@ namespace arenai::agent {
     }
 
     LiquidPpoTrainer::ActorTerms LiquidPpoTrainer::actor_terms(const FlatRows &block) const {
-        const auto out =
-            actor->act_sequence(block.vision, block.proprioception, block.actor_hiddens);
+        const auto out = actor->act_sequence(
+            block.vision, block.panorama, block.proprioception, block.actor_hiddens);
 
         // recurrence done: fold time into rows and keep the live transitions only
         const auto valid_idx = torch::nonzero(block.valids.flatten(0, 1).squeeze(-1)).squeeze(-1);
@@ -531,8 +537,8 @@ namespace arenai::agent {
 
     LiquidPpoTrainer::CriticBlock
     LiquidPpoTrainer::backward_critic(const FlatRows &block, const float batch_fraction) const {
-        const auto [value, next_x] =
-            critic->value_sequence(block.vision, block.proprioception, block.critic_hiddens);
+        const auto [value, next_x] = critic->value_sequence(
+            block.vision, block.panorama, block.proprioception, block.critic_hiddens);
 
         // recurrence done: fold time into rows and keep the live transitions only
         const auto valid_idx = torch::nonzero(block.valids.flatten(0, 1).squeeze(-1)).squeeze(-1);
@@ -573,8 +579,9 @@ namespace arenai::agent {
             hidden_list.push_back(critic_carry.cpu());
 
             const auto [value, next_x] = critic->value(
-                rollout.states.get_vision()[t].to(device), rollout.states.get_state()[t].to(device),
-                critic_carry);
+                rollout.states.get_vision()[t].to(device),
+                rollout.states.get_panorama()[t].to(device),
+                rollout.states.get_state()[t].to(device), critic_carry);
 
             value_list.push_back(value.cpu());
             critic_carry = next_x;
@@ -584,12 +591,14 @@ namespace arenai::agent {
             closing_values.push_back(critic
                                          ->value(
                                              closing_state.get_vision().to(device),
+                                             closing_state.get_panorama().to(device),
                                              closing_state.get_state().to(device), critic_carry)
                                          .value.cpu());
         }
 
         const auto bootstrap = critic->value(
             rollout.bootstrap_state.get_vision().to(device),
+            rollout.bootstrap_state.get_panorama().to(device),
             rollout.bootstrap_state.get_state().to(device), critic_carry);
 
         return {

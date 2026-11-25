@@ -31,7 +31,7 @@ namespace arenai::agent {
             torch::NoGradGuard guard;
 
             const auto &[mu, sigma, discrete_proba] =
-                actor->act(state.get_vision(), state.get_state());
+                actor->act(state.get_vision(), state.get_panorama(), state.get_state());
 
             if (sample) {
                 std::tie(action.continuous_action, continuous_pre_tanh) =

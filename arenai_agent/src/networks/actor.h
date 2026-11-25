@@ -24,12 +24,17 @@ namespace arenai::agent {
             const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_actions,
             const int &hidden_size_sensors, const std::vector<int> &hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
-            const std::vector<int> &group_norm_nums, const float &initial_sigma,
-            const std::vector<float> &initial_discrete_probas);
-        ActorRawOutput act(const torch::Tensor &vision, const torch::Tensor &sensors);
+            const std::vector<int> &group_norm_nums,
+            const std::vector<std::tuple<int, int>> &panorama_channels,
+            const std::vector<int> &panorama_group_norm_nums, const int &panorama_output_channels,
+            const float &initial_sigma, const std::vector<float> &initial_discrete_probas);
+        ActorRawOutput
+        act(const torch::Tensor &vision, const torch::Tensor &panorama,
+            const torch::Tensor &sensors);
 
     private:
         std::shared_ptr<ConvolutionNetwork> vision_encoder;
+        std::shared_ptr<PanoramaNetwork> panorama_encoder;
         torch::nn::Sequential sensors_encoder;
 
         torch::nn::Sequential head;
@@ -39,7 +44,9 @@ namespace arenai::agent {
         torch::nn::Sequential discrete;
 
     protected:
-        torch::Tensor trunc_forward(const torch::Tensor &vision, const torch::Tensor &sensors);
+        torch::Tensor trunc_forward(
+            const torch::Tensor &vision, const torch::Tensor &panorama,
+            const torch::Tensor &sensors);
     };
 
     class DistillationActor final : public Actor {
@@ -48,10 +55,14 @@ namespace arenai::agent {
             const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_actions,
             const int &hidden_size_sensors, const std::vector<int> &hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
-            const std::vector<int> &group_norm_nums, const float &initial_sigma,
-            const std::vector<float> &initial_discrete_probas);
+            const std::vector<int> &group_norm_nums,
+            const std::vector<std::tuple<int, int>> &panorama_channels,
+            const std::vector<int> &panorama_group_norm_nums, const int &panorama_output_channels,
+            const float &initial_sigma, const std::vector<float> &initial_discrete_probas);
 
-        torch::Tensor value(const torch::Tensor &vision, const torch::Tensor &sensors);
+        torch::Tensor value(
+            const torch::Tensor &vision, const torch::Tensor &panorama,
+            const torch::Tensor &sensors);
 
     private:
         torch::nn::Linear to_value;
@@ -65,7 +76,9 @@ namespace arenai::agent {
             int nb_discrete_actions, const std::vector<int> &hidden_sizes, float initial_sigma,
             const std::vector<float> &initial_discrete_probas);
 
-        ActorRawOutput act(const torch::Tensor &vision, const torch::Tensor &sensors);
+        ActorRawOutput
+        act(const torch::Tensor &vision, const torch::Tensor &panorama,
+            const torch::Tensor &sensors);
         ActorRawOutput act_from_encoding(const torch::Tensor &encoding);
 
         std::vector<torch::Tensor> head_parameters() const;

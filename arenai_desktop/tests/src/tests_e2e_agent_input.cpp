@@ -99,7 +99,8 @@ TEST(DesktopAgentInputEndToEnd, AgentReceivesValidStates) {
     for (const auto &states: agent.received_states) {
         ASSERT_EQ(static_cast<int>(states.size()), NB_TANKS);
 
-        for (const auto &[vision, proprioception, shells_ratio, cooldown_ratio, can_fire]: states) {
+        for (const auto &[vision, panorama, proprioception, shells_ratio, cooldown_ratio, can_fire]:
+             states) {
             ASSERT_EQ(
                 static_cast<int>(vision.pixels.size()),
                 3 * core::VISION_HEIGHT * core::VISION_WIDTH);

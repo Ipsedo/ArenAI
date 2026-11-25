@@ -44,6 +44,9 @@ TorchState PpgAgentTest::make_state(const PpgTestConfig &cfg, const int batch) {
         torch::randint(
             0, 255, {batch, 3, arenai::core::VISION_HEIGHT, arenai::core::VISION_WIDTH},
             torch::kUInt8),
+        torch::randint(
+            0, 255, {batch, 3, arenai::core::PANORAMA_HEIGHT, arenai::core::PANORAMA_WIDTH},
+            torch::kUInt8),
         torch::randn({batch, cfg.nb_sensors}), torch::ones({batch, 1}));
 }
 
@@ -73,19 +76,21 @@ TEST_F(PpgAgentTest, DistillationValueShape) {
 
     DistillationActor actor(
         cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 16, std::vector{32},
-        {{3, 8}}, {4}, 0.5f, std::vector(cfg.nb_discrete_actions, 0.5f));
+        {{3, 8}}, {4}, {{3, 4}}, {2}, 2, 0.5f, std::vector(cfg.nb_discrete_actions, 0.5f));
 
     constexpr int batch = 4;
     const auto state = make_state(cfg, batch);
-    const auto value = actor.value(state.get_vision(), state.get_state());
+    const auto value = actor.value(state.get_vision(), state.get_panorama(), state.get_state());
 
     ASSERT_EQ(value.sizes().vec(), (std::vector<int64_t>{batch, 1}));
     ASSERT_TRUE(torch::all(torch::isfinite(value)).item<bool>());
 }
 
 TEST_F(PpgAgentTest, DistillationValueHeadIsRegistered) {
-    DistillationActor actor(10, 4, 2, 16, std::vector{32}, {{3, 8}}, {4}, 0.5f, {0.5f, 0.5f});
-    const Actor plain_actor(10, 4, 2, 16, std::vector{32}, {{3, 8}}, {4}, 0.5f, {0.5f, 0.5f});
+    DistillationActor actor(
+        10, 4, 2, 16, std::vector{32}, {{3, 8}}, {4}, {{3, 4}}, {2}, 2, 0.5f, {0.5f, 0.5f});
+    const Actor plain_actor(
+        10, 4, 2, 16, std::vector{32}, {{3, 8}}, {4}, {{3, 4}}, {2}, 2, 0.5f, {0.5f, 0.5f});
 
     auto named_parameters = actor.named_parameters();
     ASSERT_TRUE(named_parameters.contains("value.weight"));

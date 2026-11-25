@@ -55,6 +55,7 @@ namespace arenai::agent {
 
         // [nb_tanks, slots_per_tank, ...]
         torch::Tensor visions;
+        torch::Tensor panoramas;
         torch::Tensor states;
         torch::Tensor fire_masks;
         torch::Tensor continuous_actions;

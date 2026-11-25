@@ -19,6 +19,9 @@ namespace arenai::agent {
         std::vector<std::tuple<int, int>> vision_channels = {
             {3, 16}, {16, 32}, {32, 64}, {64, 128}, {128, 128}, {128, 128}, {128, 128}};
         std::vector<int> group_norm_nums = {2, 4, 8, 16, 16, 16, 16};
+        std::vector<std::tuple<int, int>> panorama_channels = {{3, 16}, {16, 32}, {32, 64}};
+        std::vector<int> panorama_group_norm_nums = {2, 4, 8};
+        int panorama_output_channels = 4;
         float initial_sigma = 0.3f;
         float initial_fire_proba = 0.5f;
         float initial_zoom_proba = 0.5f;

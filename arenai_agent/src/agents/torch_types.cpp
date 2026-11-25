@@ -26,32 +26,48 @@ namespace arenai::agent {
         constexpr int64_t C = 3;
         constexpr int64_t H = core::VISION_HEIGHT;
         constexpr int64_t W = core::VISION_WIDTH;
+        constexpr int64_t PH = core::PANORAMA_HEIGHT;
+        constexpr int64_t PW = core::PANORAMA_WIDTH;
         constexpr int64_t P = model::ENEMY_PROPRIOCEPTION_SIZE;
         constexpr int64_t S = model::ENEMY_STATE_VECTOR_SIZE;
 
         vision = torch::zeros(
             {N, C, H, W}, torch::TensorOptions().dtype(torch::kUInt8).requires_grad(false));
+        panorama = torch::zeros(
+            {N, C, PH, PW}, torch::TensorOptions().dtype(torch::kUInt8).requires_grad(false));
         state =
             torch::zeros({N, S}, torch::TensorOptions().dtype(torch::kFloat).requires_grad(false));
         fire_mask =
             torch::zeros({N, 1}, torch::TensorOptions().dtype(torch::kFloat).requires_grad(false));
 
         auto *vision_ptr = vision.data_ptr<uint8_t>();
+        auto *panorama_ptr = panorama.data_ptr<uint8_t>();
         auto *state_ptr = state.data_ptr<float>();
         auto *fire_mask_ptr = fire_mask.data_ptr<float>();
 
         const size_t vision_bytes = static_cast<size_t>(C * H * W) * sizeof(uint8_t);
+        const size_t panorama_bytes = static_cast<size_t>(C * PH * PW) * sizeof(uint8_t);
         constexpr size_t proprioception_bytes = static_cast<size_t>(P) * sizeof(float);
 
-        for (const auto &s: states)
+        for (const auto &s: states) {
+            TORCH_CHECK(
+                s.vision.pixels.size() == vision_bytes, "TorchState: vision of ",
+                s.vision.pixels.size(), " bytes, expected ", vision_bytes);
+            TORCH_CHECK(
+                s.panorama.pixels.size() == panorama_bytes, "TorchState: panorama of ",
+                s.panorama.pixels.size(), " bytes, expected ", panorama_bytes);
             TORCH_CHECK(
                 static_cast<int64_t>(s.proprioception.size()) == P,
                 "TorchState: proprioception of size ", s.proprioception.size(), ", expected ", P);
+        }
 
         at::parallel_for(0, N, 1, [&](const int64_t begin, const int64_t end) {
             for (int64_t n = begin; n < end; ++n) {
                 std::memcpy(
                     vision_ptr + n * (C * H * W), states[n].vision.pixels.data(), vision_bytes);
+                std::memcpy(
+                    panorama_ptr + n * (C * PH * PW), states[n].panorama.pixels.data(),
+                    panorama_bytes);
 
                 auto *row = state_ptr + n * S;
                 std::memcpy(row, states[n].proprioception.data(), proprioception_bytes);
@@ -63,10 +79,14 @@ namespace arenai::agent {
         });
     }
 
-    TorchState::TorchState(torch::Tensor vision, torch::Tensor state, torch::Tensor fire_mask)
-        : vision(std::move(vision)), state(std::move(state)), fire_mask(std::move(fire_mask)) {}
+    TorchState::TorchState(
+        torch::Tensor vision, torch::Tensor panorama, torch::Tensor state, torch::Tensor fire_mask)
+        : vision(std::move(vision)), panorama(std::move(panorama)), state(std::move(state)),
+          fire_mask(std::move(fire_mask)) {}
 
     const torch::Tensor &TorchState::get_vision() const { return vision; }
+
+    const torch::Tensor &TorchState::get_panorama() const { return panorama; }
 
     const torch::Tensor &TorchState::get_state() const { return state; }
 
@@ -93,16 +113,16 @@ namespace arenai::agent {
     }
 
     TorchState TorchState::to(const torch::Device device) const {
-        return {vision.to(device), state.to(device), fire_mask.to(device)};
+        return {vision.to(device), panorama.to(device), state.to(device), fire_mask.to(device)};
     }
 
     TorchState TorchState::detach() const {
-        return {vision.detach(), state.detach(), fire_mask.detach()};
+        return {vision.detach(), panorama.detach(), state.detach(), fire_mask.detach()};
     }
 
     TorchState TorchState::slice(const int64_t start, const int64_t end) const {
         return {
-            vision.slice(0, start, end), state.slice(0, start, end),
+            vision.slice(0, start, end), panorama.slice(0, start, end), state.slice(0, start, end),
             fire_mask.slice(0, start, end)};
     }
 

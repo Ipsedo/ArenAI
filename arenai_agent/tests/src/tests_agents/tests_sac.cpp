@@ -32,6 +32,9 @@ TorchState SacAgentTest::make_state(const SacTestConfig &cfg, const int batch) {
         torch::randint(
             0, 255, {batch, 3, arenai::core::VISION_HEIGHT, arenai::core::VISION_WIDTH},
             torch::kUInt8),
+        torch::randint(
+            0, 255, {batch, 3, arenai::core::PANORAMA_HEIGHT, arenai::core::PANORAMA_WIDTH},
+            torch::kUInt8),
         torch::randn({batch, cfg.nb_sensors}), torch::ones({batch, 1}));
 }
 
@@ -72,7 +75,8 @@ TEST_F(SacAgentTest, MaskedFireIsNeverEngaged) {
 
     constexpr int batch = 64;
     auto state = make_state(cfg, batch);
-    state = TorchState(state.get_vision(), state.get_state(), torch::zeros({batch, 1}));
+    state = TorchState(
+        state.get_vision(), state.get_panorama(), state.get_state(), torch::zeros({batch, 1}));
 
     const auto [continuous_action, discrete_action] = factory->get_agent()->act(state, true);
 

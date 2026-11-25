@@ -10,10 +10,16 @@ namespace arenai::agent {
     StateEncoder::StateEncoder(
         const int nb_sensors, const int hidden_size_sensors,
         const std::vector<std::tuple<int, int>> &vision_channels,
-        const std::vector<int> &group_norm_nums)
+        const std::vector<int> &group_norm_nums,
+        const std::vector<std::tuple<int, int>> &panorama_channels,
+        const std::vector<int> &panorama_group_norm_nums, const int panorama_output_channels)
         : vision_encoder(register_module(
             "vision_encoder",
             std::make_shared<ConvolutionNetwork>(vision_channels, group_norm_nums))),
+          panorama_encoder(register_module(
+              "panorama_encoder",
+              std::make_shared<PanoramaNetwork>(
+                  panorama_channels, panorama_group_norm_nums, panorama_output_channels))),
           sensors_encoder(register_module(
               "sensors_encoder",
               torch::nn::Sequential(
@@ -21,13 +27,20 @@ namespace arenai::agent {
                       torch::nn::LinearOptions(nb_sensors, hidden_size_sensors).bias(false)),
                   torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_size_sensors})),
                   torch::nn::SiLU()))),
-          output_size(vision_encoder->get_output_size() + hidden_size_sensors) {
+          output_size(
+              vision_encoder->get_output_size() + panorama_encoder->get_output_size()
+              + hidden_size_sensors) {
         vision_encoder->apply(init_hidden_weights);
+        panorama_encoder->apply(init_hidden_weights);
         sensors_encoder->apply(init_hidden_weights);
     }
 
-    torch::Tensor StateEncoder::forward(const torch::Tensor &vision, const torch::Tensor &sensors) {
-        return torch::cat({vision_encoder->forward(vision), sensors_encoder->forward(sensors)}, 1);
+    torch::Tensor StateEncoder::forward(
+        const torch::Tensor &vision, const torch::Tensor &panorama, const torch::Tensor &sensors) {
+        return torch::cat(
+            {vision_encoder->forward(vision), panorama_encoder->forward(panorama),
+             sensors_encoder->forward(sensors)},
+            1);
     }
 
     int StateEncoder::get_output_size() const { return output_size; }

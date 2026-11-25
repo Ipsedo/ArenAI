@@ -37,6 +37,7 @@ namespace arenai::agent {
         };
 
         visions = torch::zeros(shape(step.state.get_vision()), CPU.dtype(torch::kUInt8));
+        panoramas = torch::zeros(shape(step.state.get_panorama()), CPU.dtype(torch::kUInt8));
         states = torch::zeros(shape(step.state.get_state()), CPU.dtype(torch::kFloat));
         fire_masks = torch::zeros(shape(step.state.get_fire_mask()), CPU.dtype(torch::kFloat));
         continuous_actions =
@@ -53,6 +54,7 @@ namespace arenai::agent {
 
     void SacReplayBuffer::write_observation(const TorchState &state, const torch::Tensor &valid) {
         visions.select(1, write_index).copy_(to_cpu(state.get_vision()));
+        panoramas.select(1, write_index).copy_(to_cpu(state.get_panorama()));
         states.select(1, write_index).copy_(to_cpu(state.get_state()));
         fire_masks.select(1, write_index).copy_(to_cpu(state.get_fire_mask()));
         valids.select(1, write_index).copy_(valid);
@@ -166,8 +168,9 @@ namespace arenai::agent {
         };
 
         return {
-            .states =
-                TorchState(gather(visions, flat), gather(states, flat), gather(fire_masks, flat)),
+            .states = TorchState(
+                gather(visions, flat), gather(panoramas, flat), gather(states, flat),
+                gather(fire_masks, flat)),
             .actions =
                 {.continuous_action = gather(continuous_actions, flat),
                  .discrete_action = gather(discrete_actions, flat)},
@@ -175,7 +178,7 @@ namespace arenai::agent {
             .bootstrap_discounts =
                 torch::where(cut, torch::zeros_like(discounts), discounts).unsqueeze(-1).to(device),
             .next_states = TorchState(
-                gather(visions, next_flat), gather(states, next_flat),
+                gather(visions, next_flat), gather(panoramas, next_flat), gather(states, next_flat),
                 gather(fire_masks, next_flat))};
     }
 

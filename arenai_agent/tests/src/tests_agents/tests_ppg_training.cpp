@@ -37,6 +37,9 @@ TorchState PpgTrainingTest::make_state(const PpgTrainingTestConfig &cfg, const i
         torch::randint(
             0, 255, {nb_tanks, 3, arenai::core::VISION_HEIGHT, arenai::core::VISION_WIDTH},
             torch::kUInt8),
+        torch::randint(
+            0, 255, {nb_tanks, 3, arenai::core::PANORAMA_HEIGHT, arenai::core::PANORAMA_WIDTH},
+            torch::kUInt8),
         torch::randn({nb_tanks, cfg.nb_sensors}),
         torch::randint(0, 2, {nb_tanks, 1}).to(torch::kFloat));
 }
@@ -48,16 +51,18 @@ PpgTriad PpgTrainingTest::make_triad(const PpgTrainingTestConfig &cfg, const int
     PpgTriad triad;
     triad.actor = std::make_shared<DistillationActor>(
         cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 8, std::vector{16},
-        vision_channels, group_norm_nums, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
+        vision_channels, group_norm_nums, std::vector<std::tuple<int, int>>{{3, 4}}, std::vector{2},
+        2, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
     triad.rollout_buffer = std::make_shared<PpgRolloutBuffer>();
     triad.collector = std::make_shared<PpgStepCollector>(triad.rollout_buffer);
     triad.agent = std::make_shared<TorchPpgAgent>(triad.actor, device, triad.collector);
     triad.trainer = std::make_shared<PpgTrainer>(
         triad.actor, triad.rollout_buffer, cfg.nb_continuous_actions, cfg.nb_discrete_actions,
-        cfg.nb_sensors, 1e-3f, 1e-3f, 8, std::vector{16}, vision_channels, group_norm_nums, device,
-        10, 0.99f, 0.95f, 0.2f, 0.f, 1.f, 0.001f, 3e-4f,
-        std::vector(cfg.nb_continuous_actions, -1.f), 0.05f, 2, 2, ROLLOUT_SIZE, MINIBATCH_SIZE,
-        MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, 2, 2, 1.f, n_pi);
+        cfg.nb_sensors, 1e-3f, 1e-3f, 8, std::vector{16}, vision_channels, group_norm_nums,
+        std::vector<std::tuple<int, int>>{{3, 4}}, std::vector{2}, 2, device, 10, 0.99f, 0.95f,
+        0.2f, 0.f, 1.f, 0.001f, 3e-4f, std::vector(cfg.nb_continuous_actions, -1.f), 0.05f, 2, 2,
+        ROLLOUT_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, 2, 2, 1.f,
+        n_pi);
     return triad;
 }
 
@@ -69,7 +74,9 @@ void PpgTrainingTest::run_env_loop(
 
         auto state = make_state(cfg, nb_tanks);
         if (!fire_possible)
-            state = TorchState(state.get_vision(), state.get_state(), torch::zeros({nb_tanks, 1}));
+            state = TorchState(
+                state.get_vision(), state.get_panorama(), state.get_state(),
+                torch::zeros({nb_tanks, 1}));
 
         triad.agent->act(state, true);
         triad.collector->on_transition(

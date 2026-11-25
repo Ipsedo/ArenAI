@@ -16,9 +16,12 @@ namespace arenai::agent {
         TorchState() = default;
 
         TorchState(const std::vector<core::State> &states);
-        TorchState(torch::Tensor vision, torch::Tensor state, torch::Tensor fire_mask);
+        TorchState(
+            torch::Tensor vision, torch::Tensor panorama, torch::Tensor state,
+            torch::Tensor fire_mask);
 
         const torch::Tensor &get_vision() const;
+        const torch::Tensor &get_panorama() const;
         const torch::Tensor &get_state() const;
         const torch::Tensor &get_fire_mask() const;
 
@@ -36,6 +39,7 @@ namespace arenai::agent {
 
     private:
         torch::Tensor vision;
+        torch::Tensor panorama;
         torch::Tensor state;
         torch::Tensor fire_mask;
     };

@@ -54,6 +54,9 @@ namespace arenai::model {
 
     class EnemyTank : virtual public Tank {
     public:
+        // level cameras above the turret, turning with it, left to right around the canon heading
+        virtual std::vector<std::shared_ptr<view::AbstractCamera>> get_panorama_cameras() const = 0;
+
         virtual float get_reward() const = 0;
 
         virtual RewardDetail get_last_reward_detail() const = 0;

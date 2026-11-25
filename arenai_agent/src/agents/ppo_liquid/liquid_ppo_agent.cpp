@@ -33,7 +33,8 @@ namespace arenai::agent {
             torch::NoGradGuard guard;
 
             x_t = hidden_state->get(state.get_vision().size(0));
-            const auto out = actor->act(state.get_vision(), state.get_state(), x_t);
+            const auto out =
+                actor->act(state.get_vision(), state.get_panorama(), state.get_state(), x_t);
             const auto &mu = out.mu;
             const auto &sigma = out.sigma;
             const auto &discrete_proba = out.discrete;

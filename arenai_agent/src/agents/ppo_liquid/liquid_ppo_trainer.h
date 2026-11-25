@@ -65,10 +65,12 @@ namespace arenai::agent {
             int nb_continuous_actions, int nb_discrete_actions, int nb_sensors,
             float actor_learning_rate, float critic_learning_rate, int hidden_size_sensors,
             const std::vector<std::tuple<int, int>> &vision_channels,
-            const std::vector<int> &group_norm_nums, int neuron_number, int unfolding_steps,
-            float delta_t, torch::Device device, int metric_window_size, float gamma,
-            float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
-            float initial_alpha, float alpha_learning_rate,
+            const std::vector<int> &group_norm_nums,
+            const std::vector<std::tuple<int, int>> &panorama_channels,
+            const std::vector<int> &panorama_group_norm_nums, int panorama_output_channels,
+            int neuron_number, int unfolding_steps, float delta_t, torch::Device device,
+            int metric_window_size, float gamma, float gae_lambda, float clip_epsilon,
+            float target_kl, float grad_norm_max, float initial_alpha, float alpha_learning_rate,
             const std::vector<float> &continuous_target_entropy, float discrete_target_proba,
             int actor_epochs, int critic_epochs, int rollout_size, int actor_batch_size,
             int actor_gpu_batch_size, int critic_batch_size, int critic_gpu_batch_size,
@@ -144,6 +146,7 @@ namespace arenai::agent {
         // the kept steps flattened to [T_kept * nb_tanks, ...] rows, all on the device
         struct FlatRows {
             torch::Tensor vision;
+            torch::Tensor panorama;
             torch::Tensor proprioception;
             torch::Tensor continuous_pre_tanh;
             torch::Tensor discrete_actions;

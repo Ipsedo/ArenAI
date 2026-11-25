@@ -34,12 +34,15 @@ namespace arenai::agent {
             float critic_learning_rate, int hidden_size_sensors,
             const std::vector<int> &critic_hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
-            const std::vector<int> &group_norm_nums, torch::Device device, int metric_window_size,
-            float gamma, float gae_lambda, float clip_epsilon, float target_kl, float grad_norm_max,
-            float initial_alpha, float alpha_learning_rate,
-            const std::vector<float> &continuous_target_entropy, float discrete_target_proba,
-            int actor_epochs, int critic_epochs, int rollout_size, int actor_batch_size,
-            int actor_gpu_batch_size, int critic_batch_size, int critic_gpu_batch_size);
+            const std::vector<int> &group_norm_nums,
+            const std::vector<std::tuple<int, int>> &panorama_channels,
+            const std::vector<int> &panorama_group_norm_nums, int panorama_output_channels,
+            torch::Device device, int metric_window_size, float gamma, float gae_lambda,
+            float clip_epsilon, float target_kl, float grad_norm_max, float initial_alpha,
+            float alpha_learning_rate, const std::vector<float> &continuous_target_entropy,
+            float discrete_target_proba, int actor_epochs, int critic_epochs, int rollout_size,
+            int actor_batch_size, int actor_gpu_batch_size, int critic_batch_size,
+            int critic_gpu_batch_size);
 
         void step() override;
 
@@ -101,6 +104,7 @@ namespace arenai::agent {
         // the rollout flattened to [T * nb_tanks, ...] rows, all on the device
         struct FlatRows {
             torch::Tensor vision;
+            torch::Tensor panorama;
             torch::Tensor proprioception;
             torch::Tensor continuous_pre_tanh;
             torch::Tensor discrete_actions;

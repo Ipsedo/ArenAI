@@ -27,7 +27,7 @@ namespace arenai::agent {
             torch::NoGradGuard guard;
 
             const auto [mu, sigma, discrete_proba] =
-                actor->act(state.get_vision(), state.get_state());
+                actor->act(state.get_vision(), state.get_panorama(), state.get_state());
 
             // a fire without effect is not a decision: the stored action never engages it
             const auto effective_proba =

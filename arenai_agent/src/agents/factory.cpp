@@ -51,7 +51,10 @@ namespace arenai::agent {
                 get_value<int>("hidden_size_sensors"),
                 get_value<std::vector<int>>("actor_hidden_sizes"),
                 get_value<std::vector<std::tuple<int, int>>>("vision_channels"),
-                get_value<std::vector<int>>("group_norm_nums"), 0.f, std::vector{0.5f, 0.5f}),
+                get_value<std::vector<int>>("group_norm_nums"),
+                get_value<std::vector<std::tuple<int, int>>>("panorama_channels"),
+                get_value<std::vector<int>>("panorama_group_norm_nums"),
+                get_value<int>("panorama_output_channels"), 0.f, std::vector{0.5f, 0.5f}),
             cuda ? torch::kCUDA : torch::kCPU);
     }
 
@@ -62,7 +65,10 @@ namespace arenai::agent {
             nb_sensors, nb_continuous_actions, nb_discrete_action,
             get_value<int>("hidden_size_sensors"),
             get_value<std::vector<std::tuple<int, int>>>("vision_channels"),
-            get_value<std::vector<int>>("group_norm_nums"), get_value<int>("neuron_number"),
+            get_value<std::vector<int>>("group_norm_nums"),
+            get_value<std::vector<std::tuple<int, int>>>("panorama_channels"),
+            get_value<std::vector<int>>("panorama_group_norm_nums"),
+            get_value<int>("panorama_output_channels"), get_value<int>("neuron_number"),
             get_value<int>("unfolding_steps"), get_value<float>("delta_t"), 0.f,
             std::vector{0.5f, 0.5f});
 
@@ -79,7 +85,10 @@ namespace arenai::agent {
                 get_value<int>("hidden_size_sensors"),
                 get_value<std::vector<int>>("actor_hidden_sizes"),
                 get_value<std::vector<std::tuple<int, int>>>("vision_channels"),
-                get_value<std::vector<int>>("group_norm_nums"), 0.f, std::vector{0.5f, 0.5f}),
+                get_value<std::vector<int>>("group_norm_nums"),
+                get_value<std::vector<std::tuple<int, int>>>("panorama_channels"),
+                get_value<std::vector<int>>("panorama_group_norm_nums"),
+                get_value<int>("panorama_output_channels"), 0.f, std::vector{0.5f, 0.5f}),
             cuda ? torch::kCUDA : torch::kCPU);
     }
 

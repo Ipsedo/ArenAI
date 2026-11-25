@@ -7,6 +7,7 @@
 
 #include <torch/torch.h>
 
+#include "./panorama.h"
 #include "./vision.h"
 
 namespace arenai::agent {
@@ -16,15 +17,20 @@ namespace arenai::agent {
         StateEncoder(
             int nb_sensors, int hidden_size_sensors,
             const std::vector<std::tuple<int, int>> &vision_channels,
-            const std::vector<int> &group_norm_nums);
+            const std::vector<int> &group_norm_nums,
+            const std::vector<std::tuple<int, int>> &panorama_channels,
+            const std::vector<int> &panorama_group_norm_nums, int panorama_output_channels);
 
-        // [N, vision output size + hidden_size_sensors]
-        torch::Tensor forward(const torch::Tensor &vision, const torch::Tensor &sensors);
+        // [N, vision output size + panorama output size + hidden_size_sensors]
+        torch::Tensor forward(
+            const torch::Tensor &vision, const torch::Tensor &panorama,
+            const torch::Tensor &sensors);
 
         int get_output_size() const;
 
     private:
         std::shared_ptr<ConvolutionNetwork> vision_encoder;
+        std::shared_ptr<PanoramaNetwork> panorama_encoder;
         torch::nn::Sequential sensors_encoder;
         int output_size;
     };

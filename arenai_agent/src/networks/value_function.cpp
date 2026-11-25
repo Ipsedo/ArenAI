@@ -8,9 +8,15 @@ using namespace arenai::agent;
 ValueFunction::ValueFunction(
     const int &nb_sensors, const int &hidden_size_sensors, const std::vector<int> &hidden_sizes,
     const std::vector<std::tuple<int, int>> &vision_channels,
-    const std::vector<int> &group_norm_nums)
+    const std::vector<int> &group_norm_nums,
+    const std::vector<std::tuple<int, int>> &panorama_channels,
+    const std::vector<int> &panorama_group_norm_nums, const int &panorama_output_channels)
     : vision_encoder(register_module(
         "vision_encoder", std::make_shared<ConvolutionNetwork>(vision_channels, group_norm_nums))),
+      panorama_encoder(register_module(
+          "panorama_encoder",
+          std::make_shared<PanoramaNetwork>(
+              panorama_channels, panorama_group_norm_nums, panorama_output_channels))),
       sensors_encoder(register_module(
           "sensors_encoder",
           torch::nn::Sequential(
@@ -21,10 +27,11 @@ ValueFunction::ValueFunction(
       head(register_module("head", torch::nn::Sequential())),
       to_value(register_module("to_value", torch::nn::Linear(hidden_sizes.back(), 1))) {
 
-    head->push_back(torch::nn::Linear(
-        torch::nn::LinearOptions(
-            hidden_size_sensors + vision_encoder->get_output_size(), hidden_sizes.front())
-            .bias(false)));
+    head->push_back(torch::nn::Linear(torch::nn::LinearOptions(
+                                          hidden_size_sensors + vision_encoder->get_output_size()
+                                              + panorama_encoder->get_output_size(),
+                                          hidden_sizes.front())
+                                          .bias(false)));
     head->push_back(torch::nn::LayerNorm(torch::nn::LayerNormOptions({hidden_sizes.front()})));
     head->push_back(torch::nn::SiLU());
 
@@ -38,17 +45,20 @@ ValueFunction::ValueFunction(
     }
 
     vision_encoder->apply(init_hidden_weights);
+    panorama_encoder->apply(init_hidden_weights);
     sensors_encoder->apply(init_hidden_weights);
     head->apply(init_hidden_weights);
 
     to_value->apply(init_value_output_weights);
 }
 
-torch::Tensor ValueFunction::value(const torch::Tensor &vision, const torch::Tensor &sensors) {
+torch::Tensor ValueFunction::value(
+    const torch::Tensor &vision, const torch::Tensor &panorama, const torch::Tensor &sensors) {
     const auto vision_encoded = vision_encoder->forward(vision);
+    const auto panorama_encoded = panorama_encoder->forward(panorama);
     const auto sensors_encoded = sensors_encoder->forward(sensors);
 
-    const auto encoded = torch::cat({vision_encoded, sensors_encoded}, 1);
+    const auto encoded = torch::cat({vision_encoded, panorama_encoded, sensors_encoded}, 1);
     const auto hidden = head->forward(encoded);
 
     return to_value->forward(hidden);

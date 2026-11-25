@@ -47,10 +47,12 @@ namespace arenai::agent {
         const float critic_learning_rate, const int hidden_size_sensors,
         const std::vector<int> &critic_hidden_sizes,
         const std::vector<std::tuple<int, int>> &vision_channels,
-        const std::vector<int> &group_norm_nums, const torch::Device device,
-        const int metric_window_size, const float gamma, const float gae_lambda,
-        const float clip_epsilon, const float target_kl, const float grad_norm_max,
-        const float initial_alpha, const float alpha_learning_rate,
+        const std::vector<int> &group_norm_nums,
+        const std::vector<std::tuple<int, int>> &panorama_channels,
+        const std::vector<int> &panorama_group_norm_nums, const int panorama_output_channels,
+        const torch::Device device, const int metric_window_size, const float gamma,
+        const float gae_lambda, const float clip_epsilon, const float target_kl,
+        const float grad_norm_max, const float initial_alpha, const float alpha_learning_rate,
         const std::vector<float> &continuous_target_entropy, const float discrete_target_proba,
         const int actor_epochs, const int critic_epochs, const int rollout_size,
         const int actor_batch_size, const int actor_gpu_batch_size, const int critic_batch_size,
@@ -62,7 +64,8 @@ namespace arenai::agent {
               continuous_target_entropy, discrete_target_proba)),
           critic(std::make_shared<ValueFunction>(
               nb_sensors, hidden_size_sensors, critic_hidden_sizes, vision_channels,
-              group_norm_nums)),
+              group_norm_nums, panorama_channels, panorama_group_norm_nums,
+              panorama_output_channels)),
           actor_optim(
               std::make_unique<torch::optim::Adam>(this->actor->parameters(), actor_learning_rate)),
           critic_optim(
@@ -98,6 +101,7 @@ namespace arenai::agent {
         const auto rows = [&](const torch::Tensor &tensor) { return tensor.index_select(0, idx); };
         return {
             .vision = rows(vision),
+            .panorama = rows(panorama),
             .proprioception = rows(proprioception),
             .continuous_pre_tanh = rows(continuous_pre_tanh),
             .discrete_actions = rows(discrete_actions),
@@ -133,6 +137,7 @@ namespace arenai::agent {
         };
         const FlatRows rows = {
             .vision = flat(rollout.states.get_vision()),
+            .panorama = flat(rollout.states.get_panorama()),
             .proprioception = flat(rollout.states.get_state()),
             .continuous_pre_tanh = flat(rollout.continuous_pre_tanhs),
             .discrete_actions = flat(rollout.actions.discrete_action),
@@ -240,8 +245,9 @@ namespace arenai::agent {
         for (int64_t i = 0; i < rows.vision.size(0); i += critic_gpu_batch_size) {
             const auto end = std::min<int64_t>(i + critic_gpu_batch_size, rows.vision.size(0));
 
-            const auto [mu, sigma, discrete_proba] =
-                actor->act(rows.vision.slice(0, i, end), rows.proprioception.slice(0, i, end));
+            const auto [mu, sigma, discrete_proba] = actor->act(
+                rows.vision.slice(0, i, end), rows.panorama.slice(0, i, end),
+                rows.proprioception.slice(0, i, end));
             mu_chunks.push_back(mu);
             sigma_chunks.push_back(sigma);
             discrete_chunks.push_back(discrete_proba);
@@ -276,7 +282,8 @@ namespace arenai::agent {
 
     torch::Tensor
     PpgTrainer::backward_actor(const FlatRows &block, const float batch_fraction) const {
-        const auto [mu, sigma, discrete_proba] = actor->act(block.vision, block.proprioception);
+        const auto [mu, sigma, discrete_proba] =
+            actor->act(block.vision, block.panorama, block.proprioception);
         const auto discrete_mask =
             TorchState::discrete_action_mask(block.fire_masks, discrete_proba.size(-1));
 
@@ -319,8 +326,9 @@ namespace arenai::agent {
 
     void PpgTrainer::backward_actor_aux(
         const FlatRows &block, const CloneTargets &targets, const float batch_fraction) const {
-        const auto values = actor->value(block.vision, block.proprioception);
-        const auto [mu, sigma, discrete_proba] = actor->act(block.vision, block.proprioception);
+        const auto values = actor->value(block.vision, block.panorama, block.proprioception);
+        const auto [mu, sigma, discrete_proba] =
+            actor->act(block.vision, block.panorama, block.proprioception);
 
         const auto aux_loss = torch::mse_loss(values, block.returns, at::Reduction::None);
 
@@ -345,7 +353,7 @@ namespace arenai::agent {
 
     PpgTrainer::CriticBlock
     PpgTrainer::backward_critic(const FlatRows &block, const float batch_fraction) const {
-        const auto values = critic->value(block.vision, block.proprioception);
+        const auto values = critic->value(block.vision, block.panorama, block.proprioception);
         const auto critic_loss = torch::mse_loss(values, block.returns, at::Reduction::Mean);
 
         (critic_loss * batch_fraction).backward();
@@ -363,29 +371,32 @@ namespace arenai::agent {
         const auto nb_tanks = rollout.rewards.size(1);
 
         // critic forward in device-sized chunks: the whole rollout's activations do not fit
-        const auto eval_critic = [&](const torch::Tensor &vision,
-                                     const torch::Tensor &proprioception) {
+        const auto eval_critic = [&](const TorchState &states) {
+            const auto &vision = states.get_vision();
+            const auto &panorama = states.get_panorama();
+            const auto &proprioception = states.get_state();
             std::vector<torch::Tensor> values;
             for (int64_t i = 0; i < vision.size(0); i += critic_gpu_batch_size) {
                 const auto end = std::min<int64_t>(i + critic_gpu_batch_size, vision.size(0));
                 values.push_back(critic
                                      ->value(
                                          vision.slice(0, i, end).to(device),
+                                         panorama.slice(0, i, end).to(device),
                                          proprioception.slice(0, i, end).to(device))
                                      .cpu());
             }
             return torch::cat(values, 0);
         };
 
-        const auto rollout_critic = eval_critic(
-            flatten_steps(rollout.states.get_vision()), flatten_steps(rollout.states.get_state()));
-        const auto bootstrap_critic =
-            eval_critic(rollout.bootstrap_state.get_vision(), rollout.bootstrap_state.get_state());
+        const auto rollout_critic = eval_critic(TorchState(
+            flatten_steps(rollout.states.get_vision()),
+            flatten_steps(rollout.states.get_panorama()), flatten_steps(rollout.states.get_state()),
+            flatten_steps(rollout.states.get_fire_mask())));
+        const auto bootstrap_critic = eval_critic(rollout.bootstrap_state);
 
         std::vector<torch::Tensor> closing_values;
         for (const auto &closing_state: rollout.closing_states)
-            closing_values.push_back(
-                eval_critic(closing_state.get_vision(), closing_state.get_state()));
+            closing_values.push_back(eval_critic(closing_state));
 
         return {
             .values = rollout_critic.reshape({nb_steps, nb_tanks, 1}),

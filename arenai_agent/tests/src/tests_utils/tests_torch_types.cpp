@@ -49,6 +49,7 @@ TEST_F(TorchTypesTest, SingleStateToTensor) {
 
     State state{.remaining_shells_ratio = 0.5f, .cooldown_ratio = 0.25f, .can_fire = true};
     state.vision.pixels.resize(3 * H * W, 128);
+    state.panorama.pixels.resize(3 * core::PANORAMA_HEIGHT * core::PANORAMA_WIDTH, 0);
     state.proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE, 1.0f);
 
     const TorchState torch_state({state});
@@ -72,6 +73,7 @@ TEST_F(TorchTypesTest, StateVisionPixelsPreserved) {
     State state{.remaining_shells_ratio = 0.5f, .cooldown_ratio = 0.25f, .can_fire = true};
     // channel c holds 10 * (c + 1) + (index in the plane) % 7
     state.vision.pixels.resize(3 * H * W);
+    state.panorama.pixels.resize(3 * core::PANORAMA_HEIGHT * core::PANORAMA_WIDTH, 0);
     for (int c = 0; c < 3; c++)
         for (int i = 0; i < H * W; i++)
             state.vision.pixels[c * H * W + i] = static_cast<uint8_t>(10 * (c + 1) + i % 7);
@@ -94,6 +96,7 @@ TEST_F(TorchTypesTest, StateProprioceptionPreserved) {
 
     State state{.remaining_shells_ratio = 0.5f, .cooldown_ratio = 0.25f, .can_fire = true};
     state.vision.pixels.resize(3 * H * W, 0);
+    state.panorama.pixels.resize(3 * core::PANORAMA_HEIGHT * core::PANORAMA_WIDTH, 0);
     state.proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE);
     for (int i = 0; i < model::ENEMY_PROPRIOCEPTION_SIZE; ++i)
         state.proprioception[i] = static_cast<float>(i) * 0.1f;
@@ -117,6 +120,7 @@ TEST_F(TorchTypesTest, RatiosReadBackFromTheStateVector) {
     std::vector<State> states(3);
     for (int i = 0; i < 3; ++i) {
         states[i].vision.pixels.resize(3 * H * W, 0);
+        states[i].panorama.pixels.resize(3 * core::PANORAMA_HEIGHT * core::PANORAMA_WIDTH, 0);
         states[i].proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE, 0.0f);
         states[i].remaining_shells_ratio = static_cast<float>(i) * 0.1f;
         states[i].cooldown_ratio = 1.f - static_cast<float>(i) * 0.1f;
@@ -135,7 +139,8 @@ TEST_F(TorchTypesTest, RatiosReadBackFromTheStateVector) {
 
     // a tensor-built state (stacked rollout, replay sample) reads the same columns
     const TorchState rebuilt(
-        torch_state.get_vision(), torch_state.get_state(), torch_state.get_fire_mask());
+        torch_state.get_vision(), torch_state.get_panorama(), torch_state.get_state(),
+        torch_state.get_fire_mask());
     ASSERT_EQ(rebuilt.get_remaining_shells_ratio(), shells);
     ASSERT_EQ(rebuilt.get_cooldown_ratio(), cooldown);
 }
@@ -145,6 +150,7 @@ TEST_F(TorchTypesTest, RejectsAProprioceptionOfTheWrongSize) {
 
     State state{.can_fire = true};
     state.vision.pixels.resize(3 * H * W, 0);
+    state.panorama.pixels.resize(3 * core::PANORAMA_HEIGHT * core::PANORAMA_WIDTH, 0);
     state.proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE + 1, 0.0f);
 
     ASSERT_THROW(TorchState({state}), c10::Error);
@@ -216,8 +222,9 @@ TEST_P(StatesToTensorParamTest, OutputShapeCorrect) {
     constexpr int height = core::VISION_HEIGHT, width = core::VISION_WIDTH;
 
     std::vector<State> states(batch);
-    for (auto &[vision, proprioception, shells_ratio, cooldown_ratio, can_fire]: states) {
+    for (auto &[vision, panorama, proprioception, shells_ratio, cooldown_ratio, can_fire]: states) {
         vision.pixels.resize(3 * height * width, 0);
+        panorama.pixels.resize(3 * core::PANORAMA_HEIGHT * core::PANORAMA_WIDTH, 0);
         proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE, 0.0f);
     }
 
@@ -241,8 +248,9 @@ TEST_P(StatesToTensorParamTest, NoGradient) {
     constexpr int height = core::VISION_HEIGHT, width = core::VISION_WIDTH;
 
     std::vector<State> states(batch);
-    for (auto &[vision, proprioception, shells_ratio, cooldown_ratio, can_fire]: states) {
+    for (auto &[vision, panorama, proprioception, shells_ratio, cooldown_ratio, can_fire]: states) {
         vision.pixels.resize(3 * height * width, 0);
+        panorama.pixels.resize(3 * core::PANORAMA_HEIGHT * core::PANORAMA_WIDTH, 0);
         proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE, 0.0f);
     }
 
@@ -261,6 +269,7 @@ TEST_P(StatesToTensorParamTest, PixelDataPreserved) {
     std::vector<State> states(batch);
     for (int b = 0; b < batch; ++b) {
         states[b].vision.pixels.resize(3 * height * width);
+        states[b].panorama.pixels.resize(3 * core::PANORAMA_HEIGHT * core::PANORAMA_WIDTH, 0);
         for (int i = 0; i < 3 * height * width; ++i)
             states[b].vision.pixels[i] = static_cast<uint8_t>((b + i) % 256);
         states[b].proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE, 0.0f);
@@ -288,6 +297,7 @@ TEST_F(TorchTypesTest, FireMaskFollowsCanFire) {
     std::vector<State> states(2);
     for (auto &state: states) {
         state.vision.pixels.resize(3 * H * W, 0);
+        state.panorama.pixels.resize(3 * core::PANORAMA_HEIGHT * core::PANORAMA_WIDTH, 0);
         state.proprioception.resize(model::ENEMY_PROPRIOCEPTION_SIZE, 0.0f);
     }
     states[0].can_fire = true;

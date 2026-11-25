@@ -11,7 +11,8 @@ namespace arenai::agent {
         : config(cli_fields_to_json(sac_cli_fields(), params)),
           encoder(std::make_shared<StateEncoder>(
               nb_sensors, params.hidden_size_sensors, params.vision_channels,
-              params.group_norm_nums)),
+              params.group_norm_nums, params.panorama_channels, params.panorama_group_norm_nums,
+              params.panorama_output_channels)),
           actor(std::make_shared<SacActor>(
               encoder, nb_continuous_actions, nb_discrete_actions, params.actor_hidden_sizes,
               params.initial_sigma,
@@ -24,7 +25,8 @@ namespace arenai::agent {
               actor, encoder, replay_buffer, nb_sensors, nb_continuous_actions, nb_discrete_actions,
               params.actor_learning_rate, params.critic_learning_rate, params.alpha_learning_rate,
               params.hidden_size_sensors, params.critic_hidden_sizes, params.vision_channels,
-              params.group_norm_nums, device, params.metric_window_size, params.tau,
+              params.group_norm_nums, params.panorama_channels, params.panorama_group_norm_nums,
+              params.panorama_output_channels, device, params.metric_window_size, params.tau,
               params.initial_alpha, params.target_sigma, params.discrete_target_entropy_ratio,
               params.learning_starts, params.gradient_steps, params.batch_size,
               params.gpu_batch_size)) {}

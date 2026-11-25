@@ -20,6 +20,9 @@ namespace {
     TorchState make_state(const int step) {
         return TorchState(
             torch::full({NB_TANKS, 3, H, W}, step, torch::kUInt8),
+            torch::full(
+                {NB_TANKS, 3, arenai::core::PANORAMA_HEIGHT, arenai::core::PANORAMA_WIDTH}, step,
+                torch::kUInt8),
             torch::full({NB_TANKS, P}, static_cast<float>(step)), torch::ones({NB_TANKS, 1}));
     }
 

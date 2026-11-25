@@ -10,11 +10,17 @@ namespace arenai::agent {
     LiquidCritic::LiquidCritic(
         const int &nb_sensors, const int &hidden_size_sensors,
         const std::vector<std::tuple<int, int>> &vision_channels,
-        const std::vector<int> &group_norm_nums, const int &neuron_number,
-        const int &unfolding_steps, const float &delta_t)
+        const std::vector<int> &group_norm_nums,
+        const std::vector<std::tuple<int, int>> &panorama_channels,
+        const std::vector<int> &panorama_group_norm_nums, const int &panorama_output_channels,
+        const int &neuron_number, const int &unfolding_steps, const float &delta_t)
         : vision_encoder(register_module(
             "vision_encoder",
             std::make_shared<ConvolutionNetwork>(vision_channels, group_norm_nums))),
+          panorama_encoder(register_module(
+              "panorama_encoder",
+              std::make_shared<PanoramaNetwork>(
+                  panorama_channels, panorama_group_norm_nums, panorama_output_channels))),
           sensors_encoder(register_module(
               "sensors_encoder",
               torch::nn::Sequential(
@@ -24,36 +30,46 @@ namespace arenai::agent {
                   torch::nn::SiLU()))),
           liquid(register_module(
               "liquid", std::make_shared<LiquidCell>(
-                            neuron_number, hidden_size_sensors + vision_encoder->get_output_size(),
+                            neuron_number,
+                            hidden_size_sensors + vision_encoder->get_output_size()
+                                + panorama_encoder->get_output_size(),
                             neuron_number, unfolding_steps, torch::nn::AnyModule(torch::nn::SiLU()),
                             delta_t))),
           to_value(register_module("to_value", torch::nn::Linear(neuron_number, 1))) {
 
         vision_encoder->apply(init_hidden_weights);
+        panorama_encoder->apply(init_hidden_weights);
         sensors_encoder->apply(init_hidden_weights);
 
         to_value->apply(init_value_output_weights);
     }
 
-    torch::Tensor LiquidCritic::encode(const torch::Tensor &vision, const torch::Tensor &sensors) {
-        return torch::cat({vision_encoder->forward(vision), sensors_encoder->forward(sensors)}, 1);
+    torch::Tensor LiquidCritic::encode(
+        const torch::Tensor &vision, const torch::Tensor &panorama, const torch::Tensor &sensors) {
+        return torch::cat(
+            {vision_encoder->forward(vision), panorama_encoder->forward(panorama),
+             sensors_encoder->forward(sensors)},
+            1);
     }
 
     LiquidCriticOutput LiquidCritic::value(
-        const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &x_t) {
-        const auto encoded = encode(vision, sensors);
+        const torch::Tensor &vision, const torch::Tensor &panorama, const torch::Tensor &sensors,
+        const torch::Tensor &x_t) {
+        const auto encoded = encode(vision, panorama, sensors);
         const auto [output, next_x] = liquid->forward_step(x_t, encoded);
         return {.value = to_value->forward(output), .next_x = next_x};
     }
 
     LiquidCriticOutput LiquidCritic::value_sequence(
-        const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &x_t) {
+        const torch::Tensor &vision, const torch::Tensor &panorama, const torch::Tensor &sensors,
+        const torch::Tensor &x_t) {
         const auto batch_size = vision.size(0);
         const auto nb_steps = vision.size(1);
 
         // the encoders are step-wise: fold time into the row dimension
         const auto encoded =
-            encode(vision.flatten(0, 1), sensors.flatten(0, 1)).reshape({batch_size, nb_steps, -1});
+            encode(vision.flatten(0, 1), panorama.flatten(0, 1), sensors.flatten(0, 1))
+                .reshape({batch_size, nb_steps, -1});
 
         auto x = x_t;
 

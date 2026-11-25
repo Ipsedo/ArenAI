@@ -79,6 +79,7 @@ namespace arenai::agent {
         PpoRollout rollout{
             .states = TorchState(
                 stack([](const StoredStep &s) { return s.step.state.get_vision(); }),
+                stack([](const StoredStep &s) { return s.step.state.get_panorama(); }),
                 stack([](const StoredStep &s) { return s.step.state.get_state(); }),
                 stack([](const StoredStep &s) { return s.step.state.get_fire_mask(); })),
             .actions =

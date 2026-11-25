@@ -43,17 +43,20 @@ namespace arenai::agent {
         const float alpha_learning_rate, const int hidden_size_sensors,
         const std::vector<int> &critic_hidden_sizes,
         const std::vector<std::tuple<int, int>> &vision_channels,
-        const std::vector<int> &group_norm_nums, const torch::Device device,
-        const int metric_window_size, const float tau, const float initial_alpha,
-        const float target_sigma, const float discrete_target_entropy_ratio,
-        const int learning_starts, const int gradient_steps, const int batch_size,
-        const int gpu_batch_size)
+        const std::vector<int> &group_norm_nums,
+        const std::vector<std::tuple<int, int>> &panorama_channels,
+        const std::vector<int> &panorama_group_norm_nums, const int panorama_output_channels,
+        const torch::Device device, const int metric_window_size, const float tau,
+        const float initial_alpha, const float target_sigma,
+        const float discrete_target_entropy_ratio, const int learning_starts,
+        const int gradient_steps, const int batch_size, const int gpu_batch_size)
         : actor(actor), replay_buffer(replay_buffer),
           critic(std::make_shared<TwinQNetwork>(
               encoder, nb_continuous_actions, nb_discrete_actions, critic_hidden_sizes)),
           target_critic(std::make_shared<TwinQNetwork>(
               std::make_shared<StateEncoder>(
-                  nb_sensors, hidden_size_sensors, vision_channels, group_norm_nums),
+                  nb_sensors, hidden_size_sensors, vision_channels, group_norm_nums,
+                  panorama_channels, panorama_group_norm_nums, panorama_output_channels),
               nb_continuous_actions, nb_discrete_actions, critic_hidden_sizes)),
           alphas(std::make_shared<SacAlpha>(
               initial_alpha, nb_continuous_actions + nb_discrete_actions)),
@@ -143,8 +146,9 @@ namespace arenai::agent {
         {
             torch::NoGradGuard no_grad;
 
-            const auto [mu, sigma, discrete_proba] = actor->act_from_encoding(
-                critic->encode(block.next_states.get_vision(), block.next_states.get_state()));
+            const auto [mu, sigma, discrete_proba] = actor->act_from_encoding(critic->encode(
+                block.next_states.get_vision(), block.next_states.get_panorama(),
+                block.next_states.get_state()));
             const auto [next_action, u] = gaussian_tanh_sample(mu, sigma);
             // each axis' log-probability weighted by its own temperature
             const auto continuous_log_prob = gaussian_tanh_log_pdf(u, mu, sigma);
@@ -156,7 +160,8 @@ namespace arenai::agent {
             const auto discrete_bonus = (discrete_alpha * joint.action_log_probas).sum(-1);
 
             const auto [q1, q2] = target_critic->q(
-                block.next_states.get_vision(), block.next_states.get_state(), next_action);
+                block.next_states.get_vision(), block.next_states.get_panorama(),
+                block.next_states.get_state(), next_action);
             const auto q_min = torch::min(q1, q2);
 
             // soft value: exact over the discrete combinations, one sample on the continuous
@@ -167,7 +172,8 @@ namespace arenai::agent {
         }
 
         const auto [q1, q2] = critic->q(
-            block.states.get_vision(), block.states.get_state(), block.actions.continuous_action);
+            block.states.get_vision(), block.states.get_panorama(), block.states.get_state(),
+            block.actions.continuous_action);
         const auto taken = combination_index(block.actions.discrete_action).unsqueeze(-1);
         const auto q1_taken = q1.gather(1, taken);
         const auto q2_taken = q2.gather(1, taken);
@@ -185,8 +191,11 @@ namespace arenai::agent {
         const auto [continuous_alpha, discrete_alpha] = split_alphas();
         const auto nb_discrete_actions = block.actions.discrete_action.size(-1);
 
-        const auto encoding =
-            critic->encode(block.states.get_vision(), block.states.get_state()).detach();
+        const auto encoding = critic
+                                  ->encode(
+                                      block.states.get_vision(), block.states.get_panorama(),
+                                      block.states.get_state())
+                                  .detach();
         const auto [mu, sigma, discrete_proba] = actor->act_from_encoding(encoding);
         const auto [action, u] = gaussian_tanh_sample(mu, sigma);
         // [N, nb_continuous_actions]

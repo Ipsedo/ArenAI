@@ -24,6 +24,11 @@ namespace arenai::core {
         static view::image<uint8_t> black_image(int height, int width);
     };
 
+    class PanoramaDoubleBuffer : public utils::DoubleBuffer<view::image<uint8_t>> {
+    public:
+        PanoramaDoubleBuffer();
+    };
+
     class ModelMatricesDoubleBuffer
         : public utils::DoubleBuffer<std::vector<std::tuple<std::string, glm::mat4>>> {
     public:
@@ -55,6 +60,7 @@ namespace arenai::core {
             const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) const;
 
         view::image<uint8_t> read_vision(int index) const;
+        view::image<uint8_t> read_panorama(int index) const;
 
         void set_seed(unsigned int seed);
 
@@ -83,6 +89,7 @@ namespace arenai::core {
 
         std::unique_ptr<ModelMatricesDoubleBuffer> model_matrices_;
         std::vector<std::unique_ptr<VisionDoubleBuffer>> enemy_visions_;
+        std::vector<std::unique_ptr<PanoramaDoubleBuffer>> enemy_panoramas_;
 
         std::unique_ptr<std::barrier<>> reset_barrier_;
         std::unique_ptr<std::barrier<>> start_barrier_;

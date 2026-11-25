@@ -103,8 +103,10 @@ int main(const int argc, char **argv) {
     const auto actor = std::make_shared<LiquidActor>(
         model::ENEMY_STATE_VECTOR_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
         model::ENEMY_NB_DISCRETE_ACTION, params.hidden_size_sensors, params.vision_channels,
-        params.group_norm_nums, params.neuron_number, params.unfolding_steps, params.delta_t,
-        params.initial_sigma, std::vector{params.initial_fire_proba, params.initial_zoom_proba});
+        params.group_norm_nums, params.panorama_channels, params.panorama_group_norm_nums,
+        params.panorama_output_channels, params.neuron_number, params.unfolding_steps,
+        params.delta_t, params.initial_sigma,
+        std::vector{params.initial_fire_proba, params.initial_zoom_proba});
     const auto hidden_state = std::make_shared<LiquidHiddenState>(actor);
     const auto rollout_buffer = std::make_shared<LiquidPpoRolloutBuffer>();
     const auto collector = std::make_shared<LiquidPpoStepCollector>(rollout_buffer, hidden_state);
@@ -114,6 +116,7 @@ int main(const int argc, char **argv) {
         actor, rollout_buffer, model::ENEMY_NB_CONTINUOUS_ACTION, model::ENEMY_NB_DISCRETE_ACTION,
         model::ENEMY_STATE_VECTOR_SIZE, params.actor_learning_rate, params.critic_learning_rate,
         params.hidden_size_sensors, params.vision_channels, params.group_norm_nums,
+        params.panorama_channels, params.panorama_group_norm_nums, params.panorama_output_channels,
         params.neuron_number, params.unfolding_steps, params.delta_t, device,
         params.metric_window_size, params.gamma, params.gae_lambda, params.clip_epsilon,
         params.target_kl, params.grad_norm_max, params.initial_alpha, params.alpha_learning_rate,
@@ -130,7 +133,9 @@ int main(const int argc, char **argv) {
         critic_inputs.open(critic_inputs_path, std::ios::binary);
         critic = std::make_shared<LiquidCritic>(
             model::ENEMY_STATE_VECTOR_SIZE, params.hidden_size_sensors, params.vision_channels,
-            params.group_norm_nums, params.neuron_number, params.unfolding_steps, params.delta_t);
+            params.group_norm_nums, params.panorama_channels, params.panorama_group_norm_nums,
+            params.panorama_output_channels, params.neuron_number, params.unfolding_steps,
+            params.delta_t);
         load_torch(save_folder, critic, "critic.pt");
         critic->to(device);
         critic->eval();

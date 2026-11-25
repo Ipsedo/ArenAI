@@ -11,8 +11,9 @@ SacTrainingTriad SacTrainingTest::make_triad(const SacTrainingTestConfig &cfg) c
     const std::vector group_norm_nums{2};
 
     SacTrainingTriad triad;
-    triad.encoder =
-        std::make_shared<StateEncoder>(cfg.nb_sensors, 8, vision_channels, group_norm_nums);
+    triad.encoder = std::make_shared<StateEncoder>(
+        cfg.nb_sensors, 8, vision_channels, group_norm_nums,
+        std::vector<std::tuple<int, int>>{{3, 4}}, std::vector{2}, 2);
     triad.actor = std::make_shared<SacActor>(
         triad.encoder, cfg.nb_continuous_actions, cfg.nb_discrete_actions, std::vector{16}, 0.3f,
         std::vector(cfg.nb_discrete_actions, 0.2f));
@@ -22,8 +23,8 @@ SacTrainingTriad SacTrainingTest::make_triad(const SacTrainingTestConfig &cfg) c
     triad.trainer = std::make_shared<SacTrainer>(
         triad.actor, triad.encoder, triad.replay_buffer, cfg.nb_sensors, cfg.nb_continuous_actions,
         cfg.nb_discrete_actions, 1e-3f, 1e-3f, 1e-3f, 8, std::vector{16}, vision_channels,
-        group_norm_nums, device, 10, 0.05f, 0.1f, 0.3f, 0.3f, LEARNING_STARTS, 1, BATCH_SIZE,
-        GPU_BATCH_SIZE);
+        group_norm_nums, std::vector<std::tuple<int, int>>{{3, 4}}, std::vector{2}, 2, device, 10,
+        0.05f, 0.1f, 0.3f, 0.3f, LEARNING_STARTS, 1, BATCH_SIZE, GPU_BATCH_SIZE);
     return triad;
 }
 
@@ -31,6 +32,9 @@ TorchState SacTrainingTest::make_state(const SacTrainingTestConfig &cfg, const i
     return TorchState(
         torch::randint(
             0, 255, {nb_tanks, 3, arenai::core::VISION_HEIGHT, arenai::core::VISION_WIDTH},
+            torch::kUInt8),
+        torch::randint(
+            0, 255, {nb_tanks, 3, arenai::core::PANORAMA_HEIGHT, arenai::core::PANORAMA_WIDTH},
             torch::kUInt8),
         torch::randn({nb_tanks, cfg.nb_sensors}),
         torch::randint(0, 2, {nb_tanks, 1}).to(torch::kFloat));
@@ -111,7 +115,9 @@ TEST_F(SacTrainingTest, MaskedFireReceivesNoUpdate) {
 
     for (int t = 0; t < 6; t++) {
         auto state = make_state(cfg, NB_TANKS);
-        state = TorchState(state.get_vision(), state.get_state(), torch::zeros({NB_TANKS, 1}));
+        state = TorchState(
+            state.get_vision(), state.get_panorama(), state.get_state(),
+            torch::zeros({NB_TANKS, 1}));
 
         triad.agent->act(state, true);
         triad.collector->on_transition(

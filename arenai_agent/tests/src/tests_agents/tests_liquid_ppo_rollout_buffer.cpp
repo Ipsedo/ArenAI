@@ -5,7 +5,9 @@ using namespace arenai::agent;
 
 TorchState LiquidPpoRolloutBufferTest::make_state() {
     return TorchState(
-        torch::randn({NB_TANKS, 3, VISION_SIZE, VISION_SIZE}), torch::randn({NB_TANKS, NB_SENSORS}),
+        torch::randn({NB_TANKS, 3, VISION_SIZE, VISION_SIZE}),
+        torch::randn({NB_TANKS, 3, arenai::core::PANORAMA_HEIGHT, arenai::core::PANORAMA_WIDTH}),
+        torch::randn({NB_TANKS, NB_SENSORS}),
         torch::randint(0, 2, {NB_TANKS, 1}).to(torch::kFloat));
 }
 

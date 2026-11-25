@@ -121,7 +121,9 @@ int main(const int argc, char **argv) {
         // [N, 1] critic state value in scaled-return units, empty without a state-value critic
         torch::Tensor value;
     };
-    std::function<ProbeActorOutput(const torch::Tensor &, const torch::Tensor &)> act;
+    std::function<ProbeActorOutput(
+        const torch::Tensor &, const torch::Tensor &, const torch::Tensor &)>
+        act;
     std::function<void()> reset_hidden = [] {};
     // [N, 3 × nb_aim] ∂E[min Q], ∂E[Q1], ∂E[Q2] /∂a_aim at the mode, undefined without a critic
     std::function<torch::Tensor(const TorchState &, const torch::Tensor &, const torch::Tensor &)>
@@ -132,6 +134,11 @@ int main(const int argc, char **argv) {
     const auto vision_channels =
         agent_config.at("vision_channels").get<std::vector<std::tuple<int, int>>>();
     const auto group_norm_nums = agent_config.at("group_norm_nums").get<std::vector<int>>();
+    const auto panorama_channels =
+        agent_config.at("panorama_channels").get<std::vector<std::tuple<int, int>>>();
+    const auto panorama_group_norm_nums =
+        agent_config.at("panorama_group_norm_nums").get<std::vector<int>>();
+    const int panorama_output_channels = agent_config.at("panorama_output_channels").get<int>();
     const std::vector initial_discrete_probas{
         agent_config.at("initial_fire_proba").get<float>(),
         agent_config.at("initial_zoom_proba").get<float>()};
@@ -145,21 +152,24 @@ int main(const int argc, char **argv) {
             model::ENEMY_STATE_VECTOR_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
             model::ENEMY_NB_DISCRETE_ACTION, agent_config.at("hidden_size_sensors").get<int>(),
             agent_config.at("actor_hidden_sizes").get<std::vector<int>>(), vision_channels,
-            group_norm_nums, agent_config.at("initial_sigma").get<float>(),
-            initial_discrete_probas);
+            group_norm_nums, panorama_channels, panorama_group_norm_nums, panorama_output_channels,
+            agent_config.at("initial_sigma").get<float>(), initial_discrete_probas);
         load_torch(save_folder, actor, "actor.pt");
         actor->to(device);
         actor->eval();
 
-        act = [actor](const torch::Tensor &vision, const torch::Tensor &sensors) {
-            auto out = actor->act(vision, sensors);
+        act = [actor](
+                  const torch::Tensor &vision, const torch::Tensor &panorama,
+                  const torch::Tensor &sensors) {
+            auto out = actor->act(vision, panorama, sensors);
             return ProbeActorOutput{out.mu, out.sigma, out.discrete};
         };
     } else if (is_sac) {
         const auto make_encoder = [&] {
             return std::make_shared<StateEncoder>(
                 model::ENEMY_STATE_VECTOR_SIZE, agent_config.at("hidden_size_sensors").get<int>(),
-                vision_channels, group_norm_nums);
+                vision_channels, group_norm_nums, panorama_channels, panorama_group_norm_nums,
+                panorama_output_channels);
         };
         const auto actor_encoder = make_encoder();
         const auto actor = std::make_shared<SacActor>(
@@ -177,25 +187,27 @@ int main(const int argc, char **argv) {
         critic->to(device);
         critic->eval();
 
-        act = [actor, actor_encoder,
-               critic](const torch::Tensor &vision, const torch::Tensor &sensors) {
-            auto out = actor->act(vision, sensors);
+        act = [actor, actor_encoder, critic](
+                  const torch::Tensor &vision, const torch::Tensor &panorama,
+                  const torch::Tensor &sensors) {
+            auto out = actor->act(vision, panorama, sensors);
             // features: encoding saved with the actor, vision_features: saved with the critic
             return ProbeActorOutput{
-                out.mu, out.sigma, out.discrete, actor_encoder->forward(vision, sensors),
-                critic->encode(vision, sensors)};
+                out.mu, out.sigma, out.discrete, actor_encoder->forward(vision, panorama, sensors),
+                critic->encode(vision, panorama, sensors)};
         };
 
         canon_q_gradient = [critic, device](
                                const TorchState &state, const torch::Tensor &mu,
                                const torch::Tensor &discrete) {
             const auto vision = state.get_vision().to(device);
+            const auto panorama = state.get_panorama().to(device);
             const auto sensors = state.get_state().to(device);
             const auto mask =
                 TorchState::discrete_action_mask(state.get_fire_mask(), discrete.size(-1))
                     .to(device);
             const auto action = gaussian_tanh_mode(mu.to(device)).detach().requires_grad_(true);
-            const auto [q1, q2] = critic->q(vision, sensors, action);
+            const auto [q1, q2] = critic->q(vision, panorama, sensors, action);
             const auto joint = discrete_joint(discrete.to(device), mask);
             const auto value = (joint.probas * torch::min(q1, q2)).sum();
             const auto value_1 = (joint.probas * q1).sum();
@@ -211,7 +223,8 @@ int main(const int argc, char **argv) {
         const auto actor = std::make_shared<LiquidActor>(
             model::ENEMY_STATE_VECTOR_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
             model::ENEMY_NB_DISCRETE_ACTION, agent_config.at("hidden_size_sensors").get<int>(),
-            vision_channels, group_norm_nums, agent_config.at("neuron_number").get<int>(),
+            vision_channels, group_norm_nums, panorama_channels, panorama_group_norm_nums,
+            panorama_output_channels, agent_config.at("neuron_number").get<int>(),
             agent_config.at("unfolding_steps").get<int>(), agent_config.at("delta_t").get<float>(),
             agent_config.at("initial_sigma").get<float>(), initial_discrete_probas);
         load_torch(save_folder, actor, "actor.pt");
@@ -220,7 +233,8 @@ int main(const int argc, char **argv) {
 
         const auto critic = std::make_shared<LiquidCritic>(
             model::ENEMY_STATE_VECTOR_SIZE, agent_config.at("hidden_size_sensors").get<int>(),
-            vision_channels, group_norm_nums, agent_config.at("neuron_number").get<int>(),
+            vision_channels, group_norm_nums, panorama_channels, panorama_group_norm_nums,
+            panorama_output_channels, agent_config.at("neuron_number").get<int>(),
             agent_config.at("unfolding_steps").get<int>(), agent_config.at("delta_t").get<float>());
         load_torch(save_folder, critic, "critic.pt");
         critic->to(device);
@@ -232,15 +246,16 @@ int main(const int argc, char **argv) {
             hidden_state->reset();
             *critic_x = torch::Tensor();
         };
-        act = [actor, hidden_state, critic,
-               critic_x](const torch::Tensor &vision, const torch::Tensor &sensors) {
+        act = [actor, hidden_state, critic, critic_x](
+                  const torch::Tensor &vision, const torch::Tensor &panorama,
+                  const torch::Tensor &sensors) {
             const auto x_t = hidden_state->get(vision.size(0));
-            auto out = actor->act(vision, sensors, x_t);
+            auto out = actor->act(vision, panorama, sensors, x_t);
             hidden_state->set(out.next_x);
 
             if (!critic_x->defined())
                 *critic_x = critic->initial_state(static_cast<int>(vision.size(0)));
-            const auto [value, next_critic_x] = critic->value(vision, sensors, *critic_x);
+            const auto [value, next_critic_x] = critic->value(vision, panorama, sensors, *critic_x);
             *critic_x = next_critic_x;
 
             return ProbeActorOutput{out.mu,       out.sigma,           out.discrete,
@@ -311,7 +326,9 @@ int main(const int argc, char **argv) {
             {
                 torch::NoGradGuard guard;
 
-                auto out = act(state.get_vision().to(device), state.get_state().to(device));
+                auto out =
+                    act(state.get_vision().to(device), state.get_panorama().to(device),
+                        state.get_state().to(device));
 
                 mu = out.mu.cpu();
                 sigma = out.sigma.cpu();

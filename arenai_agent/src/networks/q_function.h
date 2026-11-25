@@ -33,13 +33,15 @@ namespace arenai::agent {
             const std::shared_ptr<StateEncoder> &encoder, int nb_continuous_actions,
             int nb_discrete_actions, const std::vector<int> &hidden_sizes);
 
-        torch::Tensor encode(const torch::Tensor &vision, const torch::Tensor &sensors);
+        torch::Tensor encode(
+            const torch::Tensor &vision, const torch::Tensor &panorama,
+            const torch::Tensor &sensors);
 
         std::pair<torch::Tensor, torch::Tensor>
         q_from_encoding(const torch::Tensor &encoding, const torch::Tensor &continuous_action);
 
         std::pair<torch::Tensor, torch::Tensor>
-        q(const torch::Tensor &vision, const torch::Tensor &sensors,
+        q(const torch::Tensor &vision, const torch::Tensor &panorama, const torch::Tensor &sensors,
           const torch::Tensor &continuous_action);
 
     private:

@@ -10,6 +10,7 @@
 
 #include "../geometry.h"
 #include "../jolt_engine.h"
+#include "./panorama_camera.h"
 #include "./parts/canon.h"
 #include "./parts/shell.h"
 
@@ -35,6 +36,7 @@ namespace arenai::model {
                 if (can_fire) curr_cooldown_frame = 0;
                 return can_fire;
             }),
+          panorama_cameras(make_panorama_cameras(get_canon())),
           max_frames_upside_down(static_cast<int>(4.f / wanted_frame_frequency)),
           curr_frame_upside_down(0), has_left_arena(false),
           initial_nb_shells(shell_economy.initial_shells), nb_shells(initial_nb_shells),
@@ -241,6 +243,10 @@ namespace arenai::model {
             tracked.has_killed = killed;
             break;
         }
+    }
+
+    std::vector<std::shared_ptr<view::AbstractCamera>> JoltEnemyTank::get_panorama_cameras() const {
+        return panorama_cameras;
     }
 
     bool JoltEnemyTank::get_can_fire() const {

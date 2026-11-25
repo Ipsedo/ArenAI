@@ -64,6 +64,8 @@ namespace arenai::model {
         float get_cooldown_ratio() const override;
         bool get_can_fire() const override;
 
+        std::vector<std::shared_ptr<view::AbstractCamera>> get_panorama_cameras() const override;
+
         // Tank methods resolved via JoltTank
         using JoltTank::get_camera;
         using JoltTank::get_canon;
@@ -73,6 +75,8 @@ namespace arenai::model {
         using JoltTank::load_shell_shapes;
 
     private:
+        std::vector<std::shared_ptr<view::AbstractCamera>> panorama_cameras;
+
         int max_frames_upside_down;
         int curr_frame_upside_down;
         bool has_left_arena;

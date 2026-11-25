@@ -42,6 +42,9 @@ TorchState PpoAgentTest::make_state(const PpoTestConfig &cfg, const int batch) {
         torch::randint(
             0, 255, {batch, 3, arenai::core::VISION_HEIGHT, arenai::core::VISION_WIDTH},
             torch::kUInt8),
+        torch::randint(
+            0, 255, {batch, 3, arenai::core::PANORAMA_HEIGHT, arenai::core::PANORAMA_WIDTH},
+            torch::kUInt8),
         torch::randn({batch, cfg.nb_sensors}), torch::ones({batch, 1}));
 }
 

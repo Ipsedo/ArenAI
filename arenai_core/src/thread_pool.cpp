@@ -1,4 +1,6 @@
+#include <algorithm>
 #include <chrono>
+#include <set>
 
 #include <arenai_core/thread_pool.h>
 #include <arenai_core/types.h>
@@ -14,6 +16,10 @@ namespace arenai::core {
 
     VisionDoubleBuffer::VisionDoubleBuffer(const int height, const int width)
         : DoubleBuffer(black_image(height, width)) {}
+
+    PanoramaDoubleBuffer::PanoramaDoubleBuffer()
+        : DoubleBuffer(
+            view::image<uint8_t>{std::vector<uint8_t>(3 * PANORAMA_HEIGHT * PANORAMA_WIDTH, 0)}) {}
 
     ModelMatricesDoubleBuffer::ModelMatricesDoubleBuffer()
         : DoubleBuffer(std::vector<std::tuple<std::string, glm::mat4>>()) {}
@@ -67,6 +73,11 @@ namespace arenai::core {
             enemy_visions_.push_back(
                 std::make_unique<VisionDoubleBuffer>(VISION_HEIGHT, VISION_WIDTH));
 
+        enemy_panoramas_.clear();
+        enemy_panoramas_.reserve(num_tanks_);
+        for (int i = 0; i < num_tanks_; i++)
+            enemy_panoramas_.push_back(std::make_unique<PanoramaDoubleBuffer>());
+
         pool_.reserve(num_tanks_);
         for (int i = 0; i < num_tanks_; i++)
             pool_.emplace_back(
@@ -107,22 +118,49 @@ namespace arenai::core {
         renderer->add_drawable(
             "cubemap", drawable_factory->make_cube_map(file_reader, "cubemap/1"));
 
+        // every view of this tank draws an item with the same color
+        std::vector<std::tuple<std::string, std::shared_ptr<model::Shape>, glm::vec4>> colored;
+
         for (const auto &item: scene_items) {
             const glm::vec4 color(u_dist(local_rng), u_dist(local_rng), u_dist(local_rng), 1.f);
-            const auto shape = item->get_shape();
-            renderer->add_drawable(
-                item->get_name(),
-                drawable_factory->make_diffuse(file_reader, shape->get_vertices(), color));
+            colored.emplace_back(item->get_name(), item->get_shape(), color);
         }
 
         for (const auto &[name, shape]: tank_factory->load_shell_shapes()) {
             const glm::vec4 shell_color(
                 u_dist(local_rng), u_dist(local_rng), u_dist(local_rng), 1.f);
-
-            renderer->add_drawable(
-                name,
-                drawable_factory->make_diffuse(file_reader, shape->get_vertices(), shell_color));
+            colored.emplace_back(name, shape, shell_color);
         }
+
+        for (const auto &[name, shape, color]: colored)
+            renderer->add_drawable(
+                name, drawable_factory->make_diffuse(file_reader, shape->get_vertices(), color));
+
+        // the panorama leaves out the tank's own parts
+        std::set<std::string> own_parts;
+        for (const auto &item: tank_factory->get_items()) own_parts.insert(item->get_name());
+
+        constexpr int view_width = PANORAMA_WIDTH / PANORAMA_VIEWS;
+
+        std::vector<std::unique_ptr<view::AbstractOffscreenRenderer>> panorama_renderers;
+        for (const auto &camera: tank_factory->get_panorama_cameras()) {
+            auto panorama_renderer = graphics_backend->make_offscreen_renderer(
+                view_width, PANORAMA_HEIGHT, glm::vec3(200, 300, 200), camera);
+
+            panorama_renderer->make_current();
+
+            panorama_renderer->add_drawable(
+                "cubemap", drawable_factory->make_cube_map(file_reader, "cubemap/1"));
+
+            for (const auto &[name, shape, color]: colored)
+                if (!own_parts.contains(name))
+                    panorama_renderer->add_drawable(
+                        name,
+                        drawable_factory->make_diffuse(file_reader, shape->get_vertices(), color));
+
+            panorama_renderers.push_back(std::move(panorama_renderer));
+        }
+
         const auto frame_dt =
             std::chrono::milliseconds(static_cast<int>(wanted_frequency_ * 1000.f));
 
@@ -136,7 +174,28 @@ namespace arenai::core {
             limiter_.acquire();
 
             const auto matrices = model_matrices_->read_copy();
+
+            renderer->make_current();
             enemy_visions_[index]->write(renderer->draw_and_get_frame(matrices));
+
+            std::vector<std::tuple<std::string, glm::mat4>> seen_matrices;
+            seen_matrices.reserve(matrices.size());
+            for (const auto &matrix: matrices)
+                if (!own_parts.contains(std::get<0>(matrix))) seen_matrices.push_back(matrix);
+
+            // [C, H, W] strip: the views side by side
+            view::image<uint8_t> panorama{
+                std::vector<uint8_t>(3 * PANORAMA_HEIGHT * PANORAMA_WIDTH)};
+            for (int v = 0; v < static_cast<int>(panorama_renderers.size()); v++) {
+                panorama_renderers[v]->make_current();
+                const auto frame = panorama_renderers[v]->draw_and_get_frame(seen_matrices);
+
+                for (int row = 0; row < 3 * PANORAMA_HEIGHT; row++)
+                    std::copy_n(
+                        frame.pixels.begin() + row * view_width, view_width,
+                        panorama.pixels.begin() + row * PANORAMA_WIDTH + v * view_width);
+            }
+            enemy_panoramas_[index]->write(std::move(panorama));
 
             limiter_.release();
 
@@ -150,6 +209,7 @@ namespace arenai::core {
                     std::max(frame_dt - dt, std::chrono::steady_clock::duration::zero()));
         }
 
+        panorama_renderers.clear();
         renderer.reset();
         graphics_backend->release_thread();
 
@@ -165,6 +225,10 @@ namespace arenai::core {
 
     view::image<uint8_t> EnemyVisionThreadPool::read_vision(const int index) const {
         return enemy_visions_[index]->read_copy();
+    }
+
+    view::image<uint8_t> EnemyVisionThreadPool::read_panorama(const int index) const {
+        return enemy_panoramas_[index]->read_copy();
     }
 
     void EnemyVisionThreadPool::begin_frame() const { (void) start_barrier_->arrive(); }

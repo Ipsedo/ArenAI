@@ -32,7 +32,8 @@ TEST_F(EnvironmentTest, ResetInitialVisionIsNotBlack) {
     TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 1, false);
 
     for (const auto states = env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
-         const auto &[vision, proprioception, shells_ratio, cooldown_ratio, can_fire]: states) {
+         const auto &[vision, panorama, proprioception, shells_ratio, cooldown_ratio, can_fire]:
+         states) {
         ASSERT_EQ(
             static_cast<int>(vision.pixels.size()), 3 * core::VISION_HEIGHT * core::VISION_WIDTH);
 
@@ -40,6 +41,32 @@ TEST_F(EnvironmentTest, ResetInitialVisionIsNotBlack) {
             vision.pixels.begin(), vision.pixels.end(), 0,
             [](const int acc, const uint8_t p) { return acc + static_cast<int>(p); });
         ASSERT_GT(pixel_sum, 0) << "initial vision should not be all black";
+    }
+
+    env.stop_drawing();
+}
+
+TEST_F(EnvironmentTest, ResetInitialPanoramaIsNotBlack) {
+    constexpr int nb_tanks = 2;
+    constexpr float frequency = 1.f / 60.f;
+    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 1, false);
+
+    for (const auto &state: env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY)) {
+        ASSERT_EQ(
+            static_cast<int>(state.panorama.pixels.size()),
+            3 * core::PANORAMA_HEIGHT * core::PANORAMA_WIDTH);
+
+        // every view of the strip is drawn: no quarter of the width stays black
+        constexpr int view_width = core::PANORAMA_WIDTH / core::PANORAMA_VIEWS;
+        for (int view = 0; view < core::PANORAMA_VIEWS; view++) {
+            int pixel_sum = 0;
+            for (int row = 0; row < 3 * core::PANORAMA_HEIGHT; row++)
+                for (int column = 0; column < view_width; column++)
+                    pixel_sum +=
+                        state.panorama
+                            .pixels[row * core::PANORAMA_WIDTH + view * view_width + column];
+            ASSERT_GT(pixel_sum, 0) << "panorama view " << view << " should not be all black";
+        }
     }
 
     env.stop_drawing();
@@ -61,7 +88,7 @@ TEST_F(EnvironmentTest, ResetGoldenImage) {
     const auto states = env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
 
     for (int tank_idx = 0; tank_idx < nb_tanks; tank_idx++) {
-        const auto &[vision, proprioception, shells_ratio, cooldown_ratio, can_fire] =
+        const auto &[vision, panorama, proprioception, shells_ratio, cooldown_ratio, can_fire] =
             states[tank_idx];
 
         const auto golden_image_path =
@@ -115,7 +142,8 @@ TEST_F(EnvironmentTest, ResetProprioceptionNonEmpty) {
     TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 1, false);
 
     for (const auto states = env.reset(100.f, 100.f, model::GAME_SHELL_ECONOMY);
-         const auto &[vision, proprioception, shells_ratio, cooldown_ratio, can_fire]: states) {
+         const auto &[vision, panorama, proprioception, shells_ratio, cooldown_ratio, can_fire]:
+         states) {
         ASSERT_FALSE(proprioception.empty());
     }
 

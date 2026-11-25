@@ -61,6 +61,9 @@ namespace arenai::desktop {
                 .vision =
                     {.pixels = std::vector<uint8_t>(
                          static_cast<size_t>(3) * core::VISION_HEIGHT * core::VISION_WIDTH, 0)},
+                .panorama =
+                    {.pixels = std::vector<uint8_t>(
+                         static_cast<size_t>(3) * core::PANORAMA_HEIGHT * core::PANORAMA_WIDTH, 0)},
                 .proprioception = std::vector(model::ENEMY_PROPRIOCEPTION_SIZE, 0.f),
                 .remaining_shells_ratio = 1.f,
                 .cooldown_ratio = 1.f,

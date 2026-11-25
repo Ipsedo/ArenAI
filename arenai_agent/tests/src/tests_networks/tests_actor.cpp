@@ -18,14 +18,18 @@ TEST_P(ActorTestParam, TestActorAct) {
 
     Actor actor(
         sensors_nb, cont_actions_nb, discrete_actions_nb, sensors_hidden_size, layers,
-        {{input_channels, 4}, {4, 8}}, {2, 4}, 0.1f, std::vector(discrete_actions_nb, 0.2f));
+        {{input_channels, 4}, {4, 8}}, {2, 4}, {{3, 4}}, {2}, 2, 0.1f,
+        std::vector(discrete_actions_nb, 0.2f));
 
     const auto image = torch::randint(
         255, {batch_size, input_channels, height, width},
         torch::TensorOptions().dtype(torch::kUInt8));
+    const auto panorama = torch::randint(
+        255, {batch_size, 3, core::PANORAMA_HEIGHT, core::PANORAMA_WIDTH},
+        torch::TensorOptions().dtype(torch::kUInt8));
     const auto sensors = torch::randn({batch_size, sensors_nb});
 
-    const auto [mu, sigma, discrete] = actor.act(image, sensors);
+    const auto [mu, sigma, discrete] = actor.act(image, panorama, sensors);
 
     ASSERT_EQ(mu.ndimension(), 2);
     ASSERT_EQ(mu.size(0), batch_size);

@@ -5,6 +5,7 @@
 
 #include <torch/torch.h>
 
+#include "../panorama.h"
 #include "../vision.h"
 #include "./liquid_cell.h"
 
@@ -22,20 +23,25 @@ namespace arenai::agent {
         explicit LiquidCritic(
             const int &nb_sensors, const int &hidden_size_sensors,
             const std::vector<std::tuple<int, int>> &vision_channels,
-            const std::vector<int> &group_norm_nums, const int &neuron_number,
-            const int &unfolding_steps, const float &delta_t);
+            const std::vector<int> &group_norm_nums,
+            const std::vector<std::tuple<int, int>> &panorama_channels,
+            const std::vector<int> &panorama_group_norm_nums, const int &panorama_output_channels,
+            const int &neuron_number, const int &unfolding_steps, const float &delta_t);
 
         // one env step: vision [B, C, H, W], sensors [B, S], x_t [B, neuron_number]
-        LiquidCriticOutput
-        value(const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &x_t);
+        LiquidCriticOutput value(
+            const torch::Tensor &vision, const torch::Tensor &panorama,
+            const torch::Tensor &sensors, const torch::Tensor &x_t);
 
         LiquidCriticOutput value_sequence(
-            const torch::Tensor &vision, const torch::Tensor &sensors, const torch::Tensor &x_t);
+            const torch::Tensor &vision, const torch::Tensor &panorama,
+            const torch::Tensor &sensors, const torch::Tensor &x_t);
 
         torch::Tensor initial_state(int batch_size) const;
 
     private:
         std::shared_ptr<ConvolutionNetwork> vision_encoder;
+        std::shared_ptr<PanoramaNetwork> panorama_encoder;
         torch::nn::Sequential sensors_encoder;
 
         std::shared_ptr<LiquidCell> liquid;
@@ -43,7 +49,9 @@ namespace arenai::agent {
         torch::nn::Linear to_value;
 
         // [rows, features] recurrent input: encoded vision and sensors, concatenated
-        torch::Tensor encode(const torch::Tensor &vision, const torch::Tensor &sensors);
+        torch::Tensor encode(
+            const torch::Tensor &vision, const torch::Tensor &panorama,
+            const torch::Tensor &sensors);
     };
 
 }// namespace arenai::agent

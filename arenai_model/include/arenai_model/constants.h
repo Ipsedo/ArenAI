@@ -36,6 +36,13 @@ namespace arenai::model {
     constexpr float KILL_REWARD = 1.f;
     constexpr float DEATH_PENALTY = 1.f;
 
+    // panorama: level views around the turret, each one a quarter turn wide
+    constexpr int PANORAMA_VIEWS = 4;
+    // width / height of one view
+    constexpr float PANORAMA_VIEW_ASPECT = 4.f;
+    // m above the canon
+    constexpr float PANORAMA_CAMERA_HEIGHT = 1.5f;
+
     constexpr float ZOOM_MAGNIFICATION = 2.f;
     constexpr float ZOOM_TRANSITION_SECONDS = 0.25f;
 

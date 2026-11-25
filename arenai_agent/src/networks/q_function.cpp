@@ -49,8 +49,9 @@ namespace arenai::agent {
                         encoder->get_output_size(), nb_continuous_actions, nb_discrete_actions,
                         hidden_sizes))) {}
 
-    torch::Tensor TwinQNetwork::encode(const torch::Tensor &vision, const torch::Tensor &sensors) {
-        return encoder->forward(vision, sensors);
+    torch::Tensor TwinQNetwork::encode(
+        const torch::Tensor &vision, const torch::Tensor &panorama, const torch::Tensor &sensors) {
+        return encoder->forward(vision, panorama, sensors);
     }
 
     std::pair<torch::Tensor, torch::Tensor> TwinQNetwork::q_from_encoding(
@@ -59,9 +60,9 @@ namespace arenai::agent {
     }
 
     std::pair<torch::Tensor, torch::Tensor> TwinQNetwork::q(
-        const torch::Tensor &vision, const torch::Tensor &sensors,
+        const torch::Tensor &vision, const torch::Tensor &panorama, const torch::Tensor &sensors,
         const torch::Tensor &continuous_action) {
-        return q_from_encoding(encode(vision, sensors), continuous_action);
+        return q_from_encoding(encode(vision, panorama, sensors), continuous_action);
     }
 
 }// namespace arenai::agent

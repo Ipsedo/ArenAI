@@ -157,8 +157,10 @@ run's effective commit, not the working tree.
   CI, `--regenerate` rewrites after an *intended* render change.
   `-DARENAI_REGENERATE_GOLDEN_IMAGES=ON` disables pixel assertions: a regeneration switch, never
   a way to turn CI green.
-- Training: `arenai_agent_train <agent> --output_folder <dir> --asset_folder <dir> [--cuda] …`
-  (both folders required; options in `arenai_agent/src/main.cpp` and `agents/agent_cli.cpp`).
+- Training: `arenai_agent_train --output_folder <dir> --resources_folder <dir> [--cuda] … <agent>
+  [agent options]` (both folders required, the agent name comes after the common options; options
+  in `arenai_agent/src/main.cpp` and `agents/agent_cli.cpp`). Vision sizes are compile-time
+  constants (`arenai_core/types.h`).
   Runs live in `outputs/train_NNN_<agent>/` (`config.json`, `metrics.csv`, `save_K/`).
 
 ## Skill routing

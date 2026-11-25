@@ -61,7 +61,8 @@ function over the existing surface.
 ### Frozen contracts and no backward compatibility
 
 - `TorchAction`, `TorchState`, `TorchStep` (`agents/torch_types.h`) are shared with code outside
-  this repo (Samuel's SAC on another machine): never add a field. Algorithm-specific data
+  this repo (Samuel's SAC on another machine): never add a field. Only Samuel re-opens it: he
+  added `TorchState::panorama` on 2026-11-25 (« on ne mélange pas deux sémantiques »). Algorithm-specific data
   (pre-tanh sample, log-probs, hidden states) goes in the buffers' `*InputStep` / `*Rollout` and
   the collector's `on_act`.
 - A validated feature is permanent: no disable option, no « 0 = off » value, no fallback for old

@@ -104,7 +104,9 @@ Any learning problem or idea of a fix ⟹ skill `rl-hypothesis`.
   texte »): any chat answer that explains a mechanism, a cause, a tested setup, a bench or probe
   verdict, a proposal or a comparison of setups opens with its diagram, unasked (visualize widget
   when available, else Mermaid; ASCII as last resort); the text is its caption, a table of
-  numbers never replaces it. Also drawn: architecture, gradient flow, data flow, class
+  numbers never replaces it. Every diagram carries its legend inside the figure (each colour,
+  line style and symbol named; Samuel, 2026-11-27: « tes schémas devraient avoir une légende »).
+  Also drawn: architecture, gradient flow, data flow, class
   collaboration, causal chain, timeline. A design question shows the collaboration; a
   formulation proposal shows where the piece plugs in and where gradients stop.
 - **Compute time announced at launch** (Samuel, 2026-11-26: « dès que t'en lances il faut que tu

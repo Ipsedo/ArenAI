@@ -1,12 +1,12 @@
 ---
 name: game-match
-description: Judge an ArenAI checkpoint under the desktop game's rules — play matches with arenai_agent_match (no refill of a dry tank, deterministic agent, 16 tanks, idle player tank, game shell economy), read the game outcomes and write <run>/matches/save_K.md. The only instrument allowed to support « bon / meilleur en jeu » (docs/rl_method.md M7). Use whenever a run or checkpoint must be judged, ranked or declared improved, before telling Samuel which save to play, and for « est-ce que ce run est bon », « bon en jeu », « lequel est le meilleur », « ça donne quoi en jeu », « évalue le run ».
+description: Judge an ArenAI checkpoint under the desktop game's rules — play matches with arenai_agent_match (no refill of a dry tank, deterministic agent, 16 tanks, idle player tank, game shell economy), read the game outcomes and write <kdir>/matches/save_K.md. The only instrument allowed to support « bon / meilleur en jeu » (docs/rl_method.md M7). Use whenever a run or checkpoint must be judged, ranked or declared improved, before telling Samuel which save to play, and for « est-ce que ce run est bon », « bon en jeu », « lequel est le meilleur », « ça donne quoi en jeu », « évalue le run ».
 ---
 
 # Game match — the verdict instrument
 
 Read `docs/rl_method.md` M7 first. A game-match result is a **prediction** of Samuel's verdict;
-the verdict is his (game labels, memory note `etalons-verdict-jeu`).
+the verdict is his (game labels: `.claude/knowledge/game_labels.md`).
 
 What the executable does (`arenai_agent/probe/match.cpp`): `MatchEnvironment` replays
 `DesktopGameEnvironment::play_frame` + `GameSession::play_frame` headless — agent built by the
@@ -55,7 +55,7 @@ Mean ± sd over matches, per criterion, in Samuel's order (2026-11-25):
 ## 4. Verdict rules
 
 - Always against a reference checkpoint played with the same sides, seeds and match count; the
-  reference is the best checkpoint by game match so far (memory note `etalons-verdict-jeu`).
+  reference is the best checkpoint by game match so far (`.claude/knowledge/INDEX.md`).
 - A gap counts only beyond the match-to-match sd of both columns; one seed per training run ⟹
   write « une graine » next to any attribution to a code change.
 - Open with what is worse than the reference. A checkpoint with more living tanks dry at 10 s or
@@ -64,10 +64,12 @@ Mean ± sd over matches, per criterion, in Samuel's order (2026-11-25):
   and report the instrument as wrong.
 - Trajectory: a run is judged on ≥ 3 saves, not on its last one.
 - Before Samuel plays a save: give him the game-match table of that save and the prediction;
-  after he plays, record his words as a game label the same day.
+  after he plays, append his words verbatim to `.claude/knowledge/game_labels.md` the same day.
 
-## 5. Write `<run>/matches/save_K.md`
+## 5. Write `<kdir>/matches/save_K.md`
+
+`<kdir>` = the run folder of the knowledge base (CLAUDE.md); match exports stay in `<run>/matches/`.
 
 French. Header (run, save, index, D, binary + commit, sides, matches), table against the
 reference (bold best cell per row), what is worse first, prediction of the game verdict,
-labels check. Short chat summary. Update the run's memory note.
+labels check. Short chat summary. Update `<kdir>/run.md` and the run's line in `INDEX.md`.

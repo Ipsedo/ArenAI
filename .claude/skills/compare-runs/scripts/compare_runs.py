@@ -8,7 +8,7 @@ sys.path.insert(
 
 from arenai_run import (  # noqa: E402
     KEY_COLUMNS, alpha_columns, at_index, build_context, code_diff, config_diff, d_milestones,
-    flatten, fmt, fmt_value, load_run, per_d_level, signals, table,
+    flatten, fmt, fmt_value, knowledge_dir, load_run, per_d_level, signals, table,
 )
 
 
@@ -133,8 +133,9 @@ def main():
 
     print("\n## Analyses écrites existantes")
     for r in runs:
-        md = r.path / "analysis.md"
-        if md.exists():
+        folder = knowledge_dir(r)
+        md = folder / "analysis.md" if folder else None
+        if md and md.exists():
             stale = md.stat().st_mtime < (r.path / "metrics.csv").stat().st_mtime
             print(f"{md}{' (antérieure à la dernière ligne du CSV)' if stale else ''}")
         else:

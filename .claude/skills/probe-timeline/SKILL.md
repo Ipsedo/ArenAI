@@ -1,12 +1,12 @@
 ---
 name: probe-timeline
-description: Analyse the chronology of the probes of one ArenAI training (<run>/probes/*.json, successive saves), crossed with the CSV analysis, the config and the run's code, then write <run>/probes/timeline.md. Use for « analyse les sondes de 504 », « comment évolue la gâchette au fil des saves », « la sélectivité tient-elle de save_13 à save_27 ».
+description: Analyse the chronology of the probes of one ArenAI training (<run>/probes/*.json, successive saves), crossed with the CSV analysis, the config and the run's code, then write <kdir>/probes/timeline.md. Use for « analyse les sondes de 504 », « comment évolue la gâchette au fil des saves », « la sélectivité tient-elle de save_13 à save_27 ».
 ---
 
 # Probe timeline of a run
 
 Input: a run (folder or number), optionally a subset of saves.
-Output: `<run>/probes/timeline.md` (French) + a chat summary.
+Output: `<kdir>/probes/timeline.md` (French) (`<kdir>` = the run folder of the knowledge base, CLAUDE.md) + a chat summary.
 
 Role: establish facts, expose options; Samuel decides. Vocabulary: `docs/rl_method.md`.
 
@@ -16,7 +16,7 @@ Role: establish facts, expose options; Samuel decides. Vocabulary: `docs/rl_meth
   saves probed on the same side ⟹ no chronology. Choose the saves that discriminate (at D
   changes, around a CSV peak or break, plus `save_0` as random reference) and **probe them
   yourself** — fast evaluators need no permission; state the GPU cost.
-- **CSV analysis**: `<run>/analysis.md` from `analyze-run`. Missing or older than the last row
+- **CSV analysis**: `<kdir>/analysis.md` from `analyze-run`. Missing or older than the last row
   of `metrics.csv` ⟹ apply `analyze-run` first. It provides the effective commit, what the run
   tests, the phases and regimes of the CSV.
 
@@ -59,12 +59,12 @@ Prints:
      the noise floor.
 4. **Noise.** Ratio unreliable under ~300 aligned-and-close decisions. 4 episodes per probe,
    n = 1 seed: require a trend over ≥ 3 saves, or a gap clearly beyond the variability between
-   neighbouring saves. Memory markers (records, other runs) compare at the same D and side.
-5. **Memory.** Read `MEMORY.md` and the notes of the run and its predecessors. No refused lever
+   neighbouring saves. Markers of the run notes (records, other runs) compare at the same D and side.
+5. **Prior knowledge.** Read `.claude/knowledge/INDEX.md` and the notes of the run and its predecessors. No refused lever
    re-proposed.
 6. Any cause or remedy drawn from the timeline follows `rl-hypothesis`.
 
-## 4. Write `<run>/probes/timeline.md`
+## 4. Write `<kdir>/probes/timeline.md`
 
 French:
 
@@ -75,4 +75,4 @@ French:
 5. **Established / within noise / undecided.**
 6. **Next**: saves to probe to decide, markers to watch — options, not decisions.
 
-Then a short chat summary. A newly established fact updates the run's memory note.
+Then a short chat summary. A newly established fact updates `<kdir>/run.md`.

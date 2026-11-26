@@ -11,7 +11,7 @@ A miss is not required: the current standard works and can still be made better.
 Terms:
 - **Harness**: everything that steers Claude in this repo — `CLAUDE.md`, `.claude/skills/*`
   (body and `description`), `.claude/agents/*`, normative `docs/*.md`, hooks/settings in
-  `.claude/`, memory. The only scope of a kaizen: never the game, the agent or the tooling code.
+  `.claude/`, `.claude/knowledge/`, memory. The only scope of a kaizen: never the game, the agent or the tooling code.
 - **Standard**: the harness text or hook that currently governs a situation. Every improvement
   starts from the standard and ends as a new standard; no standard ⟹ writing one is the step.
 - **Waste** (muda) — work that brought Samuel nothing:

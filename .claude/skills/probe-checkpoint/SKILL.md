@@ -1,13 +1,13 @@
 ---
 name: probe-checkpoint
-description: Run the probe (arenai_agent_probe) on an ArenAI checkpoint (outputs/train_NNN_*/save_K) after checking that the binary matches the run's code, then analyse its metrics (trigger vs alignment, hit/shell, emptied reserve, turret, σ/μ) and write <run>/probes/save_K.md. The standard fast evaluator of a hypothesis — launch it without asking. Use for « sonde save_9 de 504 », « lance la sonde sur ce checkpoint », « est-ce que la gâchette est sélective à save_12 ».
+description: Run the probe (arenai_agent_probe) on an ArenAI checkpoint (outputs/train_NNN_*/save_K) after checking that the binary matches the run's code, then analyse its metrics (trigger vs alignment, hit/shell, emptied reserve, turret, σ/μ) and write <kdir>/probes/save_K.md. The standard fast evaluator of a hypothesis — launch it without asking. Use for « sonde save_9 de 504 », « lance la sonde sur ce checkpoint », « est-ce que la gâchette est sélective à save_12 ».
 ---
 
 # Checkpoint probe
 
 Input: `outputs/train_NNN_<agent>/save_K` (or a run + `--save K`), optionally spawn sides, number
 of episodes, deterministic mode.
-Output: `<run>/probes/save_K_side<S>[_det].{csv,_shots.csv,log,json}`, `<run>/probes/save_K.md`
+Output: `<run>/probes/save_K_side<S>[_det].{csv,_shots.csv,log,json}`, `<kdir>/probes/save_K.md` (`<kdir>` = the run folder of the knowledge base, CLAUDE.md)
 (French) and a chat summary.
 
 **Train rules only** (`docs/rl_method.md` M7): nothing read here supports « bon / meilleur en jeu »;
@@ -54,11 +54,11 @@ training: say so in the report. `--analyze-only` re-analyses existing CSVs witho
 ## 3. Metrics (armed decisions = `can_fire` and reserve > 0, step ≥ 10)
 
 One step = one decision = `action_repeat × wanted_frequency` = 0.1 s by default. Durations in
-seconds recorded in memory before 2026-11-11 are 3× too large.
+seconds recorded in the run notes before 2026-11-11 are 3× too large.
 
 | metric | meaning |
 |---|---|
-| `ratio`, `p_al`, `p_off` | armed p_fire aligned (< 5° **and** target < 40 m) / off-axis (≥ 20°): trigger **selectivity**, definition of the records in memory since 2026-11-10. `ratio_angle_only` (< 5° alone) is in the JSON |
+| `ratio`, `p_al`, `p_off` | armed p_fire aligned (< 5° **and** target < 40 m) / off-axis (≥ 20°): trigger **selectivity**, definition of the records in the run notes since 2026-11-10. `ratio_angle_only` (< 5° alone) is in the JSON |
 | `p_arm` | mean trigger level; flat vs angle = no selectivity |
 | deterministic (p > 0.5) | what the game does in deterministic mode: a trigger under 0.5 everywhere is mute in game |
 | `hit/ob`, `h<5°`, `tirs<5°`, `enrich` | hits per landed shell, per shell fired aligned, share of aligned shots, enrichment (share of aligned shots / share of aligned decisions) |
@@ -72,8 +72,8 @@ Check the counts (`n` aligned & close): under ~300 the ratio is noise.
 ## 4. Interpret
 
 - Place the checkpoint: index = K × `save_every`, curriculum D at that index, CSV around it
-  (`analyze-run` if `<run>/analysis.md` is missing or stale).
-- Compare to the markers in memory **at the same D and the same side**, within the noise floor.
+  (`analyze-run` if `<kdir>/analysis.md` is missing or stale).
+- Compare to the markers of the run notes (`.claude/knowledge/`) **at the same D and the same side**, within the noise floor.
   One isolated record establishes nothing. `save_0` is the random reference.
 - Side 550 = mid-range competence, side 1000 = cruise conditions. Read both.
 - Aim learning shows as a **negative** correlation between action mean and signed error; measure
@@ -84,9 +84,9 @@ Check the counts (`n` aligned & close): under ~300 the ratio is noise.
 - When this probe was run to decide a hypothesis: apply the decision rule written beforehand
   (prediction if true / if false) and state the verdict, refutation included.
 
-## 5. Write `<run>/probes/save_K.md`
+## 5. Write `<kdir>/probes/save_K.md`
 
 French. Header (run, save, index, D, binary + commit, compatibility, sides/episodes/mode),
 summary table, reading (trigger, shooting, dump, aim, heads), comparison to markers at the same
 D, conclusions established vs noise, next probes or saves worth running. Short chat summary. A
-newly established fact updates the run's memory note.
+newly established fact updates `<kdir>/run.md`.

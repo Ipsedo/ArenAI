@@ -1,13 +1,13 @@
 ---
 name: compare-runs
-description: Compare several ArenAI training runs (outputs/train_NNN_*) from their CSV analyses, accounting for code differences (effective commits, diff excluding comments) and config.json differences, then write outputs/comparisons/<date>_<runs>.md. Use for « compare 502 503 504 », « 504 vs 502 », « est-ce que le changement X a servi », « lequel est le meilleur ».
+description: Compare several ArenAI training runs (outputs/train_NNN_*) from their CSV analyses, accounting for code differences (effective commits, diff excluding comments) and config.json differences, then write .claude/knowledge/comparisons/<date>_<runs>.md. Use for « compare 502 503 504 », « 504 vs 502 », « est-ce que le changement X a servi », « lequel est le meilleur ».
 ---
 
 # Run comparison
 
 Input: two or more runs (folders or numbers), **reference first**, optionally the question asked
 (« le SoftClamp a-t-il servi ? »).
-Output: `outputs/comparisons/<YYYY-MM-DD>_<n1>_vs_<n2>[_vs_…].md` (French) + a chat summary.
+Output: `.claude/knowledge/comparisons/<YYYY-MM-DD>_<n1>_vs_<n2>[_vs_…].md` (French) + a chat summary.
 
 **Train rules only** (`docs/rl_method.md` M7): nothing read here supports « bon / meilleur en jeu »;
 a verdict on the run needs skill `game-match`.
@@ -17,7 +17,7 @@ structural effect): `docs/rl_method.md`.
 
 ## 1. One up-to-date analysis per run
 
-For each run whose `<run>/analysis.md` is missing or older than the last row of `metrics.csv`
+For each run whose `<kdir>/analysis.md` (run folder of the knowledge base, CLAUDE.md) is missing or older than the last row of `metrics.csv`
 (the comparison script reports it), apply `analyze-run` first. Then read every `analysis.md`:
 they hold the confirmed effective commit, what each run tests, and known traps.
 
@@ -41,7 +41,7 @@ A comparison is worth exactly what is known about what differs. For each pair:
 - **config.json**: every differing key (nb_tanks, rollout, epochs, lr, entropy targets…);
 - **code**: read the real diff between effective commits (`git diff <a> <b> -- <file>`);
   reward, economy, σ/entropy, trainer, curriculum first;
-- **outside git**: uncommitted code at launch, different binary, relaunched folder (memory notes
+- **outside git**: uncommitted code at launch, different binary, relaunched folder (`<kdir>/run.md`
   and `analysis.md`);
 - **metrics**: a column whose definition changed between the commits
   (`git log -S'"<name>"' <a>..<b>`) is not comparable as is — say it.
@@ -61,13 +61,13 @@ the attribution, the isolating control run is a tactical training (gate G4).
   established only beyond the noise floor.
 - `ev` in-sample (inflated by more critic epochs), `fire` blind to the dump, `Hd` ≈ H(zoom): do
   not compare these columns naively across configs that change those mechanisms.
-- Read `MEMORY.md` and the run notes: no refused lever re-proposed.
+- Read `.claude/knowledge/INDEX.md` and the run notes: no refused lever re-proposed.
 - If the CSV cannot decide and a probe can, run it (`probe-checkpoint` on the matching saves of
   each run, same side, same mode) — no permission needed.
 
 ## 5. Write the comparison
 
-`outputs/comparisons/<YYYY-MM-DD>_<n1>_vs_<n2>….md`, French:
+`.claude/knowledge/comparisons/<YYYY-MM-DD>_<n1>_vs_<n2>….md`, French:
 
 1. **Runs**: state, index/D reached, effective commit, throughput.
 2. **Differences**: config, code (summary of the real diff), outside git, metrics; confounds.

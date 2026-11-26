@@ -20,8 +20,7 @@ Terms:
 - **Expected action**: what a correct Claude would have done, stated as behaviour, not intent.
 - **Harness**: everything that steers Claude in this repo — `CLAUDE.md`, `.claude/skills/*`
   (body and `description`), `.claude/agents/*`, `docs/*.md`, hooks/settings in `.claude/`,
-  memory. Memory is part of the harness only for facts about runs and project state; it never
-  holds a working rule.
+  `.claude/knowledge/`, memory. Neither the knowledge base nor memory ever holds a working rule.
 - **Cause class** (exactly one per miss):
   - `C1 absent` — no harness text covers the situation.
   - `C2 unrouted` — the rule exists but nothing loaded it at the moment of action (skill not
@@ -57,7 +56,10 @@ Terms:
 | Samuel refuses or lifts a lever / design | `docs/decisions.md` | one dated row, reason and scope — public file: no name, no conversation quote |
 | normative reference several skills load | `docs/<topic>.md`, referenced from each skill that needs it | defined terms + invariants |
 | mechanical, checkable without judgement (format, forbidden path, command) | hook or script in `.claude/` (settings via `update-config`) | enforcement, not text |
-| a fact about runs, results, project state | memory | never a working rule |
+| a fact about a run | `<kdir>/run.md` + its line in `.claude/knowledge/INDEX.md` (CLAUDE.md « Knowledge base ») | git-tracked; never a working rule |
+| a fact about project state | `.claude/knowledge/project/<topic>.md` + line in `INDEX.md` | git-tracked; never a working rule |
+| a verdict Samuel gives after playing a checkpoint | `.claude/knowledge/game_labels.md` | one dated row, his words verbatim |
+| a fact about this machine only (toolchain, desktop quirk) | memory | never a working rule, never a run fact |
 
 Cause class → default fix:
 - `C1 absent` — write the rule in the layer above.
@@ -102,8 +104,8 @@ Cause class → default fix:
    « Use whenever … » with situations and Samuel's literal phrasings.
 4. **Replay check**: re-read the triggering situation; list what would now be loaded, in which
    order, and confirm it yields the expected action. If not, the layer is wrong — redo.
-5. **Collision check**: `grep -rn` for rules the change contradicts or duplicates, in the harness
-   **and** in memory; then per hit:
+5. **Collision check**: `grep -rn` for rules the change contradicts or duplicates, in the harness,
+   `.claude/knowledge/` **and** memory; then per hit:
    - same rule → keep one copy in the chosen layer, merge any extra precision (scope, date,
      Samuel's verbatim) into it, delete the other copy;
    - stricter or narrower variant → merge as the precise form, delete the vague one;

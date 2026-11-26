@@ -1,13 +1,23 @@
 # ArenAI — operating contract
 
 Audience: Claude. Samuel does not read the harness (this file, `.claude/skills/`, `docs/`,
-memory): write it in the wording that steers you best — dense, imperative, strong defined terms.
+`.claude/knowledge/`, memory): write it in the wording that steers you best — dense, imperative, strong defined terms.
 Everything addressed to Samuel (chat, questions, `analysis.md`, probe reports) is in **French**,
 except `docs/`: every file there is in **English** (only Samuel's verbatim quotes stay French),
 including project documentation written for Samuel (e.g. a design explained with its diagram).
 A working rule Samuel states or corrects goes into the harness via `harness-improvement`,
 **never into memory** — this overrides the generic auto-memory guidance to save feedback there.
-Memory holds facts about runs and project state only.
+**Knowledge base** = `.claude/knowledge/`, git-tracked so it follows the repo across machines:
+`INDEX.md` (one line per run and per note), `game_labels.md` (Samuel's game verdicts),
+`project/<topic>.md`, `comparisons/`, and one **run folder** `<kdir>` =
+`runs/<YYYY-MM-DD-HH-mm-ss>_<host>_train_<N>_<agent>/` per run: `run.md` (identity: host, user,
+launch time, commit, uncommitted diff; then established facts), `analysis.md`, `probes/*.md`,
+`matches/*.md`. `<kdir>` is created and printed by
+`.venv/bin/python .claude/skills/analyze-run/scripts/run_identity.py <run>` — on the machine that
+launched the run, ideally while it runs (the uncommitted diff is only capturable then); never
+build the name by hand. `outputs/` holds raw data only (CSV, JSON, logs, checkpoints): every
+report and every fact about runs or project state goes to the knowledge base, never into
+`outputs/`, never into memory; memory holds facts about the local machine only.
 
 Project: PPO-family agents (LibTorch) learning to play a tank-arena game; Jolt physics; offscreen
 Vulkan rendering is the agent's vision.
@@ -37,7 +47,7 @@ recommended one first. An answer validates exactly what was asked, nothing adjac
 - **Fast evaluators**: launching existing probes/scripts on existing checkpoints, writing new
   measurements (analysis scripts, probe exports, probe executables), building the binary a probe
   needs — as long as no shared surface and no training code path is touched.
-- Reading, analysing, writing run analyses and memory notes.
+- Reading, analysing, writing run analyses and knowledge-base notes.
 - **Disposable smoke runs**: a few minutes of training into the scratchpad to check that the code
   runs (no NaN, saves load, probe reads them); never in `outputs/`, never read as a result.
 
@@ -140,7 +150,9 @@ Dependency order, never reversed: `utils, controller → view → model → core
   `arenai_agent/python/` (metrics visualisation, checkpoint conversion). No ExecuTorch (Android
   era, gone): the desktop game loads `actor.pt` through the same agent code, deterministic mode.
 - `arenai_desktop` — playable game. `src/gui/` (RmlUi menu; RmlUi types never leak, others
-  include only `gui/gui.h`), `src/controller/`, `src/core/`. Assets: `resources/menu/`,
+  include only `gui/gui.h`), `src/controller/`, `src/core/`. A visible menu/HUD styling change ⟹
+  HTML mockup with the exact tokens, Samuel's visual OK before touching the RCSS; charter =
+  header of `resources/menu/menu.rcss`. Assets: `resources/menu/`,
   `resources/font/`.
 
 Reward, economy, observation layout, hyperparameter defaults change often: **read them in the

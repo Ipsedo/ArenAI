@@ -1,12 +1,13 @@
 ---
 name: analyze-run
-description: Analyse the metrics.csv of an ArenAI training folder (outputs/train_NNN_*) against the exact code of the run (effective commit, diff vs the previous run) and its config.json, then write <run>/analysis.md. Use whenever a run or its CSV must be read (« analyse 504 », « où en est le run », « regarde le CSV de train_503 », « qu'est-ce qui s'est passé dans ce run »).
+description: Analyse the metrics.csv of an ArenAI training folder (outputs/train_NNN_*) against the exact code of the run (effective commit, diff vs the previous run) and its config.json, then write <kdir>/analysis.md. Use whenever a run or its CSV must be read (« analyse 504 », « où en est le run », « regarde le CSV de train_503 », « qu'est-ce qui s'est passé dans ce run »).
 ---
 
 # Run analysis
 
 Input: `outputs/train_NNN_<agent>/` or its number (`504`).
-Output: `<run>/analysis.md` (French) + `<run>/analysis_summary.json`, and a short chat summary.
+Output: `<kdir>/analysis.md` (French; `<kdir>` = the run folder of the knowledge base, CLAUDE.md)
++ `<run>/analysis_summary.json`, and a short chat summary.
 
 **Train rules only** (`docs/rl_method.md` M7): nothing read here supports « bon / meilleur en jeu »;
 a verdict on the run needs skill `game-match`.
@@ -36,8 +37,9 @@ not verdicts.
    - `config.json` values must equal the defaults of
      `arenai_agent/src/agents/<agent>/*_hyperparams.h` at the effective commit
      (`git show <hash>:<path>`), except explicit CLI options;
-   - read the run's memory note and its neighbours': they record "uncommitted", "relaunched",
-     "binary of HH:MM"… Memory and git disagreeing is a finding: state it;
+   - read `<kdir>/run.md` (identity table: commit at launch, uncommitted diff, `launch.patch`) and
+     the neighbouring runs' (listed in `.claude/knowledge/INDEX.md`): they record "uncommitted", "relaunched",
+     "binary of HH:MM"… Note and git disagreeing is a finding: state it;
    - running run + dirty tree (`git status`): compare the binary mtime
      (`cmake-build-release/arenai_agent/arenai_agent_train` or `build/…`) to the launch date.
 2. **Read the code at the effective commit, never the working tree** (`git show <hash>:<path>`)
@@ -79,7 +81,7 @@ unknown or suspicious column, its definition at the effective commit.
 
 ## 4. Interpret
 
-- Read `MEMORY.md` and the linked notes (lineage runs, feedback). **Never** re-propose a lever
+- Read `.claude/knowledge/INDEX.md` and the linked notes (lineage runs). **Never** re-propose a lever
   recorded as refused, nor a cause recorded as ruled out.
 - Compare at **equal D**, not equal index. Noise floor: D milestone ±30k, reserve ×2; one
   isolated record proves nothing. Only code-imposed effects are structural.
@@ -94,20 +96,20 @@ unknown or suspicious column, its definition at the effective commit.
 - Any cause or remedy that comes out of the analysis follows `rl-hypothesis` (fast evaluator
   attached, gates applied).
 
-## 5. Write `<run>/analysis.md`
+## 5. Write `<kdir>/analysis.md`
 
 French, no filler, LaTeX for any formula:
 
 1. **Header**: run, agent, launch → last row, running/finished, final index, throughput,
    effective commit (with confidence).
-2. **What this run tests**: config + code diff vs the previous run, hypothesis (memory),
+2. **What this run tests**: config + code diff vs the previous run, hypothesis (run notes),
    confounded changes, any typed imposition by Samuel.
 3. **CSV reading**: D milestones, trajectory by phase, key numbers at equal D against the
-   reference runs known in memory.
+   reference runs known in the run notes.
 4. **Diagnosis**: mechanisms with their evidence; separate established / within noise /
    undecided.
 5. **Options** (no decision), each with its fast evaluator, and **markers**: what to watch, at
    which D/index, which probe.
 
 Then a short chat summary linking the file. A newly established fact updates (or creates) the
-run's memory note.
+`<kdir>/run.md` (« Faits établis ») and the run's line in `.claude/knowledge/INDEX.md`.

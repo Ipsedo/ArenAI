@@ -1,6 +1,7 @@
 import csv
 import json
 import math
+import socket
 import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -16,6 +17,7 @@ REPO = Path(
     ).stdout.strip()
 )
 OUTPUTS = REPO / "outputs"
+KNOWLEDGE_RUNS = REPO / ".claude" / "knowledge" / "runs"
 
 KEY_COLUMNS = [
     "r", "r_hit", "r_rcv", "r_aim", "hit", "kill", "fire", "s", "miss",
@@ -64,6 +66,13 @@ def run_number(path):
         return int(path.name.split("_")[1])
     except (IndexError, ValueError):
         return -1
+
+
+def knowledge_dir(run, host=None):
+    host = host or socket.gethostname()
+    suffix = run.name.removeprefix("train_")
+    matches = sorted(KNOWLEDGE_RUNS.glob(f"*_{host}_train_{suffix}"))
+    return matches[0] if matches else None
 
 
 def _to_float(x):

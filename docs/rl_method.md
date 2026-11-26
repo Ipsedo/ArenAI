@@ -41,7 +41,7 @@ that can refute it, at the lowest cost that can refute it.
   ennemis », « reste dangereux longtemps », « touche le joueur », « touche et tue les autres
   tanks », « tenue visible ».
 - **Game label**: Samuel's own verdict after playing a checkpoint. The only ground truth. Recorded
-  in memory note `etalons-verdict-jeu` (checkpoint, date, his words).
+  in `.claude/knowledge/game_labels.md` (checkpoint, date, his words).
 - **Random floor**: the metric value of an untrained or random policy at the same D. Always the
   reference for "has it learned".
 - **Structural effect**: imposed mechanically by the code; established by reading the code.
@@ -122,7 +122,7 @@ runs from train-rule kill and `tour<5°`; over half of its hits came after a fre
 1. **Symptom.** State it with numbers, index, D, and its distance to the random floor and to the
    reference run at equal D. Check it is not a measurement artefact (window lag, column
    redefinition, in-sample metric, masked dimension).
-2. **Prior knowledge.** Read `MEMORY.md` and the linked run notes. A lever recorded as refused
+2. **Prior knowledge.** Read `.claude/knowledge/INDEX.md` and the linked run notes. A lever recorded as refused
    is not re-proposed. A cause recorded as ruled out (e.g. CNN perception) is not re-proposed
    without new evidence. A design recorded as intended (e.g. aim as a potential) is not
    challenged from the fix.
@@ -147,7 +147,7 @@ runs from train-rule kill and `tour<5°`; over half of its hits came after a fre
    formulation pieces it touches (M5), and its own fast evaluator (M1) — ideally the same
    instrument that exposed the cause, with the predicted change.
 7. **Escalate if needed.** If only a training can decide, M3. If it cannot be isolated, M4.
-8. **Record.** A fact established about a run goes into that run's memory note, phrased as fact
+8. **Record.** A fact established about a run goes into that run's `run.md` (knowledge base, CLAUDE.md), phrased as fact
    + evidence + scope. Refuted hypotheses are recorded too.
 
 ## Reading discipline

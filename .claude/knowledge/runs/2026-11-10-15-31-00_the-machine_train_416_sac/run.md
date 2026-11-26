@@ -51,4 +51,4 @@ saturation, jamais par un σ petit — 415 par |μ| → 1 (tanh écrase), 416 pa
 gardant le replay stratifié (isole la stratification) ; ou définir la cible d'entropie pré-tanh
 (gaussienne seule) pour qu'elle ne soit plus contournable par saturation. La sonde
 `arenai_agent/probe/main.cpp` a été réparée (SacActor → Actor, non commité) et compilée dans
-cmake-build-release. Voir [[sac-train-415-diagnosis]], [[sac-agent-2026-11]].
+cmake-build-release. Voir run 415, sac-agent-2026-11.

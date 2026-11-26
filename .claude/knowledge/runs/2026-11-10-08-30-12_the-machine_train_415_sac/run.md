@@ -39,10 +39,10 @@ Sonde (D=350, 2 épisodes, échantillonnée) sur save_1/2/3 :
   d'entropie σ 0.1 est atteinte par saturation du tanh, pas par un σ petit.
 
 **Why:** le gain 414 → 415 vient de l'α initial ; le mécanisme reste "tirer ce qui passe devant",
-comme les PPO (voir [[ppo-actor-audit-2026-10-29]]). La sonde `arenai_agent/probe` charge désormais
+comme les PPO (voir ppo-actor-audit-2026-10-29). La sonde `arenai_agent/probe` charge désormais
 aussi l'acteur SAC (branche `is_sac` = absence de `neuron_number` dans config.json ; modif non commitée
 au 2026-11-10).
 
 **How to apply:** pistes à valider avec Samuel, pas décidées : vérifier le signe de Q (retour MC vs
 Q dans la sonde), comprendre pourquoi p(fire) remonte à 0.8 malgré α_d0 croissant, tester save_2 en
-jeu. Voir [[sac-train-414-diagnosis]], [[sac-agent-2026-11]].
+jeu. Voir run 414, sac-agent-2026-11.

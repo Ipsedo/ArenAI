@@ -16,6 +16,6 @@ Mesuré le 2026-10-30 sur save_0 / save_3 (6 épisodes chacun, harnais temporair
 - P(fire|can_fire) 0.5 → 0.98 : chaque tir rapporte ≈ +0.035 sans coût ; initial_fire_proba n'est pas la cause.
 - Metrics trompeuses : fire plafonné par la réserve, Hd dominé par le zoom sur les lignes réserve vide, Hc moyenne des σ (canon_x 0.03, canon_y 0.92).
 - La mort sur réserve vide attend `!shell_in_flight` depuis ca4583a5 (2026-10-25) : tous les runs depuis sont concernés. Corrige [[ppo-train-371-diagnosis]] : s≈23.5 n'était pas 20 obus / 0.85 tir/s mais un vidage rapide + ~20 s d'attente.
-Voir [[ppo-actor-audit-2026-10-29]], [[jolt-migration-fidelity]].
+Voir ppo-actor-audit-2026-10-29, jolt-migration-fidelity.
 
 2026-10-30 : LinearCast sur ShellItem commité (7ed8a411). Mesure à la politique d'init : terrain 100 % de contact en sonde, mais temps après dernier tir encore 11.8 s (médiane 13.6), 22 % de la récompense de visée après 19 s, réserve vide 73 %, hit 0.068. Durée de vie 4 s non appliquée. Canon baissé à fond = obus créé sous le sol plat (spawn 10 m devant le canon). Le lecteur de ressources des tests model ne lit pas les PNG ; sur cube, pas de tunneling même en Discrete.

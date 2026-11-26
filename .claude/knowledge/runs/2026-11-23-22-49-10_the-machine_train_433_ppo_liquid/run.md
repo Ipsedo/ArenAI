@@ -21,7 +21,7 @@ Sonde save_14 (378 k, D 850), 2026-11-24 :
 - mais visée inchangée : tour<5° 0,185 (550) / 0,133 (1000) ≡ 552 ; corr(μ canon_x, lacet) ≈ 0 à 200-400 m, −0,1 à −0,26 à 100-200 m ; crédit du geste ρ ≈ 0 ; hit/obus 0,15-0,16 ;
 - gâchette sélective (ratio 23 côté 550) mais ne suit pas une visée oracle (0,16-0,36 obus/tank-s contre 1,2-1,3 pour 552 s41).
 
-**Why:** la représentation n'était pas le seul verrou ; précision disponible ≠ utilisée, cohérent avec [[ppo-liquid-train-432-diagnosis]] et [[cnn-perception-validated]].
+**Why:** la représentation n'était pas le seul verrou ; précision disponible ≠ utilisée, cohérent avec run 432 et cnn-perception-validated.
 **How to apply:** comparer à 552 seulement à D 1000 ; les chiffres du banc de position ne se comparent qu'à taille de jeu égale (étalon « 7 blocs neufs » à relancer). `probe_checkpoint.py --check-only` ne voit pas un binaire plus vieux qu'un diff indexé : vérifier l'heure du binaire à la main.
 
-Suite 2026-11-24 : D 850 → 800 à 429 k, kill 21 → 12-15, fire 1,0 → 0,2-0,6, hit monte à 0,19. Sonde save_17 (459 k) vs save_14 : visée inchangée ; gâchette fermée partout sauf < 40 m (p_fire aligné toutes distances 0,30 → 0,19 côté 550, 0,091 → 0,041 côté 1000 ; 0,74 inchangé à < 40 m) ; sous visée oracle elle tire encore moins (0,25 / 0,09 obus/tank-s). Même motif que [[ppg-train-428-diagnosis]] (hit ↑ par extinction, kill ↓). Cause non établie.
+Suite 2026-11-24 : D 850 → 800 à 429 k, kill 21 → 12-15, fire 1,0 → 0,2-0,6, hit monte à 0,19. Sonde save_17 (459 k) vs save_14 : visée inchangée ; gâchette fermée partout sauf < 40 m (p_fire aligné toutes distances 0,30 → 0,19 côté 550, 0,091 → 0,041 côté 1000 ; 0,74 inchangé à < 40 m) ; sous visée oracle elle tire encore moins (0,25 / 0,09 obus/tank-s). Même motif que run 428 (hit ↑ par extinction, kill ↓). Cause non établie.

@@ -24,7 +24,7 @@ stabilisation canon, avantage canon = potentiel φ trajectoire, aim_gae_lambda 0
 - 422 (arrêt KL joint, stoppé à 148k) : mêmes jalons D et hit jusqu'à 145k, mais skip 0.5-0.6 et Hc −1.05 ;
   423 skip ≤ 0.15. Gain au-delà de 148k non attribuable entre les deux commits.
 
-**Why:** premier vrai déblocage du curriculum, voir [[ppg-train-421-diagnosis]].
+**Why:** premier vrai déblocage du curriculum, voir run 421.
 **How to apply:** curriculum saturé (hit ≫ 0.08) → juger sur hit/fire à D=1000 ; sélectivité de la
 gâchette non prouvée par le CSV → sonde save_18-21 proposée.
 

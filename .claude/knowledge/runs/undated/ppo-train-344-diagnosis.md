@@ -21,7 +21,7 @@ Config : ppo_liquid, truncated normal, `continuous/discrete_entropy_factor = 0.0
 - clip 0.2-0.27, kl ~0.02, skip à pics jusqu'à 0.7 ; ev 0.3-0.4 (pic isolé −137 à 5M).
 - fire ≈ 1.07 obus/s constant, s ≈ 33 constant ; miss 50 → 29 (en partie effet D).
 
-Lecture : facteurs fixes = pire que le plancher PID (Hc incontrôlé). Voir [[ppo-beta-entropy-init]].
+Lecture : facteurs fixes = pire que le plancher PID (Hc incontrôlé). Voir ppo-beta-entropy-init.
 
 Suite validée par Samuel (2026-10-16), **ppo_liquid uniquement** : σ indépendant de l'état
 (paramètre `sigma_logit` [nb_continuous] → `SigmaOutput` log-sigmoïde [SIGMA_MIN, SIGMA_MAX],

@@ -25,6 +25,6 @@ réseau/vision 256×128. Premier PPG depuis la refonte reward du 06/11 → réf�
 - skip ~0.4 et clip ~0.3 depuis 200k ; ev 0.9 → 0.4.
 - Caméra montée sur le canon : en consigne absolue l'acteur doit ajouter l'angle tourelle (proprio).
 
-**Why:** 1er test de la consigne absolue depuis le revert du 24/09 ([[aim-absolute-position-control]]).
+**Why:** 1er test de la consigne absolue depuis le revert du 24/09 (aim-absolute-position-control).
 **How to apply:** ne pas lire kill/r comme progrès ; options proposées : sonde save_5/save_19,
-arrêt, ou rejouer 421 en delta pour isoler la consigne. Voir [[sac-train-415-diagnosis]].
+arrêt, ou rejouer 421 en delta pour isoler la consigne. Voir run 415.

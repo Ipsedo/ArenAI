@@ -35,5 +35,5 @@ plus de coût de tir, out_of_shells -0.5, γ 0.99 / λ 0.95). Même config que 3
 **Why:** Samuel a tranché contre ma lecture Cauchy avec le contre-exemple liquid ; ne pas conclure
 d'une comparaison à un run par variante.
 **How to apply:** juger sur hit/fire + décomposition r_rcv/mort/s, pas sur r. Voir
-[[fire-cost-per-shell]], [[ppg-train-392-diagnosis]], [[out-of-shells-termination]],
-[[aim-fire-levers-audit-2026-11]].
+fire-cost-per-shell, [[ppg-train-392-diagnosis]], out-of-shells-termination,
+aim-fire-levers-audit-2026-11.

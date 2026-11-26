@@ -14,4 +14,4 @@ Run train_368_ppo-impala (2026-10-28, 160k décisions en 6h45, ~2.5× plus lent 
 
 Cause retenue : 480 échantillons + 1 pas Adam à lr 3e-4 (pas ∝ lr indépendant du bruit) + normalisation des avantages sur un rollout de 3 s où la récompense éparse est souvent absente → gradient de politique ≈ bruit amplifié à variance 1 ; dérive de σ (dépendant de l'état, entropie 0.001) → KL hypersensible ((Δμ/σ)²). Horizon GAE 30 vs 1/(1−γλ)≈62 avec critique constant ⇒ pas de bootstrap utile.
 
-Voir [[ppo-full-batch-update]], [[ppo-train-364-diagnosis]], [[ppo-train-345-diagnosis]].
+Voir ppo-full-batch-update, [[ppo-train-364-diagnosis]], [[ppo-train-345-diagnosis]].

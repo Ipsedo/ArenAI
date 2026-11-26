@@ -38,6 +38,6 @@ fixe) avait fermé pareil.
 **How to apply:** pour mesurer la visée, régresser μ_canon_x sur `yaw` (erreur signée vers la
 cible la plus proche) par tranche d'erreur dans le CSV de sonde, et toujours sonder save_0 comme
 référence. Convention mesurée : action canon_x +1 ⟹ erreur +12.7°/décision, le bon sens est une
-corrélation **négative** (les « corr ≈ 0 » de [[ppg-train-423-diagnosis]] étaient globales, or le
+corrélation **négative** (les « corr ≈ 0 » de run 423 étaient globales, or le
 signal n'existe que sous ~45°). La colonne `pitch` ne réagit pas à canon_y : le site n'est pas
 mesurable ainsi. Script : scratchpad jetable, à réécrire (20 lignes pandas, `.venv/bin/python`).

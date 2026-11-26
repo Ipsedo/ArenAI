@@ -13,10 +13,10 @@ par axe + actor_learning_rate 1e-4. Lu à 76k steps (marqueur attendu : miss < 1
 - Mais clip monte 0.13 → 0.30 et kl 0.008 → 0.023 en 40k : μ bouge beaucoup par update
   (0.02 de μ = 0.4 σ) sans direction utile.
 - miss 21.8 → 19.3 m à D=250 (24k) puis 24.8 m dès que le curriculum passe à 300 (35k, faux
-  positif hit 0.07 > 0.06) : miss ∝ D = plancher géométrique, cf. [[ppo-actor-audit-2026-10-29]].
+  positif hit 0.07 > 0.06) : miss ∝ D = plancher géométrique, cf. ppo-actor-audit-2026-10-29.
 - hit 0.07 → 0.053, kill 1.75 → 0.45, s 6-12 s (réserve vidée en ~10 s, fire 0.5-0.9/s).
 
 **Why:** σ libre neutralise bien le levier σ(état) ; le signal de visée reste trop faible pour μ.
 
 **How to apply:** si à 200k miss n'est pas < 15 m, le bruit n'était pas le blocage principal ;
-revenir au test d'oracle dense proposé dans [[ppo-actor-audit-2026-10-29]].
+revenir au test d'oracle dense proposé dans ppo-actor-audit-2026-10-29.

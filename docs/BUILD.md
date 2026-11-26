@@ -155,7 +155,9 @@ ctest --test-dir build --output-on-failure -R arenai_model_tests
 ### Golden images
 
 References are rendered by lavapipe on Ubuntu 24.04 (the CI container); they never match a local
-GPU, so pixel comparisons are skipped outside that environment. Requires Docker.
+GPU, so pixel comparisons are skipped outside that environment. Requires Docker. Goldens outside
+`arenai_view` render a simulated scene: they also encode physics poses, so a change of physics
+behaviour breaks them like a render change.
 
 ```bash
 ./scripts/goldens_docker.sh                # compare, as CI does

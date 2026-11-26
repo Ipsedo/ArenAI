@@ -42,7 +42,7 @@ robuste : corr(μ, erreur) ≈ 0 dans les 3 runs, les réglages ne bougent le hi
 **How to apply:** ne plus attribuer un écart entre runs SAC uniques à un hyperparamètre. Check proposé
 (minutes, pas de run) : sur les états de la sonde, corr(∂Q/∂a_canon, erreur yaw/pitch) → le critique
 voit-il la valeur de viser ? (nécessite d'étendre la sonde, à valider par Samuel).
-Voir [[sac-train-415-diagnosis]], [[sac-train-416-diagnosis]], [[sac-agent-2026-11]].
+Voir run 415, run 416, sac-agent-2026-11.
 
 2026-11-11, gradient du critique (sonde étendue : colonnes `dq_canon_x/y` = ∂E[min Q]/∂a_canon au mode,
 save_5, D=350, non commité) : Δyaw = +7.4°·act par décision (corr 0.42) ; **P(∂Q/∂a dans le sens qui

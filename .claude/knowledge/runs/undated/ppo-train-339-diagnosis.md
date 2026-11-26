@@ -21,4 +21,4 @@ l'identique sauf `epochs 2` (train_338 = même config, arrêté à 578k). Cibles
 
 Lecture : le problème KL de 337 est résolu, le plafond vient d'ailleurs (critique instable,
 Hc qui s'effondre tôt). Meilleurs checkpoints probables : save_6/7/8 (≈650-860k).
-Voir [[ppo-train-337-diagnosis]], [[ppo-liquid-agent]].
+Voir [[ppo-train-337-diagnosis]], ppo-liquid-agent.

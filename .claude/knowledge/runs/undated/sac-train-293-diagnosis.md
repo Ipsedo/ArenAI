@@ -27,7 +27,7 @@ normalisation du reward** dans `SacReplayBuffer` (les rewards bruts sont déjà 
 dans [−1, +2] ; diviser par l'écart-type d'un signal sparse amplifie au lieu de normaliser).
 
 **How to apply:** sur la run suivante, attendre Q (donc `π_μ`) de l'ordre de l'unité, pas 15.
-Juger sur `hit/fire` et `s_μ` (cf. [[ppo-reward-redesign-2026-08]]). Pistes non retenues à ce jour :
-timer de famine en observation ([[proprioception-archi-boundary]], refusé), buffer plus grand
+Juger sur `hit/fire` et `s_μ` (cf. ppo-reward-redesign-2026-08). Pistes non retenues à ce jour :
+timer de famine en observation (proprioception-archi-boundary, refusé), buffer plus grand
 (300 k / 32 tanks = seulement ~11 épisodes, ~0.02 % de transitions "hit"), famine en troncation
 plutôt qu'en terminal.

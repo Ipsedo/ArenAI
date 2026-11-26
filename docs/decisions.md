@@ -14,8 +14,15 @@ lifted. Public file: no names, no quotes from conversations — state the reason
 | 2026-07 | dense shaping added to the main reward ("shoot in aim", quality score, softmax over enemies) | removed | back and forth from 2025-10 to 2026-07 |
 | 2026-07 | stack: Android/ExecuTorch dropped, OpenGL → Vulkan offscreen vision, Bullet → Jolt, RmlUi GUI | validated | desktop only |
 | 2026-08-06 | shell reserve (scarcity) in place of a miss cost | validated | recharge on hit only since 10-23 |
+| 2026-08-06 | ad-hoc caches (local maps) | refused | caching goes through `utils::Cache` |
 | 2026-08-17 | training-only signal in `arenai_model` (e.g. starvation timer in the proprioception) | refused | module boundary beats the RL gain |
+| 2026-08-23 | HUD hit marker and crosshair in the Battlefield style | validated | no kill score text; no hit sound (no audio channel) |
+| 2026-08-25 | release targets: linux x86_64, linux arm64, windows x86_64 | validated | Windows ARM refused; macOS arm64 added 11-21 as experimental, non-blocking, release only |
+| 2026-08-25 | portable RPATH (`ARENAI_PORTABLE_RPATH`) on by default | refused | off by default: no duplicated libraries in development |
 | 2026-08-26 | PPO family as the current agent | validated | SAC removed 09-18, rewritten 11-10 as a factorised hybrid agent |
+| 2026-08-27 | controls submenu: one fire slot, whole gamepad remappable, a conflict unbinds the previous action | validated | capture cancelled by Escape or a 15 s timeout; B as cancel refused (bindable); Start reserved for pause |
+| 2026-08-27 | incoming-damage arc on the HUD, oriented from the impact position | validated | not from the firing position; vignette variants set aside |
+| 2026-08-29 | heightmap / cubemap selectors in the graphics menu | refused | |
 | 2026-09-01 | target-entropy annealing (cosine, warmup schedules) | refused | destructive in every run 08-22 → 09-01; constant target / PID Lagrangian only |
 | 2026-09-06 | `ppo_liquid` agent (recurrent liquid cell, TBPTT) | validated | |
 | 2026-09-06 | curriculum on the spawn zone | validated | driven by hit ratio, then by kills per tank since 11-18 |
@@ -42,9 +49,12 @@ lifted. Public file: no names, no quotes from conversations — state the reason
 | 2026-11-12 | gun laying (canon stabilised against hull motion) | validated | |
 | 2026-11-14 | 512×256 vision + one more CNN block | removed | the cause was the discrete target entropy |
 | 2026-11-16 | training under assisted / oracle aim (assisted, weaned, mixed) | refused | oracles stay measurement tools in the probe |
+| 2026-11-17 | menu charter "Duel néon" | validated | replaces the 07-18 charter; tokens in the header of `resources/menu/menu.rcss` |
+| 2026-11-17 | graphics menu: shadows and MSAA as stepped sliders, VSync, effects, render scale, fullscreen resolution, brightness | validated | |
 | 2026-11-18 | asymmetric critic: privileged inputs (enemy geometry, yaw/pitch/distance) to the critic; any brute-force feature | refused | find why the network does not extract it from the image |
 | 2026-11-21 | coloured AR(1) exploration noise + canon σ cap 0.25 (`81b4d6c0`) | removed | removed in `0137ae77` |
 | 2026-11-21 | terminal state at the arena limits; received-hit direction in the proprioception | validated | |
+| 2026-11-21 | per-OS branches (`#ifdef` linux / windows / macos) | refused | capability detection instead; exceptions: `__APPLE__` in the desktop `main.cpp`, `if (APPLE)` for the RPATH |
 | 2026-11-22 | aim potential Φ (potential-based shaping) | removed | tried at least 8 times since 2025-10-28 |
 | 2026-11-22 | empty reserve as death (10-25), penalised terminal state (10-30), no respawn (11-13, reverted) | removed | current rule: refill + constant penalty 0.25 under curriculum |
 | 2026-11-22 | value bootstrap on the last state at the episode time limit | validated | an empty reserve cuts the value target like a death (11-08) |

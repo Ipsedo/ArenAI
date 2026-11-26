@@ -25,7 +25,7 @@ aléatoire comme 417, donc rien n'est encore mesurable côté visée.
 
 **How to apply:** ne pas conclure sur les métriques CSV avant ~50k ; le test décisif est la sonde
 ∂Q/∂a_canon (qgrad.py) sur save_1 : P(bon sens) armé ≫ 0.5 (417 : 0.47–0.50).
-Voir [[sac-train-417-diagnosis]], [[sac-agent-2026-11]].
+Voir run 417, sac-agent-2026-11.
 
 2026-11-11, sonde ∂Q/∂a sur save_1 (27k, D=250, 2 épisodes), 419 vs 417 save_1 au même stade :
 P(∂Q/∂a bon sens) armé 0.51 vs 0.52, toutes tranches 0.49–0.56 vs 0.50–0.54, corr ≈ 0 dans les deux ;
@@ -48,4 +48,4 @@ cible = tank le plus proche. Ridge yaw (|yaw|<30°, <60 m) : R² 0.02 (419 s1), 
 R² 0.67, alignement CSV/bin exact. → encodeurs SAC (acteur ET critiques) détectent vaguement la
 présence d'un tank mais ne codent pas son gisement, et ça ne s'améliore pas avec l'entraînement.
 Limites : pas de témoin positif (aucun run PPO local), petit n, cible = plus proche ≠ plus saillant.
-Distinct de [[cnn-perception-validated]] (CNN PPO) : ici CNN SAC entraîné par TD seul.
+Distinct de cnn-perception-validated (CNN PPO) : ici CNN SAC entraîné par TD seul.

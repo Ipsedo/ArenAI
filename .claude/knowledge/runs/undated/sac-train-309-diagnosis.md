@@ -17,4 +17,4 @@ Diagnostic du 2026-08-21 sur `outputs/train_309_sac` (~295k env steps × 32 tank
 - Reward hacking : r reste positif avec hit=0 — la gaussienne de visée (0.5×exp, ~18 obus/épisode) + bonus winner compensent la pénalité famine −1 → « spray sans toucher puis mourir » est un optimum local stable.
 - γ=0.99 @30 Hz → horizon effectif ~3 s, la famine (30 s) est invisible pour Q sauf en fin de vie.
 
-**Pistes proposées (aucune validée par Samuel à ce stade)** : buffer bien plus grand, α min clamp/lr pour ralentir l'effondrement, curriculum pour densifier les hits, rééquilibrer gaussienne vs famine, γ plus haut. Attention : φ gaussien et réserve d'obus déjà validés ([[ppo-reward-redesign-2026-08]]), annealing d'entropie déjà refusé.
+**Pistes proposées (aucune validée par Samuel à ce stade)** : buffer bien plus grand, α min clamp/lr pour ralentir l'effondrement, curriculum pour densifier les hits, rééquilibrer gaussienne vs famine, γ plus haut. Attention : φ gaussien et réserve d'obus déjà validés (ppo-reward-redesign-2026-08), annealing d'entropie déjà refusé.

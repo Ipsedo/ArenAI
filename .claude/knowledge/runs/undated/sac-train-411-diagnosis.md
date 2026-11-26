@@ -27,4 +27,4 @@ entropie/reward, pas la perception.
 
 **How to apply:** α₀ passé à 0.01 le 2026-11-08 (validé). Refusé : bootstrap sur réserve vide (PPO cut aussi, `ppo_trainer.cpp` cuts = dones + truncateds). Reste à valider :
 gradient_steps 8 + batch 512 validés le 2026-11-08 soir (défauts, run 414) ; le bootstrap SAC seul reviendrait sur la table si fire → 0 se confirme.
-Voir [[sac-agent-2026-11]], [[ppg-train-392-diagnosis]] (fire → 0), [[sac-train-309-diagnosis]] (α effondré, l'inverse).
+Voir sac-agent-2026-11, [[ppg-train-392-diagnosis]] (fire → 0), [[sac-train-309-diagnosis]] (α effondré, l'inverse).

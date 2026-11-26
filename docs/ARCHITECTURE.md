@@ -512,6 +512,16 @@ The game is one more subclass of the environment, wrapped in a session and a UI.
 RmlUi is confined to `src/gui/rml/`: the rest of the game only includes `gui/gui.h`, which
 exposes no RmlUi type. The UI documents and style sheets live in `resources/menu/`.
 
+RmlUi pitfalls:
+
+- The Vulkan render interface (`arenai_view/src/vulkan/ui/rml_render_interface.cpp`) has no layer
+  or clip-mask hook: an RCSS `box-shadow`, `filter` or `backdrop-filter` renders as a white quad.
+  Style with `background-color`, `border`, `border-radius` only; a browser mockup does not show it.
+- Spatial navigation never crosses a scroll container (`overflow: auto` / `scroll`): a focusable
+  scrollable region needs an explicit bridge, as `AiPage::ExplorerNavListener` does.
+- A `data-event-change` handler runs before `data-value` writes the bound variable: pass
+  `ev.value` to the handler.
+
 ### Application loop
 
 ```mermaid

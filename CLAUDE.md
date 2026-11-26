@@ -8,16 +8,18 @@ including project documentation written for Samuel (e.g. a design explained with
 A working rule Samuel states or corrects goes into the harness via `harness-improvement`,
 **never into memory** — this overrides the generic auto-memory guidance to save feedback there.
 **Knowledge base** = `.claude/knowledge/`, git-tracked so it follows the repo across machines:
-`INDEX.md` (one line per run and per note), `game_labels.md` (Samuel's game verdicts),
-`project/<topic>.md`, `comparisons/`, and one **run folder** `<kdir>` =
+`INDEX.md` (one line per run), `game_labels.md` (Samuel's game verdicts), `comparisons/`, and
+one **run folder** `<kdir>` =
 `runs/<YYYY-MM-DD-HH-mm-ss>_<host>_train_<N>_<agent>/` per run: `run.md` (identity: host, user,
 launch time, commit, uncommitted diff; then established facts), `analysis.md`, `probes/*.md`,
 `matches/*.md`. `<kdir>` is created and printed by
 `.venv/bin/python .claude/skills/analyze-run/scripts/run_identity.py <run>` — on the machine that
 launched the run, ideally while it runs (the uncommitted diff is only capturable then); never
 build the name by hand. `outputs/` holds raw data only (CSV, JSON, logs, checkpoints): every
-report and every fact about runs or project state goes to the knowledge base, never into
-`outputs/`, never into memory; memory holds facts about the local machine only.
+report and every fact about a run goes to the knowledge base, never into `outputs/`, never into
+memory; memory holds facts about the local machine only. A project decision goes to
+`docs/decisions.md`; a pitfall the code cannot show goes as one line into the doc read when
+working there (`docs/ARCHITECTURE.md`, `docs/BUILD.md`); no project note anywhere else.
 
 Project: PPO-family agents (LibTorch) learning to play a tank-arena game; Jolt physics; offscreen
 Vulkan rendering is the agent's vision.

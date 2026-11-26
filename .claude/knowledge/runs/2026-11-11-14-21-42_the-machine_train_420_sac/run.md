@@ -30,5 +30,5 @@ continue. Gâchette sélective (p_fire 0.50 sous 5° → 0.24 au-delà de 45°, 
 donc elle n'est pas attribuable à l'encodeur partagé.
 
 **How to apply:** avant de créditer l'encodeur partagé, sonder 419 save_1 avec le même script ; suivre
-`ratio` et P(∂Q/∂a) sur save_2+. Voir [[sac-train-419-diagnosis]], [[sac-agent-2026-11]],
-[[sac-train-416-diagnosis]] (saturation post-tanh).
+`ratio` et P(∂Q/∂a) sur save_2+. Voir run 419, sac-agent-2026-11,
+run 416 (saturation post-tanh).

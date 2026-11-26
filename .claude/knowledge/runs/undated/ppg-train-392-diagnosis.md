@@ -20,5 +20,5 @@ et entropie 0.01 : la comparaison 392 vs 345 est confondue par le reward, pas pa
 
 **How to apply:** juger un run à coût de tir d'abord sur `fire` ; si fire → 0 c'est l'économie
 du tir, pas l'exploration. Options à proposer à Samuel : coût < gain espéré (≈ 0.01),
-ou pénalité de famine symétrique à out_of_shells. Voir [[fire-cost-per-shell]],
-[[out-of-shells-termination]], [[ppo-train-382-diagnosis]] (seuil curriculum < plancher aléatoire).
+ou pénalité de famine symétrique à out_of_shells. Voir fire-cost-per-shell,
+out-of-shells-termination, [[ppo-train-382-diagnosis]] (seuil curriculum < plancher aléatoire).

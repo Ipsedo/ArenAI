@@ -25,7 +25,7 @@ Jalons D identiques à l'index près de 424 à 428 (curriculum à vitesse max) �
   déterministe : tire dans 4-7 % des états alignés.
 
 **Why:** gain de hit = sélection des tirs (hors axe éteint, dump supprimé), pas balistique ; gâchette globalement basse → moins de kills.
-**How to apply:** ne pas lire la hausse de hit comme une meilleure visée ; surveiller p_al et fire (< 0.15/s = gâchette éteinte) ; attribution γ vs cible discrète nécessite un run séparé. Voir [[ppg-train-423-diagnosis]].
+**How to apply:** ne pas lire la hausse de hit comme une meilleure visée ; surveiller p_al et fire (< 0.15/s = gâchette éteinte) ; attribution γ vs cible discrète nécessite un run séparé. Voir run 423.
 
 **Sonde save_49 (1323k, 2026-11-15)** : h<5° 0.43 / 0.47 (1er gain de précision par tir aligné de la lignée, ≤ 0.37 avant), tour<5° 0.375 / 0.332,
 hit/obus 0.29 ; zoom abandonné (p_zoom 0.02-0.03, Hd CSV 0.07 dès 1.18M, α_zoom ≈ plancher) ; châssis braqué d'un côté (μ dir_x +1.05)

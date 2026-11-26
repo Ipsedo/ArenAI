@@ -12,6 +12,6 @@ Run train_369_ppo-impala (2026-10-28, 100k décisions en 3h36, commit aad2ab41) 
 
 Comparaison clé (ev final) : 364 (vrais minibatchs 128, 224 pas/rollout, lr 1e-4) **0.69** ; 365 full-batch lr 1e-3 −0.37 ; 367 critic 16 epochs −0.06 ; 368 0.000 ; 369 < 0. À 100k décisions : 364 ≈ 25k pas critique, 369 ≈ 2.7k (≈10× moins).
 
-Cause retenue : le full-batch ([[ppo-full-batch-update]]) donne trop peu de pas d'optimiseur pour que le critique apprenne ; sans critique, les avantages = bruit MC → politique qui ne bouge pas (369) ou qui part en vrille (368). Proposition à Samuel : découpler taille du batch d'optimisation (ex. 1024 lignes, accumulées par blocs de 128) de la taille mémoire.
+Cause retenue : le full-batch (ppo-full-batch-update) donne trop peu de pas d'optimiseur pour que le critique apprenne ; sans critique, les avantages = bruit MC → politique qui ne bouge pas (369) ou qui part en vrille (368). Proposition à Samuel : découpler taille du batch d'optimisation (ex. 1024 lignes, accumulées par blocs de 128) de la taille mémoire.
 
 Voir [[ppo-train-368-diagnosis]], [[ppo-train-364-diagnosis]].

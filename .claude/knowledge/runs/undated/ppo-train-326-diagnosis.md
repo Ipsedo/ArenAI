@@ -28,7 +28,7 @@ hit/fire/s. Hc proche de 0.69 = déterministe sans rapport avec l'échantillonn�
 Pièges structurels notés (pas des bugs stricts) : à κ→2, ∂logp/∂mode ∝ (κ−2) → tête mode sans
 gradient ; la tête κ (sigmoid log-échelle [2.01, 2000]) sature au plancher ; le PID Lagrangien
 α ≥ 0 ne pousse jamais l'entropie vers le bas → rien ne force κ à monter si l'avantage ne le
-fait pas. Voir [[ppo-beta-entropy-init]], [[ppo-reward-redesign-2026-08]].
+fait pas. Voir ppo-beta-entropy-init, ppo-reward-redesign-2026-08.
 
 Landmine `"hidden_sizes"` **corrigée le 2026-09-17** (migration config.json en JSON natif) :
 `AgentFactory` lit désormais `"actor_hidden_sizes"`, tous les champs sont requis (`at()`,

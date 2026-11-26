@@ -16,4 +16,4 @@ Run train_364_ppo-impala (2026-10-27, 328k steps en 5.5 h, arrêté) vs vanilla 
 - Débit : ~1h50 / 108k steps vs ~50 min pour 362 (convs stride 1 à pleine résolution 128×256).
 - minibatch 128 (vs 512 en vanilla) = 4× plus de pas de gradient par rollout — suspect n°1 de la chute de σ.
 
-Voir [[ppo-train-345-diagnosis]], [[ppo-vanilla-liquid-alignment]], [[ppo-beta-entropy-init]].
+Voir [[ppo-train-345-diagnosis]], ppo-vanilla-liquid-alignment, ppo-beta-entropy-init.

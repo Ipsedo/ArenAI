@@ -53,11 +53,11 @@ Terms:
 | only inside one procedure | that skill's `SKILL.md` body | a step or a rule in its list |
 | it was not loaded because the situation did not trigger the skill (C2) | that skill's `description` | add the situation and Samuel's literal words (French) |
 | a new recurring situation with its own procedure (≥ 3 steps) | new skill `.claude/skills/<name>/SKILL.md` + a row in CLAUDE.md « Skill routing » | frontmatter `name`, `description` with triggers |
-| Samuel refuses or lifts a lever / design | `docs/decisions.md` | one dated row, reason and scope — public file: no name, no conversation quote |
+| Samuel validates, refuses or lifts a lever / design / project decision (RL, GUI, build, release) | `docs/decisions.md` | one dated row, reason and scope — public file: no name, no conversation quote |
 | normative reference several skills load | `docs/<topic>.md`, referenced from each skill that needs it | defined terms + invariants |
 | mechanical, checkable without judgement (format, forbidden path, command) | hook or script in `.claude/` (settings via `update-config`) | enforcement, not text |
 | a fact about a run | `<kdir>/run.md` + its line in `.claude/knowledge/INDEX.md` (CLAUDE.md « Knowledge base ») | git-tracked; never a working rule |
-| a fact about project state | `.claude/knowledge/project/<topic>.md` + line in `INDEX.md` | git-tracked; never a working rule |
+| a pitfall of the project the code cannot show | the public doc read when working there (`docs/ARCHITECTURE.md`, `docs/BUILD.md`) | one line; no separate observations file |
 | a verdict Samuel gives after playing a checkpoint | `.claude/knowledge/game_labels.md` | one dated row, his words verbatim |
 | a fact about this machine only (toolchain, desktop quirk) | memory | never a working rule, never a run fact |
 

@@ -36,4 +36,4 @@ SAC sans entropie (politique quasi déterministe exploitant les erreurs du criti
 **How to apply:** pistes à valider avec Samuel, pas décidées : α₀ ≈ 5e-4 ou lr α ×10 pour
 sauter la phase morte ; séparer régression et curriculum (D figé à 300) ; régulariser le critique
 (target_sigma 0.2, gradient_steps 4, clip Q) ; tester save_3 en jeu. Voir
-[[sac-train-412-diagnosis]], [[sac-agent-2026-11]].
+[[sac-train-412-diagnosis]], sac-agent-2026-11.

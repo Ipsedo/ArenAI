@@ -33,4 +33,4 @@ Q 10.0 → 0.80 ; Hc 2.73 → 2.51 ; fire 0.30 → 0.46 tir/s ; hit 0.039 → 0.
 Run 413 lancé 20:30 : réseau réduit (CNN 16/32/64, MLP 128/64), **batch 8192, gpu_batch 1024**, gradient_steps toujours 1
 → **43 pas/min, 10× plus lent** (GPU 100 %), même nombre d'updates par pas d'env, même décroissance d'α (÷e / 33k pas ≈ 13 h).
 Diagnostic : le budget d'updates est le verrou (UTD 1/32, 33k updates en 75 min), pas la variance du gradient ;
-levier = `gradient_steps` > 1 avec batch 256-512. Voir [[sac-train-413-diagnosis]] si écrit.
+levier = `gradient_steps` > 1 avec batch 256-512. Voir run 413 si écrit.

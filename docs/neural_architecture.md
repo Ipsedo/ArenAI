@@ -52,7 +52,7 @@ flowchart TB
         P2["Conv 3×3, stride 2, circular pad in width · GroupNorm(4) · SiLU<br/>32 × 8 × 128"]
         P3["Conv 3×3, stride 2, circular pad in width · GroupNorm(8) · SiLU<br/>64 × 4 × 64"]
         P4["Conv 1×1<br/>4 × 4 × 64"]
-        P5["Max over the 4 rows<br/>4 × 64"]
+        P5["Mean over the 4 rows<br/>4 × 64"]
         PF["Flatten<br/>256"]
         P0 --> P1 --> P2 --> P3 --> P4 --> P5 --> PF
     end
@@ -89,7 +89,7 @@ weights, ending on one value.
 ```mermaid
 flowchart TB
     V["vision<br/>3 × 128 × 256"] --> VE["Vision encoder<br/>7 × (Conv 3×3 s2 · GroupNorm · SiLU) · Flatten<br/>256"]
-    P["panorama<br/>3 × 32 × 512"] --> PE["Panorama encoder<br/>3 × (circular Conv 3×3 s2 · GroupNorm · SiLU) · Conv 1×1 · max over rows · Flatten<br/>256"]
+    P["panorama<br/>3 × 32 × 512"] --> PE["Panorama encoder<br/>3 × (circular Conv 3×3 s2 · GroupNorm · SiLU) · Conv 1×1 · mean over rows · Flatten<br/>256"]
     S["state<br/>146"] --> SE["State encoder<br/>Linear (no bias) · LayerNorm · SiLU<br/>64"]
 
     VE --> CAT["Concatenate<br/>z ∈ ℝ^576"]
@@ -350,5 +350,5 @@ $$L_\alpha = -\sum_{i=1}^{4} \log \alpha^c_i \;\mathbb{E}\big[\log \pi_i(a_i \mi
   convolution pads the width with the columns of the other border (circular) and the height with
   zeros.
 - After three blocks one column spans 5.6° of bearing. The $1 \times 1$ convolution keeps 4
-  channels per cell and the maximum over the 4 rows drops the height: the output is 4 channels ×
+  channels per cell and the mean over the 4 rows drops the height: the output is 4 channels ×
   64 bearing columns, flattened channel by channel.

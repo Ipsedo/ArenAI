@@ -45,8 +45,8 @@ namespace arenai::agent {
             out = torch::silu(norms[i]->as<torch::nn::GroupNorm>()->forward(out));
         }
 
-        // [B, output_channels, rows, columns] -> strongest row per column -> [B, output_size]
-        return to_columns->forward(out).amax(2).flatten(1);
+        // [B, output_channels, rows, columns] -> mean over rows -> [B, output_size]
+        return to_columns->forward(out).mean(2).flatten(1);
     }
 
     int PanoramaNetwork::get_output_size() const { return output_size; }

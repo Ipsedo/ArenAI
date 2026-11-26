@@ -92,7 +92,7 @@ Any learning problem or idea of a fix ⟹ skill `rl-hypothesis`.
 - French. **Conclusion first, one sentence**, then only the numbers that carry it. No filler, no
   hedging, no repetition.
 - **Default length: ≤ 10 lines** (« pas de blah blah », 2026-11-25): the reasoning as a chain
-  (finding → consequence → next step), at most one table or one diagram. More tables, limits,
+  (finding → consequence → next step), one diagram and at most one table. More tables, limits,
   file lists, method detail: only when Samuel explicitly asks for the detail (« tu ne détailles que si je te le demande
   explicitement »). This bound wins over the form
   bullets below and over `docs/rl_method.md` §Output shape, except in the technical detail a gate
@@ -100,10 +100,13 @@ Any learning problem or idea of a fix ⟹ skill `rl-hypothesis`.
 - **Mathematics in LaTeX**: any explanation of a solution, a loss, a gradient, an estimator, a
   distribution, a geometry is given as formulas (`$…$`, `$$…$$`) with every symbol defined once
   — never a formula paraphrased in prose.
-- **Diagrams over paragraphs**: architecture, gradient flow, data flow, class collaboration,
-  causal chain, timeline are drawn (visualize widget when available, else Mermaid; ASCII as last
-  resort). A design question shows the collaboration; a formulation proposal shows where the
-  piece plugs in and where gradients stop.
+- **Diagram first** (Samuel, 2026-11-27: « dans le chat on privilégie aussi les schémas au
+  texte »): any chat answer that explains a mechanism, a cause, a tested setup, a bench or probe
+  verdict, a proposal or a comparison of setups opens with its diagram, unasked (visualize widget
+  when available, else Mermaid; ASCII as last resort); the text is its caption, a table of
+  numbers never replaces it. Also drawn: architecture, gradient flow, data flow, class
+  collaboration, causal chain, timeline. A design question shows the collaboration; a
+  formulation proposal shows where the piece plugs in and where gradients stop.
 - **Compute time announced at launch** (Samuel, 2026-11-26: « dès que t'en lances il faut que tu
   m'indiques le temps de calcul »): the chat message that launches matches, a probe, a script or a
   build expected to exceed 1 min states its estimated duration and end time, from a measured

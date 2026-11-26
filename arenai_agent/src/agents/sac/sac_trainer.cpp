@@ -37,26 +37,27 @@ namespace arenai::agent {
 
     SacTrainer::SacTrainer(
         const std::shared_ptr<SacActor> &actor, const std::shared_ptr<StateEncoder> &encoder,
+        const std::shared_ptr<PanoramaMaskNetwork> &panorama_encoder,
+        const std::shared_ptr<PanoramaMaskLearner> &panorama_mask_learner,
         const std::shared_ptr<SacReplayBuffer> &replay_buffer, const int nb_sensors,
         const int nb_continuous_actions, const int nb_discrete_actions,
         const float actor_learning_rate, const float critic_learning_rate,
         const float alpha_learning_rate, const int hidden_size_sensors,
         const std::vector<int> &critic_hidden_sizes,
         const std::vector<std::tuple<int, int>> &vision_channels,
-        const std::vector<int> &group_norm_nums,
-        const std::vector<std::tuple<int, int>> &panorama_channels,
-        const std::vector<int> &panorama_group_norm_nums, const int panorama_output_channels,
-        const torch::Device device, const int metric_window_size, const float tau,
-        const float initial_alpha, const float target_sigma,
-        const float discrete_target_entropy_ratio, const int learning_starts,
-        const int gradient_steps, const int batch_size, const int gpu_batch_size)
-        : actor(actor), replay_buffer(replay_buffer),
+        const std::vector<int> &group_norm_nums, const torch::Device device,
+        const int metric_window_size, const float tau, const float initial_alpha,
+        const float target_sigma, const float discrete_target_entropy_ratio,
+        const int learning_starts, const int gradient_steps, const int batch_size,
+        const int gpu_batch_size)
+        : actor(actor), panorama_encoder(panorama_encoder),
+          panorama_mask_learner(panorama_mask_learner), replay_buffer(replay_buffer),
           critic(std::make_shared<TwinQNetwork>(
               encoder, nb_continuous_actions, nb_discrete_actions, critic_hidden_sizes)),
           target_critic(std::make_shared<TwinQNetwork>(
               std::make_shared<StateEncoder>(
                   nb_sensors, hidden_size_sensors, vision_channels, group_norm_nums,
-                  panorama_channels, panorama_group_norm_nums, panorama_output_channels),
+                  panorama_encoder),
               nb_continuous_actions, nb_discrete_actions, critic_hidden_sizes)),
           alphas(std::make_shared<SacAlpha>(
               initial_alpha, nb_continuous_actions + nb_discrete_actions)),
@@ -85,13 +86,18 @@ namespace arenai::agent {
 
         hard_update(target_critic, critic);
         for (auto &parameter: target_critic->parameters()) parameter.set_requires_grad(false);
+        // the target shares the panorama encoder, which the mask loss still trains
+        for (auto &parameter: panorama_encoder->parameters()) parameter.set_requires_grad(true);
 
         to(device);
         set_train(false);
     }
 
     void SacTrainer::step() {
-        if (replay_buffer->nb_transitions() >= static_cast<int64_t>(learning_starts)) train();
+        if (replay_buffer->nb_transitions() < static_cast<int64_t>(learning_starts)) return;
+
+        train();
+        panorama_mask_learner->fit();
     }
 
     void SacTrainer::train() const {
@@ -262,6 +268,7 @@ namespace arenai::agent {
         save_torch(output_folder, actor_optim, "actor_optim.pt");
         save_torch(output_folder, critic_optim, "critic_optim.pt");
         save_torch(output_folder, alpha_optim, "alpha_optim.pt");
+        panorama_mask_learner->save(output_folder);
 
         write_module_repr(output_folder, actor, "actor");
         write_module_repr(output_folder, critic, "critic");

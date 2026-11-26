@@ -18,8 +18,10 @@ TEST_P(ActorTestParam, TestActorAct) {
 
     Actor actor(
         sensors_nb, cont_actions_nb, discrete_actions_nb, sensors_hidden_size, layers,
-        {{input_channels, 4}, {4, 8}}, {2, 4}, {{3, 4}}, {2}, 2, 0.1f,
-        std::vector(discrete_actions_nb, 0.2f));
+        {{input_channels, 4}, {4, 8}}, {2, 4},
+        std::make_shared<PanoramaMaskNetwork>(
+            std::vector<std::tuple<int, int>>{{3, 4}}, std::vector{2}, 2),
+        0.1f, std::vector(discrete_actions_nb, 0.2f));
 
     const auto image = torch::randint(
         255, {batch_size, input_channels, height, width},

@@ -107,6 +107,7 @@ namespace arenai::agent {
         const auto agent = agent_factory->get_agent();
         const auto collector = agent_factory->get_collector();
         const auto trainer = agent_factory->get_trainer();
+        const auto mask_learner = agent_factory->get_panorama_mask_learner();
 
         std::cout << "Parameters : " << trainer->count_parameters() << std::endl;
 
@@ -116,7 +117,9 @@ namespace arenai::agent {
 
         // metrics
 
-        const auto trainer_metrics = trainer->get_metrics();
+        auto trainer_metrics = trainer->get_metrics();
+        const auto mask_metrics = mask_learner->get_metrics();
+        trainer_metrics.insert(trainer_metrics.end(), mask_metrics.begin(), mask_metrics.end());
         const auto env_metrics = env->get_metrics();
 
         // curriculum observability: the side played this episode and the current bound
@@ -186,6 +189,8 @@ namespace arenai::agent {
             while (!is_done) {
 
                 std::vector<core::Action> actions_for_env;
+
+                mask_learner->observe(state.get_panorama(), env->enemy_sightings());
 
                 actions_for_env = agent->act(state.to(torch_device), true).to_actions();
 

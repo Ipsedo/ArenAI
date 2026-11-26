@@ -2,6 +2,8 @@
 #define ARENAI_AGENT_HOST_TRAIN_ENVIRONMENT_H
 
 #include <numbers>
+#include <optional>
+#include <vector>
 
 #include <torch/torch.h>
 
@@ -40,6 +42,17 @@ namespace arenai::agent {
         float chassis_heading;
     };
 
+    struct EnemySighting {
+        // rad from the canon heading, positive to the left
+        float bearing;
+        // rad
+        float angular_half_width;
+        // m
+        float distance;
+        // clear line of sight, inside the panorama's vertical field
+        bool visible;
+    };
+
     class TrainTankEnvironment final : public core::BaseTanksEnvironment {
     public:
         TrainTankEnvironment(
@@ -58,6 +71,9 @@ namespace arenai::agent {
 
         // view_*: the nearest enemy within view_half_yaw of the canon axis (radians)
         std::vector<AimGeometry> aim_geometry(float view_half_yaw = std::numbers::pi_v<float>);
+
+        // one list per tank, nullopt for a dead tank
+        std::vector<std::optional<std::vector<EnemySighting>>> enemy_sightings();
 
         std::vector<model::RewardDetail> last_step_reward_details() const;
 
@@ -114,6 +130,9 @@ namespace arenai::agent {
 
         std::shared_ptr<const ProgressCurriculum> curriculum;
         float empty_reserve_penalty;
+
+        // engine of the current episode
+        const model::AbstractPhysicEngine *physic_engine;
 
         bool are_all_done();
     };

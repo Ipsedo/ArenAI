@@ -8,6 +8,7 @@
 
 #include <nlohmann/json.hpp>
 
+#include "./panorama_mask_learner.h"
 #include "./step_collector.h"
 #include "./torch_agent.h"
 #include "./trainer.h"
@@ -21,6 +22,7 @@ namespace arenai::agent {
         virtual std::shared_ptr<AbstractTorchAgent> get_agent() = 0;
         virtual std::shared_ptr<AbstractStepCollector> get_collector() = 0;
         virtual std::shared_ptr<AbstractTrainer> get_trainer() = 0;
+        virtual std::shared_ptr<PanoramaMaskLearner> get_panorama_mask_learner() = 0;
 
         virtual nlohmann::json get_config() const = 0;
     };

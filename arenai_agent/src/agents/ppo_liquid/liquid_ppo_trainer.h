@@ -5,6 +5,7 @@
 #include "../../networks/recurrent/liquid_actor.h"
 #include "../../networks/recurrent/liquid_critic.h"
 #include "../entropy_alphas.h"
+#include "../panorama_mask_learner.h"
 #include "../ppo_objective.h"
 #include "../return_scaler.h"
 #include "../trainer.h"
@@ -61,13 +62,14 @@ namespace arenai::agent {
     public:
         LiquidPpoTrainer(
             const std::shared_ptr<LiquidActor> &actor,
+            const std::shared_ptr<PanoramaMaskNetwork> &panorama_encoder,
+            const std::shared_ptr<PanoramaMaskLearner> &panorama_mask_learner,
             const std::shared_ptr<LiquidPpoRolloutBuffer> &rollout_buffer,
             int nb_continuous_actions, int nb_discrete_actions, int nb_sensors,
             float actor_learning_rate, float critic_learning_rate, int hidden_size_sensors,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums,
-            const std::vector<std::tuple<int, int>> &panorama_channels,
-            const std::vector<int> &panorama_group_norm_nums, int panorama_output_channels,
+
             int neuron_number, int unfolding_steps, float delta_t, torch::Device device,
             int metric_window_size, float gamma, float gae_lambda, float clip_epsilon,
             float target_kl, float grad_norm_max, float initial_alpha, float alpha_learning_rate,
@@ -94,6 +96,8 @@ namespace arenai::agent {
 
     private:
         std::shared_ptr<LiquidActor> actor;
+        std::shared_ptr<PanoramaMaskNetwork> panorama_encoder;
+        std::shared_ptr<PanoramaMaskLearner> panorama_mask_learner;
         std::shared_ptr<LiquidPpoRolloutBuffer> rollout_buffer;
 
         // one learned entropy temperature per action

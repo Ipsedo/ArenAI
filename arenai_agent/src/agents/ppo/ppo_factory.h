@@ -19,11 +19,15 @@ namespace arenai::agent {
         std::shared_ptr<AbstractTorchAgent> get_agent() override;
         std::shared_ptr<AbstractStepCollector> get_collector() override;
         std::shared_ptr<AbstractTrainer> get_trainer() override;
+        std::shared_ptr<PanoramaMaskLearner> get_panorama_mask_learner() override;
 
         nlohmann::json get_config() const override;
 
     private:
         nlohmann::json config;
+
+        std::shared_ptr<PanoramaMaskNetwork> panorama_encoder;
+        std::shared_ptr<PanoramaMaskLearner> panorama_mask_learner;
 
         // triad built once, sharing actor + rollout_buffer
         std::shared_ptr<Actor> actor;

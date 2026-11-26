@@ -154,7 +154,10 @@ The folder is exactly `--output_folder`; `train_NNN_<agent>` is only a naming co
 | `--group_norm_nums` | `[2,4,8,16,16,16,16]` | groups per vision layer |
 | `--panorama_channels` | `[[3,16],[16,32],[32,64]]` | panorama CNN `[in,out]` pairs |
 | `--panorama_group_norm_nums` | `[2,4,8]` | groups per panorama layer |
-| `--panorama_output_channels` | `4` | panorama encoder output channels |
+| `--panorama_output_channels` | `4` | panorama channels kept per bearing column before its logit |
+| `--panorama_mask_learning_rate` | `3e-4` | learning rate of the panorama mask loss |
+| `--panorama_mask_batch_size` | `512` | panorama mask optimisation batch |
+| `--panorama_mask_epochs` | `1` | passes over the new panoramas per update |
 | `--metric_window_size` | `256` | metric averaging window |
 
 `ppo_liquid` only:
@@ -177,7 +180,7 @@ The folder is exactly `--output_folder`; `train_NNN_<agent>` is only a naming co
 
 ### Agent options — `sac`
 
-Shares the network and `--initial_*` options above.
+Shares the network, `--panorama_mask_*` and `--initial_*` options above.
 
 | option | default | meaning |
 |---|---|---|

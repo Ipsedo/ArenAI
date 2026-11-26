@@ -9,11 +9,14 @@ using namespace arenai::agent;
 SacTrainingTriad SacTrainingTest::make_triad(const SacTrainingTestConfig &cfg) const {
     const std::vector<std::tuple<int, int>> vision_channels{{3, 4}};
     const std::vector group_norm_nums{2};
+    const auto panorama_encoder = std::make_shared<PanoramaMaskNetwork>(
+        std::vector<std::tuple<int, int>>{{3, 4}}, std::vector{2}, 2);
+    const auto panorama_mask_learner =
+        std::make_shared<PanoramaMaskLearner>(panorama_encoder, 1e-3f, 8, 1, device);
 
     SacTrainingTriad triad;
     triad.encoder = std::make_shared<StateEncoder>(
-        cfg.nb_sensors, 8, vision_channels, group_norm_nums,
-        std::vector<std::tuple<int, int>>{{3, 4}}, std::vector{2}, 2);
+        cfg.nb_sensors, 8, vision_channels, group_norm_nums, panorama_encoder);
     triad.actor = std::make_shared<SacActor>(
         triad.encoder, cfg.nb_continuous_actions, cfg.nb_discrete_actions, std::vector{16}, 0.3f,
         std::vector(cfg.nb_discrete_actions, 0.2f));
@@ -21,10 +24,10 @@ SacTrainingTriad SacTrainingTest::make_triad(const SacTrainingTestConfig &cfg) c
     triad.collector = std::make_shared<SacStepCollector>(triad.replay_buffer);
     triad.agent = std::make_shared<TorchSacAgent>(triad.actor, device, triad.collector);
     triad.trainer = std::make_shared<SacTrainer>(
-        triad.actor, triad.encoder, triad.replay_buffer, cfg.nb_sensors, cfg.nb_continuous_actions,
-        cfg.nb_discrete_actions, 1e-3f, 1e-3f, 1e-3f, 8, std::vector{16}, vision_channels,
-        group_norm_nums, std::vector<std::tuple<int, int>>{{3, 4}}, std::vector{2}, 2, device, 10,
-        0.05f, 0.1f, 0.3f, 0.3f, LEARNING_STARTS, 1, BATCH_SIZE, GPU_BATCH_SIZE);
+        triad.actor, triad.encoder, panorama_encoder, panorama_mask_learner, triad.replay_buffer,
+        cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 1e-3f, 1e-3f, 1e-3f, 8,
+        std::vector{16}, vision_channels, group_norm_nums, device, 10, 0.05f, 0.1f, 0.3f, 0.3f,
+        LEARNING_STARTS, 1, BATCH_SIZE, GPU_BATCH_SIZE);
     return triad;
 }
 

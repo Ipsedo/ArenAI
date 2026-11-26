@@ -6,6 +6,7 @@
 #include <numeric>
 
 #include <arenai_agent/file_reader.h>
+#include <arenai_model/constants.h>
 #include <arenai_utils/cache.h>
 #include <arenai_utils/singleton.h>
 #include <arenai_view/backend.h>
@@ -20,6 +21,11 @@ namespace {
     constexpr float HIT_REWARD_SCALE = 3.f;
     constexpr float RECEIVED_REWARD_SCALE = 1.f;
     constexpr float EMPTY_RESERVE_PENALTY = 0.25f;
+    // m
+    constexpr float TANK_HALF_LENGTH = 4.f;
+    constexpr float SIGHT_TOLERANCE = 8.f;
+    // m, where a sight ray starts: out of the tank's own bodies
+    constexpr float OWN_TANK_CLEARANCE = 6.f;
 }// namespace
 
 namespace arenai::agent {
@@ -47,7 +53,7 @@ namespace arenai::agent {
           hit_metric(std::make_shared<MeanMetric>("hit", 16, 2, true)),
           kill_metric(std::make_shared<MeanMetric>("kill", 16, 1)), nb_kills_episode(0),
           nb_fires_episode(0), nb_hits_episode(0), curriculum(curriculum),
-          empty_reserve_penalty(0.f) {}
+          empty_reserve_penalty(0.f), physic_engine(nullptr) {}
 
     std::vector<std::tuple<core::State, core::Reward, core::IsDone, core::IsTruncated>>
     TrainTankEnvironment::step(const float time_delta, const std::vector<core::Action> &actions) {
@@ -208,6 +214,8 @@ namespace arenai::agent {
         nb_hits_episode = 0;
 
         empty_reserve_penalty = curriculum ? EMPTY_RESERVE_PENALTY : 0.f;
+
+        physic_engine = engine.get();
     }
 
     std::vector<model::RewardDetail> TrainTankEnvironment::last_step_reward_details() const {
@@ -328,6 +336,63 @@ namespace arenai::agent {
                     }
 
                     result.push_back(geometry);
+                }
+
+                return result;
+            });
+    }
+
+    std::vector<std::optional<std::vector<EnemySighting>>> TrainTankEnvironment::enemy_sightings() {
+        return apply_on_enemies<std::vector<std::optional<std::vector<EnemySighting>>>>(
+            [this](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
+                constexpr glm::vec4 origin(0.f, 0.f, 0.f, 1.f);
+                constexpr float two_pi = 2.f * std::numbers::pi_v<float>;
+
+                // half vertical field of a panorama view
+                const float half_pitch = std::atan(
+                    std::tan(std::numbers::pi_v<float> / static_cast<float>(model::PANORAMA_VIEWS))
+                    / model::PANORAMA_VIEW_ASPECT);
+
+                std::vector<glm::vec3> positions;
+                positions.reserve(tanks.size());
+                for (const auto &tank: tanks)
+                    positions.push_back(
+                        glm::vec3(tank->get_canon()->get_model_matrix() * origin)
+                        + glm::vec3(0.f, model::PANORAMA_CAMERA_HEIGHT, 0.f));
+
+                std::vector<std::optional<std::vector<EnemySighting>>> result(tanks.size());
+
+                for (int i = 0; i < tanks.size(); i++) {
+                    if (tanks[i]->is_dead()) continue;
+
+                    const auto canon_matrix = tanks[i]->get_canon()->get_model_matrix();
+                    const auto eye = glm::vec3(canon_matrix * origin)
+                                     + glm::vec3(0.f, model::PANORAMA_CAMERA_HEIGHT, 0.f);
+                    const auto axis = glm::vec3(canon_matrix * glm::vec4(0.f, 0.f, 1.f, 0.f));
+                    const float heading = std::atan2(axis.x, axis.z);
+
+                    auto &sightings = result[i].emplace();
+
+                    for (int j = 0; j < tanks.size(); j++) {
+                        if (j == i || tanks[j]->is_dead()) continue;
+
+                        const auto to_enemy = positions[j] - eye;
+                        const float distance = glm::length(to_enemy);
+                        const float pitch = std::asin(std::clamp(to_enemy.y / distance, -1.f, 1.f));
+
+                        bool in_sight = distance > OWN_TANK_CLEARANCE;
+                        if (in_sight)
+                            if (const auto hit = physic_engine->ray_cast(
+                                    eye + to_enemy * (OWN_TANK_CLEARANCE / distance), positions[j]))
+                                in_sight = glm::length(*hit - positions[j]) < SIGHT_TOLERANCE;
+
+                        sightings.push_back(
+                            {.bearing = std::remainder(
+                                 std::atan2(to_enemy.x, to_enemy.z) - heading, two_pi),
+                             .angular_half_width = std::atan(TANK_HALF_LENGTH / distance),
+                             .distance = distance,
+                             .visible = in_sight && std::abs(pitch) <= half_pitch});
+                    }
                 }
 
                 return result;

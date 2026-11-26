@@ -1,14 +1,16 @@
 # Neural architecture
 
 Actor and critic of the four agents: `ppo`, `ppo_liquid`, `ppg`, `sac`. All share the three
-encoders (vision, panorama, state), the encoding $z \in \mathbb{R}^{576}$ and the policy heads.
+encoders (vision, panorama, state), the encoding $z \in \mathbb{R}^{384}$ and the policy heads.
+In every agent one panorama encoder is shared by all its networks and trained only by its own
+[mask loss](#mask-loss).
 
 | agent | trunk | actor | critic | weights shared between actor and critic |
 |---|---|---|---|---|
-| `ppo` | MLP | [Actor](#actor) | [Critic](#critic), $V(s)$ | none |
-| `ppo_liquid` | LTC cell | [Actor](#actor) | [Critic](#critic), $V(s)$ | none |
-| `ppg` | MLP | [Actor](#actor) + auxiliary value head ([PPG](#ppg)) | [Critic](#critic), $V(s)$ | none |
-| `sac` | MLP | trunk and heads on the critic's encoding ([SAC](#sac)) | twin $Q$ + target copy ([SAC](#sac)) | the three encoders, trained by the critic only |
+| `ppo` | MLP | [Actor](#actor) | [Critic](#critic), $V(s)$ | the panorama encoder |
+| `ppo_liquid` | LTC cell | [Actor](#actor) | [Critic](#critic), $V(s)$ | the panorama encoder |
+| `ppg` | MLP | [Actor](#actor) + auxiliary value head ([PPG](#ppg)) | [Critic](#critic), $V(s)$ | the panorama encoder |
+| `sac` | MLP | trunk and heads on the critic's encoding ([SAC](#sac)) | twin $Q$ + target copy ([SAC](#sac)) | the three encoders; vision and state trained by the critic only, panorama by the mask loss only |
 
 Sizes below are the defaults (`ppo_hyperparams.h`, `liquid_ppo_hyperparams.h`,
 `ppg_hyperparams.h`, `sac_hyperparams.h`) and the compile-time constants of `arenai_core/types.h`
@@ -27,7 +29,8 @@ Both images are scaled to $[-1, 1]$ at the entry of their encoder: $x \leftarrow
 ## Actor
 
 Actor of `ppo`, `ppo_liquid` and `ppg`. The `sac` actor has the same MLP trunk and the same heads
-but reads $z$ from the critic's encoders ([SAC](#sac)).
+but reads $z$ from the critic's encoders ([SAC](#sac)). Dotted arrows carry no gradient or exist
+at training time only.
 
 ```mermaid
 flowchart TB
@@ -45,7 +48,7 @@ flowchart TB
         V0 --> V1 --> V2 --> V3 --> V4 --> V5 --> V6 --> V7 --> VF
     end
 
-    subgraph PE["Panorama encoder — PanoramaNetwork"]
+    subgraph PE["Panorama encoder — PanoramaMaskNetwork, shared with the critic"]
         direction TB
         P0["panorama<br/>3 × 32 × 512"]
         P1["Conv 3×3, stride 2, circular pad in width · GroupNorm(2) · SiLU<br/>16 × 16 × 256"]
@@ -53,8 +56,9 @@ flowchart TB
         P3["Conv 3×3, stride 2, circular pad in width · GroupNorm(8) · SiLU<br/>64 × 4 × 64"]
         P4["Conv 1×1<br/>4 × 4 × 64"]
         P5["Mean over the 4 rows<br/>4 × 64"]
-        PF["Flatten<br/>256"]
-        P0 --> P1 --> P2 --> P3 --> P4 --> P5 --> PF
+        P6["Conv 1×1<br/>64 logits, one per bearing column"]
+        PF["Sigmoid<br/>64 probabilities"]
+        P0 --> P1 --> P2 --> P3 --> P4 --> P5 --> P6 --> PF
     end
 
     subgraph SE["State encoder"]
@@ -64,11 +68,14 @@ flowchart TB
         S0 --> S1
     end
 
-    VF --> CAT["Concatenate<br/>z ∈ ℝ^576"]
-    PF --> CAT
+    VF --> CAT["Concatenate<br/>z ∈ ℝ^384"]
+    PF -. "stop-gradient" .-> CAT
     S1 --> CAT
 
-    CAT --> TRUNK["Trunk<br/>ppo_liquid : LTC cell, 128 neurons, state x_t ∈ ℝ^128<br/>ppo, ppg : MLP 576 → 256 → 128<br/>h ∈ ℝ^128"]
+    Y["Mask labels<br/>simulator state, training only"] -.-> ML["Mask loss<br/>binary cross-entropy per column"]
+    P6 -.-> ML
+
+    CAT --> TRUNK["Trunk<br/>ppo_liquid : LTC cell, 128 neurons, state x_t ∈ ℝ^128<br/>ppo, ppg : MLP 384 → 256 → 128<br/>h ∈ ℝ^128"]
     X["x_(t−1) ∈ ℝ^128<br/>(ppo_liquid only)"] -.-> TRUNK
     TRUNK -.-> XN["x_t"]
 
@@ -83,20 +90,21 @@ flowchart TB
 
 ## Critic
 
-Critic of `ppo`, `ppo_liquid` and `ppg`: same encoders and same trunk as the actor, with its own
-weights, ending on one value.
+Critic of `ppo`, `ppo_liquid` and `ppg`: same encoders and same trunk as the actor, ending on one
+value. The vision encoder, the state encoder and the trunk have their own weights; the panorama
+encoder is the very instance the actor holds.
 
 ```mermaid
 flowchart TB
     V["vision<br/>3 × 128 × 256"] --> VE["Vision encoder<br/>7 × (Conv 3×3 s2 · GroupNorm · SiLU) · Flatten<br/>256"]
-    P["panorama<br/>3 × 32 × 512"] --> PE["Panorama encoder<br/>3 × (circular Conv 3×3 s2 · GroupNorm · SiLU) · Conv 1×1 · mean over rows · Flatten<br/>256"]
+    P["panorama<br/>3 × 32 × 512"] --> PE["Panorama encoder, shared with the actor<br/>3 × (circular Conv 3×3 s2 · GroupNorm · SiLU) · Conv 1×1 · mean over rows · Conv 1×1 · Sigmoid<br/>64"]
     S["state<br/>146"] --> SE["State encoder<br/>Linear (no bias) · LayerNorm · SiLU<br/>64"]
 
-    VE --> CAT["Concatenate<br/>z ∈ ℝ^576"]
-    PE --> CAT
+    VE --> CAT["Concatenate<br/>z ∈ ℝ^384"]
+    PE -. "stop-gradient" .-> CAT
     SE --> CAT
 
-    CAT --> TRUNK["Trunk<br/>ppo_liquid : LTC cell, 128 neurons, state x_t ∈ ℝ^128<br/>ppo, ppg : MLP 576 → 256 → 128<br/>h ∈ ℝ^128"]
+    CAT --> TRUNK["Trunk<br/>ppo_liquid : LTC cell, 128 neurons, state x_t ∈ ℝ^128<br/>ppo, ppg : MLP 384 → 256 → 128<br/>h ∈ ℝ^128"]
     X["x_(t−1) ∈ ℝ^128<br/>(ppo_liquid only)"] -.-> TRUNK
     TRUNK -.-> XN["x_t"]
 
@@ -113,7 +121,7 @@ x \leftarrow \frac{x + \delta\, f \odot a}{1 + \delta\,(1/\tau + f)}$$
 
 $$h = \operatorname{SiLU}\big(\operatorname{LayerNorm}(W_o\, x)\big)$$
 
-- $z \in \mathbb{R}^{576}$: the concatenated encodings; $W_z \in \mathbb{R}^{128 \times 576}$,
+- $z \in \mathbb{R}^{384}$: the concatenated encodings; $W_z \in \mathbb{R}^{128 \times 384}$,
   $W_r \in \mathbb{R}^{128 \times 128}$, $W_o \in \mathbb{R}^{128 \times 128}$, none with a bias.
 - $\tau = \operatorname{softplus}(\tau_{raw}) + 10^{-3} \in \mathbb{R}^{128}$: learned time
   constants, log-spaced at initialisation; $a \in \mathbb{R}^{128}$: learned, initialised at
@@ -122,8 +130,8 @@ $$h = \operatorname{SiLU}\big(\operatorname{LayerNorm}(W_o\, x)\big)$$
   each episode start.
 
 **MLP (`ppo`, `ppg`, `sac`)**: two blocks `Linear (no bias) · LayerNorm · SiLU`,
-$576 \to 256 \to 128$; no memory. The `sac` critics use the same two blocks on a wider input,
-$580 \to 256 \to 128$ ([SAC](#sac)).
+$384 \to 256 \to 128$; no memory. The `sac` critics use the same two blocks on a wider input,
+$388 \to 256 \to 128$ ([SAC](#sac)).
 
 ## Heads
 
@@ -151,8 +159,8 @@ flowchart TB
 
     subgraph ACTOR["Actor — DistillationActor (optimiser: actor)"]
         direction TB
-        AE["3 encoders · Concatenate<br/>z ∈ ℝ^576"]
-        AT["MLP 576 → 256 → 128<br/>h ∈ ℝ^128"]
+        AE["3 encoders · Concatenate<br/>z ∈ ℝ^384"]
+        AT["MLP 384 → 256 → 128<br/>h ∈ ℝ^128"]
         PI["Policy heads<br/>μ, σ ∈ ℝ^4 · p ∈ [0, 1]^2"]
         VP["Auxiliary value head — Linear<br/>V_π(s) ∈ ℝ"]
         AE --> AT
@@ -162,8 +170,8 @@ flowchart TB
 
     subgraph CRITIC["Critic — ValueFunction (optimiser: critic)"]
         direction TB
-        CE["3 encoders · Concatenate<br/>z ∈ ℝ^576"]
-        CT["MLP 576 → 256 → 128"]
+        CE["3 encoders · Concatenate<br/>z ∈ ℝ^384"]
+        CT["MLP 384 → 256 → 128"]
         CV["Linear<br/>V(s) ∈ ℝ"]
         CE --> CT --> CV
     end
@@ -216,7 +224,8 @@ actor never sees $V$.
 
 ## SAC
 
-`sac` replaces the value critic by action-value critics and trains the encoders through them only.
+`sac` replaces the value critic by action-value critics and trains the vision and state encoders
+through them only; the panorama encoder is trained by the [mask loss](#mask-loss) alone.
 
 ```mermaid
 flowchart TB
@@ -225,9 +234,9 @@ flowchart TB
 
     subgraph ONLINE["Online critic — TwinQNetwork (optimiser: critic)"]
         direction TB
-        ENC["State encoder — StateEncoder<br/>3 encoders · Concatenate<br/>z ∈ ℝ^576"]
-        QIN["Concatenate (z, a)<br/>ℝ^580"]
-        Q1["Q1 — MLP 580 → 256 → 128 · Linear<br/>ℝ^4, one value per (fire, zoom)"]
+        ENC["State encoder — StateEncoder<br/>3 encoders · Concatenate<br/>z ∈ ℝ^384"]
+        QIN["Concatenate (z, a)<br/>ℝ^388"]
+        Q1["Q1 — MLP 388 → 256 → 128 · Linear<br/>ℝ^4, one value per (fire, zoom)"]
         Q2["Q2 — same structure, own weights<br/>ℝ^4"]
         ENC --> QIN
         QIN --> Q1
@@ -236,7 +245,7 @@ flowchart TB
 
     subgraph ACTOR["Actor head — SacActor (optimiser: actor)"]
         direction TB
-        AH["MLP 576 → 256 → 128<br/>h ∈ ℝ^128"]
+        AH["MLP 384 → 256 → 128<br/>h ∈ ℝ^128"]
         AP["Policy heads<br/>μ, σ ∈ ℝ^4 · p ∈ [0, 1]^2"]
         AS["a = tanh(μ + σ ε), ε ~ 𝒩(0, I)<br/>combination law π(k) from p ⊙ m"]
         AH --> AP --> AS
@@ -244,7 +253,7 @@ flowchart TB
 
     subgraph TARGET["Target critic — TwinQNetwork (no optimiser)"]
         direction TB
-        TENC["Own state encoder"]
+        TENC["Own state encoder<br/>(panorama encoder shared with the online one)"]
         TQ["Q̄1, Q̄2<br/>ℝ^4 each"]
         TENC --> TQ
     end
@@ -275,21 +284,22 @@ flowchart TB
 ### Critics
 
 - **State encoder**: the three encoders of the [Actor](#actor) diagram and their concatenation,
-  $z \in \mathbb{R}^{576}$, one instance held by the online critic and read by the actor.
+  $z \in \mathbb{R}^{384}$, one instance held by the online critic and read by the actor.
 - **How actions enter**: the continuous action $a \in [-1, 1]^4$ (after $\tanh$) is concatenated to
   $z$ at the input; the discrete actions are not inputs but index the output. Each critic returns
   $Q(s, a, \cdot) \in \mathbb{R}^{4}$, one value per combination $k \in \{0, \dots, 3\}$ of the
   $n_d = 2$ discrete actions, $k = d_{fire} + 2\, d_{zoom}$.
 - **Each critic** $Q_c$, $c \in \{1, 2\}$: two blocks `Linear (no bias) · LayerNorm · SiLU`,
-  $580 \to 256 \to 128$, then `Linear` $128 \to 4$. $Q_1$ and $Q_2$ have separate weights and share
+  $388 \to 256 \to 128$, then `Linear` $128 \to 4$. $Q_1$ and $Q_2$ have separate weights and share
   the state encoder.
-- **Target critic** $\bar Q_1, \bar Q_2$: a full copy with its own state encoder, initialised equal
+- **Target critic** $\bar Q_1, \bar Q_2$: a full copy with its own state encoder (vision and state
+  encoders copied, panorama encoder shared with the online critic), initialised equal
   to the online critic, never differentiated, moved after each gradient step by
   $\bar\theta \leftarrow \tau\,\theta + (1 - \tau)\,\bar\theta$, $\tau = 0.005$.
 
 ### Actor head
 
-`SacActor`: the MLP trunk $576 \to 256 \to 128$ and the three heads of the [Actor](#actor) diagram,
+`SacActor`: the MLP trunk $384 \to 256 \to 128$ and the three heads of the [Actor](#actor) diagram,
 applied to the critic's $z$. It owns no encoder weight: the actor optimiser holds only the trunk
 and the heads.
 
@@ -323,7 +333,7 @@ $$L_\pi = \mathbb{E}\Big[\sum_{i=1}^{4} \alpha^c_i \log \pi_i(a_i \mid s)
 
 | loss | weights updated | gradient stops |
 |---|---|---|
-| $L_Q$ | state encoder, $Q_1$, $Q_2$ | $y$ is computed without gradient: target critic, actor head and online encoder on $s_{t+n'}$, temperatures |
+| $L_Q$ | vision and state encoders, $Q_1$, $Q_2$ | $y$ is computed without gradient: target critic, actor head and online encoder on $s_{t+n'}$, temperatures |
 | $L_\pi$ | actor trunk and heads | $z$ detached before the actor trunk and before the $Q$ heads: nothing reaches the encoders; the gradient crosses $Q_1$, $Q_2$ to $a$ and to $\pi(k \mid s)$ but the actor optimiser holds no critic weight; temperatures detached |
 | $L_\alpha$ | $\log \alpha$ | log-probabilities and entropies detached |
 
@@ -346,9 +356,38 @@ $$L_\alpha = -\sum_{i=1}^{4} \log \alpha^c_i \;\mathbb{E}\big[\log \pi_i(a_i \mi
 
 ## Panorama encoder details
 
+`PanoramaMaskNetwork`, one instance per agent, built by the agent's factory and injected into each
+of its networks: it is written in both `actor.pt` and `critic.pt`, and the game needs `actor.pt`
+only.
+
 - The panorama covers the full turn, so its left and right borders are neighbours: each strided
   convolution pads the width with the columns of the other border (circular) and the height with
   zeros.
-- After three blocks one column spans 5.6° of bearing. The $1 \times 1$ convolution keeps 4
-  channels per cell and the mean over the 4 rows drops the height: the output is 4 channels ×
-  64 bearing columns, flattened channel by channel.
+- After three blocks one column spans 5.625° of bearing. A $1 \times 1$ convolution keeps 4
+  channels per cell, the mean over the 4 rows drops the height, and a second $1 \times 1$
+  convolution gives one logit $\ell_j$ per bearing column $j \in \{0, \dots, 63\}$. Column 0 starts
+  straight behind and the index grows turning right; the canon heading is the border between
+  columns 31 and 32.
+- The trunks read $p_j = \sigma(\ell_j)$, detached: no policy, value or $Q$ loss sends a gradient
+  to the encoder.
+
+### Mask loss
+
+The encoder is trained alone, by its own Adam optimiser (`PanoramaMaskLearner`, learning rate
+$3 \cdot 10^{-4}$, batches of 512 panoramas, one pass), to predict which bearing columns hold a
+visible enemy:
+
+$$\mathcal{L}_{mask}=\frac{1}{\sum_j m_j}\sum_{j=0}^{63} m_j\,\mathrm{BCE}\big(\ell_j,\ y_j\big)$$
+
+- $y_j = 1$ when an enemy closer than 400 m, in sight, has its bearing in column $j$; else 0. In
+  sight: the segment from the panorama camera to the top of the enemy's turret meets no obstacle,
+  and its elevation is inside the panorama's vertical field ($\pm 14°$).
+- $m_j = 0$ on an ambiguous column — one an enemy overlaps by its angular half-width
+  $\arctan(4\,\text{m} / \text{distance})$ while being out of sight, too far, or centred in
+  another column — and 1 elsewhere. A column with $y_j = 1$ always has $m_j = 1$.
+- The labels come from the simulator state (`TrainTankEnvironment::enemy_sightings`, then the pure
+  function `panorama_mask_labels`), at training time only: the game runs the encoder on the image
+  alone.
+- The training loop gives the learner every panorama with its sightings; each trainer calls
+  `fit()` right after its own update, so a rollout is collected and optimised with the same
+  encoder. `fit()` passes over the panoramas observed since the previous call, then forgets them.

@@ -76,7 +76,10 @@ TEST_F(PpgAgentTest, DistillationValueShape) {
 
     DistillationActor actor(
         cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 16, std::vector{32},
-        {{3, 8}}, {4}, {{3, 4}}, {2}, 2, 0.5f, std::vector(cfg.nb_discrete_actions, 0.5f));
+        {{3, 8}}, {4},
+        std::make_shared<PanoramaMaskNetwork>(
+            std::vector<std::tuple<int, int>>{{3, 4}}, std::vector{2}, 2),
+        0.5f, std::vector(cfg.nb_discrete_actions, 0.5f));
 
     constexpr int batch = 4;
     const auto state = make_state(cfg, batch);
@@ -88,9 +91,15 @@ TEST_F(PpgAgentTest, DistillationValueShape) {
 
 TEST_F(PpgAgentTest, DistillationValueHeadIsRegistered) {
     DistillationActor actor(
-        10, 4, 2, 16, std::vector{32}, {{3, 8}}, {4}, {{3, 4}}, {2}, 2, 0.5f, {0.5f, 0.5f});
+        10, 4, 2, 16, std::vector{32}, {{3, 8}}, {4},
+        std::make_shared<PanoramaMaskNetwork>(
+            std::vector<std::tuple<int, int>>{{3, 4}}, std::vector{2}, 2),
+        0.5f, {0.5f, 0.5f});
     const Actor plain_actor(
-        10, 4, 2, 16, std::vector{32}, {{3, 8}}, {4}, {{3, 4}}, {2}, 2, 0.5f, {0.5f, 0.5f});
+        10, 4, 2, 16, std::vector{32}, {{3, 8}}, {4},
+        std::make_shared<PanoramaMaskNetwork>(
+            std::vector<std::tuple<int, int>>{{3, 4}}, std::vector{2}, 2),
+        0.5f, {0.5f, 0.5f});
 
     auto named_parameters = actor.named_parameters();
     ASSERT_TRUE(named_parameters.contains("value.weight"));

@@ -15,17 +15,13 @@ namespace arenai::agent {
         const int &nb_sensors, const int &nb_continuous_actions, const int &nb_discrete_actions,
         const int &hidden_size_sensors, const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums,
-        const std::vector<std::tuple<int, int>> &panorama_channels,
-        const std::vector<int> &panorama_group_norm_nums, const int &panorama_output_channels,
-        const int &neuron_number, const int &unfolding_steps, const float &delta_t,
-        const float &initial_sigma, const std::vector<float> &initial_discrete_probas)
+        const std::shared_ptr<PanoramaMaskNetwork> &panorama_encoder, const int &neuron_number,
+        const int &unfolding_steps, const float &delta_t, const float &initial_sigma,
+        const std::vector<float> &initial_discrete_probas)
         : vision_encoder(register_module(
             "vision_encoder",
             std::make_shared<ConvolutionNetwork>(vision_channels, group_norm_nums))),
-          panorama_encoder(register_module(
-              "panorama_encoder",
-              std::make_shared<PanoramaNetwork>(
-                  panorama_channels, panorama_group_norm_nums, panorama_output_channels))),
+          panorama_encoder(register_module("panorama_encoder", panorama_encoder)),
           sensors_encoder(register_module(
               "sensors_encoder",
               torch::nn::Sequential(
@@ -51,7 +47,6 @@ namespace arenai::agent {
                   torch::nn::Linear(neuron_number, nb_discrete_actions), torch::nn::Sigmoid()))) {
 
         vision_encoder->apply(init_hidden_weights);
-        panorama_encoder->apply(init_hidden_weights);
         sensors_encoder->apply(init_hidden_weights);
 
         // zero bias puts the initial mode at the action-range center

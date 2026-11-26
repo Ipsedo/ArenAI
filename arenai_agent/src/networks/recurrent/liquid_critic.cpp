@@ -11,16 +11,12 @@ namespace arenai::agent {
         const int &nb_sensors, const int &hidden_size_sensors,
         const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums,
-        const std::vector<std::tuple<int, int>> &panorama_channels,
-        const std::vector<int> &panorama_group_norm_nums, const int &panorama_output_channels,
-        const int &neuron_number, const int &unfolding_steps, const float &delta_t)
+        const std::shared_ptr<PanoramaMaskNetwork> &panorama_encoder, const int &neuron_number,
+        const int &unfolding_steps, const float &delta_t)
         : vision_encoder(register_module(
             "vision_encoder",
             std::make_shared<ConvolutionNetwork>(vision_channels, group_norm_nums))),
-          panorama_encoder(register_module(
-              "panorama_encoder",
-              std::make_shared<PanoramaNetwork>(
-                  panorama_channels, panorama_group_norm_nums, panorama_output_channels))),
+          panorama_encoder(register_module("panorama_encoder", panorama_encoder)),
           sensors_encoder(register_module(
               "sensors_encoder",
               torch::nn::Sequential(
@@ -38,7 +34,6 @@ namespace arenai::agent {
           to_value(register_module("to_value", torch::nn::Linear(neuron_number, 1))) {
 
         vision_encoder->apply(init_hidden_weights);
-        panorama_encoder->apply(init_hidden_weights);
         sensors_encoder->apply(init_hidden_weights);
 
         to_value->apply(init_value_output_weights);

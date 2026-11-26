@@ -47,22 +47,25 @@ TorchState PpgTrainingTest::make_state(const PpgTrainingTestConfig &cfg, const i
 PpgTriad PpgTrainingTest::make_triad(const PpgTrainingTestConfig &cfg, const int n_pi) const {
     const std::vector<std::tuple<int, int>> vision_channels{{3, 4}};
     const std::vector group_norm_nums{2};
+    const auto panorama_encoder = std::make_shared<PanoramaMaskNetwork>(
+        std::vector<std::tuple<int, int>>{{3, 4}}, std::vector{2}, 2);
+    const auto panorama_mask_learner =
+        std::make_shared<PanoramaMaskLearner>(panorama_encoder, 1e-3f, 8, 1, device);
 
     PpgTriad triad;
     triad.actor = std::make_shared<DistillationActor>(
         cfg.nb_sensors, cfg.nb_continuous_actions, cfg.nb_discrete_actions, 8, std::vector{16},
-        vision_channels, group_norm_nums, std::vector<std::tuple<int, int>>{{3, 4}}, std::vector{2},
-        2, 0.1f, std::vector(cfg.nb_discrete_actions, 0.2f));
+        vision_channels, group_norm_nums, panorama_encoder, 0.1f,
+        std::vector(cfg.nb_discrete_actions, 0.2f));
     triad.rollout_buffer = std::make_shared<PpgRolloutBuffer>();
     triad.collector = std::make_shared<PpgStepCollector>(triad.rollout_buffer);
     triad.agent = std::make_shared<TorchPpgAgent>(triad.actor, device, triad.collector);
     triad.trainer = std::make_shared<PpgTrainer>(
-        triad.actor, triad.rollout_buffer, cfg.nb_continuous_actions, cfg.nb_discrete_actions,
-        cfg.nb_sensors, 1e-3f, 1e-3f, 8, std::vector{16}, vision_channels, group_norm_nums,
-        std::vector<std::tuple<int, int>>{{3, 4}}, std::vector{2}, 2, device, 10, 0.99f, 0.95f,
-        0.2f, 0.f, 1.f, 0.001f, 3e-4f, std::vector(cfg.nb_continuous_actions, -1.f), 0.05f, 2, 2,
-        ROLLOUT_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, 2, 2, 1.f,
-        n_pi);
+        triad.actor, panorama_encoder, panorama_mask_learner, triad.rollout_buffer,
+        cfg.nb_continuous_actions, cfg.nb_discrete_actions, cfg.nb_sensors, 1e-3f, 1e-3f, 8,
+        std::vector{16}, vision_channels, group_norm_nums, device, 10, 0.99f, 0.95f, 0.2f, 0.f, 1.f,
+        0.001f, 3e-4f, std::vector(cfg.nb_continuous_actions, -1.f), 0.05f, 2, 2, ROLLOUT_SIZE,
+        MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, MINIBATCH_SIZE, 2, 2, 1.f, n_pi);
     return triad;
 }
 

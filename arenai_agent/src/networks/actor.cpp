@@ -16,16 +16,12 @@ namespace arenai::agent {
         const int &hidden_size_sensors, const std::vector<int> &hidden_sizes,
         const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums,
-        const std::vector<std::tuple<int, int>> &panorama_channels,
-        const std::vector<int> &panorama_group_norm_nums, const int &panorama_output_channels,
-        const float &initial_sigma, const std::vector<float> &initial_discrete_probas)
+        const std::shared_ptr<PanoramaMaskNetwork> &panorama_encoder, const float &initial_sigma,
+        const std::vector<float> &initial_discrete_probas)
         : vision_encoder(register_module(
             "vision_encoder",
             std::make_shared<ConvolutionNetwork>(vision_channels, group_norm_nums))),
-          panorama_encoder(register_module(
-              "panorama_encoder",
-              std::make_shared<PanoramaNetwork>(
-                  panorama_channels, panorama_group_norm_nums, panorama_output_channels))),
+          panorama_encoder(register_module("panorama_encoder", panorama_encoder)),
           sensors_encoder(register_module(
               "sensors_encoder",
               torch::nn::Sequential(
@@ -63,7 +59,6 @@ namespace arenai::agent {
         }
 
         vision_encoder->apply(init_hidden_weights);
-        panorama_encoder->apply(init_hidden_weights);
         sensors_encoder->apply(init_hidden_weights);
         head->apply(init_hidden_weights);
 
@@ -101,13 +96,11 @@ namespace arenai::agent {
         const int &hidden_size_sensors, const std::vector<int> &hidden_sizes,
         const std::vector<std::tuple<int, int>> &vision_channels,
         const std::vector<int> &group_norm_nums,
-        const std::vector<std::tuple<int, int>> &panorama_channels,
-        const std::vector<int> &panorama_group_norm_nums, const int &panorama_output_channels,
-        const float &initial_sigma, const std::vector<float> &initial_discrete_probas)
+        const std::shared_ptr<PanoramaMaskNetwork> &panorama_encoder, const float &initial_sigma,
+        const std::vector<float> &initial_discrete_probas)
         : Actor(
             nb_sensors, nb_continuous_actions, nb_discrete_actions, hidden_size_sensors,
-            hidden_sizes, vision_channels, group_norm_nums, panorama_channels,
-            panorama_group_norm_nums, panorama_output_channels, initial_sigma,
+            hidden_sizes, vision_channels, group_norm_nums, panorama_encoder, initial_sigma,
             initial_discrete_probas),
           to_value(register_module("value", torch::nn::Linear(hidden_sizes.back(), 1))) {
 

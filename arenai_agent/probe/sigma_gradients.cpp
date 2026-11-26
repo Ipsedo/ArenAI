@@ -100,11 +100,15 @@ int main(const int argc, char **argv) {
         .max_shells = env_config.at("max_shells").get<int>()};
 
     // the training triad of LiquidPpoTorchAgentFactory
+    const auto panorama_encoder = std::make_shared<PanoramaMaskNetwork>(
+        params.panorama_channels, params.panorama_group_norm_nums, params.panorama_output_channels);
+    const auto panorama_mask_learner = std::make_shared<PanoramaMaskLearner>(
+        panorama_encoder, params.panorama_mask_learning_rate, params.panorama_mask_batch_size,
+        params.panorama_mask_epochs, device);
     const auto actor = std::make_shared<LiquidActor>(
         model::ENEMY_STATE_VECTOR_SIZE, model::ENEMY_NB_CONTINUOUS_ACTION,
         model::ENEMY_NB_DISCRETE_ACTION, params.hidden_size_sensors, params.vision_channels,
-        params.group_norm_nums, params.panorama_channels, params.panorama_group_norm_nums,
-        params.panorama_output_channels, params.neuron_number, params.unfolding_steps,
+        params.group_norm_nums, panorama_encoder, params.neuron_number, params.unfolding_steps,
         params.delta_t, params.initial_sigma,
         std::vector{params.initial_fire_proba, params.initial_zoom_proba});
     const auto hidden_state = std::make_shared<LiquidHiddenState>(actor);
@@ -113,10 +117,10 @@ int main(const int argc, char **argv) {
     const auto agent =
         std::make_shared<TorchLiquidPpoAgent>(actor, hidden_state, device, collector);
     const auto trainer = std::make_shared<LiquidPpoTrainer>(
-        actor, rollout_buffer, model::ENEMY_NB_CONTINUOUS_ACTION, model::ENEMY_NB_DISCRETE_ACTION,
+        actor, panorama_encoder, panorama_mask_learner, rollout_buffer,
+        model::ENEMY_NB_CONTINUOUS_ACTION, model::ENEMY_NB_DISCRETE_ACTION,
         model::ENEMY_STATE_VECTOR_SIZE, params.actor_learning_rate, params.critic_learning_rate,
         params.hidden_size_sensors, params.vision_channels, params.group_norm_nums,
-        params.panorama_channels, params.panorama_group_norm_nums, params.panorama_output_channels,
         params.neuron_number, params.unfolding_steps, params.delta_t, device,
         params.metric_window_size, params.gamma, params.gae_lambda, params.clip_epsilon,
         params.target_kl, params.grad_norm_max, params.initial_alpha, params.alpha_learning_rate,
@@ -133,8 +137,7 @@ int main(const int argc, char **argv) {
         critic_inputs.open(critic_inputs_path, std::ios::binary);
         critic = std::make_shared<LiquidCritic>(
             model::ENEMY_STATE_VECTOR_SIZE, params.hidden_size_sensors, params.vision_channels,
-            params.group_norm_nums, params.panorama_channels, params.panorama_group_norm_nums,
-            params.panorama_output_channels, params.neuron_number, params.unfolding_steps,
+            params.group_norm_nums, panorama_encoder, params.neuron_number, params.unfolding_steps,
             params.delta_t);
         load_torch(save_folder, critic, "critic.pt");
         critic->to(device);

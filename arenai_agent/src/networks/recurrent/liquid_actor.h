@@ -6,7 +6,7 @@
 #include <torch/torch.h>
 
 #include "../misc.h"
-#include "../panorama.h"
+#include "../panorama_mask.h"
 #include "../vision.h"
 #include "./liquid_cell.h"
 
@@ -30,10 +30,9 @@ namespace arenai::agent {
             const int &hidden_size_sensors,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums,
-            const std::vector<std::tuple<int, int>> &panorama_channels,
-            const std::vector<int> &panorama_group_norm_nums, const int &panorama_output_channels,
-            const int &neuron_number, const int &unfolding_steps, const float &delta_t,
-            const float &initial_sigma, const std::vector<float> &initial_discrete_probas);
+            const std::shared_ptr<PanoramaMaskNetwork> &panorama_encoder, const int &neuron_number,
+            const int &unfolding_steps, const float &delta_t, const float &initial_sigma,
+            const std::vector<float> &initial_discrete_probas);
 
         // one env step: vision [B, C, H, W], panorama [B, C, PH, PW], sensors [B, S], x_t [B, neuron_number]
         LiquidActorOutput
@@ -48,7 +47,7 @@ namespace arenai::agent {
 
     private:
         std::shared_ptr<ConvolutionNetwork> vision_encoder;
-        std::shared_ptr<PanoramaNetwork> panorama_encoder;
+        std::shared_ptr<PanoramaMaskNetwork> panorama_encoder;
         torch::nn::Sequential sensors_encoder;
 
         std::shared_ptr<LiquidCell> liquid;

@@ -42,30 +42,30 @@ namespace arenai::agent {
 
     PpgTrainer::PpgTrainer(
         const std::shared_ptr<DistillationActor> &actor,
+        const std::shared_ptr<PanoramaMaskNetwork> &panorama_encoder,
+        const std::shared_ptr<PanoramaMaskLearner> &panorama_mask_learner,
         const std::shared_ptr<PpgRolloutBuffer> &rollout_buffer, const int nb_continuous_actions,
         const int nb_discrete_actions, const int nb_sensors, const float actor_learning_rate,
         const float critic_learning_rate, const int hidden_size_sensors,
         const std::vector<int> &critic_hidden_sizes,
         const std::vector<std::tuple<int, int>> &vision_channels,
-        const std::vector<int> &group_norm_nums,
-        const std::vector<std::tuple<int, int>> &panorama_channels,
-        const std::vector<int> &panorama_group_norm_nums, const int panorama_output_channels,
-        const torch::Device device, const int metric_window_size, const float gamma,
-        const float gae_lambda, const float clip_epsilon, const float target_kl,
-        const float grad_norm_max, const float initial_alpha, const float alpha_learning_rate,
+        const std::vector<int> &group_norm_nums, const torch::Device device,
+        const int metric_window_size, const float gamma, const float gae_lambda,
+        const float clip_epsilon, const float target_kl, const float grad_norm_max,
+        const float initial_alpha, const float alpha_learning_rate,
         const std::vector<float> &continuous_target_entropy, const float discrete_target_proba,
         const int actor_epochs, const int critic_epochs, const int rollout_size,
         const int actor_batch_size, const int actor_gpu_batch_size, const int critic_batch_size,
         const int critic_gpu_batch_size, const int actor_aux_epochs, const int critic_aux_epochs,
         const float beta_clone, const int n_pi)
-        : actor(actor), rollout_buffer(rollout_buffer),
+        : actor(actor), panorama_encoder(panorama_encoder),
+          panorama_mask_learner(panorama_mask_learner), rollout_buffer(rollout_buffer),
           alphas(std::make_unique<EntropyAlphas>(
               nb_continuous_actions, nb_discrete_actions, initial_alpha, alpha_learning_rate,
               continuous_target_entropy, discrete_target_proba)),
           critic(std::make_shared<ValueFunction>(
               nb_sensors, hidden_size_sensors, critic_hidden_sizes, vision_channels,
-              group_norm_nums, panorama_channels, panorama_group_norm_nums,
-              panorama_output_channels)),
+              group_norm_nums, panorama_encoder)),
           actor_optim(
               std::make_unique<torch::optim::Adam>(this->actor->parameters(), actor_learning_rate)),
           critic_optim(
@@ -95,6 +95,7 @@ namespace arenai::agent {
 
         nb_policy_phases++;
         train(nb_policy_phases % n_pi == 0);
+        panorama_mask_learner->fit();
     }
 
     PpgTrainer::FlatRows PpgTrainer::FlatRows::select(const torch::Tensor &idx) const {
@@ -452,6 +453,7 @@ namespace arenai::agent {
         save_torch(output_folder, critic_optim, "critic_optim.pt");
         save_torch(output_folder, return_scaler, "return_scaler.pt");
         alphas->save(output_folder);
+        panorama_mask_learner->save(output_folder);
 
         // string repr
         write_module_repr(output_folder, actor, "actor");
@@ -471,6 +473,7 @@ namespace arenai::agent {
 
     int PpgTrainer::count_parameters() {
         return count_parameters_impl(actor->parameters())
-               + count_parameters_impl(critic->parameters()) + alphas->count_parameters();
+               + count_parameters_impl(critic->parameters()) + alphas->count_parameters()
+               - count_parameters_impl(panorama_encoder->parameters());
     }
 }// namespace arenai::agent

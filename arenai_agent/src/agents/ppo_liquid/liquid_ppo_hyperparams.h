@@ -19,6 +19,9 @@ namespace arenai::agent {
         std::vector<std::tuple<int, int>> panorama_channels = {{3, 16}, {16, 32}, {32, 64}};
         std::vector<int> panorama_group_norm_nums = {2, 4, 8};
         int panorama_output_channels = 4;
+        float panorama_mask_learning_rate = 3e-4f;
+        int panorama_mask_batch_size = 512;
+        int panorama_mask_epochs = 1;
         int neuron_number = 128;
         int unfolding_steps = 6;
         float delta_t = 1.f / 10.f;

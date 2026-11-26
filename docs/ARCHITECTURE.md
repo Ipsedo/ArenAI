@@ -624,7 +624,14 @@ classDiagram
         +get_agent() AbstractTorchAgent
         +get_collector() AbstractStepCollector
         +get_trainer() AbstractTrainer
+        +get_panorama_mask_learner() PanoramaMaskLearner
         +get_config() json
+    }
+    class PanoramaMaskLearner {
+        +observe(panorama, sightings)
+        +fit()
+        +save(output_folder)
+        +get_metrics()
     }
     class AbstractTorchAgent {
         <<interface>>
@@ -652,12 +659,17 @@ classDiagram
     AbstractTorchAgentFactory ..> AbstractTorchAgent : acts
     AbstractTorchAgentFactory ..> AbstractStepCollector : stores
     AbstractTorchAgentFactory ..> AbstractTrainer : learns
+    AbstractTorchAgentFactory ..> PanoramaMaskLearner : trains the panorama encoder
+    AbstractTrainer ..> PanoramaMaskLearner : fit() after its own update
     AbstractAgent <.. AbstractTorchAgent : same class implements both
 ```
 
 - the **agent** chooses actions (and, while training, records what it did);
 - the **collector** completes each transition with its reward and termination flags;
-- the **trainer** decides by itself when enough data is stored, then updates the networks.
+- the **trainer** decides by itself when enough data is stored, then updates the networks;
+- the **panorama mask learner** trains the panorama encoder shared by the actor and the critic,
+  on labels the simulator gives at training time only (which bearing columns hold a visible
+  enemy). Nothing else trains that encoder.
 
 Each concrete agent class (for example `TorchPpoAgent`) implements both `AbstractTorchAgent`
 (tensors, used by training) and the public `AbstractAgent` (plain `State`s and `Action`s, used
@@ -674,6 +686,7 @@ sequenceDiagram
     participant Agent as AbstractTorchAgent
     participant Collector as AbstractStepCollector
     participant Trainer as AbstractTrainer
+    participant Mask as PanoramaMaskLearner
     participant Out as Output folder
 
     Main->>Out: config.json (options and hyper-parameters)
@@ -685,6 +698,9 @@ sequenceDiagram
         Env-->>Main: first states
 
         loop every decision, until the episode ends
+            Main->>Env: enemy_sightings()
+            Env-->>Main: per tank, the enemies and whether each is in sight
+            Main->>Mask: observe(panorama, sightings)
             Main->>Agent: act(state, sample = true)
             Agent-->>Main: one action per tank
             Main->>Env: step(dt, actions)
@@ -693,6 +709,7 @@ sequenceDiagram
             Main->>Collector: on_transition(rewards, done, truncated)
             Main->>Trainer: step()
             Note over Trainer: updates the networks<br/>when its buffer is ready
+            Trainer->>Mask: fit(), after an update
             Main->>Out: save_K/ every save_every steps, metrics.csv rows
         end
 

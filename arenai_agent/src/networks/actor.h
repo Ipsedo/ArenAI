@@ -25,8 +25,7 @@ namespace arenai::agent {
             const int &hidden_size_sensors, const std::vector<int> &hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums,
-            const std::vector<std::tuple<int, int>> &panorama_channels,
-            const std::vector<int> &panorama_group_norm_nums, const int &panorama_output_channels,
+            const std::shared_ptr<PanoramaMaskNetwork> &panorama_encoder,
             const float &initial_sigma, const std::vector<float> &initial_discrete_probas);
         ActorRawOutput
         act(const torch::Tensor &vision, const torch::Tensor &panorama,
@@ -34,7 +33,7 @@ namespace arenai::agent {
 
     private:
         std::shared_ptr<ConvolutionNetwork> vision_encoder;
-        std::shared_ptr<PanoramaNetwork> panorama_encoder;
+        std::shared_ptr<PanoramaMaskNetwork> panorama_encoder;
         torch::nn::Sequential sensors_encoder;
 
         torch::nn::Sequential head;
@@ -56,8 +55,7 @@ namespace arenai::agent {
             const int &hidden_size_sensors, const std::vector<int> &hidden_sizes,
             const std::vector<std::tuple<int, int>> &vision_channels,
             const std::vector<int> &group_norm_nums,
-            const std::vector<std::tuple<int, int>> &panorama_channels,
-            const std::vector<int> &panorama_group_norm_nums, const int &panorama_output_channels,
+            const std::shared_ptr<PanoramaMaskNetwork> &panorama_encoder,
             const float &initial_sigma, const std::vector<float> &initial_discrete_probas);
 
         torch::Tensor value(

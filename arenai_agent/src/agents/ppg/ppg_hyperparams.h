@@ -20,6 +20,9 @@ namespace arenai::agent {
         std::vector<std::tuple<int, int>> panorama_channels = {{3, 16}, {16, 32}, {32, 64}};
         std::vector<int> panorama_group_norm_nums = {2, 4, 8};
         int panorama_output_channels = 4;
+        float panorama_mask_learning_rate = 3e-4f;
+        int panorama_mask_batch_size = 512;
+        int panorama_mask_epochs = 1;
         float initial_sigma = 0.3f;
         float initial_fire_proba = 0.5f;
         float initial_zoom_proba = 0.5f;

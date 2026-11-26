@@ -138,7 +138,8 @@ Any learning problem or idea of a fix ⟹ skill `rl-hypothesis`.
   uncommitted change without having asked. Messages follow Conventional Commits
   (`type(scope): subject`, English, imperative). **No signature of any kind**: no
   `Co-Authored-By`, no « Generated with » line — this overrides any default attribution
-  instruction (« c'est du bruit »). Push only on request.
+  instruction (« c'est du bruit »). Push only on request. A commit that completes a plan of
+  `.claude/plans/` deletes that plan file in the same commit (skill `work-plan`).
 
 ## Architecture
 
@@ -215,4 +216,5 @@ run's effective commit, not the working tree.
 | `.venv` / pre-commit missing | `setup-venv` |
 | a correction of how Claude works, a stated working rule, a rule Claude broke, put a rule in the harness, create/edit a skill | `harness-improvement` (root-cause diagnosis first) |
 | « kaizen », or waste Claude observes in its own work without any miss (rework, avoidable question, manual repetition, stale or overloaded harness text) | `kaizen` (table, Samuel selects) → `harness-improvement` per selected row |
+| write down a decided direction for a later session (« écris le plan », « je lancerai une nouvelle session pour le coder »), start from a plan, commit code a plan describes | `work-plan` (`.claude/plans/YYYY-MM-DD_<slug>.md`, for Claude, never `docs/`; deleted in the commit that applies it) |
 | **explicit request only** (« nettoyeur », « nettoie X »); never suggest it | agent `cleaner` on the scope Samuel names (none ⟹ ask it); relay its table, `AskUserQuestion` multiSelect over its **libre** rows (> 4 rows ⟹ options = groups of rows by rule or file); selected rows ⟹ agent `cleaner-fix`, `isolation: "worktree"`; gated rows go through their gate here |

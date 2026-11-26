@@ -176,21 +176,21 @@ def analyze(decisions_path, step_seconds):
     fired = sum(r["fire"] > 0.5 and r["can_fire"] > 0.5 for r in rows)
     out["shots"] = {"fired": fired, "per_tank_second": ratio(fired, len(rows) * step_seconds)}
     if shots:
-        n = sum(s["group_size"] for s in shots)
-        h = sum(s["group_hits"] for s in shots)
+        # one row per landed shell, carrying its whole group's size and hits
+        hits = lambda sub: sum(s["group_hits"] / s["group_size"] for s in sub)
+        n = len(shots)
         out["shots"].update({
-            "landed": n, "hit_per_shell": ratio(h, n),
+            "landed": n, "hit_per_shell": ratio(hits(shots), n),
             "miss_m_p50": quantile([s["group_miss"] for s in shots], 0.5),
         })
         bins = {}
         for lo, hi in SHOT_BINS:
             sub = [s for s in shots if lo <= s["fire_best_angle"] < hi]
-            n2 = sum(s["group_size"] for s in sub)
             bins[f"{lo}-{hi}"] = {
-                "share": ratio(n2, n), "hit_per_shell": ratio(sum(s["group_hits"] for s in sub), n2)}
+                "share": ratio(len(sub), n), "hit_per_shell": ratio(hits(sub), len(sub))}
         out["shots"]["by_angle"] = bins
         aligned_close_shots = sum(
-            s["group_size"] for s in shots
+            1 for s in shots
             if s["fire_best_angle"] < ALIGNED_DEG and 0 <= s["fire_best_distance"] < CLOSE_M)
         out["shots"]["aligned_close_share"] = ratio(aligned_close_shots, n)
         out["shots"]["enrichment"] = ratio(

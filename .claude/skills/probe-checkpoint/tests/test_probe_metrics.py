@@ -338,6 +338,22 @@ def test_hit_per_shell_and_shot_buckets_with_single_shell_groups(tmp_path):
     assert s["aligned_close_share"] == pytest.approx(1 / 5)
 
 
+def test_multi_shell_group_counts_each_shell_once_and_shares_its_hits(tmp_path):
+    pair = {"group_size": 2, "group_hits": 1, "fire_best_distance": 10.0}
+    rows = [
+        {"fire_best_angle": 1.0, "group_hits": 1},
+        {**pair, "fire_best_angle": 2.0},
+        {**pair, "fire_best_angle": 30.0},
+    ]
+    s = analyze(tmp_path, SHOT_DECISIONS, rows)["shots"]
+    assert s["landed"] == 3
+    assert s["hit_per_shell"] == pytest.approx(2 / 3)
+    assert s["by_angle"]["0-5"]["share"] == pytest.approx(2 / 3)
+    assert s["by_angle"]["0-5"]["hit_per_shell"] == pytest.approx(1.5 / 2)
+    assert s["by_angle"]["20-180"]["hit_per_shell"] == pytest.approx(0.5)
+    assert s["aligned_close_share"] == pytest.approx(1 / 3)
+
+
 def test_enrichment_is_aligned_shot_share_over_aligned_armed_decision_share(tmp_path):
     s = analyze(tmp_path, SHOT_DECISIONS, SHOT_ROWS)["shots"]
     assert s["enrichment"] == pytest.approx((2 / 5) / (1 / 4))

@@ -54,14 +54,16 @@ training: say so in the report. `--analyze-only` re-analyses existing CSVs witho
 ## 3. Metrics (armed decisions = `can_fire` and reserve > 0, step ≥ 10)
 
 One step = one decision = `action_repeat × wanted_frequency` = 0.1 s by default. Durations in
-seconds recorded in the run notes before 2026-11-11 are 3× too large.
+seconds recorded in the run notes before 2026-11-11 are 3× too large. `landed`, `hit/ob`, `h<5°`, `tirs<5°`
+recorded before 2026-11-27 counted a group of k shells k times: `landed` 2–8 % too high, `h<5°` up
+to 0.02 too low, `hit/ob` within 0.004.
 
 | metric | meaning |
 |---|---|
 | `ratio`, `p_al`, `p_off` | armed p_fire aligned (< 5° **and** target < 40 m) / off-axis (≥ 20°): trigger **selectivity**, definition of the records in the run notes since 2026-11-10. `ratio_angle_only` (< 5° alone) is in the JSON |
 | `p_arm` | mean trigger level; flat vs angle = no selectivity |
 | deterministic (p > 0.5) | what the game does in deterministic mode: a trigger under 0.5 everywhere is mute in game |
-| `hit/ob`, `h<5°`, `tirs<5°`, `enrich` | hits per landed shell, per shell fired aligned, share of aligned shots, enrichment (share of aligned shots / share of aligned decisions) |
+| `hit/ob`, `h<5°`, `tirs<5°`, `enrich` | hits per landed shell (one shots row = one shell; shells landing on the same step share their group's hits equally), per shell fired aligned, share of aligned shots, enrichment (share of aligned shots / share of aligned decisions) |
 | `vide_s`, `%vident`, `%désarmé` | first empty reserve (median, s), share of tank-episodes that empty it, share of disarmed steps: the **dump** |
 | `tour<5°` | share of decisions with the turret within 5° of a target: aim |
 | `σx`, `σy`, `σ@plaf`, `|μ|cx`, `μsat` | median canon σ, share at the cap (≥ 0.69), median canon \|μ\|, share \|μ\| > 1.5 (tanh saturation) |

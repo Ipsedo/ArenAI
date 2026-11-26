@@ -4,12 +4,11 @@ Work plan (skill `work-plan`): delete this file in the commit that completes it.
 
 ## Status
 
-2026-11-27, nothing coded. Samuel chose the direction himself: « ne faut-il pas que le cnn
+2026-11-27, nothing coded, every piece validated the same day (§Validated pieces). Samuel chose the direction himself: « ne faut-il pas que le cnn
 panoramique soit partagé entre l'acteur et la critique, et soit entraîné en mode masque sur les
 ennemis visibles ? et ses features sont injectées (selon une méthode à benchmarker) à l'acteur et
 la critique ? », then asked for the best version with « masque seul dans la loss » and said
-« okay je l'ai […] je lancerai une nouvelle session pour le coder ». That validates the
-direction only (G3): every line of §Open pieces goes through its gate before its code. The plan
+« okay je l'ai […] je lancerai une nouvelle session pour le coder ». The plan
 re-opens, on the panorama encoder only and with new bench evidence, the presence-head lever
 recorded as removed on 2026-11-25 in `docs/decisions.md`.
 
@@ -40,8 +39,7 @@ Bench conclusions (one-step policy-gradient bandit on labelled panoramas, see §
 ## Design
 
 One panorama encoder, shared by the actor and the critic, trained only by a mask loss. The
-trunks read a 3-value bearing summary computed from the predicted mask; policy and value
-gradients stop at that summary.
+trunks read the 64 predicted probabilities; policy and value gradients stop there.
 
 ```mermaid
 flowchart TD
@@ -50,9 +48,8 @@ flowchart TD
     F --> A[conv 1x1 to 4 channels<br/>mean over the 4 rows]
     A --> L[conv 1x1 to 1 channel<br/>64 logits, one per bearing column]
     L --> S[sigmoid<br/>p_j, probability of a visible enemy]
-    S --> B[Bearing summary<br/>3 values, no parameter]
-    B -->|stop-gradient| TA[Actor trunk]
-    B -->|stop-gradient| TC[Critic trunk]
+    S -->|stop-gradient| TA[Actor trunk]
+    S -->|stop-gradient| TC[Critic trunk]
     Y[Simulator state<br/>enemy positions, line of sight] --> M[Mask label y_j, weight m_j]
     L -.-> LOSS[Mask loss<br/>binary cross-entropy per column]
     M -.-> LOSS
@@ -85,15 +82,14 @@ $$\mathcal{L}_{mask}=\frac{1}{\sum_j m_j}\sum_{j=1}^{64} m_j\,\mathrm{BCE}\big(\
 `ℓ_j`: logit of column `j`. Separate optimiser step from the policy and value losses, as nothing
 else trains the encoder.
 
-### Bearing summary
+### Trunk input
 
-$$p_j=\sigma(\ell_j),\quad w_j=\frac{p_j}{\sum_k p_k},\quad
-b=\Big(\sum_j w_j\cos\theta_j,\ \sum_j w_j\sin\theta_j,\ \max_j p_j\Big)$$
+$$p_j=\sigma(\ell_j),\quad j=1..64$$
 
-`θ_j`: bearing of the centre of column `j`. `b` replaces the 256 panorama features at the input
-of both trunks. Per `docs/neural_architecture.md` the middle column of the panorama is the canon
-heading and both ends meet straight behind: verify the column → bearing map in the code, the
-bench panoramas were offset by 45° from the agent's.
+The 64 detached `p_j` replace the 256 panorama features at the input of both trunks (Samuel set
+the bearing summary aside: « juste les 64 proba »; bench row "mask 64 columns → 64
+probabilities"). Column `j` is centred on bearing `(31.5 − j) × 5.625°` from the canon heading,
+positive to the left (`make_panorama_cameras`: view 0 is the leftmost).
 
 ## Evidence
 
@@ -108,9 +104,9 @@ nearest off-field enemy (chance 0.50), under 60 m / 60–100 m / 100–200 m, me
 | policy gradient itself (554/555 situation) | 256 | 0.50–0.53 / 0.52–0.55 / 0.51–0.56 | — |
 | real critic encoder, 555 save 17 → features | 256 | 0.72 / 0.59 / 0.52 | 0.65 / 0.58 / 0.51 |
 | mask 64 columns → encoder features | 256 | 0.67 / 0.67 / 0.67 | 0.64 / 0.63 / 0.65 |
-| mask 64 columns → 64 probabilities | 64 | 0.70 / 0.71 / 0.70 | 0.65 / 0.65 / 0.64 |
+| **mask 64 columns → 64 probabilities (this design)** | 64 | 0.70 / 0.71 / 0.70 | 0.65 / 0.65 / 0.64 |
 | mask 16 cells → 16 logits | 16 | 0.68 / 0.72 / 0.73 | 0.67 / 0.71 / 0.72 |
-| **mask 64 columns → bearing summary (this design)** | 3 | 0.73 / 0.73 / 0.74 | 0.70 / 0.71 / 0.71 |
+| mask 64 columns → bearing summary | 3 | 0.73 / 0.73 / 0.74 | 0.70 / 0.71 / 0.71 |
 | mask + per-column proximity → proximity-weighted summary | 3 | 0.80 / 0.82 / 0.75 | 0.76 / 0.78 / 0.73 |
 
 Mask AUC on held-out panoramas: 0.84 (64 columns), 0.88 (16 cells).
@@ -127,31 +123,50 @@ exploration noise is `ξ = (atanh(act) − μ) / σ`, and the good direction is 
 
 ## Out of scope
 
-- The aiming credit itself stays near zero; the summary only makes what little there is usable.
-- The summary averages bearings: two enemies on opposite sides cancel. The proximity variant
-  (second label: `exp(-distance / 100 m)` per column) picks the nearest and is the best bench
-  result; it was set aside for now to keep the mask as the only label.
+- The aiming credit itself stays near zero; the trained encoder only makes what little there is usable.
+- The bearing summary (3 values: mean cos, mean sin, max probability; best single-label bench
+  row) and its proximity-weighted variant were set aside: the trunks read the 64 probabilities.
 
 ## Validated pieces
 
-None beyond the direction (see §Status).
+All validated by Samuel on 2026-11-27 through `AskUserQuestion`, signatures as shown to him.
+
+- **Scope**: the four agents (« Les quatre agents »). `PanoramaNetwork` is replaced everywhere by
+  `PanoramaMaskNetwork` (`networks/panorama_mask.h`).
+- **Ownership**: « Injecté aux deux ». The factory builds the encoder and injects it by
+  constructor (`const std::shared_ptr<PanoramaMaskNetwork> &panorama_encoder`) into the actor,
+  the critic and the trainer, replacing their 3 `panorama_*` parameters; it is a submodule of
+  both networks, hence written in `actor.pt` and `critic.pt`; the game loads `actor.pt` alone.
+  `act` / `value` signatures unchanged.
+- **Gradients**: « Stop-gradient ». Only the mask loss trains the encoder.
+- **Trunk input**: « 64 probabilités seules ».
+  `torch::Tensor logits(const torch::Tensor &panorama)` → `[B, columns]`;
+  `torch::Tensor forward(const torch::Tensor &panorama)` → `[B, columns]` detached probabilities.
+- **Label source**: « Faits géométriques ». `core/train_environment.h`:
+  `struct EnemySighting { float bearing; float angular_half_width; float distance; bool visible; }`
+  (rad from the canon heading, positive to the left; rad; m; clear line of sight inside the
+  panorama's vertical field) and
+  `std::vector<std::optional<std::vector<EnemySighting>>> TrainTankEnvironment::enemy_sightings()`
+  (nullopt for a dead tank). `core/panorama_mask_labels.h`:
+  `struct PanoramaMaskLabels { torch::Tensor labels; torch::Tensor weights; }` (`[columns]`) and
+  the pure `PanoramaMaskLabels panorama_mask_labels(const std::vector<EnemySighting> &sightings, int columns)`.
+- **Label path**: « Apprenant alimenté ». `agents/panorama_mask_learner.h`,
+  `PanoramaMaskLearner(encoder, learning_rate, batch_size, epochs, device)` with
+  `observe(panorama, sightings)`, `fit()` (passes over the observations since the last fit, then
+  forgets them), `save(output_folder)`; `AbstractTorchAgentFactory::get_panorama_mask_learner()`;
+  each of the 4 trainers receives the learner by constructor and calls `fit()` at the end of its
+  own update; `train.cpp` calls `observe(state.get_panorama(), env->enemy_sightings())` before
+  `agent->act`. Collectors and buffers unchanged.
+- **Optimiser**: « Tout en options CLI ». Separate Adam; per agent `--panorama_mask_learning_rate`
+  (3e-4), `--panorama_mask_batch_size` (512), `--panorama_mask_epochs` (1).
+- **Metric**: « csv + progress bar ». `mask_loss` (mean BCE per batch), owned by the learner,
+  shown in the progress bar and written to the CSV.
+- **554/555 checkpoints**: no fallback (design doctrine); probed and matched with a binary built
+  in a worktree at `a3e0b27d`.
 
 ## Open pieces
 
-Each is a G3 piece (one `AskUserQuestion` per piece, technical detail first); 1, 3 and 4 are also
-G1 (skill `design-gate`).
-
-1. One shared encoder module owned outside the actor and the critic, or two encoders with the
-   critic's weights copied; consequence on `actor.pt` / `critic.pt` and on the desktop game,
-   which loads `actor.pt` only.
-2. Stop-gradient at the summary (as benched), or policy/value gradients also allowed through.
-3. What the trunks read: the summary alone (as benched), or the summary plus the 64
-   probabilities.
-4. Label source: where the per-enemy line of sight and bearing in the turret frame are computed,
-   without putting a training-only signal in `arenai_model`.
-5. Mask optimiser: learning rate, batch, number of epochs per rollout.
-6. Scope: `ppo_liquid` only, or the four agents.
-7. Fate of the 554/555 checkpoints, which no longer load.
+None.
 
 ## Steps
 
@@ -159,14 +174,16 @@ G1 (skill `design-gate`).
    critic and trainer code of `arenai_agent` (`networks`, `agents/ppo_liquid`); note how the two
    networks are built, saved and loaded by the desktop game. Verify: the facts of this plan
    against the tree.
-2. Put the open pieces to Samuel, in the order 1, 4, 2, 3, 6, 5, 7; record each answer here.
-3. Mask label: compute per tank the 64-column `y`, `m` from the simulator state at each step and
-   carry them in the rollout. Verify: unit test on a synthetic scene (one enemy at a known
-   bearing, one occluded).
-4. Shared encoder, mask head, bearing summary, stop-gradient, trunk inputs. Verify: unit test of
-   the summary on a one-hot mask; shapes; the game still loads and plays a checkpoint.
-5. Mask loss and its optimiser in the trainer(s) of the validated scope; CSV-only metric for the
-   mask loss only if Samuel validates it (G2).
+2. Done 2026-11-27: every piece validated (§Validated pieces).
+3. Mask label: `enemy_sightings()` and the pure `panorama_mask_labels`. Verify: unit test on
+   synthetic sightings (one enemy at a known bearing, one occluded, one beyond 400 m, one
+   straddling two columns).
+4. `PanoramaMaskNetwork` shared and injected in the networks of the four agents, stop-gradient,
+   trunk inputs. Verify: shapes; no gradient reaches the encoder from a policy or value loss;
+   the game still loads and plays a checkpoint. SAC: check the target-network soft update does
+   not run twice on the shared encoder.
+5. `PanoramaMaskLearner`, its options and metric; the four trainers call `fit()`; `train.cpp`
+   feeds it.
 6. Update `docs/neural_architecture.md`, `docs/ARCHITECTURE.md`, `docs/USAGE.md` (new options),
    `docs/decisions.md` (decision row); `final-check`.
 7. Smoke run into the scratchpad, then hand Samuel the binary and the command (G4: he launches).
@@ -177,5 +194,5 @@ G1 (skill `design-gate`).
   0.84.
 - On the first saves of a real run: side of the nearest off-field enemy decodable from the
   trunk output (`decode_panorama.py`, 554/555 save 17: 0.48–0.58); prediction if the design
-  works: clearly above 0.60 under 100 m and at 100–200 m.
+  works: clearly above 0.60 under 100 m and at 100–200 m (bench, 64 probabilities: 0.70).
 - Verdict on the run: game match only (`docs/rl_method.md` M7), against 555 save 17.

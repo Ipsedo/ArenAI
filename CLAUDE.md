@@ -104,6 +104,10 @@ Any learning problem or idea of a fix ⟹ skill `rl-hypothesis`.
   causal chain, timeline are drawn (visualize widget when available, else Mermaid; ASCII as last
   resort). A design question shows the collaboration; a formulation proposal shows where the
   piece plugs in and where gradients stop.
+- **Compute time announced at launch** (Samuel, 2026-11-26: « dès que t'en lances il faut que tu
+  m'indiques le temps de calcul »): the chat message that launches matches, a probe, a script or a
+  build expected to exceed 1 min states its estimated duration and end time, from a measured
+  figure (the skill's, or the previous launch's log mtimes), not a guess.
 - Quantitative claims carry their index and D. Report failures and skipped steps as such.
 - **Comparison tables**: per measure row, bold the best cell among the compared items; a row
   without an obvious "better" direction stays unbolded.

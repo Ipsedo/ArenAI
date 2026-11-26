@@ -34,7 +34,9 @@ compiles unchanged back to `db9a825a` (552).
 ```
 
 Sides **1000 and 500**, 8 matches each, seeds 0–7 (default) so two checkpoints face the same
-spawns. ~20–40 s per match. Free (fast evaluator); shares the GPU with a running training.
+spawns. Measured 2026-11-25 with a training on the same GPU: ~65 s per match, **~9 min per side
+of 8 matches, ~18 min per checkpoint**; announce it at launch (`CLAUDE.md` « Answers to Samuel »).
+Free (fast evaluator).
 
 ## 3. Read
 

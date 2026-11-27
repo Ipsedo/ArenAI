@@ -283,10 +283,11 @@ namespace arenai::desktop {
 
             player_renderer->add_drawable(
                 item->get_name(), drawable_factory->make_diffuse(mesh, color));
+            // the player sees wrecks unhatched
             if (enemy_parts.contains(item->get_name()))
                 player_renderer->add_drawable(
                     core::wreck_drawable_name(item->get_name()),
-                    drawable_factory->make_hatched(mesh, color));
+                    drawable_factory->make_diffuse(mesh, color));
         }
 
         player_renderer->release_current();

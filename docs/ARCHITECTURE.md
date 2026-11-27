@@ -375,8 +375,9 @@ classDiagram
 
 - `Item` is what the physics moves and what the renderers draw: a name, a `Shape` (mesh) and a
   model matrix. The name is the key that links a physics body to its drawable. The parts of a dead
-  enemy tank are published under `wreck_drawable_name(name)` (`arenai_core`), drawn by a
-  `make_hatched` drawable of the same mesh and colour: a wreck is visible as such.
+  enemy tank are published under `wreck_drawable_name(name)` (`arenai_core`). The agents' renderers
+  draw that name with a `make_hatched` drawable of the same mesh and colour, so a wreck is visible as
+  such to an agent; the player renderer draws it with a plain `make_diffuse` drawable.
 - `EnemyTank` is the agent's body. It exposes what an agent observes (proprioception, shells,
   cooldown, cameras) and what training needs (reward and its detail). `tick()` resolves its
   shells against the other tanks.

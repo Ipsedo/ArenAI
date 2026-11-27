@@ -2,6 +2,7 @@
 #include <chrono>
 #include <set>
 
+#include <arenai_core/environment.h>
 #include <arenai_core/thread_pool.h>
 #include <arenai_core/types.h>
 
@@ -85,6 +86,9 @@ namespace arenai::core {
             scene.item_meshes.emplace_back(
                 item->get_name(), drawable_factory->make_mesh(item->get_shape()->get_vertices()));
         for (const auto &tank_factory: tank_factories)
+            for (const auto &item: tank_factory->get_items())
+                scene.tank_parts.insert(item->get_name());
+        for (const auto &tank_factory: tank_factories)
             for (const auto &[name, shape]: tank_factory->load_shell_shapes())
                 if (!scene.shell_meshes.contains(name))
                     scene.shell_meshes.emplace(
@@ -142,12 +146,19 @@ namespace arenai::core {
             colored.emplace_back(name, mesh, shell_color);
         }
 
-        for (const auto &[name, mesh, color]: colored)
+        for (const auto &[name, mesh, color]: colored) {
             renderer->add_drawable(name, drawable_factory->make_diffuse(mesh, color));
+            if (scene.tank_parts.contains(name))
+                renderer->add_drawable(
+                    wreck_drawable_name(name), drawable_factory->make_hatched(mesh, color));
+        }
 
         // the panorama leaves out the tank's own parts
         std::set<std::string> own_parts;
-        for (const auto &item: tank_factory->get_items()) own_parts.insert(item->get_name());
+        for (const auto &item: tank_factory->get_items()) {
+            own_parts.insert(item->get_name());
+            own_parts.insert(wreck_drawable_name(item->get_name()));
+        }
 
         constexpr int view_width = PANORAMA_WIDTH / PANORAMA_VIEWS;
 
@@ -160,10 +171,13 @@ namespace arenai::core {
 
             panorama_renderer->add_drawable("cubemap", drawable_factory->make_cube_map(scene.sky));
 
-            for (const auto &[name, mesh, color]: colored)
-                if (!own_parts.contains(name))
+            for (const auto &[name, mesh, color]: colored) {
+                if (own_parts.contains(name)) continue;
+                panorama_renderer->add_drawable(name, drawable_factory->make_diffuse(mesh, color));
+                if (scene.tank_parts.contains(name))
                     panorama_renderer->add_drawable(
-                        name, drawable_factory->make_diffuse(mesh, color));
+                        wreck_drawable_name(name), drawable_factory->make_hatched(mesh, color));
+            }
 
             panorama_renderers.push_back(std::move(panorama_renderer));
         }

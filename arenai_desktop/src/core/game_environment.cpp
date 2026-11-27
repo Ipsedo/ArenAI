@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <set>
 
 #include <arenai_agent/file_reader.h>
 #include <arenai_model/constants.h>
@@ -269,13 +270,23 @@ namespace arenai::desktop {
                           drawable_factory->make_mesh(shape->get_vertices()), color));
         }
 
+        const auto enemy_parts = apply_on_enemies<std::set<std::string>>([](const auto &tanks) {
+            std::set<std::string> parts;
+            for (const auto &tank: tanks)
+                for (const auto &item: tank->get_items()) parts.insert(item->get_name());
+            return parts;
+        });
+
         for (const auto &item: engine_->get_items()) {
             const glm::vec4 color(u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, 1.f);
+            const auto mesh = drawable_factory->make_mesh(item->get_shape()->get_vertices());
 
             player_renderer->add_drawable(
-                item->get_name(),
-                drawable_factory->make_diffuse(
-                    drawable_factory->make_mesh(item->get_shape()->get_vertices()), color));
+                item->get_name(), drawable_factory->make_diffuse(mesh, color));
+            if (enemy_parts.contains(item->get_name()))
+                player_renderer->add_drawable(
+                    core::wreck_drawable_name(item->get_name()),
+                    drawable_factory->make_hatched(mesh, color));
         }
 
         player_renderer->release_current();

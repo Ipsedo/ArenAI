@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <random>
+#include <string>
 #include <tuple>
 #include <vector>
 
@@ -18,6 +19,9 @@
 #include "./types.h"
 
 namespace arenai::core {
+    // drawable name of an item once its tank is dead
+    std::string wreck_drawable_name(const std::string &item_name);
+
     class BaseTanksEnvironment {
     public:
         BaseTanksEnvironment(

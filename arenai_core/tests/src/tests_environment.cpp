@@ -3,6 +3,7 @@
 #include <fstream>
 #include <numeric>
 #include <optional>
+#include <set>
 
 #include <nlohmann/json.hpp>
 
@@ -399,4 +400,45 @@ TEST_F(EnvironmentTest, TankLeavingArenaDiesAsSuicide) {
 
     EXPECT_FALSE(std::get<2>(results[1]));
     EXPECT_FALSE(is_suicide_in);
+}
+
+TEST_F(EnvironmentTest, DeadTankPartsAreDrawnAsWreck) {
+    constexpr int nb_tanks = 2;
+    constexpr float frequency = 1.f / 60.f;
+
+    TestTanksEnvironment env(file_reader, graphics_backend, nb_tanks, frequency, 1, false);
+    env.reset(200.f, 200.f, model::GAME_SHELL_ECONOMY);
+
+    const std::vector<controller::user_input> no_input(
+        nb_tanks, {.left_joystick = {.x = 0.f, .y = 0.f},
+                   .right_joystick = {.x = 0.f, .y = 0.f},
+                   .fire_button = {false}});
+
+    const auto drawn_names = [&env] {
+        std::set<std::string> names;
+        for (const auto &[name, matrix]: env.last_model_matrices) names.insert(name);
+        return names;
+    };
+
+    // tank 0 leaves the arena and dies, tank 1 stays alive
+    env.move_tank(0, {2100.f, 300.f, 0.f});
+    env.step(frequency, no_input);
+    env.step(frequency, no_input);
+    const auto dead_names = drawn_names();
+
+    env.respawn_tank(0);
+    env.step(frequency, no_input);
+    const auto respawned_names = drawn_names();
+    env.stop_drawing();
+
+    for (const auto &name: env.item_names(0)) {
+        EXPECT_TRUE(dead_names.contains(core::wreck_drawable_name(name))) << name;
+        EXPECT_FALSE(dead_names.contains(name)) << name;
+        EXPECT_TRUE(respawned_names.contains(name)) << name;
+        EXPECT_FALSE(respawned_names.contains(core::wreck_drawable_name(name))) << name;
+    }
+    for (const auto &name: env.item_names(1)) {
+        EXPECT_TRUE(dead_names.contains(name)) << name;
+        EXPECT_FALSE(dead_names.contains(core::wreck_drawable_name(name))) << name;
+    }
 }

@@ -6,6 +6,7 @@
 #include <memory>
 #include <optional>
 #include <random>
+#include <set>
 #include <thread>
 #include <vector>
 
@@ -105,6 +106,8 @@ namespace arenai::core {
             std::shared_ptr<view::AbstractCubeTexture> sky;
             std::vector<std::tuple<std::string, std::shared_ptr<view::AbstractMesh>>> item_meshes;
             std::map<std::string, std::shared_ptr<view::AbstractMesh>> shell_meshes;
+            // items of the tanks, drawn hatched once their tank is dead
+            std::set<std::string> tank_parts;
         };
 
         void worker_loop(

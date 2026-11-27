@@ -1,3 +1,5 @@
+#include <set>
+
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <arenai_core/environment.h>
@@ -9,6 +11,8 @@ using namespace arenai;
 using namespace arenai::core;
 
 namespace arenai::core {
+
+    std::string wreck_drawable_name(const std::string &item_name) { return item_name + "_wreck"; }
 
     BaseTanksEnvironment::BaseTanksEnvironment(
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
@@ -239,10 +243,18 @@ namespace arenai::core {
     BaseTanksEnvironment::get_model_matrices() const {
         std::vector<std::tuple<std::string, glm::mat4>> curr_model_matrices;
 
+        std::set<std::string> wreck_parts;
+        for (const auto &tank: tanks)
+            if (tank->is_dead())
+                for (const auto &item: tank->get_items()) wreck_parts.insert(item->get_name());
+
         const auto items = physic_engine->get_items();
         curr_model_matrices.reserve(items.size() + 1);
         for (const auto &item: items)
-            curr_model_matrices.emplace_back(item->get_name(), item->get_model_matrix());
+            curr_model_matrices.emplace_back(
+                wreck_parts.contains(item->get_name()) ? wreck_drawable_name(item->get_name())
+                                                       : item->get_name(),
+                item->get_model_matrix());
 
         curr_model_matrices.emplace_back(
             "cubemap", glm::scale(glm::mat4(1.f), glm::vec3(arena_terrain_.half_extent)));

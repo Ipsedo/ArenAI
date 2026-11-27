@@ -189,6 +189,7 @@ classDiagram
         +make_cube_texture(file_reader, pngs_root_path) AbstractCubeTexture
         +make_cube_map(texture) AbstractDrawable
         +make_diffuse(mesh, color) AbstractDrawable
+        +make_hatched(mesh, color) AbstractDrawable
     }
     class AbstractMesh {
         <<interface>>
@@ -373,7 +374,9 @@ classDiagram
 ```
 
 - `Item` is what the physics moves and what the renderers draw: a name, a `Shape` (mesh) and a
-  model matrix. The name is the key that links a physics body to its drawable.
+  model matrix. The name is the key that links a physics body to its drawable. The parts of a dead
+  enemy tank are published under `wreck_drawable_name(name)` (`arenai_core`), drawn by a
+  `make_hatched` drawable of the same mesh and colour: a wreck is visible as such.
 - `EnemyTank` is the agent's body. It exposes what an agent observes (proprioception, shells,
   cooldown, cameras) and what training needs (reward and its detail). `tick()` resolves its
   shells against the other tanks.
@@ -464,7 +467,7 @@ sequenceDiagram
 
     rect rgba(128, 128, 128, 0.12)
     Note over Env,Worker: render_frame
-    Env->>Engine: get_items(), read as a (name, model matrix) list
+    Env->>Engine: get_items(), read as a (name, model matrix) list, wreck names for dead tanks' parts
     Env->>Pool: set_model_matrices(list)
     Env->>Pool: begin_frame()
     Pool-->>Worker: release the start barrier
@@ -503,7 +506,8 @@ enemy tank:
 - `start_thread` uploads the scene's meshes and sky texture once; every worker's renderers draw
   them, so GPU memory does not grow with the number of tanks.
 - Each worker draws the scene with its own random colours: an agent cannot rely on the colour of
-  an object.
+  an object. A wreck keeps its part's colour, crossed by dark diagonal screen-space hatching of
+  period render height / 32 (4 px on the vision; uniform dark on the 32 px panorama).
 - The main thread publishes the frame's model matrices in a double buffer and opens a start
   barrier; workers render, write their images into per-tank double buffers, then meet the main
   thread on a loop barrier. `step()` therefore returns images of the frame it just simulated.

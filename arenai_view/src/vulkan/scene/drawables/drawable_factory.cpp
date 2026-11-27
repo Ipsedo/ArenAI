@@ -12,6 +12,10 @@
 namespace arenai::view {
 
     namespace {
+        // light kept in a hatch band, hatch periods per render height
+        constexpr float HATCH_BAND_LIGHT = 0.2f;
+        constexpr float HATCH_PERIODS_PER_HEIGHT = 32.f;
+
         template<typename Vulkan, typename Abstract>
         std::shared_ptr<const Vulkan> as_vulkan(const std::shared_ptr<Abstract> &resource) {
             auto vulkan = std::dynamic_pointer_cast<const Vulkan>(resource);
@@ -44,7 +48,18 @@ namespace arenai::view {
 
     std::unique_ptr<AbstractDrawable> VulkanDrawableFactory::make_diffuse(
         const std::shared_ptr<AbstractMesh> &mesh, const glm::vec4 color) {
-        return std::make_unique<VulkanDiffuse>(as_vulkan<VulkanMesh>(mesh), color);
+        return std::make_unique<VulkanDiffuse>(
+            as_vulkan<VulkanMesh>(mesh),
+            DiffuseMaterial{.color = color, .hatch = glm::vec4(1.f, 1.f, 0.f, 0.f)});
+    }
+
+    std::unique_ptr<AbstractDrawable> VulkanDrawableFactory::make_hatched(
+        const std::shared_ptr<AbstractMesh> &mesh, const glm::vec4 color) {
+        return std::make_unique<VulkanDiffuse>(
+            as_vulkan<VulkanMesh>(mesh),
+            DiffuseMaterial{
+                .color = color,
+                .hatch = glm::vec4(HATCH_BAND_LIGHT, HATCH_PERIODS_PER_HEIGHT, 0.f, 0.f)});
     }
 
     VulkanDrawableFactory::~VulkanDrawableFactory() {

@@ -31,6 +31,9 @@ namespace arenai::view {
         std::unique_ptr<AbstractDrawable>
         make_diffuse(const std::shared_ptr<AbstractMesh> &mesh, glm::vec4 color) override;
 
+        std::unique_ptr<AbstractDrawable>
+        make_hatched(const std::shared_ptr<AbstractMesh> &mesh, glm::vec4 color) override;
+
         ~VulkanDrawableFactory() override;
 
     private:

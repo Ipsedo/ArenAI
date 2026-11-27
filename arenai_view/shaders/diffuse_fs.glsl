@@ -7,9 +7,13 @@ layout(set = 0, binding = 0, std140) uniform FrameGlobals {
     vec4 u_fog_color;// rgb only
 };
 
-layout(set = 1, binding = 0, std140) uniform Material { vec4 u_color; };
+layout(set = 1, binding = 0, std140) uniform Material {
+    vec4 u_color;
+    vec4 u_hatch;// light kept in a hatch band (x), hatch periods per render height (y)
+};
 
 layout(location = 0) in vec3 v_position;
+layout(location = 1) in vec4 v_clip_position;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -17,6 +21,14 @@ layout(location = 0) out vec4 fragColor;
 const vec3 SHADOW_TINT = vec3(0.42, 0.44, 0.60);
 // exponential fog, calibrated for a far plane of ~3500 units
 const float FOG_DENSITY = 0.0014;
+
+// light factor of the screen-space diagonal hatching: u_hatch.x in a band, 1 between bands
+float hatch_light() {
+    // render height in pixels: NDC y spans 2 over the target height
+    float height = round(2.0 / abs(dFdy(v_clip_position.y / v_clip_position.w)));
+    float period = height / u_hatch.y;
+    return mod(gl_FragCoord.x + gl_FragCoord.y, period) < 0.5 * period ? u_hatch.x : 1.0;
+}
 
 void main() {
     // flat shading: face normal from screen-space derivatives of the
@@ -32,7 +44,7 @@ void main() {
     float wrap = dot(normal, light_vector) * 0.5 + 0.5;
     float light_amount = wrap * wrap * wrap;
 
-    vec3 base = u_color.rgb;
+    vec3 base = u_color.rgb * hatch_light();
     vec3 color = mix(base * SHADOW_TINT, base, light_amount);
 
     // distance fog toward the sky color

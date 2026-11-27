@@ -11,10 +11,14 @@ layout(set = 0, binding = 0, std140) uniform FrameGlobals {
 
 layout(set = 0, binding = 2) uniform sampler2DShadow u_shadow_map;
 
-layout(set = 1, binding = 0, std140) uniform Material { vec4 u_color; };
+layout(set = 1, binding = 0, std140) uniform Material {
+    vec4 u_color;
+    vec4 u_hatch;// light kept in a hatch band (x), hatch periods per render height (y)
+};
 
 layout(location = 0) in vec3 v_position;
 layout(location = 1) in vec4 v_shadow_coord;
+layout(location = 2) in vec4 v_clip_position;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -99,6 +103,14 @@ float fog_amount() {
     return 1.0 - exp(-optical_depth);
 }
 
+// light factor of the screen-space diagonal hatching: u_hatch.x in a band, 1 between bands
+float hatch_light() {
+    // render height in pixels: NDC y spans 2 over the target height
+    float height = round(2.0 / abs(dFdy(v_clip_position.y / v_clip_position.w)));
+    float period = height / u_hatch.y;
+    return mod(gl_FragCoord.x + gl_FragCoord.y, period) < 0.5 * period ? u_hatch.x : 1.0;
+}
+
 void main() {
     // flat shading: face normal from screen-space derivatives of the
     // view-space position, so smooth vertex normals are not needed; dFdy
@@ -124,7 +136,7 @@ void main() {
     // the facet shading is calibrated directly in display (sRGB) space:
     // mixing in linear space would crush the contrast between lit and unlit
     // faces; the post pass handles the linear-space tonemapping and grading
-    vec3 base = u_color.rgb;
+    vec3 base = u_color.rgb * hatch_light();
     vec3 color = mix(base * shadow_tint, base, light_amount);
 
     vec3 view_vector = normalize(-v_position);

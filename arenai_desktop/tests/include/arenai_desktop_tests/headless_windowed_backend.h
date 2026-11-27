@@ -43,6 +43,11 @@ public:
     make_diffuse(const std::shared_ptr<view::AbstractMesh> &mesh, glm::vec4 color) override {
         return std::make_unique<NoopDrawable>();
     }
+
+    std::unique_ptr<view::AbstractDrawable>
+    make_hatched(const std::shared_ptr<view::AbstractMesh> &mesh, glm::vec4 color) override {
+        return std::make_unique<NoopDrawable>();
+    }
 };
 
 class NoopPlayerRenderer final : public view::AbstractPlayerRenderer {

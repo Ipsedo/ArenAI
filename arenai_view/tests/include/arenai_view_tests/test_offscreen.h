@@ -21,6 +21,8 @@ class OffscreenParam : public testing::TestWithParam<image_size> {};
 
 class OffscreenDiffuseParam : public testing::TestWithParam<image_size> {};
 
+class OffscreenHatchedParam : public testing::TestWithParam<image_size> {};
+
 class OffscreenClearColorParam : public testing::TestWithParam<image_size> {};
 
 class OffscreenMultiFrameParam : public testing::TestWithParam<image_size> {};

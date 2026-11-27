@@ -45,6 +45,10 @@ namespace arenai::view {
 
         virtual std::unique_ptr<AbstractDrawable>
         make_diffuse(const std::shared_ptr<AbstractMesh> &mesh, glm::vec4 color) = 0;
+
+        // diffuse color crossed by dark screen-space hatching
+        virtual std::unique_ptr<AbstractDrawable>
+        make_hatched(const std::shared_ptr<AbstractMesh> &mesh, glm::vec4 color) = 0;
     };
 
 }// namespace arenai::view

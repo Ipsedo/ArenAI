@@ -16,21 +16,22 @@ namespace arenai::view {
         };
     }// namespace
 
-    VulkanDiffuse::VulkanDiffuse(std::shared_ptr<const VulkanMesh> mesh, const glm::vec4 color)
-        : mesh_(std::move(mesh)), color_(color) {}
+    VulkanDiffuse::VulkanDiffuse(
+        std::shared_ptr<const VulkanMesh> mesh, const DiffuseMaterial &material)
+        : mesh_(std::move(mesh)), material_data_(material) {}
 
     void VulkanDiffuse::ensure_material() {
         if (material_) return;
 
         material_ = std::make_unique<HostVisibleBuffer>(
-            context_->device(), sizeof(glm::vec4), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-        std::memcpy(material_->data(), &color_, sizeof(glm::vec4));
+            context_->device(), sizeof(DiffuseMaterial), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+        std::memcpy(material_->data(), &material_data_, sizeof(DiffuseMaterial));
         material_->flush();
 
         material_set_ = context_->descriptors().allocate(context_->pipelines().material_layout());
         write_buffer_descriptor(
             context_->device()->handle(), material_set_, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            material_->handle(), 0, sizeof(glm::vec4));
+            material_->handle(), 0, sizeof(DiffuseMaterial));
     }
 
     void VulkanDiffuse::record_draw(

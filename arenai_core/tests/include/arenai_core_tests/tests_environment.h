@@ -33,12 +33,21 @@ public:
             [index](const auto &tanks) { return tanks[index]->is_suicide(); });
     }
 
+    std::vector<std::string> item_names(const int index) {
+        return apply_on_enemies<std::vector<std::string>>([index](const auto &tanks) {
+            std::vector<std::string> names;
+            for (const auto &item: tanks[index]->get_items()) names.push_back(item->get_name());
+            return names;
+        });
+    }
+
     bool out_of_shells(const int index) {
         return apply_on_enemies<bool>(
             [index](const auto &tanks) { return tanks[index]->is_out_of_shells(); });
     }
 
     int draw_call_count = 0;
+    std::vector<std::tuple<std::string, glm::mat4>> last_model_matrices;
     int reset_physics_call_count = 0;
     int reset_drawables_call_count = 0;
 
@@ -48,6 +57,7 @@ public:
 protected:
     void on_draw(const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) override {
         draw_call_count++;
+        last_model_matrices = model_matrices;
     }
 
     void on_reset_physics(const std::unique_ptr<model::AbstractPhysicEngine> &engine) override {

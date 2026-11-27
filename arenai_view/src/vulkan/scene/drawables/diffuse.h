@@ -13,9 +13,16 @@
 
 namespace arenai::view {
 
+    // std140 layout of the Material block of the diffuse shaders
+    struct DiffuseMaterial {
+        glm::vec4 color;
+        // light kept in a hatch band (1 = no hatching), hatch periods per render height
+        glm::vec4 hatch;
+    };
+
     class VulkanDiffuse final : public VulkanShadowDrawable {
     public:
-        VulkanDiffuse(std::shared_ptr<const VulkanMesh> mesh, glm::vec4 color);
+        VulkanDiffuse(std::shared_ptr<const VulkanMesh> mesh, const DiffuseMaterial &material);
 
         void draw(
             glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos_from_camera,
@@ -36,7 +43,7 @@ namespace arenai::view {
             const glm::mat4 &mv_matrix);
 
         std::shared_ptr<const VulkanMesh> mesh_;
-        glm::vec4 color_;
+        DiffuseMaterial material_data_;
 
         std::unique_ptr<HostVisibleBuffer> material_;
         VkDescriptorSet material_set_ = VK_NULL_HANDLE;

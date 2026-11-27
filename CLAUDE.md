@@ -158,7 +158,10 @@ Any learning problem or idea of a fix ⟹ skill `rl-hypothesis`.
   (`type(scope): subject`, English, imperative). **No signature of any kind**: no
   `Co-Authored-By`, no « Generated with » line — this overrides any default attribution
   instruction (« c'est du bruit »). Push only on request. A commit that completes a plan of
-  `.claude/plans/` deletes that plan file in the same commit (skill `work-plan`).
+  `.claude/plans/` deletes that plan file in the same commit (skill `work-plan`). Once
+  `final-check` is green, commit with `git commit --no-verify`, split commits included: the hooks
+  are never replayed at commit (2026-11-27, « si pre-commit est passé une fois pas besoin de le
+  rejouer »).
 
 ## Architecture
 

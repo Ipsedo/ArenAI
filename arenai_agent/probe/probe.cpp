@@ -283,7 +283,7 @@ int main(const int argc, char **argv) {
     for (const auto &prefix: {";sigma_", ";act_", ";dq_", ";dq1_", ";dq2_"})
         for (const auto &name: aim_names) csv << prefix << name;
     csv << ";turret_yaw;canon_elevation;canon_relative_elevation;chassis_pitch;chassis_roll;"
-           "value\n";
+           "value;wreck_angle;wreck_distance\n";
 
     std::ofstream shots_csv(output.parent_path() / (output.stem().string() + "_shots.csv"));
     shots_csv
@@ -366,6 +366,7 @@ int main(const int argc, char **argv) {
             const auto q_gradient = canon_q_gradient(state, mu, discrete);
 
             const auto geometry = env->aim_geometry(oracle_half_yaw);
+            const auto wrecks = env->wreck_sightings();
             const bool write_frames = frames_out.is_open() && step % frames_every == 0;
             const auto frame_geometry =
                 write_frames ? env->aim_geometry(frames_half_yaw) : std::vector<AimGeometry>();
@@ -445,7 +446,9 @@ int main(const int argc, char **argv) {
                     << geometry[i].canon_relative_elevation * to_degrees << ';'
                     << geometry[i].chassis_pitch * to_degrees << ';'
                     << geometry[i].chassis_roll * to_degrees << ';'
-                    << (value.defined() ? value[i].item<float>() : 0.f) << '\n';
+                    << (value.defined() ? value[i].item<float>() : 0.f) << ';'
+                    << (wrecks[i] ? wrecks[i]->angle * to_degrees : 180.f) << ';'
+                    << (wrecks[i] ? wrecks[i]->distance : -1.f) << '\n';
 
                 if (features_out.is_open() && features.defined()) {
                     const float header[3] = {

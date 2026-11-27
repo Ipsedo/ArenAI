@@ -53,6 +53,13 @@ namespace arenai::agent {
         bool visible;
     };
 
+    struct WreckSighting {
+        // rad off the canon axis
+        float angle;
+        // m
+        float distance;
+    };
+
     class TrainTankEnvironment final : public core::BaseTanksEnvironment {
     public:
         TrainTankEnvironment(
@@ -74,6 +81,9 @@ namespace arenai::agent {
 
         // one list per tank, nullopt for a dead tank
         std::vector<std::optional<std::vector<EnemySighting>>> enemy_sightings();
+
+        // best-aligned dead tank of each tank, nullopt when none
+        std::vector<std::optional<WreckSighting>> wreck_sightings();
 
         std::vector<model::RewardDetail> last_step_reward_details() const;
 

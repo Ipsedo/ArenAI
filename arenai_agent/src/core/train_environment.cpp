@@ -342,6 +342,41 @@ namespace arenai::agent {
             });
     }
 
+    std::vector<std::optional<WreckSighting>> TrainTankEnvironment::wreck_sightings() {
+        return apply_on_enemies<std::vector<std::optional<WreckSighting>>>(
+            [](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {
+                constexpr glm::vec4 origin(0.f, 0.f, 0.f, 1.f);
+
+                std::vector<glm::vec3> positions;
+                positions.reserve(tanks.size());
+                for (const auto &tank: tanks)
+                    positions.emplace_back(tank->get_chassis()->get_model_matrix() * origin);
+
+                std::vector<std::optional<WreckSighting>> result(tanks.size());
+
+                for (int i = 0; i < tanks.size(); i++) {
+                    if (tanks[i]->is_dead()) continue;
+
+                    const auto canon_matrix = tanks[i]->get_canon()->get_model_matrix();
+                    const auto canon_pos = glm::vec3(canon_matrix * origin);
+                    const auto canon_inverse = glm::inverse(canon_matrix);
+
+                    for (int j = 0; j < tanks.size(); j++) {
+                        if (j == i || !tanks[j]->is_dead()) continue;
+
+                        const auto relative =
+                            glm::normalize(glm::vec3(canon_inverse * glm::vec4(positions[j], 1.f)));
+                        const float angle = std::acos(std::clamp(relative.z, -1.f, 1.f));
+                        if (!result[i] || angle < result[i]->angle)
+                            result[i] = WreckSighting{
+                                .angle = angle, .distance = glm::length(positions[j] - canon_pos)};
+                    }
+                }
+
+                return result;
+            });
+    }
+
     std::vector<std::optional<std::vector<EnemySighting>>> TrainTankEnvironment::enemy_sightings() {
         return apply_on_enemies<std::vector<std::optional<std::vector<EnemySighting>>>>(
             [this](const std::vector<std::shared_ptr<model::EnemyTank>> &tanks) {

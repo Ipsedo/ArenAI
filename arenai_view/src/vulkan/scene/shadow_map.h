@@ -22,7 +22,6 @@ namespace arenai::view {
 
         VkImageView view() const;
         VkSampler sampler() const;
-        VkFormat format() const;
 
         int size() const;
 

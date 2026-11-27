@@ -25,7 +25,8 @@ TEST_P(OffscreenMultiFrameParam, StabilityMultiFrame) {
     buffer_renderer->make_current();
 
     buffer_renderer->add_drawable(
-        "test", backend->drawable_factory()->make_cube_map(file_reader, "cubemap/1"));
+        "test", backend->drawable_factory()->make_cube_map(
+                    backend->drawable_factory()->make_cube_texture(file_reader, "cubemap/1")));
 
     const auto model_matrices = std::vector<std::tuple<std::string, glm::mat4>>{
         {"test", glm::scale(glm::mat4(1.f), glm::vec3(2000.f))}};

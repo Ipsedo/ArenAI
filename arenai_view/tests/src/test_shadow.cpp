@@ -5,9 +5,7 @@
 
 #include <arenai_view/camera.h>
 
-#include "./utils/local_file_reader.h"
 #include "./utils/make_shapes.h"
-#include "./vulkan/scene/drawables/diffuse.h"
 #include "./vulkan/scene/renderers/offscreen_renderer.h"
 #include "./vulkan/vulkan_backend.h"
 
@@ -34,11 +32,16 @@ namespace {
         const auto backend = std::make_unique<VulkanBackend>();
         const auto context =
             std::dynamic_pointer_cast<VulkanRenderContext>(backend->render_context());
-        const auto file_reader =
-            std::make_shared<LocalAssetFileReader>(std::filesystem::path(ARENAI_ASSETS_DIR));
 
         auto renderer = std::make_unique<VulkanOffscreenRenderer>(
-            context->device(), WIDTH, HEIGHT, glm::vec3(0.f, 300.f, 0.f),
+            context->device(),
+            std::make_shared<const ScenePipelines>(
+                context->device(),
+                SceneFormat{
+                    .color = VK_FORMAT_R8G8B8A8_UNORM,
+                    .depth = context->device()->find_depth_format(false),
+                    .samples = VK_SAMPLE_COUNT_1_BIT}),
+            WIDTH, HEIGHT, glm::vec3(0.f, 300.f, 0.f),
             std::make_shared<StaticCamera>(
                 glm::vec3{0.f, 80.f, -80.f}, glm::vec3{0.f, 0.f, 0.f}, glm::vec3{0.f, 1.f, 0.f}),
             with_shadows);
@@ -46,9 +49,10 @@ namespace {
         renderer->make_current();
 
         auto [vertices, normals] = make_cube(1.f);
+        const auto mesh = backend->drawable_factory()->make_mesh(vertices);
         const auto make_drawable = [&] {
-            return std::make_unique<VulkanDiffuse>(
-                file_reader, vertices, glm::vec4(0.8f, 0.8f, 0.8f, 1.f));
+            return backend->drawable_factory()->make_diffuse(
+                mesh, glm::vec4(0.8f, 0.8f, 0.8f, 1.f));
         };
         renderer->add_drawable("floor", make_drawable());
         renderer->add_drawable("occluder", make_drawable());

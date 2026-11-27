@@ -8,7 +8,6 @@
 #include <arenai_view/camera.h>
 #include <arenai_view_tests/test_offscreen.h>
 
-#include "./utils/local_file_reader.h"
 #include "./utils/make_shapes.h"
 
 using namespace arenai;
@@ -24,16 +23,14 @@ TEST_P(OffscreenDiffuseParam, TestDiffuseRendering) {
         std::make_shared<StaticCamera>(
             glm::vec3{0.f, 0.f, -10.f}, glm::vec3{0.f, 0.f, 0.f}, glm::vec3{0.f, 1.f, 0.f}));
 
-    const auto file_reader =
-        std::make_shared<LocalAssetFileReader>(std::filesystem::path(ARENAI_ASSETS_DIR));
-
     buffer_renderer->make_current();
 
     auto [vertices, normals] = make_cube(2.f);
 
     buffer_renderer->add_drawable(
-        "cube", backend->drawable_factory()->make_diffuse(
-                    file_reader, vertices, glm::vec4(0.f, 0.f, 1.f, 1.f)));
+        "cube",
+        backend->drawable_factory()->make_diffuse(
+            backend->drawable_factory()->make_mesh(vertices), glm::vec4(0.f, 0.f, 1.f, 1.f)));
 
     const auto model_matrices =
         std::vector<std::tuple<std::string, glm::mat4>>{{"cube", glm::mat4(1.f)}};

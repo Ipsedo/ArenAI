@@ -18,6 +18,7 @@
 #include "../../core/device.h"
 #include "../../core/retire_queue.h"
 #include "../drawables/drawable_context.h"
+#include "../scene_pipelines.h"
 #include "../shadow_pass.h"
 
 namespace arenai::view {
@@ -29,8 +30,8 @@ namespace arenai::view {
         static constexpr int FRAME_SLOTS = 2;
 
         VulkanRenderer(
-            std::shared_ptr<VulkanDevice> device, glm::vec3 light_pos,
-            std::shared_ptr<AbstractCamera> camera, bool with_shadows,
+            std::shared_ptr<VulkanDevice> device, std::shared_ptr<const ScenePipelines> pipelines,
+            glm::vec3 light_pos, std::shared_ptr<AbstractCamera> camera, bool with_shadows,
             const ShadowSettings &shadow_settings = {});
         ~VulkanRenderer() override;
 
@@ -45,14 +46,12 @@ namespace arenai::view {
 
         const SceneFrame &scene_frame() const override;
         VkCommandPool upload_pool() const override;
-        VkFormat shadow_depth_format() const override;
 
         const std::shared_ptr<VulkanDevice> &device() const override;
 
         DescriptorAllocator &descriptors() override;
 
-        VkDescriptorSetLayout set0_plain_layout() const override;
-        VkDescriptorSetLayout set0_shadow_layout() const override;
+        const ScenePipelines &pipelines() const override;
 
     protected:
         virtual std::pair<VkCommandBuffer, int> on_begin_frame() = 0;
@@ -80,6 +79,7 @@ namespace arenai::view {
         void ensure_slot_resources(int slot, size_t draw_count);
 
         std::shared_ptr<VulkanDevice> device_;
+        std::shared_ptr<const ScenePipelines> pipelines_;
 
         glm::vec3 light_pos_;
         bool with_shadows_;
@@ -93,8 +93,6 @@ namespace arenai::view {
 
         VkCommandPool upload_pool_;
         std::unique_ptr<DescriptorAllocator> descriptors_;
-        VkDescriptorSetLayout set0_plain_layout_;
-        VkDescriptorSetLayout set0_shadow_layout_;
 
         SlotResources slots_[FRAME_SLOTS];
         SceneFrame frame_;

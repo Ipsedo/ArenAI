@@ -48,7 +48,6 @@ namespace arenai::view {
 
         VkImageView view() const;
         VkSampler sampler() const;
-        VkFormat depth_format() const;
 
     private:
         struct SlotRing {

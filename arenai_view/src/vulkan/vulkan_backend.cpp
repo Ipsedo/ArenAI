@@ -19,7 +19,12 @@ namespace arenai::view {
         const std::shared_ptr<VulkanInstance> &instance, const DeviceCriteria &criteria)
         : context_(std::make_shared<VulkanRenderContext>(
             instance, std::make_shared<VulkanDevice>(instance, criteria))),
-          drawable_factory_(std::make_shared<VulkanDrawableFactory>()) {}
+          drawable_factory_(std::make_shared<VulkanDrawableFactory>(context_->device())),
+          offscreen_pipelines_(std::make_shared<const ScenePipelines>(
+              context_->device(), SceneFormat{
+                                      .color = VK_FORMAT_R8G8B8A8_UNORM,
+                                      .depth = context_->device()->find_depth_format(false),
+                                      .samples = VK_SAMPLE_COUNT_1_BIT})) {}
 
     std::shared_ptr<AbstractRenderContext> VulkanBackend::render_context() { return context_; }
 
@@ -27,7 +32,7 @@ namespace arenai::view {
         const int width, const int height, const glm::vec3 light_pos,
         const std::shared_ptr<AbstractCamera> &camera) {
         return std::make_unique<VulkanOffscreenRenderer>(
-            context_->device(), width, height, light_pos, camera);
+            context_->device(), offscreen_pipelines_, width, height, light_pos, camera);
     }
 
     std::shared_ptr<AbstractDrawableFactory> VulkanBackend::drawable_factory() {

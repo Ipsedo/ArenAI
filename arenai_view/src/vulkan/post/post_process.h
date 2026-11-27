@@ -9,6 +9,7 @@
 #include "../core/descriptors.h"
 #include "../core/device.h"
 #include "../core/render_target.h"
+#include "../scene/scene_pipelines.h"
 #include "./effect.h"
 
 namespace arenai::view {
@@ -26,16 +27,12 @@ namespace arenai::view {
         VulkanPostProcess(
             std::shared_ptr<VulkanDevice> device, DescriptorAllocator *descriptors, int width,
             int height, std::vector<std::shared_ptr<VulkanPostEffect>> ordered_effects,
-            int msaa_samples = 4);
+            const SceneFormat &format);
 
         VulkanPostProcess(const VulkanPostProcess &) = delete;
         VulkanPostProcess &operator=(const VulkanPostProcess &) = delete;
 
         void resize(int new_width, int new_height);
-
-        static VkFormat scene_color_format();
-        VkFormat scene_depth_format() const;
-        VkSampleCountFlagBits scene_samples() const;
 
         void begin_scene_pass(const VkCommandBuffer &cmd) const;
 
@@ -62,8 +59,7 @@ namespace arenai::view {
 
         int frame_;
 
-        VkSampleCountFlagBits samples_;
-        VkFormat depth_format_;
+        SceneFormat format_;
 
         std::unique_ptr<Target> msaa_color_;
         std::unique_ptr<Target> msaa_depth_;

@@ -84,8 +84,6 @@ namespace arenai::view {
 
     VkSampler VulkanShadowMap::sampler() const { return sampler_; }
 
-    VkFormat VulkanShadowMap::format() const { return depth_->format(); }
-
     int VulkanShadowMap::size() const { return size_; }
 
     VulkanShadowMap::~VulkanShadowMap() { vkDestroySampler(device_->handle(), sampler_, nullptr); }

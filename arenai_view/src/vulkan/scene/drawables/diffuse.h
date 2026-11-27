@@ -1,25 +1,21 @@
 #ifndef ARENAI_VK_DIFFUSE_H
 #define ARENAI_VK_DIFFUSE_H
 
-#include <cstdint>
 #include <memory>
-#include <vector>
 
 #include <glm/glm.hpp>
 
-#include <arenai_utils/file_reader.h>
-
 #include "../../core/buffer.h"
 #include "../../core/vk.h"
+#include "../scene_pipelines.h"
+#include "./mesh.h"
 #include "./shadow_drawable.h"
 
 namespace arenai::view {
 
     class VulkanDiffuse final : public VulkanShadowDrawable {
     public:
-        VulkanDiffuse(
-            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
-            const std::vector<std::tuple<float, float, float>> &vertices, glm::vec4 color);
+        VulkanDiffuse(std::shared_ptr<const VulkanMesh> mesh, glm::vec4 color);
 
         void draw(
             glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos_from_camera,
@@ -31,37 +27,19 @@ namespace arenai::view {
             glm::mat4 mvp_matrix, glm::mat4 mv_matrix, glm::vec3 light_pos_from_camera,
             glm::vec3 camera_pos, glm::vec4 world_up) override;
 
-        ~VulkanDiffuse() override;
-
     private:
-        void ensure_common();
-
-        void ensure_plain_pipeline();
-        void ensure_depth_pipeline();
-        void ensure_shadow_pipeline();
+        void ensure_material();
 
         void record_draw(
-            const VkPipeline &pipeline, const VkPipelineLayout &layout, const VkDescriptorSet &set0,
-            uint32_t dynamic_offset_count, const glm::mat4 &mvp_matrix,
-            const glm::mat4 &mv_matrix) const;
+            const ScenePipeline &pipeline, VkDescriptorSet frame_set,
+            std::span<const uint32_t> dynamic_offsets, const glm::mat4 &mvp_matrix,
+            const glm::mat4 &mv_matrix);
 
-        std::vector<float> vbo_data_;
-        std::vector<uint32_t> ibo_data_;
+        std::shared_ptr<const VulkanMesh> mesh_;
         glm::vec4 color_;
-        int nb_indices_;
 
-        std::unique_ptr<VulkanBuffer> vertices_;
-        std::unique_ptr<VulkanBuffer> indices_;
         std::unique_ptr<HostVisibleBuffer> material_;
-        VkDescriptorSetLayout material_layout_ = VK_NULL_HANDLE;
         VkDescriptorSet material_set_ = VK_NULL_HANDLE;
-
-        VkPipelineLayout plain_pipeline_layout_ = VK_NULL_HANDLE;
-        VkPipeline plain_pipeline_ = VK_NULL_HANDLE;
-        VkPipelineLayout depth_pipeline_layout_ = VK_NULL_HANDLE;
-        VkPipeline depth_pipeline_ = VK_NULL_HANDLE;
-        VkPipelineLayout shadow_pipeline_layout_ = VK_NULL_HANDLE;
-        VkPipeline shadow_pipeline_ = VK_NULL_HANDLE;
     };
 
 }// namespace arenai::view

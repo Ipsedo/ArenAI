@@ -17,17 +17,30 @@ public:
         glm::vec3 camera_pos) override {}
 };
 
+class NoopMesh final : public view::AbstractMesh {};
+
+class NoopCubeTexture final : public view::AbstractCubeTexture {};
+
 class NoopDrawableFactory final : public view::AbstractDrawableFactory {
 public:
-    std::unique_ptr<view::AbstractDrawable> make_cube_map(
+    std::shared_ptr<view::AbstractMesh>
+    make_mesh(const std::vector<std::tuple<float, float, float>> &vertices) override {
+        return std::make_shared<NoopMesh>();
+    }
+
+    std::shared_ptr<view::AbstractCubeTexture> make_cube_texture(
         const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
         const std::filesystem::path &pngs_root_path) override {
+        return std::make_shared<NoopCubeTexture>();
+    }
+
+    std::unique_ptr<view::AbstractDrawable>
+    make_cube_map(const std::shared_ptr<view::AbstractCubeTexture> &texture) override {
         return std::make_unique<NoopDrawable>();
     }
 
-    std::unique_ptr<view::AbstractDrawable> make_diffuse(
-        const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
-        const std::vector<std::tuple<float, float, float>> &vertices, glm::vec4 color) override {
+    std::unique_ptr<view::AbstractDrawable>
+    make_diffuse(const std::shared_ptr<view::AbstractMesh> &mesh, glm::vec4 color) override {
         return std::make_unique<NoopDrawable>();
     }
 };

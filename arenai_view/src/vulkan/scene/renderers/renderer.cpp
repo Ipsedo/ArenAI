@@ -24,33 +24,16 @@ namespace arenai::view {
     }// namespace
 
     VulkanRenderer::VulkanRenderer(
-        std::shared_ptr<VulkanDevice> device, const glm::vec3 light_pos,
-        std::shared_ptr<AbstractCamera> camera, const bool with_shadows,
+        std::shared_ptr<VulkanDevice> device, std::shared_ptr<const ScenePipelines> pipelines,
+        const glm::vec3 light_pos, std::shared_ptr<AbstractCamera> camera, const bool with_shadows,
         const ShadowSettings &shadow_settings)
-        : device_(std::move(device)), light_pos_(light_pos), with_shadows_(with_shadows),
-          retired_(FRAME_SLOTS), camera_(std::move(camera)),
+        : device_(std::move(device)), pipelines_(std::move(pipelines)), light_pos_(light_pos),
+          with_shadows_(with_shadows), retired_(FRAME_SLOTS), camera_(std::move(camera)),
           upload_pool_(device_->make_command_pool()),
-          descriptors_(std::make_unique<DescriptorAllocator>(device_)),
-          set0_plain_layout_(VK_NULL_HANDLE), set0_shadow_layout_(VK_NULL_HANDLE) {
+          descriptors_(std::make_unique<DescriptorAllocator>(device_)) {
         if (with_shadows_)
             shadow_pass_ =
                 std::make_unique<ShadowPass>(device_, light_pos_, FRAME_SLOTS, shadow_settings);
-
-        set0_plain_layout_ = DescriptorLayoutBuilder()
-                                 .add_binding(
-                                     0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                                     VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
-                                 .build(device_->handle());
-        set0_shadow_layout_ =
-            DescriptorLayoutBuilder()
-                .add_binding(
-                    0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
-                .add_binding(
-                    1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT)
-                .add_binding(
-                    2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
-                .build(device_->handle());
     }
 
     void VulkanRenderer::add_drawable(
@@ -76,7 +59,7 @@ namespace arenai::view {
         if (!globals) {
             globals = std::make_unique<HostVisibleBuffer>(
                 device_, sizeof(FrameGlobals), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-            set0_plain = descriptors_->allocate(set0_plain_layout_);
+            set0_plain = descriptors_->allocate(pipelines_->frame_layout());
             write_buffer_descriptor(
                 device_->handle(), set0_plain, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                 globals->handle(), 0, sizeof(FrameGlobals));
@@ -86,7 +69,7 @@ namespace arenai::view {
 
         if (shadow_pass_->ensure_ring(slot, draw_count)) {
             if (set0_shadow == VK_NULL_HANDLE) {
-                set0_shadow = descriptors_->allocate(set0_shadow_layout_);
+                set0_shadow = descriptors_->allocate(pipelines_->shadowed_frame_layout());
 
                 write_buffer_descriptor(
                     device_->handle(), set0_shadow, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -189,11 +172,7 @@ namespace arenai::view {
 
     DescriptorAllocator &VulkanRenderer::descriptors() { return *descriptors_; }
 
-    VkDescriptorSetLayout VulkanRenderer::set0_plain_layout() const { return set0_plain_layout_; }
-
-    VkDescriptorSetLayout VulkanRenderer::set0_shadow_layout() const { return set0_shadow_layout_; }
-
-    VkFormat VulkanRenderer::shadow_depth_format() const { return shadow_pass_->depth_format(); }
+    const ScenePipelines &VulkanRenderer::pipelines() const { return *pipelines_; }
 
     const glm::vec3 &VulkanRenderer::light_position() const { return light_pos_; }
 
@@ -210,8 +189,6 @@ namespace arenai::view {
         shadow_pass_.reset();
         for (auto &resources: slots_) resources.globals.reset();
         descriptors_.reset();
-        vkDestroyDescriptorSetLayout(device_->handle(), set0_shadow_layout_, nullptr);
-        vkDestroyDescriptorSetLayout(device_->handle(), set0_plain_layout_, nullptr);
         vkDestroyCommandPool(device_->handle(), upload_pool_, nullptr);
     }
 

@@ -26,10 +26,6 @@ namespace arenai::view {
         void set_window_size(int new_width, int new_height) override;
         glm::mat4 last_view_projection() const override;
 
-        VkFormat scene_color_format() const override;
-        VkFormat scene_depth_format() const override;
-        VkSampleCountFlagBits scene_samples() const override;
-
         ~VulkanPlayerRenderer() override;
 
     protected:
@@ -45,7 +41,6 @@ namespace arenai::view {
 
         int width_;
         int height_;
-        int msaa_samples_;
         float render_scale_;
         PostProcessSettings post_process_settings_;
 

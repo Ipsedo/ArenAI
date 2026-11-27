@@ -9,6 +9,7 @@
 #include "./core/device.h"
 #include "./core/instance.h"
 #include "./render_context.h"
+#include "./scene/scene_pipelines.h"
 
 namespace arenai::view {
 
@@ -39,6 +40,7 @@ namespace arenai::view {
     private:
         std::shared_ptr<VulkanRenderContext> context_;
         std::shared_ptr<VulkanDrawableFactory> drawable_factory_;
+        std::shared_ptr<const ScenePipelines> offscreen_pipelines_;
     };
 
 }// namespace arenai::view

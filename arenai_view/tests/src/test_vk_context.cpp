@@ -31,7 +31,8 @@ TEST(VkContextTest, MultipleRenderersSameContext) {
     // renderer_a with cubemap
     renderer_a->make_current();
     renderer_a->add_drawable(
-        "sky", backend->drawable_factory()->make_cube_map(file_reader, "cubemap/1"));
+        "sky", backend->drawable_factory()->make_cube_map(
+                   backend->drawable_factory()->make_cube_texture(file_reader, "cubemap/1")));
 
     // renderer_b stays empty (clear color only)
     renderer_b->make_current();
@@ -104,7 +105,8 @@ TEST(VkContextTest, AlternateContexts) {
 
     renderer_a->make_current();
     renderer_a->add_drawable(
-        "sky", backend->drawable_factory()->make_cube_map(file_reader, "cubemap/1"));
+        "sky", backend->drawable_factory()->make_cube_map(
+                   backend->drawable_factory()->make_cube_texture(file_reader, "cubemap/1")));
 
     const auto sky_matrices = std::vector<std::tuple<std::string, glm::mat4>>{
         {"sky", glm::scale(glm::mat4(1.f), glm::vec3(2000.f))}};

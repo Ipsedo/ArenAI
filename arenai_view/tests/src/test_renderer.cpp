@@ -37,7 +37,8 @@ TEST_F(RendererTest, RemoveDrawableThenDrawClearColor) {
     renderer->make_current();
 
     renderer->add_drawable(
-        "sky", backend->drawable_factory()->make_cube_map(file_reader, "cubemap/1"));
+        "sky", backend->drawable_factory()->make_cube_map(
+                   backend->drawable_factory()->make_cube_texture(file_reader, "cubemap/1")));
 
     const auto with_drawable = std::vector<std::tuple<std::string, glm::mat4>>{
         {"sky", glm::scale(glm::mat4(1.f), glm::vec3(2000.f))}};
@@ -95,7 +96,8 @@ TEST_F(RendererTest, MixedDrawablesCubeMapAndDiffuse) {
 
     // add cubemap alone, render
     renderer->add_drawable(
-        "sky", backend->drawable_factory()->make_cube_map(file_reader, "cubemap/1"));
+        "sky", backend->drawable_factory()->make_cube_map(
+                   backend->drawable_factory()->make_cube_texture(file_reader, "cubemap/1")));
 
     const auto sky_only_matrices = std::vector<std::tuple<std::string, glm::mat4>>{
         {"sky", glm::scale(glm::mat4(1.f), glm::vec3(2000.f))}};
@@ -106,8 +108,9 @@ TEST_F(RendererTest, MixedDrawablesCubeMapAndDiffuse) {
     // add diffuse cube on top
     auto [vertices, normals] = make_cube(2.f);
     renderer->add_drawable(
-        "cube", backend->drawable_factory()->make_diffuse(
-                    file_reader, vertices, glm::vec4(0.f, 0.f, 1.f, 1.f)));
+        "cube",
+        backend->drawable_factory()->make_diffuse(
+            backend->drawable_factory()->make_mesh(vertices), glm::vec4(0.f, 0.f, 1.f, 1.f)));
 
     const auto mixed_matrices = std::vector<std::tuple<std::string, glm::mat4>>{
         {"sky", glm::scale(glm::mat4(1.f), glm::vec3(2000.f))}, {"cube", glm::mat4(1.f)}};

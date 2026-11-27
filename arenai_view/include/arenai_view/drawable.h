@@ -19,17 +19,32 @@ namespace arenai::view {
         virtual ~AbstractDrawable() = default;
     };
 
+    class AbstractMesh {
+    public:
+        virtual ~AbstractMesh() = default;
+    };
+
+    class AbstractCubeTexture {
+    public:
+        virtual ~AbstractCubeTexture() = default;
+    };
+
     class AbstractDrawableFactory {
     public:
         virtual ~AbstractDrawableFactory() = default;
 
-        virtual std::unique_ptr<AbstractDrawable> make_cube_map(
+        virtual std::shared_ptr<AbstractMesh>
+        make_mesh(const std::vector<std::tuple<float, float, float>> &vertices) = 0;
+
+        virtual std::shared_ptr<AbstractCubeTexture> make_cube_texture(
             const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
             const std::filesystem::path &pngs_root_path) = 0;
 
-        virtual std::unique_ptr<AbstractDrawable> make_diffuse(
-            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
-            const std::vector<std::tuple<float, float, float>> &vertices, glm::vec4 color) = 0;
+        virtual std::unique_ptr<AbstractDrawable>
+        make_cube_map(const std::shared_ptr<AbstractCubeTexture> &texture) = 0;
+
+        virtual std::unique_ptr<AbstractDrawable>
+        make_diffuse(const std::shared_ptr<AbstractMesh> &mesh, glm::vec4 color) = 0;
     };
 
 }// namespace arenai::view

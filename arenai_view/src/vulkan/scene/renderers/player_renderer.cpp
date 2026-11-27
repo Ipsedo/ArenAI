@@ -6,15 +6,26 @@
 
 namespace arenai::view {
 
+    namespace {
+        std::shared_ptr<const ScenePipelines> make_scene_pipelines(
+            const std::shared_ptr<VulkanDevice> &device, const PlayerRendererSettings &settings) {
+            return std::make_shared<const ScenePipelines>(
+                device, SceneFormat{
+                            .color = VK_FORMAT_R8G8B8A8_UNORM,
+                            .depth = device->find_depth_format(true),
+                            .samples = device->clamp_sample_count(settings.msaa_samples)});
+        }
+    }// namespace
+
     VulkanPlayerRenderer::VulkanPlayerRenderer(
         const std::shared_ptr<VulkanDevice> &device,
         std::shared_ptr<WindowFrameContext> frame_context, const int width, const int height,
         const glm::vec3 light_pos, const std::shared_ptr<AbstractCamera> &camera,
         const PlayerRendererSettings &settings)
         : VulkanRenderer(
-            device, light_pos, camera, settings.shadows,
+            device, make_scene_pipelines(device, settings), light_pos, camera, settings.shadows,
             ShadowSettings{.map_size = settings.shadow_map_size}),
-          width_(width), height_(height), msaa_samples_(settings.msaa_samples),
+          width_(width), height_(height),
           render_scale_(std::clamp(settings.render_scale, 0.5f, 1.f)),
           post_process_settings_{
               .ambient_occlusion = settings.ambient_occlusion,
@@ -39,7 +50,7 @@ namespace arenai::view {
             device(), &descriptors(), render_width(), render_height(),
             make_default_post_processing_effects(
                 device(), &descriptors(), render_width(), render_height(), post_process_settings_),
-            msaa_samples_);
+            pipelines().format());
     }
 
     std::pair<VkCommandBuffer, int> VulkanPlayerRenderer::on_begin_frame() {
@@ -80,18 +91,6 @@ namespace arenai::view {
 
         frame_context_->handle_resize();
         if (post_process_) post_process_->resize(render_width(), render_height());
-    }
-
-    VkFormat VulkanPlayerRenderer::scene_color_format() const {
-        return VulkanPostProcess::scene_color_format();
-    }
-
-    VkFormat VulkanPlayerRenderer::scene_depth_format() const {
-        return post_process_->scene_depth_format();
-    }
-
-    VkSampleCountFlagBits VulkanPlayerRenderer::scene_samples() const {
-        return post_process_->scene_samples();
     }
 
     VulkanPlayerRenderer::~VulkanPlayerRenderer() {

@@ -1,10 +1,10 @@
 #include "./cube_map.h"
 
+#include <span>
 #include <utility>
 #include <vector>
 
 #include "../../core/descriptors.h"
-#include "../../core/pipeline.h"
 
 using namespace arenai;
 
@@ -30,81 +30,35 @@ namespace arenai::view {
                                         1.f,  -1.f, -1.f, -1.f, -1.f, 1.f,  1.f,  -1.f, 1.f};
     }// namespace
 
-    VulkanCubeMap::VulkanCubeMap(
-        const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
-        std::filesystem::path pngs_root_path)
-        : file_reader_(file_reader), pngs_root_path_(std::move(pngs_root_path)),
-          nb_vertices_(static_cast<int>(CUBE_VERTICES.size() / 3)) {}
+    VulkanCubeMap::VulkanCubeMap(std::shared_ptr<const VulkanCubeTexture> texture)
+        : texture_(std::move(texture)), nb_vertices_(static_cast<int>(CUBE_VERTICES.size() / 3)) {}
 
     void VulkanCubeMap::ensure_resources() {
-        if (pipeline_ != VK_NULL_HANDLE) return;
+        if (vertices_) return;
 
         vertices_ = std::make_unique<VulkanBuffer>(
             context_->device(), context_->upload_pool(), CUBE_VERTICES.data(),
             CUBE_VERTICES.size() * sizeof(float), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 
-        texture_ = VulkanTexture::cube_from_pngs(
-            context_->device(), context_->upload_pool(), file_reader_, pngs_root_path_);
-
-        texture_layout_ =
-            DescriptorLayoutBuilder()
-                .add_binding(
-                    0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
-                .build(context_->device()->handle());
-        texture_set_ = context_->descriptors().allocate(texture_layout_);
-        write_image_descriptor(
-            context_->device()->handle(), texture_set_, 0, texture_->sampler(), texture_->view(),
-            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-        pipeline_layout_ = make_pipeline_layout(
-            context_->device()->handle(), {context_->set0_plain_layout(), texture_layout_},
-            {{.stageFlags = VK_SHADER_STAGE_VERTEX_BIT, .offset = 0, .size = sizeof(glm::mat4)}});
-        pipeline_ = PipelineBuilder()
-                        .shaders("cube_vs.glsl", "cube_fs.glsl")
-                        .vertex_input(
-                            {{.binding = 0,
-                              .stride = 3 * sizeof(float),
-                              .inputRate = VK_VERTEX_INPUT_RATE_VERTEX}},
-                            {{.location = 0,
-                              .binding = 0,
-                              .format = VK_FORMAT_R32G32B32_SFLOAT,
-                              .offset = 0}})
-                        .color_format(context_->scene_color_format())
-                        .depth_format(context_->scene_depth_format())
-                        .samples(context_->scene_samples())
-                        .build(context_->device(), pipeline_layout_);
+        texture_set_ = context_->descriptors().allocate(context_->pipelines().sky_layout());
+        texture_->write_descriptor(context_->device()->handle(), texture_set_, 0);
     }
 
     void VulkanCubeMap::draw(const glm::mat4 mvp_matrix, glm::mat4, glm::vec3, glm::vec3) {
         ensure_resources();
 
         const auto &frame = context_->scene_frame();
-
-        vkCmdBindPipeline(frame.cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_);
+        const auto &pipeline = context_->pipelines().sky();
 
         const VkDescriptorSet sets[2] = {frame.set0_plain, texture_set_};
-        vkCmdBindDescriptorSets(
-            frame.cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_, 0, 2, sets, 0, nullptr);
-
-        vkCmdPushConstants(
-            frame.cmd, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4),
-            &mvp_matrix);
+        pipeline.bind(frame.cmd, sets, {});
+        pipeline.push(frame.cmd, std::as_bytes(std::span(&mvp_matrix, 1)));
 
         const VkBuffer &vertex_buffer = vertices_->handle();
         constexpr VkDeviceSize offset = 0;
         vkCmdBindVertexBuffers(frame.cmd, 0, 1, &vertex_buffer, &offset);
 
         vkCmdDraw(frame.cmd, nb_vertices_, 1, 0, 0);
-    }
-
-    VulkanCubeMap::~VulkanCubeMap() {
-        if (context_ == nullptr) return;
-
-        const VkDevice &device = context_->device()->handle();
-
-        vkDestroyPipeline(device, pipeline_, nullptr);
-        vkDestroyPipelineLayout(device, pipeline_layout_, nullptr);
-        vkDestroyDescriptorSetLayout(device, texture_layout_, nullptr);
     }
 
 }// namespace arenai::view

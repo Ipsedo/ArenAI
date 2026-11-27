@@ -28,7 +28,11 @@ namespace {
               descriptors_(device_), pool_(device_->make_command_pool()),
               post_process_(
                   device_, &descriptors_, WIDTH, HEIGHT,
-                  make_default_post_processing_effects(device_, &descriptors_, WIDTH, HEIGHT)) {}
+                  make_default_post_processing_effects(device_, &descriptors_, WIDTH, HEIGHT),
+                  SceneFormat{
+                      .color = VK_FORMAT_R8G8B8A8_UNORM,
+                      .depth = device_->find_depth_format(true),
+                      .samples = device_->clamp_sample_count(4)}) {}
 
         VulkanPostProcess &post_process() { return post_process_; }
 

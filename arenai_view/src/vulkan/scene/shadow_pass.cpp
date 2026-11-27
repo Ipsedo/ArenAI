@@ -94,6 +94,4 @@ namespace arenai::view {
 
     VkSampler ShadowPass::sampler() const { return map_->sampler(); }
 
-    VkFormat ShadowPass::depth_format() const { return map_->format(); }
-
 }// namespace arenai::view

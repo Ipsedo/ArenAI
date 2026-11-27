@@ -6,6 +6,7 @@
 #include "../../core/descriptors.h"
 #include "../../core/device.h"
 #include "../../core/vk.h"
+#include "../scene_pipelines.h"
 
 namespace arenai::view {
 
@@ -27,14 +28,7 @@ namespace arenai::view {
 
         virtual DescriptorAllocator &descriptors() = 0;
 
-        virtual VkDescriptorSetLayout set0_plain_layout() const = 0;
-        virtual VkDescriptorSetLayout set0_shadow_layout() const = 0;
-
-        virtual VkFormat shadow_depth_format() const = 0;
-
-        virtual VkFormat scene_color_format() const = 0;
-        virtual VkFormat scene_depth_format() const = 0;
-        virtual VkSampleCountFlagBits scene_samples() const = 0;
+        virtual const ScenePipelines &pipelines() const = 0;
 
         virtual const SceneFrame &scene_frame() const = 0;
     };

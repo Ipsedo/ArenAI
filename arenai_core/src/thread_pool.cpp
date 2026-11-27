@@ -78,19 +78,29 @@ namespace arenai::core {
         for (int i = 0; i < num_tanks_; i++)
             enemy_panoramas_.push_back(std::make_unique<PanoramaDoubleBuffer>());
 
+        const auto drawable_factory = graphics_backend->drawable_factory();
+
+        SharedScene scene{.sky = drawable_factory->make_cube_texture(file_reader, "cubemap/1")};
+        for (const auto &item: scene_items)
+            scene.item_meshes.emplace_back(
+                item->get_name(), drawable_factory->make_mesh(item->get_shape()->get_vertices()));
+        for (const auto &tank_factory: tank_factories)
+            for (const auto &[name, shape]: tank_factory->load_shell_shapes())
+                if (!scene.shell_meshes.contains(name))
+                    scene.shell_meshes.emplace(
+                        name, drawable_factory->make_mesh(shape->get_vertices()));
+
         pool_.reserve(num_tanks_);
         for (int i = 0; i < num_tanks_; i++)
-            pool_.emplace_back(
-                [this, i, &tank_factories, graphics_backend, file_reader, scene_items] {
-                    worker_loop(tank_factories[i], graphics_backend, file_reader, scene_items, i);
-                });
+            pool_.emplace_back([this, i, &tank_factories, graphics_backend, scene] {
+                worker_loop(tank_factories[i], graphics_backend, scene, i);
+            });
     }
 
     void EnemyVisionThreadPool::worker_loop(
         const std::shared_ptr<model::EnemyTank> &tank_factory,
         const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend,
-        const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
-        const std::vector<std::shared_ptr<model::Item>> &scene_items, const int index) {
+        const SharedScene &scene, const int index) {
 
         std::mt19937 local_rng;
         if (seed_.has_value()) {
@@ -115,26 +125,25 @@ namespace arenai::core {
 
         std::uniform_real_distribution u_dist(0.f, 1.f);
 
-        renderer->add_drawable(
-            "cubemap", drawable_factory->make_cube_map(file_reader, "cubemap/1"));
+        renderer->add_drawable("cubemap", drawable_factory->make_cube_map(scene.sky));
 
         // every view of this tank draws an item with the same color
-        std::vector<std::tuple<std::string, std::shared_ptr<model::Shape>, glm::vec4>> colored;
+        std::vector<std::tuple<std::string, std::shared_ptr<view::AbstractMesh>, glm::vec4>>
+            colored;
 
-        for (const auto &item: scene_items) {
+        for (const auto &[name, mesh]: scene.item_meshes) {
             const glm::vec4 color(u_dist(local_rng), u_dist(local_rng), u_dist(local_rng), 1.f);
-            colored.emplace_back(item->get_name(), item->get_shape(), color);
+            colored.emplace_back(name, mesh, color);
         }
 
-        for (const auto &[name, shape]: tank_factory->load_shell_shapes()) {
+        for (const auto &[name, mesh]: scene.shell_meshes) {
             const glm::vec4 shell_color(
                 u_dist(local_rng), u_dist(local_rng), u_dist(local_rng), 1.f);
-            colored.emplace_back(name, shape, shell_color);
+            colored.emplace_back(name, mesh, shell_color);
         }
 
-        for (const auto &[name, shape, color]: colored)
-            renderer->add_drawable(
-                name, drawable_factory->make_diffuse(file_reader, shape->get_vertices(), color));
+        for (const auto &[name, mesh, color]: colored)
+            renderer->add_drawable(name, drawable_factory->make_diffuse(mesh, color));
 
         // the panorama leaves out the tank's own parts
         std::set<std::string> own_parts;
@@ -149,14 +158,12 @@ namespace arenai::core {
 
             panorama_renderer->make_current();
 
-            panorama_renderer->add_drawable(
-                "cubemap", drawable_factory->make_cube_map(file_reader, "cubemap/1"));
+            panorama_renderer->add_drawable("cubemap", drawable_factory->make_cube_map(scene.sky));
 
-            for (const auto &[name, shape, color]: colored)
+            for (const auto &[name, mesh, color]: colored)
                 if (!own_parts.contains(name))
                     panorama_renderer->add_drawable(
-                        name,
-                        drawable_factory->make_diffuse(file_reader, shape->get_vertices(), color));
+                        name, drawable_factory->make_diffuse(mesh, color));
 
             panorama_renderers.push_back(std::move(panorama_renderer));
         }

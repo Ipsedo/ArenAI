@@ -46,7 +46,8 @@ TEST(VkOffscreenTest, WarmupThenCubemap) {
 
     renderer->make_current();
     renderer->add_drawable(
-        "sky", backend->drawable_factory()->make_cube_map(file_reader, "cubemap/1"));
+        "sky", backend->drawable_factory()->make_cube_map(
+                   backend->drawable_factory()->make_cube_texture(file_reader, "cubemap/1")));
 
     const auto matrices = std::vector<std::tuple<std::string, glm::mat4>>{
         {"sky", glm::scale(glm::mat4(1.f), glm::vec3(2000.f))}};
@@ -68,8 +69,9 @@ TEST(VkOffscreenTest, DiffuseNonBlack) {
     const std::vector<std::tuple<float, float, float>> vertices{
         {-5.f, -5.f, 0.f}, {0.f, 5.f, 0.f}, {5.f, -5.f, 0.f}};
     renderer->add_drawable(
-        "tri", backend->drawable_factory()->make_diffuse(
-                   file_reader, vertices, glm::vec4(0.f, 1.f, 0.f, 1.f)));
+        "tri",
+        backend->drawable_factory()->make_diffuse(
+            backend->drawable_factory()->make_mesh(vertices), glm::vec4(0.f, 1.f, 0.f, 1.f)));
 
     const auto matrices = std::vector<std::tuple<std::string, glm::mat4>>{{"tri", glm::mat4(1.f)}};
 
@@ -94,7 +96,8 @@ TEST(VkOffscreenTest, TwoRenderersAlternate) {
         backend->make_offscreen_renderer(w, h, {0.f, 10.f, -2.f}, make_camera());
 
     renderer_a->add_drawable(
-        "sky", backend->drawable_factory()->make_cube_map(file_reader, "cubemap/1"));
+        "sky", backend->drawable_factory()->make_cube_map(
+                   backend->drawable_factory()->make_cube_texture(file_reader, "cubemap/1")));
 
     const auto sky_matrices = std::vector<std::tuple<std::string, glm::mat4>>{
         {"sky", glm::scale(glm::mat4(1.f), glm::vec3(2000.f))}};
@@ -130,7 +133,9 @@ TEST(VkOffscreenTest, ConcurrentRenderers) {
                 backend->make_offscreen_renderer(w, h, {0.f, 10.f, -2.f}, make_camera());
             renderer->make_current();
             renderer->add_drawable(
-                "sky", backend->drawable_factory()->make_cube_map(file_reader, "cubemap/1"));
+                "sky",
+                backend->drawable_factory()->make_cube_map(
+                    backend->drawable_factory()->make_cube_texture(file_reader, "cubemap/1")));
 
             const auto matrices = std::vector<std::tuple<std::string, glm::mat4>>{
                 {"sky", glm::scale(glm::mat4(1.f), glm::vec3(2000.f))}};
@@ -154,13 +159,21 @@ TEST(VkOffscreenTest, ShadowRendererSmoke) {
     const auto context = std::dynamic_pointer_cast<VulkanRenderContext>(backend->render_context());
     ASSERT_NE(context, nullptr);
     const auto renderer = std::make_unique<VulkanOffscreenRenderer>(
-        context->device(), w, h, glm::vec3{0.f, 10.f, -2.f}, make_camera(), true);
+        context->device(),
+        std::make_shared<const ScenePipelines>(
+            context->device(),
+            SceneFormat{
+                .color = VK_FORMAT_R8G8B8A8_UNORM,
+                .depth = context->device()->find_depth_format(false),
+                .samples = VK_SAMPLE_COUNT_1_BIT}),
+        w, h, glm::vec3{0.f, 10.f, -2.f}, make_camera(), true);
 
     const std::vector<std::tuple<float, float, float>> vertices{
         {-5.f, -5.f, 0.f}, {0.f, 5.f, 0.f}, {5.f, -5.f, 0.f}};
     renderer->add_drawable(
-        "tri", backend->drawable_factory()->make_diffuse(
-                   file_reader, vertices, glm::vec4(1.f, 1.f, 1.f, 1.f)));
+        "tri",
+        backend->drawable_factory()->make_diffuse(
+            backend->drawable_factory()->make_mesh(vertices), glm::vec4(1.f, 1.f, 1.f, 1.f)));
 
     const auto matrices = std::vector<std::tuple<std::string, glm::mat4>>{{"tri", glm::mat4(1.f)}};
 

@@ -1,6 +1,7 @@
 #include "./offscreen_renderer.h"
 
 #include <cstring>
+#include <utility>
 
 #include "../../core/errors.h"
 
@@ -9,18 +10,19 @@ using namespace arenai;
 namespace arenai::view {
 
     VulkanOffscreenRenderer::VulkanOffscreenRenderer(
-        const std::shared_ptr<VulkanDevice> &device, const int width, const int height,
+        const std::shared_ptr<VulkanDevice> &device,
+        std::shared_ptr<const ScenePipelines> pipelines, const int width, const int height,
         const glm::vec3 light_pos, const std::shared_ptr<AbstractCamera> &camera,
         const bool with_shadows)
-        : VulkanRenderer(device, light_pos, camera, with_shadows), width_(width), height_(height),
-          depth_format_(device->find_depth_format(false)) {
+        : VulkanRenderer(device, std::move(pipelines), light_pos, camera, with_shadows),
+          width_(width), height_(height) {
         color_ = std::make_unique<Target>(
-            device, width, height, VK_FORMAT_R8G8B8A8_UNORM,
+            device, width, height, VulkanRenderer::pipelines().format().color,
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
             VK_IMAGE_ASPECT_COLOR_BIT);
         depth_ = std::make_unique<Target>(
-            device, width, height, depth_format_, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-            VK_IMAGE_ASPECT_DEPTH_BIT);
+            device, width, height, VulkanRenderer::pipelines().format().depth,
+            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT);
 
         const size_t readback_size = static_cast<size_t>(width) * static_cast<size_t>(height) * 4;
 
@@ -188,16 +190,6 @@ namespace arenai::view {
     int VulkanOffscreenRenderer::get_width() const { return width_; }
 
     int VulkanOffscreenRenderer::get_height() const { return height_; }
-
-    VkFormat VulkanOffscreenRenderer::scene_color_format() const {
-        return VK_FORMAT_R8G8B8A8_UNORM;
-    }
-
-    VkFormat VulkanOffscreenRenderer::scene_depth_format() const { return depth_format_; }
-
-    VkSampleCountFlagBits VulkanOffscreenRenderer::scene_samples() const {
-        return VK_SAMPLE_COUNT_1_BIT;
-    }
 
     VulkanOffscreenRenderer::~VulkanOffscreenRenderer() {
         for (auto &slot: slots_)

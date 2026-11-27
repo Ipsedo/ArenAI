@@ -36,11 +36,9 @@ namespace arenai::view {
     VulkanPostProcess::VulkanPostProcess(
         std::shared_ptr<VulkanDevice> device, DescriptorAllocator *descriptors, const int width,
         const int height, std::vector<std::shared_ptr<VulkanPostEffect>> ordered_effects,
-        const int msaa_samples)
+        const SceneFormat &format)
         : device_(std::move(device)), descriptors_(descriptors), width_(width), height_(height),
-          frame_(0), samples_(device_->clamp_sample_count(msaa_samples)),
-          depth_format_(device_->find_depth_format(true)),
-          ordered_effects_(std::move(ordered_effects)),
+          frame_(0), format_(format), ordered_effects_(std::move(ordered_effects)),
           neutral_white_(std::make_unique<Target>(
               device_, 1, 1, VK_FORMAT_R8G8B8A8_UNORM,
               VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
@@ -89,22 +87,23 @@ namespace arenai::view {
     void VulkanPostProcess::create_scene_targets() {
 
         resolve_color_ = std::make_unique<Target>(
-            device_, width_, height_, VK_FORMAT_R8G8B8A8_UNORM,
+            device_, width_, height_, format_.color,
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
             VK_IMAGE_ASPECT_COLOR_BIT);
 
         resolve_depth_ = std::make_unique<Target>(
-            device_, width_, height_, depth_format_,
+            device_, width_, height_, format_.depth,
             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
             VK_IMAGE_ASPECT_DEPTH_BIT);
 
-        if (samples_ != VK_SAMPLE_COUNT_1_BIT) {
+        if (format_.samples != VK_SAMPLE_COUNT_1_BIT) {
             msaa_color_ = std::make_unique<Target>(
-                device_, width_, height_, VK_FORMAT_R8G8B8A8_UNORM,
-                VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT, samples_);
+                device_, width_, height_, format_.color, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+                VK_IMAGE_ASPECT_COLOR_BIT, format_.samples);
             msaa_depth_ = std::make_unique<Target>(
-                device_, width_, height_, depth_format_,
-                VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, samples_);
+                device_, width_, height_, format_.depth,
+                VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT,
+                format_.samples);
         } else {
             msaa_color_.reset();
             msaa_depth_.reset();
@@ -123,14 +122,8 @@ namespace arenai::view {
         for (const auto &effect: ordered_effects_) effect->resize(width_, height_);
     }
 
-    VkFormat VulkanPostProcess::scene_color_format() { return VK_FORMAT_R8G8B8A8_UNORM; }
-
-    VkFormat VulkanPostProcess::scene_depth_format() const { return depth_format_; }
-
-    VkSampleCountFlagBits VulkanPostProcess::scene_samples() const { return samples_; }
-
     void VulkanPostProcess::begin_scene_pass(const VkCommandBuffer &cmd) const {
-        const bool msaa = samples_ != VK_SAMPLE_COUNT_1_BIT;
+        const bool msaa = format_.samples != VK_SAMPLE_COUNT_1_BIT;
         const Target &color = msaa ? *msaa_color_ : *resolve_color_;
         const Target &depth = msaa ? *msaa_depth_ : *resolve_depth_;
 

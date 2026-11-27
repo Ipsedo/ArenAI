@@ -11,18 +11,16 @@ namespace arenai::view {
     class VulkanOffscreenRenderer final : public VulkanRenderer, public AbstractOffscreenRenderer {
     public:
         VulkanOffscreenRenderer(
-            const std::shared_ptr<VulkanDevice> &device, int width, int height, glm::vec3 light_pos,
-            const std::shared_ptr<AbstractCamera> &camera, bool with_shadows = false);
+            const std::shared_ptr<VulkanDevice> &device,
+            std::shared_ptr<const ScenePipelines> pipelines, int width, int height,
+            glm::vec3 light_pos, const std::shared_ptr<AbstractCamera> &camera,
+            bool with_shadows = false);
 
         image<uint8_t> draw_and_get_frame(
             const std::vector<std::tuple<std::string, glm::mat4>> &model_matrices) override;
 
         int get_width() const override;
         int get_height() const override;
-
-        VkFormat scene_color_format() const override;
-        VkFormat scene_depth_format() const override;
-        VkSampleCountFlagBits scene_samples() const override;
 
         ~VulkanOffscreenRenderer() override;
 
@@ -42,7 +40,6 @@ namespace arenai::view {
         image<uint8_t> read_slot(const Slot &slot) const;
 
         int width_, height_;
-        VkFormat depth_format_;
 
         std::unique_ptr<Target> color_;
         std::unique_ptr<Target> depth_;

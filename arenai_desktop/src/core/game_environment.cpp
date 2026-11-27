@@ -256,7 +256,8 @@ namespace arenai::desktop {
         const auto drawable_factory = windowed_backend->drawable_factory();
 
         player_renderer->add_drawable(
-            "cubemap", drawable_factory->make_cube_map(file_reader, "cubemap/1"));
+            "cubemap", drawable_factory->make_cube_map(
+                           drawable_factory->make_cube_texture(file_reader, "cubemap/1")));
 
         std::uniform_real_distribution u_dist(0.f, 1.f);
 
@@ -264,15 +265,17 @@ namespace arenai::desktop {
             const glm::vec4 color(u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, 1.f);
 
             player_renderer->add_drawable(
-                name, drawable_factory->make_diffuse(file_reader, shape->get_vertices(), color));
+                name, drawable_factory->make_diffuse(
+                          drawable_factory->make_mesh(shape->get_vertices()), color));
         }
 
         for (const auto &item: engine_->get_items()) {
             const glm::vec4 color(u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, u_dist(rng) * 0.8f, 1.f);
 
             player_renderer->add_drawable(
-                item->get_name(), drawable_factory->make_diffuse(
-                                      file_reader, item->get_shape()->get_vertices(), color));
+                item->get_name(),
+                drawable_factory->make_diffuse(
+                    drawable_factory->make_mesh(item->get_shape()->get_vertices()), color));
         }
 
         player_renderer->release_current();

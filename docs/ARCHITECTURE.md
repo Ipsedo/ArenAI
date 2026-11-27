@@ -185,8 +185,16 @@ classDiagram
     }
     class AbstractDrawableFactory {
         <<interface>>
-        +make_cube_map(file_reader, pngs_root_path) AbstractDrawable
-        +make_diffuse(file_reader, vertices, color) AbstractDrawable
+        +make_mesh(vertices) AbstractMesh
+        +make_cube_texture(file_reader, pngs_root_path) AbstractCubeTexture
+        +make_cube_map(texture) AbstractDrawable
+        +make_diffuse(mesh, color) AbstractDrawable
+    }
+    class AbstractMesh {
+        <<interface>>
+    }
+    class AbstractCubeTexture {
+        <<interface>>
     }
     class AbstractDrawable {
         <<interface>>
@@ -232,11 +240,19 @@ classDiagram
     AbstractWindowedGraphicBackend ..> AbstractPlayerRenderer : creates
     AbstractWindowedGraphicBackend ..> AbstractWindow : provides
     AbstractDrawableFactory ..> AbstractDrawable : creates
+    AbstractDrawableFactory ..> AbstractMesh : uploads
+    AbstractDrawableFactory ..> AbstractCubeTexture : uploads
+    AbstractDrawable o-- AbstractMesh : shares
     AbstractRenderer o-- "0..*" AbstractDrawable : named
     AbstractRenderer ..> AbstractCamera : looks through
 ```
 
 - `AbstractOffscreenRenderer::draw_and_get_frame` returns the pixels: this is an agent's eye.
+- `AbstractMesh` and `AbstractCubeTexture` are GPU resources uploaded once and shared by every
+  drawable made from them, in any renderer of the same backend; a drawable only adds its own
+  colour. Meshes are indexed at upload (identical positions share one vertex).
+- Internally, the pipelines of a scene format (`ScenePipelines`) are built once and injected into
+  the renderers: one set for all offscreen renderers, one per player renderer.
 - `AbstractPlayerRenderer` draws the player's view in the window, with shadows, MSAA and
   post-processing driven by `PlayerRendererSettings`.
 - `AbstractWindow` receives the callbacks of `arenai_controller`: the view owns the devices, the
@@ -484,6 +500,8 @@ enemy tank:
 
 - Each worker owns its renderers: one offscreen renderer on the tank's canon camera and one per
   panorama camera. Its own tank's parts are left out of the panorama.
+- `start_thread` uploads the scene's meshes and sky texture once; every worker's renderers draw
+  them, so GPU memory does not grow with the number of tanks.
 - Each worker draws the scene with its own random colours: an agent cannot rely on the colour of
   an object.
 - The main thread publishes the frame's model matrices in a double buffer and opens a start

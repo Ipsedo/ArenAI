@@ -2,6 +2,7 @@
 #define ARENAI_AGENT_HOST_THREAD_POOL_H
 #include <barrier>
 #include <condition_variable>
+#include <map>
 #include <memory>
 #include <optional>
 #include <random>
@@ -99,11 +100,17 @@ namespace arenai::core {
 
         std::random_device dev_;
 
+        // GPU resources uploaded once, drawn by every tank's renderers
+        struct SharedScene {
+            std::shared_ptr<view::AbstractCubeTexture> sky;
+            std::vector<std::tuple<std::string, std::shared_ptr<view::AbstractMesh>>> item_meshes;
+            std::map<std::string, std::shared_ptr<view::AbstractMesh>> shell_meshes;
+        };
+
         void worker_loop(
             const std::shared_ptr<model::EnemyTank> &tank_factory,
             const std::shared_ptr<view::AbstractGraphicBackend> &graphics_backend,
-            const std::shared_ptr<utils::AbstractResourceFileReader> &file_reader,
-            const std::vector<std::shared_ptr<model::Item>> &scene_items, int index);
+            const SharedScene &scene, int index);
     };
 }// namespace arenai::core
 

@@ -1,6 +1,7 @@
 #ifndef ARENAI_VK_DIFFUSE_H
 #define ARENAI_VK_DIFFUSE_H
 
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -45,10 +46,12 @@ namespace arenai::view {
             const glm::mat4 &mv_matrix) const;
 
         std::vector<float> vbo_data_;
+        std::vector<uint32_t> ibo_data_;
         glm::vec4 color_;
-        int nb_vertices_;
+        int nb_indices_;
 
         std::unique_ptr<VulkanBuffer> vertices_;
+        std::unique_ptr<VulkanBuffer> indices_;
         std::unique_ptr<HostVisibleBuffer> material_;
         VkDescriptorSetLayout material_layout_ = VK_NULL_HANDLE;
         VkDescriptorSet material_set_ = VK_NULL_HANDLE;

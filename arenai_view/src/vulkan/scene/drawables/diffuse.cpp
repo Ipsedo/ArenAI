@@ -1,6 +1,9 @@
 #include "./diffuse.h"
 
+#include <array>
+#include <bit>
 #include <cstring>
+#include <unordered_map>
 
 #include "../../core/descriptors.h"
 #include "../../core/pipeline.h"
@@ -19,16 +22,41 @@ namespace arenai::view {
             {.binding = 0, .stride = 3 * sizeof(float), .inputRate = VK_VERTEX_INPUT_RATE_VERTEX}};
         const std::vector<VkVertexInputAttributeDescription> POSITION_ATTRIBUTE = {
             {.location = 0, .binding = 0, .format = VK_FORMAT_R32G32B32_SFLOAT, .offset = 0}};
+        struct PositionBits {
+            std::array<uint32_t, 3> bits;
+            bool operator==(const PositionBits &) const = default;
+        };
+
+        struct PositionBitsHash {
+            size_t operator()(const PositionBits &position) const {
+                size_t seed = 0;
+                for (const uint32_t bits: position.bits)
+                    seed ^= std::hash<uint32_t>{}(bits) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+                return seed;
+            }
+        };
     }// namespace
 
     VulkanDiffuse::VulkanDiffuse(
         const std::shared_ptr<utils::AbstractResourceFileReader> &,
         const std::vector<std::tuple<float, float, float>> &vertices, const glm::vec4 color)
-        : color_(color), nb_vertices_(static_cast<int>(vertices.size())) {
+        : color_(color), nb_indices_(static_cast<int>(vertices.size())) {
+        // identical positions share one vertex: flat shading needs no per-face attribute
+        std::unordered_map<PositionBits, uint32_t, PositionBitsHash> index_of;
+        index_of.reserve(vertices.size());
+        ibo_data_.reserve(vertices.size());
         for (const auto &[x, y, z]: vertices) {
-            vbo_data_.push_back(x);
-            vbo_data_.push_back(y);
-            vbo_data_.push_back(z);
+            const PositionBits key{
+                {std::bit_cast<uint32_t>(x), std::bit_cast<uint32_t>(y),
+                 std::bit_cast<uint32_t>(z)}};
+            const auto [entry, inserted] =
+                index_of.try_emplace(key, static_cast<uint32_t>(vbo_data_.size() / 3));
+            if (inserted) {
+                vbo_data_.push_back(x);
+                vbo_data_.push_back(y);
+                vbo_data_.push_back(z);
+            }
+            ibo_data_.push_back(entry->second);
         }
     }
 
@@ -38,6 +66,9 @@ namespace arenai::view {
         vertices_ = std::make_unique<VulkanBuffer>(
             context_->device(), context_->upload_pool(), vbo_data_.data(),
             vbo_data_.size() * sizeof(float), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+        indices_ = std::make_unique<VulkanBuffer>(
+            context_->device(), context_->upload_pool(), ibo_data_.data(),
+            ibo_data_.size() * sizeof(uint32_t), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 
         material_ = std::make_unique<HostVisibleBuffer>(
             context_->device(), sizeof(glm::vec4), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
@@ -118,8 +149,9 @@ namespace arenai::view {
         const VkBuffer &vertex_buffer = vertices_->handle();
         constexpr VkDeviceSize offset = 0;
         vkCmdBindVertexBuffers(frame.cmd, 0, 1, &vertex_buffer, &offset);
+        vkCmdBindIndexBuffer(frame.cmd, indices_->handle(), 0, VK_INDEX_TYPE_UINT32);
 
-        vkCmdDraw(frame.cmd, nb_vertices_, 1, 0, 0);
+        vkCmdDrawIndexed(frame.cmd, nb_indices_, 1, 0, 0, 0);
     }
 
     void VulkanDiffuse::draw(
@@ -144,8 +176,9 @@ namespace arenai::view {
         const VkBuffer &vertex_buffer = vertices_->handle();
         constexpr VkDeviceSize offset = 0;
         vkCmdBindVertexBuffers(frame.cmd, 0, 1, &vertex_buffer, &offset);
+        vkCmdBindIndexBuffer(frame.cmd, indices_->handle(), 0, VK_INDEX_TYPE_UINT32);
 
-        vkCmdDraw(frame.cmd, nb_vertices_, 1, 0, 0);
+        vkCmdDrawIndexed(frame.cmd, nb_indices_, 1, 0, 0, 0);
     }
 
     void VulkanDiffuse::draw_with_shadow(

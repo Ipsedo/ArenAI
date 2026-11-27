@@ -1,0 +1,17 @@
+# train_503_ppo_liquid
+
+| | |
+|---|---|
+| machine | ElMatador |
+| user | samuel |
+| launch | 2026-11-11 02:40:59 |
+| commit at launch | `3de97377` — continuous target entropy at 0.0 + align ppo and ppg to ppo_liquid |
+| commits ≤ 90 min after | none |
+| diff at launch | unknown (identity recorded after the run ended) |
+| raw data | `outputs/train_503_ppo_liquid` on ElMatador |
+
+## Established facts
+
+- 2026-11-11: Config chosen by Samuel after the analysis « the peak does not hold: critic leads, actor follows » (formulation: the real problem is SNR per Adam step: 1.7 hits and 17 independent chunks per minibatch of 512, 76 steps/rollout; at D=1000 ~0.7 hit per minibatch; advantage normalisation is aggravating, kept for this run to isolate the SNR effect, to remove afterwards if needed — centring kept). Samuel validated critic 1.5e-3 and asked to put these values as defaults in `liquid_ppo_hyperparams.h` (not committed, with `continuous_target_entropy` 0): actor/critic_batch_size 9600, actor_lr 5e-4, critic_lr 1.5e-3 ⟹ 502's command relaunches 503 with no option; gpu_batch 512 unchanged (accumulation by blocks of 17 chunks weighted by batch_fraction). units_per_batch = 320 = all chunks ⟹ 1 minibatch per epoch, 4 actor and critic steps per rollout (instead of 76), one KL test per epoch (skip ∈ {0, 0.25, 0.5, 0.75}). Noise per step ÷ √(320/17) ≈ 4.3. Batch never varied since 453. Why: Adam fixes step amplitude ≈ lr whatever the gradient; going 76 → 4 steps divides progress per rollout by 19 at equal lr, hence lr ×5; target_kl 0.05 becomes an active guard. Discarded: batch 2048 / lr 2e-4 (only ×2). Expectations: kl/rollout ~0.01-0.02 (≫ 0.05 ⟹ lr too high), clip < 0.2; at D=1000 whether |μ| drifts less (502 probes: canon_x 0.77 → 1.17 in 55 k) and whether hit/shell holds > 15 % for > 100 k; if drift only slowed, next lever = normalisation (division only) or critic.
+- 2026-11-11: Verdict at 569 k (09:40). 503 = full batch 9600 + lr ×5 + SoftClamp (confounded; SoftClamp in effect). CSV: ev ≈ 0 (−0.18 to +0.15) from 0 to 360 k (502: 0.22-0.45 at same D) ⟹ D 250 until 181 k (other runs: 48 k), D 350 from 208 to 366 k. Hc −0.5 to −0.87 from 50 to 350 k (σ falls, possible for the 1st time). As soon as ev ≈ 0.3 (366 k): D 400 → 650 in 170 k, CSV hit 14.5-15.3 % at D 550-600 (500-502: 12-14.6 %), kill 13-15. Then from 515 k: r_hit 0.004 → 0.0007, kill 15 → 4, Hc 0.2 → 0.5, kl 0.009 → 0.004, clip 0.05; continuous alpha 0.0035-0.0049 (risen during the 430 k at Hc < 0, 4 α steps per rollout ⟹ slow descent), alpha_fire 0.0010 → 0.0014 (p_fire under target 0.05). skip 0 since 377 k. Probe (`build/`, valid SoftClamp) save_19 (~513 k, D 600) → save_21 (~567 k, D 650): σ_canon_x median 0.35 → 0.46, σ_canon_y 0.57 → 0.62, no state ≥ 0.69 (formerly 80-98 %), |μ| > 1.5: 0 % on 4 dims; armed p_fire aligned 0.37 → 0.12, off-axis 0.022 → 0.018 (ratio 17.2 → 6.5); turret <5° 11 % unchanged, hit/shell 13.9 → 15.0 %; reserve empty median step 222 → 319 (= 22 → 32 s, step = 0.1 s).
+- 2026-11-11: Why: SoftClamp removed μ saturation (structural). Full batch starved the critic (4 steps per rollout) ⟹ start 2× slower in samples; α, updated at the same rhythm, integrated the Hc < 0 phase then makes σ too wide afterwards. σ ↑ ↔ aligned trigger ↓: temporal coincidence, mechanism not established. Options presented to Samuel, nothing applied: let run (α back to 0.001 in ~200 k?), relaunch with critic batch 512 / lr 3e-4 keeping actor 9600 + SoftClamp, or SoftClamp alone to isolate (led to run 504).

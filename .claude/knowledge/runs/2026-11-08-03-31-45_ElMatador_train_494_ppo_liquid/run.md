@@ -1,0 +1,32 @@
+# train_494_ppo_liquid
+
+| | |
+|---|---|
+| machine | ElMatador |
+| user | samuel |
+| launch | 2026-11-08 03:31:45 |
+| commit at launch | `401b7874` — respawn at empty reserve : truncated bootstraps on the next state, damage reward x3, no fire cost, curriculum window 8 / boundary 0.5 |
+| commits ≤ 90 min after | `3a1cb788` |
+| diff at launch | unknown (identity recorded after the run ended) |
+| raw data | `outputs/train_494_ppo_liquid` on ElMatador |
+
+## Established facts
+
+- 2026-11-08: Launched by Samuel 08/11 03:31 from `cmake-build-release`, config identical to 493; only change (validated « Oui, code-le » after 493's structural diagnosis, see run 493): bootstrap cut at truncation, i.e. empty reserve cuts the value target like a death: `deltas = rewards + gamma * next_values * (1 − cuts) − values` (cuts = done ∨ truncated) in ppo, ppo_liquid, ppg. Respawn in place and λ cut kept; the last shell carries the lost future value and the critic propagates it to earlier shells (learned option value, not a uniform cost). Comments of ppo/ppg rollout buffers rewritten. Build `build/` + agent tests ok, not committed at coding time. Risk: direction of 479 (penalise empty reserve) but without −1 nor starvation; gate at save_1-2 of next run = reserve clearly > 2.4 s without starvation, aligned/off-axis gap kept or widened. Throughput ~85 k/h, saves ~27 k.
+- 2026-11-08: CSV at 400 k. Curriculum: D 300 at 48 k, 350 at 67 k, 400 at 114 k, 450 at 181 k, 500 at 233 k, 550 at 267 k, **600 at 328 k** (493: stuck 450 since 267 k). fire 1.0 → 0.5-0.66/s (493: 1.2-1.5), CSV hit 0.09-0.12 rising (493: 0.08-0.09), **kill 12 → 3-5/episode** at D 550-600 (fewer, farther shots), s 60-75. KL regime ahead of 493: skip > 0.02 at 204 k, > 0.10 at 283 k, > 0.15 at 372 k (493: 256/378/420 k), kl 0.03 (target 0.05), Hc +0.02 → −0.22, clip 0.27, ev 0.25-0.42 (493: 0.5).
+- 2026-11-08: Probes side 250 (step ≥ 10, armed), p_fire <5° / >20°:
+
+| save (≈k) | aligned | off-axis | ratio | level | median reserve | armed | hit/shell | dec. <5° |
+|---|---|---|---|---|---|---|---|---|
+| 1 (27 k) | 0.713 | 0.687 | 1.04 | 0.70 | 2.5 s | 28 % | 8.1 % | 12.8 % |
+| 2 (54 k) | 0.601 | 0.582 | 1.03 | 0.59 | 2.8 s | 33 % | 11.9 % | 13.7 % |
+| 7 (190 k) | 0.581 | 0.460 | 1.26 | 0.52 | 3.3 s | 35 % | 12.5 % | 13.0 % |
+| 11 (297 k) | 0.535 | 0.240 | 2.2 | 0.30 | 5.1 s | 32 % | 10.3 % | 6.5 % (turret dip) |
+| 13 (351 k) | 0.446 | 0.184 | 2.4 | 0.29 | 6.8 s | 47 % | 16.5 % | 15.8 % |
+| 14 (378 k) | 0.337 | 0.136 | 2.5 | 0.21 | 9.3 s | 57 % | 17.9 % | 15.2 % |
+
+  At side 600 (save_14): 0.226 / 0.085, ratio 2.7, level 0.13, reserve 10.7 s, hit/shell 9.5 % at 224 m. Aligned-shot enrichment (shots <5° / decisions <5°): 1.03 → 1.13 → **1.60** (22 % vs 14 %); 493 plateaued 1.07. p_fire decreases with reserve (save_14: 0.33 at 1-2 shells, 0.21 at 3-5, 0.14 at 5-8; 0.62 at full reserve = spawn reflex), inverse of 493. Respawns 11 → 6/episode. Canon σ 0.30/0.29 → 0.22/0.17, |μ| > 0.9 ≤ 5 %.
+- 2026-11-08: Reading: gate passed on all three criteria (reserve ≫ 2.4 s, no starvation, gap kept/widened): scarcity restored through option value does what neither uniform cost (465/471/479/487) nor contrast alone (492/493) did: trigger sorts shots, hit/shell rises with it. First time a gap widens with steps without extinction. Vigilance: level still falling (0.30 → 0.29 → 0.21 save_11 → 14) while CSV fire holds 0.6-0.66/s (340-400 k): floor or slow slide toward 479, decide at save_18-20 (armed level > 0.15 and CSV fire ≥ 0.5/s); KL regime installs 100 k earlier than 493 (skip 17 %, Hc −0.22), 441 regressed at skip 41 %. If level < 0.15 with CSV fire < 0.4/s: slowed 479 slide, lever = hit value (amplitude), not a cost; if skip > ~30 %: 441 KL regime, treat separately (epochs/target_kl, not reward).
+- 2026-11-08: Result at 577 k (saves 16, 18, 20, 21 probed side 250). Level hit a trough at save_16 (≈432 k: 0.247/0.135, level 0.20, reserve 10.3 s, armed 55 %) then **rose**: save_18 (≈486 k) 0.547/0.262 level 0.42; save_20 (≈540 k) 0.574/0.236 level 0.38; **save_21 (≈567 k) 0.599/0.213, ratio 2.8 (record), level 0.38, reserve 5.1 s, armed 49 %**. Aligned-shot enrichment 1.3-1.55, hit/shell 15-18 % stable, decisions <5° 13-15 %. Canon σ 0.30/0.29 → 0.18/0.11 (CSV Hc −0.38), |μ| > 0.9 still 0 %. 479's slide did not occur: level self-regulates 0.2-0.4 while contrast deepens. CSV 400-577 k: D 650 at 404 k, 700 at 429 k, 750 at 461 k, 800 at 510 k, 850 at 539 k, **900 at 566 k**; hit 0.10-0.12, kill 3.6-6.4, fire 0.52-0.77/s, ev 0.33-0.41; **skip 0.16 → 0.38** (> 0.2 at 419 k, > 0.3 at 479 k), kl 0.032 flat, clip 0.28. KL regime at the level where 441 regressed (41 %) but without regression yet. Next gate: skip > 45 % or D falling = KL regime to treat (epochs/target_kl).
+- 2026-11-08: Decision by Samuel: let run to cruise at D = 1000 (curriculum ceiling) and judge there whether the agent really improves (hit/shell, kills at fixed distance, probe gap), not before; intermediate readings must not trigger changes except a confirmed KL regime (skip > 45 % or D falling).
+- 2026-11-08: Regression read at 794 k (save_29). D 900 held 566 k → 699 k then **→ 850**; skip 0.39 (570 k) → 0.45 (705 k) → 0.54 (780 k), kl flat 0.032 (early-stop at 1.5 × target = 0.075: once exceeded, rest of rollout skipped), Hc −0.38 → −0.45, ev 0.25-0.33. CSV hit 0.12 (570 k) → 0.075 (705-794 k), fire 0.5 → 0.75/s, kill 4-7. Probes side 250: **save_29 did not regress** (p 0.526/0.197 ratio 2.7, hit/shell 18.5 %, aligned hit 31 % record, dec. <5° 14.4 %); save_25 (≈675 k) = turret trough (dec. <5° 10.2 %, hit/shell 14.8 %) coinciding with the CSV hit drop at 690 k. **Probes side 850**, save_21 → save_29: hit/shell 9.0 → 6.9 %, dec. <5° 13.7 → 9.9 %, hits/tank/episode 8.9 → 5.6, mean distance 312 → 341 m, trigger unchanged (ratio 2.9 → 3.05, level 0.13 → 0.11, reserve 9-11 s). So trigger holds; **long-range alignment regresses**, with σ canon 0.30 → 0.16/0.09 (|μy| > 0.9: 2 → 5 %). Mechanism = σ↔skip loop (train353, 416): KL per step ∝ Δμ²/σ², tightening σ makes the early-stop trigger sooner, actor does only ~46 % of its steps. Continuous bonus 0.001 does not hold σ (450: 0.01 beats the surrogate). Options posed: actor lr 1e-4 → 5e-5 (KL/step ÷4, least intrusive, recommended), epochs 4 → 2 (417 ok, 480 under-exploits), continuous entropy 0.01 (σ rises, precision risk). No resume-from-save in `main.cpp` ⟹ any change = run from scratch (led to run 495).

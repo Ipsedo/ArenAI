@@ -1,0 +1,9 @@
+# PPO liquid train 430 — no shell regen, ammo dump (2026-10-24)
+
+Host: ElMatador (memory notes); raw data no longer on disk.
+Source note date: 2026-10-24. `train_430_ppo_liquid_no-shell-regen` (commit `548b4117`), analysed at 4.9 M decisions, D 250 → 450. Direct follow-up of run 429.
+
+- Measured: mean `fire` 0.56/s over ~31 s episodes ⟹ ~17-18 shells of 20 fired per episode; 26 % of `fire` windows are exactly 0 (25.6 s without a shot) ⟹ the reserve leaves in the first ~7 s then nothing until timeout. `hit` 5-6 % as 428/429 at equal D, `kill` 0.2-1.0 vs 2.1-2.8 for 429 ⟹ scarcity did not improve aim, it divided kills by the number of shells. `Hd` ≈ 0.60 = mean of H(0.4)=0.673 and H(0.25)=0.562: both discrete heads did not move from init.
+- This is the optimum of the written reward, not an exploration defect: aim reward `0.1·exp(-miss/tol)` ≥ 0 always, no fire cost, γ = 0.991/decision: a later shell is worth less unless aim improves meanwhile, which a 6 %-hit policy cannot do. The fire head only has gradient when `can_fire` (mask) ⟹ empty reserve = 80 % of the episode without any trigger learning.
+- Dump speed: p_init 0.4 × decision 10 Hz × cooldown 1/6 s (5 frames ⟹ 1 shot max per 2 decisions) ⟹ ~2.9 shots/s. The entropy factor (1e-3 × dH/dlogit ≈ 1e-4 per sample, ~1000× under the surrogate gradient) is not involved.
+- `initial_fire_proba = 0.01` does stretch the 20 shells (~0.1 shot/s) but sigmoid slope 24× weaker, 3 shells/episode = 6× less aim signal, and deterministic threshold 0.5 at +4.6 logits ⟹ dead-trigger / deterministic-threshold failure guaranteed. Levers proposed 2026-10-24 (not validated): cooldown 1/6 s → ~1.5 s (game-imposed rationing, insensitive to p), or p_init 0.10-0.15 (≈ 0.9 shot/s, slope ÷2.7 only). The cooldown lever was later refused (see docs/decisions.md: 2026-10-25 long fire cooldown, refused). Fire cost failure: see agent-does-not-aim note.

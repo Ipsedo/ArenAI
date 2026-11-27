@@ -1,0 +1,19 @@
+# train_539_ppo_liquid
+
+| | |
+|---|---|
+| machine | ElMatador |
+| user | samuel |
+| launch | 2026-11-19 16:13:05 |
+| commit at launch | `cc4ee96b` — add new graphic parameters to GUI |
+| commits ≤ 90 min after | none |
+| diff at launch | unknown (identity recorded after the run ended) |
+| raw data | `outputs/train_539_ppo_liquid` on ElMatador |
+
+## Established facts
+
+- 2026-11-19: run 539 (ppo_liquid, launched by Samuel 2026-11-19 16:13 from `cmake-build-release` recompiled 16:12, uncommitted tree; b83da585 + uncommitted; high confidence: binary and `libarenai_view.so` mtime after the fix) = 538 config + fix of image-one-decision-late (`VulkanOffscreenRenderer::draw_and_get_frame` renders the current step's image instead of the previous decision's), sole difference; config diff reduces to `noise_correlation` (option removed, 538 already at 0, white noise); removal of the coloured-noise code has no behavioural effect. One run per arm. 538 killed at 567 k (kill 11.5, D fell back 850 → 800). Throughput 97 k decisions/h (3.1 M tank-steps/h).
+- 2026-11-19: probes s3 (81 k) / s5 (135 k), sides 250/550, vs 538 s3: dwell < 5° 0.34/0.32 → 0.50/0.62 → 0.66/0.73 s; passes ≥ 1 s 4 % → 13-19 % → 22-24 % (538 never > 0.34 s from s1 to s8); command 1.5-1.75 → 0.85-1.0 °/decision. Unchanged: yaw < 5° 7-9 %, corrective 5-40° 0.56-0.59, hit/shell 13-14 % / 7.5-9 %. Passes 2× fewer and 2× longer. CSV at equal index (identical D milestones; 538 / 539): 60 k D 300 kill 22.4/23.3, hit 0.115/0.121, fire 2.40/1.96; 105 k D 350 23.1/25.4, 0.118/0.124, 1.58/2.38; 120 k D 400 22.7/26.1, 0.113/0.119, 1.04/2.79; 150 k D 450 21.6/26.4, 0.125/0.115, 1.01/1.71. Kills per probe episode 539: s3 25-28 (250), 23-25 (550); s5 26-29 (250), 16-22 (550). Why: first lever that moves dwell on target in training; one run per arm, kills and hit/shell within seed noise (bruit-de-seed-comparer-a-d-egal, feedback-proxy-pas-levier). Judge at D 600 / D 800 / D 1000 on kills (538: 18.9 at D 800; separate credit: 17.8-22 at D 1000), hit/shell, dwell held; probe with `build/` (fix included). Track B (synthese-visee-19-11-le-cercle) waiting on this verdict.
+- 2026-11-19 19:50 (CSV at 351 k, D 800): D 800 at 328 k (538: 429 k, no plateau at D 700). Kill +2 to +4 from D 350 to D 700 (25 vs 22) by cadence (fire 1.6-2.0 vs 1.0-1.4/s), hit per shot lower, r hollowed at D 450-600 (rest of reward −0.005 vs −0.0025, emptied reserves probable). Then same end as 538: fire 1.16 → 0.30/s, kill 25 → 15.5 at D 800 (538: 18.8 mean at D 800, 15.9 at D 850). At the curriculum threshold (16 kills). No gain at D 800 on kills.
+- 2026-11-19: probe s12 (324 k, D 800): dump gone (disarmed 4 %, empty at 25-49 s), hit/shell 19-21 % on sides 250/550/800, trigger selective on distance (p_fire 0.48-0.69 aligned < 40 m, 0.05-0.11 aligned all distances, 0.02-0.08 off-axis), shots 0.3-0.5/s. **Dwell lost**: 0.22-0.26 s (s5: 0.66-0.73; 538: 0.30-0.34), σ canon 0.04-0.08 → 0.20, command ×3, corrective 0.51-0.54. Sonde kills 23-28 / 17-24 / 14-19. CSV at 414 k: D fell back 750, kill 12.9, fire 0.09. The target-holding gain of s3/s5 did not hold; end = verrou-gachette-fermee-a-distance.
+- 2026-11-19 21:00 (conclusion at 447 k, D 750, kill 16, probes s8/s10 added): side 550 probe kills 24 / 20 / 25.5 / 23 / 21 (s3/s5/s8/s10/s12), dwell 0.62 / 0.73 / 0.49 / 0.28 / 0.24 s, σ canon 0.11 / 0.08 / 0.22 / 0.23 / 0.20, off-axis p_fire 0.73 / 0.67 / 0.18 / 0.05 / 0.03. At fixed side the policy holds; the CSV fall = curriculum regulating D where kills = 16 (750-850, as 538). Corrective never learned (0.51-0.59). Beyond 100 m only a shot < 2° pays (38-53 % at 100-200 m) and the trigger is closed and flat there (0.04-0.09). Correction alone is not enough; next proposal = track B (canon credit on H learned from image), design choice submitted to Samuel.

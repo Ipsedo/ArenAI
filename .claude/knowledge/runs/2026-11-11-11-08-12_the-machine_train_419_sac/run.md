@@ -3,49 +3,49 @@
 | | |
 |---|---|
 | machine | the-machine |
-| utilisateur | samuel |
-| lancement | 2026-11-11 11:08:12 |
-| commit au lancement | `f9342001` — returns for SAC computed on multiple steps (10 nexts for the moment) |
-| commits ≤ 90 min après | aucun |
-| diff au lancement | inconnu (identité relevée après la fin du run) |
-| données brutes | `outputs/train_419_sac` sur the-machine |
+| user | samuel |
+| launch | 2026-11-11 11:08:12 |
+| commit at launch | `f9342001` — returns for SAC computed on multiple steps (10 nexts for the moment) |
+| commits ≤ 90 min after | none |
+| diff at launch | unknown (identity recorded after the run ended) |
+| raw data | `outputs/train_419_sac` on the-machine |
 
-## Faits établis
+## Established facts
 
-_SAC run 419 (2026-11-11) = 417 + n_step 10, seule diff de config ; à 17k pas : Hc à la cible (−3.4) dès 12k (415 : 36k), perte q ×8, Q ≈ 0 (biais −0.09 disparu), Hd 0.15, hit 0.053 = plancher aléatoire ; trop tôt, juge = sonde ∂Q/∂a sur save_1 (27k)_
+_SAC run 419 (2026-11-11) = 417 + n_step 10, only config diff; at 17k steps: Hc at target (−3.4) from 12k (415: 36k), q loss ×8, Q ≈ 0 (−0.09 bias gone), Hd 0.15, hit 0.053 = random floor; too early, judge = ∂Q/∂a probe on save_1 (27k)_
 
-Run 419 lancé 2026-11-11 10:52, config identique à 417 sauf `n_step` 10. Lu à 17k pas (1 h 23).
+Run 419 launched 2026-11-11 10:52, config identical to 417 except `n_step` 10. Read at 17k steps (1 h 23).
 
-Moyennes 9k–17k (415 / 417 / 419) : hit 0.075 / 0.059 / 0.053, fire 0.68 / 0.49 / 0.57 obus/s,
-miss 21.2 / 21.8 / 22.7 m, perte q 0.0036 / 0.0030 / 0.023, Hd 0.23 / 0.30 / 0.15. D = 250 partout.
-Hc atteint −3.3 (≈ cible σ 0.1 sur 4 axes) dès 12k ; Q passe de −0.09 (415/417) à ≈ +0.01.
+Means 9k–17k (415 / 417 / 419): hit 0.075 / 0.059 / 0.053, fire 0.68 / 0.49 / 0.57 shells/s,
+miss 21.2 / 21.8 / 22.7 m, q loss 0.0036 / 0.0030 / 0.023, Hd 0.23 / 0.30 / 0.15. D = 250 everywhere.
+Hc reaches −3.3 (≈ σ target 0.1 over 4 axes) from 12k; Q goes from −0.09 (415/417) to ≈ +0.01.
 
-**Why:** perte q ×8 attendue (cible = somme de 10 rewards bruitées) ; à 17k le hit est au plancher
-aléatoire comme 417, donc rien n'est encore mesurable côté visée.
+**Why:** q loss ×8 expected (target = sum of 10 noisy rewards); at 17k hit is at the random floor
+like 417, so nothing about aim is measurable yet.
 
-**How to apply:** ne pas conclure sur les métriques CSV avant ~50k ; le test décisif est la sonde
-∂Q/∂a_canon (qgrad.py) sur save_1 : P(bon sens) armé ≫ 0.5 (417 : 0.47–0.50).
-Voir run 417, sac-agent-2026-11.
+**How to apply:** do not conclude on CSV metrics before ~50k; the decisive test is the probe
+∂Q/∂a_canon (qgrad.py) on save_1: P(right direction) armed ≫ 0.5 (417: 0.47–0.50).
+See run 417, sac-agent-2026-11.
 
-2026-11-11, sonde ∂Q/∂a sur save_1 (27k, D=250, 2 épisodes), 419 vs 417 save_1 au même stade :
-P(∂Q/∂a bon sens) armé 0.51 vs 0.52, toutes tranches 0.49–0.56 vs 0.50–0.54, corr ≈ 0 dans les deux ;
-|∂Q/∂a| ×3 (2.5e-3 vs 8e-4) ; P(μ bon sens) sur |yaw| 10–30° 0.54 vs 0.64 ; armé 30 % vs 15 % des
-décisions. → à 27k, le n-step rend le critique plus sensible à l'action sans lui donner de direction.
-Même le terme de potentiel (dépendant de l'action dès s_{t+1}) n'apparaît pas dans ∂Q/∂a.
+2026-11-11, ∂Q/∂a probe on save_1 (27k, D=250, 2 episodes), 419 vs 417 save_1 at the same stage:
+P(∂Q/∂a right direction) armed 0.51 vs 0.52, all slices 0.49–0.56 vs 0.50–0.54, corr ≈ 0 in both;
+|∂Q/∂a| ×3 (2.5e-3 vs 8e-4); P(μ right direction) on |yaw| 10–30° 0.54 vs 0.64; armed 30 % vs 15 % of
+decisions. → at 27k, n-step makes the critic more sensitive to the action without giving it a direction.
+Even the potential term (action-dependent from s_{t+1}) does not appear in ∂Q/∂a.
 
-2026-11-11, jumeaux (sonde : colonnes dq1/dq2 par critique, 1 épisode D=250, save_1) : accord de signe
-Q1/Q2 sur ∂Q/∂a_canon 0.48–0.55 et corr(Q1, Q2) 0.03–0.16 dans 419 comme dans 417 (même armé, |yaw|<10).
-→ la dépendance de Q à l'action est du bruit d'ajustement propre à chaque critique, pas un signal
-partagé. Ordre de grandeur attendu du seul potentiel armé |yaw|<10 : ~1e-2 à 1e-1, mesuré 8e-3 de signe
-aléatoire. Poids de la 1re couche : colonnes action ≈ init, pas d'atrophie. Piège sonde : un seul
-autograd::grad à plusieurs sorties renvoie le gradient de leur somme.
+2026-11-11, twins (probe: columns dq1/dq2 per critic, 1 episode D=250, save_1): sign agreement
+Q1/Q2 on ∂Q/∂a_canon 0.48–0.55 and corr(Q1, Q2) 0.03–0.16 in 419 as in 417 (even armed, |yaw|<10).
+→ Q's dependence on the action is fitting noise specific to each critic, not a shared
+signal. Expected order of magnitude of the armed potential alone |yaw|<10: ~1e-2 to 1e-1, measured 8e-3 of
+random sign. 1st-layer weights: action columns ≈ init, no atrophy. Probe pitfall: a single
+autograd::grad with several outputs returns the gradient of their sum.
 
-2026-11-11, sonde de features (probe --features exporte pour SAC : acteur [vision 192 | capteurs 64],
-puis Q1, Q2 ; vision = SpatialSoftmax [x 64 | y 64 | présence 64]), 1 épisode D=250, split par tank,
-cible = tank le plus proche. Ridge yaw (|yaw|<30°, <60 m) : R² 0.02 (419 s1), 0.14–0.16 (417 s1),
-−0.11 (417 s5) ; MLP pire (surapprend). Signe du yaw à |yaw|<10° : 0.52–0.57 partout. Détection
-« tank < 40 m dans le champ (|yaw|<15°, |pitch|<10°) » AUC 0.74–0.86. Contrôle : capteurs → réserve
-R² 0.67, alignement CSV/bin exact. → encodeurs SAC (acteur ET critiques) détectent vaguement la
-présence d'un tank mais ne codent pas son gisement, et ça ne s'améliore pas avec l'entraînement.
-Limites : pas de témoin positif (aucun run PPO local), petit n, cible = plus proche ≠ plus saillant.
-Distinct de cnn-perception-validated (CNN PPO) : ici CNN SAC entraîné par TD seul.
+2026-11-11, feature probe (probe --features exports for SAC: actor [vision 192 | sensors 64],
+then Q1, Q2; vision = SpatialSoftmax [x 64 | y 64 | presence 64]), 1 episode D=250, split by tank,
+target = nearest tank. Ridge yaw (|yaw|<30°, <60 m): R² 0.02 (419 s1), 0.14–0.16 (417 s1),
+−0.11 (417 s5); MLP worse (overfits). Yaw sign at |yaw|<10°: 0.52–0.57 everywhere. Detection
+« tank < 40 m in the field (|yaw|<15°, |pitch|<10°) » AUC 0.74–0.86. Control: sensors → reserve
+R² 0.67, CSV/bin alignment exact. → SAC encoders (actor AND critics) vaguely detect the
+presence of a tank but do not encode its bearing, and it does not improve with training.
+Limits: no positive control (no local PPO run), small n, target = nearest ≠ most salient.
+Distinct from cnn-perception-validated (PPO CNN): here SAC CNN trained by TD alone.

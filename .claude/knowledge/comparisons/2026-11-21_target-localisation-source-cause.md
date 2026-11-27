@@ -1,0 +1,25 @@
+# Hypothesis « source = target localisation in the image » REFUTED by control run 548
+
+Runs: 545, 546, 547, 548 (`train_548_temoin_gisement`), 550, 522
+
+2026-11-21/22: hypothesis refuted by control 548 (target position as input, turret not servoed in 300 k); contains the audit, the aiming funnel, the first-person camera bench and the end-of-episode GAE bug. Samuel's request 2026-11-21 (« Φ₂ n'est pas LA solution, cherche le problème de modélisation »). Scripts and plates: `outputs/comparisons/2026-11-21_cause_source/` (`funnel.py`, `gain.py`, `frames.py`, `.venv/bin/python`).
+
+Measured on 546 s20/s27 and 545 s16 (stochastic probes):
+- Command directed toward the nearest visible enemy (5-30° off): +0.10 to +0.20 unit (≈ 1°/decision) at < 60 m, +0.05-0.10 at 60-100 m, ≈ 0 at 100-200 m, 0 out of field; full authority = 6-9°/decision. Yaw = 5-9 % of variance of μ canon_x. Target < 60 m brought < 5° in 1 s: 30-40 % (60 % side 1000 s27).
+- Funnel side 550 s27 (armed decisions): close < 100 m 50 % → in field 19 % → yaw < 5° 11 % → aligned 5 % → fire 13 %. Out of field among close 59-67 %.
+- σ canon_x 0.09-0.13 aligned, 0.3-0.5 at 5-40° (noise 4× the directed command); hold < 2° from one decision to the next 0.82 (0.90-0.95 at low noise). α_canon_x 0.001 → 0.087.
+- Composition side 1000: 56 % of rows after 60 s for 23 % of hits, enemy < 100 m 6-12 % of the time (dead without respawn).
+- Trigger: oscillation fire 0.15 ↔ 0.4 (period 100-150 k); sum of (shot − p)·A ≈ 0 at peak (s20, +72 ± 70), clear at trough (s27, +563) ⟹ corrects gae-advantage-trigger-546 (run 546 note): no cause in the actor update.
+- Images (522, camera unchanged): 3rd person, agent tank on the firing axis, no reticle, random colours everywhere (terrain, tank parts, 120 objects, debris); enemy at 60-100 m ≈ 10-25 px.
+
+Code: end of episode on time (5400 frames) without `truncated` ⟹ `compute_gae` chains on V of the 1st state of the next episode for survivors (`final_state_` of the buffer never used); < 1 % of rows, not fixed.
+
+Reading (Claude's, by cross-reading comparisons/2026-11-16_cnn-bench-spatial-softmax.md, alignment decoding 522 s68, comparisons/2026-11-18_critic-blind-to-aiming-gesture.md, not by intervention): source = target localisation in the image, not learned; trigger, dump, economy = downstream. Deciding test proposed to Samuel 2026-11-21 (not decided): disposable control run with target bearing in the state. Nothing coded without his answer.
+
+**First-person camera bench (2026-11-22, validated by Samuel, `outputs/comparisons/2026-11-22_camera_premiere_personne/`):** camera at canon muzzle (0, 0, 10.5) vs (0, 4, −20), actor 546 save_0, 24 episodes side 550, ~5 k training images, CNN D of the 2026-11-16 bench, 4 seeds. Left/right 0.643 → 0.720; target < 100 m 0.720 → 0.813; corr 0.21 → 0.32; median error < 100 m 9.4° → 8.0°. At 5 episodes no gap. Net but partial gain. `canon.cpp` modification done in `build/` only then undone (source and `build/` restored). The canon camera is shared with the player (`JoltTank::camera`): a run requires deciding the separation.
+
+**Control run 548 (2026-11-22, pieces validated one by one by Samuel):** `outputs/train_548_temoin_gisement`, binary of disposable worktree `/home/samuel/CLionProjects/arenai_wt_temoin` (HEAD 10211f76 + diff of 547 + control, clean `build/`, never merged), launched detached in parallel with 547 (identical config). Addition: 4 proprio values before the received-shot direction = nearest living enemy in field (±39.5° / ±22.5°, canon frame, no occlusion test): yaw/39.5°, elevation/22.5°, min(1, 50 m/d), presence. Probe with the worktree binary. Criterion: command directed toward visible target at 5-30° (≈ 1°/decision without control, full authority 6-9°) and target < 60 m brought < 5° in 1 s (30-40 %), vs 547 at same saves (`gain.py`).
+
+**548 at save_3 / save_7 (81 k / 189 k, side 550, `outputs/comparisons/2026-11-22_temoin_gisement/`):** directed command < 60 m 0.87 / 1.10°/decision vs 547 0.73 / 0.70; target < 60 m brought < 5° in 1 s 30 / 31 % vs 30 / 26 %; CSV kill and hit equal. Yaw-column weight in layer 1: 0.98 → 1.39 → 1.83 (others fixed): the input is read, the turret is not servoed. ⟹ Claude's « perception = source » reading not confirmed at 189 k; Samuel (2026-11-22) leans to reward/economy, learning or control. Both runs σ canon 0.05-0.07 and kl 0.085-0.094 at 170-190 k.
+
+**548 at save_11 (297 k, D 750):** directed command < 60 m 0.96°/decision vs 547 0.97; brought < 5° in 1 s 42 % vs 30 %; yaw = 14 % of var(μ) vs 6 %; yaw-column weight 2.33; CSV kill/hit equal (27.1 / 0.141 vs 26.3 / 0.132). ⟹ **« perception = source » hypothesis refuted**: with the target position as input the turret is not servoed in 300 k. Look at command learning (σ canon 0.05-0.07 + kl 0.07-0.09 and 13-20 % canon steps skipped at 100-200 k), control (delay of 2 decisions), Φ₂ credit. Never present camera or colours as the main lever again. (see docs/decisions.md 2026-11-10: CNN perception ruled out)

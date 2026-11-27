@@ -1,21 +1,21 @@
-# Run 420 (dossier `train_20_sac`, nom erroné) — SAC, encodeur d'état partagé
+# Run 420 (folder `train_20_sac`, wrong name) — SAC, shared state encoder
 
-- Lancé 2026-11-11 14:21, lu à 15:44 : **en cours**, index 41k, D = 250 depuis le début.
-- Débit 29.8k pas/h (955k tank-steps/h, 32 tanks) — comparable à 419.
-- Commit effectif : **aed53757** (encodeur partagé), confiance haute : binaire d'entraînement compilé
-  à 14:21 et contenant `StateEncoder` ; `actor_repr.txt` montre `SacActor { encoder: StateEncoder }`
-  et `critic_repr.txt` `TwinQNetwork { encoder: StateEncoder, q1, q2 }`, même température de
-  SpatialSoftmax (0.3145) côté acteur et critique.
+- Launched 2026-11-11 14:21, read at 15:44: **running**, index 41k, D = 250 since the start.
+- Throughput 29.8k steps/h (955k tank-steps/h, 32 tanks) — comparable to 419.
+- Effective commit: **aed53757** (shared encoder), high confidence: training binary compiled
+  at 14:21 and containing `StateEncoder`; `actor_repr.txt` shows `SacActor { encoder: StateEncoder }`
+  and `critic_repr.txt` `TwinQNetwork { encoder: StateEncoder, q1, q2 }`, same SpatialSoftmax
+  temperature (0.3145) on actor and critic side.
 
-## Ce que teste ce run
+## What this run tests
 
-`config.json` identique à 419. Seul changement de code : `StateEncoder` (vision + capteurs) unique,
-porté par les jumeaux et entraîné par la perte TD ; l'acteur lit l'encodage détaché et n'optimise que
-sa tête. Hypothèse : en 417/419 les features vision ne codaient pas le gisement de la cible (R² ≤ 0.16)
-et ∂Q/∂a_canon n'avait pas de direction ; un encodeur partagé ne change pas le signal qui l'entraîne
-(TD seul), il supprime seulement l'encodeur propre de l'acteur. Aucun changement confondu.
+`config.json` identical to 419. Only code change: a single `StateEncoder` (vision + sensors),
+carried by the twins and trained by the TD loss; the actor reads the detached encoding and optimises only
+its head. Hypothesis: in 417/419 the vision features did not encode the target bearing (R² ≤ 0.16)
+and ∂Q/∂a_canon had no direction; a shared encoder does not change the signal that trains it
+(TD alone), it only removes the actor's own encoder. No confounded change.
 
-## Lecture du CSV (moyennes par tranche d'index, D = 250 partout)
+## CSV reading (means per index slice, D = 250 everywhere)
 
 | index | run | hit | kill | fire | miss | s | q | Q | Hc |
 |---|---|---|---|---|---|---|---|---|---|
@@ -28,50 +28,50 @@ et ∂Q/∂a_canon n'avait pas de direction ; un encodeur partagé ne change pas
 | 30–42k | 419 | 0.070 | 0.66 | 0.69 | 19.3 | 71 | 0.057 | 0.026 | −3.7 |
 | | 420 | 0.065 | 0.65 | 0.62 | 20.4 | 71 | 0.077 | 0.114 | −5.0 |
 
-(419 s'arrête à 33k ; 415 : hit 0.091 à 30–42k et D = 300, 417 : 0.073.)
+(419 stops at 33k; 415: hit 0.091 at 30–42k and D = 300, 417: 0.073.)
 
-- **Démarrage lent** : hit ≈ 0.004–0.01 jusqu'à 8k (419 : 0.03–0.05 dès 3k), kill = 0 jusqu'à 14k.
-  Une partie précède `learning_starts` (5k) et relève donc de l'init/du seed.
-- **Rattrapage** : pente de hit plus raide, 0.072 à 39k et 0.077 à 41k (record du run, isolé) ;
-  miss 26.9 → 19.8 m ; s 20 → 72 s. Le curriculum n'a pas bougé (seuil haut 0.08).
-- **Hc dépasse la cible** : −5.6 à 30k, min −5.97 à 31k (cible ≈ −3.5 pour σ 0.1 × 4 axes, que 419
-  tient à −3.4/−3.7). Les αc ont baissé jusqu'à ~1.8e-4 puis remontent (3.7e-4 à 41k) : la boucle α
-  corrige avec retard. La sonde montre que ce n'est pas le canon : σ canon médian 0.48/0.43 (H ≈ −0.36/−0.30,
-  σ ≫ cible 0.1). Le déficit vient des axes de direction, dont μ est saturé (|μ| > 1,5 : 25 et 29 %
-  des décisions) : la cible d'entropie post-tanh est atteinte par saturation, comme en 415/416.
-- Q monte à +0.11 (419 : +0.01–0.03) et q ×1.3 ; cohérent avec un r plus élevé en fin de fenêtre,
-  pas de dérive négative comme en 415.
-- αd monte continûment (0.0037 à 41k), comme en 419.
+- **Slow start**: hit ≈ 0.004–0.01 until 8k (419: 0.03–0.05 from 3k), kill = 0 until 14k.
+  Part of it precedes `learning_starts` (5k) and thus belongs to init/seed.
+- **Catch-up**: steeper hit slope, 0.072 at 39k and 0.077 at 41k (run record, isolated);
+  miss 26.9 → 19.8 m; s 20 → 72 s. Curriculum did not move (high threshold 0.08).
+- **Hc overshoots the target**: −5.6 at 30k, min −5.97 at 31k (target ≈ −3.5 for σ 0.1 × 4 axes, which 419
+  holds at −3.4/−3.7). αc fell to ~1.8e-4 then rise again (3.7e-4 at 41k): the α loop
+  corrects late. The probe shows it is not the canon: median canon σ 0.48/0.43 (H ≈ −0.36/−0.30,
+  σ ≫ target 0.1). The deficit comes from the direction axes, whose μ is saturated (|μ| > 1.5: 25 and 29 %
+  of decisions): the post-tanh entropy target is reached by saturation, as in 415/416.
+- Q rises to +0.11 (419: +0.01–0.03) and q ×1.3; consistent with a higher r at the end of the window,
+  no negative drift as in 415.
+- αd rises continuously (0.0037 at 41k), as in 419.
 
-## Diagnostic
+## Diagnosis
 
-Établi :
-- Le code est bien celui de l'encodeur partagé, sans autre changement.
-- À save_1 (27k), **∂Q/∂a_canon n'a toujours pas de direction** (voir `probes/save_1.md`) :
-  P(bon sens) 0.50–0.52 à tous les angles, armé 0.52, jumeaux en désaccord de signe (0.45–0.49).
-  Strictement identique à 417/419 : l'encodeur partagé n'a pas rendu le critique sensible à la visée
-  continue.
-- La gâchette (tête discrète, espérance exacte sur Q(s, ·) à K sorties) est **sélective** :
-  p_fire 0.50 sous 5° contre 0.24 au-delà de 45°, décroissance monotone avec l'angle.
+Established:
+- The code is indeed the shared-encoder one, with no other change.
+- At save_1 (27k), **∂Q/∂a_canon still has no direction** (see `probes/save_1.md`):
+  P(right direction) 0.50–0.52 at all angles, armed 0.52, twins disagree in sign (0.45–0.49).
+  Strictly identical to 417/419: the shared encoder did not make the critic sensitive to continuous
+  aim.
+- The trigger (discrete head, exact expectation over Q(s, ·) with K outputs) is **selective**:
+  p_fire 0.50 under 5° vs 0.24 beyond 45°, monotone decrease with angle.
 
-Dans le bruit / non tranché :
-- Démarrage lent puis rattrapage : un seul seed, l'écart à 41k (0.065 vs 0.070 à 30–42k) est nul.
-- On ne sait pas si la sélectivité de la gâchette est nouvelle : aucune sonde 417/419 n'a été
-  passée avec le script actuel (métrique `ratio`).
-- Hc sous la cible : effet de l'encodeur partagé (l'acteur suit des features qui bougent sous lui)
-  ou simple lenteur de α ; non attribuable.
+In the noise / undecided:
+- Slow start then catch-up: single seed, the gap at 41k (0.065 vs 0.070 at 30–42k) is nil.
+- Unknown whether the trigger's selectivity is new: no 417/419 probe was
+  run with the current script (`ratio` metric).
+- Hc under target: effect of the shared encoder (the actor follows features that move under it)
+  or mere slowness of α; not attributable.
 
-## Options (à trancher par Samuel)
+## Options (Samuel's decision)
 
-1. Sonder 419 save_1 avec le même script (côté 250) pour savoir si la gâchette sélective est due à
-   l'encodeur partagé ou était déjà là (≈ 7 min avec l'entraînement en parallèle).
-2. Laisser tourner jusqu'à ~80–100k et sonder save_2/save_3 : la question est de savoir si ∂Q/∂a
-   prend une direction plus tard, ou si seul le canal discret apprend.
-3. Comme en 419, tester les features de l'encodeur partagé (`--features`) : le gisement est-il codé
-   maintenant que l'encodeur est unique ?
+1. Probe 419 save_1 with the same script (side 250) to know whether the selective trigger is due to
+   the shared encoder or was already there (≈ 7 min with training in parallel).
+2. Let it run to ~80–100k and probe save_2/save_3: does ∂Q/∂a take a direction later, or does only
+   the discrete channel learn.
+3. As in 419, test the shared encoder's features (`--features`): is the bearing encoded
+   now that the encoder is single?
 
-## Repères
+## Markers
 
-- D passe 300 (hit > 0.08 tenu) : 415 l'avait à ~20k, 420 n'y est pas à 41k.
-- Hc : doit remonter vers −3.5 à mesure que les αc remontent ; s'il reste < −5, regarder σ direction.
-- Sonde save_2 : `ratio` de la gâchette et P(∂Q/∂a bon sens) armé.
+- D passes 300 (hit > 0.08 held): 415 had it at ~20k, 420 is not there at 41k.
+- Hc: should rise back toward −3.5 as αc rises; if it stays < −5, look at direction σ.
+- Probe save_2: trigger `ratio` and armed P(∂Q/∂a right direction).

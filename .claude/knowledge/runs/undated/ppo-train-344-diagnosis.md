@@ -1,6 +1,6 @@
 ---
 name: ppo-train-344-diagnosis
-description: "train_344 (ppo_liquid, facteurs d'entropie fixes 0.001, 256x128, 27.7M steps, 2026-10-11→16) — pic à 0.3-0.7M puis régression lente, curriculum redescend 550→350, Hc s'effondre sans plancher, Hd ≈ max"
+description: "train_344 (ppo_liquid, fixed entropy factors 0.001, 256x128, 27.7M steps, 2026-10-11→16) — peak at 0.3-0.7M then slow regression, curriculum falls 550→350, Hc collapses without floor, Hd ≈ max"
 metadata:
   node_type: memory
   type: project
@@ -8,24 +8,24 @@ metadata:
   modified: 2026-10-16T16:44:01.196Z
 ---
 
-Run analysé le 2026-10-16 (terminé à 27.7M steps, 256 saves, save_k ≈ k×108k steps).
-Config : ppo_liquid, truncated normal, `continuous/discrete_entropy_factor = 0.001` fixes
-(PID Lagrangien retiré dans 00866e3d), aim reward, epochs 2, minibatch 2048, neuron_number 128.
+Run analysed 2026-10-16 (finished at 27.7M steps, 256 saves, save_k ≈ k×108k steps).
+Config: ppo_liquid, truncated normal, fixed `continuous/discrete_entropy_factor = 0.001`
+(Lagrangian PID removed in 00866e3d), aim reward, epochs 2, minibatch 2048, neuron_number 128.
 
-- Pic hit (précision/épisode) 0.081, kill 4.3 à 0.3-0.7M (D 250-300) → save_3..6 meilleurs.
-  Moins bon que le pic de [[ppo-train-339-diagnosis]] (0.095).
-- Curriculum monte à D=550 (5.1M), y reste 11M, puis **redescend** 500 (16.2M) → 350 (26.8M).
-  À D=350 en fin : kill 0.76 vs 3.9 au même D à 0.83M → vraie régression, pas un effet de D.
-- Hc décroît sans arrêt 0.51 → −1.9 (σ moyen ≈ 0.04) : 0.001 ne retient rien. Hd monte
-  0.62 → 0.686 (≈ ln2) : fire/zoom restent ~pile-ou-face, la tête discrète n'apprend pas.
-- clip 0.2-0.27, kl ~0.02, skip à pics jusqu'à 0.7 ; ev 0.3-0.4 (pic isolé −137 à 5M).
-- fire ≈ 1.07 obus/s constant, s ≈ 33 constant ; miss 50 → 29 (en partie effet D).
+- Hit peak (precision/episode) 0.081, kill 4.3 at 0.3-0.7M (D 250-300) → save_3..6 best.
+  Worse than the peak of [ppo-train-339-diagnosis](ppo-train-339-diagnosis.md) (0.095).
+- Curriculum rises to D=550 (5.1M), stays 11M, then **falls** 500 (16.2M) → 350 (26.8M).
+  At D=350 late: kill 0.76 vs 3.9 at same D at 0.83M → real regression, not a D effect.
+- Hc decreases steadily 0.51 → −1.9 (mean σ ≈ 0.04): 0.001 retains nothing. Hd rises
+  0.62 → 0.686 (≈ ln2): fire/zoom stay ~coin-flip, the discrete head does not learn.
+- clip 0.2-0.27, kl ~0.02, skip spikes up to 0.7; ev 0.3-0.4 (isolated −137 spike at 5M).
+- fire ≈ 1.07 shells/s constant, s ≈ 33 constant; miss 50 → 29 (partly D effect).
 
-Lecture : facteurs fixes = pire que le plancher PID (Hc incontrôlé). Voir ppo-beta-entropy-init.
+Reading: fixed factors = worse than the PID floor (uncontrolled Hc). See ppo-beta-entropy-init.
 
-Suite validée par Samuel (2026-10-16), **ppo_liquid uniquement** : σ indépendant de l'état
-(paramètre `sigma_logit` [nb_continuous] → `SigmaOutput` log-sigmoïde [SIGMA_MIN, SIGMA_MAX],
-init = `initial_sigma` 0.5, tête μ orthogonale ×0.01 inchangée) façon CleanRL/Andrychowicz 2021,
-et facteurs d'entropie fixes 0.01 (standard Atari/Procgen, avantages normalisés par rollout).
-Les anciens checkpoints ppo_liquid (tête `sigma.0.*`) ne se rechargent plus. Options écartées
-pour l'instant : retour au PID, plancher σ par dim (DreamerV3), pool d'adversaires passés.
+Follow-up validated by Samuel (2026-10-16), **ppo_liquid only**: state-independent σ
+(parameter `sigma_logit` [nb_continuous] → `SigmaOutput` log-sigmoid [SIGMA_MIN, SIGMA_MAX],
+init = `initial_sigma` 0.5, orthogonal μ head ×0.01 unchanged) CleanRL/Andrychowicz 2021 style,
+and fixed entropy factors 0.01 (Atari/Procgen standard, advantages normalised per rollout).
+Old ppo_liquid checkpoints (head `sigma.0.*`) no longer reload. Options set aside for now:
+back to PID, per-dim σ floor (DreamerV3), pool of past opponents.

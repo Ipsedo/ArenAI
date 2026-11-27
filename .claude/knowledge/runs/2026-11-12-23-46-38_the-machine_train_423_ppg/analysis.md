@@ -1,29 +1,29 @@
 # Run 423 — PPG
 
-- Lancé 2026-11-12 23:46 → dernière ligne 2026-11-13 08:15, **en cours** (8.5 h).
-- Index final 581k, 68.4k pas/h (2.19 M tank-steps/h, 32 tanks) ; 422 tournait à 74.8k pas/h.
-- Commit effectif **802b1b32** (confiance haute) : commit 23:45:43, binaire 23:46:37, `config.json` 23:46:38, arbre propre.
-- Saves : save_21 ≈ 581k (~27.7k pas/save) ; D=1000 atteint vers save_15.
+- Launched 2026-11-12 23:46 → last row 2026-11-13 08:15, **running** (8.5 h).
+- Final index 581k, 68.4k steps/h (2.19 M tank-steps/h, 32 tanks); 422 ran at 74.8k steps/h.
+- Effective commit **802b1b32** (high confidence): commit 23:45:43, binary 23:46:37, `config.json` 23:46:38, clean tree.
+- Saves: save_21 ≈ 581k (~27.7k steps/save); D=1000 reached around save_15.
 
-## Ce que teste ce run
+## What this run tests
 
-Config identique à 422. Seul changement de code : **7422d098, arrêt KL par groupe d'actions**.
-Avant, un seul `target_kl` sur la KL jointe coupait tout l'acteur ; maintenant le groupe visée
-(canon_x, canon_y, avantage φ sans critique) et le groupe reste (déplacement, fire, zoom, avantage
-critique) sont stoppés chacun sur leur propre KL (> 1.5 × 0.05). `skip` = skip du groupe reste,
-`skip_canon` = skip du groupe visée, `kl` = KL jointe.
+Config identical to 422. Only code change: **7422d098, per-action-group KL stop**.
+Before, a single `target_kl` on the joint KL cut the whole actor; now the aim group
+(canon_x, canon_y, critic-less φ advantage) and the rest group (displacement, fire, zoom, critic
+advantage) are each stopped on their own KL (> 1.5 × 0.05). `skip` = skip of the rest group,
+`skip_canon` = skip of the aim group, `kl` = joint KL.
 
-Hérité de 422 (1e171bbf), donc **confondu** avec 423 face à 421 : stabilisation du canon vis-à-vis
-des mouvements du châssis, avantage visée = potentiel φ (trajectoire théorique de l'obus) avec
-`aim_gae_lambda = 0`, cibles d'entropie [0, 0, 0, 0], retour à la visée en delta.
+Inherited from 422 (1e171bbf), hence **confounded** with 423 against 421: canon stabilisation w.r.t.
+chassis movements, aim advantage = potential φ (theoretical shell trajectory) with
+`aim_gae_lambda = 0`, entropy targets [0, 0, 0, 0], return to delta aim.
 
-422 a été arrêté à 148k (D=500) : il n'existe pas de 422 long pour isoler l'arrêt par groupe.
+422 was stopped at 148k (D=500): there is no long 422 to isolate the per-group stop.
 
-## Lecture du CSV
+## CSV reading
 
-Jalons D : 300 @ 21k, 400 @ 67k, 500 @ 145k, 600 @ 208k, 700 @ 267k, 800 @ 305k, 900 @ 366k,
-**1000 @ 429k** — premier run à atteindre la borne finale du curriculum (421 : D=400 à 145k,
-450 à 566k ; meilleurs SAC : D=400).
+D milestones: 300 @ 21k, 400 @ 67k, 500 @ 145k, 600 @ 208k, 700 @ 267k, 800 @ 305k, 900 @ 366k,
+**1000 @ 429k** — first run to reach the curriculum's final bound (421: D=400 at 145k,
+450 at 566k; best SACs: D=400).
 
 | D | hit | fire (/s) | kill | s (s) | miss (m) | ev | Hc | skip | skip_canon |
 |---|---|---|---|---|---|---|---|---|---|
@@ -33,61 +33,61 @@ Jalons D : 300 @ 21k, 400 @ 67k, 500 @ 145k, 600 @ 208k, 700 @ 267k, 800 @ 305k,
 | 900 | 0.171 | 1.01 | 22.1 | 45 | 58 | 0.74 | 0.05 | 0.09 | 0.02 |
 | 1000 (429k → 581k) | 0.193 | 0.81 | 21.2 | 48 | 64 | 0.74 | 0.06 | 0.03 | 0.03 |
 
-- **hit monte avec D** au lieu de chuter : 0.126 (D=400) → 0.193 (D=1000), dernier 0.217 @ 581k,
-  record du run. Les tranches à D=1000 : 0.186 → 0.199 → 0.194, encore en légère hausse.
-- **fire baisse** 1.6 → 0.8 /s pendant que hit monte. Touches/s par tank vivant ≈ fire × hit :
-  0.21 (D=400) → 0.16 (D=1000), dans une arène 6× plus grande ; kill/épisode plat ~21.
-- miss 22 → 64 m croît avec D : géométrique, pas une dégradation de la visée.
-- Critique stable (ev 0.70–0.75 tout le run, v ~0.04).
-- Hc : creux −1.34 @ 59k (D=350), puis remonte à ~+0.1 dès D=450 et y reste. α canon actifs
-  (0.01–0.035, au-dessus du plancher) ; α dir au plancher 1e-4 depuis ~400k ; α fire/zoom au plancher.
-- KL : régime KL seulement à D=300–400 (kl 0.14, clip 0.5, skip 0.11–0.15), puis kl 0.02–0.05,
+- **hit rises with D** instead of dropping: 0.126 (D=400) → 0.193 (D=1000), last 0.217 @ 581k,
+  run record. Slices at D=1000: 0.186 → 0.199 → 0.194, still slightly rising.
+- **fire drops** 1.6 → 0.8 /s while hit rises. Hits/s per living tank ≈ fire × hit:
+  0.21 (D=400) → 0.16 (D=1000), in a 6× larger arena; kill/episode flat ~21.
+- miss 22 → 64 m grows with D: geometric, not an aim degradation.
+- Critic stable (ev 0.70–0.75 all run, v ~0.04).
+- Hc: trough −1.34 @ 59k (D=350), then rises to ~+0.1 from D=450 and stays. Canon α active
+  (0.01–0.035, above floor); dir α at floor 1e-4 since ~400k; fire/zoom α at floor.
+- KL: KL regime only at D=300–400 (kl 0.14, clip 0.5, skip 0.11–0.15), then kl 0.02–0.05,
   clip ~0.21, skip < 0.1.
 
-### Face à 422 (même config, arrêt KL joint) sur 0–148k
+### Against 422 (same config, joint KL stop) over 0–148k
 
-Jalons D identiques au point de log près (300 @ 21k … 500 @ 145k), hit identique dans le bruit
-(D=400 : 0.126 vs 0.123 ; D=450 : 0.131 vs 0.119). Différences nettes :
-- skip : 423 ≤ 0.15 vs 422 0.47 (D=400) → 0.58 (D=450) — dans 422 la KL du canon coupait la
-  moitié des pas du groupe reste ;
-- Hc : 423 remonte à +0.16 à D=450, 422 reste à −1.05 ;
-- clip 0.24 vs 0.38 à D=450.
+D milestones identical to the log point (300 @ 21k … 500 @ 145k), hit identical within noise
+(D=400: 0.126 vs 0.123; D=450: 0.131 vs 0.119). Clear differences:
+- skip: 423 ≤ 0.15 vs 422 0.47 (D=400) → 0.58 (D=450) — in 422 the canon KL cut half
+  of the rest group's steps;
+- Hc: 423 rises to +0.16 at D=450, 422 stays at −1.05;
+- clip 0.24 vs 0.38 at D=450.
 
-## Diagnostic
+## Diagnosis
 
-**Établi**
-- Saut qualitatif vs 421 : curriculum déverrouillé jusqu'à D=1000 et hit ≈ 2.5× le niveau de 421
-  à D=400 (0.077), plus de régime KL chronique, pas d'effondrement de σ. Attribuable au paquet
-  1e171bbf + 7422d098 ; les deux sont confondus au-delà de 148k.
-- L'arrêt KL joint de 422 coupait réellement le groupe reste (skip 0.5–0.6) ; l'arrêt par groupe le
-  libère (skip < 0.15).
-- Le curriculum est saturé : hit 0.19 ≫ ratio_high 0.08. D ne mesure plus rien depuis 429k ; seuls
-  hit, fire et kill à D=1000 restent informatifs.
+**Established**
+- Qualitative jump vs 421: curriculum unlocked up to D=1000 and hit ≈ 2.5× 421's level
+  at D=400 (0.077), no more chronic KL regime, no σ collapse. Attributable to the package
+  1e171bbf + 7422d098; the two are confounded beyond 148k.
+- 422's joint KL stop really cut the rest group (skip 0.5–0.6); the per-group stop
+  frees it (skip < 0.15).
+- The curriculum is saturated: hit 0.19 ≫ ratio_high 0.08. D measures nothing since 429k; only
+  hit, fire and kill at D=1000 remain informative.
 
-**Probable, non prouvé par le CSV**
-- fire ↓ avec hit ↑ ressemble à une gâchette qui devient sélective (tirer moins, mieux). Le CSV ne
-  le prouve pas : `fire` est aveugle au dump de début d'épisode et ne dit rien de l'alignement au tir.
-- Jusqu'à 145k, l'arrêt par groupe n'a pas changé la vitesse du curriculum ; on ne sait pas si 422
-  serait aussi monté jusqu'à 1000 (arrêté trop tôt).
+**Probable, not proven by the CSV**
+- fire ↓ with hit ↑ looks like a trigger becoming selective (fire less, better). The CSV does not
+  prove it: `fire` is blind to the episode-start dump and says nothing about alignment at fire.
+- Up to 145k, the per-group stop did not change the curriculum speed; unknown whether 422
+  would also have climbed to 1000 (stopped too early).
 
-**Dans le bruit**
-- Oscillations de fire 0.39 → 1.89 /s en quelques k (fenêtre 256 décisions) ; Hc oscille ±0.3 en fin de run.
-- Perte de débit −8 % vs 422 : cohérente avec la double passe de gradient quand un groupe est stoppé,
-  mais à ce niveau ça peut aussi être du bruit machine.
+**In the noise**
+- fire oscillations 0.39 → 1.89 /s within a few k (256-decision window); Hc oscillates ±0.3 at the end of run.
+- Throughput loss −8 % vs 422: consistent with the double gradient pass when a group is stopped,
+  but at this level it may also be machine noise.
 
-## Options (à trancher par Samuel)
+## Options (Samuel's decision)
 
-1. **Sonder un checkpoint à D=1000** (save_18–21) : sélectivité de la gâchette (angle au tir vs hors
-   tir, p(fire) armé), corr(μ canon, erreur), hit/obus — c'est la question que le CSV ne tranche
-   pas, et le premier run où la sonde a de quoi trouver un signal. Comparer à save_5 (D≈450).
-2. **Laisser tourner** pour voir si hit plafonne à D=1000 (repère : tranche suivante ≥ 0.20).
-3. Le curriculum n'a plus de marge : étendre `final_spawn_*` ou durcir la tâche autrement est une
-   décision de conception.
-4. Pour attribuer le gain : rejouer 422 (arrêt KL joint) au-delà de 300k.
+1. **Probe a checkpoint at D=1000** (save_18–21): trigger selectivity (angle at fire vs off-fire,
+   armed p(fire)), corr(μ canon, error), hit/shell — the question the CSV does not settle,
+   and the first run where the probe has something to find. Compare to save_5 (D≈450).
+2. **Let it run** to see whether hit plateaus at D=1000 (marker: next slice ≥ 0.20).
+3. The curriculum has no margin left: extending `final_spawn_*` or hardening the task otherwise is a
+   design decision.
+4. To attribute the gain: replay 422 (joint KL stop) beyond 300k.
 
-## Repères
+## Markers
 
-- hit à D=1000 : progression ou plateau sur les 100k prochains.
-- fire : s'il continue sous 0.6 /s avec kill qui baisse, surveiller une extinction de la gâchette.
-- skip_canon / α canon : remontée = la visée recommence à bouger fort.
-- ev < 0.6 ou Hc < −0.5 durable : changement de régime.
+- hit at D=1000: progress or plateau over the next 100k.
+- fire: if it continues under 0.6 /s with kill falling, watch for trigger extinction.
+- skip_canon / canon α: rise = aim starts moving strongly again.
+- ev < 0.6 or Hc < −0.5 sustained: regime change.

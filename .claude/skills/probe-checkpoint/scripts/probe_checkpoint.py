@@ -41,7 +41,7 @@ def resolve_save(arg, save):
         return load_run(p.parent), p.name
     run = load_run(arg)
     if save is None:
-        raise SystemExit("préciser --save save_N quand l'entrée est un run")
+        raise SystemExit("specify --save save_N when the input is a run")
     return run, save if str(save).startswith("save_") else f"save_{save}"
 
 
@@ -103,65 +103,65 @@ def run_probe(run, save, binary, side, args, out_csv):
     with open(log, "w") as f:
         res = subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT)
     if res.returncode != 0:
-        raise SystemExit(f"sonde en échec (code {res.returncode}), voir {log}")
+        raise SystemExit(f"probe failed (code {res.returncode}), see {log}")
 
 
 def print_detail(side, m):
     t, tu, h, r, s = m["trigger"], m["turret"], m["heads"], m["reserve"], m["shots"]
-    print(f"\n### côté {side:g} — {m['decisions']} décisions, {m['episodes']} épisodes, "
-          f"{m['tanks']} tanks, armé {fmt(m['armed_fraction']).strip()}")
-    print("p_fire armé (step ≥ 10) par best_angle :")
+    print(f"\n### side {side:g} — {m['decisions']} decisions, {m['episodes']} episodes, "
+          f"{m['tanks']} tanks, armed {fmt(m['armed_fraction']).strip()}")
+    print("p_fire armed (step ≥ 10) by best_angle:")
     for b, v in t["by_angle"].items():
         print(f"  [{b:>6}°) n={v['n']:6d} p_fire {fmt(v['p_fire']).strip():>6}"
               f" p_zoom {fmt(v['p_zoom']).strip():>6}")
-    print(f"  aligné<5°&<40m {fmt(t['p_fire_aligned_close']).strip()} (n {t['n_aligned_close']}),"
+    print(f"  aligned<5°&<40m {fmt(t['p_fire_aligned_close']).strip()} (n {t['n_aligned_close']}),"
           f" hors axe≥20° {fmt(t['p_fire_off_axis']).strip()} (n {t['n_off_axis']}),"
-          f" ratio {fmt(t['ratio']).strip()}, écart {fmt(t['gap']).strip()} ; aligné<5° seul "
+          f" ratio {fmt(t['ratio']).strip()}, gap {fmt(t['gap']).strip()} ; aligned<5° only "
           f"{fmt(t['p_fire_aligned']).strip()} (n {t['n_aligned']}), ratio "
           f"{fmt(t['ratio_angle_only']).strip()}")
-    print(f"  déterministe (p>0,5) : aligné {fmt(t['deterministic_fires_aligned']).strip()}, "
+    print(f"  deterministic (p>0.5): aligned {fmt(t['deterministic_fires_aligned']).strip()}, "
           f"hors axe {fmt(t['deterministic_fires_off_axis']).strip()} ; corr(p_fire, p_zoom) "
           f"{fmt(t.get('corr_p_fire_p_zoom', float('nan'))).strip()}")
     print(f"tourelle : <5° {fmt(tu['below_5deg']).strip()}, <10° {fmt(tu['below_10deg']).strip()},"
-          f" <20° {fmt(tu['below_20deg']).strip()}, angle médian {fmt(tu['median_best_angle']).strip()}°,"
-          f" distance cible médiane {fmt(tu['median_best_distance']).strip()} m")
+          f" <20° {fmt(tu['below_20deg']).strip()}, median angle {fmt(tu['median_best_angle']).strip()}°,"
+          f" median target distance {fmt(tu['median_best_distance']).strip()} m")
     for d in h.get("aim_dims", ("canon_x", "canon_y")):
         sg = h[f"sigma_{d}"]
         print(f"σ_{d} p10/p50/p90 {fmt(sg['p10']).strip()}/{fmt(sg['p50']).strip()}/"
               f"{fmt(sg['p90']).strip()}, au plafond {fmt(sg['at_ceiling']).strip()}, "
-              f"H estimée {fmt(h[f'H_{d}']).strip()}")
+              f"H estimated {fmt(h[f'H_{d}']).strip()}")
     print("μ : " + ", ".join(
         f"{d} moy {fmt(h[f'mu_{d}']['mean']).strip()} |μ|p50 {fmt(h[f'mu_{d}']['abs_p50']).strip()}"
         f" sat {fmt(h[f'mu_{d}']['saturated']).strip()}"
         for d in h.get("all_dims", ("dir_x", "dir_y", "canon_x", "canon_y"))))
-    print(f"réserve : {fmt(r['emptied']).strip()} des tank-épisodes vident, 1re réserve vide "
+    print(f"reserve: {fmt(r['emptied']).strip()} of tank-episodes empty, 1st empty reserve "
           f"p10/p50/p90 {fmt(r['first_empty_s_p10']).strip()}/{fmt(r['first_empty_s_p50']).strip()}/"
-          f"{fmt(r['first_empty_s_p90']).strip()} s, désarmé {fmt(r['disarmed_fraction']).strip()},"
-          f" vie médiane {fmt(r['life_s_p50']).strip()} s")
-    print(f"obus : {s['fired']} tirs ({fmt(s['per_tank_second']).strip()}/tank/s), "
-          f"hit/obus {fmt(s.get('hit_per_shell', math.nan)).strip()}, ratage médian "
-          f"{fmt(s.get('miss_m_p50', math.nan)).strip()} m, tirs alignés&proches "
+          f"{fmt(r['first_empty_s_p90']).strip()} s, disarmed {fmt(r['disarmed_fraction']).strip()},"
+          f" median life {fmt(r['life_s_p50']).strip()} s")
+    print(f"shells: {s['fired']} shots ({fmt(s['per_tank_second']).strip()}/tank/s), "
+          f"hit/shell {fmt(s.get('hit_per_shell', math.nan)).strip()}, median miss "
+          f"{fmt(s.get('miss_m_p50', math.nan)).strip()} m, aligned&close shots "
           f"{fmt(s.get('aligned_close_share', math.nan)).strip()}, enrichissement "
           f"{fmt(s.get('enrichment', math.nan)).strip()}")
     for b, v in s.get("by_angle", {}).items():
-        print(f"  tirés à [{b}°) : part {fmt(v['share']).strip()}, hit/obus "
+        print(f"  fired at [{b}°): share {fmt(v['share']).strip()}, hit/shell "
               f"{fmt(v['hit_per_shell']).strip()}")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Sonde un checkpoint ArenAI et résume les métriques")
-    parser.add_argument("checkpoint", help="outputs/train_NNN_*/save_K, ou un run avec --save")
-    parser.add_argument("--save", help="save_K ou K quand l'entrée est un run")
-    parser.add_argument("--sides", default="550,1000", help="côtés de spawn, séparés par des virgules")
+    parser = argparse.ArgumentParser(description="Probe an ArenAI checkpoint and summarize the metrics")
+    parser.add_argument("checkpoint", help="outputs/train_NNN_*/save_K, or a run with --save")
+    parser.add_argument("--save", help="save_K or K when the input is a run")
+    parser.add_argument("--sides", default="550,1000", help="spawn sides, comma-separated")
     parser.add_argument("--episodes", type=int, default=4)
-    parser.add_argument("--binary", help="binaire arenai_agent_probe (défaut : le plus récent)")
+    parser.add_argument("--binary", help="arenai_agent_probe binary (default: most recent)")
     parser.add_argument("--deterministic", action="store_true")
     parser.add_argument("--zoom", choices=["policy", "on", "off"], default="policy",
-                        help="force le zoom (on/off) ou le laisse à la politique")
+                        help="force zoom (on/off) or leave it to the policy")
     parser.add_argument("--no-cuda", dest="cuda", action="store_false")
-    parser.add_argument("--check-only", action="store_true", help="compatibilité seulement")
-    parser.add_argument("--analyze-only", action="store_true", help="réanalyse les CSV existants")
-    parser.add_argument("--force", action="store_true", help="sonder malgré un diff d'inférence")
+    parser.add_argument("--check-only", action="store_true", help="compatibility only")
+    parser.add_argument("--analyze-only", action="store_true", help="re-analyze existing CSVs")
+    parser.add_argument("--force", action="store_true", help="probe despite an inference diff")
     args = parser.parse_args()
 
     run, save = resolve_save(args.checkpoint, args.save)
@@ -176,26 +176,26 @@ def main():
 
     binaries = [Path(args.binary)] if args.binary else [b for b in BINARIES if b.exists()]
     if not binaries:
-        raise SystemExit("aucun binaire arenai_agent_probe : utiliser le skill build")
+        raise SystemExit("no arenai_agent_probe binary: use the build skill")
     binary = max(binaries, key=lambda b: b.stat().st_mtime)
     compat = compatibility(run, binary)
 
-    print(f"# sonde {run.name}/{save} — index {index / 1e3:.0f}k, D {d_at}")
-    print(f"binaire : {compat['binary']} (compilé {compat['built']}, "
+    print(f"# probe {run.name}/{save} — index {index / 1e3:.0f}k, D {d_at}")
+    print(f"binary: {compat['binary']} (built {compat['built']}, "
           f"commit {compat['binary_commit']['hash']} {compat['binary_commit']['subject']})")
     rc = compat["run_commit"]
-    print(f"code du run : {rc['hash']} {rc['subject']}" if rc else "code du run : inconnu")
-    print("tête σ/μ du checkpoint : " + " | ".join(repr_signature(save_dir)[-7:]))
+    print(f"run code: {rc['hash']} {rc['subject']}" if rc else "run code: unknown")
+    print("checkpoint σ/μ head: " + " | ".join(repr_signature(save_dir)[-7:]))
     if compat["uncommitted_in_binary"]:
-        print("modifs non commitées antérieures au build (probablement dans le binaire) : "
+        print("uncommitted changes older than the build (probably in the binary): "
               + ", ".join(compat["uncommitted_in_binary"]))
     if compat["inference_diff"]:
-        print("DIFF D'INFÉRENCE run → binaire (réseau, distributions, observation, environnement) :")
+        print("INFERENCE DIFF run → binary (network, distributions, observation, environment):")
         print("\n".join(f"  {line}" for line in compat["inference_diff"].splitlines()))
         if not (args.force or args.analyze_only or args.check_only):
-            raise SystemExit("incompatibilité possible : vérifier le diff, puis --force si sans effet")
+            raise SystemExit("possible incompatibility: check the diff, then --force if harmless")
     else:
-        print("aucun diff d'inférence entre le code du run et celui du binaire")
+        print("no inference diff between the run's code and the binary's")
     if args.check_only:
         return
 
@@ -220,12 +220,12 @@ def main():
             json.dumps({"meta": meta, "metrics": metrics}, indent=1, default=str))
         print_detail(side, metrics)
 
-    print("\n## Résumé")
-    header = ["côté"] + [h for h, _ in HEADLINE]
+    print("\n## Summary")
+    header = ["side"] + [h for h, _ in HEADLINE]
     print(" ".join(f"{h:>8}" for h in header))
     for side, m in results.items():
         print(" ".join([fmt(side)] + [fmt(f(m)) for _, f in HEADLINE]))
-    print(f"\nrésultats : {out_dir}/{save}_side*{suffix}.json")
+    print(f"\nresults: {out_dir}/{save}_side*{suffix}.json")
 
 
 if __name__ == "__main__":

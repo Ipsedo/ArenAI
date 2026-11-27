@@ -16,10 +16,10 @@ def k(index):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Résumé chiffré d'un run ArenAI")
-    parser.add_argument("run", help="dossier du run, ou son numéro (504)")
-    parser.add_argument("--prev", help="run de référence pour les diffs (défaut : numéro précédent)")
-    parser.add_argument("--json", action="store_true", help="écrit <run>/analysis_summary.json")
+    parser = argparse.ArgumentParser(description="Numeric summary of an ArenAI run")
+    parser.add_argument("run", help="run folder, or its number (504)")
+    parser.add_argument("--prev", help="reference run for diffs (default: previous number)")
+    parser.add_argument("--json", action="store_true", help="writes <run>/analysis_summary.json")
     args = parser.parse_args()
 
     run = load_run(args.run)
@@ -29,28 +29,28 @@ def main():
     alphas = alpha_columns(run)
 
     print(f"# {run.name}")
-    print(f"lancé {ctx['launch']} (mtime config.json), dernière écriture CSV {ctx['last_write']}"
+    print(f"launched {ctx['launch']} (config.json mtime), last CSV write {ctx['last_write']}"
           f"{' — EN COURS' if ctx['running'] else ''}")
-    print(f"{s['nb_rows']} lignes, index final {k(s['last_index'])}, {ctx['hours']} h, "
-          f"{ctx['steps_per_hour']} pas/h, {ctx['tank_steps_per_hour']} tank-steps/h")
+    print(f"{s['nb_rows']} rows, final index {k(s['last_index'])}, {ctx['hours']} h, "
+          f"{ctx['steps_per_hour']} steps/h, {ctx['tank_steps_per_hour']} tank-steps/h")
 
     print("\n## Code")
     c = ctx["commit_at_launch"]
-    print(f"commit au lancement : {c['hash']} {c['date']} {c['subject']}" if c else "aucun commit")
+    print(f"commit at launch: {c['hash']} {c['date']} {c['subject']}" if c else "no commit")
     e = ctx["effective_commit"]
     if e and c and e["hash"] != c["hash"]:
-        print(f"commit effectif estimé : {e['hash']} (à confirmer contre config.json / mémoire)")
+        print(f"estimated effective commit: {e['hash']} (confirm against config.json / memory)")
     for cm in ctx["commits_during_run"]:
-        tag = "  <- peut contenir le code du run (lancé non commité)" if cm["maybe_run_code"] else ""
-        print(f"  pendant le run +{cm['minutes_after_launch']} min : {cm['hash']} {cm['subject']}{tag}")
+        tag = "  <- may contain the run's code (launched uncommitted)" if cm["maybe_run_code"] else ""
+        print(f"  during the run +{cm['minutes_after_launch']} min: {cm['hash']} {cm['subject']}{tag}")
 
     prev_path = args.prev or previous_run(run)
     if not prev_path:
-        print("\n## Différences : aucun run précédent dans outputs/")
+        print("\n## Differences: no previous run in outputs/")
     else:
         prev = load_run(prev_path)
         build_context(prev)
-        print(f"\n## Différences vs {prev.name}")
+        print(f"\n## Differences vs {prev.name}")
         diff = config_diff(prev, run)
         print("config.json :" if diff else "config.json : identique")
         for key, (a, b) in diff.items():
@@ -61,9 +61,9 @@ def main():
             for line in cd["log"]:
                 print(f"  {line}")
             print("\n".join(f"  {line}" for line in cd["stat"].splitlines())
-                  or "  aucun changement hors commentaires")
+                  or "  no change outside comments")
             if cd["comment_only_files"]:
-                print(f"  (+ {cd['comment_only_files']} fichiers modifiés seulement en commentaires/blancs)")
+                print(f"  (+ {cd['comment_only_files']} files changed only in comments/whitespace)")
         added = [c for c in run.columns if c not in prev.columns]
         removed = [c for c in prev.columns if c not in run.columns]
         if added or removed:
@@ -74,14 +74,14 @@ def main():
         items = run.config.get(section, {})
         print(f"{section}: " + ", ".join(f"{key}={fmt_value(v)}" for key, v in items.items()))
 
-    print("\n## Jalons D (index de première apparition)")
+    print("\n## D milestones (index of first appearance)")
     print("  " + ", ".join(f"D {d:.0f} @ {k(i)}" for d, i in s["d_milestones"]))
 
-    print("\n## Moyennes par niveau de D")
+    print("\n## Means per D level")
     show = ["n", "from", "to"] + cols
     print(table(["D"] + show, [[d] + [st[c] for c in show] for d, st in s["per_d_level"].items()]))
 
-    print("\n## Fenêtres (10 tranches d'index)")
+    print("\n## Windows (10 index slices)")
     show = ["to", "D"] + cols
     print(table(show, [[w[c] for c in show] for w in s["windows"]]))
     if alphas:
@@ -90,20 +90,20 @@ def main():
         print(table(["to"] + [a.replace("alpha_", "α_") for a in alphas],
                     [[w[c] for c in show] for w in s["windows"]], width=10))
 
-    print("\n## Extrêmes (valeur @ index, D)")
+    print("\n## Extremes (value @ index, D)")
     for c, e in s["extremes"].items():
         mx, mn, last = e["max"], e["min"], e["last"]
         print(f"  {c:>14}: max {fmt(mx[0]).strip()} @ {k(mx[1])} D{fmt(mx[2]).strip()}"
               f" | min {fmt(mn[0]).strip()} @ {k(mn[1])} | dernier {fmt(last[0]).strip()}")
 
-    print("\n## Signaux automatiques (à vérifier, pas des verdicts)")
-    for sig in s["signals"] or ["aucun"]:
+    print("\n## Automatic signals (to verify, not verdicts)")
+    for sig in s["signals"] or ["none"]:
         print(f"  - {sig}")
 
     if args.json:
         out = run.path / "analysis_summary.json"
         out.write_text(json.dumps(s, indent=1, default=str))
-        print(f"\nécrit : {out}")
+        print(f"\nwritten: {out}")
 
 
 if __name__ == "__main__":

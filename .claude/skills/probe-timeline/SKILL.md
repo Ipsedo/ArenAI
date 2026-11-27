@@ -6,7 +6,7 @@ description: Analyse the chronology of the probes of one ArenAI training (<run>/
 # Probe timeline of a run
 
 Input: a run (folder or number), optionally a subset of saves.
-Output: `<kdir>/probes/timeline.md` (French) (`<kdir>` = the run folder of the knowledge base, CLAUDE.md) + a chat summary.
+Output: `<kdir>/probes/timeline.md` (`<kdir>` = the run folder of the knowledge base, CLAUDE.md) + a chat summary.
 
 Role: establish facts, expose options; Samuel decides. Vocabulary: `docs/rl_method.md`.
 
@@ -66,7 +66,7 @@ Prints:
 
 ## 4. Write `<kdir>/probes/timeline.md`
 
-French:
+English:
 
 1. **Run and code**: effective commit, what the run tests, probe binary(ies).
 2. **Chronological table** of key metrics per side, with D and the CSV at the same index.

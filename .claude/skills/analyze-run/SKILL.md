@@ -6,7 +6,7 @@ description: Analyse the metrics.csv of an ArenAI training folder (outputs/train
 # Run analysis
 
 Input: `outputs/train_NNN_<agent>/` or its number (`504`).
-Output: `<kdir>/analysis.md` (French; `<kdir>` = the run folder of the knowledge base, CLAUDE.md)
+Output: `<kdir>/analysis.md` (`<kdir>` = the run folder of the knowledge base, CLAUDE.md)
 + `<run>/analysis_summary.json`, and a short chat summary.
 
 **Train rules only** (`docs/rl_method.md` M7): nothing read here supports « bon / meilleur en jeu »;
@@ -98,7 +98,7 @@ unknown or suspicious column, its definition at the effective commit.
 
 ## 5. Write `<kdir>/analysis.md`
 
-French, no filler, LaTeX for any formula:
+English (Claude's wording), no filler, LaTeX for any formula:
 
 1. **Header**: run, agent, launch → last row, running/finished, final index, throughput,
    effective commit (with confidence).
@@ -112,4 +112,4 @@ French, no filler, LaTeX for any formula:
    which D/index, which probe.
 
 Then a short chat summary linking the file. A newly established fact updates (or creates) the
-`<kdir>/run.md` (« Faits établis ») and the run's line in `.claude/knowledge/INDEX.md`.
+`<kdir>/run.md` (« Established facts ») and the run's line in `.claude/knowledge/INDEX.md`.

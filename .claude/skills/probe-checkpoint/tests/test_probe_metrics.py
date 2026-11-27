@@ -383,8 +383,8 @@ def test_headline_labels_and_sources(tmp_path):
     m = analyze(tmp_path, decisions, SHOT_ROWS, step_seconds=0.5)
     values = {label: read(m) for label, read in pm.HEADLINE}
     assert list(values) == [
-        "ratio", "p_al", "p_off", "p_arm", "hit/ob", "h<5°", "tirs<5°", "enrich", "vide_s",
-        "%vident", "%désarmé", "tir/s", "tour<5°", "σx", "σy", "σ@plaf", "|μ|cx", "μsat",
+        "ratio", "p_al", "p_off", "p_arm", "hit/sh", "h<5°", "shots<5°", "enrich", "empty_s",
+        "%emptied", "%disarmed", "shots/s", "turret<5°", "σx", "σy", "σ@ceil", "|μ|cx", "μsat",
         "σyaw°", "p_zoom",
     ]
     t, s, r, h = m["trigger"], m["shots"], m["reserve"], m["heads"]
@@ -392,15 +392,15 @@ def test_headline_labels_and_sources(tmp_path):
     assert values["p_al"] == t["p_fire_aligned_close"]
     assert values["p_off"] == t["p_fire_off_axis"]
     assert values["p_arm"] == t["p_fire_armed"]
-    assert values["hit/ob"] == s["hit_per_shell"] == pytest.approx(3 / 5)
+    assert values["hit/sh"] == s["hit_per_shell"] == pytest.approx(3 / 5)
     assert values["h<5°"] == s["by_angle"]["0-5"]["hit_per_shell"]
-    assert values["tirs<5°"] == s["by_angle"]["0-5"]["share"]
+    assert values["shots<5°"] == s["by_angle"]["0-5"]["share"]
     assert values["enrich"] == s["enrichment"]
-    assert values["vide_s"] == r["first_empty_s_p50"]
-    assert values["%vident"] == r["emptied"] == pytest.approx(2 / 4)
-    assert values["%désarmé"] == r["disarmed_fraction"]
-    assert values["tir/s"] == s["per_tank_second"]
-    assert values["tour<5°"] == m["turret"]["below_5deg"]
+    assert values["empty_s"] == r["first_empty_s_p50"]
+    assert values["%emptied"] == r["emptied"] == pytest.approx(2 / 4)
+    assert values["%disarmed"] == r["disarmed_fraction"]
+    assert values["shots/s"] == s["per_tank_second"]
+    assert values["turret<5°"] == m["turret"]["below_5deg"]
     assert values["σx"] == h["sigma_canon_x"]["p50"]
     assert values["σy"] == h["sigma_canon_y"]["p50"]
     assert values["|μ|cx"] == h["mu_canon_x"]["abs_p50"]
@@ -415,12 +415,12 @@ def test_headline_ceiling_and_saturation_take_the_worst_dimension(tmp_path):
         {"sigma_canon_x": 0.1, "sigma_canon_y": 0.1, "mu_dir_y": 0.0, "mu_canon_x": 0.0},
     ])
     values = {label: read(m) for label, read in pm.HEADLINE}
-    assert values["σ@plaf"] == pytest.approx(1 / 3)
+    assert values["σ@ceil"] == pytest.approx(1 / 3)
     assert values["μsat"] == pytest.approx(2 / 3)
 
 
 def test_headline_shot_columns_are_nan_without_shots_file(tmp_path):
     m = analyze(tmp_path, TRIGGER_ROWS)
     values = {label: read(m) for label, read in pm.HEADLINE}
-    for label in ("hit/ob", "h<5°", "tirs<5°", "enrich"):
+    for label in ("hit/sh", "h<5°", "shots<5°", "enrich"):
         assert is_nan(values[label])

@@ -37,21 +37,21 @@ def report(tmp_path, monkeypatch, capsys):
 
 
 def test_d_milestones_side_by_side(report):
-    body = report.split("## Jalons D")[1].split("\n## ")[0].splitlines()[1:]
+    body = report.split("## D milestones")[1].split("\n## ")[0].splitlines()[1:]
     assert [line.split() for line in body if line] == [
         ["D", "7", "8"], ["250", "90k", "100k"], ["300", "200k", "200k"]]
 
 
 def test_equal_d_means_cover_every_row_of_the_level(report):
-    assert table(report, "## À D égal", "hit") == [
+    assert table(report, "## At equal D", "hit") == [
         ["D", "7", "8"], ["250", "0.375", "0.400"], ["300", "0.500", "0.650"]]
-    assert table(report, "## À D égal", "n") == [["D", "7", "8"], ["250", "4", "1"], ["300", "1", "2"]]
+    assert table(report, "## At equal D", "n") == [["D", "7", "8"], ["250", "4", "1"], ["300", "1", "2"]]
 
 
 def test_equal_index_points_stop_at_the_least_advanced_run(report):
-    assert table(report, "## À index égal", "hit") == [
+    assert table(report, "## At equal index", "hit") == [
         ["index", "7", "8"], ["100k", "0.200", "0.400"], ["200k", "0.500", "0.600"]]
-    assert table(report, "## À index égal", "D") == [
+    assert table(report, "## At equal index", "D") == [
         ["index", "7", "8"], ["100k", "250", "250"], ["200k", "300", "300"]]
 
 

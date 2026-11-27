@@ -72,6 +72,6 @@ Mean ± sd over matches, per criterion, in Samuel's order (2026-11-25):
 
 `<kdir>` = the run folder of the knowledge base (CLAUDE.md); match exports stay in `<run>/matches/`.
 
-French. Header (run, save, index, D, binary + commit, sides, matches), table against the
+English. Header (run, save, index, D, binary + commit, sides, matches), table against the
 reference (bold best cell per row), what is worse first, prediction of the game verdict,
 labels check. Short chat summary. Update `<kdir>/run.md` and the run's line in `INDEX.md`.

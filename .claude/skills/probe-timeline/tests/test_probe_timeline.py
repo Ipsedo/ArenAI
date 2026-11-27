@@ -63,24 +63,24 @@ def section(text, title):
 
 
 def test_one_table_per_side_ordered_by_save(report):
-    rows = section(report, "## Côté 550, 4 épisodes")
+    rows = section(report, "## Side 550, 4 episodes")
     assert rows[1][:6] == ["save_2", "2k", "4.000", "0.500", "0.250", "0.300"]
     assert rows[2][:3] == ["save_3", "3k", "6.000"]
-    assert section(report, "## Côté 1000, 4 épisodes")[1][:3] == ["save_2", "2k", "2.000"]
+    assert section(report, "## Side 1000, 4 episodes")[1][:3] == ["save_2", "2k", "2.000"]
 
 
 def test_headline_columns_follow_probe_metrics(report):
-    header = section(report, "## Côté 550, 4 épisodes")[0]
+    header = section(report, "## Side 550, 4 episodes")[0]
     assert header[:5] == ["save", "index", "ratio", "p_al", "p_off"]
     assert header[-1] == "p_zoom"
 
 
 def test_csv_around_a_save_reads_d_at_the_save_and_means_in_the_window(report):
-    rows = section(report, "## CSV autour de chaque save (±0k)")
+    rows = section(report, "## CSV around each save (±0k)")
     assert rows[0] == ["save", "index", "D", "hit", "α_max", "α_argmax"]
     assert rows[1] == ["save_2", "2k", "300", "0.300", "5.0e-03", "zoom"]
     assert rows[2] == ["save_3", "3k", "400", "0.900", "9.0e-03", "fire"]
 
 
 def test_unprobed_saves_are_listed(report):
-    assert "saves non sondées : [1]" in report
+    assert "unprobed saves: [1]" in report

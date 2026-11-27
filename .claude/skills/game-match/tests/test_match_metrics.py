@@ -17,10 +17,10 @@ TANK = {
 PLAYER = {"match": "0", "second": "1", "alive": "1", "impacts": "0"}
 INFO = {"match": "0", "seconds": "300", "end": "timeout", "enemies_armed": "0"}
 
-FOUND = "trouve: armé à <5° d'une cible"
-FIRST = "trouve: 1re cible <5° (s, médiane)"
-DRY_TIME = "dangereux: temps vivant à sec"
-ARMED_END = "dangereux: armés en fin / tanks"
+FOUND = "found: armed within <5° of a target"
+FIRST = "found: 1st target <5° (s, median)"
+DRY_TIME = "dangerous: time alive dry"
+ARMED_END = "dangerous: armed at end / tanks"
 
 
 def tank(**kw):
@@ -36,7 +36,7 @@ def info(**kw):
 
 
 def dry_at(t):
-    return f"dangereux: vivants à sec à {t} s"
+    return f"dangerous: alive dry at {t} s"
 
 
 def is_nan(x):
@@ -54,12 +54,12 @@ def write_csv(path, rows):
 
 def test_duration_and_all_dry_end():
     m = mm.one_match([tank()], [player()], info(seconds=42.5, end="all_dry"))
-    assert m["durée_s"] == 42.5
-    assert m["fin_à_sec"] == 1.0
-    assert mm.one_match([tank()], [player()], info(end="timeout"))["fin_à_sec"] == 0.0
+    assert m["duration_s"] == 42.5
+    assert m["end_dry"] == 1.0
+    assert mm.one_match([tank()], [player()], info(end="timeout"))["end_dry"] == 0.0
 
 
-# 1. trouve les ennemis
+# 1. finds the enemies
 
 def test_found_is_share_of_armed_living_rows_under_5_degrees():
     m = mm.one_match([
@@ -142,28 +142,28 @@ def test_armed_at_end_is_per_distinct_tank():
     assert m[ARMED_END] == pytest.approx(3 / 4)
 
 
-# 3. touche le joueur
+# 3. hits the player
 
 def test_player_impacts_first_impact_and_death():
     m = mm.one_match([tank()], [
         player(second=1), player(second=2, impacts=2), player(second=3),
         player(second=4, impacts=1, alive=0), player(second=5, alive=0),
     ], info())
-    assert m["joueur: impacts reçus"] == 3
-    assert m["joueur: 1er impact (s)"] == 2.0
-    assert m["joueur: tué"] == 1.0
-    assert m["joueur: mort à (s)"] == 4.0
+    assert m["player: impacts received"] == 3
+    assert m["player: 1st impact (s)"] == 2.0
+    assert m["player: killed"] == 1.0
+    assert m["player: died at (s)"] == 4.0
 
 
 def test_player_untouched():
     m = mm.one_match([tank()], [player(second=1), player(second=2)], info())
-    assert m["joueur: impacts reçus"] == 0
-    assert is_nan(m["joueur: 1er impact (s)"])
-    assert m["joueur: tué"] == 0.0
-    assert is_nan(m["joueur: mort à (s)"])
+    assert m["player: impacts received"] == 0
+    assert is_nan(m["player: 1st impact (s)"])
+    assert m["player: killed"] == 0.0
+    assert is_nan(m["player: died at (s)"])
 
 
-# 4. touche et tue les autres
+# 4. hits and kills the others
 
 def test_combat_counts_are_summed_over_rows_and_divided_by_tanks():
     m = mm.one_match([
@@ -175,15 +175,15 @@ def test_combat_counts_are_summed_over_rows_and_divided_by_tanks():
     ], [player()], info())
     assert m["combat: touches / tank"] == pytest.approx(1 / 3)
     assert m["combat: kills / tank"] == pytest.approx(1 / 3)
-    assert m["combat: obus tirés / tank"] == pytest.approx(4 / 3)
-    assert m["combat: touche / obus"] == pytest.approx(1 / 4)
-    assert m["combat: tanks sans touche"] == pytest.approx(2 / 3)
+    assert m["combat: shells fired / tank"] == pytest.approx(4 / 3)
+    assert m["combat: hit / shell"] == pytest.approx(1 / 4)
+    assert m["combat: tanks without a hit"] == pytest.approx(2 / 3)
 
 
 def test_hit_per_shell_is_nan_without_shot():
     m = mm.one_match([tank()], [player()], info())
-    assert is_nan(m["combat: touche / obus"])
-    assert m["combat: tanks sans touche"] == 1.0
+    assert is_nan(m["combat: hit / shell"])
+    assert m["combat: tanks without a hit"] == 1.0
 
 
 # 5. tenue visible
@@ -194,17 +194,17 @@ def test_canon_elevation_armed_and_dry():
         tank(canon_elevation=-20, out_of_shells=1), tank(canon_elevation=-30, out_of_shells=1),
         tank(canon_elevation=-80, alive=0), tank(canon_elevation=-80, alive=0, out_of_shells=1),
     ], [player()], info())
-    assert m["tenue: élévation canon armé (°, médiane)"] == -5.0
-    assert m["tenue: élévation canon à sec (°, médiane)"] == -25.0
-    assert m["tenue: armé canon < -5°"] == pytest.approx(1 / 3)
+    assert m["hold: gun elevation armed (°, median)"] == -5.0
+    assert m["hold: gun elevation dry (°, median)"] == -25.0
+    assert m["hold: armed gun < -5°"] == pytest.approx(1 / 3)
 
 
 def test_canon_elevation_is_nan_for_an_empty_population():
     armed_only = mm.one_match([tank(canon_elevation=1)], [player()], info())
-    assert is_nan(armed_only["tenue: élévation canon à sec (°, médiane)"])
+    assert is_nan(armed_only["hold: gun elevation dry (°, median)"])
     dry_only = mm.one_match([tank(canon_elevation=1, out_of_shells=1)], [player()], info())
-    assert is_nan(dry_only["tenue: élévation canon armé (°, médiane)"])
-    assert is_nan(dry_only["tenue: armé canon < -5°"])
+    assert is_nan(dry_only["hold: gun elevation armed (°, median)"])
+    assert is_nan(dry_only["hold: armed gun < -5°"])
 
 
 # files and summary
@@ -224,7 +224,7 @@ def test_checkpoint_groups_rows_by_match(tmp_path):
     prefix = str(tmp_path / "save_3_side500")
     write_checkpoint(prefix, {0: [1, 1, 30, 30], 1: [30, 30, 30, 30]})
     first, second = mm.checkpoint(prefix)
-    assert (first["durée_s"], second["durée_s"]) == (100.0, 200.0)
+    assert (first["duration_s"], second["duration_s"]) == (100.0, 200.0)
     assert first[FOUND] == pytest.approx(1 / 2)
     assert second[FOUND] == 0.0
     assert first[FIRST] == 2.0

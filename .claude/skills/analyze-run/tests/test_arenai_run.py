@@ -347,12 +347,12 @@ def test_healthy_run_raises_no_signal():
 
 def test_fewer_than_five_rows_is_not_interpreted():
     out = ar.signals(make_run(healthy_rows()[:4], CONFIG))
-    assert len(out) == 1 and "moins de 5 lignes" in out[0]
+    assert len(out) == 1 and "fewer than 5 rows" in out[0]
 
 
 def test_signal_weak_critic_when_tail_ev_under_0_2():
     out = signals_with(ev=0.19)
-    assert len(out) == 1 and "critic faible" in out[0]
+    assert len(out) == 1 and "weak critic" in out[0]
     assert signals_with(ev=0.21) == []
 
 
@@ -361,14 +361,14 @@ def test_signal_negative_ev_on_more_than_20_percent_of_rows():
     for r in rows[:3]:
         r["ev"] = -0.1
     out = ar.signals(make_run(rows, CONFIG))
-    assert len(out) == 1 and "ev < 0 sur 30%" in out[0]
+    assert len(out) == 1 and "ev < 0 on 30%" in out[0]
     rows[2]["ev"] = 0.5
     assert ar.signals(make_run(rows, CONFIG)) == []
 
 
 def test_signal_kl_regime_when_tail_skip_above_0_1():
     out = signals_with(skip=0.11)
-    assert len(out) == 1 and "régime KL" in out[0]
+    assert len(out) == 1 and "KL regime" in out[0]
     assert signals_with(skip=0.09) == []
 
 
@@ -386,20 +386,20 @@ def test_signal_alpha_off_its_floor_above_1_5_times_initial():
     rows = healthy_rows()
     rows[4]["alpha_fire"] = 0.0016
     out = ar.signals(make_run(rows, CONFIG))
-    assert len(out) == 1 and out[0].startswith("alpha_fire a quitté le plancher")
+    assert len(out) == 1 and out[0].startswith("alpha_fire left the floor")
     rows[4]["alpha_fire"] = 0.0014
     assert ar.signals(make_run(rows, CONFIG)) == []
 
 
 def test_signal_trigger_off_when_fire_ends_under_0_05_after_a_peak():
     out = signals_with(fire=0.04)
-    assert len(out) == 1 and "gâchette éteinte" in out[0]
+    assert len(out) == 1 and "trigger off" in out[0]
     assert signals_with(fire=0.06) == []
 
 
 def test_signal_hit_and_kill_under_70_percent_of_their_peak():
     out = signals_with(hit=0.069)
-    assert len(out) == 1 and out[0].startswith("hit final") and "70 % du pic" in out[0]
+    assert len(out) == 1 and out[0].startswith("hit final") and "70 % of peak" in out[0]
     out = signals_with(kill=0.69)
     assert len(out) == 1 and out[0].startswith("kill final")
     assert signals_with(hit=0.071, kill=0.71) == []
@@ -410,7 +410,7 @@ def test_signal_curriculum_stuck_below_final_width_for_over_30_percent_of_the_ru
     for r in rows:
         r["D"] = 250.0
     out = ar.signals(make_run(rows, CONFIG))
-    assert len(out) == 1 and out[0].startswith("D bloqué à 250")
+    assert len(out) == 1 and out[0].startswith("D stuck at 250")
     for r in rows:
         r["D"] = 1000.0
     assert ar.signals(make_run(rows, CONFIG)) == []

@@ -7,7 +7,7 @@ description: Compare several ArenAI training runs (outputs/train_NNN_*) from the
 
 Input: two or more runs (folders or numbers), **reference first**, optionally the question asked
 (« le SoftClamp a-t-il servi ? »).
-Output: `.claude/knowledge/comparisons/<YYYY-MM-DD>_<n1>_vs_<n2>[_vs_…].md` (French) + a chat summary.
+Output: `.claude/knowledge/comparisons/<YYYY-MM-DD>_<n1>_vs_<n2>[_vs_…].md` + a chat summary.
 
 **Train rules only** (`docs/rl_method.md` M7): nothing read here supports « bon / meilleur en jeu »;
 a verdict on the run needs skill `game-match`.
@@ -67,7 +67,7 @@ the attribution, the isolating control run is a tactical training (gate G4).
 
 ## 5. Write the comparison
 
-`.claude/knowledge/comparisons/<YYYY-MM-DD>_<n1>_vs_<n2>….md`, French:
+`.claude/knowledge/comparisons/<YYYY-MM-DD>_<n1>_vs_<n2>….md`, English:
 
 1. **Runs**: state, index/D reached, effective commit, throughput.
 2. **Differences**: config, code (summary of the real diff), outside git, metrics; confounds.

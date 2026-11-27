@@ -327,7 +327,7 @@ def signals(run):
     out = []
     n = len(run.rows)
     if n < 5:
-        return ["moins de 5 lignes : rien d'interprétable"]
+        return ["fewer than 5 rows: nothing interpretable"]
     tail = run.rows[int(n * 0.8):]
     target_kl = config_value(run, "target_kl")
     initial_alpha = config_value(run, "initial_alpha")
@@ -338,39 +338,39 @@ def signals(run):
     if "ev" in run.columns:
         ev = tail_mean("ev")
         if ev < 0.2:
-            out.append(f"ev moyen {ev:.2f} sur les 20 % finaux : critic faible")
+            out.append(f"ev mean {ev:.2f} over the final 20 %: weak critic")
         neg = sum(1 for r in run.rows if r.get("ev", 0) < 0) / n
         if neg > 0.2:
-            out.append(f"ev < 0 sur {neg:.0%} des lignes")
+            out.append(f"ev < 0 on {neg:.0%} of rows")
     if "skip" in run.columns and tail_mean("skip") > 0.1:
-        out.append(f"skip {tail_mean('skip'):.2f} en fin de run : régime KL")
+        out.append(f"skip {tail_mean('skip'):.2f} at end of run: KL regime")
     if "kl" in run.columns and target_kl and tail_mean("kl") > target_kl:
         out.append(f"kl {tail_mean('kl'):.3f} > target_kl {target_kl:.3f}")
     if "Hc" in run.columns and tail_mean("Hc") < 0:
-        out.append(f"Hc {tail_mean('Hc'):.2f} < 0 en fin de run")
+        out.append(f"Hc {tail_mean('Hc'):.2f} < 0 at end of run")
     if initial_alpha:
         for c in alpha_columns(run):
             peak = max(r[c] for r in run.rows if c in r)
             if peak > 1.5 * initial_alpha:
-                out.append(f"{c} a quitté le plancher (max {peak:.4f} vs init {initial_alpha:.4f})")
+                out.append(f"{c} left the floor (max {peak:.4f} vs init {initial_alpha:.4f})")
     if "fire" in run.columns:
         peak = max(r["fire"] for r in run.rows[1:]) if n > 1 else 0
         if tail_mean("fire") < 0.05 and peak > 0.2:
-            out.append(f"fire {tail_mean('fire'):.3f}/s en fin (pic {peak:.2f}) : gâchette éteinte")
+            out.append(f"fire {tail_mean('fire'):.3f}/s at end (peak {peak:.2f}): trigger off")
     for c in ("hit", "kill"):
         if c not in run.columns:
             continue
         peak = max(r[c] for r in run.rows)
         if peak > 0 and tail_mean(c) < 0.7 * peak:
             idx = max(run.rows, key=lambda r: r[c])["index"]
-            out.append(f"{c} final {tail_mean(c):.3f} < 70 % du pic {peak:.3f} (à {idx / 1e3:.0f} k)")
+            out.append(f"{c} final {tail_mean(c):.3f} < 70 % of peak {peak:.3f} (at {idx / 1e3:.0f} k)")
     if "D" in run.columns:
         last_d = run.rows[-1]["D"]
         first_at_last = next(r["index"] for r in run.rows if r["D"] == last_d)
         span = run.rows[-1]["index"]
         if last_d < (config_value(run, "final_spawn_width") or float("inf")) and \
                 span - first_at_last > 0.3 * span:
-            out.append(f"D bloqué à {last_d:.0f} depuis {first_at_last / 1e3:.0f} k")
+            out.append(f"D stuck at {last_d:.0f} since {first_at_last / 1e3:.0f} k")
     return out
 
 

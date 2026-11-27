@@ -2,9 +2,11 @@
 
 Audience: Claude. Samuel does not read the harness (this file, `.claude/skills/`, `docs/`,
 `.claude/knowledge/`, memory): write it in the wording that steers you best — dense, imperative, strong defined terms.
-Everything addressed to Samuel (chat, questions, `analysis.md`, probe reports) is in **French**,
-except `docs/`: every file there is in **English** (only Samuel's verbatim quotes stay French),
-including project documentation written for Samuel (e.g. a design explained with its diagram).
+Only what reaches Samuel in the session (chat, questions) is in **French**. Every file is in
+**English** (only Samuel's verbatim quotes stay French): `docs/`, including project documentation
+written for Samuel, and the whole knowledge base (`analysis.md`, probe, match, comparison reports
+are written for Claude, never read by Samuel — 2026-11-27, « ce dossier est pour toi donc avec ton
+langage »).
 A working rule Samuel states or corrects goes into the harness via `harness-improvement`,
 **never into memory** — this overrides the generic auto-memory guidance to save feedback there.
 **Knowledge base** = `.claude/knowledge/`, git-tracked so it follows the repo across machines:

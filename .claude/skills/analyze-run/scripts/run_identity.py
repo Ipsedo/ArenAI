@@ -6,7 +6,7 @@ from arenai_run import (
     KNOWLEDGE_RUNS, REPO, SOURCE_DIRS, build_context, git, knowledge_dir, load_run,
 )
 
-UNKNOWN = "inconnu"
+UNKNOWN = "unknown"
 
 
 def describe(commit):
@@ -15,12 +15,12 @@ def describe(commit):
 
 def launch_diff(run, context, folder):
     if not context["running"]:
-        return f"{UNKNOWN} (identité relevée après la fin du run)"
+        return f"{UNKNOWN} (identity recorded after the run ended)"
     if not git("status", "--porcelain", "--", *SOURCE_DIRS):
-        return "aucun (arbre propre, run en cours)"
+        return "none (clean tree, run in progress)"
     (folder / "launch.patch").write_text(git("diff", "HEAD", "--", *SOURCE_DIRS) + "\n")
     stamp = datetime.now().isoformat(sep=" ", timespec="seconds")
-    return f"non commité — `launch.patch` capturé le {stamp}, run en cours"
+    return f"uncommitted — `launch.patch` captured {stamp}, run in progress"
 
 
 def create(run, host, imported):
@@ -31,16 +31,16 @@ def create(run, host, imported):
     candidates = [c for c in context["commits_during_run"] if c["maybe_run_code"]]
     rows = [
         ("machine", host),
-        ("utilisateur", UNKNOWN if imported else run.path.owner()),
-        ("lancement", run.launch.isoformat(sep=" ", timespec="seconds")),
-        ("commit au lancement", describe(context["commit_at_launch"])),
-        ("commits ≤ 90 min après", ", ".join(f"`{c['hash']}`" for c in candidates) or "aucun"),
-        ("diff au lancement", UNKNOWN if imported else launch_diff(run, context, folder)),
-        ("données brutes", f"`outputs/{run.name}` sur {host}"),
+        ("user", UNKNOWN if imported else run.path.owner()),
+        ("launch", run.launch.isoformat(sep=" ", timespec="seconds")),
+        ("commit at launch", describe(context["commit_at_launch"])),
+        ("commits ≤ 90 min after", ", ".join(f"`{c['hash']}`" for c in candidates) or "none"),
+        ("diff at launch", UNKNOWN if imported else launch_diff(run, context, folder)),
+        ("raw data", f"`outputs/{run.name}` on {host}"),
     ]
     lines = [f"# {run.name}", "", "| | |", "|---|---|"]
     lines += [f"| {k} | {v} |" for k, v in rows]
-    lines += ["", "## Faits établis", "", ""]
+    lines += ["", "## Established facts", "", ""]
     (folder / "run.md").write_text("\n".join(lines))
     return folder
 

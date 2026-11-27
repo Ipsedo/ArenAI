@@ -8,7 +8,7 @@ description: Run the probe (arenai_agent_probe) on an ArenAI checkpoint (outputs
 Input: `outputs/train_NNN_<agent>/save_K` (or a run + `--save K`), optionally spawn sides, number
 of episodes, deterministic mode.
 Output: `<run>/probes/save_K_side<S>[_det].{csv,_shots.csv,log,json}`, `<kdir>/probes/save_K.md` (`<kdir>` = the run folder of the knowledge base, CLAUDE.md)
-(French) and a chat summary.
+and a chat summary.
 
 **Train rules only** (`docs/rl_method.md` M7): nothing read here supports « bon / meilleur en jeu »;
 a verdict on the run needs skill `game-match`.
@@ -54,19 +54,19 @@ training: say so in the report. `--analyze-only` re-analyses existing CSVs witho
 ## 3. Metrics (armed decisions = `can_fire` and reserve > 0, step ≥ 10)
 
 One step = one decision = `action_repeat × wanted_frequency` = 0.1 s by default. Durations in
-seconds recorded in the run notes before 2026-11-11 are 3× too large. `landed`, `hit/ob`, `h<5°`, `tirs<5°`
+seconds recorded in the run notes before 2026-11-11 are 3× too large. `landed`, `hit/sh`, `h<5°`, `shots<5°`
 recorded before 2026-11-27 counted a group of k shells k times: `landed` 2–8 % too high, `h<5°` up
-to 0.02 too low, `hit/ob` within 0.004.
+to 0.02 too low, `hit/sh` within 0.004.
 
 | metric | meaning |
 |---|---|
 | `ratio`, `p_al`, `p_off` | armed p_fire aligned (< 5° **and** target < 40 m) / off-axis (≥ 20°): trigger **selectivity**, definition of the records in the run notes since 2026-11-10. `ratio_angle_only` (< 5° alone) is in the JSON |
 | `p_arm` | mean trigger level; flat vs angle = no selectivity |
 | deterministic (p > 0.5) | what the game does in deterministic mode: a trigger under 0.5 everywhere is mute in game |
-| `hit/ob`, `h<5°`, `tirs<5°`, `enrich` | hits per landed shell (one shots row = one shell; shells landing on the same step share their group's hits equally), per shell fired aligned, share of aligned shots, enrichment (share of aligned shots / share of aligned decisions) |
-| `vide_s`, `%vident`, `%désarmé` | first empty reserve (median, s), share of tank-episodes that empty it, share of disarmed steps: the **dump** |
-| `tour<5°` | share of decisions with the turret within 5° of a target: aim |
-| `σx`, `σy`, `σ@plaf`, `|μ|cx`, `μsat` | median canon σ, share at the cap (≥ 0.69), median canon \|μ\|, share \|μ\| > 1.5 (tanh saturation) |
+| `hit/sh`, `h<5°`, `shots<5°`, `enrich` | hits per landed shell (one shots row = one shell; shells landing on the same step share their group's hits equally), per shell fired aligned, share of aligned shots, enrichment (share of aligned shots / share of aligned decisions) |
+| `empty_s`, `%emptied`, `%disarmed` | first empty reserve (median, s), share of tank-episodes that empty it, share of disarmed steps: the **dump** |
+| `turret<5°` | share of decisions with the turret within 5° of a target: aim |
+| `σx`, `σy`, `σ@ceil`, `|μ|cx`, `μsat` | median canon σ, share at the cap (≥ 0.69), median canon \|μ\|, share \|μ\| > 1.5 (tanh saturation) |
 | `p_zoom`, corr(p_fire, p_zoom) | trigger/zoom coupling |
 
 Check the counts (`n` aligned & close): under ~300 the ratio is noise.
@@ -88,7 +88,7 @@ Check the counts (`n` aligned & close): under ~300 the ratio is noise.
 
 ## 5. Write `<kdir>/probes/save_K.md`
 
-French. Header (run, save, index, D, binary + commit, compatibility, sides/episodes/mode),
+English. Header (run, save, index, D, binary + commit, compatibility, sides/episodes/mode),
 summary table, reading (trigger, shooting, dump, aim, heads), comparison to markers at the same
 D, conclusions established vs noise, next probes or saves worth running. Short chat summary. A
 newly established fact updates `<kdir>/run.md`.

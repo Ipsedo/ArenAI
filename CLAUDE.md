@@ -53,6 +53,25 @@ recommended one first. An answer validates exactly what was asked, nothing adjac
 - **Disposable smoke runs**: a few minutes of training into the scratchpad to check that the code
   runs (no NaN, saves load, probe reads them); never in `outputs/`, never read as a result.
 
+### Feature ⟹ plan
+
+**Feature** = a new behaviour or capability in product code (`arenai_*/`, build): what G2 gates
+as « add a feature or an option » or « restructure an API », and every G3 formulation change.
+Not a Feature: a hyperparameter, default value or config change; a refactor without behaviour
+change; an internal fix; a fast evaluator (probe, match, bench, analysis script); a smoke run;
+harness, docs or knowledge-base edits. Doubt ⟹ Feature.
+
+Every Feature goes through skill `work-plan`, unasked (Samuel, 2026-11-27: « systématiquement
+pour chaque nouvelle feature […] un plan soit créé et complété avec les règles du harnais (dont
+questions) »), four phases, **no code of the Feature before phase 3**:
+
+1. **Draft** — as soon as Samuel validated the idea: write the plan, then put its pieces through
+   the gates (questions), answers recorded in the plan.
+2. **Validate** — summary of the plan to Samuel, commit of the plan, then execute here or end the
+   session.
+3. **Execute** — code the plan, `final-check`, run its evaluators.
+4. **Close** — report against the plan to Samuel, commit (deletes the plan file).
+
 ## Design — `docs/design_doctrine.md`
 
 Samuel is exacting about code beauty: object design, functional purity, modular architecture.
@@ -216,5 +235,5 @@ run's effective commit, not the working tree.
 | `.venv` / pre-commit missing | `setup-venv` |
 | a correction of how Claude works, a stated working rule, a rule Claude broke, put a rule in the harness, create/edit a skill | `harness-improvement` (root-cause diagnosis first) |
 | « kaizen », or waste Claude observes in its own work without any miss (rework, avoidable question, manual repetition, stale or overloaded harness text) | `kaizen` (table, Samuel selects) → `harness-improvement` per selected row |
-| write down a decided direction for a later session (« écris le plan », « je lancerai une nouvelle session pour le coder »), start from a plan, commit code a plan describes | `work-plan` (`.claude/plans/YYYY-MM-DD_<slug>.md`, for Claude, never `docs/`; deleted in the commit that applies it) |
+| Samuel validated the idea of a Feature (« ok on fait ça », « go », « code-le », « ajoute X ») — before any code of it; write down a decided direction for a later session (« écris le plan », « je lancerai une nouvelle session pour le coder »), start from a plan, commit code a plan describes | `work-plan` (four phases: draft + gate questions → plan validated and committed → execute → close and commit; `.claude/plans/YYYY-MM-DD_<slug>.md`, for Claude, never `docs/`; deleted in the commit that applies it) |
 | **explicit request only** (« nettoyeur », « nettoie X »); never suggest it | agent `cleaner` on the scope Samuel names (none ⟹ ask it); relay its table, `AskUserQuestion` multiSelect over its **libre** rows (> 4 rows ⟹ options = groups of rows by rule or file); selected rows ⟹ agent `cleaner-fix`, `isolation: "worktree"`; gated rows go through their gate here |

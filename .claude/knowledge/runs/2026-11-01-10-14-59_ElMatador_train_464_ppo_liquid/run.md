@@ -11,4 +11,3 @@
 | raw data | `outputs/train_464_ppo_liquid` on ElMatador |
 
 ## Established facts
-

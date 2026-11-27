@@ -311,6 +311,26 @@ Agent family read from `config.json`: `ppo_liquid`, `ppg`, `sac`. Also writes
 | `--vision_num_threads` | CPU threads | vision rendering threads |
 | `--cuda` | off | agent on GPU |
 
+### Render bench
+
+```bash
+./build/arenai_agent/arenai_agent_render_bench \
+    --resources_folder resources \
+    --frames /tmp/reset_frames.bin
+```
+
+Prints `startup_ms`, `step_mean_ms`, `step_p50_ms`, `step_p90_ms`, `step_p99_ms`, `max_rss_mib`.
+
+| option | default | meaning |
+|---|---|---|
+| `--nb_tanks` | `32` | tanks |
+| `--steps` | `300` | timed steps |
+| `--warmup` | `20` | untimed steps first |
+| `--action_repeat` | `3` | frames per step |
+| `--vision_num_threads` | CPU threads | vision rendering threads |
+| `--seed` | `42` | environment and action seed |
+| `--frames <file>` | none | dump the reset visions and panoramas (raw `uint8`, per tank) |
+
 ## Python tooling
 
 ```bash

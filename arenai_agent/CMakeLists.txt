@@ -86,6 +86,12 @@ target_link_libraries(arenai_agent_match PRIVATE arenai_agent ${ARENAI_AGENT_LIN
 target_include_directories(arenai_agent_match PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 arenai_copy_runtime_dlls(arenai_agent_match TORCH)
 
+# Render bench: training-environment step time with the agents' visions
+add_executable(arenai_agent_render_bench "${CMAKE_CURRENT_SOURCE_DIR}/probe/render_bench.cpp")
+target_link_libraries(arenai_agent_render_bench PRIVATE arenai_agent ${ARENAI_AGENT_LINK_LIBS})
+target_include_directories(arenai_agent_render_bench PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}/src")
+arenai_copy_runtime_dlls(arenai_agent_render_bench TORCH)
+
 add_executable(arenai_agent_sigma_gradients "${CMAKE_CURRENT_SOURCE_DIR}/probe/sigma_gradients.cpp")
 target_link_libraries(arenai_agent_sigma_gradients PRIVATE arenai_agent ${ARENAI_AGENT_LINK_LIBS})
 target_include_directories(arenai_agent_sigma_gradients PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}/src")

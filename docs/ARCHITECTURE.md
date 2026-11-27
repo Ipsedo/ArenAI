@@ -72,6 +72,7 @@ Executables:
 | `arenai_agent_probe` | `arenai_agent/probe/probe.cpp` | measures a checkpoint's behaviour in the training environment |
 | `arenai_agent_match` | `arenai_agent/probe/match.cpp` | plays a checkpoint under the game's rules, without a window |
 | `arenai_agent_sigma_gradients` | `arenai_agent/probe/sigma_gradients.cpp` | gradient diagnostic on a checkpoint |
+| `arenai_agent_render_bench` | `arenai_agent/probe/render_bench.cpp` | times the training environment's step and startup, dumps the reset frames |
 
 Other folders: `resources/` (meshes, height maps, cube maps, fonts, menu documents, shipped
 trained models), `cmake/` (helper modules, shader compilation), `scripts/` (CI packaging, golden

@@ -94,6 +94,7 @@ rm -rf build && ./build_linux.sh
 | `arenai_agent_probe` | `build/arenai_agent/arenai_agent_probe` |
 | `arenai_agent_match` | `build/arenai_agent/arenai_agent_match` |
 | `arenai_agent_sigma_gradients` | `build/arenai_agent/arenai_agent_sigma_gradients` |
+| `arenai_agent_render_bench` | `build/arenai_agent/arenai_agent_render_bench` |
 | `arenai_{view,model,core,agent,desktop}_tests` | `build/arenai_<module>/tests/` |
 
 ## Windows
